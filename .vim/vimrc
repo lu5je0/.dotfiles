@@ -47,3 +47,42 @@ set encoding=utf8
 set fileencoding=utf-8 
 set fileencodings=ucs-bom,utf-8,utf-16,gbk,big5,gb18030,latin1
 syntax on
+
+" 光标设置
+" https://vim.fandom.com/wiki/Configuring_the_cursor
+" 1 or 0 -> blinking block
+" 2 solid block
+" 3 -> blinking underscore
+" 4 solid underscore
+" Recent versions of xterm (282 or above) also support
+" 5 -> blinking vertical bar
+" 6 -> solid vertical bar
+
+if &term =~ '^xterm'
+  " normal mode
+  let &t_EI .= "\<Esc>[4 q"
+  " insert mode
+  let &t_SI .= "\<Esc>[6 q"
+endif
+
+
+" gVim设置
+if has("gui_running")
+  "au GUIEnter * simalt ~x " 窗口启动时自动最大化
+  set guioptions-=m " 隐藏菜单栏
+  set guioptions-=T " 隐藏工具栏
+  set guioptions-=L " 隐藏左侧滚动条
+  set guioptions-=r " 隐藏右侧滚动条
+  set guioptions-=b " 隐藏底部滚动条
+  "set showtabline=0 " 隐藏Tab栏
+endif
+
+
+" 使用系统剪切板
+set clipboard+=unnamed
+
+
+" 主题配置
+set guifont=consolas:h13
+colorscheme gruvbox
+set bg=dark
