@@ -2,7 +2,7 @@ set nocompatible               "去除VIM一致性，必须
 filetype off                   "必须
 
 " 设置包括vundle和初始化相关的运行时路径
-set rtp+=~/.vim/bundle/Vundle.vim
+set rtp+=$HOME/.vim/bundle/Vundle.vim
 call vundle#begin()
 
 " 启用vundle管理插件，必须
