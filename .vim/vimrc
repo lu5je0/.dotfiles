@@ -59,7 +59,7 @@ inoremap " ""<ESC>i
 inoremap ( ()<ESC>i
 inoremap < <><ESC>i
 inoremap [ []<ESC>i
-inoremap { {<CR>}<ESC>O<TAB>
+inoremap { {<CR>}<ESC>O
 
 " 光标设置
 " https://vim.fandom.com/wiki/Configuring_the_cursor
