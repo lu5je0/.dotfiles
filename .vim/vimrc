@@ -15,6 +15,7 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'vim-airline'
 Plugin 'tpope/vim-surround'
 Plugin 'Raimondi/delimitMate'
+Plugin 'preservim/nerdtree'
 
 " 在此增加其他插件，安装的插件需要放在vundle#begin和vundle#end之间
 " 安装github上的插件格式为 Plugin '用户名/插件仓库名'
