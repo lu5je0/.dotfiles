@@ -36,3 +36,4 @@ describe 'parts'
     Expect airline#parts#get('part').accent == 'red'
   end
 end
+

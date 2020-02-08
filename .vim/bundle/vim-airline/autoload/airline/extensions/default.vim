@@ -1,32 +1,24 @@
-" MIT License. Copyright (c) 2013-2020 Bailey Ling et al.
+" MIT License. Copyright (c) 2013-2014 Bailey Ling.
 " vim: et ts=2 sts=2 sw=2
 
-scriptencoding utf-8
-
-let s:section_use_groups     = get(g:, 'airline#extensions#default#section_use_groupitems', 1)
 let s:section_truncate_width = get(g:, 'airline#extensions#default#section_truncate_width', {
       \ 'b': 79,
       \ 'x': 60,
       \ 'y': 88,
       \ 'z': 45,
-      \ 'warning': 80,
-      \ 'error': 80,
       \ })
 let s:layout = get(g:, 'airline#extensions#default#layout', [
       \ [ 'a', 'b', 'c' ],
-      \ [ 'x', 'y', 'z', 'warning', 'error' ]
+      \ [ 'x', 'y', 'z', 'warning' ]
       \ ])
 
 function! s:get_section(winnr, key, ...)
   if has_key(s:section_truncate_width, a:key)
-    if airline#util#winwidth(a:winnr) < s:section_truncate_width[a:key]
+    if winwidth(a:winnr) < s:section_truncate_width[a:key]
       return ''
     endif
   endif
   let spc = g:airline_symbols.space
-  if !exists('g:airline_section_{a:key}')
-    return ''
-  endif
   let text = airline#util#getwinvar(a:winnr, 'airline_section_'.a:key, g:airline_section_{a:key})
   let [prefix, suffix] = [get(a:000, 0, '%('.spc), get(a:000, 1, spc.'%)')]
   return empty(text) ? '' : prefix.text.suffix
@@ -34,42 +26,30 @@ endfunction
 
 function! s:build_sections(builder, context, keys)
   for key in a:keys
-    if (key == 'warning' || key == 'error') && !a:context.active
+    if key == 'warning' && !a:context.active
       continue
     endif
     call s:add_section(a:builder, a:context, key)
   endfor
 endfunction
 
-" There still is a highlighting bug when using groups %(%) in the statusline,
-" deactivate it, unless it is fixed (7.4.1511)
-if s:section_use_groups && (v:version >= 704 || (v:version >= 703 && has('patch81')))
-  function! s:add_section(builder, context, key)
-    let condition = (a:key is# "warning" || a:key is# "error") &&
-          \ (v:version == 704 && !has("patch1511"))
+if v:version >= 704 || (v:version >= 703 && has('patch81'))
+  function s:add_section(builder, context, key)
     " i have no idea why the warning section needs special treatment, but it's
     " needed to prevent separators from showing up
-    if ((a:key == 'error' || a:key == 'warning') && empty(s:get_section(a:context.winnr, a:key)))
-      return
-    endif
-    if condition
+    if a:key == 'warning'
       call a:builder.add_raw('%(')
     endif
     call a:builder.add_section('airline_'.a:key, s:get_section(a:context.winnr, a:key))
-    if condition
+    if a:key == 'warning'
       call a:builder.add_raw('%)')
     endif
   endfunction
 else
   " older version don't like the use of %(%)
-  function! s:add_section(builder, context, key)
-    if ((a:key == 'error' || a:key == 'warning') && empty(s:get_section(a:context.winnr, a:key)))
-      return
-    endif
+  function s:add_section(builder, context, key)
     if a:key == 'warning'
       call a:builder.add_raw('%#airline_warning#'.s:get_section(a:context.winnr, a:key))
-    elseif a:key == 'error'
-      call a:builder.add_raw('%#airline_error#'.s:get_section(a:context.winnr, a:key))
     else
       call a:builder.add_section('airline_'.a:key, s:get_section(a:context.winnr, a:key))
     endif
@@ -98,3 +78,4 @@ function! airline#extensions#default#apply(builder, context)
 
   return 1
 endfunction
+

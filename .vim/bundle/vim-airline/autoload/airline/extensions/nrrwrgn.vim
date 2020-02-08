@@ -1,8 +1,5 @@
-" MIT License. Copyright (c) 2013-2019 Bailey Ling, Christian Brabandt et al.
-" Plugin: https://github.com/chrisbra/NrrwRgn
+" MIT License. Copyright (c) 2013-2014 Bailey Ling.
 " vim: et ts=2 sts=2 sw=2
-
-scriptencoding utf-8
 
 if !get(g:, 'loaded_nrrw_rgn', 0)
   finish
@@ -20,7 +17,7 @@ function! airline#extensions#nrrwrgn#apply(...)
       let dict=nrrwrgn#NrrwRgnStatus()
       let vmode = { 'v': 'Char ', 'V': 'Line ', '': 'Block '}
       let mode = dict.visual ? vmode[dict.visual] : vmode['V']
-      let winwidth = airline#util#winwidth()
+      let winwidth = winwidth(0)
       if winwidth < 80
         let mode = mode[0]
       endif
@@ -42,8 +39,7 @@ function! airline#extensions#nrrwrgn#apply(...)
         endif
       endif
       let range=(dict.multi ? '' : printf("[%d-%d]", dict.start[1], dict.end[1]))
-      call a:1.add_section('airline_c', printf("%s %s %s", name, range,
-        \ dict.enabled ? (&encoding ==? 'utf-8'  ? "\u2713"  : '')  : '!'))
+      call a:1.add_section('airline_c', printf("%s %s %s", name, range, dict.enabled ? "\u2713" : '!'))
       call a:1.split()
       call a:1.add_section('airline_x', get(g:, 'airline_section_x').spc)
       call a:1.add_section('airline_y', spc.get(g:, 'airline_section_y').spc)

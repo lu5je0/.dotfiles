@@ -1,7 +1,7 @@
 let g:airline_theme = 'dark'
-
+call airline#init#bootstrap()
+call airline#init#sections()
 source plugin/airline.vim
-doautocmd VimEnter
 
 function! MyFuncref(...)
   call a:1.add_raw('hello world')
@@ -84,3 +84,4 @@ describe 'airline'
     Expect airline#statusline(1) =~ 'airline#check_mode'
   end
 end
+

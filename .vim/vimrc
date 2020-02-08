@@ -14,6 +14,7 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'vim-airline'
 Plugin 'tpope/vim-surround'
+Plugin 'Raimondi/delimitMate'
 
 " 在此增加其他插件，安装的插件需要放在vundle#begin和vundle#end之间
 " 安装github上的插件格式为 Plugin '用户名/插件仓库名'
@@ -54,11 +55,11 @@ set fileencodings=ucs-bom,utf-8,utf-16,gbk,big5,gb18030,latin1
 syntax on
 
 " 按键映射
-inoremap ' ''<ESC>i
-inoremap " ""<ESC>i
-inoremap ( ()<ESC>i
-inoremap [ []<ESC>i
-inoremap { {<CR>}<ESC>O
+" inoremap ' ''<ESC>i
+" inoremap " ""<ESC>i
+" inoremap ( ()<ESC>i
+" inoremap [ []<ESC>i
+" inoremap { {<CR>}<ESC>O
 
 " 光标设置
 " https://vim.fandom.com/wiki/Configuring_the_cursor

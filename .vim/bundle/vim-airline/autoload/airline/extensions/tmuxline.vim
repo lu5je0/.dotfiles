@@ -1,8 +1,5 @@
-" MIT License. Copyright (c) 2013-2019 Bailey Ling et al.
-" Plugin: https://github.com/edkolev/tmuxline.vim
+" MIT License. Copyright (c) 2013-2014 Bailey Ling.
 " vim: et ts=2 sts=2 sw=2
-
-scriptencoding utf-8
 
 if !exists(':Tmuxline')
   finish
@@ -26,3 +23,4 @@ function! airline#extensions#tmuxline#set_tmux_colors(palette)
     call tmuxline#api#snapshot(s:tmuxline_snapshot_file)
   endif
 endfunction
+

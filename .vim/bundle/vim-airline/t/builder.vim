@@ -15,27 +15,25 @@ describe 'active builder'
     call s:builder.add_section('Normal', 'hello')
     call s:builder.add_section('Search', 'world')
     let stl = s:builder.build()
-    Expect stl =~ '%#Normal#hello%#Normal_to_Search#%#Search#world'
+    Expect stl =~ '%#Normal#hello%#Normal_to_Search#>%#Search#world'
   end
 
   it 'should reuse highlight group if background colors match'
-    call airline#highlighter#reset_hlcache()
     highlight Foo1 ctermfg=1 ctermbg=2
     highlight Foo2 ctermfg=1 ctermbg=2
     call s:builder.add_section('Foo1', 'hello')
     call s:builder.add_section('Foo2', 'world')
     let stl = s:builder.build()
-    Expect stl =~ '%#Foo1#helloworld'
+    Expect stl =~ '%#Foo1#hello>world'
   end
 
   it 'should switch highlight groups if foreground colors differ'
-    call airline#highlighter#reset_hlcache()
     highlight Foo1 ctermfg=1 ctermbg=2
     highlight Foo2 ctermfg=2 ctermbg=2
     call s:builder.add_section('Foo1', 'hello')
     call s:builder.add_section('Foo2', 'world')
     let stl = s:builder.build()
-    Expect stl =~ '%#Foo1#hello%#Foo1_to_Foo2#%#Foo2#world'
+    Expect stl =~ '%#Foo1#hello%#Foo1_to_Foo2#>%#Foo2#world'
   end
 
   it 'should split left/right sections'
@@ -49,14 +47,14 @@ describe 'active builder'
     call s:builder.add_section('Normal', 'hello')
     call s:builder.add_section('Search', 'world')
     let stl = s:builder.build()
-    Expect stl =~ 'hello%#Normal_to_Search#%#Search#world'
+    Expect stl =~ 'hello%#Normal_to_Search#<%#Search#world'
   end
 
   it 'should not repeat the same highlight group'
     call s:builder.add_section('Normal', 'hello')
     call s:builder.add_section('Normal', 'hello')
     let stl = s:builder.build()
-    Expect stl == '%#Normal#hellohello'
+    Expect stl == '%#Normal#hello>hello'
   end
 
   it 'should replace accent groups with the specified group'
@@ -96,7 +94,7 @@ describe 'inactive builder'
     call s:builder.add_section('Normal', 'hello')
     call s:builder.add_section('Search', 'world')
     let stl = s:builder.build()
-    Expect stl =~ '%#Normal_inactive#hello%#Normal_to_Search_inactive#%#Search_inactive#world'
+    Expect stl =~ '%#Normal_inactive#hello%#Normal_to_Search_inactive#>%#Search_inactive#world'
   end
 
   it 'should not render accents'
@@ -105,3 +103,4 @@ describe 'inactive builder'
     Expect stl == '%#Normal_inactive#hello%#foo_inactive#fooworld'
   end
 end
+
