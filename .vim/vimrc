@@ -18,12 +18,10 @@ Plugin 'Raimondi/delimitMate'
 Plugin 'preservim/nerdtree'
 Plugin 'tpope/vim-commentary'
 Plugin 'joshdick/onedark.vim'
-
-" 在此增加其他插件，安装的插件需要放在vundle#begin和vundle#end之间
-" 安装github上的插件格式为 Plugin '用户名/插件仓库名'
+Plugin 'airblade/vim-gitgutter'
 
 call vundle#end()
-filetype plugin indent on      "加载vim自带和插件相应的语法和文件类型相关脚本，必须"
+filetype plugin indent on      "加载vim自带和插件相应的语法和文件类型相关脚本，必须
 
 " airline
 set laststatus=2
@@ -33,6 +31,12 @@ let g:airline_left_sep = ''
 let g:airline_left_sep = ''
 let g:airline_right_sep = ''
 let g:airline_right_sep = ''
+
+" gitgutter
+" 设置vim更新时间，主要用于更新gitgutter
+set updatetime=100
+" diff signs的最大行数
+let g:gitgutter_max_signs = 2000
 
 " 搜索设置
 " 高亮搜索结果
@@ -94,12 +98,12 @@ if has("gui_running")
   winpos 440 200
 
   " Windows下使用wsl作为默认终端
-  if has("windows")
-    set shell=C:\Windows\Sysnative\wsl.exe
-    set shellpipe=|
-    set shellredir=>
-    set shellcmdflag=
-  endif
+  " if has("windows")
+  "   set shell=C:\Windows\Sysnative\wsl.exe
+  "   set shellpipe=|
+  "   set shellredir=>
+  "   set shellcmdflag=
+  " endif
 endif
 
 
@@ -113,3 +117,4 @@ set splitbelow
 set guifont=consolas:h13
 colorscheme onedark
 set bg=dark
+
