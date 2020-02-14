@@ -66,6 +66,10 @@ syntax on
 " inoremap ( ()<ESC>i
 " inoremap [ []<ESC>i
 " inoremap { {<CR>}<ESC>O
+" 设置空格键为leader
+let mapleader=" "
+nnoremap <silent> <leader>e :NERDTreeToggle<CR>
+nnoremap <silent> <leader>f :NERDTreeFind<CR>
 
 " 光标设置
 " https://vim.fandom.com/wiki/Configuring_the_cursor
