@@ -83,7 +83,7 @@ endif
 
 " gVim设置
 if has("gui_running")
-  "au GUIEnter * simalt ~x " 窗口启动时自动最大化
+  " au GUIEnter * simalt ~x " 窗口启动时自动最大化
   set guioptions-=m " 隐藏菜单栏
   set guioptions-=T " 隐藏工具栏
   set guioptions-=L " 隐藏左侧滚动条
@@ -91,13 +91,24 @@ if has("gui_running")
   set guioptions-=b " 隐藏底部滚动条
   set lines=33
   set columns=110
-  "set showtabline=0 " 隐藏Tab栏
+  winpos 440 200
+
+  " Windows下使用wsl作为默认终端
+  if has("windows")
+    set shell=C:\Windows\Sysnative\wsl.exe
+    set shellpipe=|
+    set shellredir=>
+    set shellcmdflag=
+  endif
+  " set showtabline=0 " 隐藏Tab栏
 endif
 
 
 " 使用系统剪切板
 set clipboard+=unnamed
 
+" 默认在下侧分屏
+set splitbelow
 
 " 主题配置
 set guifont=consolas:h13
