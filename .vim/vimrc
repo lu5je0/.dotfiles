@@ -1,6 +1,5 @@
 " vundle相关设置 {{{
-"去除VIM一致性，必须
-set nocompatible
+set nocompatible "去除VIM一致性，必须
 filetype off
 
 " 设置包括vundle和初始化相关的运行时路径
@@ -22,24 +21,17 @@ Plugin 'joshdick/onedark.vim'
 Plugin 'airblade/vim-gitgutter'
 
 call vundle#end()
-filetype plugin indent on      "加载vim自带和插件相应的语法和文件类型相关脚本，必须
+filetype plugin indent on "加载vim自带和插件相应的语法和文件类型相关脚本，必须
 " }}}
 
 " 常规设置 {{{
-" 高亮搜索结果
-set hlsearch
-" 搜索时忽略大小写
-set ignorecase
-" 每输入一个字符就跳转到对应的结果
-set incsearch
-" 关闭错误响声
-set noerrorbells
-" 开启256颜色支持
-" 使用系统剪切板
-set clipboard+=unnamed
-" 默认在下侧分屏
-set splitbelow
-set t_Co=256
+set hlsearch " 高亮搜索结果
+set ignorecase " 搜索时忽略大小写
+set incsearch " 每输入一个字符就跳转到对应的结果
+set noerrorbells " 关闭错误响声
+set clipboard+=unnamed " 使用系统剪切板
+set splitbelow " 默认在下侧分屏
+set t_Co=256 " 开启256颜色支持
 set autoindent
 set number
 set tabstop=4
@@ -50,8 +42,7 @@ set encoding=utf8
 set fileencoding=utf-8
 set fileencodings=ucs-bom,utf-8,utf-16,gbk,big5,gb18030,latin1
 syntax on
-" 使用marker折叠
-set fdm=marker
+set fdm=marker " 使用marker折叠
 " }}}
 
 " airline {{{
@@ -65,20 +56,12 @@ let g:airline_right_sep = ''
 " }}}
 
 " gitgutter {{{
-" 设置vim更新时间，主要用于更新gitgutter
-set updatetime=100
-" diff signs的最大行数
-let g:gitgutter_max_signs = 2000
+set updatetime=100 " 设置vim更新时间，主要用于更新gitgutter
+let g:gitgutter_max_signs = 2000 " diff signs的最大行数
 " }}}
 
 " 按键映射 {{{
-  " inoremap ' ''<ESC>i
-  " inoremap " ""<ESC>i
-  " inoremap ( ()<ESC>i
-  " inoremap [ []<ESC>i
-  " inoremap { {<CR>}<ESC>O
-  " 设置空格键为leader
-  let mapleader=" "
+  let mapleader=" " " 设置空格键为leader
   nnoremap <silent> <leader>e :NERDTreeToggle<CR>
   nnoremap <silent> <leader>f :NERDTreeFind<CR>
 " }}}
