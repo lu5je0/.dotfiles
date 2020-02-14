@@ -22,14 +22,13 @@ Plugin 'joshdick/onedark.vim'
 " 在此增加其他插件，安装的插件需要放在vundle#begin和vundle#end之间
 " 安装github上的插件格式为 Plugin '用户名/插件仓库名'
 
-call vundle#end()              
+call vundle#end()
 filetype plugin indent on      "加载vim自带和插件相应的语法和文件类型相关脚本，必须"
 
 " airline
 set laststatus=2
 set ambiwidth=double
-let g:airline_powerline_fonts=1
-
+" let g:airline_powerline_fonts=1
 let g:airline_left_sep = ''
 let g:airline_left_sep = ''
 let g:airline_right_sep = ''
@@ -52,8 +51,8 @@ set tabstop=4
 set shiftwidth=4
 set expandtab
 set softtabstop=4
-set encoding=utf8 
-set fileencoding=utf-8 
+set encoding=utf8
+set fileencoding=utf-8
 set fileencodings=ucs-bom,utf-8,utf-16,gbk,big5,gb18030,latin1
 syntax on
 
