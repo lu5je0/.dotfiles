@@ -16,6 +16,7 @@ Plugin 'vim-airline'
 Plugin 'tpope/vim-surround'
 Plugin 'Raimondi/delimitMate'
 Plugin 'preservim/nerdtree'
+Plugin 'tpope/vim-commentary'
 
 " 在此增加其他插件，安装的插件需要放在vundle#begin和vundle#end之间
 " 安装github上的插件格式为 Plugin '用户名/插件仓库名'
@@ -88,6 +89,8 @@ if has("gui_running")
   set guioptions-=L " 隐藏左侧滚动条
   set guioptions-=r " 隐藏右侧滚动条
   set guioptions-=b " 隐藏底部滚动条
+  set lines=33
+  set columns=110
   "set showtabline=0 " 隐藏Tab栏
 endif
 
