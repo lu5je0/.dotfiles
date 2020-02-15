@@ -20,6 +20,10 @@ Plugin 'tpope/vim-commentary'
 Plugin 'joshdick/onedark.vim'
 Plugin 'airblade/vim-gitgutter'
 
+" themes
+Plugin 'rakr/vim-one'
+Plugin 'dracula/vim'
+
 call vundle#end()
 filetype plugin indent on "加载vim自带和插件相应的语法和文件类型相关脚本，必须
 " }}}
@@ -43,6 +47,7 @@ set fileencoding=utf-8
 set fileencodings=ucs-bom,utf-8,utf-16,gbk,big5,gb18030,latin1
 syntax on
 set fdm=marker " 使用marker折叠
+set foldlevelstart=99 " 打开文件默认不折叠
 " }}}
 
 " airline {{{
@@ -107,6 +112,6 @@ endif
 
 " 主题配置 {{{
 set guifont=consolas:h13
-colorscheme onedark
+colorscheme one
 set bg=dark
 " }}}
