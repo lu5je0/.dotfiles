@@ -69,6 +69,8 @@ let g:gitgutter_max_signs = 2000 " diff signs的最大行数
   let mapleader=" " " 设置空格键为leader
   nnoremap <silent> <leader>e :NERDTreeToggle<CR>
   nnoremap <silent> <leader>f :NERDTreeFind<CR>
+  " 为了支持win+v
+  imap <C-V> <ESC>"+gpa
 " }}}
 
 " 光标设置 {{{
@@ -107,6 +109,9 @@ if has("gui_running")
   "   set shellredir=>
   "   set shellcmdflag=
   " endif
+
+  " Windows下使用ctrl v粘贴
+  nmap <C-V> "+gP
 endif
 " }}}
 
