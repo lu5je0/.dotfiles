@@ -19,6 +19,10 @@ Plugin 'preservim/nerdtree'
 Plugin 'tpope/vim-commentary'
 Plugin 'joshdick/onedark.vim'
 Plugin 'airblade/vim-gitgutter'
+Plugin 'vim-multiple-cursors'
+Plugin 'w0ng/vim-hybrid'
+Plugin 'kana/vim-textobj-user'
+Plugin 'sgur/vim-textobj-parameter'
 
 " themes
 Plugin 'rakr/vim-one'
@@ -117,6 +121,6 @@ endif
 
 " 主题配置 {{{
 set guifont=consolas:h13
-colorscheme one
+colorscheme hybrid
 set bg=dark
 " }}}
