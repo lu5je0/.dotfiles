@@ -1,0 +1,19 @@
+set ignorecase
+
+set keep-english-in-normal-and-restore-in-insert
+
+set surround
+set commentary
+set multiple-cursors
+set argtextobj
+
+set clipboard+=unnamed
+
+" keymap
+let mapleader=" "
+map <leader>h :action PreviousTab<CR>
+map <leader>l :action NextTab<CR>
+map <leader>r :action Replace<CR>
+map <leader>f :action Find<CR>
+map <leader>t :action ReopenClosedTab<CR>
+map <leader>q :action CloseContent<CR>
