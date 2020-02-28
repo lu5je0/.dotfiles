@@ -1,13 +1,12 @@
-" vundle相关设置 {{{
+" vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
-Plug 'VundleVim/Vundle.vim'
-Plug 'vim-airline'
+Plug 'vim-airline/vim-airline'
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
 Plug 'preservim/nerdtree'
 Plug 'tpope/vim-commentary'
-Plug 'vim-multiple-cursors'
+Plug 'terryma/vim-multiple-cursors'
 Plug 'kana/vim-textobj-user'
 Plug 'sgur/vim-textobj-parameter'
 Plug 'kana/vim-textobj-entire'
@@ -18,7 +17,7 @@ Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 Plug 'dracula/vim'
 
-call vundle#end()
+call plug#end()
 " }}}
 
 " 常规设置 {{{
