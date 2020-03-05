@@ -113,6 +113,6 @@ endif
 
 " 主题配置 {{{
 set guifont=consolas:h13
-colorscheme one
+colorscheme gruvbox
 set bg=dark
 " }}}
