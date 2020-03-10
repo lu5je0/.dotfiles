@@ -17,6 +17,7 @@ Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 Plug 'dracula/vim'
 Plug 'morhetz/gruvbox'
+Plug 'Chiel92/vim-autoformat'
 
 call plug#end()
 " }}}
@@ -47,7 +48,7 @@ set foldlevelstart=99 " 打开文件默认不折叠
 " airline {{{
 set laststatus=2
 set ambiwidth=double
-" let g:airline_powerline_fonts=1
+let g:airline_powerline_fonts=1
 let g:airline_left_sep = ''
 let g:airline_left_sep = ''
 let g:airline_right_sep = ''
@@ -63,11 +64,12 @@ let g:vim_textobj_parameter_mapping = 'a'
 " }}}
 
 " 按键映射 {{{
-  let mapleader=" " " 设置空格键为leader
-  nnoremap <silent> <leader>e :NERDTreeToggle<CR>
-  nnoremap <silent> <leader>f :NERDTreeFind<CR>
-  " 为了支持win+v
-  imap <C-V> <ESC>"+gpa
+let mapleader=" " " 设置空格键为leader
+nnoremap ` ^
+nnoremap <silent> <leader>e :NERDTreeToggle<CR>
+nnoremap <silent> <leader>f :NERDTreeFind<CR>
+" 为了支持win+v
+imap <C-V> <ESC>"+gpa
 " }}}
 
 " 光标设置 {{{
@@ -81,34 +83,34 @@ let g:vim_textobj_parameter_mapping = 'a'
 " 6 -> solid vertical bar
 
 if &term =~ '^xterm'
-  " normal mode
-  let &t_EI .= "\<Esc>[8 q"
-  " insert mode
-  let &t_SI .= "\<Esc>[6 q"
+    " normal mode
+    let &t_EI .= "\<Esc>[8 q"
+    " insert mode
+    let &t_SI .= "\<Esc>[6 q"
 endif
 " }}}
 
 " gVim {{{
 if has("gui_running")
-  " au GUIEnter * simalt ~x " 窗口启动时自动最大化
-  set guioptions-=m " 隐藏菜单栏
-  set guioptions-=T " 隐藏工具栏
-  set guioptions-=L " 隐藏左侧滚动条
-  set guioptions-=r " 隐藏右侧滚动条
-  set guioptions-=b " 隐藏底部滚动条
-  set lines=33
-  set columns=110
-  winpos 440 200
-  " Windows下使用wsl作为默认终端
-  " if has("win32")
-  "   set shell=C:\Windows\Sysnative\wsl.exe
-  "   set shellpipe=|
-  "   set shellredir=>
-  "   set shellcmdflag=
-  " endif
+    " au GUIEnter * simalt ~x " 窗口启动时自动最大化
+    set guioptions-=m " 隐藏菜单栏
+    set guioptions-=T " 隐藏工具栏
+    set guioptions-=L " 隐藏左侧滚动条
+    set guioptions-=r " 隐藏右侧滚动条
+    set guioptions-=b " 隐藏底部滚动条
+    set lines=33
+    set columns=110
+    winpos 440 200
+    " Windows下使用wsl作为默认终端
+    " if has("win32")
+    "   set shell=C:\Windows\Sysnative\wsl.exe
+    "   set shellpipe=|
+    "   set shellredir=>
+    "   set shellcmdflag=
+    " endif
 
-  " Windows下使用ctrl v粘贴
-  nmap <C-V> "+gP
+    " Windows下使用ctrl v粘贴
+    nmap <C-V> "+gP
 endif
 " }}}
 
