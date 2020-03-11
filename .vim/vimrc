@@ -1,3 +1,7 @@
+if has("win32")
+    let g:python3_host_prog = 'C:\Users\Administrator\AppData\Local\Programs\Python\Python38\python.exe'
+endif
+
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
@@ -11,13 +15,14 @@ Plug 'kana/vim-textobj-user'
 Plug 'sgur/vim-textobj-parameter'
 Plug 'kana/vim-textobj-entire'
 Plug 'mhinz/vim-signify'
+Plug 'voldikss/vim-translator'
+Plug 'Chiel92/vim-autoformat'
 " themes
 Plug 'w0ng/vim-hybrid'
 Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 Plug 'dracula/vim'
 Plug 'morhetz/gruvbox'
-Plug 'Chiel92/vim-autoformat'
 
 call plug#end()
 " }}}
@@ -118,4 +123,16 @@ endif
 set guifont=consolas:h13
 colorscheme gruvbox
 set bg=dark
+" }}}
+
+" vim-translator {{{
+" Echo translation in the cmdline
+nmap <silent> <Leader>w <Plug>Translate
+vmap <silent> <Leader>w <Plug>TranslateV
+" Display translation in a window
+nmap <silent> <Leader>t <Plug>TranslateW
+vmap <silent> <Leader>t <Plug>TranslateWV
+" Replace the text with translation
+" nmap <silent> <Leader>r <Plug>TranslateR
+" vmap <silent> <Leader>r <Plug>TranslateRV
 " }}}
