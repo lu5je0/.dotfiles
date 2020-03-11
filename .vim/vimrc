@@ -106,6 +106,8 @@ if has("gui_running")
     set lines=33
     set columns=110
     winpos 440 200
+    source $VIMRUNTIME/delmenu.vim
+    source $VIMRUNTIME/menu.vim
     " Windows下使用wsl作为默认终端
     " if has("win32")
     "   set shell=C:\Windows\Sysnative\wsl.exe
@@ -127,11 +129,11 @@ set bg=dark
 
 " vim-translator {{{
 " Echo translation in the cmdline
-nmap <silent> <Leader>w <Plug>Translate
-vmap <silent> <Leader>w <Plug>TranslateV
+nmap <silent> <Leader>s <Plug>Translate
+vmap <silent> <Leader>s <Plug>TranslateV
 " Display translation in a window
-nmap <silent> <Leader>t <Plug>TranslateW
-vmap <silent> <Leader>t <Plug>TranslateWV
+nmap <silent> <Leader>w <Plug>TranslateW
+vmap <silent> <Leader>w <Plug>TranslateWV
 " Replace the text with translation
 " nmap <silent> <Leader>r <Plug>TranslateR
 " vmap <silent> <Leader>r <Plug>TranslateRV
