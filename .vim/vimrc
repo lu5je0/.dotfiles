@@ -44,7 +44,7 @@ set expandtab
 set softtabstop=4
 set encoding=utf8
 set fileencoding=utf-8
-set fileencodings=ucs-bom,utf-8,utf-16,gbk,big5,gb18030,latin1
+set fileencodings=ucs-bom,utf-8,gbk,utf-16,big5,gb18030,ISO-8859,latin1
 syntax on
 set fdm=marker " 使用marker折叠
 set foldlevelstart=99 " 打开文件默认不折叠
