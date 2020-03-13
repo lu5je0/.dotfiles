@@ -17,6 +17,8 @@ Plug 'kana/vim-textobj-entire'
 Plug 'mhinz/vim-signify'
 Plug 'voldikss/vim-translator'
 Plug 'Chiel92/vim-autoformat'
+Plug 'tpope/vim-fugitive'
+
 " themes
 Plug 'w0ng/vim-hybrid'
 Plug 'joshdick/onedark.vim'
