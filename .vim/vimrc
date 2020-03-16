@@ -18,6 +18,15 @@ Plug 'mhinz/vim-signify'
 Plug 'voldikss/vim-translator'
 Plug 'Chiel92/vim-autoformat'
 Plug 'tpope/vim-fugitive'
+" 自动弹出pop
+" Plug 'vim-scripts/AutoComplPop'
+Plug 'ervandew/supertab'
+
+" snipmate
+Plug 'garbas/vim-snipmate'
+Plug 'honza/vim-snippets'
+Plug 'MarcWeber/vim-addon-mw-utils'
+Plug 'tomtom/tlib_vim'
 
 " themes
 Plug 'w0ng/vim-hybrid'
@@ -140,4 +149,8 @@ vmap <silent> <Leader>w <Plug>TranslateWV
 " Replace the text with translation
 " nmap <silent> <Leader>r <Plug>TranslateR
 " vmap <silent> <Leader>r <Plug>TranslateRV
+" }}}
+
+" supertab {{{
+let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
