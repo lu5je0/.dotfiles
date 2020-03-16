@@ -80,12 +80,25 @@ let g:vim_textobj_parameter_mapping = 'a'
 " }}}
 
 " 按键映射 {{{
-let mapleader=" " " 设置空格键为leader
-nnoremap ` ^
+let mapleader=","
+
+map <leader>tn :tabnew<cr>
+" flush vimrc
 nnoremap <silent> <leader>e :NERDTreeToggle<CR>
 nnoremap <silent> <leader>f :NERDTreeFind<CR>
+
+" 正常模式下 alt+j,k,h,l 调整分割窗口大小
+nnoremap <M-j> :resize +5<cr>
+nnoremap <M-k> :resize -5<cr>
+nnoremap <M-h> :vertical resize -5<cr>
+nnoremap <M-l> :vertical resize +5<cr>
+
+nnoremap ` ^
+
 " 为了支持win+v
 imap <C-V> <ESC>"+gpa
+
+" 另存为
 map <silent> <C-S-s> :brow saveas<CR>
 imap <C-S-s> <ESC>:brow saveas<CR>a
 " }}}
