@@ -86,6 +86,8 @@ nnoremap <silent> <leader>e :NERDTreeToggle<CR>
 nnoremap <silent> <leader>f :NERDTreeFind<CR>
 " 为了支持win+v
 imap <C-V> <ESC>"+gpa
+map <silent> <C-S-s> :brow saveas<CR>
+imap <C-S-s> <ESC>:brow saveas<CR>a
 " }}}
 
 " 光标设置 {{{
