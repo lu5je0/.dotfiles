@@ -11,7 +11,10 @@ set textobj-entire
 set clipboard+=unnamed
 
 " keymap
-let mapleader=" "
+let mapleader=","
+map <leader>th :tabprev<cr>
+map <leader>tl :tabnext<cr>
+
 map <leader>h :action PreviousTab<CR>
 map <leader>l :action NextTab<CR>
 map <leader>r :action Replace<CR>

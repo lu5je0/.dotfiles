@@ -64,6 +64,8 @@ set foldlevelstart=99 " 打开文件默认不折叠
 " airline {{{
 set laststatus=2
 set ambiwidth=double
+" tab显示
+let g:airline#extensions#tabline#enabled=1
 let g:airline_powerline_fonts=1
 let g:airline_left_sep = ''
 let g:airline_left_sep = ''
@@ -83,20 +85,19 @@ let g:vim_textobj_parameter_mapping = 'a'
 let mapleader=","
 
 map <leader>tn :tabnew<cr>
+map <leader>th :tabprev<cr>
+map <leader>tl :tabnext<cr>
 " flush vimrc
 nnoremap <silent> <leader>e :NERDTreeToggle<CR>
-nnoremap <silent> <leader>f :NERDTreeFind<CR>
 
 " 正常模式下 alt+j,k,h,l 调整分割窗口大小
-nnoremap <M-j> :resize +5<cr>
-nnoremap <M-k> :resize -5<cr>
-nnoremap <M-h> :vertical resize -5<cr>
-nnoremap <M-l> :vertical resize +5<cr>
-
+nnoremap <M-j> :resize +2<cr>
+nnoremap <M-k> :resize -2<cr>
+nnoremap <M-h> :vertical resize -2<cr>
+nnoremap <M-l> :vertical resize +2<cr>
 nnoremap ` ^
-
 " 为了支持win+v
-imap <C-V> <ESC>"+gpa
+imap <C-v> <ESC>"+gpa
 
 " 另存为
 map <silent> <C-S-s> :brow saveas<CR>
@@ -129,7 +130,7 @@ if has("gui_running")
     set guioptions-=L " 隐藏左侧滚动条
     set guioptions-=r " 隐藏右侧滚动条
     set guioptions-=b " 隐藏底部滚动条
-    set lines=33
+    set lines=36
     set columns=110
     winpos 440 200
     source $VIMRUNTIME/delmenu.vim
@@ -144,7 +145,6 @@ if has("gui_running")
     " endif
 
     " Windows下使用ctrl v粘贴
-    nmap <C-V> "+gP
 endif
 " }}}
 
