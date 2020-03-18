@@ -92,9 +92,13 @@ let g:vim_textobj_parameter_mapping = 'a'
 " 按键映射 {{{
 let mapleader=","
 
+" tab switch
 map <leader>tn :tabnew<cr>
-nmap H :tabprev<cr>
-nmap L :tabnext<cr>
+nnoremap <silent> <C-h> :tabprev<cr>
+inoremap <silent> <C-h> <ESC>:tabprev<cr>
+nnoremap <silent> <C-l> :tabnext<cr>
+inoremap <silent> <C-l> <ESC>:tabnext<cr>
+
 " flush vimrc
 nnoremap <silent> <leader>e :NERDTreeToggle<CR>
 
