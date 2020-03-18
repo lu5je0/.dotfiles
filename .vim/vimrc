@@ -62,22 +62,23 @@ set foldlevelstart=99 " 打开文件默认不折叠
 " }}}
 
 " airline {{{
-set laststatus=2
-set ambiwidth=double
 " tab显示
 let g:airline#extensions#tabline#enabled=1
 let g:airline#extensions#tabline#show_buffers = 0
-let g:airline#extensions#tabline#show_splits = 0
+let g:airline#extensions#tabline#show_splits = 1
 let g:airline#extensions#tabline#show_tabs = 1
 let g:airline#extensions#tabline#show_tab_nr = 1
-let g:airline#extensions#tabline#show_tab_type = 0
+let g:airline#extensions#tabline#show_tab_type = 1
 let g:airline#extensions#tabline#show_close_button = 1
 
 let g:airline_powerline_fonts=1
-let g:airline_left_sep = ''
-let g:airline_left_sep = ''
-let g:airline_right_sep = ''
-let g:airline_right_sep = ''
+
+" 隐藏箭头
+" let g:airline_left_sep = ''
+" let g:airline_left_sep = ''
+" let g:airline_right_sep = ''
+" let g:airline_right_sep = ''
+"
 " }}}
 
 " vim-signify {{{
@@ -157,7 +158,7 @@ endif
 " }}}
 
 " 主题配置 {{{
-set guifont=Consolas:h13
+set guifont=Consolas\ NF:h13
 colorscheme one
 set bg=dark
 " }}}
@@ -177,3 +178,4 @@ vmap <silent> <Leader>w <Plug>TranslateWV
 " supertab {{{
 let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
+let g:airline_left_sep = ''
