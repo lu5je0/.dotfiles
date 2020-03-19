@@ -18,6 +18,7 @@ Plug 'mhinz/vim-signify'
 Plug 'voldikss/vim-translator'
 Plug 'Chiel92/vim-autoformat'
 Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-repeat'
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
 Plug 'ervandew/supertab'
@@ -59,6 +60,9 @@ set fileencodings=ucs-bom,utf-8,gbk,utf-16,big5,gb18030,ISO-8859,latin1
 syntax on
 set fdm=marker " 使用marker折叠
 set foldlevelstart=99 " 打开文件默认不折叠
+
+" make the backspace work like in most other programs
+set backspace=indent,eol,start
 " }}}
 
 " airline {{{
@@ -182,4 +186,3 @@ vmap <silent> <Leader>w <Plug>TranslateWV
 " supertab {{{
 let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
-let g:airline_left_sep = ''
