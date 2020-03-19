@@ -117,8 +117,10 @@ imap <C-v> <ESC>"+gpa
 nmap <C-v> "+gpa
 
 " 另存为
-map <silent> <C-S-s> :brow saveas<CR>
-imap <C-S-s> <ESC>:brow saveas<CR>a
+if has("gui_running")
+    map <silent> <C-S-S> :brow saveas<CR>
+    imap <silent> <C-S-S> <ESC>:brow saveas<CR>a
+endif
 " }}}
 
 " 光标设置 {{{
@@ -167,7 +169,7 @@ endif
 
 " 主题配置 {{{
 set guifont=Consolas\ NF:h13
-colorscheme one
+colorscheme gruvbox
 set bg=dark
 " }}}
 
