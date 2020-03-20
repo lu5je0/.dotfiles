@@ -99,10 +99,8 @@ let mapleader=","
 
 " tab switch
 map <leader>tn :tabnew<cr>
-nnoremap <silent> <C-h> :tabprev<cr>
-inoremap <silent> <C-h> <ESC>:tabprev<cr>
-nnoremap <silent> <C-l> :tabnext<cr>
-inoremap <silent> <C-l> <ESC>:tabnext<cr>
+nnoremap <silent> <leader>th :tabprev<cr>
+nnoremap <silent> <leader>tl :tabnext<cr>
 
 " flush vimrc
 nnoremap <silent> <leader>e :NERDTreeToggle<CR>
