@@ -19,6 +19,7 @@ Plug 'voldikss/vim-translator'
 Plug 'Chiel92/vim-autoformat'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-repeat'
+Plug 'chr4/nginx.vim'
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
 Plug 'ervandew/supertab'
