@@ -20,6 +20,8 @@ Plug 'Chiel92/vim-autoformat'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
+Plug 'lu5je0/vim-java-bytecode'
+Plug 'lu5je0/jsonc.vim'
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
 Plug 'ervandew/supertab'
@@ -101,8 +103,6 @@ let mapleader=","
 map <leader>tn :tabnew<cr>
 nnoremap <silent> <leader>th :tabprev<cr>
 nnoremap <silent> <leader>tl :tabnext<cr>
-
-" flush vimrc
 nnoremap <silent> <leader>e :NERDTreeToggle<CR>
 
 " 正常模式下 alt+j,k,h,l 调整分割窗口大小
@@ -117,9 +117,12 @@ nmap <C-v> "+gpa
 
 " 另存为
 if has("gui_running")
-    map <silent> <C-S-S> :brow saveas<CR>
-    imap <silent> <C-S-S> <ESC>:brow saveas<CR>a
+    map <silent> <C-S> :brow saveas<CR>
+    imap <silent> <C-S> <ESC>:brow saveas<CR>a
 endif
+
+map <silent> <F10> :set wrap!<CR>
+imap <silent> <F10> <ESC>:set wrap!<CR>
 " }}}
 
 " 光标设置 {{{
