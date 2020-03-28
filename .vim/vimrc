@@ -22,6 +22,8 @@ Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
 Plug 'lu5je0/vim-java-bytecode'
 Plug 'lu5je0/jsonc.vim'
+Plug 'skywind3000/vim-terminal-help'
+" Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
 Plug 'ervandew/supertab'
@@ -104,18 +106,34 @@ map <leader>tn :tabnew<cr>
 nnoremap <silent> <leader>th :tabprev<cr>
 nnoremap <silent> <leader>tl :tabnext<cr>
 nnoremap <silent> <leader>e :NERDTreeToggle<CR>
+nnoremap <silent> <leader>1 1gt
+nnoremap <silent> <leader>2 2gt
+nnoremap <silent> <leader>3 3gt
+nnoremap <silent> <leader>4 4gt
+nnoremap <silent> <leader>5 5gt
+nnoremap <silent> <leader>6 6gt
+nnoremap <silent> <leader>7 7gt
+nnoremap <silent> <leader>8 8gt
+nnoremap <silent> <leader>9 9gt
 
 " 正常模式下 alt+j,k,h,l 调整分割窗口大小
-nnoremap <M-j> :resize +2<cr>
-nnoremap <M-k> :resize -2<cr>
-nnoremap <M-h> :vertical resize -2<cr>
-nnoremap <M-l> :vertical resize +2<cr>
-nnoremap ` ^
 if has("win32")
     " 为了支持win+v
     imap <C-v> <ESC>"+gpa
     nmap <C-v> "+gpa
 endif
+nnoremap <M-j> <down>
+nnoremap <M-k> <up>
+nnoremap <M-h> <left>
+nnoremap <M-l> <right>
+
+imap <M-j> <down>
+imap <M-k> <up>
+imap <M-h> <left>
+imap <M-l> <right>
+" 为了支持win+v
+imap <C-v> <ESC>"+gpa
+nmap <C-v> "+gpa
 
 " 另存为
 if has("gui_running")
@@ -173,7 +191,11 @@ endif
 
 " 主题配置 {{{
 set guifont=Consolas\ NF:h13
-colorscheme gruvbox
+if has("gui_running")
+    colorscheme one
+else
+    colorscheme gruvbox
+endif
 set bg=dark
 " }}}
 
@@ -191,4 +213,8 @@ vmap <silent> <Leader>w <Plug>TranslateWV
 
 " supertab {{{
 let g:SuperTabDefaultCompletionType = "<c-n>"
+" }}}
+
+" vim-terminal-helpe {{{
+" nmap <silent> <Leader>t :call TerminalToggle()<cr>
 " }}}
