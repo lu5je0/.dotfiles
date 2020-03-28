@@ -10,11 +10,21 @@ set textobj-entire
 
 set clipboard+=unnamed
 
-" keymap
+""" keymap
 let mapleader=","
+" tab
 map <leader>tn :tabnew<cr>
 nnoremap <silent> <leader>th :tabprev<cr>
 nnoremap <silent> <leader>tl :tabnext<cr>
+nnoremap <silent> <leader>1 1gt
+nnoremap <silent> <leader>2 2gt
+nnoremap <silent> <leader>3 3gt
+nnoremap <silent> <leader>4 4gt
+nnoremap <silent> <leader>5 5gt
+nnoremap <silent> <leader>6 6gt
+nnoremap <silent> <leader>7 7gt
+nnoremap <silent> <leader>8 8gt
+nnoremap <silent> <leader>9 9gt
 
 map <leader>h :action PreviousTab<CR>
 map <leader>l :action NextTab<CR>
