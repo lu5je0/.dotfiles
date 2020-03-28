@@ -116,24 +116,16 @@ nnoremap <silent> <leader>7 7gt
 nnoremap <silent> <leader>8 8gt
 nnoremap <silent> <leader>9 9gt
 
-" 正常模式下 alt+j,k,h,l 调整分割窗口大小
 if has("win32")
     " 为了支持win+v
     imap <C-v> <ESC>"+gpa
     nmap <C-v> "+gpa
 endif
-nnoremap <M-j> <down>
-nnoremap <M-k> <up>
-nnoremap <M-h> <left>
-nnoremap <M-l> <right>
 
 imap <M-j> <down>
 imap <M-k> <up>
 imap <M-h> <left>
 imap <M-l> <right>
-" 为了支持win+v
-imap <C-v> <ESC>"+gpa
-nmap <C-v> "+gpa
 
 " 另存为
 if has("gui_running")
