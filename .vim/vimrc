@@ -22,11 +22,10 @@ Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
 Plug 'lu5je0/vim-java-bytecode'
 Plug 'lu5je0/jsonc.vim'
-Plug 'lu5je0/vim-terminal-help'
+Plug 'ervandew/supertab'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
-Plug 'ervandew/supertab'
 
 " snipmate
 Plug 'garbas/vim-snipmate'
@@ -121,6 +120,9 @@ if has("win32")
     imap <C-v> <ESC>"+gpa
     nmap <C-v> "+gpa
 endif
+
+" ctrl-c 复制
+vnoremap <C-c> y
 
 imap <M-j> <down>
 imap <M-k> <up>
