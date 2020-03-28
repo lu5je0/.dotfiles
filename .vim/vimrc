@@ -211,5 +211,5 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
 
 " vim-terminal-helpe {{{
-nmap <silent> <Leader>t :call TerminalToggle()<cr>
+imap <silent> <m-=> <ESC>:call TerminalToggle()<cr>
 " }}}
