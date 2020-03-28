@@ -111,9 +111,11 @@ nnoremap <M-k> :resize -2<cr>
 nnoremap <M-h> :vertical resize -2<cr>
 nnoremap <M-l> :vertical resize +2<cr>
 nnoremap ` ^
-" 为了支持win+v
-imap <C-v> <ESC>"+gpa
-nmap <C-v> "+gpa
+if has("win32")
+    " 为了支持win+v
+    imap <C-v> <ESC>"+gpa
+    nmap <C-v> "+gpa
+endif
 
 " 另存为
 if has("gui_running")
