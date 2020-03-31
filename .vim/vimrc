@@ -23,6 +23,7 @@ Plug 'chr4/nginx.vim'
 Plug 'lu5je0/vim-java-bytecode'
 Plug 'lu5je0/jsonc.vim'
 Plug 'ervandew/supertab'
+" Plug 'lu5je0/vim-terminal-help'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
@@ -195,11 +196,13 @@ set bg=dark
 
 " vim-translator {{{
 " Echo translation in the cmdline
-nmap <silent> <Leader>s <Plug>Translate
-vmap <silent> <Leader>s <Plug>TranslateV
+nmap <silent> <Leader>w <Plug>Translate
+vmap <silent> <Leader>w <Plug>TranslateV
 " Display translation in a window
-nmap <silent> <Leader>w <Plug>TranslateW
-vmap <silent> <Leader>w <Plug>TranslateWV
+nmap <silent> <Leader>s <Plug>TranslateW
+vmap <silent> <Leader>s <Plug>TranslateWV
+nmap <silent> <m-s> <Plug>TranslateW
+vmap <silent> <m-s> <Plug>TranslateWV
 " Replace the text with translation
 " nmap <silent> <Leader>r <Plug>TranslateR
 " vmap <silent> <Leader>r <Plug>TranslateRV
