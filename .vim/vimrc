@@ -23,6 +23,9 @@ Plug 'chr4/nginx.vim'
 Plug 'lu5je0/vim-java-bytecode'
 Plug 'lu5je0/jsonc.vim'
 Plug 'ervandew/supertab'
+Plug 'vim-scripts/ReplaceWithRegister'
+Plug 'junegunn/vim-peekaboo'
+
 " Plug 'lu5je0/vim-terminal-help'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop

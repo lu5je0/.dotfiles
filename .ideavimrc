@@ -7,6 +7,7 @@ set commentary
 set multiple-cursors
 set argtextobj
 set textobj-entire
+set ReplaceWithRegister
 
 set clipboard+=unnamed
 
@@ -32,3 +33,7 @@ map <leader>r :action Replace<CR>
 map <leader>f :action Find<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
+
+
+# nmap <c-o> :action Back<CR>
+# nmap <c-i> :action Forward<CR>
