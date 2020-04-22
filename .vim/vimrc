@@ -331,5 +331,5 @@ endif
 
 " set terminal window position
 " (see possible options at :help vertical)
-let g:toggle_terminal#position = 'bel'
+let g:toggle_terminal#position = 'bo'
 " }}}
