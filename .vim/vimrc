@@ -147,6 +147,18 @@ endif
 
 map <silent> <F10> :set wrap!<CR>
 imap <silent> <F10> <ESC>:set wrap!<CR>
+
+" 快速切换窗口
+nmap <M-J> <C-w>j
+nmap <M-K> <C-w>k
+nmap <M-H> <C-w>h
+nmap <M-L> <C-w>l
+
+imap <M-J> <ESC><C-w>j
+imap <M-K> <ESC><C-w>k
+imap <M-H> <ESC><C-w>h
+imap <M-L> <ESC><C-w>l
+
 " }}}
 
 " 光标设置 {{{
@@ -235,7 +247,7 @@ if !has("gui_running")
     " Functions:
     function Escalt_console()
         " 0-9 =
-        for i in range(48, 57) + range(61, 61)
+        for i in range(48, 57) + range(61, 61) + range(65, 90)
             exe "set <M-".nr2char(i).">=\<Esc>".nr2char(i)
         endfor
         " 10, 22, 34, 62, 124 can't be set
