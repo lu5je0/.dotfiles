@@ -25,6 +25,7 @@ Plug 'lu5je0/jsonc.vim'
 Plug 'ervandew/supertab'
 Plug 'vim-scripts/ReplaceWithRegister'
 Plug 'junegunn/vim-peekaboo'
+Plug 'pakutoma/toggle-terminal'
 
 " Plug 'lu5je0/vim-terminal-help'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
@@ -194,7 +195,7 @@ endif
 " 主题配置 {{{
 set guifont=Consolas\ NF:h13
 if has("gui_running")
-    colorscheme one
+    colorscheme gruvbox
 else
     colorscheme gruvbox
 endif
@@ -221,4 +222,20 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 
 " vim-terminal-helpe {{{
 imap <silent> <m-=> <ESC>:call TerminalToggle()<cr>
+" }}}
+
+" terminal-toggle {{{
+
+" map <C-@> to toggle
+tnoremap <silent> <m-=> <C-w>:ToggleTerminal<CR>
+nnoremap <silent> <m-=> :ToggleTerminal<CR>
+inoremap <silent> <m-=> <ESC>:ToggleTerminal<CR>
+
+" set your favorite shell
+let g:toggle_terminal#command = 'wsl'
+
+" set terminal window position
+" (see possible options at :help vertical)
+let g:toggle_terminal#position = 'bel'
+
 " }}}
