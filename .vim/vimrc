@@ -27,7 +27,6 @@ Plug 'vim-scripts/ReplaceWithRegister'
 Plug 'junegunn/vim-peekaboo'
 Plug 'pakutoma/toggle-terminal'
 
-" Plug 'lu5je0/vim-terminal-help'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
@@ -218,10 +217,6 @@ vmap <silent> <m-s> <Plug>TranslateWV
 
 " supertab {{{
 let g:SuperTabDefaultCompletionType = "<c-n>"
-" }}}
-
-" vim-terminal-helpe {{{
-imap <silent> <m-=> <ESC>:call TerminalToggle()<cr>
 " }}}
 
 " terminal-toggle {{{
