@@ -150,20 +150,20 @@ imap <silent> <F10> <ESC>:set wrap!<CR>
 
 " 快速切换窗口
 " normal
-nmap <M-J> <C-w>j
-nmap <M-K> <C-w>k
-nmap <M-H> <C-w>h
-nmap <M-L> <C-w>l
-" insert
-imap <M-J> <ESC><C-w>j
-imap <M-K> <ESC><C-w>k
-imap <M-H> <ESC><C-w>h
-imap <M-L> <ESC><C-w>l
-" terminal
-tmap <M-J> <C-w>j
-tmap <M-K> <C-w>k
-tmap <M-H> <C-w>h
-tmap <M-L> <C-w>l
+nmap <silent> <M-J> <C-w>j
+nmap <silent> <M-K> <C-w>k
+nmap <silent> <M-H> <C-w>h
+nmap <silent> <M-L> <C-w>l
+" ins<silent>ert
+imap <silent> <M-J> <ESC><C-w>j
+imap <silent> <M-K> <ESC><C-w>k
+imap <silent> <M-H> <ESC><C-w>h
+imap <silent> <M-L> <ESC><C-w>l
+" ter<silent>minal
+tmap <silent> <M-J> <C-w>j
+tmap <silent> <M-K> <C-w>k
+tmap <silent> <M-H> <C-w>h
+tmap <silent> <M-L> <C-w>l
 
 " }}}
 
