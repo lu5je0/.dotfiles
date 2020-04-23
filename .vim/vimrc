@@ -103,12 +103,16 @@ set updatetime=1000 " 设置vim更新时间，主要用于更新gitgutter
 let g:vim_textobj_parameter_mapping = 'a'
 " }}}
 
+" delimitMate {{{
+let g:delimitMate_expand_cr=1
+" }}}
+
 " 按键映射 {{{
 let mapleader=","
 
 " vimrc
-nnoremap <leader>vir :tabnew $MYVIMRC<cr>
-nnoremap <leader>vis :source $MYVIMRC<cr>
+nnoremap <leader>vim :tabnew $MYVIMRC<cr>
+nnoremap <leader>source :source $MYVIMRC<cr>
 
 " tab switch
 map <leader>tn :tabnew<cr>
