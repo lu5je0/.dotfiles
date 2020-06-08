@@ -1,7 +1,8 @@
 set ignorecase
-
+set clipboard+=unnamed
 set keep-english-in-normal-and-restore-in-insert
 
+# plugins
 set surround
 set commentary
 set multiple-cursors
@@ -9,11 +10,13 @@ set argtextobj
 set textobj-entire
 set ReplaceWithRegister
 
-set clipboard+=unnamed
-
-""" keymap
+" 按键映射
 let mapleader=","
-" tab
+
+vmap < <gv
+vmap > >gv
+
+" tab页
 map <leader>tn :tabnew<cr>
 nnoremap <silent> <leader>th :tabprev<cr>
 nnoremap <silent> <leader>tl :tabnext<cr>
@@ -34,6 +37,10 @@ map <leader>f :action Find<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
 
-
-# nmap <c-o> :action Back<CR>
-# nmap <c-i> :action Forward<CR>
+# mac multiple0-cursors key maps
+map <c-n> <A-n>
+map <c-x> <A-x>
+map <c-p> <A-p>
+vmap <c-n> <A-n>
+vmap <c-x> <A-x>
+vmap <c-p> <A-p>
