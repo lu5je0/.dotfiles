@@ -138,6 +138,10 @@ endif
 " ctrl-c 复制
 vnoremap <C-c> y
 
+" 缩进后重新选择
+vmap < <gv
+vmap > >gv
+
 imap <M-j> <down>
 imap <M-k> <up>
 imap <M-h> <left>
