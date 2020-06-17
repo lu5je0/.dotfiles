@@ -203,8 +203,13 @@ if has("gui_running")
     set guioptions-=L " 隐藏左侧滚动条
     set guioptions-=r " 隐藏右侧滚动条
     set guioptions-=b " 隐藏底部滚动条
-    set lines=36
-    set columns=110
+    if has("mac")
+        set lines=28
+        set columns=90
+    else
+        set lines=36
+        set columns=110
+    endif
     winpos 440 200
     source $VIMRUNTIME/delmenu.vim
     source $VIMRUNTIME/menu.vim
@@ -348,7 +353,7 @@ let g:toggle_terminal#position = 'bo'
 " mac {{{
 
 " mac下输入法切换问题
-if has("mac")
+if has("mac") && has("gui")
     set noimd
     set imi=2
     set ims=2
