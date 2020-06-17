@@ -225,7 +225,7 @@ endif
 if has("mac")
     set guifont=Monaco\ for\ Powerline:h15
 else
-    set guifont=Consolas\ NF:h16
+    set guifont=Consolas\ NF:h12
 endif
 
 colorscheme gruvbox
@@ -328,7 +328,7 @@ endif
 
 " terminal-toggle {{{
 
-" map <C-@> to toggle
+" map <m-=> to toggle
 tnoremap <silent> <m-=> <C-w>:ToggleTerminal<CR>
 nnoremap <silent> <m-=> :ToggleTerminal<CR>
 inoremap <silent> <m-=> <ESC>:ToggleTerminal<CR>
