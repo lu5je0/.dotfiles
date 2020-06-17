@@ -50,6 +50,7 @@ call plug#end()
 " }}}
 
 " 常规设置 {{{
+set mouse=a
 set hlsearch " 高亮搜索结果
 set ignorecase " 搜索时忽略大小写
 set incsearch " 每输入一个字符就跳转到对应的结果
