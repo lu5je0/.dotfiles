@@ -223,7 +223,7 @@ endif
 
 " 主题配置 {{{
 if has("mac")
-    set guifont=Monaco\ for\ Powerline:h16
+    set guifont=Monaco\ for\ Powerline:h15
 else
     set guifont=Consolas\ NF:h16
 endif
@@ -343,4 +343,15 @@ endif
 " set terminal window position
 " (see possible options at :help vertical)
 let g:toggle_terminal#position = 'bo'
+" }}}
+
+" mac {{{
+
+" mac下输入法切换问题
+if has("mac")
+    set noimd
+    set imi=2
+    set ims=2
+endif
+
 " }}}

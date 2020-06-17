@@ -36,6 +36,7 @@ map <leader>r :action Replace<CR>
 map <leader>f :action Find<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
+map <leader>i :action Inline<CR>
 
 # mac multiple0-cursors key maps
 map <c-n> <A-n>
