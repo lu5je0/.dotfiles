@@ -9,6 +9,7 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'vim-airline/vim-airline'
 Plug 'tpope/vim-surround'
+Plug 'elzr/vim-json'
 Plug 'Raimondi/delimitMate'
 Plug 'preservim/nerdtree'
 Plug 'tpope/vim-commentary'
@@ -69,7 +70,7 @@ set encoding=utf8
 set fileencoding=utf-8
 set fileencodings=ucs-bom,utf-8,gbk,utf-16,big5,gb18030,ISO-8859,latin1
 syntax on
-set fdm=marker " 使用marker折叠
+setlocal foldmethod=syntax
 set foldlevelstart=99 " 打开文件默认不折叠
 
 " make the backspace work like in most other programs
@@ -360,4 +361,14 @@ if has("mac") && has("gui")
     set ims=2
 endif
 
+" Change cursor shape between insert and normal mode in iTerm2.app
+if $TERM_PROGRAM =~ "iTerm"
+    let &t_SI = "\<Esc>]50;CursorShape=1\x7" " Vertical bar in insert mode
+    let &t_EI = "\<Esc>]50;CursorShape=0\x7" " Block in normal mode
+endif
+
+" }}}
+
+" vim-json {{{
+set conceallevel=0
 " }}}
