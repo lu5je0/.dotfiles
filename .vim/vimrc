@@ -237,7 +237,12 @@ else
     set guifont=Consolas\ NF:h12
 endif
 
-colorscheme gruvbox
+if has("gui")
+    colorscheme one
+else
+    colorscheme gruvbox
+endif
+
 set bg=dark
 " }}}
 
