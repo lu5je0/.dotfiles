@@ -39,8 +39,7 @@ map <leader>q :action CloseContent<CR>
 map <leader>i :action Inline<CR>
 map <leader>s :action $EditorTranslateAction<CR>
 map <leader>u :action GotoSuperMethod<CR>
-map <leader>m :action GotoImplementation<CR>
-
+map <leader>n :action GotoImplementation<CR>
 
 # mac multiple0-cursors key maps
 map <c-n> <A-n>
