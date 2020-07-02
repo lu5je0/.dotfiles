@@ -37,6 +37,10 @@ map <leader>f :action Find<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
 map <leader>i :action Inline<CR>
+map <leader>s :action $EditorTranslateAction<CR>
+map <leader>u :action GotoSuperMethod<CR>
+map <leader>n :action GotoImplementation<CR>
+
 
 # mac multiple0-cursors key maps
 map <c-n> <A-n>
@@ -45,3 +49,7 @@ map <c-p> <A-p>
 vmap <c-n> <A-n>
 vmap <c-x> <A-x>
 vmap <c-p> <A-p>
+
+# history
+map <c-o> :action Back<CR>
+map <c-i> :action Forward<CR>
