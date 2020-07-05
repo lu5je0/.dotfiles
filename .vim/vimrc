@@ -1,6 +1,6 @@
 " windows gvim {{{
 if has("win32")
-    let g:python3_host_prog = 'C:\Users\Administrator\AppData\Local\Programs\Python\Python38\python.exe'
+    let g:python3_host_prog = $HOME . "/AppData/Local/Programs/Python/Python38/python.exe"
 endif
 " }}}
 
