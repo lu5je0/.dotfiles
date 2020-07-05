@@ -61,10 +61,12 @@ set t_Co=256 " 开启256颜色支持
 set nowrap " 默认不启用拆行
 set autoindent
 set number
-set tabstop=4
-set shiftwidth=4
+
+set tabstop=2
+set shiftwidth=2
+set softtabstop=2
+
 set expandtab
-set softtabstop=4
 set encoding=utf8
 set fileencoding=utf-8
 set fileencodings=ucs-bom,utf-8,gbk,utf-16,big5,gb18030,ISO-8859,latin1
