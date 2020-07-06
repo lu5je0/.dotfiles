@@ -117,7 +117,7 @@ let mapleader=","
 
 " vimrc
 nnoremap <leader>vim :tabnew $MYVIMRC<cr>
-nnoremap <leader>source :source $MYVIMRC<cr>
+nnoremap <leader>sou :source $MYVIMRC<cr>
 
 " tab switch
 map <leader>tn :tabnew<cr>
@@ -375,4 +375,10 @@ if $TERM_PROGRAM =~ "iTerm"
     let &t_EI = "\<Esc>]50;CursorShape=0\x7" " Block in normal mode
 endif
 
+" }}}
+
+" alias {{{
+command Json set ft=json
+command Diff windo difft
+command Diffo windo diffo
 " }}}
