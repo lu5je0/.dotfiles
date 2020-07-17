@@ -102,3 +102,8 @@ bindkey "^[[6~" history-beginning-search-forward
 source ~/.ohmyenv
 
 alias pc="proxychains4 -q"
+
+PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+alias ls='ls -F --show-control-chars --color=auto'
+eval `gdircolors -b $HOME/.dir_colors`
+

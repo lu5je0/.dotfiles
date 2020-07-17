@@ -272,9 +272,16 @@ runtime escalt.vim
 " terminal-toggle {{{
 
 " map <m-=> to toggle
+
+" windows
 tnoremap <silent> <m-=> <C-w>:ToggleTerminal<CR>
 nnoremap <silent> <m-=> :ToggleTerminal<CR>
 inoremap <silent> <m-=> <ESC>:ToggleTerminal<CR>
+
+" mac
+tnoremap <silent> <d-=> <C-w>:ToggleTerminal<CR>
+nnoremap <silent> <d-=> :ToggleTerminal<CR>
+inoremap <silent> <d-=> <ESC>:ToggleTerminal<CR>
 
 " set your favorite shell
 if has("win32")
