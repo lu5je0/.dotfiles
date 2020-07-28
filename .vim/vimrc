@@ -49,10 +49,12 @@ Plug 'morhetz/gruvbox'
 call plug#end()
 " }}}
 
+" runtime 加载.vim {{{
 runtime escalt.vim
 runtime foldtext.vim
 runtime keymap.vim
 runtime gvim.vim
+" }}}
 
 " 常规设置 {{{
 set mouse=a
