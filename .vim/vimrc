@@ -27,6 +27,7 @@ Plug 'ervandew/supertab'
 Plug 'vim-scripts/ReplaceWithRegister'
 Plug 'junegunn/vim-peekaboo'
 Plug 'pakutoma/toggle-terminal'
+Plug 'elzr/vim-json'
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
@@ -105,6 +106,10 @@ let g:airline_powerline_fonts=1
 "
 " }}}
 
+" vim-json {{{
+let g:vim_json_syntax_conceal = 0
+" }}}
+
 " vim-signify {{{
 set updatetime=1000 " 设置vim更新时间，主要用于更新gitgutter
 " }}}
@@ -137,25 +142,11 @@ if has("win32")
 endif
 " }}}
 
-" 主题配置 {{{
-if has("mac")
-    set guifont=Monaco\ for\ Powerline:h15
-else
-    set guifont=Consolas\ NF:h12
-endif
-
-if has("gui") && $TERM_PROGRAM != "iTerm.app"
-    colorscheme one
-else
-    colorscheme gruvbox
-endif
-
-set bg=dark
-" }}}
-
 " supertab {{{
 let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
+
+" toggle_terminal {{{
 
 " set your favorite shell
 if has("win32")
@@ -167,6 +158,7 @@ endif
 " set terminal window position
 " (see possible options at :help vertical)
 let g:toggle_terminal#position = 'bo'
+
 " }}}
 
 " mac {{{
@@ -190,4 +182,20 @@ endif
 command Json set ft=json
 command Diff windo difft
 command Diffo windo diffo
+" }}}
+
+" 主题配置 {{{
+if has("mac")
+    set guifont=Monaco\ for\ Powerline:h15
+else
+    set guifont=Consolas\ NF:h12
+endif
+
+if has("gui") && $TERM_PROGRAM != "iTerm.app"
+    colorscheme one
+else
+    colorscheme gruvbox
+endif
+
+set bg=dark
 " }}}

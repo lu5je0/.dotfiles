@@ -107,3 +107,8 @@ PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 alias ls='ls -F --show-control-chars --color=auto'
 eval `gdircolors -b $HOME/.dir_colors`
 
+export JAVA_HOME_8=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+export JAVA_HOME_11=/Library/Java/JavaVirtualMachines/jdk-11.0.7.jdk/Contents/Home
+alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
+alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
+export JAVA_HOME=$JAVA_HOME_8
