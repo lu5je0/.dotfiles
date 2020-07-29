@@ -22,6 +22,7 @@ Plug 'vim-scripts/ReplaceWithRegister'
 Plug 'junegunn/vim-peekaboo'
 Plug 'pakutoma/toggle-terminal'
 Plug 'elzr/vim-json'
+Plug 'terryma/vim-expand-region'
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
@@ -64,9 +65,9 @@ set nowrap " 默认不启用拆行
 set autoindent
 set number
 
-set tabstop=2
-set shiftwidth=2
-set softtabstop=2
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
 
 set expandtab
 set encoding=utf8
@@ -78,6 +79,16 @@ set foldlevelstart=99 " 打开文件默认不折叠
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start
+" }}}
+
+" autocmd {{{
+autocmd FileType vim setlocal foldmethod=marker
+autocmd FileType json,xml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
+" }}}
+
+" vim-expand-region {{{
+vmap v <Plug>(expand_region_expand)
+vmap V <Plug>(expand_region_shrink)
 " }}}
 
 " airline {{{
