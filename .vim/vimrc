@@ -35,10 +35,7 @@ Plug 'MarcWeber/vim-addon-mw-utils'
 Plug 'tomtom/tlib_vim'
 
 " themes
-Plug 'w0ng/vim-hybrid'
-Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
-Plug 'dracula/vim'
 Plug 'morhetz/gruvbox'
 
 call plug#end()
