@@ -76,6 +76,7 @@ set fileencodings=ucs-bom,utf-8,gbk,utf-16,big5,gb18030,ISO-8859,latin1
 syntax on
 set foldmethod=syntax
 set foldlevelstart=99 " 打开文件默认不折叠
+set termguicolors
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start
@@ -83,7 +84,7 @@ set backspace=indent,eol,start
 
 " autocmd {{{
 autocmd FileType vim setlocal foldmethod=marker
-autocmd FileType json,xml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
+autocmd FileType json,xml,html setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
 " }}}
 
 " vim-expand-region {{{
@@ -195,11 +196,6 @@ else
     set guifont=Consolas\ NF:h12
 endif
 
-if has("gui") && $TERM_PROGRAM != "iTerm.app"
-    colorscheme one
-else
-    colorscheme gruvbox
-endif
-
+colorscheme one
 set bg=dark
 " }}}
