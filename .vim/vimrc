@@ -42,8 +42,10 @@ call plug#end()
 " }}}
 
 " runtime 加载.vim {{{
-runtime escalt.vim
 runtime foldtext.vim
+if has("win32")
+    runtime escalt.vim
+endif
 runtime gvim.vim
 " }}}
 
@@ -276,14 +278,14 @@ tmap <silent> <D-L> <C-w>l
 
 " terminal-toggle
 " windows
-tnoremap <silent> <m-=> <C-w>:ToggleTerminal<CR>
-nnoremap <silent> <m-=> :ToggleTerminal<CR>
-inoremap <silent> <m-=> <ESC>:ToggleTerminal<CR>
+tnoremap <silent> <m--> <C-w>:ToggleTerminal<CR>
+nnoremap <silent> <m--> :ToggleTerminal<CR>
+inoremap <silent> <m--> <ESC>:ToggleTerminal<CR>
 
 " mac
-tnoremap <silent> <d-k> <C-w>:ToggleTerminal<CR>
-nnoremap <silent> <d-k> :ToggleTerminal<CR>
-inoremap <silent> <d-k> <ESC>:ToggleTerminal<CR>
+tnoremap <silent> <d--> <C-w>:ToggleTerminal<CR>
+nnoremap <silent> <d--> :ToggleTerminal<CR>
+inoremap <silent> <d--> <ESC>:ToggleTerminal<CR>
 
 " vim-translator
 " Echo translation in the cmdline
