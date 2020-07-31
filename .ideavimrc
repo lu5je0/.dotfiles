@@ -9,6 +9,7 @@ set multiple-cursors
 set argtextobj
 set textobj-entire
 set ReplaceWithRegister
+set highlightedyank
 
 " 按键映射
 let mapleader=","

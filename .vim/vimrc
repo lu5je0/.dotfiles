@@ -23,6 +23,7 @@ Plug 'junegunn/vim-peekaboo'
 Plug 'pakutoma/toggle-terminal'
 Plug 'elzr/vim-json'
 Plug 'terryma/vim-expand-region'
+Plug 'machakann/vim-highlightedyank'
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
@@ -133,6 +134,10 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
 
 " toggle_terminal {{{
+
+" highlightedyank {{{
+let g:highlightedyank_highlight_duration=300
+" }}}
 
 " set your favorite shell
 if has("win32")
