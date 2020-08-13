@@ -10,6 +10,7 @@ set argtextobj
 set textobj-entire
 set ReplaceWithRegister
 set highlightedyank
+set exchange
 
 " 按键映射
 let mapleader=","

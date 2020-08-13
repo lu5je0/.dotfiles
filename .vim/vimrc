@@ -24,6 +24,7 @@ Plug 'pakutoma/toggle-terminal'
 Plug 'elzr/vim-json'
 Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
+Plug 'tommcdo/vim-exchange'
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
