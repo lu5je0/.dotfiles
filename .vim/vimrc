@@ -85,7 +85,7 @@ set backspace=indent,eol,start
 
 " autocmd {{{
 autocmd FileType vim setlocal foldmethod=marker
-autocmd FileType json,xml,html setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
+autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
 " }}}
 
 " vim-expand-region {{{
@@ -135,11 +135,11 @@ let g:delimitMate_expand_cr=1
 let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
 
-" toggle_terminal {{{
-
 " highlightedyank {{{
 let g:highlightedyank_highlight_duration=300
 " }}}
+
+" toggle_terminal {{{
 
 " set your favorite shell
 if has("win32")
