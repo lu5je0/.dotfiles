@@ -112,3 +112,9 @@ export JAVA_HOME_11=/Library/Java/JavaVirtualMachines/jdk-11.0.7.jdk/Contents/Ho
 alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
 alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
 export JAVA_HOME=$JAVA_HOME_8
+
+# nvim
+alias vi='nvim'
+alias vim='nvim'
+export EDITOR=nvim
+export EDITOR
