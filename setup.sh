@@ -5,6 +5,7 @@ ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
 
 # nvim
 ln -s ~/.dotfiles/.vim ~/.local/share/nvim/site
+mkdir -p ~/.config/nvim
 ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
 
 cp ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes
