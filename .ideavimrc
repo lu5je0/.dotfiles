@@ -43,14 +43,22 @@ map <leader>s :action $EditorTranslateAction<CR>
 map <leader>u :action GotoSuperMethod<CR>
 map <leader>n :action GotoImplementation<CR>
 
-# mac multiple0-cursors key maps
-map <c-n> <A-n>
-map <c-x> <A-x>
-map <c-p> <A-p>
+# windows multiple0-cursors key maps
+nmap <c-n> <A-n>
+nmap <c-x> <A-x>
+nmap <c-p> <A-p>
 vmap <c-n> <A-n>
 vmap <c-x> <A-x>
 vmap <c-p> <A-p>
 
+# mac multiple0-cursors key maps
+nmap <m-n> <A-n>
+nmap <m-x> <A-x>
+nmap <m-p> <A-p>
+vmap <m-n> <A-n>
+vmap <m-x> <A-x>
+vmap <m-p> <A-p>
+
 # history
-map <c-o> :action Back<CR>
-map <c-i> :action Forward<CR>
+nmap <c-o> :action Back<CR>
+nmap <c-i> :action Forward<CR>
