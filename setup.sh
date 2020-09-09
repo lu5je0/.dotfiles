@@ -4,6 +4,7 @@ ln -s ~/.dotfiles/.zshrc ~/.zshrc
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
 
 # nvim
+mkdir ~/.local/share/nvim
 ln -s ~/.dotfiles/.vim ~/.local/share/nvim/site
 mkdir -p ~/.config/nvim
 ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
