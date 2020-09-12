@@ -1,4 +1,5 @@
 ln -s ~/.dotfiles/.vim ~/.vim
+ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf

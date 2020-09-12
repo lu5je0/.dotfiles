@@ -11,6 +11,8 @@ set textobj-entire
 set ReplaceWithRegister
 set highlightedyank
 set exchange
+set ideajoin
+set ideamarks
 
 " 按键映射
 let mapleader=","

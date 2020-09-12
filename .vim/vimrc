@@ -26,6 +26,7 @@ Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
 Plug 'Konfekt/FastFold'
+Plug 'Yggdroot/LeaderF'
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
@@ -180,10 +181,10 @@ endif
 
 " 光标设置
 " Change cursor shape between insert and normal mode in iTerm2.app
-if $TERM_PROGRAM =~ "iTerm"
-    let &t_SI = "\<Esc>]50;CursorShape=1\x7" " Vertical bar in insert mode
-    let &t_EI = "\<Esc>]50;CursorShape=0\x7" " Block in normal mode
-endif
+" if $TERM_PROGRAM =~ "iTerm"
+"     let &t_SI = "\<Esc>]50;CursorShape=1\x7" " Vertical bar in insert mode
+"     let &t_EI = "\<Esc>]50;CursorShape=0\x7" " Block in normal mode
+" endif
 
 " }}}
 
@@ -205,6 +206,7 @@ endif
 
 " alias {{{
 command Json set ft=json
+command Jp set ft=jproperties
 command Diff windo difft
 command Diffo windo diffo
 " }}}
@@ -269,6 +271,9 @@ endif
 map <silent> <F10> :set wrap!<CR>
 imap <silent> <F10> <ESC>:set wrap!<CR>
 
+map <silent> <F9> :Autoformat<CR>
+imap <silent> <F9> <ESC>:Autoformat<CR>
+
 " 快速切换窗口
 " normal
 nmap <silent> <M-J> <C-w>j
@@ -318,7 +323,13 @@ nmap <silent> <Leader>s <Plug>TranslateW
 vmap <silent> <Leader>s <Plug>TranslateWV
 nmap <silent> <m-s> <Plug>TranslateW
 vmap <silent> <m-s> <Plug>TranslateWV
-" Replace the text with translation
-" nmap <silent> <Leader>r <Plug>TranslateR
-" vmap <silent> <Leader>r <Plug>TranslateRV
+" }}}
+
+" Leaderf {{{
+let g:Lf_WindowPosition = 'popup'
+let g:Lf_ShowDevIcons = 0
+let g:Lf_ShortcutF = "<leader>ff"
+noremap <leader>fb :<C-U><C-R>=printf("Leaderf buffer %s", "")<CR><CR>
+noremap <leader>fm :<C-U><C-R>=printf("Leaderf mru %s", "")<CR><CR>
+noremap <leader>fl :<C-U><C-R>=printf("Leaderf line %s", "")<CR><CR>
 " }}}
