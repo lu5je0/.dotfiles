@@ -271,8 +271,8 @@ endif
 map <silent> <F10> :set wrap!<CR>
 imap <silent> <F10> <ESC>:set wrap!<CR>
 
-map <silent> <F9> :Autoformat<CR>
-imap <silent> <F9> <ESC>:Autoformat<CR>
+map <silent> <F5> :Autoformat<CR>
+imap <silent> <F5> <ESC>:Autoformat<CR>
 
 " 快速切换窗口
 " normal
@@ -323,6 +323,21 @@ nmap <silent> <Leader>s <Plug>TranslateW
 vmap <silent> <Leader>s <Plug>TranslateWV
 nmap <silent> <m-s> <Plug>TranslateW
 vmap <silent> <m-s> <Plug>TranslateWV
+
+" 在gj和j之间切换
+let g:ToggleGjStauts = 0
+function ToggleGj()
+    if g:ToggleGjStauts == 0
+        nmap j gj
+        nmap k gk
+        let g:ToggleGjStauts = 1
+    else
+        unmap j
+        unmap k
+        let g:ToggleGjStauts = 0
+    endif
+endfunction
+nmap <silent> <f9> <ESC>:call ToggleGj()<CR>
 " }}}
 
 " Leaderf {{{
