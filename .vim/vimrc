@@ -26,7 +26,10 @@ Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
 Plug 'Konfekt/FastFold'
-Plug 'Yggdroot/LeaderF'
+if !has("gui")
+    Plug 'brglng/vim-im-select'
+endif
+Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
