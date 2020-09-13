@@ -1,5 +1,5 @@
 " gVim {{{
-if has("gui_running")
+if has("gui_running") && !has("gui_vimr")
     " au GUIEnter * simalt ~x " 窗口启动时自动最大化
     set guioptions-=m " 隐藏菜单栏
     set guioptions-=T " 隐藏工具栏
@@ -16,16 +16,9 @@ if has("gui_running")
     winpos 440 200
     source $VIMRUNTIME/delmenu.vim
     source $VIMRUNTIME/menu.vim
-    command Wsl :ter C:\Windows\Sysnative\wsl.exe
-    " Windows下使用wsl作为默认终端
-    " if has("win32")
-    "   set shell=C:\Windows\Sysnative\wsl.exe
-    "   set shellpipe=|
-    "   set shellredir=>
-    "   set shellcmdflag=
-    " endif
-
-    " Windows下使用ctrl v粘贴
+    if has("win32")
+        command Wsl :ter C:\Windows\Sysnative\wsl.exe
+    endif
 endif
 " }}}
 
