@@ -235,10 +235,6 @@ set bg=dark
 " 按键映射 {{{
 let mapleader=","
 
-" vimrc
-nnoremap <leader>vim :tabnew $MYVIMRC<cr>
-nnoremap <leader>sou :source $MYVIMRC<cr>
-
 " tab switch
 map <leader>tn :tabnew<cr>
 nnoremap <silent> <leader>th :tabprev<cr>
@@ -325,10 +321,6 @@ nnoremap <silent> <f8> :ToggleTerminal<CR>
 inoremap <silent> <f8> <ESC>:ToggleTerminal<CR>
 
 " vim-translator
-" Echo translation in the cmdline
-nmap <silent> <Leader>w <Plug>Translate
-vmap <silent> <Leader>w <Plug>TranslateV
-" Display translation in a window
 nmap <silent> <Leader>s <Plug>TranslateW
 vmap <silent> <Leader>s <Plug>TranslateWV
 nmap <silent> <m-s> <Plug>TranslateW
