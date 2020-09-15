@@ -56,6 +56,7 @@ if has("win32")
     runtime escalt.vim
 endif
 runtime gvim.vim
+runtime functions.vim
 " }}}
 
 " 常规设置 {{{
@@ -236,10 +237,6 @@ set bg=dark
 let mapleader=","
 
 " tab switch
-map <leader>tn :tabnew<cr>
-nnoremap <silent> <leader>th :tabprev<cr>
-nnoremap <silent> <leader>tl :tabnext<cr>
-nnoremap <silent> <leader>e :NERDTreeToggle<CR>
 nnoremap <silent> <leader>1 1gt
 nnoremap <silent> <leader>2 2gt
 nnoremap <silent> <leader>3 3gt
@@ -326,24 +323,7 @@ vmap <silent> <Leader>s <Plug>TranslateWV
 nmap <silent> <m-s> <Plug>TranslateW
 vmap <silent> <m-s> <Plug>TranslateWV
 
-" 在gj和j之间切换
-let g:ToggleGjStauts = 0
-function ToggleGj()
-    if g:ToggleGjStauts == 0
-        nmap j gj
-        nmap k gk
-        let g:ToggleGjStauts = 1
-    else
-        unmap j
-        unmap k
-        let g:ToggleGjStauts = 0
-    endif
-endfunction
-
 nmap <tab> <c-w>
-
-" undo tree
-nmap <leader>r :UndotreeToggle<cr>
 " }}}
 
 " Leaderf {{{

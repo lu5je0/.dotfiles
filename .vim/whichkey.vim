@@ -17,6 +17,10 @@ let g:which_key_map.7 = 'which_key_ignore'
 let g:which_key_map.8 = 'which_key_ignore'
 let g:which_key_map.9 = 'which_key_ignore'
 
+" undo tree
+let g:which_key_map.r = [':UndotreeToggle', 'undotree']
+let g:which_key_map.e = [':NERDTreeToggle', 'nerd']
+
 " vim toggle
 let g:which_key_map.v = {
       \ 'name' : '+vim toggle' ,
@@ -31,6 +35,7 @@ let g:which_key_map.v = {
 let g:which_key_map.t = {
       \ 'name' : '+tab or terminal' ,
       \ 't' : [':ToggleTerminal', 'open terminal'],
+      \ 'n' : [':tabnew', 'new tab'],
       \ }
 
 " code
