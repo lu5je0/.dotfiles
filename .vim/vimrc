@@ -27,6 +27,7 @@ Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
 Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
+Plug 'liuchengxu/vim-which-key'
 if !has("gui")
     Plug 'brglng/vim-im-select'
 endif
@@ -346,7 +347,6 @@ function ToggleGj()
         let g:ToggleGjStauts = 0
     endif
 endfunction
-nmap <silent> <f9> :call ToggleGj()<CR>
 
 nmap <tab> <c-w>
 
@@ -358,8 +358,6 @@ nmap <leader>r :UndotreeToggle<cr>
 let g:Lf_WindowPosition = 'popup'
 let g:Lf_ShowDevIcons = 0
 let g:Lf_ShortcutF = "<leader>ff"
-noremap <leader>fb :<C-U><C-R>=printf("Leaderf buffer %s", "")<CR><CR>
-noremap <leader>fm :<C-U><C-R>=printf("Leaderf mru %s", "")<CR><CR>
-noremap <leader>fl :<C-U><C-R>=printf("Leaderf line %s", "")<CR><CR>
-noremap <leader>fn :<C-U><C-R>=printf("Leaderf filetype %s", "")<CR><CR>
 " }}}
+
+runtime whichkey.vim
