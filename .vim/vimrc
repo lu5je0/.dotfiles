@@ -26,6 +26,7 @@ Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
 Plug 'Konfekt/FastFold'
+Plug 'mbbill/undotree'
 if !has("gui")
     Plug 'brglng/vim-im-select'
 endif
@@ -156,6 +157,11 @@ endif
 " (see possible options at :help vertical)
 let g:toggle_terminal#position = 'bo'
 
+" }}}
+
+" undotree {{{
+let g:undotree_WindowLayout = 3
+let g:undotree_SetFocusWhenToggle = 1
 " }}}
 
 " FastFold {{{
@@ -340,9 +346,12 @@ function ToggleGj()
         let g:ToggleGjStauts = 0
     endif
 endfunction
-nmap <silent> <f9> <ESC>:call ToggleGj()<CR>
+nmap <silent> <f9> :call ToggleGj()<CR>
 
 nmap <tab> <c-w>
+
+" undo tree
+nmap <leader>r :UndotreeToggle<cr>
 " }}}
 
 " Leaderf {{{
