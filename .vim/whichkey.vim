@@ -25,7 +25,7 @@ let g:which_key_map.e = [':NERDTreeToggle', 'nerd']
 let g:which_key_map.v = {
       \ 'name' : '+vim toggle' ,
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
-      \ 'v' : [':tabnew $MYVIMRC | :cd ' . $HOME . '/.dotfiles', 'open vimrc'],
+      \ 'v' : [':tabnew $MYVIMRC | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'n' : [':set invnumber', 'toggle number'],
       \ 'w' : [':set wrap!', 'toggle wrap'],
