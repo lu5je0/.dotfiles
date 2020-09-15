@@ -18,12 +18,12 @@ let g:which_key_map.8 = 'which_key_ignore'
 let g:which_key_map.9 = 'which_key_ignore'
 
 " undo tree
-let g:which_key_map.r = [':UndotreeToggle', 'undotree']
-let g:which_key_map.e = [':NERDTreeToggle', 'nerd']
+let g:which_key_map.r = [':UndotreeToggle', 'Undotree']
+let g:which_key_map.e = [':NERDTreeToggle', 'Nerdtree']
 
 " vim toggle
 let g:which_key_map.v = {
-      \ 'name' : '+vim toggle' ,
+      \ 'name' : '+Vim toggle' ,
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
       \ 'v' : [':tabnew $MYVIMRC | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
@@ -33,26 +33,26 @@ let g:which_key_map.v = {
 
 " +tab or terminal
 let g:which_key_map.t = {
-      \ 'name' : '+tab or terminal' ,
-      \ 't' : [':ToggleTerminal', 'open terminal'],
-      \ 'n' : [':tabnew', 'new tab'],
+      \ 'name' : '+tab/terminal' ,
+      \ 't' : [':ToggleTerminal', 'Open terminal'],
+      \ 'n' : [':tabnew', 'New tab'],
       \ }
 
-" code
-let g:which_key_map.C = {
-      \ 'name' : '+Code' ,
-      \ 'u' : [':set ff=unix', 'unix'],
-      \ 'd' : [':set ff=dos', 'dos'],
-      \ }
 
-" leaderf
 let g:which_key_map.f = {
-      \ 'name' : '+Leaderf' ,
+      \ 'name' : '+Leaderf/Files' ,
       \ 'f' : [':Leaderf file', 'file'],
+      \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
       \ 'm' : [':Leaderf mru', 'mru'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
+      \ }
+
+let g:which_key_map.f.C = {
+      \ 'name' : '+Files/convert' ,
+      \ 'u' : [':set ff=unix', '2unix'],
+      \ 'd' : [':set ff=dos', '2dos'],
       \ }
 
 call which_key#register(',', "g:which_key_map")
