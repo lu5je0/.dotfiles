@@ -10,10 +10,10 @@ if has("gui_running") && !has("gui_vimr")
         set lines=28
         set columns=90
     else
-        set lines=36
-        set columns=110
+        set lines=40
+        set columns=120
     endif
-    winpos 440 200
+    winpos 980 450
     source $VIMRUNTIME/delmenu.vim
     source $VIMRUNTIME/menu.vim
     if has("win32")
