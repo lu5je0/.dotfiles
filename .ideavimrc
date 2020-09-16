@@ -64,3 +64,5 @@ vmap <m-p> <A-p>
 # history
 nmap <c-o> :action Back<CR>
 nmap <c-i> :action Forward<CR>
+
+nmap <tab> <c-w>

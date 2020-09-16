@@ -349,6 +349,7 @@ nmap <tab> <c-w>
 let g:Lf_WindowPosition = 'popup'
 let g:Lf_ShowDevIcons = 0
 let g:Lf_ShortcutF = "<leader>ff"
+let g:Lf_CommandMap = {'<C-J>': ['<C-N>'], '<C-K>': ['<C-P>'], '<C-P>': ['<C-O>']}
 noremap <leader>fb :<C-U><C-R>=printf("Leaderf buffer %s", "")<CR><CR>
 noremap <leader>fm :<C-U><C-R>=printf("Leaderf mru %s", "")<CR><CR>
 noremap <leader>fl :<C-U><C-R>=printf("Leaderf line %s", "")<CR><CR>
