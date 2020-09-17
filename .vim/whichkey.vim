@@ -31,6 +31,12 @@ let g:which_key_map.v = {
       \ 'w' : [':set wrap!', 'toggle wrap'],
       \ }
 
+let g:which_key_map.c = {
+      \ 'name' : '+Code' ,
+      \ 'a' : [':%s/_\(\w\)/\=toupper(submatch(1))/g', 'Underline to Camel'],
+      \ 'b' : [':%s/\(\l\)\(\u\)/\1\_\l\2/g', 'Camel to Underline'],
+      \ }
+
 " +tab or terminal
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,

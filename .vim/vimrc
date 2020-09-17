@@ -28,6 +28,7 @@ Plug 'tommcdo/vim-exchange'
 Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
+Plug 'christianchiarulli/nvcode.vim'
 if !has("gui")
     Plug 'brglng/vim-im-select'
 endif
@@ -216,10 +217,10 @@ endif
 " }}}
 
 " alias {{{
-command Json set ft=json
-command Jp set ft=jproperties
-command Diff windo difft
-command Diffo windo diffo
+command! Json set ft=json
+command! Jp set ft=jproperties
+command! Diff windo difft
+command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
