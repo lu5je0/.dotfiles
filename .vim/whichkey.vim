@@ -33,8 +33,8 @@ let g:which_key_map.v = {
 
 let g:which_key_map.c = {
       \ 'name' : '+Code' ,
-      \ 'a' : [':%s/_\(\w\)/\=toupper(submatch(1))/g', 'Underline to Camel'],
-      \ 'b' : [':%s/\(\l\)\(\u\)/\1\_\l\2/g', 'Camel to Underline'],
+      \ 'a' : [':SnakeToCamelAll!', 'Snake to Camel'],
+      \ 'b' : [':CamelToSnakeAll!', 'Camel to Snake'],
       \ }
 
 " +tab or terminal

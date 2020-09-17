@@ -33,7 +33,8 @@ if !has("gui")
     Plug 'brglng/vim-im-select'
 endif
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
-
+" 变量命名转换
+Plug 'chiedo/vim-case-convert'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
