@@ -43,32 +43,32 @@ imap <silent> <F5> <ESC>:Autoformat<CR>
 
 " 快速切换窗口
 " normal
-nmap <silent> <M-J> <C-w>j
-nmap <silent> <M-K> <C-w>k
-nmap <silent> <M-H> <C-w>h
-nmap <silent> <M-L> <C-w>l
+nmap <silent> <C-J> <C-w>j
+nmap <silent> <C-K> <C-w>k
+nmap <silent> <C-H> <C-w>h
+nmap <silent> <C-L> <C-w>l
 
-nmap <silent> <D-J> <C-w>j
-nmap <silent> <D-K> <C-w>k
-nmap <silent> <D-H> <C-w>h
-nmap <silent> <D-L> <C-w>l
+" nmap <silent> <D-J> <C-w>j
+" nmap <silent> <D-K> <C-w>k
+" nmap <silent> <D-H> <C-w>h
+" nmap <silent> <D-L> <C-w>l
 
-" ins<silent>ert
-imap <silent> <M-J> <ESC><C-w>j
-imap <silent> <M-K> <ESC><C-w>k
-imap <silent> <M-H> <ESC><C-w>h
-imap <silent> <M-L> <ESC><C-w>l
+" " ins<silent>ert
+" imap <silent> <M-J> <ESC><C-w>j
+" imap <silent> <M-K> <ESC><C-w>k
+" imap <silent> <M-H> <ESC><C-w>h
+" imap <silent> <M-L> <ESC><C-w>l
 
-imap <silent> <D-J> <ESC><C-w>j
-imap <silent> <D-K> <ESC><C-w>k
-imap <silent> <D-H> <ESC><C-w>h
-imap <silent> <D-L> <ESC><C-w>l
+" imap <silent> <D-J> <ESC><C-w>j
+" imap <silent> <D-K> <ESC><C-w>k
+" imap <silent> <D-H> <ESC><C-w>h
+" imap <silent> <D-L> <ESC><C-w>l
 
-" ter<silent>minal
-tmap <silent> <D-J> <C-w>j
-tmap <silent> <D-K> <C-w>k
-tmap <silent> <D-H> <C-w>h
-tmap <silent> <D-L> <C-w>l
+" " ter<silent>minal
+" tmap <silent> <D-J> <C-w>j
+" tmap <silent> <D-K> <C-w>k
+" tmap <silent> <D-H> <C-w>h
+" tmap <silent> <D-L> <C-w>l
 
 " terminal-toggle
 " windows
