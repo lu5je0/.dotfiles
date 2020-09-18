@@ -53,6 +53,7 @@ call plug#end()
 " }}}
 
 " runtime 加载.vim {{{
+runtime settings.vim
 runtime foldtext.vim
 if has("win32")
     runtime escalt.vim
