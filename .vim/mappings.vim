@@ -87,8 +87,6 @@ vmap <silent> <Leader>s <Plug>TranslateWV
 nmap <silent> <m-s> <Plug>TranslateW
 vmap <silent> <m-s> <Plug>TranslateWV
 
-nmap <tab> <c-w>
-
 nmap H ^
 nmap L $
 vmap H ^
