@@ -68,6 +68,8 @@ nmap <tab> <c-w>
 
 nmap H ^
 nmap L $
+vmap H ^
+vmap L $
 omap H ^
 omap L $
 
