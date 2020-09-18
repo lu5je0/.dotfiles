@@ -66,7 +66,10 @@ nmap <c-i> :action Forward<CR>
 
 nmap <tab> <c-w>
 
-hmap H ^
-hmap L $
+nmap H ^
+nmap L $
 omap H ^
 omap L $
+
+imap <m-j> <c-n>
+imap <m-k> <c-p>
