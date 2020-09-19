@@ -93,9 +93,3 @@ vmap H ^
 vmap L $
 omap H ^
 omap L $
-
-if IsWSL() == 1
-    vmap ;y : !$HOME/.dotfiles/.vim/bin/clip.exe<cr>u''
-    map ;p :read !$HOME/.dotfiles/.vim/bin/clip.exe <cr>
-    map! ;p <esc>:read !$HOME/.dotfiles/.vim/bin/clip.exe <cr>
-endif
