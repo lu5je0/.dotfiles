@@ -97,6 +97,9 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+# source "$HOME/.oh-my-zsh/zsh-vim-mode.plugin.zsh"
+source "$HOME/.dotfiles/zsh/zsh-vimto.zsh"
+
 bindkey "^[[5~" history-beginning-search-backward
 bindkey "^[[6~" history-beginning-search-forward
 source ~/.ohmyenv

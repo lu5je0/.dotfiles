@@ -1,13 +1,3 @@
-function! IsWSL()
-  if has("unix")
-    let lines = readfile("/proc/version")
-    if lines[0] =~ "Microsoft"
-      return 1
-    endif
-  endif
-  return 0
-endfunction
-
 if !has("mac") && IsWSL() == 1
     let g:im_select_default=1033
 endif
