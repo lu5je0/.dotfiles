@@ -74,6 +74,7 @@ let g:which_key_map.f = {
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
       \ 'm' : [':Leaderf mru', 'mru'],
+      \ 'S' : [':SudaWrite', ':sudo-write'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }

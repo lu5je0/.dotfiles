@@ -29,6 +29,9 @@ Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 Plug 'christianchiarulli/nvcode.vim'
+Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+" save with sudo
+Plug 'lambdalisue/suda.vim'
 if !has("gui")
     Plug 'brglng/vim-im-select'
 endif
