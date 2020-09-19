@@ -225,12 +225,6 @@ command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
-if has("mac") && !has("gui_vimr")
-    set guifont=Monaco\ for\ Powerline:h15
-elseif has("win32")
-    set guifont=Consolas\ NF:h12
-endif
-
 colorscheme one
 set bg=dark
 " }}}
