@@ -28,7 +28,13 @@ let g:which_key_map.9 = 'which_key_ignore'
 
 " undo tree
 let g:which_key_map.r = [':UndotreeToggle', 'Undotree']
-let g:which_key_map.e = [':NERDTreeToggle', 'Nerdtree']
+" let g:which_key_map.e = [':NERDTreeToggle', 'Nerdtree']
+" let g:which_key_map.e = [':NERDTreeTabsToggle', 'Nerdtree']
+let g:which_key_map.e = {
+      \ 'name' : '+NERDTree' ,
+      \ 'e' : [':NERDTreeTabsToggle'                        , 'toggle-nerd'],
+      \ 'f' : [':NERDTreeTabsFind'                        , 'locate-file'],
+      \ }
 
 " g is for git
 let g:which_key_map.g = {
