@@ -29,6 +29,7 @@ Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 Plug 'christianchiarulli/nvcode.vim'
+" Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 " save with sudo
 Plug 'lambdalisue/suda.vim'
@@ -37,6 +38,14 @@ if !has("gui")
 endif
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 Plug 'jistr/vim-nerdtree-tabs'
+
+" if has('nvim')
+"   Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
+" else
+"   Plug 'Shougo/defx.nvim'
+"   Plug 'roxma/nvim-yarp'
+"   Plug 'roxma/vim-hug-neovim-rpc'
+" endif
 
 " 变量命名转换
 Plug 'chiedo/vim-case-convert'
@@ -66,7 +75,7 @@ endif
 runtime gvim.vim
 runtime functions.vim
 runtime plug-config/airline.vim
-runtime plug-config/nerdtreetabs.vim
+runtime plug-config/nerdtree.vim
 " }}}
 
 " autocmd {{{
@@ -165,5 +174,3 @@ let g:Lf_CommandMap = {'<C-J>': ['<C-N>'], '<C-K>': ['<C-P>'], '<C-P>': ['<C-O>'
 runtime mappings.vim
 runtime im.vim
 runtime whichkey.vim
-
-let NERDTreeQuitOnOpen=0
