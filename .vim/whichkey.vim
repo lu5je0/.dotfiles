@@ -13,7 +13,7 @@ nnoremap <silent> <leader>      :<c-u>WhichKey '<Space>'<CR>
 nnoremap <silent> <localleader> :<c-u>WhichKey  ','<CR>
 let g:which_key_map = {}
 
-let g:which_key_map['q'] = [ 'q'                                  , 'quit' ]
+let g:which_key_map['q'] = [ 'q', 'quit' ]
 
 " hide 1-9
 let g:which_key_map.1 = 'which_key_ignore'
@@ -32,22 +32,31 @@ let g:which_key_map.r = [':UndotreeToggle', 'Undotree']
 " let g:which_key_map.e = [':NERDTreeTabsToggle', 'Nerdtree']
 let g:which_key_map.e = {
       \ 'name' : '+NERDTree' ,
-      \ 'e' : [':NERDTreeTabsToggle'                        , 'toggle-nerd'],
-      \ 'f' : [':NERDTreeTabsFind'                        , 'locate-file'],
+      \ 'e' : [':NERDTreeTabsToggle', 'toggle-nerd'],
+      \ 'f' : [':NERDTreeTabsFind', 'locate-file'],
+      \ }
+
+" windows
+let g:which_key_map.w = {
+      \ 'name' : '+windows' ,
+      \ 'n' : [':vnew', 'vnew'],
+      \ 'N' : [':new', 'new'],
+      \ 's' : [':vsplit', 'vspilt'],
+      \ 'S' : [':split', 'spilt'],
       \ }
 
 " g is for git
 let g:which_key_map.g = {
       \ 'name' : '+git' ,
-      \ 'a' : [':Git add %'                        , 'add current'],
-      \ 'A' : [':Git add -A'                        , 'add all'],
-      \ 'b' : [':Git blame'                        , 'blame'],
-      \ 'c' : [':Git commit'                       , 'commit'],
-      \ 'd' : [':Git diff'                         , 'diff'],
-      \ 'D' : [':Gvdiffsplit'                       , 'diff split'],
-      \ 'l' : [':Git log'                          , 'log'],
-      \ 's' : [':Gstatus'                      , 'status'],
-      \ 'S' : [':Git status'                      , 'status'],
+      \ 'a' : [':Git add %', 'add current'],
+      \ 'A' : [':Git add -A', 'add all'],
+      \ 'b' : [':Git blame', 'blame'],
+      \ 'c' : [':Git commit', 'commit'],
+      \ 'd' : [':Git diff', 'diff'],
+      \ 'D' : [':Gvdiffsplit', 'diff split'],
+      \ 'l' : [':Git log', 'log'],
+      \ 's' : [':Gstatus', 'status'],
+      \ 'S' : [':Git status', 'status'],
       \ }
 
 " vim toggle

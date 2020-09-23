@@ -24,7 +24,7 @@ ZSH_THEME="lu5je0"
 # HYPHEN_INSENSITIVE="true"
 
 # Uncomment the following line to disable bi-weekly auto-update checks.
-# DISABLE_AUTO_UPDATE="true"
+DISABLE_AUTO_UPDATE="true"
 
 # Uncomment the following line to automatically update without prompting.
 # DISABLE_UPDATE_PROMPT="true"
@@ -98,6 +98,11 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 # source "$HOME/.oh-my-zsh/zsh-vim-mode.plugin.zsh"
+
+# vi bindind
+bindkey -a H vi-first-non-blank
+bindkey -a L vi-end-of-line
+
 source "$HOME/.dotfiles/zsh/zsh-vimto.zsh"
 
 bindkey "^[[5~" history-beginning-search-backward
@@ -115,7 +120,7 @@ if [ "$(uname)" = "Darwin" ]; then
     export JAVA_HOME_11=/Library/Java/JavaVirtualMachines/jdk-11.0.7.jdk/Contents/Home
     alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
     alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
-    export JAVA_HOME=$JAVA_HOME_8
+    export JAVA_HOME=$JAVA_HOME_11
 fi
 
 # nvim
