@@ -13,8 +13,6 @@ nnoremap <silent> <leader>      :<c-u>WhichKey '<Space>'<CR>
 nnoremap <silent> <localleader> :<c-u>WhichKey  ','<CR>
 let g:which_key_map = {}
 
-let g:which_key_map['q'] = [ 'q', 'quit' ]
-
 " hide 1-9
 let g:which_key_map.1 = 'which_key_ignore'
 let g:which_key_map.2 = 'which_key_ignore'
@@ -26,10 +24,11 @@ let g:which_key_map.7 = 'which_key_ignore'
 let g:which_key_map.8 = 'which_key_ignore'
 let g:which_key_map.9 = 'which_key_ignore'
 
-" undo tree
-let g:which_key_map.r = [':UndotreeToggle', 'Undotree']
-" let g:which_key_map.e = [':NERDTreeToggle', 'Nerdtree']
-" let g:which_key_map.e = [':NERDTreeTabsToggle', 'Nerdtree']
+" Single mappings
+let g:which_key_map.q = [ 'q', 'quit' ]
+let g:which_key_map.u = [':UndotreeToggle', 'Undotree']
+let g:which_key_map.n = [':let @/ = ""', 'no highlight']
+
 let g:which_key_map.e = {
       \ 'name' : '+NERDTree' ,
       \ 'e' : [':NERDTreeTabsToggle', 'toggle-nerd'],
