@@ -7,9 +7,9 @@ autocmd  FileType which_key set laststatus=0 noshowmode noruler
 
 let g:which_key_use_floating_win = 0
 
-let g:mapleader = "\<Space>"
+" let g:mapleader = "\<Space>"
 let g:maplocalleader = ','
-nnoremap <silent> <leader>      :<c-u>WhichKey '<Space>'<CR>
+" nnoremap <silent> <leader>      :<c-u>WhichKey '<Space>'<CR>
 nnoremap <silent> <localleader> :<c-u>WhichKey  ','<CR>
 let g:which_key_map = {}
 

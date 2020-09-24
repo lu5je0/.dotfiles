@@ -5,11 +5,19 @@ function ToggleGj()
         nmap j gj
         nmap k gk
         let g:ToggleGjStauts = 1
+        echo "gj is enable"
     else
         unmap j
         unmap k
         let g:ToggleGjStauts = 0
+        echo "gj is disable"
     endif
+endfunction
+
+function LargeFile()
+    " file is large from 5MB
+    syntax off
+    autocmd VimEnter * echo "The file is larger than " . g:LargeFile . " MB, so some options are changed (see .vimrc for details)."
 endfunction
 
 function! IsWSL()
