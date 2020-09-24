@@ -1,6 +1,38 @@
 " 在gj和j之间切换
-let g:ToggleGjStauts = 0
-function ToggleGj()
+function! ToggleMouse()
+    if !exists("g:ToggleMouse")
+        let g:ToggleMouse = "a"
+    endif
+
+    if &mouse == ""
+        let &mouse = g:ToggleMouse
+        echo "Mouse is for Vim (" . &mouse . ")"
+    else
+        let g:ToggleMouse = &mouse
+        let &mouse=""
+        echo "Mouse is for terminal"
+    endif
+endfunction
+
+function! ToggleWrap()
+    if !exists("g:ToggleWrapStauts")
+        let g:ToggleWrapStauts = 0
+    endif
+    if g:ToggleWrapStauts == 0
+        let g:ToggleWrapStauts = 1
+        set wrap!
+        echo "wrap"
+    else
+        set wrap!
+        let g:ToggleWrapStauts = 0
+        echo "unwrap"
+    endif
+endfunction
+
+function! ToggleGj()
+    if !exists("g:ToggleGjStauts")
+        let g:ToggleGjStauts = 0
+    endif
     if g:ToggleGjStauts == 0
         nmap j gj
         nmap k gk
@@ -14,7 +46,7 @@ function ToggleGj()
     endif
 endfunction
 
-function LargeFile()
+function! LargeFile()
     " file is large from 5MB
     syntax off
     autocmd VimEnter * echo "The file is larger than " . g:LargeFile . " MB, so some options are changed (see .vimrc for details)."

@@ -35,12 +35,6 @@ if has("gui_running")
     imap <silent> <C-S> <ESC>:brow saveas<CR>a
 endif
 
-map <silent> <F10> :set wrap!<CR>
-imap <silent> <F10> <ESC>:set wrap!<CR>
-
-map <silent> <F5> :Autoformat<CR>
-imap <silent> <F5> <ESC>:Autoformat<CR>
-
 " 快速切换窗口
 " normal
 nmap <silent> <C-J> <C-w>j
