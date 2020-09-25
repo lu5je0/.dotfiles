@@ -14,6 +14,14 @@ function! ToggleMouse()
     endif
 endfunction
 
+function! IsVisualMode()
+    if mode() == "v"
+        return "'<,'>"
+    else
+        return ""
+    endif
+endfunction
+
 function! ToggleWrap()
     if !exists("g:ToggleWrapStauts")
         let g:ToggleWrapStauts = 0

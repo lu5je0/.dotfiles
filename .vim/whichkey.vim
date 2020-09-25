@@ -11,6 +11,7 @@ let g:which_key_use_floating_win = 0
 let g:maplocalleader = ','
 " nnoremap <silent> <leader>      :<c-u>WhichKey '<Space>'<CR>
 nnoremap <silent> <localleader> :<c-u>WhichKey  ','<CR>
+vnoremap <silent> <localleader> :<c-u>WhichKeyVisual ','<CR>
 let g:which_key_map = {}
 
 " hide 1-9
@@ -69,11 +70,21 @@ let g:which_key_map.v = {
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ }
 
+vmap <leader>ca :'<,'>SnakeToCamelAll!<cr>
+nmap <leader>ca :SnakeToCamelAll!<cr>
+
+vmap <leader>cb :'<,'>CamelToSnakeAll!<cr>
+nmap <leader>cb :CamelToSnakeAll!<cr>
+
+vmap <leader>cf :'<,'>Autoformat<cr>
+nmap <leader>cf :Autoformat<cr>
+
 let g:which_key_map.c = {
       \ 'name' : '+Code' ,
-      \ 'a' : [':SnakeToCamelAll!', 'Snake to Camel'],
-      \ 'b' : [':CamelToSnakeAll!', 'Camel to Snake'],
       \ }
+let g:which_key_map.c.a = "ToCamel"
+let g:which_key_map.c.b = "ToSnake"
+let g:which_key_map.c.f = "Autoformat"
 
 " +tab or terminal
 let g:which_key_map.t = {
