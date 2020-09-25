@@ -4,7 +4,8 @@ call plug#begin('~/.vim/plugged')
 Plug 'vim-airline/vim-airline'
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
-Plug 'preservim/nerdtree', {'on': 'NERDTreeToggle'}
+Plug 'jistr/vim-nerdtree-tabs', {'on': 'NERDTreeTabsToggle'}
+Plug 'preservim/nerdtree', {'on': 'NERDTreeTabsToggle'}
 Plug 'tpope/vim-commentary'
 Plug 'mg979/vim-visual-multi'
 Plug 'kana/vim-textobj-user'
@@ -41,7 +42,6 @@ if !has("gui")
     Plug 'brglng/vim-im-select'
 endif
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
-Plug 'jistr/vim-nerdtree-tabs'
 
 " if has('nvim')
 "   Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
@@ -89,7 +89,7 @@ autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 |
 " 超过最大的文件大小后禁用语法高亮
 augroup LargeFile
     " MB
-    let g:LargeFile = 10 
+    let g:LargeFile = 10
     autocmd BufReadPre * let f=getfsize(expand("<afile>")) | if f > g:LargeFile * 1024 * 1024 || f == -2 | call LargeFile() | endif
 augroup END
 
