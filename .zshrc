@@ -103,8 +103,6 @@ source $ZSH/oh-my-zsh.sh
 bindkey -a H vi-first-non-blank
 bindkey -a L vi-end-of-line
 
-source "$HOME/.dotfiles/zsh/zsh-vimto.zsh"
-
 bindkey "^[[5~" history-beginning-search-backward
 bindkey "^[[6~" history-beginning-search-forward
 source ~/.ohmyenv
