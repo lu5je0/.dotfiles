@@ -34,6 +34,9 @@ nnoremap <silent> <leader>7 7gt
 nnoremap <silent> <leader>8 8gt
 nnoremap <silent> <leader>9 9gt
 
+# reload vimrc
+nmap <leader>vs :action IdeaVim.ReloadVimRc.reload<CR>
+
 map <leader>e :action ActivateProjectToolWindow<CR>
 map <leader>r :action Replace<CR>
 map <leader>f :action Find<CR>
@@ -75,3 +78,11 @@ omap L $
 
 imap <m-j> <c-n>
 imap <m-k> <c-p>
+
+# windows keymapping
+nmap <leader>ws :vsplit<CR>
+nmap <leader>wS :split<CR>
+nmap <c-h> <c-w>h
+nmap <c-l> <c-w>l
+nmap <c-j> <c-w>j
+nmap <c-k> <c-w>j

@@ -1,15 +1,79 @@
 " 在gj和j之间切换
-let g:ToggleGjStauts = 0
-function ToggleGj()
+function! ToggleMouse()
+    if !exists("g:ToggleMouse")
+        let g:ToggleMouse = "a"
+    endif
+
+    if &mouse == ""
+        let &mouse = g:ToggleMouse
+        echo "Mouse is for Vim (" . &mouse . ")"
+    else
+        let g:ToggleMouse = &mouse
+        let &mouse=""
+        echo "Mouse is for terminal"
+    endif
+endfunction
+
+" 在gj和j之间切换
+function! ToggleDiff()
+    if !exists("g:ToggleDiff")
+        let g:ToggleDiff = 0
+    endif
+    if g:ToggleDiff == 0
+        windo difft
+        let g:ToggleDiff = 1
+        echo "diff on"
+    else
+        windo diffo
+        let g:ToggleDiff = 0
+        echo "diff off"
+    endif
+endfunction
+
+function! IsVisualMode()
+    if mode() == "v"
+        return "'<,'>"
+    else
+        return ""
+    endif
+endfunction
+
+function! ToggleWrap()
+    if !exists("g:ToggleWrapStauts")
+        let g:ToggleWrapStauts = 0
+    endif
+    if g:ToggleWrapStauts == 0
+        let g:ToggleWrapStauts = 1
+        set wrap!
+        echo "wrap"
+    else
+        set wrap!
+        let g:ToggleWrapStauts = 0
+        echo "unwrap"
+    endif
+endfunction
+
+function! ToggleGj()
+    if !exists("g:ToggleGjStauts")
+        let g:ToggleGjStauts = 0
+    endif
     if g:ToggleGjStauts == 0
         nmap j gj
         nmap k gk
         let g:ToggleGjStauts = 1
+        echo "gj is enable"
     else
         unmap j
         unmap k
         let g:ToggleGjStauts = 0
+        echo "gj is disable"
     endif
+endfunction
+
+function! LargeFile()
+    " file is large from 5MB
+    syntax off
+    autocmd VimEnter * echo "The file is larger than " . g:LargeFile . " MB, so some options are changed (see .vimrc for details)."
 endfunction
 
 function! IsWSL()
