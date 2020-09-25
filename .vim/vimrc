@@ -29,10 +29,11 @@ Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 Plug 'christianchiarulli/nvcode.vim'
-if !has("nvim")
+" Plug 'neoclide/coc-imselect'
+" Plug 'neoclide/coc.nvim', {'branch': 'release'}
+if has("nvim")
     Plug 'caenrique/nvim-toggle-terminal'
 endif
-" Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 " save with sudo
 Plug 'lambdalisue/suda.vim'

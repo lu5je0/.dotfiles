@@ -66,6 +66,7 @@ let g:which_key_map.v = {
       \ 'v' : [':tabnew ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'n' : [':set invnumber', 'toggle number'],
+      \ 'd' : [':call ToggleDiff()', 'toggle diff'],
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ }

@@ -14,6 +14,22 @@ function! ToggleMouse()
     endif
 endfunction
 
+" 在gj和j之间切换
+function! ToggleDiff()
+    if !exists("g:ToggleDiff")
+        let g:ToggleDiff = 0
+    endif
+    if g:ToggleDiff == 0
+        windo difft
+        let g:ToggleDiff = 1
+        echo "diff on"
+    else
+        windo diffo
+        let g:ToggleDiff = 0
+        echo "diff off"
+    endif
+endfunction
+
 function! IsVisualMode()
     if mode() == "v"
         return "'<,'>"
