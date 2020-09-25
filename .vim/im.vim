@@ -10,4 +10,8 @@ if has("mac") && has("gui")
 endif
 
 " 退出vim时 恢复默认输入法
-au VimLeave * call im_select#on_insert_enter()
+if !has("gui")
+    if has("mac")
+        au VimLeave * call im_select#set_im('com.sogou.inputmethod.sogou.pinyin')
+    endif
+endif
