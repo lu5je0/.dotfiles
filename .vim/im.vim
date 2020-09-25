@@ -8,3 +8,6 @@ if has("mac") && has("gui")
     set imi=2
     set ims=2
 endif
+
+" 退出vim时 恢复默认输入法
+au VimLeave * call im_select#on_insert_enter()
