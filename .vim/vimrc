@@ -80,6 +80,7 @@ runtime gvim.vim
 runtime functions.vim
 runtime plug-config/airline.vim
 runtime plug-config/nerdtree.vim
+runtime plug-config/autoformat.vim
 " }}}
 
 " autocmd {{{
