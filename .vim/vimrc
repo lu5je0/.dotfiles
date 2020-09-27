@@ -21,7 +21,7 @@ Plug 'lu5je0/vim-java-bytecode'
 Plug 'ervandew/supertab'
 Plug 'vim-scripts/ReplaceWithRegister'
 Plug 'junegunn/vim-peekaboo'
-Plug 'pakutoma/toggle-terminal'
+Plug 'lu5je0/vim-terminal-help'
 Plug 'elzr/vim-json'
 Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
@@ -30,11 +30,8 @@ Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 Plug 'christianchiarulli/nvcode.vim'
-" Plug 'neoclide/coc-imselect'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
-if has("nvim")
-    Plug 'caenrique/nvim-toggle-terminal'
-endif
+" Plug 'neoclide/coc-imselect'
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 " save with sudo
 Plug 'lambdalisue/suda.vim'

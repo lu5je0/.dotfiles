@@ -1,4 +1,5 @@
 let mapleader=","
+let g:terminal_key='<c-_>'
 
 " tab switch
 nnoremap <silent> <leader>1 1gt
@@ -41,6 +42,11 @@ nmap <silent> <C-J> <C-w>j
 nmap <silent> <C-K> <C-w>k
 nmap <silent> <C-H> <C-w>h
 nmap <silent> <C-L> <C-w>l
+
+tmap <silent> <C-J> <C-w>j
+tmap <silent> <C-K> <C-w>k
+tmap <silent> <C-H> <C-w>h
+tmap <silent> <C-L> <C-w>l
 
 " nmap <silent> <D-J> <C-w>j
 " nmap <silent> <D-K> <C-w>k
