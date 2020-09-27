@@ -25,6 +25,13 @@ vnoremap <C-c> y
 vmap < <gv
 vmap > >gv
 
+nmap H ^
+nmap L $
+vmap H ^
+vmap L $
+omap H ^
+omap L $
+
 imap <M-j> <down>
 imap <M-k> <up>
 imap <M-h> <left>
@@ -37,31 +44,19 @@ if has("gui_running")
 endif
 
 " 快速切换窗口
-" normal
 nmap <silent> <C-J> <C-w>j
 nmap <silent> <C-K> <C-w>k
 nmap <silent> <C-H> <C-w>h
 nmap <silent> <C-L> <C-w>l
 
-tmap <silent> <C-J> <C-w>j
-tmap <silent> <C-K> <C-w>k
-tmap <silent> <C-H> <C-w>h
-tmap <silent> <C-L> <C-w>l
+" terminal-toggle
+nmap <M-i> :call TerminalToggle()<CR>
+nmap <D-i> :call TerminalToggle()<CR>
+tmap <M-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <D-i> <c-\><c-n>:call TerminalToggle()<CR>
 
 " vim-translator
 nmap <silent> <Leader>s <Plug>TranslateW
 vmap <silent> <Leader>s <Plug>TranslateWV
 nmap <silent> <m-s> <Plug>TranslateW
 vmap <silent> <m-s> <Plug>TranslateWV
-
-nmap H ^
-nmap L $
-vmap H ^
-vmap L $
-omap H ^
-omap L $
-
-nmap <M-i> :call TerminalToggle()<CR>
-nmap <D-i> :call TerminalToggle()<CR>
-tmap <M-i> <c-\><c-n>:call TerminalToggle()<CR>
-tmap <D-i> <c-\><c-n>:call TerminalToggle()<CR>
