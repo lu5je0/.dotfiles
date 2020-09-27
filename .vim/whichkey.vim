@@ -63,7 +63,7 @@ let g:which_key_map.g = {
 let g:which_key_map.v = {
       \ 'name' : '+Vim toggle' ,
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
-      \ 'v' : [':tabnew ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
+      \ 'v' : [':e ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'n' : [':set invnumber', 'toggle number'],
       \ 'd' : [':call ToggleDiff()', 'toggle diff'],

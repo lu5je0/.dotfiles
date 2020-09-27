@@ -48,39 +48,6 @@ tmap <silent> <C-K> <C-w>k
 tmap <silent> <C-H> <C-w>h
 tmap <silent> <C-L> <C-w>l
 
-" nmap <silent> <D-J> <C-w>j
-" nmap <silent> <D-K> <C-w>k
-" nmap <silent> <D-H> <C-w>h
-" nmap <silent> <D-L> <C-w>l
-
-" " ins<silent>ert
-" imap <silent> <M-J> <ESC><C-w>j
-" imap <silent> <M-K> <ESC><C-w>k
-" imap <silent> <M-H> <ESC><C-w>h
-" imap <silent> <M-L> <ESC><C-w>l
-
-" imap <silent> <D-J> <ESC><C-w>j
-" imap <silent> <D-K> <ESC><C-w>k
-" imap <silent> <D-H> <ESC><C-w>h
-" imap <silent> <D-L> <ESC><C-w>l
-
-" " ter<silent>minal
-" tmap <silent> <D-J> <C-w>j
-" tmap <silent> <D-K> <C-w>k
-" tmap <silent> <D-H> <C-w>h
-" tmap <silent> <D-L> <C-w>l
-
-" terminal-toggle
-" windows
-tnoremap <silent> <f8> <C-w>:ToggleTerminal<CR>
-nnoremap <silent> <f8> :ToggleTerminal<CR>
-inoremap <silent> <f8> <ESC>:ToggleTerminal<CR>
-
-" mac
-tnoremap <silent> <f8> <C-w>:ToggleTerminal<CR>
-nnoremap <silent> <f8> :ToggleTerminal<CR>
-inoremap <silent> <f8> <ESC>:ToggleTerminal<CR>
-
 " vim-translator
 nmap <silent> <Leader>s <Plug>TranslateW
 vmap <silent> <Leader>s <Plug>TranslateWV
@@ -93,3 +60,8 @@ vmap H ^
 vmap L $
 omap H ^
 omap L $
+
+nmap <M-i> :call TerminalToggle()<CR>
+nmap <D-i> :call TerminalToggle()<CR>
+tmap <M-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <D-i> <c-\><c-n>:call TerminalToggle()<CR>
