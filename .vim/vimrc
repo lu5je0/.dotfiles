@@ -29,7 +29,6 @@ Plug 'tommcdo/vim-exchange'
 Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
-Plug 'christianchiarulli/nvcode.vim'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " Plug 'neoclide/coc-imselect'
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
