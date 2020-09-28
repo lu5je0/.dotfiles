@@ -183,3 +183,6 @@ let g:Lf_CommandMap = {'<C-J>': ['<C-N>'], '<C-K>': ['<C-P>'], '<C-P>': ['<C-O>'
 runtime mappings.vim
 runtime im.vim
 runtime whichkey.vim
+
+map <d-down> <Plug>(VM-Add-Cursor-Down)
+map <d-up>   <Plug>(VM-Add-Cursor-Up)
