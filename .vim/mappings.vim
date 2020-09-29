@@ -32,6 +32,15 @@ vmap L $
 omap H ^
 omap L $
 
+" map i" a" to ij aj
+omap ij i"
+omap aj a"
+vmap ij i"
+vmap aj a"
+let g:surround_106 = "\"\r\""
+map dsj ds"
+map csj cs"
+
 imap <M-j> <down>
 imap <M-k> <up>
 imap <M-h> <left>

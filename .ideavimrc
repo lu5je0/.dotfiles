@@ -76,6 +76,11 @@ vmap L $
 omap H ^
 omap L $
 
+omap ij i"
+omap aj a"
+vmap ij i"
+vmap aj a"
+
 imap <m-j> <c-n>
 imap <m-k> <c-p>
 

@@ -18,8 +18,9 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
 Plug 'lu5je0/vim-java-bytecode'
-Plug 'ervandew/supertab'
+" Plug 'ervandew/supertab'
 Plug 'vim-scripts/ReplaceWithRegister'
+" Peekaboo extends " and @ in normal mode and <CTRL-R> in insert mode so you can see the contents of the registers.
 Plug 'junegunn/vim-peekaboo'
 Plug 'lu5je0/vim-terminal-help'
 Plug 'elzr/vim-json'
@@ -30,7 +31,6 @@ Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
-" Plug 'neoclide/coc-imselect'
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 " save with sudo
 Plug 'lambdalisue/suda.vim'
@@ -39,17 +39,9 @@ if !has("gui")
 endif
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 
-" if has('nvim')
-"   Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
-" else
-"   Plug 'Shougo/defx.nvim'
-"   Plug 'roxma/nvim-yarp'
-"   Plug 'roxma/vim-hug-neovim-rpc'
-" endif
-
 " 变量命名转换
 Plug 'chiedo/vim-case-convert'
-" Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
 
