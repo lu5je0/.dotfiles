@@ -77,9 +77,9 @@ omap H ^
 omap L $
 
 omap ij i"
-omap aj a"
+omap oj o"
 vmap ij i"
-vmap aj a"
+vmap oj o"
 
 imap <m-j> <c-n>
 imap <m-k> <c-p>

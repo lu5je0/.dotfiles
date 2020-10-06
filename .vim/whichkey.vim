@@ -97,6 +97,7 @@ let g:which_key_map.t = {
 
 let g:which_key_map.f = {
       \ 'name' : '+Leaderf/Files' ,
+      \ 'c' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
