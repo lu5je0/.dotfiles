@@ -70,6 +70,7 @@ runtime plug-config/airline.vim
 runtime plug-config/nerdtree.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
+runtime plug-config/terminal.vim
 " }}}
 
 " autocmd {{{
