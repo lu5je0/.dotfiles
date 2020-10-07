@@ -43,8 +43,8 @@ Plug 'chiedo/vim-case-convert'
 
 " Plug 'lilydjwg/colorizer'
 
-Plug 'itchyny/lightline.vim'
-" Plug 'vim-airline/vim-airline'
+" Plug 'itchyny/lightline.vim'
+Plug 'vim-airline/vim-airline'
 
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
@@ -74,8 +74,8 @@ runtime plug-config/nerdtree.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
-" runtime plug-config/airline.vim
-runtime plug-config/lightline.vim
+runtime plug-config/airline.vim
+" runtime plug-config/lightline.vim
 " }}}
 
 " autocmd {{{
