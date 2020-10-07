@@ -53,7 +53,7 @@ let g:which_key_map.g = {
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
       \ 'd' : [':Git diff', 'diff'],
-      \ 'D' : [':Gvdiffsplit', 'diff split'],
+      \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'l' : [':Git log', 'log'],
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],

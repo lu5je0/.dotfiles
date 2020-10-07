@@ -1,7 +1,6 @@
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
-Plug 'vim-airline/vim-airline'
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
 Plug 'jistr/vim-nerdtree-tabs', {'on': 'NERDTreeTabsToggle'}
@@ -42,6 +41,11 @@ Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 " 变量命名转换
 Plug 'chiedo/vim-case-convert'
 
+" Plug 'lilydjwg/colorizer'
+
+Plug 'itchyny/lightline.vim'
+" Plug 'vim-airline/vim-airline'
+
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
 
@@ -53,7 +57,6 @@ Plug 'tomtom/tlib_vim'
 
 " themes
 Plug 'rakr/vim-one'
-Plug 'joshdick/onedark.vim'
 Plug 'gruvbox-community/gruvbox'
 
 call plug#end()
@@ -67,11 +70,12 @@ if has("win32")
 endif
 runtime gvim.vim
 runtime functions.vim
-runtime plug-config/airline.vim
 runtime plug-config/nerdtree.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
+" runtime plug-config/airline.vim
+runtime plug-config/lightline.vim
 " }}}
 
 " autocmd {{{

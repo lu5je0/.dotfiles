@@ -10,7 +10,8 @@ set t_Co=256 " 开启256颜色支持
 set nowrap " 默认不启用拆行
 set autoindent
 set number
-set cursorline
+set laststatus=2
+" set cursorline
 " 缩进
 set tabstop=4
 set shiftwidth=4
