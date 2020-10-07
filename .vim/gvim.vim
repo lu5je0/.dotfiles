@@ -9,6 +9,7 @@ if has("gui_running") && !has("gui_vimr")
     endif
 
     set guioptions-=m " 隐藏菜单栏
+    set guioptions-=e " 隐藏tab
     set guioptions-=T " 隐藏工具栏
     set guioptions-=L " 隐藏左侧滚动条
     set guioptions-=r " 隐藏右侧滚动条
