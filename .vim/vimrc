@@ -29,6 +29,7 @@ Plug 'tommcdo/vim-exchange'
 Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
+Plug 'lu5je0/vim-base64'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 " save with sudo
@@ -45,6 +46,7 @@ Plug 'chiedo/vim-case-convert'
 
 " Plug 'itchyny/lightline.vim'
 Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'

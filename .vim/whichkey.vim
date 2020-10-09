@@ -71,11 +71,19 @@ let g:which_key_map.v = {
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ }
 
-vmap <leader>ca :'<,'>SnakeToCamelAll!<cr>
-nmap <leader>ca :SnakeToCamelAll!<cr>
+" Visual Mode mappings
+vmap <silent> <leader>cB :<c-u>call base64#v_atob()<cr>
+vmap <silent> <leader>cb :<c-u>call base64#v_btoa()<cr>
 
-vmap <leader>cb :'<,'>CamelToSnakeAll!<cr>
-nmap <leader>cb :CamelToSnakeAll!<cr>
+" Regex mappings
+" nmap <leader>cB\ :%s/\v()/\=base64#encode(submatch(1))/<home><right><right><right><right><right><right>
+" nmap <leader>cb\ :%s/\v()/\=base64#decode(submatch(1))/<home><right><right><right><right><right><right>
+
+vmap <leader>cc :'<,'>SnakeToCamelAll!<cr>
+nmap <leader>cc :SnakeToCamelAll!<cr>
+
+vmap <leader>cs :'<,'>CamelToSnakeAll!<cr>
+nmap <leader>cs :CamelToSnakeAll!<cr>
 
 vmap <leader>cf :'<,'>Autoformat<cr>
 nmap <leader>cf :Autoformat<cr>
@@ -83,9 +91,11 @@ nmap <leader>cf :Autoformat<cr>
 let g:which_key_map.c = {
       \ 'name' : '+Code' ,
       \ }
-let g:which_key_map.c.a = "ToCamel"
-let g:which_key_map.c.b = "ToSnake"
+let g:which_key_map.c.c = "ToCamel"
+let g:which_key_map.c.s = "ToSnake"
 let g:which_key_map.c.f = "Autoformat"
+let g:which_key_map.c.b = "base64"
+let g:which_key_map.c.B = "unbase64"
 
 " +tab or terminal
 let g:which_key_map.t = {
