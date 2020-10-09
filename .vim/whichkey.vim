@@ -79,10 +79,10 @@ vmap <silent> <leader>cb :<c-u>call base64#v_btoa()<cr>
 " nmap <leader>cB\ :%s/\v()/\=base64#encode(submatch(1))/<home><right><right><right><right><right><right>
 " nmap <leader>cb\ :%s/\v()/\=base64#decode(submatch(1))/<home><right><right><right><right><right><right>
 
-vmap <leader>cc :'<,'>SnakeToCamelAll!<cr>
+vmap <leader>cc :'<,'>SnakeToCamelSel!<cr>
 nmap <leader>cc :SnakeToCamelAll!<cr>
 
-vmap <leader>cs :'<,'>CamelToSnakeAll!<cr>
+vmap <leader>cs :'<,'>CamelToSnakeSel!<cr>
 nmap <leader>cs :CamelToSnakeAll!<cr>
 
 vmap <leader>cf :'<,'>Autoformat<cr>
