@@ -32,8 +32,8 @@ let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 
 let g:which_key_map.e = {
       \ 'name' : '+NERDTree' ,
-      \ 'e' : [':NERDTreeTabsToggle', 'toggle-nerd'],
-      \ 'f' : [':NERDTreeTabsFind', 'locate-file'],
+      \ 'e' : [':NERDTreeToggle', 'toggle-nerd'],
+      \ 'f' : [':NERDTreeFind', 'locate-file'],
       \ }
 
 " windows
