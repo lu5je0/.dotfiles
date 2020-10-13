@@ -50,6 +50,16 @@ Plug 'vim-airline/vim-airline-themes'
 
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
+"
+if has('nvim')
+  Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
+else
+  Plug 'Shougo/defx.nvim'
+  Plug 'roxma/nvim-yarp'
+  Plug 'roxma/vim-hug-neovim-rpc'
+endif
+Plug 'kristijanhusak/defx-icons'
+
 
 " snipmate
 Plug 'garbas/vim-snipmate'
@@ -72,7 +82,8 @@ if has("win32")
 endif
 runtime gvim.vim
 runtime functions.vim
-runtime plug-config/nerdtree.vim
+" runtime plug-config/nerdtree.vim
+runtime plug-config/defx.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
