@@ -20,18 +20,9 @@ function! s:init_fern() abort
   nmap <buffer> R gg<Plug>(fern-action-reload)<C-o>
   nmap <buffer> cd <Plug>(fern-action-cd)
   nmap <buffer> CD gg<Plug>(fern-action-cd)<C-o>
-  nmap <buffer> I <Plug>(fern-action-hide-toggle)
+  nmap <buffer> I <Plug>(fern-action-hidden:toggle)
 
   nmap <buffer> q :<C-u>quit<CR>
-
-  nmap <buffer><expr>
-      \ <Plug>(fern-my-expand-or-collapse)
-      \ fern#smart#leaf(
-      \   "\<Plug>(fern-action-collapse)",
-      \   "\<Plug>(fern-action-expand)",
-      \   "\<Plug>(fern-action-collapse)",
-      \ )
-  nmap <buffer><nowait> <cr> <Plug>(fern-my-expand-or-collapse)
 endfunction
 
 augroup fern-custom

@@ -35,7 +35,7 @@ let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 let g:which_key_map.e = {
       \ 'name' : '+NERDTree' ,
       \ 'e' : [':Fern . -drawer -stay -toggle', 'Defx'],
-      \ 'f' : [":Defx `expand('%:p:h')` -search=`expand('%:p')`", 'locate-file'],
+      \ 'f' : [":Fern . -reveal=% -drawer -stay", 'locate-file'],
       \ }
 
 " windows
