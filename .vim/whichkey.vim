@@ -30,9 +30,11 @@ let g:which_key_map.q = [ 'q', 'quit' ]
 let g:which_key_map.u = [':UndotreeToggle', 'Undotree']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 
+
+" :Fern {url} -drawer [-opener={opener}] [-reveal={reveal}] [-stay] [-wait] [-width=30] [-keep] [-toggle]
 let g:which_key_map.e = {
       \ 'name' : '+NERDTree' ,
-      \ 'e' : [':Defx -toggle', 'Defx'],
+      \ 'e' : [':Fern . -drawer -stay -toggle', 'Defx'],
       \ 'f' : [":Defx `expand('%:p:h')` -search=`expand('%:p')`", 'locate-file'],
       \ }
 
