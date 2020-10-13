@@ -1,9 +1,10 @@
-let g:fern#disable_default_mappings=1
+" let g:fern#disable_default_mappings=1
 
 function! s:init_fern() abort
   " Define NERDTree like mappings
-  nmap <buffer> o <Plug>(fern-action-open:edit)
-  nmap <buffer> <cr> <Plug>(fern-action-open:edit)
+  nmap <buffer> <C-L> <C-W>l
+  nmap <buffer> o <Plug>(fern-action-open-or-expand)
+  nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
   nmap <buffer> t <Plug>(fern-action-open:tabedit)
   nmap <buffer> T <Plug>(fern-action-open:tabedit)gT
