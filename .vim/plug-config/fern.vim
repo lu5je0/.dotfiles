@@ -2,7 +2,7 @@
 let g:fern#renderer = "nerdfont"
 " let g:fern#smart_cursor = "hide"
 let g:fern#disable_drawer_smart_quit = 0
-let g:fern#renderer#nerdfont#root_symbol = " ≡"
+let g:fern#renderer#nerdfont#root_symbol = " ≡ "
 
 function! s:init_fern() abort
   " hide sign
