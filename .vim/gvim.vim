@@ -2,7 +2,7 @@
 if has("gui_running") && !has("gui_vimr")
 
     if has("mac") && !has("gui_vimr")
-        set guifont=Monaco\ for\ Powerline:h15
+        set guifont=JetBrainsMono\ Nerd\ Font\ Mono:h15
         " set guifont=JetBrainsMono:h15
     elseif has("win32")
         set guifont=Consolas\ NF:h12

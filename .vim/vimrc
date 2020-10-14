@@ -194,9 +194,3 @@ set bg=dark
 runtime mappings.vim
 runtime im.vim
 runtime whichkey.vim
-
-let g:fern#renderer#default#leading = "ggdafa"
-let g:fern#renderer#default#leading = "j"
-
-let g:fern#smart_cursor = "hide"
-let g:fern#disable_drawer_auto_winfixwidth = 0

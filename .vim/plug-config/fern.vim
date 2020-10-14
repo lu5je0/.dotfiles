@@ -1,10 +1,17 @@
 " let g:fern#disable_default_mappings=1
 let g:fern#renderer = "nerdfont"
+" let g:fern#smart_cursor = "hide"
+let g:fern#disable_drawer_smart_quit = 0
+
 
 function! s:init_fern() abort
+  " hide sign
+  setlocal scl=no
+  setlocal nonumber
+
   " Define NERDTree like mappings
-  set nonumber
   nmap <buffer> <C-L> <C-W>l
+  nmap <buffer> <C-H> <C-W>h
   nmap <buffer> o <Plug>(fern-action-open-or-expand)
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
