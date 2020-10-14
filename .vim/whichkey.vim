@@ -34,7 +34,7 @@ let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 " :Fern {url} -drawer [-opener={opener}] [-reveal={reveal}] [-stay] [-wait] [-width=30] [-keep] [-toggle]
 let g:which_key_map.e = {
       \ 'name' : '+NERDTree' ,
-      \ 'e' : [':Fern . -drawer -stay -toggle -keep', 'Defx'],
+      \ 'e' : [':Fern . -width=25 -drawer -stay -toggle -keep', 'Defx'],
       \ 'f' : [":Fern . -reveal=% -drawer -stay", 'locate-file'],
       \ }
 
