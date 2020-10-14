@@ -2,10 +2,12 @@
 let g:fern#renderer = "nerdfont"
 " let g:fern#smart_cursor = "hide"
 let g:fern#disable_drawer_smart_quit = 0
-
+let g:fern#renderer#nerdfont#root_symbol = " ≡"
 
 function! s:init_fern() abort
   " hide sign
+  hi FernBranchText ctermfg=16 guifg=#E5C07B
+  hi FernRootText ctermfg=16 guifg=#E06C75
   setlocal scl=no
   setlocal nonumber
 
@@ -37,4 +39,10 @@ endfunction
 augroup fern-custom
   autocmd! *
   autocmd FileType fern call s:init_fern()
+augroup END
+
+augroup my-glyph-palette
+  autocmd! *
+  autocmd FileType fern call glyph_palette#apply()
+  autocmd FileType nerdtree,startify call glyph_palette#apply()
 augroup END
