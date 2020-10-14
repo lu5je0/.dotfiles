@@ -1,7 +1,9 @@
 " let g:fern#disable_default_mappings=1
+let g:fern#renderer = "nerdfont"
 
 function! s:init_fern() abort
   " Define NERDTree like mappings
+  set nonumber
   nmap <buffer> <C-L> <C-W>l
   nmap <buffer> o <Plug>(fern-action-open-or-expand)
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)

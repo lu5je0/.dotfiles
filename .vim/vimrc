@@ -1,12 +1,25 @@
-let g:fern#renderer = "nerdfont"
-
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
+
 " Plug 'jistr/vim-nerdtree-tabs', {'on': 'NERDTreeTabsToggle'}
-Plug 'preservim/nerdtree'
+" Plug 'preservim/nerdtree'
+
+Plug 'lambdalisue/fern.vim'
+Plug 'lambdalisue/fern-renderer-nerdfont.vim'
+Plug 'lambdalisue/nerdfont.vim'
+
+" if has('nvim')
+"   Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
+" else
+"   Plug 'Shougo/defx.nvim'
+"   Plug 'roxma/nvim-yarp'
+"   Plug 'roxma/vim-hug-neovim-rpc'
+" endif
+" Plug 'kristijanhusak/defx-icons'
+
 Plug 'tpope/vim-commentary'
 Plug 'mg979/vim-visual-multi'
 Plug 'kana/vim-textobj-user'
@@ -16,9 +29,6 @@ Plug 'mhinz/vim-signify'
 Plug 'voldikss/vim-translator'
 Plug 'Chiel92/vim-autoformat'
 Plug 'tpope/vim-fugitive'
-Plug 'lambdalisue/fern.vim'
-Plug 'lambdalisue/fern-renderer-nerdfont.vim'
-Plug 'lambdalisue/nerdfont.vim'
 Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
 Plug 'lu5je0/vim-java-bytecode'
@@ -35,7 +45,7 @@ Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 Plug 'lu5je0/vim-base64'
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 " save with sudo
 Plug 'lambdalisue/suda.vim'
@@ -55,16 +65,6 @@ Plug 'vim-airline/vim-airline-themes'
 
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
-"
-if has('nvim')
-  Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
-else
-  Plug 'Shougo/defx.nvim'
-  Plug 'roxma/nvim-yarp'
-  Plug 'roxma/vim-hug-neovim-rpc'
-endif
-Plug 'kristijanhusak/defx-icons'
-
 
 " snipmate
 Plug 'garbas/vim-snipmate'
@@ -87,13 +87,13 @@ if has("win32")
 endif
 runtime gvim.vim
 runtime functions.vim
+runtime plug-config/fern.vim
 " runtime plug-config/nerdtree.vim
-runtime plug-config/defx.vim
+" runtime plug-config/defx.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
 runtime plug-config/airline.vim
-runtime plug-config/fern.vim
 " runtime plug-config/lightline.vim
 " }}}
 
@@ -194,3 +194,9 @@ set bg=dark
 runtime mappings.vim
 runtime im.vim
 runtime whichkey.vim
+
+let g:fern#renderer#default#leading = "ggdafa"
+let g:fern#renderer#default#leading = "j"
+
+let g:fern#smart_cursor = "hide"
+let g:fern#disable_drawer_auto_winfixwidth = 0
