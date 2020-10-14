@@ -13,14 +13,14 @@ Plug 'lambdalisue/nerdfont.vim'
 Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/glyph-palette.vim'
 
-" if has('nvim')
-"   Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
-" else
-"   Plug 'Shougo/defx.nvim'
-"   Plug 'roxma/nvim-yarp'
-"   Plug 'roxma/vim-hug-neovim-rpc'
-" endif
-" Plug 'kristijanhusak/defx-icons'
+if has('nvim')
+  Plug 'Shougo/defx.nvim', { 'do': ':UpdateRemotePlugins' }
+else
+  Plug 'Shougo/defx.nvim'
+  Plug 'roxma/nvim-yarp'
+  Plug 'roxma/vim-hug-neovim-rpc'
+endif
+Plug 'kristijanhusak/defx-icons'
 
 Plug 'tpope/vim-commentary'
 Plug 'mg979/vim-visual-multi'
@@ -91,7 +91,7 @@ runtime gvim.vim
 runtime functions.vim
 runtime plug-config/fern.vim
 " runtime plug-config/nerdtree.vim
-" runtime plug-config/defx.vim
+runtime plug-config/defx.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim

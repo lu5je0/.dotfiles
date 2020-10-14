@@ -2,16 +2,21 @@
 let g:fern#renderer = "nerdfont"
 " let g:fern#smart_cursor = "hide"
 let g:fern#disable_drawer_smart_quit = 0
-let g:fern#renderer#nerdfont#root_symbol = " ≡ "
+let g:fern#renderer#nerdfont#root_symbol = "≡ "
 
 function! s:init_fern() abort
-  " hide sign
+  " hi FernBranchText ctermfg=16 guifg=#61afef
+  " yellow
   hi FernBranchText ctermfg=16 guifg=#E5C07B
+
   hi FernRootText ctermfg=16 guifg=#E06C75
+
+  " hide sign
   setlocal scl=no
   setlocal nonumber
 
   " Define NERDTree like mappings
+  nmap <buffer> <nowait> <leader> <C-W>l<leader>
   nmap <buffer> <C-L> <C-W>l
   nmap <buffer> <C-H> <C-W>h
   nmap <buffer> o <Plug>(fern-action-open-or-expand)
