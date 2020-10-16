@@ -1,11 +1,8 @@
-" function! s:check_back_space() abort
-"   let col = col('.') - 1
-"   return !col || getline('.')[col - 1]  =~ '\s'
-" endfunction
+imap <expr> <cr> pumvisible() ? "\<C-y>\<cr>" : "\<cr>"
+imap <expr> <tab> pumvisible() ? "\<C-y>" : "\<Plug>snipMateNextOrTrigger"
+imap <expr> . pumvisible() ? "\<C-y>." : "."
+imap <c-j> <Plug>snipMateNextOrTrigger
+imap <c-k> <Plug>snipMateBack
 
-" inoremap <silent><expr> <TAB>
-"       \ pumvisible() ? "\<C-n>" :
-"       \ <SID>check_back_space() ? "\<TAB>" :
-"       \ coc#refresh()
-" inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-" inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<CR>"
+inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+            \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
