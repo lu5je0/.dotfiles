@@ -1,9 +1,6 @@
 imap <expr> <cr> pumvisible() ? "\<C-y>" : "\<cr>"
 
-imap <expr> <tab> 
-            \ pumvisible() ? 
-            \ "\<C-y>" : 
-            \ "\<TAB>"
+imap <expr> <tab> pumvisible() ?  "\<C-y>" : "\<TAB>"
 
 imap <expr> . pumvisible() ? "\<C-y>." : "."
 
