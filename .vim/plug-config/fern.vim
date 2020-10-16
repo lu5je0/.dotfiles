@@ -16,7 +16,7 @@ function! s:init_fern() abort
   setlocal nonumber
 
   " Define NERDTree like mappings
-  nmap <buffer> <nowait> <leader> <C-W>l<leader>
+  " nmap <buffer> <nowait> <leader> <C-W>l<leader>
   nmap <buffer> <C-L> <C-W>l
   nmap <buffer> <C-H> <C-W>h
   nmap <buffer> o <Plug>(fern-action-open-or-expand)
