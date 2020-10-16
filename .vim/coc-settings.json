@@ -1,3 +1,4 @@
 {
-	"suggest.noselect": false
+	"suggest.noselect": false,
+  "http.proxy": "http://localhost:1080"
 }
