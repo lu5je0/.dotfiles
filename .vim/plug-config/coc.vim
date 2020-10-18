@@ -2,7 +2,7 @@ imap <expr> <cr> pumvisible() ? "\<C-y>" : "\<cr>"
 
 imap <expr> <tab> pumvisible() ?  "\<C-y>" : "\<TAB>"
 
-imap <expr> . pumvisible() ? "\<C-y>." : "."
+" imap <expr> . pumvisible() ? "\<C-y>." : "."
 
 " Use <C-j> for jump to next placeholder, it's default of coc.nvim
 let g:coc_snippet_next = '<c-j>'
@@ -39,4 +39,4 @@ nmap <leader>rn <Plug>(coc-rename)
 
 autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 
-let g:coc_global_extensions = ['coc-json', 'coc-python', 'coc-highlight', 'coc-java']
+let g:coc_global_extensions = ['coc-json', 'coc-python', 'coc-highlight', 'coc-java', 'coc-snippets', 'coc-sql']
