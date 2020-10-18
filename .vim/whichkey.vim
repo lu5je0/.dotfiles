@@ -87,11 +87,11 @@ nmap <leader>cc :SnakeToCamelAll!<cr>
 vmap <leader>cs :'<,'>CamelToSnakeSel!<cr>
 nmap <leader>cs :CamelToSnakeAll!<cr>
 
-vmap <leader>cf :'<,'>Autoformat<cr>
-nmap <leader>cf :Autoformat<cr>
-
+vmap <leader>cf <Plug>(coc-format)
+nmap <leader>cf <Plug>(coc-format-selected)
 let g:which_key_map.c = {
       \ 'name' : '+Code' ,
+      \ 'r' : ["<Plug>(coc-rename)", 'rename variable'],
       \ }
 let g:which_key_map.c.c = "ToCamel"
 let g:which_key_map.c.s = "ToSnake"
