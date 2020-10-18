@@ -28,3 +28,6 @@ set termguicolors
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start
+
+" 彻底关闭bell
+set noeb

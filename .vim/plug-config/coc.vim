@@ -36,3 +36,7 @@ nmap <leader>rn <Plug>(coc-rename)
 
 " nmap <leader>rf <Plug>(coc-fix-current)
 " command! -nargs=0 Format :call CocAction('format')
+
+autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
+
+let g:coc_global_extensions = ['coc-json', 'coc-python', 'coc-highlight', 'coc-java']
