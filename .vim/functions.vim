@@ -91,3 +91,21 @@ function! IsWSL()
     let g:isWsl=0
     return 0
 endfunction
+
+python3 << EOF
+import vim
+def keepLines(pattern):
+    pattern = re.compile(pattern)
+    buffer = vim.current.buffer
+    for num in range(len(buffer) - 1, -1, -1):
+        if (pattern.search(buffer[num]) == None):
+            del(buffer[num])
+EOF
+
+function! KeepLines(pattern)
+python3 << EOF
+import vim
+keepLines(vim.eval("a:pattern"))
+EOF
+endfunction
+command! -nargs=1 KeepLines call KeepLines(<f-args>)

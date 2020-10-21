@@ -127,5 +127,5 @@ alias vim='nvim'
 export EDITOR=nvim
 
 # 代理设置
-alias proxy='export http_proxy=http://127.0.0.1:1087; export https_proxy=http://127.0.0.1:1087;'
+alias proxy='export http_proxy=http://127.0.0.1:1080; export https_proxy=http://127.0.0.1:1080;'
 alias unproxy='unset http_proxy; unset https_proxy'
