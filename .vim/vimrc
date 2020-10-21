@@ -3,7 +3,7 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
-Plug 'mhinz/vim-startify'
+" Plug 'mhinz/vim-startify'
 
 " Plug 'jistr/vim-nerdtree-tabs', {'on': 'NERDTreeTabsToggle'}
 " Plug 'preservim/nerdtree'

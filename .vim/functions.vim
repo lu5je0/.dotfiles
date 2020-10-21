@@ -99,7 +99,6 @@ import sys
 from os.path import normpath, join
 import vim
 python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
-print(python_root_dir)
 sys.path.insert(0, python_root_dir)
 import functions
 import importlib
@@ -113,3 +112,11 @@ functions.keepLines(vim.eval("a:000"))
 EOF
 endfunction
 command! -nargs=* KeepLines call KeepLines(<f-args>)
+
+function! DelLines(...)
+python3 << EOF
+import vim
+functions.delLines(vim.eval("a:000"))
+EOF
+endfunction
+command! -nargs=* DelLines call DelLines(<f-args>)
