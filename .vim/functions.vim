@@ -120,3 +120,11 @@ functions.delLines(vim.eval("a:000"))
 EOF
 endfunction
 command! -nargs=* DelLines call DelLines(<f-args>)
+
+function! KeepMatchs(pattern)
+python3 << EOF
+import vim
+functions.keepMatchs(vim.eval("a:pattern"))
+EOF
+endfunction
+command! -nargs=1 KeepMatchs call KeepMatchs(<f-args>)

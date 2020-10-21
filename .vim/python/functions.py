@@ -16,6 +16,18 @@ def keepLines(str_patterns):
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
 
+def keepMatchs(pattern):
+    pattern = re.compile(pattern)
+    buffer = vim.current.buffer
+    
+    rm_line_cnt = 0
+    for num in range(len(buffer) - 1, -1, -1):
+        matchs = pattern.findall(buffer[num])
+        if len(matchs) != 0:
+            buffer[num] = " ".join(matchs)
+        else:
+            del(buffer[num])
+
 def delLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
     buffer = vim.current.buffer
