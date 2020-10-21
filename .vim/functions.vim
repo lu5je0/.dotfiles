@@ -92,20 +92,24 @@ function! IsWSL()
     return 0
 endfunction
 
+let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+
 python3 << EOF
+import sys
+from os.path import normpath, join
 import vim
-def keepLines(pattern):
-    pattern = re.compile(pattern)
-    buffer = vim.current.buffer
-    for num in range(len(buffer) - 1, -1, -1):
-        if (pattern.search(buffer[num]) == None):
-            del(buffer[num])
+python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
+print(python_root_dir)
+sys.path.insert(0, python_root_dir)
+import functions
+import importlib
+importlib.reload(functions)
 EOF
 
-function! KeepLines(pattern)
+function! KeepLines(...)
 python3 << EOF
 import vim
-keepLines(vim.eval("a:pattern"))
+functions.keepLines(vim.eval("a:000"))
 EOF
 endfunction
-command! -nargs=1 KeepLines call KeepLines(<f-args>)
+command! -nargs=* KeepLines call KeepLines(<f-args>)
