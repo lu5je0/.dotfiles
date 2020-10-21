@@ -104,6 +104,7 @@ let g:which_key_map.c.B = "unbase64"
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
       \ 't' : [':ToggleTerminal', 'Open terminal'],
+      \ 's' : [':tab split', 'tab split'],
       \ 'n' : [':tabnew', 'New tab'],
       \ }
 
