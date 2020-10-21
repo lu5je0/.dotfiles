@@ -12,12 +12,6 @@ nnoremap <silent> <leader>7 7gt
 nnoremap <silent> <leader>8 8gt
 nnoremap <silent> <leader>9 9gt
 
-if has("win32")
-    " 为了支持win+v
-    imap <C-v> <ESC>"+gpa
-    nmap <C-v> "+gpa
-endif
-
 " ctrl-c 复制
 vnoremap <C-c> y
 
