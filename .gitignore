@@ -1,4 +1,5 @@
 .vim/.netrwhist
 .vim/plugged/*
 .vim/pack/
+__pycache__
 *.swp
