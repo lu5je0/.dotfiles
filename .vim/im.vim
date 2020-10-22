@@ -42,7 +42,8 @@ function! SwitchToEn()
 python3 << EOF
 
 last = im.getCurrentInputSourceID()
-im.switchInputSource(mac_im)
+if last != mac_im:
+    im.switchInputSource(mac_im)
 
 EOF
 endfunction
@@ -51,7 +52,8 @@ endfunction
 function! SwitchToCn()
 python3 << EOF
 
-im.switchInputSource(last)
+if last != mac_im:
+    im.switchInputSource(last)
 
 EOF
 endfunction
