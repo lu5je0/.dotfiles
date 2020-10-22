@@ -16,43 +16,45 @@ if !has("gui")
     endif
 endif
 
-if has("mac")
-    autocmd InsertLeave * call SwitchToEn()
-    autocmd InsertEnter * call SwitchToCn()
-
-    python3 << EOF
-    import sys
-    from os.path import normpath, join
-    import vim
-    python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
-    sys.path.insert(0, python_root_dir)
-    import im
-    import importlib
-    importlib.reload(im)
-
-    mac_im = 'com.apple.keylayout.ABC'
-    last = 'com.apple.keylayout.ABC'
-    EOF
-
-    function! SwitchToEn()
-    python3 << EOF
-
-    last = im.getCurrentInputSourceID()
-    im.switchInputSource(mac_im)
-
-    EOF
-    endfunction
-
-
-    function! SwitchToCn()
-    python3 << EOF
-
-    im.switchInputSource(last)
-
-    EOF
-    endfunction
-
-    command! SwitchToCn call SwitchToCn()
-    command! SwitchToEn call SwitchToEn()
+if !has("mac")
+    finish
 endif
 
+autocmd InsertLeave * call SwitchToEn()
+autocmd InsertEnter * call SwitchToCn()
+
+let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+python3 << EOF
+import sys
+from os.path import normpath, join
+import vim
+python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
+sys.path.insert(0, python_root_dir)
+import im
+import importlib
+importlib.reload(im)
+
+mac_im = 'com.apple.keylayout.ABC'
+last = 'com.apple.keylayout.ABC'
+EOF
+
+function! SwitchToEn()
+python3 << EOF
+
+last = im.getCurrentInputSourceID()
+im.switchInputSource(mac_im)
+
+EOF
+endfunction
+
+
+function! SwitchToCn()
+python3 << EOF
+
+im.switchInputSource(last)
+
+EOF
+endfunction
+
+command! SwitchToCn call SwitchToCn()
+command! SwitchToEn call SwitchToEn()
