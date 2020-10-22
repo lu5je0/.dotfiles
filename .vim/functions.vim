@@ -101,8 +101,12 @@ import vim
 python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
 sys.path.insert(0, python_root_dir)
 import functions
+import im
 import importlib
 importlib.reload(functions)
+
+mac_im = 'com.apple.keylayout.ABC'
+last = 'com.apple.keylayout.ABC'
 EOF
 
 function! KeepLines(...)
@@ -125,3 +129,24 @@ functions.keepMatchs(vim.eval("a:pattern"))
 EOF
 endfunction
 command! -nargs=1 KeepMatchs call KeepMatchs(<f-args>)
+
+function! SwitchToEn()
+python3 << EOF
+
+last = im.getCurrentInputSourceID()
+print(last, "321")
+im.switchInputSource(mac_im)
+
+EOF
+endfunction
+command! SwitchToEn call SwitchToEn()
+
+
+function! SwitchToCn()
+python3 << EOF
+
+im.switchInputSource(last)
+
+EOF
+endfunction
+command! SwitchToCn call SwitchToCn()
