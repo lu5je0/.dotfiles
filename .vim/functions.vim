@@ -101,12 +101,8 @@ import vim
 python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
 sys.path.insert(0, python_root_dir)
 import functions
-import im
 import importlib
 importlib.reload(functions)
-
-mac_im = 'com.apple.keylayout.ABC'
-last = 'com.apple.keylayout.ABC'
 EOF
 
 function! KeepLines(...)
