@@ -27,6 +27,7 @@ def keepMatchs(pattern):
             buffer[num] = " ".join(matchs)
         else:
             del(buffer[num])
+    print('del {} lines'.format(rm_line_cnt))
 
 def delLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
