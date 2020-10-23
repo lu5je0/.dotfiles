@@ -1,6 +1,7 @@
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
+Plug 'mengelbrecht/lightline-bufferline'
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
 Plug 'roxma/nvim-ascript'
@@ -56,9 +57,9 @@ Plug 'chiedo/vim-case-convert'
 
 " Plug 'lilydjwg/colorizer'
 
-" Plug 'itchyny/lightline.vim'
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
+Plug 'itchyny/lightline.vim'
+" Plug 'vim-airline/vim-airline'
+" Plug 'vim-airline/vim-airline-themes'
 
 " 自动弹出pop
 " Plug 'vim-scripts/AutoComplPop'
@@ -90,9 +91,9 @@ runtime plug-config/fern.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
-runtime plug-config/airline.vim
+" runtime plug-config/airline.vim
 runtime plug-config/coc.vim
-" runtime plug-config/lightline.vim
+runtime plug-config/lightline.vim
 " }}}
 
 " autocmd {{{
