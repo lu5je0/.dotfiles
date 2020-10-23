@@ -4,7 +4,7 @@ import re
 def keepLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
     buffer = vim.current.buffer
-    
+
     rm_line_cnt = 0
     for num in range(len(buffer) - 1, -1, -1):
         flag = False
@@ -19,7 +19,7 @@ def keepLines(str_patterns):
 def keepMatchs(pattern):
     pattern = re.compile(pattern)
     buffer = vim.current.buffer
-    
+
     rm_line_cnt = 0
     for num in range(len(buffer) - 1, -1, -1):
         matchs = pattern.findall(buffer[num])
@@ -32,7 +32,7 @@ def keepMatchs(pattern):
 def delLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
     buffer = vim.current.buffer
-    
+
     rm_line_cnt = 0
     for num in range(len(buffer) - 1, -1, -1):
         flag = False
@@ -44,7 +44,34 @@ def delLines(str_patterns):
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
 
+def getBufType(number):
+    return vim.eval("getbufvar({}, \"&buftype\")".format(number))
+
 def closeBuffer():
-    number = vim.current.buffer.number
-    vim.command("bNext")
-    vim.command("bdelete " + str(number))
+    cur_buffer = vim.current.buffer
+    number = cur_buffer.number
+    is_edit = int(vim.eval("getbufvar(bufname(), \"&mod\")")) == 1
+    buftype = getBufType(number)
+    if buftype != "":
+        vim.command("quit")
+        return
+
+    if is_edit:
+        print("未保存！")
+    else:
+        count = 0
+        has_same_buffer = False
+        for window in vim.current.tabpage.windows:
+            buffer = window.buffer
+            if buffer.number == number:
+                has_same_buffer = True
+            if getBufType(buffer.number) == "":
+                count += 1
+                if count > 1:
+                    break
+        if count <= 1:
+            vim.command("bn")
+        elif has_same_buffer:
+            vim.command("quit")
+            return
+        vim.command("bd " + str(number))

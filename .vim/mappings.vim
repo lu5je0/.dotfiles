@@ -88,3 +88,6 @@ map <c-d-n> <Plug>(VM-Add-Cursor-Down)
 map <c-d-p> <Plug>(VM-Add-Cursor-Up)
 map <c-m-n> <Plug>(VM-Add-Cursor-Down)
 map <c-m-p> <Plug>(VM-Add-Cursor-Up)
+
+nmap <F2> :bp<cr>
+nmap <F3> :bn<cr>
