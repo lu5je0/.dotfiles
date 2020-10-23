@@ -17,6 +17,12 @@ function! s:init_fern() abort
 
   " Define NERDTree like mappings
   " nmap <buffer> <nowait> <leader> <C-W>l<leader>
+  " nmap <buffer><expr> <Plug>(fern-my-open-or-expand)
+  "             \ fern#smart#leaf(
+  "             \   "\<Plug>(fern-action-open:edit-or-vsplit)",
+  "             \   "\<Plug>(fern-action-expand)",
+  "             \ )
+  " nmap <buffer> l <Plug>(fern-my-open-or-expand)
   nmap <buffer> <C-L> <C-W>l
   nmap <buffer> <C-H> <C-W>h
   nmap <buffer> o <Plug>(fern-action-open-or-expand)

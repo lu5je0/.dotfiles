@@ -3,11 +3,11 @@ if !has("mac") && IsWSL() == 1
 endif
 
 " mac下输入法切换问题
-" if has("mac") && has("gui")
-"     set noimd
-"     set imi=2
-"     set ims=2
-" endif
+if has("mac") && has("gui")
+    set noimd
+    set imi=2
+    set ims=2
+endif
 
 " 退出vim时 恢复默认输入法
 if !has("gui")
@@ -16,7 +16,7 @@ if !has("gui")
     endif
 endif
 
-if !has("mac")
+if !has("mac") || has("gui")
     finish
 endif
 
@@ -42,8 +42,7 @@ function! SwitchToEn()
 python3 << EOF
 
 last = im.getCurrentInputSourceID()
-if last != mac_im:
-    im.switchInputSource(mac_im)
+im.switchInputSource(mac_im)
 
 EOF
 endfunction
@@ -52,8 +51,7 @@ endfunction
 function! SwitchToCn()
 python3 << EOF
 
-if last != mac_im:
-    im.switchInputSource(last)
+im.switchInputSource(last)
 
 EOF
 endfunction
