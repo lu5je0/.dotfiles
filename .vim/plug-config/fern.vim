@@ -9,6 +9,7 @@ function! s:init_fern() abort
   " yellow
   hi FernBranchText ctermfg=16 guifg=#E5C07B
 
+  " file Fern
   hi FernRootText ctermfg=16 guifg=#E06C75
 
   " hide sign

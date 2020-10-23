@@ -1,7 +1,7 @@
 " tab显示
 let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#show_buffers = 0
-let g:airline#extensions#tabline#show_splits = 0       " disables the buffer name that displays on the right of the tabline
+" let g:airline#extensions#tabline#show_buffers = 0
+" let g:airline#extensions#tabline#show_splits = 0       " disables the buffer name that displays on the right of the tabline
 let g:airline#extensions#tabline#show_tabs = 1
 " tab编号
 let g:airline#extensions#tabline#show_tab_nr = 1 

@@ -126,23 +126,9 @@ EOF
 endfunction
 command! -nargs=1 KeepMatchs call KeepMatchs(<f-args>)
 
-function! SwitchToEn()
+function! CloseBuffer()
 python3 << EOF
-
-last = im.getCurrentInputSourceID()
-print(last, "321")
-im.switchInputSource(mac_im)
-
+functions.closeBuffer()
 EOF
 endfunction
-command! SwitchToEn call SwitchToEn()
-
-
-function! SwitchToCn()
-python3 << EOF
-
-im.switchInputSource(last)
-
-EOF
-endfunction
-command! SwitchToCn call SwitchToCn()
+command! CloseBuffer call CloseBuffer()

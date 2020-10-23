@@ -43,3 +43,8 @@ def delLines(str_patterns):
             rm_line_cnt += 1
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
+
+def closeBuffer():
+    number = vim.current.buffer.number
+    vim.command("bNext")
+    vim.command("bdelete " + str(number))

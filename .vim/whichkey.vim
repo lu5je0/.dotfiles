@@ -26,7 +26,7 @@ let g:which_key_map.8 = 'which_key_ignore'
 let g:which_key_map.9 = 'which_key_ignore'
 
 " Single mappings
-let g:which_key_map.q = [ 'q', 'quit' ]
+let g:which_key_map.q = [ 'CloseBuffer', 'close buffer' ]
 let g:which_key_map.u = [':UndotreeToggle', 'Undotree']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 
