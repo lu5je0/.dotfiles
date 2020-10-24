@@ -6,7 +6,15 @@ if !has("nvim")
 else
     autocmd TermOpen * set nobuflisted
 endif
-" imap <F5> <ESC>:AsyncRun -mode=term -pos=bottom python "$(VIM_FILEPATH)"<CR>
+
+" 设置wsl为默认shell
+if has("win32")
+    set shell=C:\Windows\WinSxS\amd64_microsoft-windows-lxss-wsl_31bf3856ad364e35_10.0.19041.423_none_60fa68722da1e84e\wsl.exe
+    set shellpipe=|
+    set shellredir=>
+    set shellcmdflag=
+endif
+
 if has("win32")
     nmap <F5> :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>
 else
@@ -15,5 +23,3 @@ endif
 
 let g:asyncrun_mode='term'
 let g:asyncrun_save=1
-" let g:asyncrun_status = ''
-" let g:airline_section_error = airline#section#create_right(['%{g:asyncrun_status}'])
