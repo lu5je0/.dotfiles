@@ -73,6 +73,14 @@ Plug 'itchyny/lightline.vim'
 " themes
 Plug 'rakr/vim-one'
 Plug 'gruvbox-community/gruvbox'
+Plug 'hzchirs/vim-material'
+Plug 'jacoborus/tender.vim'
+Plug 'dunstontc/vim-vscode-theme'
+Plug 'blueshirts/darcula'
+Plug 'rakr/vim-two-firewatch'
+Plug 'lifepillar/vim-solarized8'
+Plug 'srcery-colors/srcery-vim'
+Plug 'Marfisc/vorange'
 
 call plug#end()
 " }}}

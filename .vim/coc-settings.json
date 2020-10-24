@@ -1,5 +1,8 @@
 {
 	"suggest.noselect": false,
   "http.proxy": "http://localhost:1080",
-  "python.autoComplete.addBrackets": true
+  "python.autoComplete.addBrackets": true,
+  "diagnostic.errorSign": "•",
+  "diagnostic.warningSign": "•",
+  "diagnostic.infoSign": "•"
 }

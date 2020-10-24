@@ -45,6 +45,9 @@ function! ToggleWrap()
     if g:ToggleWrapStauts == 0
         let g:ToggleWrapStauts = 1
         set wrap!
+        nmap j gj
+        nmap k gk
+        let g:ToggleGjStauts = 1
         echo "wrap"
     else
         set wrap!
