@@ -27,6 +27,7 @@ set foldmethod=syntax
 set foldlevelstart=99 " 打开文件默认不折叠
 set termguicolors
 set hidden
+set updatetime=100
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start

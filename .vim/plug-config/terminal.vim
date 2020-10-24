@@ -8,12 +8,12 @@ else
 endif
 
 " 设置wsl为默认shell
-if has("win32")
-    set shell=C:\Windows\WinSxS\amd64_microsoft-windows-lxss-wsl_31bf3856ad364e35_10.0.19041.423_none_60fa68722da1e84e\wsl.exe
-    set shellpipe=|
-    set shellredir=>
-    set shellcmdflag=
-endif
+" if has("win32")
+"     set shell=C:\Windows\WinSxS\amd64_microsoft-windows-lxss-wsl_31bf3856ad364e35_10.0.19041.423_none_60fa68722da1e84e\wsl.exe
+"     set shellpipe=|
+"     set shellredir=>
+"     set shellcmdflag=
+" endif
 
 if has("win32")
     nmap <F5> :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>

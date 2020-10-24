@@ -34,7 +34,7 @@ let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 " :Fern {url} -drawer [-opener={opener}] [-reveal={reveal}] [-stay] [-wait] [-width=30] [-keep] [-toggle]
 let g:which_key_map.e = {
       \ 'name' : '+NERDTree' ,
-      \ 'e' : [':Fern . -width=25 -drawer -stay -toggle -keep', 'Defx'],
+      \ 'e' : [':Fern . -width=22 -drawer -stay -toggle -keep', 'Defx'],
       \ 'f' : [":Fern . -reveal=% -drawer -stay", 'locate-file'],
       \ }
 
@@ -54,6 +54,8 @@ let g:which_key_map.g = {
       \ 'A' : [':Git add -A', 'add all'],
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
+      \ 'g' : [':SignifyHunkDiff', 'SignifyHunkDiff'],
+      \ 'G' : [':SignifyHunkUndo', 'SignifyHunkDiff'],
       \ 'd' : [':Git diff', 'diff'],
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'l' : [':Git log', 'log'],
