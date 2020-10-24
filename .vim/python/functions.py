@@ -1,4 +1,5 @@
 import vim
+import time
 import re
 
 def keepLines(str_patterns):
@@ -56,7 +57,18 @@ def closeBuffer():
         vim.command("quit")
         return
 
-    if is_edit:
+    txt_window_count = 0
+    has_same_buffer = False
+    for window in vim.current.tabpage.windows:
+        buffer = window.buffer
+        if buffer.number == number and vim.current.window != window:
+            has_same_buffer = True
+        if getBufType(buffer.number) == "":
+            txt_window_count += 1
+            if txt_window_count > 1:
+                break
+
+    if is_edit and not has_same_buffer:
         has_mac = int(vim.eval("has('mac')")) == 1
         if has_mac:
             vim.command("set guioptions+=c")
@@ -66,19 +78,8 @@ def closeBuffer():
         if confirm != 2:
             return
 
-    count = 0
-    has_same_buffer = False
-    for window in vim.current.tabpage.windows:
-        buffer = window.buffer
-        if buffer.number == number:
-            has_same_buffer = True
-        if getBufType(buffer.number) == "":
-            count += 1
-            if count > 1:
-                break
-    if count <= 1:
+    if not has_same_buffer:
         vim.command("bp")
-    elif has_same_buffer:
+        vim.command("bd! " + str(number))
+    else:
         vim.command("quit!")
-        return
-    vim.command("bd! " + str(number))

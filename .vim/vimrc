@@ -173,11 +173,6 @@ let g:rust_fold = 1
 let g:php_folding = 1
 " }}}
 
-" Windows {{{
-if has("win32")
-    let g:python3_host_prog = $HOME . "/AppData/Local/Programs/Python/Python38/python.exe"
-endif
-
 " alias {{{
 command! Json set ft=json
 command! Jp set ft=jproperties
