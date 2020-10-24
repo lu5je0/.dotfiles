@@ -57,9 +57,13 @@ def closeBuffer():
         return
 
     if is_edit:
+        has_mac = int(vim.eval("has('mac')")) == 1
+        if has_mac:
+            vim.command("set guioptions+=c")
         confirm = int(vim.eval('''confirm("Close without saving?", "&No\n&Yes")'''))
+        if has_mac:
+            vim.command("set guioptions-=c")
         if confirm != 2:
-            print("Canceled")
             return
 
     count = 0
