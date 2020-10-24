@@ -15,6 +15,7 @@ vnoremap <silent> <localleader> :<c-u>WhichKeyVisual ','<CR>
 let g:which_key_map = {}
 
 " hide 1-9
+let g:which_key_map.0 = 'which_key_ignore'
 let g:which_key_map.1 = 'which_key_ignore'
 let g:which_key_map.2 = 'which_key_ignore'
 let g:which_key_map.3 = 'which_key_ignore'
@@ -54,8 +55,8 @@ let g:which_key_map.g = {
       \ 'A' : [':Git add -A', 'add all'],
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
-      \ 'g' : [':SignifyHunkDiff', 'SignifyHunkDiff'],
-      \ 'G' : [':SignifyHunkUndo', 'SignifyHunkDiff'],
+      \ 'g' : [':SignifyHunkDiff', 'show hunk diff'],
+      \ 'G' : [':SignifyHunkUndo', 'Undo git hunk'],
       \ 'd' : [':Git diff', 'diff'],
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'l' : [':Git log', 'log'],
@@ -63,6 +64,15 @@ let g:which_key_map.g = {
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],
       \ }
+
+nmap <leader>gj <plug>(signify-next-hunk)
+let g:which_key_map.g.j = 'next hunk'
+nmap <leader>gk <plug>(signify-prev-hunk)
+let g:which_key_map.g.k = 'prev hunk'
+nmap <leader>gJ 9999<leader>gj
+let g:which_key_map.g.J = 'first hunk'
+nmap <leader>gK 9999<leader>gk
+let g:which_key_map.g.K = 'last hunk'
 
 " vim toggle
 let g:which_key_map.v = {
