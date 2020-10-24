@@ -11,6 +11,7 @@ set nowrap " 默认不启用拆行
 set autoindent
 set number
 set laststatus=2
+set showtabline=2
 " set cursorline
 " 缩进
 set tabstop=4

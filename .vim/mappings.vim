@@ -2,15 +2,15 @@ let mapleader=","
 let g:terminal_key='<c-_>'
 
 " tab switch
-nnoremap <silent> <leader>1 1gt
-nnoremap <silent> <leader>2 2gt
-nnoremap <silent> <leader>3 3gt
-nnoremap <silent> <leader>4 4gt
-nnoremap <silent> <leader>5 5gt
-nnoremap <silent> <leader>6 6gt
-nnoremap <silent> <leader>7 7gt
-nnoremap <silent> <leader>8 8gt
-nnoremap <silent> <leader>9 9gt
+" nnoremap <silent> <leader>1 1gt
+" nnoremap <silent> <leader>2 2gt
+" nnoremap <silent> <leader>3 3gt
+" nnoremap <silent> <leader>4 4gt
+" nnoremap <silent> <leader>5 5gt
+" nnoremap <silent> <leader>6 6gt
+" nnoremap <silent> <leader>7 7gt
+" nnoremap <silent> <leader>8 8gt
+" nnoremap <silent> <leader>9 9gt
 
 " ctrl-c 复制
 vnoremap <C-c> y
@@ -91,3 +91,16 @@ map <c-m-p> <Plug>(VM-Add-Cursor-Up)
 
 nmap <F2> :bp<cr>
 nmap <F3> :bn<cr>
+nnoremap <PageUp>   :bprevious<CR>
+nnoremap <PageDown> :bnext<CR>
+
+nmap <Leader>1 <Plug>lightline#bufferline#go(1)
+nmap <Leader>2 <Plug>lightline#bufferline#go(2)
+nmap <Leader>3 <Plug>lightline#bufferline#go(3)
+nmap <Leader>4 <Plug>lightline#bufferline#go(4)
+nmap <Leader>5 <Plug>lightline#bufferline#go(5)
+nmap <Leader>6 <Plug>lightline#bufferline#go(6)
+nmap <Leader>7 <Plug>lightline#bufferline#go(7)
+nmap <Leader>8 <Plug>lightline#bufferline#go(8)
+nmap <Leader>9 <Plug>lightline#bufferline#go(9)
+nmap <Leader>0 <Plug>lightline#bufferline#go(10)

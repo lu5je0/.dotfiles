@@ -66,7 +66,7 @@ let g:which_key_map.g = {
 let g:which_key_map.v = {
       \ 'name' : '+Vim toggle' ,
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
-      \ 'v' : [':tabnew ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
+      \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'n' : [':set invnumber', 'toggle number'],
       \ 'd' : [':call ToggleDiff()', 'toggle diff'],
@@ -104,8 +104,7 @@ let g:which_key_map.c.B = "unbase64"
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
       \ 't' : [':ToggleTerminal', 'Open terminal'],
-      \ 's' : [':tab split', 'tab split'],
-      \ 'n' : [':tabnew', 'New tab'],
+      \ 'n' : [':enew', 'New tab'],
       \ }
 
 

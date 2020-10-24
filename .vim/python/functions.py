@@ -57,21 +57,24 @@ def closeBuffer():
         return
 
     if is_edit:
-        print("未保存！")
-    else:
-        count = 0
-        has_same_buffer = False
-        for window in vim.current.tabpage.windows:
-            buffer = window.buffer
-            if buffer.number == number:
-                has_same_buffer = True
-            if getBufType(buffer.number) == "":
-                count += 1
-                if count > 1:
-                    break
-        if count <= 1:
-            vim.command("bn")
-        elif has_same_buffer:
-            vim.command("quit")
+        confirm = int(vim.eval('''confirm("Close without saving?", "&No\n&Yes")'''))
+        if confirm != 2:
+            print("Canceled")
             return
-        vim.command("bd " + str(number))
+
+    count = 0
+    has_same_buffer = False
+    for window in vim.current.tabpage.windows:
+        buffer = window.buffer
+        if buffer.number == number:
+            has_same_buffer = True
+        if getBufType(buffer.number) == "":
+            count += 1
+            if count > 1:
+                break
+    if count <= 1:
+        vim.command("bp")
+    elif has_same_buffer:
+        vim.command("quit")
+        return
+    vim.command("bd! " + str(number))
