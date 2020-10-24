@@ -1,21 +1,3 @@
-" let g:lightline.active = {
-"     \ 'left': [ [ 'mode', 'paste' ],
-"     \           [ 'readonly', 'filename'] ],
-"     \ 'right': [ [ 'lineinfo' ],
-"     \            [ 'percent' ],
-"     \            [ 'fileformat', 'fileencoding', 'filetype' ] ] }
-
-" let g:lightline.inactive = {
-"     \ 'left': [ [ 'readonly', 'filename'] ],
-"     \ 'right': [ [ 'lineinfo' ],
-"     \            [ 'percent' ],
-"     \            [ 'fileformat', 'fileencoding', 'filetype' ] ] }
-
-" let g:lightline.component = {
-"     \ 'filetype': '%{&ft!=#""?&ft:"txt"}',
-"     \ 'lineinfo': '%3l:%-2c',
-"     \ }
-
 let g:lightline = {
       \ 'colorscheme': 'one',
       \ 'active': {
@@ -23,12 +5,18 @@ let g:lightline = {
       \ },
       \ 'tabline': {
       \   'left': [ ['buffers'] ],
+      \   'right': [ ['helloworld'] ],
       \ },
       \ 'component_expand': {
       \   'buffers': 'lightline#bufferline#buffers'
       \ },
       \ 'component_type': {
       \   'buffers': 'tabsel'
+      \ },
+      \ 'component': {
+      \   'filetype': '%{&ft!=#""?&ft:"txt"}',
+      \   'lineinfo': '%3l:%-2c',
+      \   'helloworld': 'Oh?',
       \ }
       \ }
 

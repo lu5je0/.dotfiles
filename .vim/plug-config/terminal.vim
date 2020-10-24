@@ -1,7 +1,11 @@
 let g:terminal_height=18
 tmap <S-Insert> <C-W>"+
 
-autocmd TerminalOpen * set nobuflisted
+if !has("nvim")
+    autocmd TerminalOpen * set nobuflisted
+else
+    autocmd TermOpen * set nobuflisted
+endif
 " imap <F5> <ESC>:AsyncRun -mode=term -pos=bottom python "$(VIM_FILEPATH)"<CR>
 if has("win32")
     nmap <F5> :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>

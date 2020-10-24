@@ -75,6 +75,6 @@ def closeBuffer():
     if count <= 1:
         vim.command("bp")
     elif has_same_buffer:
-        vim.command("quit")
+        vim.command("quit!")
         return
     vim.command("bd! " + str(number))
