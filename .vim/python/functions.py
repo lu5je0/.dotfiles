@@ -78,7 +78,8 @@ def closeBuffer():
         if confirm != 2:
             return
 
-    if not has_same_buffer:
+    # 一个tab页中有两个的buffer时，直接quit
+    if txt_window_count == 1:
         vim.command("bp")
         vim.command("bd! " + str(number))
     else:
