@@ -5,6 +5,10 @@ let g:lightline = {
       \   'right': [ [ 'lineinfo' ],
       \              [ 'encoding'] ]
       \ },
+      \ 'inactive': {
+      \   'right': [ [ 'lineinfo' ],
+      \              [ 'encoding'] ]
+      \ },
       \ 'tabline': {
       \   'left': [ ['buffers'] ],
       \   'right': [ ['close'] ],
