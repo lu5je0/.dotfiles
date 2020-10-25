@@ -4,6 +4,7 @@ let g:fern#renderer = "nerdfont"
 let g:fern#disable_drawer_smart_quit = 0
 let g:fern#renderer#nerdfont#root_symbol = "≡ "
 let g:fern#disable_viewer_spinner=1
+let g:fern#default_exclude = '\.\(swp\|git\)'
 
 function! s:init_fern() abort
   " hi FernBranchText ctermfg=16 guifg=#61afef
