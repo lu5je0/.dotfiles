@@ -1,11 +1,13 @@
 let g:lightline = {
       \ 'colorscheme': 'ayu_mirage',
       \ 'active': {
-      \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename', 'modified' ] ]
+      \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename'] ],
+      \   'right': [ [ 'lineinfo' ],
+      \              [ 'encoding'] ]
       \ },
       \ 'tabline': {
       \   'left': [ ['buffers'] ],
-      \   'right': [ ['helloworld'] ],
+      \   'right': [ ['close'] ],
       \ },
       \ 'component_expand': {
       \   'buffers': 'lightline#bufferline#buffers'
@@ -15,7 +17,8 @@ let g:lightline = {
       \ },
       \ 'component': {
       \   'filetype': '%{&ft!=#""?&ft:"txt"}',
-      \   'lineinfo': '%3l:%-2c',
+      \   'lineinfo': '%2p%% ☰ %2l:%L :%2c',
+      \   'encoding': '%{&fenc!=#""?&fenc:&enc}[%{&ff}]',
       \   'helloworld': 'Oh?',
       \ }
       \ }

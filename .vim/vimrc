@@ -73,7 +73,7 @@ Plug 'itchyny/lightline.vim'
 " Plug 'tomtom/tlib_vim'
 
 " themes
-" Plug 'rakr/vim-one'
+Plug 'rakr/vim-one'
 Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
 Plug 'ayu-theme/ayu-vim'
