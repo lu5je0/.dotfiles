@@ -73,16 +73,11 @@ Plug 'itchyny/lightline.vim'
 " Plug 'tomtom/tlib_vim'
 
 " themes
-Plug 'rakr/vim-one'
+" Plug 'rakr/vim-one'
 Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
-Plug 'jacoborus/tender.vim'
-Plug 'dunstontc/vim-vscode-theme'
-Plug 'blueshirts/darcula'
-Plug 'rakr/vim-two-firewatch'
-Plug 'lifepillar/vim-solarized8'
-Plug 'srcery-colors/srcery-vim'
-Plug 'Marfisc/vorange'
+Plug 'ayu-theme/ayu-vim'
+let ayucolor="mirage"
 
 call plug#end()
 " }}}
@@ -191,7 +186,7 @@ command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
-colorscheme one
+colorscheme ayu
 set bg=dark
 " }}}
 

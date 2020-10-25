@@ -1,5 +1,5 @@
 let g:lightline = {
-      \ 'colorscheme': 'one',
+      \ 'colorscheme': 'ayu_mirage',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename', 'modified' ] ]
       \ },
