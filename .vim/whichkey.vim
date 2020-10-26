@@ -56,7 +56,7 @@ let g:which_key_map.g = {
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
       \ 'g' : [':SignifyHunkDiff', 'show hunk diff'],
-      \ 'G' : [':SignifyHunkUndo', 'Undo git hunk'],
+      \ 'u' : [':SignifyHunkUndo', 'Undo git hunk'],
       \ 'd' : [':Git diff', 'diff'],
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'l' : [':Git log', 'log'],

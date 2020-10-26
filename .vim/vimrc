@@ -186,7 +186,7 @@ command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
-colorscheme ayu
+colorscheme one
 set bg=dark
 " }}}
 

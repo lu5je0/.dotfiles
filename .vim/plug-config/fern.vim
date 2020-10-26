@@ -26,6 +26,7 @@ function! s:init_fern() abort
   "             \   "\<Plug>(fern-action-expand)",
   "             \ )
   " nmap <buffer> l <Plug>(fern-my-open-or-expand)
+  unmap n
   nmap <buffer> <C-L> <C-W>l
   nmap <buffer> <C-H> <C-W>h
   nmap <buffer> o <Plug>(fern-action-open-or-expand)

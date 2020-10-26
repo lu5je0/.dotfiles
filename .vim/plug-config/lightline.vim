@@ -1,5 +1,5 @@
 let g:lightline = {
-      \ 'colorscheme': 'ayu_mirage',
+      \ 'colorscheme': 'one',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'filename'] ],
       \   'right': [ [ 'lineinfo' ],
@@ -11,7 +11,7 @@ let g:lightline = {
       \ },
       \ 'tabline': {
       \   'left': [ ['buffers'] ],
-      \   'right': [ ['close'] ],
+      \   'right': [ ['tab'] ],
       \ },
       \ 'component_expand': {
       \   'buffers': 'lightline#bufferline#buffers'
@@ -23,7 +23,7 @@ let g:lightline = {
       \   'filetype': '%{&ft!=#""?&ft:"txt"}',
       \   'lineinfo': '%2p%% ☰ %2l:%L :%2c',
       \   'encoding': '%{&fenc!=#""?&fenc:&enc}[%{&ff}]',
-      \   'helloworld': 'Oh?',
+      \   'tab': 'Buffers',
       \ }
       \ }
 
