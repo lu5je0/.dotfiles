@@ -30,7 +30,8 @@ let g:which_key_map.9 = 'which_key_ignore'
 let g:which_key_map.q = [ 'CloseBuffer', 'close buffer' ]
 let g:which_key_map.u = [':UndotreeToggle', 'Undotree']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
-
+let g:which_key_map.d = 'buffer switch'
+nmap <leader>d <c-^>
 
 " :Fern {url} -drawer [-opener={opener}] [-reveal={reveal}] [-stay] [-wait] [-width=30] [-keep] [-toggle]
 let g:which_key_map.e = {

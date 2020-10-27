@@ -68,7 +68,8 @@ def closeBuffer():
             if txt_window_count > 1:
                 break
 
-    if is_edit and not has_same_buffer:
+    # 如果编辑过buffer，则需要确认
+    if is_edit and txt_window_count == 1:
         has_mac = int(vim.eval("has('mac')")) == 1
         if has_mac:
             vim.command("set guioptions+=c")
@@ -83,4 +84,4 @@ def closeBuffer():
         vim.command("bp")
         vim.command("bd! " + str(number))
     else:
-        vim.command("quit!")
+        vim.command("q")
