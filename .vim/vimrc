@@ -7,9 +7,6 @@ Plug 'Raimondi/delimitMate'
 Plug 'roxma/nvim-ascript'
 " Plug 'mhinz/vim-startify'
 
-" Plug 'jistr/vim-nerdtree-tabs', {'on': 'NERDTreeTabsToggle'}
-" Plug 'preservim/nerdtree'
-
 " fern
 Plug 'lambdalisue/fern.vim'
 Plug 'lu5je0/fern-renderer-nerdfont.vim'
@@ -30,7 +27,6 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
 Plug 'lu5je0/vim-java-bytecode'
-" Plug 'ervandew/supertab'
 Plug 'vim-scripts/ReplaceWithRegister'
 " Peekaboo extends " and @ in normal mode and <CTRL-R> in insert mode so you can see the contents of the registers.
 Plug 'junegunn/vim-peekaboo'
@@ -60,17 +56,6 @@ Plug 'chiedo/vim-case-convert'
 " Plug 'lilydjwg/colorizer'
 
 Plug 'itchyny/lightline.vim'
-" Plug 'vim-airline/vim-airline'
-" Plug 'vim-airline/vim-airline-themes'
-
-" 自动弹出pop
-" Plug 'vim-scripts/AutoComplPop'
-
-" snipmate
-" Plug 'garbas/vim-snipmate'
-" Plug 'honza/vim-snippets'
-" Plug 'MarcWeber/vim-addon-mw-utils'
-" Plug 'tomtom/tlib_vim'
 
 " themes
 Plug 'rakr/vim-one'
