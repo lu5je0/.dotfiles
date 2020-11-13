@@ -6,6 +6,7 @@ if has("gui_running") && !has("gui_vimr")
         " set guifont=JetBrainsMono:h15
     elseif has("win32")
         set guifont=Consolas\ NF:h12
+        set guifontwide=Microsoft_Yahei_Mono:h12
     endif
 
     set guioptions-=m " 隐藏菜单栏
