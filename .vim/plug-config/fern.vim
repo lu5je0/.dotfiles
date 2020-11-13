@@ -28,6 +28,8 @@ function! s:init_fern() abort
   " nmap <buffer> l <Plug>(fern-my-open-or-expand)
   nmap <buffer> <C-L> <C-W>l
   nmap <buffer> <C-H> <C-W>h
+  nmap <buffer> <C-J> <C-W>j
+  nmap <buffer> <C-K> <C-W>k
   nmap <buffer> o <Plug>(fern-action-open-or-expand)
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
