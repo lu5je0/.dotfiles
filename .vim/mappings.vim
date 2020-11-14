@@ -77,11 +77,9 @@ tmap <D-i> <c-\><c-n>:call TerminalToggle()<CR>
 
 " nvim todo
 
-" vim-translator
-nmap <silent> <Leader>s <Plug>TranslateW
-vmap <silent> <Leader>s <Plug>TranslateWV
-nmap <silent> <m-s> <Plug>TranslateW
-vmap <silent> <m-s> <Plug>TranslateWV
+" popup
+nmap <Leader>s <Plug>(coc-translator-p)
+vmap <Leader>s <Plug>(coc-translator-pv)
 
 " visual-multi
 map <c-d-n> <Plug>(VM-Add-Cursor-Down)
