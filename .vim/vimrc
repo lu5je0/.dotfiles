@@ -5,6 +5,7 @@ Plug 'mengelbrecht/lightline-bufferline'
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
 Plug 'roxma/nvim-ascript'
+Plug 'neoclide/jsonc.vim'
 " Plug 'mhinz/vim-startify'
 
 " fern
@@ -89,6 +90,7 @@ runtime plug-config/lightline.vim
 " autocmd {{{
 autocmd FileType vim setlocal foldmethod=marker
 autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
+autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
 
 " 超过最大的文件大小后禁用语法高亮
 augroup LargeFile
