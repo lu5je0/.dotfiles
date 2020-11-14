@@ -105,5 +105,5 @@ nmap <Leader>8 <Plug>lightline#bufferline#go(8)
 nmap <Leader>9 <Plug>lightline#bufferline#go(9)
 nmap <Leader>0 <Plug>lightline#bufferline#go(10)
 
-map <space> <c-d>
-map m <c-u>
+map <space> <c-u>
+map m <c-d>
