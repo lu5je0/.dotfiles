@@ -40,4 +40,4 @@ nmap <leader>rn <Plug>(coc-rename)
 
 autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 
-let g:coc_global_extensions = ['coc-json', 'coc-python', 'coc-snippets', 'coc-sql']
+let g:coc_global_extensions = ['coc-json', 'coc-python', 'coc-snippets', 'coc-sql', 'coc-translator']
