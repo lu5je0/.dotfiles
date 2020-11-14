@@ -107,3 +107,4 @@ nmap <Leader>0 <Plug>lightline#bufferline#go(10)
 
 map <space> <c-u>
 map m <c-d>
+map M <c-u>
