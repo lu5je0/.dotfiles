@@ -12,3 +12,5 @@ ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
 ln -s ~/.dotfiles/.vim/coc-settings.json ~/.config/nvim/coc-settings.json
 
 cp ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes
+
+ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
