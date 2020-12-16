@@ -1,8 +1,9 @@
 from ctypes import c_char_p
 import ctypes
 import time
+import os
 
-lib = ctypes.CDLL("/Users/lu5je0/Desktop/libinput-source-switcher.dylib")
+lib = ctypes.CDLL(os.environ['HOME'] + "/.dotfiles/lib/libinput-source-switcher.dylib")
 lib.getCurrentInputSourceID.restype = c_char_p
 
 def getCurrentInputSourceID():
