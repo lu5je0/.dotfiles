@@ -1,7 +1,6 @@
 set ignorecase
 set clipboard+=unnamed
-set keep-english-in-normal-and-restore-in-insert
-
+set keep-english-in-normal
 # plugins
 set surround
 set commentary
@@ -46,6 +45,7 @@ map <leader>i :action Inline<CR>
 map <leader>s :action $EditorTranslateAction<CR>
 map <leader>u :action GotoSuperMethod<CR>
 map <leader>n :action GotoImplementation<CR>
+map <leader>cf :action ReformatCode<CR>
 
 # windows multiple0-cursors key maps
 nmap <c-n> <A-n>
