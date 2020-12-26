@@ -77,6 +77,8 @@ vmap L $
 omap H ^
 omap L $
 
+nmap Y ^y$
+
 omap ij i"
 omap oj o"
 vmap ij i"
@@ -98,7 +100,6 @@ nmap <c-k> <c-w>j
 " git
 map <leader>gu <Action>(Vcs.RollbackChangedLines)
 map <leader>ga <Action>(Annotate)
-map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 
 " navicat
 nmap [c <Action>(VcsShowPrevChangeMarker)
