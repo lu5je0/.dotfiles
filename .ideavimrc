@@ -41,11 +41,14 @@ map <leader>r :action Replace<CR>
 map <leader>f :action Find<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
-map <leader>i :action Inline<CR>
 map <leader>s :action $EditorTranslateAction<CR>
 map <leader>u :action GotoSuperMethod<CR>
 map <leader>n :action GotoImplementation<CR>
+
+# code
 map <leader>cf :action ReformatCode<CR>
+map <leader>i :action Inline<CR>
+map <leader>cr <Action>(RenameElement)
 
 # windows multiple0-cursors key maps
 nmap <c-n> <A-n>
@@ -67,8 +70,6 @@ vmap <m-p> <A-p>
 nmap <c-o> :action Back<CR>
 nmap <c-i> :action Forward<CR>
 
-nmap <tab> <c-w>
-
 nmap H ^
 nmap L $
 vmap H ^
@@ -84,7 +85,9 @@ vmap oj o"
 imap <m-j> <c-n>
 imap <m-k> <c-p>
 
-# windows keymapping
+noremap <leader>vv :open ~/.ideavimrc<CR>
+
+# window keymapping
 nmap <leader>ws :vsplit<CR>
 nmap <leader>wS :split<CR>
 nmap <c-h> <c-w>h
@@ -92,4 +95,11 @@ nmap <c-l> <c-w>l
 nmap <c-j> <c-w>j
 nmap <c-k> <c-w>j
 
-map <leader>gu :action Vcs.RollbackChangedLines<CR>
+" git
+map <leader>gu <Action>(Vcs.RollbackChangedLines)
+map <leader>ga <Action>(Annotate)
+map <leader>gg <Action>(VcsShowCurrentChangeMarker)
+
+" navicat
+nmap [c <Action>(VcsShowPrevChangeMarker)
+nmap ]c <Action>(VcsShowNextChangeMarker)
