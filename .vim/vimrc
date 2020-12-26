@@ -3,10 +3,9 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'mengelbrecht/lightline-bufferline'
 Plug 'tpope/vim-surround'
-Plug 'Raimondi/delimitMate'
+Plug 'jiangmiao/auto-pairs'
 Plug 'roxma/nvim-ascript'
 Plug 'neoclide/jsonc.vim'
-" Plug 'mhinz/vim-startify'
 
 " fern
 Plug 'lambdalisue/fern.vim'
@@ -88,6 +87,7 @@ runtime plug-config/lightline.vim
 
 " autocmd {{{
 autocmd FileType vim setlocal foldmethod=marker
+autocmd FileType * set formatoptions-=o
 autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
 autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
 
@@ -107,6 +107,10 @@ vmap V <Plug>(expand_region_shrink)
 
 " vim-json {{{
 let g:vim_json_syntax_conceal = 0
+" }}}
+
+" auto-paris {{{
+let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
 " }}}
 
 " vim-signify {{{
