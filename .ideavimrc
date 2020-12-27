@@ -37,7 +37,6 @@ nnoremap <silent> <leader>9 9gt
 nmap <leader>vs :action IdeaVim.ReloadVimRc.reload<CR>
 
 map <leader>e :action ActivateProjectToolWindow<CR>
-map <leader>r :action Replace<CR>
 map <leader>f :action Find<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
@@ -48,7 +47,7 @@ map <leader>n :action GotoImplementation<CR>
 # code
 map <leader>cf :action ReformatCode<CR>
 map <leader>i :action Inline<CR>
-map <leader>cr <Action>(RenameElement)
+map <leader>r <Action>(RenameElement)
 
 # windows multiple0-cursors key maps
 nmap <c-n> <A-n>
