@@ -12,7 +12,6 @@ set highlightedyank
 set exchange
 set ideajoin
 set ideamarks
-set idearefactormode=keep
 
 " 按键映射
 let mapleader=","
