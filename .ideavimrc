@@ -86,7 +86,7 @@ vmap oj o"
 imap <m-j> <c-n>
 imap <m-k> <c-p>
 
-noremap <leader>vv :open ~/.ideavimrc<CR>
+noremap <leader>vv :e ~/.ideavimrc<CR>
 
 # window keymapping
 nmap <leader>ws :vsplit<CR>
