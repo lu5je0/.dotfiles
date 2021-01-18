@@ -16,6 +16,11 @@ set ideamarks
 " 按键映射
 let mapleader=","
 
+" 搜索
+nmap / :action Find<CR>
+nmap <leader>fm :action RecentChangedFiles<CR>
+nmap <leader>ff :action GotoFile<CR>
+
 vmap < <gv
 vmap > >gv
 
@@ -37,7 +42,6 @@ nnoremap <silent> <leader>9 9gt
 nmap <leader>vs :action IdeaVim.ReloadVimRc.reload<CR>
 
 map <leader>e :action ActivateProjectToolWindow<CR>
-map <leader>f :action Find<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
 map <leader>s :action $EditorTranslateAction<CR>
@@ -107,6 +111,7 @@ nmap <c-k> <c-w>j
 " git
 map <leader>gu <Action>(Vcs.RollbackChangedLines)
 map <leader>ga <Action>(Annotate)
+map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 
 " navicat
 nmap [c <Action>(VcsShowPrevChangeMarker)
