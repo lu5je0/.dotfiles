@@ -46,8 +46,16 @@ map <leader>n :action GotoImplementation<CR>
 
 # code
 map <leader>cf :action ReformatCode<CR>
+map <leader>cr <Action>(RenameElement)
 map <leader>i :action Inline<CR>
-map <leader>r <Action>(RenameElement)
+
+# run
+nnoremap <leader>re :action ChooseRunConfiguration<CR>
+nnoremap <leader>rc :action CompileDirty<CR>
+nnoremap <leader>rD :action Debug<CR>
+nnoremap <leader>rd :action DebugClass<CR>
+nnoremap <leader>rR :action Run<CR>
+nnoremap <leader>rr :action RunClass<CR>
 
 # windows multiple0-cursors key maps
 nmap <c-n> <A-n>
