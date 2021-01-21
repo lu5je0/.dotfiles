@@ -1,6 +1,6 @@
 set ignorecase
 set clipboard+=unnamed
-set keep-english-in-normal-and-restore-in-insert
+set keep-english-in-normal
 # plugins
 set surround
 set commentary
