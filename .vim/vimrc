@@ -21,7 +21,8 @@ Plug 'kana/vim-textobj-user'
 Plug 'sgur/vim-textobj-parameter'
 Plug 'kana/vim-textobj-entire'
 Plug 'mhinz/vim-signify'
-Plug 'Chiel92/vim-autoformat'
+Plug 'voldikss/vim-translator'
+Plug 'ervandew/supertab'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
@@ -40,8 +41,9 @@ Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 Plug 'lu5je0/vim-base64'
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+" Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
 " save with sudo
 Plug 'lambdalisue/suda.vim'
 if !has("gui") && !has("mac")
@@ -75,14 +77,11 @@ endif
 runtime gvim.vim
 runtime functions.vim
 runtime plug-config/fern.vim
-" runtime plug-config/nerdtree.vim
-" runtime plug-config/defx.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
-" runtime plug-config/airline.vim
-runtime plug-config/coc.vim
 runtime plug-config/lightline.vim
+" runtime plug-config/coc.vim
 " }}}
 
 " autocmd {{{

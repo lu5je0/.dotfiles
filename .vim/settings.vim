@@ -36,3 +36,6 @@ set backspace=indent,eol,start
 
 " 彻底关闭bell
 set noeb
+
+" 补全时默认不选中
+set cot=noinsert,menu
