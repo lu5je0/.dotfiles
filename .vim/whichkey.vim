@@ -81,7 +81,7 @@ nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV
 " Display translation in a window
 nmap <silent> <Leader>ss <Plug>TranslateW
-vmap <silent> <Leader>sc <Plug>TranslateWV
+vmap <silent> <Leader>ss <Plug>TranslateWV
 " Replace the text with translation
 nmap <silent> <Leader>sr <Plug>TranslateR
 vmap <silent> <Leader>sr <Plug>TranslateRV
