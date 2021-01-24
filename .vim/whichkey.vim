@@ -75,6 +75,19 @@ let g:which_key_map.g.J = 'first hunk'
 nmap <leader>gK 9999<leader>gk
 let g:which_key_map.g.K = 'last hunk'
 
+""" Configuration example
+" Echo translation in the cmdline
+nmap <silent> <Leader>sc <Plug>Translate
+vmap <silent> <Leader>sc <Plug>TranslateV
+" Display translation in a window
+nmap <silent> <Leader>ss <Plug>TranslateW
+vmap <silent> <Leader>sc <Plug>TranslateWV
+" Replace the text with translation
+nmap <silent> <Leader>sr <Plug>TranslateR
+vmap <silent> <Leader>sr <Plug>TranslateRV
+" Translate the text in clipboard
+nmap <silent> <Leader>sy <Plug>TranslateX
+
 " vim toggle
 let g:which_key_map.v = {
       \ 'name' : '+Vim toggle' ,
