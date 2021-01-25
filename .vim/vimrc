@@ -112,10 +112,6 @@ let g:vim_json_syntax_conceal = 0
 let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
 " }}}
 
-" vim-signify {{{
-set updatetime=1000 " 设置vim更新时间，主要用于更新gitgutter
-" }}}
-
 " vim-textobj-parameter {{{
 let g:vim_textobj_parameter_mapping = 'a'
 " }}}
