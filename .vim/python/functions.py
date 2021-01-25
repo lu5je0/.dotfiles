@@ -1,9 +1,9 @@
 import vim
 import time
 import re
-import jsbeautifier
 
 def jsonFormat():
+    import jsbeautifier
     buffer = vim.current.buffer
     json = "".join(buffer)
 
