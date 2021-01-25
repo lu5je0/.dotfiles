@@ -115,6 +115,13 @@ EOF
 endfunction
 command! -nargs=* KeepLines call KeepLines(<f-args>)
 
+function! JsonFormat(...)
+python3 << EOF
+functions.jsonFormat()
+EOF
+endfunction
+command! -nargs=* JsonFormat call JsonFormat(<f-args>)
+
 function! DelLines(...)
 python3 << EOF
 functions.delLines(vim.eval("a:000"))
@@ -157,9 +164,3 @@ function! FileSize()
     return bytes . 'B '
   endif
 endfunction
-
-command! JsonFormat :execute '%!python -m json.tool'
-  \ | :execute '%!python -c "import re,sys;chr=__builtins__.__dict__.get(\"unichr\", chr);sys.stdout.write(re.sub(r\"\\u[0-9a-f]{4}\", lambda x: chr(int(\"0x\" + x.group(0)[2:], 16)), sys.stdin.read()))"'
-  \ | :%s/ \+$//ge
-  \ | :norm! gg=G
-  \ | :1

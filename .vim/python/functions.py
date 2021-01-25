@@ -1,6 +1,18 @@
 import vim
 import time
 import re
+import jsbeautifier
+
+def jsonFormat():
+    buffer = vim.current.buffer
+    json = "".join(buffer)
+
+    opts = jsbeautifier.default_options()
+    opts.indent_size = 2
+    opts.space_in_empty_paren = True
+    res = jsbeautifier.beautify(json, opts).split('\n')
+
+    buffer[0:len(res)] = res
 
 def keepLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
