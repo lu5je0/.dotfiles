@@ -44,7 +44,8 @@ nmap <leader>vs :action IdeaVim.ReloadVimRc.reload<CR>
 map <leader>e :action ActivateProjectToolWindow<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
-map <leader>s :action $EditorTranslateAction<CR>
+map <leader>ss :action $EditorTranslateAction<CR>
+map <leader>sr :action $TranslateAndReplaceAction<CR>
 map <leader>u :action GotoSuperMethod<CR>
 map <leader>n :action GotoImplementation<CR>
 
