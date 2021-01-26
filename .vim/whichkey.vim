@@ -140,7 +140,7 @@ let g:which_key_map.f = {
       \ 'f' : [':Leaderf file', 'file'],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
-      \ 'm' : [':Leaderf mru', 'mru'],
+      \ 'm' : [':Leaderf --nowrap mru', 'mru'],
       \ 'W' : [':SudaWrite', 'sudo-write'],
       \ 'w' : [':w', 'write'],
       \ 'l' : [':Leaderf line', 'line'],
