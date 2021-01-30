@@ -5,7 +5,7 @@ ZSH_THEME="lu5je0"
 DISABLE_AUTO_UPDATE="true"
 VI_MODE_SET_CURSOR="true"
 
-plugins=(git vi-mode)
+plugins=(git vi-mode zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 source ~/.ohmyenv

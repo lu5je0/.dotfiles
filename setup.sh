@@ -15,3 +15,5 @@ cp ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 rm ~/.dotfiles/.vim/.vim
+
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
