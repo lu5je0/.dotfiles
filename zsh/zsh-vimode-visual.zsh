@@ -911,6 +911,7 @@ bindkey -M vivis 'R'  vi-visual-substitute-lines
 bindkey -M vivis 'S ' vi-visual-surround-space
 bindkey -M vivis 'S"' vi-visual-surround-dquote
 bindkey -M vivis 'S(' vi-visual-surround-parenthesis
+bindkey -M vivis 'Sb' vi-visual-surround-parenthesis
 bindkey -M vivis 'S)' vi-visual-surround-parenthesis
 bindkey -M vivis 'T'  vi-visual-find-prev-char-skip
 bindkey -M vivis 'U'  vi-visual-uppercase-region

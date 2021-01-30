@@ -9,7 +9,9 @@ plugins=(git vi-mode zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 source ~/.ohmyenv
-source ~/.dotfiles/zsh/zsh-vimode-visual.zsh
+# source ~/.dotfiles/zsh/zsh-vimode-visual.zsh
+MODE_INDICATOR=""
+source "$HOME/.dotfiles/zsh/zsh-vim-mode.plugin.zsh"
 
 # zsh key mappings
 bindkey "^[[5~" history-beginning-search-backward
