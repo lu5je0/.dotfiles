@@ -5,7 +5,7 @@ bindkey -N vivis
 get-x-clipboard()
 {
     local clippaste clipboard
-    if [ $DISABLE_ZSH_VI_VISUAL_MODE ]; then
+    if [ $DISABLE_ZSH_VI_VISUAL_MODE = 0 ]; then
         return 1
     elif (( $+commands[pbpaste] )); then
         clippaste="pbpaste"
@@ -25,7 +25,7 @@ get-x-clipboard()
 set-x-clipboard()
 {
     local clipcopy clipboard
-    if [ $DISABLE_ZSH_VI_VISUAL_MODE ]; then
+    if [ $DISABLE_ZSH_VI_VISUAL_MODE = 1 ]; then
         return 1
     elif (( $+commands[pbcopy] )); then
         clipcopy="pbcopy"
