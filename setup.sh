@@ -2,7 +2,8 @@ ln -s ~/.dotfiles/.vim ~/.vim
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
-ln -s ~/.dotfiles/.pip ~/.pip
+mkdir -p ~/.pip
+ln -s ~/.dotfiles/.pip/pip.conf ~/.pip/pip.conf
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
 
 # nvim
