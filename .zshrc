@@ -57,3 +57,5 @@ export LS_COLORS
 bindkey -a H vi-first-non-blank
 bindkey -a L vi-end-of-line
 export KEYTIMEOUT=1
+
+tmux ls
