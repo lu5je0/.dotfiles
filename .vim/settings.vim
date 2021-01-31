@@ -39,3 +39,8 @@ set noeb
 
 " 补全时默认不选中
 set cot=noinsert,menuone
+
+" 自动打开上次位置
+if has("autocmd")  
+    au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif  
+endif 
