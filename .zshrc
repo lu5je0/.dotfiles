@@ -5,11 +5,10 @@ ZSH_THEME="lu5je0"
 DISABLE_AUTO_UPDATE="true"
 VI_MODE_SET_CURSOR="true"
 
-plugins=(git vi-mode)
+plugins=(git zsh-syntax-highlighting vi-mode z git-open zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 source ~/.ohmyenv
-source ~/.dotfiles/zsh/zsh-vimode-visual.zsh
 
 # zsh key mappings
 bindkey "^[[5~" history-beginning-search-backward
@@ -17,6 +16,12 @@ bindkey "^[[6~" history-beginning-search-forward
 
 # alias
 alias pc="proxychains4 -q"
+# tmux
+alias ta="tmux attach -t"
+alias td="tmux detach"
+alias tl="tmux ls"
+alias tkss="tmux kill-session -t"
+alias ts="tmux new-session -s"
 
 # mac
 if [ "$(uname)" = "Darwin" ]; then
@@ -28,6 +33,10 @@ if [ "$(uname)" = "Darwin" ]; then
     alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
     alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
     export JAVA_HOME=$JAVA_HOME_11
+elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
+    clippaste () {
+        powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
+    }
 fi
 
 # nvim
@@ -45,8 +54,8 @@ LS_COLORS="rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:c
 export LS_COLORS
 
 # vi mode
-
-# bindind
 bindkey -a H vi-first-non-blank
 bindkey -a L vi-end-of-line
 export KEYTIMEOUT=1
+
+tmux ls
