@@ -18,3 +18,4 @@ ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 rm ~/.dotfiles/.vim/.vim
 
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+git clone https://github.com/paulirish/git-open.git ~/.oh-my-zsh/custom/plugins/git-open
