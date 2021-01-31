@@ -171,8 +171,8 @@ command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
-colorscheme gruvbox
-let g:lightline.colorscheme = 'gruvbox'
+colorscheme one
+let g:lightline.colorscheme = 'one'
 set bg=dark
 " }}}
 
