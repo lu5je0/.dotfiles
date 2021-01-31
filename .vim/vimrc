@@ -3,7 +3,9 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'mengelbrecht/lightline-bufferline'
 Plug 'tpope/vim-surround'
-Plug 'jiangmiao/auto-pairs'
+if !has("gui_macvim")
+    Plug 'jiangmiao/auto-pairs'
+endif
 Plug 'roxma/nvim-ascript'
 Plug 'neoclide/jsonc.vim'
 
