@@ -3,7 +3,9 @@ call plug#begin('~/.vim/plugged')
 
 Plug 'mengelbrecht/lightline-bufferline'
 Plug 'tpope/vim-surround'
-Plug 'jiangmiao/auto-pairs'
+if !has("gui_macvim")
+    Plug 'jiangmiao/auto-pairs'
+endif
 Plug 'roxma/nvim-ascript'
 Plug 'neoclide/jsonc.vim'
 
@@ -63,8 +65,8 @@ Plug 'rakr/vim-one'
 Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
 Plug 'ayu-theme/ayu-vim'
-let ayucolor="mirage"
-
+Plug 'w0ng/vim-hybrid'
+" Plug 'cocopon/lightline-hybrid.vim'
 call plug#end()
 " }}}
 
@@ -172,6 +174,7 @@ command! Diffo windo diffo
 
 " 主题配置 {{{
 colorscheme one
+let g:lightline.colorscheme = 'one'
 set bg=dark
 " }}}
 
