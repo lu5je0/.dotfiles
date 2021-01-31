@@ -6,6 +6,9 @@ mkdir -p ~/.pip
 ln -s ~/.dotfiles/.pip/pip.conf ~/.pip/pip.conf
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
 
+mkdir -p ~/.aria2
+ln -s ~/.dotfiles/.aria2/aria2.conf ~/.aria2/aria2.conf
+
 # nvim
 mkdir ~/.local/share/nvim
 ln -s ~/.dotfiles/.vim ~/.local/share/nvim/site
