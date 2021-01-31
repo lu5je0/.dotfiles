@@ -3,14 +3,11 @@ export ZSH=$HOME"/.oh-my-zsh"
 ZSH_THEME="lu5je0"
 
 DISABLE_AUTO_UPDATE="true"
-VI_MODE_SET_CURSOR="true"
 
-plugins=(git vi-mode zsh-syntax-highlighting)
+plugins=(git zsh-syntax-highlighting vi-mode)
 
 source $ZSH/oh-my-zsh.sh
 source ~/.ohmyenv
-MODE_INDICATOR=""
-source "$HOME/.dotfiles/zsh/zsh-vim-mode.plugin.zsh"
 
 # zsh key mappings
 bindkey "^[[5~" history-beginning-search-backward
@@ -18,6 +15,12 @@ bindkey "^[[6~" history-beginning-search-forward
 
 # alias
 alias pc="proxychains4 -q"
+# tmux
+alias ta="tmux attach -t"
+alias td="tmux detach"
+alias tl="tmux ls"
+alias tkss="tmux kill-session -t"
+alias ts="tmux new-session -s"
 
 # mac
 if [ "$(uname)" = "Darwin" ]; then
