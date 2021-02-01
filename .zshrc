@@ -33,6 +33,7 @@ if [ "$(uname)" = "Darwin" ]; then
     alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
     alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
     export JAVA_HOME=$JAVA_HOME_11
+    ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
     clippaste () {
         powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
