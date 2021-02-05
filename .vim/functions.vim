@@ -30,6 +30,21 @@ function! ToggleDiff()
     endif
 endfunction
 
+function! TogglePaste()
+    if !exists("g:TogglePaste")
+        let g:TogglePaste = 0
+    endif
+    if g:TogglePaste == 0
+        set paste!
+        let g:TogglePaste = 1
+        echo "paste mode"
+    else
+        set paste!
+        let g:TogglePaste = 0
+        echo "disable paste mode"
+    endif
+endfunction
+
 function! IsVisualMode()
     if mode() == "v"
         return "'<,'>"

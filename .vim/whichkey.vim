@@ -96,6 +96,7 @@ let g:which_key_map.v = {
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'n' : [':set invnumber', 'toggle number'],
       \ 'd' : [':call ToggleDiff()', 'toggle diff'],
+      \ 'p' : [':call TogglePaste()', 'toggle paste'],
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ }
