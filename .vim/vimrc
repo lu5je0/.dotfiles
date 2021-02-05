@@ -47,7 +47,10 @@ Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 " save with sudo
-Plug 'lambdalisue/suda.vim'
+if !has("win32")
+    Plug 'lambdalisue/suda.vim'
+endif
+
 if !has("gui") && !has("mac")
     Plug 'brglng/vim-im-select'
 endif
