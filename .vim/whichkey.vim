@@ -101,6 +101,12 @@ let g:which_key_map.v = {
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ }
 
+" g is for git
+let g:which_key_map.r = {
+      \ 'name' : '+run' ,
+      \ }
+let g:which_key_map.r.r = "run"
+
 " Visual Mode mappings
 vmap <silent> <leader>cB :<c-u>call base64#v_atob()<cr>
 vmap <silent> <leader>cb :<c-u>call base64#v_btoa()<cr>

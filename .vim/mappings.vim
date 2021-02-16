@@ -95,3 +95,9 @@ nmap <Leader>7 <Plug>lightline#bufferline#go(7)
 nmap <Leader>8 <Plug>lightline#bufferline#go(8)
 nmap <Leader>9 <Plug>lightline#bufferline#go(9)
 nmap <Leader>0 <Plug>lightline#bufferline#go(10)
+
+if has("win32")
+    nmap <leader>rr :AsyncRun -moderterm -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>
+else
+    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
+endif
