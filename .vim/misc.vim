@@ -15,14 +15,14 @@ endfunc
 " Open junk file.
 command! -nargs=0 JunkFile call s:open_junk_file()
 function! s:open_junk_file()
-	let junk_dir = '~/.vim/junk'
+	let junk_dir = '~/junk-file'
 	let junk_dir = junk_dir . strftime('/%Y/%m')
 	let real_dir = expand(junk_dir)
 	if !isdirectory(real_dir)
 		call mkdir(real_dir, 'p')
 	endif
 
-	let filename = junk_dir.strftime('/%Y-%m-%d-%H%M%S.')
+	let filename = junk_dir . strftime('/%Y-%m-%d-%H%M%S.')
 	let filename = tr(filename, '\', '/')
 	let filename = input('Junk Code: ', filename)
 	if filename != ''
@@ -32,7 +32,7 @@ endfunction
 
 command! -nargs=0 JunkList call s:open_junk_list()
 function! s:open_junk_list()
-	let junk_dir = '~/.vim/junk'
+	let junk_dir = '~/junk-file'
 	" let junk_dir = expand(junk_dir) . strftime('/%Y/%m')
 	let junk_dir = tr(junk_dir, '\', '/')
 	echo junk_dir
