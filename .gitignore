@@ -1,6 +1,7 @@
 .vim/.netrwhist
 .vim/plugged/*
 .vim/pack/
+.vim/junk/
 __pycache__
 .idea/
 *.swp

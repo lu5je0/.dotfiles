@@ -150,6 +150,8 @@ let g:which_key_map.f = {
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],
       \ 'W' : [':SudaWrite', 'sudo-write'],
       \ 'w' : [':w', 'write'],
+      \ 'j' : [':JunkList', 'junk list'],
+      \ 'J' : [':JunkFile', 'JunkFile'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }
