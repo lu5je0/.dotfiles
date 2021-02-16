@@ -148,6 +148,7 @@ let g:which_key_map.f = {
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],
+      \ 'h' : [':Leaderf help', 'help'],
       \ 'W' : [':SudaWrite', 'sudo-write'],
       \ 'w' : [':w', 'write'],
       \ 'j' : [':JunkList', 'junk list'],
