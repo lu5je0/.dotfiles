@@ -62,3 +62,16 @@ augroup my-glyph-palette
   autocmd FileType fern call glyph_palette#apply()
   autocmd FileType nerdtree,startify call glyph_palette#apply()
 augroup END
+
+
+" functions
+" locate file
+function! FernLocateFile() abort
+    let cur_file_path = expand('%:p:h')
+    let working_dir = getcwd()
+    if stridx(cur_file_path, working_dir) != -1
+        :Fern . -reveal=% -drawer -stay
+    else
+        :Fern %:h -reveal=% -drawer -stay
+    endif
+endfunction
