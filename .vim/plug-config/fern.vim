@@ -33,8 +33,7 @@ function! s:init_fern() abort
   nmap <buffer> o <Plug>(fern-action-open-or-expand)
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
-  nmap <buffer> t <Plug>(fern-action-open:tabedit)
-  nmap <buffer> T <Plug>(fern-action-open:tabedit)gT
+  nmap <buffer> T <Plug>(fern-action-terminal:bottom)
   nmap <buffer> i <Plug>(fern-action-open:split)
   nmap <buffer> gi <Plug>(fern-action-open:split)<C-w>p
   nmap <buffer> s <Plug>(fern-action-open:vsplit)
