@@ -1,6 +1,12 @@
 " gVim {{{
-if has("gui_running") && !has("gui_vimr")
 
+
+if !exists("g:gui_vim_init")
+    let g:gui_vim_init = 0
+endif
+
+if g:gui_vim_init == 0 && has("gui_running") && !has("gui_vimr")
+    let g:gui_vim_init = 1
     if has("mac") && !has("gui_vimr")
         set guifont=JetBrainsMono\ Nerd\ Font\ Mono:h15
         " set guifont=JetBrainsMono:h15

@@ -1,4 +1,4 @@
-" let g:fern#disable_default_mappings=1
+let g:fern#disable_default_mappings=0
 let g:fern#renderer = "nerdfont"
 " let g:fern#smart_cursor = "hide"
 let g:fern#disable_drawer_smart_quit = 0
@@ -18,14 +18,10 @@ function! s:init_fern() abort
   setlocal scl=auto
   setlocal nonumber
 
-  " Define NERDTree like mappings
-  " nmap <buffer> <nowait> <leader> <C-W>l<leader>
-  " nmap <buffer><expr> <Plug>(fern-my-open-or-expand)
-  "             \ fern#smart#leaf(
-  "             \   "\<Plug>(fern-action-open:edit-or-vsplit)",
-  "             \   "\<Plug>(fern-action-expand)",
-  "             \ )
-  " nmap <buffer> l <Plug>(fern-my-open-or-expand)
+  mapclear! <buffer>
+
+  silent! unmap <buffer> t
+
   nmap <buffer> <C-L> <C-W>l
   nmap <buffer> <C-H> <C-W>h
   nmap <buffer> <C-J> <C-W>j
@@ -49,6 +45,15 @@ function! s:init_fern() abort
   nmap <buffer> I <Plug>(fern-action-hidden:toggle)
 
   nmap <buffer> q :<C-u>quit<CR>
+  nmap <buffer> <leader>1 <C-W>l<leader>1 
+  nmap <buffer> <leader>2 <C-W>l<leader>2 
+  nmap <buffer> <leader>3 <C-W>l<leader>3 
+  nmap <buffer> <leader>4 <C-W>l<leader>4 
+  nmap <buffer> <leader>5 <C-W>l<leader>5 
+  nmap <buffer> <leader>6 <C-W>l<leader>6 
+  nmap <buffer> <leader>7 <C-W>l<leader>7 
+  nmap <buffer> <leader>8 <C-W>l<leader>8 
+  nmap <buffer> <leader>9 <C-W>l<leader>9 
 endfunction
 
 augroup fern-custom
