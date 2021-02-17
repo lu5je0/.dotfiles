@@ -64,7 +64,7 @@ Plug 'chiedo/vim-case-convert'
 Plug 'itchyny/lightline.vim'
 
 " themes
-Plug 'rakr/vim-one'
+Plug 'lu5je0/vim-one'
 Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
 Plug 'ayu-theme/ayu-vim'
@@ -185,3 +185,4 @@ runtime mappings.vim
 runtime im.vim
 runtime whichkey.vim
 runtime misc.vim
+runtime runner.vim
