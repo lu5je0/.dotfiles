@@ -145,6 +145,7 @@ let g:which_key_map.f = {
       \ 'name' : '+Leaderf/Files' ,
       \ 'c' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
+      \ 'r' : [':Leaderf rg', 'rg'],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],
