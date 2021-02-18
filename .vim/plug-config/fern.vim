@@ -36,7 +36,7 @@ function! s:init_fern() abort
   nmap <buffer> gs <Plug>(fern-action-open:vsplit)<C-w>p
   nmap <buffer> ma <Plug>(fern-action-new-path)
   nmap <buffer> P gg
-  nmap <buffer> C <Plug>(fern-action-enter)
+  nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
   nmap <buffer> u <Plug>(fern-action-leave)
   nmap <buffer> r <Plug>(fern-action-reload)
   nmap <buffer> R gg<Plug>(fern-action-reload)<C-o>

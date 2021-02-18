@@ -10,6 +10,8 @@ plugins=(git zsh-syntax-highlighting vi-mode z git-open)
 source $ZSH/oh-my-zsh.sh
 source ~/.ohmyenv
 
+source ~/.dotfiles/zsh/functions.sh
+
 # zsh key mappings
 bindkey "^[[5~" history-beginning-search-backward
 bindkey "^[[6~" history-beginning-search-forward
