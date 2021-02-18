@@ -15,11 +15,5 @@ endif
 "     set shellcmdflag=
 " endif
 
-if has("win32")
-    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>
-else
-    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
-endif
-
 let g:asyncrun_mode='term'
 let g:asyncrun_save=1

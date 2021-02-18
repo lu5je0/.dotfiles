@@ -133,11 +133,11 @@ let g:which_key_map.c.f = "Autoformat"
 let g:which_key_map.c.b = "base64"
 let g:which_key_map.c.B = "unbase64"
 
-" +tab or terminal
+" +buffer or terminal
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
-      \ 't' : [':ToggleTerminal', 'Open terminal'],
-      \ 'n' : [':enew', 'New tab'],
+      \ 't' : [':call ToggleTerminal()', 'open terminal'],
+      \ 'n' : [':enew', 'new buffer'],
       \ }
 
 
