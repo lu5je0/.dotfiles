@@ -54,6 +54,9 @@ function! s:init_fern() abort
   nmap <buffer> <leader>7 <C-W>l<leader>7 
   nmap <buffer> <leader>8 <C-W>l<leader>8 
   nmap <buffer> <leader>9 <C-W>l<leader>9 
+  nmap <buffer> <leader>ff <C-W>l<leader>ff
+  nmap <buffer> <leader>fr <C-W>l<leader>fr
+  nmap <buffer> <leader>fw <C-W>l<leader>fw
 endfunction
 
 augroup fern-custom
