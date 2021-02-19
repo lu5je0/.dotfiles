@@ -1,4 +1,4 @@
-let s:coc_enable = 0
+let s:coc_enable = 1
 
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
