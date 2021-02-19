@@ -12,6 +12,8 @@ function! RunFile()
         else 
             AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"
         endif
+    elseif file_type == 'java'
+        AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 java "$(VIM_FILEPATH)"
     endif
 endfunction
 
