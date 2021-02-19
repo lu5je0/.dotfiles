@@ -1,3 +1,10 @@
+function! QuitForce()
+    if confirm("Quit without saving?", "&No\n&Yes") != 2
+        return
+    endif
+    qa!
+endfunction
+
 " 在gj和j之间切换
 function! ToggleMouse()
     if !exists("g:ToggleMouse")
