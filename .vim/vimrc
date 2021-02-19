@@ -1,3 +1,5 @@
+let s:coc_enable = 0
+
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
@@ -24,7 +26,6 @@ Plug 'sgur/vim-textobj-parameter'
 Plug 'kana/vim-textobj-entire'
 Plug 'mhinz/vim-signify'
 Plug 'voldikss/vim-translator'
-Plug 'ervandew/supertab'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-repeat'
 Plug 'chr4/nginx.vim'
@@ -49,7 +50,11 @@ if !has("gui")
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 endif
 
-" Plug 'neoclide/coc.nvim', {'branch': 'release'}
+if s:coc_enable == 1
+    Plug 'neoclide/coc.nvim', {'branch': 'release'}
+else
+    Plug 'ervandew/supertab'
+endif
 
 " save with sudo
 if !has("win32")
@@ -91,7 +96,10 @@ runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
 runtime plug-config/lightline.vim
-" runtime plug-config/coc.vim
+
+if s:coc_enable == 1
+    runtime plug-config/coc.vim
+endif
 " }}}
 
 " autocmd {{{
