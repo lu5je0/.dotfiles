@@ -36,7 +36,7 @@ nmap <leader>d <c-^>
 " :Fern {url} -drawer [-opener={opener}] [-reveal={reveal}] [-stay] [-wait] [-width=30] [-keep] [-toggle]
 let g:which_key_map.e = {
       \ 'name' : '+Fern' ,
-      \ 'e' : [':Fern . -width=22 -drawer -stay -toggle -keep', 'Defx'],
+      \ 'e' : [':Fern . -drawer -stay -toggle -keep', 'Defx'],
       \ 'f' : [":call FernLocateFile()"],
       \ }
 

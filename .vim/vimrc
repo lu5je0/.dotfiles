@@ -10,6 +10,7 @@ if !has("gui_macvim")
 endif
 Plug 'roxma/nvim-ascript'
 Plug 'neoclide/jsonc.vim'
+Plug 'schickling/vim-bufonly'
 
 " fern
 Plug 'lambdalisue/fern.vim'
