@@ -27,7 +27,7 @@ function! s:init_fern() abort
   nmap <buffer> <C-H> <C-W>h
   nmap <buffer> <C-J> <C-W>j
   nmap <buffer> <C-K> <C-W>k
-  nmap <buffer> o <Plug>(fern-action-open-or-expand)<C-w>h
+  nmap <buffer> <silent> o <Plug>(fern-action-open-or-expand)<C-w>h
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
   nmap <buffer> T <Plug>(fern-action-terminal:bottom)

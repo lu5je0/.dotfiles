@@ -45,6 +45,7 @@ fi
 # nvim
 alias vi='nvim'
 alias vim='nvim'
+alias vimn='nvim -u None'
 export EDITOR=nvim
 
 # 代理设置
