@@ -96,6 +96,7 @@ nmap <Leader>8 <Plug>lightline#bufferline#go(8)
 nmap <Leader>9 <Plug>lightline#bufferline#go(9)
 nmap <Leader>0 <Plug>lightline#bufferline#go(10)
 nmap <silent> <leader>Q :call QuitForce()<CR>
+nmap Q <Nop>
 
 " let s:python = executable('python3')? 'python3' : 'python'
 if has("win32")

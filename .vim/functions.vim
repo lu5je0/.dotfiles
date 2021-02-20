@@ -1,5 +1,5 @@
 function! QuitForce()
-    if confirm("Quit without saving?", "&No\n&Yes") != 2
+    if confirm("Quit all buffers without save?", "&No\n&Yes") != 2
         return
     endif
     qa!
