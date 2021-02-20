@@ -3,8 +3,6 @@ inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() :
 
 imap <expr> <tab> pumvisible() ?  "\<C-y>" : "\<TAB>"
 
-" imap <expr> . pumvisible() ? "\<C-y>." : "."
-
 " Use <C-j> for jump to next placeholder, it's default of coc.nvim
 let g:coc_snippet_next = '<c-j>'
 
@@ -16,7 +14,7 @@ let g:coc_snippet_prev = '<c-k>'
 nmap <silent> gy <Plug>(coc-type-definition)
 " nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
-" nmap <silent> K :call <SID>show_documentation()<CR>
+nmap <silent> K :call <SID>show_documentation()<CR>
 
 " Use K to show documentation in preview window.
 function! s:show_documentation()
@@ -40,4 +38,4 @@ nmap <leader>cr <Plug>(coc-rename)
 
 autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 
-let g:coc_global_extensions = ['coc-json', 'coc-python', 'coc-snippets', 'coc-sql']
+let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql']

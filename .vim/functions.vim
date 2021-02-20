@@ -5,6 +5,19 @@ function! QuitForce()
     qa!
 endfunction
 
+" Toggle signcolumn. Works on vim>=8.1 or NeoVim
+function! ToggleSignColumn()
+    if !exists("b:signcolumn_on") || b:signcolumn_on
+        set signcolumn=yes
+        let b:signcolumn_on=0
+        echo "signcolumn=yes"
+    else
+        set signcolumn=number
+        let b:signcolumn_on=1
+        echo "signcolumn=number"
+    endif
+endfunction
+
 " 在gj和j之间切换
 function! ToggleMouse()
     if !exists("g:ToggleMouse")
