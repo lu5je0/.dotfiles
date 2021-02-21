@@ -10,8 +10,8 @@ let g:coc_snippet_next = '<c-j>'
 let g:coc_snippet_prev = '<c-k>'
 
 " GoTo code navigation.
-" nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gu <Plug>(coc-type-definition)
 " nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 nmap <silent> K :call <SID>show_documentation()<CR>
@@ -38,4 +38,4 @@ nmap <leader>cr <Plug>(coc-rename)
 
 autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 
-let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql']
+let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-clangd']

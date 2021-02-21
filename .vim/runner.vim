@@ -14,6 +14,8 @@ function! RunFile()
         endif
     elseif file_type == 'java'
         AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 java "$(VIM_FILEPATH)"
+    elseif file_type == 'c'
+        AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 gcc "$(VIM_FILEPATH)" && ./a.out && rm a.out
     endif
 endfunction
 
