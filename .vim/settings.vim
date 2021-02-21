@@ -36,7 +36,10 @@ set signcolumn=number
 set backspace=indent,eol,start
 
 " 彻底关闭bell
-set noeb
+if has("gui") && has("win64")
+    set visualbell t_vb=  "关闭visual bell
+    au GuiEnter * set t_vb= "关闭beep
+endif
 
 " 补全时默认不选中
 set cot=noinsert,menuone
