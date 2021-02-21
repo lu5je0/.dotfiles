@@ -3,11 +3,10 @@ inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() :
 
 imap <expr> <tab> pumvisible() ?  "\<C-y>" : "\<TAB>"
 
-" Use <C-j> for jump to next placeholder, it's default of coc.nvim
-let g:coc_snippet_next = '<c-j>'
+let g:coc_snippet_next = '<cr>'
 
 " Use <C-k> for jump to previous placeholder, it's default of coc.nvim
-let g:coc_snippet_prev = '<c-k>'
+let g:coc_snippet_prev = '<c-g>'
 
 " GoTo code navigation.
 nmap <silent> gd <Plug>(coc-definition)
