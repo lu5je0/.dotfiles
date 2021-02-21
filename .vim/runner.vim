@@ -16,6 +16,8 @@ function! RunFile()
         AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 java "$(VIM_FILEPATH)"
     elseif file_type == 'c'
         AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 gcc "$(VIM_FILEPATH)" && ./a.out && rm ./a.out
+    elseif file_type == 'sh'
+        AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 bash "$(VIM_FILEPATH)"
     endif
 endfunction
 

@@ -18,9 +18,21 @@ ln -s ~/.dotfiles/.vim/coc-settings.json ~/.config/nvim/coc-settings.json
 
 cp ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes
 
-ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
+
+echo "use ssh config?(y/n)"
+read use_ssh_config
+case $install_git_open in
+    Y | y)
+        echo "use ssh config" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
+esac
+
 rm ~/.dotfiles/.vim/.vim
 
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-git clone https://github.com/paulirish/git-open.git ~/.oh-my-zsh/custom/plugins/git-open
-git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/plugins/zsh-autosuggestions
+
+echo "install git open?(y/n)"
+read install_git_open
+case $install_git_open in
+    Y | y)
+        echo "install" && git clone https://github.com/paulirish/git-open.git ~/.oh-my-zsh/custom/plugins/git-open;;
+esac
