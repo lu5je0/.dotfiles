@@ -11,6 +11,7 @@ endif
 Plug 'roxma/nvim-ascript'
 Plug 'neoclide/jsonc.vim'
 Plug 'schickling/vim-bufonly'
+Plug 'cespare/vim-toml'
 
 " fern
 Plug 'lambdalisue/fern.vim'
