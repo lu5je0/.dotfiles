@@ -1,4 +1,5 @@
 .vim/.netrwhist
+.vim/init.vim
 .vim/plugged/*
 .vim/pack/
 .vim/junk/
