@@ -46,10 +46,10 @@ nmap <silent> <C-H> <C-w>h
 nmap <silent> <C-L> <C-w>l
 
 " terminal-toggle
-nmap <M-i> :call TerminalToggle()<CR>
-nmap <D-i> :call TerminalToggle()<CR>
-tmap <M-i> <c-\><c-n>:call TerminalToggle()<CR>
-tmap <D-i> <c-\><c-n>:call TerminalToggle()<CR>
+nmap <silent> <M-i> :call TerminalToggle()<CR>
+nmap <silent> <D-i> :call TerminalToggle()<CR>
+tmap <silent> <M-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <silent> <D-i> <c-\><c-n>:call TerminalToggle()<CR>
 
 
 " alt command
