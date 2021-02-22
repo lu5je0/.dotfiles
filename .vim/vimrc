@@ -106,13 +106,17 @@ endif
 " }}}
 
 " autocmd {{{
-autocmd FileType vim setlocal foldmethod=marker
-autocmd FileType * set formatoptions-=o
-autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
-autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
+augroup file_type
+    autocmd!
+    autocmd FileType vim setlocal foldmethod=marker
+    autocmd FileType * set formatoptions-=o
+    autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
+    autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
+augroup END
 
 " 超过最大的文件大小后禁用语法高亮
 augroup LargeFile
+    autocmd!
     " MB
     let g:LargeFile = 10
     autocmd BufReadPre * let f=getfsize(expand("<afile>")) | if f > g:LargeFile * 1024 * 1024 || f == -2 | call LargeFile() | endif

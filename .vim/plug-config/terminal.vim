@@ -1,11 +1,14 @@
 let g:terminal_height=18
 tmap <S-Insert> <C-W>"+
 
-if !has("nvim")
-    autocmd TerminalOpen * set nobuflisted
-else
-    autocmd TermOpen * set nobuflisted
-endif
+augroup term_nobufflisted
+    autocmd!
+    if !has("nvim")
+        autocmd TerminalOpen * set nobuflisted
+    else
+        autocmd TermOpen * set nobuflisted
+    endif
+augroup END
 
 " 设置wsl为默认shell
 " if has("win32")

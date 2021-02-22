@@ -20,8 +20,11 @@ if !has("mac") || has("gui")
     finish
 endif
 
-autocmd InsertLeave * call SwitchToEn()
-autocmd InsertEnter * call SwitchToCn()
+augroup switch_im
+    autocmd!
+    autocmd InsertLeave * call SwitchToEn()
+    autocmd InsertEnter * call SwitchToCn()
+augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 python3 << EOF
