@@ -47,6 +47,7 @@ let g:which_key_map.w = {
       \ 'N' : [':new', 'new'],
       \ 's' : [':vsplit', 'vspilt'],
       \ 'S' : [':split', 'spilt'],
+      \ 'o' : [':only', 'only'],
       \ }
 
 " g is for git

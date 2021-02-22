@@ -1,17 +1,6 @@
 let mapleader=","
 let g:terminal_key='<c-_>'
 
-" tab switch
-" nnoremap <silent> <leader>1 1gt
-" nnoremap <silent> <leader>2 2gt
-" nnoremap <silent> <leader>3 3gt
-" nnoremap <silent> <leader>4 4gt
-" nnoremap <silent> <leader>5 5gt
-" nnoremap <silent> <leader>6 6gt
-" nnoremap <silent> <leader>7 7gt
-" nnoremap <silent> <leader>8 8gt
-" nnoremap <silent> <leader>9 9gt
-
 " ctrl-c 复制
 vnoremap <C-c> y
 
@@ -104,3 +93,20 @@ if has("win32")
 else
     nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
 endif
+
+fun SplitWithBuffer(n)
+    let l:buffer_number = lightline#bufferline#get_buffer_for_ordinal_number(a:n)
+    execute "vertical sb" l:buffer_number
+endf
+
+map <leader>w1 :call SplitWithBuffer(1)<cr>
+map <leader>w2 :call SplitWithBuffer(2)<cr>
+map <leader>w3 :call SplitWithBuffer(3)<cr>
+map <leader>w4 :call SplitWithBuffer(4)<cr>
+map <leader>w5 :call SplitWithBuffer(5)<cr>
+map <leader>w6 :call SplitWithBuffer(6)<cr>
+map <leader>w7 :call SplitWithBuffer(7)<cr>
+map <leader>w8 :call SplitWithBuffer(8)<cr>
+map <leader>w9 :call SplitWithBuffer(9)<cr>
+
+command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
