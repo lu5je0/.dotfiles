@@ -2,7 +2,7 @@
 .vim/init.vim
 .vim/plugged/*
 .vim/pack/
-.vim/junk/
+.vim/quicknote.md
 __pycache__
 .idea/
 *.swp

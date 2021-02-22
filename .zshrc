@@ -25,6 +25,8 @@ alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
 alias ts="tmux new-session -s"
 
+PATH=$PATH:~/.bin
+
 # mac
 if [ "$(uname)" = "Darwin" ]; then
     PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
