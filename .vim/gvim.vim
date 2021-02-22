@@ -1,6 +1,3 @@
-" gVim {{{
-
-
 if !exists("g:gui_vim_init")
     let g:gui_vim_init = 0
 endif
@@ -25,11 +22,11 @@ if g:gui_vim_init == 0 && has("gui_running") && !has("gui_vimr")
         set lines=28
         set columns=90
     else
-        set lines=40
-        set columns=120
+        set lines=48
+        set columns=140
     endif
     if has("win32")
-        winpos 980 450
+        winpos 900 330
     endif
     source $VIMRUNTIME/delmenu.vim
     source $VIMRUNTIME/menu.vim
@@ -37,5 +34,3 @@ if g:gui_vim_init == 0 && has("gui_running") && !has("gui_vimr")
         command Wsl :ter C:\Windows\Sysnative\wsl.exe
     endif
 endif
-" }}}
-
