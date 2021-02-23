@@ -7,6 +7,7 @@ let g:fern#disable_viewer_spinner=1
 let g:fern#default_exclude = '\.\(swp\|git\)'
 let g:fern#drawer_width=22
 
+
 function! s:init_fern() abort
   " hi FernBranchText ctermfg=16 guifg=#61afef
   " yellow
@@ -27,7 +28,17 @@ function! s:init_fern() abort
   nmap <buffer> <C-H> <C-W>h
   nmap <buffer> <C-J> <C-W>j
   nmap <buffer> <C-K> <C-W>k
-  nmap <buffer> <silent> o <Plug>(fern-action-open-or-expand)<C-w>h
+
+  nmap <buffer><expr>
+              \ <Plug>(fern-my-expand-or-collapse)
+              \ fern#smart#leaf(
+              \   "\<Plug>(fern-action-collapse)",
+              \   "\<Plug>(fern-action-expand:stay)",
+              \   "\<Plug>(fern-action-collapse)",
+              \ )
+  nmap <buffer><nowait> o <Plug>(fern-my-expand-or-collapse)
+  nmap <buffer><nowait> b <Plug>(fern-action-open-or-expand)<C-w>h
+
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
   nmap <buffer> T <Plug>(fern-action-terminal:bottom)
@@ -47,6 +58,7 @@ function! s:init_fern() abort
   nmap <buffer> cd <Plug>(fern-action-cd)
   nmap <buffer> CD gg<Plug>(fern-action-cd)<C-o>
   nmap <buffer> I <Plug>(fern-action-hidden:toggle)
+  nmap <buffer> <ESC> <C-W>l
 
   nmap <buffer> q :<C-u>quit<CR>
   nmap <buffer> <leader>1 <C-W>l<leader>1 
