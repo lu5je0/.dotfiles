@@ -33,11 +33,10 @@ let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 let g:which_key_map.d = 'buffer switch'
 nmap <leader>d <c-^>
 
-" :Fern {url} -drawer [-opener={opener}] [-reveal={reveal}] [-stay] [-wait] [-width=30] [-keep] [-toggle]
 let g:which_key_map.e = {
-      \ 'name' : '+Fern' ,
-      \ 'e' : [':Fern . -drawer -stay -toggle -keep', 'Defx'],
-      \ 'f' : [":call FernLocateFile()"],
+      \ 'name' : '+fern' ,
+      \ 'e' : [':Fern . -drawer -stay -toggle -keep', 'fern'],
+      \ 'f' : [':call FernLocateFile()', 'locate file'],
       \ }
 
 " windows
