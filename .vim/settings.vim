@@ -48,3 +48,18 @@ set cot=noinsert,menuone
 if has("autocmd")  
     au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif  
 endif 
+
+if has("persistent_undo")
+    if has("win64")
+        let home = $HOME . "\\.undodir"
+    else
+        let home = $HOME . "/.undodir"
+    endif
+
+    if filewritable(&undodir) == 0
+        call mkdir(&undodir, "p")
+    endif
+
+    execute "set undodir=" . home
+    set undofile
+endif

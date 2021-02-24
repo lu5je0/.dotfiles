@@ -110,3 +110,8 @@ map <leader>w8 :call SplitWithBuffer(8)<cr>
 map <leader>w9 :call SplitWithBuffer(9)<cr>
 
 command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
+
+" undotree esc映射
+function g:Undotree_CustomMap()
+    nmap <buffer> <ESC> <plug>UndotreeClose
+endfunc
