@@ -12,6 +12,7 @@ set highlightedyank
 set exchange
 set ideajoin
 set ideamarks
+set NERDTree
 
 " 按键映射
 let mapleader=","
@@ -43,7 +44,8 @@ nnoremap <silent> <leader>9 9gt
 # reload vimrc
 nmap <leader>vs :action IdeaVim.ReloadVimRc.reload<CR>
 
-map <leader>e :action ActivateProjectToolWindow<CR>
+map <leader>ee :NERDTree<CR>
+map <leader>ef :NERDTreeFind<CR>
 map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
 map <leader>ss :action $EditorTranslateAction<CR>
@@ -121,3 +123,4 @@ nmap [c <Action>(VcsShowPrevChangeMarker)
 nmap ]c <Action>(VcsShowNextChangeMarker)
 
 imap <c-n> <Action>(CodeCompletion)
+map <c-h> :NERDTree<CR>
