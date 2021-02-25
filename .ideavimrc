@@ -123,4 +123,3 @@ nmap [c <Action>(VcsShowPrevChangeMarker)
 nmap ]c <Action>(VcsShowNextChangeMarker)
 
 imap <c-n> <Action>(CodeCompletion)
-map <c-h> :NERDTree<CR>
