@@ -199,3 +199,13 @@ function! FileSize()
     return bytes . 'B '
   endif
 endfunction
+
+" A function to clear the undo history
+function! <SID>ForgetUndo()
+    let old_undolevels = &undolevels
+    set undolevels=-1
+    exe "normal a \<BS>\<Esc>"
+    let &undolevels = old_undolevels
+    unlet old_undolevels
+endfunction
+command -nargs=0 ClearUndo call <SID>ForgetUndo()
