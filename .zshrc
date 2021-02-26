@@ -18,12 +18,13 @@ bindkey "^[[6~" history-beginning-search-forward
 
 # alias
 alias pc="proxychains4 -q"
+alias sftp="sftp -C"
 # tmux
 alias ta="tmux attach -t"
 alias td="tmux detach"
 alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
-alias ts="tmux new-session -s"
+alias tn="tmux new-session -s"
 
 PATH=$PATH:~/.bin
 
@@ -35,10 +36,12 @@ if [ "$(uname)" = "Darwin" ]; then
     export JAVA_HOME_8=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
     export JAVA_HOME_11=/Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk/Contents/Home
     alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
+    alias e='open'
     alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
     export JAVA_HOME=$JAVA_HOME_11
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
+    alias e='explorer.exe'
     clippaste () {
         powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
     }
