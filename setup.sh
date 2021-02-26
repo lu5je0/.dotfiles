@@ -30,10 +30,3 @@ esac
 rm ~/.dotfiles/.vim/.vim
 
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-
-echo "install git open?(y/n)"
-read install_git_open
-case $install_git_open in
-    Y | y)
-        echo "install" && git clone https://github.com/paulirish/git-open.git ~/.oh-my-zsh/custom/plugins/git-open;;
-esac
