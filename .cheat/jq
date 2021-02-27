@@ -1,0 +1,26 @@
+jq '.[] | select(.userId=="14397007")'
+
+[
+  {
+    "userId": "557033270",
+    "sellerLevelInfo": {
+      "user_honor": 17892,
+      "user_last_week_deal_amount": 0,
+      "level": "3",
+      "level_name": "三星商家",
+      "detail": []
+    },
+    "sellerUserLevel": 6
+  },
+  {
+    "userId": "14397007",
+    "sellerLevelInfo": {
+      "user_honor": 13092,
+      "user_last_week_deal_amount": 0,
+      "level": "3",
+      "level_name": "三星商家",
+      "detail": []
+    },
+    "sellerUserLevel": 20
+  }
+]
