@@ -1,4 +1,5 @@
 ln -s ~/.dotfiles/.vim ~/.vim
+ln -s ~/.dotfiles/bin ~/.bin
 ln -s ~/.dotfiles/.cheat ~/.cheat
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
