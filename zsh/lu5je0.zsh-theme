@@ -39,9 +39,9 @@ ys_hg_prompt_info() {
 local status_info='$(status_info)'
 status_info() {
     INFO=""
-    INFO="T:`tmux ls | wc -l`"
+    INFO="T:`tmux ls 2>/dev/null | wc -l`"
     if [[ $http_proxy ]]; then
-        INFO="$INFO,P"
+        INFO="$INFO P"
     fi
 
     if [[ "[]" != $INFO ]]; then
