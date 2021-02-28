@@ -35,6 +35,14 @@ ys_hg_prompt_info() {
 	fi
 }
 
+# status
+local status_info='$(status_info)'
+status_info() {
+    if [[ $http_proxy ]]; then
+        echo "[P] "
+    fi
+}
+
 # Prompt format:
 #
 # PRIVILEGES USER @ MACHINE in DIRECTORY on git:BRANCH STATE [TIME] C:LAST_EXIT_CODE
@@ -53,5 +61,6 @@ PROMPT="%{$terminfo[bold]$fg[blue]%}#%{$reset_color%} \
 ${hg_info}\
 ${git_info}\
  \
+%{$fg[yellow]%}${status_info}%{$reset_color%}\
 %{$fg[white]%}[%*]
 %{$terminfo[bold]$fg[red]%}$ %{$reset_color%}"

@@ -4,6 +4,7 @@ ln -s ~/.dotfiles/.cheat ~/.cheat
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
+ln -s ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes/lu5je0.zsh-theme
 
 touch ~/.ohmyenv
 
@@ -20,8 +21,6 @@ ln -s ~/.dotfiles/.vim ~/.local/share/nvim/site
 mkdir -p ~/.config/nvim
 ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
 ln -s ~/.dotfiles/.vim/coc-settings.json ~/.config/nvim/coc-settings.json
-
-cp ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes
 
 
 echo "use ssh config?(y/n)"
