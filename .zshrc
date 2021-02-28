@@ -71,5 +71,3 @@ bindkey -a K history-beginning-search-backward
 bindkey -a J history-beginning-search-forward
 
 export KEYTIMEOUT=1
-
-tmux ls
