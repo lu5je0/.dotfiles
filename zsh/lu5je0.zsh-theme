@@ -38,8 +38,14 @@ ys_hg_prompt_info() {
 # status
 local status_info='$(status_info)'
 status_info() {
+    INFO=""
+    INFO="T:`tmux ls | wc -l`"
     if [[ $http_proxy ]]; then
-        echo "[P] "
+        INFO="$INFO,P"
+    fi
+
+    if [[ "[]" != $INFO ]]; then
+        echo -n "[$INFO] "
     fi
 }
 
@@ -61,6 +67,6 @@ PROMPT="%{$terminfo[bold]$fg[blue]%}#%{$reset_color%} \
 ${hg_info}\
 ${git_info}\
  \
-%{$fg[yellow]%}${status_info}%{$reset_color%}\
+%{$fg[white]%}${status_info}%{$reset_color%}\
 %{$fg[white]%}[%*]
 %{$terminfo[bold]$fg[red]%}$ %{$reset_color%}"
