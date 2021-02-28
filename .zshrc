@@ -19,6 +19,8 @@ bindkey "^[[6~" history-beginning-search-forward
 # alias
 alias pc="proxychains4 -q"
 alias sftp="sftp -C"
+alias wd="trans :zh"
+alias sudo="sudo "
 # tmux
 alias ta="tmux attach -t"
 alias td="tmux detach"
