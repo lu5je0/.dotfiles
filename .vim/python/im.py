@@ -1,21 +1,26 @@
 from ctypes import c_char_p
 import ctypes
-import time
 import os
+import random
 
-try:
-    import AppKit
-    # 隐藏macos dock栏小火箭
-    info = AppKit.NSBundle.mainBundle().infoDictionary()
-    info["LSBackgroundOnly"] = "1"
-except ImportError:
-    print("隐藏macos dock栏小火箭,需要pip3 install -U PyObjC")
+class ImSwitcher():
+    lib = None
 
-lib = ctypes.CDLL(os.environ['HOME'] + "/.dotfiles/lib/libinput-source-switcher.dylib")
-lib.getCurrentInputSourceID.restype = c_char_p
+    def __init__(self) -> None:
+        try:
+            import AppKit
+            # 隐藏macos dock栏小火箭
+            info = AppKit.NSBundle.mainBundle().infoDictionary()
+            info["LSBackgroundOnly"] = "1"
+        except ImportError:
+            print("隐藏macos dock栏小火箭,需要pip3 install -U PyObjC")
 
-def getCurrentInputSourceID():
-    return str(lib.getCurrentInputSourceID(), encoding='utf8')
+        self.lib = ctypes.CDLL(os.environ['HOME'] + "/.dotfiles/lib/libinput-source-switcher.dylib")
+        self.lib.getCurrentInputSourceID.restype = c_char_p
 
-def switchInputSource(input_method):
-    return lib.switchInputSource(input_method.encode('ascii'))
+    def getCurrentInputSourceID(self):
+        im_id = str(self.lib.getCurrentInputSourceID(random.randint(10, 20)), encoding='utf8')
+        return im_id;
+
+    def switchInputSource(self, input_method):
+        return self.lib.switchInputSource(input_method.encode('ascii'))

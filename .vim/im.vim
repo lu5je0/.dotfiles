@@ -39,13 +39,14 @@ importlib.reload(im)
 
 mac_im = 'com.apple.keylayout.ABC'
 last = 'com.apple.keylayout.ABC'
+switcher = im.ImSwitcher()
 EOF
 
 function! SwitchToEn()
 python3 << EOF
 
-last = im.getCurrentInputSourceID()
-im.switchInputSource(mac_im)
+# last = switcher.getCurrentInputSourceID()
+switcher.switchInputSource(mac_im)
 
 EOF
 endfunction
@@ -54,7 +55,7 @@ endfunction
 function! SwitchToCn()
 python3 << EOF
 
-im.switchInputSource(last)
+switcher.switchInputSource(last)
 
 EOF
 endfunction
