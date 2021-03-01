@@ -99,7 +99,7 @@ let g:which_key_map.v = {
       \ 'p' : [':call TogglePaste()', 'toggle paste'],
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
-      \ 'i' : [":call ToggleSignColumn()", 'toggle mouse'],
+      \ 'i' : [":call ToggleSignColumn()", 'toggle sign'],
       \ }
 
 " g is for git
