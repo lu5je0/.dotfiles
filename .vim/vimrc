@@ -81,7 +81,7 @@ Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
 Plug 'ayu-theme/ayu-vim'
 Plug 'w0ng/vim-hybrid'
-" Plug 'cocopon/lightline-hybrid.vim'
+Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
@@ -191,7 +191,7 @@ command! Diffo windo diffo
 
 " 主题配置 {{{
 colorscheme one
-let g:lightline.colorscheme = 'one'
+let g:lightline.colorscheme = 'ones'
 set bg=dark
 " }}}
 
