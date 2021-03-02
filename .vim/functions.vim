@@ -108,12 +108,6 @@ function! ToggleGj()
     endif
 endfunction
 
-function! LargeFile()
-    " file is large from 5MB
-    syntax off
-    autocmd VimEnter * echo "The file is larger than " . g:LargeFile . " MB, so some options are changed (see .vimrc for details)."
-endfunction
-
 function! IsWSL()
     if exists("g:isWsl")
         return g:isWsl
