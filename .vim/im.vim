@@ -8,18 +8,14 @@ if has("gui")
     finish
 endif
 
-if has("win32") || IsWSL()
+if !has("mac") && (has("win32") || IsWSL())
     let g:im_select_default=1033
-endif
-
-" 退出vim时 恢复默认输入法
-if has("win32") || IsWSL()
+    " 退出vim时 恢复默认输入法
     augroup vim_leave_group
         autocmd!
         autocmd VimLeave * call im_select#set_im('2052')
     augroup END
 endif
-
 
 " ##################################
 " #              mac               #
