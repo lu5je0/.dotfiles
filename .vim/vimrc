@@ -81,7 +81,7 @@ Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
 Plug 'ayu-theme/ayu-vim'
 Plug 'w0ng/vim-hybrid'
-" Plug 'cocopon/lightline-hybrid.vim'
+Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
@@ -111,15 +111,10 @@ augroup file_type
     autocmd FileType * set formatoptions-=o
     autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
     autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
+    " 超过最大的文件大小后禁用语法高亮
+    autocmd Filetype * if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
 augroup END
 
-" 超过最大的文件大小后禁用语法高亮
-augroup LargeFile
-    autocmd!
-    " MB
-    let g:LargeFile = 10
-    autocmd BufReadPre * let f=getfsize(expand("<afile>")) | if f > g:LargeFile * 1024 * 1024 || f == -2 | call LargeFile() | endif
-augroup END
 
 " }}}
 
@@ -196,7 +191,7 @@ command! Diffo windo diffo
 
 " 主题配置 {{{
 colorscheme one
-let g:lightline.colorscheme = 'one'
+let g:lightline.colorscheme = 'ones'
 set bg=dark
 " }}}
 
