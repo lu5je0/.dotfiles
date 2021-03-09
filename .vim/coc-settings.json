@@ -1,6 +1,6 @@
 {
 	"suggest.noselect": false,
-  /* "http.proxy": "http://localhost:1080", */
+  "http.proxy": "http://localhost:1080",
   "diagnostic.errorSign": "•",
   "diagnostic.warningSign": "•",
   "diagnostic.infoSign": "•",

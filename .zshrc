@@ -45,6 +45,7 @@ if [ "$(uname)" = "Darwin" ]; then
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
     alias e='explorer.exe'
+    alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
     clippaste () {
         powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
     }
