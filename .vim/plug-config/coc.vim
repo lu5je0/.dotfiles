@@ -38,3 +38,6 @@ nmap <leader>cr <Plug>(coc-rename)
 autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-clangd']
+
+inoremap <C-P> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
+inoremap <silent><expr> <c-n> coc#refresh()
