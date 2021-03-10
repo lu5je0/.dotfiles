@@ -50,8 +50,9 @@ map <leader>t :action ReopenClosedTab<CR>
 map <leader>q :action CloseContent<CR>
 map <leader>ss :action $EditorTranslateAction<CR>
 map <leader>sr :action $TranslateAndReplaceAction<CR>
-map <leader>u :action GotoSuperMethod<CR>
-map <leader>n :action GotoImplementation<CR>
+
+map gu :action GotoSuperMethod<CR>
+map gn :action GotoImplementation<CR>
 
 # code
 map <leader>cf :action ReformatCode<CR>
@@ -121,5 +122,7 @@ map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 " navicat
 nmap [c <Action>(VcsShowPrevChangeMarker)
 nmap ]c <Action>(VcsShowNextChangeMarker)
+nnoremap [g :action GotoNextError<CR>
+nnoremap ]g :action GotoPreviousError<CR>
 
 imap <c-n> <Action>(CodeCompletion)

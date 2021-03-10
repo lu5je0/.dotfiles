@@ -42,3 +42,8 @@ let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-s
 
 inoremap <C-P> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
 inoremap <silent><expr> <c-n> coc#refresh()
+
+" Use `[g` and `]g` to navigate diagnostics
+" Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
