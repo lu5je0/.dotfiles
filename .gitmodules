@@ -4,3 +4,6 @@
 [submodule "submodule/submodule/wd"]
 	path = submodule/submodule/wd
 	url = git@github.com:lu5je0/wd.git
+[submodule "submodule/wd"]
+	path = submodule/wd
+	url = git@github.com:lu5je0/wd.git
