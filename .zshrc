@@ -20,6 +20,7 @@ bindkey "^[[6~" history-beginning-search-forward
 alias pc="proxychains4 -q"
 alias sftp="sftp -C"
 alias wd="~/.dotfiles/submodule/wd/wd.py"
+alias fetch_subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias sudo="sudo "
 # tmux
 alias ta="tmux attach -t"
