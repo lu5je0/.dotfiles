@@ -10,6 +10,7 @@ let g:coc_snippet_prev = '<c-g>'
 
 " GoTo code navigation.
 nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gn <Plug>(coc-implementation)
 nmap <silent> gu <Plug>(coc-type-definition)
 " nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
