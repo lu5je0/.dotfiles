@@ -40,25 +40,6 @@ nmap <silent> <D-i> :call TerminalToggle()<CR>
 tmap <silent> <M-i> <c-\><c-n>:call TerminalToggle()<CR>
 tmap <silent> <D-i> <c-\><c-n>:call TerminalToggle()<CR>
 
-
-" alt command
-" nmap <silent> <D-j> <C-w>j
-" nmap <silent> <D-k> <C-w>k
-" nmap <silent> <D-h> <C-w>h
-" nmap <silent> <D-l> <C-w>l
-
-" nmap <silent> <M-j> <C-w>j
-" nmap <silent> <M-k> <C-w>k
-" nmap <silent> <M-h> <C-w>h
-" nmap <silent> <M-l> <C-w>l
-
-" tmap <silent> <D-j> <C-w>j
-" tmap <silent> <D-k> <C-w>k
-" tmap <silent> <D-h> <C-w>h
-" tmap <silent> <D-l> <C-w>l
-
-" nvim todo
-
 " popup
 nmap <Leader>s <Plug>(coc-translator-p)
 vmap <Leader>s <Plug>(coc-translator-pv)
