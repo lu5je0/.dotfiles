@@ -155,6 +155,7 @@ let g:which_key_map.f = {
       \ 'w' : [':w', 'write'],
       \ 'j' : [':JunkList', 'junk list'],
       \ 'g' : [':JunkFile', 'JunkFile'],
+      \ 'G' : [':SaveAsJunkFile', 'SaveAsJunkFile'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }

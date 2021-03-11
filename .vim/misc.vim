@@ -31,6 +31,24 @@ function! s:open_junk_file()
 	endif
 endfunction
 
+command! -nargs=0 SaveAsJunkFile call s:save_as_junk_file()
+function! s:save_as_junk_file()
+	let junk_dir = '~/junk-file'
+	let junk_dir = junk_dir . strftime('/%Y/%m')
+	let real_dir = expand(junk_dir)
+	if !isdirectory(real_dir)
+		call mkdir(real_dir, 'p')
+	endif
+
+	let filename = junk_dir . '/'
+	let filename = tr(filename, '\', '/')
+    let partname = input('Junk Code: ', strftime('%Y-%m-%d-%H%M%S.'))
+	let filename = filename . partname
+	if partname != ''
+		execute 'w ' . fnameescape(filename)
+	endif
+endfunction
+
 command! -nargs=0 JunkList call s:open_junk_list()
 function! s:open_junk_list()
 	let junk_dir = '~/junk-file'
