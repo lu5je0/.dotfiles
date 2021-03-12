@@ -46,9 +46,10 @@ function! s:init_fern() abort
   nmap <buffer> gi <Plug>(fern-action-open:split)<C-w>p
   nmap <buffer> s <Plug>(fern-action-open:vsplit)
   nmap <buffer> gs <Plug>(fern-action-open:vsplit)<C-w>p
-  nmap <buffer> md <Plug>(fern-action-new-dir)
+  nmap <buffer> mk <Plug>(fern-action-new-dir)
   nmap <buffer> ma <Plug>(fern-action-new-file)
-  nmap <buffer> mm <Plug>(fern-action-move)
+  nmap <buffer> mv <Plug>(fern-action-move)
+  nmap <buffer> m <Nop>
 
   nmap <buffer> D <Plug>(fern-action-remove)
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
