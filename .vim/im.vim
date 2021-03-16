@@ -31,22 +31,41 @@ augroup switch_im
 augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
-python3 << EOF
-import sys
-from os.path import normpath, join
-import vim
-python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
-sys.path.insert(0, python_root_dir)
-import im
-import importlib
-importlib.reload(im)
 
-mac_im = 'com.apple.keylayout.ABC'
-last = 'com.apple.keylayout.ABC'
-switcher = im.ImSwitcher()
+let g:im_func_init = 0
+function! ImFuncInit()
+if g:im_func_init == 1
+    return
+endif
+
+python3 << EOF
+mac_im = None
+last = None
+switcher = None
+
+def im_init():
+    global mac_im
+    global last
+    global switcher
+
+    import sys
+    from os.path import normpath, join
+    import vim
+    python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
+    sys.path.insert(0, python_root_dir)
+    import im
+    import importlib
+    mac_im = 'com.apple.keylayout.ABC'
+    last = 'com.apple.keylayout.ABC'
+    switcher = im.ImSwitcher()
+
+im_init()
 EOF
+let g:im_func_init = 1
+endfunction
 
 function! SwitchToEn()
+call ImFuncInit()
 python3 << EOF
 
 # last = switcher.getCurrentInputSourceID()
@@ -57,6 +76,7 @@ endfunction
 
 
 function! SwitchToCn()
+call ImFuncInit()
 python3 << EOF
 
 switcher.switchInputSource(last)
