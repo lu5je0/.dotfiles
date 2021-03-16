@@ -40,7 +40,7 @@ autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-clangd']
 
-inoremap <C-P> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
+inoremap <m-p> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
 inoremap <silent><expr> <c-n> coc#refresh()
 
 " Use `[g` and `]g` to navigate diagnostics

@@ -129,6 +129,7 @@ let g:vim_json_syntax_conceal = 0
 
 " auto-paris {{{
 let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
+let g:AutoPairsShortcutToggle = '<leader>va'
 " }}}
 
 " vim-textobj-parameter {{{
