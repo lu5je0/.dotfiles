@@ -63,12 +63,12 @@ def im_init(path):
 path = vim.eval('s:plugin_root_dir')
 threading.Thread(target=im_init, args=[path]).start()
 EOF
-
 let g:im_func_init = 1
 endfunction
 
-function! SwitchToEn()
 call ImFuncInit()
+
+function! SwitchToEn()
 python3 << EOF
 
 # last = switcher.getCurrentInputSourceID()
@@ -80,7 +80,6 @@ endfunction
 
 
 function! SwitchToCn()
-call ImFuncInit()
 python3 << EOF
 
 if switcher != None:
