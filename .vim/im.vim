@@ -39,11 +39,13 @@ if g:im_func_init == 1
 endif
 
 python3 << EOF
+import threading
+
 mac_im = None
 last = None
 switcher = None
 
-def im_init():
+def im_init(path):
     global mac_im
     global last
     global switcher
@@ -51,16 +53,17 @@ def im_init():
     import sys
     from os.path import normpath, join
     import vim
-    python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
+    python_root_dir = path + "/python"
     sys.path.insert(0, python_root_dir)
     import im
-    import importlib
     mac_im = 'com.apple.keylayout.ABC'
     last = 'com.apple.keylayout.ABC'
     switcher = im.ImSwitcher()
 
-im_init()
+path = vim.eval('s:plugin_root_dir')
+threading.Thread(target=im_init, args=[path]).start()
 EOF
+
 let g:im_func_init = 1
 endfunction
 
@@ -69,7 +72,8 @@ call ImFuncInit()
 python3 << EOF
 
 # last = switcher.getCurrentInputSourceID()
-switcher.switchInputSource(mac_im)
+if switcher != None:
+    switcher.switchInputSource(mac_im)
 
 EOF
 endfunction
@@ -79,7 +83,8 @@ function! SwitchToCn()
 call ImFuncInit()
 python3 << EOF
 
-switcher.switchInputSource(last)
+if switcher != None:
+    switcher.switchInputSource(last)
 
 EOF
 endfunction
