@@ -126,6 +126,13 @@ endfunction
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 
+let g:py_func_init = 0
+
+function! PyFuncInit()
+if g:py_func_init == 1
+    return
+endif
+
 python3 << EOF
 import sys
 from os.path import normpath, join
@@ -136,8 +143,18 @@ import functions
 import importlib
 importlib.reload(functions)
 EOF
+let g:py_func_init = 1
+endfunction
 
 function! KeepLines(...)
+call PyFuncInit()
+python3 << EOF
+functions.keepLines(vim.eval("a:000"))
+EOF
+endfunction
+
+function! KeepLines(...)
+call PyFuncInit()
 python3 << EOF
 functions.keepLines(vim.eval("a:000"))
 EOF
@@ -145,6 +162,7 @@ endfunction
 command! -nargs=* KeepLines call KeepLines(<f-args>)
 
 function! JsonFormat(...)
+call PyFuncInit()
 python3 << EOF
 functions.jsonFormat()
 EOF
@@ -152,6 +170,7 @@ endfunction
 command! -nargs=* JsonFormat call JsonFormat(<f-args>)
 
 function! DelLines(...)
+call PyFuncInit()
 python3 << EOF
 functions.delLines(vim.eval("a:000"))
 EOF
@@ -159,6 +178,7 @@ endfunction
 command! -nargs=* DelLines call DelLines(<f-args>)
 
 function! KeepMatchs(pattern)
+call PyFuncInit()
 python3 << EOF
 functions.keepMatchs(vim.eval("a:pattern"))
 EOF
@@ -166,6 +186,7 @@ endfunction
 command! -nargs=1 KeepMatchs call KeepMatchs(<f-args>)
 
 function! CloseBuffer()
+call PyFuncInit()
 python3 << EOF
 functions.closeBuffer()
 EOF
