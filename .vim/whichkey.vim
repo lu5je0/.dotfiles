@@ -90,8 +90,9 @@ nmap <silent> <Leader>sy <Plug>TranslateX
 
 " vim toggle
 let g:which_key_map.v = {
-      \ 'name' : '+Vim toggle' ,
+      \ 'name' : '+Vim toggle',
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
+      \ 'a' : 'toggle auto pairs',
       \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'n' : [':set invnumber', 'toggle number'],
@@ -104,17 +105,13 @@ let g:which_key_map.v = {
 
 " g is for git
 let g:which_key_map.r = {
-      \ 'name' : '+run' ,
+      \ 'name' : '+run',
+      \ 'r': "run"
       \ }
-let g:which_key_map.r.r = "run"
 
 " Visual Mode mappings
 vmap <silent> <leader>cB :<c-u>call base64#v_atob()<cr>
 vmap <silent> <leader>cb :<c-u>call base64#v_btoa()<cr>
-
-" Regex mappings
-" nmap <leader>cB\ :%s/\v()/\=base64#encode(submatch(1))/<home><right><right><right><right><right><right>
-" nmap <leader>cb\ :%s/\v()/\=base64#decode(submatch(1))/<home><right><right><right><right><right><right>
 
 vmap <leader>cc :'<,'>SnakeToCamelSel!<cr>
 nmap <leader>cc :SnakeToCamelAll!<cr>
@@ -124,15 +121,16 @@ nmap <leader>cs :CamelToSnakeAll!<cr>
 
 vmap <leader>cf <Plug>(coc-format-selected)
 nmap <leader>cf <Plug>(coc-format)
+
 let g:which_key_map.c = {
       \ 'name' : '+Code' ,
       \ 'r' : ["<Plug>(coc-rename)", 'rename variable'],
+      \ 'c' : "ToCamel",
+      \ 's' : "ToSnake",
+      \ 'f' : "Autoformat",
+      \ 'b' : "base64",
+      \ 'B' : "unbase64",
       \ }
-let g:which_key_map.c.c = "ToCamel"
-let g:which_key_map.c.s = "ToSnake"
-let g:which_key_map.c.f = "Autoformat"
-let g:which_key_map.c.b = "base64"
-let g:which_key_map.c.B = "unbase64"
 
 " +buffer or terminal
 let g:which_key_map.t = {
