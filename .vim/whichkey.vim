@@ -92,7 +92,7 @@ nmap <silent> <Leader>sy <Plug>TranslateX
 let g:which_key_map.v = {
       \ 'name' : '+Vim toggle',
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
-      \ 'a' : 'toggle auto pairs',
+      \ 'a' : [':call AutoPairsToggle()', 'toggle auto pairs'],
       \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'n' : [':set invnumber', 'toggle number'],

@@ -22,6 +22,7 @@ nmap / :action Find<CR>
 nmap <leader>fm :action RecentChangedFiles<CR>
 nmap <leader>ff :action GotoFile<CR>
 nmap <leader>fr :action FindInPath<CR>
+nmap <leader>fc :action GotoClass<CR>
 nmap <leader>fw :w<cr>
 
 vmap < <gv
