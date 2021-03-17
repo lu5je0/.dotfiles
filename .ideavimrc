@@ -86,6 +86,7 @@ vmap <m-p> <A-p>
 # history
 nmap <c-o> :action Back<CR>
 nmap <c-i> :action Forward<CR>
+imap <m-p> <Action>(ParameterInfo)
 
 nmap H ^
 nmap L $

@@ -1,7 +1,6 @@
 from ctypes import c_char_p
 import ctypes
 import os
-import random
 
 class ImSwitcher():
     lib = None
@@ -19,8 +18,9 @@ class ImSwitcher():
         self.lib.getCurrentInputSourceID.restype = c_char_p
 
     def getCurrentInputSourceID(self):
-        im_id = str(self.lib.getCurrentInputSourceID(random.randint(10, 20)), encoding='utf8')
-        return im_id;
+        # im_id = str(self.lib.getCurrentInputSourceID(), encoding='utf8')
+        # return im_id;
+        return os.popen('im-select').read()[0:-1]
 
     def switchInputSource(self, input_method):
         return self.lib.switchInputSource(input_method.encode('ascii'))
