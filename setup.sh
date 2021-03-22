@@ -25,7 +25,7 @@ ln -s ~/.dotfiles/.vim/coc-settings.json ~/.config/nvim/coc-settings.json
 
 echo "use ssh config?(y/n)"
 read use_ssh_config
-case $install_git_open in
+case $use_ssh_config in
     Y | y)
         echo "use ssh config" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 esac

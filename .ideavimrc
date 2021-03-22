@@ -18,7 +18,6 @@ set NERDTree
 let mapleader=","
 
 " 搜索
-nmap / :action Find<CR>
 nmap <leader>fm :action RecentChangedFiles<CR>
 nmap <leader>ff :action GotoFile<CR>
 nmap <leader>fr :action FindInPath<CR>
@@ -58,6 +57,7 @@ map gn :action GotoImplementation<CR>
 # code
 map <leader>cf :action ReformatCode<CR>
 map <leader>cr <Action>(RenameElement)
+map <leader>cm <Action>(ChangeSignature)
 map <leader>i :action Inline<CR>
 
 # run

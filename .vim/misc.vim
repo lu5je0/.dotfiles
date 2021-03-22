@@ -24,7 +24,7 @@ function! s:open_junk_file()
 
 	let filename = junk_dir . '/'
 	let filename = tr(filename, '\', '/')
-    let partname = input('Junk Code: ', strftime('%Y-%m-%d-%H%M%S.'))
+    let partname = input('Junk Code: ', strftime('%Y-%m-%dT%H:%M:%S.'))
 	let filename = filename . partname
 	if partname != ''
 		execute 'edit ' . fnameescape(filename)
@@ -42,7 +42,7 @@ function! s:save_as_junk_file()
 
 	let filename = junk_dir . '/'
 	let filename = tr(filename, '\', '/')
-    let partname = input('Junk Code: ', strftime('%Y-%m-%d-%H%M%S.'))
+    let partname = input('Junk Code: ', strftime('%Y-%m-%dT%H:%M:%S.'))
 	let filename = filename . partname
 	if partname != ''
 		execute 'w ' . fnameescape(filename)
