@@ -13,6 +13,8 @@ def jsonFormat():
     res = jsbeautifier.beautify(json, opts).split('\n')
 
     buffer[0:len(res)] = res
+    if vim.eval("&ft") == "":
+        vim.command("set filetype=json")
 
 def keepLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]

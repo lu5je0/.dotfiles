@@ -20,6 +20,7 @@ Plug 'lambdalisue/glyph-palette.vim'
 Plug 'lambdalisue/fern-git-status.vim'
 
 Plug 'yianwillis/vimcdoc'
+Plug 'MTDL9/vim-log-highlighting'
 Plug 'tpope/vim-commentary'
 Plug 'honza/vim-snippets'
 Plug 'mg979/vim-visual-multi'
