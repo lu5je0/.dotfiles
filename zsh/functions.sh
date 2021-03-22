@@ -10,17 +10,16 @@ function q-myip
 
 function q-kill-by-name
 {
-    echo "todo"
-    # if [[ ! -n $1 ]]; then
-    #     echo "you have not input a keyword!"
-    # fi
-    # ps -ef | grep -E $1
-    # echo "The above process will be kill(y/n)"
-    # read kill_or_not
-    # case $kill_or_not in
-    #     Y | y)
-    #             ps -ef | grep -E $1 | awk '{print $1}' | xargs kill
-    # esac
+    if [[ ! -n $1 ]]; then
+        echo "you have not input a keyword!"
+    fi
+    ps -ef | grep -E $1 | grep -v grep
+    echo "\nThe above process will be kill(y/n)"
+    read kill_or_not
+    case $kill_or_not in
+        Y | y)
+            ps -ef | grep -E $1 | grep -v grep | awk '{print $2}' | xargs kill
+    esac
 }
 
 function q-color
