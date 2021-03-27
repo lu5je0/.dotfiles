@@ -16,7 +16,7 @@ mkdir -p ~/.aria2
 ln -s ~/.dotfiles/.aria2/aria2.conf ~/.aria2/aria2.conf
 
 # nvim
-mkdir ~/.local/share/nvim
+mkdir -p ~/.local/share/nvim
 ln -s ~/.dotfiles/.vim ~/.local/share/nvim/site
 mkdir -p ~/.config/nvim
 ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
