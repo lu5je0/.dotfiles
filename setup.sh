@@ -8,6 +8,9 @@ ln -s ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes/lu5je0.zsh-theme
 
 touch ~/.ohmyenv
 
+mkdir -p ~/.bin
+ln -s ~/.dotfiles/bin ~/.bin/local
+
 mkdir -p ~/.pip
 ln -s ~/.dotfiles/.pip/pip.conf ~/.pip/pip.conf
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf

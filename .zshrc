@@ -30,7 +30,7 @@ alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
 alias tn="tmux new-session -s"
 
-export PATH=$PATH:~/.bin
+export PATH=$PATH:~/.bin:~/.bin/local
 
 # mac
 if [ "$(uname)" = "Darwin" ]; then
