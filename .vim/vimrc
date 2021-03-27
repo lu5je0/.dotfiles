@@ -133,6 +133,12 @@ set diffopt+=internal,algorithm:patience
 let g:vim_json_syntax_conceal = 0
 " }}}
 
+" vim-commentary {{{
+augroup vim_commentary
+    autocmd FileType crontab setlocal commentstring=#\ %s
+augroup END
+" }}}
+
 " auto-paris {{{
 let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
 let g:AutoPairsShortcutToggle = ''
