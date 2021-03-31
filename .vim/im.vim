@@ -66,9 +66,10 @@ EOF
 let g:im_func_init = 1
 endfunction
 
-call ImFuncInit()
-
 function! SwitchToEn()
+if g:im_func_init != 1
+    call ImFuncInit()
+endif
 python3 << EOF
 
 # last = switcher.getCurrentInputSourceID()
@@ -80,6 +81,9 @@ endfunction
 
 
 function! SwitchToCn()
+if g:im_func_init != 1
+    call ImFuncInit()
+endif
 python3 << EOF
 
 if switcher != None:

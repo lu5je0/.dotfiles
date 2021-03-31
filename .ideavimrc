@@ -54,7 +54,7 @@ nmap gu :action GotoSuperMethod<CR>
 nmap gn :action GotoImplementation<CR>
 
 # code
-nmap <leader>cf :action ReformatCode<CR>
+map <leader>cf :action ReformatCode<CR>
 nmap <leader>cr <Action>(RenameElement)
 nmap <leader>cm <Action>(ChangeSignature)
 nmap <leader>i :action Inline<CR>
