@@ -1,5 +1,4 @@
 ln -s ~/.dotfiles/.vim ~/.vim
-ln -s ~/.dotfiles/bin ~/.bin
 ln -s ~/.dotfiles/.cheat ~/.cheat
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
@@ -7,6 +6,9 @@ ln -s ~/.dotfiles/.zshrc ~/.zshrc
 ln -s ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes/lu5je0.zsh-theme
 
 touch ~/.ohmyenv
+
+mkdir -p ~/.bin
+ln -s ~/.dotfiles/bin ~/.bin/local
 
 mkdir -p ~/.pip
 ln -s ~/.dotfiles/.pip/pip.conf ~/.pip/pip.conf

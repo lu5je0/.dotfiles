@@ -22,6 +22,7 @@ alias sftp="sftp -C"
 alias wd="~/.dotfiles/submodule/wd/wd.py"
 alias fetch_subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias sudo="sudo "
+alias crontab="cron.sh"
 # tmux
 alias ta="tmux attach -t"
 alias td="tmux detach"
@@ -29,7 +30,7 @@ alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
 alias tn="tmux new-session -s"
 
-export PATH=$PATH:~/.bin
+export PATH=$PATH:~/.bin:~/.bin/local
 
 # mac
 if [ "$(uname)" = "Darwin" ]; then
