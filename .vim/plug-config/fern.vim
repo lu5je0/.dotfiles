@@ -37,7 +37,7 @@ function! s:init_fern() abort
               \   "\<Plug>(fern-action-collapse)",
               \ )
   nmap <buffer><nowait> o <Plug>(fern-my-expand-or-collapse)
-  nmap <buffer><nowait> b <Plug>(fern-action-open-or-expand)<C-w>h
+  nmap <buffer><nowait> w <Plug>(fern-action-mark:toggle)j
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
@@ -57,7 +57,6 @@ function! s:init_fern() abort
   nmap <buffer> r <Plug>(fern-action-reload)
   nmap <buffer> <silent> R :Fern .<cr>
   nmap <buffer> cd <Plug>(fern-action-cd)
-  nmap <buffer> CD gg<Plug>(fern-action-cd)<C-o>
   nmap <buffer> I <Plug>(fern-action-hidden:toggle)
   nmap <buffer> <ESC> <C-W>l
 
