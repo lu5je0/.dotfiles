@@ -47,7 +47,7 @@ nmap <leader>ee :NERDTree<CR>
 nmap <leader>ef :NERDTreeFind<CR>
 nmap <leader>t :action ReopenClosedTab<CR>
 nmap <leader>q :action CloseContent<CR>
-nmap <leader>ss :action $EditorTranslateAction<CR>
+map <leader>ss :action $EditorTranslateAction<CR>
 nmap <leader>sr :action $TranslateAndReplaceAction<CR>
 
 nmap gu :action GotoSuperMethod<CR>
