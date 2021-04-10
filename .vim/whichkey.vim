@@ -113,8 +113,11 @@ let g:which_key_map.r = {
 vmap <silent> <leader>cB :<c-u>call base64#v_atob()<cr>
 vmap <silent> <leader>cb :<c-u>call base64#v_btoa()<cr>
 
-vmap <leader>cc :'<,'>SnakeToCamelSel!<cr>
-nmap <leader>cc :SnakeToCamelAll!<cr>
+" vmap <leader>cc :'<,'>SnakeToCamelSel!<cr>
+" nmap <leader>cc :SnakeToCamelAll!<cr>
+
+" Symbol renaming.
+nmap <leader>cr <Plug>(coc-rename)
 
 vmap <leader>cs :'<,'>CamelToSnakeSel!<cr>
 nmap <leader>cs :CamelToSnakeAll!<cr>
@@ -122,10 +125,15 @@ nmap <leader>cs :CamelToSnakeAll!<cr>
 vmap <leader>cf <Plug>(coc-format-selected)
 nmap <leader>cf <Plug>(coc-format)
 
+" Applying codeAction to the selected region.
+" Example: `<leader>aap` for current paragraph
+xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+
+      " \ 'c' : ["<Plug>(coc-codeaction-selected)<cr>", 'codeaction'],
 let g:which_key_map.c = {
       \ 'name' : '+Code' ,
       \ 'r' : ["<Plug>(coc-rename)", 'rename variable'],
-      \ 'c' : "ToCamel",
       \ 's' : "ToSnake",
       \ 'f' : "Autoformat",
       \ 'b' : "base64",

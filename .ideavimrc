@@ -58,6 +58,7 @@ map <leader>cf :action ReformatCode<CR>
 nmap <leader>cr <Action>(RenameElement)
 nmap <leader>cm <Action>(ChangeSignature)
 nmap <leader>i :action Inline<CR>
+nmap <leader>cc :action ShowIntentionActions<CR>
 
 # run
 nmap <leader>re :action ChooseRunConfiguration<CR>

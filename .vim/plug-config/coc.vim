@@ -32,12 +32,15 @@ nmap <leader>cr <Plug>(coc-rename)
 
 " Highlight the symbol and its references when holding the cursor.
 augroup coc_hold
+    autocmd!
     autocmd CursorHold * silent call CocActionAsync('highlight')
     autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 augroup END
 
-" nmap <leader>rf <Plug>(coc-fix-current)
-" command! -nargs=0 Format :call CocAction('format')
+" Applying codeAction to the selected region.
+" Example: `<leader>aap` for current paragraph
+xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-clangd']
 
