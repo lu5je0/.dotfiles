@@ -27,16 +27,17 @@ function! s:show_documentation()
   endif
 endfunction
 
-" Highlight the symbol and its references when holding the cursor.
-autocmd CursorHold * silent call CocActionAsync('highlight')
-
 " Symbol renaming.
 nmap <leader>cr <Plug>(coc-rename)
 
+" Highlight the symbol and its references when holding the cursor.
+augroup coc_hold
+    autocmd CursorHold * silent call CocActionAsync('highlight')
+    autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
+augroup END
+
 " nmap <leader>rf <Plug>(coc-fix-current)
 " command! -nargs=0 Format :call CocAction('format')
-
-autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
 
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-clangd']
 
