@@ -3,10 +3,9 @@ inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() :
 
 imap <expr> <tab> pumvisible() ?  "\<C-y>" : "\<TAB>"
 
-let g:coc_snippet_next = '<cr>'
-
 " Use <C-k> for jump to previous placeholder, it's default of coc.nvim
-let g:coc_snippet_prev = '<c-g>'
+let g:coc_snippet_next = '<c-j>'
+let g:coc_snippet_prev = '<c-k>'
 
 " GoTo code navigation.
 nmap <silent> gd <Plug>(coc-definition)
@@ -27,16 +26,20 @@ function! s:show_documentation()
   endif
 endfunction
 
-" Highlight the symbol and its references when holding the cursor.
-autocmd CursorHold * silent call CocActionAsync('highlight')
-
 " Symbol renaming.
 nmap <leader>cr <Plug>(coc-rename)
 
-" nmap <leader>rf <Plug>(coc-fix-current)
-" command! -nargs=0 Format :call CocAction('format')
+" Highlight the symbol and its references when holding the cursor.
+augroup coc_hold
+    autocmd!
+    autocmd CursorHold * silent call CocActionAsync('highlight')
+    autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
+augroup END
 
-autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
+" Applying codeAction to the selected region.
+" Example: `<leader>aap` for current paragraph
+xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-clangd']
 

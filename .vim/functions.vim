@@ -80,13 +80,15 @@ function! ToggleWrap()
     if g:ToggleWrapStauts == 0
         let g:ToggleWrapStauts = 1
         set wrap!
-        nmap j gj
-        nmap k gk
+        map j gj
+        map k gk
         let g:ToggleGjStauts = 1
         echo "wrap"
     else
         set wrap!
         let g:ToggleWrapStauts = 0
+        unmap j
+        unmap k
         echo "unwrap"
     endif
 endfunction

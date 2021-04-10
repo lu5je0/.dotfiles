@@ -41,7 +41,7 @@ nmap <silent> <leader>8 8gt
 nmap <silent> <leader>9 9gt
 
 # reload vimrc
-nmap <leader>vs :action IdeaVim.ReloadVimRc.reload<CR>
+nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
 
 nmap <leader>ee :NERDTree<CR>
 nmap <leader>ef :NERDTreeFind<CR>
@@ -55,17 +55,19 @@ nmap gn :action GotoImplementation<CR>
 
 # code
 map <leader>cf :action ReformatCode<CR>
-nmap <leader>cr <Action>(RenameElement)
-nmap <leader>cm <Action>(ChangeSignature)
-nmap <leader>i :action Inline<CR>
+map <leader>cr <Action>(RenameElement)
+map <leader>cm <Action>(ChangeSignature)
+map <leader>cg <Action>(Generate)
+map <leader>ci :action Inline<CR>
+map <leader>cc <Action>(ShowIntentionActions)
 
 # run
 nmap <leader>re :action ChooseRunConfiguration<CR>
 nmap <leader>rc :action CompileDirty<CR>
-nmap <leader>rD :action Debug<CR>
-nmap <leader>rd :action DebugClass<CR>
-nmap <leader>rR :action Run<CR>
-nmap <leader>rr :action RunClass<CR>
+nmap <leader>rR :action Debug<CR>
+nmap <leader>rr :action DebugClass<CR>
+nmap <leader>rD :action Run<CR>
+nmap <leader>rd :action RunClass<CR>
 
 # windows multiple0-cursors key maps
 nmap <c-n> <A-n>
