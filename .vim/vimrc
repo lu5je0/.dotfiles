@@ -117,6 +117,11 @@ augroup file_type
     autocmd Filetype * if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
 augroup END
 
+augroup filetype_help
+    autocmd!
+    autocmd BufRead * if &l:buftype ==# 'help' | set number | set bl | set buftype="" | endif
+augroup END
+
 
 " }}}
 

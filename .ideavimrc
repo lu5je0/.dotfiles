@@ -119,7 +119,7 @@ nmap <c-k> <c-w>j
 
 " git
 map <leader>gu <Action>(Vcs.RollbackChangedLines)
-map <leader>ga <Action>(Annotate)
+map <leader>gb <Action>(Annotate)
 map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 
 " navicat
