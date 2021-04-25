@@ -1,7 +1,7 @@
-inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() : 
+inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" : 
                                            \"\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
-imap <expr> <tab> pumvisible() ?  "\<C-y>" : "\<TAB>"
+imap <expr> <tab> pumvisible() ?  "\<C-y>\<C-g>u" : "\<TAB>"
 
 " Use <C-k> for jump to previous placeholder, it's default of coc.nvim
 let g:coc_snippet_next = '<c-j>'
