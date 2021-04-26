@@ -96,3 +96,6 @@ command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
 function g:Undotree_CustomMap()
     nmap <buffer> <ESC> <plug>UndotreeClose
 endfunc
+
+" 打断undo
+inoremap . <c-g>u.
