@@ -50,6 +50,7 @@ function! s:init_fern() abort
   nmap <buffer> ma <Plug>(fern-action-new-file)
   nmap <buffer> mv <Plug>(fern-action-move)
   nmap <buffer> m <Nop>
+  nmap <buffer> W <Plug>(fern-action-rename)
 
   nmap <buffer> D <Plug>(fern-action-remove)
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
