@@ -8,6 +8,11 @@ let g:fern#default_exclude = '\.\(swp\|git\)'
 let g:fern#drawer_width=22
 
 
+function! TerminalSendInner()
+    call TerminalSend('cd ' . eval('@+'))
+	call TerminalSend("\r")
+endfunction
+
 function! s:init_fern() abort
   " hi FernBranchText ctermfg=16 guifg=#61afef
   " yellow
@@ -50,7 +55,7 @@ function! s:init_fern() abort
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
-  nmap <buffer> T <Plug>(fern-action-terminal:bottom)
+  nmap <buffer> T yp:call TerminalSendInner()<cr><C-w>ji
   nmap <buffer> i <Plug>(fern-action-open:split)
   nmap <buffer> gi <Plug>(fern-action-open:split)<C-w>p
   nmap <buffer> s <Plug>(fern-action-open:vsplit)
