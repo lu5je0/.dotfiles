@@ -9,7 +9,7 @@ let g:fern#drawer_width=22
 
 
 function! TerminalSendInner()
-    call TerminalSend('cd ' . eval('@+'))
+    call TerminalSend('cd ' . fnamemodify(eval('@+'), ":p:h"))
 	call TerminalSend("\r")
 endfunction
 
@@ -55,7 +55,7 @@ function! s:init_fern() abort
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
-  nmap <buffer> T yp:call TerminalSendInner()<cr><C-w>ji
+  nmap <buffer> t yp:call TerminalSendInner()<cr><C-w>ji
   nmap <buffer> i <Plug>(fern-action-open:split)
   nmap <buffer> gi <Plug>(fern-action-open:split)<C-w>p
   nmap <buffer> s <Plug>(fern-action-open:vsplit)
