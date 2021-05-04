@@ -37,7 +37,11 @@ function! s:init_fern() abort
               \   "\<Plug>(fern-action-collapse)",
               \ )
   nmap <buffer><nowait> o <Plug>(fern-my-expand-or-collapse)
-  nmap <buffer><nowait> w <Plug>(fern-action-mark:toggle)j
+  nmap <buffer><nowait> <space> <Plug>(fern-action-mark:toggle)j
+
+  nmap <buffer> yy <Plug>(fern-action-clipboard-copy)
+  nmap <buffer> dd <Plug>(fern-action-clipboard-move)
+  nmap <buffer> pp <Plug>(fern-action-clipboard-paste)
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
