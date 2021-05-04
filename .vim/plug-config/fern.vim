@@ -41,7 +41,11 @@ function! s:init_fern() abort
 
   nmap <buffer> yy <Plug>(fern-action-clipboard-copy)
   nmap <buffer> dd <Plug>(fern-action-clipboard-move)
+  nmap <buffer> dD <Plug>(fern-action-remove)
   nmap <buffer> pp <Plug>(fern-action-clipboard-paste)
+  nmap <buffer> yp <Plug>(fern-action-yank:path)
+  nmap <buffer> yn <Plug>(fern-action-yank:label)
+  nmap <buffer> p <Nop>
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
@@ -56,7 +60,6 @@ function! s:init_fern() abort
   nmap <buffer> m <Nop>
   nmap <buffer> W <Plug>(fern-action-rename)
 
-  nmap <buffer> D <Plug>(fern-action-remove)
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
   nmap <buffer> u <Plug>(fern-action-leave)
   nmap <buffer> r <Plug>(fern-action-reload)
