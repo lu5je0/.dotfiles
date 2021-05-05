@@ -8,6 +8,11 @@ let g:fern#default_exclude = '\.\(swp\|git\)'
 let g:fern#drawer_width=22
 
 
+function! TerminalSendInner()
+    call TerminalSend('cd ' . fnamemodify(eval('@+'), ":p:h"))
+	call TerminalSend("\r")
+endfunction
+
 function! s:init_fern() abort
   " hi FernBranchText ctermfg=16 guifg=#61afef
   " yellow
@@ -37,11 +42,20 @@ function! s:init_fern() abort
               \   "\<Plug>(fern-action-collapse)",
               \ )
   nmap <buffer><nowait> o <Plug>(fern-my-expand-or-collapse)
-  nmap <buffer><nowait> w <Plug>(fern-action-mark:toggle)j
+  nmap <buffer><nowait> <space> <Plug>(fern-action-mark:toggle)j
+
+  nmap <buffer> yy <Plug>(fern-action-clipboard-copy)
+  nmap <buffer> dd <Plug>(fern-action-clipboard-move)
+  nmap <buffer> dD <Plug>(fern-action-remove)
+  nmap <buffer> pp <Plug>(fern-action-clipboard-paste)
+  nmap <buffer> yp <Plug>(fern-action-yank:path)
+  nmap <buffer> yn <Plug>(fern-action-yank:label)
+  nmap <buffer> cw <Plug>(fern-action-rename)
+  nmap <buffer> p <Nop>
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
-  nmap <buffer> T <Plug>(fern-action-terminal:bottom)
+  nmap <buffer> t yp:call TerminalSendInner()<cr><C-w>ji
   nmap <buffer> i <Plug>(fern-action-open:split)
   nmap <buffer> gi <Plug>(fern-action-open:split)<C-w>p
   nmap <buffer> s <Plug>(fern-action-open:vsplit)
@@ -51,7 +65,6 @@ function! s:init_fern() abort
   nmap <buffer> mv <Plug>(fern-action-move)
   nmap <buffer> m <Nop>
 
-  nmap <buffer> D <Plug>(fern-action-remove)
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
   nmap <buffer> u <Plug>(fern-action-leave)
   nmap <buffer> r <Plug>(fern-action-reload)

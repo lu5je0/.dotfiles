@@ -41,6 +41,7 @@ Plug 'junegunn/vim-peekaboo'
 Plug 'lu5je0/vim-terminal-help'
 Plug 'skywind3000/asynctasks.vim'
 Plug 'skywind3000/asyncrun.vim'
+Plug 'skywind3000/asyncrun.extra'
 Plug 'elzr/vim-json'
 Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
@@ -117,10 +118,10 @@ augroup file_type
     autocmd Filetype * if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
 augroup END
 
-augroup filetype_help
-    autocmd!
-    autocmd BufRead * if &l:buftype ==# 'help' | set number | set bl | set buftype="" | endif
-augroup END
+" augroup filetype_help
+"     autocmd!
+"     autocmd BufRead * if &l:buftype ==# 'help' | set number | set bl | set buftype="" | endif
+" augroup END
 
 
 " }}}

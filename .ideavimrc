@@ -30,6 +30,7 @@ vmap > >gv
 " tab页
 nmap <silent> <leader>th :tabprev<cr>
 nmap <silent> <leader>tl :tabnext<cr>
+nmap <silent> <leader>tn :action NewScratchFile<cr>
 nmap <silent> <leader>1 1gt
 nmap <silent> <leader>2 2gt
 nmap <silent> <leader>3 3gt
@@ -64,10 +65,10 @@ map <leader>cc <Action>(ShowIntentionActions)
 # run
 nmap <leader>re :action ChooseRunConfiguration<CR>
 nmap <leader>rc :action CompileDirty<CR>
-nmap <leader>rR :action Debug<CR>
-nmap <leader>rr :action DebugClass<CR>
+nmap <leader>rD :action Debug<CR>
+nmap <leader>rd :action DebugClass<CR>
 nmap <leader>rD :action Run<CR>
-nmap <leader>rd :action RunClass<CR>
+nmap <leader>rr :action RunClass<CR>
 
 # windows multiple0-cursors key maps
 nmap <c-n> <A-n>
