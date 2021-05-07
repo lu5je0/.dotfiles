@@ -37,6 +37,10 @@ nmap <silent> <C-L> <C-w>l
 " terminal-toggle
 nmap <silent> <M-i> :call TerminalToggle()<CR>
 nmap <silent> <D-i> :call TerminalToggle()<CR>
+
+imap <silent> <M-i> <ESC>:call TerminalToggle()<CR>
+imap <silent> <D-i> <ESC>:call TerminalToggle()<CR>
+
 tmap <silent> <M-i> <c-\><c-n>:call TerminalToggle()<CR>
 tmap <silent> <D-i> <c-\><c-n>:call TerminalToggle()<CR>
 

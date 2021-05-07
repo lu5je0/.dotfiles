@@ -6,6 +6,7 @@ let g:fern#renderer#nerdfont#root_symbol = "≡ "
 let g:fern#disable_viewer_spinner=1
 let g:fern#default_exclude = '\.\(swp\|git\)'
 let g:fern#drawer_width=22
+let g:fern#disable_drawer_auto_resize=1
 
 
 function! TerminalSendInner()
