@@ -1,5 +1,11 @@
 command! -nargs=0 RunFile call RunFile()
 
+function! RunFileInner(cmd, append)
+    let l:cmd_str = 'AsyncRun -mode=term -pos=termhelp -rows=10 -focus=0 ' . a:cmd . ' "$(VIM_FILEPATH)"'
+
+    exe l:cmd_str . a:append
+endfunction
+
 function! RunFile()
     let file_type = &filetype
     if file_type == 'vim'
@@ -7,16 +13,20 @@ function! RunFile()
         so %
     elseif file_type == 'python'
         if has("win32") || has("win64")
-            AsyncRun -mode=term -pos=termhelp -rows=10 -focus=0 python "$(VIM_FILEPATH)"
+            call RunFileInner("python", "")
         else 
-            AsyncRun -mode=term -pos=termhelp -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"
+            call RunFileInner("python3", "")
         endif
     elseif file_type == 'java'
-        AsyncRun -mode=term -pos=termhelp -rows=10 -focus=0 java "$(VIM_FILEPATH)"
+        call RunFileInner("java", "")
     elseif file_type == 'c'
-        AsyncRun -mode=term -pos=termhelp -rows=10 -focus=0 gcc "$(VIM_FILEPATH)" && ./a.out && rm ./a.out
+        call RunFileInner("gcc", " && ./a.out && rm ./a.out")
     elseif file_type == 'sh'
-        AsyncRun -mode=term -pos=termhelp -rows=10 -focus=0 bash "$(VIM_FILEPATH)"
+        call RunFileInner("sh", "")
+    elseif file_type == 'javascript'
+        call RunFileInner("node", "")
+    elseif file_type == 'go'
+        call RunFileInner("go run", "")
     endif
 endfunction
 
