@@ -160,8 +160,7 @@ let g:which_key_map.f = {
       \ 'W' : [':SudaWrite', 'sudo-write'],
       \ 'w' : [':w', 'write'],
       \ 'j' : [':JunkList', 'junk list'],
-      \ 'g' : [':JunkFile', 'JunkFile'],
-      \ 'G' : [':SaveAsJunkFile', 'SaveAsJunkFile'],
+      \ 'J' : [':JunkFile', 'JunkFile'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }

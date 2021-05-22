@@ -22,6 +22,7 @@ nmap <leader>fm :action RecentChangedFiles<CR>
 nmap <leader>ff :action GotoFile<CR>
 nmap <leader>fr :action FindInPath<CR>
 nmap <leader>fc :action GotoClass<CR>
+nmap <leader>fe :action SearchEverywhere<CR>
 nmap <leader>fw :w<cr>
 
 vmap < <gv
@@ -49,7 +50,7 @@ nmap <leader>ef :NERDTreeFind<CR>
 nmap <leader>t :action ReopenClosedTab<CR>
 nmap <leader>q :action CloseContent<CR>
 map <leader>ss :action $EditorTranslateAction<CR>
-nmap <leader>sr :action $TranslateAndReplaceAction<CR>
+map <leader>sr :action $TranslateAndReplaceAction<CR>
 
 nmap gu :action GotoSuperMethod<CR>
 nmap gn :action GotoImplementation<CR>
