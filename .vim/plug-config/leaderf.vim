@@ -8,7 +8,7 @@ let g:Lf_WildIgnore = {
         \ 'file': ['*.sw?']
         \}
 
-let g:Lf_UseCache = 0      
-let g:Lf_UseMemoryCache = 0
-let g:Lf_PopupColorscheme = 'default'
-let g:Lf_RememberLastSearch = 1
+" let g:Lf_UseCache = 0      
+" let g:Lf_UseMemoryCache = 0
+" let g:Lf_PopupColorscheme = 'default'
+" let g:Lf_RememberLastSearch = 1
