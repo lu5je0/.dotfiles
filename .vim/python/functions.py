@@ -63,41 +63,44 @@ def getBufType(number):
     return vim.eval("getbufvar({}, \"&buftype\")".format(number))
 
 def closeBuffer():
-    txt_buffer_types = ["", "help", "acwrite"]
+    try:
+        txt_buffer_types = ["", "help", "acwrite"]
 
-    cur_buffer = vim.current.buffer
-    number = cur_buffer.number
-    is_edit = int(vim.eval("getbufvar(bufname(), \"&mod\")")) == 1
-    buftype = getBufType(number)
-    if buftype not in txt_buffer_types:
-        vim.command("quit")
-        return
-
-    txt_window_count = 0
-    has_same_buffer = False
-    for window in vim.current.tabpage.windows:
-        buffer = window.buffer
-        if buffer.number == number and vim.current.window != window:
-            has_same_buffer = True
-        if getBufType(buffer.number) in txt_buffer_types:
-            txt_window_count += 1
-            if txt_window_count > 1:
-                break
-
-    # 如果编辑过buffer，则需要确认
-    if is_edit and txt_window_count == 1:
-        has_mac = int(vim.eval("has('mac')")) == 1
-        if has_mac:
-            vim.command("set guioptions+=c")
-        confirm = int(vim.eval('''confirm("Close without saving?", "&No\n&Yes")'''))
-        if has_mac:
-            vim.command("set guioptions-=c")
-        if confirm != 2:
+        cur_buffer = vim.current.buffer
+        number = cur_buffer.number
+        is_edit = int(vim.eval("getbufvar(bufname(), \"&mod\")")) == 1
+        buftype = getBufType(number)
+        if buftype not in txt_buffer_types:
+            vim.command("quit")
             return
 
-    # 一个tab页中有两个的buffer时，直接quit
-    if txt_window_count == 1:
-        vim.command("bp")
-        vim.command("bd! " + str(number))
-    else:
-        vim.command("q")
+        txt_window_count = 0
+        has_same_buffer = False
+        for window in vim.current.tabpage.windows:
+            buffer = window.buffer
+            if buffer.number == number and vim.current.window != window:
+                has_same_buffer = True
+            if getBufType(buffer.number) in txt_buffer_types:
+                txt_window_count += 1
+                if txt_window_count > 1:
+                    break
+
+        # 如果编辑过buffer，则需要确认
+        if is_edit and txt_window_count == 1:
+            has_mac = int(vim.eval("has('mac')")) == 1
+            if has_mac:
+                vim.command("set guioptions+=c")
+            confirm = int(vim.eval('''confirm("Close without saving?", "&No\n&Yes")'''))
+            if has_mac:
+                vim.command("set guioptions-=c")
+            if confirm != 2:
+                return
+
+        # 一个tab页中有两个的buffer时，直接quit
+        if txt_window_count == 1:
+            vim.command("bp")
+            vim.command("bd! " + str(number))
+        else:
+            vim.command("q")
+    except Exception as e:
+        print("close waring")
