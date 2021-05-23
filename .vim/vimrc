@@ -88,9 +88,7 @@ Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
-"----------------------------------------------------------------------
-" runtime
-"----------------------------------------------------------------------
+" runtime 加载.vim {{{
 runtime settings.vim
 runtime foldtext.vim
 if has("win32")
@@ -107,10 +105,9 @@ runtime plug-config/lightline.vim
 if s:coc_enable == 1
     runtime plug-config/coc.vim
 endif
+" }}}
 
-"----------------------------------------------------------------------
-" autocmd
-"----------------------------------------------------------------------
+" autocmd {{{
 augroup file_type
     autocmd!
     autocmd FileType vim setlocal foldmethod=marker
@@ -127,69 +124,53 @@ augroup END
 " augroup END
 
 
-"----------------------------------------------------------------------
-" vim-expand-region
-"----------------------------------------------------------------------
+" }}}
+
+" vim-expand-region {{{
 vmap v <Plug>(expand_region_expand)
 vmap V <Plug>(expand_region_shrink)
+" }}}
 
-
-"----------------------------------------------------------------------
-" vim-diff-enhanced 
-"----------------------------------------------------------------------
+" vim-diff-enhanced {{{
 set diffopt+=internal,algorithm:patience
+" }}}
 
-
-"----------------------------------------------------------------------
-" vim-json
-"----------------------------------------------------------------------
+" vim-json {{{
 let g:vim_json_syntax_conceal = 0
+" }}}
 
-"----------------------------------------------------------------------
-" vim-commentary
-"----------------------------------------------------------------------
+" vim-commentary {{{
 augroup vim_commentary
     autocmd FileType crontab setlocal commentstring=#\ %s
 augroup END
+" }}}
 
-
-"----------------------------------------------------------------------
-" auto-paris
-"----------------------------------------------------------------------
+" auto-paris {{{
 let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
 let g:AutoPairsShortcutToggle = ''
 let g:AutoPairsShortcutJump = ''
 let g:AutoPairsShortcutFastWrap = ''
 let g:AutoPairsMoveCharacter = ''
+" }}}
 
-
-"----------------------------------------------------------------------
-" vim-textobj-parameter
-"----------------------------------------------------------------------
+" vim-textobj-parameter {{{
 let g:vim_textobj_parameter_mapping = 'a'
+" }}}
 
-
-"----------------------------------------------------------------------
-" delimitMate
-"----------------------------------------------------------------------
+" delimitMate {{{
 let g:delimitMate_expand_cr=1
+" }}}
 
-
-"----------------------------------------------------------------------
-" supertab
-"----------------------------------------------------------------------
+" supertab {{{
 let g:SuperTabDefaultCompletionType = "<c-n>"
+" }}}
 
-
-"----------------------------------------------------------------------
-" highlightedyank
-"----------------------------------------------------------------------
+" highlightedyank {{{
 let g:highlightedyank_highlight_duration=300
+" }}}
 
+" toggle_terminal {{{
 
-"----------------------------------------------------------------------
-" toggle_terminal
-"----------------------------------------------------------------------
 " set your favorite shell
 if has("win32")
     let g:toggle_terminal#command = 'wsl'
@@ -197,17 +178,18 @@ else
     let g:toggle_terminal#command = ''
 endif
 
+" set terminal window position
+" (see possible options at :help vertical)
+" let g:toggle_terminal#position = 's'
 
-"----------------------------------------------------------------------
-" undotree
-"----------------------------------------------------------------------
+" }}}
+
+" undotree {{{
 let g:undotree_WindowLayout = 3
 let g:undotree_SetFocusWhenToggle = 1
+" }}}
 
-
-"----------------------------------------------------------------------
-" FastFold
-"----------------------------------------------------------------------
+" FastFold {{{
 let g:markdown_folding = 1
 let g:tex_fold_enabled = 1
 let g:vimsyn_folding = 'af'
@@ -220,28 +202,21 @@ let g:perl_fold_blocks = 1
 let g:r_syntax_folding = 1
 let g:rust_fold = 1
 let g:php_folding = 1
+" }}}
 
-
-"----------------------------------------------------------------------
-" alias
-"----------------------------------------------------------------------
+" alias {{{
 command! Json set ft=json
 command! Jp set ft=jproperties
 command! Diff windo difft
 command! Diffo windo diffo
+" }}}
 
-
-"----------------------------------------------------------------------
-" 主题配置
-"----------------------------------------------------------------------
+" 主题配置 {{{
 colorscheme one
 let g:lightline.colorscheme = 'ones'
 set bg=dark
+" }}}
 
-
-"----------------------------------------------------------------------
-" runtime
-"----------------------------------------------------------------------
 runtime mappings.vim
 runtime im.vim
 runtime whichkey.vim
