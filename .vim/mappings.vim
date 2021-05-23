@@ -28,12 +28,6 @@ if has("gui_running")
     imap <silent> <C-S> <ESC>:brow saveas<CR>a
 endif
 
-" 快速切换窗口
-nmap <silent> <C-J> <C-w>j
-nmap <silent> <C-K> <C-w>k
-nmap <silent> <C-H> <C-w>h
-nmap <silent> <C-L> <C-w>l
-
 " terminal-toggle
 nmap <silent> <M-i> :call TerminalToggle()<CR>
 nmap <silent> <D-i> :call TerminalToggle()<CR>
@@ -59,6 +53,20 @@ nmap <F3> :bn<cr>
 nnoremap <PageUp>   :bprevious<CR>
 nnoremap <PageDown> :bnext<CR>
 
+"----------------------------------------------------------------------
+" window control
+"----------------------------------------------------------------------
+noremap <silent><space>= :resize +3<cr>
+noremap <silent><space>- :resize -3<cr>
+noremap <silent><space>, :vertical resize -3<cr>
+noremap <silent><space>. :vertical resize +3<cr>
+
+" 快速切换窗口
+nmap <silent> <C-J> <C-w>j
+nmap <silent> <C-K> <C-w>k
+nmap <silent> <C-H> <C-w>h
+nmap <silent> <C-L> <C-w>l
+
 nmap <Leader>1 <Plug>lightline#bufferline#go(1)
 nmap <Leader>2 <Plug>lightline#bufferline#go(2)
 nmap <Leader>3 <Plug>lightline#bufferline#go(3)
@@ -71,13 +79,6 @@ nmap <Leader>9 <Plug>lightline#bufferline#go(9)
 nmap <Leader>0 <Plug>lightline#bufferline#go(10)
 nmap <silent> <leader>Q :call QuitForce()<CR>
 nmap Q <Nop>
-
-" let s:python = executable('python3')? 'python3' : 'python'
-if has("win32")
-    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>
-else
-    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
-endif
 
 fun SplitWithBuffer(n)
     let l:buffer_number = lightline#bufferline#get_buffer_for_ordinal_number(a:n)
@@ -103,3 +104,16 @@ endfunc
 
 " 打断undo
 inoremap . <c-g>u.
+
+"----------------------------------------------------------------------
+" text-objects
+"----------------------------------------------------------------------
+onoremap il :<c-u>normal! v$o^oh<cr>
+vnoremap il $o^oh
+
+" let s:python = executable('python3')? 'python3' : 'python'
+if has("win32")
+    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>
+else
+    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
+endif
