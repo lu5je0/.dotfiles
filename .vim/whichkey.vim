@@ -150,7 +150,7 @@ let g:which_key_map.t = {
 
 let g:which_key_map.f = {
       \ 'name' : '+Leaderf/Files' ,
-      \ 'c' : [':Leaderf colorscheme', 'colorscheme'],
+      \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'r' : [':Leaderf rg', 'rg'],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
@@ -166,10 +166,13 @@ let g:which_key_map.f = {
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }
 
-let g:which_key_map.f.C = {
+let g:which_key_map.f.c = {
       \ 'name' : '+Files/convert' ,
       \ 'u' : [':set ff=unix', '2unix'],
       \ 'd' : [':set ff=dos', '2dos'],
+      \ 'q' : [':%!opencc -c t2s', '繁体转简体'],
+      \ 'm' : [':%s/\r$//', '移除^M'],
       \ }
+vmap <leader>fcq :!opencc -c t2s<cr>
 
 call which_key#register(',', "g:which_key_map")
