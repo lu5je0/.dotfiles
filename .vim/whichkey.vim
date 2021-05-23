@@ -170,9 +170,14 @@ let g:which_key_map.f.c = {
       \ 'name' : '+Files/convert' ,
       \ 'u' : [':set ff=unix', '2unix'],
       \ 'd' : [':set ff=dos', '2dos'],
-      \ 'q' : [':%!opencc -c t2s', '繁体转简体'],
+      \ 'q' : "繁体转简体",
+      \ 'w' : "简体转繁体",
       \ 'm' : [':%s/\r$//', '移除^M'],
       \ }
 vmap <leader>fcq :!opencc -c t2s<cr>
+nmap <leader>fcq :%!opencc -c t2s<cr>
+
+vmap <leader>fcw :!opencc -c s2t<cr>
+nmap <leader>fcw :%!opencc -c s2t<cr>
 
 call which_key#register(',', "g:which_key_map")
