@@ -8,6 +8,8 @@ let g:Lf_WildIgnore = {
         \ 'file': ['*.sw?']
         \}
 
+let g:Lf_PopupHeight = 0.6
+
 " let g:Lf_UseCache = 0      
 " let g:Lf_UseMemoryCache = 0
 " let g:Lf_PopupColorscheme = 'default'
