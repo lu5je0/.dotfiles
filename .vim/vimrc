@@ -111,6 +111,7 @@ endif
 augroup file_type
     autocmd!
     autocmd FileType vim setlocal foldmethod=marker
+    autocmd FileType json setlocal foldmethod=syntax
     autocmd FileType * set formatoptions-=o
     autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
     autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
