@@ -111,6 +111,12 @@ inoremap . <c-g>u.
 onoremap il :<c-u>normal! v$o^oh<cr>
 vnoremap il $o^oh
 
+xnoremap <silent> ij i"
+onoremap <silent> ij :normal vij<CR>
+
+xnoremap <silent> aj a"
+onoremap <silent> aj :normal vaj<CR>
+
 " let s:python = executable('python3')? 'python3' : 'python'
 if has("win32")
     nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>

@@ -110,10 +110,6 @@ let g:which_key_map.r = {
       \ 'r': "run"
       \ }
 
-" Visual Mode mappings
-vmap <silent> <leader>cB :<c-u>call base64#v_atob()<cr>
-vmap <silent> <leader>cb :<c-u>call base64#v_btoa()<cr>
-
 " vmap <leader>cc :'<,'>SnakeToCamelSel!<cr>
 " nmap <leader>cc :SnakeToCamelAll!<cr>
 
@@ -137,8 +133,6 @@ let g:which_key_map.c = {
       \ 'r' : ["<Plug>(coc-rename)", 'rename variable'],
       \ 's' : "ToSnake",
       \ 'f' : "Autoformat",
-      \ 'b' : "base64",
-      \ 'B' : "unbase64",
       \ }
 
 " +buffer or terminal
@@ -171,13 +165,20 @@ let g:which_key_map.f.c = {
       \ 'u' : [':set ff=unix', '2unix'],
       \ 'd' : [':set ff=dos', '2dos'],
       \ 'q' : "繁体转简体",
-      \ 'w' : "简体转繁体",
+      \ 'Q' : "简体转繁体",
       \ 'm' : [':%s/\r$//', '移除^M'],
+      \ 'b' : "base64",
+      \ 'B' : "unbase64",
       \ }
 vmap <leader>fcq :!opencc -c t2s<cr>
 nmap <leader>fcq :%!opencc -c t2s<cr>
 
 vmap <leader>fcw :!opencc -c s2t<cr>
 nmap <leader>fcw :%!opencc -c s2t<cr>
+
+" Visual Mode mappings
+vmap <silent> <leader>fcB :<c-u>call base64#v_atob()<cr>
+vmap <silent> <leader>fcb :<c-u>call base64#v_btoa()<cr>
+
 
 call which_key#register(',', "g:which_key_map")

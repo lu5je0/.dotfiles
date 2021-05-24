@@ -223,3 +223,6 @@ runtime im.vim
 runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
+
+xnoremap <silent> ij i"
+onoremap <silent> ij :normal vij<CR>
