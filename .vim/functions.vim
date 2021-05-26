@@ -247,3 +247,33 @@ function! VisualSelection()
     let lines[0] = lines[0][column_start - 1:]
     return join(lines, "\n")
 endfunction
+
+function! UnicodeEscapeString(str)
+  let oldenc = &encoding
+  set encoding=utf-8
+  let escaped = substitute(a:str, '.', '\=printf("\\u%04x", char2nr(submatch(0)))', 'g')
+  let &encoding = oldenc
+  return escaped
+endfunction
+
+function! UnicodeUnescapeString(str)
+  let oldenc = &encoding
+  set encoding=utf-8
+  let escaped = substitute(a:str, '\\u\([0-9a-fA-F]\{4\}\)', '\=nr2char("0x" . submatch(1))', 'g')
+  let &encoding = oldenc
+  return escaped
+endfunction
+
+function! ReplaceSelect(fn)
+	" Preserve line breaks
+	let l:paste = &paste
+	set paste
+	" Reselect the visual mode text
+	normal! gv
+	" Apply transformation to the text
+	execute "normal! c\<c-r>=" . a:fn . "(@\")\<cr>\<esc>"
+	" Select the new text
+	normal! `[v`]h
+	" Revert to previous mode
+	let &paste = l:paste
+endfunction

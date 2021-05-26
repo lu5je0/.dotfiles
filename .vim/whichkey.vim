@@ -162,13 +162,15 @@ let g:which_key_map.f = {
 
 let g:which_key_map.f.c = {
       \ 'name' : '+Files/convert' ,
-      \ 'u' : [':set ff=unix', '2unix'],
-      \ 'd' : [':set ff=dos', '2dos'],
+      \ 'f' : [':set ff=unix', '2unix'],
+      \ 'F' : [':set ff=dos', '2dos'],
       \ 'q' : "繁体转简体",
       \ 'Q' : "简体转繁体",
       \ 'm' : [':%s/\r$//', '移除^M'],
       \ 'b' : "base64",
       \ 'B' : "unbase64",
+      \ 'u' : "Escape Unicode",
+      \ 'U' : "Unescape Unicode",
       \ }
 vmap <leader>fcq :!opencc -c t2s<cr>
 nmap <leader>fcq :%!opencc -c t2s<cr>
@@ -180,5 +182,7 @@ nmap <leader>fcw :%!opencc -c s2t<cr>
 vmap <silent> <leader>fcB :<c-u>call base64#v_atob()<cr>
 vmap <silent> <leader>fcb :<c-u>call base64#v_btoa()<cr>
 
+vmap <silent> <leader>fcu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
+vmap <silent> <leader>fcU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
 
 call which_key#register(',', "g:which_key_map")
