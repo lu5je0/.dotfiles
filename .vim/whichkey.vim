@@ -171,18 +171,42 @@ let g:which_key_map.f.c = {
       \ 'B' : "unbase64",
       \ 'u' : "Escape Unicode",
       \ 'U' : "Unescape Unicode",
+      \ 'h' : "url encode",
+      \ 'H' : "url decode",
       \ }
+
+"----------------------------------------------------------------------
+" 繁体简体
+"----------------------------------------------------------------------
 vmap <leader>fcq :!opencc -c t2s<cr>
 nmap <leader>fcq :%!opencc -c t2s<cr>
 
-vmap <leader>fcw :!opencc -c s2t<cr>
-nmap <leader>fcw :%!opencc -c s2t<cr>
+vmap <leader>fcQ :!opencc -c s2t<cr>
+nmap <leader>fcQ :%!opencc -c s2t<cr>
 
-" Visual Mode mappings
+
+"----------------------------------------------------------------------
+" base64
+"----------------------------------------------------------------------
 vmap <silent> <leader>fcB :<c-u>call base64#v_atob()<cr>
 vmap <silent> <leader>fcb :<c-u>call base64#v_btoa()<cr>
 
+
+"----------------------------------------------------------------------
+" unicode escape
+"----------------------------------------------------------------------
 vmap <silent> <leader>fcu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
 vmap <silent> <leader>fcU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+
+
+"----------------------------------------------------------------------
+" url encode
+"----------------------------------------------------------------------
+nmap <leader>fch :%!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+nmap <leader>fcH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+
+vnoremap <leader>fch :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+vnoremap <leader>fcH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+
 
 call which_key#register(',', "g:which_key_map")
