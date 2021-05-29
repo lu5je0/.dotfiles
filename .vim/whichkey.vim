@@ -30,6 +30,7 @@ let g:which_key_map.9 = 'which_key_ignore'
 let g:which_key_map.q = [ 'CloseBuffer', 'close buffer' ]
 let g:which_key_map.Q = [ 'QuitForce', 'quit force' ]
 let g:which_key_map.u = [':UndotreeToggle', 'undotree']
+let g:which_key_map.i = [':Vista!!', 'vista']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 let g:which_key_map.d = 'buffer switch'
 nmap <leader>d <c-^>

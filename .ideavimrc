@@ -44,6 +44,7 @@ nmap <silent> <leader>9 9gt
 
 # reload vimrc
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
+nmap <leader>i <Action>(ActivateStructureToolWindow)
 
 nmap <leader>ee :NERDTree<CR>
 nmap <leader>ef :NERDTreeFind<CR>
