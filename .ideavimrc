@@ -125,6 +125,7 @@ nmap <c-k> <c-w>j
 map <leader>gu <Action>(Vcs.RollbackChangedLines)
 map <leader>gb <Action>(Annotate)
 map <leader>gg <Action>(VcsShowCurrentChangeMarker)
+map <leader>gv <Action>(Compare.SameVersion)
 
 " navicat
 nmap [c <Action>(VcsShowPrevChangeMarker)
