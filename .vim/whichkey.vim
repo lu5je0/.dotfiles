@@ -28,7 +28,8 @@ let g:which_key_map.9 = 'which_key_ignore'
 
 " Single mappings
 let g:which_key_map.q = [ 'CloseBuffer', 'close buffer' ]
-let g:which_key_map.u = [':UndotreeToggle', 'Undotree']
+let g:which_key_map.Q = [ 'QuitForce', 'quit force' ]
+let g:which_key_map.u = [':UndotreeToggle', 'undotree']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 let g:which_key_map.d = 'buffer switch'
 nmap <leader>d <c-^>
@@ -57,10 +58,10 @@ let g:which_key_map.g = {
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
       \ 'g' : [':SignifyHunkDiff', 'show hunk diff'],
-      \ 'u' : [':SignifyHunkUndo', 'Undo git hunk'],
+      \ 'u' : [':SignifyHunkUndo', 'undo git hunk'],
       \ 'd' : [':Git diff', 'diff'],
       \ 'D' : [':Git diff --cached', 'diff --cached'],
-      \ 'v' : [':Gvdiffsplit!', 'Gvdiffsplit'],
+      \ 'v' : [':Gvdiffsplit!', 'gvdiffsplit'],
       \ 'l' : [':Gclog', 'log'],
       \ 'P' : [':AsyncRun -focus=0 -mode=term -rows=10 git push', 'git push'],
       \ 's' : [':Gstatus', 'status'],
@@ -76,7 +77,6 @@ let g:which_key_map.g.J = 'first hunk'
 nmap <leader>gK 9999<leader>gk
 let g:which_key_map.g.K = 'last hunk'
 
-""" Configuration example
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV
@@ -86,12 +86,10 @@ vmap <silent> <Leader>ss <Plug>TranslateWV
 " Replace the text with translation
 nmap <silent> <Leader>sr <Plug>TranslateR
 vmap <silent> <Leader>sr <Plug>TranslateRV
-" Translate the text in clipboard
-nmap <silent> <Leader>sy <Plug>TranslateX
 
 " vim toggle
 let g:which_key_map.v = {
-      \ 'name' : '+Vim toggle',
+      \ 'name' : '+vim',
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
       \ 'a' : [':call AutoPairsToggle()', 'toggle auto pairs'],
       \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
@@ -110,14 +108,8 @@ let g:which_key_map.r = {
       \ 'r': "run"
       \ }
 
-" vmap <leader>cc :'<,'>SnakeToCamelSel!<cr>
-" nmap <leader>cc :SnakeToCamelAll!<cr>
-
 " Symbol renaming.
 nmap <leader>cr <Plug>(coc-rename)
-
-vmap <leader>cs :'<,'>CamelToSnakeSel!<cr>
-nmap <leader>cs :CamelToSnakeAll!<cr>
 
 vmap <leader>cf <Plug>(coc-format-selected)
 nmap <leader>cf <Plug>(coc-format)
@@ -129,22 +121,21 @@ nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 
       " \ 'c' : ["<Plug>(coc-codeaction-selected)<cr>", 'codeaction'],
 let g:which_key_map.c = {
-      \ 'name' : '+Code' ,
+      \ 'name' : '+code' ,
       \ 'r' : ["<Plug>(coc-rename)", 'rename variable'],
-      \ 's' : "ToSnake",
-      \ 'f' : "Autoformat",
+      \ 'f' : "autoformat",
       \ }
 
 " +buffer or terminal
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
-      \ 't' : [':call ToggleTerminal()', 'open terminal'],
+      \ 't' : [':call ToggleTerminal()', 'terminal'],
       \ 'n' : [':enew', 'new buffer'],
       \ }
 
 
 let g:which_key_map.f = {
-      \ 'name' : '+Leaderf/Files' ,
+      \ 'name' : '+leaderf/Files' ,
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'r' : [':Leaderf rg', 'rg'],
@@ -155,13 +146,13 @@ let g:which_key_map.f = {
       \ 'W' : [':SudaWrite', 'sudo-write'],
       \ 'w' : [':w', 'write'],
       \ 'j' : [':JunkList', 'junk list'],
-      \ 'J' : [':JunkFile', 'JunkFile'],
+      \ 'J' : [':JunkFile', 'new junk file'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }
 
 let g:which_key_map.f.c = {
-      \ 'name' : '+Files/convert' ,
+      \ 'name' : '+files/convert' ,
       \ 'f' : [':set ff=unix', '2unix'],
       \ 'F' : [':set ff=dos', '2dos'],
       \ 'q' : "繁体转简体",
