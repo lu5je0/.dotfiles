@@ -76,6 +76,7 @@ function! s:init_fern() abort
   nmap <buffer> <ESC> <C-W>l
 
   nmap <buffer> q :<C-u>quit<CR>
+  nmap <buffer> <leader>d <C-W>l<leader>d 
   nmap <buffer> <leader>1 <C-W>l<leader>1 
   nmap <buffer> <leader>2 <C-W>l<leader>2 
   nmap <buffer> <leader>3 <C-W>l<leader>3 

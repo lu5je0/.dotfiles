@@ -10,6 +10,7 @@ Plug 'roxma/nvim-ascript'
 Plug 'neoclide/jsonc.vim'
 Plug 'schickling/vim-bufonly'
 Plug 'cespare/vim-toml'
+Plug 'liuchengxu/vista.vim'
 
 " fern
 Plug 'lambdalisue/fern.vim'
@@ -101,6 +102,7 @@ runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
 runtime plug-config/lightline.vim
+runtime plug-config/vista.vim
 
 if s:coc_enable == 1
     runtime plug-config/coc.vim

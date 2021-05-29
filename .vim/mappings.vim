@@ -38,10 +38,6 @@ imap <silent> <D-i> <ESC>:call TerminalToggle()<CR>
 tmap <silent> <M-i> <c-\><c-n>:call TerminalToggle()<CR>
 tmap <silent> <D-i> <c-\><c-n>:call TerminalToggle()<CR>
 
-" popup
-nmap <Leader>s <Plug>(coc-translator-p)
-vmap <Leader>s <Plug>(coc-translator-pv)
-
 " visual-multi
 map <c-d-n> <Plug>(VM-Add-Cursor-Down)
 map <c-d-p> <Plug>(VM-Add-Cursor-Up)
