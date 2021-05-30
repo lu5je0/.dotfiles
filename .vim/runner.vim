@@ -27,6 +27,8 @@ function! RunFile()
         call RunFileInner("node", "")
     elseif file_type == 'go'
         call RunFileInner("go run", "")
+    elseif file_type == 'lua'
+        call RunFileInner("lua", "")
     endif
 endfunction
 

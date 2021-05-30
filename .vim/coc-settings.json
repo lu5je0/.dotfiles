@@ -7,6 +7,7 @@
   "clangd.path": "/Users/lu5je0/.config/coc/extensions/coc-clangd-data/install/11.0.0/clangd_11.0.0/bin/clangd",
   "coc.source.around.firstMatch": false,
   "coc.source.buffer.firstMatch": false,
+  "Lua.completion.callSnippet": "Replace",
   "suggest.completionItemKindLabels": {
       "method": "  ",
       "function": "  ",
@@ -33,5 +34,10 @@
       "constructor": "  ",
       "value": "  ",
       "enumMember": "  "
-    }
+    },
+    "cSpell.userWords": [
+      "clangd",
+      "mxhichina",
+      "smtplib"
+    ]
 }
