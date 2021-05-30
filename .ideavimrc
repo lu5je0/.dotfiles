@@ -7,6 +7,7 @@ set commentary
 set multiple-cursors
 set argtextobj
 set textobj-entire
+set textobj-indent
 set ReplaceWithRegister
 set highlightedyank
 set exchange
@@ -23,6 +24,7 @@ nmap <leader>ff :action GotoFile<CR>
 nmap <leader>fr :action FindInPath<CR>
 nmap <leader>fc :action GotoClass<CR>
 nmap <leader>fe :action SearchEverywhere<CR>
+nmap <leader>fb :action ShowBookmarks<CR>
 nmap <leader>fw :w<cr>
 
 vmap < <gv
@@ -89,8 +91,11 @@ vmap <m-x> <A-x>
 vmap <m-p> <A-p>
 
 # history
-nmap <c-o> :action Back<CR>
-nmap <c-i> :action Forward<CR>
+sethandler <c-o> n-v:vim i:vim
+sethandler <c-i> n-v:vim i:vim
+nmap <c-o> <Action>(Back)
+nmap <c-i> <Action>(Forward)
+
 imap <m-p> <Action>(ParameterInfo)
 
 nmap H ^
