@@ -103,6 +103,16 @@ let g:which_key_map.v = {
       \ 'i' : [":call ToggleSignColumn()", 'toggle sign'],
       \ }
 
+let g:which_key_map.v.f = {
+      \ 'name' : '+foldmethod',
+      \ 'm' : [":set fdm=manual | echo \"fdm = manual\"", 'manual'],
+      \ 's' : [":set fdm=sytanx | echo \"fdm = sytanx\"", 'sytanx'],
+      \ 'e' : [":set fdm=expr | echo \"fdm = expr\"", 'expr'],
+      \ 'i' : [":set fdm=indent | echo \"fdm = indent\"", 'indent'],
+      \ 'n' : [":set fdm=marker | echo \"fdm = marker\"", 'marker'],
+      \ 'd' : [":set fdm=diff | echo \"fdm = diff\"", 'diff'],
+      \ }
+
 " g is for git
 let g:which_key_map.r = {
       \ 'name' : '+run',
