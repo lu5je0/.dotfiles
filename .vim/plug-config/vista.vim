@@ -15,6 +15,8 @@ let g:vista#renderer#icons = {
 " specifying the executive.
 let g:vista_executive_for = {
   \ 'python': 'coc',
+  \ 'java': 'coc',
+  \ 'vim': 'coc',
   \ }
 
 function! s:vista_mapping() abort
