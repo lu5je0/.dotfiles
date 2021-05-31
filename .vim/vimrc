@@ -10,6 +10,7 @@ Plug 'neoclide/jsonc.vim'
 Plug 'schickling/vim-bufonly'
 Plug 'cespare/vim-toml'
 Plug 'liuchengxu/vista.vim'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
 " fern
 Plug 'lambdalisue/fern.vim'
@@ -47,7 +48,6 @@ Plug 'elzr/vim-json'
 Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
-Plug 'Konfekt/FastFold'
 Plug 'mbbill/undotree'
 Plug 'liuchengxu/vim-which-key'
 Plug 'lu5je0/vim-base64'
@@ -113,10 +113,9 @@ endif
 augroup file_type
     autocmd!
     autocmd FileType vim setlocal foldmethod=marker
-    autocmd FileType json setlocal foldmethod=syntax
     autocmd FileType * set formatoptions-=o
     autocmd FileType json,xml,html,yaml setlocal tabstop=2 | setlocal shiftwidth=2 | setlocal softtabstop=2
-    autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
+    " autocmd BufNewFile,BufRead *.json setlocal filetype=jsonc
     " 超过最大的文件大小后禁用语法高亮
     autocmd Filetype * if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
 augroup END
@@ -128,6 +127,21 @@ augroup END
 
 
 " }}}
+
+
+" treesitter {{{ "
+lua <<EOF
+require'nvim-treesitter.configs'.setup {
+  -- Modules and its options go here
+  highlight = { enable = true },
+  incremental_selection = { enable = true },
+  textobjects = { enable = true },
+}
+EOF
+set foldmethod=expr
+set foldexpr=nvim_treesitter#foldexpr()
+" }}} treesitter "
+
 
 " vim-expand-region {{{
 vmap v <Plug>(expand_region_expand)
@@ -190,21 +204,6 @@ endif
 " undotree {{{
 let g:undotree_WindowLayout = 3
 let g:undotree_SetFocusWhenToggle = 1
-" }}}
-
-" FastFold {{{
-let g:markdown_folding = 1
-let g:tex_fold_enabled = 1
-let g:vimsyn_folding = 'af'
-let g:xml_syntax_folding = 1
-let g:javaScript_fold = 1
-let g:sh_fold_enabled= 7
-let g:ruby_fold = 1
-let g:perl_fold = 1
-let g:perl_fold_blocks = 1
-let g:r_syntax_folding = 1
-let g:rust_fold = 1
-let g:php_folding = 1
 " }}}
 
 " alias {{{
