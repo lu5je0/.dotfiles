@@ -1,4 +1,5 @@
 let s:coc_enable = 1
+let s:nvim_treesitter = 0
 
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
@@ -11,6 +12,7 @@ Plug 'schickling/vim-bufonly'
 Plug 'liuchengxu/vista.vim'
 
 if has("nvim")
+    let s:nvim_treesitter = 1
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 endif
 
@@ -131,6 +133,7 @@ augroup END
 
 
 " treesitter {{{ "
+if s:nvim_treesitter == 1
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
   -- Modules and its options go here
@@ -142,6 +145,7 @@ require'nvim-treesitter.configs'.setup {
 EOF
 set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
+endif
 " }}} treesitter "
 
 
