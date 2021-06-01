@@ -216,6 +216,7 @@ command! Diffo windo diffo
 colorscheme one
 let g:lightline.colorscheme = 'ones'
 set bg=dark
+hi TSPunctBracket guifg=#ABB2BF
 " }}}
 
 runtime mappings.vim
