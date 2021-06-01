@@ -9,7 +9,10 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'sheerun/vim-polyglot'
 Plug 'schickling/vim-bufonly'
 Plug 'liuchengxu/vista.vim'
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+
+if has("nvim")
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+endif
 
 " fern
 Plug 'lambdalisue/fern.vim'
