@@ -22,6 +22,11 @@ imap <M-k> <up>
 imap <M-h> <left>
 imap <M-l> <right>
 
+map <silent> <m-cr> <leader>cc
+imap <silent> <m-cr> <leader>cc
+map <silent> <d-cr> <leader>cc
+imap <silent> <d-cr> <leader>cc
+
 " 另存为
 if has("gui_running")
     map <silent> <C-S> :brow saveas<CR>

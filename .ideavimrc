@@ -20,7 +20,8 @@ let mapleader=","
 
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
-nmap <leader>ff :action GotoFile<CR>
+" nmap <leader>ff :action GotoFile<CR>
+nmap <leader>ff :action SearchEverywhere<CR>
 nmap <leader>fr :action FindInPath<CR>
 nmap <leader>fc :action GotoClass<CR>
 nmap <leader>fe :action SearchEverywhere<CR>

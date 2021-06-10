@@ -19,8 +19,8 @@ if g:gui_vim_init == 0 && has("gui_running") && !has("gui_vimr")
     set guioptions-=r " 隐藏右侧滚动条
     set guioptions-=b " 隐藏底部滚动条
     if has("mac")
-        set lines=28
-        set columns=90
+        set lines=35
+        set columns=107
     else
         set lines=48
         set columns=140
