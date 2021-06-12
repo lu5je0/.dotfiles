@@ -7,6 +7,8 @@ call plug#begin('~/.vim/plugged')
 Plug 'lu5je0/lightline-bufferline'
 Plug 'tpope/vim-surround'
 Plug 'jiangmiao/auto-pairs'
+
+let g:polyglot_disabled = ['vue']
 Plug 'sheerun/vim-polyglot'
 Plug 'schickling/vim-bufonly'
 Plug 'liuchengxu/vista.vim'
