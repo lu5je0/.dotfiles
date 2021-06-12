@@ -19,7 +19,7 @@ if has("nvim")
 endif
 
 " fern
-Plug 'lambdalisue/fern.vim'
+Plug 'lu5je0/fern.vim'
 Plug 'lu5je0/fern-renderer-nerdfont.vim'
 Plug 'lambdalisue/nerdfont.vim'
 Plug 'lambdalisue/fern-hijack.vim'

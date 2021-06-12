@@ -87,6 +87,7 @@ function! s:init_fern() abort
   nmap <buffer> <leader>8 <C-W>l<leader>8 
   nmap <buffer> <leader>9 <C-W>l<leader>9 
   nmap <buffer> <leader>ff <C-W>l<leader>ff
+  nmap <buffer> <leader>tn <C-W>l<leader>tn
   nmap <buffer> <leader>fr <C-W>l<leader>fr
   nmap <buffer> <leader>fm <C-W>l<leader>fm
   nmap <buffer> <leader>fb <C-W>l<leader>fb
