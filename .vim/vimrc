@@ -11,10 +11,10 @@ Plug 'sheerun/vim-polyglot'
 Plug 'schickling/vim-bufonly'
 Plug 'liuchengxu/vista.vim'
 
-if has("nvim")
-    let s:nvim_treesitter = 1
-    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-endif
+" if has("nvim")
+"     let s:nvim_treesitter = 1
+"     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+" endif
 
 " fern
 Plug 'lu5je0/fern.vim'
