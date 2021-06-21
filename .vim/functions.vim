@@ -277,3 +277,8 @@ function! ReplaceSelect(fn)
 	" Revert to previous mode
 	let &paste = l:paste
 endfunction
+
+function! CDTerminalToCWD()
+    call TerminalSend("cd '" . getcwd() . "'")
+    call TerminalSend("\r")
+endfunction

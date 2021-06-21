@@ -140,7 +140,8 @@ let g:which_key_map.c = {
 " +buffer or terminal
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
-      \ 't' : [':call ToggleTerminal()', 'terminal'],
+      \ 't' : [':call TerminalToggle()', 'terminal'],
+      \ 'c' : [':call CDTerminalToCWD()', 'terminal cd current dir'],
       \ 'n' : [':enew', 'new buffer'],
       \ }
 
