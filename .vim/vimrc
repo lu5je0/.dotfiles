@@ -7,7 +7,6 @@ call plug#begin('~/.vim/plugged')
 Plug 'lu5je0/lightline-bufferline'
 Plug 'tpope/vim-surround'
 Plug 'jiangmiao/auto-pairs'
-Plug 'sheerun/vim-polyglot'
 Plug 'schickling/vim-bufonly'
 Plug 'liuchengxu/vista.vim'
 
@@ -15,6 +14,9 @@ Plug 'liuchengxu/vista.vim'
 "     let s:nvim_treesitter = 1
 "     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 " endif
+
+Plug 'chr4/nginx.vim'
+Plug 'cespare/vim-toml'
 
 " fern
 Plug 'lu5je0/fern.vim'

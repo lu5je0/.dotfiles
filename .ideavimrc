@@ -141,3 +141,7 @@ nmap [g :action GotoNextError<CR>
 nmap ]g :action GotoPreviousError<CR>
 
 imap <c-n> <Action>(CodeCompletion)
+
+let g:NERDTreeMapActivateNode='l'
+let g:NERDTreeMapCloseDir='h'
+let g:NERDTreeMapToggleZoom='z'
