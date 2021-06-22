@@ -73,5 +73,12 @@ bindkey -a H vi-first-non-blank
 bindkey -a L vi-end-of-line
 bindkey -a K history-beginning-search-backward
 bindkey -a J history-beginning-search-forward
-
-export KEYTIMEOUT=1
+# surround
+autoload -Uz surround
+zle -N delete-surround surround
+zle -N add-surround surround
+zle -N change-surround surround
+bindkey -a cs change-surround
+bindkey -a ds delete-surround
+bindkey -a ys add-surround
+bindkey -M visual S add-surround
