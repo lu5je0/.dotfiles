@@ -73,7 +73,9 @@ bindkey -a H vi-first-non-blank
 bindkey -a L vi-end-of-line
 bindkey -a K history-beginning-search-backward
 bindkey -a J history-beginning-search-forward
-# surround
+
+export KEYTIMEOUT=1
+
 autoload -Uz surround
 zle -N delete-surround surround
 zle -N add-surround surround
