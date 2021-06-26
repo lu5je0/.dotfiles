@@ -12,6 +12,7 @@ zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 zinit snippet OMZ::lib/git.zsh
+zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit ice lucid wait='2'
 zinit snippet OMZ::plugins/zsh_reload/zsh_reload.plugin.zsh
@@ -33,6 +34,8 @@ zinit ice lucid wait='1'
 zinit light zsh-users/zsh-syntax-highlighting
 zinit ice lucid wait='1'
 zinit light hlissner/zsh-autopair
+zinit ice lucid wait='1'
+zinit light zsh-users/zsh-autosuggestions
 
 ## THEME
 # lu5je0
