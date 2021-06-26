@@ -7,32 +7,34 @@ fi
 source ~/.zinit/bin/zinit.zsh
 
 # OMZ
-zinit snippet OMZ::lib/clipboard.zsh
+# zinit snippet OMZ::lib/clipboard.zsh
 zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
-zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::lib/theme-and-appearance.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
-zinit snippet OMZ::plugins/vi-mode/vi-mode.plugin.zsh
+zinit snippet OMZ::lib/git.zsh
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
-zinit ice lucid wait='1'
+zinit ice lucid wait='2'
 zinit snippet ~/.dotfiles/zsh/z/z.sh
-zinit ice lucid wait='1'
+zinit ice lucid wait='2'
 zinit snippet ~/.dotfiles/zsh/platform-alias.sh
 zinit snippet ~/.ohmyenv
 
-zinit ice lucid wait='1'
+zinit ice lucid wait='2'
 zinit snippet ~/.dotfiles/zsh/functions.sh
 zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
+zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 
-zinit ice lucid wait='1'
+zinit ice lucid wait='3'
 zinit light paulirish/git-open
 zinit ice lucid wait='1'
 zinit light zsh-users/zsh-syntax-highlighting
 zinit ice lucid wait='1'
 zinit light hlissner/zsh-autopair
 
+# zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
+# zinit light sindresorhus/pure
 
 ##########################################
 # zsh key mappings
