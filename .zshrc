@@ -23,7 +23,6 @@ zinit snippet ~/.ohmyenv
 
 zinit ice lucid wait='2'
 zinit snippet ~/.dotfiles/zsh/functions.sh
-zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 
 zinit ice lucid wait='3'
@@ -33,8 +32,11 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit ice lucid wait='1'
 zinit light hlissner/zsh-autopair
 
+# prompt
+zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 # zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
 # zinit light sindresorhus/pure
+# zstyle ':prompt:pure:prompt:*' color cyan
 
 ##########################################
 # zsh key mappings
