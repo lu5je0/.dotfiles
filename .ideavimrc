@@ -18,6 +18,8 @@ set NERDTree
 " 按键映射
 let mapleader=","
 
+nmap yr <Action>(CopyReference)
+
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
 " nmap <leader>ff :action GotoFile<CR>
