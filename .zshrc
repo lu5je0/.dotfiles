@@ -52,7 +52,7 @@ zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 ##########################################
 bindkey "^[[5~" history-beginning-search-backward
 bindkey "^[[6~" history-beginning-search-forward
-bindkey "^y" autosuggest-accept
+bindkey "^n" autosuggest-accept
 
 
 
@@ -123,4 +123,4 @@ bindkey -a cs change-surround
 bindkey -a ds delete-surround
 bindkey -a ys add-surround
 bindkey -M visual S add-surround
-bindkey -a "^y" autosuggest-accept
+bindkey -a "^n" autosuggest-accept
