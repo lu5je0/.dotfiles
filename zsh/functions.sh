@@ -8,6 +8,10 @@ function q-myip
 	fi
 }
 
+function q-zsh-speed-test() {
+    for i ({1..10}) { time zsh -i -c 'exit' }
+}
+
 function q-kill-by-name
 {
     if [[ ! -n $1 ]]; then
