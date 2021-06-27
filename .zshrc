@@ -52,13 +52,15 @@ zinit light hlissner/zsh-autopair
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
 # zinit light zsh-users/zsh-autosuggestions
 
-zinit ice depth=1
-zinit light romkatv/powerlevel10k
 
 ## THEME
 # lu5je0
 # zinit snippet OMZ::lib/theme-and-appearance.zsh
 # zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
+
+# p10k
+zinit ice depth=1
+zinit light romkatv/powerlevel10k
 
 # pure
 # zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
