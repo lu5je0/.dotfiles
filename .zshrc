@@ -1,3 +1,10 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 ##########################################
 # zinit
 ##########################################
@@ -12,35 +19,46 @@ zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 zinit snippet OMZ::lib/git.zsh
+
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
+
 zinit ice lucid wait='2'
 zinit snippet OMZ::plugins/zsh_reload/zsh_reload.plugin.zsh
+
 zinit ice lucid wait='3'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
 zinit ice lucid wait='2'
 zinit snippet ~/.dotfiles/zsh/z/z.sh
+
 zinit ice lucid wait='2'
 zinit snippet ~/.dotfiles/zsh/platform-alias.sh
 
 zinit ice lucid wait='1'
 zinit snippet ~/.dotfiles/zsh/functions.sh
+
 zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 
 zinit ice lucid wait='3'
 zinit light paulirish/git-open
+
 zinit ice lucid wait='2'
 zinit light zsh-users/zsh-syntax-highlighting
+
 zinit ice lucid wait='1'
 zinit light hlissner/zsh-autopair
-zinit ice lucid wait='1'
-zinit light zsh-users/zsh-autosuggestions
+
+# zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
+# zinit light zsh-users/zsh-autosuggestions
+
+zinit ice depth=1
+zinit light romkatv/powerlevel10k
 
 ## THEME
 # lu5je0
-zinit snippet OMZ::lib/theme-and-appearance.zsh
-zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
+# zinit snippet OMZ::lib/theme-and-appearance.zsh
+# zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 
 # pure
 # zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
@@ -52,7 +70,7 @@ zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 ##########################################
 bindkey "^[[5~" history-beginning-search-backward
 bindkey "^[[6~" history-beginning-search-forward
-bindkey "^n" autosuggest-accept
+# bindkey "^n" autosuggest-accept
 
 
 
@@ -123,4 +141,8 @@ bindkey -a cs change-surround
 bindkey -a ds delete-surround
 bindkey -a ys add-surround
 bindkey -M visual S add-surround
-bindkey -a "^n" autosuggest-accept
+# bindkey -a "m" autosuggest-accept
+# bindkey -a "^n" autosuggest-accept
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
