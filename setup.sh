@@ -34,5 +34,3 @@ case $use_ssh_config in
 esac
 
 rm ~/.dotfiles/.vim/.vim
-
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
