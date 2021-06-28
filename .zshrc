@@ -6,6 +6,10 @@ if [[ ! -d ~/.zinit ]]; then
 fi
 source ~/.zinit/bin/zinit.zsh
 
+# 补全
+zinit ice lucid wait='0'
+zinit light zsh-users/zsh-completions
+
 # OMZ
 # zinit snippet OMZ::lib/clipboard.zsh
 zinit snippet OMZ::lib/completion.zsh
@@ -33,7 +37,7 @@ zinit snippet ~/.dotfiles/zsh/functions.sh
 
 zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 
-zinit ice depth=1  lucid wait='1'
+zinit ice depth=1 lucid wait='1'
 zinit light paulirish/git-open
 
 zinit ice depth=1 lucid wait='0'
@@ -60,6 +64,7 @@ zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 # zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
 # zinit light sindresorhus/pure
 # zstyle ':prompt:pure:prompt:*' color cyan
+
 
 ##########################################
 # zsh key mappings
