@@ -7,7 +7,7 @@ fi
 source ~/.zinit/bin/zinit.zsh
 
 # 补全
-zinit ice lucid wait='0'
+zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-completions
 
 # OMZ
