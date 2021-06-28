@@ -16,16 +16,16 @@ zinit snippet OMZ::lib/git.zsh
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
-zinit ice lucid wait='2'
+zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/zsh_reload/zsh_reload.plugin.zsh
 
-zinit ice lucid wait='3'
+zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
-zinit ice lucid wait='2'
+zinit ice lucid wait='1'
 zinit snippet ~/.dotfiles/zsh/z/z.sh
 
-zinit ice lucid wait='2'
+zinit ice lucid wait='1'
 zinit snippet ~/.dotfiles/zsh/platform-alias.sh
 
 zinit ice lucid wait='1'
@@ -33,13 +33,13 @@ zinit snippet ~/.dotfiles/zsh/functions.sh
 
 zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 
-zinit ice lucid wait='3'
+zinit ice depth=1  lucid wait='1'
 zinit light paulirish/git-open
 
-zinit ice lucid wait='2'
+zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-syntax-highlighting
 
-zinit ice lucid wait='1'
+zinit ice depth=1 lucid wait='0'
 zinit light hlissner/zsh-autopair
 
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
@@ -48,13 +48,13 @@ zinit light hlissner/zsh-autopair
 
 ## THEME
 # lu5je0
-# zinit snippet OMZ::lib/theme-and-appearance.zsh
-# zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
+zinit snippet OMZ::lib/theme-and-appearance.zsh
+zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 
 # p10k
-zinit ice depth=1
-zinit light romkatv/powerlevel10k
-source ~/.p10k.zsh
+# zinit ice depth=1
+# zinit light romkatv/powerlevel10k
+# source ~/.p10k.zsh
 
 # pure
 # zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
