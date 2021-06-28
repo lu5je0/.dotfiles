@@ -1,3 +1,4 @@
+autoload -Uz compinit && compinit
 ##########################################
 # zinit
 ##########################################
@@ -6,16 +7,17 @@ if [[ ! -d ~/.zinit ]]; then
 fi
 source ~/.zinit/bin/zinit.zsh
 
-# 补全
-zinit ice depth=1 lucid wait='0'
-zinit light zsh-users/zsh-completions
-
+# autoload -Uz compinit && compinit
 # OMZ
 # zinit snippet OMZ::lib/clipboard.zsh
 zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 zinit snippet OMZ::lib/git.zsh
+
+# 补全
+zinit ice depth=1 lucid wait='0'
+zinit light zsh-users/zsh-completions
 
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
