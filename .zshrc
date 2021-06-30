@@ -1,4 +1,3 @@
-autoload -Uz compinit && compinit
 ##########################################
 # zinit
 ##########################################
@@ -7,7 +6,10 @@ if [[ ! -d ~/.zinit ]]; then
 fi
 source ~/.zinit/bin/zinit.zsh
 
-# autoload -Uz compinit && compinit
+if [[ -f ~/.mac ]]; then
+    autoload -Uz compinit && compinit
+fi
+
 # OMZ
 # zinit snippet OMZ::lib/clipboard.zsh
 zinit snippet OMZ::lib/completion.zsh
