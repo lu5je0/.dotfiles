@@ -124,3 +124,7 @@ if has("win32")
 else
     nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
 endif
+
+" git next hunk
+nmap ]g <plug>(signify-next-hunk)
+nmap [g <plug>(signify-prev-hunk)

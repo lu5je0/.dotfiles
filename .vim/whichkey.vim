@@ -70,15 +70,6 @@ let g:which_key_map.g = {
       \ 'S' : [':Git status', 'status'],
       \ }
 
-nmap <leader>gj <plug>(signify-next-hunk)
-let g:which_key_map.g.j = 'next hunk'
-nmap <leader>gk <plug>(signify-prev-hunk)
-let g:which_key_map.g.k = 'prev hunk'
-nmap <leader>gJ 9999<leader>gj
-let g:which_key_map.g.J = 'first hunk'
-nmap <leader>gK 9999<leader>gk
-let g:which_key_map.g.K = 'last hunk'
-
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV

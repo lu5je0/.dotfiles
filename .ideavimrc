@@ -1,6 +1,7 @@
 set ignorecase
 set clipboard+=unnamed
 set keep-english-in-normal
+
 # plugins
 set surround
 set commentary
@@ -15,14 +16,12 @@ set ideajoin
 set ideamarks
 set NERDTree
 
-" 按键映射
 let mapleader=","
 
 nmap yr <Action>(CopyReference)
 
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
-" nmap <leader>ff :action GotoFile<CR>
 nmap <leader>ff :action SearchEverywhere<CR>
 nmap <leader>fr :action FindInPath<CR>
 nmap <leader>fc :action GotoClass<CR>
@@ -34,9 +33,8 @@ vmap < <gv
 vmap > >gv
 
 " tab页
-nmap <silent> <leader>th :tabprev<cr>
-nmap <silent> <leader>tl :tabnext<cr>
 nmap <silent> <leader>tn :action NewScratchFile<cr>
+nmap <leader>tr :action ReopenClosedTab<CR>
 nmap <silent> <leader>1 1gt
 nmap <silent> <leader>2 2gt
 nmap <silent> <leader>3 3gt
@@ -47,14 +45,14 @@ nmap <silent> <leader>7 7gt
 nmap <silent> <leader>8 8gt
 nmap <silent> <leader>9 9gt
 
-# reload vimrc
-nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
 nmap <leader>i <Action>(ActivateStructureToolWindow)
+nmap <leader>q :action CloseContent<CR>
+nmap <leader>o <Action>(CloseAllEditorsButActive)
 
+nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
 nmap <leader>ee :NERDTree<CR>
 nmap <leader>ef :NERDTreeFind<CR>
-nmap <leader>t :action ReopenClosedTab<CR>
-nmap <leader>q :action CloseContent<CR>
+
 map <leader>ss :action $EditorTranslateAction<CR>
 map <leader>sr :action $TranslateAndReplaceAction<CR>
 
@@ -137,10 +135,10 @@ map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 map <leader>gv <Action>(Compare.SameVersion)
 
 " navicat
-nmap [c <Action>(VcsShowPrevChangeMarker)
-nmap ]c <Action>(VcsShowNextChangeMarker)
-nmap [g :action GotoNextError<CR>
-nmap ]g :action GotoPreviousError<CR>
+nmap [g <Action>(VcsShowPrevChangeMarker)
+nmap ]g <Action>(VcsShowNextChangeMarker)
+nmap [e :action GotoNextError<CR>
+nmap ]e :action GotoPreviousError<CR>
 
 imap <c-n> <Action>(CodeCompletion)
 
