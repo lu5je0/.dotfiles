@@ -25,9 +25,10 @@ nmap <leader>fm :action RecentChangedFiles<CR>
 nmap <leader>ff :action SearchEverywhere<CR>
 nmap <leader>fr :action FindInPath<CR>
 nmap <leader>fc :action GotoClass<CR>
-nmap <leader>fe :action SearchEverywhere<CR>
 nmap <leader>fb :action ShowBookmarks<CR>
 nmap <leader>fw :w<cr>
+
+nmap <leader>fe :NERDTreeFind<CR>
 
 vmap < <gv
 vmap > >gv
@@ -50,8 +51,7 @@ nmap <leader>q :action CloseContent<CR>
 nmap <leader>o <Action>(CloseAllEditorsButActive)
 
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
-nmap <leader>ee :NERDTree<CR>
-nmap <leader>ef :NERDTreeFind<CR>
+nmap <leader>e :NERDTree<CR>
 
 map <leader>ss :action $EditorTranslateAction<CR>
 map <leader>sr :action $TranslateAndReplaceAction<CR>
