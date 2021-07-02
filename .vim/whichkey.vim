@@ -34,13 +34,8 @@ let g:which_key_map.i = [':Vista!!', 'vista']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 let g:which_key_map.o = [ ':call CloseOtherBuffers()', 'close other buffers' ]
 let g:which_key_map.d = 'buffer switch'
+let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
 nmap <leader>d <c-^>
-
-let g:which_key_map.e = {
-      \ 'name' : '+fern' ,
-      \ 'e' : [':Fern . -drawer -stay -toggle -keep', 'fern'],
-      \ 'f' : [':call FernLocateFile()', 'locate file'],
-      \ }
 
 " windows
 let g:which_key_map.w = {
@@ -143,6 +138,7 @@ let g:which_key_map.f = {
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'r' : [':Leaderf rg', 'rg'],
+      \ 'e' : [':call FernLocateFile()', 'locate file'],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],

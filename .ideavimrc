@@ -137,8 +137,8 @@ map <leader>gv <Action>(Compare.SameVersion)
 " navicat
 nmap [g <Action>(VcsShowPrevChangeMarker)
 nmap ]g <Action>(VcsShowNextChangeMarker)
-nmap [e :action GotoNextError<CR>
-nmap ]e :action GotoPreviousError<CR>
+nmap [e :action GotoPreviousError<CR>
+nmap ]e :action GotoNextError<CR>
 
 imap <c-n> <Action>(CodeCompletion)
 
