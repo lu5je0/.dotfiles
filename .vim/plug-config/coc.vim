@@ -14,13 +14,13 @@ augroup user_plugin_coc
     " Highlight the symbol and its references when holding the cursor.
     autocmd CursorHold * silent call CocActionAsync('highlight')
     autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
-    autocmd FileType python,java,js nmap <silent> gd <Plug>(coc-definition)
+    autocmd FileType python,java,js nmap <buffer> <silent> gd <Plug>(coc-definition)
 augroup END
 
 " GoTo code navigation.
 nmap <silent> gn <Plug>(coc-implementation)
-nmap <silent> gu <Plug>(coc-type-definition)
-" nmap <silent> gr <Plug>(coc-references)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gb <Plug>(coc-references)
 
 " Use K to show documentation in preview window.
 nmap <silent> K :call <SID>show_documentation()<CR>

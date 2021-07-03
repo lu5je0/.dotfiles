@@ -58,6 +58,8 @@ map <leader>sr :action $TranslateAndReplaceAction<CR>
 
 nmap gu :action GotoSuperMethod<CR>
 nmap gn :action GotoImplementation<CR>
+nmap gy :action GotoTypeDeclaration<CR>
+nmap gb :action ShowUsages<CR>
 
 # code
 map <leader>cf :action ReformatCode<CR>
