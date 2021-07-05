@@ -59,7 +59,7 @@ let g:which_key_map.g = {
       \ 'd' : [':Git diff', 'diff'],
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'v' : [':Gvdiffsplit!', 'gvdiffsplit'],
-      \ 'l' : [':Gclog', 'log'],
+      \ 'l' : [':Flogsplit', 'git log'],
       \ 'P' : [':AsyncRun -focus=0 -mode=term -rows=10 git push', 'git push'],
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],
