@@ -3,6 +3,7 @@ ln -s ~/.dotfiles/.cheat ~/.cheat
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
+ln -s ~/.dotfiles/.p10k.zsh ~/.p10k.zsh
 ln -s ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes/lu5je0.zsh-theme
 
 touch ~/.ohmyenv
@@ -33,5 +34,3 @@ case $use_ssh_config in
 esac
 
 rm ~/.dotfiles/.vim/.vim
-
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting

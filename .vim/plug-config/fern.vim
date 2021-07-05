@@ -113,8 +113,8 @@ function! FernLocateFile() abort
     let cur_file_path = expand('%:p:h')
     let working_dir = getcwd()
     if stridx(cur_file_path, working_dir) != -1
-        :Fern . -reveal=% -drawer -stay
+        :Fern . -reveal=% -drawer -stay -keep
     else
-        :Fern %:h -reveal=% -drawer -stay
+        :Fern %:h -reveal=% -drawer -stay -keep
     endif
 endfunction

@@ -277,3 +277,16 @@ function! ReplaceSelect(fn)
 	" Revert to previous mode
 	let &paste = l:paste
 endfunction
+
+function! CDTerminalToCWD()
+    call TerminalSend("cd '" . getcwd() . "'")
+    call TerminalSend("\r")
+endfunction
+
+" 关闭其它标签
+function! CloseOtherBuffers()
+    let choice = confirm("Close other buffers?", "&No\n&Yes")
+    if choice == 2
+        :silent BufOnly!
+    endif
+endfunction

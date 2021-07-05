@@ -32,14 +32,10 @@ let g:which_key_map.Q = [ 'QuitForce', 'quit force' ]
 let g:which_key_map.u = [':UndotreeToggle', 'undotree']
 let g:which_key_map.i = [':Vista!!', 'vista']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
+let g:which_key_map.o = [ ':call CloseOtherBuffers()', 'close other buffers' ]
 let g:which_key_map.d = 'buffer switch'
+let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
 nmap <leader>d <c-^>
-
-let g:which_key_map.e = {
-      \ 'name' : '+fern' ,
-      \ 'e' : [':Fern . -drawer -stay -toggle -keep', 'fern'],
-      \ 'f' : [':call FernLocateFile()', 'locate file'],
-      \ }
 
 " windows
 let g:which_key_map.w = {
@@ -63,20 +59,11 @@ let g:which_key_map.g = {
       \ 'd' : [':Git diff', 'diff'],
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'v' : [':Gvdiffsplit!', 'gvdiffsplit'],
-      \ 'l' : [':Gclog', 'log'],
+      \ 'l' : [':Flogsplit', 'git log'],
       \ 'P' : [':AsyncRun -focus=0 -mode=term -rows=10 git push', 'git push'],
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],
       \ }
-
-nmap <leader>gj <plug>(signify-next-hunk)
-let g:which_key_map.g.j = 'next hunk'
-nmap <leader>gk <plug>(signify-prev-hunk)
-let g:which_key_map.g.k = 'prev hunk'
-nmap <leader>gJ 9999<leader>gj
-let g:which_key_map.g.J = 'first hunk'
-nmap <leader>gK 9999<leader>gk
-let g:which_key_map.g.K = 'last hunk'
 
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
@@ -140,7 +127,8 @@ let g:which_key_map.c = {
 " +buffer or terminal
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
-      \ 't' : [':call ToggleTerminal()', 'terminal'],
+      \ 't' : [':call TerminalToggle()', 'terminal'],
+      \ 'c' : [':call CDTerminalToCWD()', 'terminal cd current dir'],
       \ 'n' : [':enew', 'new buffer'],
       \ }
 
@@ -150,6 +138,7 @@ let g:which_key_map.f = {
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'r' : [':Leaderf rg', 'rg'],
+      \ 'e' : [':call FernLocateFile()', 'locate file'],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],
