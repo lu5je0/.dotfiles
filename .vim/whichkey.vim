@@ -46,7 +46,8 @@ let g:which_key_map.w = {
       \ 'S' : [':split', 'spilt'],
       \ 'o' : [':only', 'only'],
       \ }
-nmap <leader>wu <c-w>r
+nmap <leader>wu <c-w>x
+let g:which_key_map.w.u = 'swap buffer'
 
 " g is for git
 let g:which_key_map.g = {
