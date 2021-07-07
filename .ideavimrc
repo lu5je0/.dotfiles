@@ -45,10 +45,13 @@ nmap <silent> <leader>6 6gt
 nmap <silent> <leader>7 7gt
 nmap <silent> <leader>8 8gt
 nmap <silent> <leader>9 9gt
+nmap <silent> <left> :bp<cr>
+nmap <silent> <right> :bn<cr>
 
 nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
 nmap <leader>o <Action>(CloseAllEditorsButActive)
+nmap <leader>d :b#<cr>
 
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
 nmap <leader>e :NERDTree<CR>
