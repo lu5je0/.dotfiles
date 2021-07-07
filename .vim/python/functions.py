@@ -64,13 +64,11 @@ def getBufType(number):
 
 def closeBuffer():
     try:
-        txt_buffer_types = ["", "help", "acwrite"]
-
         cur_buffer = vim.current.buffer
         number = cur_buffer.number
         is_edit = int(vim.eval("getbufvar(bufname(), \"&mod\")")) == 1
         buftype = getBufType(number)
-        if buftype not in txt_buffer_types:
+        if buftype != "":
             vim.command("quit")
             return
 
@@ -80,7 +78,7 @@ def closeBuffer():
             buffer = window.buffer
             if buffer.number == number and vim.current.window != window:
                 has_same_buffer = True
-            if getBufType(buffer.number) in txt_buffer_types:
+            if getBufType(buffer.number) == "":
                 txt_window_count += 1
                 if txt_window_count > 1:
                     break
