@@ -52,6 +52,7 @@ nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
 nmap <leader>o <Action>(CloseAllEditorsButActive)
 nmap <leader>d :b#<cr>
+namp <leader>a <Action>(CloseAllEditors)
 
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
 nmap <leader>e :NERDTree<CR>
