@@ -32,7 +32,6 @@ let g:which_key_map.Q = [ 'QuitForce', 'quit force' ]
 let g:which_key_map.u = [':UndotreeToggle', 'undotree']
 let g:which_key_map.i = [':Vista!!', 'vista']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
-let g:which_key_map.o = [ ':call CloseOtherBuffers()', 'close other buffers' ]
 let g:which_key_map.d = 'buffer switch'
 let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
 nmap <leader>d <c-^>
@@ -131,6 +130,7 @@ let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
       \ 't' : [':call TerminalToggle()', 'terminal'],
       \ 'c' : [':call CDTerminalToCWD()', 'terminal cd current dir'],
+      \ 'o' : [ ':call CloseOtherBuffers()', 'close other buffers' ],
       \ 'n' : [':enew', 'new buffer'],
       \ }
 
