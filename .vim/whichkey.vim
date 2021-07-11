@@ -131,7 +131,7 @@ let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
       \ 't' : [':call TerminalToggle()', 'terminal'],
       \ 'b' : [':call CDTerminalToCWD()', 'terminal-cd-buffer-dir'],
-      \ 'o' : [ ':call CloseOtherBuffers()', 'close-other-buffers' ],
+      \ 'o' : [ ':call buffer#CloseOtherBuffers()', 'close-other-buffers' ],
       \ 'n' : [':enew', 'new-buffer'],
       \ }
 
@@ -172,7 +172,7 @@ let g:which_key_map.x = {
       \ 'U' : "Unescape Unicode",
       \ 'h' : "url encode",
       \ 'H' : "url decode",
-      \ 'c' : [":call CountSelectionRegion()", "count in the selection region"],
+      \ 'c' : [":call edit#CountSelectionRegion()", "count in the selection region"],
       \ }
 
 "----------------------------------------------------------------------
