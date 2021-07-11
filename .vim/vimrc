@@ -51,7 +51,6 @@ Plug 'skywind3000/asynctasks.vim'
 Plug 'skywind3000/asyncrun.vim'
 Plug 'skywind3000/asyncrun.extra'
 Plug 'elzr/vim-json'
-Plug 'terryma/vim-expand-region'
 Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
 Plug 'mbbill/undotree'
@@ -80,8 +79,6 @@ Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 
 " 变量命名转换
 Plug 'chiedo/vim-case-convert'
-
-" Plug 'lilydjwg/colorizer'
 
 Plug 'itchyny/lightline.vim'
 
