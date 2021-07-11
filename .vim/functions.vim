@@ -290,3 +290,7 @@ function! CloseOtherBuffers()
         :silent BufOnly!
     endif
 endfunction
+
+function! CountSelectionRegion() abort
+  call feedkeys("gvg\<c-g>\<Esc>", 'ti')
+endfunction
