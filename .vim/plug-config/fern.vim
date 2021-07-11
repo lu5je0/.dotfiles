@@ -48,7 +48,7 @@ function! s:init_fern() abort
 
   nmap <buffer> yy <Plug>(fern-action-clipboard-copy)
   nmap <buffer> dd <Plug>(fern-action-clipboard-move)
-  nmap <buffer> dD <Plug>(fern-action-remove)
+  nmap <buffer> D <Plug>(fern-action-remove)
   nmap <buffer> yp <Plug>(fern-action-yank:path)
   nmap <buffer> yn <Plug>(fern-action-yank:label)
   nmap <buffer> cw <Plug>(fern-action-rename)

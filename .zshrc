@@ -119,11 +119,8 @@ alias vim='nvim'
 alias vimn='nvim -u None'
 
 # 代理设置
-alias proxy='export ALL_PROXY=socks5://127.0.0.1:${HTTP_PROXY_PORT:-1080}'
-alias unproxy='unset ALL_PROXY'
-# alias proxy='export http_proxy=http://127.0.0.1:${HTTP_PROXY_PORT:-1080}; export https_proxy=http://127.0.0.1:${HTTP_PROXY_PORT:-1080};'
-# alias unproxy='unset http_proxy; unset https_proxy'
-
+alias proxy='export http_proxy=http://127.0.0.1:${HTTP_PROXY_PORT:-1080}; export https_proxy=http://127.0.0.1:${HTTP_PROXY_PORT:-1080};'
+alias unproxy='unset http_proxy; unset https_proxy'
 alias pc='proxychains4 -q'
 
 
