@@ -121,17 +121,18 @@ nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
       " \ 'c' : ["<Plug>(coc-codeaction-selected)<cr>", 'codeaction'],
 let g:which_key_map.c = {
       \ 'name' : '+code' ,
-      \ 'r' : ["<Plug>(coc-rename)", 'rename variable'],
-      \ 'f' : "autoformat",
+      \ 'r' : ["<Plug>(coc-rename)", 'rename-variable'],
+      \ 'c' : "code-action",
+      \ 'f' : "auto-format",
       \ }
 
 " +buffer or terminal
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
       \ 't' : [':call TerminalToggle()', 'terminal'],
-      \ 'b' : [':call CDTerminalToCWD()', 'terminal cd current dir'],
-      \ 'o' : [ ':call CloseOtherBuffers()', 'close other buffers' ],
-      \ 'n' : [':enew', 'new buffer'],
+      \ 'b' : [':call CDTerminalToCWD()', 'terminal-cd-buffer-dir'],
+      \ 'o' : [ ':call CloseOtherBuffers()', 'close-other-buffers' ],
+      \ 'n' : [':enew', 'new-buffer'],
       \ }
 
 
