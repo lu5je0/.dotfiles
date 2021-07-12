@@ -5,10 +5,10 @@ let s:nvim_treesitter = 0
 call plug#begin('~/.vim/plugged')
 
 Plug 'lu5je0/lightline-bufferline'
-Plug 'tpope/vim-surround'
+Plug 'tpope/vim-surround', {'on': []}
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
-Plug 'liuchengxu/vista.vim'
+Plug 'liuchengxu/vista.vim', {'on': []}
 
 if has("nvim")
     let s:nvim_treesitter = 1
@@ -52,7 +52,7 @@ Plug 'skywind3000/asyncrun.extra', {'on': []}
 Plug 'elzr/vim-json'
 Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
-Plug 'mbbill/undotree'
+Plug 'mbbill/undotree', {'on': []}
 Plug 'liuchengxu/vim-which-key'
 Plug 'lu5je0/vim-base64'
 
@@ -68,7 +68,7 @@ endif
 
 " save with sudo
 if !has("win32")
-    Plug 'lambdalisue/suda.vim'
+    Plug 'lambdalisue/suda.vim', { 'on': [] }
 endif
 
 if !has("gui") && !has("mac")
@@ -106,6 +106,10 @@ function! LoadPlug(timer) abort
   call plug#load('asyncrun.extra')
   call plug#load('vim-fugitive')
   call plug#load('vim-flog')
+  call plug#load('suda.vim')
+  call plug#load('undotree')
+  call plug#load('vim-surround')
+  call plug#load('vista.vim')
 endfunction
 
 " runtime 加载.vim {{{
