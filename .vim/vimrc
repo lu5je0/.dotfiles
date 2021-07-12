@@ -46,9 +46,9 @@ Plug 'vim-scripts/ReplaceWithRegister'
 " Peekaboo extends " and @ in normal mode and <CTRL-R> in insert mode so you can see the contents of the registers.
 Plug 'junegunn/vim-peekaboo'
 Plug 'lu5je0/vim-terminal-help'
-Plug 'skywind3000/asynctasks.vim'
-Plug 'skywind3000/asyncrun.vim'
-Plug 'skywind3000/asyncrun.extra'
+Plug 'skywind3000/asynctasks.vim', {'on': []}
+Plug 'skywind3000/asyncrun.vim', {'on': []}
+Plug 'skywind3000/asyncrun.extra', {'on': []}
 Plug 'elzr/vim-json'
 Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
@@ -97,6 +97,10 @@ function! LoadPlug(timer) abort
   call plug#load('vim-visual-multi')
   call plug#load('vim-textobj-entire')
   call plug#load('vim-textobj-parameter')
+
+  call plug#load('asynctasks.vim')
+  call plug#load('asyncrun.vim')
+  call plug#load('asyncrun.extra')
 endfunction
 
 " runtime 加载.vim {{{
