@@ -101,6 +101,8 @@ function! LoadPlug(timer) abort
   call plug#load('coc.nvim')
   runtime plug-config/coc.vim
 
+  runtime im.vim
+
   call plug#load('asynctasks.vim')
   call plug#load('asyncrun.vim')
   call plug#load('asyncrun.extra')
@@ -231,7 +233,6 @@ hi TSPunctBracket guifg=#ABB2BF
 " }}}
 
 runtime mappings.vim
-runtime im.vim
 runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim

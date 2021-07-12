@@ -32,12 +32,7 @@ augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 
-let g:im_func_init = 0
 function! ImFuncInit()
-if g:im_func_init == 1
-    return
-endif
-
 python3 << EOF
 import threading
 
@@ -63,32 +58,23 @@ def im_init(path):
 path = vim.eval('s:plugin_root_dir')
 threading.Thread(target=im_init, args=[path]).start()
 EOF
-let g:im_func_init = 1
 endfunction
 
-function! SwitchToEn()
-if g:im_func_init != 1
-    call ImFuncInit()
-endif
-python3 << EOF
+call ImFuncInit()
 
+function! SwitchToEn()
+python3 << EOF
 # last = switcher.getCurrentInputSourceID()
 if switcher != None:
     switcher.switchInputSource(mac_im)
-
 EOF
 endfunction
 
 
 function! SwitchToCn()
-if g:im_func_init != 1
-    call ImFuncInit()
-endif
 python3 << EOF
-
 if switcher != None:
     switcher.switchInputSource(last)
-
 EOF
 endfunction
 
