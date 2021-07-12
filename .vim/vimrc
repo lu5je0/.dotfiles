@@ -37,8 +37,8 @@ Plug 'sgur/vim-textobj-parameter', {'on': []}
 Plug 'kana/vim-textobj-entire', {'on': []}
 Plug 'mhinz/vim-signify'
 Plug 'voldikss/vim-translator'
-Plug 'tpope/vim-fugitive'
-Plug 'rbong/vim-flog'
+Plug 'tpope/vim-fugitive', {'on': []}
+Plug 'rbong/vim-flog', {'on': []}
 Plug 'tpope/vim-repeat'
 Plug 'lu5je0/vim-java-bytecode'
 Plug 'vim-scripts/ReplaceWithRegister'
@@ -98,9 +98,14 @@ function! LoadPlug(timer) abort
   call plug#load('vim-textobj-entire')
   call plug#load('vim-textobj-parameter')
 
+  call plug#load('coc.nvim')
+  runtime plug-config/coc.vim
+
   call plug#load('asynctasks.vim')
   call plug#load('asyncrun.vim')
   call plug#load('asyncrun.extra')
+  call plug#load('vim-fugitive')
+  call plug#load('vim-flog')
 endfunction
 
 " runtime 加载.vim {{{
@@ -123,17 +128,6 @@ runtime plug-config/vista.vim
 augroup file_type
     autocmd!
     autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
-augroup END
-
-fun s:lazy_load()
-    if s:coc_enable == 1
-        call plug#load('coc.nvim')
-        runtime plug-config/coc.vim
-    endif
-endf
-augroup lazy_load
-    autocmd!
-    autocmd InsertEnter * call s:lazy_load() | autocmd! lazy_load 
 augroup END
 " }}}
 
