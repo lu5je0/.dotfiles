@@ -89,6 +89,7 @@ let g:which_key_map.v = {
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ 'i' : [":call ToggleSignColumn()", 'toggle sign'],
+      \ 'l' : [":set cursorline!", 'toggle cursorline'],
       \ }
 
 let g:which_key_map.v.f = {
