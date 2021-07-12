@@ -63,3 +63,6 @@ if has("persistent_undo")
     execute "set undodir=" . home
     set undofile
 endif
+
+" 不显示启动界面
+set shortmess=atI

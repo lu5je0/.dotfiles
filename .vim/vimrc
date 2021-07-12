@@ -31,10 +31,10 @@ Plug 'chrisbra/vim-diff-enhanced'
 Plug 'MTDL9/vim-log-highlighting'
 Plug 'tpope/vim-commentary'
 Plug 'honza/vim-snippets'
-Plug 'mg979/vim-visual-multi'
+Plug 'mg980/vim-visual-multi', {'on': []}
 Plug 'kana/vim-textobj-user'
-Plug 'sgur/vim-textobj-parameter'
-Plug 'kana/vim-textobj-entire'
+Plug 'sgur/vim-textobj-parameter', {'on': []}
+Plug 'kana/vim-textobj-entire', {'on': []}
 Plug 'mhinz/vim-signify'
 Plug 'voldikss/vim-translator'
 Plug 'tpope/vim-fugitive'
@@ -90,6 +90,14 @@ Plug 'w0ng/vim-hybrid'
 Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
+
+" 500 毫秒后调用 LoadPlug，且只调用一次, 见 `:h timer_start()`
+call timer_start(500, 'LoadPlug')
+function! LoadPlug(timer) abort
+  call plug#load('vim-visual-multi')
+  call plug#load('vim-textobj-entire')
+  call plug#load('vim-textobj-parameter')
+endfunction
 
 " runtime 加载.vim {{{
 runtime settings.vim
