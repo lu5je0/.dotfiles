@@ -9,10 +9,21 @@ let g:fern#drawer_width=22
 let g:fern#mark_symbol="•"
 " let g:fern#disable_drawer_auto_resize=1
 
-
 function! TerminalSendInner()
     call TerminalSend('cd ' . fnamemodify(eval('@+'), ":p:h"))
 	call TerminalSend("\r")
+endfunction
+
+" functions
+" locate file
+function! FernLocateFile() abort
+    let cur_file_path = expand('%:p:h')
+    let working_dir = getcwd()
+    if stridx(cur_file_path, working_dir) != -1
+        :Fern . -reveal=% -drawer -keep
+    else
+        :Fern %:h -reveal=% -drawer -keep
+    endif
 endfunction
 
 function! s:init_fern() abort
@@ -96,25 +107,7 @@ function! s:init_fern() abort
 endfunction
 
 augroup fern-custom
-  autocmd! *
+  autocmd!
+  autocmd FileType nerdtree,startify,fern call glyph_palette#apply()
   autocmd FileType fern call s:init_fern()
 augroup END
-
-augroup my-glyph-palette
-  autocmd! *
-  autocmd FileType fern call glyph_palette#apply()
-  autocmd FileType nerdtree,startify call glyph_palette#apply()
-augroup END
-
-
-" functions
-" locate file
-function! FernLocateFile() abort
-    let cur_file_path = expand('%:p:h')
-    let working_dir = getcwd()
-    if stridx(cur_file_path, working_dir) != -1
-        :Fern . -reveal=% -drawer -keep
-    else
-        :Fern %:h -reveal=% -drawer -keep
-    endif
-endfunction
