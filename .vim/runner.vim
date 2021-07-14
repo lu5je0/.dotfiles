@@ -22,7 +22,7 @@ function! RunFile()
     elseif file_type == 'c'
         call RunFileInner("gcc", " && ./a.out && rm ./a.out")
     elseif file_type == 'sh'
-        call RunFileInner("sh", "")
+        call RunFileInner("bash", "")
     elseif file_type == 'javascript'
         call RunFileInner("node", "")
     elseif file_type == 'go'
