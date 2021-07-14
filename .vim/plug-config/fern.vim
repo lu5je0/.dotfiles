@@ -81,6 +81,7 @@ function! s:init_fern() abort
   nmap <buffer> m <Nop>
 
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
+  nmap <buffer> H :Fern ~ -drawer -stay -keep<cr>
   nmap <buffer> u <Plug>(fern-action-leave)
   nmap <buffer> r <Plug>(fern-action-reload)
   nmap <buffer> <silent> R :Fern .<cr>
