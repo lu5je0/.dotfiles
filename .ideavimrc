@@ -1,6 +1,8 @@
 set ignorecase
 set clipboard+=unnamed
 set keep-english-in-normal
+set hlsearch
+set incsearch
 
 # plugins
 set surround
@@ -52,8 +54,10 @@ nmap <silent> <right> :bn<cr>
 nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
 nmap <leader>d :b#<cr>
+nmap <leader>n /uvclewrq<cr>
 
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
+nmap <leader>vc :set ic!<cr>
 nmap <leader>e :NERDTree<CR>
 
 map <leader>ss :action $EditorTranslateAction<CR>
