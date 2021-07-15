@@ -80,6 +80,7 @@ vmap <silent> <Leader>sr <Plug>TranslateRV
 let g:which_key_map.v = {
       \ 'name' : '+vim',
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
+      \ 'c' : [':set ic!', 'toggle case insensitive'],
       \ 'a' : [':call AutoPairsToggle()', 'toggle auto pairs'],
       \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
@@ -89,6 +90,7 @@ let g:which_key_map.v = {
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ 'i' : [":call ToggleSignColumn()", 'toggle sign'],
+      \ 'l' : [":set cursorline!", 'toggle cursorline'],
       \ }
 
 let g:which_key_map.v.f = {
