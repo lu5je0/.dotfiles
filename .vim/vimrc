@@ -83,6 +83,7 @@ Plug 'chiedo/vim-case-convert'
 Plug 'itchyny/lightline.vim'
 
 " themes
+Plug 'tomasiser/vim-code-dark'
 Plug 'lu5je0/vim-one'
 Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
@@ -229,8 +230,14 @@ command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
-colorscheme one
-let g:lightline.colorscheme = 'ones'
+colorscheme codedark
+let g:lightline.colorscheme = 'apprentice'
+
+" colorscheme gruvbox
+" let g:lightline.colorscheme = 'gruvbox'
+
+" colorscheme codedark
+" let g:lightline.colorscheme = 'deus'
 set bg=dark
 hi TSPunctBracket guifg=#ABB2BF
 " }}}
