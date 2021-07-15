@@ -92,8 +92,7 @@ Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
-" 500 毫秒后调用 LoadPlug，且只调用一次, 见 `:h timer_start()`
-call timer_start(300, 'LoadPlug')
+call timer_start(50, 'LoadPlug')
 function! LoadPlug(timer) abort
   call plug#load('fern-renderer-nerdfont.vim')
   call plug#load('vim-visual-multi')

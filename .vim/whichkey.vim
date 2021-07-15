@@ -149,6 +149,7 @@ let g:which_key_map.f = {
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],
       \ 'h' : [':Leaderf help', 'help'],
       \ 'W' : [':SudaWrite', 'sudo-write'],
+      \ 'v' : [":Fern ~/.vim -drawer -keep", 'fern .vim/'],
       \ 'w' : [':w', 'write'],
       \ 'j' : [':JunkList', 'junk-list'],
       \ 'J' : [':JunkFile', 'new-junk-file'],

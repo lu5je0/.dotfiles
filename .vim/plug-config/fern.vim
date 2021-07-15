@@ -79,12 +79,14 @@ function! s:init_fern() abort
   nmap <buffer> mp <Plug>(fern-action-clipboard-paste)
   nmap <buffer> mv <Plug>(fern-action-move)
   nmap <buffer> m <Nop>
+  nmap <buffer> c <Nop>
 
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
+  nmap <buffer> H :Fern ~ -drawer -stay -keep<cr>
   nmap <buffer> u <Plug>(fern-action-leave)
   nmap <buffer> r <Plug>(fern-action-reload)
   nmap <buffer> <silent> R :Fern .<cr>
-  nmap <buffer> cd <Plug>(fern-action-cd)
+  nmap <silent> <buffer> cd <Plug>(fern-action-cd):echo "cd " . getcwd()<cr>
   nmap <buffer> I <Plug>(fern-action-hidden:toggle)
   nmap <buffer> <ESC> <C-W>l
 
