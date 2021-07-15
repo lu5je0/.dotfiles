@@ -3,6 +3,7 @@ set clipboard+=unnamed
 set keep-english-in-normal
 set hlsearch
 set incsearch
+set smartcase
 
 # plugins
 set surround
