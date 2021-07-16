@@ -230,14 +230,14 @@ command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
-colorscheme codedark
-let g:lightline.colorscheme = 'apprentice'
+" colorscheme codedark
+" let g:lightline.colorscheme = 'apprentice'
 
 " colorscheme gruvbox
 " let g:lightline.colorscheme = 'gruvbox'
 
-" colorscheme codedark
-" let g:lightline.colorscheme = 'deus'
+colorscheme one
+let g:lightline.colorscheme = 'one'
 set bg=dark
 hi TSPunctBracket guifg=#ABB2BF
 " }}}
