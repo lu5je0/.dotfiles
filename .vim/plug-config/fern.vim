@@ -63,7 +63,12 @@ function! s:init_fern() abort
   nmap <buffer> yp <Plug>(fern-action-yank:path)
   nmap <buffer> yn <Plug>(fern-action-yank:label)
   nmap <buffer> cw <Plug>(fern-action-rename)
-  nmap <buffer> p <Plug>(fern-action-focus:parent)
+
+  nmap <silent> <buffer> <expr> <Plug>(fern-quit-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", ":q\<CR>")
+  nmap <silent> <buffer> <expr> <Plug>(fern-esc-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", "<c-w>l")
+  nmap <silent> <buffer> p <Plug>(fern-action-preview:toggle)
+  nmap <buffer> q <Plug>(fern-quit-or-close-preview)
+  nmap <buffer> <ESC> <Plug>(fern-esc-or-close-preview)
   nmap <buffer> P gg
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
@@ -88,9 +93,7 @@ function! s:init_fern() abort
   nmap <buffer> <silent> R :Fern .<cr>
   nmap <silent> <buffer> cd <Plug>(fern-action-cd):echo "cd " . getcwd()<cr>
   nmap <buffer> I <Plug>(fern-action-hidden:toggle)
-  nmap <buffer> <ESC> <C-W>l
 
-  nmap <buffer> q :<C-u>quit<CR>
   nmap <buffer> <leader>d <C-W>l<leader>d 
   nmap <buffer> <leader>1 <C-W>l<leader>1 
   nmap <buffer> <leader>2 <C-W>l<leader>2 
