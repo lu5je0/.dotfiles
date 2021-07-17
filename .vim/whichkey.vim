@@ -83,13 +83,14 @@ let g:which_key_map.v = {
       \ 'c' : [':set ic!', 'toggle case insensitive'],
       \ 'a' : [':call AutoPairsToggle()', 'toggle auto pairs'],
       \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
-      \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
+      \ 'S' : [':source ' .  $MYVIMRC, 'apply vimrc'],
+      \ 's' : [":call ToggleSignColumn()", 'toggle sign'],
       \ 'n' : [':set invnumber', 'toggle number'],
       \ 'd' : [':call ToggleDiff()', 'toggle diff'],
       \ 'p' : [':call TogglePaste()', 'toggle paste'],
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
-      \ 'i' : [":call ToggleSignColumn()", 'toggle sign'],
+      \ 'i' : [":ToggleSaveLastIme", 'toggle-save-last-ime'],
       \ 'l' : [":set cursorline!", 'toggle cursorline'],
       \ }
 

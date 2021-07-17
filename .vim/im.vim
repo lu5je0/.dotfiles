@@ -74,5 +74,13 @@ if switcher != None:
 EOF
 endfunction
 
+function! ToggleSaveLastIme()
+python3 << EOF
+if switcher != None:
+    switcher.toggle_save_last_ime()
+EOF
+endfunction
+
 command! SwitchNormalMode call SwitchNormalMode()
 command! SwitchInsertMode call SwitchInsertMode()
+command! ToggleSaveLastIme call ToggleSaveLastIme()

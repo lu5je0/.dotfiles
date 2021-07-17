@@ -7,8 +7,9 @@ class ImSwitcher():
 
     def __init__(self) -> None:
         self.text_input_context = NSTextInputContext.alloc().initWithClient_(NSTextView.new())
-        self.thread_pool = ThreadPoolExecutor(max_workers=1)
         self.last_ime = 'com.apple.keylayout.ABC'
+        self.is_save_ime = False
+        # self.thread_pool = ThreadPoolExecutor(max_workers=1)
         try:
             # 隐藏macos dock栏小火箭
             info = NSBundle.mainBundle().infoDictionary()
@@ -21,12 +22,17 @@ class ImSwitcher():
 
     def get_cur_ime(self):
         return os.popen('im-select').read()[0:-1]
+
+    def toggle_save_last_ime(self):
+        self.is_save_ime = not self.is_save_ime
+        print("save_last_ime", self.is_save_ime)
         
     def save_last_ime(self):
         self.last_ime = self.get_cur_ime()
 
     def switch_normal_mode(self):
-        self.save_last_ime()
+        if self.is_save_ime:
+            self.save_last_ime()
         self.switch_input_source(self.mac_ime)
         # self.thread_pool.submit(self.save_last_ime)
 
