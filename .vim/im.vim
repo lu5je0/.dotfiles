@@ -26,8 +26,8 @@ endif
 
 augroup switch_im
     autocmd!
-    autocmd InsertLeave * call SwitchToEn()
-    autocmd InsertEnter * call SwitchToCn()
+    autocmd InsertLeave * call SwitchInsertMode()
+    autocmd InsertEnter * call SwitchNormalMode()
 augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
@@ -36,8 +36,6 @@ function! ImFuncInit()
 python3 << EOF
 import threading
 
-mac_im = None
-last = None
 switcher = None
 
 def im_init(path):
@@ -51,8 +49,7 @@ def im_init(path):
     python_root_dir = path + "/python"
     sys.path.insert(0, python_root_dir)
     import im
-    mac_im = 'com.apple.keylayout.ABC'
-    last = 'com.apple.keylayout.ABC'
+
     switcher = im.ImSwitcher()
 
 path = vim.eval('s:plugin_root_dir')
@@ -62,21 +59,20 @@ endfunction
 
 call ImFuncInit()
 
-function! SwitchToEn()
+function! SwitchInsertMode()
 python3 << EOF
-# last = switcher.getCurrentInputSourceID()
 if switcher != None:
-    switcher.switchInputSource(mac_im)
+    switcher.switch_normal_mode()
 EOF
 endfunction
 
 
-function! SwitchToCn()
+function! SwitchNormalMode()
 python3 << EOF
 if switcher != None:
-    switcher.switchInputSource(last)
+    switcher.swith_insert_mode()
 EOF
 endfunction
 
-command! SwitchToCn call SwitchToCn()
-command! SwitchToEn call SwitchToEn()
+command! SwitchNormalMode call SwitchNormalMode()
+command! SwitchInsertMode call SwitchInsertMode()
