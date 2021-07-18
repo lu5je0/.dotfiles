@@ -31,6 +31,7 @@ set termguicolors
 set hidden
 set updatetime=100
 set signcolumn=number
+set smartcase
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start

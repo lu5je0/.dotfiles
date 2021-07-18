@@ -9,8 +9,10 @@ let g:fern#drawer_width=22
 let g:fern#mark_symbol="•"
 " let g:fern#disable_drawer_auto_resize=1
 
-function! TerminalSendInner()
-    call TerminalSend('cd ' . fnamemodify(eval('@+'), ":p:h"))
+function! TerminalSendInner() abort
+    let helper = fern#helper#new()
+    let path = helper.sync.get_cursor_node()['_path']
+    call TerminalSend('cd ' . fnamemodify(path, ":p:h"))
 	call TerminalSend("\r")
 endfunction
 
@@ -63,12 +65,17 @@ function! s:init_fern() abort
   nmap <buffer> yp <Plug>(fern-action-yank:path)
   nmap <buffer> yn <Plug>(fern-action-yank:label)
   nmap <buffer> cw <Plug>(fern-action-rename)
-  nmap <buffer> p <Plug>(fern-action-focus:parent)
+
+  nmap <silent> <buffer> <expr> <Plug>(fern-quit-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", ":q\<CR>")
+  nmap <silent> <buffer> <expr> <Plug>(fern-esc-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", "<c-w>l")
+  nmap <silent> <buffer> p <Plug>(fern-action-preview:toggle)
+  nmap <buffer> q <Plug>(fern-quit-or-close-preview)
+  nmap <buffer> <ESC> <Plug>(fern-esc-or-close-preview)
   nmap <buffer> P gg
 
   nmap <buffer> <cr> <Plug>(fern-action-open-or-expand)
   nmap <buffer> go <Plug>(fern-action-open:edit)<C-w>p
-  nmap <buffer> t yp:call TerminalSendInner()<cr><C-w>ji
+  nmap <buffer> t :call TerminalSendInner()<cr><C-w>ji
   nmap <buffer> i <Plug>(fern-action-open:split)
   nmap <buffer> gi <Plug>(fern-action-open:split)<C-w>p
   nmap <buffer> s <Plug>(fern-action-open:vsplit)
@@ -79,16 +86,17 @@ function! s:init_fern() abort
   nmap <buffer> mp <Plug>(fern-action-clipboard-paste)
   nmap <buffer> mv <Plug>(fern-action-move)
   nmap <buffer> m <Nop>
+  nmap <buffer> c <Nop>
+  nmap <buffer> f :call fileinfo#fern_show_file_info()<cr>
 
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
+  nmap <buffer> H :Fern ~ -drawer -stay -keep<cr>
   nmap <buffer> u <Plug>(fern-action-leave)
   nmap <buffer> r <Plug>(fern-action-reload)
   nmap <buffer> <silent> R :Fern .<cr>
-  nmap <buffer> cd <Plug>(fern-action-cd)
+  nmap <silent> <buffer> cd <Plug>(fern-action-cd):echo "cd " . getcwd()<cr>
   nmap <buffer> I <Plug>(fern-action-hidden:toggle)
-  nmap <buffer> <ESC> <C-W>l
 
-  nmap <buffer> q :<C-u>quit<CR>
   nmap <buffer> <leader>d <C-W>l<leader>d 
   nmap <buffer> <leader>1 <C-W>l<leader>1 
   nmap <buffer> <leader>2 <C-W>l<leader>2 

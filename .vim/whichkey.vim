@@ -80,15 +80,18 @@ vmap <silent> <Leader>sr <Plug>TranslateRV
 let g:which_key_map.v = {
       \ 'name' : '+vim',
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
+      \ 'c' : [':set ic!', 'toggle case insensitive'],
       \ 'a' : [':call AutoPairsToggle()', 'toggle auto pairs'],
       \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
+      \ 'b' : [":call ToggleSignColumn()", 'toggle blame'],
       \ 'n' : [':set invnumber', 'toggle number'],
       \ 'd' : [':call ToggleDiff()', 'toggle diff'],
       \ 'p' : [':call TogglePaste()', 'toggle paste'],
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
-      \ 'i' : [":call ToggleSignColumn()", 'toggle sign'],
+      \ 'i' : [":ToggleSaveLastIme", 'toggle-save-last-ime'],
+      \ 'l' : [":set cursorline!", 'toggle cursorline'],
       \ }
 
 let g:which_key_map.v.f = {
@@ -148,6 +151,7 @@ let g:which_key_map.f = {
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],
       \ 'h' : [':Leaderf help', 'help'],
       \ 'W' : [':SudaWrite', 'sudo-write'],
+      \ 'v' : [":Fern ~/.vim -drawer -keep", 'fern .vim/'],
       \ 'w' : [':w', 'write'],
       \ 'j' : [':JunkList', 'junk-list'],
       \ 'J' : [':JunkFile', 'new-junk-file'],

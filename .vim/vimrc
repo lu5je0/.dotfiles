@@ -26,6 +26,7 @@ Plug 'lambdalisue/nerdfont.vim'
 Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/glyph-palette.vim'
 Plug 'lambdalisue/fern-git-status.vim'
+Plug 'yuki-yano/fern-preview.vim'
 
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
@@ -83,6 +84,7 @@ Plug 'chiedo/vim-case-convert'
 Plug 'itchyny/lightline.vim'
 
 " themes
+Plug 'tomasiser/vim-code-dark'
 Plug 'lu5je0/vim-one'
 Plug 'gruvbox-community/gruvbox'
 Plug 'hzchirs/vim-material'
@@ -92,8 +94,7 @@ Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
-" 500 毫秒后调用 LoadPlug，且只调用一次, 见 `:h timer_start()`
-call timer_start(300, 'LoadPlug')
+call timer_start(50, 'LoadPlug')
 function! LoadPlug(timer) abort
   call plug#load('fern-renderer-nerdfont.vim')
   call plug#load('vim-visual-multi')
@@ -234,8 +235,14 @@ command! Diffo windo diffo
 " }}}
 
 " 主题配置 {{{
+" colorscheme codedark
+" let g:lightline.colorscheme = 'apprentice'
+
+" colorscheme gruvbox
+" let g:lightline.colorscheme = 'gruvbox'
+
 colorscheme one
-let g:lightline.colorscheme = 'ones'
+let g:lightline.colorscheme = 'one'
 set bg=dark
 hi TSPunctBracket guifg=#ABB2BF
 " }}}
