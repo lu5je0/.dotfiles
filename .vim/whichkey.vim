@@ -32,7 +32,6 @@ let g:which_key_map.Q = [ 'QuitForce', 'quit force' ]
 let g:which_key_map.u = [':UndotreeToggle', 'undotree']
 let g:which_key_map.i = [':Vista!!', 'vista']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
-let g:which_key_map.o = [ ':call CloseOtherBuffers()', 'close other buffers' ]
 let g:which_key_map.d = 'buffer switch'
 let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
 nmap <leader>d <c-^>
@@ -81,15 +80,18 @@ vmap <silent> <Leader>sr <Plug>TranslateRV
 let g:which_key_map.v = {
       \ 'name' : '+vim',
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
+      \ 'c' : [':set ic!', 'toggle case insensitive'],
       \ 'a' : [':call AutoPairsToggle()', 'toggle auto pairs'],
       \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
+      \ 'b' : [":call ToggleSignColumn()", 'toggle blame'],
       \ 'n' : [':set invnumber', 'toggle number'],
       \ 'd' : [':call ToggleDiff()', 'toggle diff'],
       \ 'p' : [':call TogglePaste()', 'toggle paste'],
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
-      \ 'i' : [":call ToggleSignColumn()", 'toggle sign'],
+      \ 'i' : [":ToggleSaveLastIme", 'toggle-save-last-ime'],
+      \ 'l' : [":set cursorline!", 'toggle cursorline'],
       \ }
 
 let g:which_key_map.v.f = {
@@ -122,41 +124,49 @@ nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
       " \ 'c' : ["<Plug>(coc-codeaction-selected)<cr>", 'codeaction'],
 let g:which_key_map.c = {
       \ 'name' : '+code' ,
-      \ 'r' : ["<Plug>(coc-rename)", 'rename variable'],
-      \ 'f' : "autoformat",
+      \ 'r' : ["<Plug>(coc-rename)", 'rename-variable'],
+      \ 'c' : "code-action",
+      \ 'f' : "auto-format",
       \ }
 
 " +buffer or terminal
 let g:which_key_map.t = {
       \ 'name' : '+tab/terminal' ,
       \ 't' : [':call TerminalToggle()', 'terminal'],
-      \ 'c' : [':call CDTerminalToCWD()', 'terminal cd current dir'],
-      \ 'n' : [':enew', 'new buffer'],
+      \ 'b' : [':call CDTerminalToCWD()', 'terminal-cd-buffer-dir'],
+      \ 'o' : [ ':call buffer#CloseOtherBuffers()', 'close-other-buffers' ],
+      \ 'n' : [':enew', 'new-buffer'],
       \ }
 
 
 let g:which_key_map.f = {
-      \ 'name' : '+leaderf/Files' ,
+      \ 'name' : '+leaderf/Files',
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
+      \ 'g' : [':Leaderf --recall', 'recall'],
       \ 'r' : [':Leaderf rg', 'rg'],
-      \ 'e' : [':call FernLocateFile()', 'locate file'],
+      \ 'e' : [':call FernLocateFile()', 'locate-file'],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'b' : [':Leaderf buffer', 'buffer'],
       \ 'm' : [':Leaderf --nowrap mru', 'mru'],
       \ 'h' : [':Leaderf help', 'help'],
       \ 'W' : [':SudaWrite', 'sudo-write'],
+      \ 'v' : [":Fern ~/.vim -drawer -keep", 'fern .vim/'],
       \ 'w' : [':w', 'write'],
-      \ 'j' : [':JunkList', 'junk list'],
-      \ 'J' : [':JunkFile', 'new junk file'],
+      \ 'j' : [':JunkList', 'junk-list'],
+      \ 'J' : [':JunkFile', 'new-junk-file'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }
 
-let g:which_key_map.f.c = {
-      \ 'name' : '+files/convert' ,
+let g:which_key_map.f.x = {
+      \ 'name' : '+encoding',
       \ 'f' : [':set ff=unix', '2unix'],
       \ 'F' : [':set ff=dos', '2dos'],
+      \ }
+
+let g:which_key_map.x = {
+      \ 'name' : '+text',
       \ 'q' : "繁体转简体",
       \ 'Q' : "简体转繁体",
       \ 'm' : [':%s/\r$//', '移除^M'],
@@ -166,40 +176,41 @@ let g:which_key_map.f.c = {
       \ 'U' : "Unescape Unicode",
       \ 'h' : "url encode",
       \ 'H' : "url decode",
+      \ 'c' : [":call edit#CountSelectionRegion()", "count in the selection region"],
       \ }
 
 "----------------------------------------------------------------------
 " 繁体简体
 "----------------------------------------------------------------------
-vmap <leader>fcq :!opencc -c t2s<cr>
-nmap <leader>fcq :%!opencc -c t2s<cr>
+vmap <leader>xq :!opencc -c t2s<cr>
+nmap <leader>xq :%!opencc -c t2s<cr>
 
-vmap <leader>fcQ :!opencc -c s2t<cr>
-nmap <leader>fcQ :%!opencc -c s2t<cr>
+vmap <leader>xQ :!opencc -c s2t<cr>
+nmap <leader>xQ :%!opencc -c s2t<cr>
 
 
 "----------------------------------------------------------------------
 " base64
 "----------------------------------------------------------------------
-vmap <silent> <leader>fcB :<c-u>call base64#v_atob()<cr>
-vmap <silent> <leader>fcb :<c-u>call base64#v_btoa()<cr>
+vmap <silent> <leader>xB :<c-u>call base64#v_atob()<cr>
+vmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
 
 
 "----------------------------------------------------------------------
 " unicode escape
 "----------------------------------------------------------------------
-vmap <silent> <leader>fcu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
-vmap <silent> <leader>fcU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+vmap <silent> <leader>xu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
+vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
 
 
 "----------------------------------------------------------------------
 " url encode
 "----------------------------------------------------------------------
-nmap <leader>fch :%!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
-nmap <leader>fcH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+nmap <leader>xh :%!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+nmap <leader>xH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
 
-vnoremap <leader>fch :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
-vnoremap <leader>fcH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+vnoremap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+vnoremap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
 
 
 call which_key#register(',', "g:which_key_map")

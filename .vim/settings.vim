@@ -31,6 +31,7 @@ set termguicolors
 set hidden
 set updatetime=100
 set signcolumn=number
+set smartcase
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start
@@ -63,3 +64,6 @@ if has("persistent_undo")
     execute "set undodir=" . home
     set undofile
 endif
+
+" 不显示启动界面
+set shortmess=atI

@@ -1,6 +1,9 @@
 set ignorecase
 set clipboard+=unnamed
 set keep-english-in-normal
+set hlsearch
+set incsearch
+set smartcase
 
 # plugins
 set surround
@@ -35,7 +38,8 @@ vmap > >gv
 
 " tab页
 nmap <silent> <leader>tn :action NewScratchFile<cr>
-nmap <leader>tr :action ReopenClosedTab<CR>
+nmap <learer>tr :action ReopenClosedTab<CR>
+nmap <leader>to <Action>(CloseAllEditorsButActive)
 nmap <silent> <leader>1 1gt
 nmap <silent> <leader>2 2gt
 nmap <silent> <leader>3 3gt
@@ -50,11 +54,12 @@ nmap <silent> <right> :bn<cr>
 
 nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
-nmap <leader>o <Action>(CloseAllEditorsButActive)
 nmap <leader>d :b#<cr>
 nmap <leader>a <Action>(CloseAllEditors)
+nmap <leader>n /uvclewrq<cr>
 
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
+nmap <leader>vc :set ic!<cr>
 nmap <leader>e :NERDTree<CR>
 
 map <leader>ss :action $EditorTranslateAction<CR>
@@ -104,6 +109,7 @@ nmap <c-o> <Action>(Back)
 nmap <c-i> <Action>(Forward)
 
 imap <m-p> <Action>(ParameterInfo)
+imap <A-p> <Action>(ParameterInfo)
 
 nmap H ^
 nmap L $

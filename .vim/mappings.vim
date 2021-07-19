@@ -130,3 +130,8 @@ endif
 " git next hunk
 nmap ]g <plug>(signify-next-hunk)
 nmap [g <plug>(signify-prev-hunk)
+
+"----------------------------------------------------------------------
+" visual mode
+"----------------------------------------------------------------------
+vmap <silent> t :call visual#runSelectInTerminal()<cr>

@@ -26,23 +26,16 @@ endif
 
 augroup switch_im
     autocmd!
-    autocmd InsertLeave * call SwitchToEn()
-    autocmd InsertEnter * call SwitchToCn()
+    autocmd InsertLeave * call SwitchInsertMode()
+    autocmd InsertEnter * call SwitchNormalMode()
 augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 
-let g:im_func_init = 0
 function! ImFuncInit()
-if g:im_func_init == 1
-    return
-endif
-
 python3 << EOF
 import threading
 
-mac_im = None
-last = None
 switcher = None
 
 def im_init(path):
@@ -56,41 +49,38 @@ def im_init(path):
     python_root_dir = path + "/python"
     sys.path.insert(0, python_root_dir)
     import im
-    mac_im = 'com.apple.keylayout.ABC'
-    last = 'com.apple.keylayout.ABC'
+
     switcher = im.ImSwitcher()
 
 path = vim.eval('s:plugin_root_dir')
 threading.Thread(target=im_init, args=[path]).start()
 EOF
-let g:im_func_init = 1
 endfunction
 
-function! SwitchToEn()
-if g:im_func_init != 1
-    call ImFuncInit()
-endif
+call ImFuncInit()
+
+function! SwitchInsertMode()
 python3 << EOF
-
-# last = switcher.getCurrentInputSourceID()
 if switcher != None:
-    switcher.switchInputSource(mac_im)
-
+    switcher.switch_normal_mode()
 EOF
 endfunction
 
 
-function! SwitchToCn()
-if g:im_func_init != 1
-    call ImFuncInit()
-endif
+function! SwitchNormalMode()
 python3 << EOF
-
 if switcher != None:
-    switcher.switchInputSource(last)
-
+    switcher.swith_insert_mode()
 EOF
 endfunction
 
-command! SwitchToCn call SwitchToCn()
-command! SwitchToEn call SwitchToEn()
+function! ToggleSaveLastIme()
+python3 << EOF
+if switcher != None:
+    switcher.toggle_save_last_ime()
+EOF
+endfunction
+
+command! SwitchNormalMode call SwitchNormalMode()
+command! SwitchInsertMode call SwitchInsertMode()
+command! ToggleSaveLastIme call ToggleSaveLastIme()

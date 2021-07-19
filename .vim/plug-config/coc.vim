@@ -3,7 +3,7 @@ let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-s
 inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" : 
                                            \"\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
-imap <expr> <tab> pumvisible() ?  "\<C-y>\<C-g>u" : "\<TAB>"
+imap <silent><expr> <tab> pumvisible() ?  "\<C-y>\<C-g>u" : "\<TAB>"
 
 " Use <C-k> for jump to previous placeholder, it's default of coc.nvim
 let g:coc_snippet_next = '<C-j>'
@@ -40,7 +40,7 @@ nmap <leader>cr <Plug>(coc-rename)
 xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 
-inoremap <m-p> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
+inoremap <silent><m-p> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
 inoremap <silent><expr> <c-n> coc#refresh()
 
 " Use `[g` and `]g` to navigate diagnostics
