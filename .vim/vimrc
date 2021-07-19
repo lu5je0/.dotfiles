@@ -26,6 +26,7 @@ Plug 'lambdalisue/nerdfont.vim'
 Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/glyph-palette.vim'
 Plug 'lambdalisue/fern-git-status.vim'
+Plug 'yuki-yano/fern-preview.vim'
 
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
@@ -110,7 +111,11 @@ function! LoadPlug(timer) abort
   call plug#load('asyncrun.extra')
   call plug#load('vim-fugitive')
   call plug#load('vim-flog')
-  call plug#load('suda.vim')
+
+  if !has("win32")
+      call plug#load('suda.vim')
+  endif
+
   call plug#load('undotree')
   call plug#load('vim-surround')
   call plug#load('vista.vim')
