@@ -55,6 +55,9 @@ if has("persistent_undo")
     else
         let home = $HOME . "/.undodir"
     endif
+    if has("nvim")
+        let home = home . "_neovim"
+    endif
 
     if filewritable(&undodir) == 0
         call mkdir(&undodir, "p")
