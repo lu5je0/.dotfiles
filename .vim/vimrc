@@ -96,6 +96,7 @@ call plug#end()
 
 call timer_start(50, 'LoadPlug')
 function! LoadPlug(timer) abort
+  runtime im.vim
   call plug#load('fern-renderer-nerdfont.vim')
   call plug#load('vim-visual-multi')
   call plug#load('vim-textobj-entire')
@@ -104,7 +105,6 @@ function! LoadPlug(timer) abort
   call plug#load('coc.nvim')
   runtime plug-config/coc.vim
 
-  runtime im.vim
 
   call plug#load('asynctasks.vim')
   call plug#load('asyncrun.vim')
