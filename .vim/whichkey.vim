@@ -1,5 +1,10 @@
 set timeoutlen=500
 
+" highlight default link WhichKey          Function
+" highlight default link WhichKeyDesc      Function
+highlight default link WhichKeySeperator String
+highlight default link WhichKeyGroup Text
+
 " Hide status line
 autocmd! FileType which_key
 autocmd  FileType which_key set laststatus=0 noshowmode noruler
@@ -65,6 +70,13 @@ let g:which_key_map.g = {
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],
       \ }
+
+let g:which_key_map.s = {
+            \ 'name' : '+translate',
+            \ 's' : 'translate popup',
+            \ 'r' : 'translate replace',
+            \ 'c' : 'translate',
+            \ }
 
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
