@@ -55,10 +55,12 @@ function! TogglePaste()
         let g:TogglePaste = 0
     endif
     if g:TogglePaste == 0
+        nmap p p=`]
         set paste!
         let g:TogglePaste = 1
         echo "paste mode"
     else
+        unmap p
         set paste!
         let g:TogglePaste = 0
         echo "disable paste mode"

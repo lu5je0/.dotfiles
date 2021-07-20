@@ -87,8 +87,8 @@ function! s:init_fern() abort
   nmap <buffer> mv <Plug>(fern-action-move)
   nmap <buffer> m <Nop>
   nmap <buffer> c <Nop>
-  unmap <buffer> fe
-  unmap <buffer> fi
+  silent ! unmap <buffer> fe
+  silent ! unmap <buffer> fi
   nmap <buffer><nowait> f :call fileinfo#fern_show_file_info()<cr>
 
   nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
