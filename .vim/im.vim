@@ -35,17 +35,28 @@ let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 function! ImFuncInit()
 python3 << EOF
 import threading
-import sys
-from os.path import normpath, join
-import vim
 
-python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
-sys.path.insert(0, python_root_dir)
-import im
+switcher = None
 
-switcher = im.ImSwitcher()
+def im_init(path):
+    global mac_im
+    global last
+    global switcher
+
+    import sys
+    from os.path import normpath, join
+    import vim
+    python_root_dir = path + "/python"
+    sys.path.insert(0, python_root_dir)
+    import im
+
+    switcher = im.ImSwitcher()
+
+path = vim.eval('s:plugin_root_dir')
+threading.Thread(target=im_init, args=[path]).start()
 EOF
 endfunction
+
 call ImFuncInit()
 
 function! SwitchInsertMode()
