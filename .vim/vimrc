@@ -4,6 +4,9 @@ let s:nvim_treesitter = 0
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
+if has("mac")
+    Plug 'lu5je0/im-switcher'
+endif
 Plug 'lu5je0/lightline-bufferline'
 Plug 'tpope/vim-surround', {'on': []}
 Plug 'jiangmiao/auto-pairs'
@@ -96,7 +99,7 @@ call plug#end()
 
 call timer_start(50, 'LoadPlug')
 function! LoadPlug(timer) abort
-  runtime im.vim
+  " runtime im.vim
   call plug#load('fern-renderer-nerdfont.vim')
   call plug#load('vim-visual-multi')
   call plug#load('vim-textobj-entire')

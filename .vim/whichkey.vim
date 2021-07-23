@@ -152,7 +152,7 @@ let g:which_key_map.t = {
 
 
 let g:which_key_map.f = {
-      \ 'name' : '+leaderf/Files',
+      \ 'name' : '+leaderf/files',
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'g' : [':Leaderf --recall', 'recall'],

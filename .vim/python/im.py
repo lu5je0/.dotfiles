@@ -26,14 +26,14 @@ class Observer(NSObject):
         AppHelper.runConsoleEventLoop()
 
 class ImSwitcher():
-    englist_ime = 'com.apple.keylayout.ABC'
+    english_ime = 'com.apple.keylayout.ABC'
 
     def __init__(self) -> None:
         self.text_input_context = NSTextInputContext.alloc().initWithClient_(NSTextView.new())
-        self.last_ime = ImSwitcher.englist_ime
+        self.last_ime = ImSwitcher.english_ime
         self.is_save_ime = True
         manager = multiprocessing.Manager()
-        self.cur_ime = manager.Value(ctypes.c_wchar_p, ImSwitcher.englist_ime)
+        self.cur_ime = manager.Value(ctypes.c_wchar_p, ImSwitcher.english_ime)
         multiprocessing.Process(target=Observer.watch, args=(self.cur_ime,)).start()
         try:
             # 隐藏macos dock栏小火箭
@@ -58,9 +58,9 @@ class ImSwitcher():
     def switch_normal_mode(self):
         if self.is_save_ime:
             self.save_last_ime()
-        if self.cur_ime.value == self.englist_ime:
+        if self.cur_ime.value == self.english_ime:
             return
-        self.switch_input_source(self.englist_ime)
+        self.switch_input_source(self.english_ime)
 
     def switch_input_source(self, input_method):
         self.text_input_context.setValue_forKey_(input_method, 'selectedKeyboardInputSource')
