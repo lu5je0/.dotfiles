@@ -1,3 +1,7 @@
+if g:coc_enable == 0
+    finish
+endif
+
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql']
 
 inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" : 

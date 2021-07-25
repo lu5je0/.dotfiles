@@ -1,4 +1,4 @@
-let s:coc_enable = 1
+let g:coc_enable = 1
 let s:nvim_treesitter = 0
 let g:loaded_clipboard_provider = 1
 
@@ -66,7 +66,7 @@ if !has("gui")
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 endif
 
-if s:coc_enable == 1
+if g:coc_enable == 1
     Plug 'neoclide/coc.nvim', {'branch': 'release', 'on': []}
 else
     Plug 'ervandew/supertab'
@@ -101,6 +101,12 @@ call plug#end()
 
 call timer_start(50, 'LoadPlug')
 function! LoadPlug(timer) abort
+
+  if g:coc_enable == 1
+      call plug#load('coc.nvim')
+      runtime plug-config/coc.vim
+  endif
+
   " runtime im.vim
   if !has("gui") && !has("mac")
       call plug#load('vim-im-select')
@@ -113,10 +119,6 @@ function! LoadPlug(timer) abort
   call plug#load('vim-visual-multi')
   call plug#load('vim-textobj-entire')
   call plug#load('vim-textobj-parameter')
-
-  call plug#load('coc.nvim')
-  runtime plug-config/coc.vim
-
 
   call plug#load('asynctasks.vim')
   call plug#load('asyncrun.vim')
