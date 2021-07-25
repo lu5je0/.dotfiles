@@ -1,5 +1,6 @@
 let s:coc_enable = 1
 let s:nvim_treesitter = 0
+let g:loaded_clipboard_provider = 1
 
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
@@ -77,8 +78,9 @@ if !has("win32")
 endif
 
 if !has("gui") && !has("mac")
-    Plug 'brglng/vim-im-select'
+    Plug 'brglng/vim-im-select', { 'on': [] }
 endif
+
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 
 " 变量命名转换
@@ -100,6 +102,13 @@ call plug#end()
 call timer_start(50, 'LoadPlug')
 function! LoadPlug(timer) abort
   " runtime im.vim
+  if !has("gui") && !has("mac")
+      call plug#load('vim-im-select')
+  endif
+
+  unlet g:loaded_clipboard_provider
+  runtime autoload/provider/clipboard.vim
+
   call plug#load('fern-renderer-nerdfont.vim')
   call plug#load('vim-visual-multi')
   call plug#load('vim-textobj-entire')
