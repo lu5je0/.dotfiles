@@ -24,13 +24,13 @@ Plug 'cespare/vim-toml'
 Plug 'dstein64/vim-startuptime'
 
 " fern
-Plug 'lu5je0/fern.vim'
+Plug 'lu5je0/fern.vim', {'on': []}
 Plug 'lu5je0/fern-renderer-nerdfont.vim', {'on': []}
 Plug 'lambdalisue/nerdfont.vim'
-Plug 'lambdalisue/fern-hijack.vim'
-Plug 'lambdalisue/glyph-palette.vim'
-Plug 'lambdalisue/fern-git-status.vim'
-Plug 'yuki-yano/fern-preview.vim'
+Plug 'lambdalisue/fern-hijack.vim', {'on': []}
+Plug 'lambdalisue/glyph-palette.vim', {'on': []}
+Plug 'lambdalisue/fern-git-status.vim', {'on': []}
+Plug 'yuki-yano/fern-preview.vim', {'on': []}
 
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
@@ -99,7 +99,7 @@ Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
-call timer_start(50, 'LoadPlug')
+call timer_start(20, 'LoadPlug')
 function! LoadPlug(timer) abort
 
   if g:coc_enable == 1
@@ -115,7 +115,14 @@ function! LoadPlug(timer) abort
   unlet g:loaded_clipboard_provider
   runtime autoload/provider/clipboard.vim
 
+  call plug#load('fern.vim')
   call plug#load('fern-renderer-nerdfont.vim')
+  call plug#load('fern-hijack.vim')
+  call plug#load('glyph-palette.vim')
+  call plug#load('fern-git-status.vim')
+  call plug#load('fern-preview.vim')
+  runtime plug-config/fern.vim
+
   call plug#load('vim-visual-multi')
   call plug#load('vim-textobj-entire')
   call plug#load('vim-textobj-parameter')
@@ -145,7 +152,6 @@ if has("win32")
 endif
 runtime gvim.vim
 runtime functions.vim
-runtime plug-config/fern.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
