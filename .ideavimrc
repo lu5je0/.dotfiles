@@ -1,6 +1,8 @@
 set ignorecase
 set clipboard+=unnamed
-set keep-english-in-normal
+" set keep-english-in-normal
+" 回到insert模式时恢复输入法
+set keep-english-in-normal-and-restore-in-insert
 set hlsearch
 set incsearch
 set smartcase
