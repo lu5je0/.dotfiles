@@ -1,3 +1,7 @@
+if g:coc_enable == 0
+    finish
+endif
+
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql']
 
 inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" : 
@@ -14,7 +18,7 @@ augroup user_plugin_coc
     " Highlight the symbol and its references when holding the cursor.
     autocmd CursorHold * silent call CocActionAsync('highlight')
     autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
-    autocmd FileType python,java,js nmap <buffer> <silent> gd <Plug>(coc-definition)
+    autocmd FileType python,cpp,java,js,c nmap <buffer> <silent> gd <Plug>(coc-definition)
 augroup END
 
 " GoTo code navigation.

@@ -219,6 +219,11 @@ function! FileSize()
   endif
 endfunction
 
+function! CurVimPath()
+    let name = getcwd() 
+    return fnamemodify(name, ':p:h:t')
+endfunction
+
 " A function to clear the undo history
 function! <SID>ForgetUndo()
     let old_undolevels = &undolevels

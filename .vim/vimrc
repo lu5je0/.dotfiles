@@ -1,9 +1,13 @@
-let s:coc_enable = 1
+let g:coc_enable = 1
 let s:nvim_treesitter = 0
+let g:loaded_clipboard_provider = 1
 
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
+" if has("mac")
+"     Plug 'lu5je0/im-switcher'
+" endif
 Plug 'lu5je0/lightline-bufferline'
 Plug 'tpope/vim-surround', {'on': []}
 Plug 'jiangmiao/auto-pairs'
@@ -20,13 +24,13 @@ Plug 'cespare/vim-toml'
 Plug 'dstein64/vim-startuptime'
 
 " fern
-Plug 'lu5je0/fern.vim'
+Plug 'lu5je0/fern.vim', {'on': []}
 Plug 'lu5je0/fern-renderer-nerdfont.vim', {'on': []}
 Plug 'lambdalisue/nerdfont.vim'
-Plug 'lambdalisue/fern-hijack.vim'
-Plug 'lambdalisue/glyph-palette.vim'
-Plug 'lambdalisue/fern-git-status.vim'
-Plug 'yuki-yano/fern-preview.vim'
+Plug 'lambdalisue/fern-hijack.vim', {'on': []}
+Plug 'lambdalisue/glyph-palette.vim', {'on': []}
+Plug 'lambdalisue/fern-git-status.vim', {'on': []}
+Plug 'yuki-yano/fern-preview.vim', {'on': []}
 
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
@@ -62,7 +66,7 @@ if !has("gui")
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 endif
 
-if s:coc_enable == 1
+if g:coc_enable == 1
     Plug 'neoclide/coc.nvim', {'branch': 'release', 'on': []}
 else
     Plug 'ervandew/supertab'
@@ -74,8 +78,9 @@ if !has("win32")
 endif
 
 if !has("gui") && !has("mac")
-    Plug 'brglng/vim-im-select'
+    Plug 'brglng/vim-im-select', { 'on': [] }
 endif
+
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 
 " 变量命名转换
@@ -94,17 +99,33 @@ Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
-call timer_start(50, 'LoadPlug')
+call timer_start(20, 'LoadPlug')
 function! LoadPlug(timer) abort
+
+  if g:coc_enable == 1
+      call plug#load('coc.nvim')
+      runtime plug-config/coc.vim
+  endif
+
   runtime im.vim
+  if !has("gui") && !has("mac")
+      call plug#load('vim-im-select')
+  endif
+
+  unlet g:loaded_clipboard_provider
+  runtime autoload/provider/clipboard.vim
+
+  call plug#load('fern.vim')
   call plug#load('fern-renderer-nerdfont.vim')
+  call plug#load('fern-hijack.vim')
+  call plug#load('glyph-palette.vim')
+  call plug#load('fern-git-status.vim')
+  call plug#load('fern-preview.vim')
+  runtime plug-config/fern.vim
+
   call plug#load('vim-visual-multi')
   call plug#load('vim-textobj-entire')
   call plug#load('vim-textobj-parameter')
-
-  call plug#load('coc.nvim')
-  runtime plug-config/coc.vim
-
 
   call plug#load('asynctasks.vim')
   call plug#load('asyncrun.vim')
@@ -131,7 +152,6 @@ if has("win32")
 endif
 runtime gvim.vim
 runtime functions.vim
-runtime plug-config/fern.vim
 runtime plug-config/leaderf.vim
 runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
