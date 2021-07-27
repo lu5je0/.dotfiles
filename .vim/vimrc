@@ -5,9 +5,9 @@ let g:loaded_clipboard_provider = 1
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
-if has("mac")
-    Plug 'lu5je0/im-switcher'
-endif
+" if has("mac")
+"     Plug 'lu5je0/im-switcher'
+" endif
 Plug 'lu5je0/lightline-bufferline'
 Plug 'tpope/vim-surround', {'on': []}
 Plug 'jiangmiao/auto-pairs'
@@ -107,7 +107,7 @@ function! LoadPlug(timer) abort
       runtime plug-config/coc.vim
   endif
 
-  " runtime im.vim
+  runtime im.vim
   if !has("gui") && !has("mac")
       call plug#load('vim-im-select')
   endif
