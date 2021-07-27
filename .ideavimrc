@@ -23,6 +23,10 @@ let mapleader=","
 
 nmap yr <Action>(CopyReference)
 
+" leetCode
+nmap <leader>lr <Action>(leetcode.RunCodeAction)
+nmap <leader>ls <Action>(leetcode.SubmitAction)
+
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
 nmap <leader>ff :action SearchEverywhere<CR>
