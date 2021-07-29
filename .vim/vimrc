@@ -14,7 +14,7 @@ Plug 'liuchengxu/vista.vim', {'on': []}
 " if has("mac")
 "     Plug 'lu5je0/im-switcher'
 " endif
-Plug 'lyokha/vim-xkbswitch'
+" Plug 'lyokha/vim-xkbswitch'
 
 if has("nvim")
     let s:nvim_treesitter = 1
@@ -109,7 +109,7 @@ function! LoadPlug(timer) abort
       runtime plug-config/coc.vim
   endif
 
-  " runtime im.vim
+  runtime im.vim
   if !has("gui") && !has("mac")
       call plug#load('vim-im-select')
   endif
