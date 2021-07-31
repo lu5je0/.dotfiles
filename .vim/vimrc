@@ -36,7 +36,7 @@ Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
 Plug 'MTDL9/vim-log-highlighting'
 Plug 'tpope/vim-commentary'
-Plug 'honza/vim-snippets'
+" Plug 'honza/vim-snippets'
 Plug 'mg979/vim-visual-multi', {'on': []}
 Plug 'kana/vim-textobj-user'
 Plug 'sgur/vim-textobj-parameter', {'on': []}
