@@ -5,14 +5,16 @@ let g:loaded_clipboard_provider = 1
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
-if has("mac")
-    Plug 'lu5je0/im-switcher'
-endif
 Plug 'lu5je0/lightline-bufferline'
 Plug 'tpope/vim-surround', {'on': []}
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
 Plug 'liuchengxu/vista.vim', {'on': []}
+
+" if has("mac")
+"     Plug 'lu5je0/im-switcher'
+" endif
+" Plug 'lyokha/vim-xkbswitch'
 
 if has("nvim")
     let s:nvim_treesitter = 1
@@ -107,7 +109,7 @@ function! LoadPlug(timer) abort
       runtime plug-config/coc.vim
   endif
 
-  " runtime im.vim
+  runtime im.vim
   if !has("gui") && !has("mac")
       call plug#load('vim-im-select')
   endif
@@ -157,6 +159,11 @@ runtime plug-config/autoformat.vim
 runtime plug-config/terminal.vim
 runtime plug-config/lightline.vim
 runtime plug-config/vista.vim
+" }}}
+
+" vim-xkbswitch {{{
+let g:XkbSwitchEnabled = 1
+let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 " }}}
 
 " autocmd {{{
