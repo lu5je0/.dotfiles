@@ -10,6 +10,7 @@ Plug 'tpope/vim-surround', {'on': []}
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
 Plug 'liuchengxu/vista.vim', {'on': []}
+Plug 'SirVer/ultisnips'
 
 " if has("mac")
 "     Plug 'lu5je0/im-switcher'
@@ -38,7 +39,7 @@ Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
 Plug 'MTDL9/vim-log-highlighting'
 Plug 'tpope/vim-commentary'
-" Plug 'honza/vim-snippets'
+Plug 'lu5je0/vim-snippets'
 Plug 'mg979/vim-visual-multi', {'on': []}
 Plug 'kana/vim-textobj-user'
 Plug 'sgur/vim-textobj-parameter', {'on': []}
@@ -232,6 +233,10 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 
 " highlightedyank {{{
 let g:highlightedyank_highlight_duration=300
+" }}}
+
+" ultisnips {{{
+let g:UltiSnipsExpandTrigger="<c-d>"
 " }}}
 
 " toggle_terminal {{{
