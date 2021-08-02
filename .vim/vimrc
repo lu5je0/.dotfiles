@@ -2,6 +2,15 @@ let g:coc_enable = 1
 let s:nvim_treesitter = 0
 let g:loaded_clipboard_provider = 1
 
+
+let s:lazy_load_plug_list = []
+
+function s:lazy_load(plug_name)
+    call add(s:lazy_load_plug_list, a:plug_name)
+    Plug a:plug_name, {'on': []}
+endfunction
+command! -nargs=1 LazyLoadPlug call s:lazy_load(<f-args>)
+
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
@@ -77,11 +86,11 @@ endif
 
 " save with sudo
 if !has("win32")
-    Plug 'lambdalisue/suda.vim', { 'on': [] }
+    call s:lazy_load('lambdalisue/suda.vim')
 endif
 
 if !has("gui") && !has("mac")
-    Plug 'brglng/vim-im-select', { 'on': [] }
+    call s:lazy_load('brglng/vim-im-select')
 endif
 
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
@@ -111,9 +120,10 @@ function! LoadPlug(timer) abort
   endif
 
   runtime im.vim
-  if !has("gui") && !has("mac")
-      call plug#load('vim-im-select')
-  endif
+
+  for plug_name in s:lazy_load_plug_list
+      call plug#load(split(plug_name, '/')[1])
+  endfor
 
   unlet g:loaded_clipboard_provider
   runtime autoload/provider/clipboard.vim
