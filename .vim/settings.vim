@@ -1,7 +1,6 @@
 set mouse=a
 set hlsearch " 高亮搜索结果
 set ignorecase
-set smartcase
 set incsearch " 每输入一个字符就跳转到对应的结果
 set noerrorbells " 关闭错误响声
 set clipboard+=unnamed " 使用系统剪切板
