@@ -20,7 +20,6 @@ Plug 'lu5je0/lightline-bufferline'
 
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
-Plug 'SirVer/ultisnips'
 
 " if has("mac")
 "     Plug 'lu5je0/im-switcher'
@@ -45,7 +44,6 @@ Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/nerdfont.vim'
 Plug 'lu5je0/fern-renderer-nerdfont.vim'
 Plug 'lambdalisue/glyph-palette.vim'
-
 call s:lazy_load('lambdalisue/fern-git-status.vim')
 call s:lazy_load('yuki-yano/fern-preview.vim')
 
@@ -65,11 +63,12 @@ call s:lazy_load('mbbill/undotree')
 call s:lazy_load('junegunn/vim-peekaboo')
 call s:lazy_load('tpope/vim-surround')
 call s:lazy_load('liuchengxu/vista.vim')
+call s:lazy_load('machakann/vim-highlightedyank')
+call s:lazy_load('SirVer/ultisnips')
 " save with sudo
 if !has("win32")
     call s:lazy_load('lambdalisue/suda.vim')
 endif
-
 if !has("gui") && !has("mac")
     call s:lazy_load('brglng/vim-im-select')
 endif
@@ -82,7 +81,6 @@ Plug 'lu5je0/vim-snippets'
 Plug 'kana/vim-textobj-user'
 Plug 'tpope/vim-repeat'
 Plug 'vim-scripts/ReplaceWithRegister'
-Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
 Plug 'liuchengxu/vim-which-key'
 Plug 'lu5je0/vim-base64'
@@ -98,10 +96,6 @@ else
 endif
 
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
-
-" 变量命名转换
-Plug 'chiedo/vim-case-convert'
-
 
 " themes
 Plug 'tomasiser/vim-code-dark'
@@ -175,12 +169,6 @@ set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
 endif
 " }}} treesitter "
-
-
-" vim-expand-region {{{
-vmap v <Plug>(expand_region_expand)
-vmap V <Plug>(expand_region_shrink)
-" }}}
 
 " vim-diff-enhanced {{{
 set diffopt+=internal,algorithm:patience
