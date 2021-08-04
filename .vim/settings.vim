@@ -46,8 +46,8 @@ set cot=noinsert,menuone
 
 " 自动打开上次位置
 if has("autocmd")  
-    au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif  
-endif 
+    au BufReadPost * if line("'\"") > 1 && &ft != "gitcommit" && line("'\"") <= line("$") | exe "normal! g'\"" | endif  
+endif
 
 if has("persistent_undo")
     if has("win64")

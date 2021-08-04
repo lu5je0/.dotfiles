@@ -9,7 +9,6 @@ function s:lazy_load(plug_name)
     call add(s:lazy_load_plug_list, a:plug_name)
     Plug a:plug_name, {'on': []}
 endfunction
-command! -nargs=1 LazyLoadPlug call s:lazy_load(<f-args>)
 
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
