@@ -14,8 +14,10 @@ vmap H ^
 vmap L $
 omap H ^
 omap L $
-
 nmap Y ^y$
+
+nnoremap go }o<Esc>o
+nnoremap gO {O<Esc>O
 
 imap <M-j> <down>
 imap <M-k> <up>
