@@ -1,7 +1,7 @@
 ##########################################
 # zinit
 ##########################################
-if [[ ! -d ~/.zinit ]]; then
+if [[ ! -d ~/.dotfiles/.zinit ]]; then
     git clone --depth=1 https://github.com/zdharma/zinit.git ~/.dotfiles/.zinit/bin
 fi
 source ~/.dotfiles/.zinit/bin/zinit.zsh
