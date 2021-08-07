@@ -5,9 +5,9 @@ let g:Lf_CommandMap = {'<C-J>': ['<DOWN>'], '<C-K>': ['<UP>']}
 let g:Lf_ShortcutB = ""
 
 let g:Lf_WildIgnore = {
-        \ 'dir': ['.svn','.git','.hg'],
-        \ 'file': ['*.sw?']
-        \}
+            \ 'dir': ['.svn','.git','.hg'],
+            \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]']
+            \}
 
 let g:Lf_PopupHeight = 0.6
 

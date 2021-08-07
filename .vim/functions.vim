@@ -84,6 +84,14 @@ function! ToggleWrap()
         set wrap!
         map j gj
         map k gk
+
+        nmap H g^
+        nmap L g$
+        vmap H g^
+        vmap L g$
+        omap H g^
+        omap L g$
+
         let g:ToggleGjStauts = 1
         echo "wrap"
     else
@@ -91,6 +99,14 @@ function! ToggleWrap()
         let g:ToggleWrapStauts = 0
         unmap j
         unmap k
+
+        nmap H ^
+        nmap L $
+        vmap H ^
+        vmap L $
+        omap H ^
+        omap L $
+
         echo "unwrap"
     endif
 endfunction
@@ -217,6 +233,11 @@ function! FileSize()
   else
     return bytes . 'B '
   endif
+endfunction
+
+function! CurVimPath()
+    let name = getcwd() 
+    return fnamemodify(name, ':p:h:t')
 endfunction
 
 " A function to clear the undo history

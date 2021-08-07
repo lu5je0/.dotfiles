@@ -4,9 +4,6 @@ let g:terminal_key='<c-_>'
 " ctrl-c 复制
 vnoremap <C-c> y
 
-" 粘贴后自动格式化
-nnoremap p p=`]
-
 " 缩进后重新选择
 vmap < <gv
 vmap > >gv
@@ -17,8 +14,10 @@ vmap H ^
 vmap L $
 omap H ^
 omap L $
-
 nmap Y ^y$
+
+nnoremap go }o<Esc>o
+nnoremap gO {O<Esc>O
 
 imap <M-j> <down>
 imap <M-k> <up>
