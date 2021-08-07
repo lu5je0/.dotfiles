@@ -3,10 +3,10 @@ function! s:quick_note(text)
 	let text = substitute(a:text, '^\s*\(.\{-}\)\s*$', '\1', '')
 	if exists('*writefile') && text != ''
 		let filename = get(g:, 'quicknote_file', '~/.vim/quicknote.md')
-		let notehead = get(g:, 'quicknote_head', '- ')
+		" let notehead = get(g:, 'quicknote_head', '- ')
 		let notetime = strftime("[%Y-%m-%d %H:%M:%S] ")
 		let realname = expand(filename)
-		call writefile([notehead . notetime . text], realname, 'a')
+		call writefile([notetime . text], realname, 'a')
 		checktime
 		echo notetime . text
 	endif
@@ -22,7 +22,7 @@ function! s:get_junk_filename()
 
 	let filename = junk_dir . '/'
 	let filename = tr(filename, '\', '/')
-    let partname = input('Junk Code: ', strftime('%Y-%m-%dT%H%M%S'))
+    let partname = input('Junk Code: ', strftime('%Y-%m-%dT%H%M%S-'))
 	let filename = filename . partname
     
     if partname != ''
