@@ -2,9 +2,9 @@
 # zinit
 ##########################################
 if [[ ! -d ~/.zinit ]]; then
-    git clone --depth=1 https://github.com/zdharma/zinit.git ~/.zinit/bin
+    git clone --depth=1 https://github.com/zdharma/zinit.git ~/.dotfiles/.zinit/bin
 fi
-source ~/.zinit/bin/zinit.zsh
+source ~/.dotfiles/.zinit/bin/zinit.zsh
 
 if [[ -f ~/.mac ]]; then
     autoload -Uz compinit && compinit
