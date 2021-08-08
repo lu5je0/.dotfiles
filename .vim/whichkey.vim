@@ -42,6 +42,9 @@ let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
 nmap <leader>d <c-^>
 
 " windows
+let g:which_key_map.a = [":call Calc()", "calcultor"]
+
+" windows
 let g:which_key_map.w = {
       \ 'name' : '+windows' ,
       \ 'n' : [':vnew', 'vnew'],

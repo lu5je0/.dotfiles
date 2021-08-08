@@ -19,10 +19,11 @@ Plug 'lu5je0/lightline-bufferline'
 
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
+Plug 'theniceboy/vim-calc'
 
-" if has("mac")
-"     Plug 'lu5je0/im-switcher'
-" endif
+if !has("mac") && platform#is_wsl()
+    Plug 'lu5je0/im-switcher'
+endif
 " Plug 'lyokha/vim-xkbswitch'
 
 if has("nvim")
@@ -68,9 +69,9 @@ call s:lazy_load('SirVer/ultisnips')
 if !has("win32")
     call s:lazy_load('lambdalisue/suda.vim')
 endif
-if !has("gui") && !has("mac")
-    call s:lazy_load('brglng/vim-im-select')
-endif
+" if !has("gui") && !has("mac")
+"     call s:lazy_load('brglng/vim-im-select')
+" endif
 
 Plug 'dstein64/vim-startuptime'
 Plug 'yianwillis/vimcdoc'
