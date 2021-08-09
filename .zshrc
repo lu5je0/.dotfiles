@@ -82,6 +82,10 @@ bindkey "^[[6~" history-beginning-search-forward
 ##########################################
 # ENV
 ##########################################
+if [[ ! -f ~/.ohmyenv ]]; then
+    touch ~/.ohmyenv
+    echo "HTTP_PROXY=127.0.0.1:1080" > ~/.ohmyenv
+fi
 source ~/.ohmyenv
 export ZSH_AUTOSUGGEST_ACCEPT_WIDGETS=""
 export PATH=$PATH:~/.bin:~/.bin/local
