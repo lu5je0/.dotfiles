@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [[ $# == 0 ]]; then
+    echo "target branch required"
+    exit 0
+fi
+
+cur_branch=`git branch --show-current`
+echo 'cur_branch'
+git checkout $1
+git pull
+git merge $cur_branch
+git push
+git checkout $cur_branch
