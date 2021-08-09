@@ -1,0 +1,10 @@
+# maven
+export M2_HOME=~/opt/maven/bin
+export PATH=${PATH}:${M2_HOME}
+
+# set oracle jdk environment
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_251.jdk/Contents/Home
+export PATH=${PATH}:${JAVA_HOME}/bin
+
+#gnubin
+export PATH=${PATH}:/usr/local/opt/coreutils/libexec/gnubin
