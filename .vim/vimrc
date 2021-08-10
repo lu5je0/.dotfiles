@@ -110,8 +110,6 @@ call plug#end()
 
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
-  runtime im.vim
-
   if g:coc_enable == 1
       call plug#load('coc.nvim')
       runtime plug-config/coc.vim
@@ -123,6 +121,8 @@ function! LoadPlug(timer) abort
 
   unlet g:loaded_clipboard_provider
   runtime autoload/provider/clipboard.vim
+
+  runtime im.vim
 endfunction
 
 " runtime 加载.vim {{{
@@ -256,3 +256,4 @@ runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
 runtime plug-config/fern.vim
+runtime im.vim
