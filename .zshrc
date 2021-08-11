@@ -57,7 +57,8 @@ zinit light hlissner/zsh-autopair
 ## THEME
 # lu5je0
 zinit snippet OMZ::lib/theme-and-appearance.zsh
-zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
+# zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
+zinit snippet ~/.oh-my-zsh/themes/ys.zsh-theme
 
 # p10k
 # zinit ice depth=1
@@ -104,9 +105,12 @@ eval $(gdircolors ~/.dotfiles/.dircolors/dircolors.256dark)
 alias l='ls -lah'
 alias la='ls -lAh'
 alias ll='ls -lh'
-# alias ls='gls --color=tty'
+alias ls='gls --color=tty'
 alias lsa='ls -lah'
 alias md='mkdir -p'
+
+# git
+alias gmc='sh ~/tools/script/gmc.sh'
 
 # tmux
 alias ta="tmux attach -t"
