@@ -256,4 +256,3 @@ runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
 runtime plug-config/fern.vim
-runtime im.vim
