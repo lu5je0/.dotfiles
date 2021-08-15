@@ -39,7 +39,7 @@ Plug 'lu5je0/vim-java-bytecode'
 Plug 'MTDL9/vim-log-highlighting'
 
 " fern
-Plug 'lu5je0/fern.vim'
+Plug 'lambdalisue/fern.vim'
 Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/nerdfont.vim'
 Plug 'lu5je0/fern-renderer-nerdfont.vim'
@@ -110,6 +110,8 @@ call plug#end()
 
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
+  runtime im.vim
+
   if g:coc_enable == 1
       call plug#load('coc.nvim')
       runtime plug-config/coc.vim
@@ -121,8 +123,6 @@ function! LoadPlug(timer) abort
 
   unlet g:loaded_clipboard_provider
   runtime autoload/provider/clipboard.vim
-
-  runtime im.vim
 endfunction
 
 " runtime 加载.vim {{{
