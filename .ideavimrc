@@ -29,6 +29,9 @@ nmap yr <Action>(CopyReference)
 nmap <leader>lr <Action>(leetcode.RunCodeAction)
 nmap <leader>ls <Action>(leetcode.SubmitAction)
 
+" idea maven
+nmap <leader>mr <Action>(Maven.Reimport)
+
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
 nmap <leader>ff :action SearchEverywhere<CR>
