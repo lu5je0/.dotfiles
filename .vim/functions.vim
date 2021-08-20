@@ -51,20 +51,7 @@ function! ToggleDiff()
 endfunction
 
 function! TogglePaste()
-    if !exists("g:TogglePaste")
-        let g:TogglePaste = 0
-    endif
-    if g:TogglePaste == 0
-        nmap p p=`]
-        set paste!
-        let g:TogglePaste = 1
-        echo "paste mode"
-    else
-        unmap p
-        set paste!
-        let g:TogglePaste = 0
-        echo "disable paste mode"
-    endif
+    set paste!
 endfunction
 
 function! IsVisualMode()
@@ -76,56 +63,7 @@ function! IsVisualMode()
 endfunction
 
 function! ToggleWrap()
-    if !exists("g:ToggleWrapStauts")
-        let g:ToggleWrapStauts = 0
-    endif
-    if g:ToggleWrapStauts == 0
-        let g:ToggleWrapStauts = 1
-        set wrap!
-        map j gj
-        map k gk
-
-        nmap H g^
-        nmap L g$
-        vmap H g^
-        vmap L g$
-        omap H g^
-        omap L g$
-
-        let g:ToggleGjStauts = 1
-        echo "wrap"
-    else
-        set wrap!
-        let g:ToggleWrapStauts = 0
-        unmap j
-        unmap k
-
-        nmap H ^
-        nmap L $
-        vmap H ^
-        vmap L $
-        omap H ^
-        omap L $
-
-        echo "unwrap"
-    endif
-endfunction
-
-function! ToggleGj()
-    if !exists("g:ToggleGjStauts")
-        let g:ToggleGjStauts = 0
-    endif
-    if g:ToggleGjStauts == 0
-        nmap j gj
-        nmap k gk
-        let g:ToggleGjStauts = 1
-        echo "gj is enable"
-    else
-        unmap j
-        unmap k
-        let g:ToggleGjStauts = 0
-        echo "gj is disable"
-    endif
+    set wrap!
 endfunction
 
 function! IsWSL()
