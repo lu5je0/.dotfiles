@@ -144,15 +144,20 @@ runtime plug-config/vista.vim
 let g:XkbSwitchEnabled = 1
 let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 " }}}
-
+ 
 " autocmd {{{
 augroup file_type
     autocmd!
     autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
 augroup END
 " }}}
-
-
+ 
+" visual_multi {{{
+let g:VM_maps = {}
+let g:VM_maps["Select Cursor Down"] = '<m-n>'
+" let g:VM_maps["Select Cursor Up"]   = '<m-N>'
+" }}}
+ 
 " treesitter {{{ "
 if s:nvim_treesitter == 1
 lua <<EOF
