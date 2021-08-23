@@ -1,6 +1,8 @@
 set ignorecase
 set clipboard+=unnamed
-set keep-english-in-normal
+" set keep-english-in-normal
+" 回到insert模式时恢复输入法
+set keep-english-in-normal-and-restore-in-insert
 set hlsearch
 set incsearch
 set smartcase
@@ -49,8 +51,8 @@ nmap <silent> <leader>6 6gt
 nmap <silent> <leader>7 7gt
 nmap <silent> <leader>8 8gt
 nmap <silent> <leader>9 9gt
-nmap <silent> <left> :bp<cr>
-nmap <silent> <right> :bn<cr>
+" nmap <silent> <left> <Action>(PreviousTab)
+" nmap <silent> <right> <Action>(NextTab)
 
 nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>

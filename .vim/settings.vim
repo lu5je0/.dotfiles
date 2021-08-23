@@ -1,6 +1,6 @@
 set mouse=a
 set hlsearch " 高亮搜索结果
-set ignorecase " 搜索时忽略大小写
+set ignorecase
 set incsearch " 每输入一个字符就跳转到对应的结果
 set noerrorbells " 关闭错误响声
 set clipboard+=unnamed " 使用系统剪切板
@@ -31,7 +31,6 @@ set termguicolors
 set hidden
 set updatetime=100
 set signcolumn=number
-set smartcase
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start
@@ -47,14 +46,17 @@ set cot=noinsert,menuone
 
 " 自动打开上次位置
 if has("autocmd")  
-    au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif  
-endif 
+    au BufReadPost * if line("'\"") > 1 && &ft != "gitcommit" && line("'\"") <= line("$") | exe "normal! g'\"" | endif  
+endif
 
 if has("persistent_undo")
     if has("win64")
         let home = $HOME . "\\.undodir"
     else
         let home = $HOME . "/.undodir"
+    endif
+    if has("nvim")
+        let home = home . "_neovim"
     endif
 
     if filewritable(&undodir) == 0
