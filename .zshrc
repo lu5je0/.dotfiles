@@ -97,6 +97,13 @@ alias fetch_subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias sudo="sudo "
 alias crontab="cron.sh"
 
+# .zshrc
+alias vz='vim ~/.zshrc'
+alias sz='source ~/.zshrc'
+
+# souche-work
+alias deploy='python3 ~/tools/script/souche/deploy.py'
+
 # ls
 if [[ ! -d ~/.dotfiles/.dircolors ]]; then
     git clone --depth=1 git clone https://github.com/gibbling666/dircolors.git ~/.dotfiles/.dircolors
