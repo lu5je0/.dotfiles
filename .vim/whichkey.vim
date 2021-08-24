@@ -42,6 +42,9 @@ let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
 nmap <leader>d <c-^>
 
 " windows
+let g:which_key_map.a = [":call Calc()", "calcultor"]
+
+" windows
 let g:which_key_map.w = {
       \ 'name' : '+windows' ,
       \ 'n' : [':vnew', 'vnew'],
@@ -167,14 +170,17 @@ let g:which_key_map.f = {
       \ 'w' : [':w', 'write'],
       \ 'j' : [':JunkList', 'junk-list'],
       \ 'J' : [':JunkFile', 'new-junk-file'],
+      \ 'u' : [':SaveAsJunkFile', 'save-as-junk-file'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
       \ }
 
 let g:which_key_map.f.x = {
       \ 'name' : '+encoding',
-      \ 'f' : [':set ff=unix', '2unix'],
-      \ 'F' : [':set ff=dos', '2dos'],
+      \ 'a' : [':set ff=unix', '2unix'],
+      \ 'b' : [':set ff=dos', '2dos'],
+      \ 'u' : [':set fileencoding=utf8', 'convert to utf8'],
+      \ 'g' : [':set fileencoding=GB18030', 'convert to gb18030'],
       \ }
 
 let g:which_key_map.x = {

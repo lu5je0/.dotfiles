@@ -58,8 +58,8 @@ class ImSwitcher():
     def switch_normal_mode(self):
         if self.is_save_ime:
             self.save_last_ime()
-        if self.cur_ime.value == self.english_ime:
-            return
+        # if self.cur_ime.value == self.english_ime:
+        #     return
         self.switch_input_source(self.english_ime)
 
     def switch_input_source(self, input_method):

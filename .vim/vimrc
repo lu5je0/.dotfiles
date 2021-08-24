@@ -19,10 +19,11 @@ Plug 'lu5je0/lightline-bufferline'
 
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
+Plug 'theniceboy/vim-calc'
 
-" if has("mac")
-"     Plug 'lu5je0/im-switcher'
-" endif
+if !has("mac") && platform#is_wsl()
+    Plug 'lu5je0/im-switcher'
+endif
 " Plug 'lyokha/vim-xkbswitch'
 
 " if has("nvim")
@@ -38,7 +39,7 @@ Plug 'lu5je0/vim-java-bytecode'
 Plug 'MTDL9/vim-log-highlighting'
 
 " fern
-Plug 'lu5je0/fern.vim'
+Plug 'lambdalisue/fern.vim'
 Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/nerdfont.vim'
 Plug 'lu5je0/fern-renderer-nerdfont.vim'
@@ -68,9 +69,9 @@ call s:lazy_load('SirVer/ultisnips')
 if !has("win32")
     call s:lazy_load('lambdalisue/suda.vim')
 endif
-if !has("gui") && !has("mac")
-    call s:lazy_load('brglng/vim-im-select')
-endif
+" if !has("gui") && !has("mac")
+"     call s:lazy_load('brglng/vim-im-select')
+" endif
 
 Plug 'dstein64/vim-startuptime'
 Plug 'yianwillis/vimcdoc'
@@ -107,15 +108,14 @@ Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
-call timer_start(20, 'LoadPlug')
+call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
+  runtime im.vim
 
   if g:coc_enable == 1
       call plug#load('coc.nvim')
       runtime plug-config/coc.vim
   endif
-
-  runtime im.vim
 
   for plug_name in s:lazy_load_plug_list
       call plug#load(split(plug_name, '/')[1])
@@ -144,15 +144,20 @@ runtime plug-config/vista.vim
 let g:XkbSwitchEnabled = 1
 let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 " }}}
-
+ 
 " autocmd {{{
 augroup file_type
     autocmd!
     autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
 augroup END
 " }}}
-
-
+ 
+" visual_multi {{{
+let g:VM_maps = {}
+let g:VM_maps["Select Cursor Down"] = '<m-n>'
+" let g:VM_maps["Select Cursor Up"]   = '<m-N>'
+" }}}
+ 
 " treesitter {{{ "
 if s:nvim_treesitter == 1
 lua <<EOF
