@@ -58,7 +58,7 @@ zinit light hlissner/zsh-autopair
 # lu5je0
 zinit snippet OMZ::lib/theme-and-appearance.zsh
 # zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
-zinit snippet ~/.oh-my-zsh/themes/ys.zsh-theme
+zinit snippet ~/.dotfiles/zsh/themes/ys.zsh-theme
 
 # p10k
 # zinit ice depth=1
