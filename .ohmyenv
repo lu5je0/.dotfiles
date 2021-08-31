@@ -1,10 +1,19 @@
-# maven
-export M2_HOME=~/opt/maven/bin
-export PATH=${PATH}:${M2_HOME}
+if [ "$(uname)" = "Darwin" ]; then
+    # maven
+    export M2_HOME=~/opt/maven/bin
+    export PATH=${PATH}:${M2_HOME}
 
-# set oracle jdk environment
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_251.jdk/Contents/Home
-export PATH=${PATH}:${JAVA_HOME}/bin
+    # set oracle jdk environment
+    export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_251.jdk/Contents/Home
+    export PATH=${PATH}:${JAVA_HOME}/bin
 
-#gnubin
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+    #gnubin
+    export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+
+elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
+    alias e='explorer.exe'
+    alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
+    clippaste () {
+        powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
+    }
+fi
