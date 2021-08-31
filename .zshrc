@@ -101,18 +101,16 @@ alias crontab="cron.sh"
 alias vz='vim ~/.zshrc'
 alias sz='source ~/.zshrc'
 
-# souche-work
-alias deploy='python3 ~/tools/script/souche/deploy.py'
+#souche work
+if [[ ! -d ~/tools/script/souche/souche_zsh ]];then
+    source ~/tools/script/souche/souche_zsh
+fi
 
 # ls
-if [[ ! -d ~/.dotfiles/.dircolors ]]; then
-    git clone --depth=1 git clone https://github.com/gibbling666/dircolors.git ~/.dotfiles/.dircolors
-fi
-eval $(gdircolors ~/.dotfiles/.dircolors/dircolors.256dark)
 alias l='ls -lah'
 alias la='ls -lAh'
 alias ll='ls -lh'
-alias ls='gls --color=tty'
+alias ls='ls --color=tty'
 alias lsa='ls -lah'
 alias md='mkdir -p'
 

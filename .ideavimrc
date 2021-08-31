@@ -58,8 +58,8 @@ nmap <silent> <leader>6 6gt
 nmap <silent> <leader>7 7gt
 nmap <silent> <leader>8 8gt
 nmap <silent> <leader>9 9gt
-" nmap <silent> <left> <Action>(PreviousTab)
-" nmap <silent> <right> <Action>(NextTab)
+nmap <silent> <left> <Action>(PreviousTab)
+nmap <silent> <right> <Action>(NextTab)
 
 nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
