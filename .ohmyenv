@@ -7,4 +7,4 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_251.jdk/Contents/Hom
 export PATH=${PATH}:${JAVA_HOME}/bin
 
 #gnubin
-export PATH=${PATH}:/usr/local/opt/coreutils/libexec/gnubin
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
