@@ -102,7 +102,7 @@ alias vz='vim ~/.zshrc'
 alias sz='source ~/.zshrc'
 
 #souche work
-if [[ -d ~/tools/script/souche/souche_zsh ]];then
+if [[ -e ~/tools/script/souche/souche_zsh ]];then
     source ~/tools/script/souche/souche_zsh
 fi
 
