@@ -22,7 +22,7 @@ Plug 'schickling/vim-bufonly'
 Plug 'theniceboy/vim-calc'
 
 if !has("mac") && platform#is_wsl()
-    Plug 'lu5je0/im-switcher'
+    call s:lazy_load("lu5je0/im-switcher")
 endif
 " Plug 'lyokha/vim-xkbswitch'
 
@@ -110,12 +110,12 @@ call plug#end()
 
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
-  runtime im.vim
-
   if g:coc_enable == 1
       call plug#load('coc.nvim')
       runtime plug-config/coc.vim
   endif
+
+  runtime im.vim
 
   for plug_name in s:lazy_load_plug_list
       call plug#load(split(plug_name, '/')[1])
