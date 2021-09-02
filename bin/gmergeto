@@ -5,6 +5,7 @@ if [[ $# == 0 ]]; then
     exit 0
 fi
 
+git push
 cur_branch=`git branch --show-current`
 echo 'cur_branch'
 git checkout $1
