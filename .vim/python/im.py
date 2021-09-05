@@ -42,7 +42,7 @@ class ImSwitcher():
         except ImportError:
             print("隐藏macos dock栏小火箭,需要pip3 install -U PyObjC")
 
-    def swith_insert_mode(self):
+    def switch_insert_mode(self):
         if self.last_ime != self.cur_ime:
             self.switch_input_source(self.last_ime)
 
@@ -58,8 +58,8 @@ class ImSwitcher():
     def switch_normal_mode(self):
         if self.is_save_ime:
             self.save_last_ime()
-        if self.cur_ime.value == self.english_ime:
-            return
+        # if self.cur_ime.value == self.english_ime:
+        #     return
         self.switch_input_source(self.english_ime)
 
     def switch_input_source(self, input_method):

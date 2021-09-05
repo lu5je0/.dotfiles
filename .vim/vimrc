@@ -2,63 +2,86 @@ let g:coc_enable = 1
 let s:nvim_treesitter = 0
 let g:loaded_clipboard_provider = 1
 
+
+let s:lazy_load_plug_list = []
+
+function s:lazy_load(plug_name)
+    call add(s:lazy_load_plug_list, a:plug_name)
+    Plug a:plug_name, {'on': []}
+endfunction
+
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
-if has("mac")
-    Plug 'lu5je0/im-switcher'
-endif
+" lightline
+Plug 'itchyny/lightline.vim'
 Plug 'lu5je0/lightline-bufferline'
-Plug 'tpope/vim-surround', {'on': []}
+
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
-Plug 'liuchengxu/vista.vim', {'on': []}
+Plug 'theniceboy/vim-calc'
+
+if !has("mac") && platform#is_wsl()
+    call s:lazy_load("lu5je0/im-switcher")
+endif
+" Plug 'lyokha/vim-xkbswitch'
 
 if has("nvim")
     let s:nvim_treesitter = 1
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 endif
 
+" filetype
 Plug 'chr4/nginx.vim'
 Plug 'cespare/vim-toml'
-Plug 'dstein64/vim-startuptime'
+Plug 'elzr/vim-json'
+Plug 'lu5je0/vim-java-bytecode'
+Plug 'MTDL9/vim-log-highlighting'
 
 " fern
-Plug 'lu5je0/fern.vim', {'on': []}
-Plug 'lu5je0/fern-renderer-nerdfont.vim', {'on': []}
+Plug 'lambdalisue/fern.vim'
+Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/nerdfont.vim'
-Plug 'lambdalisue/fern-hijack.vim', {'on': []}
-Plug 'lambdalisue/glyph-palette.vim', {'on': []}
-Plug 'lambdalisue/fern-git-status.vim', {'on': []}
-Plug 'yuki-yano/fern-preview.vim', {'on': []}
+Plug 'lu5je0/fern-renderer-nerdfont.vim'
+Plug 'lambdalisue/glyph-palette.vim'
+call s:lazy_load('lambdalisue/fern-git-status.vim')
+call s:lazy_load('yuki-yano/fern-preview.vim')
 
+" lazy load
+call s:lazy_load('mg979/vim-visual-multi')
+call s:lazy_load('sgur/vim-textobj-parameter')
+call s:lazy_load('kana/vim-textobj-entire')
+call s:lazy_load('mhinz/vim-signify')
+call s:lazy_load('voldikss/vim-translator')
+call s:lazy_load('tpope/vim-fugitive')
+call s:lazy_load('rbong/vim-flog')
+call s:lazy_load('lu5je0/vim-terminal-help')
+call s:lazy_load('skywind3000/asynctasks.vim')
+call s:lazy_load('skywind3000/asyncrun.vim')
+call s:lazy_load('skywind3000/asyncrun.extra')
+call s:lazy_load('mbbill/undotree')
+call s:lazy_load('junegunn/vim-peekaboo')
+call s:lazy_load('tpope/vim-surround')
+call s:lazy_load('liuchengxu/vista.vim')
+call s:lazy_load('machakann/vim-highlightedyank')
+call s:lazy_load('SirVer/ultisnips')
+" save with sudo
+if !has("win32")
+    call s:lazy_load('lambdalisue/suda.vim')
+endif
+" if !has("gui") && !has("mac")
+"     call s:lazy_load('brglng/vim-im-select')
+" endif
+
+Plug 'dstein64/vim-startuptime'
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
-Plug 'MTDL9/vim-log-highlighting'
 Plug 'tpope/vim-commentary'
-Plug 'honza/vim-snippets'
-Plug 'mg979/vim-visual-multi', {'on': []}
+Plug 'lu5je0/vim-snippets'
 Plug 'kana/vim-textobj-user'
-Plug 'sgur/vim-textobj-parameter', {'on': []}
-Plug 'kana/vim-textobj-entire', {'on': []}
-Plug 'mhinz/vim-signify', {'on': []}
-Plug 'voldikss/vim-translator'
-Plug 'tpope/vim-fugitive', {'on': []}
-Plug 'rbong/vim-flog', {'on': []}
 Plug 'tpope/vim-repeat'
-Plug 'lu5je0/vim-java-bytecode'
 Plug 'vim-scripts/ReplaceWithRegister'
-
-" Peekaboo extends " and @ in normal mode and <CTRL-R> in insert mode so you can see the contents of the registers.
-Plug 'junegunn/vim-peekaboo'
-Plug 'lu5je0/vim-terminal-help', {'on': []}
-Plug 'skywind3000/asynctasks.vim', {'on': []}
-Plug 'skywind3000/asyncrun.vim', {'on': []}
-Plug 'skywind3000/asyncrun.extra', {'on': []}
-Plug 'elzr/vim-json'
-Plug 'machakann/vim-highlightedyank'
 Plug 'tommcdo/vim-exchange'
-Plug 'mbbill/undotree', {'on': []}
 Plug 'liuchengxu/vim-which-key'
 Plug 'lu5je0/vim-base64'
 
@@ -72,21 +95,7 @@ else
     Plug 'ervandew/supertab'
 endif
 
-" save with sudo
-if !has("win32")
-    Plug 'lambdalisue/suda.vim', { 'on': [] }
-endif
-
-if !has("gui") && !has("mac")
-    Plug 'brglng/vim-im-select', { 'on': [] }
-endif
-
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
-
-" 变量命名转换
-Plug 'chiedo/vim-case-convert'
-
-Plug 'itchyny/lightline.vim'
 
 " themes
 Plug 'tomasiser/vim-code-dark'
@@ -99,49 +108,21 @@ Plug 'lu5je0/lightline-ones'
 call plug#end()
 " }}}
 
-call timer_start(20, 'LoadPlug')
+call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
-
   if g:coc_enable == 1
       call plug#load('coc.nvim')
       runtime plug-config/coc.vim
   endif
 
-  " runtime im.vim
-  if !has("gui") && !has("mac")
-      call plug#load('vim-im-select')
-  endif
+  runtime im.vim
+
+  for plug_name in s:lazy_load_plug_list
+      call plug#load(split(plug_name, '/')[1])
+  endfor
 
   unlet g:loaded_clipboard_provider
   runtime autoload/provider/clipboard.vim
-
-  call plug#load('fern.vim')
-  call plug#load('fern-renderer-nerdfont.vim')
-  call plug#load('fern-hijack.vim')
-  call plug#load('glyph-palette.vim')
-  call plug#load('fern-git-status.vim')
-  call plug#load('fern-preview.vim')
-  runtime plug-config/fern.vim
-
-  call plug#load('vim-visual-multi')
-  call plug#load('vim-textobj-entire')
-  call plug#load('vim-textobj-parameter')
-
-  call plug#load('asynctasks.vim')
-  call plug#load('asyncrun.vim')
-  call plug#load('asyncrun.extra')
-  call plug#load('vim-fugitive')
-  call plug#load('vim-flog')
-
-  if !has("win32")
-      call plug#load('suda.vim')
-  endif
-
-  call plug#load('undotree')
-  call plug#load('vim-surround')
-  call plug#load('vista.vim')
-  call plug#load('vim-signify')
-  call plug#load('vim-terminal-help')
 endfunction
 
 " runtime 加载.vim {{{
@@ -159,14 +140,24 @@ runtime plug-config/lightline.vim
 runtime plug-config/vista.vim
 " }}}
 
+" vim-xkbswitch {{{
+let g:XkbSwitchEnabled = 1
+let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
+" }}}
+ 
 " autocmd {{{
 augroup file_type
     autocmd!
     autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
 augroup END
 " }}}
-
-
+ 
+" visual_multi {{{
+let g:VM_maps = {}
+let g:VM_maps["Select Cursor Down"] = '<m-n>'
+" let g:VM_maps["Select Cursor Up"]   = '<m-N>'
+" }}}
+ 
 " treesitter {{{ "
 if s:nvim_treesitter == 1
 lua <<EOF
@@ -182,12 +173,6 @@ set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
 endif
 " }}} treesitter "
-
-
-" vim-expand-region {{{
-vmap v <Plug>(expand_region_expand)
-vmap V <Plug>(expand_region_shrink)
-" }}}
 
 " vim-diff-enhanced {{{
 set diffopt+=internal,algorithm:patience
@@ -225,6 +210,10 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 
 " highlightedyank {{{
 let g:highlightedyank_highlight_duration=300
+" }}}
+
+" ultisnips {{{
+let g:UltiSnipsExpandTrigger="<c-d>"
 " }}}
 
 " toggle_terminal {{{
@@ -271,3 +260,4 @@ runtime mappings.vim
 runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
+runtime plug-config/fern.vim

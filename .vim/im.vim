@@ -26,8 +26,8 @@ endif
 
 augroup switch_im
     autocmd!
-    autocmd InsertLeave * call SwitchInsertMode()
-    autocmd InsertEnter * call SwitchNormalMode()
+    autocmd InsertLeave * call SwitchNormalMode()
+    autocmd InsertEnter * call SwitchInsertMode()
 augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
@@ -36,41 +36,27 @@ function! ImFuncInit()
 python3 << EOF
 import threading
 
-switcher = None
+import sys
+from os.path import normpath, join
+import vim
+python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
+sys.path.insert(0, python_root_dir)
+import im
+switcher = im.ImSwitcher()
 
-def im_init(path):
-    global mac_im
-    global last
-    global switcher
-
-    import sys
-    from os.path import normpath, join
-    import vim
-    python_root_dir = path + "/python"
-    sys.path.insert(0, python_root_dir)
-    import im
-
-    switcher = im.ImSwitcher()
-
-path = vim.eval('s:plugin_root_dir')
-threading.Thread(target=im_init, args=[path]).start()
 EOF
 endfunction
 
 call ImFuncInit()
 
 function! SwitchInsertMode()
-python3 << EOF
-if switcher != None:
-    switcher.switch_normal_mode()
-EOF
+    call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
 endfunction
-
 
 function! SwitchNormalMode()
 python3 << EOF
 if switcher != None:
-    switcher.swith_insert_mode()
+    switcher.switch_normal_mode()
 EOF
 endfunction
 
