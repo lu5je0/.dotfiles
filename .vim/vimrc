@@ -90,7 +90,7 @@ if !has("gui")
 endif
 
 if g:coc_enable == 1
-    Plug 'neoclide/coc.nvim', {'branch': 'release', 'on': []}
+    Plug 'neoclide/coc.nvim'
 else
     Plug 'ervandew/supertab'
 endif
@@ -112,11 +112,6 @@ call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
   runtime im.vim
 
-  if g:coc_enable == 1
-      call plug#load('coc.nvim')
-      runtime plug-config/coc.vim
-  endif
-
   for plug_name in s:lazy_load_plug_list
       call plug#load(split(plug_name, '/')[1])
   endfor
@@ -128,6 +123,11 @@ endfunction
 " runtime 加载.vim {{{
 runtime settings.vim
 runtime foldtext.vim
+
+if g:coc_enable == 1
+    runtime plug-config/coc.vim
+endif
+
 if has("win32")
     runtime escalt.vim
 endif
