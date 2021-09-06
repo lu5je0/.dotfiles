@@ -22,7 +22,7 @@ Plug 'schickling/vim-bufonly'
 Plug 'theniceboy/vim-calc'
 
 if !has("mac") && platform#is_wsl()
-    Plug 'lu5je0/im-switcher'
+    call s:lazy_load("lu5je0/im-switcher")
 endif
 " Plug 'lyokha/vim-xkbswitch'
 
