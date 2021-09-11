@@ -5,11 +5,12 @@ if [[ $# == 0 ]]; then
     exit 0
 fi
 
+git pull
 git push
 cur_branch=`git branch --show-current`
 echo 'cur_branch'
 git checkout $1
 git pull
-git merge $cur_branch
+git merge --no-edit $cur_branch
 git push
 git checkout $cur_branch
