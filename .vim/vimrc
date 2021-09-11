@@ -20,6 +20,7 @@ Plug 'lu5je0/lightline-bufferline'
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
 Plug 'theniceboy/vim-calc'
+Plug 'rootkiter/vim-hexedit'
 
 if !has("mac") && platform#is_wsl()
     call s:lazy_load("lu5je0/im-switcher")
