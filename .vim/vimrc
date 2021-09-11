@@ -65,7 +65,6 @@ call s:lazy_load('junegunn/vim-peekaboo')
 call s:lazy_load('tpope/vim-surround')
 call s:lazy_load('liuchengxu/vista.vim')
 call s:lazy_load('machakann/vim-highlightedyank')
-call s:lazy_load('SirVer/ultisnips')
 " save with sudo
 if !has("win32")
     call s:lazy_load('lambdalisue/suda.vim')
@@ -74,6 +73,7 @@ endif
 "     call s:lazy_load('brglng/vim-im-select')
 " endif
 
+Plug 'SirVer/ultisnips'
 Plug 'dstein64/vim-startuptime'
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
