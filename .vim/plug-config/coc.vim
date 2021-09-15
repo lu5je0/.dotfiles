@@ -10,7 +10,7 @@ inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" :
 imap <silent><expr> <tab> pumvisible() ?  "\<C-y>\<C-g>u" : "\<TAB>"
 
 " Use <C-k> for jump to previous placeholder, it's default of coc.nvim
-let g:coc_snippet_next = '<cr>'
+let g:coc_snippet_next = '<C-J>'
 let g:coc_snippet_prev = '<C-k>'
 
 augroup user_plugin_coc
