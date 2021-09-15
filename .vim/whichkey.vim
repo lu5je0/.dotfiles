@@ -106,6 +106,7 @@ let g:which_key_map.v = {
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ 'i' : [":ToggleSaveLastIme", 'toggle-save-last-ime'],
+      \ 'h' : [":call hexedit#ToggleHexEdit()", 'toggle hexedit'],
       \ 'l' : [":set cursorline!", 'toggle cursorline'],
       \ }
 
