@@ -16,6 +16,16 @@ def jsonFormat():
     if vim.eval("&ft") == "":
         vim.command("set filetype=json")
 
+def resetFileTypeTemporary(func):
+    def wrapper(*args, **kw):
+        ft = vim.eval("&ft")
+        vim.command("set ft=none")
+        r = func(*args, **kw)
+        vim.command("set ft=" + ft)
+        return r
+    return wrapper
+
+@resetFileTypeTemporary
 def keepLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
     buffer = vim.current.buffer
@@ -31,7 +41,10 @@ def keepLines(str_patterns):
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
 
+@resetFileTypeTemporary
 def keepMatchs(pattern):
+    ft = vim.eval("&ft")
+    vim.command("set ft=none")
     pattern = re.compile(pattern)
     buffer = vim.current.buffer
 
@@ -43,7 +56,9 @@ def keepMatchs(pattern):
         else:
             del(buffer[num])
     print('del {} lines'.format(rm_line_cnt))
+    vim.command("set ft=" + ft)
 
+@resetFileTypeTemporary
 def delLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
     buffer = vim.current.buffer
