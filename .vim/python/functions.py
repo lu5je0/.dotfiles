@@ -77,15 +77,18 @@ def delLines(str_patterns):
 def getBufType(number):
     return vim.eval("getbufvar({}, \"&buftype\")".format(number))
 
+def getBufListed(number):
+    return int(vim.eval("getbufvar({}, \"&buflisted\")".format(number)))
+
 def closeBuffer():
     try:
         cur_buffer = vim.current.buffer
         number = cur_buffer.number
         is_edit = int(vim.eval("getbufvar(bufname(), \"&mod\")")) == 1
-        buftype = getBufType(number)
+        # buftype = getBufType(number)
+        buflisted = getBufListed(number)
 
-        buftype_list = ["", "acwrite", "nofile"]
-        if buftype not in buftype_list: 
+        if buflisted == 0:
             # print("quit")
             vim.command("quit")
             return
@@ -93,10 +96,10 @@ def closeBuffer():
         txt_window_count = 0
         for window in vim.current.tabpage.windows:
             buffer = window.buffer
-            if getBufType(buffer.number) in buftype_list:
+            if getBufListed(buffer.number) == 1:
                 txt_window_count += 1
-                if txt_window_count > 1:
-                    break
+                # if txt_window_count > 1:
+                #     break
 
         # 如果编辑过buffer，则需要确认
         if is_edit and txt_window_count == 1:
@@ -111,11 +114,11 @@ def closeBuffer():
 
         # 一个tab页中有两个的buffer时，直接quit
         if txt_window_count == 1:
-            # print("bd")
+            # print(txt_window_count, "bd")
             vim.command("bp")
             vim.command("bd! " + str(number))
         else:
-            # print("q")
+            # print(txt_window_count, "q")
             vim.command("q")
     except Exception as e:
         print("close waring", e)
