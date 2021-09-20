@@ -21,6 +21,7 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
 Plug 'theniceboy/vim-calc'
 Plug 'rootkiter/vim-hexedit'
+" Plug 'rhysd/committia.vim'
 
 if !has("mac") && platform#is_wsl()
     call s:lazy_load("lu5je0/im-switcher")
@@ -262,3 +263,5 @@ runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
 runtime plug-config/fern.vim
+
+let g:committia_status_window_opencmd='vsplit'
