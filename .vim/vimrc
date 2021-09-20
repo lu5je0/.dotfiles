@@ -21,6 +21,8 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
 Plug 'theniceboy/vim-calc'
 Plug 'rootkiter/vim-hexedit'
+Plug 'mattn/vim-gist'
+Plug 'mattn/webapi-vim'
 " Plug 'rhysd/committia.vim'
 
 if !has("mac") && platform#is_wsl()
@@ -184,6 +186,12 @@ set diffopt+=internal,algorithm:patience
 let g:vim_json_syntax_conceal = 0
 " }}}
 
+" vim-gist {{{
+let github_user = 'lu5je0@gmail.com'
+let g:gist_show_privates = 1
+let g:gist_post_private = 1
+" }}}
+
 " vim-commentary {{{
 augroup vim_commentary
     autocmd FileType crontab setlocal commentstring=#\ %s
@@ -263,5 +271,3 @@ runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
 runtime plug-config/fern.vim
-
-let g:committia_status_window_opencmd='vsplit'
