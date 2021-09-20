@@ -83,17 +83,17 @@ def closeBuffer():
         number = cur_buffer.number
         is_edit = int(vim.eval("getbufvar(bufname(), \"&mod\")")) == 1
         buftype = getBufType(number)
-        if buftype != "":
+
+        buftype_list = ["", "acwrite", "nofile"]
+        if buftype not in buftype_list: 
+            # print("quit")
             vim.command("quit")
             return
 
         txt_window_count = 0
-        has_same_buffer = False
         for window in vim.current.tabpage.windows:
             buffer = window.buffer
-            if buffer.number == number and vim.current.window != window:
-                has_same_buffer = True
-            if getBufType(buffer.number) == "":
+            if getBufType(buffer.number) in buftype_list:
                 txt_window_count += 1
                 if txt_window_count > 1:
                     break
@@ -111,9 +111,11 @@ def closeBuffer():
 
         # 一个tab页中有两个的buffer时，直接quit
         if txt_window_count == 1:
+            # print("bd")
             vim.command("bp")
             vim.command("bd! " + str(number))
         else:
+            # print("q")
             vim.command("q")
     except Exception as e:
-        print("close waring")
+        print("close waring", e)
