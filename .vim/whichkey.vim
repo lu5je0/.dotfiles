@@ -191,6 +191,7 @@ let g:which_key_map.x = {
       \ 'm' : [':%s/\r$//', '移除^M'],
       \ 'b' : "base64",
       \ 'B' : "unbase64",
+      \ 's' : "escape string",
       \ 'u' : "Escape Unicode",
       \ 'U' : "Unescape Unicode",
       \ 'h' : "url encode",
@@ -221,6 +222,11 @@ vmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
 vmap <silent> <leader>xu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
 vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
 
+"----------------------------------------------------------------------
+" text escape
+"----------------------------------------------------------------------
+vmap <silent> <leader>xs :<c-u>call ReplaceSelect("EscapeText")<cr>
+" vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
 
 "----------------------------------------------------------------------
 " url encode
