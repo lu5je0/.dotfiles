@@ -153,6 +153,7 @@ let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 augroup file_type
     autocmd!
     autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
+    autocmd FileType help set buflisted
 augroup END
 " }}}
  
