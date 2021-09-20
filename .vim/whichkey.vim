@@ -51,7 +51,7 @@ let g:which_key_map.w = {
       \ 'N' : [':new', 'new'],
       \ 's' : [':vsplit', 'vspilt'],
       \ 'S' : [':split', 'spilt'],
-      \ 'o' : [':only', 'only'],
+      \ 'q' : [':only', 'break window'],
       \ }
 nmap <leader>wu <c-w>x
 let g:which_key_map.w.u = 'swap buffer'
@@ -69,6 +69,7 @@ let g:which_key_map.g = {
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'v' : [':Gvdiffsplit!', 'gvdiffsplit'],
       \ 'l' : [':Flogsplit', 'git log'],
+      \ 'i' : [':Gist -l', 'gist'],
       \ 'P' : [':AsyncRun -focus=0 -mode=term -rows=10 git push', 'git push'],
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],
