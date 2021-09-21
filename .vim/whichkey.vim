@@ -75,6 +75,13 @@ let g:which_key_map.g = {
       \ 'S' : [':Git status', 'status'],
       \ }
 
+" plugin
+let g:which_key_map.p = {
+      \ 'name' : '+git' ,
+      \ 'i' : [':source $MYVIMRC | PlugInstall', 'plugin install'],
+      \ 'c' : [':PlugClean', 'plugin clean'],
+      \ }
+
 let g:which_key_map.s = {
             \ 'name' : '+translate',
             \ 's' : 'translate popup',
