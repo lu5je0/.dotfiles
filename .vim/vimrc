@@ -25,13 +25,6 @@ Plug 'mattn/vim-gist'
 Plug 'mattn/webapi-vim'
 " Plug 'rhysd/committia.vim'
 
-if g:coc_enable == 1
-    Plug 'neoclide/coc.nvim'
-    runtime plug-config/coc.vim
-else
-    Plug 'ervandew/supertab'
-endif
-
 if !has("mac") && platform#is_wsl()
     call s:lazy_load("lu5je0/im-switcher")
 endif
@@ -100,6 +93,12 @@ if !has("gui")
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 endif
 
+if g:coc_enable == 1
+    Plug 'neoclide/coc.nvim'
+else
+    Plug 'ervandew/supertab'
+endif
+
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 
 " themes
@@ -128,6 +127,11 @@ endfunction
 " runtime 加载.vim {{{
 runtime settings.vim
 runtime foldtext.vim
+
+if g:coc_enable == 1
+    runtime plug-config/coc.vim
+endif
+
 if has("win32")
     runtime escalt.vim
 endif
