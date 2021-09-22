@@ -94,7 +94,7 @@ if !has("gui")
 endif
 
 if g:coc_enable == 1
-    Plug 'neoclide/coc.nvim'
+    call s:lazy_load('neoclide/coc.nvim')
 else
     Plug 'ervandew/supertab'
 endif
