@@ -1,128 +1,137 @@
 let g:coc_enable = 1
-let s:nvim_treesitter = 0
-let g:loaded_clipboard_provider = 1
+let s:nvim_treesitter = 1
 
+" dein {{{
+"dein Scripts-----------------------------
+if &compatible
+  set nocompatible               " Be iMproved
+endif
 
-let s:lazy_load_plug_list = []
+" Required:
+set runtimepath+=~/.dotfiles/.vim/dein.vim
+" Required:
+call dein#begin('~/.dotfiles/.vim/dein')
 
-function s:lazy_load(plug_name)
-    call add(s:lazy_load_plug_list, a:plug_name)
-    Plug a:plug_name, {'on': []}
-endfunction
-
-" vim-plug {{{
-call plug#begin('~/.vim/plugged')
+" Let dein manage dein
+" Required:
+call dein#add('~/.dotfiles/.vim/dein.vim')
+call dein#add('wsdjeg/dein-ui.vim')
 
 " lightline
-Plug 'itchyny/lightline.vim'
-Plug 'lu5je0/lightline-bufferline'
+call dein#add('itchyny/lightline.vim')
+call dein#add('lu5je0/lightline-bufferline')
 
-Plug 'jiangmiao/auto-pairs'
-Plug 'schickling/vim-bufonly'
-Plug 'theniceboy/vim-calc'
-Plug 'rootkiter/vim-hexedit'
-Plug 'mattn/vim-gist'
-Plug 'mattn/webapi-vim'
+call dein#add('jiangmiao/auto-pairs')
+call dein#add('schickling/vim-bufonly')
+call dein#add('theniceboy/vim-calc')
+call dein#add('rootkiter/vim-hexedit')
+call dein#add('mattn/vim-gist')
+call dein#add('mattn/webapi-vim')
 " Plug 'rhysd/committia.vim'
 
 if !has("mac") && platform#is_wsl()
-    call s:lazy_load("lu5je0/im-switcher")
+    call dein#add("lu5je0/im-switcher")
 endif
 " Plug 'lyokha/vim-xkbswitch'
 
 if has("nvim")
     let s:nvim_treesitter = 1
-    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+    call dein#add('nvim-treesitter/nvim-treesitter')
+    call dein#config('nvim-treesitter/nvim-treesitter', {
+    \ 'hook_source': ':TSUpdate'
+    \ })
 endif
 
 " filetype
-Plug 'chr4/nginx.vim'
-Plug 'cespare/vim-toml'
-Plug 'elzr/vim-json'
-Plug 'lu5je0/vim-java-bytecode'
-Plug 'MTDL9/vim-log-highlighting'
+call dein#add('chr4/nginx.vim')
+call dein#add('cespare/vim-toml')
+call dein#add('elzr/vim-json')
+call dein#add('lu5je0/vim-java-bytecode')
+call dein#add('MTDL9/vim-log-highlighting')
 
 " fern
-Plug 'lambdalisue/fern.vim'
-Plug 'lambdalisue/fern-hijack.vim'
-Plug 'lambdalisue/nerdfont.vim'
-Plug 'lu5je0/fern-renderer-nerdfont.vim'
-Plug 'lambdalisue/glyph-palette.vim'
-call s:lazy_load('lambdalisue/fern-git-status.vim')
-call s:lazy_load('yuki-yano/fern-preview.vim')
+call dein#add('lambdalisue/fern.vim')
+call dein#add('lambdalisue/fern-hijack.vim')
+call dein#add('lambdalisue/nerdfont.vim')
+call dein#add('lu5je0/fern-renderer-nerdfont.vim')
+call dein#add('lambdalisue/glyph-palette.vim')
+call dein#add('lambdalisue/fern-git-status.vim')
+call dein#add('yuki-yano/fern-preview.vim')
 
 " lazy load
-call s:lazy_load('mg979/vim-visual-multi')
-call s:lazy_load('sgur/vim-textobj-parameter')
-call s:lazy_load('kana/vim-textobj-entire')
-call s:lazy_load('mhinz/vim-signify')
-call s:lazy_load('voldikss/vim-translator')
-call s:lazy_load('tpope/vim-fugitive')
-call s:lazy_load('rbong/vim-flog')
-call s:lazy_load('lu5je0/vim-terminal-help')
-call s:lazy_load('skywind3000/asynctasks.vim')
-call s:lazy_load('skywind3000/asyncrun.vim')
-call s:lazy_load('skywind3000/asyncrun.extra')
-call s:lazy_load('mbbill/undotree')
-call s:lazy_load('junegunn/vim-peekaboo')
-call s:lazy_load('tpope/vim-surround')
-call s:lazy_load('liuchengxu/vista.vim')
-call s:lazy_load('machakann/vim-highlightedyank')
+call dein#add('mg979/vim-visual-multi')
+call dein#add('sgur/vim-textobj-parameter')
+call dein#add('kana/vim-textobj-entire')
+call dein#add('mhinz/vim-signify')
+call dein#add('voldikss/vim-translator')
+call dein#add('tpope/vim-fugitive')
+call dein#add('rbong/vim-flog')
+call dein#add('lu5je0/vim-terminal-help')
+call dein#add('skywind3000/asynctasks.vim')
+call dein#add('skywind3000/asyncrun.vim')
+call dein#add('skywind3000/asyncrun.extra')
+call dein#add('mbbill/undotree')
+call dein#add('junegunn/vim-peekaboo')
+call dein#add('tpope/vim-surround')
+call dein#add('liuchengxu/vista.vim')
+call dein#add('machakann/vim-highlightedyank')
 " save with sudo
 if !has("win32")
-    call s:lazy_load('lambdalisue/suda.vim')
+    call dein#add('lambdalisue/suda.vim')
 endif
 " if !has("gui") && !has("mac")
-"     call s:lazy_load('brglng/vim-im-select')
+"     call dein#add('brglng/vim-im-select')
 " endif
 
-Plug 'SirVer/ultisnips'
-Plug 'dstein64/vim-startuptime'
-Plug 'yianwillis/vimcdoc'
-Plug 'chrisbra/vim-diff-enhanced'
-Plug 'tpope/vim-commentary'
-Plug 'lu5je0/vim-snippets'
-Plug 'kana/vim-textobj-user'
-Plug 'tpope/vim-repeat'
-Plug 'vim-scripts/ReplaceWithRegister'
-Plug 'tommcdo/vim-exchange'
-Plug 'liuchengxu/vim-which-key'
-Plug 'lu5je0/vim-base64'
+call dein#add('SirVer/ultisnips')
+call dein#add('dstein64/vim-startuptime')
+call dein#add('yianwillis/vimcdoc')
+call dein#add('chrisbra/vim-diff-enhanced')
+call dein#add('tpope/vim-commentary')
+call dein#add('lu5je0/vim-snippets')
+call dein#add('kana/vim-textobj-user')
+call dein#add('tpope/vim-repeat')
+call dein#add('vim-scripts/ReplaceWithRegister')
+call dein#add('tommcdo/vim-exchange')
+call dein#add('liuchengxu/vim-which-key')
+call dein#add('lu5je0/vim-base64')
 
 if !has("gui")
-    Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+    call dein#add('iamcco/markdown-preview.nvim', { 'build': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']})
 endif
 
 if g:coc_enable == 1
-    call s:lazy_load('neoclide/coc.nvim')
+    call dein#add('neoclide/coc.nvim', {'rev': 'release'})
 else
-    Plug 'ervandew/supertab'
+    call dein#add('ervandew/supertab')
 endif
 
-Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
+call dein#add('Yggdroot/LeaderF', { 'do': './install.sh' })
 
 " themes
-Plug 'tomasiser/vim-code-dark'
-Plug 'lu5je0/vim-one'
-Plug 'gruvbox-community/gruvbox'
-Plug 'hzchirs/vim-material'
-Plug 'ayu-theme/ayu-vim'
-Plug 'w0ng/vim-hybrid'
-Plug 'lu5je0/lightline-ones'
-call plug#end()
+call dein#add('tomasiser/vim-code-dark')
+call dein#add('lu5je0/vim-one')
+call dein#add('gruvbox-community/gruvbox')
+call dein#add('hzchirs/vim-material')
+call dein#add('ayu-theme/ayu-vim')
+call dein#add('w0ng/vim-hybrid')
+call dein#add('lu5je0/lightline-ones')
+
+" Required:
+call dein#end()
+
+" Required:
+filetype plugin indent on
+syntax enable
+
+" If you want to install not installed plugins on startup.
+"if dein#check_install()
+"  call dein#install()
+"endif
 " }}}
 
-call timer_start(0, 'LoadPlug')
-function! LoadPlug(timer) abort
-  runtime im.vim
-
-  for plug_name in s:lazy_load_plug_list
-      call plug#load(split(plug_name, '/')[1])
-  endfor
-
-  unlet g:loaded_clipboard_provider
-  runtime autoload/provider/clipboard.vim
-endfunction
+" vim-plug {{{
+" }}}
 
 " runtime 加载.vim {{{
 runtime settings.vim
