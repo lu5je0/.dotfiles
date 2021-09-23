@@ -6,6 +6,8 @@ set keep-english-in-normal-and-restore-in-insert
 set hlsearch
 set incsearch
 set smartcase
+set which-key
+set timeoutlen=10000
 
 # plugins
 set surround
@@ -22,6 +24,8 @@ set ideamarks
 set NERDTree
 
 let mapleader=","
+
+let g:WhichKeyDesc_windows="<leader>w Windows"
 
 nmap yr <Action>(CopyReference)
 

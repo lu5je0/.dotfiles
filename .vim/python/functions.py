@@ -16,6 +16,26 @@ def jsonFormat():
     if vim.eval("&ft") == "":
         vim.command("set filetype=json")
 
+
+def executeTime(func):
+    def wrapper(*args, **kw):
+        now = time.time()
+        r = func(*args, **kw)
+        print("Took", time.time() - now, "seconds")
+        return r
+    return wrapper
+
+def resetFileTypeTemporary(func):
+    def wrapper(*args, **kw):
+        ft = vim.eval("&ft")
+        vim.command("set ft=none")
+        r = func(*args, **kw)
+        vim.command("set ft=" + ft)
+        return r
+    return wrapper
+
+# @executeTime
+@resetFileTypeTemporary
 def keepLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
     buffer = vim.current.buffer
@@ -31,7 +51,11 @@ def keepLines(str_patterns):
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
 
+# @executeTime
+@resetFileTypeTemporary
 def keepMatchs(pattern):
+    ft = vim.eval("&ft")
+    vim.command("set ft=none")
     pattern = re.compile(pattern)
     buffer = vim.current.buffer
 
@@ -43,7 +67,10 @@ def keepMatchs(pattern):
         else:
             del(buffer[num])
     print('del {} lines'.format(rm_line_cnt))
+    vim.command("set ft=" + ft)
 
+# @executeTime
+@resetFileTypeTemporary
 def delLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
     buffer = vim.current.buffer
@@ -62,26 +89,29 @@ def delLines(str_patterns):
 def getBufType(number):
     return vim.eval("getbufvar({}, \"&buftype\")".format(number))
 
+def getBufListed(number):
+    return int(vim.eval("getbufvar({}, \"&buflisted\")".format(number)))
+
 def closeBuffer():
     try:
         cur_buffer = vim.current.buffer
         number = cur_buffer.number
         is_edit = int(vim.eval("getbufvar(bufname(), \"&mod\")")) == 1
-        buftype = getBufType(number)
-        if buftype != "":
+        # buftype = getBufType(number)
+        buflisted = getBufListed(number)
+
+        if buflisted == 0:
+            # print("quit")
             vim.command("quit")
             return
 
         txt_window_count = 0
-        has_same_buffer = False
         for window in vim.current.tabpage.windows:
             buffer = window.buffer
-            if buffer.number == number and vim.current.window != window:
-                has_same_buffer = True
-            if getBufType(buffer.number) == "":
+            if getBufListed(buffer.number) == 1:
                 txt_window_count += 1
-                if txt_window_count > 1:
-                    break
+                # if txt_window_count > 1:
+                #     break
 
         # 如果编辑过buffer，则需要确认
         if is_edit and txt_window_count == 1:
@@ -96,9 +126,11 @@ def closeBuffer():
 
         # 一个tab页中有两个的buffer时，直接quit
         if txt_window_count == 1:
+            # print(txt_window_count, "bd")
             vim.command("bp")
             vim.command("bd! " + str(number))
         else:
+            # print(txt_window_count, "q")
             vim.command("q")
     except Exception as e:
-        print("close waring")
+        print("close waring", e)

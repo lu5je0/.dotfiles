@@ -51,7 +51,7 @@ let g:which_key_map.w = {
       \ 'N' : [':new', 'new'],
       \ 's' : [':vsplit', 'vspilt'],
       \ 'S' : [':split', 'spilt'],
-      \ 'o' : [':only', 'only'],
+      \ 'q' : [':only', 'break window'],
       \ }
 nmap <leader>wu <c-w>x
 let g:which_key_map.w.u = 'swap buffer'
@@ -69,9 +69,17 @@ let g:which_key_map.g = {
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'v' : [':Gvdiffsplit!', 'gvdiffsplit'],
       \ 'l' : [':Flogsplit', 'git log'],
+      \ 'i' : [':Gist -l', 'gist'],
       \ 'P' : [':AsyncRun -focus=0 -mode=term -rows=10 git push', 'git push'],
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],
+      \ }
+
+" plugin
+let g:which_key_map.p = {
+      \ 'name' : '+git' ,
+      \ 'i' : [':source $MYVIMRC | PlugInstall', 'plugin install'],
+      \ 'c' : [':PlugClean', 'plugin clean'],
       \ }
 
 let g:which_key_map.s = {
@@ -106,6 +114,7 @@ let g:which_key_map.v = {
       \ 'w' : [":call ToggleWrap()", 'toggle wrap'],
       \ 'm' : [":call ToggleMouse()", 'toggle mouse'],
       \ 'i' : [":ToggleSaveLastIme", 'toggle-save-last-ime'],
+      \ 'h' : [":call hexedit#ToggleHexEdit()", 'toggle hexedit'],
       \ 'l' : [":set cursorline!", 'toggle cursorline'],
       \ }
 
@@ -190,6 +199,7 @@ let g:which_key_map.x = {
       \ 'm' : [':%s/\r$//', '移除^M'],
       \ 'b' : "base64",
       \ 'B' : "unbase64",
+      \ 's' : "escape string",
       \ 'u' : "Escape Unicode",
       \ 'U' : "Unescape Unicode",
       \ 'h' : "url encode",
@@ -220,6 +230,11 @@ vmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
 vmap <silent> <leader>xu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
 vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
 
+"----------------------------------------------------------------------
+" text escape
+"----------------------------------------------------------------------
+vmap <silent> <leader>xs :<c-u>call ReplaceSelect("EscapeText")<cr>
+" vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
 
 "----------------------------------------------------------------------
 " url encode
