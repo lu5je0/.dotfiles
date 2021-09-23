@@ -10,6 +10,8 @@ if [ "$(uname)" = "Darwin" ]; then
     #gnubin
     export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 
+    alias pip3='python3 -m pip'
+
 elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
     alias e='explorer.exe'
     alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
