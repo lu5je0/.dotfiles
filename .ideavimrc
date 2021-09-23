@@ -99,6 +99,13 @@ nmap <leader>rd :action DebugClass<CR>
 nmap <leader>rD :action Run<CR>
 nmap <leader>rr :action RunClass<CR>
 
+" 跳转
+nmap <leader>jl :action JumpToLastChange<CR>
+nmap <leader>jn :action JumpToNextChange<CR>
+
+" 调试
+nmap <leader>bb :action ToggleLineBreakpoint<CR>
+
 # windows multiple0-cursors key maps
 nmap <c-n> <A-n>
 nmap <c-x> <A-x>
