@@ -20,9 +20,13 @@ Plug 'lu5je0/lightline-bufferline'
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
 Plug 'theniceboy/vim-calc'
+Plug 'rootkiter/vim-hexedit'
+Plug 'mattn/vim-gist'
+Plug 'mattn/webapi-vim'
+" Plug 'rhysd/committia.vim'
 
 if !has("mac") && platform#is_wsl()
-    Plug 'lu5je0/im-switcher'
+    call s:lazy_load("lu5je0/im-switcher")
 endif
 " Plug 'lyokha/vim-xkbswitch'
 
@@ -64,7 +68,6 @@ call s:lazy_load('junegunn/vim-peekaboo')
 call s:lazy_load('tpope/vim-surround')
 call s:lazy_load('liuchengxu/vista.vim')
 call s:lazy_load('machakann/vim-highlightedyank')
-call s:lazy_load('SirVer/ultisnips')
 " save with sudo
 if !has("win32")
     call s:lazy_load('lambdalisue/suda.vim')
@@ -73,6 +76,7 @@ endif
 "     call s:lazy_load('brglng/vim-im-select')
 " endif
 
+Plug 'SirVer/ultisnips'
 Plug 'dstein64/vim-startuptime'
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
@@ -90,7 +94,7 @@ if !has("gui")
 endif
 
 if g:coc_enable == 1
-    Plug 'neoclide/coc.nvim', {'branch': 'release', 'on': []}
+    call s:lazy_load('neoclide/coc.nvim')
 else
     Plug 'ervandew/supertab'
 endif
@@ -112,11 +116,6 @@ call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
   runtime im.vim
 
-  if g:coc_enable == 1
-      call plug#load('coc.nvim')
-      runtime plug-config/coc.vim
-  endif
-
   for plug_name in s:lazy_load_plug_list
       call plug#load(split(plug_name, '/')[1])
   endfor
@@ -128,6 +127,11 @@ endfunction
 " runtime 加载.vim {{{
 runtime settings.vim
 runtime foldtext.vim
+
+if g:coc_enable == 1
+    runtime plug-config/coc.vim
+endif
+
 if has("win32")
     runtime escalt.vim
 endif
@@ -149,6 +153,7 @@ let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 augroup file_type
     autocmd!
     autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
+    autocmd FileType help set buflisted
 augroup END
 " }}}
  
@@ -180,6 +185,12 @@ set diffopt+=internal,algorithm:patience
 
 " vim-json {{{
 let g:vim_json_syntax_conceal = 0
+" }}}
+
+" vim-gist {{{
+let github_user = 'lu5je0@gmail.com'
+let g:gist_show_privates = 1
+let g:gist_post_private = 1
 " }}}
 
 " vim-commentary {{{

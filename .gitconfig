@@ -3,3 +3,5 @@
 	name = lu5je0
 [core]
     editor = nvim
+[github]
+	user = lu5je0@gmail.com
