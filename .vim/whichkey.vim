@@ -39,6 +39,8 @@ let g:which_key_map.i = [':Vista!!', 'vista']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 let g:which_key_map.d = 'buffer switch'
 let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
+let g:which_key_map['/'] = [":call eregex#toggle()", "eregex toggle"]
+
 nmap <leader>d <c-^>
 
 " windows
