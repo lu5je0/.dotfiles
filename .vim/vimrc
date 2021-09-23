@@ -56,7 +56,7 @@ call dein#add('lambdalisue/nerdfont.vim')
 call dein#add('lu5je0/fern-renderer-nerdfont.vim')
 call dein#add('lambdalisue/glyph-palette.vim')
 call dein#add('lambdalisue/fern-git-status.vim')
-call dein#add('yuki-yano/fern-preview.vim')
+call dein#add('yuki-yano/fern-preview.vim', {'on_ft': 'fern', 'lazy': 1})
 
 " lazy load
 call dein#add('mg979/vim-visual-multi')
@@ -76,12 +76,7 @@ call dein#add('tpope/vim-surround')
 call dein#add('liuchengxu/vista.vim')
 call dein#add('machakann/vim-highlightedyank')
 " save with sudo
-if !has("win32")
-    call dein#add('lambdalisue/suda.vim')
-endif
-" if !has("gui") && !has("mac")
-"     call dein#add('brglng/vim-im-select')
-" endif
+call dein#add('lambdalisue/suda.vim', {'if': !has("win32")})
 
 call dein#add('SirVer/ultisnips')
 call dein#add('dstein64/vim-startuptime')
@@ -278,6 +273,7 @@ hi TSPunctBracket guifg=#ABB2BF
 
 runtime mappings.vim
 runtime whichkey.vim
+" runtime im.vim
 runtime misc.vim
 runtime runner.vim
 runtime plug-config/fern.vim
