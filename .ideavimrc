@@ -22,6 +22,7 @@ set exchange
 set ideajoin
 set ideamarks
 set NERDTree
+set easymotion
 
 let mapleader=","
 
