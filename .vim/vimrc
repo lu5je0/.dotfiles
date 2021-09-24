@@ -23,6 +23,7 @@ Plug 'theniceboy/vim-calc'
 Plug 'rootkiter/vim-hexedit'
 Plug 'mattn/vim-gist'
 Plug 'mattn/webapi-vim'
+Plug 'Lokaltog/vim-easymotion'
 " Plug 'rhysd/committia.vim'
 
 if !has("mac") && platform#is_wsl()
