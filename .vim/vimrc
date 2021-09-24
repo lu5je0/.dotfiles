@@ -48,7 +48,6 @@ Plug 'lambdalisue/fern-hijack.vim'
 Plug 'lambdalisue/nerdfont.vim'
 Plug 'lu5je0/fern-renderer-nerdfont.vim'
 Plug 'lambdalisue/glyph-palette.vim'
-Plug 'othree/eregex.vim'
 call s:lazy_load('lambdalisue/fern-git-status.vim')
 call s:lazy_load('yuki-yano/fern-preview.vim')
 
@@ -77,6 +76,8 @@ endif
 " endif
 
 Plug 'SirVer/ultisnips', {'for': ['markdown']}
+" perl regex
+Plug 'othree/eregex.vim'
 Plug 'dstein64/vim-startuptime'
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
