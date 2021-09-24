@@ -55,7 +55,6 @@ call s:lazy_load('yuki-yano/fern-preview.vim')
 " lazy load
 call s:lazy_load('mg979/vim-visual-multi')
 call s:lazy_load('sgur/vim-textobj-parameter')
-call s:lazy_load('kana/vim-textobj-entire')
 call s:lazy_load('mhinz/vim-signify')
 call s:lazy_load('voldikss/vim-translator')
 call s:lazy_load('tpope/vim-fugitive')
