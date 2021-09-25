@@ -3,112 +3,125 @@ let s:nvim_treesitter = 0
 let g:loaded_clipboard_provider = 1
 
 
-let s:lazy_load_plug_list = []
+let s:plug_add_plug_list = []
+let s:runtime_file_list = []
 
-function s:lazy_load(plug_name)
-    call add(s:lazy_load_plug_list, a:plug_name)
-    Plug a:plug_name, {'on': []}
+" call dein#add('yuki-yano/fern-preview.vim', {'on_ft': 'fern', 'lazy': 1})
+function s:plug_add(...)
+    let plug_name = a:1
+    let param = {}
+    if a:0 == 2
+        let param = a:2
+    endif
+
+    if has_key(param, 'lazy') && param["lazy"]
+        call add(s:plug_add_plug_list, plug_name)
+        if !has_key(param, 'on')
+            let param["on"] = []
+        endif
+    endif
+    if has_key(param, 'runtime')
+        call add(s:runtime_file_list, param['runtime'])
+    endif
+    Plug plug_name, param
 endfunction
 
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
-Plug 'akinsho/bufferline.nvim'
-Plug 'glepnir/galaxyline.nvim' , {'branch': 'main'}
+call s:plug_add('akinsho/bufferline.nvim')
+call s:plug_add('glepnir/galaxyline.nvim', {'branch': 'main'})
 
 " If you want to display icons, then use one of these plugins:
-Plug 'kyazdani42/nvim-web-devicons'
-Plug 'ryanoasis/vim-devicons' " vimscript
+call s:plug_add('kyazdani42/nvim-web-devicons')
+call s:plug_add('ryanoasis/vim-devicons')
 
-Plug 'jiangmiao/auto-pairs'
-Plug 'schickling/vim-bufonly'
-Plug 'theniceboy/vim-calc'
-Plug 'rootkiter/vim-hexedit'
-Plug 'mattn/vim-gist'
-Plug 'mattn/webapi-vim'
-" Plug 'rhysd/committia.vim'
+call s:plug_add('neoclide/coc.nvim', {'lazy': 1, 'branch': 'release', 'runtime': 'plug-config/coc.vim'})
+
+call s:plug_add('jiangmiao/auto-pairs')
+call s:plug_add('schickling/vim-bufonly')
+call s:plug_add('theniceboy/vim-calc')
+call s:plug_add('rootkiter/vim-hexedit', {'lazy': 1})
+call s:plug_add('mattn/vim-gist')
+call s:plug_add('mattn/webapi-vim')
+call s:plug_add('rhysd/committia.vim')
 
 if !has("mac") && platform#is_wsl()
-    call s:lazy_load("lu5je0/im-switcher")
+    call s:plug_add("lu5je0/im-switcher", {'lazy': 1})
 endif
 
 if has("nvim")
     let s:nvim_treesitter = 1
-    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+    call s:plug_add('nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'})
 endif
 
 " filetype
-Plug 'chr4/nginx.vim'
-Plug 'cespare/vim-toml'
-Plug 'elzr/vim-json'
-Plug 'lu5je0/vim-java-bytecode'
-Plug 'MTDL9/vim-log-highlighting'
+call s:plug_add('chr4/nginx.vim')
+call s:plug_add('cespare/vim-toml')
+call s:plug_add('elzr/vim-json')
+call s:plug_add('lu5je0/vim-java-bytecode')
+call s:plug_add('MTDL9/vim-log-highlighting')
 
 " fern
-Plug 'lambdalisue/fern-hijack.vim'
-Plug 'lambdalisue/fern.vim', {'on': 'Fern'}
-Plug 'lambdalisue/nerdfont.vim', {'on': 'Fern'}
-Plug 'lu5je0/fern-renderer-nerdfont.vim', {'on': 'Fern'}
-Plug 'lambdalisue/glyph-palette.vim', {'on': 'Fern'}
-Plug 'lambdalisue/fern-git-status.vim', {'on': 'Fern'}
-Plug 'yuki-yano/fern-preview.vim', {'on': 'Fern'}
+call s:plug_add('lambdalisue/fern-hijack.vim')
+call s:plug_add('lambdalisue/fern.vim', {'on': 'Fern', 'runtime': 'plug-config/fern.vim'})
+call s:plug_add( 'lambdalisue/nerdfont.vim', {'on': 'Fern'})
+call s:plug_add( 'lu5je0/fern-renderer-nerdfont.vim', {'on': 'Fern'})
+call s:plug_add( 'lambdalisue/glyph-palette.vim', {'on': 'Fern'})
+call s:plug_add( 'lambdalisue/fern-git-status.vim', {'on': 'Fern'})
+call s:plug_add( 'yuki-yano/fern-preview.vim', {'on': 'Fern'})
 
 " lazy load
-call s:lazy_load('mg979/vim-visual-multi')
-call s:lazy_load('sgur/vim-textobj-parameter')
-call s:lazy_load('mhinz/vim-signify')
-call s:lazy_load('voldikss/vim-translator')
-call s:lazy_load('tpope/vim-fugitive')
-call s:lazy_load('rbong/vim-flog')
-call s:lazy_load('lu5je0/vim-terminal-help')
-call s:lazy_load('skywind3000/asynctasks.vim')
-call s:lazy_load('skywind3000/asyncrun.vim')
-call s:lazy_load('skywind3000/asyncrun.extra')
-call s:lazy_load('mbbill/undotree')
-call s:lazy_load('junegunn/vim-peekaboo')
-call s:lazy_load('tpope/vim-surround')
-call s:lazy_load('liuchengxu/vista.vim')
-call s:lazy_load('machakann/vim-highlightedyank')
+call s:plug_add('mg979/vim-visual-multi', {'lazy': 1})
+call s:plug_add('sgur/vim-textobj-parameter', {})
+call s:plug_add('mhinz/vim-signify', {})
+call s:plug_add('voldikss/vim-translator', {})
+call s:plug_add('tpope/vim-fugitive', {})
+call s:plug_add('rbong/vim-flog', {})
+call s:plug_add('lu5je0/vim-terminal-help', {'lazy': 1})
+call s:plug_add('skywind3000/asynctasks.vim', {})
+call s:plug_add('skywind3000/asyncrun.vim', {})
+call s:plug_add('skywind3000/asyncrun.extra', {})
+call s:plug_add('mbbill/undotree', {})
+call s:plug_add('junegunn/vim-peekaboo', {})
+call s:plug_add('tpope/vim-surround', {})
+call s:plug_add('liuchengxu/vista.vim', {})
+call s:plug_add('machakann/vim-highlightedyank', {})
 " save with sudo
 if !has("win32")
-    call s:lazy_load('lambdalisue/suda.vim')
+    call s:plug_add('lambdalisue/suda.vim', {})
 endif
 
-Plug 'SirVer/ultisnips', {'for': ['markdown']}
+call s:plug_add( 'SirVer/ultisnips', {'for': ['markdown']})
 " perl regex
-Plug 'othree/eregex.vim'
-Plug 'dstein64/vim-startuptime'
-Plug 'yianwillis/vimcdoc'
-Plug 'chrisbra/vim-diff-enhanced'
-Plug 'tpope/vim-commentary'
-Plug 'lu5je0/vim-snippets'
-Plug 'kana/vim-textobj-user'
-Plug 'tpope/vim-repeat'
-Plug 'vim-scripts/ReplaceWithRegister'
-Plug 'tommcdo/vim-exchange'
-Plug 'liuchengxu/vim-which-key'
-Plug 'lu5je0/vim-base64'
+call s:plug_add('othree/eregex.vim')
+call s:plug_add('dstein64/vim-startuptime')
+call s:plug_add('yianwillis/vimcdoc')
+call s:plug_add('chrisbra/vim-diff-enhanced')
+call s:plug_add('tpope/vim-commentary')
+call s:plug_add('lu5je0/vim-snippets')
+call s:plug_add('kana/vim-textobj-user')
+call s:plug_add('tpope/vim-repeat')
+call s:plug_add('vim-scripts/ReplaceWithRegister')
+call s:plug_add('tommcdo/vim-exchange')
+call s:plug_add('liuchengxu/vim-which-key')
+call s:plug_add('lu5je0/vim-base64')
 
 if !has("gui")
-    Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+    call s:plug_add( 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']})
 endif
 
-if g:coc_enable == 1
-    call s:lazy_load('neoclide/coc.nvim')
-else
-    Plug 'ervandew/supertab'
-endif
 
-Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
+call s:plug_add('Yggdroot/LeaderF', {'do': './install.sh'})
 
 " themes
-Plug 'tomasiser/vim-code-dark'
-Plug 'lu5je0/vim-one'
-Plug 'gruvbox-community/gruvbox'
-Plug 'hzchirs/vim-material'
-Plug 'ayu-theme/ayu-vim'
-Plug 'w0ng/vim-hybrid'
-" Plug 'lu5je0/lightline-ones'
+call s:plug_add('tomasiser/vim-code-dark')
+call s:plug_add('lu5je0/vim-one')
+call s:plug_add('gruvbox-community/gruvbox')
+call s:plug_add('hzchirs/vim-material')
+call s:plug_add('ayu-theme/ayu-vim')
+call s:plug_add('w0ng/vim-hybrid')
+" call s:plug_add('lu5je0/lightline-ones')
 call plug#end()
 " }}}
 
@@ -116,7 +129,7 @@ call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
   runtime im.vim
 
-  for plug_name in s:lazy_load_plug_list
+  for plug_name in s:plug_add_plug_list
       call plug#load(split(plug_name, '/')[1])
   endfor
 
@@ -128,13 +141,10 @@ endfunction
 runtime settings.vim
 runtime foldtext.vim
 
-if g:coc_enable == 1
-    runtime plug-config/coc.vim
-endif
-
 if has("win32")
     runtime escalt.vim
 endif
+
 runtime gvim.vim
 runtime functions.vim
 runtime plug-config/leaderf.vim
@@ -272,8 +282,12 @@ set bg=dark
 hi TSPunctBracket guifg=#ABB2BF
 " }}}
 
+
+for runtime_file in s:runtime_file_list
+    execute "runtime " . runtime_file
+endfor
+
 runtime mappings.vim
 runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
-runtime plug-config/fern.vim
