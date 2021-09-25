@@ -78,14 +78,14 @@ call s:plug_add('mhinz/vim-signify', {})
 call s:plug_add('voldikss/vim-translator', {})
 call s:plug_add('tpope/vim-fugitive', {})
 call s:plug_add('rbong/vim-flog', {})
-call s:plug_add('lu5je0/vim-terminal-help', {'lazy': 1})
 call s:plug_add('skywind3000/asynctasks.vim', {})
-call s:plug_add('skywind3000/asyncrun.vim', {})
+call s:plug_add('skywind3000/asyncrun.vim', {'runtime': 'runner.vim'})
+call s:plug_add('lu5je0/vim-terminal-help', {'lazy': 1, 'runtime': 'plug-config/terminal.vim'})
 call s:plug_add('skywind3000/asyncrun.extra', {})
 call s:plug_add('mbbill/undotree', {})
 call s:plug_add('junegunn/vim-peekaboo', {})
 call s:plug_add('tpope/vim-surround', {})
-call s:plug_add('liuchengxu/vista.vim', {})
+call s:plug_add('liuchengxu/vista.vim', {'runtime': 'plug-config/vista.vim'})
 call s:plug_add('machakann/vim-highlightedyank', {})
 " save with sudo
 if !has("win32")
@@ -104,7 +104,6 @@ call s:plug_add('kana/vim-textobj-user')
 call s:plug_add('tpope/vim-repeat')
 call s:plug_add('vim-scripts/ReplaceWithRegister')
 call s:plug_add('tommcdo/vim-exchange')
-call s:plug_add('liuchengxu/vim-which-key')
 call s:plug_add('lu5je0/vim-base64')
 
 if !has("gui")
@@ -112,7 +111,7 @@ if !has("gui")
 endif
 
 
-call s:plug_add('Yggdroot/LeaderF', {'do': './install.sh'})
+call s:plug_add('Yggdroot/LeaderF', {'do': './install.sh', 'runtime': 'plug-config/leaderf.vim'})
 
 " themes
 call s:plug_add('tomasiser/vim-code-dark')
@@ -122,6 +121,7 @@ call s:plug_add('hzchirs/vim-material')
 call s:plug_add('ayu-theme/ayu-vim')
 call s:plug_add('w0ng/vim-hybrid')
 " call s:plug_add('lu5je0/lightline-ones')
+call s:plug_add('liuchengxu/vim-which-key', {'runtime': 'whichkey.vim'})
 call plug#end()
 " }}}
 
@@ -147,11 +147,7 @@ endif
 
 runtime gvim.vim
 runtime functions.vim
-runtime plug-config/leaderf.vim
-runtime plug-config/autoformat.vim
-runtime plug-config/terminal.vim
 " runtime plug-config/lightline.vim
-runtime plug-config/vista.vim
 " }}}
 
 " vim-xkbswitch {{{
@@ -249,21 +245,6 @@ let g:highlightedyank_highlight_duration=300
 let g:UltiSnipsExpandTrigger="<c-d>"
 " }}}
 
-" toggle_terminal {{{
-
-" set your favorite shell
-if has("win32")
-    let g:toggle_terminal#command = 'wsl'
-else
-    let g:toggle_terminal#command = ''
-endif
-
-" set terminal window position
-" (see possible options at :help vertical)
-" let g:toggle_terminal#position = 's'
-
-" }}}
-
 " undotree {{{
 let g:undotree_WindowLayout = 3
 let g:undotree_SetFocusWhenToggle = 1
@@ -283,11 +264,9 @@ hi TSPunctBracket guifg=#ABB2BF
 " }}}
 
 
+
+runtime misc.vim
+runtime mappings.vim
 for runtime_file in s:runtime_file_list
     execute "runtime " . runtime_file
 endfor
-
-runtime mappings.vim
-runtime whichkey.vim
-runtime misc.vim
-runtime runner.vim

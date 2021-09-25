@@ -18,3 +18,18 @@ endf
 
 let g:asyncrun_mode='term'
 let g:asyncrun_save=1
+
+" toggle_terminal {{{
+
+" set your favorite shell
+if has("win32")
+    let g:toggle_terminal#command = 'wsl'
+else
+    let g:toggle_terminal#command = ''
+endif
+
+" set terminal window position
+" (see possible options at :help vertical)
+" let g:toggle_terminal#position = 's'
+
+" }}}
