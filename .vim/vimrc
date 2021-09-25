@@ -43,13 +43,13 @@ Plug 'lu5je0/vim-java-bytecode'
 Plug 'MTDL9/vim-log-highlighting'
 
 " fern
-Plug 'lambdalisue/fern.vim'
 Plug 'lambdalisue/fern-hijack.vim'
-Plug 'lambdalisue/nerdfont.vim'
-Plug 'lu5je0/fern-renderer-nerdfont.vim'
-Plug 'lambdalisue/glyph-palette.vim'
-call s:lazy_load('lambdalisue/fern-git-status.vim')
-call s:lazy_load('yuki-yano/fern-preview.vim')
+Plug 'lambdalisue/fern.vim', {'on': 'Fern'}
+Plug 'lambdalisue/nerdfont.vim', {'on': 'Fern'}
+Plug 'lu5je0/fern-renderer-nerdfont.vim', {'on': 'Fern'}
+Plug 'lambdalisue/glyph-palette.vim', {'on': 'Fern'}
+Plug 'lambdalisue/fern-git-status.vim', {'on': 'Fern'}
+Plug 'yuki-yano/fern-preview.vim', {'on': 'Fern'}
 
 " lazy load
 call s:lazy_load('mg979/vim-visual-multi')
@@ -277,3 +277,24 @@ runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
 runtime plug-config/fern.vim
+
+" Toggle Vexplore with Ctrl-E
+function! ToggleVExplorer()
+  if exists("t:expl_buf_num")
+      let expl_win_num = bufwinnr(t:expl_buf_num)
+      if expl_win_num != -1
+          let cur_win_nr = winnr()
+          exec expl_win_num . 'wincmd w'
+          close
+          exec cur_win_nr . 'wincmd w'
+          unlet t:expl_buf_num
+      else
+          unlet t:expl_buf_num
+      endif
+  else
+      exec '1wincmd w'
+      Vexplore
+      let t:expl_buf_num = bufnr("%")
+  endif
+endfunction
+map <silent> <C-E> :call ToggleVExplorer()<CR>

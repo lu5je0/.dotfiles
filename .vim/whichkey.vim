@@ -82,6 +82,7 @@ let g:which_key_map.p = {
       \ 'name' : '+git' ,
       \ 'i' : [':source $MYVIMRC | PlugInstall', 'plugin install'],
       \ 'c' : [':PlugClean', 'plugin clean'],
+      \ 'u' : [':PlugUpdate', 'plugin update'],
       \ }
 
 let g:which_key_map.s = {
