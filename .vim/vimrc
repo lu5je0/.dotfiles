@@ -13,9 +13,11 @@ endfunction
 " vim-plug {{{
 call plug#begin('~/.vim/plugged')
 
+Plug 'kyazdani42/nvim-web-devicons'
+Plug 'akinsho/bufferline.nvim'
+
 " lightline
 Plug 'itchyny/lightline.vim'
-Plug 'lu5je0/lightline-bufferline'
 
 Plug 'jiangmiao/auto-pairs'
 Plug 'schickling/vim-bufonly'
@@ -28,7 +30,6 @@ Plug 'mattn/webapi-vim'
 if !has("mac") && platform#is_wsl()
     call s:lazy_load("lu5je0/im-switcher")
 endif
-" Plug 'lyokha/vim-xkbswitch'
 
 if has("nvim")
     let s:nvim_treesitter = 1
@@ -71,9 +72,6 @@ call s:lazy_load('machakann/vim-highlightedyank')
 if !has("win32")
     call s:lazy_load('lambdalisue/suda.vim')
 endif
-" if !has("gui") && !has("mac")
-"     call s:lazy_load('brglng/vim-im-select')
-" endif
 
 Plug 'SirVer/ultisnips', {'for': ['markdown']}
 " perl regex
@@ -148,6 +146,30 @@ runtime plug-config/vista.vim
 " vim-xkbswitch {{{
 let g:XkbSwitchEnabled = 1
 let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
+" }}}
+
+" lua-bufferline {{{
+lua << EOF
+require("bufferline").setup {
+    options = {
+        numbers = "ordinal",
+        offsets = {
+            {
+                filetype = "fern",
+                text = "File Explorer",
+                highlight = "Directory",
+                text_align = "center"
+            },
+            {
+                filetype = "undotree",
+                text = "undotree",
+                highlight = "Directory",
+                text_align = "center"
+            }
+        }
+    }
+}
+EOF
 " }}}
  
 " autocmd {{{
@@ -277,24 +299,3 @@ runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
 runtime plug-config/fern.vim
-
-" Toggle Vexplore with Ctrl-E
-function! ToggleVExplorer()
-  if exists("t:expl_buf_num")
-      let expl_win_num = bufwinnr(t:expl_buf_num)
-      if expl_win_num != -1
-          let cur_win_nr = winnr()
-          exec expl_win_num . 'wincmd w'
-          close
-          exec cur_win_nr . 'wincmd w'
-          unlet t:expl_buf_num
-      else
-          unlet t:expl_buf_num
-      endif
-  else
-      exec '1wincmd w'
-      Vexplore
-      let t:expl_buf_num = bufnr("%")
-  endif
-endfunction
-map <silent> <C-E> :call ToggleVExplorer()<CR>
