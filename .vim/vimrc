@@ -1,4 +1,3 @@
-let g:coc_enable = 0
 let s:nvim_treesitter = 0
 let g:loaded_clipboard_provider = 1
 
@@ -8,20 +7,11 @@ lua require('plugins')
 runtime settings.vim
 runtime foldtext.vim
 
-if g:coc_enable == 1
-    runtime plug-config/coc.vim
-endif
-
 if has("win32")
     runtime escalt.vim
 endif
 runtime gvim.vim
 runtime functions.vim
-runtime plug-config/leaderf.vim
-runtime plug-config/autoformat.vim
-runtime plug-config/terminal.vim
-" runtime plug-config/lightline.vim
-runtime plug-config/vista.vim
 " }}}
 
 " vim-xkbswitch {{{
@@ -29,14 +19,6 @@ let g:XkbSwitchEnabled = 1
 let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 " }}}
 
-" galaxyline {{{
-lua require("config/galaxyline")
-" }}}
-
-" lua-bufferline {{{
-lua require("config/bufferline")
-" }}}
- 
 " autocmd {{{
 augroup file_type
     autocmd!
@@ -52,19 +34,8 @@ let g:VM_maps["Select Cursor Down"] = '<m-n>'
 " }}}
  
 " treesitter {{{ "
-if s:nvim_treesitter == 1
-lua <<EOF
-require'nvim-treesitter.configs'.setup {
-  -- Modules and its options go here
-  ensure_installed = { "java", "python", "lua", "c", "json" },
-  highlight = { enable = true },
-  incremental_selection = { enable = true },
-  textobjects = { enable = true },
-}
-EOF
 set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
-endif
 " }}} treesitter "
 
 " vim-diff-enhanced {{{
@@ -153,7 +124,5 @@ hi TSPunctBracket guifg=#ABB2BF
 " }}}
 
 runtime mappings.vim
-runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
-runtime plug-config/fern.vim
