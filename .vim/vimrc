@@ -54,7 +54,6 @@ call s:lazy_load('yuki-yano/fern-preview.vim')
 " lazy load
 call s:lazy_load('mg979/vim-visual-multi')
 call s:lazy_load('sgur/vim-textobj-parameter')
-call s:lazy_load('kana/vim-textobj-entire')
 call s:lazy_load('mhinz/vim-signify')
 call s:lazy_load('voldikss/vim-translator')
 call s:lazy_load('tpope/vim-fugitive')
@@ -76,7 +75,9 @@ endif
 "     call s:lazy_load('brglng/vim-im-select')
 " endif
 
-Plug 'SirVer/ultisnips'
+Plug 'SirVer/ultisnips', {'for': ['markdown']}
+" perl regex
+Plug 'othree/eregex.vim'
 Plug 'dstein64/vim-startuptime'
 Plug 'yianwillis/vimcdoc'
 Plug 'chrisbra/vim-diff-enhanced'
@@ -94,7 +95,7 @@ if !has("gui")
 endif
 
 if g:coc_enable == 1
-    Plug 'neoclide/coc.nvim'
+    call s:lazy_load('neoclide/coc.nvim')
 else
     Plug 'ervandew/supertab'
 endif
@@ -191,6 +192,10 @@ let g:vim_json_syntax_conceal = 0
 let github_user = 'lu5je0@gmail.com'
 let g:gist_show_privates = 1
 let g:gist_post_private = 1
+" }}}
+
+" othree/eregex.vim {{{
+let g:eregex_default_enable = 0
 " }}}
 
 " vim-commentary {{{

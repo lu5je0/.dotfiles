@@ -39,6 +39,8 @@ let g:which_key_map.i = [':Vista!!', 'vista']
 let g:which_key_map.n = [':let @/ = ""', 'no highlight']
 let g:which_key_map.d = 'buffer switch'
 let g:which_key_map.e = [":Fern . -drawer -stay -toggle -keep", "fern"]
+let g:which_key_map['/'] = [":call eregex#toggle()", "eregex toggle"]
+
 nmap <leader>d <c-^>
 
 " windows
@@ -51,7 +53,7 @@ let g:which_key_map.w = {
       \ 'N' : [':new', 'new'],
       \ 's' : [':vsplit', 'vspilt'],
       \ 'S' : [':split', 'spilt'],
-      \ 'o' : [':only', 'only'],
+      \ 'q' : [':only', 'break window'],
       \ }
 nmap <leader>wu <c-w>x
 let g:which_key_map.w.u = 'swap buffer'
@@ -69,9 +71,17 @@ let g:which_key_map.g = {
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'v' : [':Gvdiffsplit!', 'gvdiffsplit'],
       \ 'l' : [':Flogsplit', 'git log'],
+      \ 'i' : [':Gist -l', 'gist'],
       \ 'P' : [':AsyncRun -focus=0 -mode=term -rows=10 git push', 'git push'],
       \ 's' : [':Gstatus', 'status'],
       \ 'S' : [':Git status', 'status'],
+      \ }
+
+" plugin
+let g:which_key_map.p = {
+      \ 'name' : '+git' ,
+      \ 'i' : [':source $MYVIMRC | PlugInstall', 'plugin install'],
+      \ 'c' : [':PlugClean', 'plugin clean'],
       \ }
 
 let g:which_key_map.s = {
