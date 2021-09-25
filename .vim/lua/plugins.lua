@@ -15,6 +15,7 @@ return require('packer').startup(function()
   use {'rootkiter/vim-hexedit'}
   use {'mattn/vim-gist'}
   use {'mattn/webapi-vim'}
+  use {'kyazdani42/nvim-tree.lua'}
 
   -- Post-install/update hook with neovim command
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate', config = function() require("config/treesitter") end}

@@ -9,6 +9,12 @@ require("bufferline").setup {
                 text_align = "center"
             },
             {
+                filetype = "NvimTree",
+                text = "File Explorer",
+                highlight = "Directory",
+                text_align = "center"
+            },
+            {
                 filetype = "undotree",
                 text = "undotree",
                 highlight = "Directory",
