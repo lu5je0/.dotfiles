@@ -80,6 +80,7 @@ map <leader>cm <Action>(ChangeSignature)
 map <leader>cg <Action>(Generate)
 map <leader>ci :action Inline<CR>
 map <leader>cc <Action>(ShowIntentionActions)
+map <leader>ca <Action>(ShowErrorDescription)
 
 # run
 nmap <leader>re :action ChooseRunConfiguration<CR>
