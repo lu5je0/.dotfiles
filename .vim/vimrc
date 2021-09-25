@@ -44,7 +44,7 @@ call s:plug_add('theniceboy/vim-calc')
 call s:plug_add('rootkiter/vim-hexedit', {'lazy': 1})
 call s:plug_add('mattn/vim-gist')
 call s:plug_add('mattn/webapi-vim')
-call s:plug_add('rhysd/committia.vim')
+" call s:plug_add('rhysd/committia.vim')
 
 if !has("mac") && platform#is_wsl()
     call s:plug_add("lu5je0/im-switcher", {'lazy': 1})
@@ -92,7 +92,7 @@ if !has("win32")
     call s:plug_add('lambdalisue/suda.vim', {})
 endif
 
-call s:plug_add( 'SirVer/ultisnips', {'for': ['markdown']})
+call s:plug_add('SirVer/ultisnips', {'for': ['markdown']})
 " perl regex
 call s:plug_add('othree/eregex.vim')
 call s:plug_add('dstein64/vim-startuptime')
