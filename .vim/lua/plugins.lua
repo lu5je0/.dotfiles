@@ -48,22 +48,23 @@ return require('packer').startup(function()
   use {'kyazdani42/nvim-tree.lua'}
 
   -- -- Post-install/update hook with neovim command
-  -- use {
-  --     'nvim-treesitter/nvim-treesitter', 
-  --     run = ':TSUpdate',
-  --     config = function() 
-  --         require'nvim-treesitter.configs'.setup {
-  --             -- Modules and its options go here
-  --             ensure_installed = { "java", "python", "lua", "c", "json" },
-  --             highlight = { enable = true },
-  --             incremental_selection = { enable = true },
-  --             textobjects = { enable = true },
-  --         }
+  use {
+      'nvim-treesitter/nvim-treesitter', 
+      run = ':TSUpdate',
+      opt = true,
+      config = function() 
+          require'nvim-treesitter.configs'.setup {
+              -- Modules and its options go here
+              ensure_installed = { "java", "python", "lua", "c", "json" },
+              highlight = { enable = true },
+              incremental_selection = { enable = true },
+              textobjects = { enable = true },
+          }
 
-  --         vim.cmd("set foldmethod=expr")
-  --         vim.cmd("set foldexpr=nvim_treesitter#foldexpr()")
-  --     end
-  -- }
+          vim.cmd("set foldmethod=expr")
+          vim.cmd("set foldexpr=nvim_treesitter#foldexpr()")
+      end
+  }
 
   use {'chr4/nginx.vim'}
   use {'cespare/vim-toml'}

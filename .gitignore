@@ -3,6 +3,8 @@
 .vim/plugged/*
 .vim/pack/
 .vim/quicknote.md
+.vim/parser/
+.vim/parser-info/
 __pycache__
 .idea/
 *.swp

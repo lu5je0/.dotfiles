@@ -99,5 +99,6 @@ call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
     runtime im.vim
     silent! PackerLoad coc.nvim
+    silent! PackerLoad nvim-treesitter
     set clipboard=unnamed
 endfunction
