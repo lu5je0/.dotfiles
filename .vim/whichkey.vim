@@ -91,9 +91,9 @@ let g:which_key_map.g = {
 " plugin
 let g:which_key_map.p = {
       \ 'name' : '+git' ,
-      \ 'i' : [':source $MYVIMRC | PlugInstall', 'plugin install'],
-      \ 'c' : [':PlugClean', 'plugin clean'],
-      \ 'u' : [':PlugUpdate', 'plugin update'],
+      \ 'i' : [":echo 'PackerInstall' | PackerInstall", 'plugin install'],
+      \ 'C' : [":echo 'ParkerClean' | ParkerClean", 'plugin clean'],
+      \ 'c' : [":echo 'PackerCompile' | PackerCompile", 'plugin compile'],
       \ }
 
 let g:which_key_map.s = {

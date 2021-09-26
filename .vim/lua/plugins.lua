@@ -149,12 +149,26 @@ return require('packer').startup(function()
   use {'voldikss/vim-translator'}
 
   use {
-      'tpope/vim-fugitive',
+      'rbong/vim-flog',
+      cmd = 'Flogsplit',
       opt = true,
-      cmd = {'Git'}
+      requires = {
+          {
+              'tpope/vim-fugitive',
+              opt = true,
+              cmd = {'Git', 'Gvdiffsplit', 'Gstatus'},
+              requires = {
+                  {'skywind3000/asynctasks.vim', opt = true},
+              }
+          }
+      }
   }
 
-  use {'rbong/vim-flog'}
+  use {
+      'dstein64/vim-startuptime', 
+      opt = true,
+      cmd = {'StartupTime'}
+  }
 
   use {
       'lu5je0/vim-terminal-help', 
