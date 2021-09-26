@@ -13,7 +13,7 @@ return require('packer').startup(function()
   }
 
   use {
-      'akinsho/bufferline.nvim', 
+      'akinsho/bufferline.nvim',
       config = function() require("config/bufferline") end
   }
 
@@ -37,7 +37,7 @@ return require('packer').startup(function()
 
   use {
       'mattn/vim-gist',
-      config = function() 
+      config = function()
           vim.cmd("let github_user = 'lu5je0@gmail.com'")
           vim.cmd("let g:gist_show_privates = 1")
           vim.cmd("let g:gist_post_private = 1")
@@ -49,10 +49,10 @@ return require('packer').startup(function()
 
   -- -- Post-install/update hook with neovim command
   use {
-      'nvim-treesitter/nvim-treesitter', 
+      'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
       opt = true,
-      config = function() 
+      config = function()
           require'nvim-treesitter.configs'.setup {
               -- Modules and its options go here
               ensure_installed = { "java", "python", "lua", "c", "json" },
@@ -60,9 +60,10 @@ return require('packer').startup(function()
               incremental_selection = { enable = true },
               textobjects = { enable = true },
           }
-
-          vim.cmd("set foldmethod=expr")
-          vim.cmd("set foldexpr=nvim_treesitter#foldexpr()")
+          vim.cmd([[
+            set foldmethod=expr
+            set foldexpr=nvim_treesitter#foldexpr()
+          ]])
       end
   }
 
@@ -95,7 +96,7 @@ return require('packer').startup(function()
 
   use {
     'chrisbra/vim-diff-enhanced',
-    config = function() 
+    config = function()
         vim.cmd("set diffopt+=internal,algorithm:patience")
     end
   }
@@ -116,12 +117,20 @@ return require('packer').startup(function()
   use 'ayu-theme/ayu-vim'
   use 'w0ng/vim-hybrid'
 
+  use {
+    'lu5je0/im-switcher',
+    opt = true,
+    cond = function()
+      return vim.api.nvim_eval('platform#is_wsl()') == 1
+    end
+  }
+
   -- " fern
   use {'lambdalisue/fern-hijack.vim'}
   use {
-      'lambdalisue/fern.vim', 
-      opt = true, 
-      cmd = {'Fern'}, 
+      'lambdalisue/fern.vim',
+      opt = true,
+      cmd = {'Fern'},
       keys = {'<leader>fe'},
       requires = {
           {'yuki-yano/fern-preview.vim', opt = true},
@@ -134,7 +143,7 @@ return require('packer').startup(function()
   }
 
   use {'Yggdroot/LeaderF',
-      run = './install.sh', 
+      run = './install.sh',
       opt = true,
       cmd = {'Leaderf'},
       config = function() vim.cmd('runtime plug-config/leaderf.vim') end
@@ -166,13 +175,13 @@ return require('packer').startup(function()
   }
 
   use {
-      'dstein64/vim-startuptime', 
+      'dstein64/vim-startuptime',
       opt = true,
       cmd = {'StartupTime'}
   }
 
   use {
-      'lu5je0/vim-terminal-help', 
+      'lu5je0/vim-terminal-help',
       config = function() vim.cmd('runtime plug-config/terminal.vim') end,
       opt = true,
       keys = {'<m-i>', '<d-i>'}
@@ -197,7 +206,7 @@ return require('packer').startup(function()
   use {'junegunn/vim-peekaboo'}
   use {'tpope/vim-surround'}
 
-  use {'liuchengxu/vista.vim', 
+  use {'liuchengxu/vista.vim',
       config = function() vim.cmd('runtime plug-config/vista.vim') end,
       opt = true,
       keys = {'<leader>i'}
@@ -215,8 +224,8 @@ return require('packer').startup(function()
   }
 
   use {
-      'iamcco/markdown-preview.nvim', 
-      run = 'cd app && yarn install', 
+      'iamcco/markdown-preview.nvim',
+      run = 'cd app && yarn install',
       opt = true,
       cmd = 'MarkdownPreview'
   }
