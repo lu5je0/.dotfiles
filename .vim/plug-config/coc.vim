@@ -12,7 +12,7 @@ let g:coc_snippet_prev = '<C-k>'
 augroup user_plugin_coc
     autocmd!
     " Highlight the symbol and its references when holding the cursor.
-    autocmd CursorHold * silent call CocActionAsync('highlight')
+    " autocmd CursorHold * silent call CocActionAsync('highlight')
     autocmd ColorScheme * highlight CocHighlightText ctermbg=green guibg=#344134
     autocmd FileType go,python,cpp,java,js,c nmap <buffer> <silent> gd <Plug>(coc-definition)
 augroup END

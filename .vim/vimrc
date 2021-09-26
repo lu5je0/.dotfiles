@@ -1,6 +1,3 @@
-let s:nvim_treesitter = 0
-let g:loaded_clipboard_provider = 1
-
 lua require('plugins')
 
 " runtime 加载.vim {{{
@@ -134,7 +131,5 @@ runtime runner.vim
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
   runtime im.vim
-
-  unlet g:loaded_clipboard_provider
-  runtime autoload/provider/clipboard.vim
+  silent! PackerLoad coc.nvim
 endfunction

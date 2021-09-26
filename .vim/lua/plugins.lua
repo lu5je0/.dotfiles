@@ -141,7 +141,11 @@ return require('packer').startup(function()
       },
   }
 
-  use {'mbbill/undotree'}
+  use {
+      'mbbill/undotree',
+      opt = true,
+      keys = {'<leader>u'}
+  }
   use {'junegunn/vim-peekaboo'}
   use {'tpope/vim-surround'}
 
@@ -165,17 +169,17 @@ return require('packer').startup(function()
       opt = true,
       cmd = 'MarkdownPreview'
   }
-  -- use {'neoclide/coc.nvim', branch = 'release', config = function() vim.cmd('runtime plug-config/coc.vim') end}
+
+  use {
+      'neoclide/coc.nvim', branch = 'release',
+      opt = true,
+      config = function() vim.cmd('runtime plug-config/coc.vim') end
+  }
+
   use {'liuchengxu/vim-which-key', 
       config = function() vim.cmd('runtime whichkey.vim') end,
       opt = true,
       keys = {'<leader>'}
   }
-
-  -- if g:coc_enable == 1
-  --     call s:lazy_load('neoclide/coc.nvim')
-  -- else
-  --     use 'ervandew/supertab'
-  -- endif
 
 end)
