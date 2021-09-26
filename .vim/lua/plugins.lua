@@ -5,19 +5,19 @@ return require('packer').startup(function()
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
 
-  use {
-      'akinsho/bufferline.nvim', 
-      config = function() require("config/bufferline") end
-  }
-
-  use 'kyazdani42/nvim-web-devicons'
-
   -- Use specific branch, dependency and run lua file after load
   use {
       'glepnir/galaxyline.nvim',
       branch = 'main',
       config = function() require("config/galaxyline") end,
   }
+
+  use {
+      'akinsho/bufferline.nvim', 
+      config = function() require("config/bufferline") end
+  }
+
+  use 'kyazdani42/nvim-web-devicons'
 
   use {'jiangmiao/auto-pairs'}
   use {'schickling/vim-bufonly'}
@@ -121,6 +121,7 @@ return require('packer').startup(function()
       'lambdalisue/fern.vim', 
       opt = true, 
       cmd = {'Fern'}, 
+      keys = {'<leader>fe'},
       requires = {
           {'yuki-yano/fern-preview.vim', opt = true},
           {'lambdalisue/nerdfont.vim', opt = true},

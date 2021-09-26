@@ -28,14 +28,8 @@ gls.left[2] = {
     highlight = {colors.red,colors.bg,'bold'},
   },
 }
-gls.left[3] = {
-  FileSize = {
-    provider = 'FileSize',
-    condition = condition.buffer_not_empty,
-    highlight = {colors.fg,colors.bg}
-  }
-}
-gls.left[4] ={
+
+gls.left[3] ={
   FileIcon = {
     provider = 'FileIcon',
     condition = condition.buffer_not_empty,
@@ -43,7 +37,7 @@ gls.left[4] ={
   },
 }
 
-gls.left[5] = {
+gls.left[4] = {
   FileName = {
     provider = 'FileName',
     condition = condition.buffer_not_empty,
@@ -51,22 +45,22 @@ gls.left[5] = {
   }
 }
 
-gls.left[6] = {
-  LineInfo = {
-    provider = 'LineColumn',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.fg,colors.bg},
-  },
-}
-
-gls.left[7] = {
-  PerCent = {
-    provider = 'LinePercent',
-    separator = '',
-    separator_highlight = {'NONE',colors.bg},
-    highlight = {colors.fg,colors.bg,'bold'},
+gls.left[5] = {
+  FileSize = {
+    provider = 'FileSize',
+    condition = condition.buffer_not_empty,
+    highlight = {colors.fg,colors.bg}
   }
 }
+
+-- gls.left[7] = {
+--   PerCent = {
+--     provider = 'LinePercent',
+--     separator = '',
+--     separator_highlight = {'NONE',colors.bg},
+--     highlight = {colors.fg,colors.bg,'bold'},
+--   }
+-- }
 
 gls.left[8] = {
   DiagnosticError = {
@@ -120,8 +114,21 @@ gls.right[2] = {
 }
 
 gls.right[3] = {
+  LineInfo = {
+    provider = function ()
+      local max_lines = vim.fn.line('$')
+      local line = vim.fn.line('.')
+      local column = vim.fn.col('.')
+      return string.format("  %2d:%d :%d ", line, max_lines, column)
+    end,
+    separator_highlight = {'NONE',colors.bg},
+    highlight = {colors.fg,colors.bg},
+  },
+}
+
+gls.right[4] = {
   GitIcon = {
-    provider = function() return '  ' end,
+    provider = function() return ' ' end,
     condition = condition.check_git_workspace,
     separator = ' ',
     separator_highlight = {'NONE',colors.bg},
@@ -129,7 +136,7 @@ gls.right[3] = {
   }
 }
 
-gls.right[4] = {
+gls.right[5] = {
   GitBranch = {
     provider = 'GitBranch',
     condition = condition.check_git_workspace,
