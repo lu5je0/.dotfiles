@@ -15,14 +15,3 @@ function! platform#is_wsl()
     let g:isWsl=0
     return 0
 endfunction
-
-function! platform#wsl_version()
-    let lines = readfile("~/.wsl.version")
-    if lines[0] =~ "1"
-        return 1
-    elseif lines[1] =! "2"
-        return 2
-    endif
-    return 0
-endfunction
-

@@ -152,7 +152,7 @@ return require('packer').startup(function()
   use 'w0ng/vim-hybrid'
   use 'glepnir/zephyr-nvim'
 
-  if vim.api.nvim_eval('platform#is_wsl()') == 1 then
+  if vim.api.nvim_eval('platform#is_wsl()') == 0 then
       use {
         'lu5je0/im-switcher',
         opt = true
@@ -189,8 +189,7 @@ return require('packer').startup(function()
   }
 
   use {
-      'sgur/vim-textobj-parameter',
-      keys = {'vi', 'cxi', 'di', 'yi', 'ci', 'gri'}
+      'sgur/vim-textobj-parameter'
   }
 
   use {
@@ -254,8 +253,7 @@ return require('packer').startup(function()
   }
 
   use {
-      'tpope/vim-surround',
-      keys = {'ysi', 'S'}
+      'tpope/vim-surround'
   }
 
   use {'liuchengxu/vista.vim',
