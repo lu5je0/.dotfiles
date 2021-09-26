@@ -97,6 +97,6 @@ runtime runner.vim
 
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
-  runtime im.vim
-  silent! PackerLoad coc.nvim
+    runtime im.vim
+    silent! PackerLoad coc.nvim
 endfunction
