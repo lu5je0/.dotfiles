@@ -37,13 +37,19 @@ python3 << EOF
 import threading
 
 import sys
+import time 
 from os.path import normpath, join
 import vim
 python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
 sys.path.insert(0, python_root_dir)
-import im
-switcher = im.ImSwitcher()
+switcher = None
 
+def im_init():
+    import im
+    global switcher
+    switcher = im.ImSwitcher()
+
+threading.Thread(target=im_init).start()
 EOF
 endfunction
 
