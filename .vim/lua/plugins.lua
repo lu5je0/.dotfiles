@@ -4,28 +4,67 @@
 return require('packer').startup(function()
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
-  use {'akinsho/bufferline.nvim', config = function() require("config/bufferline") end}
+
+  use {
+      'akinsho/bufferline.nvim', 
+      config = function() require("config/bufferline") end
+  }
+
   use 'kyazdani42/nvim-web-devicons'
 
   -- Use specific branch, dependency and run lua file after load
-  use {'glepnir/galaxyline.nvim', branch = 'main', config = function() require("config/galaxyline") end}
+  use {
+      'glepnir/galaxyline.nvim',
+      branch = 'main',
+      config = function() require("config/galaxyline") end,
+  }
+
   use {'jiangmiao/auto-pairs'}
   use {'schickling/vim-bufonly'}
-  use {'theniceboy/vim-calc'}
-  use {'rootkiter/vim-hexedit'}
+
+  use {
+      'theniceboy/vim-calc',
+      opt = true,
+      keys = '<leader>a'
+  }
+
+  use {
+      'rootkiter/vim-hexedit',
+      opt = true,
+      ft = 'bin',
+      keys = '<leader>vh'
+  }
+
   use {'mattn/vim-gist'}
   use {'mattn/webapi-vim'}
   use {'kyazdani42/nvim-tree.lua'}
 
   -- Post-install/update hook with neovim command
-  use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate', config = function() require("config/treesitter") end}
+  use {
+      'nvim-treesitter/nvim-treesitter', 
+      run = ':TSUpdate',
+      config = function() require("config/treesitter") end
+  }
+
   use {'chr4/nginx.vim'}
   use {'cespare/vim-toml'}
   use {'elzr/vim-json'}
   use {'lu5je0/vim-java-bytecode'}
   use {'MTDL9/vim-log-highlighting'}
-  use {'SirVer/ultisnips', ft = {'markdown'}}
-  use {'othree/eregex.vim'}
+
+  use {
+      'SirVer/ultisnips',
+      opt = true,
+      ft = 'markdown'
+  }
+
+  use {
+      'othree/eregex.vim',
+      opt = true,
+      keys = '<leader>/',
+      cmd = 'S'
+  }
+
   use 'dstein64/vim-startuptime'
   use 'yianwillis/vimcdoc'
   use 'chrisbra/vim-diff-enhanced'
@@ -46,35 +85,93 @@ return require('packer').startup(function()
   use 'w0ng/vim-hybrid'
 
   -- " fern
-  -- use 'lambdalisue/fern-hijack.vim'
-  -- use {'lambdalisue/nerdfont.vim'}
-  -- use {'lu5je0/fern-renderer-nerdfont.vim'}
-  -- use {'lambdalisue/glyph-palette.vim'}
-  -- use {'lambdalisue/fern-git-status.vim'}
-  -- use {'yuki-yano/fern-preview.vim'}
-  -- use {'lambdalisue/fern.vim', config = function() vim.cmd('runtime plug-config/fern.vim') end}
+  use {'lambdalisue/fern-hijack.vim'}
+  use {
+      'lambdalisue/fern.vim', 
+      opt = true, 
+      cmd = {'Fern'}, 
+      requires = {
+          {'yuki-yano/fern-preview.vim', opt = true},
+          {'lambdalisue/nerdfont.vim', opt = true},
+          {'lu5je0/fern-renderer-nerdfont.vim', opt = true},
+          {'lambdalisue/glyph-palette.vim', opt = true},
+          {'lambdalisue/fern-git-status.vim', opt = true}
+      },
+      config = function() vim.cmd('runtime plug-config/fern.vim') end
+  }
 
-  use {'Yggdroot/LeaderF', run = './install.sh', config = function() vim.cmd('runtime plug-config/leaderf.vim') end}
+  use {'Yggdroot/LeaderF',
+      run = './install.sh', 
+      opt = true,
+      cmd = {'Leaderf'},
+      config = function() vim.cmd('runtime plug-config/leaderf.vim') end
+  }
 
-  use {'mg979/vim-visual-multi'}
+  use {'mg979/vim-visual-multi',
+      opt = true,
+      keys = {'<c-n>', '<m-n>'}
+  }
+
   use {'sgur/vim-textobj-parameter'}
   use {'mhinz/vim-signify'}
   use {'voldikss/vim-translator'}
-  use {'tpope/vim-fugitive'}
+
+  use {
+      'tpope/vim-fugitive',
+      opt = true,
+      cmd = {'Git'}
+  }
+
   use {'rbong/vim-flog'}
-  use {'lu5je0/vim-terminal-help', config = function() vim.cmd('runtime plug-config/terminal.vim') end}
-  use {'skywind3000/asynctasks.vim'}
-  use {'skywind3000/asyncrun.vim'}
-  use {'skywind3000/asyncrun.extra'}
+
+  use {
+      'lu5je0/vim-terminal-help', 
+      config = function() vim.cmd('runtime plug-config/terminal.vim') end,
+      opt = true,
+      keys = {'<m-i>', '<d-i>'}
+  }
+
+  use {
+      'skywind3000/asyncrun.vim',
+      opt = true,
+      cmd = 'AsyncRun',
+      requires = {
+          {'skywind3000/asynctasks.vim', opt = true},
+          {'skywind3000/asyncrun.extra', opt = true}
+      },
+  }
+
   use {'mbbill/undotree'}
   use {'junegunn/vim-peekaboo'}
   use {'tpope/vim-surround'}
-  use {'liuchengxu/vista.vim', config = function() vim.cmd('runtime plug-config/vista.vim') end}
+
+  use {'liuchengxu/vista.vim', 
+      config = function() vim.cmd('runtime plug-config/vista.vim') end,
+      opt = true,
+      keys = {'<leader>i'}
+  }
+
   use {'machakann/vim-highlightedyank'}
-  use {'lambdalisue/suda.vim'}
-  use {'iamcco/markdown-preview.nvim', run = 'cd app && yarn install', cmd = 'MarkdownPreview'}
+
+  use {
+      'lambdalisue/suda.vim',
+      opt = true,
+      cmd = {'SudaRead', 'SudaWrite'}
+  }
+
+  use {
+      'iamcco/markdown-preview.nvim', 
+      run = 'cd app && yarn install', 
+      opt = true,
+      cmd = 'MarkdownPreview'
+  }
   -- use {'neoclide/coc.nvim', branch = 'release', config = function() vim.cmd('runtime plug-config/coc.vim') end}
-  use {'liuchengxu/vim-which-key', config = function() vim.cmd('runtime whichkey.vim') end}
+  use {'liuchengxu/vim-which-key', 
+      config = function() vim.cmd('runtime whichkey.vim') end,
+      opt = true,
+      keys = {'<leader>'}
+  }
+
   -- if g:coc_enable == 1
   --     call s:lazy_load('neoclide/coc.nvim')
   -- else

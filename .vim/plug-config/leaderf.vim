@@ -15,3 +15,4 @@ let g:Lf_PopupHeight = 0.6
 " let g:Lf_UseMemoryCache = 0
 " let g:Lf_PopupColorscheme = 'default'
 " let g:Lf_RememberLastSearch = 1
+silent! unmap <leader>f

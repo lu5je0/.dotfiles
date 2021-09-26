@@ -39,14 +39,14 @@ if has("gui_running")
 endif
 
 " terminal-toggle
-nmap <silent> <M-i> :call TerminalToggle()<CR>
-nmap <silent> <D-i> :call TerminalToggle()<CR>
+nmap <silent> <m-i> :call TerminalToggle()<CR>
+nmap <silent> <d-i> :call TerminalToggle()<CR>
 
-imap <silent> <M-i> <ESC>:call TerminalToggle()<CR>
-imap <silent> <D-i> <ESC>:call TerminalToggle()<CR>
+imap <silent> <m-i> <ESC>:call TerminalToggle()<CR>
+imap <silent> <d-i> <ESC>:call TerminalToggle()<CR>
 
-tmap <silent> <M-i> <c-\><c-n>:call TerminalToggle()<CR>
-tmap <silent> <D-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <silent> <m-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <silent> <d-i> <c-\><c-n>:call TerminalToggle()<CR>
 
 " visual-multi
 map <c-d-n> <Plug>(VM-Add-Cursor-Down)

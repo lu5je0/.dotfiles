@@ -6,7 +6,7 @@ set keep-english-in-normal-and-restore-in-insert
 set hlsearch
 set incsearch
 set smartcase
-set which-key
+" set which-key
 set timeoutlen=10000
 
 # plugins
