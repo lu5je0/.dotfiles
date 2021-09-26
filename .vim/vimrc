@@ -10,7 +10,11 @@ runtime foldtext.vim
 if has("win32")
     runtime escalt.vim
 endif
-runtime gvim.vim
+
+if has("gui")
+    runtime gvim.vim
+endif
+
 runtime functions.vim
 " }}}
 
