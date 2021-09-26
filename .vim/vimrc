@@ -28,12 +28,6 @@ augroup file_type
 augroup END
 " }}}
  
-" visual_multi {{{
-let g:VM_maps = {}
-let g:VM_maps["Select Cursor Down"] = '<m-n>'
-" let g:VM_maps["Select Cursor Up"]   = '<m-N>'
-" }}}
- 
 " treesitter {{{ "
 set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
@@ -41,10 +35,6 @@ set foldexpr=nvim_treesitter#foldexpr()
 
 " vim-diff-enhanced {{{
 set diffopt+=internal,algorithm:patience
-" }}}
-
-" vim-json {{{
-let g:vim_json_syntax_conceal = 0
 " }}}
 
 " vim-gist {{{
@@ -83,14 +73,6 @@ let g:delimitMate_expand_cr=1
 let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
 
-" highlightedyank {{{
-let g:highlightedyank_highlight_duration=300
-" }}}
-
-" ultisnips {{{
-let g:UltiSnipsExpandTrigger="<c-d>"
-" }}}
-
 " toggle_terminal {{{
 
 " set your favorite shell
@@ -104,11 +86,6 @@ endif
 " (see possible options at :help vertical)
 " let g:toggle_terminal#position = 's'
 
-" }}}
-
-" undotree {{{
-let g:undotree_WindowLayout = 3
-let g:undotree_SetFocusWhenToggle = 1
 " }}}
 
 " alias {{{

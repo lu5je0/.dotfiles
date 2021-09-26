@@ -48,14 +48,20 @@ return require('packer').startup(function()
 
   use {'chr4/nginx.vim'}
   use {'cespare/vim-toml'}
-  use {'elzr/vim-json'}
+
+  use {
+      'elzr/vim-json',
+      config = function() vim.cmd('let g:vim_json_syntax_conceal = 0') end
+  }
+
   use {'lu5je0/vim-java-bytecode'}
   use {'MTDL9/vim-log-highlighting'}
 
   use {
       'SirVer/ultisnips',
       opt = true,
-      ft = 'markdown'
+      ft = 'markdown',
+      config = function() vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"') end
   }
 
   use {
@@ -109,7 +115,8 @@ return require('packer').startup(function()
 
   use {'mg979/vim-visual-multi',
       opt = true,
-      keys = {'<c-n>', '<m-n>'}
+      keys = {'<c-n>', '<m-n>'},
+      config = function() vim.cmd('let g:VM_maps = {} | let g:VM_maps["Select Cursor Down"] = "<m-n>"') end
   }
 
   use {'sgur/vim-textobj-parameter'}
@@ -144,7 +151,8 @@ return require('packer').startup(function()
   use {
       'mbbill/undotree',
       opt = true,
-      keys = {'<leader>u'}
+      keys = {'<leader>u'},
+      config = function() vim.cmd('let g:undotree_WindowLayout = 3 | let g:undotree_SetFocusWhenToggle = 1') end,
   }
   use {'junegunn/vim-peekaboo'}
   use {'tpope/vim-surround'}
@@ -155,7 +163,10 @@ return require('packer').startup(function()
       keys = {'<leader>i'}
   }
 
-  use {'machakann/vim-highlightedyank'}
+  use {
+      'machakann/vim-highlightedyank',
+      config = function() vim.cmd('let g:highlightedyank_highlight_duration=300') end,
+  }
 
   use {
       'lambdalisue/suda.vim',
