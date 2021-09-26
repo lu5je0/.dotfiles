@@ -117,13 +117,12 @@ return require('packer').startup(function()
   use 'ayu-theme/ayu-vim'
   use 'w0ng/vim-hybrid'
 
-  use {
-    'lu5je0/im-switcher',
-    opt = true,
-    cond = function()
-      return vim.api.nvim_eval('platform#is_wsl()') == 1
-    end
-  }
+  if vim.api.nvim_eval('platform#is_wsl()') == 1 then
+      use {
+        'lu5je0/im-switcher',
+        opt = true
+      }
+  end
 
   -- " fern
   use {'lambdalisue/fern-hijack.vim'}

@@ -92,7 +92,7 @@ let g:which_key_map.g = {
 let g:which_key_map.p = {
       \ 'name' : '+git' ,
       \ 'i' : [":echo 'PackerInstall' | PackerInstall", 'plugin install'],
-      \ 'C' : [":echo 'ParkerClean' | ParkerClean", 'plugin clean'],
+      \ 'C' : [":echo 'PackerClean' | PackerClean", 'plugin clean'],
       \ 'c' : [":echo 'PackerCompile' | PackerCompile", 'plugin compile'],
       \ }
 
