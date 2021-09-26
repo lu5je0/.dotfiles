@@ -35,16 +35,35 @@ return require('packer').startup(function()
       keys = '<leader>vh'
   }
 
-  use {'mattn/vim-gist'}
+  use {
+      'mattn/vim-gist',
+      config = function() 
+          vim.cmd("let github_user = 'lu5je0@gmail.com'")
+          vim.cmd("let g:gist_show_privates = 1")
+          vim.cmd("let g:gist_post_private = 1")
+      end
+  }
+
   use {'mattn/webapi-vim'}
   use {'kyazdani42/nvim-tree.lua'}
 
-  -- Post-install/update hook with neovim command
-  use {
-      'nvim-treesitter/nvim-treesitter', 
-      run = ':TSUpdate',
-      config = function() require("config/treesitter") end
-  }
+  -- -- Post-install/update hook with neovim command
+  -- use {
+  --     'nvim-treesitter/nvim-treesitter', 
+  --     run = ':TSUpdate',
+  --     config = function() 
+  --         require'nvim-treesitter.configs'.setup {
+  --             -- Modules and its options go here
+  --             ensure_installed = { "java", "python", "lua", "c", "json" },
+  --             highlight = { enable = true },
+  --             incremental_selection = { enable = true },
+  --             textobjects = { enable = true },
+  --         }
+
+  --         vim.cmd("set foldmethod=expr")
+  --         vim.cmd("set foldexpr=nvim_treesitter#foldexpr()")
+  --     end
+  -- }
 
   use {'chr4/nginx.vim'}
   use {'cespare/vim-toml'}
@@ -67,13 +86,19 @@ return require('packer').startup(function()
   use {
       'othree/eregex.vim',
       opt = true,
-      keys = '<leader>/',
+      keys = {'<leader>/', '/', '?'},
       cmd = 'S'
   }
 
-  use 'dstein64/vim-startuptime'
   use 'yianwillis/vimcdoc'
-  use 'chrisbra/vim-diff-enhanced'
+
+  use {
+    'chrisbra/vim-diff-enhanced',
+    config = function() 
+        vim.cmd("set diffopt+=internal,algorithm:patience")
+    end
+  }
+
   use 'tpope/vim-commentary'
   use 'lu5je0/vim-snippets'
   use 'kana/vim-textobj-user'
@@ -115,8 +140,7 @@ return require('packer').startup(function()
 
   use {'mg979/vim-visual-multi',
       opt = true,
-      keys = {'<c-n>', '<m-n>'},
-      config = function() vim.cmd('let g:VM_maps = {} | let g:VM_maps["Select Cursor Down"] = "<m-n>"') end
+      keys = {'<c-n>', '<m-n>'}
   }
 
   use {'sgur/vim-textobj-parameter'}

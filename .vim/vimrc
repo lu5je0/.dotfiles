@@ -28,21 +28,11 @@ augroup file_type
 augroup END
 " }}}
  
-" treesitter {{{ "
-set foldmethod=expr
-set foldexpr=nvim_treesitter#foldexpr()
-" }}} treesitter "
-
-" vim-diff-enhanced {{{
-set diffopt+=internal,algorithm:patience
+" visual_multi {{{
+let g:VM_maps = {}
+let g:VM_maps["Select Cursor Down"] = '<m-n>'
 " }}}
-
-" vim-gist {{{
-let github_user = 'lu5je0@gmail.com'
-let g:gist_show_privates = 1
-let g:gist_post_private = 1
-" }}}
-
+ 
 " othree/eregex.vim {{{
 let g:eregex_default_enable = 0
 " }}}
