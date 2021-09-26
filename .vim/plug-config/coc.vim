@@ -1,4 +1,4 @@
-let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql']
+let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-lua']
 
 inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" : 
                                            \"\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
