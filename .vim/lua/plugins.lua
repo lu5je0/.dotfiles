@@ -2,8 +2,14 @@
 
 -- Only required if you have packer configured as `opt`
 return require('packer').startup(function()
+
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
+
+  vim.g.did_load_filetypes = 1
+  use {
+      "nathom/filetype.nvim"
+  }
 
   -- Use specific branch, dependency and run lua file after load
   use {
@@ -69,6 +75,7 @@ return require('packer').startup(function()
   }
 
   use {'mattn/webapi-vim'}
+
   use {'kyazdani42/nvim-tree.lua'}
 
   -- -- Post-install/update hook with neovim command
@@ -152,7 +159,7 @@ return require('packer').startup(function()
   use 'w0ng/vim-hybrid'
   use 'glepnir/zephyr-nvim'
 
-  if vim.api.nvim_eval('platform#is_wsl()') == 0 then
+  if vim.fn.has('mac') and vim.api.nvim_eval('platform#is_wsl()') == 1 then
       use {
         'lu5je0/im-switcher',
         opt = true
