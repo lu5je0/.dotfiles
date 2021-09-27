@@ -72,7 +72,7 @@ let g:which_key_map.w.u = 'swap buffer'
 " g is for git
 let g:which_key_map.g = {
       \ 'name' : '+git' ,
-      \ 'a' : [':Git add %', 'add current'],
+      \ 'a' : [":silent! w | Git add % | echo 'git added'", 'add current'],
       \ 'A' : [':Git add -A', 'add all'],
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],

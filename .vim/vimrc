@@ -20,14 +20,6 @@ let g:XkbSwitchEnabled = 1
 let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 " }}}
 
-" autocmd {{{
-augroup file_type
-    autocmd!
-    autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
-    autocmd FileType help set buflisted
-augroup END
-" }}}
- 
 " visual_multi {{{
 let g:VM_maps = {}
 let g:VM_maps["Select Cursor Down"] = '<m-n>'
@@ -35,12 +27,6 @@ let g:VM_maps["Select Cursor Down"] = '<m-n>'
  
 " othree/eregex.vim {{{
 let g:eregex_default_enable = 0
-" }}}
-
-" vim-commentary {{{
-augroup vim_commentary
-    autocmd FileType crontab setlocal commentstring=#\ %s
-augroup END
 " }}}
 
 " auto-paris {{{
@@ -63,28 +49,6 @@ let g:delimitMate_expand_cr=1
 let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
 
-" toggle_terminal {{{
-
-" set your favorite shell
-if has("win32")
-    let g:toggle_terminal#command = 'wsl'
-else
-    let g:toggle_terminal#command = ''
-endif
-
-" set terminal window position
-" (see possible options at :help vertical)
-" let g:toggle_terminal#position = 's'
-
-" }}}
-
-" alias {{{
-command! Json set ft=json
-command! Jp set ft=jproperties
-command! Diff windo difft
-command! Diffo windo diffo
-" }}}
-
 " 主题配置 {{{
 colorscheme one
 set bg=dark
@@ -94,6 +58,7 @@ hi TSPunctBracket guifg=#ABB2BF
 runtime mappings.vim
 runtime misc.vim
 runtime runner.vim
+runtime autocmd.vim
 
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort

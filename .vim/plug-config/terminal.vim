@@ -35,3 +35,14 @@ imap <silent> <d-i> <ESC>:call TerminalToggle()<CR>
 
 tmap <silent> <m-i> <c-\><c-n>:call TerminalToggle()<CR>
 tmap <silent> <d-i> <c-\><c-n>:call TerminalToggle()<CR>
+
+" set your favorite shell
+if has("win32")
+    let g:toggle_terminal#command = 'wsl'
+else
+    let g:toggle_terminal#command = ''
+endif
+
+" set terminal window position
+" (see possible options at :help vertical)
+" let g:toggle_terminal#position = 's'
