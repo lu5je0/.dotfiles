@@ -125,11 +125,20 @@ return require('packer').startup(function()
     end
   }
 
-  use 'tpope/vim-commentary'
+  use {
+    'tpope/vim-commentary',
+    keys = {'gc'}
+  }
+
   use 'lu5je0/vim-snippets'
   use 'kana/vim-textobj-user'
   use 'tpope/vim-repeat'
-  use 'vim-scripts/ReplaceWithRegister'
+
+  use {
+      'vim-scripts/ReplaceWithRegister',
+      keys = {'gr'}
+  }
+
   use 'tommcdo/vim-exchange'
   use 'lu5je0/vim-base64'
 
@@ -227,7 +236,11 @@ return require('packer').startup(function()
       keys = {'<leader>u'},
       config = function() vim.cmd('let g:undotree_WindowLayout = 3 | let g:undotree_SetFocusWhenToggle = 1') end,
   }
-  use {'junegunn/vim-peekaboo'}
+
+  use {
+      'junegunn/vim-peekaboo'
+  }
+
   use {'tpope/vim-surround'}
 
   use {'liuchengxu/vista.vim',
