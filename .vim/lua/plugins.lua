@@ -76,11 +76,11 @@ return require('packer').startup(function()
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
       opt = true,
-      ft = {'json', 'python', 'java', 'lua', 'c'},
+      ft = {'json', 'python', 'java', 'lua', 'c', 'vim'},
       config = function()
           require'nvim-treesitter.configs'.setup {
               -- Modules and its options go here
-              ensure_installed = { "java", "python", "lua", "c", "json" },
+              ensure_installed = { "java", "python", "lua", "c", "json", "vim" },
               highlight = { enable = true },
               incremental_selection = { enable = true },
               textobjects = { enable = true },
