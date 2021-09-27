@@ -6,11 +6,10 @@ return require('packer').startup(function()
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
 
-  -- vim.g.did_load_filetypes = 1
-  -- use {
-  --     "nathom/filetype.nvim",
-  --     disable = true
-  -- }
+  vim.g.did_load_filetypes = 1
+  use {
+      "nathom/filetype.nvim"
+  }
 
   -- Use specific branch, dependency and run lua file after load
   use {
