@@ -76,6 +76,7 @@ return require('packer').startup(function()
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
       opt = true,
+      ft = {'json', 'python', 'java', 'lua', 'c'},
       config = function()
           require'nvim-treesitter.configs'.setup {
               -- Modules and its options go here
@@ -187,7 +188,10 @@ return require('packer').startup(function()
       keys = {'<c-n>', '<m-n>'}
   }
 
-  use {'sgur/vim-textobj-parameter'}
+  use {
+      'sgur/vim-textobj-parameter',
+      keys = {'vi', 'cxi', 'di', 'yi', 'ci', 'gri'}
+  }
 
   use {
       'mhinz/vim-signify',
@@ -249,7 +253,10 @@ return require('packer').startup(function()
       'junegunn/vim-peekaboo'
   }
 
-  use {'tpope/vim-surround'}
+  use {
+      'tpope/vim-surround',
+      keys = {'ysi', 'S'}
+  }
 
   use {'liuchengxu/vista.vim',
       config = function() vim.cmd('runtime plug-config/vista.vim') end,
