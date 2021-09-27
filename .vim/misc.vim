@@ -12,7 +12,7 @@ function! s:quick_note(text)
 	endif
 endfunc
 
-function! s:get_junk_filename()
+function! s:get_junk_filename(name)
 	let junk_dir = '~/junk-file'
 	let junk_dir = junk_dir . strftime('/%Y/%m')
 	let real_dir = expand(junk_dir)
@@ -22,7 +22,11 @@ function! s:get_junk_filename()
 
 	let filename = junk_dir . '/'
 	let filename = tr(filename, '\', '/')
-    let partname = input('Junk Code: ', strftime('%Y-%m-%dT%H%M%S-'))
+    if a:name != ""
+        let partname = input('Junk Code: ', a:name)
+    else
+        let partname = input('Junk Code: ', strftime('%Y-%m-%dT%H%M%S-'))
+    endif
 	let filename = filename . partname
     
     if partname != ''
@@ -35,7 +39,7 @@ endfunction
 " Open junk file.
 command! -nargs=0 JunkFile call s:open_junk_file()
 function! s:open_junk_file()
-    let filename = s:get_junk_filename()
+    let filename = s:get_junk_filename("")
 	if filename != ''
 		execute 'edit ' . fnameescape(filename)
 	endif
@@ -43,7 +47,8 @@ endfunction
 
 command! -nargs=0 SaveAsJunkFile call s:save_as_junk_file()
 function! s:save_as_junk_file()
-    let filename = s:get_junk_filename()
+    let cur_file_name = expand('%:t')
+    let filename = s:get_junk_filename(cur_file_name)
 	if filename != ''
 		execute 'w ' . fnameescape(filename)
 	endif

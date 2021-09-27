@@ -39,14 +39,14 @@ if has("gui_running")
 endif
 
 " terminal-toggle
-nmap <silent> <M-i> :call TerminalToggle()<CR>
-nmap <silent> <D-i> :call TerminalToggle()<CR>
+nmap <silent> <m-i> :call TerminalToggle()<CR>
+nmap <silent> <d-i> :call TerminalToggle()<CR>
 
-imap <silent> <M-i> <ESC>:call TerminalToggle()<CR>
-imap <silent> <D-i> <ESC>:call TerminalToggle()<CR>
+imap <silent> <m-i> <ESC>:call TerminalToggle()<CR>
+imap <silent> <d-i> <ESC>:call TerminalToggle()<CR>
 
-tmap <silent> <M-i> <c-\><c-n>:call TerminalToggle()<CR>
-tmap <silent> <D-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <silent> <m-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <silent> <d-i> <c-\><c-n>:call TerminalToggle()<CR>
 
 " visual-multi
 map <c-d-n> <Plug>(VM-Add-Cursor-Down)
@@ -73,16 +73,6 @@ nmap <silent> <C-K> <C-w>k
 nmap <silent> <C-H> <C-w>h
 nmap <silent> <C-L> <C-w>l
 
-nmap <Leader>1 <Plug>lightline#bufferline#go(1)
-nmap <Leader>2 <Plug>lightline#bufferline#go(2)
-nmap <Leader>3 <Plug>lightline#bufferline#go(3)
-nmap <Leader>4 <Plug>lightline#bufferline#go(4)
-nmap <Leader>5 <Plug>lightline#bufferline#go(5)
-nmap <Leader>6 <Plug>lightline#bufferline#go(6)
-nmap <Leader>7 <Plug>lightline#bufferline#go(7)
-nmap <Leader>8 <Plug>lightline#bufferline#go(8)
-nmap <Leader>9 <Plug>lightline#bufferline#go(9)
-nmap <Leader>0 <Plug>lightline#bufferline#go(10)
 nmap <silent> <left> :bp<cr>
 nmap <silent> <right> :bn<cr>
 nmap <silent> <leader>Q :call QuitForce()<CR>
@@ -119,11 +109,11 @@ inoremap . <c-g>u.
 onoremap il :<c-u>normal! v$o^oh<cr>
 vnoremap il $o^oh
 
-xnoremap <silent> ij i"
-onoremap <silent> ij :normal vij<CR>
+onoremap ie :<c-u>normal! vgg0oG$<cr>
+vnoremap ie gg0oG$
 
-xnoremap <silent> aj a"
-onoremap <silent> aj :normal vaj<CR>
+onoremap ae :<c-u>normal! vgg0oG$<cr>
+vnoremap ae gg0oG$
 
 " let s:python = executable('python3')? 'python3' : 'python'
 if has("win32")

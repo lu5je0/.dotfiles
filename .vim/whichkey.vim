@@ -19,6 +19,17 @@ nnoremap <silent> <localleader> :<c-u>WhichKey  ','<CR>
 vnoremap <silent> <localleader> :<c-u>WhichKeyVisual ','<CR>
 let g:which_key_map = {}
 
+nnoremap <silent><leader>1 :lua require'bufferline'.go_to_buffer(1, true)<cr>
+nnoremap <silent><leader>2 :lua require'bufferline'.go_to_buffer(2, true)<cr>
+nnoremap <silent><leader>3 :lua require'bufferline'.go_to_buffer(3, true)<cr>
+nnoremap <silent><leader>4 :lua require'bufferline'.go_to_buffer(4, true)<cr>
+nnoremap <silent><leader>5 :lua require'bufferline'.go_to_buffer(5, true)<cr>
+nnoremap <silent><leader>6 :lua require'bufferline'.go_to_buffer(6, true)<cr>
+nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
+nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
+nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
+nnoremap <silent><leader>0 :BufferLinePick<CR>
+
 " hide 1-9
 let g:which_key_map.0 = 'which_key_ignore'
 let g:which_key_map.1 = 'which_key_ignore'
@@ -61,7 +72,7 @@ let g:which_key_map.w.u = 'swap buffer'
 " g is for git
 let g:which_key_map.g = {
       \ 'name' : '+git' ,
-      \ 'a' : [':Git add %', 'add current'],
+      \ 'a' : [":silent! w | Git add % | echo 'git added'", 'add current'],
       \ 'A' : [':Git add -A', 'add all'],
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
@@ -80,8 +91,9 @@ let g:which_key_map.g = {
 " plugin
 let g:which_key_map.p = {
       \ 'name' : '+git' ,
-      \ 'i' : [':source $MYVIMRC | PlugInstall', 'plugin install'],
-      \ 'c' : [':PlugClean', 'plugin clean'],
+      \ 'i' : [":echo 'PackerInstall' | PackerInstall", 'plugin install'],
+      \ 'C' : [":echo 'PackerClean' | PackerClean", 'plugin clean'],
+      \ 'c' : [":echo 'PackerCompile' | PackerCompile", 'plugin compile'],
       \ }
 
 let g:which_key_map.s = {

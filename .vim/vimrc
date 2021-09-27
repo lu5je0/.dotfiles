@@ -1,208 +1,32 @@
-let g:coc_enable = 1
-let s:nvim_treesitter = 0
-let g:loaded_clipboard_provider = 1
-
-
-let s:lazy_load_plug_list = []
-
-function s:lazy_load(plug_name)
-    call add(s:lazy_load_plug_list, a:plug_name)
-    Plug a:plug_name, {'on': []}
-endfunction
-
-" vim-plug {{{
-call plug#begin('~/.vim/plugged')
-
-" lightline
-Plug 'itchyny/lightline.vim'
-Plug 'lu5je0/lightline-bufferline'
-
-Plug 'jiangmiao/auto-pairs'
-Plug 'schickling/vim-bufonly'
-Plug 'theniceboy/vim-calc'
-Plug 'rootkiter/vim-hexedit'
-Plug 'mattn/vim-gist'
-Plug 'mattn/webapi-vim'
-Plug 'Lokaltog/vim-easymotion'
-" Plug 'rhysd/committia.vim'
-
-if !has("mac") && platform#is_wsl()
-    call s:lazy_load("lu5je0/im-switcher")
-endif
-" Plug 'lyokha/vim-xkbswitch'
-
-" if has("nvim")
-"     let s:nvim_treesitter = 1
-"     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-" endif
-
-" filetype
-Plug 'chr4/nginx.vim'
-Plug 'cespare/vim-toml'
-Plug 'elzr/vim-json'
-Plug 'lu5je0/vim-java-bytecode'
-Plug 'MTDL9/vim-log-highlighting'
-
-" fern
-Plug 'lambdalisue/fern.vim'
-Plug 'lambdalisue/fern-hijack.vim'
-Plug 'lambdalisue/nerdfont.vim'
-Plug 'lu5je0/fern-renderer-nerdfont.vim'
-Plug 'lambdalisue/glyph-palette.vim'
-Plug 'othree/eregex.vim'
-call s:lazy_load('lambdalisue/fern-git-status.vim')
-call s:lazy_load('yuki-yano/fern-preview.vim')
-
-" lazy load
-call s:lazy_load('mg979/vim-visual-multi')
-call s:lazy_load('sgur/vim-textobj-parameter')
-call s:lazy_load('kana/vim-textobj-entire')
-call s:lazy_load('mhinz/vim-signify')
-call s:lazy_load('voldikss/vim-translator')
-call s:lazy_load('tpope/vim-fugitive')
-call s:lazy_load('rbong/vim-flog')
-call s:lazy_load('lu5je0/vim-terminal-help')
-call s:lazy_load('skywind3000/asynctasks.vim')
-call s:lazy_load('skywind3000/asyncrun.vim')
-call s:lazy_load('skywind3000/asyncrun.extra')
-call s:lazy_load('mbbill/undotree')
-call s:lazy_load('junegunn/vim-peekaboo')
-call s:lazy_load('tpope/vim-surround')
-call s:lazy_load('liuchengxu/vista.vim')
-call s:lazy_load('machakann/vim-highlightedyank')
-" save with sudo
-if !has("win32")
-    call s:lazy_load('lambdalisue/suda.vim')
-endif
-" if !has("gui") && !has("mac")
-"     call s:lazy_load('brglng/vim-im-select')
-" endif
-
-Plug 'SirVer/ultisnips', {'for': ['markdown']}
-Plug 'dstein64/vim-startuptime'
-Plug 'yianwillis/vimcdoc'
-Plug 'chrisbra/vim-diff-enhanced'
-Plug 'tpope/vim-commentary'
-Plug 'lu5je0/vim-snippets'
-Plug 'kana/vim-textobj-user'
-Plug 'tpope/vim-repeat'
-Plug 'vim-scripts/ReplaceWithRegister'
-Plug 'tommcdo/vim-exchange'
-Plug 'liuchengxu/vim-which-key'
-Plug 'lu5je0/vim-base64'
-
-if !has("gui")
-    Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
-endif
-
-if g:coc_enable == 1
-    call s:lazy_load('neoclide/coc.nvim')
-else
-    Plug 'ervandew/supertab'
-endif
-
-Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
-
-" themes
-Plug 'tomasiser/vim-code-dark'
-Plug 'lu5je0/vim-one'
-Plug 'gruvbox-community/gruvbox'
-Plug 'hzchirs/vim-material'
-Plug 'ayu-theme/ayu-vim'
-Plug 'w0ng/vim-hybrid'
-Plug 'lu5je0/lightline-ones'
-call plug#end()
-" }}}
-
-call timer_start(0, 'LoadPlug')
-function! LoadPlug(timer) abort
-  runtime im.vim
-
-  for plug_name in s:lazy_load_plug_list
-      call plug#load(split(plug_name, '/')[1])
-  endfor
-
-  unlet g:loaded_clipboard_provider
-  runtime autoload/provider/clipboard.vim
-endfunction
+lua require('plugins')
 
 " runtime 加载.vim {{{
 runtime settings.vim
 runtime foldtext.vim
 
-if g:coc_enable == 1
-    runtime plug-config/coc.vim
-endif
-
 if has("win32")
     runtime escalt.vim
 endif
-runtime gvim.vim
+
+if has("gui")
+    runtime gvim.vim
+endif
+
 runtime functions.vim
-runtime plug-config/leaderf.vim
-runtime plug-config/autoformat.vim
-runtime plug-config/terminal.vim
-runtime plug-config/lightline.vim
-runtime plug-config/vista.vim
 " }}}
 
 " vim-xkbswitch {{{
 let g:XkbSwitchEnabled = 1
 let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
 " }}}
- 
-" autocmd {{{
-augroup file_type
-    autocmd!
-    autocmd FileType * set formatoptions-=o | if getfsize(@%) > 1024 * 1024 | setlocal syntax=OFF | endif
-    autocmd FileType help set buflisted
-augroup END
-" }}}
- 
+
 " visual_multi {{{
 let g:VM_maps = {}
 let g:VM_maps["Select Cursor Down"] = '<m-n>'
-" let g:VM_maps["Select Cursor Up"]   = '<m-N>'
 " }}}
  
-" treesitter {{{ "
-if s:nvim_treesitter == 1
-lua <<EOF
-require'nvim-treesitter.configs'.setup {
-  -- Modules and its options go here
-  ensure_installed = { "java", "python", "lua", "c", "json" },
-  highlight = { enable = true },
-  incremental_selection = { enable = true },
-  textobjects = { enable = true },
-}
-EOF
-set foldmethod=expr
-set foldexpr=nvim_treesitter#foldexpr()
-endif
-" }}} treesitter "
-
-" vim-diff-enhanced {{{
-set diffopt+=internal,algorithm:patience
-" }}}
-
-" vim-json {{{
-let g:vim_json_syntax_conceal = 0
-" }}}
-
-" vim-gist {{{
-let github_user = 'lu5je0@gmail.com'
-let g:gist_show_privates = 1
-let g:gist_post_private = 1
-" }}}
-
 " othree/eregex.vim {{{
 let g:eregex_default_enable = 0
-" }}}
-
-" vim-commentary {{{
-augroup vim_commentary
-    autocmd FileType crontab setlocal commentstring=#\ %s
-augroup END
 " }}}
 
 " auto-paris {{{
@@ -225,56 +49,21 @@ let g:delimitMate_expand_cr=1
 let g:SuperTabDefaultCompletionType = "<c-n>"
 " }}}
 
-" highlightedyank {{{
-let g:highlightedyank_highlight_duration=300
-" }}}
-
-" ultisnips {{{
-let g:UltiSnipsExpandTrigger="<c-d>"
-" }}}
-
-" toggle_terminal {{{
-
-" set your favorite shell
-if has("win32")
-    let g:toggle_terminal#command = 'wsl'
-else
-    let g:toggle_terminal#command = ''
-endif
-
-" set terminal window position
-" (see possible options at :help vertical)
-" let g:toggle_terminal#position = 's'
-
-" }}}
-
-" undotree {{{
-let g:undotree_WindowLayout = 3
-let g:undotree_SetFocusWhenToggle = 1
-" }}}
-
-" alias {{{
-command! Json set ft=json
-command! Jp set ft=jproperties
-command! Diff windo difft
-command! Diffo windo diffo
-" }}}
-
 " 主题配置 {{{
-" colorscheme codedark
-" let g:lightline.colorscheme = 'apprentice'
-
-" colorscheme gruvbox
-" let g:lightline.colorscheme = 'gruvbox'
-
 colorscheme one
-let g:lightline.colorscheme = 'one'
 set bg=dark
 hi TSPunctBracket guifg=#ABB2BF
 " }}}
 
 runtime mappings.vim
-runtime whichkey.vim
 runtime misc.vim
 runtime runner.vim
-runtime plug-config/fern.vim
+runtime autocmd.vim
+
+call timer_start(0, 'LoadPlug')
+function! LoadPlug(timer) abort
+    runtime im.vim
+    silent! PackerLoad coc.nvim
+    silent! PackerLoad im-switcher
+    set clipboard=unnamed
+endfunction
