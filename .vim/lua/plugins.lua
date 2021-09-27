@@ -183,7 +183,8 @@ return require('packer').startup(function()
       'lu5je0/vim-terminal-help',
       config = function() vim.cmd('runtime plug-config/terminal.vim') end,
       opt = true,
-      keys = {'<m-i>', '<d-i>'}
+      keys = {'<m-i>', '<d-i>'},
+      fn = {'TerminalSendInner', 'TerminalOpen', 'TerminalSend'}
   }
 
   use {
