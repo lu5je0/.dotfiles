@@ -149,6 +149,7 @@ return require('packer').startup(function()
   use 'hzchirs/vim-material'
   use 'ayu-theme/ayu-vim'
   use 'w0ng/vim-hybrid'
+  use 'glepnir/zephyr-nvim'
 
   if vim.api.nvim_eval('platform#is_wsl()') == 1 then
       use {
@@ -187,7 +188,14 @@ return require('packer').startup(function()
   }
 
   use {'sgur/vim-textobj-parameter'}
-  use {'mhinz/vim-signify'}
+
+  use {
+      'mhinz/vim-signify',
+      config = function()
+          vim.cmd("let g:signify_vcs_cmds_diffmode = {'git': 'git cat-file -p :./%f'}")
+      end
+  }
+
   use {'voldikss/vim-translator'}
 
   use {
