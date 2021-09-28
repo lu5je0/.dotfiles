@@ -197,7 +197,8 @@ return require('packer').startup(function()
   }
 
   use {
-      'sgur/vim-textobj-parameter'
+      'sgur/vim-textobj-parameter',
+      opt = true
   }
 
   use {
