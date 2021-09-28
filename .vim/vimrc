@@ -64,6 +64,9 @@ call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
     runtime im.vim
     silent! PackerLoad coc.nvim
-    silent! PackerLoad im-switcher
+    silent! PackerLoad vim-textobj-parameter
+    if platform#is_wsl() == 1
+        silent! PackerLoad im-switcher
+    endif
     set clipboard=unnamed
 endfunction

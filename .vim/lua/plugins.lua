@@ -2,8 +2,14 @@
 
 -- Only required if you have packer configured as `opt`
 return require('packer').startup(function()
+
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
+
+  vim.g.did_load_filetypes = 1
+  use {
+      "nathom/filetype.nvim"
+  }
 
   -- Use specific branch, dependency and run lua file after load
   use {
@@ -69,18 +75,20 @@ return require('packer').startup(function()
   }
 
   use {'mattn/webapi-vim'}
+
   use {'kyazdani42/nvim-tree.lua'}
 
   -- -- Post-install/update hook with neovim command
+  local treesitter_ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml'}
   use {
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
       opt = true,
-      ft = {'json', 'python', 'java', 'lua', 'c', 'vim'},
+      ft = treesitter_ft,
       config = function()
           require'nvim-treesitter.configs'.setup {
               -- Modules and its options go here
-              ensure_installed = { "java", "python", "lua", "c", "json", "vim" },
+              ensure_installed = treesitter_ft,
               highlight = { enable = true },
               incremental_selection = { enable = true },
               textobjects = { enable = true },
@@ -152,7 +160,7 @@ return require('packer').startup(function()
   use 'w0ng/vim-hybrid'
   use 'glepnir/zephyr-nvim'
 
-  if vim.api.nvim_eval('platform#is_wsl()') == 1 then
+  if vim.fn.has('mac') and vim.api.nvim_eval('platform#is_wsl()') == 1 then
       use {
         'lu5je0/im-switcher',
         opt = true
@@ -190,7 +198,7 @@ return require('packer').startup(function()
 
   use {
       'sgur/vim-textobj-parameter',
-      keys = {'vi', 'cxi', 'di', 'yi', 'ci', 'gri'}
+      opt = true
   }
 
   use {
@@ -254,8 +262,7 @@ return require('packer').startup(function()
   }
 
   use {
-      'tpope/vim-surround',
-      keys = {'ysi', 'S'}
+      'tpope/vim-surround'
   }
 
   use {'liuchengxu/vista.vim',
