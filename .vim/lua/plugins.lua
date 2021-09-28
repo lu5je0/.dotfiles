@@ -72,15 +72,16 @@ return require('packer').startup(function()
   use {'kyazdani42/nvim-tree.lua'}
 
   -- -- Post-install/update hook with neovim command
+  local treesitter_ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml'}
   use {
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
       opt = true,
-      ft = {'json', 'python', 'java', 'lua', 'c', 'vim'},
+      ft = treesitter_ft,
       config = function()
           require'nvim-treesitter.configs'.setup {
               -- Modules and its options go here
-              ensure_installed = { "java", "python", "lua", "c", "json", "vim" },
+              ensure_installed = treesitter_ft,
               highlight = { enable = true },
               incremental_selection = { enable = true },
               textobjects = { enable = true },
