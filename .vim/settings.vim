@@ -69,3 +69,5 @@ endif
 
 " 不显示启动界面
 set shortmess=atI
+
+set foldtext=misc#fold_text()

@@ -1,6 +1,4 @@
-" fold {{{
-set foldtext=FoldText()
-function! FoldText()
+function! misc#fold_text()
   let l:lpadding = &fdc
   redir => l:signs
     execute 'silent sign place buffer='.bufnr('%')
@@ -34,4 +32,3 @@ function! FoldText()
 
   return l:text . repeat(' ', l:width - strlen(substitute(l:text, ".", "x", "g")) + 1) . l:info
 endfunction
-" }}}
