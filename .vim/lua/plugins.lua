@@ -24,19 +24,33 @@ return require('packer').startup(function()
   }
 
   use {
-      'hrsh7th/nvim-compe',
+      'hrsh7th/nvim-cmp',
       config = function() 
-          require("config/nvim-compe")
-      end
+          require("config/nvim-cmp")
+      end,
+      requires =  {
+          'hrsh7th/cmp-nvim-lsp',
+          'hrsh7th/cmp-buffer',
+          'hrsh7th/nvim-cmp',
+          'hrsh7th/cmp-vsnip',
+          'hrsh7th/vim-vsnip'
+      }
   }
 
   use {
       'windwp/nvim-autopairs',
       config = function()
           require('nvim-autopairs').setup{}
-          require("nvim-autopairs.completion.compe").setup({
+          -- you need setup cmp first put this after cmp.setup()
+          require("nvim-autopairs.completion.cmp").setup({
               map_cr = true, --  map <CR> on insert mode
-              map_complete = true -- it will auto insert `(` after select function or method item
+              map_complete = true, -- it will auto insert `(` (map_char) after select function or method item
+              auto_select = true, -- automatically select the first item
+              insert = false, -- use insert confirm behavior instead of replace
+              map_char = { -- modifies the function or method delimiter by filetypes
+                  all = '(',
+                  tex = '{'
+              }
           })
       end
   }
