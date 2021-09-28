@@ -14,7 +14,7 @@ cmp.setup({
             -- require('luasnip').lsp_expand(args.body)
 
             -- For `ultisnips` user.
-            -- vim.fn["UltiSnips#Anon"](args.body)
+            vim.fn["UltiSnips#Anon"](args.body)
         end,
     },
     mapping = {
@@ -35,7 +35,7 @@ cmp.setup({
         -- { name = 'luasnip' },
 
         -- For ultisnips user.
-        -- { name = 'ultisnips' },
+        { name = 'ultisnips' },
 
         { name = 'buffer' },
     }

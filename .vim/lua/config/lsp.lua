@@ -33,6 +33,7 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
   buf_set_keymap('n', 'gn', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
   buf_set_keymap('i', '<m-p>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+  buf_set_keymap('i', '<d-p>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
   buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
   buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
   buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
@@ -45,13 +46,6 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
   buf_set_keymap('n', '<leader>cf', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
-
-  vim.cmd("inoremap <silent><expr> <C-Space> compe#complete()")
-  vim.cmd("inoremap <silent><expr> <CR>      compe#confirm('<CR>')")
-  vim.cmd("inoremap <silent><expr> <tab>     compe#confirm('<tab>')")
-  vim.cmd("inoremap <silent><expr> <C-e>     compe#close('<C-e>')")
-  vim.cmd("inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })")
-  vim.cmd("inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })")
 end
 
 -- Use a loop to conveniently call 'setup' on multiple servers and

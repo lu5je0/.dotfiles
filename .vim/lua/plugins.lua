@@ -20,7 +20,9 @@ return require('packer').startup(function()
 
   use {
       'neovim/nvim-lspconfig',
-      config = function() require("config/lspconfig") end
+      config = function() 
+          require('config/lsp')
+      end
   }
 
   use {
@@ -28,13 +30,15 @@ return require('packer').startup(function()
       config = function() 
           require("config/nvim-cmp")
       end,
+      after = 'nvim-lspconfig',
       requires =  {
           'hrsh7th/cmp-nvim-lsp',
           'hrsh7th/cmp-buffer',
           'hrsh7th/nvim-cmp',
           'hrsh7th/cmp-vsnip',
           'hrsh7th/vim-vsnip'
-      }
+      },
+      disable = true
   }
 
   use {
@@ -150,7 +154,6 @@ return require('packer').startup(function()
   use {
       'SirVer/ultisnips',
       config = function() 
-          vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"') 
           vim.g.UltiSnipsJumpForwardTrigger = '<c-j>'
           vim.g.UltiSnipsJumpBackwardTrigger = '<c-k>'
       end
