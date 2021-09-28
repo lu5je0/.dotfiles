@@ -27,8 +27,6 @@ return require('packer').startup(function()
       'hrsh7th/nvim-compe',
       config = function() 
           vim.o.completeopt = "menu,preview,noinsert"
-          -- vim.api.nvim_set_keymap("i", "<CR>", "compe#confirm({ 'keys': '<CR>', 'select': v:true })", { expr = true })
-          -- vim.api.nvim_set_keymap("i", "<tab>", "compe#confirm({ 'keys': '<CR>', 'select': v:true })", { expr = true })
           require'compe'.setup {
               preselect = 'always';
               enabled = true;
@@ -160,9 +158,11 @@ return require('packer').startup(function()
 
   use {
       'SirVer/ultisnips',
-      opt = true,
-      ft = 'markdown',
-      config = function() vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"') end
+      config = function() 
+          vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"') 
+          vim.g.UltiSnipsJumpForwardTrigger = '<c-j>'
+          vim.g.UltiSnipsJumpBackwardTrigger = '<c-k>'
+      end
   }
 
   use {
