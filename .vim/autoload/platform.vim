@@ -15,4 +15,3 @@ function! platform#is_wsl()
     let g:isWsl=0
     return 0
 endfunction
-
