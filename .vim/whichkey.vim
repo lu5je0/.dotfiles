@@ -94,6 +94,7 @@ let g:which_key_map.p = {
       \ 'i' : [":echo 'PackerInstall' | PackerInstall", 'plugin install'],
       \ 'C' : [":echo 'PackerClean' | PackerClean", 'plugin clean'],
       \ 'c' : [":echo 'PackerCompile' | PackerCompile", 'plugin compile'],
+      \ 'u' : [":echo 'PackerUpdate' | PackerUpdate", 'plugin update'],
       \ }
 
 let g:which_key_map.s = {
