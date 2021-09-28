@@ -49,7 +49,17 @@ return require('packer').startup(function()
 
   use 'kyazdani42/nvim-web-devicons'
 
-  use {'jiangmiao/auto-pairs'}
+  use {
+      'jiangmiao/auto-pairs',
+      config = function()
+          vim.cmd([[let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}]])
+          vim.g.AutoPairsShortcutToggle = ''
+          vim.g.AutoPairsShortcutJump = ''
+          vim.g.AutoPairsShortcutFastWrap = ''
+          vim.g.AutoPairsMoveCharacter = ''
+      end
+  }
+
   use {'schickling/vim-bufonly'}
 
   use {

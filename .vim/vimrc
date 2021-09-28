@@ -29,14 +29,6 @@ let g:VM_maps["Select Cursor Down"] = '<m-n>'
 let g:eregex_default_enable = 0
 " }}}
 
-" auto-paris {{{
-let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
-let g:AutoPairsShortcutToggle = ''
-let g:AutoPairsShortcutJump = ''
-let g:AutoPairsShortcutFastWrap = ''
-let g:AutoPairsMoveCharacter = ''
-" }}}
-
 " vim-textobj-parameter {{{
 let g:vim_textobj_parameter_mapping = 'a'
 " }}}
