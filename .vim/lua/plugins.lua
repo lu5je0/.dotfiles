@@ -88,25 +88,13 @@ return require('packer').startup(function()
 
   use {'kyazdani42/nvim-tree.lua'}
 
-  -- -- Post-install/update hook with neovim command
-  local treesitter_ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml'}
   use {
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
       opt = true,
-      ft = treesitter_ft,
+      ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown'},
       config = function()
-          require'nvim-treesitter.configs'.setup {
-              -- Modules and its options go here
-              ensure_installed = treesitter_ft,
-              highlight = { enable = true },
-              incremental_selection = { enable = true },
-              textobjects = { enable = true },
-          }
-          vim.cmd([[
-            set foldmethod=expr
-            set foldexpr=nvim_treesitter#foldexpr()
-          ]])
+          require('config/treesiter')
       end
   }
 
@@ -302,11 +290,11 @@ return require('packer').startup(function()
   }
 
   use {
-    'plasticboy/vim-markdown',
-    ft = {'markdown'},
-    requires = {
-        {'godlygeek/tabular', ft = {'markdown'}}
-    }
+      'masukomi/vim-markdown-folding',
+      ft = {'markdown'},
+      config = function()
+          vim.g.markdown_fold_style = 'nested'
+      end
   }
 
   use {
