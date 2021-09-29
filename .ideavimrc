@@ -122,6 +122,8 @@ vmap L $
 omap H ^
 omap L $
 
+map m %
+
 nmap Y ^y$
 
 omap ij i"

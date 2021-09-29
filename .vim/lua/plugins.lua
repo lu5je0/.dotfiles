@@ -294,9 +294,8 @@ return require('packer').startup(function()
 
   use {
       'iamcco/markdown-preview.nvim',
-      run = 'cd app && yarn install',
-      opt = true,
-      cmd = 'MarkdownPreview'
+      run = function() vim.fn['mkdp#util#install']() end,
+      ft = {'markdown'}
   }
 
   use {
