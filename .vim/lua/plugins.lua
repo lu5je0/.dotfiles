@@ -121,12 +121,12 @@ return require('packer').startup(function()
   use {'lu5je0/vim-java-bytecode'}
   use {'MTDL9/vim-log-highlighting'}
 
-  use {
-      'SirVer/ultisnips',
-      opt = true,
-      ft = 'markdown',
-      config = function() vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"') end
-  }
+--   use {
+--       'SirVer/ultisnips',
+--       opt = true,
+--       ft = 'markdown',
+--       config = function() vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"') end
+--   }
 
   use {
       'othree/eregex.vim',
@@ -295,7 +295,18 @@ return require('packer').startup(function()
   use {
       'iamcco/markdown-preview.nvim',
       run = function() vim.fn['mkdp#util#install']() end,
+      config = function ()
+          vim.g.mkdp_auto_close = 0
+      end,
       ft = {'markdown'}
+  }
+
+  use {
+    'plasticboy/vim-markdown',
+    ft = {'markdown'},
+    requires = {
+        {'godlygeek/tabular', ft = {'markdown'}}
+    }
   }
 
   use {

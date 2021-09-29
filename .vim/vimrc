@@ -61,3 +61,6 @@ function! LoadPlug(timer) abort
     endif
     set clipboard=unnamed
 endfunction
+
+
+let g:vim_markdown_folding_style_pythonic = 1
