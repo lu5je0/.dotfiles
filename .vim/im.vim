@@ -31,6 +31,7 @@ augroup switch_im
 augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+let g:save_last_ime = 0
 
 function! ImFuncInit()
 python3 << EOF
@@ -56,7 +57,11 @@ endfunction
 call ImFuncInit()
 
 function! SwitchInsertMode()
-    call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
+    if g:save_last_ime == 1
+        call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
+    else
+        call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", "com.apple.keylayout.ABC")
+    endif
 endfunction
 
 function! SwitchNormalMode()
@@ -67,10 +72,13 @@ EOF
 endfunction
 
 function! ToggleSaveLastIme()
-python3 << EOF
-if switcher != None:
-    switcher.toggle_save_last_ime()
-EOF
+    if g:save_last_ime == 0
+        let g:save_last_ime = 1
+        echo "keep last ime enabled"
+    else
+        let g:save_last_ime = 0
+        echo "keep last ime disabled"
+    endif
 endfunction
 
 command! SwitchNormalMode call SwitchNormalMode()
