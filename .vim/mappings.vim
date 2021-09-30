@@ -78,21 +78,6 @@ nmap <silent> <right> :bn<cr>
 nmap <silent> <leader>Q :call QuitForce()<CR>
 nmap Q <Nop>
 
-fun SplitWithBuffer(n)
-    let l:buffer_number = lightline#bufferline#get_buffer_for_ordinal_number(a:n)
-    execute "vertical sb" l:buffer_number
-endf
-
-map <leader>w1 :call SplitWithBuffer(1)<cr>
-map <leader>w2 :call SplitWithBuffer(2)<cr>
-map <leader>w3 :call SplitWithBuffer(3)<cr>
-map <leader>w4 :call SplitWithBuffer(4)<cr>
-map <leader>w5 :call SplitWithBuffer(5)<cr>
-map <leader>w6 :call SplitWithBuffer(6)<cr>
-map <leader>w7 :call SplitWithBuffer(7)<cr>
-map <leader>w8 :call SplitWithBuffer(8)<cr>
-map <leader>w9 :call SplitWithBuffer(9)<cr>
-
 command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
 
 " undotree esc映射

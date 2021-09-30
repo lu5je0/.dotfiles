@@ -65,6 +65,8 @@ let g:which_key_map.w = {
       \ 's' : [':vsplit', 'vspilt'],
       \ 'S' : [':split', 'spilt'],
       \ 'q' : [':only', 'break window'],
+      \ 'd' : [':BufferLinePickSplit', 'spilit with'],
+      \ 'p' : [':BufferLinePick', 'buffer pick'],
       \ }
 nmap <leader>wu <c-w>x
 let g:which_key_map.w.u = 'swap buffer'

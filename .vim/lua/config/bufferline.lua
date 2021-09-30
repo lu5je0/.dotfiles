@@ -1,4 +1,7 @@
-require("bufferline").setup {
+local M = {}
+
+local bl = require("bufferline")
+bl.setup {
     options = {
         numbers = "ordinal",
         offsets = {
@@ -30,3 +33,5 @@ require("bufferline").setup {
         max_name_length = 12,
     }
 }
+
+return M

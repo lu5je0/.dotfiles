@@ -43,7 +43,7 @@ return require('packer').startup(function()
   }
 
   use {
-      'akinsho/bufferline.nvim',
+      'lu5je0/bufferline.nvim',
       config = function() require("config/bufferline") end
   }
 
@@ -125,12 +125,12 @@ return require('packer').startup(function()
 
   use 'yianwillis/vimcdoc'
 
-  use {
-    'chrisbra/vim-diff-enhanced',
-    config = function()
-        vim.cmd("set diffopt+=internal,algorithm:patience")
-    end
-  }
+  -- use {
+  --   'chrisbra/vim-diff-enhanced',
+  --   config = function()
+  --       vim.cmd("set diffopt+=internal,algorithm:patience")
+  --   end
+  -- }
 
   use {
     'tpope/vim-commentary',
