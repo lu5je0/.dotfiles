@@ -111,7 +111,7 @@ let g:which_key_map.s = {
 nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV
 " say it
-nmap <silent> <Leader>sa :call misc#execute_command_for_word("say")<cr>
+nmap <silent> <Leader>sa :call misc#execute_command_for_word("say -v Alex")<cr>
 " vmap <silent> <Leader>sc <Plug>TranslateV
 " Display translation in a window
 nmap <silent> <Leader>ss <Plug>TranslateW
