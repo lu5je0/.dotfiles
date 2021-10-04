@@ -44,6 +44,6 @@ function misc#say_it()
 endfunction
 
 function misc#visual_say_it()
-    echon VisualSelection()
-    silent exec "!say -v Alex " . VisualSelection()
+    echon visual#visual_selection()
+    silent exec "!say -v Alex " . visual#visual_selection()
 endfunction
