@@ -206,7 +206,12 @@ return require('packer').startup(function()
       end
   }
 
-  use {'voldikss/vim-translator'}
+  use {
+      'lu5je0/vim-translator',
+      config = function()
+        vim.g.translator_default_engines = {'disk'}
+      end
+  }
 
   use {
       'rbong/vim-flog',
