@@ -32,3 +32,8 @@ function! misc#fold_text()
 
   return l:text . repeat(' ', l:width - strlen(substitute(l:text, ".", "x", "g")) + 1) . l:info
 endfunction
+
+function misc#execute_command_for_word(cmd)
+   let l:word = expand("<cword>")
+   execute 'silent exec "!' . a:cmd . ' ' . l:word . '"'
+endfu 
