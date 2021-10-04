@@ -110,8 +110,11 @@ let g:which_key_map.s = {
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV
+
 " say it
-nmap <silent> <Leader>sa :call misc#execute_command_for_word("say -v Alex")<cr>
+nmap <silent> <Leader>sa :call misc#say_it()<cr>
+vmap <silent> <Leader>sa :call misc#visual_say_it()<cr>
+
 " vmap <silent> <Leader>sc <Plug>TranslateV
 " Display translation in a window
 nmap <silent> <Leader>ss <Plug>TranslateW

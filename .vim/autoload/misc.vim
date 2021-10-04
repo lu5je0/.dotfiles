@@ -37,3 +37,13 @@ function misc#execute_command_for_word(cmd)
    let l:word = expand("<cword>")
    execute 'silent exec "!' . a:cmd . ' ' . l:word . '"'
 endfu 
+
+function misc#say_it()
+    echon expand("<cword>")
+    call misc#execute_command_for_word("say -v Alex")
+endfunction
+
+function misc#visual_say_it()
+    echon VisualSelection()
+    silent exec "!say -v Alex " . VisualSelection()
+endfunction
