@@ -38,12 +38,15 @@ function misc#execute_command_for_word(cmd)
    execute 'silent exec "!' . a:cmd . ' ' . l:word . '"'
 endfu 
 
+function misc#say(word)
+    echon a:word
+    call jobstart("say -v Alex " . a:word)
+endfunction
+
 function misc#say_it()
-    echon expand("<cword>")
-    call misc#execute_command_for_word("say -v Alex")
+    call misc#say(expand("<cword>"))
 endfunction
 
 function misc#visual_say_it()
-    echon visual#visual_selection()
-    silent exec "!say -v Alex " . visual#visual_selection()
+    call misc#say(visual#visual_selection())
 endfunction
