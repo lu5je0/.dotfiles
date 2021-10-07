@@ -40,7 +40,12 @@ endfu
 
 function misc#say(word)
     echon a:word
-    call jobstart("say -v Alex " . a:word)
+    if has("mac")
+        call jobstart("say -v Alex " . a:word)
+    elseif platform#is_wsl()
+        call jobstart("wsay -v 2 " . a:word)
+    endif
+    
 endfunction
 
 function misc#say_it()
