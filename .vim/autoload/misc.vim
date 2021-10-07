@@ -54,4 +54,5 @@ endfunction
 
 function misc#visual_say_it()
     call misc#say(visual#visual_selection())
+    norm gv
 endfunction
