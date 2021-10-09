@@ -112,8 +112,8 @@ nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV
 
 " say it
-nmap <silent> <Leader>sa <Plug>TranslateW:call misc#say_it()<cr>
-vmap <silent> <Leader>sa <Plug>TranslateWV:call misc#visual_say_it()<cr>
+nmap <silent> <Leader>sa :call misc#say_it()<cr><Plug>TranslateW
+vmap <silent> <Leader>sa :call misc#visual_say_it()<cr><Plug>TranslateWV
 
 " vmap <silent> <Leader>sc <Plug>TranslateV
 " Display translation in a window

@@ -40,7 +40,11 @@ endfu
 
 function misc#say(word)
     echon a:word
-    call jobstart("say -v Fiona " . a:word)
+    if has("mac")
+        call jobstart("say -v Alex " . a:word)
+    elseif platform#is_wsl()
+        call jobstart("wsay -v 7 '" . a:word . "'")
+    endif
 endfunction
 
 function misc#say_it()
@@ -49,4 +53,5 @@ endfunction
 
 function misc#visual_say_it()
     call misc#say(visual#visual_selection())
+    norm gv
 endfunction
