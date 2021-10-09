@@ -40,7 +40,7 @@ endfu
 
 function misc#say(word)
     echon a:word
-    call jobstart("say -v Alex " . a:word)
+    call jobstart("say -v Fiona " . a:word)
 endfunction
 
 function misc#say_it()

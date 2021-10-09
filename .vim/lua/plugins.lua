@@ -1,7 +1,7 @@
 -- This file can be loaded by calling `lua require('plugins')` from your init.vim
 
 require('packer').init {
-    max_jobs = 10
+    max_jobs = 15
 }
 -- Only required if you have packer configured as `opt`
 return require('packer').startup(function()
@@ -89,7 +89,7 @@ return require('packer').startup(function()
 
   use {'mattn/webapi-vim'}
 
-  use {'kyazdani42/nvim-tree.lua'}
+  -- use {'kyazdani42/nvim-tree.lua'}
 
   use {
       'nvim-treesitter/nvim-treesitter',
