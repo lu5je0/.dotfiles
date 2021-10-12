@@ -306,15 +306,25 @@ return require('packer').startup(function()
   }
 
   use {
-      'neoclide/coc.nvim', branch = 'release',
+      'neoclide/coc.nvim',
+      branch = 'release',
       opt = true,
       config = function() vim.cmd('runtime plug-config/coc.vim') end
   }
 
-  use {'liuchengxu/vim-which-key', 
+  use {
+      'liuchengxu/vim-which-key',
       config = function() vim.cmd('runtime whichkey.vim') end,
       opt = true,
       keys = {'<leader>'}
   }
+
+  -- use {
+  --     'weirongxu/plantuml-previewer.vim',
+  --     requires = {
+  --         {'tyru/open-browser.vim'},
+  --         {'aklt/plantuml-syntax'}
+  --     }
+  -- }
 
 end)

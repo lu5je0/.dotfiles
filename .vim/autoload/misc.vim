@@ -43,7 +43,7 @@ function misc#say(word)
     if has("mac")
         call jobstart("say -v Alex " . a:word)
     elseif platform#is_wsl()
-        call jobstart("wsay -v 7 '" . a:word . "'")
+        call jobstart("wsay -v 2 '" . a:word . "'")
     endif
 endfunction
 
