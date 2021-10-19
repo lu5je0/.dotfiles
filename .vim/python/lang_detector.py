@@ -4,7 +4,8 @@ import vim
 lang_map = {
         "Python": "python",
         "Java": "java",
-        "Shell": "bash",
+        "Shell": "sh",
+        "C++": "cpp",
         }
 guess = Guess()
 
