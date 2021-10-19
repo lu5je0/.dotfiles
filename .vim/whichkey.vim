@@ -189,6 +189,7 @@ let g:which_key_map.t = {
 
 let g:which_key_map.f = {
       \ 'name' : '+leaderf/files',
+      \ 'a' : [':GuessLang', 'GuessLang'],
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'g' : [':Leaderf --recall', 'recall'],

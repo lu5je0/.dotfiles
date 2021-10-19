@@ -18,3 +18,4 @@ def detect_filetype():
     ft = ft.lower()
 
     vim.command("set filetype=" + ft)
+    print("set filetype=" + ft)
