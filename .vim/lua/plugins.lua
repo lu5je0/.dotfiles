@@ -110,7 +110,20 @@ return require('packer').startup(function()
   }
 
   use {'lu5je0/vim-java-bytecode'}
+
   use {'MTDL9/vim-log-highlighting'}
+
+  use {
+      'tpope/vim-dadbod',
+      config = function ()
+          vim.g.db_ui_use_nerd_fonts=1
+          vim.g.db_ui_winwidth = 15
+      end
+  }
+
+  use {
+      'kristijanhusak/vim-dadbod-ui',
+  }
 
 --   use {
 --       'SirVer/ultisnips',

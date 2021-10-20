@@ -6,6 +6,13 @@ bl.setup {
         numbers = "ordinal",
         offsets = {
             {
+                filetype = "dbui",
+                text = "DBUI",
+                highlight = "Directory",
+                text_align = "center"
+            },
+
+            {
                 filetype = "fern",
                 text = "File Explorer",
                 highlight = "Directory",
