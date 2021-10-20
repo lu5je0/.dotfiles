@@ -18,7 +18,9 @@ ask "Clone parcker.nvim?" && git clone --depth 1 https://github.com/wbthomason/p
 ask "Use ssh config?" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 if [ "$(uname)" = "Linux" ]; then
-    ask "Install requires(ubuntu)?" && sh ~/.dotfiles/scripts/apt-requires.sh
+    if [ -f /etc/lsb-release ]; then
+        ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requires.sh
+    fi
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
 fi
 
