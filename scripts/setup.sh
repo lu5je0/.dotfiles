@@ -11,17 +11,22 @@ ask() {
     return -1
 }
 
-ask "Enable http proxy?" && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
+ask "Enable http proxy(http://127.0.0.1:1080)?" && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
 
 ask "Clone parcker.nvim?" && git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
 
-ask "Use ssh config" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
+ask "Use ssh config?" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
+
+if [ "$(uname)" = "Linux" ]; then
+    ask "Install requires(ubuntu)?" && sh ~/.dotfiles/scripts/apt-requires.sh
+    ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
+fi
 
 ln -s ~/.dotfiles/.vim ~/.vim
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
-ln -s ~/.dotfiles/.p10k.zsh ~/.p10k.zsh
+# ln -s ~/.dotfiles/.p10k.zsh ~/.p10k.zsh
 ln -s ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes/lu5je0.zsh-theme
 
 if [ "$(uname)" = "Darwin" ]; then
@@ -48,3 +53,4 @@ ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
 ln -s ~/.dotfiles/.vim/coc-settings.json ~/.config/nvim/coc-settings.json
 
 rm ~/.dotfiles/.vim/.vim
+rm ~/.dotfiles/bin/bin
