@@ -17,8 +17,9 @@ ask "Clone parcker.nvim?" && git clone --depth 1 https://github.com/wbthomason/p
 
 ask "Use ssh config?" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
-
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
+
+ask "Git config?" && ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 
 if [ "$(uname)" = "Linux" ]; then
     if [ -f /etc/lsb-release ]; then
@@ -30,7 +31,6 @@ fi
 
 ln -s ~/.dotfiles/.vim ~/.vim
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
-ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
 # ln -s ~/.dotfiles/.p10k.zsh ~/.p10k.zsh
 ln -s ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes/lu5je0.zsh-theme
