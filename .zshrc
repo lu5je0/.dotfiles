@@ -44,6 +44,8 @@ zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 zinit ice depth=1 lucid wait='1'
 zinit light paulirish/git-open
 
+zinit light Aloxaf/fzf-tab
+
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-syntax-highlighting
 
