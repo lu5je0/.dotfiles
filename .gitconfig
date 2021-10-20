@@ -4,4 +4,5 @@
 [core]
     editor = nvim
 [github]
-	user = lu5je0@gmail.com
+	user = lu5je0
+	email = lu5je0@gmail.com
