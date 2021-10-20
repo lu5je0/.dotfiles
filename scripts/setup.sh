@@ -17,10 +17,12 @@ ask "Clone parcker.nvim?" && git clone --depth 1 https://github.com/wbthomason/p
 
 ask "Use ssh config?" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
+
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
 if [ "$(uname)" = "Linux" ]; then
     if [ -f /etc/lsb-release ]; then
+        ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
         ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requires.sh
     fi
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
