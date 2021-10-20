@@ -1,3 +1,4 @@
+#!/bin/bash
 type unzip >/dev/null 2>&1 || { echo >&2 "unzip not installed. Aborting."; exit 1; }
 type wget >/dev/null 2>&1 || { echo >&2 "wget not installed. Aborting."; exit 1; }
 

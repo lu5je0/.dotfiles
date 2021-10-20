@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo apt install openjdk-11-jdk neovim zsh htop p7zip unzip build-essential fzf ripgrep nodejs python3 python3-pip tmux git
