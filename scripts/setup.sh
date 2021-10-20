@@ -1,6 +1,21 @@
 #!/bin/bash
-git clone --depth 1 https://github.com/wbthomason/packer.nvim\
- ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+
+ask() {
+    echo -n $1
+    echo -n $' (y/n) \n# '
+    read choice
+    case $choice in
+        Y | y)
+        return 0
+    esac
+    return -1
+}
+
+ask "Enable http proxy?" && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
+
+ask "Clone parcker.nvim?" && git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+
+ask "Use ssh config" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ln -s ~/.dotfiles/.vim ~/.vim
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
@@ -31,13 +46,5 @@ ln -s ~/.dotfiles/.vim ~/.local/share/nvim/site
 mkdir -p ~/.config/nvim
 ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
 ln -s ~/.dotfiles/.vim/coc-settings.json ~/.config/nvim/coc-settings.json
-
-
-echo "use ssh config?(y/n)"
-read use_ssh_config
-case $use_ssh_config in
-    Y | y)
-        echo "use ssh config" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
-esac
 
 rm ~/.dotfiles/.vim/.vim
