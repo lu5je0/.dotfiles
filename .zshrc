@@ -24,8 +24,8 @@ zinit light zsh-users/zsh-completions
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
-zinit ice lucid wait='1'
-zinit snippet OMZ::plugins/zsh_reload/zsh_reload.plugin.zsh
+# zinit ice lucid wait='1'
+# zinit snippet OMZ::plugins/zsh_reload/zsh_reload.plugin.zsh
 
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
@@ -44,9 +44,9 @@ zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 zinit ice depth=1 lucid wait='1'
 zinit light paulirish/git-open
 
-zinit ice depth=1 lucid wait='0'
-zinit light Aloxaf/fzf-tab
-zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+# zinit ice depth=1 lucid wait='0'
+# zinit light Aloxaf/fzf-tab
+# zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-syntax-highlighting
@@ -108,11 +108,11 @@ alias sudo="sudo "
 alias crontab="cron.sh"
 
 # ls
-# alias l='ls -lah'
-# alias ll='ls -lh'
+alias l='ls -lah'
+alias ll='ls -lh'
 
-alias l='exa -laF'
-alias ll='exa -lF'
+# alias l='exa -laF'
+# alias ll='exa -lF'
 
 alias md='mkdir -p'
 
