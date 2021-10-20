@@ -44,6 +44,7 @@ zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 zinit ice depth=1 lucid wait='1'
 zinit light paulirish/git-open
 
+zinit ice depth=1 lucid wait='0'
 zinit light Aloxaf/fzf-tab
 zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
@@ -107,11 +108,12 @@ alias sudo="sudo "
 alias crontab="cron.sh"
 
 # ls
-alias l='ls -lah'
-alias la='ls -lAh'
-alias ll='ls -lh'
-alias ls='ls --color=tty'
-alias lsa='ls -lah'
+# alias l='ls -lah'
+# alias ll='ls -lh'
+
+alias l='exa -laF --icons'
+alias ll='exa -lF --icons'
+
 alias md='mkdir -p'
 
 # tmux
