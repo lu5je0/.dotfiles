@@ -19,15 +19,17 @@ nnoremap <silent> <localleader> :<c-u>WhichKey  ','<CR>
 vnoremap <silent> <localleader> :<c-u>WhichKeyVisual ','<CR>
 let g:which_key_map = {}
 
-nnoremap <silent><leader>1 <Cmd>BufferLineGoToBuffer 1<CR>
-nnoremap <silent><leader>2 <Cmd>BufferLineGoToBuffer 2<CR>
-nnoremap <silent><leader>3 <Cmd>BufferLineGoToBuffer 3<CR>
-nnoremap <silent><leader>4 <Cmd>BufferLineGoToBuffer 4<CR>
-nnoremap <silent><leader>5 <Cmd>BufferLineGoToBuffer 5<CR>
-nnoremap <silent><leader>6 <Cmd>BufferLineGoToBuffer 6<CR>
-nnoremap <silent><leader>7 <Cmd>BufferLineGoToBuffer 7<CR>
-nnoremap <silent><leader>8 <Cmd>BufferLineGoToBuffer 8<CR>
-nnoremap <silent><leader>9 <Cmd>BufferLineGoToBuffer 9<CR>
+nnoremap <silent><leader>1 :lua require'bufferline'.go_to_buffer(1, true)<cr>
+nnoremap <silent><leader>2 :lua require'bufferline'.go_to_buffer(2, true)<cr>
+nnoremap <silent><leader>3 :lua require'bufferline'.go_to_buffer(3, true)<cr>
+nnoremap <silent><leader>4 :lua require'bufferline'.go_to_buffer(4, true)<cr>
+nnoremap <silent><leader>5 :lua require'bufferline'.go_to_buffer(5, true)<cr>
+nnoremap <silent><leader>6 :lua require'bufferline'.go_to_buffer(6, true)<cr>
+nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
+nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
+nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
+nnoremap <silent><leader>0 :BufferLinePick<CR>
+
 " hide 1-9
 let g:which_key_map.0 = 'which_key_ignore'
 let g:which_key_map.1 = 'which_key_ignore'
@@ -63,6 +65,8 @@ let g:which_key_map.w = {
       \ 's' : [':vsplit', 'vspilt'],
       \ 'S' : [':split', 'spilt'],
       \ 'q' : [':only', 'break window'],
+      \ 'd' : [':BufferLinePickSplit', 'spilit with'],
+      \ 'p' : [':BufferLinePick', 'buffer pick'],
       \ }
 nmap <leader>wu <c-w>x
 let g:which_key_map.w.u = 'swap buffer'
@@ -70,7 +74,7 @@ let g:which_key_map.w.u = 'swap buffer'
 " g is for git
 let g:which_key_map.g = {
       \ 'name' : '+git' ,
-      \ 'a' : [':Git add %', 'add current'],
+      \ 'a' : [":silent! w | Git add % | echo 'git added'", 'add current'],
       \ 'A' : [':Git add -A', 'add all'],
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
@@ -89,14 +93,16 @@ let g:which_key_map.g = {
 " plugin
 let g:which_key_map.p = {
       \ 'name' : '+git' ,
-      \ 'i' : [':source $MYVIMRC | PlugInstall', 'plugin install'],
-      \ 'c' : [':PlugClean', 'plugin clean'],
-      \ 'u' : [':PlugUpdate', 'plugin update'],
+      \ 'i' : [":echo 'PackerInstall' | PackerInstall", 'plugin install'],
+      \ 'C' : [":echo 'PackerClean' | PackerClean", 'plugin clean'],
+      \ 'c' : [":echo 'PackerCompile' | PackerCompile", 'plugin compile'],
+      \ 'u' : [":echo 'PackerUpdate' | PackerUpdate", 'plugin update'],
       \ }
 
 let g:which_key_map.s = {
             \ 'name' : '+translate',
             \ 's' : 'translate popup',
+            \ 'a' : 'say it',
             \ 'r' : 'translate replace',
             \ 'c' : 'translate',
             \ }
@@ -104,6 +110,12 @@ let g:which_key_map.s = {
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV
+
+" say it
+nmap <silent> <Leader>sa :call misc#say_it()<cr><Plug>TranslateW
+vmap <silent> <Leader>sa :call misc#visual_say_it()<cr><Plug>TranslateWV
+
+" vmap <silent> <Leader>sc <Plug>TranslateV
 " Display translation in a window
 nmap <silent> <Leader>ss <Plug>TranslateW
 vmap <silent> <Leader>ss <Plug>TranslateWV
@@ -177,6 +189,7 @@ let g:which_key_map.t = {
 
 let g:which_key_map.f = {
       \ 'name' : '+leaderf/files',
+      \ 'a' : [":echom 'detecting' | GuessLang", "GuessLang"],
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
       \ 'g' : [':Leaderf --recall', 'recall'],

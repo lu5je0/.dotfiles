@@ -3,7 +3,9 @@ function! platform#is_wsl()
         return g:isWsl
     endif
 
-    if has("unix")
+    if has("mac")
+        return 0
+    elseif has("unix")
         let lines = readfile("/proc/version")
         if lines[0] =~ "Microsoft"
             let g:isWsl=1
@@ -13,4 +15,3 @@ function! platform#is_wsl()
     let g:isWsl=0
     return 0
 endfunction
-

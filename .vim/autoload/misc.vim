@@ -1,6 +1,4 @@
-" fold {{{
-set foldtext=FoldText()
-function! FoldText()
+function! misc#fold_text()
   let l:lpadding = &fdc
   redir => l:signs
     execute 'silent sign place buffer='.bufnr('%')
@@ -34,4 +32,26 @@ function! FoldText()
 
   return l:text . repeat(' ', l:width - strlen(substitute(l:text, ".", "x", "g")) + 1) . l:info
 endfunction
-" }}}
+
+function misc#execute_command_for_word(cmd)
+   let l:word = expand("<cword>")
+   execute 'silent exec "!' . a:cmd . ' ' . l:word . '"'
+endfu 
+
+function misc#say(word)
+    echon a:word
+    if has("mac")
+        call jobstart("say -v Alex " . a:word)
+    elseif platform#is_wsl()
+        call jobstart("wsay -v 2 '" . a:word . "'")
+    endif
+endfunction
+
+function misc#say_it()
+    call misc#say(expand("<cword>"))
+endfunction
+
+function misc#visual_say_it()
+    call misc#say(visual#visual_selection())
+    norm gv
+endfunction

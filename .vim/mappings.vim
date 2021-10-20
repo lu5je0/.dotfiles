@@ -39,14 +39,14 @@ if has("gui_running")
 endif
 
 " terminal-toggle
-nmap <silent> <M-i> :call TerminalToggle()<CR>
-nmap <silent> <D-i> :call TerminalToggle()<CR>
+nmap <silent> <m-i> :call TerminalToggle()<CR>
+nmap <silent> <d-i> :call TerminalToggle()<CR>
 
-imap <silent> <M-i> <ESC>:call TerminalToggle()<CR>
-imap <silent> <D-i> <ESC>:call TerminalToggle()<CR>
+imap <silent> <m-i> <ESC>:call TerminalToggle()<CR>
+imap <silent> <d-i> <ESC>:call TerminalToggle()<CR>
 
-tmap <silent> <M-i> <c-\><c-n>:call TerminalToggle()<CR>
-tmap <silent> <D-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <silent> <m-i> <c-\><c-n>:call TerminalToggle()<CR>
+tmap <silent> <d-i> <c-\><c-n>:call TerminalToggle()<CR>
 
 " visual-multi
 map <c-d-n> <Plug>(VM-Add-Cursor-Down)
@@ -78,22 +78,7 @@ nmap <silent> <right> :bn<cr>
 nmap <silent> <leader>Q :call QuitForce()<CR>
 nmap Q <Nop>
 
-" fun SplitWithBuffer(n)
-"     let l:buffer_number = lightline#bufferline#get_buffer_for_ordinal_number(a:n)
-"     execute "vertical sb" l:buffer_number
-" endf
-
-" map <leader>w1 :call SplitWithBuffer(1)<cr>
-" map <leader>w2 :call SplitWithBuffer(2)<cr>
-" map <leader>w3 :call SplitWithBuffer(3)<cr>
-" map <leader>w4 :call SplitWithBuffer(4)<cr>
-" map <leader>w5 :call SplitWithBuffer(5)<cr>
-" map <leader>w6 :call SplitWithBuffer(6)<cr>
-" map <leader>w7 :call SplitWithBuffer(7)<cr>
-" map <leader>w8 :call SplitWithBuffer(8)<cr>
-" map <leader>w9 :call SplitWithBuffer(9)<cr>
-
-" command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
+command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
 
 " undotree esc映射
 function g:Undotree_CustomMap()
