@@ -17,6 +17,8 @@ ask "Clone parcker.nvim?" && git clone --depth 1 https://github.com/wbthomason/p
 
 ask "Use ssh config?" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
+ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
+
 if [ "$(uname)" = "Linux" ]; then
     if [ -f /etc/lsb-release ]; then
         ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requires.sh
