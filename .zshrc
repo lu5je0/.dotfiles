@@ -45,6 +45,7 @@ zinit ice depth=1 lucid wait='1'
 zinit light paulirish/git-open
 
 zinit light Aloxaf/fzf-tab
+zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-syntax-highlighting
