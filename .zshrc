@@ -111,8 +111,8 @@ alias crontab="cron.sh"
 # alias l='ls -lah'
 # alias ll='ls -lh'
 
-alias l='exa -laF --icons'
-alias ll='exa -lF --icons'
+alias l='exa -laF'
+alias ll='exa -lF'
 
 alias md='mkdir -p'
 
