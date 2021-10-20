@@ -95,7 +95,7 @@ return require('packer').startup(function()
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
       opt = true,
-      ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown'},
+      ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'sh'},
       config = function()
           require('config/treesiter')
       end
@@ -306,15 +306,25 @@ return require('packer').startup(function()
   }
 
   use {
-      'neoclide/coc.nvim', branch = 'release',
+      'neoclide/coc.nvim',
+      branch = 'release',
       opt = true,
       config = function() vim.cmd('runtime plug-config/coc.vim') end
   }
 
-  use {'liuchengxu/vim-which-key', 
+  use {
+      'liuchengxu/vim-which-key',
       config = function() vim.cmd('runtime whichkey.vim') end,
       opt = true,
       keys = {'<leader>'}
   }
+
+  -- use {
+  --     'weirongxu/plantuml-previewer.vim',
+  --     requires = {
+  --         {'tyru/open-browser.vim'},
+  --         {'aklt/plantuml-syntax'}
+  --     }
+  -- }
 
 end)

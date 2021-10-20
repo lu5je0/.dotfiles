@@ -9,7 +9,7 @@ set smartcase
 " set which-key
 set timeoutlen=10000
 
-# plugins
+" plugins
 set surround
 set commentary
 set multiple-cursors
@@ -73,7 +73,7 @@ nmap gn :action GotoImplementation<CR>
 nmap gy :action GotoTypeDeclaration<CR>
 nmap gb :action ShowUsages<CR>
 
-# code
+" code
 map <leader>cf :action ReformatCode<CR>
 map <leader>cr <Action>(RenameElement)
 map <leader>cm <Action>(ChangeSignature)
@@ -82,7 +82,7 @@ map <leader>ci :action Inline<CR>
 map <leader>cc <Action>(ShowIntentionActions)
 map <leader>ca <Action>(ShowErrorDescription)
 
-# run
+" run
 nmap <leader>re :action ChooseRunConfiguration<CR>
 nmap <leader>rc :action CompileDirty<CR>
 nmap <leader>rD :action Debug<CR>
@@ -90,7 +90,7 @@ nmap <leader>rd :action DebugClass<CR>
 nmap <leader>rD :action Run<CR>
 nmap <leader>rr :action RunClass<CR>
 
-# windows multiple0-cursors key maps
+" windows multiple0-cursors key maps
 nmap <c-n> <A-n>
 nmap <c-x> <A-x>
 nmap <c-p> <A-p>
@@ -98,7 +98,7 @@ vmap <c-n> <A-n>
 vmap <c-x> <A-x>
 vmap <c-p> <A-p>
 
-# mac multiple0-cursors key maps
+" mac multiple0-cursors key maps
 nmap <m-n> <A-n>
 nmap <m-x> <A-x>
 nmap <m-p> <A-p>
@@ -106,7 +106,7 @@ vmap <m-n> <A-n>
 vmap <m-x> <A-x>
 vmap <m-p> <A-p>
 
-# history
+" history
 sethandler <c-o> n-v:vim i:vim
 sethandler <c-i> n-v:vim i:vim
 nmap <c-o> <Action>(Back)
@@ -138,7 +138,7 @@ imap <m-k> <c-p>
 
 noremap <leader>vv :e ~/.ideavimrc<CR>
 
-# window keymapping
+" window keymapping
 nmap <leader>ws :vsplit<CR>
 nmap <leader>wS :split<CR>
 nmap <c-h> <c-w>h
