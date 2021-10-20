@@ -1,4 +1,3 @@
-from guesslang import Guess
 import vim
 
 lang_map = {
@@ -7,9 +6,16 @@ lang_map = {
         "Shell": "sh",
         "C++": "cpp",
         }
-guess = Guess()
+
+guess = None
 
 def detect_filetype():
+    global guess
+
+    if guess is None:
+        from guesslang import Guess
+        guess = Guess()
+
     buffer = vim.current.buffer
     text = "".join(buffer)
     ft = str(guess.language_name(text))
@@ -19,4 +25,4 @@ def detect_filetype():
     ft = ft.lower()
 
     vim.command("set filetype=" + ft)
-    print("set filetype=" + ft)
+    vim.command("echon ', set filetype=" + ft +"'")
