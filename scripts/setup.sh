@@ -17,7 +17,7 @@ if [ "$(uname)" = "Linux" ]; then
     if [ -f /etc/lsb-release ]; then
         ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
         ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requires.sh
-        ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash - && sudo apt install -y nodejs
+        ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt install -y nodejs
     fi
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
 fi
