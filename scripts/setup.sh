@@ -30,8 +30,6 @@ ask "Git config?" && ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.vim ~/.vim
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
-# ln -s ~/.dotfiles/.p10k.zsh ~/.p10k.zsh
-ln -s ~/.dotfiles/zsh/lu5je0.zsh-theme ~/.oh-my-zsh/themes/lu5je0.zsh-theme
 
 if [ "$(uname)" = "Darwin" ]; then
     if [[ -f ~/.mac ]]; then
