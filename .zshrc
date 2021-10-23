@@ -24,9 +24,6 @@ zinit light zsh-users/zsh-completions
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
-# zinit ice lucid wait='1'
-# zinit snippet OMZ::plugins/zsh_reload/zsh_reload.plugin.zsh
-
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
