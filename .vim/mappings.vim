@@ -114,4 +114,4 @@ nmap [g <plug>(signify-prev-hunk)
 "----------------------------------------------------------------------
 " visual mode
 "----------------------------------------------------------------------
-vmap <silent> t :call visual#runSelectInTerminal()<cr>
+vmap <silent> # :call visual#runSelectInTerminal()<cr>
