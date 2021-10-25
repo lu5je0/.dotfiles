@@ -178,7 +178,8 @@ return require('packer').startup(function()
   use 'w0ng/vim-hybrid'
   use 'glepnir/zephyr-nvim'
 
-  if vim.fn.has('mac') and vim.api.nvim_eval('platform#is_wsl()') == 1 then
+  local wsl_version = vim.api.nvim_eval('platform#is_wsl()')
+  if  wsl_version == 1 or wsl_version == 2 then
       use {
         'lu5je0/im-switcher',
         opt = true

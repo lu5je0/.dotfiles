@@ -24,9 +24,6 @@ zinit light zsh-users/zsh-completions
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
-# zinit ice lucid wait='1'
-# zinit snippet OMZ::plugins/zsh_reload/zsh_reload.plugin.zsh
-
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
@@ -158,3 +155,13 @@ bindkey -a ys add-surround
 bindkey -M visual S add-surround
 # bindkey -a "m" autosuggest-accept
 # bindkey -a "^n" autosuggest-accept
+
+# 补全
+# 0 -- vanilla completion (abc => abc)
+# 1 -- smart case completion (abc => Abc)
+# 2 -- word flex completion (abc => A-big-Car)
+# 3 -- full flex completion (abc => ABraCadabra)
+zstyle ':completion:*' matcher-list '' \
+  'm:{a-z\-}={A-Z\_}' \
+  'r:[^[:alpha:]]||[[:alpha:]]=** r:|=* m:{a-z\-}={A-Z\_}' \
+  'r:|?=** m:{a-z\-}={A-Z\_}'
