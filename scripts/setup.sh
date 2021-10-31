@@ -56,7 +56,7 @@ mkdir -p ~/.config/nvim
 ln -s ~/.dotfiles/.vim/vimrc ~/.config/nvim/init.vim
 ln -s ~/.dotfiles/.vim/coc-settings.json ~/.config/nvim/coc-settings.json
 
-pip3 install pynvim
+pip3 install pynvim neovim-remote
 
 if [ "$(uname)" = "Darwin" ]; then
     pip install pyobjc
