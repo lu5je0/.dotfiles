@@ -61,5 +61,3 @@ pip3 install pynvim neovim-remote
 if [ "$(uname)" = "Darwin" ]; then
     pip install pyobjc
 fi
-
-ask "Clone packer.nvim?" && git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
