@@ -3,6 +3,14 @@
 require('packer').init {
     max_jobs = 15
 }
+
+vim.cmd([[
+  augroup packer_user_config
+    autocmd!
+    autocmd BufWritePost plugins.lua source <afile> | PackerCompile
+  augroup end
+]])
+
 -- Only required if you have packer configured as `opt`
 return require('packer').startup(function()
 

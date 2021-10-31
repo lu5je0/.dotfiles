@@ -129,7 +129,7 @@ let g:which_key_map.v = {
       \ 'j' : [':call ToggleGj()', 'toggle gj'],
       \ 'c' : [':set ic!', 'toggle case insensitive'],
       \ 'a' : [':call AutoPairsToggle()', 'toggle auto pairs'],
-      \ 'v' : [':edit ' . $HOME . '/.dotfiles/.vim/vimrc | :cd ' . $HOME . '/.dotfiles/.vim', 'open vimrc'],
+      \ 'v' : [':edit ' . $HOME . '/.dotfiles/vim/vimrc | :cd ' . $HOME . '/.dotfiles/vim', 'open vimrc'],
       \ 's' : [':source ' .  $MYVIMRC, 'apply vimrc'],
       \ 'b' : [":call ToggleSignColumn()", 'toggle blame'],
       \ 'n' : [':set invnumber', 'toggle number'],
