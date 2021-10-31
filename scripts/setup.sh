@@ -22,7 +22,7 @@ if [ "$(uname)" = "Linux" ]; then
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
 fi
 
-ask "Use ssh config?" && ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
+ask "Use ssh config?" && cp ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 

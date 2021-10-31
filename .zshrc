@@ -10,6 +10,12 @@ if [[ -f ~/.mac ]]; then
     autoload -Uz compinit && compinit
 fi
 
+if [[ ! -f ~/.ohmyenv ]]; then
+    touch ~/.ohmyenv
+    echo "HTTP_PROXY_PORT=1080\nSOCKS5_PROXY_PORT=1080" > ~/.ohmyenv
+fi
+source ~/.ohmyenv
+
 # OMZ
 # zinit snippet OMZ::lib/clipboard.zsh
 zinit snippet OMZ::lib/completion.zsh
@@ -35,6 +41,9 @@ zinit snippet ~/.dotfiles/zsh/platform-alias.sh
 
 zinit ice lucid wait='1'
 zinit snippet ~/.dotfiles/zsh/functions.sh
+
+zinit ice lucid wait='1'
+zinit snippet ~/.dotfiles/zsh/proxy.sh
 
 zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 
@@ -83,11 +92,6 @@ bindkey "^[[6~" history-beginning-search-forward
 ##########################################
 # ENV
 ##########################################
-if [[ ! -f ~/.ohmyenv ]]; then
-    touch ~/.ohmyenv
-    echo "HTTP_PROXY=127.0.0.1:1080" > ~/.ohmyenv
-fi
-source ~/.ohmyenv
 export ZSH_AUTOSUGGEST_ACCEPT_WIDGETS=""
 export PATH=$PATH:~/.bin:~/.bin/local
 export PATH=$PATH:~/go/bin
@@ -124,13 +128,6 @@ alias tn="tmux new-session -s"
 alias vi='nvim'
 alias vim='nvim'
 alias vimn='nvim -u None'
-
-# 代理设置
-alias proxy='export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}; export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080};'
-alias unproxy='unset http_proxy; unset https_proxy'
-alias pc='proxychains4 -q'
-
-
 
 ##########################################
 # vi-mode
