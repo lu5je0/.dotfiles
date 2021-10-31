@@ -31,6 +31,7 @@ ask "Git config?" && ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 ln -s ~/.dotfiles/.vim ~/.vim
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
+ln -s ~/.dotfiles/cheat ~/.cheat
 
 if [ "$(uname)" = "Darwin" ]; then
     if [[ -f ~/.mac ]]; then
