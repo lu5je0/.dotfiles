@@ -10,6 +10,7 @@ if [ "$(uname)" = "Darwin" ]; then
     alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
     alias jdk17='export JAVA_HOME=$JAVA_HOME_17'
     alias e='open'
+    alias sed='gsed'
     alias iterm='open -a iTerm .'
     export JAVA_HOME=$JAVA_HOME_17
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"

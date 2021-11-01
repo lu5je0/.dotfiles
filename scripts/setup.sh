@@ -22,7 +22,7 @@ if [ "$(uname)" = "Linux" ]; then
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
 fi
 
-ask "Use ssh config?" && cp ~/.dotfiles/.ssh/config ~/.ssh/config
+cp ~/.dotfiles/ssh/config ~/.ssh/config
 
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
@@ -59,5 +59,5 @@ ln -s ~/.dotfiles/vim/coc-settings.json ~/.config/nvim/coc-settings.json
 pip3 install pynvim neovim-remote
 
 if [ "$(uname)" = "Darwin" ]; then
-    pip install pyobjc
+    pip3 install pyobjc
 fi
