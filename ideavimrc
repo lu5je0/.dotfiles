@@ -66,6 +66,7 @@ nmap <leader>vc :set ic!<cr>
 nmap <leader>e :NERDTree<CR>
 
 map <leader>ss :action $EditorTranslateAction<CR>
+map <leader>sa :action $EditorTranslateAction<CR>
 map <leader>sr :action $TranslateAndReplaceAction<CR>
 
 nmap gu :action GotoSuperMethod<CR>
