@@ -178,7 +178,7 @@ gls.right[8] = {
 
 gls.short_line_left[1] = {
   BufferType = {
-    provider = 'FileTypeName',
+    provider = function() return string.upper("  " .. vim.api.nvim_eval('&ft')) end,
     separator = ' ',
     separator_highlight = {'NONE',colors.bg},
     highlight = {colors.blue,colors.bg,'bold'}
@@ -187,7 +187,7 @@ gls.short_line_left[1] = {
 
 gls.short_line_left[2] = {
   SFileName = {
-    provider =  'SFileName',
+    provider = 'SFileName',
     condition = condition.buffer_not_empty,
     highlight = {colors.fg,colors.bg,'bold'}
   }
