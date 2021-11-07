@@ -41,6 +41,7 @@ xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 
 inoremap <silent><m-p> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
+inoremap <silent><c-p> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
 inoremap <silent><expr> <c-n> coc#refresh()
 
 " Use `[g` and `]g` to navigate diagnostics

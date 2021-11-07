@@ -215,12 +215,12 @@ return require('packer').startup(function()
       config = function() vim.cmd('runtime plug-config/fern.vim') end
   }
 
-  use {'Yggdroot/LeaderF',
-      run = './install.sh',
-      opt = true,
-      cmd = {'Leaderf'},
-      config = function() vim.cmd('runtime plug-config/leaderf.vim') end
-  }
+  -- use {'Yggdroot/LeaderF',
+  --     run = './install.sh',
+  --     opt = true,
+  --     cmd = {'Leaderf'},
+  --     config = function() vim.cmd('runtime plug-config/leaderf.vim') end
+  -- }
 
   use {'mg979/vim-visual-multi',
       opt = true,
@@ -349,12 +349,9 @@ return require('packer').startup(function()
       keys = {'<leader>'}
   }
 
-  -- use {
-  --     'weirongxu/plantuml-previewer.vim',
-  --     requires = {
-  --         {'tyru/open-browser.vim'},
-  --         {'aklt/plantuml-syntax'}
-  --     }
-  -- }
+  use {
+      'nvim-telescope/telescope.nvim',
+      requires = { {'nvim-lua/plenary.nvim'} }
+  }
 
 end)
