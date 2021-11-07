@@ -1,4 +1,3 @@
-let g:signify_skip = {'vcs': { 'allow': ['git'] }}
 lua require('impatient')
 lua require('plugins')
 
