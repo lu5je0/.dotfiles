@@ -1,3 +1,4 @@
+lua require('impatient')
 lua require('plugins')
 
 " runtime 加载.vim {{{

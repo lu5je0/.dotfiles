@@ -18,6 +18,9 @@ vim.cmd([[
 -- Only required if you have packer configured as `opt`
 return require('packer').startup(function()
 
+  -- Speed up loading Lua modules in Neovim to improve startup time.
+  use 'lewis6991/impatient.nvim'
+
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
 
