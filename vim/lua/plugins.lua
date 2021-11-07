@@ -351,6 +351,19 @@ return require('packer').startup(function()
 
   use {
       'nvim-telescope/telescope.nvim',
+      config = function()
+          local actions = require('telescope.actions')
+          require('telescope').setup{
+              defaults = {
+                  path_display = { truncate = 2 },
+                  mappings = {
+                      i = {
+                          ["<esc>"] = actions.close
+                      },
+                  },
+              }
+          }
+      end,
       requires = { {'nvim-lua/plenary.nvim'} }
   }
 
