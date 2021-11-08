@@ -221,6 +221,7 @@ let g:which_key_map.f = {
       \ 'l' : [":lua require('telescope.builtin').current_buffer_fuzzy_find{}", 'line'],
       \ 'n' : [":lua require('telescope.builtin').filetypes{}", 'filetype'],
       \ 'j' : [":lua require('telescope.builtin').find_files{search_dirs={'~/junk-file'}}", 'junk-list'],
+      \ 'd' : [":e", 'reload'],
       \ 'q' : [":echom 'detecting' | GuessLang", "GuessLang"],
       \ 'F' : ['<c-w>f', 'open-cursor-file'],
       \ 'e' : [':call FernLocateFile()', 'locate-file'],
