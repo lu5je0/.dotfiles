@@ -1,12 +1,11 @@
 [submodule "submodule/PathPicker"]
 	path = submodule/PathPicker
 	url = https://github.com/facebook/PathPicker
-[submodule "submodule/submodule/wd"]
-	path = submodule/submodule/wd
-	url = git@github.com:lu5je0/wd.git
 [submodule "submodule/wd"]
 	path = submodule/wd
 	url = git@github.com:lu5je0/wd.git
+    branch = master
 [submodule "submodule/SubtitlesDownloader"]
 	path = submodule/SubtitlesDownloader
 	url = git@github.com:lu5je0/SubtitlesDownloader.git
+    branch = master
