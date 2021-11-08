@@ -30,7 +30,10 @@ ask "Git config?" && ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
 
 ln -s ~/.dotfiles/ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/zshrc ~/.zshrc
-ln -s ~/.dotfiles/cheat ~/.cheat
+
+if [[ ! -d ~/.cheat ]]; then
+    ln -s ~/.dotfiles/cheat ~/.cheat
+fi
 
 if [ "$(uname)" = "Darwin" ]; then
     if [[ -f ~/.mac ]]; then
@@ -38,8 +41,10 @@ if [ "$(uname)" = "Darwin" ]; then
     fi
 fi
 
-mkdir -p ~/.bin
-ln -s ~/.dotfiles/bin ~/.bin/local
+if [[ ! -d ~/.bin/local ]]; then
+    mkdir -p ~/.bin
+    ln -s ~/.dotfiles/bin ~/.bin/local
+fi
 
 mkdir -p ~/.pip
 ln -s ~/.dotfiles/pip/pip.conf ~/.pip/pip.conf
@@ -49,11 +54,14 @@ mkdir -p ~/.aria2
 ln -s ~/.dotfiles/aria2/aria2.conf ~/.aria2/aria2.conf
 
 # nvim
-mkdir -p ~/.config/nvim
-ln -s ~/.dotfiles/vim ~/.config/nvim
+mkdir -p ~/.config
 
-pip3 install pynvim neovim-remote
+if [[ ! -d ~/.config/nvim ]]; then
+    ln -s ~/.dotfiles/vim ~/.config/nvim
+fi
+
+ask "Install pip3 requirements?" && pip3 install pynvim neovim-remote
 
 if [ "$(uname)" = "Darwin" ]; then
-    pip3 install pyobjc
+    ask "pip3 install pyobjc?" && pip3 install pyobjc
 fi

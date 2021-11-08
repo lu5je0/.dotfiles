@@ -4,7 +4,8 @@ if fn.empty(fn.glob(install_path)) > 0 then
   vim.cmd("term git clone --depth 1 https://github.com/wbthomason/packer.nvim " .. install_path)
 end
 
-require('packer').init {
+local packer = require('packer')
+packer.init {
   max_jobs = 15
 }
 
@@ -16,7 +17,7 @@ augroup end
 ]])
 
 -- Only required if you have packer configured as `opt`
-return require('packer').startup(function()
+return packer.startup(function()
 
   -- Speed up loading Lua modules in Neovim to improve startup time.
   use 'lewis6991/impatient.nvim'
