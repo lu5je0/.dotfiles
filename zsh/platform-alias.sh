@@ -15,6 +15,17 @@ if [ "$(uname)" = "Darwin" ]; then
     export JAVA_HOME=$JAVA_HOME_17
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
+    function __git_prompt_git() {
+        if [[ "$PWD" =~ '^/mnt/[cdefgh]' ]] ; then
+            GIT_OPTIONAL_LOCKS=0 command git.exe "$@"
+        else
+            GIT_OPTIONAL_LOCKS=0 command git "$@"
+        fi
+    }
+    alias gst='__git_prompt_git status'
+    alias gaa='__git_prompt_git add -A'
+    alias gc='__git_prompt_git commit'
+    alias gd='__git_prompt_git diff'
     alias e='explorer.exe'
     alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
     clippaste () {
