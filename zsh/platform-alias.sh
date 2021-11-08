@@ -16,7 +16,7 @@ if [ "$(uname)" = "Darwin" ]; then
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
     function __git_prompt_git() {
-        if [[ "$PWD" =~ '^/mnt/[cdefgh]' ]] ; then
+        if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]] ; then
             GIT_OPTIONAL_LOCKS=0 command git.exe "$@"
         else
             GIT_OPTIONAL_LOCKS=0 command git "$@"
