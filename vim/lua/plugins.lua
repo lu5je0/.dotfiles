@@ -360,7 +360,8 @@ return packer.startup(function()
     'nvim-telescope/telescope.nvim',
     config = function()
       local actions = require('telescope.actions')
-      require('telescope').setup{
+      local telescope = require('telescope')
+      telescope.setup {
         defaults = {
           path_display = { truncate = 2 },
           mappings = {
@@ -370,8 +371,12 @@ return packer.startup(function()
           },
         }
       }
+      telescope.load_extension('fzf')
     end,
-    requires = { {'nvim-lua/plenary.nvim'} }
+    requires = {
+      {'nvim-lua/plenary.nvim'},
+      {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
+    }
   }
 
 end)
