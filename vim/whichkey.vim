@@ -190,7 +190,8 @@ let g:which_key_map.f = {
       \ 'name' : '+leaderf/files',
       \ 'C' : [':Leaderf colorscheme', 'colorscheme'],
       \ 'f' : [':Leaderf file', 'file'],
-      \ 'g' : [':Leaderf --recall', 'recall'],
+      \ 's' : [':Leaderf --recall', 'recall'],
+      \ 'g' : [':Leaderf bcommit', 'recall'],
       \ 'r' : [':Leaderf rg', 'rg'],
       \ 'l' : [':Leaderf line', 'line'],
       \ 'n' : [':Leaderf filetype', 'filetype'],
@@ -205,6 +206,7 @@ let g:which_key_map.f = {
       \ 'D' : [":Fern ~/.dotfiles -drawer -keep | cd ~/.dotfiles", 'fern .dotfiles/ && cd .dotfiles/'],
       \ 'w' : [':w', 'write'],
       \ 'J' : [':JunkFile', 'new-junk-file'],
+      \ 'j' : [':JunkList', 'junk-list'],
       \ 'u' : [':SaveAsJunkFile', 'save-as-junk-file'],
       \ }
 

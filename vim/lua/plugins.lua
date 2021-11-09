@@ -215,8 +215,11 @@ return packer.startup(function()
   use {'Yggdroot/LeaderF',
       run = './install.sh',
       opt = true,
-      cmd = {'Leaderf'},
-      config = function() vim.cmd('runtime plug-config/leaderf.vim') end
+      cmd = {'Leaderf', 'Git'},
+      config = function() vim.cmd('runtime plug-config/leaderf.vim') end,
+      requires = {
+        {'linjiX/LeaderF-git', opt = true}
+      }
   }
 
   use {
