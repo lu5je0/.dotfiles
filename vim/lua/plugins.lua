@@ -161,16 +161,8 @@ return packer.startup(function()
 
   use 'yianwillis/vimcdoc'
 
-  -- use {
-  --   'chrisbra/vim-diff-enhanced',
-  --   config = function()
-  --       vim.cmd("set diffopt+=internal,algorithm:patience")
-  --   end
-  -- }
-
   use {
-    'tpope/vim-commentary',
-    keys = {'gc'}
+    'tpope/vim-commentary'
   }
 
   use 'lu5je0/vim-snippets'
@@ -204,6 +196,7 @@ return packer.startup(function()
 
   -- " fern
   use {'lambdalisue/fern-hijack.vim'}
+
   use {
     'lambdalisue/fern.vim',
     opt = true,
@@ -219,12 +212,12 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/fern.vim') end
   }
 
-  -- use {'Yggdroot/LeaderF',
-  --     run = './install.sh',
-  --     opt = true,
-  --     cmd = {'Leaderf'},
-  --     config = function() vim.cmd('runtime plug-config/leaderf.vim') end
-  -- }
+  use {'Yggdroot/LeaderF',
+      run = './install.sh',
+      opt = true,
+      cmd = {'Leaderf'},
+      config = function() vim.cmd('runtime plug-config/leaderf.vim') end
+  }
 
   use {
     'mg979/vim-visual-multi',
@@ -351,32 +344,30 @@ return packer.startup(function()
 
   use {
     'liuchengxu/vim-which-key',
-    config = function() vim.cmd('runtime whichkey.vim') end,
-    opt = true,
-    keys = {'<leader>'}
+    config = function() vim.cmd('runtime whichkey.vim') end
   }
 
-  use {
-    'nvim-telescope/telescope.nvim',
-    config = function()
-      local actions = require('telescope.actions')
-      local telescope = require('telescope')
-      telescope.setup {
-        defaults = {
-          path_display = { truncate = 2 },
-          mappings = {
-            i = {
-              ["<esc>"] = actions.close
-            },
-          },
-        }
-      }
-      telescope.load_extension('fzf')
-    end,
-    requires = {
-      {'nvim-lua/plenary.nvim'},
-      {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
-    }
-  }
+  -- use {
+  --   'nvim-telescope/telescope.nvim',
+  --   config = function()
+  --     local actions = require('telescope.actions')
+  --     local telescope = require('telescope')
+  --     telescope.setup {
+  --       defaults = {
+  --         path_display = { truncate = 2 },
+  --         mappings = {
+  --           i = {
+  --             ["<esc>"] = actions.close
+  --           },
+  --         },
+  --       }
+  --     }
+  --     telescope.load_extension('fzf')
+  --   end,
+  --   requires = {
+  --     {'nvim-lua/plenary.nvim'},
+  --     {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
+  --   }
+  -- }
 
 end)
