@@ -1,3 +1,6 @@
+vim.cmd("hi StatusLine guibg=#202328")
+vim.cmd("set statusline=\\ ")
+
 local gl = require('galaxyline')
 local colors = require('galaxyline.theme').default
 local condition = require('galaxyline.condition')
