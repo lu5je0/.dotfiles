@@ -214,7 +214,7 @@ let g:which_key_map.f = {
       \ 'C' : [":lua require('telescope.builtin').colorscheme{}", 'colorscheme'],
       \ 'f' : [":lua require('telescope.builtin').find_files{}", 'file'],
       \ 'g' : [":lua require('telescope.builtin').resume{}", 'recall'],
-      \ 'r' : [":lua require('telescope.builtin').grep_string{ shorten_path = true, word_match = '-w', only_sort_text = true, search = '' }", 'rg'],
+      \ 'r' : [":lua require('telescope.builtin').live_grep{}", 'rg'],
       \ 'b' : [":lua require('telescope.builtin').buffers{}", 'buffer'],
       \ 'm' : [":lua require('telescope.builtin').oldfiles{}", 'mru'],
       \ 'h' : [":lua require('telescope.builtin').help_tags{}", 'help'],
