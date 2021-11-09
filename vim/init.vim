@@ -45,6 +45,8 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 colorscheme one
 set bg=dark
 hi TSPunctBracket guifg=#ABB2BF
+hi StatusLine guibg=#202328
+set statusline=\ 
 " }}}
 
 runtime mappings.vim
