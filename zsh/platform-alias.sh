@@ -23,6 +23,8 @@ elif [[ $uname =~ "microsoft" ]]; then
             GIT_OPTIONAL_LOCKS=0 command git "$@"
         fi
     }
+    export WSL_IP=$(hostname -I | awk '{print $1}')
+    export WSL_HOST_IP=$(cat /etc/resolv.conf | grep nameserver | awk '{ print $2 }')
     alias gst='__git_prompt_git status'
     alias gaa='__git_prompt_git add -A'
     alias gc='__git_prompt_git commit'
