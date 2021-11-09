@@ -1,5 +1,6 @@
 # mac
-if [ "$(uname)" = "Darwin" ]; then
+uname=`uname -a`
+if [[ $uname =~ "Darwin" ]]; then
     PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
     alias ls='ls -F --show-control-chars --color=auto'
     eval `gdircolors -b $HOME/.dir_colors`
@@ -14,7 +15,7 @@ if [ "$(uname)" = "Darwin" ]; then
     alias iterm='open -a iTerm .'
     export JAVA_HOME=$JAVA_HOME_17
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
-elif [ $(uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/ip') ]; then
+elif [[ $uname =~ "microsoft" ]]; then
     function __git_prompt_git() {
         if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]] ; then
             GIT_OPTIONAL_LOCKS=0 command git.exe "$@"
