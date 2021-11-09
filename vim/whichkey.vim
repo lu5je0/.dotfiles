@@ -212,6 +212,7 @@ let g:which_key_map.t = {
 let g:which_key_map.f = {
       \ 'name' : '+leaderf/files',
       \ 'C' : [":lua require('telescope.builtin').colorscheme{}", 'colorscheme'],
+      \ 'c' : [":lua require('telescope.builtin').commands{}", 'colorscheme'],
       \ 'f' : [":lua require('telescope.builtin').find_files{}", 'file'],
       \ 'g' : [":lua require('telescope.builtin').resume{}", 'recall'],
       \ 'r' : [":lua require('telescope.builtin').live_grep{}", 'rg'],
