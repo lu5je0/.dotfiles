@@ -218,7 +218,8 @@ return packer.startup(function()
       cmd = {'Leaderf', 'Git'},
       config = function() vim.cmd('runtime plug-config/leaderf.vim') end,
       requires = {
-        {'linjiX/LeaderF-git', opt = true}
+        {'linjiX/LeaderF-git'},
+        {'tpope/vim-fugitive'}
       }
   }
 
