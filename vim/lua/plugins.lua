@@ -362,6 +362,14 @@ return packer.startup(function()
     config = function() vim.cmd('runtime whichkey.vim') end
   }
 
+  use {
+    'gelguy/wilder.nvim',
+    run = ':UpdateRemotePlugins',
+    config = function()
+      vim.cmd('runtime plug-config/wilder.vim')
+    end
+  }
+
   -- use {
   --   'nvim-telescope/telescope.nvim',
   --   config = function()
