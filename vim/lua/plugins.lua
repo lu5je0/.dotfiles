@@ -234,11 +234,22 @@ return packer.startup(function()
     opt = true
   }
 
+  -- use {
+  --   'mhinz/vim-signify',
+  --   config = function()
+  --     vim.cmd("let g:signify_skip = {'vcs': { 'allow': ['git'] }}")
+  --     vim.cmd("let g:signify_vcs_cmds_diffmode = {'git': 'git cat-file -p :./%f'}")
+  --   end
+  -- }
+  --
+
   use {
-    'mhinz/vim-signify',
-    config = function()
-      vim.cmd("let g:signify_skip = {'vcs': { 'allow': ['git'] }}")
-      vim.cmd("let g:signify_vcs_cmds_diffmode = {'git': 'git cat-file -p :./%f'}")
+    'lewis6991/gitsigns.nvim',
+    requires = {
+      'nvim-lua/plenary.nvim'
+    },
+    config = function ()
+      require("config/gitsigns")
     end
   }
 

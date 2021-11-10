@@ -78,8 +78,6 @@ let g:which_key_map.g = {
       \ 'A' : [':Git add -A', 'add all'],
       \ 'b' : [':Git blame', 'blame'],
       \ 'c' : [':Git commit', 'commit'],
-      \ 'g' : [':SignifyHunkDiff', 'show hunk diff'],
-      \ 'u' : [':SignifyHunkUndo', 'undo git hunk'],
       \ 'd' : [':Git diff', 'diff'],
       \ 'D' : [':Git diff --cached', 'diff --cached'],
       \ 'v' : [':Gvdiffsplit!', 'gvdiffsplit'],
