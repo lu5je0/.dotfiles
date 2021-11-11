@@ -21,5 +21,6 @@ require('gitsigns').setup {
     -- Text objects
     ['o ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
     ['x ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>'
-  }
+  },
+  sign_priority = 1,
 }
