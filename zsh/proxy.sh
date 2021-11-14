@@ -1,6 +1,7 @@
 proxy() {
     if [[ $(uname -r) == *WSL2* ]]; then
-        export HOST_IP=$(cat /etc/resolv.conf | grep nameserver | awk '{ print $2 }')
+        # export HOST_IP=$(cat /etc/resolv.conf | grep nameserver | awk '{ print $2 }')
+        export HOST_IP=$(cat /mnt/wsl/resolv.conf | grep nameserver | awk '{ print $2 }')
     fi
 
     export http_proxy="${HOST_IP:-127.0.0.1}:${HTTP_PROXY_PORT:-1080}"
