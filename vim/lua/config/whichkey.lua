@@ -27,7 +27,7 @@ local setup = {
     padding = { 2, 2, 2, 2 }, -- extra window padding [top, right, bottom, left]
   },
   layout = {
-    height = { min = 1, max = 5 }, -- min and max height of the columns
+    height = { min = 1, max = 10 }, -- min and max height of the columns
     width = { min = 20, max = 80 }, -- min and max width of the columns
     spacing = 2, -- spacing between columns
   },
@@ -69,9 +69,22 @@ local n_mappings = {
   },
   p = {
     name = "Packer",
-    c = { "<cmd>PackerCompile<cr>", "Compile" },
-    i = { "<cmd>PackerInstall<cr>", "Install" },
-    u = { "<cmd>PackerUpdate<cr>", "Update" },
+    c = { "<cmd>PackerCompile<cr>", "compile" },
+    i = { "<cmd>PackerInstall<cr>", "install" },
+    u = { "<cmd>PackerUpdate<cr>", "update" },
+    C = { "<cmd>PackerClean<cr>", "clean" },
+  },
+  c = {
+    r = { "<Plug>(coc-rename)", 'rename-variable' },
+    c = "code-action",
+    f = "auto-format",
+  },
+  t = {
+      name = '+tab/terminal',
+      t = { ':call TerminalToggle()<cr>', 'terminal' },
+      b = { ':call CDTerminalToCWD()<cr>', 'terminal-cd-buffer-dir' },
+      o = { ':call buffer#CloseOtherBuffers()<cr>', 'close-other-buffers' },
+      n = { ':enew<cr>', 'new-buffer' },
   },
   f = {
     name = '+leaderf/files',
@@ -94,6 +107,62 @@ local n_mappings = {
     J = {':JunkFile<cr>', 'new-junk-file'},
     j = {':JunkList<cr>', 'junk-list'},
     u = {':SaveAsJunkFile<cr>', 'save-as-junk-file'},
+    x = {
+      name = "+encoding",
+      a = { ':set ff=unix<cr>', '2unix' },
+      b = { ':set ff=dos<cr>', '2dos' },
+      u = { ':set fileencoding=utf8<cr>', 'convert to utf8' },
+      g = { ':set fileencoding=GB18030<cr>', 'convert to gb18030' }
+    }
+  },
+  x = {
+    name = "+text",
+    u = "Escape Unicode",
+    U = "Unescape Unicode",
+    h = "url encode",
+    H = "url decode",
+    c = { ":call edit#CountSelectionRegion()<cr>", "count in the selection region" },
+    m = { ':%s/\r$//<cr>', 'remove ^M' },
+    q = "繁体转简体",
+    Q = "简体转繁体",
+  },
+  s = {
+    name = '+translate',
+    s = 'translate popup',
+    a = 'say it',
+    r = 'translate replace',
+    c = 'translate',
+  },
+  v = {
+      name = '+vim',
+      v = { ':edit ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim/init.vim | :cd ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim <cr>', 'open init.vim' },
+      s = { ':source ' .. vim.api.nvim_eval("$MYVIMRC") .. "<cr>", 'apply vimrc' },
+      j = { ':call ToggleGj()<cr>', 'toggle gj' },
+      c = { ':set ic!<cr>', 'toggle case insensitive' },
+      a = { ':call AutoPairsToggle()<cr>', 'toggle auto pairs' },
+      b = { ":call ToggleSignColumn()<cr>", 'toggle blame' },
+      n = { ':set invnumber<cr>', 'toggle number' },
+      d = { ':call ToggleDiff()<cr>', 'toggle diff' },
+      p = { ':call TogglePaste()<cr>', 'toggle paste' },
+      w = { ":call ToggleWrap()<cr>", 'toggle wrap' },
+      m = { ":call ToggleMouse()<cr>", 'toggle mouse' },
+      i = { ":ToggleSaveLastIme<cr>", 'toggle-save-last-ime' },
+      h = { ":call hexedit#ToggleHexEdit()<cr>", 'toggle hexedit' },
+      l = { ":set cursorline!<cr>", 'toggle cursorline' },
+      f = {
+        name = '+foldmethod',
+        m = { ":set fdm=manual | echo \"set fdm = manual\"<cr>", 'manual' },
+        s = { ":set fdm=sytanx | echo \"set fdm = sytanx\"<cr>", 'sytanx' },
+        e = { ":set fdm=expr | echo \"set fdm = expr\"<cr>", 'expr' },
+        i = { ":set fdm=indent | echo \"set fdm = indent\"<cr>", 'indent' },
+        n = { ":set fdm=marker | echo \"set fdm = marker\"<cr>", 'marker' },
+        d = { ":set fdm=diff | echo \"set fdm = diff\"<cr>", 'diff' },
+      }
+
+  },
+  r = {
+    name = '+run',
+    r = "run"
   },
   g = {
     name = '+git',
@@ -127,6 +196,12 @@ local n_opts = {
 }
 
 local v_mappings = {
+  x = {
+    c = {":call edit#CountSelectionRegion()<cr>", "count in the selection region"},
+    b = {"base64"},
+    B = {"unbase64"},
+    s = {"text escape"}
+  }
 }
 
 local v_opts = {
@@ -140,16 +215,59 @@ local v_opts = {
 
 local wk = require("which-key")
 vim.cmd[[
-  nnoremap <silent><leader>1 :lua require'bufferline'.go_to_buffer(1, true)<cr>
-  nnoremap <silent><leader>2 :lua require'bufferline'.go_to_buffer(2, true)<cr>
-  nnoremap <silent><leader>3 :lua require'bufferline'.go_to_buffer(3, true)<cr>
-  nnoremap <silent><leader>4 :lua require'bufferline'.go_to_buffer(4, true)<cr>
-  nnoremap <silent><leader>5 :lua require'bufferline'.go_to_buffer(5, true)<cr>
-  nnoremap <silent><leader>6 :lua require'bufferline'.go_to_buffer(6, true)<cr>
-  nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
-  nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
-  nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
-  nnoremap <silent><leader>0 :BufferLinePick<CR>
+  " Echo translation in the cmdline
+  nmap <silent> <Leader>sc <Plug>Translate
+  vmap <silent> <Leader>sc <Plug>TranslateV
+
+  " say it
+  nmap <silent> <Leader>sa :call misc#say_it()<cr><Plug>TranslateW
+  vmap <silent> <Leader>sa :call misc#visual_say_it()<cr><Plug>TranslateWV
+
+  " vmap <silent> <Leader>sc <Plug>TranslateV
+  " Display translation in a window
+  nmap <silent> <Leader>ss <Plug>TranslateW
+  vmap <silent> <Leader>ss <Plug>TranslateWV
+  " Replace the text with translation
+  nmap <silent> <Leader>sr <Plug>TranslateR
+  vmap <silent> <Leader>sr <Plug>TranslateRV
+
+  "----------------------------------------------------------------------
+  " 繁体简体
+  "----------------------------------------------------------------------
+  vmap <leader>xq :!opencc -c t2s<cr>
+  nmap <leader>xq :%!opencc -c t2s<cr>
+
+  vmap <leader>xQ :!opencc -c s2t<cr>
+  nmap <leader>xQ :%!opencc -c s2t<cr>
+
+
+  "----------------------------------------------------------------------
+  " base64
+  "----------------------------------------------------------------------
+  vmap <silent> <leader>xB :<c-u>call base64#v_atob()<cr>
+  vmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
+
+
+  "----------------------------------------------------------------------
+  " unicode escape
+  "----------------------------------------------------------------------
+  vmap <silent> <leader>xu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
+  vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+
+  "----------------------------------------------------------------------
+  " text escape
+  "----------------------------------------------------------------------
+  vmap <silent> <leader>xs :<c-u>call ReplaceSelect("EscapeText")<cr>
+  " vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+
+  "----------------------------------------------------------------------
+  " url encode
+  "----------------------------------------------------------------------
+  nmap <leader>xh :%!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+  nmap <leader>xH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+
+  vnoremap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+  vnoremap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
 ]]
 wk.setup(setup)
 wk.register(n_mappings, n_opts)
