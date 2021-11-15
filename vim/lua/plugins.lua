@@ -363,6 +363,13 @@ return packer.startup(function()
     config = function() vim.cmd('runtime whichkey.vim') end
   }
 
+  -- use {
+  --   "folke/which-key.nvim",
+  --   config = function()
+  --     require("config/whichkey")
+  --   end
+  -- }
+
   use {
     'gelguy/wilder.nvim',
     run = ':UpdateRemotePlugins',
