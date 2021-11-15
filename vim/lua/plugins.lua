@@ -250,7 +250,8 @@ return packer.startup(function()
     },
     config = function ()
       require("config/gitsigns")
-    end
+    end,
+    event = "BufRead"
   }
 
   use {
