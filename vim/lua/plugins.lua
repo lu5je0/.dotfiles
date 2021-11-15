@@ -358,17 +358,17 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/coc.vim') end
   }
 
-  -- use {
-  --   'liuchengxu/vim-which-key',
-  --   config = function() vim.cmd('runtime whichkey.vim') end
-  -- }
-
   use {
-    "folke/which-key.nvim",
-    config = function()
-      require("config/whichkey")
-    end
+    'liuchengxu/vim-which-key',
+    config = function() vim.cmd('runtime whichkey.vim') end
   }
+
+  -- use {
+  --   "folke/which-key.nvim",
+  --   config = function()
+  --     require("config/whichkey")
+  --   end
+  -- }
 
   use {
     'gelguy/wilder.nvim',
