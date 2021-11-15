@@ -44,9 +44,9 @@ if [ "$(uname)" = "Darwin" ]; then
 fi
 
 if [[ ! -d ~/.bin/local ]]; then
-    mkdir -p ~/.bin
-    ln -s ~/.dotfiles/bin ~/.bin/local
+    mkdir -p ~/.local/bin
 fi
+ln -s ~/.dotfiles/bin ~/.local/bin/solid
 
 mkdir -p ~/.pip
 ln -s ~/.dotfiles/pip/pip.conf ~/.pip/pip.conf
