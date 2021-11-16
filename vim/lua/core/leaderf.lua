@@ -26,7 +26,11 @@ function M.setup()
 end
 
 function M.visual_leaderf(lf_cmd)
-  vim.cmd(":Leaderf " .. lf_cmd .. " --input " .. vim.call('visual#visual_selection'))
+  local search = vim.call('visual#visual_selection')
+  search = string.gsub(search, "'", "")
+  search = string.gsub(search, "\n", "")
+
+  vim.cmd(":Leaderf " .. lf_cmd .. " --input '" .. search .. "'")
 end
 
 return M
