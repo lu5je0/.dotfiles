@@ -69,6 +69,8 @@ local n_mappings = {
   },
   p = {
     name = "Packer",
+    q = { "<cmd>PackerCompile profile=true<cr>", "compile profile" },
+    w = { "<cmd>PackerProfile<cr>", "profile" },
     c = { "<cmd>PackerCompile<cr>", "compile" },
     i = { "<cmd>PackerInstall<cr>", "install" },
     u = { "<cmd>PackerUpdate<cr>", "update" },
@@ -102,6 +104,7 @@ local n_mappings = {
     e = {':call FernLocateFile()<cr>', 'locate-file'},
     W = {':SudaWrite<cr>', 'sudo-write'},
     d = {":Fern ~/.dotfiles -drawer -keep<cr>", 'fern .dotfiles/'},
+    p = {":Fern ~/.local/share/nvim/site/pack/packer/ -drawer -keep<cr>", 'fern packer'},
     D = {":Fern ~/.dotfiles -drawer -keep | cd ~/.dotfiles<cr>", 'fern .dotfiles'},
     w = {':w<cr>', 'write'},
     J = {':JunkFile<cr>', 'new-junk-file'},
