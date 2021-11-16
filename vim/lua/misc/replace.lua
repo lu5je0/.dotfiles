@@ -3,9 +3,10 @@ local M = {}
 function M.replace()
   local target = vim.fn.input("replace with:")
 
-  target:gsub("/", "\\/")
+  local source = vim.call('visual#visual_selection')
+  source = string.gsub(source, "/", "\\/")
 
-  local r = ":%s/" .. vim.call('visual#visual_selection') .. "/" .. target .. "/g"
+  local r = ":%s/" .. source .. "/" .. target .. "/g"
   print(r)
   vim.cmd(r)
 end
