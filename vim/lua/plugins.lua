@@ -19,6 +19,13 @@ augroup end
 -- Only required if you have packer configured as `opt`
 return packer.startup(function()
 
+  function use(plugin_spec)
+    if plugin_spec['before'] ~= nil then
+      plugin_spec['before']()
+    end
+    packer.use(plugin_spec)
+  end
+
   -- Speed up loading Lua modules in Neovim to improve startup time.
   use 'lewis6991/impatient.nvim'
 
@@ -156,6 +163,9 @@ return packer.startup(function()
     'othree/eregex.vim',
     opt = true,
     keys = {'/', '?'},
+    before = function()
+      vim.g.eregex_default_enable = 0
+    end,
     fn = {'eregex#toggle'},
     cmd = 'S'
   }
@@ -227,11 +237,20 @@ return packer.startup(function()
   use {
     'mg979/vim-visual-multi',
     opt = true,
+    before = function ()
+      vim.cmd [[
+        let g:VM_maps = {}
+        let g:VM_maps["Select Cursor Down"] = '<m-n>'
+      ]]
+    end,
     keys = {'<c-n>', '<m-n>'}
   }
 
   use {
     'sgur/vim-textobj-parameter',
+    before = function ()
+      vim.g.vim_textobj_parameter_mapping = 'a'
+    end,
     opt = true
   }
 

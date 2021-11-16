@@ -15,32 +15,6 @@ endif
 runtime functions.vim
 " }}}
 
-" vim-xkbswitch {{{
-let g:XkbSwitchEnabled = 1
-let g:XkbSwitchLib = '/usr/local/lib/libInputSourceSwitcher.dylib'
-" }}}
-
-" visual_multi {{{
-let g:VM_maps = {}
-let g:VM_maps["Select Cursor Down"] = '<m-n>'
-" }}}
- 
-" othree/eregex.vim {{{
-let g:eregex_default_enable = 0
-" }}}
-
-" vim-textobj-parameter {{{
-let g:vim_textobj_parameter_mapping = 'a'
-" }}}
-
-" delimitMate {{{
-let g:delimitMate_expand_cr=1
-" }}}
-
-" supertab {{{
-let g:SuperTabDefaultCompletionType = "<c-n>"
-" }}}
-
 " 主题配置 {{{
 colorscheme one
 set bg=dark
