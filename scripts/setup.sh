@@ -43,7 +43,7 @@ if [ "$(uname)" = "Darwin" ]; then
     fi
 fi
 
-if [[ ! -d ~/.bin/local ]]; then
+if [[ ! -d ~/.local/bin ]]; then
     mkdir -p ~/.local/bin
 fi
 ln -s ~/.dotfiles/bin ~/.local/bin/solid

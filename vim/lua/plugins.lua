@@ -84,14 +84,14 @@ return packer.startup(function()
   use {
     'theniceboy/vim-calc',
     opt = true,
-    keys = '<leader>a'
+    fn = {'Calc'}
   }
 
   use {
     'rootkiter/vim-hexedit',
     opt = true,
     ft = 'bin',
-    keys = '<leader>vh'
+    fn = {'hexedit#ToggleHexEdit'}
   }
 
   use {
@@ -155,7 +155,8 @@ return packer.startup(function()
   use {
     'othree/eregex.vim',
     opt = true,
-    keys = {'<leader>/', '/', '?'},
+    keys = {'/', '?'},
+    fn = {'eregex#toggle'},
     cmd = 'S'
   }
 
@@ -200,8 +201,8 @@ return packer.startup(function()
   use {
     'lambdalisue/fern.vim',
     opt = true,
+    fn = {'FernLocateFile'},
     cmd = {'Fern'},
-    keys = {'<leader>fe'},
     requires = {
       {'yuki-yano/fern-preview.vim', opt = true},
       {'lambdalisue/nerdfont.vim', opt = true},
@@ -304,7 +305,7 @@ return packer.startup(function()
   use {
     'mbbill/undotree',
     opt = true,
-    keys = {'<leader>u'},
+    cmd = {'UndotreeToggle'},
     config = function() vim.cmd('let g:undotree_WindowLayout = 3 | let g:undotree_SetFocusWhenToggle = 1') end,
   }
 
@@ -320,7 +321,7 @@ return packer.startup(function()
     'liuchengxu/vista.vim',
     config = function() vim.cmd('runtime plug-config/vista.vim') end,
     opt = true,
-    keys = {'<leader>i'}
+    cmd = {'Vista'}
   }
 
   use {
@@ -358,17 +359,17 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/coc.vim') end
   }
 
-  use {
-    'liuchengxu/vim-which-key',
-    config = function() vim.cmd('runtime whichkey.vim') end
-  }
-
   -- use {
-  --   "folke/which-key.nvim",
-  --   config = function()
-  --     require("config/whichkey")
-  --   end
+  --   'liuchengxu/vim-which-key',
+  --   config = function() vim.cmd('runtime whichkey.vim') end
   -- }
+
+  use {
+    "folke/which-key.nvim",
+    config = function()
+      require("config/whichkey")
+    end
+  }
 
   use {
     'gelguy/wilder.nvim',
