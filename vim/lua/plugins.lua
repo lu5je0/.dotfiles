@@ -19,7 +19,7 @@ augroup end
 -- Only required if you have packer configured as `opt`
 return packer.startup(function()
 
-  function use(plugin_spec)
+  local function use(plugin_spec)
     if plugin_spec['before'] ~= nil then
       plugin_spec['before']()
     end
