@@ -1,21 +1,27 @@
 local M = {}
 
 function M.setup()
-  vim.cmd [[
-    let g:Lf_StlSeparator = { 'left': '', 'right': '' }
-    let g:Lf_WindowPosition = 'popup'
-    let g:Lf_ShortcutF = "<leader>ff"
-    let g:Lf_CommandMap = {'<C-J>': ['<DOWN>'], '<C-K>': ['<UP>']}
-    let g:Lf_ShortcutB = ""
-    let g:Lf_PreviewInPopup = 1
+  vim.g.Lf_StlSeparator = {
+    left = '',
+    right = ''
+  }
 
-    let g:Lf_WildIgnore = {
-      \ 'dir': ['.svn','.git','.hg'],
-      \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]']
-      \}
+  vim.g.Lf_WindowPosition = 'popup'
 
-    let g:Lf_PopupHeight = 0.7
-  ]]
+  vim.g.Lf_CommandMap = {
+    ['<C-J>'] = {'<DOWN>'},
+    ['<C-K>'] = {'<UP>'}
+  }
+
+  vim.g.Lf_ShortcutF = "<leader>ff"
+  vim.g.Lf_ShortcutB = ""
+  vim.g.Lf_PreviewInPopup = 1
+  vim.g.Lf_PopupHeight = 0.7
+  vim.g.Lf_WildIgnore = {
+     dir = {'.svn','.git','.hg'},
+     file = {'*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]'}
+    }
+
   vim.cmd('silent! unmap <leader>f')
 end
 
