@@ -120,8 +120,9 @@ local n_mappings = {
   },
   x = {
     name = "+text",
-    u = "Escape Unicode",
-    U = "Unescape Unicode",
+    r = {":lua require('misc/replace').n_replace()<cr>", "replace word"},
+    u = "escape unicode",
+    U = "unescape unicode",
     h = "url encode",
     H = "url decode",
     c = { ":call edit#CountSelectionRegion()<cr>", "count in the selection region" },
@@ -204,7 +205,7 @@ local v_mappings = {
     b = {"base64"},
     B = {"unbase64"},
     s = {"text escape"},
-    r = {":lua require('misc/replace').replace()<cr>", "replace word"}
+    r = {":lua require('misc/replace').v_replace()<cr>", "replace"}
   },
   f = {
     f = {":lua require('core/leaderf').visual_leaderf('file')<cr>", "file"},
