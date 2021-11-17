@@ -202,6 +202,10 @@ local v_mappings = {
     B = {"unbase64"},
     s = {"text escape"}
   },
+  f = {
+    f = {":lua require('config/leaderf').visual_leaderf('file')<cr>", "file"},
+    r = {":lua require('config/leaderf').visual_leaderf('rg')<cr>", "file"},
+  },
   c = {
     f = { "<Plug>(coc-format-selected)", 'coc-format' }
   }

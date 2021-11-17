@@ -222,7 +222,7 @@ return packer.startup(function()
       run = './install.sh',
       opt = true,
       cmd = {'Leaderf', 'Git'},
-      config = function() vim.cmd('runtime plug-config/leaderf.vim') end,
+      config = function() require("config/leaderf").setup() end,
       requires = {
         {'linjiX/LeaderF-git'},
         {'tpope/vim-fugitive'}
