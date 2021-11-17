@@ -342,12 +342,10 @@ return packer.startup(function()
   use {
     'norcalli/nvim-colorizer.lua',
     config = function ()
-      require 'colorizer'.setup {
-        vim = {
-          names = false;
-          RGB = false;
-        }
-      }
+      require 'colorizer'.setup(
+        {'vim', 'lua'},
+        { names = false }
+      )
     end
   }
 
@@ -405,13 +403,13 @@ return packer.startup(function()
     end
   }
 
-  use {
-    'gelguy/wilder.nvim',
-    run = ':UpdateRemotePlugins',
-    config = function()
-      vim.cmd('runtime plug-config/wilder.vim')
-    end
-  }
+  -- use {
+  --   'gelguy/wilder.nvim',
+  --   run = ':UpdateRemotePlugins',
+  --   config = function()
+  --     vim.cmd('runtime plug-config/wilder.vim')
+  --   end
+  -- }
 
   -- use {
   --   'nvim-telescope/telescope.nvim',
