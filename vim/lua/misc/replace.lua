@@ -2,7 +2,12 @@ local M = {}
 
 function M.replace()
   local target = vim.fn.input("replace with:")
-  vim.cmd(":%s/" .. vim.call('visual#visual_selection') .. "/" .. target .. "/g")
+
+  target:gsub("/", "\\/")
+
+  local r = ":%s/" .. vim.call('visual#visual_selection') .. "/" .. target .. "/g"
+  print(r)
+  vim.cmd(r)
 end
 
 return M
