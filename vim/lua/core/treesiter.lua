@@ -8,6 +8,7 @@ require'nvim-treesitter.configs'.setup {
 vim.cmd([[
 set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
+hi TSPunctBracket guifg=#ABB2BF
 ]])
 
 local parser_configs = require("nvim-treesitter.parsers").get_parser_configs()
