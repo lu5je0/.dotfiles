@@ -27,6 +27,14 @@ return packer.startup(function()
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
 
+  use {
+    'ojroques/vim-oscyank',
+    config = function()
+      vim.cmd("autocmd TextYankPost * execute 'OSCYankReg \"'")
+    end,
+    disable = (vim.fn.has("clipboard") == 1)
+  }
+
   vim.g.did_load_filetypes = 1
   use {
     "nathom/filetype.nvim"
