@@ -340,6 +340,18 @@ return packer.startup(function()
   }
 
   use {
+    'norcalli/nvim-colorizer.lua',
+    config = function ()
+      require 'colorizer'.setup {
+        vim = {
+          names = false;
+          RGB = false;
+        }
+      }
+    end
+  }
+
+  use {
     'liuchengxu/vista.vim',
     config = function() vim.cmd('runtime plug-config/vista.vim') end,
     opt = true,
