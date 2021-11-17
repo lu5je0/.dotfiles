@@ -204,7 +204,7 @@ local v_mappings = {
   },
   f = {
     f = {":lua require('config/leaderf').visual_leaderf('file')<cr>", "file"},
-    r = {":lua require('config/leaderf').visual_leaderf('rg')<cr>", "file"},
+    r = {":lua require('config/leaderf').visual_leaderf('rg')<cr>", "rg"},
   },
   c = {
     f = { "<Plug>(coc-format-selected)", 'coc-format' }
