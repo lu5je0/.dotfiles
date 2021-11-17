@@ -77,7 +77,7 @@ local n_mappings = {
   c = {
     r = { "<Plug>(coc-rename)", 'rename-variable' },
     c = "code-action",
-    f = "auto-format",
+    f = { "<Plug>(coc-format)", 'coc-format' }
   },
   t = {
       name = '+tab/terminal',
@@ -201,6 +201,9 @@ local v_mappings = {
     b = {"base64"},
     B = {"unbase64"},
     s = {"text escape"}
+  },
+  c = {
+    f = { "<Plug>(coc-format-selected)", 'coc-format' }
   }
 }
 
@@ -265,6 +268,9 @@ vim.cmd[[
   "----------------------------------------------------------------------
   nmap <leader>xh :%!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
   nmap <leader>xH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+
+  xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+  nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 
   vnoremap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
   vnoremap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
