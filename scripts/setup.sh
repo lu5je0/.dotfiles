@@ -22,7 +22,11 @@ if [ "$(uname)" = "Linux" ]; then
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
 fi
 
-cp ~/.dotfiles/ssh/config ~/.ssh/config
+if [[ -f ~/.ssh/config ]]; then
+    cp ~/.dotfiles/ssh/config ~/.ssh/config
+else
+    echo "~/.ssh/config existed"
+fi
 
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
