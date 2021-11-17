@@ -71,3 +71,9 @@ endif
 set shortmess=atI
 
 set foldtext=misc#fold_text()
+
+" 主题配置 {{{
+colorscheme one
+set bg=dark
+hi TSPunctBracket guifg=#ABB2BF
+" }}}

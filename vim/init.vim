@@ -1,25 +1,13 @@
 lua require('impatient')
 lua require('plugins')
 
-" runtime 加载.vim {{{
 runtime settings.vim
-
-if has("win32")
-    runtime escalt.vim
-endif
 
 if has("gui")
     runtime gvim.vim
 endif
 
 runtime functions.vim
-" }}}
-
-" 主题配置 {{{
-colorscheme one
-set bg=dark
-hi TSPunctBracket guifg=#ABB2BF
-" }}}
 
 runtime mappings.vim
 runtime misc.vim
