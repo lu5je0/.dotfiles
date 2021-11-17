@@ -115,7 +115,7 @@ return packer.startup(function()
     opt = true,
     ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'sh'},
     config = function()
-      require('config/treesiter')
+      require('core/treesiter')
     end
   }
 
