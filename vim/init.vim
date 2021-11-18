@@ -24,7 +24,7 @@ function! LoadPlug(timer) abort
     silent! PackerLoad vim-textobj-parameter
 
     if has("wsl")
-        silent! PackerLoad im-switcher
+        silent! PackerLoad im-switcher.nvim
     endif
     set clipboard=unnamed
 endfunction
