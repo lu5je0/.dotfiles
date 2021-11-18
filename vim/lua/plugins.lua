@@ -201,7 +201,7 @@ return packer.startup(function()
   use 'glepnir/zephyr-nvim'
 
   use {
-    'lu5je0/im-switcher',
+    'lu5je0/im-switcher.nvim',
     opt = true,
     disable = vim.fn.has("wsl") == 0
   }
