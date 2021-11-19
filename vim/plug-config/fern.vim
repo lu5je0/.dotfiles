@@ -122,3 +122,11 @@ augroup fern-custom
   autocmd FileType nerdtree,startify,fern call glyph_palette#apply()
   autocmd FileType fern call s:init_fern()
 augroup END
+
+" Add dirs and files inside the brackets that need to remain hidden
+" let hide_dirs  = '^\%(\.git\|node_modules\)$'  " here you write the dir names 
+" let hide_files = '\%(\.byebug\|\.ruby-\)\+'    " here you write the file names
+" let g:fern#default_exclude = hide_dirs . '\|' . hide_files  " here you exclude them
+let hide_dirs  = '^\%(\.git\)$'  " here you write the dir names 
+
+let g:fern#default_exclude = '^\%(\.git\)$'
