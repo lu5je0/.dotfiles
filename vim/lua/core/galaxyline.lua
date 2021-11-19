@@ -13,6 +13,7 @@ gls.left[1] = {
     highlight = {colors.blue,colors.bg}
   },
 }
+
 gls.left[2] = {
   ViMode = {
     provider = function()
@@ -42,7 +43,9 @@ gls.left[3] ={
 
 gls.left[4] = {
   FileName = {
-    provider = 'FileName',
+    provider = function ()
+      return vim.api.nvim_eval("expand('%:t')") .. " "
+    end,
     condition = condition.buffer_not_empty,
     highlight = {colors.magenta,colors.bg,'bold'}
   }
@@ -119,11 +122,11 @@ gls.right[2] = {
 gls.right[3] = {
   LineInfo = {
     provider = function ()
-      local max_lines = vim.fn.line('$')
       local line = vim.fn.line('.')
       local column = vim.fn.col('.')
-      return string.format("  %2d:%d :%d ", line, max_lines, column)
+      return string.format("%2d:%d", line, column)
     end,
+    separator = ' ',
     separator_highlight = {'NONE',colors.bg},
     highlight = {colors.fg,colors.bg},
   },
@@ -147,30 +150,20 @@ gls.right[5] = {
   }
 }
 
--- gls.right[5] = {
---   DiffAdd = {
---     provider = 'DiffAdd',
---     condition = condition.hide_in_width,
---     icon = '   ',
---     highlight = {colors.green,colors.bg},
---   }
--- }
--- gls.right[6] = {
---   DiffModified = {
---     provider = 'DiffModified',
---     condition = condition.hide_in_width,
---     icon = ' ',
---     highlight = {colors.orange,colors.bg},
---   }
--- }
--- gls.right[7] = {
---   DiffRemove = {
---     provider = 'DiffRemove',
---     condition = condition.hide_in_width,
---     icon = ' ',
---     highlight = {colors.red,colors.bg},
---   }
--- }
+gls.right[6] = {
+  GitInfo = {
+    provider = function ()
+      local status = vim.api.nvim_eval("get(b:, 'gitsigns_status', '')");
+      if status == '' then
+        return ''
+      else
+        return '  ' .. status;
+      end
+    end,
+    condition = condition.check_git_workspace,
+    highlight = {colors.fg,colors.bg},
+  }
+}
 
 gls.right[8] = {
   RainbowBlue = {
