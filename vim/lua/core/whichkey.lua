@@ -186,8 +186,7 @@ local n_mappings = {
     l = {":lua require('core/fugitive').current_file_logs()<cr>", 'show changs on current file'},
     i = {':Gist -l<cr>', 'gist'},
     P = {':AsyncRun -focus=0 -mode=term -rows=10 git push<cr>', 'git push'},
-    s = {':Gstatus<cr>', 'status'},
-    S = {':Git status<cr>', 'status'},
+    s = {':Git status<cr>', 'status'},
   }
 }
 
