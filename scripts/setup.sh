@@ -16,7 +16,7 @@ ask "Enable http proxy(http://127.0.0.1:1080)?" && export http_proxy=http://${HT
 if [ "$(uname)" = "Linux" ]; then
     if [ -f /etc/lsb-release ]; then
         ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
-        ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requires.sh
+        ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requirements.sh
         ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt install -y nodejs
     fi
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
@@ -66,7 +66,7 @@ if [[ ! -d ~/.config/nvim ]]; then
     ln -s ~/.dotfiles/vim ~/.config/nvim
 fi
 
-ask "Install pip3 requirements?" && pip3 install pynvim neovim-remote
+ask "Install pip3 requirements?" && sh ~/.dotfiles/scripts/pip3-requirements.sh
 
 if [ "$(uname)" = "Darwin" ]; then
     ask "pip3 install pyobjc?" && pip3 install pyobjc

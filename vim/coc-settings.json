@@ -7,6 +7,7 @@
   "coc.source.around.firstMatch": false,
   "coc.source.buffer.firstMatch": false,
   "Lua.completion.callSnippet": "Replace",
+  "python.formatting.autopep8Path": "~/.local/bin/autopep8",
   "Lua.diagnostics.globals": "vim",
   "suggest.completionItemKindLabels": {
     "method": "  ",
