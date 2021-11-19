@@ -185,7 +185,7 @@ local n_mappings = {
     L = {':Flogsplit<cr>', 'git log in repository'},
     l = {":lua require('core/fugitive').current_file_logs()<cr>", 'show changs on current file'},
     i = {':Gist -l<cr>', 'gist'},
-    P = {':AsyncRun -focus=0 -mode=term -rows=10 git push<cr>', 'git push'},
+    p = {':AsyncRun -focus=0 -mode=term -rows=10 git push<cr>', 'git push'},
     s = {':Git status<cr>', 'status'},
   }
 }
