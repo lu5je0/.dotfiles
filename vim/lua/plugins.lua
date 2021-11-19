@@ -32,7 +32,7 @@ return packer.startup(function()
     config = function()
       vim.cmd("autocmd TextYankPost * execute 'OSCYankReg \"'")
     end,
-    disable = (vim.fn.has("clipboard") == 1)
+    disable = (vim.fn.has("wsl") == 1 or vim.fn.has("mac") or vim.fn.has("clipboard") == 1)
   }
 
   vim.g.did_load_filetypes = 1
@@ -200,13 +200,11 @@ return packer.startup(function()
   use 'w0ng/vim-hybrid'
   use 'glepnir/zephyr-nvim'
 
-  local wsl_version = vim.api.nvim_eval('platform#is_wsl()')
-  if  wsl_version == 1 or wsl_version == 2 then
-    use {
-      'lu5je0/im-switcher',
-      opt = true
-    }
-  end
+  use {
+    'lu5je0/im-switcher.nvim',
+    opt = true,
+    disable = vim.fn.has("wsl") == 0
+  }
 
   -- " fern
   use {'lambdalisue/fern-hijack.vim'}
@@ -339,6 +337,18 @@ return packer.startup(function()
     'tpope/vim-surround'
   }
 
+  local nvim_colorizer_ft = {'vim', 'lua'}
+  use {
+    'norcalli/nvim-colorizer.lua',
+    config = function ()
+      require 'colorizer'.setup(
+        nvim_colorizer_ft,
+        { names = false }
+      )
+    end,
+    ft = nvim_colorizer_ft
+  }
+
   use {
     'liuchengxu/vista.vim',
     config = function() vim.cmd('runtime plug-config/vista.vim') end,
@@ -393,13 +403,13 @@ return packer.startup(function()
     end
   }
 
-  use {
-    'gelguy/wilder.nvim',
-    run = ':UpdateRemotePlugins',
-    config = function()
-      vim.cmd('runtime plug-config/wilder.vim')
-    end
-  }
+  -- use {
+  --   'gelguy/wilder.nvim',
+  --   run = ':UpdateRemotePlugins',
+  --   config = function()
+  --     vim.cmd('runtime plug-config/wilder.vim')
+  --   end
+  -- }
 
   -- use {
   --   'nvim-telescope/telescope.nvim',

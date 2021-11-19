@@ -23,9 +23,8 @@ function! LoadPlug(timer) abort
     silent! PackerLoad coc.nvim
     silent! PackerLoad vim-textobj-parameter
 
-    let wsl_version = platform#is_wsl()
-    if wsl_version == 1 || wsl_version == 2
-        silent! PackerLoad im-switcher
+    if has("wsl")
+        silent! PackerLoad im-switcher.nvim
     endif
     set clipboard=unnamed
 endfunction
