@@ -1,6 +1,6 @@
 lua require('impatient')
 lua require('plugins')
-lua require('command')
+lua require('commands')
 
 runtime settings.vim
 
