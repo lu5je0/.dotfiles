@@ -40,4 +40,7 @@ function! s:wilder_init() abort
   endtry
 endfunction
 
-autocmd CmdlineEnter * ++once call s:wilder_init()
+" augroup wilderInit
+"     autocmd!
+"     autocmd CmdlineEnter * ++once call s:wilder_init()
+" augroup END
