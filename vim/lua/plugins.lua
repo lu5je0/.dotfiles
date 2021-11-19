@@ -285,7 +285,7 @@ return packer.startup(function()
   use {
     'tpope/vim-fugitive',
     opt = true,
-    cmd = {'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog'},
+    cmd = {'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread'},
     requires = {
       {'skywind3000/asynctasks.vim', opt = true},
     }

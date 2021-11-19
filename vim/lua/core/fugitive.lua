@@ -11,6 +11,9 @@ end
 
 function M.current_file_logs()
   local filepath = vim.fn.expand("%:p")
+  if filepath == "" then
+    return
+  end
   local cmd = string.format("Gclog -p %s", filepath)
   vim.cmd(cmd)
 end
