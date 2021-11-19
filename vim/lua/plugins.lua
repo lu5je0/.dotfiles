@@ -283,19 +283,19 @@ return packer.startup(function()
   }
 
   use {
+    'tpope/vim-fugitive',
+    opt = true,
+    cmd = {'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog'},
+    requires = {
+      {'skywind3000/asynctasks.vim', opt = true},
+    }
+  }
+
+  use {
     'rbong/vim-flog',
     cmd = 'Flogsplit',
     opt = true,
-    requires = {
-      {
-        'tpope/vim-fugitive',
-        opt = true,
-        cmd = {'Git', 'Gvdiffsplit', 'Gstatus'},
-        requires = {
-          {'skywind3000/asynctasks.vim', opt = true},
-        }
-      }
-    }
+    requires = {{'tpope/vim-fugitive'}}
   }
 
   use {
