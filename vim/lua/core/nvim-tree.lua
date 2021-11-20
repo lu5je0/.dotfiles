@@ -25,7 +25,24 @@ function M.setup()
           \   'symlink_open': "",
           \   }
           \ }
+    let g:nvim_tree_show_icons = {
+        \ 'git': 1,
+        \ 'folders': 1,
+        \ 'files': 1,
+        \ 'folder_arrows': 1,
+        \ }
+
+    highlight NvimTreeFolderName guifg=#e5c07b
+    highlight NvimTreeOpenedFolderName guifg=#e5c07b
+    highlight NvimTreeRootFolder guifg=#e06c75
+
   ]]
+  vim.g.nvim_tree_special_files = {}
+  vim.g.nvim_tree_add_trailing = 1
+  vim.g.nvim_tree_indent_markers = 1
+
+
+  require('nvim-tree.view').View.winopts.signcolumn = 'yes:1'
 
   local tree_cb = require'nvim-tree.config'.nvim_tree_callback
   -- default mappings
@@ -97,7 +114,7 @@ function M.setup()
     },
     filters = {
       dotfiles = false,
-      custom = {}
+      custom = {'.git'}
     },
     view = {
       width = 25,

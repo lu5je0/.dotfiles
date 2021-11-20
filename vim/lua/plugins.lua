@@ -177,8 +177,6 @@ return packer.startup(function()
     cmd = 'S'
   }
 
-  use 'yianwillis/vimcdoc'
-
   use {
     'tpope/vim-commentary'
   }
