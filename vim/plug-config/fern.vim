@@ -2,7 +2,7 @@ let g:fern#disable_default_mappings=0
 let g:fern#renderer = "nerdfont"
 " let g:fern#smart_cursor = "hide"
 let g:fern#disable_drawer_smart_quit = 0
-let g:fern#renderer#nerdfont#root_symbol = "≡ "
+" let g:fern#renderer#nerdfont#root_symbol = "≡ "
 let g:fern#disable_viewer_spinner=1
 let g:fern#default_exclude = '\.\(swp\|git\)'
 let g:fern#drawer_width=22
@@ -37,7 +37,7 @@ function! s:init_fern() abort
   hi FernRootText ctermfg=16 guifg=#E06C75
 
   " hide sign
-  setlocal scl=auto
+  setlocal scl=yes
   setlocal nonumber
 
   mapclear! <buffer>
@@ -91,7 +91,7 @@ function! s:init_fern() abort
   silent ! unmap <buffer> fi
   nmap <buffer><nowait> f :call file#fern_show_file_info()<cr>
 
-  nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
+  nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter):pwd<cr>
   nmap <buffer> H :Fern ~ -drawer -stay -keep<cr>
   nmap <buffer> u <Plug>(fern-action-leave)
   " map <buffer> U ucd todo
