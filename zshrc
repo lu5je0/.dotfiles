@@ -27,7 +27,7 @@ zinit snippet OMZ::lib/git.zsh
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-completions
 
-zinit ice lucid wait='1'
+zinit ice lucid wait='0'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
 zinit ice lucid wait='1'
