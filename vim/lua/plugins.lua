@@ -32,7 +32,7 @@ return packer.startup(function()
     config = function()
       vim.cmd("autocmd TextYankPost * execute 'OSCYankReg \"'")
     end,
-    disable = (vim.fn.has("wsl") == 1 or vim.fn.has("mac") or vim.fn.has("clipboard") == 1)
+    disable = (vim.fn.has("wsl") == 1 or vim.fn.has("mac") == 1 or vim.fn.has("clipboard") == 1)
   }
 
   vim.g.did_load_filetypes = 1
