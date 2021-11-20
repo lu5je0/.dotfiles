@@ -115,11 +115,11 @@ return packer.startup(function()
 
   use {'mattn/webapi-vim'}
 
-  use {
-    'kyazdani42/nvim-tree.lua',
-    requires = 'kyazdani42/nvim-web-devicons',
-    config = function() require("core/nvim-tree").setup() end
-  }
+  -- use {
+  --   'kyazdani42/nvim-tree.lua',
+  --   requires = 'kyazdani42/nvim-web-devicons',
+  --   config = function() require("core/nvim-tree").setup() end
+  -- }
 
   use {
     'nvim-treesitter/nvim-treesitter',
@@ -208,23 +208,23 @@ return packer.startup(function()
     disable = vim.fn.has("wsl") == 0
   }
 
-  -- -- " fern
-  -- use {'lambdalisue/fern-hijack.vim'}
+  -- " fern
+  use {'lambdalisue/fern-hijack.vim'}
 
-  -- use {
-  --   'lambdalisue/fern.vim',
-  --   opt = true,
-  --   fn = {'FernLocateFile'},
-  --   cmd = {'Fern'},
-  --   requires = {
-  --     {'yuki-yano/fern-preview.vim', opt = true},
-  --     {'lambdalisue/nerdfont.vim', opt = true},
-  --     {'lu5je0/fern-renderer-nerdfont.vim', opt = true},
-  --     {'lambdalisue/glyph-palette.vim', opt = true},
-  --     {'lambdalisue/fern-git-status.vim', opt = true}
-  --   },
-  --   config = function() vim.cmd('runtime plug-config/fern.vim') end
-  -- }
+  use {
+    'lambdalisue/fern.vim',
+    opt = true,
+    fn = {'FernLocateFile'},
+    cmd = {'Fern'},
+    requires = {
+      {'yuki-yano/fern-preview.vim', opt = true},
+      {'lambdalisue/nerdfont.vim', opt = true},
+      {'lu5je0/fern-renderer-nerdfont.vim', opt = true},
+      {'lambdalisue/glyph-palette.vim', opt = true},
+      {'lambdalisue/fern-git-status.vim', opt = true}
+    },
+    config = function() vim.cmd('runtime plug-config/fern.vim') end
+  }
 
   use {'lu5je0/LeaderF',
       run = './install.sh',

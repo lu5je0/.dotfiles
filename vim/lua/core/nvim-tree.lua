@@ -37,6 +37,9 @@ function M.setup()
     highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
 
+    nnoremap <leader>e :NvimTreeToggle<CR><c-w>p
+    nnoremap <leader>r :NvimTreeRefresh<CR>
+    nnoremap <leader>fe :NvimTreeFindFile<CR>
   ]]
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
