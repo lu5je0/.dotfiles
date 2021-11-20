@@ -29,3 +29,7 @@ function! LoadPlug(timer) abort
     endif
     set clipboard=unnamed
 endfunction
+
+nnoremap <leader>e :NvimTreeToggle<CR><c-w>p
+nnoremap <leader>r :NvimTreeRefresh<CR>
+nnoremap <leader>fe :NvimTreeFindFile<CR>
