@@ -34,6 +34,7 @@ function M.setup()
 
     highlight NvimTreeFolderName guifg=#e5c07b
     highlight NvimTreeOpenedFolderName guifg=#e5c07b
+    highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
 
   ]]
@@ -48,15 +49,14 @@ function M.setup()
   -- default mappings
   local list = {
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
-    { key = {"cd"},    cb = tree_cb("cd") },
+    { key = {"cd", "C"},    cb = tree_cb("cd") },
     { key = "S",                        cb = tree_cb("vsplit") },
     { key = "s",                        cb = tree_cb("split") },
     -- { key = "<C-t>",                        cb = tree_cb("tabnew") },
     { key = "<",                            cb = tree_cb("prev_sibling") },
     { key = ">",                            cb = tree_cb("next_sibling") },
     { key = "P",                            cb = tree_cb("parent_node") },
-    { key = "<BS>",                         cb = tree_cb("close_node") },
-    { key = "h",                       cb = tree_cb("close_node") },
+    { key = {"<BS>", 'h'},                         cb = tree_cb("close_node") },
     { key = "p",                        cb = tree_cb("preview") },
     { key = "K",                            cb = tree_cb("first_sibling") },
     { key = "J",                            cb = tree_cb("last_sibling") },
@@ -113,7 +113,7 @@ function M.setup()
       args = {}
     },
     filters = {
-      dotfiles = false,
+      dotfiles = true,
       custom = {'.git'}
     },
     view = {
