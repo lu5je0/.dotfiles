@@ -191,7 +191,12 @@ gls.short_line_left[2] = {
 
 gls.short_line_right[1] = {
   BufferIcon = {
-    provider= 'BufferIcon',
+    provider= function ()
+      if vim.api.nvim_eval('&ft') == 'fern' then
+        return " "
+      end
+      return ""
+    end,
     highlight = {colors.fg,colors.bg}
   }
 }
