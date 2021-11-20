@@ -52,7 +52,7 @@ function M.setup()
   -- default mappings
   local list = {
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
-    { key = {"cd", "C"},    cb = tree_cb("cd") },
+    { key = {"cd", "C"}, cb = ":lua require('core/nvim-tree').cd()<cr>"},
     { key = "S",                        cb = tree_cb("vsplit") },
     { key = "s",                        cb = tree_cb("split") },
     -- { key = "<C-t>",                        cb = tree_cb("tabnew") },
@@ -68,17 +68,16 @@ function M.setup()
     { key = "r",                            cb = tree_cb("refresh") },
     { key = "ma",                            cb = tree_cb("create") },
     { key = "D",                            cb = tree_cb("remove") },
-    { key = "mV",                            cb = tree_cb("rename") },
-    { key = "mv",                        cb = tree_cb("full_rename") },
+    { key = "mv",                        cb = tree_cb("rename") },
     -- { key = "x",                            cb = tree_cb("cut") },
     { key = "yy",                            cb = tree_cb("copy") },
     { key = "p",                            cb = tree_cb("paste") },
     { key = "yn",                            cb = tree_cb("copy_name") },
     { key = "yP",                            cb = tree_cb("copy_path") },
     { key = "yp",                           cb = tree_cb("copy_absolute_path") },
-    { key = "[c",                           cb = tree_cb("prev_git_item") },
-    { key = "]c",                           cb = tree_cb("next_git_item") },
-    { key = "u",                            cb = tree_cb("dir_up") },
+    { key = "[g",                           cb = tree_cb("prev_git_item") },
+    { key = "]g",                           cb = tree_cb("next_git_item") },
+    { key = "U",                            cb = tree_cb("dir_up") },
     { key = "s",                            cb = tree_cb("system_open") },
     { key = "q",                            cb = tree_cb("close") },
     { key = "g?",                           cb = tree_cb("toggle_help") },
@@ -91,8 +90,8 @@ function M.setup()
     ignore_ft_on_setup  = {},
     auto_close          = false,
     open_on_tab         = false,
-    hijack_cursor       = false,
-    update_cwd          = false,
+    hijack_cursor       = true,
+    update_cwd          = true,
     update_to_buf_dir   = {
       enable = false,
       auto_open = true,
@@ -106,11 +105,11 @@ function M.setup()
         error = "",
       }
     },
-    update_focused_file = {
-      enable      = false,
-      update_cwd  = true,
-      ignore_list = {}
-    },
+    -- update_focused_file = {
+    --   enable      = false,
+    --   update_cwd  = false,
+    --   ignore_list = {}
+    -- },
     system_open = {
       cmd  = nil,
       args = {}
@@ -131,6 +130,12 @@ function M.setup()
       }
     }
   }
+end
+
+function M.cd()
+  print("begin" .. vim.api.nvim_eval("getcwd()"))
+  require'nvim-tree'.on_keypress('cd')
+  print("end" .. vim.api.nvim_eval("getcwd()"))
 end
 
 return M
