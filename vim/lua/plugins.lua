@@ -387,6 +387,11 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/coc.vim') end
   }
 
+  use {
+    "lukas-reineke/indent-blankline.nvim",
+    config = function () vim.g.indent_blankline_char = '▏' end
+  }
+
   -- use {
   --   'liuchengxu/vim-which-key',
   --   config = function() vim.cmd('runtime whichkey.vim') end
