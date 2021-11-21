@@ -281,7 +281,7 @@ return packer.startup(function()
   use {
     'tpope/vim-fugitive',
     opt = true,
-    cmd = {'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread'},
+    cmd = {'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator'},
     requires = {
       {'skywind3000/asynctasks.vim', opt = true},
     }
@@ -389,7 +389,13 @@ return packer.startup(function()
 
   use {
     "lukas-reineke/indent-blankline.nvim",
-    config = function () vim.g.indent_blankline_char = '▏' end
+    setup = function ()
+      vim.g.indent_blankline_char = '▏'
+      vim.g.indentLine_fileTypeExclude = {'undotree', 'vista', 'git', 'diff', 'translator', 'help'}
+      vim.g.indent_blankline_context_patterns = {'function', 'method'}
+      vim.g.indent_blankline_show_first_indent_level = false
+      vim.g.indent_blankline_show_trailing_blankline_indent = false
+    end
   }
 
   -- use {
