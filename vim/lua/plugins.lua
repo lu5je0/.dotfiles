@@ -392,7 +392,6 @@ return packer.startup(function()
     setup = function ()
       vim.g.indent_blankline_char = '▏'
       vim.g.indentLine_fileTypeExclude = {'undotree', 'vista', 'git', 'diff', 'translator', 'help'}
-      vim.g.indent_blankline_context_patterns = {'function', 'method'}
       vim.g.indent_blankline_show_first_indent_level = false
       vim.g.indent_blankline_show_trailing_blankline_indent = false
     end
