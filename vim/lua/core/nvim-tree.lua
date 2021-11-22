@@ -37,14 +37,12 @@ function M.setup()
     highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
 
-    nnoremap <leader>e :NvimTreeToggle<CR><c-w>p
-    nnoremap <leader>r :NvimTreeRefresh<CR>
-    nnoremap <leader>fe :NvimTreeFindFile<CR>
+    map <silent> <leader>e :NvimTreeToggle<cr>
+    map <silent> <leader>fe :lua require("core/nvim-tree").locate_file()<cr>
   ]]
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
   vim.g.nvim_tree_indent_markers = 1
-
 
   require('nvim-tree.view').View.winopts.signcolumn = 'yes:1'
 
@@ -139,6 +137,10 @@ function M.locate_file()
 
   local pwd = vim.fn.getcwd()
   local file_path = vim.fn.expand("%:p")
+  if file_path == nil or file_path == "" then
+     return
+  end
+
   file_path = string.sub(file_path, 0, file_path:match('^.*()/') - 1)
 
   if string.match(file_path, [[%.]]) ~= nil then

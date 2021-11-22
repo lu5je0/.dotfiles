@@ -115,12 +115,6 @@ return packer.startup(function()
 
   use {'mattn/webapi-vim'}
 
-  -- use {
-  --   'kyazdani42/nvim-tree.lua',
-  --   requires = 'kyazdani42/nvim-web-devicons',
-  --   config = function() require("core/nvim-tree").setup() end
-  -- }
-
   use {
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
@@ -403,6 +397,12 @@ return packer.startup(function()
     config = function()
       require("core/whichkey")
     end
+  }
+
+  use {
+    'kyazdani42/nvim-tree.lua',
+    requires = 'kyazdani42/nvim-web-devicons',
+    config = function() require("core/nvim-tree").setup() end
   }
 
   -- use {
