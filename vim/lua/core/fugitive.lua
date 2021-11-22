@@ -1,7 +1,7 @@
 local M = {}
 
 local function load_plugin()
-  vim.cmd("silent! PackerLoad vim-fugitive")
+  require('core/plugins_helper').load_plugin("vim-fugitive")
 end
 
 function M.lines_changes()
