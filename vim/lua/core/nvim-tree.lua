@@ -51,6 +51,7 @@ function M.setup()
   local list = {
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
     { key = {"cd", "C"}, cb = ":lua require('core/nvim-tree').cd()<cr>"},
+    { key = "H", cb = ":cd ~<cr>"},
     { key = "S",                        cb = tree_cb("vsplit") },
     { key = "s",                        cb = tree_cb("split") },
     -- { key = "<C-t>",                        cb = tree_cb("tabnew") },
@@ -138,6 +139,7 @@ function M.locate_file()
      return
   end
 
+  -- what if pwd has .
   file_path = string.sub(file_path, 0, file_path:match('^.*()/') - 1)
 
   if string.match(file_path, [[%.]]) ~= nil then
@@ -153,7 +155,7 @@ end
 
 function M.cd()
   require'nvim-tree'.on_keypress('cd')
-  vim.cmd("gg")
+  vim.cmd("norm gg")
 end
 
 return M
