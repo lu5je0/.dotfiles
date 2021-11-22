@@ -1,6 +1,12 @@
 local M = {}
 
+local function load_plugin()
+  vim.cmd("silent! PackerLoad vim-fugitive")
+end
+
 function M.lines_changes()
+  load_plugin()
+
   local begin_line = vim.fn.getpos("'<")[2]
   local end_line = vim.fn.getpos("'>")[2]
   local filepath = vim.fn.expand("%:p")
@@ -10,6 +16,8 @@ function M.lines_changes()
 end
 
 function M.current_file_logs()
+  load_plugin()
+
   local filepath = vim.fn.expand("%:p")
   if filepath == "" then
     return

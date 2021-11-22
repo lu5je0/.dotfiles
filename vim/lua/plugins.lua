@@ -399,11 +399,11 @@ return packer.startup(function()
     end
   }
 
-  use {
-    'lu5je0/nvim-tree.lua',
-    requires = 'kyazdani42/nvim-web-devicons',
-    config = function() require("core/nvim-tree").setup() end
-  }
+  -- use {
+  --   'lu5je0/nvim-tree.lua',
+  --   requires = 'kyazdani42/nvim-web-devicons',
+  --   config = function() require("core/nvim-tree").setup() end
+  -- }
 
   -- use {
   --   'gelguy/wilder.nvim',
