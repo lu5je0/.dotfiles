@@ -1,7 +1,10 @@
 let g:fern#disable_default_mappings=0
 let g:fern#renderer = "nerdfont"
 " let g:fern#smart_cursor = "hide"
+
+let g:fern#renderer#nerdfont#indent_line = 1
 let g:fern#renderer#nerdfont#root_symbol = "≡ "
+
 let g:fern#disable_drawer_smart_quit = 0
 let g:fern#disable_viewer_spinner=1
 let g:fern#default_exclude = '\.\(swp\|git\)'
@@ -111,6 +114,7 @@ function! s:init_fern() abort
   nmap <buffer> <leader>8 <C-W>l<leader>8 
   nmap <buffer> <leader>9 <C-W>l<leader>9 
   nmap <buffer> <leader>ff <C-W>l<leader>ff
+  nmap <buffer> <leader>fe <Nop>
   nmap <buffer> <leader>tn <C-W>l<leader>tn
   nmap <buffer> <leader>fr <C-W>l<leader>fr
   nmap <buffer> <leader>fm <C-W>l<leader>fm

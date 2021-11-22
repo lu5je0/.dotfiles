@@ -14,7 +14,7 @@ set laststatus=2
 set showtabline=2
 set noshowmode
 set fileformat=unix
-" set cursorline
+set cursorline
 " 缩进
 set tabstop=4
 set shiftwidth=4

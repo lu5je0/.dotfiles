@@ -19,7 +19,7 @@ runtime autocmd.vim
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
     if has("mac")
-        let g:python3_host_prog  = '/usr/local/bin/python3'
+        let g:python3_host_prog = '/usr/local/bin/python3'
     endif
     runtime im.vim
     silent! PackerLoad coc.nvim
