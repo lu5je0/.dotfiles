@@ -88,7 +88,7 @@ function M.setup()
     ignore_ft_on_setup  = {},
     auto_close          = false,
     open_on_tab         = false,
-    hijack_cursor       = true,
+    hijack_cursor       = false,
     update_cwd          = true,
     update_to_buf_dir   = {
       enable = false,
