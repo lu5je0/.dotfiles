@@ -29,7 +29,4 @@ function! LoadPlug(timer) abort
         silent! PackerLoad im-switcher.nvim
     endif
     set clipboard=unnamed
-
-    map <silent> <leader>e :NvimTreeToggle<cr>
-    map <silent> <leader>fe :lua require("core/nvim-tree").locate_file()<cr>
 endfunction

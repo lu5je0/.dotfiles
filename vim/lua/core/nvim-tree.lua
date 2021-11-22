@@ -34,6 +34,7 @@ function M.setup()
 
     highlight NvimTreeFolderName guifg=#e5c07b
     highlight NvimTreeOpenedFolderName guifg=#e5c07b
+    highlight default link NvimTreeFolderIcon Directory
     highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
 

@@ -14,3 +14,7 @@ function table.dump(o)
       return tostring(o)
    end
 end
+
+function string.escape_pattern(text)
+    return text:gsub("([^%w])", "%%%1")
+end
