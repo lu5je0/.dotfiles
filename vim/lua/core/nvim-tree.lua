@@ -133,6 +133,7 @@ end
 function M.locate_file()
   local pwd = vim.fn.getcwd()
   local file_path = vim.fn.expand("%:p")
+
   if file_path == nil or file_path == "" then
      return
   end
@@ -144,7 +145,6 @@ function M.locate_file()
     require('nvim-tree.lib').refresh_tree()
   end
 
-  print(file_path, pwd)
   if not string.startswith(file_path, pwd) then
     vim.cmd(":cd " .. file_path)
   end
@@ -152,9 +152,8 @@ function M.locate_file()
 end
 
 function M.cd()
-  print("begin" .. vim.api.nvim_eval("getcwd()"))
   require'nvim-tree'.on_keypress('cd')
-  print("end" .. vim.api.nvim_eval("getcwd()"))
+  vim.cmd("gg")
 end
 
 return M
