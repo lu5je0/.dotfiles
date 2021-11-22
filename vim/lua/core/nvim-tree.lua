@@ -77,7 +77,7 @@ function M.setup()
     { key = "yp",                           cb = tree_cb("copy_absolute_path") },
     { key = "[g",                           cb = tree_cb("prev_git_item") },
     { key = "]g",                           cb = tree_cb("next_git_item") },
-    { key = "U",                            cb = tree_cb("dir_up") },
+    { key = "u",                            cb = tree_cb("dir_up") },
     { key = "s",                            cb = tree_cb("system_open") },
     { key = "q",                            cb = tree_cb("close") },
     { key = "g?",                           cb = tree_cb("toggle_help") },
@@ -105,11 +105,11 @@ function M.setup()
         error = "",
       }
     },
-    -- update_focused_file = {
-    --   enable      = false,
-    --   update_cwd  = false,
-    --   ignore_list = {}
-    -- },
+    update_focused_file = {
+      enable      = false,
+      update_cwd  = false,
+      ignore_list = {}
+    },
     system_open = {
       cmd  = nil,
       args = {}
@@ -130,6 +130,26 @@ function M.setup()
       }
     }
   }
+end
+
+function M.locate_file()
+  string.startswith = function(self, str)
+    return self:find('^' .. str) ~= nil
+  end
+
+  local pwd = vim.fn.getcwd()
+  local file_path = vim.fn.expand("%:p")
+  file_path = string.sub(file_path, 0, file_path:match('^.*()/') - 1)
+
+  if string.match(file_path, [[%.]]) ~= nil then
+    require('nvim-tree.populate').config.filter_dotfiles = false
+    require('nvim-tree.lib').refresh_tree()
+  end
+
+  if not string.startswith(file_path, pwd) then
+    vim.cmd(":cd " .. file_path)
+  end
+  vim.cmd("NvimTreeFindFile")
 end
 
 function M.cd()
