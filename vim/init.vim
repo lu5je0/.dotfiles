@@ -1,4 +1,5 @@
 lua require('impatient')
+lua require('enhance')
 lua require('plugins')
 lua require('commands')
 

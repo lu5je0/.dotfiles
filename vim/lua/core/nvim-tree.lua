@@ -131,10 +131,6 @@ function M.setup()
 end
 
 function M.locate_file()
-  string.startswith = function(self, str)
-    return self:find('^' .. str) ~= nil
-  end
-
   local pwd = vim.fn.getcwd()
   local file_path = vim.fn.expand("%:p")
   if file_path == nil or file_path == "" then
@@ -148,6 +144,7 @@ function M.locate_file()
     require('nvim-tree.lib').refresh_tree()
   end
 
+  print(file_path, pwd)
   if not string.startswith(file_path, pwd) then
     vim.cmd(":cd " .. file_path)
   end
