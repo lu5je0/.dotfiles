@@ -214,11 +214,11 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/fern.vim') end
   }
 
-  -- use {
-  --   'yuki-yano/fern-preview.vim',
-  --   ft = {"fern"},
-  --   opt = true
-  -- }
+  use {
+    'yuki-yano/fern-preview.vim',
+    opt = true,
+    fn = {"fern_preview#open"}
+  }
 
   use {'lu5je0/LeaderF',
       run = './install.sh',
