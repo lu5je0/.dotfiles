@@ -7,8 +7,10 @@
   "coc.source.around.firstMatch": false,
   "coc.source.buffer.firstMatch": false,
   "Lua.completion.callSnippet": "Replace",
+  "Lua.diagnostics.globals": ["vim"],
+  "sumneko-lua.locale": "zh-cn",
   "python.formatting.autopep8Path": "~/.local/bin/autopep8",
-  "Lua.diagnostics.globals": "vim",
+  "sumneko-lua.enableNvimLuaDev": true,
   "suggest.completionItemKindLabels": {
     "method": "  ",
     "function": "  ",

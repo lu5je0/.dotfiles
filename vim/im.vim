@@ -6,6 +6,9 @@ let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 let g:save_last_ime = 0
 
 function! ImFuncInit()
+if get(g:, "im_init", 0) == 1
+    return
+endif
 python3 << EOF
 import threading
 
@@ -24,11 +27,11 @@ def im_init():
 
 threading.Thread(target=im_init).start()
 EOF
+let g:im_init = 1
 endfunction
 
-call ImFuncInit()
-
 function! SwitchInsertMode()
+    call ImFuncInit()
     if g:save_last_ime == 1
         call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
     else
@@ -37,6 +40,7 @@ function! SwitchInsertMode()
 endfunction
 
 function! SwitchNormalMode()
+call ImFuncInit()
 python3 << EOF
 if switcher != None:
     switcher.switch_normal_mode()
@@ -62,4 +66,3 @@ augroup switch_im
     autocmd InsertLeave * call SwitchNormalMode()
     autocmd InsertEnter * call SwitchInsertMode()
 augroup END
-
