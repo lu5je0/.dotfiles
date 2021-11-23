@@ -27,6 +27,8 @@ return packer.startup(function()
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
 
+  use 'nvim-lua/plenary.nvim'
+
   use {
     'ojroques/vim-oscyank',
     config = function()
@@ -429,6 +431,9 @@ return packer.startup(function()
   --   end
   -- }
 
+
+  use {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
+
   use {
     'nvim-telescope/telescope.nvim',
     config = function()
@@ -448,7 +453,6 @@ return packer.startup(function()
     end,
     requires = {
       {'nvim-lua/plenary.nvim'},
-      {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
     },
     cmd = 'Telescope',
     opt = true
