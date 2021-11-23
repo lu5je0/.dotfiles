@@ -115,6 +115,7 @@ local n_mappings = {
     h = {":lua require('telescope.builtin').help_tags{}<cr>", 'help'},
     l = {":lua require('telescope.builtin').current_buffer_fuzzy_find{}<cr>", 'line'},
     n = {":lua require('telescope.builtin').filetypes{}<cr>", 'filetype'},
+    a = {":lua require('telescope').extensions.project.project{}<cr>", 'filetype'},
     j = {":lua require('telescope.builtin').find_files{search_dirs={'~/junk-file'}}<cr>", 'junk-list'},
 
     q = {":echom 'detecting' | GuessLang<cr>", "GuessLang"},

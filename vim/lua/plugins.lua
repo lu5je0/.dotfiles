@@ -431,9 +431,6 @@ return packer.startup(function()
   --   end
   -- }
 
-
-  use {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
-
   use {
     'nvim-telescope/telescope.nvim',
     config = function()
@@ -442,20 +439,21 @@ return packer.startup(function()
       telescope.setup {
         defaults = {
           path_display = { truncate = 2 },
-          mappings = {
-            i = {
-              ["<esc>"] = actions.close
-            },
-          },
+          -- mappings = {
+          --   i = {
+          --     ["<esc>"] = actions.close
+          --   },
+          -- },
         }
       }
       telescope.load_extension('fzf')
+      telescope.load_extension('project')
     end,
     requires = {
       {'nvim-lua/plenary.nvim'},
-    },
-    cmd = 'Telescope',
-    opt = true
+      {'nvim-telescope/telescope-fzf-native.nvim', run='make'},
+      {'nvim-telescope/telescope-project.nvim'}
+    }
   }
 
 end)
