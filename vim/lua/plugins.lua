@@ -202,23 +202,23 @@ return packer.startup(function()
     disable = vim.fn.has("wsl") == 0
   }
 
-  -- " fern
-  use {'lambdalisue/fern-hijack.vim'}
-
   use {
     'lambdalisue/fern.vim',
-    opt = true,
-    fn = {'FernLocateFile'},
-    cmd = {'Fern'},
     requires = {
-      {'yuki-yano/fern-preview.vim', opt = true},
-      {'lambdalisue/nerdfont.vim', opt = true},
-      {'lu5je0/fern-renderer-nerdfont.vim', opt = true},
-      {'lambdalisue/glyph-palette.vim', opt = true},
-      {'lambdalisue/fern-git-status.vim', opt = true}
+      {'lambdalisue/fern-hijack.vim'},
+      {'lambdalisue/fern-git-status.vim'},
+      {'lambdalisue/nerdfont.vim'},
+      {'lu5je0/fern-renderer-nerdfont.vim'},
+      {'lambdalisue/glyph-palette.vim'}
     },
     config = function() vim.cmd('runtime plug-config/fern.vim') end
   }
+
+  -- use {
+  --   'yuki-yano/fern-preview.vim',
+  --   ft = {"fern"},
+  --   opt = true
+  -- }
 
   use {'lu5je0/LeaderF',
       run = './install.sh',
