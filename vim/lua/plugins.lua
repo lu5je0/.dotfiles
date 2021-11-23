@@ -209,15 +209,10 @@ return packer.startup(function()
       {'lambdalisue/fern-git-status.vim'},
       {'lambdalisue/nerdfont.vim'},
       {'lu5je0/fern-renderer-nerdfont.vim'},
-      {'lambdalisue/glyph-palette.vim'}
+      {'lambdalisue/glyph-palette.vim'},
+      {'yuki-yano/fern-preview.vim', opt=true}
     },
     config = function() vim.cmd('runtime plug-config/fern.vim') end
-  }
-
-  use {
-    'yuki-yano/fern-preview.vim',
-    opt = true,
-    fn = {"fern_preview#open"}
   }
 
   use {'lu5je0/LeaderF',
