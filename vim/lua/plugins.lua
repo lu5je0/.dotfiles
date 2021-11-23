@@ -226,16 +226,12 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/fern.vim') end
   }
 
-  -- use {'lu5je0/LeaderF',
-  --     run = './install.sh',
-  --     opt = true,
-  --     cmd = {'Leaderf', 'Git'},
-  --     config = function() require("core/leaderf").setup() end,
-  --     requires = {
-  --       {'linjiX/LeaderF-git'},
-  --       {'tpope/vim-fugitive'}
-  --     }
-  -- }
+  use {'lu5je0/LeaderF',
+      run = './install.sh',
+      -- opt = true,
+      -- cmd = {'Leaderf', 'Git'},
+      config = function() require("core/leaderf").setup() end,
+  }
 
   use {
     'mg979/vim-visual-multi',
@@ -431,29 +427,14 @@ return packer.startup(function()
   --   end
   -- }
 
-  use {
-    'nvim-telescope/telescope.nvim',
-    config = function()
-      local actions = require('telescope.actions')
-      local telescope = require('telescope')
-      telescope.setup {
-        defaults = {
-          path_display = { truncate = 2 },
-          -- mappings = {
-          --   i = {
-          --     ["<esc>"] = actions.close
-          --   },
-          -- },
-        }
-      }
-      telescope.load_extension('fzf')
-      telescope.load_extension('project')
-    end,
-    requires = {
-      {'nvim-lua/plenary.nvim'},
-      {'nvim-telescope/telescope-fzf-native.nvim', run='make'},
-      {'nvim-telescope/telescope-project.nvim'}
-    }
-  }
+  -- use {
+  --   'nvim-telescope/telescope.nvim',
+  --   config = function() require("core/telescope").setup() end,
+  --   requires = {
+  --     {'nvim-lua/plenary.nvim'},
+  --     {'nvim-telescope/telescope-fzf-native.nvim', run='make'},
+  --     {'nvim-telescope/telescope-project.nvim'}
+  --   }
+  -- }
 
 end)
