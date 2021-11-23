@@ -203,10 +203,19 @@ return packer.startup(function()
   }
 
   use {
+    'lambdalisue/fern-git-status.vim',
+    setup = function ()
+      vim.g.loaded_fern_git_status = 1
+    end
+  }
+
+  use {
     'lambdalisue/fern.vim',
+    opt = true,
+    cmd = {"Fern"},
+    fn = {'FernLocateFile'},
     requires = {
       {'lambdalisue/fern-hijack.vim'},
-      {'lambdalisue/fern-git-status.vim'},
       {'lambdalisue/nerdfont.vim'},
       {'lu5je0/fern-renderer-nerdfont.vim'},
       {'lambdalisue/glyph-palette.vim'},

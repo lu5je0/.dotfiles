@@ -10,6 +10,12 @@ let g:fern#disable_viewer_spinner=1
 let g:fern#default_exclude = '\.\(swp\|git\)'
 let g:fern#drawer_width=26
 let g:fern#mark_symbol="•"
+
+if g:loaded_fern_git_status == 1 
+  call fern_git_status#init()
+  let g:loaded_fern_git_status = 2
+endif
+
 " let g:fern#disable_drawer_auto_resize=1
 
 function! TerminalSendInner() abort

@@ -15,13 +15,15 @@ runtime mappings.vim
 runtime misc.vim
 runtime runner.vim
 runtime autocmd.vim
+if has("mac")
+    runtime im.vim
+endif
 
 call timer_start(0, 'LoadPlug')
 function! LoadPlug(timer) abort
     if has("mac")
         let g:python3_host_prog = '/usr/local/bin/python3'
     endif
-    runtime im.vim
     silent! PackerLoad coc.nvim
     silent! PackerLoad vim-textobj-parameter
 
