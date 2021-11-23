@@ -226,16 +226,16 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/fern.vim') end
   }
 
-  use {'lu5je0/LeaderF',
-      run = './install.sh',
-      opt = true,
-      cmd = {'Leaderf', 'Git'},
-      config = function() require("core/leaderf").setup() end,
-      requires = {
-        {'linjiX/LeaderF-git'},
-        {'tpope/vim-fugitive'}
-      }
-  }
+  -- use {'lu5je0/LeaderF',
+  --     run = './install.sh',
+  --     opt = true,
+  --     cmd = {'Leaderf', 'Git'},
+  --     config = function() require("core/leaderf").setup() end,
+  --     requires = {
+  --       {'linjiX/LeaderF-git'},
+  --       {'tpope/vim-fugitive'}
+  --     }
+  -- }
 
   use {
     'mg979/vim-visual-multi',
