@@ -413,6 +413,8 @@ return packer.startup(function()
     end
   }
 
+  -- use 'MunifTanjim/nui.nvim'
+
   -- use {
   --   'lu5je0/nvim-tree.lua',
   --   requires = 'kyazdani42/nvim-web-devicons',
