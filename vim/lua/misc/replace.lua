@@ -15,6 +15,7 @@ local function replace(mode)
     source = vim.call('visual#visual_selection')
   end
 
+  source = string.gsub(source, "\\", "\\\\")
   source = string.gsub(source, "/", "\\/")
 
   local r = ":%s/" .. source .. "/" .. target .. "/g"
