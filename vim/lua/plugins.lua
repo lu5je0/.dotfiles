@@ -316,7 +316,15 @@ return packer.startup(function()
     cmd = 'AsyncRun',
     requires = {
       {'skywind3000/asynctasks.vim', opt = true},
-      {'skywind3000/asyncrun.extra', opt = true}
+      {'skywind3000/asyncrun.extra', opt = true},
+      {
+        'preservim/vimux',
+        config = function ()
+          vim.g.VimuxHeight = "40"
+          vim.g.VimuxOrientation = "h"
+        end,
+        opt = true
+      }
     },
   }
 
