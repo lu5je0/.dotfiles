@@ -384,7 +384,13 @@ return packer.startup(function()
     end
   }
 
-  use {'neovim/nvim-lspconfig'}
+  use {
+    'neovim/nvim-lspconfig',
+    config = function()
+      require("core/lspconfig").setup()
+    end
+  }
+
   use {'hrsh7th/cmp-nvim-lsp'}
   use {'hrsh7th/cmp-buffer'}
   use {'hrsh7th/cmp-path'}
@@ -394,7 +400,7 @@ return packer.startup(function()
 
   use {
       'hrsh7th/nvim-cmp', 
-      config = function() require("config/nvimcmp") end
+      config = function() require("core/nvimcmp") end
   }
 
   use {
