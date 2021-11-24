@@ -1,39 +1,14 @@
-if has("gui")
-    " macvim
-    if has("mac") 
-        set noimd
-        set imi=2
-        set ims=2
-    endif
-    finish
-endif
-
-if !has("mac") && (has("win32") || IsWSL())
-    let g:im_select_default=1033
-    " 退出vim时 恢复默认输入法
-    augroup vim_leave_group
-        autocmd!
-        autocmd VimLeave * call im_select#set_im('2052')
-    augroup END
-endif
-
-" ##################################
-" #              mac               #
-" ##################################
 if !has("mac")
     finish
 endif
-
-augroup switch_im
-    autocmd!
-    autocmd InsertLeave * call SwitchNormalMode()
-    autocmd InsertEnter * call SwitchInsertMode()
-augroup END
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 let g:save_last_ime = 0
 
 function! ImFuncInit()
+if get(g:, "im_init", 0) == 1
+    return
+endif
 python3 << EOF
 import threading
 
@@ -52,11 +27,11 @@ def im_init():
 
 threading.Thread(target=im_init).start()
 EOF
+let g:im_init = 1
 endfunction
 
-call ImFuncInit()
-
 function! SwitchInsertMode()
+    call ImFuncInit()
     if g:save_last_ime == 1
         call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
     else
@@ -65,6 +40,7 @@ function! SwitchInsertMode()
 endfunction
 
 function! SwitchNormalMode()
+call ImFuncInit()
 python3 << EOF
 if switcher != None:
     switcher.switch_normal_mode()
@@ -84,3 +60,9 @@ endfunction
 command! SwitchNormalMode call SwitchNormalMode()
 command! SwitchInsertMode call SwitchInsertMode()
 command! ToggleSaveLastIme call ToggleSaveLastIme()
+
+augroup switch_im
+    autocmd!
+    autocmd InsertLeave * call SwitchNormalMode()
+    autocmd InsertEnter * call SwitchInsertMode()
+augroup END

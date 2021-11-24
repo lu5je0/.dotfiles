@@ -152,6 +152,9 @@ map <leader>gu <Action>(Vcs.RollbackChangedLines)
 map <leader>gb <Action>(Annotate)
 map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 map <leader>gv <Action>(Compare.SameVersion)
+map <leader>gl <Action>(Vcs.ShowTabbedFileHistory)
+vmap <leader>gl <Action>(Vcs.ShowHistoryForBlock)
+map <leader>gL <Action>(Git.Log)
 
 " navicat
 nmap [g <Action>(VcsShowPrevChangeMarker)

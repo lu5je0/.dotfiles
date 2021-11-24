@@ -28,7 +28,7 @@ function! RunFile()
     elseif file_type == 'go'
         call RunFileInner("go run", "")
     elseif file_type == 'lua'
-        call RunFileInner("lua", "")
+        call RunFileInner("luajit", "")
     endif
 endfunction
 

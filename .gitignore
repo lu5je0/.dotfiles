@@ -1,10 +1,9 @@
 vim/.netrwhist
-vim/init.vim
-vim/plugged/*
 vim/pack/
 vim/quicknote.md
 vim/parser/
 vim/parser-info/
+vim/plugin/packer_compiled.lua
 __pycache__
 .idea/
 *.swp

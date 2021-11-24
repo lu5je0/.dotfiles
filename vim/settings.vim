@@ -30,7 +30,7 @@ set foldlevelstart=99 " 打开文件默认不折叠
 set termguicolors
 set hidden
 set updatetime=100
-set signcolumn=auto
+set signcolumn=auto:1-2
 
 " make the backspace work like in most other programs
 set backspace=indent,eol,start
@@ -46,7 +46,7 @@ set cot=noinsert,menuone
 
 " 自动打开上次位置
 if has("autocmd")  
-    au BufReadPost * if line("'\"") > 1 && &ft != "gitcommit" && line("'\"") <= line("$") | exe "normal! g'\"" | endif  
+    au BufReadPost * if line("'\"") > 1 && &ft != "gitcommit" && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
 
 if has("persistent_undo")
@@ -71,3 +71,8 @@ endif
 set shortmess=atI
 
 set foldtext=misc#fold_text()
+
+" 主题配置 {{{
+colorscheme one
+set bg=dark
+" }}}

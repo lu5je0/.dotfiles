@@ -107,11 +107,13 @@ else
     nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
 endif
 
-" git next hunk
-nmap ]g <plug>(signify-next-hunk)
-nmap [g <plug>(signify-prev-hunk)
-
 "----------------------------------------------------------------------
 " visual mode
 "----------------------------------------------------------------------
 vmap <silent> # :call visual#runSelectInTerminal()<cr>
+
+"----------------------------------------------------------------------
+" other
+"----------------------------------------------------------------------
+nnoremap * m`:keepjumps normal! *``<cr>
+xnoremap * m`:keepjumps <C-u>call VisualStarSearchSet('/')<CR>/<C-R>=@/<CR><CR>``

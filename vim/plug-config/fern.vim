@@ -1,12 +1,21 @@
 let g:fern#disable_default_mappings=0
 let g:fern#renderer = "nerdfont"
 " let g:fern#smart_cursor = "hide"
+
+let g:fern#renderer#nerdfont#indent_line = 1
+let g:fern#renderer#nerdfont#root_symbol = "≡ "
+
 let g:fern#disable_drawer_smart_quit = 0
-let g:fern#renderer#nerdfont#root_symbol = "≡ "
 let g:fern#disable_viewer_spinner=1
 let g:fern#default_exclude = '\.\(swp\|git\)'
-let g:fern#drawer_width=22
+let g:fern#drawer_width=26
 let g:fern#mark_symbol="•"
+
+if g:loaded_fern_git_status == 1 
+  call fern_git_status#init()
+  let g:loaded_fern_git_status = 2
+endif
+
 " let g:fern#disable_drawer_auto_resize=1
 
 function! TerminalSendInner() abort
@@ -37,7 +46,7 @@ function! s:init_fern() abort
   hi FernRootText ctermfg=16 guifg=#E06C75
 
   " hide sign
-  setlocal scl=auto
+  setlocal scl=yes
   setlocal nonumber
 
   mapclear! <buffer>
@@ -68,7 +77,7 @@ function! s:init_fern() abort
 
   nmap <silent> <buffer> <expr> <Plug>(fern-quit-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", ":q\<CR>")
   nmap <silent> <buffer> <expr> <Plug>(fern-esc-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", "<c-w>l")
-  nmap <silent> <buffer> p <Plug>(fern-action-preview:toggle)
+  nmap <silent> <buffer> p :lua require("core/fern").preview_toggle()<cr>
   nmap <buffer> q <Plug>(fern-quit-or-close-preview)
   nmap <buffer> <ESC> <Plug>(fern-esc-or-close-preview)
   nmap <buffer> P gg
@@ -91,7 +100,7 @@ function! s:init_fern() abort
   silent ! unmap <buffer> fi
   nmap <buffer><nowait> f :call file#fern_show_file_info()<cr>
 
-  nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter)
+  nmap <buffer> C <Plug>(fern-action-cd)<Plug>(fern-action-enter):pwd<cr>
   nmap <buffer> H :Fern ~ -drawer -stay -keep<cr>
   nmap <buffer> u <Plug>(fern-action-leave)
   " map <buffer> U ucd todo
@@ -111,6 +120,7 @@ function! s:init_fern() abort
   nmap <buffer> <leader>8 <C-W>l<leader>8 
   nmap <buffer> <leader>9 <C-W>l<leader>9 
   nmap <buffer> <leader>ff <C-W>l<leader>ff
+  nmap <buffer> <leader>fe <Nop>
   nmap <buffer> <leader>tn <C-W>l<leader>tn
   nmap <buffer> <leader>fr <C-W>l<leader>fr
   nmap <buffer> <leader>fm <C-W>l<leader>fm
@@ -122,3 +132,11 @@ augroup fern-custom
   autocmd FileType nerdtree,startify,fern call glyph_palette#apply()
   autocmd FileType fern call s:init_fern()
 augroup END
+
+" Add dirs and files inside the brackets that need to remain hidden
+" let hide_dirs  = '^\%(\.git\|node_modules\)$'  " here you write the dir names 
+" let hide_files = '\%(\.byebug\|\.ruby-\)\+'    " here you write the file names
+" let g:fern#default_exclude = hide_dirs . '\|' . hide_files  " here you exclude them
+let hide_dirs  = '^\%(\.git\)$'  " here you write the dir names 
+
+let g:fern#default_exclude = '^\%(\.git\)$'
