@@ -429,27 +429,29 @@ return packer.startup(function()
   --   end
   -- }
 
-  -- use {
-  --   'nvim-telescope/telescope.nvim',
-  --   config = function()
-  --     local actions = require('telescope.actions')
-  --     local telescope = require('telescope')
-  --     telescope.setup {
-  --       defaults = {
-  --         path_display = { truncate = 2 },
-  --         mappings = {
-  --           i = {
-  --             ["<esc>"] = actions.close
-  --           },
-  --         },
-  --       }
-  --     }
-  --     telescope.load_extension('fzf')
-  --   end,
-  --   requires = {
-  --     {'nvim-lua/plenary.nvim'},
-  --     {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
-  --   }
-  -- }
+  use {
+    'nvim-telescope/telescope.nvim',
+    config = function()
+      local actions = require('telescope.actions')
+      local telescope = require('telescope')
+      telescope.setup {
+        defaults = {
+          path_display = { truncate = 2 },
+          mappings = {
+            i = {
+              ["<esc>"] = actions.close
+            },
+          },
+        }
+      }
+      telescope.load_extension('fzf')
+    end,
+    requires = {
+      {'nvim-lua/plenary.nvim'},
+      {'nvim-telescope/telescope-fzf-native.nvim', run='make'}
+    },
+    cmd = 'Telescope',
+    opt = true
+  }
 
 end)

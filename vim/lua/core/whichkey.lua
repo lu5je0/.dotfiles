@@ -89,7 +89,7 @@ local n_mappings = {
       n = { ':enew<cr>', 'new-buffer' },
   },
   f = {
-    name = '+leaderf/files',
+    name = '+search/files',
     C = {':Leaderf colorscheme<cr>', 'colorscheme'},
     f = {':Leaderf file<cr>', 'file'},
     s = {':Leaderf --recall<cr>', 'recall'},
@@ -98,7 +98,7 @@ local n_mappings = {
     l = {':Leaderf line<cr>', 'line'},
     n = {':Leaderf filetype<cr>', 'filetype'},
     b = {':Leaderf buffer<cr>', 'buffer'},
-    m = {':Leaderf --nowrap mru<cr>', 'mru'},
+    m = {':Telescope oldfiles<cr>', 'mru'},
     h = {':Leaderf help<cr>', 'help'},
     q = {":echom 'detecting' | GuessLang<cr>", "GuessLang"},
     e = {':call FernLocateFile()<cr>', 'locate-file'},
