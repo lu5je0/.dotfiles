@@ -320,7 +320,7 @@ return packer.startup(function()
       {
         'preservim/vimux',
         config = function ()
-          vim.g.VimuxHeight = "40"
+          vim.g.VimuxHeight = "50"
           vim.g.VimuxOrientation = "h"
         end,
         opt = true
