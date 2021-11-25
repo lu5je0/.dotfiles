@@ -47,4 +47,4 @@ function! RunFile()
     endif
 endfunction
 
-nmap <leader>rr :RunFile<CR>
+nmap <silent> <leader>rr :RunFile<CR>
