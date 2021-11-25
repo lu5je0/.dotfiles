@@ -55,7 +55,7 @@ function M.setup()
   local list = {
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
     { key = {"cd", "C"}, cb = ":lua require('core/nvim-tree-config').cd()<cr>"},
-    { key = {"t"}, cb = ":lua require('core/nvim-tree-config').terminal_cd()<cr>"},
+    { key = {"t"}, cb = ":lua require('core/nvim-tree-config').terminal_cd()<cr><C-w>ji"},
     { key = "H", cb = ":cd ~<cr>"},
     { key = "S",                        cb = tree_cb("vsplit") },
     { key = "s",                        cb = tree_cb("split") },
