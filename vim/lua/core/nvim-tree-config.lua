@@ -39,13 +39,16 @@ function M.setup()
     highlight NvimTreeRootFolder guifg=#e06c75
 
     nmap <silent> <leader>e :NvimTreeToggle<cr><c-w>p
-    nmap <silent> <leader>fe :lua require("core/nvim-tree-config").locate_file()
+    nmap <silent> <leader>fe :lua require("core/nvim-tree-config").locate_file()<cr>
+
+    autocmd BufWinEnter NvimTree setlocal cursorline
   ]]
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
   vim.g.nvim_tree_indent_markers = 1
 
-  require('nvim-tree.view').View.winopts.signcolumn = 'yes:1'
+  local view = require('nvim-tree.view')
+  view.View.winopts.signcolumn = 'yes:1'
 
   local tree_cb = require'nvim-tree.config'.nvim_tree_callback
   -- default mappings
@@ -145,7 +148,7 @@ function M.locate_file()
   -- what if pwd has .
   cur_file_path = string.sub(cur_file_path, 0, cur_file_path:match('^.*()/') - 1)
 
-  if string.match(cur_file_path, [[%.]]) ~= nil then
+  if string.match(string.sub(cur_file_path, string.len(pwd) + 2, -1), [[%.]]) ~= nil then
     require('nvim-tree.populate').config.filter_dotfiles = false
     require('nvim-tree.lib').refresh_tree()
   end
