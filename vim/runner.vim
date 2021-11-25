@@ -11,7 +11,13 @@ let g:asyncrun_runner = get(g:, 'asyncrun_runner', {})
 let g:asyncrun_runner.tmux = function('s:run_tmux')
 
 function! RunFileInner(cmd, append)
-    let l:cmd_str = 'AsyncRun -mode=term -pos=tmux -rows=10 -focus=0 ' . a:cmd . ' "$(VIM_FILEPATH)"'
+    let pos = ''
+    if exists('$TMUX')
+        let pos = 'tmux'
+    else
+        let pos = 'termhelp'
+    endif
+    let l:cmd_str = 'AsyncRun -mode=term -pos=' . pos . ' -rows=10 -focus=0 ' . a:cmd . ' "$(VIM_FILEPATH)"'
     exe l:cmd_str . a:append
 endfunction
 
