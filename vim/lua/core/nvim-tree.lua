@@ -38,7 +38,7 @@ function M.setup()
     highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
 
-    map <silent> <leader>e :NvimTreeToggle<cr>
+    map <silent> <leader>e :NvimTreeToggle<cr><c-w>p
     map <silent> <leader>fe :lua require("core/nvim-tree").locate_file()<cr>
   ]]
   vim.g.nvim_tree_special_files = {}
