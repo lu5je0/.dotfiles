@@ -204,27 +204,27 @@ return packer.startup(function()
     disable = vim.fn.has("wsl") == 0
   }
 
-  use {
-    'lambdalisue/fern-git-status.vim',
-    setup = function ()
-      vim.g.loaded_fern_git_status = 1
-    end
-  }
+  -- use {
+  --   'lambdalisue/fern-git-status.vim',
+  --   setup = function ()
+  --     vim.g.loaded_fern_git_status = 1
+  --   end
+  -- }
 
-  use {
-    'lambdalisue/fern.vim',
-    opt = true,
-    cmd = {"Fern"},
-    fn = {'FernLocateFile'},
-    requires = {
-      {'lambdalisue/fern-hijack.vim'},
-      {'lambdalisue/nerdfont.vim'},
-      {'lu5je0/fern-renderer-nerdfont.vim'},
-      {'lambdalisue/glyph-palette.vim'},
-      {'yuki-yano/fern-preview.vim', opt=true}
-    },
-    config = function() vim.cmd('runtime plug-config/fern.vim') end
-  }
+  -- use {
+  --   'lambdalisue/fern.vim',
+  --   opt = true,
+  --   cmd = {"Fern"},
+  --   fn = {'FernLocateFile'},
+  --   requires = {
+  --     {'lambdalisue/fern-hijack.vim'},
+  --     {'lambdalisue/nerdfont.vim'},
+  --     {'lu5je0/fern-renderer-nerdfont.vim'},
+  --     {'lambdalisue/glyph-palette.vim'},
+  --     {'yuki-yano/fern-preview.vim', opt=true}
+  --   },
+  --   config = function() vim.cmd('runtime plug-config/fern.vim') end
+  -- }
 
   use {'lu5je0/LeaderF',
       run = './install.sh',
@@ -421,11 +421,11 @@ return packer.startup(function()
 
   -- use 'MunifTanjim/nui.nvim'
 
-  -- use {
-  --   'lu5je0/nvim-tree.lua',
-  --   requires = 'kyazdani42/nvim-web-devicons',
-  --   config = function() require("core/nvim-tree").setup() end
-  -- }
+  use {
+    'lu5je0/nvim-tree.lua',
+    requires = 'kyazdani42/nvim-web-devicons',
+    config = function() require("core/nvim-tree").setup() end
+  }
 
   -- use {
   --   'gelguy/wilder.nvim',
