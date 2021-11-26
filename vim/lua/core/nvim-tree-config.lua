@@ -1,53 +1,54 @@
 local M = {}
 
 function M.setup()
-  vim.cmd[[
-    let g:nvim_tree_icons = {
-      \ 'default': '',
-      \ 'symlink': '',
-      \ 'git': {
-        \   'unstaged': "✗",
-        \   'staged': "✓",
-        \   'unmerged': "",
-        \   'renamed': "➜",
-        \   'untracked': "★",
-        \   'deleted': "",
-        \   'ignored': "◌"
-        \   },
-        \ 'folder': {
-          \   'arrow_open': " ",
-          \   'arrow_closed': " ",
-          \   'default': "",
-          \   'open': "",
-          \   'empty': "",
-          \   'empty_open': "",
-          \   'symlink': "",
-          \   'symlink_open': "",
-          \   }
-          \ }
-    let g:nvim_tree_show_icons = {
-        \ 'git': 1,
-        \ 'folders': 1,
-        \ 'files': 1,
-        \ 'folder_arrows': 1,
-        \ }
 
+  vim.g.nvim_tree_icons = {
+    default= '',
+    symlink= '',
+    git= {
+      unstaged= "✗",
+      staged= "✓",
+      unmerged= "",
+      renamed= "➜",
+      untracked= "★",
+      deleted= "",
+      ignored= "◌"
+    },
+    folder= {
+      arrow_open= " ",
+      arrow_closed= " ",
+      default= "",
+      open= "",
+      empty= "",
+      empty_open= "",
+      symlink= "",
+      symlink_open= "",
+    }
+  }
+  vim.g.nvim_tree_show_icons = {
+    git= 1,
+    folders= 1,
+    files= 1,
+    folder_arrows= 1,
+  }
+  vim.g.nvim_tree_special_files = {}
+  vim.g.nvim_tree_add_trailing = 1
+  vim.g.nvim_tree_indent_markers = 1
+
+  vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core/nvim-tree-config").locate_file()<cr>', { noremap = true, silent = true })
+
+  vim.cmd[[
     highlight NvimTreeFolderName guifg=#e5c07b
     highlight NvimTreeOpenedFolderName guifg=#e5c07b
     highlight default link NvimTreeFolderIcon Directory
     highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
 
-    nmap <silent> <leader>e :NvimTreeToggle<cr><c-w>p
-    nmap <silent> <leader>fe :lua require("core/nvim-tree-config").locate_file()<cr>
-
     autocmd BufWinEnter NvimTree setlocal cursorline
 
     autocmd DirChanged * lua require('core/nvim-tree-config').pwd_stack:push(vim.fn.getcwd())
   ]]
-  vim.g.nvim_tree_special_files = {}
-  vim.g.nvim_tree_add_trailing = 1
-  vim.g.nvim_tree_indent_markers = 1
 
   local view = require('nvim-tree.view')
   view.View.winopts.signcolumn = 'yes:1'
@@ -61,34 +62,34 @@ function M.setup()
     { key = "<c-o>", cb = ":lua require('core/nvim-tree-config').back()<cr>"},
     { key = "<c-i>", cb = ":lua require('core/nvim-tree-config').forward()<cr>"},
     { key = "H", cb = ":cd ~<cr>"},
-    { key = "S",                        cb = tree_cb("vsplit") },
-    { key = "s",                        cb = tree_cb("split") },
-    -- { key = "<C-t>",                        cb = tree_cb("tabnew") },
-    { key = "<",                            cb = tree_cb("prev_sibling") },
-    { key = ">",                            cb = tree_cb("next_sibling") },
-    { key = "P",                            cb = tree_cb("parent_node") },
-    { key = {"<BS>", 'h'},                         cb = tree_cb("close_node") },
-    { key = "p",                        cb = tree_cb("preview") },
-    { key = "K",                            cb = tree_cb("first_sibling") },
-    { key = "J",                            cb = tree_cb("last_sibling") },
-    -- { key = "I",                            cb = tree_cb("toggle_ignored") },
-    { key = "I",                            cb = tree_cb("toggle_dotfiles") },
-    { key = "r",                            cb = tree_cb("refresh") },
-    { key = "ma",                            cb = tree_cb("create") },
-    { key = "D",                            cb = tree_cb("remove") },
-    { key = "mv",                        cb = tree_cb("rename") },
-    -- { key = "x",                            cb = tree_cb("cut") },
-    { key = "yy",                            cb = tree_cb("copy") },
-    { key = "p",                            cb = tree_cb("paste") },
-    { key = "yn",                            cb = tree_cb("copy_name") },
-    { key = "yP",                            cb = tree_cb("copy_path") },
-    { key = "yp",                           cb = tree_cb("copy_absolute_path") },
-    { key = "[g",                           cb = tree_cb("prev_git_item") },
-    { key = "]g",                           cb = tree_cb("next_git_item") },
-    { key = "u",                            cb = tree_cb("dir_up") },
-    { key = "s",                            cb = tree_cb("system_open") },
-    { key = "q",                            cb = tree_cb("close") },
-    { key = "g?",                           cb = tree_cb("toggle_help") },
+    { key = "S", cb = tree_cb("vsplit") },
+    { key = "s", cb = tree_cb("split") },
+    -- { key = "<C-t>", cb = tree_cb("tabnew") },
+    { key = "<", cb = tree_cb("prev_sibling") },
+    { key = ">", cb = tree_cb("next_sibling") },
+    { key = "P", cb = tree_cb("parent_node") },
+    { key = {"<BS>", 'h'}, cb = tree_cb("close_node") },
+    { key = "p", cb = tree_cb("preview") },
+    { key = "K", cb = tree_cb("first_sibling") },
+    { key = "J", cb = tree_cb("last_sibling") },
+    -- { key = "I", cb = tree_cb("toggle_ignored") },
+    { key = "I", cb = tree_cb("toggle_dotfiles") },
+    { key = "r", cb = tree_cb("refresh") },
+    { key = "ma", cb = tree_cb("create") },
+    { key = "D", cb = tree_cb("remove") },
+    { key = "mv", cb = tree_cb("rename") },
+    -- { key = "x", cb = tree_cb("cut") },
+    { key = "yy", cb = tree_cb("copy") },
+    { key = "p", cb = tree_cb("paste") },
+    { key = "yn", cb = tree_cb("copy_name") },
+    { key = "yP", cb = tree_cb("copy_path") },
+    { key = "yp", cb = tree_cb("copy_absolute_path") },
+    { key = "[g", cb = tree_cb("prev_git_item") },
+    { key = "]g", cb = tree_cb("next_git_item") },
+    { key = "u", cb = tree_cb("dir_up") },
+    { key = "s", cb = tree_cb("system_open") },
+    { key = "q", cb = tree_cb("close") },
+    { key = "g?", cb = tree_cb("toggle_help") },
   }
 
   require('nvim-tree').setup {
