@@ -42,6 +42,8 @@ function M.setup()
     nmap <silent> <leader>fe :lua require("core/nvim-tree-config").locate_file()<cr>
 
     autocmd BufWinEnter NvimTree setlocal cursorline
+
+    autocmd DirChanged * lua require('core/nvim-tree-config').pwd_stack:push(vim.fn.getcwd())
   ]]
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
@@ -56,6 +58,8 @@ function M.setup()
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
     { key = {"cd", "C"}, cb = ":lua require('core/nvim-tree-config').cd()<cr>"},
     { key = {"t"}, cb = ":lua require('core/nvim-tree-config').terminal_cd()<cr><C-w>ji"},
+    { key = "<c-o>", cb = ":lua require('core/nvim-tree-config').back()<cr>"},
+    { key = "<c-i>", cb = ":lua require('core/nvim-tree-config').forward()<cr>"},
     { key = "H", cb = ":cd ~<cr>"},
     { key = "S",                        cb = tree_cb("vsplit") },
     { key = "s",                        cb = tree_cb("split") },
@@ -134,6 +138,8 @@ function M.setup()
       }
     }
   }
+
+  M.pwd_stack:push(vim.fn.getcwd())
 end
 
 function M.terminal_cd()
@@ -168,6 +174,22 @@ function M.locate_file()
     vim.cmd(":cd " .. cur_file_path)
   end
   vim.cmd("NvimTreeFindFile")
+end
+
+M.pwd_stack = require('stack/stack'):create()
+M.pwd_forward_stack = require('stack/stack'):create()
+
+function M.back()
+  if M.pwd_stack:count() >= 2 then
+    M.pwd_forward_stack:push(M.pwd_stack:pop())
+    vim.cmd(":cd " .. M.pwd_stack:pop())
+  end
+end
+
+function M.forward()
+  if M.pwd_forward_stack:count() >= 1 then
+    vim.cmd(":cd " .. M.pwd_forward_stack:pop())
+  end
 end
 
 function M.cd()

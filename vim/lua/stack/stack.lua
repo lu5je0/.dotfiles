@@ -1,13 +1,13 @@
 local Stack = {}
 local tinsert = table.insert
 
-function Stack:Create()
+function Stack:create()
     local t = {}
     setmetatable(t, {__index = self})
     return t
 end
 
-function Stack:Push(...)
+function Stack:push(...)
     local arg = {...}
     self.dataTb = self.dataTb or {}
     if next(arg) then
@@ -17,7 +17,7 @@ function Stack:Push(...)
     end
 end
 
-function Stack:Pop(num)
+function Stack:pop(num)
     num = num or 1
     assert(num > 0, "num必须为正整数")
     local popTb = {}
@@ -28,13 +28,13 @@ function Stack:Pop(num)
     return unpack(popTb)
 end
 
-function Stack:List()
+function Stack:list()
     for i = 1, #self.dataTb do
         print(i, self.dataTb[i])
     end
 end
 
-function Stack:Count()
+function Stack:count()
     return #self.dataTb
 end
 
