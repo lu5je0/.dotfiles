@@ -424,7 +424,8 @@ return packer.startup(function()
   use {
     'lu5je0/nvim-tree.lua',
     requires = 'kyazdani42/nvim-web-devicons',
-    keys = {"<leader>e", "<leader>fe"},
+    cmd = {"NvimTreeToggle"},
+    opt = true,
     config = function()
       require("core/nvim-tree-config").setup()
     end

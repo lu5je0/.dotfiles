@@ -313,6 +313,9 @@ vim.cmd[[
   nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
   nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
   nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
+
+  nmap <silent> <leader>e :NvimTreeToggle<cr><c-w>p
+  nmap <silent> <leader>fe :lua require("core/nvim-tree-config").locate_file()<cr>
 ]]
 wk.setup(setup)
 wk.register(n_mappings, n_opts)

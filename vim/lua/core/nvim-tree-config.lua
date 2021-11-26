@@ -1,4 +1,5 @@
 local M = {}
+local plugins_helper = require("core/plugins_helper")
 
 function M.setup()
   vim.cmd[[
@@ -37,9 +38,6 @@ function M.setup()
     highlight default link NvimTreeFolderIcon Directory
     highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
-
-    map <silent> <leader>e :NvimTreeToggle<cr><c-w>p
-    map <silent> <leader>fe :lua require("core/nvim-tree-config").locate_file()<cr>
   ]]
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
@@ -51,7 +49,7 @@ function M.setup()
   -- default mappings
   local list = {
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
-    { key = {"cd", "C"}, cb = ":lua require('core/nvim-tree').cd()<cr>"},
+    { key = {"cd", "C"}, cb = ":lua require('core/nvim-tree-config').cd()<cr>"},
     { key = "H", cb = ":cd ~<cr>"},
     { key = "S",                        cb = tree_cb("vsplit") },
     { key = "s",                        cb = tree_cb("split") },
@@ -133,29 +131,33 @@ function M.setup()
 end
 
 function M.locate_file()
-  local pwd = vim.fn.getcwd()
-  local file_path = vim.fn.expand("%:p")
+  plugins_helper.load_plugin("nvim-tree.lua")
 
-  if file_path == nil or file_path == "" then
+  local pwd = vim.fn.getcwd()
+
+  -- current file path
+  local cur_file_path = vim.fn.expand("%:p")
+
+  if cur_file_path == nil or cur_file_path == "" then
      return
   end
 
   -- what if pwd has .
-  file_path = string.sub(file_path, 0, file_path:match('^.*()/') - 1)
+  cur_file_path = string.sub(cur_file_path, 0, cur_file_path:match('^.*()/') - 1)
 
-  if string.match(file_path, [[%.]]) ~= nil then
+  if string.match(cur_file_path, [[%.]]) ~= nil then
     require('nvim-tree.populate').config.filter_dotfiles = false
     require('nvim-tree.lib').refresh_tree()
   end
 
-  if not string.startswith(file_path, pwd) then
-    vim.cmd(":cd " .. file_path)
+  if not string.startswith(cur_file_path, pwd) then
+    vim.cmd(":cd " .. cur_file_path)
   end
   vim.cmd("NvimTreeFindFile")
 end
 
 function M.cd()
-  require'nvim-tree'.on_keypress('cd')
+  require('nvim-tree').on_keypress('cd')
   vim.cmd("norm gg")
 end
 
