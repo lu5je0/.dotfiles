@@ -35,9 +35,6 @@ function M.setup()
   vim.g.nvim_tree_add_trailing = 1
   vim.g.nvim_tree_indent_markers = 1
 
-  vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
-  vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core/nvim-tree-config").locate_file()<cr>', { noremap = true, silent = true })
-
   vim.cmd[[
     highlight NvimTreeFolderName guifg=#e5c07b
     highlight NvimTreeOpenedFolderName guifg=#e5c07b
@@ -48,7 +45,17 @@ function M.setup()
     autocmd BufWinEnter NvimTree setlocal cursorline
 
     autocmd DirChanged * lua require('core/nvim-tree-config').pwd_stack:push(vim.fn.getcwd())
+
+    function NvimLocateFile()
+      PackerLoad nvim-tree.lua
+      lua require("core/nvim-tree-config").locate_file()
+      endfunction
+
+      lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
   ]]
+
+  vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core/nvim-tree-config").locate_file()<cr>', { noremap = true, silent = true })
 
   local view = require('nvim-tree.view')
   view.View.winopts.signcolumn = 'yes:1'
@@ -154,6 +161,8 @@ function M.terminal_cd()
 end
 
 function M.locate_file()
+  vim.cmd('sleep 1m')
+
   local pwd = vim.fn.getcwd()
 
   -- current file path
