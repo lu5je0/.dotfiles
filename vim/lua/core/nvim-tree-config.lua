@@ -1,5 +1,4 @@
 local M = {}
-local plugins_helper = require("core/plugins_helper")
 
 function M.setup()
   vim.cmd[[
@@ -38,6 +37,9 @@ function M.setup()
     highlight default link NvimTreeFolderIcon Directory
     highlight NvimTreeEmptyFolderName guifg=#e5c07b
     highlight NvimTreeRootFolder guifg=#e06c75
+
+    nmap <silent> <leader>e :NvimTreeToggle<cr><c-w>p
+    nmap <silent> <leader>fe :lua require("core/nvim-tree-config").locate_file()
   ]]
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
@@ -131,8 +133,6 @@ function M.setup()
 end
 
 function M.locate_file()
-  plugins_helper.load_plugin("nvim-tree.lua")
-
   local pwd = vim.fn.getcwd()
 
   -- current file path
