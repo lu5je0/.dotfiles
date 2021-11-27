@@ -46,7 +46,7 @@ function M.setup()
 
     autocmd BufWinEnter NvimTree setlocal cursorline
 
-    autocmd DirChanged * lua require('core/nvim-tree-config').pwd_stack:push(vim.fn.getcwd())
+    autocmd DirChanged * lua require('core/nvim-tree-config').pwd_stack_push()
 
     function NvimLocateFile()
       PackerLoad nvim-tree.lua
@@ -192,11 +192,18 @@ end
 
 M.pwd_stack = require('stack/stack'):create()
 M.pwd_forward_stack = require('stack/stack'):create()
+M.pwd_back_state = 0
+
+function M.pwd_stack_push()
+  M.pwd_stack:push(vim.fn.getcwd())
+end
 
 function M.back()
   if M.pwd_stack:count() >= 2 then
+    M.pwd_back_state = 1
     M.pwd_forward_stack:push(M.pwd_stack:pop())
     vim.cmd(":cd " .. M.pwd_stack:pop())
+    M.pwd_back_state = 0
   end
 end
 
