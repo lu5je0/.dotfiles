@@ -192,9 +192,22 @@ end
 
 M.pwd_stack = require('stack/stack'):create()
 M.pwd_forward_stack = require('stack/stack'):create()
+
+-- cd 0
+-- back 1
 M.pwd_back_state = 0
 
 function M.pwd_stack_push()
+  -- cd
+  if M.pwd_back_state == 0 then
+    local count = M.pwd_forward_stack:count()
+    if count > 1 then
+      M.pwd_forward_stack:pop(count - 1)
+    end
+  -- back
+  else
+
+  end
   M.pwd_stack:push(vim.fn.getcwd())
 end
 
