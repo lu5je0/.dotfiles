@@ -205,6 +205,35 @@ return packer.startup(function()
   }
 
   -- use {
+  --   "akinsho/toggleterm.nvim",
+  --   config = function ()
+  --     require("toggleterm").setup{
+  --       size = 18,
+  --       open_mapping = [[<c-}>]],
+  --       hide_numbers = true, -- hide the number column in toggleterm buffers
+  --       shade_filetypes = {},
+  --       shade_terminals = false,
+  --       start_in_insert = true,
+  --       insert_mappings = true, -- whether or not the open mapping applies in insert mode
+  --       persist_size = true,
+  --       direction = 'float',
+  --       close_on_exit = true, -- close the terminal window when the process exits
+  --       shell = vim.o.shell, -- change the default shell
+  --     }
+  --     vim.cmd[[
+  --     nmap <silent> <m-i> :ToggleTerm<CR>
+  --     nmap <silent> <d-i> :ToggleTerm<CR>
+
+  --     imap <silent> <m-i> <ESC>:ToggleTerm<CR>
+  --     imap <silent> <d-i> <ESC>:ToggleTerm<CR>
+
+  --     tmap <silent> <m-i> <c-\><c-n>:ToggleTerm<CR>
+  --     tmap <silent> <d-i> <c-\><c-n>:ToggleTerm<CR>
+  --     ]]
+  --   end
+  -- }
+
+  -- use {
   --   'lambdalisue/fern-git-status.vim',
   --   setup = function ()
   --     vim.g.loaded_fern_git_status = 1
