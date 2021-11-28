@@ -52,7 +52,7 @@ local n_mappings = {
   ["i"] = { ':Vista!!<cr>', 'vista' },
   ["n"] = { ':let @/ = ""<cr>', 'no highlight' },
   ["d"] = { '<c-^>', 'buffer switch' },
-  ["e"] = { ":Fern . -drawer -stay -toggle -keep<cr>", "fern" },
+  ["e"] = {"file explorer" },
   ["a"] = { ":call Calc()<cr>", "calcultor" },
   ["/"] = { ":call eregex#toggle()<cr>", "eregex toggle" },
   -- ["/"] = { "<cmd>lua require('Comment').toggle()<CR>", "Comment" },
@@ -119,7 +119,7 @@ local n_mappings = {
     -- j = {":lua require('telescope.builtin').find_files{search_dirs={'~/junk-file'}}<cr>", 'junk-list'},
 
     q = {":echom 'detecting' | GuessLang<cr>", "GuessLang"},
-    e = {':call FernLocateFile()<cr>', 'locate-file'},
+    e = {'locate-file'},
     W = {':SudaWrite<cr>', 'sudo-write'},
     d = {":Fern ~/.dotfiles -drawer -keep<cr>", 'fern .dotfiles/'},
     p = {":Fern ~/.local/share/nvim/site/pack/packer/ -drawer -keep<cr>", 'fern packer'},
