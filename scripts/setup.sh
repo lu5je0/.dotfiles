@@ -50,7 +50,9 @@ fi
 if [[ ! -d ~/.local/bin ]]; then
     mkdir -p ~/.local/bin
 fi
-ln -s ~/.dotfiles/bin ~/.local/bin/solid
+if [[ ! -f ~/.local/bin/solid ]]; then
+    ln -s ~/.dotfiles/bin ~/.local/bin/solid
+fi
 
 mkdir -p ~/.pip
 ln -s ~/.dotfiles/pip/pip.conf ~/.pip/pip.conf
