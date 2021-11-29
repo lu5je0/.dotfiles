@@ -130,6 +130,11 @@ function M.setup()
       update_cwd  = false,
       ignore_list = {}
     },
+    git = {
+      enable = true,
+      ignore = true,
+      timeout = 500,
+    },
     system_open = {
       cmd  = nil,
       args = {}
@@ -145,7 +150,7 @@ function M.setup()
       side = 'left',
       auto_resize = false,
       mappings = {
-        custom_only = false,
+        custom_only = true,
         list = list
       }
     }
