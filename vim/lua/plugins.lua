@@ -78,7 +78,20 @@ return packer.startup(function()
     config = function() require("core/bufferline") end
   }
 
-  use 'kyazdani42/nvim-web-devicons'
+  use {
+    'kyazdani42/nvim-web-devicons',
+    config = function ()
+      require'nvim-web-devicons'.setup {
+        override = {
+          xml = {
+            icon = "",
+            color = "#123333",
+            name = "Xml",
+          }
+        }
+      }
+    end
+  }
 
   use {
     'jiangmiao/auto-pairs',
