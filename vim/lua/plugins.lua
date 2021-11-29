@@ -204,6 +204,14 @@ return packer.startup(function()
     disable = vim.fn.has("wsl") == 0
   }
 
+  use {
+    'lu5je0/vim-terminal-help',
+    config = function() vim.cmd('runtime plug-config/terminal.vim') end,
+    opt = true,
+    keys = {'<m-i>', '<d-i>'},
+    fn = {'TerminalSendInner', 'TerminalOpen', 'TerminalSend'}
+  }
+
   -- use {
   --   "akinsho/toggleterm.nvim",
   --   config = function ()
@@ -221,14 +229,14 @@ return packer.startup(function()
   --       shell = vim.o.shell, -- change the default shell
   --     }
   --     vim.cmd[[
-  --     nmap <silent> <m-i> :ToggleTerm<CR>
-  --     nmap <silent> <d-i> :ToggleTerm<CR>
-
   --     imap <silent> <m-i> <ESC>:ToggleTerm<CR>
   --     imap <silent> <d-i> <ESC>:ToggleTerm<CR>
 
   --     tmap <silent> <m-i> <c-\><c-n>:ToggleTerm<CR>
   --     tmap <silent> <d-i> <c-\><c-n>:ToggleTerm<CR>
+
+  --     nmap <silent> <m-i> :ToggleTerm<CR>
+  --     nmap <silent> <d-i> :ToggleTerm<CR>
   --     ]]
   --   end
   -- }
@@ -329,14 +337,6 @@ return packer.startup(function()
     'dstein64/vim-startuptime',
     opt = true,
     cmd = {'StartupTime'}
-  }
-
-  use {
-    'lu5je0/vim-terminal-help',
-    config = function() vim.cmd('runtime plug-config/terminal.vim') end,
-    opt = true,
-    keys = {'<m-i>', '<d-i>'},
-    fn = {'TerminalSendInner', 'TerminalOpen', 'TerminalSend'}
   }
 
   use {
