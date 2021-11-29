@@ -85,7 +85,7 @@ return packer.startup(function()
         override = {
           xml = {
             icon = "",
-            color = "#123333",
+            color = "#e37933",
             name = "Xml",
           }
         }
