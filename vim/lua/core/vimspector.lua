@@ -20,6 +20,11 @@ function M.setup()
   nmap <F12> :call vimspector#Reset()<cr>
 
   tmap <silent> <C-Q> <C-\><C-N>
+  tmap <silent> <C-Q> <C-\><C-N>
+  tmap <silent> <C-J> <C-\><C-N><C-w>j
+  tmap <silent> <C-K> <C-\><C-N><C-w>k
+  tmap <silent> <C-H> <C-\><C-N><C-w>h
+  tmap <silent> <C-L> <C-\><C-N><C-w>l
   ]])
   vim.g.vimspector_install_gadgets = {'debugpy'}
 end
