@@ -13,6 +13,7 @@ function M.setup()
 
   nmap <leader>rx :call vimspector#Reset()<cr>
   ]])
+  vim.g.vimspector_install_gadgets = {'debugpy'}
 end
 
 return M
