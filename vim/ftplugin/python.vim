@@ -7,6 +7,7 @@ let g:python_vimspector = {
     \       "program": expand("%:p"),
     \       "console": "externalTerminal",
     \       "stopOnEntry": v:true,
+    \       "justMyCode": v:true,
     \       "breakpoints": {
     \         "exception": {
     \           "caught": "",
