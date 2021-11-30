@@ -7,11 +7,7 @@ tmap <S-Insert> <C-W>"+
 
 augroup term_nobufflisted
     autocmd!
-    if !has("nvim")
-        autocmd TerminalOpen * call s:TerminalOpen()
-    else
-        autocmd TermOpen * call s:TerminalOpen()
-    endif
+    autocmd TermOpen * call s:TerminalOpen()
 augroup END
 
 fun! s:TerminalOpen()

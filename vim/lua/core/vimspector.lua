@@ -11,7 +11,9 @@ function M.setup()
   nmap <F10> <Plug>VimspectorToggleBreakpoint
   nmap <F22> <Plug>VimspectorToggleConditionalBreakpoint
 
-  nmap <leader>rx :call vimspector#Reset()<cr>
+  nmap <F12> :call vimspector#Reset()<cr>
+
+  tmap <silent> <C-Q> <C-\><C-N>
   ]])
   vim.g.vimspector_install_gadgets = {'debugpy'}
 end
