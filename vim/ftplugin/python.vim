@@ -18,4 +18,6 @@ let g:python_vimspector = {
     \   }
     \ }
 
-nmap <leader>rd :call vimspector#LaunchWithConfigurations(get(g:, 'python_vimspector'))<cr>
+nmap <expr> <leader>rd filereadable(getcwd() .. '/' .. '.vimspector.json') ?
+            \ ": call vimspector#Launch()\<cr>" :
+            \ ":call vimspector#LaunchWithConfigurations(get(g:, 'python_vimspector'))\<cr>"
