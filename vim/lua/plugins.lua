@@ -465,6 +465,14 @@ return packer.startup(function()
   -- use 'MunifTanjim/nui.nvim'
 
   use {
+    'puremourning/vimspector',
+    config = function ()
+      require("core/vimspector").setup()
+    end,
+    fn = {'vimspector#Launch', 'vimspector#Reset'}
+  }
+
+  use {
     'lu5je0/nvim-tree.lua',
     requires = 'kyazdani42/nvim-web-devicons',
     keys = {"<leader>e", "<leader>fe"},

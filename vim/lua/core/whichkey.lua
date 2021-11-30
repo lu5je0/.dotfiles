@@ -184,7 +184,8 @@ local n_mappings = {
   },
   r = {
     name = '+run',
-    r = "run"
+    r = "run",
+    d = {":call vimspector#Launch()<cr>", "debug"}
   },
   g = {
     name = '+git',
