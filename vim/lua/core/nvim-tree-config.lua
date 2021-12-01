@@ -132,7 +132,7 @@ function M.setup()
     },
     git = {
       enable = true,
-      ignore = true,
+      ignore = false,
       timeout = 500,
     },
     system_open = {
