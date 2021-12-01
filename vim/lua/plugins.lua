@@ -469,7 +469,7 @@ return packer.startup(function()
     config = function ()
       require("core/vimspector").setup()
     end,
-    keys = {"<f10>"},
+    keys = {"<F10>", "<S-F10>"},
     fn = {'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations'}
   }
 
