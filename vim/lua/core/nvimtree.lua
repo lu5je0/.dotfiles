@@ -71,6 +71,7 @@ function M.setup()
     { key = "=", cb = ":lua require('core/nvimtree').increase_width()<cr>"},
     { key = "-", cb = ":lua require('core/nvimtree').reduce_width()<cr>"},
     { key = "f", cb = ":lua require('core/nvimtree').file_info()<cr>"},
+    { key = "x", cb = ":lua require('core/nvimtree').toggle_width()<cr>"},
     { key = "H", cb = ":cd ~<cr>"},
     { key = "d", cb = "<nop>"},
     { key = "S", cb = tree_cb("vsplit") },
@@ -89,7 +90,7 @@ function M.setup()
     { key = "ma", cb = tree_cb("create") },
     { key = "D", cb = tree_cb("remove") },
     { key = "mv", cb = tree_cb("rename") },
-    -- { key = "x", cb = tree_cb("cut") },
+    { key = "mv", cb = tree_cb("cut") },
     { key = "yy", cb = tree_cb("copy") },
     { key = "p", cb = tree_cb("paste") },
     { key = "yn", cb = tree_cb("copy_name") },
@@ -229,12 +230,23 @@ function M.file_info()
   print(info:sub(1, -2))
 end
 
+function M.toggle_width()
+  local cur_width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
+  if M.last_width == nil or cur_width ~= 60 then
+    vim.cmd("NvimTreeResize " .. 60)
+    M.last_width = cur_width
+    vim.cmd("vertical resize " .. 60)
+  else
+    vim.cmd("NvimTreeResize " .. M.last_width)
+    vim.cmd("vertical resize " .. M.last_width)
+  end
+end
+
 function M.increase_width()
   vim.cmd("vertical resize +1")
 
   local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
   vim.cmd("NvimTreeResize " .. (width + 1))
-
 end
 
 function M.reduce_width()
