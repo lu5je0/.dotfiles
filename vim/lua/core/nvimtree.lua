@@ -1,7 +1,5 @@
 local M = {}
 
-M.win_width = 26
-
 function M.setup()
 
   vim.g.nvim_tree_icons = {
@@ -74,6 +72,7 @@ function M.setup()
     { key = "-", cb = ":lua require('core/nvimtree').reduce_width()<cr>"},
     { key = "f", cb = ":lua require('core/nvimtree').file_info()<cr>"},
     { key = "H", cb = ":cd ~<cr>"},
+    { key = "d", cb = "<nop>"},
     { key = "S", cb = tree_cb("vsplit") },
     { key = "s", cb = tree_cb("split") },
     -- { key = "<C-t>", cb = tree_cb("tabnew") },
@@ -145,7 +144,7 @@ function M.setup()
       custom = {'.git'}
     },
     view = {
-      width = M.win_width,
+      width = 26,
       height = 30,
       hide_root_folder = false,
       side = 'left',
@@ -232,18 +231,17 @@ end
 
 function M.increase_width()
   vim.cmd("vertical resize +1")
-  M.win_width = M.win_width +  1
-  vim.cmd("NvimTreeResize " .. M.win_width)
+
+  local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
+  vim.cmd("NvimTreeResize " .. (width + 1))
 
 end
 
 function M.reduce_width()
   vim.cmd("vertical resize -1")
-  M.win_width = M.win_width -  1
-  if M.win_width < 19 then
-    M.win_width = 19
-  end
-  vim.cmd("NvimTreeResize " .. M.win_width)
+
+  local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
+  vim.cmd("NvimTreeResize " .. (width - 1))
 end
 
 return M
