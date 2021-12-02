@@ -72,6 +72,7 @@ function M.setup()
     { key = "<c-i>", cb = ":lua require('core/nvimtree').forward()<cr>"},
     { key = "=", cb = ":lua require('core/nvimtree').increase_width()<cr>"},
     { key = "-", cb = ":lua require('core/nvimtree').reduce_width()<cr>"},
+    { key = "f", cb = ":lua require('core/nvimtree').file_info()<cr>"},
     { key = "H", cb = ":cd ~<cr>"},
     { key = "S", cb = tree_cb("vsplit") },
     { key = "s", cb = tree_cb("split") },
@@ -221,6 +222,12 @@ end
 function M.cd()
   require('nvim-tree').on_keypress('cd')
   vim.cmd("norm gg")
+end
+
+function M.file_info()
+  local lib = require('nvim-tree.lib')
+  local info = vim.fn.system("ls -alhd \"" .. lib.get_node_at_cursor().absolute_path .. "\" -l --time-style=\"+%Y-%m-%d %H:%M:%S\"")
+  print(info:sub(1, -2))
 end
 
 function M.increase_width()
