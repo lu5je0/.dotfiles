@@ -7,6 +7,7 @@ let g:python_vimspector = {
     \       "program": expand("%:p"),
     \       "console": "externalTerminal",
     \       "stopOnEntry": v:true,
+    \       "justMyCode": v:true,
     \       "breakpoints": {
     \         "exception": {
     \           "caught": "",
@@ -17,4 +18,6 @@ let g:python_vimspector = {
     \   }
     \ }
 
-nmap <leader>rd :call vimspector#LaunchWithConfigurations(get(g:, 'python_vimspector'))<cr>
+nmap <expr> <leader>rd filereadable(getcwd() .. '/' .. '.vimspector.json') ?
+            \ ": call vimspector#Launch()\<cr>" :
+            \ ":call vimspector#LaunchWithConfigurations(get(g:, 'python_vimspector'))\<cr>"
