@@ -150,7 +150,7 @@ function M.setup()
       side = 'left',
       auto_resize = false,
       mappings = {
-        custom_only = true,
+        custom_only = false,
         list = list
       }
     }
