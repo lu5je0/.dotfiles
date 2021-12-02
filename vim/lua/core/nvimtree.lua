@@ -231,11 +231,13 @@ function M.file_info()
 end
 
 function M.toggle_width()
-  local cur_width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
-  if M.last_width == nil or cur_width ~= 60 then
-    vim.cmd("NvimTreeResize " .. 60)
+  local cur_width = vim.api.nvim_win_get_width(0)
+  local after_width = math.floor(vim.api.nvim_eval("&co") * 2 / 5)
+
+  if M.last_width == nil or cur_width ~= after_width then
+    vim.cmd("NvimTreeResize " .. after_width)
     M.last_width = cur_width
-    vim.cmd("vertical resize " .. 60)
+    vim.cmd("vertical resize " .. after_width)
   else
     vim.cmd("NvimTreeResize " .. M.last_width)
     vim.cmd("vertical resize " .. M.last_width)
