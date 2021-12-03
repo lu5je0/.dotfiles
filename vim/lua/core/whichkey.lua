@@ -80,7 +80,7 @@ local n_mappings = {
   c = {
     r = { "<Plug>(coc-rename)", 'rename-variable' },
     c = "code-action",
-    f = { "<Plug>(coc-format)", 'coc-format' }
+    f = { "<cmd>lua vim.lsp.buf.formatting()<CR>", 'format' }
   },
   t = {
       name = '+tab/terminal',
@@ -231,7 +231,7 @@ local v_mappings = {
     r = {":lua require('core/leaderf').visual_leaderf('rg')<cr>", "rg"},
   },
   c = {
-    f = { "<Plug>(coc-format-selected)", 'coc-format' }
+    f = { "<cmd>lua vim.lsp.buf.formatting()<CR>", 'format' }
   },
   g = {
     l = {":lua require('core/fugitive').lines_changes()<cr>", 'show changs on select lines'}
