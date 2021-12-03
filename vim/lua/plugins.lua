@@ -125,10 +125,9 @@ return packer.startup(function()
       vim.cmd("let github_user = 'lu5je0@gmail.com'")
       vim.cmd("let g:gist_show_privates = 1")
       vim.cmd("let g:gist_post_private = 1")
-    end
+    end,
+    requires = {'mattn/webapi-vim'}
   }
-
-  use {'mattn/webapi-vim'}
 
   use {
     'nvim-treesitter/nvim-treesitter',
@@ -140,33 +139,31 @@ return packer.startup(function()
     end
   }
 
+  -- highlighting
   use {'chr4/nginx.vim'}
   use {'cespare/vim-toml'}
-
+  use {'lu5je0/vim-java-bytecode'}
   use {
     'elzr/vim-json',
     config = function() vim.cmd('let g:vim_json_syntax_conceal = 0') end
   }
-
-  use {'lu5je0/vim-java-bytecode'}
-
   use {'MTDL9/vim-log-highlighting'}
 
-  use {
-    'tpope/vim-dadbod',
-    config = function ()
-      vim.g.db_ui_use_nerd_fonts = 1
-      vim.g.db_ui_winwidth = 30
-    end,
-    opt = true,
-    cmd = {'DB', 'DBUI'}
-  }
+  -- use {
+  --   'tpope/vim-dadbod',
+  --   config = function ()
+  --     vim.g.db_ui_use_nerd_fonts = 1
+  --     vim.g.db_ui_winwidth = 30
+  --   end,
+  --   opt = true,
+  --   cmd = {'DB', 'DBUI'}
+  -- }
 
-  use {
-    'kristijanhusak/vim-dadbod-ui',
-    opt = true,
-    cmd = {'DB', 'DBUI'}
-  }
+  -- use {
+  --   'kristijanhusak/vim-dadbod-ui',
+  --   opt = true,
+  --   cmd = {'DB', 'DBUI'}
+  -- }
 
   --   use {
   --       'SirVer/ultisnips',
@@ -458,7 +455,7 @@ return packer.startup(function()
   use {
     "folke/which-key.nvim",
     config = function()
-      require("core/whichkey")
+      require("core/whichkey").setup()
     end
   }
 
