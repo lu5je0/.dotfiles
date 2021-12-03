@@ -470,7 +470,7 @@ return packer.startup(function()
   use {'hrsh7th/vim-vsnip'}
 
   use {
-      'hrsh7th/nvim-cmp', 
+      'hrsh7th/nvim-cmp',
       config = function() require("core/nvimcmp") end
   }
 
