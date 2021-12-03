@@ -167,3 +167,8 @@ imap <c-n> <Action>(CodeCompletion)
 let g:NERDTreeMapActivateNode='l'
 let g:NERDTreeMapCloseDir='h'
 let g:NERDTreeMapToggleZoom='z'
+
+" debug
+nmap <F10> <Action>(ToggleLineBreakpoint)
+nmap <S-F9> <Action>(RunToCursor)
+nmap <F12> <Action>(Stop)

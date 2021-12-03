@@ -194,6 +194,8 @@ gls.short_line_right[1] = {
     provider= function ()
       if vim.api.nvim_eval('&ft') == 'fern' then
         return " "
+      elseif vim.api.nvim_eval('&ft') == 'NvimTree' then
+        return " "
       elseif vim.api.nvim_eval('&ft') == 'diff' then
         return "署 "
       end

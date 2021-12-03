@@ -33,8 +33,7 @@ zinit snippet OMZ::plugins/git/git.plugin.zsh
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
-zinit ice lucid wait='1'
-zinit snippet ~/.dotfiles/zsh/z/z.sh
+zinit light skywind3000/z.lua
 
 zinit ice lucid wait='1'
 zinit snippet ~/.dotfiles/zsh/platform-alias.sh
@@ -122,6 +121,10 @@ alias tn="tmux new-session -s"
 alias vi='nvim'
 alias vim='nvim'
 alias vimn='nvim -u None'
+
+# z.lua
+alias zf='z -I'      # 使用 fzf 对多个结果进行选择
+alias zh='z -I -t .' # 使用 fzf 选择最近去过的目录
 
 ##########################################
 # vi-mode

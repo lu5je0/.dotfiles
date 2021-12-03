@@ -78,7 +78,20 @@ return packer.startup(function()
     config = function() require("core/bufferline") end
   }
 
-  use 'kyazdani42/nvim-web-devicons'
+  use {
+    'kyazdani42/nvim-web-devicons',
+    config = function ()
+      require'nvim-web-devicons'.setup {
+        override = {
+          xml = {
+            icon = "",
+            color = "#e37933",
+            name = "Xml",
+          }
+        }
+      }
+    end
+  }
 
   use {
     'jiangmiao/auto-pairs',
@@ -205,26 +218,63 @@ return packer.startup(function()
   }
 
   use {
-    'lambdalisue/fern-git-status.vim',
-    setup = function ()
-      vim.g.loaded_fern_git_status = 1
-    end
+    'lu5je0/vim-terminal-help',
+    config = function() vim.cmd('runtime plug-config/terminal.vim') end,
+    opt = true,
+    keys = {'<m-i>', '<d-i>'},
+    fn = {'TerminalSendInner', 'TerminalOpen', 'TerminalSend'}
   }
 
-  use {
-    'lambdalisue/fern.vim',
-    opt = true,
-    cmd = {"Fern"},
-    fn = {'FernLocateFile'},
-    requires = {
-      {'lambdalisue/fern-hijack.vim'},
-      {'lambdalisue/nerdfont.vim'},
-      {'lu5je0/fern-renderer-nerdfont.vim'},
-      {'lambdalisue/glyph-palette.vim'},
-      {'yuki-yano/fern-preview.vim', opt=true}
-    },
-    config = function() vim.cmd('runtime plug-config/fern.vim') end
-  }
+  -- use {
+  --   "akinsho/toggleterm.nvim",
+  --   config = function ()
+  --     require("toggleterm").setup{
+  --       size = 18,
+  --       open_mapping = [[<c-}>]],
+  --       hide_numbers = true, -- hide the number column in toggleterm buffers
+  --       shade_filetypes = {},
+  --       shade_terminals = false,
+  --       start_in_insert = true,
+  --       insert_mappings = true, -- whether or not the open mapping applies in insert mode
+  --       persist_size = true,
+  --       direction = 'float',
+  --       close_on_exit = true, -- close the terminal window when the process exits
+  --       shell = vim.o.shell, -- change the default shell
+  --     }
+  --     vim.cmd[[
+  --     imap <silent> <m-i> <ESC>:ToggleTerm<CR>
+  --     imap <silent> <d-i> <ESC>:ToggleTerm<CR>
+
+  --     tmap <silent> <m-i> <c-\><c-n>:ToggleTerm<CR>
+  --     tmap <silent> <d-i> <c-\><c-n>:ToggleTerm<CR>
+
+  --     nmap <silent> <m-i> :ToggleTerm<CR>
+  --     nmap <silent> <d-i> :ToggleTerm<CR>
+  --     ]]
+  --   end
+  -- }
+
+  -- use {
+  --   'lambdalisue/fern-git-status.vim',
+  --   setup = function ()
+  --     vim.g.loaded_fern_git_status = 1
+  --   end
+  -- }
+
+  -- use {
+  --   'lambdalisue/fern.vim',
+  --   opt = true,
+  --   cmd = {"Fern"},
+  --   fn = {'FernLocateFile'},
+  --   requires = {
+  --     {'lambdalisue/fern-hijack.vim'},
+  --     {'lambdalisue/nerdfont.vim'},
+  --     {'lu5je0/fern-renderer-nerdfont.vim'},
+  --     {'lambdalisue/glyph-palette.vim'},
+  --     {'yuki-yano/fern-preview.vim', opt=true}
+  --   },
+  --   config = function() vim.cmd('runtime plug-config/fern.vim') end
+  -- }
 
   use {'lu5je0/LeaderF',
       run = './install.sh',
@@ -284,6 +334,7 @@ return packer.startup(function()
     'tpope/vim-fugitive',
     opt = true,
     cmd = {'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator'},
+    fn = {'fugitive#repo'},
     requires = {
       {'skywind3000/asynctasks.vim', opt = true},
     }
@@ -303,20 +354,20 @@ return packer.startup(function()
   }
 
   use {
-    'lu5je0/vim-terminal-help',
-    config = function() vim.cmd('runtime plug-config/terminal.vim') end,
-    opt = true,
-    keys = {'<m-i>', '<d-i>'},
-    fn = {'TerminalSendInner', 'TerminalOpen', 'TerminalSend'}
-  }
-
-  use {
     'skywind3000/asyncrun.vim',
     opt = true,
     cmd = 'AsyncRun',
     requires = {
       {'skywind3000/asynctasks.vim', opt = true},
-      {'skywind3000/asyncrun.extra', opt = true}
+      {'skywind3000/asyncrun.extra', opt = true},
+      {
+        'preservim/vimux',
+        config = function ()
+          vim.g.VimuxHeight = "50"
+          vim.g.VimuxOrientation = "h"
+        end,
+        opt = true
+      }
     },
   }
 
@@ -425,11 +476,24 @@ return packer.startup(function()
 
   -- use 'MunifTanjim/nui.nvim'
 
-  -- use {
-  --   'lu5je0/nvim-tree.lua',
-  --   requires = 'kyazdani42/nvim-web-devicons',
-  --   config = function() require("core/nvim-tree").setup() end
-  -- }
+  use {
+    'puremourning/vimspector',
+    config = function ()
+      require("core/vimspector").setup()
+    end,
+    keys = {"<F10>", "<S-F10>"},
+    fn = {'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations'}
+  }
+
+  use {
+    'lu5je0/nvim-tree.lua',
+    requires = 'kyazdani42/nvim-web-devicons',
+    keys = {"<leader>e", "<leader>fe"},
+    opt = true,
+    config = function()
+      require("core/nvimtree").setup()
+    end
+  }
 
   -- use {
   --   'gelguy/wilder.nvim',

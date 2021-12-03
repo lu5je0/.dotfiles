@@ -140,3 +140,6 @@ augroup END
 let hide_dirs  = '^\%(\.git\)$'  " here you write the dir names 
 
 let g:fern#default_exclude = '^\%(\.git\)$'
+
+nmap <silent> <leader>e :Fern . -drawer -stay -toggle -keep<cr>
+nmap <silent> <leader>fe :call FernLocateFile()<cr>

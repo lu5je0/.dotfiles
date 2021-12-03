@@ -1,13 +1,13 @@
+" let g:terminal_pos='vertical'
+" let g:terminal_fixheight=1
 let g:terminal_height=18
+" let g:terminal_pos='rightbelow'
+
 tmap <S-Insert> <C-W>"+
 
 augroup term_nobufflisted
     autocmd!
-    if !has("nvim")
-        autocmd TerminalOpen * call s:TerminalOpen()
-    else
-        autocmd TermOpen * call s:TerminalOpen()
-    endif
+    autocmd TermOpen * call s:TerminalOpen()
 augroup END
 
 fun! s:TerminalOpen()
@@ -42,7 +42,3 @@ if has("win32")
 else
     let g:toggle_terminal#command = ''
 endif
-
-" set terminal window position
-" (see possible options at :help vertical)
-" let g:toggle_terminal#position = 's'
