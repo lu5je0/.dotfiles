@@ -143,7 +143,7 @@ local n_mappings = {
     U = "unescape unicode",
     h = "url encode",
     H = "url decode",
-    c = { ":call edit#CountSelectionRegion()<cr>", "count in the selection region" },
+    c = { "g<c-g>", "count in the selection region" },
     m = { ':%s/\r$//<cr>', 'remove ^M' },
     q = "繁体转简体",
     Q = "简体转繁体",
@@ -220,7 +220,7 @@ local n_opts = {
 
 local v_mappings = {
   x = {
-    c = {":call edit#CountSelectionRegion()<cr>", "count in the selection region"},
+    c = {"g<c-g>", "count in the selection region"},
     b = {"base64"},
     B = {"unbase64"},
     s = {"text escape"},
