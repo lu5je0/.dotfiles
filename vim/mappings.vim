@@ -8,8 +8,8 @@ vnoremap <C-c> y
 vmap < <gv
 vmap > >gv
 
-map <silent><expr> j &wrap ? "gj" : "j"
-map <silent><expr> k &wrap ? "gk" : "k"
+nmap <silent><expr> j &wrap ? "gj" : "j"
+nmap <silent><expr> k &wrap ? "gk" : "k"
 
 nmap <silent><expr> H &wrap ? "g^" : "^"
 nmap <silent><expr> L &wrap ? "g$" : "$"
@@ -99,6 +99,10 @@ vnoremap ie gg0oG$
 
 onoremap ae :<c-u>normal! vgg0oG$<cr>
 vnoremap ae gg0oG$
+
+sunmap ae
+sunmap ie
+sunmap il
 
 " let s:python = executable('python3')? 'python3' : 'python'
 if has("win32")

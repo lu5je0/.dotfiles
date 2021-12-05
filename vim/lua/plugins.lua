@@ -452,13 +452,6 @@ return packer.startup(function()
     end
   }
 
-  use {
-    'neovim/nvim-lspconfig',
-    config = function()
-      require("core/lspconfig").setup()
-    end
-  }
-
   use {'hrsh7th/cmp-nvim-lsp'}
   use {'hrsh7th/cmp-buffer'}
   use {'hrsh7th/cmp-path'}
@@ -485,6 +478,13 @@ return packer.startup(function()
         always_trigger = false,
         toggle_key = '<c-p>' -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
       })
+    end
+  }
+
+  use {
+    'neovim/nvim-lspconfig',
+    config = function()
+      require("core/lspconfig").setup()
     end
   }
 
