@@ -109,9 +109,14 @@ smap <expr> <c-j>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<c-j
 " imap <c-p> <cmd>lua vim.lsp.buf.signature_help()<CR>
 ]]
 
--- Setup lspconfig.
+-- The nvim-cmp almost supports LSP's capabilities so You should advertise it to LSP servers..
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
--- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
-require('lspconfig')['pyright'].setup {
-  capabilities = capabilities
-}
+capabilities = require("cmp_nvim_lsp").update_capabilities(capabilities)
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+local lsp_servers = {'sumneko_lua', 'pyright'}
+
+for _, value in ipairs(lsp_servers) do
+  require('lspconfig')[value].setup {
+    capabilities = capabilities
+  }
+end
