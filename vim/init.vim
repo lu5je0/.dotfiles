@@ -31,4 +31,8 @@ function! LoadPlug(timer) abort
         silent! PackerLoad im-switcher.nvim
     endif
     set clipboard=unnamed
+
+    hi StatusLine guibg=#5C6370
+    hi StatusLineNC guibg=#5C6370
+    hi CocHighlightText guibg=#344134
 endfunction

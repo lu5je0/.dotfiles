@@ -73,6 +73,9 @@ set shortmess=atI
 set foldtext=misc#fold_text()
 
 " 主题配置 {{{
-colorscheme one-nvim
+colorscheme one
 set bg=dark
+" hi TabLineSel     cterm=reverse ctermfg=237 ctermbg=246 gui=reverse guifg=#5C6370 guibg=#5C6370
+" hi TabLineFill     cterm=reverse ctermfg=237 ctermbg=246 gui=reverse guifg=#5C6370 guibg=#5C6370
+" hi TabLine     cterm=reverse ctermfg=237 ctermbg=246 gui=reverse guifg=#5C6370 guibg=#5C6370
 " }}}

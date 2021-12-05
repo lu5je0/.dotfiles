@@ -207,6 +207,17 @@ return packer.startup(function()
   use 'ayu-theme/ayu-vim'
   use 'w0ng/vim-hybrid'
   use 'glepnir/zephyr-nvim'
+  use 'olimorris/onedarkpro.nvim'
+  use 'Th3Whit3Wolf/one-nvim'
+
+  -- use {
+  --   'wfxr/minimap.vim',
+  --   config = function()
+  --     vim.g.minimap_width = 10
+  --     vim.g.minimap_auto_start = 1
+  --     vim.g.minimap_auto_start_win_enter = 1
+  --   end
+  -- }
 
   use {
     'lu5je0/im-switcher.nvim',
