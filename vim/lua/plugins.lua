@@ -431,25 +431,11 @@ return packer.startup(function()
   }
 
   use {
-    'williamboman/nvim-lsp-installer',
+    'neovim/nvim-lspconfig',
     config = function()
-      local lsp_installer = require("nvim-lsp-installer")
-
-      -- Register a handler that will be called for all installed servers.
-      -- Alternatively, you may also register handlers on specific server instances instead (see example below).
-      lsp_installer.on_server_ready(function(server)
-          local opts = {}
-
-          -- (optional) Customize the options passed to the server
-          -- if server.name == "tsserver" then
-          --     opts.root_dir = function() ... end
-          -- end
-
-          -- This setup() function is exactly the same as lspconfig's setup function.
-          -- Refer to https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
-          server:setup(opts)
-      end)
-    end
+      require("core/lspconfig").setup()
+    end,
+    requires = {'williamboman/nvim-lsp-installer'}
   }
 
   use {'hrsh7th/cmp-nvim-lsp'}
@@ -462,6 +448,7 @@ return packer.startup(function()
   }
   use {'hrsh7th/cmp-vsnip'}
   use {'hrsh7th/vim-vsnip'}
+
   use {
     "ray-x/lsp_signature.nvim",
     config = function()
@@ -473,24 +460,24 @@ return packer.startup(function()
         hint_enable = false, -- virtual hint enable
         timer_interval = 100000,
         handler_opts = {
-          border = "none"   -- double, rounded, single, shadow, none
+          border = "single"   -- double, rounded, single, shadow, none
         },
         always_trigger = false,
         toggle_key = '<c-p>' -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
       })
-    end
-  }
 
-  use {
-    'neovim/nvim-lspconfig',
-    config = function()
-      require("core/lspconfig").setup()
+      vim.cmd[[
+        augroup clean_signature
+          autocmd!
+          autocmd BufEnter * silent! autocmd! Signature InsertEnter | silent! autocmd! Signature CursorHoldI
+        augroup END
+      ]]
     end
   }
 
   use {
     'windwp/nvim-autopairs',
-    config = function() 
+    config = function()
       require('nvim-autopairs').setup{}
       -- If you want insert `(` after select function or method item
       local cmp_autopairs = require('nvim-autopairs.completion.cmp')

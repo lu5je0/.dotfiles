@@ -24,7 +24,7 @@ function! LoadPlug(timer) abort
     if has("mac")
         let g:python3_host_prog = '/usr/local/bin/python3'
     endif
-    silent! PackerLoad coc.nvim
+    " silent! PackerLoad coc.nvim
     silent! PackerLoad vim-textobj-parameter
     silent! PackerLoad indent-blankline.nvim
 
