@@ -86,9 +86,7 @@ M.setup = function ()
       f = 'code-format'
     },
     t = {
-        name = '+tab/terminal',
-        t = { ':call TerminalToggle()<cr>', 'terminal' },
-        b = { ':call CDTerminalToCWD()<cr>', 'terminal-cd-buffer-dir' },
+        name = '+tab',
         o = { ':call buffer#CloseOtherBuffers()<cr>', 'close-other-buffers' },
         n = { ':enew<cr>', 'new-buffer' },
     },
@@ -125,9 +123,8 @@ M.setup = function ()
       q = {":echom 'detecting' | GuessLang<cr>", "GuessLang"},
       e = {'locate-file'},
       W = {':SudaWrite<cr>', 'sudo-write'},
-      d = {":Fern ~/.dotfiles -drawer -keep<cr>", 'fern .dotfiles/'},
-      p = {":Fern ~/.local/share/nvim/site/pack/packer/ -drawer -keep<cr>", 'fern packer'},
-      D = {":Fern ~/.dotfiles -drawer -keep | cd ~/.dotfiles<cr>", 'fern .dotfiles'},
+      d = {'dir .dotfiles'},
+      p = {'dir packer'},
       w = {':w<cr>', 'write'},
       J = {':JunkFile<cr>', 'new-junk-file'},
       u = {':SaveAsJunkFile<cr>', 'save-as-junk-file'},
