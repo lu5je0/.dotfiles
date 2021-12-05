@@ -38,10 +38,10 @@ function M.setup()
     }
   )
 
-  vim.cmd[[
-    autocmd CursorHold * lua vim.lsp.diagnostic.show_line_diagnostics()
-    autocmd CursorHoldI * silent! lua vim.lsp.buf.signature_help()
-  ]]
+  -- vim.cmd[[
+  --   autocmd CursorHold * lua vim.lsp.diagnostic.show_line_diagnostics()
+  --   autocmd CursorHoldI * silent! lua vim.lsp.buf.signature_help()
+  -- ]]
 end
 
 return M
