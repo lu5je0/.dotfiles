@@ -7,3 +7,8 @@ augroup quick_list_preview
     autocmd!
     autocmd FileType qf nnoremap <buffer> p <CR><C-W>p
 augroup END
+
+" augroup signcolumn_increase
+"     autocmd!
+"     autocmd User CocDiagnosticChange setlocal signcolumn=yes:2
+" augroup END
