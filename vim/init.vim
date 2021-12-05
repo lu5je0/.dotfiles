@@ -33,7 +33,7 @@ function! LoadPlug(timer) abort
     endif
     set clipboard=unnamed
 
-    hi StatusLine guibg=#5C6370
+    " hi StatusLine guibg=#5C6370
     hi StatusLineNC guibg=#5C6370
     hi CocHighlightText guibg=#344134
 endfunction
