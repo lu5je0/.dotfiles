@@ -81,9 +81,9 @@ M.setup = function ()
       C = { "<cmd>PackerClean<cr>", "clean" },
     },
     c = {
-      r = { "<Plug>(coc-rename)", 'rename-variable' },
+      r = "rename-variable",
       c = "code-action",
-      f = { "<Plug>(coc-format)", 'coc-format' }
+      f = 'code-format'
     },
     t = {
         name = '+tab/terminal',
