@@ -1,5 +1,7 @@
 local M = {}
 
+M.loaded = false
+
 function M.setup()
 
   vim.g.nvim_tree_icons = {
@@ -56,6 +58,8 @@ function M.setup()
 
   vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core/nvimtree").locate_file()<cr>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('n', '<leader>fp', ':cd ~/.local/share/nvim/site/pack/packer<cr>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('n', '<leader>fd', ':cd ~/.dotfiles<cr>', { noremap = true, silent = true })
 
   local view = require('nvim-tree.view')
   view.View.winopts.signcolumn = 'yes:1'
@@ -171,7 +175,10 @@ function M.terminal_cd()
 end
 
 function M.locate_file()
-  vim.cmd('sleep 1m')
+  if not M.loaded then
+    vim.cmd('sleep 50m')
+    M.loaded = true
+  end
 
   local pwd = vim.fn.getcwd()
 

@@ -452,13 +452,6 @@ return packer.startup(function()
   --   config = function() vim.cmd('runtime whichkey.vim') end
   -- }
 
-  use {
-    "folke/which-key.nvim",
-    config = function()
-      require("core/whichkey").setup()
-    end
-  }
-
   -- use 'MunifTanjim/nui.nvim'
 
   use {
@@ -477,6 +470,13 @@ return packer.startup(function()
     opt = true,
     config = function()
       require("core/nvimtree").setup()
+    end
+  }
+
+  use {
+    "folke/which-key.nvim",
+    config = function()
+      require("core/whichkey").setup()
     end
   }
 
