@@ -471,16 +471,19 @@ return packer.startup(function()
   use {'hrsh7th/vim-vsnip'}
   use {
     "ray-x/lsp_signature.nvim",
-    config = function() 
+    config = function()
       require "lsp_signature".setup({
         floating_window = true, -- show hint in a floating window, set to false for virtual text only mode
         floating_window_above_cur_line = true, -- try to place the floating above the current line when possible Note:
         -- will set to true when fully tested, set to false will use whichever side has more space
         -- this setting will be helpful if you do not want the PUM and floating win overlap
         hint_enable = false, -- virtual hint enable
+        timer_interval = 100000,
         handler_opts = {
           border = "none"   -- double, rounded, single, shadow, none
-        }
+        },
+        always_trigger = false,
+        toggle_key = '<c-p>' -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
       })
     end
   }
@@ -495,8 +498,8 @@ return packer.startup(function()
       cmp.event:on( 'confirm_done', cmp_autopairs.on_confirm_done({  map_char = { tex = '' } }))
 
 
-      -- add a lisp filetype (wrap my-function), FYI: Hardcoded = { "clojure", "clojurescript", "fennel", "janet" }
-      cmp_autopairs.lisp[#cmp_autopairs.lisp+1] = "racket"
+--       -- add a lisp filetype (wrap my-function), FYI: Hardcoded = { "clojure", "clojurescript", "fennel", "janet" }
+--       cmp_autopairs.lisp[#cmp_autopairs.lisp+1] = "racket"
     end
   }
 

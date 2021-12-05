@@ -106,7 +106,7 @@ imap <expr> <c-k> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<c-k>'
 smap <expr> <c-k> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<c-k>'
 imap <expr> <c-j>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<c-j>'
 smap <expr> <c-j>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<c-j>'
-imap <c-p> <cmd>lua vim.lsp.buf.signature_help()<CR>
+" imap <c-p> <cmd>lua vim.lsp.buf.signature_help()<CR>
 ]]
 
 -- Setup lspconfig.
