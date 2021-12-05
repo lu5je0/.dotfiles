@@ -208,7 +208,7 @@ return packer.startup(function()
   use 'w0ng/vim-hybrid'
   use 'glepnir/zephyr-nvim'
   use 'olimorris/onedarkpro.nvim'
-  use 'Th3Whit3Wolf/one-nvim'
+  use 'lu5je0/one-nvim'
 
   -- use {
   --   'wfxr/minimap.vim',
