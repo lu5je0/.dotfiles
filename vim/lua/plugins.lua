@@ -429,7 +429,7 @@ return packer.startup(function()
   use {
     'neovim/nvim-lspconfig',
     config = function()
-      require("core/lspconfig").setup()
+      require("core/lsp").setup()
     end,
     requires = {'williamboman/nvim-lsp-installer', 'ray-x/lsp_signature.nvim'},
   }
@@ -440,7 +440,7 @@ return packer.startup(function()
   -- use {'hrsh7th/cmp-cmdline'}
   use {
       'hrsh7th/nvim-cmp',
-      config = function() require("core/nvimcmp") end
+      config = function() require("core/cmp") end
   }
   use {
     'hrsh7th/cmp-vsnip',
@@ -484,10 +484,6 @@ return packer.startup(function()
       local cmp_autopairs = require('nvim-autopairs.completion.cmp')
       local cmp = require('cmp')
       cmp.event:on( 'confirm_done', cmp_autopairs.on_confirm_done({  map_char = { tex = '' } }))
-
-
---       -- add a lisp filetype (wrap my-function), FYI: Hardcoded = { "clojure", "clojurescript", "fennel", "janet" }
---       cmp_autopairs.lisp[#cmp_autopairs.lisp+1] = "racket"
     end
   }
 

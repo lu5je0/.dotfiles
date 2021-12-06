@@ -80,6 +80,7 @@ function M.setup()
     { key = "d", cb = "<nop>"},
     { key = "S", cb = tree_cb("vsplit") },
     { key = "s", cb = tree_cb("split") },
+    {key = "<Tab>", cb = tree_cb("preview")},
     -- { key = "<C-t>", cb = tree_cb("tabnew") },
     { key = "<", cb = tree_cb("prev_sibling") },
     { key = ">", cb = tree_cb("next_sibling") },
