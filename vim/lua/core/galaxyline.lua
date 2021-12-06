@@ -70,7 +70,9 @@ gls.left[7] = {
       return true
     end,
     icon = ' LSP:',
-    highlight = {colors.cyan,colors.bg,'bold'}
+    highlight = {colors.cyan,colors.bg,'bold'},
+    separator = ' ',
+    separator_highlight = {'NONE',colors.bg},
   }
 }
 
