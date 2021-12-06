@@ -26,6 +26,7 @@ function! LoadPlug(timer) abort
     endif
     silent! PackerLoad coc.nvim
     silent! PackerLoad vim-textobj-parameter
+    silent! PackerLoad indent-blankline.nvim
 
     if has("wsl")
         silent! PackerLoad im-switcher.nvim

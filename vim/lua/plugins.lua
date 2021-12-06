@@ -455,7 +455,8 @@ return packer.startup(function()
       vim.g.indentLine_fileTypeExclude = {'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer'}
       vim.g.indent_blankline_show_first_indent_level = false
       vim.g.indent_blankline_show_trailing_blankline_indent = false
-    end
+    end,
+    opt = true
   }
 
   -- use {
