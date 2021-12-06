@@ -1,8 +1,8 @@
 {
   "suggest.noselect": false,
-  "diagnostic.errorSign": "•",
-  "diagnostic.warningSign": "•",
-  "diagnostic.infoSign": "•",
+  "diagnostic.errorSign": " ",
+  "diagnostic.warningSign": " ",
+  "diagnostic.infoSign": " ",
   "coc.source.around.firstMatch": false,
   "coc.source.buffer.firstMatch": false,
   "Lua.completion.callSnippet": "Replace",
