@@ -432,7 +432,6 @@ return packer.startup(function()
       require("core/lspconfig").setup()
     end,
     requires = {'williamboman/nvim-lsp-installer', 'ray-x/lsp_signature.nvim'},
-    
   }
 
   use {'hrsh7th/cmp-nvim-lsp'}
