@@ -1,0 +1,13 @@
+{
+  "yyyy": {
+    "prefix": ["yyyy"],
+    "body": [ "yyyy-MM-dd HH:mm:ss" ],
+    "description": "yyyy"
+  },
+  "uuid": {
+    "prefix": "uuid",
+    "body": [
+      "${VIM:system('python -c \"import uuid, sys;sys.stdout.write(str(uuid.uuid4()))\"')}"
+    ]
+  }
+}
