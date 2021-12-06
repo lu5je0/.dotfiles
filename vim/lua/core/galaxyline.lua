@@ -59,6 +59,21 @@ gls.left[5] = {
   }
 }
 
+gls.left[7] = {
+  ShowLspClient = {
+    provider = 'GetLspClient',
+    condition = function ()
+      local tbl = {['dashboard'] = true,['']=true}
+      if tbl[vim.bo.filetype] then
+        return false
+      end
+      return true
+    end,
+    icon = ' LSP:',
+    highlight = {colors.cyan,colors.bg,'bold'}
+  }
+}
+
 -- gls.left[7] = {
 --   PerCent = {
 --     provider = 'LinePercent',
@@ -72,7 +87,7 @@ gls.left[8] = {
   DiagnosticError = {
     provider = 'DiagnosticError',
     icon = '  ',
-    highlight = {colors.red,colors.bg}
+    highlight = {colors.red,colors.bg},
   }
 }
 gls.left[9] = {
