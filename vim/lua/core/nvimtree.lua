@@ -176,7 +176,7 @@ end
 
 function M.locate_file()
   if not M.loaded then
-    vim.cmd('sleep 50m')
+    vim.cmd('sleep 100m')
     M.loaded = true
   end
 
