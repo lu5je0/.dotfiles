@@ -143,3 +143,5 @@ let g:fern#default_exclude = '^\%(\.git\)$'
 
 nmap <silent> <leader>e :Fern . -drawer -stay -toggle -keep<cr>
 nmap <silent> <leader>fe :call FernLocateFile()<cr>
+nmap <silent> <leader>fp :Fern ~/.local/share/nvim/site/pack/packer/ -drawer -keep<cr>
+nmap <silent> <leader>fd :Fern ~/.dotfiles -drawer -keep<cr>

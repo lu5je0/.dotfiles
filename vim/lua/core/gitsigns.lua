@@ -25,7 +25,7 @@ function M.setup()
       ['o ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
       ['x ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>'
     },
-    sign_priority = 1,
+    sign_priority = 999,
   }
 end
 

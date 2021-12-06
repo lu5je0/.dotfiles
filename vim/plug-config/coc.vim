@@ -34,11 +34,11 @@ function! s:show_documentation()
   endif
 endfunction
 
-" Symbol renaming.
-nmap <leader>cr <Plug>(coc-rename)
-
+" leader
 xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+nmap <silent> <leader>cf <Plug>(coc-format)
+nmap <leader>cr <Plug>(coc-rename)
 
 inoremap <silent><m-p> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>
 inoremap <silent><c-p> <C-\><C-O>:call CocActionAsync('showSignatureHelp')<cr>

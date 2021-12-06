@@ -30,7 +30,7 @@ fi
 
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
-ask "Git config?" && ln -s ~/.dotfiles/.gitconfig ~/.gitconfig
+ask "Git config?" && cp ~/.dotfiles/.gitconfig ~/.gitconfig
 
 ask "Copy maven config?" && if [[ ! -d ~/.m2 ]]; then mkdir ~/.m2; fi && cp -i ~/.dotfiles/m2/settings.xml ~/.m2/settings.xml
 
