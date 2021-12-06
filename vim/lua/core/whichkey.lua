@@ -38,64 +38,6 @@ M.setup = function ()
     show_help = true, -- show help message on the command line when the popup is visible
   }
 
-<<<<<<< HEAD
-local n_mappings = {
-  ["1"] = "which_key_ignore",
-  ["2"] = "which_key_ignore",
-  ["3"] = "which_key_ignore",
-  ["4"] = "which_key_ignore",
-  ["5"] = "which_key_ignore",
-  ["6"] = "which_key_ignore",
-  ["7"] = "which_key_ignore",
-  ["8"] = "which_key_ignore",
-  ["9"] = "which_key_ignore",
-  ["0"] = {"<cmd>BufferLinePick<cr>", "BufferLinePick"},
-  ["q"] = { '<cmd>CloseBuffer<cr>', 'close buffer' },
-  ["Q"] = { ':call QuitForce()<cr>', 'quit force' },
-  ["u"] = { '<cmd>UndotreeToggle<cr>', 'undotree' },
-  ["i"] = { ':Vista!!<cr>', 'vista' },
-  ["n"] = { ':let @/ = ""<cr>', 'no highlight' },
-  ["d"] = { '<c-^>', 'buffer switch' },
-  ["e"] = {"file explorer" },
-  ["a"] = { ":call Calc()<cr>", "calcultor" },
-  ["/"] = { ":call eregex#toggle()<cr>", "eregex toggle" },
-  -- ["/"] = { "<cmd>lua require('Comment').toggle()<CR>", "Comment" },
-  w = {
-      name = '+windows',
-      ['n'] = { ':vnew<cr>', 'vnew' },
-      ['N'] = { ':new<cr>', 'new' },
-      ['s'] = { ':vsplit<cr>', 'vspilt' },
-      ['S'] = { ':split<cr>', 'spilt' },
-      ['q'] = { ':only<cr>', 'break window' },
-      ['d'] = { ':BufferLinePickSplit<cr>', 'spilit with' },
-      ['p'] = { ':BufferLinePick<cr>', 'buffer pick' },
-      ['u'] = { '<c-w>x', 'buffer pick' },
-  },
-  p = {
-    name = "Packer",
-    q = { "<cmd>PackerCompile profile=true<cr>", "compile profile" },
-    w = { "<cmd>PackerProfile<cr>", "profile" },
-    s = { "<cmd>PackerSync<cr>", "sync" },
-    c = { "<cmd>PackerCompile<cr>", "compile" },
-    i = { "<cmd>PackerInstall<cr>", "install" },
-    u = { "<cmd>PackerUpdate<cr>", "update" },
-    C = { "<cmd>PackerClean<cr>", "clean" },
-  },
-  c = {
-    r = { "<Plug>(coc-rename)", 'rename-variable' },
-    c = "code-action",
-    f = { "<cmd>lua vim.lsp.buf.formatting()<CR>", 'format' }
-  },
-  t = {
-      name = '+tab/terminal',
-      t = { ':call TerminalToggle()<cr>', 'terminal' },
-      b = { ':call CDTerminalToCWD()<cr>', 'terminal-cd-buffer-dir' },
-      o = { ':call buffer#CloseOtherBuffers()<cr>', 'close-other-buffers' },
-      n = { ':enew<cr>', 'new-buffer' },
-  },
-  f = {
-    name = '+search/files',
-=======
   local n_mappings = {
     ["1"] = "which_key_ignore",
     ["2"] = "which_key_ignore",
@@ -150,7 +92,6 @@ local n_mappings = {
     },
     f = {
       name = '+search/files',
->>>>>>> master
 
       -- leaderf
       C = {':Leaderf colorscheme<cr>', 'colorscheme'},
@@ -290,32 +231,13 @@ local n_mappings = {
       r = {":lua require('core/leaderf').visual_leaderf('rg')<cr>", "rg"},
     },
     c = {
-      f = { "<Plug>(coc-format-selected)", 'coc-format' }
+      f = {'coc-format'}
     },
     g = {
       l = {":lua require('core/fugitive').lines_changes()<cr>", 'show changs on select lines'}
     }
   }
 
-<<<<<<< HEAD
-local v_mappings = {
-  x = {
-    c = {":call edit#CountSelectionRegion()<cr>", "count in the selection region"},
-    b = {"base64"},
-    B = {"unbase64"},
-    s = {"text escape"},
-    r = {":lua require('misc/replace').v_replace()<cr>", "replace"}
-  },
-  f = {
-    f = {":lua require('core/leaderf').visual_leaderf('file')<cr>", "file"},
-    r = {":lua require('core/leaderf').visual_leaderf('rg')<cr>", "rg"},
-  },
-  c = {
-    f = { "<cmd>lua vim.lsp.buf.formatting()<CR>", 'format' }
-  },
-  g = {
-    l = {":lua require('core/fugitive').lines_changes()<cr>", 'show changs on select lines'}
-=======
   local v_opts = {
     mode = "v", -- VISUAL mode
     prefix = "<leader>",
@@ -323,7 +245,6 @@ local v_mappings = {
     silent = true, -- use `silent` when creating keymaps
     noremap = true, -- use `noremap` when creating keymaps
     nowait = true, -- use `nowait` when creating keymaps
->>>>>>> master
   }
 
   vim.cmd[[
