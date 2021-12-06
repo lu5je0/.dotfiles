@@ -123,7 +123,8 @@ vmap L $
 omap H ^
 omap L $
 
-map m %
+nmap <cr> %
+vmap <cr> %
 
 nmap Y ^y$
 
