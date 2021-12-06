@@ -95,7 +95,7 @@ function M.setup()
     { key = "ma", cb = tree_cb("create") },
     { key = "D", cb = tree_cb("remove") },
     { key = "mv", cb = tree_cb("rename") },
-    { key = "mv", cb = tree_cb("cut") },
+    -- { key = "mv", cb = tree_cb("cut") },
     { key = "yy", cb = tree_cb("copy") },
     { key = "p", cb = tree_cb("paste") },
     { key = "yn", cb = tree_cb("copy_name") },
