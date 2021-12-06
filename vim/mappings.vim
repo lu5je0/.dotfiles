@@ -8,9 +8,6 @@ vnoremap <C-c> y
 vmap < <gv
 vmap > >gv
 
-nmap <cr> %
-vmap <cr> %
-
 map <silent><expr> j &wrap ? "gj" : "j"
 map <silent><expr> k &wrap ? "gk" : "k"
 

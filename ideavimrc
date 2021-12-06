@@ -123,9 +123,6 @@ vmap L $
 omap H ^
 omap L $
 
-nmap <cr> %
-vmap <cr> %
-
 nmap Y ^y$
 
 omap ij i"
