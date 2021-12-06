@@ -442,13 +442,6 @@ return packer.startup(function()
   }
 
   use {
-    'neovim/nvim-lspconfig',
-    config = function()
-      require("core/lspconfig").setup()
-    end
-  }
-
-  use {
     'williamboman/nvim-lsp-installer',
     config = function()
       local lsp_installer = require("nvim-lsp-installer")
@@ -470,17 +463,23 @@ return packer.startup(function()
     end
   }
 
+  use {
+    'neovim/nvim-lspconfig',
+    config = function()
+      require("core/lspconfig").setup()
+    end
+  }
+
   use {'hrsh7th/cmp-nvim-lsp'}
   use {'hrsh7th/cmp-buffer'}
   use {'hrsh7th/cmp-path'}
   use {'hrsh7th/cmp-cmdline'}
-  use {'hrsh7th/cmp-vsnip'}
-  use {'hrsh7th/vim-vsnip'}
-
   use {
       'hrsh7th/nvim-cmp',
       config = function() require("core/nvimcmp") end
   }
+  use {'hrsh7th/cmp-vsnip'}
+  use {'hrsh7th/vim-vsnip'}
 
   use {
     "lukas-reineke/indent-blankline.nvim",
@@ -525,14 +524,6 @@ return packer.startup(function()
       require("core/whichkey").setup()
     end
   }
-
-  -- use {
-  --   'gelguy/wilder.nvim',
-  --   run = ':UpdateRemotePlugins',
-  --   config = function()
-  --     vim.cmd('runtime plug-config/wilder.vim')
-  --   end
-  -- }
 
   -- use {
   --   'nvim-telescope/telescope.nvim',

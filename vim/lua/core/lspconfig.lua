@@ -28,6 +28,20 @@ function M.setup()
   buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   -- buf_set_keymap('n', '<leader>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
   buf_set_keymap('n', '<leader>cf', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
+
+  vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.diagnostic.on_publish_diagnostics, {
+      underline = true,
+      virtual_text = false,
+      signs = true,
+      update_in_insert = true,
+    }
+  )
+
+  vim.cmd[[
+    autocmd CursorHold * lua vim.lsp.diagnostic.show_line_diagnostics()
+    autocmd CursorHoldI * silent! lua vim.lsp.buf.signature_help()
+  ]]
 end
 
 return M
