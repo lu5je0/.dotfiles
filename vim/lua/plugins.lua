@@ -189,15 +189,11 @@ return packer.startup(function()
   use 'lu5je0/vim-base64'
 
   -- themes
-  use 'tomasiser/vim-code-dark'
   use 'lu5je0/vim-one'
-  use 'gruvbox-community/gruvbox'
-  use 'hzchirs/vim-material'
-  use 'ayu-theme/ayu-vim'
-  use 'w0ng/vim-hybrid'
-  use 'glepnir/zephyr-nvim'
   use 'olimorris/onedarkpro.nvim'
   use 'lu5je0/one-nvim'
+  use 'sainnhe/edge'
+  use 'gruvbox-community/gruvbox'
 
   -- use {
   --   'wfxr/minimap.vim',

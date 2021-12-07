@@ -14,10 +14,10 @@ cmp.setup({
   completion = {
     completeopt = 'menu,menuone,noinsert',
   },
-   -- experimental = {
-   --   -- native_menu = true,
-   --  ghost_text = true
-   -- },
+  -- experimental = {
+  --   native_menu = true,
+  --   -- ghost_text = true
+  -- },
   mapping = {
     ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
     ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),

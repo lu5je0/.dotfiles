@@ -114,6 +114,7 @@ nmap <c-o> <Action>(Back)
 nmap <c-i> <Action>(Forward)
 
 imap <m-p> <Action>(ParameterInfo)
+imap <c-p> <Action>(ParameterInfo)
 imap <A-p> <Action>(ParameterInfo)
 
 nmap H ^
