@@ -255,20 +255,20 @@ return packer.startup(function()
   --   end
   -- }
 
-  -- use {
-  --   'lambdalisue/fern.vim',
-  --   opt = true,
-  --   cmd = {"Fern"},
-  --   fn = {'FernLocateFile'},
-  --   requires = {
-  --     {'lambdalisue/fern-hijack.vim'},
-  --     {'lambdalisue/nerdfont.vim'},
-  --     {'lu5je0/fern-renderer-nerdfont.vim'},
-  --     {'lambdalisue/glyph-palette.vim'},
-  --     {'yuki-yano/fern-preview.vim', opt=true}
-  --   },
-  --   config = function() vim.cmd('runtime plug-config/fern.vim') end
-  -- }
+  use {
+    'lambdalisue/fern.vim',
+    opt = true,
+    cmd = {"Fern"},
+    fn = {'FernLocateFile'},
+    requires = {
+      {'lambdalisue/fern-hijack.vim'},
+      {'lambdalisue/nerdfont.vim'},
+      {'lu5je0/fern-renderer-nerdfont.vim'},
+      {'lambdalisue/glyph-palette.vim'},
+      {'yuki-yano/fern-preview.vim', opt=true}
+    },
+    config = function() vim.cmd('runtime plug-config/fern.vim') end
+  }
 
   use {'lu5je0/LeaderF',
       run = './install.sh',

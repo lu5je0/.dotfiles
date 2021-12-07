@@ -11,10 +11,10 @@ let g:fern#default_exclude = '\.\(swp\|git\)'
 let g:fern#drawer_width=26
 let g:fern#mark_symbol="•"
 
-if g:loaded_fern_git_status == 1 
-  call fern_git_status#init()
-  let g:loaded_fern_git_status = 2
-endif
+" if g:loaded_fern_git_status == 1 
+"   call fern_git_status#init()
+"   let g:loaded_fern_git_status = 2
+" endif
 
 " let g:fern#disable_drawer_auto_resize=1
 
@@ -141,7 +141,7 @@ let hide_dirs  = '^\%(\.git\)$'  " here you write the dir names
 
 let g:fern#default_exclude = '^\%(\.git\)$'
 
-nmap <silent> <leader>e :Fern . -drawer -stay -toggle -keep<cr>
-nmap <silent> <leader>fe :call FernLocateFile()<cr>
-nmap <silent> <leader>fp :Fern ~/.local/share/nvim/site/pack/packer/ -drawer -keep<cr>
-nmap <silent> <leader>fd :Fern ~/.dotfiles -drawer -keep<cr>
+" nmap <silent> <leader>e :Fern . -drawer -stay -toggle -keep<cr>
+" nmap <silent> <leader>fe :call FernLocateFile()<cr>
+" nmap <silent> <leader>fp :Fern ~/.local/share/nvim/site/pack/packer/ -drawer -keep<cr>
+" nmap <silent> <leader>fd :Fern ~/.dotfiles -drawer -keep<cr>
