@@ -192,7 +192,7 @@ return packer.startup(function()
   use 'lu5je0/vim-one'
   use 'olimorris/onedarkpro.nvim'
   use 'lu5je0/one-nvim'
-  use 'sainnhe/edge'
+  use 'lu5je0/edge'
   use 'gruvbox-community/gruvbox'
 
   -- use {
