@@ -7,6 +7,13 @@
     ],
     "description": "for i in range"
   },
+  "now": {
+    "prefix": ["now"],
+    "body": [ 
+      "time.strftime(\"%Y-%m-%d %H:%M:%S\", time.localtime())"
+    ],
+    "description": "time format to yyyy-MM-dd HH:mm:ss"
+  },
   "if __name__ == \"__main__\"": {
       "prefix": "ifmain",
       "body": "if __name__ == \"__main__\":\n\t${1:main()}$0",
