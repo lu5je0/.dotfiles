@@ -447,7 +447,12 @@ return packer.startup(function()
       'hrsh7th/nvim-cmp',
       config = function() require("core/nvimcmp") end
   }
-  use {'hrsh7th/cmp-vsnip'}
+  use {
+    'hrsh7th/cmp-vsnip',
+    config = function ()
+      vim.g.vsnip_snippet_dir = "~/.dotfiles/vim/vsnip"
+    end
+  }
   use {'hrsh7th/vim-vsnip'}
 
   use {

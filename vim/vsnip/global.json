@@ -1,0 +1,7 @@
+{
+  "yyyy": {
+    "prefix": ["yyyy"],
+    "body": [ "yyyy-MM-dd HH:mm:ss" ],
+    "description": "yyyy"
+  }
+}
