@@ -46,7 +46,8 @@ function! s:init_fern() abort
   hi FernRootText ctermfg=16 guifg=#E06C75
 
   " hide sign
-  setlocal scl=yes
+  setlocal scl=no
+  setlocal foldcolumn=1
   setlocal nonumber
 
   mapclear! <buffer>
@@ -140,6 +141,8 @@ augroup END
 let hide_dirs  = '^\%(\.git\)$'  " here you write the dir names 
 
 let g:fern#default_exclude = '^\%(\.git\)$'
+
+command! FernLocateFile call FernLocateFile()
 
 " nmap <silent> <leader>e :Fern . -drawer -stay -toggle -keep<cr>
 " nmap <silent> <leader>fe :call FernLocateFile()<cr>

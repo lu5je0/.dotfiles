@@ -258,7 +258,7 @@ return packer.startup(function()
   use {
     'lambdalisue/fern.vim',
     opt = true,
-    cmd = {"Fern"},
+    cmd = {"Fern", "FernLocateFile"},
     fn = {'FernLocateFile'},
     requires = {
       {'lambdalisue/fern-hijack.vim'},
