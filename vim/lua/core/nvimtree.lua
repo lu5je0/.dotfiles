@@ -51,9 +51,9 @@ function M.setup()
     function NvimLocateFile()
       PackerLoad nvim-tree.lua
       lua require("core/nvimtree").locate_file()
-      endfunction
+    endfunction
 
-      lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
+    lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
   ]]
 
   vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
@@ -81,7 +81,7 @@ function M.setup()
     { key = "d", cb = "<nop>"},
     { key = "S", cb = tree_cb("vsplit") },
     { key = "s", cb = tree_cb("split") },
-    {key = "<Tab>", cb = tree_cb("preview")},
+    { key = "<Tab>", cb = tree_cb("preview")},
     -- { key = "<C-t>", cb = tree_cb("tabnew") },
     { key = "<", cb = tree_cb("prev_sibling") },
     { key = ">", cb = tree_cb("next_sibling") },
