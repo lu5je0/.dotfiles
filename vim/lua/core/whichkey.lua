@@ -158,7 +158,8 @@ M.setup = function ()
     v = {
         name = '+vim',
         v = { ':edit ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim/init.vim | :cd ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim <cr>', 'open init.vim' },
-        s = { ':source ' .. vim.api.nvim_eval("$MYVIMRC") .. "<cr>", 'apply vimrc' },
+        s = { ':call ToggleSignColumn()<cr>', 'toggle signcolumn'},
+        S = { ':set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes'},
         j = { ':call ToggleGj()<cr>', 'toggle gj' },
         c = { ':set ic!<cr>', 'toggle case insensitive' },
         a = { ':call AutoPairsToggle()<cr>', 'toggle auto pairs' },
