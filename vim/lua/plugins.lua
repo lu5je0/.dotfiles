@@ -431,6 +431,8 @@ return packer.startup(function()
 
   use {'ray-x/lsp_signature.nvim'}
 
+  use {'folke/lua-dev.nvim'}
+
   use {
     'neovim/nvim-lspconfig',
     config = function()

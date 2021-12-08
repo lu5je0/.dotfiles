@@ -125,14 +125,20 @@ M.lsp_installer_config = function()
 
   -- Register a handler that will be called for all installed servers.
   installer.on_server_ready(function(server)
-    local opts = {}
+    local opts = {
+      capabilities = M.capabilities,
+      on_attach = M.on_attach
+    }
 
     if server.name == "sumneko_lua" then
       opts.settings = M.lua_setting
+      local luadev = require("lua-dev").setup({
+        lspconfig = opts
+      })
+      server:setup(luadev)
+    else
+      server:setup(opts)
     end
-    opts.capabilities = M.capabilities
-    opts.on_attach = M.on_attach
-    server:setup(opts)
   end)
 end
 
