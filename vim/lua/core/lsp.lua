@@ -59,8 +59,7 @@ M.lua_setting = {
   }
 }
 
-function M.setup()
-
+M.lsp_capabilities = (function ()
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   capabilities.textDocument.completion.completionItem.documentationFormat = {
       "markdown", "plaintext"
@@ -78,23 +77,10 @@ function M.setup()
   capabilities.textDocument.completion.completionItem.resolveSupport = {
       properties = {"documentation", "detail", "additionalTextEdits"}
   }
+  return capabilities
+end)()
 
-  -- diagnostic
-  vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-    vim.lsp.diagnostic.on_publish_diagnostics, {
-      underline = true,
-      virtual_text = false,
-      signs = true,
-      update_in_insert = true,
-    }
-  )
-  local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
-  for type, icon in pairs(signs) do
-    local hl = "DiagnosticSign" .. type
-    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-  end
-
-  -- lsp_signature
+M.lsp_signature_config = function()
   require "lsp_signature".setup({
     floating_window = true, -- show hint in a floating window, set to false for virtual text only mode
     floating_window_above_cur_line = true, -- try to place the floating above the current line when possible Note:
@@ -108,14 +94,16 @@ function M.setup()
     always_trigger = false,
     toggle_key = '<c-p>' -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
   })
+
   vim.cmd[[
-    augroup clean_signature
-      autocmd!
-      autocmd BufEnter * silent! autocmd! Signature InsertEnter | silent! autocmd! Signature CursorHoldI
-    augroup END
+  augroup clean_signature
+  autocmd!
+  autocmd BufEnter * silent! autocmd! Signature InsertEnter | silent! autocmd! Signature CursorHoldI
+  augroup END
   ]]
+end
 
-
+M.lsp_installer_config = function()
   local installer = require("nvim-lsp-installer")
 
   for _, lang in pairs(M.servers) do
@@ -135,11 +123,33 @@ function M.setup()
     if server.name == "sumneko_lua" then
       opts.settings = M.lua_setting
     end
-    opts.capabilities = capabilities
+    opts.capabilities = M.lsp_capabilities
     opts.on_attach = M.on_attach
     server:setup(opts)
   end)
+end
 
+M.lsp_diagnostic = function()
+  -- diagnostic
+  vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.diagnostic.on_publish_diagnostics, {
+      underline = true,
+      virtual_text = false,
+      signs = true,
+      update_in_insert = true,
+    }
+  )
+  local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
+  for type, icon in pairs(signs) do
+    local hl = "DiagnosticSign" .. type
+    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+  end
+end
+
+function M.setup()
+  M.lsp_diagnostic()
+  M.lsp_signature_config()
+  M.lsp_installer_config()
 end
 
 return M
