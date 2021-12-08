@@ -18,6 +18,16 @@ function! ToggleSignColumn()
     endif
 endfunction
 
+" Toggles foldcolumn
+function! s:ToggleFoldColumn()
+    if &foldcolumn == 'auto:9'
+        set foldcolumn=0
+    else
+        set foldcolumn=auto:9
+    endif
+endfunction
+nnoremap <silent> <Plug>FoldToggleColumn :call <SID>ToggleFoldColumn()<CR>
+
 function! VisualStarSearchSet(cmdtype,...)
   let temp = @"
   normal! gvy
