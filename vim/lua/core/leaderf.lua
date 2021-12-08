@@ -19,9 +19,9 @@ function M.setup()
   vim.g.Lf_PopupHeight = 0.7
   vim.g.Lf_PopupShowFoldcolumn = 0
   vim.g.Lf_WildIgnore = {
-     dir = {'.svn','.git','.hg'},
-     file = {'*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]'}
-    }
+    dir = {'.svn','.git','.hg'},
+    file = {'*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]'}
+  }
 
   vim.cmd('silent! unmap <leader>f')
 

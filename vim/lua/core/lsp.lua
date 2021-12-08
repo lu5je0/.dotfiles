@@ -44,12 +44,12 @@ M.lua_setting = {
       version = "LuaJIT",
     },
     workspace = {
-        library = {
-          [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-          [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true
-        },
-        maxPreload = 100000,
-        preloadFileSize = 10000
+      library = {
+        [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+        [vim.fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true
+      },
+      maxPreload = 100000,
+      preloadFileSize = 10000
     },
     diagnostics = {
       -- Get the language server to recognize the `vim` global
@@ -62,20 +62,19 @@ M.lua_setting = {
 M.lsp_capabilities = (function ()
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   capabilities.textDocument.completion.completionItem.documentationFormat = {
-      "markdown", "plaintext"
+    "markdown", "plaintext"
   }
   capabilities.textDocument.completion.completionItem.snippetSupport = true
   capabilities.textDocument.completion.completionItem.preselectSupport = true
   capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
   capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
   capabilities.textDocument.completion.completionItem.deprecatedSupport = true
-  capabilities.textDocument.completion.completionItem.commitCharactersSupport =
-      true
+  capabilities.textDocument.completion.completionItem.commitCharactersSupport = true
   capabilities.textDocument.completion.completionItem.tagSupport = {
-      valueSet = {1}
+    valueSet = {1}
   }
   capabilities.textDocument.completion.completionItem.resolveSupport = {
-      properties = {"documentation", "detail", "additionalTextEdits"}
+    properties = {"documentation", "detail", "additionalTextEdits"}
   }
   return capabilities
 end)()
@@ -107,13 +106,13 @@ M.lsp_installer_config = function()
   local installer = require("nvim-lsp-installer")
 
   for _, lang in pairs(M.servers) do
-      local ok, server = installer.get_server(lang)
-      if ok then
-          if not server:is_installed() then
-              print("Installing " .. lang)
-              server:install()
-          end
+    local ok, server = installer.get_server(lang)
+    if ok then
+      if not server:is_installed() then
+        print("Installing " .. lang)
+        server:install()
       end
+    end
   end
 
   -- Register a handler that will be called for all installed servers.
