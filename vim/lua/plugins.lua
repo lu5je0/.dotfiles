@@ -434,21 +434,17 @@ return packer.startup(function()
     requires = {'williamboman/nvim-lsp-installer', 'ray-x/lsp_signature.nvim'},
   }
 
-  use {'hrsh7th/cmp-nvim-lsp'}
-  use {'hrsh7th/cmp-buffer'}
-  use {'hrsh7th/cmp-path'}
-  -- use {'hrsh7th/cmp-cmdline'}
   use {
       'hrsh7th/nvim-cmp',
-      config = function() require("core/cmp") end
+      config = function() require("core/cmp") end,
+      requires = {
+        'hrsh7th/cmp-nvim-lsp',
+        'hrsh7th/cmp-buffer',
+        'hrsh7th/cmp-path',
+        'hrsh7th/cmp-vsnip',
+        'hrsh7th/vim-vsnip'
+      }
   }
-  use {
-    'hrsh7th/cmp-vsnip',
-    config = function ()
-      vim.g.vsnip_snippet_dir = "~/.dotfiles/vim/vsnip"
-    end
-  }
-  use {'hrsh7th/vim-vsnip'}
 
   use {
     "ray-x/lsp_signature.nvim",
@@ -487,18 +483,6 @@ return packer.startup(function()
     end
   }
 
-
-  -- use {
-  --   'jiangmiao/auto-pairs',
-  --   config = function()
-  --     vim.cmd([[let g:AutoPairs= {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}]])
-  --     vim.g.AutoPairsShortcutToggle = ''
-  --     vim.g.AutoPairsShortcutJump = ''
-  --     vim.g.AutoPairsShortcutFastWrap = ''
-  --     vim.g.AutoPairsMoveCharacter = ''
-  --   end
-  -- }
-
   use {
     "lukas-reineke/indent-blankline.nvim",
     setup = function ()
@@ -509,13 +493,6 @@ return packer.startup(function()
     end,
     opt = true
   }
-
-  -- use {
-  --   'liuchengxu/vim-which-key',
-  --   config = function() vim.cmd('runtime whichkey.vim') end
-  -- }
-
-  -- use 'MunifTanjim/nui.nvim'
 
   use {
     'puremourning/vimspector',

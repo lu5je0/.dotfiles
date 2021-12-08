@@ -1,6 +1,8 @@
 -- Setup nvim-cmp.
 local cmp = require('cmp')
 
+vim.g.vsnip_snippet_dir = "~/.dotfiles/vim/vsnip"
+
 cmp.setup({
   snippet = {
     -- REQUIRED - you must specify a snippet engine
