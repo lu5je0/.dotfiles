@@ -17,6 +17,7 @@ function M.setup()
   vim.g.Lf_ShortcutB = ""
   vim.g.Lf_PreviewInPopup = 1
   vim.g.Lf_PopupHeight = 0.7
+  vim.g.Lf_PopupShowFoldcolumn = 0
   vim.g.Lf_WildIgnore = {
      dir = {'.svn','.git','.hg'},
      file = {'*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]'}
@@ -65,8 +66,6 @@ function M.on_colorscheme()
   highlight! link Lf_hl_popup_cwd Pmenu
   highlight! link Lf_hl_popup_blank Lf_hl_popup_window
   highlight! link Lf_hl_popup_spin Yellow
-
-  hi FoldColumn guibg=none
   ]]
 end
 
