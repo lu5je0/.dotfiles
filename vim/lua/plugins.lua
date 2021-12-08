@@ -74,11 +74,6 @@ return packer.startup(function()
   }
 
   use {
-    'lu5je0/bufferline.nvim',
-    config = function() require("core/bufferline") end
-  }
-
-  use {
     'kyazdani42/nvim-web-devicons',
     config = function ()
       require'nvim-web-devicons'.setup {
@@ -91,6 +86,12 @@ return packer.startup(function()
         }
       }
     end
+  }
+
+  use {
+    'lu5je0/bufferline.nvim',
+    config = function() require("core/bufferline") end,
+    requires = {'nvim-web-devicons'}
   }
 
   use {'schickling/vim-bufonly'}
