@@ -62,7 +62,8 @@ function M.setup()
   vim.api.nvim_set_keymap('n', '<leader>fd', ':cd ~/.dotfiles<cr>', { noremap = true, silent = true })
 
   local view = require('nvim-tree.view')
-  view.View.winopts.signcolumn = 'yes:1'
+  view.View.winopts.signcolumn = 'no'
+  view.View.winopts.foldcolumn = 1
 
   local tree_cb = require'nvim-tree.config'.nvim_tree_callback
   -- default mappings
