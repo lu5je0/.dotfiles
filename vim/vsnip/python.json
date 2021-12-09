@@ -1,4 +1,14 @@
 {
+  "shebang": {
+    "prefix": ["#!", "shebang"],
+    "body": "#!/usr/bin/env python3",
+    "description": [
+      "Option 1:\n",
+      "#!/bin/python3\n",
+      "Option 2:\n",
+      "#!/usr/bin/env python3\n"
+    ]
+  },
   "fori": {
     "prefix": ["fori"],
     "body": [ 

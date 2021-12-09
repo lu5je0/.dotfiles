@@ -1,4 +1,8 @@
 {
+  "shebang": {
+    "prefix": ["#!", "shebang"],
+    "body": "#!/usr/bin/env $1"
+  },
   "yyyy": {
     "prefix": ["yyyy"],
     "body": [ "yyyy-MM-dd HH:mm:ss" ],
