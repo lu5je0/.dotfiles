@@ -24,7 +24,7 @@ M.on_attach = function(client, bufnr)
   vim.cmd [[
   augroup LSPDiagnosticsOnHover
     autocmd!
-    autocmd CursorHold *   lua _G.LspDiagnosticsPopupHandler()
+    autocmd CursorHold * lua _G.LspDiagnosticsPopupHandler()
   augroup END
   ]]
 

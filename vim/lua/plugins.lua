@@ -427,12 +427,16 @@ return packer.startup(function()
     end
   }
 
+  use {'williamboman/nvim-lsp-installer'}
+
+  use {'ray-x/lsp_signature.nvim'}
+
   use {
     'neovim/nvim-lspconfig',
     config = function()
       require("core/lsp").setup()
     end,
-    requires = {'williamboman/nvim-lsp-installer', 'ray-x/lsp_signature.nvim'},
+    opt = true
   }
 
   use {
@@ -444,7 +448,8 @@ return packer.startup(function()
         'hrsh7th/cmp-path',
         'hrsh7th/cmp-vsnip',
         'hrsh7th/vim-vsnip'
-      }
+      },
+      opt = true
   }
 
   use {
@@ -455,7 +460,8 @@ return packer.startup(function()
       local cmp_autopairs = require('nvim-autopairs.completion.cmp')
       local cmp = require('cmp')
       cmp.event:on( 'confirm_done', cmp_autopairs.on_confirm_done({  map_char = { tex = '' } }))
-    end
+    end,
+    opt = true
   }
 
   use {
