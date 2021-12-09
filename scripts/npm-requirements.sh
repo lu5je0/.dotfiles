@@ -1,1 +1,1 @@
-npm install --save curlconverter
+npm install -g curlconverter
