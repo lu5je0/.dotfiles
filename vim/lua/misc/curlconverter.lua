@@ -10,7 +10,7 @@ function M.convert()
     return
   end
   local cmd = string.format([[
-    :%%!node -e "var curlconverter = require('curlconverter'); const fs = require('fs'); const data = fs.readFileSync('/dev/stdin', 'utf-8'); console.log(curlconverter.to%s(data));"
+    :%%!node -e "var curlconverter = require('/usr/local/lib/node_modules/curlconverter'); const fs = require('fs'); const data = fs.readFileSync('/dev/stdin', 'utf-8'); console.log(curlconverter.to%s(data));"
     set ft=%s
   ]], firstToUpper(tl), tl);
 
