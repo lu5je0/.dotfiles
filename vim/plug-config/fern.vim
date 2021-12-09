@@ -46,7 +46,7 @@ function! s:init_fern() abort
   hi FernRootText ctermfg=16 guifg=#E06C75
 
   " hide sign
-  setlocal scl=no
+  setlocal scl=auto
   setlocal foldcolumn=1
   setlocal nonumber
 
