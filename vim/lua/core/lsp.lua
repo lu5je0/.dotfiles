@@ -56,9 +56,9 @@ end
 
 M.lua_setting = {
   Lua = {
-    -- completion = {
-    --   callSnippet = "Replace",
-    -- },
+    completion = {
+      callSnippet = "Disable",
+    },
     runtime = {
       -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
       version = "LuaJIT",
