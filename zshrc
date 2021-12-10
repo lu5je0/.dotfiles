@@ -126,6 +126,10 @@ alias vimn='nvim -u None'
 alias zf='z -I'      # 使用 fzf 对多个结果进行选择
 alias zh='z -I -t .' # 使用 fzf 选择最近去过的目录
 
+# maven
+alias mvni='mvn install -Dmaven.test.skip=true'
+alias mvnp='mvn package -Dmaven.test.skip=true'
+
 ##########################################
 # vi-mode
 ##########################################
