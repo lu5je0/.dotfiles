@@ -1,0 +1,27 @@
+snippet "( *)(.*)\.par" "Parenthesis (postfix)" r
+`!p snip.rv = match.group(1)`(`!p snip.rv = match.group(2)`)$0
+endsnippet
+
+snippet "( *)(.*)\.if" "If (postfix)" r
+`!p snip.rv = match.group(1)`if `!p snip.rv = match.group(2)` then
+`!p snip.rv = match.group(1)`	$2
+`!p snip.rv = match.group(1)`end
+endsnippet
+
+snippet "( *)(.*)\.fori" "Fori (postfix)" r
+`!p snip.rv = match.group(1)`for ${1:i} = 1, `!p snip.rv = match.group(2)`, 1 do
+`!p snip.rv = match.group(1)`	$2
+`!p snip.rv = match.group(1)`end
+endsnippet
+
+snippet "( *)(.*)\.arg" "Arg (postfix)" r
+`!p snip.rv = match.group(1)`$0(`!p snip.rv = match.group(2)`)
+endsnippet
+
+snippet "( *)(.*)\.dump" "Arg (postfix)" r
+`!p snip.rv = match.group(1)`dump(`!p snip.rv = match.group(2)`)
+endsnippet
+
+snippet "( *)(.*)\.print" "Print (postfix)" r
+`!p snip.rv = match.group(1)`print(`!p snip.rv = match.group(2)`)$1
+endsnippet

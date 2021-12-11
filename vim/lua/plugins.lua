@@ -440,6 +440,7 @@ return packer.startup(function()
         'hrsh7th/cmp-nvim-lsp',
         'hrsh7th/cmp-buffer',
         'hrsh7th/cmp-path',
+        'lu5je0/cmp-nvim-ultisnips'
         -- 'hrsh7th/cmp-vsnip',
         -- 'hrsh7th/vim-vsnip'
       },
@@ -450,15 +451,9 @@ return packer.startup(function()
       'SirVer/ultisnips',
       setup = function()
         vim.g.UltiSnipsSnippetDirectories = {vim.fn.stdpath('config') .. '/snippets/ultisnips'}
-        vim.cmd[[
-        function! IsExpandable()
-            return !empty(UltiSnips#SnippetsInCurrentScope())
-        endfunction
-        ]]
+        vim.g.UltiSnipsExpandTrigger = "<NUL>"
       end
   }
-
-  use {'lu5je0/cmp-nvim-ultisnips'}
 
   use {
     'windwp/nvim-autopairs',

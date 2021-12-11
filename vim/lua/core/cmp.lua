@@ -35,12 +35,12 @@ cmp.setup({
     -- ['<Tab>'] = cmp.mapping.confirm({ select = true }),
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
-        if vim.fn['IsExpandable']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
+        if vim.fn['UltiSnips#CanExpandSnippet']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
           vim.fn['UltiSnips#ExpandSnippet']()
         else
           cmp.confirm({ select = true })
         end
-      elseif vim.fn['IsExpandable']() == 1 then
+      elseif vim.fn['UltiSnips#CanExpandSnippet']() == 1 then
         vim.fn['UltiSnips#ExpandSnippet']()
       else
         fallback()
