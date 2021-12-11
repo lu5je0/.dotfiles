@@ -1,7 +1,10 @@
 local M = {}
 
+local utils = require('util.utils')
+
 local function replace(mode)
-  vim.cmd("mark `")
+  utils.save_position()
+
   local target = vim.fn.input("replace with:")
 
   if target == nil or target == "" then
@@ -15,17 +18,13 @@ local function replace(mode)
     source = vim.call('visual#visual_selection')
   end
 
-  -- save cursor position
-  local column_move = vim.fn.getpos('.')[3] - 1
-
   local fn = vim.fn
   for index, line in ipairs(fn.getbufline(fn.bufnr('%'), 1, "$")) do
     -- print(index, value)
     fn.setline(index, fn.substitute(line, source, target, 'g'))
   end
 
-  vim.cmd("normal ``")
-  vim.cmd("normal 0" .. column_move .. "l")
+  utils.goto_saved_position()
 end
 
 function M.v_replace()
