@@ -15,9 +15,10 @@ local function replace(mode)
   if mode == "n" then
     source = vim.fn.expand("<cword>")
   elseif mode == "v" then
-    source = vim.call('visual#visual_selection')
+    source = vim.call('visual#visual_selection_by_yank')
   end
 
+  log.info(source, target)
   local fn = vim.fn
   for index, line in ipairs(fn.getbufline(fn.bufnr('%'), 1, "$")) do
     -- print(index, value)
