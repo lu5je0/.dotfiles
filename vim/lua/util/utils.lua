@@ -5,14 +5,11 @@ function M.selected_text()
 end
 
 function M.save_position()
-  vim.cmd("mark `")
-  -- save cursor position
-  M.column_move = vim.fn.getpos('.')[3] - 1
+  M.cursor_position = vim.fn.getpos(".")
 end
 
 function M.goto_saved_position()
-  vim.cmd("normal ``")
-  vim.cmd("normal 0" .. M.column_move .. "l")
+  vim.fn.cursor({M.cursor_position[2], M.cursor_position[3]})
 end
 
   -- vmap <leader>h :lua print(require("util.utils").selected_text())<cr>
