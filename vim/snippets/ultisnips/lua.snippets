@@ -25,3 +25,7 @@ endsnippet
 snippet "( *)(.*)\.print" "Print (postfix)" r
 `!p snip.rv = match.group(1)`print(`!p snip.rv = match.group(2)`)$1
 endsnippet
+
+snippet "( *)(.*)\.log" "Log (postfix)" r
+`!p snip.rv = match.group(1)`log.info(`!p snip.rv = match.group(2)`)$0
+endsnippet

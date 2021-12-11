@@ -14,6 +14,10 @@ snippet "( *)(.*)\.par" "Parenthesis (postfix)" r
 `!p snip.rv = match.group(1)`(`!p snip.rv = match.group(2)`)$0
 endsnippet
 
+snippet "( *)(.*)\.log" "Log (postfix)" r
+`!p snip.rv = match.group(1)`log.info(`!p snip.rv = match.group(2)`)$0
+endsnippet
+
 snippet "( *)(.*)\.if" "If (postfix)" r
 `!p snip.rv = match.group(1)`if `!p snip.rv = match.group(2)`:
 `!p snip.rv = match.group(1)`	$0
