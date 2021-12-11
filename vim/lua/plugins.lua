@@ -459,7 +459,7 @@ return packer.startup(function()
       end
   }
 
-  use 'quangnguyen30192/cmp-nvim-ultisnips'
+  use {'lu5je0/cmp-nvim-ultisnips'}
 
   use {
     'windwp/nvim-autopairs',
