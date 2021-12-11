@@ -32,7 +32,17 @@ cmp.setup({
       c = cmp.mapping.close(),
     }),
     ['<CR>'] = cmp.mapping.confirm({ select = true }),
-    ['<Tab>'] = cmp.mapping.confirm({ select = true }),
+    ["<Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        if vim.fn['vsnip#expandable']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
+          vim.fn['vsnip#expand']()
+        else
+          cmp.confirm({ select = true })
+        end
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
   },
   sources = cmp.config.sources({
     { name = 'vsnip' }, -- For vsnip users.

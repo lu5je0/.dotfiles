@@ -19,8 +19,8 @@ omap <silent><expr> H &wrap ? "g^" : "^"
 omap <silent><expr> L &wrap ? "g$" : "$"
 nmap <silent><expr> Y &wrap ? "g^yg$" : "^y$"
 
-nnoremap go }o<Esc>o
-nnoremap gO {O<Esc>O
+nnoremap go o0<C-D>
+nnoremap gO O0<C-D>
 
 imap <M-j> <down>
 imap <M-k> <up>
