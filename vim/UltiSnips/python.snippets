@@ -1,6 +1,23 @@
 priority -60
 
 snippet fori "fori" w
-for ${1:i} in range(${2:10}):
+for ${1:i} in range(${2:9}):
 	${3}
+endsnippet
+
+snippet "(\d+).for" "Parenthesis (postfix)" r
+for ${1:i} in range(`!p snip.rv = match.group(1)`):
+	${3}
+endsnippet
+
+snippet "( *)(.*)\.par" "Parenthesis (postfix)" r
+`!p snip.rv = match.group(1)`(`!p snip.rv = match.group(2)`)$0
+endsnippet
+
+snippet "( *)(.*)\.if" "If (postfix)" r
+`!p snip.rv = match.group(1)`if `!p snip.rv = match.group(2)`$0
+endsnippet
+
+snippet "( *)(.*)\.arg" "Arg (postfix)" r
+`!p snip.rv = match.group(1)`$0(`!p snip.rv = match.group(2)`)
 endsnippet
