@@ -1,4 +1,6 @@
 command! -nargs=0 RunFile call RunFile()
+command! -nargs=0 LuaDevOn let g:lua_dev=1
+command! -nargs=0 LuaDevOff let g:lua_dev=0
 
 function! s:run_tmux(opts)
     " asyncrun has temporarily changed dir for you
@@ -43,7 +45,11 @@ function! RunFile()
     elseif file_type == 'go'
         call RunFileInner("go run", "")
     elseif file_type == 'lua'
-        call RunFileInner("luajit", "")
+        if get(g:, 'lua_dev', 0) == 1
+            luafile %
+        else
+            call RunFileInner("luajit", "")
+        endif
     endif
 endfunction
 

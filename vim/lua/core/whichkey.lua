@@ -53,7 +53,7 @@ M.setup = function ()
     ["Q"] = { ':call QuitForce()<cr>', 'quit force' },
     ["u"] = { '<cmd>UndotreeToggle<cr>', 'undotree' },
     ["i"] = { ':Vista!!<cr>', 'vista' },
-    ["n"] = { ':let @/ = ""<cr>', 'no highlight' },
+    ["n"] = { ':noh<cr>', 'no highlight' },
     ["d"] = { '<c-^>', 'buffer switch' },
     ["e"] = {"file explorer" },
     ["a"] = { ":call Calc()<cr>", "calcultor" },
