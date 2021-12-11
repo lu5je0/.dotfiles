@@ -170,7 +170,6 @@ return packer.startup(function()
     'tpope/vim-commentary'
   }
 
-  use 'lu5je0/vim-snippets'
   use 'kana/vim-textobj-user'
   use 'tpope/vim-repeat'
 
