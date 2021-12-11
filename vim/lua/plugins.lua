@@ -449,7 +449,7 @@ return packer.startup(function()
   use {
       'SirVer/ultisnips',
       setup = function()
-        vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"')
+        vim.g.UltiSnipsSnippetDirectories = {vim.fn.stdpath('config') .. '/snippets/ultisnips'}
         vim.cmd[[
         function! IsExpandable()
             return !empty(UltiSnips#SnippetsInCurrentScope())
