@@ -15,12 +15,17 @@ local function replace(mode)
     source = vim.call('visual#visual_selection')
   end
 
-  source = string.gsub(source, "\\", "\\\\")
-  source = string.gsub(source, "/", "\\/")
+  -- save cursor position
+  local column_move = vim.fn.getpos('.')[3] - 1
 
-  local r = ":%s/" .. source .. "/" .. target .. "/g"
-  vim.cmd(r)
+  local fn = vim.fn
+  for index, line in ipairs(fn.getbufline(fn.bufnr('%'), 1, "$")) do
+    -- print(index, value)
+    fn.setline(index, fn.substitute(line, source, target, 'g'))
+  end
+
   vim.cmd("normal ``")
+  vim.cmd("normal 0" .. column_move .. "l")
 end
 
 function M.v_replace()
