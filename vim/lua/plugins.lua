@@ -155,13 +155,6 @@ return packer.startup(function()
   --   cmd = {'DB', 'DBUI'}
   -- }
 
-  --   use {
-  --       'SirVer/ultisnips',
-  --       opt = true,
-  --       ft = 'markdown',
-  --       config = function() vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"') end
-  --   }
-
   use {
     'othree/eregex.vim',
     opt = true,
@@ -448,11 +441,25 @@ return packer.startup(function()
         'hrsh7th/cmp-nvim-lsp',
         'hrsh7th/cmp-buffer',
         'hrsh7th/cmp-path',
-        'hrsh7th/cmp-vsnip',
-        'hrsh7th/vim-vsnip'
+        -- 'hrsh7th/cmp-vsnip',
+        -- 'hrsh7th/vim-vsnip'
       },
       opt = true
   }
+
+  use {
+      'SirVer/ultisnips',
+      setup = function()
+        vim.cmd('let g:UltiSnipsExpandTrigger="<c-d>"')
+        vim.cmd[[
+        function! IsExpandable()
+            return !empty(UltiSnips#SnippetsInCurrentScope())
+        endfunction
+        ]]
+      end
+  }
+
+  use 'quangnguyen30192/cmp-nvim-ultisnips'
 
   use {
     'windwp/nvim-autopairs',
