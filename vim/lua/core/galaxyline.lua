@@ -87,11 +87,11 @@ gls.left[7] = {
 
 -- gls.left[8] = {
 --   DiagnosticError = {
---     provider = 'DiagnosticError',
 --     icon = '  ',
 --     highlight = {colors.red,colors.bg},
 --   }
 -- }
+
 -- gls.left[9] = {
 --   DiagnosticWarn = {
 --     provider = 'DiagnosticWarn',
