@@ -17,8 +17,11 @@ M.on_attach = function(client, bufnr)
     -- but only once for the current cursor location (unless moved afterwards).
     if not (current_cursor[1] == last_popup_cursor[1] and current_cursor[2] == last_popup_cursor[2]) then
       vim.w.lsp_diagnostics_last_cursor = current_cursor
-      -- vim.diagnostic.open_float(0, {scope="cursor"})   -- for neovim 0.6.0+, replaces show_{line,position}_diagnostics
-      vim.lsp.diagnostic.show_position_diagnostics({show_header = false})
+      if vim.fn.has("nvim-0.6") == 1 then
+        vim.diagnostic.open_float(0, {scope="cursor"})   -- for neovim 0.6.0+, replaces show_{line,position}_diagnostics
+      else
+        vim.lsp.diagnostic.show_position_diagnostics({show_header = false})
+      end
     end
   end
   vim.cmd [[
