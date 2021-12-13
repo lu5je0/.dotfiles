@@ -7,7 +7,7 @@ set splitbelow " 默认在下侧分屏
 set splitright " 默认在右侧分屏
 set nowrap " 默认不启用拆行
 set autoindent
-set indentkeys=""
+" set indentkeys=""
 set number
 set laststatus=2
 set showtabline=2

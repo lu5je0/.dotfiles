@@ -14,6 +14,10 @@ snippet "( *)(.*);if" "If (postfix)" r
 `!p snip.rv = match.group(1)`end
 endsnippet
 
+snippet "( *)(.*);return" "Return (postfix)" r
+`!p snip.rv = match.group(1)`return `!p snip.rv = match.group(2)`$1
+endsnippet
+
 snippet "( *)(\d+);for" "Fori (postfix)" r
 `!p snip.rv = match.group(1)`for ${1:i} = 1, `!p snip.rv = match.group(2)`, 1 do
 `!p snip.rv = match.group(1)`	$2
