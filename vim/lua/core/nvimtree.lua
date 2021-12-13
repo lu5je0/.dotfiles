@@ -159,7 +159,8 @@ function M.setup()
       mappings = {
         custom_only = false,
         list = list
-      }
+      },
+      signcolumn = "auto"
     }
   }
 
