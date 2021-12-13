@@ -41,19 +41,24 @@ cmp.setup({
           local entry = cmp.get_selected_entry()
           local label = entry.completion_item.label
           local indent_change_items = {
-            'endif', 'end', 'else', 'elif', 'elseif .. then',
+            'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif',
             'endfor', 'endfunction', 'endwhile', 'endtry', 'except', 'catch'
           }
           if table.find(indent_change_items, label) then
             cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert})
             local indent = vim.fn.indent('.')
             local cmd = [[
-            function! Good(timer) abort
-              if indent('.') != %s
-                call setline(getpos(".")[1], repeat(" ", indent('.')) . '%s')
+            function! CmpLineFormat(timer) abort
+              let c = getpos(".")
+              let indent_num = indent('.')
+              norm ==
+              if indent('.') != indent_num
+                call cursor(c[1], c[2] - 2)
+              else
+                call cursor(c[1], c[2])
               endif
             endfunction
-            call timer_start(0, 'Good')
+            call timer_start(0, 'CmpLineFormat')
             ]]
             cmd = cmd:format(indent, label)
             vim.cmd(cmd)
