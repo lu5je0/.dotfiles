@@ -38,7 +38,28 @@ cmp.setup({
         if vim.fn['UltiSnips#CanExpandSnippet']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
           vim.fn['UltiSnips#ExpandSnippet']()
         else
-          cmp.confirm({ select = true })
+          local entry = cmp.get_selected_entry()
+          local label = entry.completion_item.label
+          local indent_change_items = {
+            'endif', 'end', 'else', 'elif', 'elseif .. then',
+            'endfor', 'endfunction', 'endwhile', 'endtry', 'except', 'catch'
+          }
+          if table.find(indent_change_items, label) then
+            cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert})
+            local indent = vim.fn.indent('.')
+            local cmd = [[
+            function! Good(timer) abort
+              if indent('.') != %s
+                call setline(getpos(".")[1], repeat(" ", indent('.')) . '%s')
+              endif
+            endfunction
+            call timer_start(0, 'Good')
+            ]]
+            cmd = cmd:format(indent, label)
+            vim.cmd(cmd)
+          else
+            cmp.confirm({ select = true })
+          end
         end
       elseif vim.fn['UltiSnips#CanExpandSnippet']() == 1 then
         vim.fn['UltiSnips#ExpandSnippet']()

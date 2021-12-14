@@ -71,8 +71,6 @@ function M.setup()
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
     { key = {"cd", "C"}, cb = ":lua require('core/nvimtree').cd()<cr>"},
     { key = {"t"}, cb = ":lua require('core/nvimtree').terminal_cd()<cr><C-w>ji"},
-    { key = "<c-o>", cb = ":lua require('core/nvimtree').back()<cr>"},
-    { key = "<c-i>", cb = ":lua require('core/nvimtree').forward()<cr>"},
     { key = "=", cb = ":lua require('core/nvimtree').increase_width()<cr>"},
     { key = "-", cb = ":lua require('core/nvimtree').reduce_width()<cr>"},
     { key = "f", cb = ":lua require('core/nvimtree').file_info()<cr>"},
@@ -108,6 +106,8 @@ function M.setup()
     { key = "s", cb = tree_cb("system_open") },
     { key = "q", cb = tree_cb("close") },
     { key = "g?", cb = tree_cb("toggle_help") },
+    { key = "<c-o>", cb = ":lua require('core/nvimtree').back()<cr>"},
+    { key = "<c-i>", cb = ":lua require('core/nvimtree').forward()<cr>"},
   }
 
   require('nvim-tree').setup {
@@ -157,7 +157,7 @@ function M.setup()
       side = 'left',
       auto_resize = false,
       mappings = {
-        custom_only = false,
+        custom_only = true,
         list = list
       },
       signcolumn = "auto"

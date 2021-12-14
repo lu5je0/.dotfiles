@@ -15,6 +15,18 @@ function table.dump(o)
    end
 end
 
+function table.find(t, value)
+    if t and type(t) == "table" and value then
+        for _, v in ipairs (t) do
+            if v == value then
+                return true;
+            end
+        end
+        return false;
+    end
+    return false;
+end
+
 function _G.dump(...)
     local objects = vim.tbl_map(vim.inspect, {...})
     print(unpack(objects))
