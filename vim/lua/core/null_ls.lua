@@ -9,7 +9,7 @@ null_ls.setup({
 })
 
 local trailing_space = {
-  method = null_ls.methods.DIAGNOSTICS,
+  method = null_ls.methods.DIAGNOSTICS_ON_SAVE,
   filetypes = { "vim", "python"},
   generator = {
     fn = function(params)

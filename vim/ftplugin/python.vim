@@ -1,9 +1,9 @@
-let g:python_vimspector = { 
-    \   "launch": { 
-    \     "adapter": "debugpy", 
-    \     "configuration": { 
-    \       "request": "launch", 
-    \       "python3": "/usr/bin/python3", 
+let g:python_vimspector = {
+    \   "launch": {
+    \     "adapter": "debugpy",
+    \     "configuration": {
+    \       "request": "launch",
+    \       "python3": "/usr/bin/python3",
     \       "program": expand("%:p"),
     \       "console": "externalTerminal",
     \       "stopOnEntry": v:true,
@@ -13,7 +13,7 @@ let g:python_vimspector = {
     \           "caught": "",
     \           "uncaught": ""
     \         }
-    \       } 
+    \       }
     \     }
     \   }
     \ }
