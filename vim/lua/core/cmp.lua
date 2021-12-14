@@ -11,7 +11,7 @@ local comfirm = function(fallback)
       local entry = cmp.get_selected_entry()
       local label = entry.completion_item.label
       local indent_change_items = {
-        'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif', 'else~',
+        'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif', 'else .. then~',
         'endfor', 'endfunction', 'endwhile', 'endtry', 'except', 'catch'
       }
       if table.find(indent_change_items, label) then
