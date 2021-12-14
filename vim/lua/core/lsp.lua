@@ -4,7 +4,7 @@ M.servers = {
   "sumneko_lua", "pyright", "jsonls", "bashls", "vimls"
 }
 
-M.on_attach = function(client, bufnr)
+local function on_attach(client, bufnr)
   local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
 
@@ -78,7 +78,7 @@ M.lua_setting = {
   }
 }
 
-M.capabilities = (function ()
+local capabilities = (function()
   -- The nvim-cmp almost supports LSP's capabilities so You should advertise it to LSP servers..
   local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
   capabilities = require("cmp_nvim_lsp").update_capabilities(capabilities)
@@ -86,7 +86,7 @@ M.capabilities = (function ()
   return capabilities
 end)()
 
-M.lsp_signature_config = function()
+local function lsp_signature_config()
   require "lsp_signature".setup({
     floating_window = true, -- show hint in a floating window, set to false for virtual text only mode
     floating_window_above_cur_line = true, -- try to place the floating above the current line when possible Note:
@@ -109,7 +109,7 @@ M.lsp_signature_config = function()
   ]]
 end
 
-M.lsp_installer_config = function()
+local function lsp_installer_config()
   local installer = require("nvim-lsp-installer")
 
   for _, lang in pairs(M.servers) do
@@ -125,8 +125,8 @@ M.lsp_installer_config = function()
   -- Register a handler that will be called for all installed servers.
   installer.on_server_ready(function(server)
     local opts = {
-      capabilities = M.capabilities,
-      on_attach = M.on_attach
+      capabilities = capabilities,
+      on_attach = on_attach
     }
 
     if server.name == "sumneko_lua" then
@@ -141,7 +141,7 @@ M.lsp_installer_config = function()
   end)
 end
 
-M.lsp_diagnostic = function()
+local function lsp_diagnostic()
   -- diagnostic
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
     vim.lsp.diagnostic.on_publish_diagnostics, {
@@ -159,9 +159,9 @@ M.lsp_diagnostic = function()
 end
 
 function M.setup()
-  M.lsp_diagnostic()
-  M.lsp_signature_config()
-  M.lsp_installer_config()
+  lsp_diagnostic()
+  lsp_signature_config()
+  lsp_installer_config()
 end
 
 return M

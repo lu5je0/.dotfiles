@@ -426,6 +426,13 @@ return packer.startup(function()
   use {'folke/lua-dev.nvim'}
 
   use {
+    'jose-elias-alvarez/null-ls.nvim',
+    config = function()
+      require('core.null_ls')
+    end
+  }
+
+  use {
     'neovim/nvim-lspconfig',
     config = function()
       require("core/lsp").setup()
