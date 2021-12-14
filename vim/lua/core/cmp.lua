@@ -3,6 +3,46 @@ local cmp = require('cmp')
 
 vim.g.vsnip_snippet_dir = "~/.dotfiles/vim/vsnip"
 
+local comfirm = function(fallback)
+  if cmp.visible() then
+    if vim.fn['UltiSnips#CanExpandSnippet']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
+      vim.fn['UltiSnips#ExpandSnippet']()
+    else
+      local entry = cmp.get_selected_entry()
+      local label = entry.completion_item.label
+      local indent_change_items = {
+        'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif', 'else~',
+        'endfor', 'endfunction', 'endwhile', 'endtry', 'except', 'catch'
+      }
+      if table.find(indent_change_items, label) then
+        cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert})
+        local indent = vim.fn.indent('.')
+        local cmd = [[
+        function! CmpLineFormat(timer) abort
+          let c = getpos(".")
+          let indent_num = indent('.')
+          norm ==
+          if indent('.') != indent_num
+            call cursor(c[1], c[2] - 2)
+          else
+            call cursor(c[1], c[2])
+          endif
+        endfunction
+        call timer_start(0, 'CmpLineFormat')
+        ]]
+        cmd = cmd:format(indent, label)
+        vim.cmd(cmd)
+      else
+        cmp.confirm({ select = true })
+      end
+    end
+  elseif vim.fn['UltiSnips#CanExpandSnippet']() == 1 then
+    vim.fn['UltiSnips#ExpandSnippet']()
+  else
+    fallback()
+  end
+end
+
 cmp.setup({
   snippet = {
     -- REQUIRED - you must specify a snippet engine
@@ -31,47 +71,8 @@ cmp.setup({
       i = cmp.mapping.abort(),
       c = cmp.mapping.close(),
     }),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-    -- ['<Tab>'] = cmp.mapping.confirm({ select = true }),
-    ["<Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        if vim.fn['UltiSnips#CanExpandSnippet']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
-          vim.fn['UltiSnips#ExpandSnippet']()
-        else
-          local entry = cmp.get_selected_entry()
-          local label = entry.completion_item.label
-          local indent_change_items = {
-            'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif', 'else~',
-            'endfor', 'endfunction', 'endwhile', 'endtry', 'except', 'catch'
-          }
-          if table.find(indent_change_items, label) then
-            cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert})
-            local indent = vim.fn.indent('.')
-            local cmd = [[
-            function! CmpLineFormat(timer) abort
-              let c = getpos(".")
-              let indent_num = indent('.')
-              norm ==
-              if indent('.') != indent_num
-                call cursor(c[1], c[2] - 2)
-              else
-                call cursor(c[1], c[2])
-              endif
-            endfunction
-            call timer_start(0, 'CmpLineFormat')
-            ]]
-            cmd = cmd:format(indent, label)
-            vim.cmd(cmd)
-          else
-            cmp.confirm({ select = true })
-          end
-        end
-      elseif vim.fn['UltiSnips#CanExpandSnippet']() == 1 then
-        vim.fn['UltiSnips#ExpandSnippet']()
-      else
-        fallback()
-      end
-    end, { "i", "s" }),
+    ['<CR>'] = cmp.mapping(comfirm, { "i", "s" }),
+    ["<Tab>"] = cmp.mapping(comfirm, { "i", "s" }),
   },
   sources = cmp.config.sources({
     { name = 'ultisnips' }, -- For ultisnips users.
