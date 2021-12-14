@@ -41,7 +41,7 @@ cmp.setup({
           local entry = cmp.get_selected_entry()
           local label = entry.completion_item.label
           local indent_change_items = {
-            'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif',
+            'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif', 'else~',
             'endfor', 'endfunction', 'endwhile', 'endtry', 'except', 'catch'
           }
           if table.find(indent_change_items, label) then

@@ -4,6 +4,10 @@ for ${0:i} = 1, ${1:10} do
 end
 endsnippet
 
+snippet else "else .. then" w
+else $0 then
+endsnippet
+
 snippet "( *)(.*);par" "Parenthesis (postfix)" r
 `!p snip.rv = match.group(1)`(`!p snip.rv = match.group(2)`)$0
 endsnippet
