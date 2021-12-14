@@ -30,6 +30,7 @@ function! LoadPlug(timer) abort
     silent! PackerLoad nvim-lspconfig
     silent! PackerLoad nvim-cmp
     silent! PackerLoad nvim-autopairs
+    silent! PackerLoad null-ls.nvim
 
     if has("wsl")
         silent! PackerLoad im-switcher.nvim

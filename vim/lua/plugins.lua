@@ -429,7 +429,8 @@ return packer.startup(function()
     'jose-elias-alvarez/null-ls.nvim',
     config = function()
       require('core.null_ls')
-    end
+    end,
+    opt = true
   }
 
   use {

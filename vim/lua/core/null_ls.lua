@@ -28,7 +28,7 @@ local trailing_space = {
               end_col = end_col + 1,
               source = "trailing_space",
               message = "trailing space",
-              severity = 2,
+              severity = 4,
             })
           end
         end
