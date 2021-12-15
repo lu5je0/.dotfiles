@@ -59,7 +59,7 @@ nmap <silent> <leader>9 9gt
 nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
 nmap <leader>d :b#<cr>
-nmap <leader>n /uvclewrq<cr>
+nmap <leader>n :noh<cr>
 
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
 nmap <leader>vc :set ic!<cr>

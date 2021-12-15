@@ -70,6 +70,12 @@ M.setup = function ()
         ['p'] = { ':BufferLinePick<cr>', 'buffer pick' },
         ['u'] = { '<c-w>x', 'buffer pick' },
     },
+    W = {
+      name = '+workspace',
+      a = 'add workspace folder',
+      r = 'remove workspace folder',
+      l = 'list workspace folder'
+    },
     p = {
       name = "Packer",
       q = { "<cmd>PackerCompile profile=true<cr>", "compile profile" },
