@@ -187,6 +187,11 @@ return packer.startup(function()
   use 'lu5je0/one-nvim'
   use 'lu5je0/edge'
   use 'gruvbox-community/gruvbox'
+  -- use {'rktjmp/lush.nvim'}
+  -- use {
+  --   "rktjmp/shipwright.nvim"
+  -- }
+
 
   -- use {
   --   'wfxr/minimap.vim',

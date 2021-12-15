@@ -11,7 +11,7 @@ null_ls.setup({
 local trailing_space = {
   -- method = null_ls.methods.DIAGNOSTICS_ON_SAVE,
   method = null_ls.methods.DIAGNOSTICS,
-  filetypes = {"vim", "python"},
+  filetypes = {'vim', 'python', 'bash', 'c', 'java', 'sh', 'zsh'},
   generator = {
     fn = function(params)
       local diagnostics = {}
