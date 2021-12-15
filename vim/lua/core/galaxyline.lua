@@ -85,36 +85,37 @@ gls.left[7] = {
 --   }
 -- }
 
--- gls.left[8] = {
---   DiagnosticError = {
---     icon = '  ',
---     highlight = {colors.red,colors.bg},
---   }
--- }
+gls.left[8] = {
+  DiagnosticError = {
+    provider = 'DiagnosticError',
+    icon = '  ',
+    highlight = {colors.red,colors.bg},
+  }
+}
 
--- gls.left[9] = {
---   DiagnosticWarn = {
---     provider = 'DiagnosticWarn',
---     icon = '  ',
---     highlight = {colors.yellow,colors.bg},
---   }
--- }
+gls.left[9] = {
+  DiagnosticWarn = {
+    provider = 'DiagnosticWarn',
+    icon = '  ',
+    highlight = {colors.yellow,colors.bg},
+  }
+}
 
--- gls.left[10] = {
---   DiagnosticHint = {
---     provider = 'DiagnosticHint',
---     icon = '  ',
---     highlight = {colors.cyan,colors.bg},
---   }
--- }
+gls.left[10] = {
+  DiagnosticHint = {
+    provider = 'DiagnosticHint',
+    icon = '  ',
+    highlight = {colors.cyan,colors.bg},
+  }
+}
 
--- gls.left[11] = {
---   DiagnosticInfo = {
---     provider = 'DiagnosticInfo',
---     icon = '  ',
---     highlight = {colors.blue,colors.bg},
---   }
--- }
+gls.left[11] = {
+  DiagnosticInfo = {
+    provider = 'DiagnosticInfo',
+    icon = '  ',
+    highlight = {colors.blue,colors.bg},
+  }
+}
 
 gls.right[1] = {
   FileEncode = {
@@ -159,6 +160,7 @@ gls.right[4] = {
   }
 }
 
+-- perf TODO
 gls.right[5] = {
   GitBranch = {
     provider = 'GitBranch',

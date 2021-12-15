@@ -42,9 +42,9 @@ return packer.startup(function()
     "nathom/filetype.nvim"
   }
 
-  -- Use specific branch, dependency and run lua file after load
   use {
-    'glepnir/galaxyline.nvim',
+    -- 'glepnir/galaxyline.nvim',
+    'Avimitin/galaxyline.nvim',
     branch = 'main',
     config = function() require("core/galaxyline") end,
   }
