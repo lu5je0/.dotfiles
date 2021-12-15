@@ -204,7 +204,7 @@ function! FileSize()
 endfunction
 
 function! CurVimPath()
-    let name = getcwd() 
+    let name = getcwd()
     return fnamemodify(name, ':p:h:t')
 endfunction
 

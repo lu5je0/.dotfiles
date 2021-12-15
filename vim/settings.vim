@@ -45,7 +45,7 @@ endif
 set completeopt=menu,menuone,noselect
 
 " 自动打开上次位置
-if has("autocmd")  
+if has("autocmd")
     au BufReadPost * if line("'\"") > 1 && &ft != "gitcommit" && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
 

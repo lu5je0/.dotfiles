@@ -13,7 +13,7 @@ python3 << EOF
 import threading
 
 import sys
-import time 
+import time
 from os.path import normpath, join
 import vim
 python_root_dir = vim.eval('s:plugin_root_dir') + "/python"

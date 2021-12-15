@@ -20,16 +20,16 @@ let g:vista_executive_for = {
   \ }
 
 function! s:vista_mapping() abort
-  nmap <buffer> <leader>d <C-W>h<leader>d 
-  nmap <buffer> <leader>1 <C-W>h<leader>1 
-  nmap <buffer> <leader>2 <C-W>h<leader>2 
-  nmap <buffer> <leader>3 <C-W>h<leader>3 
-  nmap <buffer> <leader>4 <C-W>h<leader>4 
-  nmap <buffer> <leader>5 <C-W>h<leader>5 
-  nmap <buffer> <leader>6 <C-W>h<leader>6 
-  nmap <buffer> <leader>7 <C-W>h<leader>7 
-  nmap <buffer> <leader>8 <C-W>h<leader>8 
-  nmap <buffer> <leader>9 <C-W>h<leader>9 
+  nmap <buffer> <leader>d <C-W>h<leader>d
+  nmap <buffer> <leader>1 <C-W>h<leader>1
+  nmap <buffer> <leader>2 <C-W>h<leader>2
+  nmap <buffer> <leader>3 <C-W>h<leader>3
+  nmap <buffer> <leader>4 <C-W>h<leader>4
+  nmap <buffer> <leader>5 <C-W>h<leader>5
+  nmap <buffer> <leader>6 <C-W>h<leader>6
+  nmap <buffer> <leader>7 <C-W>h<leader>7
+  nmap <buffer> <leader>8 <C-W>h<leader>8
+  nmap <buffer> <leader>9 <C-W>h<leader>9
   nmap <buffer> <leader>ff <C-W>h<leader>ff
   nmap <buffer> <leader>fr <C-W>h<leader>fr
   nmap <buffer> <leader>fm <C-W>h<leader>fm

@@ -4,8 +4,8 @@ command! -nargs=0 LuaDevOff let g:lua_dev=0
 
 function! s:run_tmux(opts)
     " asyncrun has temporarily changed dir for you
-    " getcwd() in the runner function is the target directory defined in `-cwd=xxx`  
-    let cwd = getcwd()   
+    " getcwd() in the runner function is the target directory defined in `-cwd=xxx`
+    let cwd = getcwd()
     call VimuxRunCommand('cd ' . shellescape(cwd) . '; ' . a:opts.cmd)
 endfunction
 
@@ -31,7 +31,7 @@ function! RunFile()
     elseif file_type == 'python'
         if has("win32") || has("win64")
             call RunFileInner("python", "")
-        else 
+        else
             call RunFileInner("python3", "")
         endif
     elseif file_type == 'java'

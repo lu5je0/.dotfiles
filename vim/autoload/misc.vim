@@ -36,7 +36,7 @@ endfunction
 function misc#execute_command_for_word(cmd)
    let l:word = expand("<cword>")
    execute 'silent exec "!' . a:cmd . ' ' . l:word . '"'
-endfu 
+endfu
 
 function misc#say(word)
     echon a:word

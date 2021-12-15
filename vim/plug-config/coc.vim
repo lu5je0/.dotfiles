@@ -1,6 +1,6 @@
 let g:coc_global_extensions = ['coc-json', 'coc-pyright', 'coc-snippets', 'coc-sql', 'coc-sumneko-lua', 'coc-vimlsp', 'coc-markdownlint', 'coc-sh', 'coc-java']
 
-inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" : 
+inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>\<C-g>u" :
                                            \"\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
 imap <silent><expr> <tab> pumvisible() ?  "\<C-y>\<C-g>u" : "\<TAB>"
