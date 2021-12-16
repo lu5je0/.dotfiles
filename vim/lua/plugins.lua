@@ -453,20 +453,15 @@ return packer.startup(function()
         'hrsh7th/cmp-nvim-lsp',
         'hrsh7th/cmp-buffer',
         'hrsh7th/cmp-path',
-        'lu5je0/cmp-nvim-ultisnips'
-        -- 'hrsh7th/cmp-vsnip',
-        -- 'hrsh7th/vim-vsnip'
+        'hrsh7th/vim-vsnip',
+        {
+          'hrsh7th/cmp-vsnip',
+          config = function ()
+            vim.g.vsnip_snippet_dir = "/home/lu5je0/.dotfiles/vim/snippets/vsnip"
+          end
+        }
       },
       opt = true
-  }
-
-  use {
-      'SirVer/ultisnips',
-      setup = function()
-        vim.g.UltiSnipsSnippetDirectories = {vim.fn.stdpath('config') .. '/snippets/ultisnips'}
-        vim.g.UltiSnipsExpandTrigger = "<NUL>"
-        vim.g.UltiSnipsJumpForwardTrigger="<cr>"
-      end
   }
 
   use {

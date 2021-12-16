@@ -1,12 +1,14 @@
 -- Setup nvim-cmp.
 local cmp = require('cmp')
 
-vim.g.vsnip_snippet_dir = "~/.dotfiles/vim/vsnip"
+local feedkey = function(key, mode)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
+end
 
 local comfirm = function(fallback)
   if cmp.visible() then
-    if vim.fn['UltiSnips#CanExpandSnippet']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
-      vim.fn['UltiSnips#ExpandSnippet']()
+    if vim.fn['vsnip#expandable']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
+      vim.fn['vsnip#expand']()
     else
       local entry = cmp.get_selected_entry()
       local label = entry.completion_item.label
@@ -36,8 +38,8 @@ local comfirm = function(fallback)
         cmp.confirm({ select = true })
       end
     end
-  elseif vim.fn['UltiSnips#CanExpandSnippet']() == 1 then
-    vim.fn['UltiSnips#ExpandSnippet']()
+  elseif vim.fn['vsnip#jumpable'](1) == 1 then
+    feedkey("<Plug>(vsnip-jump-next)", "")
   else
     fallback()
   end
@@ -45,12 +47,8 @@ end
 
 cmp.setup({
   snippet = {
-    -- REQUIRED - you must specify a snippet engine
     expand = function(args)
-      -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-      -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-      vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-      -- require'snippy'.expand_snippet(args.body) -- For `snippy` users.
+      vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
     end,
   },
   completion = {
@@ -74,7 +72,7 @@ cmp.setup({
     ["<tab>"] = cmp.mapping(comfirm, { "i" }),
   },
   sources = cmp.config.sources({
-    { name = 'ultisnips' }, -- For ultisnips users.
+    { name = 'vsnip' }, -- For ultisnips users.
     { name = 'nvim_lsp' },
     { name = 'path' },
     { name = 'buffer' },
@@ -161,4 +159,6 @@ highlight! CmpItemKindMethod guibg=NONE guifg=#C586C0
 highlight! CmpItemKindKeyword guibg=NONE guifg=#D4D4D4
 highlight! CmpItemKindProperty guibg=NONE guifg=#D4D4D4
 highlight! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
+
+smap <expr> <cr>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<cr>'
 ]]

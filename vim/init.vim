@@ -40,3 +40,5 @@ function! LoadPlug(timer) abort
     " hi StatusLine guibg=#5C6370
     hi CocHighlightText guibg=#344134
 endfunction
+
+let g:vsnip_snippet_dir = "/home/lu5je0/.dotfiles/vim/snippets/vsnip"
