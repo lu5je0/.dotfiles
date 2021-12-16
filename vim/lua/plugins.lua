@@ -465,6 +465,7 @@ return packer.startup(function()
       setup = function()
         vim.g.UltiSnipsSnippetDirectories = {vim.fn.stdpath('config') .. '/snippets/ultisnips'}
         vim.g.UltiSnipsExpandTrigger = "<NUL>"
+        vim.g.UltiSnipsJumpForwardTrigger="<cr>"
       end
   }
 

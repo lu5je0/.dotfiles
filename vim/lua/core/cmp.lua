@@ -66,13 +66,12 @@ cmp.setup({
     ['<c-n>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
     ['<down>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
     ['<up>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
-    ['<c-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
     ['<c-e>'] = cmp.mapping({
       i = cmp.mapping.abort(),
       c = cmp.mapping.close(),
     }),
-    ['<cr>'] = cmp.mapping(comfirm, { "i", "s" }),
-    ["<tab>"] = cmp.mapping(comfirm, { "i", "s" }),
+    ['<cr>'] = cmp.mapping(comfirm, { "i" }),
+    ["<tab>"] = cmp.mapping(comfirm, { "i" }),
   },
   sources = cmp.config.sources({
     { name = 'ultisnips' }, -- For ultisnips users.
@@ -162,11 +161,4 @@ highlight! CmpItemKindMethod guibg=NONE guifg=#C586C0
 highlight! CmpItemKindKeyword guibg=NONE guifg=#D4D4D4
 highlight! CmpItemKindProperty guibg=NONE guifg=#D4D4D4
 highlight! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
-
-" Jump forward or backward
-imap <expr> <c-k> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<c-k>'
-smap <expr> <c-k> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<c-k>'
-imap <expr> <c-j>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<c-j>'
-smap <expr> <c-j>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<c-j>'
-" imap <c-p> <cmd>lua vim.lsp.buf.signature_help()<CR>
 ]]
