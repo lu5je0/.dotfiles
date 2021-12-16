@@ -110,16 +110,16 @@ function! s:init_fern() abort
   nmap <silent> <buffer> cd <Plug>(fern-action-cd):echo "cd " . getcwd()<cr>
   nmap <buffer> I <Plug>(fern-action-hidden:toggle)
 
-  nmap <buffer> <leader>d <C-W>l<leader>d 
-  nmap <buffer> <leader>1 <C-W>l<leader>1 
-  nmap <buffer> <leader>2 <C-W>l<leader>2 
-  nmap <buffer> <leader>3 <C-W>l<leader>3 
-  nmap <buffer> <leader>4 <C-W>l<leader>4 
-  nmap <buffer> <leader>5 <C-W>l<leader>5 
-  nmap <buffer> <leader>6 <C-W>l<leader>6 
-  nmap <buffer> <leader>7 <C-W>l<leader>7 
-  nmap <buffer> <leader>8 <C-W>l<leader>8 
-  nmap <buffer> <leader>9 <C-W>l<leader>9 
+  nmap <buffer> <leader>d <C-W>l<leader>d
+  nmap <buffer> <leader>1 <C-W>l<leader>1
+  nmap <buffer> <leader>2 <C-W>l<leader>2
+  nmap <buffer> <leader>3 <C-W>l<leader>3
+  nmap <buffer> <leader>4 <C-W>l<leader>4
+  nmap <buffer> <leader>5 <C-W>l<leader>5
+  nmap <buffer> <leader>6 <C-W>l<leader>6
+  nmap <buffer> <leader>7 <C-W>l<leader>7
+  nmap <buffer> <leader>8 <C-W>l<leader>8
+  nmap <buffer> <leader>9 <C-W>l<leader>9
   nmap <buffer> <leader>ff <C-W>l<leader>ff
   nmap <buffer> <leader>fe <Nop>
   nmap <buffer> <leader>tn <C-W>l<leader>tn
@@ -135,10 +135,10 @@ augroup fern-custom
 augroup END
 
 " Add dirs and files inside the brackets that need to remain hidden
-" let hide_dirs  = '^\%(\.git\|node_modules\)$'  " here you write the dir names 
+" let hide_dirs  = '^\%(\.git\|node_modules\)$'  " here you write the dir names
 " let hide_files = '\%(\.byebug\|\.ruby-\)\+'    " here you write the file names
 " let g:fern#default_exclude = hide_dirs . '\|' . hide_files  " here you exclude them
-let hide_dirs  = '^\%(\.git\)$'  " here you write the dir names 
+let hide_dirs  = '^\%(\.git\)$'  " here you write the dir names
 
 let g:fern#default_exclude = '^\%(\.git\)$'
 
