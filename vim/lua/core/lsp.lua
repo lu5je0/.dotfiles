@@ -133,6 +133,7 @@ local function lsp_signature_config()
   })
 
   vim.cmd[[
+  imap <m-p> <c-p>
   augroup clean_signature
   autocmd!
   autocmd BufEnter * silent! autocmd! Signature InsertEnter | silent! autocmd! Signature CursorHoldI

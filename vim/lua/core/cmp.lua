@@ -63,16 +63,16 @@ cmp.setup({
   mapping = {
     ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
-    -- ['<c-Space>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
-    ['<Down>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
-    ['<Up>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
-    ['<C-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
-    ['<C-e>'] = cmp.mapping({
+    ['<c-n>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+    ['<down>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
+    ['<up>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
+    ['<c-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
+    ['<c-e>'] = cmp.mapping({
       i = cmp.mapping.abort(),
       c = cmp.mapping.close(),
     }),
-    ['<CR>'] = cmp.mapping(comfirm, { "i", "s" }),
-    ["<Tab>"] = cmp.mapping(comfirm, { "i", "s" }),
+    ['<cr>'] = cmp.mapping(comfirm, { "i", "s" }),
+    ["<tab>"] = cmp.mapping(comfirm, { "i", "s" }),
   },
   sources = cmp.config.sources({
     { name = 'ultisnips' }, -- For ultisnips users.
