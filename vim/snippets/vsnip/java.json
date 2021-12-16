@@ -7,5 +7,12 @@
       "}"
     ],
     "description": "Code snippet for 'for' loop"
+  },
+  "sout": {
+    "prefix": "sout",
+    "body": [
+      "System.out.println($1);$2"
+    ],
+    "description": "sout"
   }
 }
