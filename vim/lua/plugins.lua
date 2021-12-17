@@ -453,13 +453,13 @@ return packer.startup(function()
         'hrsh7th/cmp-nvim-lsp',
         'hrsh7th/cmp-buffer',
         'hrsh7th/cmp-path',
-        'hrsh7th/vim-vsnip',
         {
-          'hrsh7th/cmp-vsnip',
-          config = function ()
-            vim.g.vsnip_snippet_dir = "/home/lu5je0/.dotfiles/vim/snippets/vsnip"
+          'hrsh7th/vim-vsnip',
+          setup = function ()
+            vim.g.vsnip_snippet_dir = vim.fn.stdpath('config') .. '/snippets/vsnip'
           end
-        }
+        },
+        'hrsh7th/cmp-vsnip',
       },
       opt = true
   }
