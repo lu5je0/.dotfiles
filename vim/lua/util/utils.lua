@@ -1,5 +1,9 @@
 local M = {}
 
+M.feedkey = function(key, mode)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
+end
+
 function M.selected_text()
     return ""
 end

@@ -1,9 +1,6 @@
 -- Setup nvim-cmp.
 local cmp = require('cmp')
-
-local feedkey = function(key, mode)
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
-end
+local utils = require('util.utils')
 
 local comfirm = function(fallback)
   if cmp.visible() then
@@ -39,7 +36,7 @@ local comfirm = function(fallback)
       end
     end
   elseif vim.fn['vsnip#jumpable'](1) == 1 then
-    feedkey("<Plug>(vsnip-jump-next)", "")
+    utils.feedkey("<Plug>(vsnip-jump-next)", "")
   else
     fallback()
   end

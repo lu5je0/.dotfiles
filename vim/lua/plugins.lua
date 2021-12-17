@@ -455,8 +455,8 @@ return packer.startup(function()
         'hrsh7th/cmp-path',
         {
           'hrsh7th/vim-vsnip',
-          setup = function ()
-            vim.g.vsnip_snippet_dir = vim.fn.stdpath('config') .. '/snippets/vsnip'
+          config = function()
+            require('core.vsnip').setup()
           end
         },
         'hrsh7th/cmp-vsnip',
