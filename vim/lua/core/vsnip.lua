@@ -9,7 +9,7 @@ M.setup = function()
 end
 
 M.jump_next_able = function()
-  return vim.fn.line("'^") == vim.fn.line(".") and vim.fn['vsnip#jumpable'](1) == 1
+  return math.abs(vim.fn.line("'^") - vim.fn.line(".")) <= 1 and vim.fn['vsnip#jumpable'](1) == 1
 end
 
 return M
