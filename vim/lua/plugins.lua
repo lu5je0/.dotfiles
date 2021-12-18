@@ -442,8 +442,11 @@ return packer.startup(function()
   use {
     'RRethy/vim-illuminate',
     config = function()
-      vim.g.Illuminate_delay = 750
-      vim.cmd[[hi link illuminatedWord CursorLine]]
+      vim.g.Illuminate_delay = 0
+      vim.g.Illuminate_ftwhitelist = {'vim', 'sh', 'python', 'lua', 'java'}
+      vim.cmd[[
+      highlight illuminatedWord ctermbg=green guibg=#344134
+      ]]
     end
   }
 
