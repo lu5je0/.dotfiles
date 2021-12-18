@@ -178,7 +178,7 @@ M.setup = function ()
         i = { ":ToggleSaveLastIme<cr>", 'toggle-save-last-ime' },
         h = { ":call hexedit#ToggleHexEdit()<cr>", 'toggle hexedit' },
         l = { ":set cursorline!<cr>", 'toggle cursorline' },
-        f = { "<Plug>FoldToggleColumn", 'toggle column' },
+        f = { "<Plug>FoldToggleColumn", 'toggle fold column' },
         F = {
           name = '+foldmethod',
           m = { ":set fdm=manual | echo \"set fdm = manual\"<cr>", 'manual' },

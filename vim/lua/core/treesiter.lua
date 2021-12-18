@@ -1,6 +1,6 @@
 require'nvim-treesitter.configs'.setup {
   -- Modules and its options go here
-  ensure_installed = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'html'},
+  ensure_installed = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'html', 'markdown'},
   highlight = {
     enable = true
   },

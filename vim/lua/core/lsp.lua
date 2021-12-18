@@ -111,7 +111,7 @@ local function on_attach(client, bufnr)
   -- cursor word highlight
   require 'illuminate'.on_attach(client)
   vim.cmd[[
-  highlight LspReferenceText guibg=#344134 gui=none
+  highlight LspReferenceText guibg=none gui=none
   highlight LspReferenceWrite guibg=#344134 gui=none
   highlight LspReferenceRead guibg=#344134 gui=none
   ]]
