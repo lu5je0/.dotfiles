@@ -438,6 +438,15 @@ return packer.startup(function()
     opt = true
   }
 
+  -- highlight cursor word
+  use {
+    'RRethy/vim-illuminate',
+    config = function()
+      vim.g.Illuminate_delay = 750
+      vim.cmd[[hi link illuminatedWord CursorLine]]
+    end
+  }
+
   use {
     'neovim/nvim-lspconfig',
     config = function()
