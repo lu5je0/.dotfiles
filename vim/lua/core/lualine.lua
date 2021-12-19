@@ -181,7 +181,7 @@ ins_left {
 
 ins_left {
   function()
-    return '%2p%% ☰ %l:%c';
+    return [[ %l:%c %2p%%]];
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
