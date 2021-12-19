@@ -64,7 +64,7 @@ local extensions = {
       extensions_type_icon
     }
   },
-  filetypes = {'NvimTree', 'diff', 'fern'}
+  filetypes = {'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap'}
 }
 
 -- Config
