@@ -173,6 +173,23 @@ ins_left {
   cond = function()
     return conditions.buffer_not_empty() and conditions.hide_in_width()
   end,
+  color = { fg = colors.yellow },
+  padding = { left = 1, right = 0 },
+}
+
+ins_left {
+  function()
+    return '%2p%% ☰ %2l:%L';
+  end,
+  padding = { left = 1, right = 0 },
+  color = { fg = colors.violet },
+}
+
+ins_left {
+  function()
+    return ' :%2c';
+  end,
+  padding = { left = 0, right = 0 },
   color = { fg = colors.grey },
 }
 
@@ -218,7 +235,7 @@ ins_right {
   fmt = string.upper, -- I'm not sure why it's upper case either ;)
   cond = conditions.hide_in_width,
   color = { fg = colors.green, gui = 'bold' },
-  padding = { left = 1, right = 0 },
+  padding = { left = 0, right = 0 },
 }
 
 ins_right {
@@ -228,12 +245,6 @@ ins_right {
   color = { fg = colors.green, gui = 'bold' },
   padding = { left = 1, right = 1 },
   cond = conditions.hide_in_width
-}
-
-ins_right {
-  'location',
-  padding = { left = 0, right = 0 },
-  color = { fg = colors.grey }
 }
 
 -- ins_right {
@@ -246,7 +257,7 @@ ins_right {
   'b:gitsigns_head',
   icon = '',
   color = { fg = colors.violet, gui = 'bold' },
-  padding = { left = 1, right = 1 },
+  padding = { left = 0, right = 1 },
 }
 
 local function diff_source()
