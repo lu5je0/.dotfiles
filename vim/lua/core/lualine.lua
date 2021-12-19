@@ -154,43 +154,37 @@ ins_left {
   'filetype',
   icon_only = true,
   inactive = true,
-  cond = conditions.buffer_not_empty,
   color = { fg = colors.magenta, gui = 'bold' },
-  padding = { left = 1, right = 1 },
+  padding = { left = 1, right = 0 },
 }
 
 ins_left {
   'filename',
   inactive = true,
-  cond = conditions.buffer_not_empty,
   color = { fg = colors.magenta, gui = 'bold' },
-  padding = { left = 0, right = 0 },
+  padding = { left = 1, right = 0 },
+  icons_enabled = true,
+  symbols = {
+    modified = '[+]',      -- when the file was modified
+    readonly = '[-]',      -- if the file is not modifiable or readonly
+    unnamed = '[No Name]', -- default display name for unnamed buffers
+  }
 }
 
 ins_left {
   -- filesize component
   'filesize',
-  cond = function()
-    return conditions.buffer_not_empty() and conditions.hide_in_width()
-  end,
+  cond = conditions.hide_in_width,
   color = { fg = colors.yellow },
   padding = { left = 1, right = 0 },
 }
 
 ins_left {
   function()
-    return '%2p%% ☰ %2l:%L';
+    return '%2p%% ☰ %l:%c';
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
-}
-
-ins_left {
-  function()
-    return ' :%2c';
-  end,
-  padding = { left = 0, right = 0 },
-  color = { fg = colors.grey },
 }
 
 ins_left {
@@ -241,10 +235,15 @@ ins_right {
 ins_right {
   'fileformat',
   fmt = string.upper,
-  icons_enabled = false, -- I think icons are cool but Eviline doesn't have them. sigh
+  icons_enabled = true, -- I think icons are cool but Eviline doesn't have them. sigh
   color = { fg = colors.green, gui = 'bold' },
   padding = { left = 1, right = 1 },
-  cond = conditions.hide_in_width
+  cond = conditions.hide_in_width,
+  symbols = {
+    unix = 'LF',
+    dos = 'CRLF',
+    mac = 'CR',
+  },
 }
 
 -- ins_right {
