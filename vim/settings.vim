@@ -73,7 +73,7 @@ set shortmess=atI
 set foldtext=misc#fold_text()
 
 " 主题配置 {{{
-colorscheme one
+colorscheme one-nvim
 set bg=dark
 hi FoldColumn guibg=none
 " hi StatusLine guibg=#5C6370
