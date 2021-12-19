@@ -170,7 +170,9 @@ ins_left {
 ins_left {
   -- filesize component
   'filesize',
-  cond = conditions.buffer_not_empty,
+  cond = function()
+    return conditions.buffer_not_empty() and conditions.hide_in_width()
+  end,
   color = { fg = colors.grey },
 }
 
