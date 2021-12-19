@@ -249,13 +249,20 @@ ins_right {
   padding = { left = 1, right = 1 },
 }
 
+local function diff_source()
+  local gitsigns = vim.b.gitsigns_status_dict
+  if gitsigns then
+    return {
+      added = gitsigns.added,
+      modified = gitsigns.changed,
+      removed = gitsigns.removed
+    }
+  end
+end
+
 ins_right {
-  function()
-    local status = vim.api.nvim_eval("get(b:, 'gitsigns_status', '')");
-    return status
-  end,
-  conf = conditions.check_git_workspace(),
-  color = { fg = colors.grey},
+  'diff',
+  source = diff_source,
   padding = { left = 0, right = 1 },
 }
 
