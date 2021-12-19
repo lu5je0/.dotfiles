@@ -171,6 +171,32 @@ ins_left {
   -- filesize component
   'filesize',
   cond = conditions.buffer_not_empty,
+  color = { fg = colors.grey },
+}
+
+ins_left {
+  -- Lsp server name .
+  function()
+    local msg = 'No Active Lsp'
+    local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
+    local clients = vim.lsp.get_active_clients()
+    if next(clients) == nil then
+      return ' LSP:' .. msg
+    end
+    for _, client in ipairs(clients) do
+      local filetypes = client.config.filetypes
+      if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
+        if client.name == 'null-ls' then
+          goto continue
+        end
+        return ' LSP:' .. client.name
+      end
+      ::continue::
+    end
+    return ' LSP:' .. msg
+  end,
+  color = { fg = colors.cyan, gui = 'bold' },
+  cond = conditions.lsp_cond
 }
 
 ins_left {
@@ -184,39 +210,6 @@ ins_left {
   },
 }
 
--- Insert mid section. You can make any number of sections in neovim :)
--- for lualine it's any number greater then 2
-ins_left {
-  function()
-    return '%='
-  end,
-}
-
-ins_left {
-  -- Lsp server name .
-  function()
-    local msg = 'No Active Lsp'
-    local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
-    local clients = vim.lsp.get_active_clients()
-    if next(clients) == nil then
-      return msg
-    end
-    for _, client in ipairs(clients) do
-      local filetypes = client.config.filetypes
-      if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
-        if client.name == 'null-ls' then
-          goto continue
-        end
-        return client.name
-      end
-      ::continue::
-    end
-    return msg
-  end,
-  icon = ' LSP:',
-  color = { fg = colors.cyan, gui = 'bold' },
-  cond = conditions.lsp_cond
-}
 
 -- Add components to right sections
 ins_right {
@@ -239,6 +232,7 @@ ins_right {
 ins_right {
   'location',
   padding = { left = 0, right = 0 },
+  color = { fg = colors.grey }
 }
 
 -- ins_right {
@@ -252,6 +246,16 @@ ins_right {
   icon = '',
   color = { fg = colors.violet, gui = 'bold' },
   padding = { left = 1, right = 1 },
+}
+
+ins_right {
+  function()
+    local status = vim.api.nvim_eval("get(b:, 'gitsigns_status', '')");
+    return status
+  end,
+  conf = conditions.check_git_workspace(),
+  color = { fg = colors.grey},
+  padding = { left = 0, right = 1 },
 }
 
 lualine.setup(config)
