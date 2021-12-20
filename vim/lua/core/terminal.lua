@@ -1,7 +1,12 @@
 local M = {}
 
-M.sendToTerminal = function(cmd)
-  local v_cmd = "TermExec cmd='%s' go_back=0"
+M.sendToTerminal = function(cmd, opts)
+  if opts == nil then
+    opts = {}
+    opts.go_back = 0
+  end
+
+  local v_cmd = "TermExec cmd='%s' go_back=" .. opts.go_back
   v_cmd = v_cmd:format(cmd)
   vim.cmd(v_cmd)
 end
@@ -36,6 +41,10 @@ M.setup = function()
 
   tmap <silent> <m-i> <c-\><c-n>:ToggleTerm<CR>
   tmap <silent> <d-i> <c-\><c-n>:ToggleTerm<CR>
+  
+  tmap <silent> <c-w>L <c-\><c-n><m-i>:TermExec cmd="echo 'L'" direction='vertical' go_back=0<CR>
+  tmap <silent> <c-w>J <c-\><c-n><m-i>:TermExec cmd="echo 'J'" direction='horizontal' go_back=0<CR>
+  tmap <silent> <c-w>F <c-\><c-n><m-i>:TermExec cmd="echo 'F'" direction='float' go_back=0<CR>
   
   tmap <silent> <c-h> <c-\><c-n><c-w>h
   tmap <silent> <c-l> <c-\><c-n><c-w>l
