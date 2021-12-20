@@ -6,8 +6,9 @@ require("filetype").setup({
         },
         literal = {
             -- Set the filetype of files named "MyBackupFile" to lua
-            bashrc = "sh",
-            zshrc = "sh",
+            ['.bashrc'] = "sh",
+            ['.zshrc'] = "sh",
+            ['.ohmyenv'] = "sh",
         },
         complex = {
             -- Set the filetype of any full filename matching the regex to gitconfig
@@ -39,8 +40,10 @@ require("filetype").setup({
         --     end,
         -- },
         shebang = {
-            -- Set the filetype of files with a dash shebang to sh
-            dash = "sh",
+            -- Set the filetype of files with a bash shebang to sh
+            bash = "sh",
+            zsh = "sh",
+            python3 = "python",
         },
     },
 })
