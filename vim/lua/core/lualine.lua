@@ -50,7 +50,11 @@ local extensions_type_icon = {
 
 local extensions_name = {
   function()
-    return vim.bo.filetype:upper()
+    local res = vim.bo.filetype:upper()
+    if vim.bo.filetype == 'toggleterm' then
+      res = res .. " %{b:toggle_number}"
+    end
+    return res
   end,
   color = { fg = colors.blue, bg = colors.bg, gui = 'bold' }
 }
@@ -64,7 +68,7 @@ local extensions = {
       extensions_type_icon
     }
   },
-  filetypes = {'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap'}
+  filetypes = {'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm'}
 }
 
 -- Config
