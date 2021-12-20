@@ -5,8 +5,10 @@ from threading import Thread
 import time
 import sys
 
+
 def run_on(port):
     os.system("python3 -m http.server " + str(port))
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

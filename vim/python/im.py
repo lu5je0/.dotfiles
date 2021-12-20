@@ -1,9 +1,10 @@
 import Foundation
-from AppKit import NSObject, NSTextInputContext , NSTextView, NSTextInputContextKeyboardSelectionDidChangeNotification, NSBundle
+from AppKit import NSObject, NSTextInputContext, NSTextView, NSTextInputContextKeyboardSelectionDidChangeNotification, NSBundle
 import multiprocessing
 import ctypes
 from PyObjCTools import AppHelper
 import objc
+
 
 class Observer(NSObject):
 
@@ -13,17 +14,20 @@ class Observer(NSObject):
         return self
 
     def bundle_(self, aNotification):
-        self.ime.value = str(self.text_input_context.selectedKeyboardInputSource())
+        self.ime.value = str(
+            self.text_input_context.selectedKeyboardInputSource())
 
     @staticmethod
     def watch(ime):
-        txtObj = NSTextInputContext.alloc().initWithClient_( NSTextView.new() )
+        txtObj = NSTextInputContext.alloc().initWithClient_(NSTextView.new())
 
         obs = Observer.new().initWithValue_(txtObj)
         obs.ime = ime
 
-        Foundation.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(obs, 'bundle:', NSTextInputContextKeyboardSelectionDidChangeNotification, None)
+        Foundation.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+            obs, 'bundle:', NSTextInputContextKeyboardSelectionDidChangeNotification, None)
         AppHelper.runConsoleEventLoop()
+
 
 class ImSwitcher():
     english_ime = 'com.apple.keylayout.ABC'
@@ -34,7 +38,8 @@ class ImSwitcher():
         self.is_save_ime = True
         manager = multiprocessing.Manager()
         self.cur_ime = manager.Value(ctypes.c_wchar_p, ImSwitcher.english_ime)
-        multiprocessing.Process(target=Observer.watch, args=(self.cur_ime,)).start()
+        multiprocessing.Process(target=Observer.watch,
+                                args=(self.cur_ime,)).start()
         try:
             # 隐藏macos dock栏小火箭
             info = NSBundle.mainBundle().infoDictionary()
@@ -51,7 +56,7 @@ class ImSwitcher():
 
     def toggle_save_last_ime(self):
         self.is_save_ime = not self.is_save_ime
-        
+
     def save_last_ime(self):
         self.last_ime = self.get_cur_ime()
 
@@ -63,4 +68,5 @@ class ImSwitcher():
         self.switch_input_source(self.english_ime)
 
     def switch_input_source(self, input_method):
-        self.text_input_context.setValue_forKey_(input_method, 'selectedKeyboardInputSource')
+        self.text_input_context.setValue_forKey_(
+            input_method, 'selectedKeyboardInputSource')

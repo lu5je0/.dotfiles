@@ -2,6 +2,7 @@ import vim
 import time
 import re
 
+
 def jsonFormat():
     import jsbeautifier
     buffer = vim.current.buffer
@@ -25,6 +26,7 @@ def executeTime(func):
         return r
     return wrapper
 
+
 def resetFileTypeTemporary(func):
     def wrapper(*args, **kw):
         ft = vim.eval("&ft")
@@ -35,6 +37,8 @@ def resetFileTypeTemporary(func):
     return wrapper
 
 # @executeTime
+
+
 @resetFileTypeTemporary
 def keepLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
@@ -50,6 +54,7 @@ def keepLines(str_patterns):
             rm_line_cnt += 1
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
+
 
 # @executeTime
 @resetFileTypeTemporary
@@ -69,6 +74,7 @@ def keepMatchs(pattern):
     print('del {} lines'.format(rm_line_cnt))
     vim.command("set ft=" + ft)
 
+
 # @executeTime
 @resetFileTypeTemporary
 def delLines(str_patterns):
@@ -86,11 +92,14 @@ def delLines(str_patterns):
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
 
+
 def getBufType(number):
     return vim.eval("getbufvar({}, \"&buftype\")".format(number))
 
+
 def getBufListed(number):
     return int(vim.eval("getbufvar({}, \"&buflisted\")".format(number)))
+
 
 def closeBuffer():
     try:
@@ -118,7 +127,8 @@ def closeBuffer():
             has_mac = int(vim.eval("has('mac')")) == 1
             if has_mac:
                 vim.command("set guioptions+=c")
-            confirm = int(vim.eval('''confirm("Close without saving?", "&No\n&Yes")'''))
+            confirm = int(
+                vim.eval('''confirm("Close without saving?", "&No\n&Yes")'''))
             if has_mac:
                 vim.command("set guioptions-=c")
             if confirm != 2:
