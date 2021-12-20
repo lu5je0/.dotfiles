@@ -181,7 +181,7 @@ ins_left {
 
 ins_left {
   function()
-    return [[ %l:%2c %2p%%]];
+    return [[ %2p%% %l:%c ]];
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
@@ -196,6 +196,7 @@ ins_right {
     color_warn = { fg = colors.yellow },
     color_info = { fg = colors.cyan },
   },
+  padding = { left = 0, right = 1 },
 }
 
 
@@ -221,7 +222,8 @@ ins_right {
     return ' LSP:' .. msg
   end,
   color = { fg = colors.cyan, gui = 'bold' },
-  cond = conditions.lsp_cond
+  cond = conditions.lsp_cond,
+  padding = { left = 0, right = 1 },
 }
 
 -- Add components to right sections

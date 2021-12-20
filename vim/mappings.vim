@@ -126,4 +126,4 @@ xnoremap * m`:keepjumps <C-u>call VisualStarSearchSet('/')<CR>/<C-R>=@/<CR><CR>`
 nnoremap o o<space><BS>
 nnoremap O O<space><BS>
 
-nmap <silent> <expr> p v:lua.require('util.utils').is_register_contains_newline('"') ? 'p`[V`]=' : 'p'
+" nmap <silent> <expr> p v:lua.require('util.utils').is_register_contains_newline('"') ? 'p`[V`]=' : 'p'
