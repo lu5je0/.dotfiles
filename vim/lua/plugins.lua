@@ -39,7 +39,10 @@ return packer.startup(function()
 
   vim.g.did_load_filetypes = 1
   use {
-    "nathom/filetype.nvim"
+    "nathom/filetype.nvim",
+    config = function()
+      require("core.filetype")
+    end
   }
 
   use {

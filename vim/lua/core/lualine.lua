@@ -181,13 +181,13 @@ ins_left {
 
 ins_left {
   function()
-    return [[ %l:%c %2p%%]];
+    return [[ %l:%2c %2p%%]];
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
 }
 
-ins_left {
+ins_right {
   'diagnostics',
   sources = { 'nvim_diagnostic' },
   symbols = { error = ' ', warn = ' ', info = ' ' },
@@ -197,6 +197,7 @@ ins_left {
     color_info = { fg = colors.cyan },
   },
 }
+
 
 ins_right {
   -- Lsp server name .
