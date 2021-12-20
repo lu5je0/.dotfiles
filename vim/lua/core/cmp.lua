@@ -20,6 +20,12 @@ local comfirm = function(fallback)
         function! CmpLineFormat(timer) abort
           let c = getpos(".")
           let indent_num = indent('.')
+          
+          " todo
+          if nvim_get_mode()['mode'] == 's'
+            return
+          endif
+          
           norm ==
           if indent('.') != indent_num
             call cursor(c[1], c[2] - 2)

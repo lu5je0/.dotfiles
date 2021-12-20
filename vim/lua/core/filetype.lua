@@ -8,6 +8,8 @@ require("filetype").setup({
             -- Set the filetype of files named "MyBackupFile" to lua
             ['.bashrc'] = "sh",
             ['.zshrc'] = "sh",
+            ['zshrc'] = "sh",
+            ['bashrc'] = "sh",
             ['.ohmyenv'] = "sh",
         },
         complex = {
