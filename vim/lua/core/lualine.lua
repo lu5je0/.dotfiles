@@ -203,7 +203,7 @@ ins_right {
 ins_right {
   -- Lsp server name .
   function()
-    local msg = 'No Active Lsp'
+    local msg = nil
     local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
     local clients = vim.lsp.get_active_clients()
     if next(clients) == nil then
@@ -219,7 +219,11 @@ ins_right {
       end
       ::continue::
     end
-    return ' LSP:' .. msg
+    if msg == nil then
+      return ""
+    else
+      return ' LSP:' .. msg
+    end
   end,
   color = { fg = colors.cyan, gui = 'bold' },
   cond = conditions.lsp_cond,
