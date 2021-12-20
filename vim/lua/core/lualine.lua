@@ -247,12 +247,6 @@ ins_right {
   },
 }
 
--- ins_right {
---   'progress',
---   color = { fg = colors.fg, gui = 'bold' },
---   padding = { left = 0, right = 0 },
--- }
-
 ins_right {
   'b:gitsigns_head',
   icon = '',
