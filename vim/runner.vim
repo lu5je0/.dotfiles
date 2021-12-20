@@ -2,25 +2,8 @@ command! -nargs=0 RunFile call RunFile()
 command! -nargs=0 LuaDevOn let g:lua_dev=1
 command! -nargs=0 LuaDevOff let g:lua_dev=0
 
-function! s:run_tmux(opts)
-    " asyncrun has temporarily changed dir for you
-    " getcwd() in the runner function is the target directory defined in `-cwd=xxx`
-    let cwd = getcwd()
-    call VimuxRunCommand('cd ' . shellescape(cwd) . '; ' . a:opts.cmd)
-endfunction
-
-let g:asyncrun_runner = get(g:, 'asyncrun_runner', {})
-let g:asyncrun_runner.tmux = function('s:run_tmux')
-
 function! RunFileInner(cmd, append)
-    let pos = ''
-    if exists('$TMUX')
-        let pos = 'tmux'
-    else
-        let pos = 'termhelp'
-    endif
-    let l:cmd_str = 'AsyncRun -mode=term -pos=' . pos . ' -rows=10 -focus=0 ' . a:cmd . ' "$(VIM_FILEPATH)"'
-    exe l:cmd_str . a:append
+    call v:lua.require("core.terminal").sendToTerminal(a:cmd .. ' ' .. expand('%:p') .. a:append)
 endfunction
 
 function! RunFile()

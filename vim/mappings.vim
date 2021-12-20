@@ -114,7 +114,7 @@ endif
 "----------------------------------------------------------------------
 " visual mode
 "----------------------------------------------------------------------
-vmap <silent> # :call visual#runSelectInTerminal()<cr>
+vmap <silent> # :lua require("core.terminal").runSelectInTerminal()<cr>
 
 "----------------------------------------------------------------------
 " other

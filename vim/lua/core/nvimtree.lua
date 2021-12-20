@@ -70,7 +70,7 @@ function M.setup()
   local list = {
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
     { key = {"cd", "C"}, cb = ":lua require('core/nvimtree').cd()<cr>"},
-    { key = {"t"}, cb = ":lua require('core/nvimtree').terminal_cd()<cr><C-w>ji"},
+    { key = {"t"}, cb = ":lua require('core/nvimtree').terminal_cd()<cr>"},
     { key = "=", cb = ":lua require('core/nvimtree').increase_width()<cr>"},
     { key = "-", cb = ":lua require('core/nvimtree').reduce_width()<cr>"},
     { key = "f", cb = ":lua require('core/nvimtree').file_info()<cr>"},
@@ -169,12 +169,8 @@ end
 
 function M.terminal_cd()
   local lib = require('nvim-tree.lib')
-  local cmd = [[
-    call TerminalSend('cd ' . fnamemodify('%s', ':p:h'))
-  ]]
-  cmd = cmd:format(lib.get_node_at_cursor().absolute_path)
-  vim.cmd(cmd)
-  vim.fn.TerminalSend('\r')
+  local cmd = 'cd ' .. vim.fn.fnamemodify(lib.get_node_at_cursor().absolute_path, ':p:h')
+  require('core.terminal').sendToTerminal(cmd)
 end
 
 function M.locate_file()

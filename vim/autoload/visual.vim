@@ -1,8 +1,3 @@
-function! visual#runSelectInTerminal()
-    call TerminalSend(visual#visual_selection())
-    call TerminalSend("\r")
-endfunction
-
 function! visual#visual_selection()
     if mode()=="v"
         let [line_start, column_start] = getpos("v")[1:2]

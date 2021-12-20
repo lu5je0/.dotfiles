@@ -1,7 +1,7 @@
 " let g:terminal_pos='vertical'
 " let g:terminal_fixheight=1
 let g:terminal_height=18
-" let g:terminal_pos='rightbelow'
+let g:terminal_pos='vert'
 
 tmap <S-Insert> <C-W>"+
 
