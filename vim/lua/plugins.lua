@@ -454,6 +454,10 @@ return packer.startup(function()
     end
   }
 
+  -- use {
+  --   'ThePrimeagen/refactoring.nvim'
+  -- }
+
   use {
     'neovim/nvim-lspconfig',
     config = function()
