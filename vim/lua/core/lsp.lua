@@ -193,7 +193,8 @@ local function lsp_diagnostic()
     float = {
       source = "always",
     },
-    severity_sort = true
+    severity_sort = true,
+    update_in_insert = true,
   })
   local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
   for type, icon in pairs(signs) do
