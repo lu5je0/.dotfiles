@@ -3,7 +3,7 @@ command! -nargs=0 LuaDevOn let g:lua_dev=1
 command! -nargs=0 LuaDevOff let g:lua_dev=0
 
 function! RunFileInner(cmd, append)
-    call v:lua.require("core.terminal").sendToTerminal(a:cmd .. ' ' .. expand('%:p') .. a:append, {"go_back": 1})
+    call v:lua.require("core.terminal").send_to_terminal(a:cmd .. ' ' .. expand('%:p') .. a:append, {"go_back": 1})
 endfunction
 
 function! RunFile()

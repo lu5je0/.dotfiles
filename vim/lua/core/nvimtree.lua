@@ -170,7 +170,7 @@ end
 function M.terminal_cd()
   local lib = require('nvim-tree.lib')
   local cmd = 'cd ' .. vim.fn.fnamemodify(lib.get_node_at_cursor().absolute_path, ':p:h')
-  require('core.terminal').sendToTerminal(cmd)
+  require('core.terminal').send_to_terminal(cmd)
 end
 
 function M.locate_file()

@@ -1,6 +1,6 @@
 local M = {}
 
-M.sendToTerminal = function(cmd, opts)
+M.send_to_terminal = function(cmd, opts)
   if opts == nil then
     opts = {}
     opts.go_back = 0
@@ -22,8 +22,8 @@ M.change_terminal_direction = function(direction)
   M.toggle()
 end
 
-M.runSelectInTerminal = function()
-  M.sendToTerminal(vim.fn['visual#visual_selection']())
+M.run_select_in_terminal = function()
+  M.send_to_terminal(vim.fn['visual#visual_selection']())
 end
 
 M.setup = function()
