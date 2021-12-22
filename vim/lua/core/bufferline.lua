@@ -25,12 +25,6 @@ bl.setup {
                 text_align = "center"
             },
             {
-                filetype = "undotree",
-                text = "undotree",
-                highlight = "Directory",
-                text_align = "center"
-            },
-            {
                 filetype = "vista",
                 text = "vista",
                 highlight = "Directory",
