@@ -1,8 +1,9 @@
-lua require('impatient')
-lua require('enhance')
-lua require('plugins')
-lua require('commands')
+require('impatient')
+require('enhance')
+require('plugins')
+require('commands')
 
+vim.cmd[[
 runtime settings.vim
 
 if has("gui")
@@ -10,7 +11,6 @@ if has("gui")
 endif
 
 runtime functions.vim
-
 runtime mappings.vim
 runtime misc.vim
 runtime runner.vim
@@ -37,3 +37,4 @@ function! LoadPlug(timer) abort
     endif
     set clipboard=unnamed
 endfunction
+]]
