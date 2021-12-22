@@ -173,7 +173,20 @@ return packer.startup(function()
   use {
     'numToStr/Comment.nvim',
     config = function()
-      require('Comment').setup()
+      require('Comment').setup {
+        opleader = {
+          -- Line-comment keymap
+          line = 'gc',
+          -- Block-comment keymap
+          block = nil,
+        },
+        toggler = {
+          -- Line-comment toggle keymap
+          line = 'gcc',
+          -- Block-comment toggle keymap
+          block = 'gcgc',
+        },
+      }
     end
   }
 
