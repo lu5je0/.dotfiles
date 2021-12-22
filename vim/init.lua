@@ -18,23 +18,24 @@ runtime autocmd.vim
 if has("mac")
     runtime im.vim
 endif
-
-call timer_start(0, 'LoadPlug')
-function! LoadPlug(timer) abort
-    if has("mac")
-        let g:python3_host_prog = '/usr/local/bin/python3'
-    endif
-    " silent! PackerLoad coc.nvim
-    silent! PackerLoad vim-textobj-parameter
-    silent! PackerLoad indent-blankline.nvim
-    silent! PackerLoad nvim-lspconfig
-    silent! PackerLoad nvim-cmp
-    silent! PackerLoad nvim-autopairs
-    silent! PackerLoad null-ls.nvim
-
-    if has("wsl")
-        silent! PackerLoad im-switcher.nvim
-    endif
-    set clipboard=unnamed
-endfunction
 ]]
+
+local function load_plug()
+  if vim.fn.has("mac") then
+    vim.g.python3_host_prog = '/usr/local/bin/python3'
+  end
+  if vim.fn.has("wsl") then
+    vim.cmd("silent! PackerLoad im-switcher.nvim")
+  end
+  vim.cmd[[
+  silent! PackerLoad vim-textobj-parameter
+  silent! PackerLoad indent-blankline.nvim
+  silent! PackerLoad nvim-lspconfig
+  silent! PackerLoad nvim-cmp
+  silent! PackerLoad nvim-autopairs
+  silent! PackerLoad null-ls.nvim
+  ]]
+  vim.o.clipboard='unnamed'
+end
+
+vim.defer_fn(load_plug, 0)

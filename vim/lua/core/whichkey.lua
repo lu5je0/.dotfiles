@@ -163,7 +163,7 @@ M.setup = function ()
     },
     v = {
         name = '+vim',
-        v = { ':edit ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim/init.vim | :cd ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim <cr>', 'open init.vim' },
+        v = { ':edit ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim/init.lua | :cd ' .. vim.api.nvim_eval("$HOME") .. '/.dotfiles/vim <cr>', 'edit init.lua' },
         s = { ':call ToggleSignColumn()<cr>', 'toggle signcolumn'},
         S = { ':set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes'},
         j = { ':call ToggleGj()<cr>', 'toggle gj' },
