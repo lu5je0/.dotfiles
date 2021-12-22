@@ -5,11 +5,6 @@ require('commands')
 
 vim.cmd[[
 runtime settings.vim
-
-if has("gui")
-    runtime gvim.vim
-endif
-
 runtime functions.vim
 runtime mappings.vim
 runtime misc.vim
