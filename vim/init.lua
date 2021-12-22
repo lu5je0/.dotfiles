@@ -16,20 +16,24 @@ endif
 ]]
 
 local function load_plug()
-  if vim.fn.has("mac") then
+  if vim.fn.has("mac") == 1 then
     vim.g.python3_host_prog = '/usr/local/bin/python3'
   end
-  if vim.fn.has("wsl") then
-    vim.cmd("silent! PackerLoad im-switcher.nvim")
+
+  local plugins = {
+    'indent-blankline.nvim',
+    'vim-textobj-parameter',
+    'nvim-lspconfig',
+    'nvim-cmp',
+    'nvim-autopairs',
+    'null-ls.nvim',
+  }
+
+  if vim.fn.has('wsl') == 1 then
+    table.insert(plugins, 'im-switcher.nvim')
   end
-  vim.cmd[[
-  silent! PackerLoad vim-textobj-parameter
-  silent! PackerLoad indent-blankline.nvim
-  silent! PackerLoad nvim-lspconfig
-  silent! PackerLoad nvim-cmp
-  silent! PackerLoad nvim-autopairs
-  silent! PackerLoad null-ls.nvim
-  ]]
+
+  require("packer").loader(unpack(plugins))
   vim.o.clipboard='unnamed'
 end
 
