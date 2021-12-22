@@ -171,7 +171,10 @@ return packer.startup(function()
   }
 
   use {
-    'tpope/vim-commentary'
+    'numToStr/Comment.nvim',
+    config = function()
+      require('Comment').setup()
+    end
   }
 
   use 'kana/vim-textobj-user'
