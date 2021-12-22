@@ -2,7 +2,7 @@ if !has("mac")
     finish
 endif
 
-let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+let s:std_config_path = stdpath("config")
 let g:save_last_ime = 0
 
 function! ImFuncInit()
@@ -16,7 +16,7 @@ import sys
 import time
 from os.path import normpath, join
 import vim
-python_root_dir = vim.eval('s:plugin_root_dir') + "/python"
+python_root_dir = vim.eval('s:std_config_path') + "/python"
 sys.path.insert(0, python_root_dir)
 switcher = None
 
@@ -33,9 +33,9 @@ endfunction
 function! SwitchInsertMode()
     call ImFuncInit()
     if g:save_last_ime == 1
-        call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
+        call libcall(s:std_config_path . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
     else
-        call libcall(s:plugin_root_dir . "/lib/libinput-source-switcher.dylib", "switchInputSource", "com.apple.keylayout.ABC")
+        call libcall(s:std_config_path . "/lib/libinput-source-switcher.dylib", "switchInputSource", "com.apple.keylayout.ABC")
     endif
 endfunction
 
