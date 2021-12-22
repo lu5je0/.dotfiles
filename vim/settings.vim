@@ -74,6 +74,8 @@ set foldtext=misc#fold_text()
 
 " 主题配置 {{{
 set bg=dark
+let g:edge_enable_italic = 0
+let g:edge_disable_italic_comment = 1
 colorscheme edge
 
 " edge
@@ -82,8 +84,6 @@ hi Folded guifg=#282c34 guibg=#5c6370
 " StatusLine 左边
 hi StatusLine guibg=#5C6370
 hi StatusLineNC guibg=#5C6370
-
-" hi CocHighlightText guibg=#344134
 
 " leaderf
 hi FoldColumn guibg=none

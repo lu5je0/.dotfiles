@@ -193,13 +193,23 @@ ins_left {
 
 ins_right {
   'diagnostics',
-  sources = { 'nvim_diagnostic' },
+  -- table of diagnostic sources, available sources:
+  -- 'nvim_lsp', 'nvim_diagnostic', 'coc', 'ale', 'vim_lsp'
+  -- Or a function that returns a table like
+  --   {error=error_cnt, warn=warn_cnt, info=info_cnt, hint=hint_cnt}
+  sources = {'nvim_diagnostic'},
+  -- displays diagnostics from defined severity
+  sections = {'error', 'warn', 'info', 'hint'},
   symbols = { error = ' ', warn = ' ', info = ' ' },
   diagnostics_color = {
-    color_error = { fg = colors.red },
-    color_warn = { fg = colors.yellow },
-    color_info = { fg = colors.cyan },
+    -- Same values like general color option can be used here.
+    error = { fg = colors.red },
+    warn  = { fg = colors.yellow },
+    info  = { fg = colors.fg },
+    hint  = { fg = colors.grey }
   },
+  colored = true, -- displays diagnostics status in color if set to true
+  update_in_insert = false, -- Update diagnostics in insert mode
   padding = { left = 0, right = 1 },
 }
 
