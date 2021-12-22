@@ -1,1 +1,7 @@
 mvn install -Dmaven.test.skip=true
+
+# 强制更新snapshot依赖
+mvn dependency:resolve -U
+
+# 依赖树
+mvn dependency:tree
