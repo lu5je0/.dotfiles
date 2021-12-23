@@ -73,10 +73,18 @@ set shortmess=atI
 set foldtext=misc#fold_text()
 
 " 主题配置 {{{
-colorscheme edge
 set bg=dark
-hi FoldColumn guibg=none
-" hi StatusLine guibg=#5C6370
+colorscheme edge
+
+" edge
+hi Folded guifg=#282c34 guibg=#5c6370
+
+" StatusLine 左边
+hi StatusLine guibg=#5C6370
 hi StatusLineNC guibg=#5C6370
+
 " hi CocHighlightText guibg=#344134
+
+" leaderf
+hi FoldColumn guibg=none
 " }}}

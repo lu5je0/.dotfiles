@@ -16,16 +16,7 @@ set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
 hi TSPunctBracket guifg=#ABB2BF
 
-hi! TSTitle ctermfg=168 guifg=#e06c75
-hi! link TSURI markdownUrl
-hi! link TSStrong markdownBold
+" hi! TSTitle ctermfg=168 guifg=#e06c75
+" hi! link TSURI markdownUrl
+" hi! link TSStrong markdownBold
 ]])
-
--- local parser_configs = require("nvim-treesitter.parsers").get_parser_configs()
--- parser_configs.markdown = {
---   install_info = {
---     url = "https://github.com/ikatyang/tree-sitter-markdown",
---     files = { "src/parser.c", "src/scanner.cc" },
---   },
---   filetype = "markdown",
--- }
