@@ -35,8 +35,8 @@ M.preview = function(file_path)
 
   popup:mount()
 
-  vim.fn.win_execute(popup.winid, 'set number')
-  vim.fn.win_execute(popup.winid, 'set signcolumn=no')
+  vim.fn.win_execute(popup.winid, 'setlocal signcolumn=no')
+  vim.fn.win_execute(popup.winid, 'setlocal number')
   vim.fn.win_execute(popup.winid, 'e ' .. file_path)
   vim.api.nvim_buf_set_option(vim.fn.winbufnr(popup.winid), 'buflisted', false)
 
