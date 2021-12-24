@@ -26,7 +26,7 @@ function M.setup()
   tmap <silent> <C-H> <C-\><C-N><C-w>h
   tmap <silent> <C-L> <C-\><C-N><C-w>l
   ]])
-  vim.g.vimspector_install_gadgets = {'debugpy'}
+  vim.g.vimspector_install_gadgets = { 'debugpy' }
 end
 
 return M

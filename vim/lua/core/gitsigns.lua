@@ -1,13 +1,13 @@
 local M = {}
 
 function M.setup()
-  require('gitsigns').setup {
+  require('gitsigns').setup({
     keymaps = {
       -- Default keymap options
       noremap = true,
 
-      ['n ]g'] = { expr = true, "&diff ? ']c' : '<cmd>lua require\"gitsigns.actions\".next_hunk()<CR>'"},
-      ['n [g'] = { expr = true, "&diff ? '[c' : '<cmd>lua require\"gitsigns.actions\".prev_hunk()<CR>'"},
+      ['n ]g'] = { expr = true, "&diff ? ']c' : '<cmd>lua require\"gitsigns.actions\".next_hunk()<CR>'" },
+      ['n [g'] = { expr = true, "&diff ? '[c' : '<cmd>lua require\"gitsigns.actions\".prev_hunk()<CR>'" },
       ['n <leader>ga'] = '<cmd>lua require"gitsigns".stage_buffer()<CR>',
       ['n <leader>gh'] = '<cmd>lua require"gitsigns".stage_hunk()<CR>',
       ['v <leader>gh'] = '<cmd>lua require"gitsigns".stage_hunk({vim.fn.line("."), vim.fn.line("v")})<CR>',
@@ -23,10 +23,10 @@ function M.setup()
 
       -- Text objects
       ['o ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
-      ['x ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>'
+      ['x ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
     },
     sign_priority = 999,
-  }
+  })
 end
 
 return M

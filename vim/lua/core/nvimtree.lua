@@ -3,41 +3,40 @@ local M = {}
 M.loaded = false
 
 function M.setup()
-
   vim.g.nvim_tree_icons = {
-    default= '',
-    symlink= '',
-    git= {
-      unstaged= "✗",
-      staged= "✓",
-      unmerged= "",
-      renamed= "➜",
-      untracked= "★",
-      deleted= "",
-      ignored= "◌"
+    default = '',
+    symlink = '',
+    git = {
+      unstaged = '✗',
+      staged = '✓',
+      unmerged = '',
+      renamed = '➜',
+      untracked = '★',
+      deleted = '',
+      ignored = '◌',
     },
-    folder= {
-      arrow_open= " ",
-      arrow_closed= " ",
-      default= "",
-      open= "",
-      empty= "",
-      empty_open= "",
-      symlink= "",
-      symlink_open= "",
-    }
+    folder = {
+      arrow_open = ' ',
+      arrow_closed = ' ',
+      default = '',
+      open = '',
+      empty = '',
+      empty_open = '',
+      symlink = '',
+      symlink_open = '',
+    },
   }
   vim.g.nvim_tree_show_icons = {
-    git= 1,
-    folders= 1,
-    files= 1,
-    folder_arrows= 1,
+    git = 1,
+    folders = 1,
+    files = 1,
+    folder_arrows = 1,
   }
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
   vim.g.nvim_tree_indent_markers = 1
 
-  vim.cmd[[
+  vim.cmd([[
     " highlight NvimTreeFolderName guifg=#e5c07b
     " highlight NvimTreeOpenedFolderName guifg=#e5c07b
     " highlight default link NvimTreeFolderIcon Directory
@@ -54,7 +53,7 @@ function M.setup()
     endfunction
 
     lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
-  ]]
+  ]])
 
   vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core/nvimtree").locate_file()<cr>', { noremap = true, silent = true })
@@ -65,79 +64,79 @@ function M.setup()
   view.View.winopts.signcolumn = 'no'
   view.View.winopts.foldcolumn = 1
 
-  local tree_cb = require'nvim-tree.config'.nvim_tree_callback
+  local tree_cb = require('nvim-tree.config').nvim_tree_callback
   -- default mappings
   local list = {
-    { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
-    { key = {"cd", "C"}, cb = ":lua require('core/nvimtree').cd()<cr>"},
-    { key = {"t"}, cb = ":lua require('core/nvimtree').terminal_cd()<cr>"},
-    { key = "=", cb = ":lua require('core/nvimtree').increase_width(2)<cr>"},
-    { key = "-", cb = ":lua require('core/nvimtree').reduce_width(2)<cr>"},
-    { key = "+", cb = ":lua require('core/nvimtree').increase_width(1)<cr>"},
-    { key = "_", cb = ":lua require('core/nvimtree').reduce_width(1)<cr>"},
-    { key = "f", cb = ":lua require('core/nvimtree').file_info()<cr>"},
-    { key = "x", cb = ":lua require('core/nvimtree').toggle_width()<cr>"},
-    { key = "H", cb = ":cd ~<cr>"},
-    { key = "d", cb = "<nop>"},
-    { key = "S", cb = tree_cb("vsplit") },
-    { key = "s", cb = tree_cb("split") },
-    { key = "<Tab>", cb = tree_cb("preview")},
+    { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = tree_cb('edit') },
+    { key = { 'cd', 'C' }, cb = ":lua require('core/nvimtree').cd()<cr>" },
+    { key = { 't' }, cb = ":lua require('core/nvimtree').terminal_cd()<cr>" },
+    { key = '=', cb = ":lua require('core/nvimtree').increase_width(2)<cr>" },
+    { key = '-', cb = ":lua require('core/nvimtree').reduce_width(2)<cr>" },
+    { key = '+', cb = ":lua require('core/nvimtree').increase_width(1)<cr>" },
+    { key = '_', cb = ":lua require('core/nvimtree').reduce_width(1)<cr>" },
+    { key = 'f', cb = ":lua require('core/nvimtree').file_info()<cr>" },
+    { key = 'x', cb = ":lua require('core/nvimtree').toggle_width()<cr>" },
+    { key = 'H', cb = ':cd ~<cr>' },
+    { key = 'd', cb = '<nop>' },
+    { key = 'S', cb = tree_cb('vsplit') },
+    { key = 's', cb = tree_cb('split') },
+    { key = '<Tab>', cb = tree_cb('preview') },
     -- { key = "<C-t>", cb = tree_cb("tabnew") },
-    { key = "<", cb = tree_cb("prev_sibling") },
-    { key = ">", cb = tree_cb("next_sibling") },
-    { key = "P", cb = tree_cb("parent_node") },
-    { key = {"<BS>", 'h'}, cb = tree_cb("close_node") },
-    { key = "p", cb = tree_cb("preview") },
-    { key = "K", cb = tree_cb("first_sibling") },
-    { key = "J", cb = tree_cb("last_sibling") },
+    { key = '<', cb = tree_cb('prev_sibling') },
+    { key = '>', cb = tree_cb('next_sibling') },
+    { key = 'P', cb = tree_cb('parent_node') },
+    { key = { '<BS>', 'h' }, cb = tree_cb('close_node') },
+    { key = 'p', cb = tree_cb('preview') },
+    { key = 'K', cb = tree_cb('first_sibling') },
+    { key = 'J', cb = tree_cb('last_sibling') },
     -- { key = "I", cb = tree_cb("toggle_ignored") },
-    { key = "I", cb = tree_cb("toggle_dotfiles") },
-    { key = "r", cb = tree_cb("refresh") },
-    { key = "ma", cb = tree_cb("create") },
-    { key = "D", cb = tree_cb("remove") },
-    { key = "mv", cb = tree_cb("rename") },
+    { key = 'I', cb = tree_cb('toggle_dotfiles') },
+    { key = 'r', cb = tree_cb('refresh') },
+    { key = 'ma', cb = tree_cb('create') },
+    { key = 'D', cb = tree_cb('remove') },
+    { key = 'mv', cb = tree_cb('rename') },
     -- { key = "mv", cb = tree_cb("cut") },
-    { key = "yy", cb = tree_cb("copy") },
-    { key = "p", cb = tree_cb("paste") },
-    { key = "yn", cb = tree_cb("copy_name") },
-    { key = "yP", cb = tree_cb("copy_path") },
-    { key = "yp", cb = tree_cb("copy_absolute_path") },
-    { key = "[g", cb = tree_cb("prev_git_item") },
-    { key = "]g", cb = tree_cb("next_git_item") },
-    { key = "u", cb = tree_cb("dir_up") },
-    { key = "s", cb = tree_cb("system_open") },
-    { key = "q", cb = tree_cb("close") },
-    { key = "g?", cb = tree_cb("toggle_help") },
-    { key = "<c-o>", cb = ":lua require('core/nvimtree').back()<cr>"},
-    { key = "<c-i>", cb = ":lua require('core/nvimtree').forward()<cr>"},
+    { key = 'yy', cb = tree_cb('copy') },
+    { key = 'p', cb = tree_cb('paste') },
+    { key = 'yn', cb = tree_cb('copy_name') },
+    { key = 'yP', cb = tree_cb('copy_path') },
+    { key = 'yp', cb = tree_cb('copy_absolute_path') },
+    { key = '[g', cb = tree_cb('prev_git_item') },
+    { key = ']g', cb = tree_cb('next_git_item') },
+    { key = 'u', cb = tree_cb('dir_up') },
+    { key = 's', cb = tree_cb('system_open') },
+    { key = 'q', cb = tree_cb('close') },
+    { key = 'g?', cb = tree_cb('toggle_help') },
+    { key = '<c-o>', cb = ":lua require('core/nvimtree').back()<cr>" },
+    { key = '<c-i>', cb = ":lua require('core/nvimtree').forward()<cr>" },
   }
 
-  require('nvim-tree').setup {
-    disable_netrw       = true,
-    hijack_netrw        = true,
-    open_on_setup       = false,
-    ignore_ft_on_setup  = {},
-    auto_close          = false,
-    open_on_tab         = false,
-    hijack_cursor       = false,
-    update_cwd          = true,
-    update_to_buf_dir   = {
+  require('nvim-tree').setup({
+    disable_netrw = true,
+    hijack_netrw = true,
+    open_on_setup = false,
+    ignore_ft_on_setup = {},
+    auto_close = false,
+    open_on_tab = false,
+    hijack_cursor = false,
+    update_cwd = true,
+    update_to_buf_dir = {
       enable = false,
       auto_open = true,
     },
     diagnostics = {
       enable = false,
       icons = {
-        hint = "",
-        info = "",
-        warning = "",
-        error = "",
-      }
+        hint = '',
+        info = '',
+        warning = '',
+        error = '',
+      },
     },
     update_focused_file = {
-      enable      = false,
-      update_cwd  = false,
-      ignore_list = {}
+      enable = false,
+      update_cwd = false,
+      ignore_list = {},
     },
     git = {
       enable = true,
@@ -145,12 +144,12 @@ function M.setup()
       timeout = 500,
     },
     system_open = {
-      cmd  = nil,
-      args = {}
+      cmd = nil,
+      args = {},
     },
     filters = {
       dotfiles = true,
-      custom = {'.git'}
+      custom = { '.git' },
     },
     view = {
       width = 25,
@@ -160,11 +159,11 @@ function M.setup()
       auto_resize = false,
       mappings = {
         custom_only = true,
-        list = list
+        list = list,
       },
-      signcolumn = "auto"
-    }
-  }
+      signcolumn = 'auto',
+    },
+  })
 
   M.pwd_stack:push(vim.fn.getcwd())
 end
@@ -184,10 +183,10 @@ function M.locate_file()
   local pwd = vim.fn.getcwd()
 
   -- current file path
-  local cur_file_path = vim.fn.expand("%:p")
+  local cur_file_path = vim.fn.expand('%:p')
 
-  if cur_file_path == nil or cur_file_path == "" then
-     return
+  if cur_file_path == nil or cur_file_path == '' then
+    return
   end
 
   -- what if pwd has .
@@ -199,9 +198,9 @@ function M.locate_file()
   end
 
   if not string.startswith(cur_file_path, pwd) then
-    vim.cmd(":cd " .. cur_file_path)
+    vim.cmd(':cd ' .. cur_file_path)
   end
-  vim.cmd("NvimTreeFindFile")
+  vim.cmd('NvimTreeFindFile')
 end
 
 M.pwd_stack = require('stack/stack'):create()
@@ -216,54 +215,54 @@ function M.back()
   if M.pwd_stack:count() >= 2 then
     M.pwd_back_state = 1
     M.pwd_forward_stack:push(M.pwd_stack:pop())
-    vim.cmd(":cd " .. M.pwd_stack:pop())
+    vim.cmd(':cd ' .. M.pwd_stack:pop())
     M.pwd_back_state = 0
   end
 end
 
 function M.forward()
   if M.pwd_forward_stack:count() >= 1 then
-    vim.cmd(":cd " .. M.pwd_forward_stack:pop())
+    vim.cmd(':cd ' .. M.pwd_forward_stack:pop())
   end
 end
 
 function M.cd()
   require('nvim-tree').on_keypress('cd')
-  vim.cmd("norm gg")
+  vim.cmd('norm gg')
 end
 
 function M.file_info()
   local lib = require('nvim-tree.lib')
-  local info = vim.fn.system("ls -alhd \"" .. lib.get_node_at_cursor().absolute_path .. "\" -l --time-style=\"+%Y-%m-%d %H:%M:%S\"")
+  local info = vim.fn.system('ls -alhd "' .. lib.get_node_at_cursor().absolute_path .. '" -l --time-style="+%Y-%m-%d %H:%M:%S"')
   print(info:sub(1, -2))
 end
 
 function M.toggle_width()
   local cur_width = vim.api.nvim_win_get_width(0)
-  local after_width = math.floor(vim.api.nvim_eval("&co") * 2 / 5)
+  local after_width = math.floor(vim.api.nvim_eval('&co') * 2 / 5)
 
   if M.last_width == nil or cur_width ~= after_width then
-    vim.cmd("NvimTreeResize " .. after_width)
+    vim.cmd('NvimTreeResize ' .. after_width)
     M.last_width = cur_width
-    vim.cmd("vertical resize " .. after_width)
+    vim.cmd('vertical resize ' .. after_width)
   else
-    vim.cmd("NvimTreeResize " .. M.last_width)
-    vim.cmd("vertical resize " .. M.last_width)
+    vim.cmd('NvimTreeResize ' .. M.last_width)
+    vim.cmd('vertical resize ' .. M.last_width)
   end
 end
 
 function M.increase_width(w)
-  vim.cmd("vertical resize +" .. w)
+  vim.cmd('vertical resize +' .. w)
 
   local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
-  vim.cmd("NvimTreeResize " .. (width + w))
+  vim.cmd('NvimTreeResize ' .. (width + w))
 end
 
 function M.reduce_width(w)
-  vim.cmd("vertical resize -" .. w)
+  vim.cmd('vertical resize -' .. w)
 
   local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
-  vim.cmd("NvimTreeResize " .. (width - w))
+  vim.cmd('NvimTreeResize ' .. (width - w))
 end
 
 return M
