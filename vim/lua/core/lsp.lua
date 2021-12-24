@@ -98,7 +98,7 @@ local function on_attach(client, bufnr)
   buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
   buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
   buf_set_keymap('n', 'gn', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-  buf_set_keymap('i', '<c-p>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+  -- buf_set_keymap('i', '<c-p>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
   buf_set_keymap('n', '<leader>Wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
   buf_set_keymap('n', '<leader>Wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
   buf_set_keymap('n', '<leader>Wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
@@ -120,6 +120,9 @@ local function on_attach(client, bufnr)
   highlight LspReferenceText guibg=none gui=none
   highlight LspReferenceWrite guibg=#344134 gui=none
   highlight LspReferenceRead guibg=#344134 gui=none
+  
+  autocmd! Signature InsertEnter
+  imap <c-p> <cmd>lua require'lsp_signature'.on_InsertEnter()<cr>
   ]])
 end
 
@@ -138,21 +141,13 @@ local function lsp_signature_config()
     -- will set to true when fully tested, set to false will use whichever side has more space
     -- this setting will be helpful if you do not want the PUM and floating win overlap
     hint_enable = false, -- virtual hint enable
-    timer_interval = 100000,
+    timer_interval = 200,
     handler_opts = {
       border = 'single', -- double, rounded, single, shadow, none
     },
-    always_trigger = false,
-    toggle_key = '<c-p>', -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
+    always_trigger = true,
+    toggle_key = nil, -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
   })
-
-  vim.cmd([[
-  imap <m-p> <c-p>
-  augroup clean_signature
-  autocmd!
-  autocmd BufEnter * silent! autocmd! Signature InsertEnter | silent! autocmd! Signature CursorHoldI
-  augroup END
-  ]])
 end
 
 local function lsp_installer_config()

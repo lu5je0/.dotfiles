@@ -76,6 +76,7 @@ cmp.setup({
     ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
     ['<c-n>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+    ['<c-p>'] = cmp.config.disable,
     ['<down>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
     ['<up>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
     ['<c-e>'] = cmp.mapping({
