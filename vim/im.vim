@@ -9,6 +9,7 @@ function! ImFuncInit()
 if get(g:, "im_init", 0) == 1
     return
 endif
+let g:im_init = 1
 python3 << EOF
 import threading
 
@@ -27,7 +28,6 @@ def im_init():
 
 threading.Thread(target=im_init).start()
 EOF
-let g:im_init = 1
 endfunction
 
 function! SwitchInsertMode()
@@ -56,6 +56,12 @@ function! ToggleSaveLastIme()
         echo "keep last ime disabled"
     endif
 endfunction
+
+" 无操作自动加载
+function! ImFuncJob(timer) abort
+    call ImFuncInit()
+endfunction
+call timer_start(2000, 'ImFuncJob')
 
 command! SwitchNormalMode call SwitchNormalMode()
 command! SwitchInsertMode call SwitchInsertMode()
