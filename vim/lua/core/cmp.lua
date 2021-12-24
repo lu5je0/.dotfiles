@@ -10,11 +10,22 @@ local comfirm = function(fallback)
       local entry = cmp.get_selected_entry()
       local label = entry.completion_item.label
       local indent_change_items = {
-        'endif', 'end', 'else', 'elif', 'elseif .. then', 'elseif', 'else .. then~',
-        'endfor', 'endfunction', 'endwhile', 'endtry', 'except', 'catch'
+        'endif',
+        'end',
+        'else',
+        'elif',
+        'elseif .. then',
+        'elseif',
+        'else .. then~',
+        'endfor',
+        'endfunction',
+        'endwhile',
+        'endtry',
+        'except',
+        'catch',
       }
       if table.find(indent_change_items, label) then
-        cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert})
+        cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert })
         local indent = vim.fn.indent('.')
         local cmd = [[
         function! CmpLineFormat(timer) abort
@@ -42,7 +53,7 @@ local comfirm = function(fallback)
       end
     end
   elseif vim.fn['vsnip#jumpable'](1) == 1 then
-    utils.feedkey("<Plug>(vsnip-jump-next)", "")
+    utils.feedkey('<Plug>(vsnip-jump-next)', '')
   else
     fallback()
   end
@@ -51,7 +62,7 @@ end
 cmp.setup({
   snippet = {
     expand = function(args)
-      vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+      vim.fn['vsnip#anonymous'](args.body) -- For `vsnip` users.
     end,
   },
   completion = {
@@ -71,15 +82,15 @@ cmp.setup({
       i = cmp.mapping.abort(),
       c = cmp.mapping.close(),
     }),
-    ['<cr>'] = cmp.mapping(comfirm, { "i" }),
-    ["<tab>"] = cmp.mapping(comfirm, { "i" }),
+    ['<cr>'] = cmp.mapping(comfirm, { 'i' }),
+    ['<tab>'] = cmp.mapping(comfirm, { 'i' }),
   },
   sources = cmp.config.sources({
     { name = 'vsnip' }, -- For ultisnips users.
     { name = 'nvim_lsp' },
     { name = 'path' },
     { name = 'buffer' },
-  })
+  }),
 })
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
@@ -99,53 +110,53 @@ cmp.setup({
 -- })
 
 local kind_icons = {
-  Text = "",
-  Method = "",
-  Function = "",
-  Constructor = "",
-  Field = "",
-  Variable = "",
-  Class = "ﴯ",
-  Interface = "",
-  Module = "",
-  Property = "ﰠ",
-  Unit = "",
-  Value = "",
-  Enum = "",
-  Keyword = "",
-  Snippet = "",
-  Color = "",
-  File = "",
-  Reference = "",
-  Folder = "",
-  EnumMember = "",
-  Constant = "",
-  Struct = "",
-  Event = "",
-  Operator = "",
-  TypeParameter = ""
+  Text = '',
+  Method = '',
+  Function = '',
+  Constructor = '',
+  Field = '',
+  Variable = '',
+  Class = 'ﴯ',
+  Interface = '',
+  Module = '',
+  Property = 'ﰠ',
+  Unit = '',
+  Value = '',
+  Enum = '',
+  Keyword = '',
+  Snippet = '',
+  Color = '',
+  File = '',
+  Reference = '',
+  Folder = '',
+  EnumMember = '',
+  Constant = '',
+  Struct = '',
+  Event = '',
+  Operator = '',
+  TypeParameter = '',
 }
 
-cmp.setup {
+cmp.setup({
   formatting = {
     format = function(entry, vim_item)
       -- Kind icons
       vim_item.kind = string.format('%s %s', kind_icons[vim_item.kind], vim_item.kind) -- This concatonates the icons with the name of the item kind
       -- Source
       vim_item.menu = ({
-        buffer = "[B]",
-        nvim_lsp = "[L]",
-        ultisnips = "[U]",
-        luasnip = "[LuaSnip]",
-        nvim_lua = "[Lua]",
-        latex_symbols = "[LaTeX]",
+        buffer = '[B]',
+        nvim_lsp = '[L]',
+        ultisnips = '[U]',
+        luasnip = '[LuaSnip]',
+        nvim_lua = '[Lua]',
+        latex_symbols = '[LaTeX]',
       })[entry.source.name]
       return vim_item
-    end
+    end,
   },
-}
+})
 
-vim.cmd[[
+vim.cmd([[
 " gray
 highlight! CmpItemAbbrDeprecated guibg=NONE gui=strikethrough guifg=#808080
 " blue
@@ -164,4 +175,4 @@ highlight! CmpItemKindProperty guibg=NONE guifg=#D4D4D4
 highlight! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
 
 smap <expr> <cr>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<cr>'
-]]
+]])

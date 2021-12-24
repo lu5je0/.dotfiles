@@ -71,8 +71,10 @@ function M.setup()
     { key = {"<CR>", "l", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
     { key = {"cd", "C"}, cb = ":lua require('core/nvimtree').cd()<cr>"},
     { key = {"t"}, cb = ":lua require('core/nvimtree').terminal_cd()<cr>"},
-    { key = "=", cb = ":lua require('core/nvimtree').increase_width()<cr>"},
-    { key = "-", cb = ":lua require('core/nvimtree').reduce_width()<cr>"},
+    { key = "=", cb = ":lua require('core/nvimtree').increase_width(2)<cr>"},
+    { key = "-", cb = ":lua require('core/nvimtree').reduce_width(2)<cr>"},
+    { key = "+", cb = ":lua require('core/nvimtree').increase_width(1)<cr>"},
+    { key = "_", cb = ":lua require('core/nvimtree').reduce_width(1)<cr>"},
     { key = "f", cb = ":lua require('core/nvimtree').file_info()<cr>"},
     { key = "x", cb = ":lua require('core/nvimtree').toggle_width()<cr>"},
     { key = "H", cb = ":cd ~<cr>"},
@@ -250,18 +252,18 @@ function M.toggle_width()
   end
 end
 
-function M.increase_width()
-  vim.cmd("vertical resize +1")
+function M.increase_width(w)
+  vim.cmd("vertical resize +" .. w)
 
   local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
-  vim.cmd("NvimTreeResize " .. (width + 1))
+  vim.cmd("NvimTreeResize " .. (width + w))
 end
 
-function M.reduce_width()
-  vim.cmd("vertical resize -1")
+function M.reduce_width(w)
+  vim.cmd("vertical resize -" .. w)
 
   local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
-  vim.cmd("NvimTreeResize " .. (width - 1))
+  vim.cmd("NvimTreeResize " .. (width - w))
 end
 
 return M

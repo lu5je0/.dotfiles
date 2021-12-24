@@ -1,28 +1,26 @@
 local M = {}
 
-M.servers = {
-  "sumneko_lua", "pyright", "jsonls", "bashls", "vimls"
-}
+M.servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls' }
 
 local lua_setting = {
   Lua = {
     completion = {
-      callSnippet = "Disable",
+      callSnippet = 'Disable',
     },
     runtime = {
       -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
-      version = "LuaJIT",
+      version = 'LuaJIT',
     },
     workspace = {
       maxPreload = 100000,
-      preloadFileSize = 10000
+      preloadFileSize = 10000,
     },
     diagnostics = {
       -- Get the language server to recognize the `vim` global
-      globals = {"vim"},
+      globals = { 'vim' },
     },
-    telemetry = { enable = false }
-  }
+    telemetry = { enable = false },
+  },
 }
 
 local pyright_setting = {
@@ -37,11 +35,14 @@ local pyright_setting = {
           if not err and result then
             local items = result.items or result
             for _, item in ipairs(items) do
-              if not (item.data and item.data.funcParensDisabled) and (
-                item.kind == vim.lsp.protocol.CompletionItemKind.Function or
-                item.kind == vim.lsp.protocol.CompletionItemKind.Method or
-                item.kind == vim.lsp.protocol.CompletionItemKind.Constructor
-                ) then
+              if
+                not (item.data and item.data.funcParensDisabled)
+                and (
+                  item.kind == vim.lsp.protocol.CompletionItemKind.Function
+                  or item.kind == vim.lsp.protocol.CompletionItemKind.Method
+                  or item.kind == vim.lsp.protocol.CompletionItemKind.Constructor
+                )
+              then
                 item.insertText = item.label .. '$1'
                 item.insertTextFormat = vim.lsp.protocol.InsertTextFormat.Snippet
               end
@@ -52,41 +53,45 @@ local pyright_setting = {
       end
       return orig_rpc_request(method, params, handler, ...)
     end
-  end
+  end,
 }
 
 local function on_attach(client, bufnr)
-  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+  local function buf_set_keymap(...)
+    vim.api.nvim_buf_set_keymap(bufnr, ...)
+  end
+  local function buf_set_option(...)
+    vim.api.nvim_buf_set_option(bufnr, ...)
+  end
 
   -- Show diagnostics in a pop-up window on hover
   _G.LspDiagnosticsPopupHandler = function()
     local current_cursor = vim.api.nvim_win_get_cursor(0)
-    local last_popup_cursor = vim.w.lsp_diagnostics_last_cursor or {nil, nil}
+    local last_popup_cursor = vim.w.lsp_diagnostics_last_cursor or { nil, nil }
 
     -- Show the popup diagnostics window,
     -- but only once for the current cursor location (unless moved afterwards).
     if not (current_cursor[1] == last_popup_cursor[1] and current_cursor[2] == last_popup_cursor[2]) then
       vim.w.lsp_diagnostics_last_cursor = current_cursor
-      if vim.fn.has("nvim-0.6") == 1 then
-        vim.diagnostic.open_float(0, {scope="cursor"})   -- for neovim 0.6.0+, replaces show_{line,position}_diagnostics
+      if vim.fn.has('nvim-0.6') == 1 then
+        vim.diagnostic.open_float(0, { scope = 'cursor' }) -- for neovim 0.6.0+, replaces show_{line,position}_diagnostics
       else
-        vim.lsp.diagnostic.show_position_diagnostics({show_header = false})
+        vim.lsp.diagnostic.show_position_diagnostics({ show_header = false })
       end
     end
   end
-  vim.cmd [[
+  vim.cmd([[
   augroup LSPDiagnosticsOnHover
     autocmd!
     autocmd CursorHold * lua _G.LspDiagnosticsPopupHandler()
   augroup END
-  ]]
+  ]])
 
   -- Enable completion triggered by <c-x><c-o>
   buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
 
   -- Mappings.
-  local opts = { noremap=true, silent=true }
+  local opts = { noremap = true, silent = true }
 
   -- See `:help vim.lsp.*` for documentation on any of the below functions
   buf_set_keymap('n', 'gu', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
@@ -110,24 +115,24 @@ local function on_attach(client, bufnr)
   buf_set_keymap('n', '<leader><space>', "<cmd>lua vim.diagnostic.open_float({scope='line'})<CR>", opts)
 
   -- cursor word highlight
-  require 'illuminate'.on_attach(client)
-  vim.cmd[[
+  require('illuminate').on_attach(client)
+  vim.cmd([[
   highlight LspReferenceText guibg=none gui=none
   highlight LspReferenceWrite guibg=#344134 gui=none
   highlight LspReferenceRead guibg=#344134 gui=none
-  ]]
+  ]])
 end
 
 local capabilities = (function()
   -- The nvim-cmp almost supports LSP's capabilities so You should advertise it to LSP servers..
   local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
-  capabilities = require("cmp_nvim_lsp").update_capabilities(capabilities)
+  capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
   -- log.info(capabilities)
   return capabilities
 end)()
 
 local function lsp_signature_config()
-  require "lsp_signature".setup({
+  require('lsp_signature').setup({
     floating_window = true, -- show hint in a floating window, set to false for virtual text only mode
     floating_window_above_cur_line = true, -- try to place the floating above the current line when possible Note:
     -- will set to true when fully tested, set to false will use whichever side has more space
@@ -135,29 +140,29 @@ local function lsp_signature_config()
     hint_enable = false, -- virtual hint enable
     timer_interval = 100000,
     handler_opts = {
-      border = "single"   -- double, rounded, single, shadow, none
+      border = 'single', -- double, rounded, single, shadow, none
     },
     always_trigger = false,
-    toggle_key = '<c-p>' -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
+    toggle_key = '<c-p>', -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
   })
 
-  vim.cmd[[
+  vim.cmd([[
   imap <m-p> <c-p>
   augroup clean_signature
   autocmd!
   autocmd BufEnter * silent! autocmd! Signature InsertEnter | silent! autocmd! Signature CursorHoldI
   augroup END
-  ]]
+  ]])
 end
 
 local function lsp_installer_config()
-  local installer = require("nvim-lsp-installer")
+  local installer = require('nvim-lsp-installer')
 
   for _, lang in pairs(M.servers) do
     local ok, server = installer.get_server(lang)
     if ok then
       if not server:is_installed() then
-        print("Installing " .. lang)
+        print('Installing ' .. lang)
         server:install()
       end
     end
@@ -167,16 +172,16 @@ local function lsp_installer_config()
   installer.on_server_ready(function(server)
     local opts = {
       capabilities = capabilities,
-      on_attach = on_attach
+      on_attach = on_attach,
     }
 
-    if server.name == "sumneko_lua" then
+    if server.name == 'sumneko_lua' then
       opts.settings = lua_setting
-      local luadev = require("lua-dev").setup({
-        lspconfig = opts
+      local luadev = require('lua-dev').setup({
+        lspconfig = opts,
       })
       server:setup(luadev)
-    elseif server.name == "pyright" then
+    elseif server.name == 'pyright' then
       opts.on_init = pyright_setting.on_init
       server:setup(opts)
     else
@@ -191,14 +196,14 @@ local function lsp_diagnostic()
     virtual_text = false,
     underline = true,
     float = {
-      source = "always",
+      source = 'always',
     },
     severity_sort = true,
     update_in_insert = true,
   })
-  local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
+  local signs = { Error = ' ', Warn = ' ', Hint = ' ', Info = ' ' }
   for type, icon in pairs(signs) do
-    local hl = "DiagnosticSign" .. type
+    local hl = 'DiagnosticSign' .. type
     vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
   end
 end

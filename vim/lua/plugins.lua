@@ -1,13 +1,13 @@
 local fn = vim.fn
 local install_path = fn.stdpath('data') .. '/site/pack/packer/start/packer.nvim'
 if fn.empty(fn.glob(install_path)) > 0 then
-  vim.cmd("term git clone --depth 1 https://github.com/wbthomason/packer.nvim " .. install_path)
+  vim.cmd('term git clone --depth 1 https://github.com/wbthomason/packer.nvim ' .. install_path)
 end
 
 local packer = require('packer')
-packer.init {
-  max_jobs = 15
-}
+packer.init({
+  max_jobs = 15,
+})
 
 vim.cmd([[
 augroup packer_user_config
@@ -18,42 +18,41 @@ augroup end
 
 -- Only required if you have packer configured as `opt`
 return packer.startup(function()
-
   local use = packer.use
 
   -- Speed up loading Lua modules in Neovim to improve startup time.
-  use 'lewis6991/impatient.nvim'
+  use('lewis6991/impatient.nvim')
 
   -- Packer can manage itself
-  use 'wbthomason/packer.nvim'
+  use('wbthomason/packer.nvim')
 
-  use 'nvim-lua/plenary.nvim'
+  use('nvim-lua/plenary.nvim')
 
-  use {
+  use({
     'ojroques/vim-oscyank',
     config = function()
       vim.cmd("autocmd TextYankPost * execute 'OSCYankReg \"'")
     end,
-    disable = (vim.fn.has("wsl") == 1 or vim.fn.has("mac") == 1)
-  }
+    disable = (vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1),
+  })
 
   vim.g.did_load_filetypes = 1
-  use {
-    "nathom/filetype.nvim",
+  use({
+    'nathom/filetype.nvim',
     config = function()
-      require("core.filetype")
-    end
-  }
+      require('core.filetype')
+    end,
+  })
 
-  use {
+  use({
     'nvim-lualine/lualine.nvim',
-    requires = {'kyazdani42/nvim-web-devicons', opt = true},
+    requires = { 'kyazdani42/nvim-web-devicons', opt = true },
     config = function()
-      require("core.lualine")
-    end
-  }
+      require('core.lualine')
+    end,
+  })
 
-  use {
+  use({
     'hrsh7th/vim-eft',
     config = function()
       vim.cmd([[
@@ -74,74 +73,78 @@ return packer.startup(function()
       xmap T <Plug>(eft-T)
       omap T <Plug>(eft-T)
       ]])
-    end
-  }
+    end,
+  })
 
-  use {
+  use({
     'kyazdani42/nvim-web-devicons',
-    config = function ()
-      require'nvim-web-devicons'.setup {
+    config = function()
+      require('nvim-web-devicons').setup({
         override = {
           xml = {
-            icon = "",
-            color = "#e37933",
-            name = "Xml",
-          }
-        }
-      }
-    end
-  }
+            icon = '',
+            color = '#e37933',
+            name = 'Xml',
+          },
+        },
+      })
+    end,
+  })
 
-  use {
+  use({
     'lu5je0/bufferline.nvim',
-    config = function() require("core/bufferline") end,
-    requires = {'nvim-web-devicons'}
-  }
+    config = function()
+      require('core/bufferline')
+    end,
+    requires = { 'nvim-web-devicons' },
+  })
 
-  use {'schickling/vim-bufonly'}
+  use({ 'schickling/vim-bufonly' })
 
-  use {
+  use({
     'theniceboy/vim-calc',
     opt = true,
-    fn = {'Calc'}
-  }
+    fn = { 'Calc' },
+  })
 
-  use {
+  use({
     'rootkiter/vim-hexedit',
     opt = true,
     ft = 'bin',
-    fn = {'hexedit#ToggleHexEdit'}
-  }
+    fn = { 'hexedit#ToggleHexEdit' },
+  })
 
-  use {
+  use({
     'mattn/vim-gist',
     config = function()
       vim.cmd("let github_user = 'lu5je0@gmail.com'")
-      vim.cmd("let g:gist_show_privates = 1")
-      vim.cmd("let g:gist_post_private = 1")
+      vim.cmd('let g:gist_show_privates = 1')
+      vim.cmd('let g:gist_post_private = 1')
     end,
-    requires = {'mattn/webapi-vim'}
-  }
+    requires = { 'mattn/webapi-vim' },
+  })
 
-  use {
+  use({
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
     opt = true,
-    ft = {'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'sh'},
+    ft = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'sh' },
     config = function()
       require('core/treesiter')
-    end
-  }
+    end,
+  })
 
   -- highlighting
-  use {'chr4/nginx.vim'}
-  use {'cespare/vim-toml'}
-  use {'lu5je0/vim-java-bytecode'}
-  use {
+  use({ 'chr4/nginx.vim' })
+  use({ 'cespare/vim-toml' })
+  use({ 'lu5je0/vim-java-bytecode' })
+  use({
     'elzr/vim-json',
-    config = function() vim.cmd('let g:vim_json_syntax_conceal = 0') end
-  }
-  use {'MTDL9/vim-log-highlighting'}
+    config = function()
+      vim.cmd('let g:vim_json_syntax_conceal = 0')
+    end,
+  })
+  use({ 'MTDL9/vim-log-highlighting' })
 
   -- use {
   --   'tpope/vim-dadbod',
@@ -159,21 +162,21 @@ return packer.startup(function()
   --   cmd = {'DB', 'DBUI'}
   -- }
 
-  use {
+  use({
     'othree/eregex.vim',
     opt = true,
-    keys = {'/', '?'},
+    keys = { '/', '?' },
     setup = function()
       vim.g.eregex_default_enable = 0
     end,
-    fn = {'eregex#toggle'},
-    cmd = 'S'
-  }
+    fn = { 'eregex#toggle' },
+    cmd = 'S',
+  })
 
-  use {
+  use({
     'numToStr/Comment.nvim',
     config = function()
-      require('Comment').setup {
+      require('Comment').setup({
         opleader = {
           -- Line-comment keymap
           line = 'gc',
@@ -186,27 +189,27 @@ return packer.startup(function()
           -- Block-comment toggle keymap
           block = 'gcgc',
         },
-      }
-    end
-  }
+      })
+    end,
+  })
 
-  use 'kana/vim-textobj-user'
-  use 'tpope/vim-repeat'
+  use('kana/vim-textobj-user')
+  use('tpope/vim-repeat')
 
-  use {
+  use({
     'vim-scripts/ReplaceWithRegister',
-    keys = {'gr'}
-  }
+    keys = { 'gr' },
+  })
 
-  use 'tommcdo/vim-exchange'
-  use 'lu5je0/vim-base64'
+  use('tommcdo/vim-exchange')
+  use('lu5je0/vim-base64')
 
   -- themes
-  use 'lu5je0/vim-one'
-  use 'lu5je0/one-nvim'
-  use 'sainnhe/sonokai'
-  use 'sainnhe/edge'
-  use 'gruvbox-community/gruvbox'
+  use('lu5je0/vim-one')
+  use('lu5je0/one-nvim')
+  use('sainnhe/sonokai')
+  use('sainnhe/edge')
+  use('gruvbox-community/gruvbox')
 
   -- use {
   --   'wfxr/minimap.vim',
@@ -217,16 +220,18 @@ return packer.startup(function()
   --   end
   -- }
 
-  use {
+  use({
     'lu5je0/im-switcher.nvim',
     opt = true,
-    disable = vim.fn.has("wsl") == 0
-  }
+    disable = vim.fn.has('wsl') == 0,
+  })
 
-  use {
-    "akinsho/toggleterm.nvim",
-    config = function () require('core.terminal').setup() end
-  }
+  use({
+    'akinsho/toggleterm.nvim',
+    config = function()
+      require('core.terminal').setup()
+    end,
+  })
 
   -- use {
   --   'lambdalisue/fern-git-status.vim',
@@ -235,88 +240,93 @@ return packer.startup(function()
   --   end
   -- }
 
-  use {
+  use({
     'lambdalisue/fern.vim',
     opt = true,
-    cmd = {"Fern", "FernLocateFile"},
-    fn = {'FernLocateFile'},
+    cmd = { 'Fern', 'FernLocateFile' },
+    fn = { 'FernLocateFile' },
     requires = {
-      {'lambdalisue/fern-hijack.vim'},
-      {'lambdalisue/nerdfont.vim'},
-      {'lu5je0/fern-renderer-nerdfont.vim'},
-      {'lambdalisue/glyph-palette.vim'},
-      {'yuki-yano/fern-preview.vim', opt=true}
+      { 'lambdalisue/fern-hijack.vim' },
+      { 'lambdalisue/nerdfont.vim' },
+      { 'lu5je0/fern-renderer-nerdfont.vim' },
+      { 'lambdalisue/glyph-palette.vim' },
+      { 'yuki-yano/fern-preview.vim', opt = true },
     },
-    config = function() vim.cmd('runtime plug-config/fern.vim') end
-  }
+    config = function()
+      vim.cmd('runtime plug-config/fern.vim')
+    end,
+  })
 
-  use {'lu5je0/LeaderF',
-      run = './install.sh',
-      -- opt = true,
-      -- cmd = {'Leaderf', 'Git'},
-      config = function() require("core/leaderf").setup() end,
-  }
+  use({
+    'lu5je0/LeaderF',
+    run = './install.sh',
+    -- opt = true,
+    -- cmd = {'Leaderf', 'Git'},
+    config = function()
+      require('core/leaderf').setup()
+    end,
+  })
 
-  use {
+  use({
     'mg979/vim-visual-multi',
     opt = true,
-    setup = function ()
-      vim.cmd [[
+    setup = function()
+      vim.cmd([[
         let g:VM_maps = {}
         let g:VM_maps["Select Cursor Down"] = '<m-n>'
-      ]]
+      ]])
     end,
-    keys = {'<c-n>', '<m-n>'}
-  }
+    keys = { '<c-n>', '<m-n>' },
+  })
 
-  use {
+  use({
     'sgur/vim-textobj-parameter',
-    setup = function ()
+    setup = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
     end,
-    opt = true
-  }
+    opt = true,
+  })
 
-  use {
+  use({
     'lewis6991/gitsigns.nvim',
     requires = {
-      'nvim-lua/plenary.nvim'
+      'nvim-lua/plenary.nvim',
     },
-    config = function ()
-      require("core/gitsigns").setup()
+    config = function()
+      require('core/gitsigns').setup()
     end,
-    event = "BufRead"
-  }
+    event = 'BufRead',
+  })
 
-  use {
+  use({
     'lu5je0/vim-translator',
     config = function()
-      vim.g.translator_default_engines = {'disk'}
-    end
-  }
+      vim.g.translator_default_engines = { 'disk' }
+    end,
+  })
 
-  use {
+  use({
     'tpope/vim-fugitive',
     opt = true,
-    cmd = {'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator'},
-    fn = {'fugitive#repo'},
+    cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
+    fn = { 'fugitive#repo' },
     requires = {
-      {'skywind3000/asynctasks.vim', opt = true},
-    }
-  }
+      { 'skywind3000/asynctasks.vim', opt = true },
+    },
+  })
 
-  use {
+  use({
     'rbong/vim-flog',
     cmd = 'Flogsplit',
     opt = true,
-    requires = {{'tpope/vim-fugitive'}}
-  }
+    requires = { { 'tpope/vim-fugitive' } },
+  })
 
-  use {
+  use({
     'dstein64/vim-startuptime',
     opt = true,
-    cmd = {'StartupTime'}
-  }
+    cmd = { 'StartupTime' },
+  })
 
   -- use {
   --   'skywind3000/asyncrun.vim',
@@ -325,178 +335,183 @@ return packer.startup(function()
   --   requires = {
   --     {'skywind3000/asynctasks.vim', opt = true},
   --     {'skywind3000/asyncrun.extra', opt = true},
-      -- {
-      --   'preservim/vimux',
-      --   config = function ()
-      --     vim.g.VimuxHeight = "50"
-      --     vim.g.VimuxOrientation = "h"
-      --   end,
-      --   opt = true
-      -- }
-    -- },
+  -- {
+  --   'preservim/vimux',
+  --   config = function ()
+  --     vim.g.VimuxHeight = "50"
+  --     vim.g.VimuxOrientation = "h"
+  --   end,
+  --   opt = true
+  -- }
+  -- },
   -- }
 
-  use {
+  use({
     'mbbill/undotree',
     opt = true,
-    cmd = {'UndotreeToggle'},
-    config = function() vim.cmd('let g:undotree_WindowLayout = 3 | let g:undotree_SetFocusWhenToggle = 1') end,
-  }
-
-  use {
-    'junegunn/vim-peekaboo'
-  }
-
-  use {
-    'tpope/vim-surround'
-  }
-
-  local nvim_colorizer_ft = {'vim', 'lua'}
-  use {
-    'norcalli/nvim-colorizer.lua',
-    config = function ()
-      require 'colorizer'.setup(
-        nvim_colorizer_ft,
-        { names = false }
-      )
+    cmd = { 'UndotreeToggle' },
+    config = function()
+      vim.cmd('let g:undotree_WindowLayout = 3 | let g:undotree_SetFocusWhenToggle = 1')
     end,
-    ft = nvim_colorizer_ft
-  }
+  })
 
-  use {
+  use({
+    'junegunn/vim-peekaboo',
+  })
+
+  use({
+    'tpope/vim-surround',
+  })
+
+  local nvim_colorizer_ft = { 'vim', 'lua' }
+  use({
+    'norcalli/nvim-colorizer.lua',
+    config = function()
+      require('colorizer').setup(nvim_colorizer_ft, { names = false })
+    end,
+    ft = nvim_colorizer_ft,
+  })
+
+  use({
     'liuchengxu/vista.vim',
-    config = function() vim.cmd('runtime plug-config/vista.vim') end,
+    config = function()
+      vim.cmd('runtime plug-config/vista.vim')
+    end,
     opt = true,
-    cmd = {'Vista'}
-  }
+    cmd = { 'Vista' },
+  })
 
-  use {
+  use({
     'lambdalisue/suda.vim',
     opt = true,
-    cmd = {'SudaRead', 'SudaWrite'}
-  }
+    cmd = { 'SudaRead', 'SudaWrite' },
+  })
 
-  use {
+  use({
     'iamcco/markdown-preview.nvim',
-    run = function() vim.fn['mkdp#util#install']() end,
-    config = function ()
+    run = function()
+      vim.fn['mkdp#util#install']()
+    end,
+    config = function()
       vim.g.mkdp_auto_close = 0
     end,
-    ft = {'markdown'}
-  }
+    ft = { 'markdown' },
+  })
 
-  use {
+  use({
     'masukomi/vim-markdown-folding',
-    ft = {'markdown'},
+    ft = { 'markdown' },
     config = function()
       vim.g.markdown_fold_style = 'nested'
-    end
-  }
+    end,
+  })
 
-  use {'williamboman/nvim-lsp-installer'}
+  use({ 'williamboman/nvim-lsp-installer' })
 
-  use {'ray-x/lsp_signature.nvim'}
+  use({ 'ray-x/lsp_signature.nvim' })
 
-  use {'folke/lua-dev.nvim'}
+  use({ 'folke/lua-dev.nvim' })
 
-  use {
+  use({
     'jose-elias-alvarez/null-ls.nvim',
     config = function()
       require('core.null_ls')
     end,
-    opt = true
-  }
+    opt = true,
+  })
 
   -- highlight cursor word
-  use {
+  use({
     'RRethy/vim-illuminate',
     config = function()
       vim.g.Illuminate_delay = 0
-      vim.g.Illuminate_ftwhitelist = {'vim', 'sh', 'python', 'lua', 'java'}
-      vim.cmd[[
+      vim.g.Illuminate_ftwhitelist = { 'vim', 'sh', 'python', 'lua', 'java' }
+      vim.cmd([[
       highlight illuminatedWord ctermbg=green guibg=#344134
-      ]]
-    end
-  }
+      ]])
+    end,
+  })
 
   -- use {
   --   'ThePrimeagen/refactoring.nvim'
   -- }
 
-  use {
+  use({
     'neovim/nvim-lspconfig',
     config = function()
-      require("core/lsp").setup()
+      require('core/lsp').setup()
     end,
-    opt = true
-  }
+    opt = true,
+  })
 
-  use {
-      'hrsh7th/nvim-cmp',
-      config = function() require("core/cmp") end,
-      requires = {
-        'hrsh7th/cmp-nvim-lsp',
-        'hrsh7th/cmp-buffer',
-        'hrsh7th/cmp-path',
-        {
-          'hrsh7th/vim-vsnip',
-          config = function()
-            require('core.vsnip').setup()
-          end
-        },
-        'hrsh7th/cmp-vsnip',
+  use({
+    'hrsh7th/nvim-cmp',
+    config = function()
+      require('core/cmp')
+    end,
+    requires = {
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-path',
+      {
+        'hrsh7th/vim-vsnip',
+        config = function()
+          require('core.vsnip').setup()
+        end,
       },
-      opt = true
-  }
+      'hrsh7th/cmp-vsnip',
+    },
+    opt = true,
+  })
 
-  use {
+  use({
     'windwp/nvim-autopairs',
     config = function()
-      require('nvim-autopairs').setup{}
+      require('nvim-autopairs').setup({})
       -- If you want insert `(` after select function or method item
       local cmp_autopairs = require('nvim-autopairs.completion.cmp')
       local cmp = require('cmp')
-      cmp.event:on( 'confirm_done', cmp_autopairs.on_confirm_done({  map_char = { tex = '' } }))
+      cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done({ map_char = { tex = '' } }))
     end,
-    opt = true
-  }
+    opt = true,
+  })
 
-  use {
-    "lukas-reineke/indent-blankline.nvim",
-    setup = function ()
+  use({
+    'lukas-reineke/indent-blankline.nvim',
+    setup = function()
       vim.g.indent_blankline_char = '▏'
-      vim.g.indentLine_fileTypeExclude = {'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm'}
+      vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm' }
       vim.g.indent_blankline_show_first_indent_level = false
       vim.g.indent_blankline_show_trailing_blankline_indent = false
     end,
-    opt = true
-  }
+    opt = true,
+  })
 
-  use {
+  use({
     'puremourning/vimspector',
-    config = function ()
-      require("core/vimspector").setup()
+    config = function()
+      require('core/vimspector').setup()
     end,
-    keys = {"<F10>", "<S-F10>"},
-    fn = {'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations'}
-  }
+    keys = { '<F10>', '<S-F10>' },
+    fn = { 'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations' },
+  })
 
-  use {
+  use({
     'lu5je0/nvim-tree.lua',
     requires = 'kyazdani42/nvim-web-devicons',
-    keys = {"<leader>e", "<leader>fe"},
+    keys = { '<leader>e', '<leader>fe' },
     opt = true,
     config = function()
-      require("core/nvimtree").setup()
-    end
-  }
+      require('core/nvimtree').setup()
+    end,
+  })
 
-  use {
-    "folke/which-key.nvim",
+  use({
+    'folke/which-key.nvim',
     config = function()
-      require("core/whichkey").setup()
-    end
-  }
+      require('core/whichkey').setup()
+    end,
+  })
 
   -- use {
   --   'nvim-telescope/telescope.nvim',
@@ -507,5 +522,4 @@ return packer.startup(function()
   --     {'nvim-telescope/telescope-project.nvim'}
   --   }
   -- }
-
 end)
