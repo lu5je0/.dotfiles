@@ -1,10 +1,3 @@
-function! QuitForce()
-    if confirm("Quit all buffers without save?", "&No\n&Yes") != 2
-        return
-    endif
-    qa!
-endfunction
-
 function! SynStack ()
     for i1 in synstack(line("."), col("."))
         let i2 = synIDtrans(i1)
