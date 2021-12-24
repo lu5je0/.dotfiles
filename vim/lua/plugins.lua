@@ -203,7 +203,6 @@ return packer.startup(function()
 
   -- themes
   use 'lu5je0/vim-one'
-  use 'olimorris/onedarkpro.nvim'
   use 'lu5je0/one-nvim'
   use 'sainnhe/sonokai'
   use 'sainnhe/edge'
@@ -223,14 +222,6 @@ return packer.startup(function()
     opt = true,
     disable = vim.fn.has("wsl") == 0
   }
-
-  -- use {
-  --   'lu5je0/vim-terminal-help',
-  --   config = function() vim.cmd('runtime plug-config/terminal.vim') end,
-  --   opt = true,
-  --   keys = {'<m-i>', '<d-i>'},
-  --   fn = {'TerminalSendInner', 'TerminalOpen', 'TerminalSend'}
-  -- }
 
   use {
     "akinsho/toggleterm.nvim",
@@ -285,15 +276,6 @@ return packer.startup(function()
     end,
     opt = true
   }
-
-  -- use {
-  --   'mhinz/vim-signify',
-  --   config = function()
-  --     vim.cmd("let g:signify_skip = {'vcs': { 'allow': ['git'] }}")
-  --     vim.cmd("let g:signify_vcs_cmds_diffmode = {'git': 'git cat-file -p :./%f'}")
-  --   end
-  -- }
-  --
 
   use {
     'lewis6991/gitsigns.nvim',
@@ -386,11 +368,6 @@ return packer.startup(function()
     config = function() vim.cmd('runtime plug-config/vista.vim') end,
     opt = true,
     cmd = {'Vista'}
-  }
-
-  use {
-    'machakann/vim-highlightedyank',
-    config = function() vim.cmd('let g:highlightedyank_highlight_duration=300') end,
   }
 
   use {

@@ -85,6 +85,7 @@ M.setup = function ()
       i = { "<cmd>PackerInstall<cr>", "install" },
       u = { "<cmd>PackerUpdate<cr>", "update" },
       C = { "<cmd>PackerClean<cr>", "clean" },
+      d = { "<cmd>PackerClean<cr>", "clean" },
     },
     c = {
       r = "rename-variable",

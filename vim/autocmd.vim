@@ -8,6 +8,11 @@ augroup quick_list_preview
     autocmd FileType qf nnoremap <buffer> p <CR><C-W>p
 augroup END
 
+augroup highlight_on_yank
+    autocmd!
+    autocmd TextYankPost * silent! lua vim.highlight.on_yank{higroup="Visual", timeout=300}
+augroup END
+
 " augroup signcolumn_increase
 "     autocmd!
 "     autocmd User CocDiagnosticChange setlocal signcolumn=yes:2
