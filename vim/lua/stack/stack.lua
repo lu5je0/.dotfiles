@@ -3,12 +3,12 @@ local tinsert = table.insert
 
 function Stack:create()
   local t = {}
-  setmetatable(t, {__index = self})
+  setmetatable(t, { __index = self })
   return t
 end
 
 function Stack:push(...)
-  local arg = {...}
+  local arg = { ... }
   self.dataTb = self.dataTb or {}
   if next(arg) then
     for i = 1, #arg do
@@ -19,7 +19,7 @@ end
 
 function Stack:pop(num)
   num = num or 1
-  assert(num > 0, "num必须为正整数")
+  assert(num > 0, 'num必须为正整数')
   local popTb = {}
   for _ = 1, num do
     tinsert(popTb, self.dataTb[#self.dataTb])

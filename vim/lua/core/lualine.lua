@@ -1,7 +1,7 @@
 -- Eviline config for lualine
 -- Author: shadmansaleh
 -- Credit: glepnir
-local lualine = require 'lualine'
+local lualine = require('lualine')
 
 -- Color table for highlights
 -- stylua: ignore
@@ -22,16 +22,16 @@ local colors = {
 
 local conditions = {
   buffer_not_empty = function()
-    return vim.fn.empty(vim.fn.expand '%:t') ~= 1
+    return vim.fn.empty(vim.fn.expand('%:t')) ~= 1
   end,
   hide_in_width = function()
     return vim.fn.winwidth(0) > 80
   end,
   check_git_workspace = function()
-    local filepath = vim.fn.expand '%:p:h'
+    local filepath = vim.fn.expand('%:p:h')
     local gitdir = vim.fn.finddir('.git', filepath .. ';')
     return gitdir and #gitdir > 0 and #gitdir < #filepath
-  end
+  end,
 }
 
 conditions.lsp_cond = function()
@@ -43,20 +43,20 @@ end
 
 local extensions_type_icon = {
   function()
-    return ""
+    return ''
   end,
-  color = { fg = colors.grey, bg = colors.bg, gui = 'bold' }
+  color = { fg = colors.grey, bg = colors.bg, gui = 'bold' },
 }
 
 local extensions_name = {
   function()
     local res = vim.bo.filetype:upper()
     if vim.bo.filetype == 'toggleterm' then
-      res = res .. " %{b:toggle_number}"
+      res = res .. ' %{b:toggle_number}'
     end
     return res
   end,
-  color = { fg = colors.blue, bg = colors.bg, gui = 'bold' }
+  color = { fg = colors.blue, bg = colors.bg, gui = 'bold' },
 }
 
 local extensions = {
@@ -65,15 +65,15 @@ local extensions = {
       extensions_name,
     },
     lualine_z = {
-      extensions_type_icon
-    }
+      extensions_type_icon,
+    },
   },
-  filetypes = {'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm'}
+  filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' },
 }
 
 -- Config
 local config = {
-  extensions = {extensions},
+  extensions = { extensions },
   options = {
     -- Disable sections and component separators
     component_separators = '',
@@ -121,7 +121,7 @@ local function ins_right(component)
   table.insert(config.sections.lualine_x, component)
 end
 
-ins_left {
+ins_left({
   -- mode component
   function()
     -- auto change color according to neovims mode
@@ -152,69 +152,68 @@ ins_left {
   end,
   color = 'LualineMode',
   padding = { left = 1, right = 1 },
-}
+})
 
-ins_left {
+ins_left({
   'filetype',
   icon_only = true,
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
   padding = { left = 1, right = 0 },
-}
+})
 
-ins_left {
+ins_left({
   'filename',
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
   padding = { left = 1, right = 0 },
   icons_enabled = true,
   symbols = {
-    modified = '[+]',      -- when the file was modified
-    readonly = '[-]',      -- if the file is not modifiable or readonly
+    modified = '[+]', -- when the file was modified
+    readonly = '[-]', -- if the file is not modifiable or readonly
     unnamed = '[No Name]', -- default display name for unnamed buffers
-  }
-}
+  },
+})
 
-ins_left {
+ins_left({
   -- filesize component
   'filesize',
   cond = conditions.hide_in_width,
   color = { fg = colors.yellow },
   padding = { left = 1, right = 0 },
-}
+})
 
-ins_left {
+ins_left({
   function()
-    return [[ %2p%% %l:%c ]];
+    return [[ %2p%% %l:%c ]]
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
-}
+})
 
-ins_right {
+ins_right({
   'diagnostics',
   -- table of diagnostic sources, available sources:
   -- 'nvim_lsp', 'nvim_diagnostic', 'coc', 'ale', 'vim_lsp'
   -- Or a function that returns a table like
   --   {error=error_cnt, warn=warn_cnt, info=info_cnt, hint=hint_cnt}
-  sources = {'nvim_diagnostic'},
+  sources = { 'nvim_diagnostic' },
   -- displays diagnostics from defined severity
-  sections = {'error', 'warn', 'info', 'hint'},
+  sections = { 'error', 'warn', 'info', 'hint' },
   symbols = { error = ' ', warn = ' ', info = ' ' },
   diagnostics_color = {
     -- Same values like general color option can be used here.
     error = { fg = colors.red },
-    warn  = { fg = colors.yellow },
-    info  = { fg = colors.fg },
-    hint  = { fg = colors.grey }
+    warn = { fg = colors.yellow },
+    info = { fg = colors.fg },
+    hint = { fg = colors.grey },
   },
   colored = true, -- displays diagnostics status in color if set to true
   update_in_insert = false, -- Update diagnostics in insert mode
   padding = { left = 0, right = 1 },
-}
+})
 
-
-ins_right {
+ins_right({
   -- Lsp server name .
   function()
     local msg = nil
@@ -234,7 +233,7 @@ ins_right {
       ::continue::
     end
     if msg == nil then
-      return ""
+      return ''
     else
       return ' LSP:' .. msg
     end
@@ -242,18 +241,18 @@ ins_right {
   color = { fg = colors.cyan, gui = 'bold' },
   cond = conditions.lsp_cond,
   padding = { left = 0, right = 1 },
-}
+})
 
 -- Add components to right sections
-ins_right {
+ins_right({
   'o:encoding', -- option component same as &encoding in viml
   fmt = string.upper, -- I'm not sure why it's upper case either ;)
   cond = conditions.hide_in_width,
   color = { fg = colors.green, gui = 'bold' },
   padding = { left = 0, right = 0 },
-}
+})
 
-ins_right {
+ins_right({
   'fileformat',
   fmt = string.upper,
   icons_enabled = true, -- I think icons are cool but Eviline doesn't have them. sigh
@@ -265,14 +264,14 @@ ins_right {
     dos = 'CRLF',
     mac = 'CR',
   },
-}
+})
 
-ins_right {
+ins_right({
   'b:gitsigns_head',
   icon = '',
   color = { fg = colors.violet, gui = 'bold' },
   padding = { left = 0, right = 1 },
-}
+})
 
 local function diff_source()
   local gitsigns = vim.b.gitsigns_status_dict
@@ -280,15 +279,15 @@ local function diff_source()
     return {
       added = gitsigns.added,
       modified = gitsigns.changed,
-      removed = gitsigns.removed
+      removed = gitsigns.removed,
     }
   end
 end
 
-ins_right {
+ins_right({
   'diff',
   source = diff_source,
   padding = { left = 0, right = 1 },
-}
+})
 
 lualine.setup(config)
