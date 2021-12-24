@@ -61,7 +61,7 @@ endfunction
 function! ImFuncJob(timer) abort
     call ImFuncInit()
 endfunction
-call timer_start(2000, 'ImFuncJob')
+call timer_start(5000, 'ImFuncJob')
 
 command! SwitchNormalMode call SwitchNormalMode()
 command! SwitchInsertMode call SwitchInsertMode()

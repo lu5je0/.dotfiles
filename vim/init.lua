@@ -11,7 +11,7 @@ runtime misc.vim
 runtime runner.vim
 runtime autocmd.vim
 if has("mac")
-    runtime im.vim
+  runtime im.vim
 endif
 ]]
 
