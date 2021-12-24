@@ -107,7 +107,7 @@ local function on_attach(client, bufnr)
   buf_set_keymap('n', '<leader>ce', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
   buf_set_keymap('n', '<leader>cf', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
   buf_set_keymap('v', '<leader>cf', '<cmd>lua vim.lsp.buf.range_formatting()<CR>', opts)
-  buf_set_keymap('n', '<leader><space>', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
+  buf_set_keymap('n', '<leader><space>', "<cmd>lua vim.diagnostic.open_float({scope='line'})<CR>", opts)
 
   -- cursor word highlight
   require 'illuminate'.on_attach(client)
