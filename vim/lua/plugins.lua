@@ -482,7 +482,7 @@ return packer.startup(function()
     'lukas-reineke/indent-blankline.nvim',
     setup = function()
       vim.g.indent_blankline_char = '▏'
-      vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm' }
+      vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm' , 'confirm' }
       vim.g.indent_blankline_show_first_indent_level = false
       vim.g.indent_blankline_show_trailing_blankline_indent = false
     end,
