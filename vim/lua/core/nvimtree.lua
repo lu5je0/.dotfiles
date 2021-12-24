@@ -75,18 +75,17 @@ function M.setup()
     { key = '+', cb = ":lua require('core/nvimtree').increase_width(1)<cr>" },
     { key = '_', cb = ":lua require('core/nvimtree').reduce_width(1)<cr>" },
     { key = 'f', cb = ":lua require('core/nvimtree').file_info()<cr>" },
+    { key = 'p', cb = ":lua require('core/nvimtree').preview()<cr>" },
     { key = 'x', cb = ":lua require('core/nvimtree').toggle_width()<cr>" },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
     { key = 'S', cb = tree_cb('vsplit') },
     { key = 's', cb = tree_cb('split') },
-    { key = '<Tab>', cb = tree_cb('preview') },
     -- { key = "<C-t>", cb = tree_cb("tabnew") },
     { key = '<', cb = tree_cb('prev_sibling') },
     { key = '>', cb = tree_cb('next_sibling') },
-    { key = 'P', cb = tree_cb('parent_node') },
+    -- { key = 'P', cb = tree_cb('parent_node') },
     { key = { '<BS>', 'h' }, cb = tree_cb('close_node') },
-    { key = 'p', cb = tree_cb('preview') },
     { key = 'K', cb = tree_cb('first_sibling') },
     { key = 'J', cb = tree_cb('last_sibling') },
     -- { key = "I", cb = tree_cb("toggle_ignored") },
@@ -97,7 +96,7 @@ function M.setup()
     { key = 'mv', cb = tree_cb('rename') },
     -- { key = "mv", cb = tree_cb("cut") },
     { key = 'yy', cb = tree_cb('copy') },
-    { key = 'p', cb = tree_cb('paste') },
+    { key = 'P', cb = tree_cb('paste') },
     { key = 'yn', cb = tree_cb('copy_name') },
     { key = 'yP', cb = tree_cb('copy_path') },
     { key = 'yp', cb = tree_cb('copy_absolute_path') },
@@ -231,10 +230,15 @@ function M.cd()
   vim.cmd('norm gg')
 end
 
+function M.preview()
+  local lib = require('nvim-tree.lib')
+  require('util.ui').preview(lib.get_node_at_cursor().absolute_path)
+end
+
 function M.file_info()
   local lib = require('nvim-tree.lib')
   local info = vim.fn.system('ls -alhd "' .. lib.get_node_at_cursor().absolute_path .. '" -l --time-style="+%Y-%m-%d %H:%M:%S"')
-  print(info:sub(1, -2))
+  require('util.ui').popup_info_window(info:sub(1, -2))
 end
 
 function M.toggle_width()
