@@ -28,6 +28,8 @@ return packer.startup(function()
 
   use('nvim-lua/plenary.nvim')
 
+  use('MunifTanjim/nui.nvim')
+
   use({
     'ojroques/vim-oscyank',
     config = function()

@@ -15,7 +15,7 @@ M.exit_vim = function()
   if #unsave_buffers ~= 0 then
     msg = 'The change of the following buffers will be discarded.'
     for _, buffer in ipairs(unsave_buffers) do
-      local name = buffer.name
+      local name = vim.fn.fnamemodify(buffer.name, ':t')
       if name == '' then
         name = '[No Name] ' .. buffer.bufnr
       end
