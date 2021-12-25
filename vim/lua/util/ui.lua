@@ -1,8 +1,8 @@
 local M = {}
 
 M.preview = function(file_path)
-  if _G.dialog_popup ~= nil then
-    _G.dialog_popup:unmount()
+  if _G.preview_popup ~= nil then
+    _G.preview_popup:unmount()
   end
 
   local Popup = require('nui.popup')
@@ -30,8 +30,8 @@ M.preview = function(file_path)
   }
 
   local popup = Popup(popup_options)
-  _G.dialog_popup = popup
-  vim.cmd('au! CursorMoved,CursorMovedI,InsertEnter,BufLeave * ++once lua _G.dialog_popup:unmount()')
+  _G.preview_popup = popup
+  vim.cmd('au! CursorMoved,CursorMovedI,InsertEnter,BufLeave * ++once lua _G.preview_popup:unmount()')
 
   popup:mount()
 
@@ -51,8 +51,8 @@ M.preview = function(file_path)
 end
 
 M.popup_info_window = function(content)
-  if _G.dialog_popup ~= nil then
-    _G.dialog_popup:unmount()
+  if _G.preview_popup ~= nil then
+    _G.preview_popup:unmount()
   end
 
   local Popup = require('nui.popup')
@@ -83,8 +83,8 @@ M.popup_info_window = function(content)
   }
 
   local popup = Popup(popup_options)
-  _G.dialog_popup = popup
-  vim.cmd('au! CursorMoved,CursorMovedI,InsertEnter,BufLeave * ++once lua _G.dialog_popup:unmount()')
+  _G.preview_popup = popup
+  vim.cmd('au! CursorMoved,CursorMovedI,InsertEnter,BufLeave * ++once lua _G.preview_popup:unmount()')
 
   popup:mount()
 

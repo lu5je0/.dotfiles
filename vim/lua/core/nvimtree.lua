@@ -67,7 +67,7 @@ function M.setup()
   local tree_cb = require('nvim-tree.config').nvim_tree_callback
   -- default mappings
   local list = {
-    { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = tree_cb('edit') },
+    { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = ":lua require('core/nvimtree').edit()<cr>" },
     { key = { 'cd', 'C' }, cb = ":lua require('core/nvimtree').cd()<cr>" },
     { key = { 't' }, cb = ":lua require('core/nvimtree').terminal_cd()<cr>" },
     { key = '=', cb = ":lua require('core/nvimtree').increase_width(2)<cr>" },
@@ -165,7 +165,7 @@ function M.setup()
   })
 
   vim.g.nvim_tree_window_picker_exclude = {
-    filetype = { 'notify', 'packer', 'qf' , 'confirm', 'popup'},
+    filetype = { 'notify', 'packer', 'qf', 'confirm', 'popup' },
     buftype = { 'terminal', 'nowrite' },
   }
 
@@ -210,6 +210,13 @@ end
 M.pwd_stack = require('stack/stack'):create()
 M.pwd_forward_stack = require('stack/stack'):create()
 M.pwd_back_state = 0
+
+function M.edit()
+  if _G.preview_popup then
+    _G.preview_popup:unmount()
+  end
+  require('nvim-tree').on_keypress('edit')
+end
 
 function M.pwd_stack_push()
   M.pwd_stack:push(vim.fn.getcwd())
