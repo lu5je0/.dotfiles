@@ -9,8 +9,8 @@ local function exit_vim_pupop(msg)
   local popup_options = {
     enter = true,
     border = {
-      style = 'rounded',
-      highlight = 'Red',
+      style = 'single',
+      highlight = 'Fg',
       text = {
         -- top = 'Exiting',
         -- top_align = 'center',
@@ -34,8 +34,8 @@ local function exit_vim_pupop(msg)
 
   popup:mount()
 
-  vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
   vim.fn.win_execute(popup.winid, 'set ft=confirm')
+  vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
   vim.api.nvim_buf_set_option(popup.bufnr, 'modifiable', false)
   vim.api.nvim_buf_set_option(popup.bufnr, 'readonly', true)
   vim.fn.cursor({ 99, 99 })

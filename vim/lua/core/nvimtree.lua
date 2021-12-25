@@ -164,6 +164,11 @@ function M.setup()
     },
   })
 
+  vim.g.nvim_tree_window_picker_exclude = {
+    filetype = { 'notify', 'packer', 'qf' , 'confirm', 'popup'},
+    buftype = { 'terminal', 'nowrite' },
+  }
+
   M.pwd_stack:push(vim.fn.getcwd())
 end
 

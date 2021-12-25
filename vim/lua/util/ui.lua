@@ -18,12 +18,12 @@ M.preview = function(file_path)
       },
     },
     highlight = 'Normal:Normal',
-    position = "50%",
+    position = '50%',
     size = {
-      width = "70%",
-      height = "80%",
+      width = '70%',
+      height = '80%',
     },
-    relative = "editor",
+    relative = 'editor',
     opacity = 1,
     zindex = 100,
     -- focusable = false,
@@ -88,6 +88,7 @@ M.popup_info_window = function(content)
 
   popup:mount()
 
+  vim.fn.win_execute(popup.winid, 'set ft=popup')
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, { content })
   vim.api.nvim_buf_set_option(popup.bufnr, 'modifiable', false)
   vim.api.nvim_buf_set_option(popup.bufnr, 'readonly', true)
