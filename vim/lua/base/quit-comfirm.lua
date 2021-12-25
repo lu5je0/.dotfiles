@@ -18,8 +18,8 @@ local function exit_vim_pupop(msg)
     },
     highlight = 'Normal:Normal',
     position = {
-      row = '40%',
-      col = '50%',
+      row = '45%',
+      col = '48%',
     },
     relative = 'editor',
     size = {
@@ -77,7 +77,7 @@ local function exit_vim_with_dialog()
   if #unsave_buffers ~= 0 then
     msg = 'The change of the following buffers will be discarded.\n'
     for _, buffer in ipairs(unsave_buffers) do
-      local name = require('nvim-web-devicons').get_icon(buffer.name, string.split(buffer.name, '.')[-1]) .. ' ' .. vim.fn.fnamemodify(buffer.name, ':t')
+      local name = require('nvim-web-devicons').get_icon(buffer.name, vim.fn.getbufvar(buffer.bufnr, '&filetype')) .. ' ' .. vim.fn.fnamemodify(buffer.name, ':t')
       if name == '' then
         name = '[No Name] ' .. buffer.bufnr
       end
