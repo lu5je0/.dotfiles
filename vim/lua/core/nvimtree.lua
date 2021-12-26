@@ -37,11 +37,12 @@ function M.setup()
   vim.g.nvim_tree_indent_markers = 1
 
   vim.cmd([[
-    " highlight NvimTreeFolderName guifg=#e5c07b
-    " highlight NvimTreeOpenedFolderName guifg=#e5c07b
-    " highlight default link NvimTreeFolderIcon Directory
-    " highlight NvimTreeEmptyFolderName guifg=#e5c07b
-    " highlight NvimTreeRootFolder guifg=#e06c75
+    hi NvimTreeFolderName guifg=#e5c07b
+    hi NvimTreeOpenedFolderName guifg=#e5c07b
+    hi default link NvimTreeFolderIcon Directory
+    hi NvimTreeEmptyFolderName guifg=#e5c07b
+    hi NvimTreeRootFolder guifg=#e06c75
+    hi NvimTreeGitDirty guifg=#e06c75
 
     autocmd BufWinEnter NvimTree setlocal cursorline
 
