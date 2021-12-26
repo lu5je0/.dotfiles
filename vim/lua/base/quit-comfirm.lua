@@ -18,8 +18,8 @@ local function exit_vim_pupop(msg)
     },
     highlight = 'Normal:Normal',
     position = {
-      row = '40%',
-      col = '50%',
+      row = '45%',
+      col = '48%',
     },
     relative = 'editor',
     size = {
