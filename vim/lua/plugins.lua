@@ -435,7 +435,7 @@ return packer.startup(function()
       vim.g.Illuminate_delay = 0
       vim.g.Illuminate_ftwhitelist = { 'vim', 'sh', 'python', 'lua', 'java' }
       vim.cmd([[
-      highlight illuminatedWord ctermbg=green guibg=#344134
+      hi! illuminatedWord ctermbg=green guibg=#344134
       ]])
     end,
   })

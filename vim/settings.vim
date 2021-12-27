@@ -79,12 +79,12 @@ let g:edge_disable_italic_comment = 1
 colorscheme edge
 
 " edge
-hi Folded guifg=#282c34 guibg=#5c6370
+hi! Folded guifg=#282c34 guibg=#5c6370
 
 " StatusLine 左边
-hi StatusLine guibg=#5C6370
-hi StatusLineNC guibg=#5C6370
+hi! StatusLine guibg=#5C6370
+hi! StatusLineNC guibg=#5C6370
 
 " leaderf
-hi FoldColumn guibg=none
+hi! FoldColumn guibg=none
 " }}}
