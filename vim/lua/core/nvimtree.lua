@@ -245,13 +245,13 @@ end
 
 function M.preview()
   local lib = require('nvim-tree.lib')
-  require('util.ui').preview(lib.get_node_at_cursor().absolute_path)
+  require('utils.ui').preview(lib.get_node_at_cursor().absolute_path)
 end
 
 function M.file_info()
   local lib = require('nvim-tree.lib')
   local info = vim.fn.system('ls -alhd "' .. lib.get_node_at_cursor().absolute_path .. '" -l --time-style="+%Y-%m-%d %H:%M:%S"')
-  require('util.ui').popup_info_window(info:sub(1, -2))
+  require('utils.ui').popup_info_window(info:sub(1, -2))
 end
 
 function M.toggle_width()

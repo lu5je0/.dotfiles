@@ -1,6 +1,6 @@
 -- Setup nvim-cmp.
 local cmp = require('cmp')
-local utils = require('util.utils')
+local utils = require('utils.utils')
 
 local comfirm = function(fallback)
   if cmp.visible() then

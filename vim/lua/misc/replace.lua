@@ -1,6 +1,6 @@
 local M = {}
 
-local utils = require('util.utils')
+local utils = require('utils.utils')
 
 local function replace(mode)
   utils.save_position()
