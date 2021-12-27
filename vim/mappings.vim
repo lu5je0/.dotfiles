@@ -128,5 +128,5 @@ nnoremap O O<space><BS>
 
 " augroup AutoReIndentAfterPaste
 "     autocmd!
-"     autocmd FileType vim,lua,python nmap <buffer> <silent> <expr> p v:lua.require('utils.utils').is_register_contains_newline('"') ? 'p`[V`]=^' : 'p'
+"     autocmd FileType vim,lua,python nmap <buffer> <silent> <expr> p v:lua.require('utils.register').is_register_contains_newline('"') ? 'p`[V`]=^' : 'p'
 " augroup END
