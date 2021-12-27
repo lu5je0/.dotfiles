@@ -1,9 +1,9 @@
 local M = {}
 
-local cursor = require('utils.cursor')
+local cursor_utils = require('utils.cursor-utils')
 
 local function replace(mode)
-  cursor.save_position()
+  cursor_utils.save_position()
 
   local target = vim.fn.input('replace with:')
 
@@ -25,7 +25,7 @@ local function replace(mode)
     fn.setline(index, fn.substitute(line, source, target, 'g'))
   end
 
-  cursor.goto_saved_position()
+  cursor_utils.goto_saved_position()
 end
 
 function M.v_replace()
