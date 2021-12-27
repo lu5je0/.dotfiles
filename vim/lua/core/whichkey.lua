@@ -224,7 +224,7 @@ M.setup = function()
       r = { ":lua require('core/leaderf').visual_leaderf('rg')<cr>", 'rg' },
     },
     c = {
-      f = { 'coc-format' },
+      f = { ':lua vim.lsp.buf.range_formatting()<cr>', 'format' },
     },
     g = {
       l = { ":lua require('core/fugitive').lines_changes()<cr>", 'show changs on select lines' },

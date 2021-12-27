@@ -77,10 +77,12 @@ local function exit_vim_with_dialog()
   if #unsave_buffers ~= 0 then
     msg = 'The change of the following buffers will be discarded.\n'
     for _, buffer in ipairs(unsave_buffers) do
-      local name = require('nvim-web-devicons').get_icon(buffer.name, vim.fn.getbufvar(buffer.bufnr, '&filetype')) .. ' ' .. vim.fn.fnamemodify(buffer.name, ':t')
-      if name == '' then
-        name = '[No Name] ' .. buffer.bufnr
+      local file_icon = require('nvim-web-devicons').get_icon(buffer.name, vim.fn.getbufvar(buffer.bufnr, '&filetype'), { default = true })
+      local filename = vim.fn.fnamemodify(buffer.name, ':t')
+      if filename == '' then
+        filename = '[No Name] '
       end
+      local name = file_icon .. ' ' .. filename
       name = '  ' .. name
       msg = msg .. '\n' .. name
     end

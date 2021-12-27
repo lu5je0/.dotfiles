@@ -81,15 +81,19 @@ return packer.startup(function()
   use({
     'kyazdani42/nvim-web-devicons',
     config = function()
-      require('nvim-web-devicons').setup({
-        override = {
-          xml = {
-            icon = '',
-            color = '#e37933',
-            name = 'Xml',
+      local plugin = require('nvim-web-devicons')
+      if plugin.has_loaded() then
+        plugin.setup({
+          override = {
+            xml = {
+              icon = '',
+              color = '#e37933',
+              name = 'Xml',
+            },
           },
-        },
-      })
+          default = true,
+        })
+      end
     end,
   })
 
