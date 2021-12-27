@@ -220,8 +220,8 @@ M.setup = function()
       r = { ":lua require('misc/replace').v_replace()<cr>", 'replace' },
     },
     f = {
-      f = { ":lua require('core/leaderf').visual_leaderf('file')<cr>", 'file' },
-      r = { ":lua require('core/leaderf').visual_leaderf('rg')<cr>", 'rg' },
+      f = { ":lua require('core.leaderf').visual_leaderf('file')<cr>", 'file' },
+      r = { ":lua require('core.leaderf').visual_leaderf('rg')<cr>", 'rg' },
     },
     c = {
       f = { ':lua vim.lsp.buf.range_formatting()<cr>', 'format' },

@@ -100,7 +100,7 @@ return packer.startup(function()
   use({
     'lu5je0/bufferline.nvim',
     config = function()
-      require('core/bufferline')
+      require('core.bufferline')
     end,
     requires = { 'nvim-web-devicons' },
   })
@@ -136,7 +136,7 @@ return packer.startup(function()
     opt = true,
     ft = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'sh' },
     config = function()
-      require('core/treesiter')
+      require('core.treesiter')
     end,
   })
 
@@ -269,7 +269,7 @@ return packer.startup(function()
     -- opt = true,
     -- cmd = {'Leaderf', 'Git'},
     config = function()
-      require('core/leaderf').setup()
+      require('core.leaderf').setup()
     end,
   })
 
@@ -299,7 +299,7 @@ return packer.startup(function()
       'nvim-lua/plenary.nvim',
     },
     config = function()
-      require('core/gitsigns').setup()
+      require('core.gitsigns').setup()
     end,
     event = 'BufRead',
   })
@@ -447,7 +447,7 @@ return packer.startup(function()
   use({
     'neovim/nvim-lspconfig',
     config = function()
-      require('core/lsp').setup()
+      require('core.lsp').setup()
     end,
     opt = true,
   })
@@ -455,7 +455,7 @@ return packer.startup(function()
   use({
     'hrsh7th/nvim-cmp',
     config = function()
-      require('core/cmp')
+      require('core.cmp')
     end,
     requires = {
       'hrsh7th/cmp-nvim-lsp',
@@ -505,7 +505,7 @@ return packer.startup(function()
   use({
     'puremourning/vimspector',
     config = function()
-      require('core/vimspector').setup()
+      require('core.vimspector').setup()
     end,
     keys = { '<F10>', '<S-F10>' },
     fn = { 'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations' },
@@ -517,20 +517,20 @@ return packer.startup(function()
     keys = { '<leader>e', '<leader>fe' },
     opt = true,
     config = function()
-      require('core/nvimtree').setup()
+      require('core.nvimtree').setup()
     end,
   })
 
   use({
     'folke/which-key.nvim',
     config = function()
-      require('core/whichkey').setup()
+      require('core.whichkey').setup()
     end,
   })
 
   -- use {
   --   'nvim-telescope/telescope.nvim',
-  --   config = function() require("core/telescope").setup() end,
+  --   config = function() require("core.telescope").setup() end,
   --   requires = {
   --     {'nvim-lua/plenary.nvim'},
   --     {'nvim-telescope/telescope-fzf-native.nvim', run='make'},

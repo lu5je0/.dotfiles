@@ -46,18 +46,18 @@ function M.setup()
 
     autocmd BufWinEnter NvimTree setlocal cursorline
 
-    autocmd DirChanged * lua require('core/nvimtree').pwd_stack_push()
+    autocmd DirChanged * lua require('core.nvimtree').pwd_stack_push()
 
     function NvimLocateFile()
       PackerLoad nvim-tree.lua
-      lua require("core/nvimtree").locate_file()
+      lua require("core.nvimtree").locate_file()
     endfunction
 
     lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
   ]])
 
   vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
-  vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core/nvimtree").locate_file()<cr>', { noremap = true, silent = true })
+  vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core.nvimtree").locate_file()<cr>', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<leader>fp', ':cd ~/.local/share/nvim/site/pack/packer<cr>', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<leader>fd', ':cd ~/.dotfiles<cr>', { noremap = true, silent = true })
 
@@ -68,16 +68,16 @@ function M.setup()
   local tree_cb = require('nvim-tree.config').nvim_tree_callback
   -- default mappings
   local list = {
-    { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = ":lua require('core/nvimtree').edit()<cr>" },
-    { key = { 'cd', 'C' }, cb = ":lua require('core/nvimtree').cd()<cr>" },
-    { key = { 't' }, cb = ":lua require('core/nvimtree').terminal_cd()<cr>" },
-    { key = '=', cb = ":lua require('core/nvimtree').increase_width(2)<cr>" },
-    { key = '-', cb = ":lua require('core/nvimtree').reduce_width(2)<cr>" },
-    { key = '+', cb = ":lua require('core/nvimtree').increase_width(1)<cr>" },
-    { key = '_', cb = ":lua require('core/nvimtree').reduce_width(1)<cr>" },
-    { key = 'f', cb = ":lua require('core/nvimtree').file_info()<cr>" },
-    { key = 'p', cb = ":lua require('core/nvimtree').preview()<cr>" },
-    { key = 'x', cb = ":lua require('core/nvimtree').toggle_width()<cr>" },
+    { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = ":lua require('core.nvimtree').edit()<cr>" },
+    { key = { 'cd', 'C' }, cb = ":lua require('core.nvimtree').cd()<cr>" },
+    { key = { 't' }, cb = ":lua require('core.nvimtree').terminal_cd()<cr>" },
+    { key = '=', cb = ":lua require('core.nvimtree').increase_width(2)<cr>" },
+    { key = '-', cb = ":lua require('core.nvimtree').reduce_width(2)<cr>" },
+    { key = '+', cb = ":lua require('core.nvimtree').increase_width(1)<cr>" },
+    { key = '_', cb = ":lua require('core.nvimtree').reduce_width(1)<cr>" },
+    { key = 'f', cb = ":lua require('core.nvimtree').file_info()<cr>" },
+    { key = 'p', cb = ":lua require('core.nvimtree').preview()<cr>" },
+    { key = 'x', cb = ":lua require('core.nvimtree').toggle_width()<cr>" },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
     { key = 'S', cb = tree_cb('vsplit') },
@@ -107,8 +107,8 @@ function M.setup()
     { key = 's', cb = tree_cb('system_open') },
     { key = 'q', cb = tree_cb('close') },
     { key = 'g?', cb = tree_cb('toggle_help') },
-    { key = '<c-o>', cb = ":lua require('core/nvimtree').back()<cr>" },
-    { key = '<c-i>', cb = ":lua require('core/nvimtree').forward()<cr>" },
+    { key = '<c-o>', cb = ":lua require('core.nvimtree').back()<cr>" },
+    { key = '<c-i>', cb = ":lua require('core.nvimtree').forward()<cr>" },
   }
 
   require('nvim-tree').setup({
