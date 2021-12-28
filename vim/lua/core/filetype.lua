@@ -11,6 +11,8 @@ require('filetype').setup({
       ['zshrc'] = 'sh',
       ['bashrc'] = 'sh',
       ['.ohmyenv'] = 'sh',
+      ['*tmux.conf'] = 'tmux',
+      ['tmux.conf'] = 'tmux',
     },
     complex = {
       -- Set the filetype of any full filename matching the regex to gitconfig
