@@ -14,9 +14,11 @@ let g:vista#renderer#icons = {
 " instead of the default one for these filetypes when using `:Vista` without
 " specifying the executive.
 let g:vista_executive_for = {
-  \ 'python': 'coc',
-  \ 'java': 'coc',
-  \ 'vim': 'coc',
+  \ 'python': 'nvim_lsp',
+  \ 'java': 'nvim_lsp',
+  \ 'vim': 'nvim_lsp',
+  \ 'lua': 'nvim_lsp',
+  \ 'json': 'nvim_lsp',
   \ }
 
 function! s:vista_mapping() abort

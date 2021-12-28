@@ -16,7 +16,7 @@ endif
 ]]
 
 local function load_plug()
-  if vim.fn.has("mac") == 1 then
+  if vim.fn.has('mac') == 1 then
     vim.g.python3_host_prog = '/usr/local/bin/python3'
   end
 
