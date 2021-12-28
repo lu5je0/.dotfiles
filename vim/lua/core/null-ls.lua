@@ -1,11 +1,13 @@
 local null_ls = require('null-ls')
 
 null_ls.setup({
+  -- debug = true,
   sources = {
     require('null-ls').builtins.formatting.stylua.with({
       extra_args = { '--config-path', vim.fn.stdpath('config') .. '/config/stylua.toml' },
     }),
     require('null-ls').builtins.formatting.autopep8,
+    require('core.null-ls-extra.sql-formatter')
     -- require("null-ls").builtins.code_actions.refactoring
     -- require("null-ls").builtins.diagnostics.eslint,
     -- require("null-ls").builtins.completion.spell,

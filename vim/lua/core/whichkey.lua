@@ -90,7 +90,7 @@ M.setup = function()
     c = {
       r = 'rename-variable',
       c = 'code-action',
-      f = 'code-format',
+      f = { ':lua vim.lsp.buf.formatting()<cr>', 'code-format' },
     },
     t = {
       name = '+tab',
