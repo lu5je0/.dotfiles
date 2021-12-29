@@ -133,8 +133,23 @@ VI_MODE_SET_CURSOR="true"
 
 bindkey -a H vi-first-non-blank
 bindkey -a L vi-end-of-line
+bindkey -a j down-line
+bindkey -a k up-line
 bindkey -a K history-beginning-search-backward
 bindkey -a J history-beginning-search-forward
+
+end-of-buffer() {
+CURSOR=9999999
+}
+zle -N end-of-buffer
+
+begin-of-buffer() {
+CURSOR=0
+}
+zle -N begin-of-buffer
+
+bindkey -a gg begin-of-buffer
+bindkey -a G end-of-buffer
 
 export KEYTIMEOUT=1
 
