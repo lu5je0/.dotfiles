@@ -32,6 +32,8 @@ elif [[ $uname =~ "microsoft" ]]; then
     alias gc='__git_prompt_git commit'
     alias gd='__git_prompt_git diff'
     alias e='explorer.exe'
+    alias yy='win32yank.exe -i'
+    alias p='win32yank.exe -o'
     alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
     clippaste () {
         powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
