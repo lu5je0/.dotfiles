@@ -295,15 +295,13 @@ return packer.startup(function()
 
   -- textobj
   use('kana/vim-textobj-user')
-
-  use({
-    'sgur/vim-textobj-parameter',
-    setup = function()
-      vim.g.vim_textobj_parameter_mapping = 'a'
-    end
-  })
-
   use('michaeljsmith/vim-indent-object')
+  -- use({
+  --   'sgur/vim-textobj-parameter',
+  --   setup = function()
+  --     vim.g.vim_textobj_parameter_mapping = 'a'
+  --   end
+  -- })
 
   use({
     'lewis6991/gitsigns.nvim',

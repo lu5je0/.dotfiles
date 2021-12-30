@@ -8,7 +8,6 @@ runtime settings.vim
 runtime functions.vim
 runtime mappings.vim
 runtime misc.vim
-runtime runner.vim
 runtime autocmd.vim
 if has("mac")
   runtime im.vim
