@@ -35,10 +35,10 @@ M.preview = function(file_path)
 
   popup:mount()
 
-  vim.fn.win_execute(popup.winid, 'setlocal signcolumn=no')
-  vim.fn.win_execute(popup.winid, 'setlocal number')
+  vim.wo[popup.winid].number = true
+  vim.wo[popup.winid].signcolumn = 'no'
   vim.fn.win_execute(popup.winid, 'e ' .. file_path)
-  vim.api.nvim_buf_set_option(vim.fn.winbufnr(popup.winid), 'buflisted', false)
+  vim.bo[vim.fn.winbufnr(popup.winid)].buflisted = false
 
   -- unmount component when cursor leaves buffer
   popup:on(event.BufLeave, function()
@@ -90,8 +90,8 @@ M.popup_info_window = function(content)
 
   vim.fn.win_execute(popup.winid, 'set ft=popup')
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, { content })
-  vim.api.nvim_buf_set_option(popup.bufnr, 'modifiable', false)
-  vim.api.nvim_buf_set_option(popup.bufnr, 'readonly', true)
+  vim.bo[vim.fn.winbufnr(popup.winid)].modifiable = false
+  vim.bo[vim.fn.winbufnr(popup.winid)].readonly = true
 
   -- unmount component when cursor leaves buffer
   popup:on(event.BufLeave, function()
