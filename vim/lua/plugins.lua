@@ -199,7 +199,6 @@ return packer.startup(function()
     end,
   })
 
-  use('kana/vim-textobj-user')
   use('tpope/vim-repeat')
 
   use({
@@ -238,6 +237,15 @@ return packer.startup(function()
       require('core.terminal').setup()
     end,
   })
+
+  -- use({
+  --   'luukvbaal/stabilize.nvim',
+  --   config = function()
+  --     require('stabilize').setup({
+  --       force = false
+  --     })
+  --   end,
+  -- })
 
   -- use {
   --   'lambdalisue/fern-git-status.vim',
@@ -285,13 +293,17 @@ return packer.startup(function()
     keys = { '<c-n>', '<m-n>' },
   })
 
+  -- textobj
+  use('kana/vim-textobj-user')
+
   use({
     'sgur/vim-textobj-parameter',
     setup = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
-    end,
-    opt = true,
+    end
   })
+
+  use('michaeljsmith/vim-indent-object')
 
   use({
     'lewis6991/gitsigns.nvim',

@@ -22,7 +22,6 @@ local function load_plug()
 
   local plugins = {
     'indent-blankline.nvim',
-    'vim-textobj-parameter',
     'nvim-lspconfig',
     'nvim-cmp',
     'nvim-autopairs',
