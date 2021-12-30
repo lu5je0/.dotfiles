@@ -26,7 +26,16 @@ M.run_select_in_terminal = function()
   M.send_to_terminal(vim.fn['visual#visual_selection']())
 end
 
+local function save_terminal_mode()
+  vim.cmd([[
+  autocmd TermOpen * startinsert
+  autocmd TermEnter * let g:terminal_mode='i'
+  autocmd BufEnter * if (&buftype ==# 'terminal' && get(g:, 'terminal_mode', 'i') == 'i') | startinsert! | endif
+  ]])
+end
+
 M.setup = function()
+  save_terminal_mode()
   require('toggleterm').setup({
     size = function(term)
       if term.direction == 'horizontal' then
@@ -39,7 +48,7 @@ M.setup = function()
     hide_numbers = true, -- hide the number column in toggleterm buffers
     shade_filetypes = {},
     shade_terminals = false,
-    start_in_insert = true,
+    start_in_insert = false,
     insert_mappings = true, -- whether or not the open mapping applies in insert mode
     persist_size = true,
     direction = 'float',
@@ -64,7 +73,7 @@ M.setup = function()
   tmap <silent> <c-l> <c-\><c-n><c-w>l
   tmap <silent> <c-j> <c-\><c-n><c-w>j
   tmap <silent> <c-k> <c-\><c-n><c-w>k
-  tmap <silent> <c-q> <c-\><c-n>
+  tmap <silent> <c-q> <c-\><c-n>:let g:terminal_mode='n'<cr>
   
   augroup TerminalConfig
     autocmd!
