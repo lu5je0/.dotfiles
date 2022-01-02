@@ -11,7 +11,6 @@ bl.setup({
         highlight = 'Directory',
         text_align = 'center',
       },
-
       {
         filetype = 'fern',
         text = 'File Explorer',
