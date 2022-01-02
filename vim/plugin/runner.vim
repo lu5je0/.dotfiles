@@ -30,6 +30,7 @@ function! RunFile()
         call RunFileInner("go run", "")
     elseif file_type == 'lua'
         if get(g:, 'lua_dev', 1) == 1
+            w
             luafile %
         else
             call RunFileInner("luajit", "")
