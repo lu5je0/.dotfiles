@@ -238,15 +238,6 @@ return packer.startup(function()
     end,
   })
 
-  -- use({
-  --   'luukvbaal/stabilize.nvim',
-  --   config = function()
-  --     require('stabilize').setup({
-  --       force = false
-  --     })
-  --   end,
-  -- })
-
   -- use {
   --   'lambdalisue/fern-git-status.vim',
   --   setup = function ()
