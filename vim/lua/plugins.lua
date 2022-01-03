@@ -262,15 +262,15 @@ return packer.startup(function()
     end,
   })
 
-  -- use({
-  --   'lu5je0/LeaderF',
-  --   run = './install.sh',
-  --   -- opt = true,
-  --   -- cmd = {'Leaderf', 'Git'},
-  --   config = function()
-  --     require('core.leaderf').setup()
-  --   end,
-  -- })
+  use({
+    'lu5je0/LeaderF',
+    run = './install.sh',
+    -- opt = true,
+    -- cmd = {'Leaderf', 'Git'},
+    config = function()
+      require('core.leaderf').setup()
+    end,
+  })
 
   use({
     'mg979/vim-visual-multi',
@@ -529,22 +529,22 @@ return packer.startup(function()
     end,
   })
 
-  use {
-    'nvim-telescope/telescope.nvim',
-    config = function() require("core.telescope").setup() end,
-    requires = {
-      {'nvim-lua/plenary.nvim'},
-      {'nvim-telescope/telescope-fzf-native.nvim', run='make'},
-      {'nvim-telescope/telescope-project.nvim'},
-      {
-        'AckslD/nvim-neoclip.lua',
-        config = function()
-          require('neoclip').setup({
-            default_register = '*'
-          })
-        end,
-      }
-    }
-  }
+  -- use {
+  --   'nvim-telescope/telescope.nvim',
+  --   config = function() require("core.telescope").setup() end,
+  --   requires = {
+  --     {'nvim-lua/plenary.nvim'},
+  --     {'nvim-telescope/telescope-fzf-native.nvim', run='make'},
+  --     {'nvim-telescope/telescope-project.nvim'},
+  --     {
+  --       'AckslD/nvim-neoclip.lua',
+  --       config = function()
+  --         require('neoclip').setup({
+  --           default_register = '*'
+  --         })
+  --       end,
+  --     }
+  --   }
+  -- }
 
 end)
