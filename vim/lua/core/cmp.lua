@@ -24,7 +24,7 @@ local comfirm = function(fallback)
         'except',
         'catch',
       }
-      if table.find(indent_change_items, label) then
+      if table.contain(indent_change_items, label) then
         cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert })
         local indent = vim.fn.indent('.')
         local cmd = [[

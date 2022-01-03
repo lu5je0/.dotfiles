@@ -2,21 +2,6 @@ function string.startswith(self, str)
   return string.sub(self, 1, string.len(str)) == str
 end
 
-function table.dump(o)
-  if type(o) == 'table' then
-    local s = '{ '
-    for k, v in pairs(o) do
-      if type(k) ~= 'number' then
-        k = '"' .. k .. '"'
-      end
-      s = s .. '[' .. k .. '] = ' .. table.dump(v) .. ','
-    end
-    return s .. '} '
-  else
-    return tostring(o)
-  end
-end
-
 function string:split(delimiter)
   local result = { }
   local from  = 1
@@ -30,9 +15,9 @@ function string:split(delimiter)
   return result
 end
 
-function table.find(t, value)
-  if t and type(t) == 'table' and value then
-    for _, v in ipairs(t) do
+function table:contain(value)
+  if self and type(self) == 'table' and value then
+    for _, v in ipairs(self) do
       if v == value then
         return true
       end
