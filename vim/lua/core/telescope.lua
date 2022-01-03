@@ -14,6 +14,7 @@ local function key_mapping()
   vim.api.nvim_set_keymap('n', '<leader>fn', ":lua require('telescope.builtin').filetypes{}<cr>", opts)
   vim.api.nvim_set_keymap('n', '<leader>fa', ":lua require('telescope').extensions.project.project{}<cr>", opts)
   vim.api.nvim_set_keymap('n', '<leader>fj', ":lua require('telescope.builtin').find_files{search_dirs={'~/junk-file'}}<cr>", opts)
+  vim.api.nvim_set_keymap('n', '<leader>fp', ":Telescope neoclip star<cr>", opts)
 end
 
 function M.setup()
