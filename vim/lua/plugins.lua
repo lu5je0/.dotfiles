@@ -286,7 +286,7 @@ return packer.startup(function()
 
   -- textobj
   use('kana/vim-textobj-user')
-  use('michaeljsmith/vim-indent-object')
+  -- use('michaeljsmith/vim-indent-object')
   -- use({
   --   'sgur/vim-textobj-parameter',
   --   setup = function()
