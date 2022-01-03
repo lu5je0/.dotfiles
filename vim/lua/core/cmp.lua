@@ -36,10 +36,13 @@ local comfirm = function(fallback)
           if nvim_get_mode()['mode'] == 's'
             return
           endif
-          
+
           norm ==
-          if indent('.') != indent_num
-            call cursor(c[1], c[2] - 2)
+          let sw = shiftwidth()
+          if indent('.') < indent_num
+            call cursor(c[1], c[2] - sw)
+          elseif indent('.') > indent_num
+            call cursor(c[1], c[2] + sw)
           else
             call cursor(c[1], c[2])
           endif
