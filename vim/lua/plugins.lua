@@ -531,7 +531,7 @@ return packer.startup(function()
     config = function()
       require("scrollbar").setup({
         handle = {
-          color = '#34454f'
+          color = '#5C6370'
         },
         excluded_filetypes = { "NvimTree" }
       })
