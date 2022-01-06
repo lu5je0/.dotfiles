@@ -32,7 +32,7 @@ local function load_plug()
   end
 
   require('packer').loader(unpack(plugins))
-  vim.o.clipboard = 'unnamed'
+  vim.o.clipboard = 'unnamedplus'
 end
 
 vim.defer_fn(load_plug, 0)
