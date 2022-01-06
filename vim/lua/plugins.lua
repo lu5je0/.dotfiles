@@ -48,7 +48,16 @@ return packer.startup(function()
 
   use({
     'nvim-lualine/lualine.nvim',
-    requires = { 'kyazdani42/nvim-web-devicons', opt = true },
+    requires = {
+      { 'kyazdani42/nvim-web-devicons', opt = true },
+      -- {
+      --   'nvim-lua/lsp-status.nvim',
+      --   config = function()
+      --     local lsp_status = require('lsp-status')
+      --     lsp_status.register_progress()
+      --   end
+      -- }
+    },
     config = function()
       require('core.lualine')
     end,
@@ -526,17 +535,17 @@ return packer.startup(function()
     opt = true,
   })
 
-  use({
-    'petertriho/nvim-scrollbar',
-    config = function()
-      require("scrollbar").setup({
-        handle = {
-          color = '#5C6370'
-        },
-        excluded_filetypes = { "NvimTree" }
-      })
-    end
-  })
+  -- use({
+  --   'petertriho/nvim-scrollbar',
+  --   config = function()
+  --     require("scrollbar").setup({
+  --       handle = {
+  --         color = '#5C6370'
+  --       },
+  --       excluded_filetypes = { "NvimTree" , "confirm" }
+  --     })
+  --   end
+  -- })
 
   -- use {
   --   'nvim-telescope/telescope.nvim',

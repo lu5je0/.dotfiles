@@ -213,6 +213,15 @@ ins_right({
   padding = { left = 0, right = 1 },
 })
 
+-- lsp status
+-- ins_right({
+--   function()
+--     return require('lsp-status').status()
+--   end,
+--   color = 'LualineMode',
+--   padding = { left = 1, right = 1 },
+-- })
+
 ins_right({
   -- Lsp server name .
   function()
