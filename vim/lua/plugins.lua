@@ -92,7 +92,7 @@ return packer.startup(function()
         },
         default = true,
       })
-    end
+    end,
   })
 
   use({
@@ -140,7 +140,6 @@ return packer.startup(function()
 
   -- highlighting
   use({ 'chr4/nginx.vim' })
-  use({ 'cespare/vim-toml' })
   use({ 'lu5je0/vim-java-bytecode' })
   use({
     'elzr/vim-json',
@@ -315,9 +314,9 @@ return packer.startup(function()
     opt = true,
     cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
     fn = { 'fugitive#repo' },
-    requires = {
-      { 'skywind3000/asynctasks.vim', opt = true },
-    },
+    -- requires = {
+    --   { 'skywind3000/asynctasks.vim', opt = true },
+    -- },
   })
 
   use({
@@ -333,23 +332,23 @@ return packer.startup(function()
     cmd = { 'StartupTime' },
   })
 
-  -- use {
-  --   'skywind3000/asyncrun.vim',
-  --   opt = true,
-  --   cmd = 'AsyncRun',
-  --   requires = {
-  --     {'skywind3000/asynctasks.vim', opt = true},
-  --     {'skywind3000/asyncrun.extra', opt = true},
-  -- {
-  --   'preservim/vimux',
-  --   config = function ()
-  --     vim.g.VimuxHeight = "50"
-  --     vim.g.VimuxOrientation = "h"
-  --   end,
-  --   opt = true
-  -- }
-  -- },
-  -- }
+  use({
+    'skywind3000/asyncrun.vim',
+    opt = true,
+    cmd = 'AsyncRun',
+    requires = {
+      { 'skywind3000/asynctasks.vim', opt = true },
+      { 'skywind3000/asyncrun.extra', opt = true },
+      {
+        'preservim/vimux',
+        config = function()
+          vim.g.VimuxHeight = '50'
+          vim.g.VimuxOrientation = 'h'
+        end,
+        opt = true,
+      },
+    },
+  })
 
   use({
     'mbbill/undotree',
@@ -361,14 +360,14 @@ return packer.startup(function()
   })
 
   use({
-    'junegunn/vim-peekaboo',
+    'junegunn/vim-peekaboo'
   })
 
   use({
     'tpope/vim-surround',
   })
 
-  local nvim_colorizer_ft = { 'vim', 'lua' }
+  local nvim_colorizer_ft = { 'vim', 'lua', 'css' }
   use({
     'norcalli/nvim-colorizer.lua',
     config = function()
@@ -411,14 +410,12 @@ return packer.startup(function()
     end,
   })
 
-  use({ 'williamboman/nvim-lsp-installer' })
-
-  use({ 'ray-x/lsp_signature.nvim' })
-
   use({ 'kevinhwang91/nvim-bqf' })
 
+  -- lsp
+  use({ 'williamboman/nvim-lsp-installer' })
+  use({ 'ray-x/lsp_signature.nvim' })
   use({ 'folke/lua-dev.nvim' })
-
   use({
     'jose-elias-alvarez/null-ls.nvim',
     config = function()
@@ -544,5 +541,4 @@ return packer.startup(function()
   --     }
   --   }
   -- }
-
 end)
