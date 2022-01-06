@@ -332,23 +332,23 @@ return packer.startup(function()
     cmd = { 'StartupTime' },
   })
 
-  use({
-    'skywind3000/asyncrun.vim',
-    opt = true,
-    cmd = 'AsyncRun',
-    requires = {
-      { 'skywind3000/asynctasks.vim', opt = true },
-      { 'skywind3000/asyncrun.extra', opt = true },
-      {
-        'preservim/vimux',
-        config = function()
-          vim.g.VimuxHeight = '50'
-          vim.g.VimuxOrientation = 'h'
-        end,
-        opt = true,
-      },
-    },
-  })
+  -- use({
+  --   'skywind3000/asyncrun.vim',
+  --   opt = true,
+  --   cmd = 'AsyncRun',
+  --   requires = {
+  --     { 'skywind3000/asynctasks.vim', opt = true },
+  --     { 'skywind3000/asyncrun.extra', opt = true },
+  --     {
+  --       'preservim/vimux',
+  --       config = function()
+  --         vim.g.VimuxHeight = '50'
+  --         vim.g.VimuxOrientation = 'h'
+  --       end,
+  --       opt = true,
+  --     },
+  --   },
+  -- })
 
   use({
     'mbbill/undotree',

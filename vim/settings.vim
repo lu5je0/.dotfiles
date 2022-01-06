@@ -49,23 +49,7 @@ if has("autocmd")
     au BufReadPost * if line("'\"") > 1 && &ft != "gitcommit" && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
 
-if has("persistent_undo")
-    if has("win64")
-        let home = $HOME . "\\.undodir"
-    else
-        let home = $HOME . "/.undodir"
-    endif
-    if has("nvim")
-        let home = home . "_neovim"
-    endif
-
-    if filewritable(&undodir) == 0
-        call mkdir(&undodir, "p")
-    endif
-
-    execute "set undodir=" . home
-    set undofile
-endif
+set undofile
 
 " 不显示启动界面
 set shortmess=atI
