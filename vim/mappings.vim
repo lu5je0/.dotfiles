@@ -75,7 +75,6 @@ nmap <silent> <C-L> <C-w>l
 
 nmap <silent> <left> :bp<cr>
 nmap <silent> <right> :bn<cr>
-nmap <silent> <leader>Q :call QuitForce()<CR>
 nmap Q <Nop>
 
 command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)

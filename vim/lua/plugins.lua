@@ -360,7 +360,7 @@ return packer.startup(function()
   })
 
   use({
-    'junegunn/vim-peekaboo'
+    'junegunn/vim-peekaboo',
   })
 
   use({
@@ -522,6 +522,8 @@ return packer.startup(function()
     config = function()
       require('core.whichkey').setup()
     end,
+    keys = { ',' },
+    opt = true
   })
 
   -- use {
