@@ -76,6 +76,7 @@ local function on_attach(client, bufnr)
       if vim.fn.has('nvim-0.6') == 1 then
         vim.diagnostic.open_float(0, { scope = 'cursor' }) -- for neovim 0.6.0+, replaces show_{line,position}_diagnostics
       else
+        ---@diagnostic disable-next-line: deprecated
         vim.lsp.diagnostic.show_position_diagnostics({ show_header = false })
       end
     end
@@ -196,7 +197,7 @@ local function lsp_diagnostic()
     severity_sort = true,
     update_in_insert = true,
   })
-  local signs = { Error = ' ', Warn = ' ', Hint = ' ', Info = ' ' }
+  local signs = { Error = ' ', Warn = ' ', Hint = ' ', Info = ' ' }
   for type, icon in pairs(signs) do
     local hl = 'DiagnosticSign' .. type
     vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
