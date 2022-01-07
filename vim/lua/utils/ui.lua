@@ -58,6 +58,8 @@ M.popup_info_window = function(content)
   local Popup = require('nui.popup')
   local event = require('nui.utils.autocmd').event
 
+  local content_array = content:split('\n')
+
   local popup_options = {
     enter = false,
     border = {
@@ -74,8 +76,8 @@ M.popup_info_window = function(content)
     },
     relative = 'cursor',
     size = {
-      width = #content,
-      height = 1,
+      width = #content_array[1],
+      height = #content_array,
     },
     opacity = 1,
     zindex = 100,
@@ -89,7 +91,7 @@ M.popup_info_window = function(content)
   popup:mount()
 
   vim.fn.win_execute(popup.winid, 'set ft=popup')
-  vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, { content })
+  vim.api.nvim_buf_set_lines(popup.bufnr, 0, 0, false, content_array)
   vim.bo[vim.fn.winbufnr(popup.winid)].modifiable = false
   vim.bo[vim.fn.winbufnr(popup.winid)].readonly = true
 
