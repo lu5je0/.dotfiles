@@ -87,3 +87,7 @@ if has('wsl')
           \   'cache_enabled': 1,
           \ }
 endif
+
+if has('mac')
+    let g:python3_host_prog = '/usr/local/bin/python3'
+endif
