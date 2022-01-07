@@ -51,6 +51,7 @@ M.preview = function(file_path)
 end
 
 M.popup_info_window = function(content)
+  -- 关闭上一个弹窗
   if _G.preview_popup ~= nil then
     _G.preview_popup:unmount()
   end
@@ -59,6 +60,11 @@ M.popup_info_window = function(content)
   local event = require('nui.utils.autocmd').event
 
   local content_array = content:split('\n')
+
+  local width = 0
+  for _, line in ipairs(content_array) do
+    width = math.max(width, #line)
+  end
 
   local popup_options = {
     enter = false,
@@ -76,7 +82,7 @@ M.popup_info_window = function(content)
     },
     relative = 'cursor',
     size = {
-      width = #content_array[1],
+      width = width,
       height = #content_array,
     },
     opacity = 1,
