@@ -523,8 +523,20 @@ return packer.startup(function()
       require('core.whichkey').setup()
     end,
     keys = { ',' },
-    opt = true
+    opt = true,
   })
+
+  -- use({
+  --   'petertriho/nvim-scrollbar',
+  --   config = function()
+  --     require("scrollbar").setup({
+  --       handle = {
+  --         color = '#33353f'
+  --       },
+  --       excluded_filetypes = { "NvimTree" }
+  --     })
+  --   end
+  -- })
 
   -- use {
   --   'nvim-telescope/telescope.nvim',
