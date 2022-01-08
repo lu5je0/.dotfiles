@@ -536,17 +536,17 @@ return packer.startup(function()
     opt = true,
   })
 
-  -- use({
-  --   'petertriho/nvim-scrollbar',
-  --   config = function()
-  --     require("scrollbar").setup({
-  --       handle = {
-  --         color = '#5C6370'
-  --       },
-  --       excluded_filetypes = { "NvimTree" , "confirm" }
-  --     })
-  --   end
-  -- })
+  use({
+    'petertriho/nvim-scrollbar',
+    config = function()
+      require("scrollbar").setup({
+        handle = {
+          color = '#5C6370'
+        },
+        excluded_filetypes = { "NvimTree" , "confirm", "toggleterm" }
+      })
+    end
+  })
 
   -- use {
   --   'nvim-telescope/telescope.nvim',
