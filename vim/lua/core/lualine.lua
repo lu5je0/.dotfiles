@@ -185,7 +185,8 @@ ins_left({
 
 ins_left({
   function()
-    return [[ %2p%% %l:%c ]]
+    -- return [[ %2p%% %l:%c ]]
+    return [[ %l:%c ]]
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
