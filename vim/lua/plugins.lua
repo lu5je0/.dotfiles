@@ -235,7 +235,7 @@ return packer.startup(function()
     'lu5je0/im-switcher.nvim',
     opt = true,
     disable = vim.fn.has('wsl') == 0,
-    event = { 'InsertEnter' }
+    event = { 'InsertEnter' },
   })
 
   use({
@@ -539,13 +539,13 @@ return packer.startup(function()
   use({
     'petertriho/nvim-scrollbar',
     config = function()
-      require("scrollbar").setup({
+      require('scrollbar').setup({
         handle = {
-          color = '#5C6370'
+          color = '#5C6370',
         },
-        excluded_filetypes = { "NvimTree" , "confirm", "toggleterm" }
+        excluded_filetypes = { 'NvimTree', 'confirm', 'toggleterm', 'vista' },
       })
-    end
+    end,
   })
 
   -- use {
