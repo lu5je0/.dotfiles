@@ -412,14 +412,6 @@ return packer.startup(function()
     ft = { 'markdown' },
   })
 
-  use({
-    'masukomi/vim-markdown-folding',
-    ft = { 'markdown' },
-    config = function()
-      vim.g.markdown_fold_style = 'nested'
-    end,
-  })
-
   use({ 'kevinhwang91/nvim-bqf' })
 
   -- lsp
