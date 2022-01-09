@@ -13,8 +13,6 @@ require('nvim-treesitter.configs').setup({
 })
 
 vim.cmd(([[
-set foldmethod=expr
-set foldexpr=nvim_treesitter#foldexpr()
 hi TSPunctBracket guifg=#ABB2BF
 
 " hi! TSTitle ctermfg=168 guifg=#e06c75
@@ -23,6 +21,6 @@ hi TSPunctBracket guifg=#ABB2BF
 
 augroup ts_fold_fix
     autocmd!
-    autocmd Filetype %s set foldmethod=expr
+    autocmd Filetype %s setlocal foldmethod=expr | setlocal foldexpr=nvim_treesitter#foldexpr()
 augroup END
 ]]):format(table.concat(_G.ts_filtypes, ',')))

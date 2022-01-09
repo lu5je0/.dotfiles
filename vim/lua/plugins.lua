@@ -137,7 +137,7 @@ return packer.startup(function()
     requires = { 'mattn/webapi-vim' },
   })
 
-  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash' }
+  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', --[[ 'markdown', ]] 'bash' }
   use({
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
