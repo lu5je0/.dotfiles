@@ -28,7 +28,7 @@ function! misc#fold_text()
   let l:separator = ' … '
   let l:separatorlen = strlen(substitute(l:separator, '.', 'x', 'g'))
   let l:start = strpart(l:start , 0, l:width - strlen(substitute(l:end, '.', 'x', 'g')) - l:separatorlen)
-  let l:text = l:start . trim(getline(v:foldstart + 1)) . '...' . l:end
+  let l:text = l:start . ' ' . trim(getline(v:foldstart + 1)) . ' ... ' . l:end
 
   return l:text . repeat(' ', l:width - strlen(substitute(l:text, ".", "x", "g")) + 1) . l:info
 endfunction

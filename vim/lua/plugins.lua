@@ -137,7 +137,8 @@ return packer.startup(function()
     requires = { 'mattn/webapi-vim' },
   })
 
-  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', --[[ 'markdown', ]] 'bash' }
+  -- stylua: ignore
+  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', --[[ 'markdown', ]] 'bash', }
   use({
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
@@ -439,16 +440,12 @@ return packer.startup(function()
     end,
   })
 
-  -- use {
-  --   'ThePrimeagen/refactoring.nvim'
-  -- }
-
   use({
     'neovim/nvim-lspconfig',
     config = function()
       require('core.lsp').setup()
     end,
-    opt = true,
+    opt = true
   })
 
   use({
@@ -485,7 +482,7 @@ return packer.startup(function()
 
   use({
     'lukas-reineke/indent-blankline.nvim',
-    setup = function()
+    config = function()
       vim.g.indent_blankline_char = '▏'
       vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm', 'confirm' }
       vim.g.indent_blankline_show_first_indent_level = false
