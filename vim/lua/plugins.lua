@@ -135,30 +135,16 @@ return packer.startup(function(use)
   })
 
   -- stylua: ignore
+  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', }
   use({
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
     opt = true,
-    setup = function()
-    _G.ts_filtypes = {
-      'json',
-      'python',
-      'java',
-      'lua',
-      'c',
-      'vim',
-      'bash',
-      'go',
-      'rust',
-      'toml',
-      'yaml', --[[ 'markdown', ]]
-      'bash',
-    }
-    end,
+    commit = '8ada8faf2fd5a74cc73090ec856fa88f34cd364b',
     config = function()
     require('core.treesiter')
     end,
-    ft = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', },
+    ft = _G.ts_filtypes
   })
 
   -- highlighting
