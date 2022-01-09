@@ -31,4 +31,4 @@ local function load_plug()
   vim.o.clipboard = 'unnamedplus'
 end
 
-vim.defer_fn(load_plug, 0)
+vim.defer_fn(load_plug, 10)

@@ -17,14 +17,11 @@ augroup end
 ]])
 
 return packer.startup(function(use)
-
   -- Speed up loading Lua modules in Neovim to improve startup time.
   use('lewis6991/impatient.nvim')
 
   -- Packer can manage itself
-  use({
-    'wbthomason/packer.nvim'
-  })
+  use('wbthomason/packer.nvim')
 
   use('nvim-lua/plenary.nvim')
 
@@ -143,10 +140,23 @@ return packer.startup(function(use)
     run = ':TSUpdate',
     opt = true,
     setup = function()
-      _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', --[[ 'markdown', ]] 'bash', }
+    _G.ts_filtypes = {
+      'json',
+      'python',
+      'java',
+      'lua',
+      'c',
+      'vim',
+      'bash',
+      'go',
+      'rust',
+      'toml',
+      'yaml', --[[ 'markdown', ]]
+      'bash',
+    }
     end,
     config = function()
-      require('core.treesiter')
+    require('core.treesiter')
     end,
     ft = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', },
   })
@@ -447,7 +457,7 @@ return packer.startup(function(use)
     config = function()
       require('core.lsp').setup()
     end,
-    opt = true
+    opt = true,
   })
 
   use({
