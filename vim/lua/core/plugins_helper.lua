@@ -1,7 +1,7 @@
 local M = {}
 
 function M.load_plugin(plugin)
-  if not packer_plugins[plugin]['loaded'] then
+  if not packer_plugins[plugin] and packer_plugins[plugin].loaded then
     vim.cmd('PackerLoad ' .. plugin)
     return true
   end

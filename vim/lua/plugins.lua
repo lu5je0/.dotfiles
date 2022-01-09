@@ -16,15 +16,15 @@ autocmd BufWritePost plugins.lua source <afile> | PackerCompile
 augroup end
 ]])
 
--- Only required if you have packer configured as `opt`
-return packer.startup(function()
-  local use = packer.use
+return packer.startup(function(use)
 
   -- Speed up loading Lua modules in Neovim to improve startup time.
   use('lewis6991/impatient.nvim')
 
   -- Packer can manage itself
-  use('wbthomason/packer.nvim')
+  use({
+    'wbthomason/packer.nvim'
+  })
 
   use('nvim-lua/plenary.nvim')
 
@@ -138,15 +138,17 @@ return packer.startup(function()
   })
 
   -- stylua: ignore
-  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', --[[ 'markdown', ]] 'bash', }
   use({
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
     opt = true,
-    ft = _G.ts_filtypes,
+    setup = function()
+      _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', --[[ 'markdown', ]] 'bash', }
+    end,
     config = function()
       require('core.treesiter')
     end,
+    ft = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', },
   })
 
   -- highlighting

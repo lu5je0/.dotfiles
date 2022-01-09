@@ -1,6 +1,6 @@
 require('impatient')
-require('enhance')
 require('plugins')
+require('enhance')
 require('commands')
 
 vim.cmd([[
@@ -32,5 +32,3 @@ local function load_plug()
 end
 
 vim.defer_fn(load_plug, 0)
-
-vim.cmd("let g:markdown_folding = 1")
