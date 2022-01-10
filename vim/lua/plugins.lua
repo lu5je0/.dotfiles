@@ -431,10 +431,16 @@ return packer.startup(function(use)
     'RRethy/vim-illuminate',
     config = function()
       vim.g.Illuminate_delay = 0
-      vim.g.Illuminate_ftwhitelist = { 'vim', 'sh', 'python', 'lua', 'java' }
       vim.cmd([[
       hi! illuminatedWord ctermbg=green guibg=#344134
       ]])
+      vim.defer_fn(function()
+        vim.cmd([[
+        augroup illuminated_autocmd
+          autocmd!
+        augroup END
+        ]])
+      end, 0)
     end,
   })
 
