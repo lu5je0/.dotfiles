@@ -8,8 +8,16 @@ M.setup = function()
   ]])
 end
 
+M.buffer_snippets_map = {}
+
 function M.is_snippet_contain(snippet)
-  for _, item in ipairs(vim.fn['vsnip#get_complete_items'](".")) do
+  local cached_snippets = M.buffer_snippets_map[vim.bo.filetype]
+  if cached_snippets == nil then
+    cached_snippets = vim.fn['vsnip#get_complete_items'](".")
+    M.buffer_snippets_map[vim.bo.filetype] = cached_snippets
+  end
+
+  for _, item in ipairs(cached_snippets) do
     if item.abbr == snippet then
       return true
     end
