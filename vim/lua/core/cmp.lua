@@ -4,7 +4,9 @@ local utils = require('utils.utils')
 
 local comfirm = function(fallback)
   if cmp.visible() then
-    if vim.fn['vsnip#expandable']() == 1 and cmp.get_selected_entry() == cmp.core.view:get_first_entry() then
+    if vim.fn['vsnip#expandable']() == 1
+      and cmp.get_selected_entry() == cmp.core.view:get_first_entry()
+      and require('core.vsnip').is_snippet_contain(cmp.get_selected_entry().completion_item.label) then
       vim.fn['vsnip#expand']()
     else
       local entry = cmp.get_selected_entry()
