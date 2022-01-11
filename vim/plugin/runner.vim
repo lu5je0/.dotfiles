@@ -20,6 +20,8 @@ function! RunFile()
         endif
     elseif file_type == 'java'
         call RunFileInner("java", "")
+    elseif file_type == 'rest'
+      call VrcQuery()
     elseif file_type == 'c'
         call RunFileInner("gcc", " && ./a.out && rm ./a.out")
     elseif file_type == 'sh'
