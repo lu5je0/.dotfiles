@@ -11,7 +11,7 @@ M.send_to_terminal = function(cmd, opts)
   vim.cmd(v_cmd)
 end
 
-M.direction = 'float'
+M.direction = 'horizontal'
 
 M.toggle = function()
   vim.cmd('ToggleTerm direction=' .. M.direction)
@@ -51,7 +51,7 @@ M.setup = function()
     start_in_insert = false,
     insert_mappings = true, -- whether or not the open mapping applies in insert mode
     persist_size = true,
-    direction = 'float',
+    direction = M.direction,
     close_on_exit = true, -- close the terminal window when the process exits
     shell = vim.o.shell, -- change the default shell
   })

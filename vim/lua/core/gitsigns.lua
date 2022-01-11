@@ -20,6 +20,7 @@ function M.setup()
       ['v <leader>gu'] = '<cmd>lua require"gitsigns".reset_hunk({vim.fn.line("."), vim.fn.line("v")})<CR>',
       ['n <leader>gg'] = '<cmd>lua require"gitsigns".preview_hunk()<CR>',
       ['n <leader>gB'] = '<cmd>lua require"gitsigns".blame_line(true)<CR>',
+      ['n <leader>gw'] = '<cmd>Gitsigns toggle_word_diff<CR>',
 
       -- Text objects
       ['o ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
