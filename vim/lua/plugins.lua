@@ -140,7 +140,6 @@ return packer.startup(function(use)
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
     opt = true,
-    commit = '8ada8faf2fd5a74cc73090ec856fa88f34cd364b',
     config = function()
     require('core.treesiter')
     end,

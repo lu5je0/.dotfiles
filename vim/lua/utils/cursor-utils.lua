@@ -1,4 +1,4 @@
-local M
+local M = {}
 
 function M.save_position()
   M.cursor_position = vim.fn.getpos(".")
