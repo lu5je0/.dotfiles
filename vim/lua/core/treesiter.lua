@@ -12,6 +12,9 @@ require('nvim-treesitter.configs').setup({
   },
 })
 
+local fold_filetypes = vim.deepcopy(ts_filtypes)
+table.remove_by_value(fold_filetypes, 'markdown')
+
 vim.cmd(([[
 hi TSPunctBracket guifg=#ABB2BF
 
@@ -23,4 +26,4 @@ augroup ts_fold_fix
     autocmd!
     autocmd Filetype %s setlocal foldmethod=expr | setlocal foldexpr=nvim_treesitter#foldexpr()
 augroup END
-]]):format(table.concat(_G.ts_filtypes, ',')))
+]]):format(table.concat(fold_filetypes, ',')))
