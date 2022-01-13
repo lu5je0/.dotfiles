@@ -483,11 +483,13 @@ return packer.startup(function(use)
     opt = true,
   })
 
+  -- _G.indent_blankline_filetypes = { 'vim', 'lua', 'json', 'java', 'c', 'python', 'sql', 'xml', 'html', 'bash' }
   use({
     'lukas-reineke/indent-blankline.nvim',
     config = function()
       vim.g.indent_blankline_char = '▏'
       vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm', 'confirm' }
+      -- vim.g.indent_blankline_filetype = _G.indent_blankline_filetypes
       vim.g.indent_blankline_show_first_indent_level = false
       vim.g.indent_blankline_show_trailing_blankline_indent = false
       vim.cmd([[highlight IndentBlanklineIndent guifg=#373C44 gui=nocombine]])
@@ -497,7 +499,8 @@ return packer.startup(function(use)
           'IndentBlanklineIndent',
         },
       })
-    end
+    end,
+    -- ft = _G.indent_blankline_filetypes
   })
 
   use({
