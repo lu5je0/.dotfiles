@@ -16,7 +16,6 @@ endif
 
 local function load_plug()
   local plugins = {
-    'indent-blankline.nvim',
     'nvim-cmp',
     'nvim-lspconfig',
     'nvim-autopairs',

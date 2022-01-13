@@ -497,8 +497,7 @@ return packer.startup(function(use)
           'IndentBlanklineIndent',
         },
       })
-    end,
-    opt = true,
+    end
   })
 
   use({
