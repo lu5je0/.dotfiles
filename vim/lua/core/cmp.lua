@@ -2,6 +2,22 @@
 local cmp = require('cmp')
 local utils = require('utils.utils')
 
+local indent_change_items = {
+  'endif',
+  'end',
+  'else',
+  'elif',
+  'elseif .. then',
+  'elseif',
+  'else .. then~',
+  'endfor',
+  'endfunction',
+  'endwhile',
+  'endtry',
+  'except',
+  'catch',
+}
+
 local comfirm = function(fallback)
   if cmp.visible() then
     if vim.fn['vsnip#expandable']() == 1
@@ -10,22 +26,11 @@ local comfirm = function(fallback)
       vim.fn['vsnip#expand']()
     else
       local entry = cmp.get_selected_entry()
+      if entry == nil then
+        return
+      end
+
       local label = entry.completion_item.label
-      local indent_change_items = {
-        'endif',
-        'end',
-        'else',
-        'elif',
-        'elseif .. then',
-        'elseif',
-        'else .. then~',
-        'endfor',
-        'endfunction',
-        'endwhile',
-        'endtry',
-        'except',
-        'catch',
-      }
       if table.contain(indent_change_items, label) then
         cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert })
         local indent = vim.fn.indent('.')
@@ -54,7 +59,7 @@ local comfirm = function(fallback)
         cmd = cmd:format(indent, label)
         vim.cmd(cmd)
       else
-        cmp.confirm({ select = true })
+        cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert })
       end
     end
   elseif vim.fn['vsnip#jumpable'](1) == 1 then
