@@ -58,7 +58,7 @@ M.setup = function()
     ['e'] = { 'file explorer' },
     ['a'] = { ':call Calc()<cr>', 'calcultor' },
     ['/'] = { ':call eregex#toggle()<cr>', 'eregex toggle' },
-    -- ["/"] = { "<cmd>lua require('Comment').toggle()<CR>", "Comment" },
+    ['<space>'] = 'diagnostic',
     w = {
       name = '+windows',
       ['n'] = { ':vnew<cr>', 'vnew' },
@@ -296,16 +296,6 @@ M.setup = function()
 
     vnoremap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
     vnoremap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
-
-    nnoremap <silent><leader>1 :lua require'bufferline'.go_to_buffer(1, true)<cr>
-    nnoremap <silent><leader>2 :lua require'bufferline'.go_to_buffer(2, true)<cr>
-    nnoremap <silent><leader>3 :lua require'bufferline'.go_to_buffer(3, true)<cr>
-    nnoremap <silent><leader>4 :lua require'bufferline'.go_to_buffer(4, true)<cr>
-    nnoremap <silent><leader>5 :lua require'bufferline'.go_to_buffer(5, true)<cr>
-    nnoremap <silent><leader>6 :lua require'bufferline'.go_to_buffer(6, true)<cr>
-    nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
-    nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
-    nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
   ]])
 
   local wk = require('which-key')
