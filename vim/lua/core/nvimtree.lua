@@ -246,7 +246,11 @@ end
 
 function M.preview()
   local lib = require('nvim-tree.lib')
-  require('utils.ui').preview(lib.get_node_at_cursor().absolute_path)
+  local path = lib.get_node_at_cursor().absolute_path
+  if vim.fn.isdirectory(path) == 1 then
+    return
+  end
+  require('utils.ui').preview(path)
 end
 
 function M.file_info()
