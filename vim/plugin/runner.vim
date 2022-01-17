@@ -18,6 +18,8 @@ function! RunFile()
         else
             call RunFileInner("python3", "")
         endif
+    elseif file_type == 'markdown'
+        MarkdownPreview
     elseif file_type == 'java'
         call RunFileInner("java", "")
     elseif file_type == 'rest'
