@@ -103,13 +103,6 @@ sunmap ae
 sunmap ie
 sunmap il
 
-" let s:python = executable('python3')? 'python3' : 'python'
-if has("win32")
-    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python "$(VIM_FILEPATH)"<CR>
-else
-    nmap <leader>rr :AsyncRun -mode=term -pos=bottom -rows=10 -focus=0 python3 "$(VIM_FILEPATH)"<CR>
-endif
-
 "----------------------------------------------------------------------
 " visual mode
 "----------------------------------------------------------------------
@@ -120,6 +113,12 @@ vmap <silent> # :lua require("core.terminal").run_select_in_terminal()<cr>
 "----------------------------------------------------------------------
 nnoremap * m`:keepjumps normal! *``<cr>
 xnoremap * m`:keepjumps <C-u>call VisualStarSearchSet('/')<CR>/<C-R>=@/<CR><CR>``
+
+"----------------------------------------------------------------------
+" leader
+"----------------------------------------------------------------------
+nmap <leader>q <cmd>CloseBuffer<cr>
+nmap <leader>Q <cmd>lua require("base.quit-comfirm").exit()<cr>
 
 " ugly hack to start newline and keep indent
 " nnoremap o o<space><BS>

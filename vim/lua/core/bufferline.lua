@@ -44,6 +44,7 @@ nnoremap <silent><leader>6 :lua require'bufferline'.go_to_buffer(6, true)<cr>
 nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
 nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
 nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
+nnoremap <silent><leader>0 <cmd>BufferLinePick<cr>
 ]]
 
 return M
