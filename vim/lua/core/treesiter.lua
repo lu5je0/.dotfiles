@@ -60,4 +60,3 @@ hi TSPunctBracket guifg=#ABB2BF
 --     autocmd Filetype %s setlocal foldmethod=expr | setlocal foldexpr=nvim_treesitter#foldexpr()
 -- augroup END
 -- ]]):format(table.concat(parsers, ',')))
-
