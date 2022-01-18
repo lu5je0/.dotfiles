@@ -20,6 +20,14 @@ local foldexpr_backups = {}
 
 local fold_skip_filetypes = { 'markdown' }
 
+function _G.fold_patch()
+  vim.api.nvim_buf_set_lines(0, 0, 1, false, vim.api.nvim_buf_get_lines(0, 0, 1, true))
+  -- if vim.b.fold_init == nil then
+  --   vim.b.fold_init = 1
+  -- end
+  vim.api.nvim_feedkeys('zc', 'n', true)
+end
+
 define_modules({
   folding = {
     enable = true,
@@ -32,6 +40,9 @@ define_modules({
       foldexpr_backups[bufnr] = vim.wo.foldexpr
       vim.wo.foldmethod = 'expr'
       vim.wo.foldexpr = 'nvim_treesitter#foldexpr()'
+      vim.cmd[[
+      nmap <buffer> <silent> zc :lua _G.fold_patch()<cr>
+      ]]
     end,
     detach = function(bufnr)
       vim.wo.foldmethod = foldmethod_backups[bufnr]
