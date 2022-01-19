@@ -75,6 +75,8 @@ nmap <silent> <C-L> <C-w>l
 
 nmap <silent> <left> :bp<cr>
 nmap <silent> <right> :bn<cr>
+nmap <silent> <c-b>o <c-w>w
+nmap <silent> <c-b><c-o> <c-w>w
 nmap Q <Nop>
 
 command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
