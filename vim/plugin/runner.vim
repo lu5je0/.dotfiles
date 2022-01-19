@@ -36,6 +36,8 @@ function! RunFile()
         if get(g:, 'lua_dev', 1) == 1
             w
             luafile %
+            " let file = expand('%')
+            " vnew | pu=execute('luafile ' . file)
         else
             call RunFileInner("luajit", "")
         endif

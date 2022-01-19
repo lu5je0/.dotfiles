@@ -49,7 +49,7 @@ M.setup = function()
     ['8'] = 'which_key_ignore',
     ['9'] = 'which_key_ignore',
     ['0'] = 'BufferLinePick',
-    ['q'] = 'close buffer' ,
+    ['q'] = 'close buffer',
     ['Q'] = 'exit vim',
     ['u'] = { '<cmd>UndotreeToggle<cr>', 'undotree' },
     ['i'] = { ':Vista!!<cr>', 'vista' },
@@ -89,7 +89,7 @@ M.setup = function()
     c = {
       r = 'rename-variable',
       c = 'code-action',
-      f = { ':lua vim.lsp.buf.formatting()<cr>', 'code-format' },
+      f = 'code-formatting',
     },
     t = {
       name = '+tab',
@@ -223,7 +223,7 @@ M.setup = function()
       r = { ":lua require('core.leaderf').visual_leaderf('rg')<cr>", 'rg' },
     },
     c = {
-      f = { ':lua vim.lsp.buf.range_formatting()<cr>', 'format' },
+      f = 'range formatting',
     },
     g = {
       l = { ":lua require('core/fugitive').lines_changes()<cr>", 'show changs on select lines' },
