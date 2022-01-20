@@ -21,10 +21,10 @@ local foldexpr_backups = {}
 local fold_skip_filetypes = { 'markdown' }
 
 function _G.fold_patch()
-  if vim.b.fold_init == nil then
-    vim.api.nvim_buf_set_lines(0, 0, 1, false, vim.api.nvim_buf_get_lines(0, 0, 1, true))
-    vim.b.fold_init = 1
-  end
+  -- if vim.b.fold_init == nil then
+  vim.api.nvim_buf_set_lines(0, 0, 1, false, vim.api.nvim_buf_get_lines(0, 0, 1, true))
+  --   vim.b.fold_init = 1
+  -- end
   vim.api.nvim_feedkeys('zc', 'n', true)
 end
 
