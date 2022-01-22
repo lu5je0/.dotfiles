@@ -35,7 +35,6 @@ return packer.startup(function(use)
     disable = (vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1),
   })
 
-  vim.g.did_load_filetypes = 1
   use({
     'nathom/filetype.nvim',
     config = function()
