@@ -2,6 +2,7 @@ require('impatient')
 require('plugins')
 require('enhance')
 require('commands')
+require('patch')
 
 vim.cmd([[
 runtime settings.vim
