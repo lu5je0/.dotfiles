@@ -1,5 +1,5 @@
 -- 让lsp能够attach到未命名文件
-function _G.lsp_attach()
+function _G.lsp_attach_on_no_filename()
   if #vim.lsp.buf_get_clients(0) ~= 0 then
     return
   end
@@ -15,6 +15,6 @@ end
 vim.cmd[[
 augroup confirm_lsp_attach 
     autocmd!
-    autocmd FileType json lua _G.lsp_attach()
+    autocmd FileType json lua _G.lsp_attach_on_no_filename()
 augroup END
 ]]
