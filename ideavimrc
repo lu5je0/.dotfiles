@@ -91,6 +91,9 @@ nmap <leader>rd :action DebugClass<CR>
 nmap <leader>rD :action Run<CR>
 nmap <leader>rr :action RunClass<CR>
 
+" other
+nmap <leader><space> <Action>(ShowErrorDescription)
+
 " windows multiple0-cursors key maps
 nmap <c-n> <A-n>
 nmap <c-x> <A-x>
