@@ -35,6 +35,8 @@ function M.setup()
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
   vim.g.nvim_tree_indent_markers = 1
+  vim.g.nvim_tree_create_in_closed_folder = 1
+  vim.g.nvim_tree_change_dir_global = 1
 
   vim.cmd([[
     hi NvimTreeFolderName guifg=#e5c07b
@@ -66,7 +68,6 @@ function M.setup()
   view.View.winopts.signcolumn = 'no'
   view.View.winopts.foldcolumn = 1
 
-  local tree_cb = require('nvim-tree.config').nvim_tree_callback
   -- default mappings
   local list = {
     { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = ":lua require('core.nvimtree').edit()<cr>" },
@@ -81,33 +82,33 @@ function M.setup()
     { key = 'x', cb = ":lua require('core.nvimtree').toggle_width()<cr>" },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
-    { key = 's', cb = tree_cb('vsplit') },
-    -- { key = 's', cb = tree_cb('split') },
+    { key = 's', action = 'vsplit' },
+    -- { key = 's', action = 'split' },
     -- { key = "<C-t>", cb = tree_cb("tabnew") },
-    { key = '<', cb = tree_cb('prev_sibling') },
-    { key = '>', cb = tree_cb('next_sibling') },
-    -- { key = 'P', cb = tree_cb('parent_node') },
-    { key = { '<BS>', 'h' }, cb = tree_cb('close_node') },
-    { key = 'K', cb = tree_cb('first_sibling') },
-    { key = 'J', cb = tree_cb('last_sibling') },
+    { key = '<', action = 'prev_sibling' },
+    { key = '>', action = 'next_sibling' },
+    -- { key = 'P', action = 'parent_node' },
+    { key = { '<BS>', 'h' }, action = 'close_node' },
+    { key = 'K', action = 'first_sibling' },
+    { key = 'J', action = 'last_sibling' },
     -- { key = "I", cb = tree_cb("toggle_ignored") },
-    { key = 'I', cb = tree_cb('toggle_dotfiles') },
-    { key = 'r', cb = tree_cb('refresh') },
-    { key = 'ma', cb = tree_cb('create') },
-    { key = 'D', cb = tree_cb('remove') },
-    { key = 'mv', cb = tree_cb('rename') },
+    { key = 'I', action = 'toggle_dotfiles' },
+    { key = 'r', action = 'refresh' },
+    { key = 'ma', action = 'create' },
+    { key = 'D', action = 'remove' },
+    { key = 'mv', action = 'rename' },
     -- { key = "mv", cb = tree_cb("cut") },
-    { key = 'yy', cb = tree_cb('copy') },
-    { key = 'P', cb = tree_cb('paste') },
-    { key = 'yn', cb = tree_cb('copy_name') },
-    { key = 'yP', cb = tree_cb('copy_path') },
-    { key = 'yp', cb = tree_cb('copy_absolute_path') },
-    { key = '[g', cb = tree_cb('prev_git_item') },
-    { key = ']g', cb = tree_cb('next_git_item') },
-    { key = 'u', cb = tree_cb('dir_up') },
-    { key = 'o', cb = tree_cb('system_open') },
-    { key = 'q', cb = tree_cb('close') },
-    { key = 'g?', cb = tree_cb('toggle_help') },
+    { key = 'yy', action = 'copy' },
+    { key = 'P', action = 'paste' },
+    { key = 'yn', action = 'copy_name' },
+    { key = 'yP', action = 'copy_path' },
+    { key = 'yp', action = 'copy_absolute_path' },
+    { key = '[g', action = 'prev_git_item' },
+    { key = ']g', action = 'next_git_item' },
+    { key = 'u', action = 'dir_up' },
+    { key = 'o', action = 'system_open' },
+    { key = 'q', action = 'close' },
+    { key = 'g?', action = 'toggle_help' },
     { key = '<c-o>', cb = ":lua require('core.nvimtree').back()<cr>" },
     { key = '<c-i>', cb = ":lua require('core.nvimtree').forward()<cr>" },
   }
@@ -174,12 +175,6 @@ function M.setup()
   M.pwd_stack:push(vim.fn.getcwd())
 end
 
-function M.terminal_cd()
-  local lib = require('nvim-tree.lib')
-  local cmd = 'cd ' .. vim.fn.fnamemodify(lib.get_node_at_cursor().absolute_path, ':p:h')
-  require('core.terminal').send_to_terminal(cmd)
-end
-
 function M.locate_file()
   if not M.loaded then
     vim.cmd('sleep 150m')
@@ -213,11 +208,16 @@ M.pwd_stack = require('stack/stack'):create()
 M.pwd_forward_stack = require('stack/stack'):create()
 M.pwd_back_state = 0
 
+function M.terminal_cd()
+  local cmd = 'cd ' .. vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
+  require('core.terminal').send_to_terminal(cmd)
+end
+
 function M.edit()
   if _G.preview_popup then
     _G.preview_popup:unmount()
   end
-  require('nvim-tree').on_keypress('edit')
+  require'nvim-tree.actions'.on_keypress('edit')
 end
 
 function M.pwd_stack_push()
@@ -240,7 +240,7 @@ function M.forward()
 end
 
 function M.cd()
-  require('nvim-tree').on_keypress('cd')
+  require'nvim-tree.actions'.on_keypress('cd')
   vim.cmd('norm gg')
 end
 
