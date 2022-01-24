@@ -35,12 +35,12 @@ return packer.startup(function(use)
     disable = (vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1),
   })
 
-  use({
-    'nathom/filetype.nvim',
-    config = function()
-      require('core.filetype')
-    end,
-  })
+  -- use({
+  --   'nathom/filetype.nvim',
+  --   config = function()
+  --     require('core.filetype')
+  --   end,
+  -- })
 
   use({
     'nvim-lualine/lualine.nvim',
@@ -410,7 +410,9 @@ return packer.startup(function(use)
     ft = { 'markdown' },
   })
 
-  use({ 'kevinhwang91/nvim-bqf' })
+  use({
+    'kevinhwang91/nvim-bqf',
+  })
 
   -- lsp
   use({ 'williamboman/nvim-lsp-installer' })
