@@ -128,11 +128,7 @@ local function on_attach(client, bufnr)
 end
 
 local capabilities = (function()
-  -- The nvim-cmp almost supports LSP's capabilities so You should advertise it to LSP servers..
-  local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
-  capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
-  -- log.info(capabilities)
-  return capabilities
+  return require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 end)()
 
 local function lsp_signature_config()
