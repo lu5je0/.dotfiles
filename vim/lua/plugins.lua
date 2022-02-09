@@ -284,6 +284,8 @@ return packer.startup(function(use)
       vim.cmd([[
         let g:VM_maps = {}
         let g:VM_maps["Select Cursor Down"] = '<m-n>'
+        let g:VM_maps["Remove Region"] = '<c-p>'
+        let g:VM_maps["Skip Region"] = '<c-x>'
       ]])
     end,
     keys = { '<c-n>', '<m-n>' },
