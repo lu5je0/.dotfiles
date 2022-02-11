@@ -4,7 +4,7 @@ null_ls.setup({
   -- debug = true,
   sources = {
     require('null-ls').builtins.formatting.stylua.with({
-      extra_args = { '--config-path', vim.fn.stdpath('config') .. '/config/stylua.toml' },
+      extra_args = { '--config-path', vim.fn.stdpath('config') .. '/stylua.toml' },
     }),
     require('null-ls').builtins.formatting.autopep8,
     require('core.null-ls-extra.sql-formatter')
