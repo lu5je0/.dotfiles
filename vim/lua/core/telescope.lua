@@ -14,14 +14,14 @@ local function key_mapping()
   vim.api.nvim_set_keymap('n', '<leader>fn', ":lua require('telescope.builtin').filetypes{}<cr>", opts)
   vim.api.nvim_set_keymap('n', '<leader>fa', ":lua require('telescope').extensions.project.project{}<cr>", opts)
   vim.api.nvim_set_keymap('n', '<leader>fj', ":lua require('telescope.builtin').find_files{search_dirs={'~/junk-file'}}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fc', ":Telescope neoclip star<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fd', ":Telescope opener<cr>", opts)
+  vim.api.nvim_set_keymap('n', '<leader>fc', ':Telescope neoclip star<cr>', opts)
+  vim.api.nvim_set_keymap('n', '<leader>fd', ':Telescope opener<cr>', opts)
 end
 
 function M.setup()
   local actions = require('telescope.actions')
   local telescope = require('telescope')
-  telescope.setup({
+  telescope.setup {
     defaults = {
       path_display = { truncate = 2 },
       mappings = {
@@ -30,9 +30,9 @@ function M.setup()
         },
       },
     },
-  })
+  }
   telescope.load_extension('fzf')
-  telescope.load_extension("opener")
+  telescope.load_extension('opener')
   key_mapping()
 end
 

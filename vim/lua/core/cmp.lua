@@ -49,10 +49,10 @@ local comfirm = function(fallback)
 
     local label = entry.completion_item.label
     if table.contain(indent_change_items, label) then
-      cmp.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert })
+      cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
       vim.cmd([[call timer_start(0, 'CmpLineFormat')]])
     else
-      cmp.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert })
+      cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
   elseif vim.fn['vsnip#jumpable'](1) == 1 then
     utils.feedkey('<Plug>(vsnip-jump-next)', '')
@@ -61,7 +61,7 @@ local comfirm = function(fallback)
   end
 end
 
-cmp.setup({
+cmp.setup {
   snippet = {
     expand = function(args)
       vim.fn['vsnip#anonymous'](args.body) -- For `vsnip` users.
@@ -79,22 +79,22 @@ cmp.setup({
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
     ['<c-n>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
     ['<c-p>'] = cmp.config.disable,
-    ['<down>'] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
-    ['<up>'] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
-    ['<c-e>'] = cmp.mapping({
+    ['<down>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
+    ['<up>'] = cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select },
+    ['<c-e>'] = cmp.mapping {
       i = cmp.mapping.abort(),
       c = cmp.mapping.close(),
-    }),
+    },
     ['<cr>'] = cmp.mapping(comfirm, { 'i' }),
     ['<tab>'] = cmp.mapping(comfirm, { 'i' }),
   },
-  sources = cmp.config.sources({
+  sources = cmp.config.sources {
     { name = 'vsnip' },
     { name = 'nvim_lsp' },
     { name = 'path' },
     { name = 'buffer' },
-  }),
-})
+  },
+}
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
 -- cmp.setup.cmdline('/', {
@@ -140,7 +140,7 @@ local kind_icons = {
   TypeParameter = '',
 }
 
-cmp.setup({
+cmp.setup {
   formatting = {
     format = function(entry, vim_item)
       -- Kind icons
@@ -157,7 +157,7 @@ cmp.setup({
       return vim_item
     end,
   },
-})
+}
 
 vim.cmd([[
 " gray

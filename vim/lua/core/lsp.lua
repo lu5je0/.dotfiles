@@ -132,7 +132,7 @@ local capabilities = (function()
 end)()
 
 local function lsp_signature_config()
-  require('lsp_signature').setup({
+  require('lsp_signature').setup {
     floating_window = true, -- show hint in a floating window, set to false for virtual text only mode
     floating_window_above_cur_line = true, -- try to place the floating above the current line when possible Note:
     -- will set to true when fully tested, set to false will use whichever side has more space
@@ -144,7 +144,7 @@ local function lsp_signature_config()
     },
     always_trigger = true,
     toggle_key = nil, -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
-  })
+  }
 end
 
 local function lsp_installer_config()
@@ -169,9 +169,9 @@ local function lsp_installer_config()
 
     if server.name == 'sumneko_lua' then
       opts.settings = lua_setting
-      local luadev = require('lua-dev').setup({
+      local luadev = require('lua-dev').setup {
         lspconfig = opts,
-      })
+      }
       server:setup(luadev)
     elseif server.name == 'pyright' then
       opts.on_init = pyright_setting.on_init
@@ -184,7 +184,7 @@ end
 
 local function lsp_diagnostic()
   -- diagnostic
-  vim.diagnostic.config({
+  vim.diagnostic.config {
     virtual_text = false,
     underline = true,
     float = {
@@ -192,7 +192,7 @@ local function lsp_diagnostic()
     },
     severity_sort = true,
     update_in_insert = true,
-  })
+  }
   local signs = { Error = ' ', Warn = ' ', Hint = ' ', Info = ' ' }
   for type, icon in pairs(signs) do
     local hl = 'DiagnosticSign' .. type

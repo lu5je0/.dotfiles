@@ -1,7 +1,7 @@
 local M
 
 function M.selected_text()
-    return ""
+  return ''
 end
 
 return M

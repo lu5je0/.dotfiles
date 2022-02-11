@@ -1,4 +1,4 @@
-require('filetype').setup({
+require('filetype').setup {
   overrides = {
     extensions = {
       -- Set the filetype of *.pn files to potion
@@ -47,7 +47,7 @@ require('filetype').setup({
       -- Set the filetype of files with a bash shebang to sh
       bash = 'sh',
       zsh = 'sh',
-      python3 = 'python'
+      python3 = 'python',
     },
   },
-})
+}

@@ -13,7 +13,7 @@ M.buffer_snippets_map = {}
 function M.is_snippet_contain(snippet)
   local cached_snippets = M.buffer_snippets_map[vim.bo.filetype]
   if cached_snippets == nil then
-    cached_snippets = vim.fn['vsnip#get_complete_items'](".")
+    cached_snippets = vim.fn['vsnip#get_complete_items']('.')
     M.buffer_snippets_map[vim.bo.filetype] = cached_snippets
   end
 

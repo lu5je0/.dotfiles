@@ -113,7 +113,7 @@ function M.setup()
     { key = '<c-i>', cb = ":lua require('core.nvimtree').forward()<cr>" },
   }
 
-  require('nvim-tree').setup({
+  require('nvim-tree').setup {
     disable_netrw = true,
     hijack_netrw = true,
     open_on_setup = false,
@@ -165,7 +165,7 @@ function M.setup()
       },
       signcolumn = 'auto',
     },
-  })
+  }
 
   vim.g.nvim_tree_window_picker_exclude = {
     filetype = { 'notify', 'packer', 'qf', 'confirm', 'popup' },
@@ -217,7 +217,7 @@ function M.edit()
   if _G.preview_popup then
     _G.preview_popup:unmount()
   end
-  require'nvim-tree.actions'.on_keypress('edit')
+  require('nvim-tree.actions').on_keypress('edit')
 end
 
 function M.pwd_stack_push()
@@ -240,7 +240,7 @@ function M.forward()
 end
 
 function M.cd()
-  require'nvim-tree.actions'.on_keypress('cd')
+  require('nvim-tree.actions').on_keypress('cd')
   vim.cmd('norm gg')
 end
 

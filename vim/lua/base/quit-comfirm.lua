@@ -38,7 +38,7 @@ local function exit_vim_pupop(msg)
   vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
   vim.api.nvim_buf_set_option(popup.bufnr, 'modifiable', false)
   vim.api.nvim_buf_set_option(popup.bufnr, 'readonly', true)
-  vim.fn.cursor({ 99, 99 })
+  vim.fn.cursor { 99, 99 }
 
   -- unmount component when cursor leaves buffer
   popup:on(event.BufLeave, function()
@@ -67,7 +67,7 @@ end
 local function exit_vim_with_dialog()
   local unsave_buffers = {}
 
-  for _, buffer in ipairs(vim.fn.getbufinfo({ bufloaded = 1, buflisted = 1 })) do
+  for _, buffer in ipairs(vim.fn.getbufinfo { bufloaded = 1, buflisted = 1 }) do
     if buffer.changed == 1 then
       table.insert(unsave_buffers, buffer)
     end
@@ -112,7 +112,7 @@ end
 local function exit_vim_by_comfirm()
   local unsave_buffers = {}
 
-  for _, buffer in ipairs(vim.fn.getbufinfo({ bufloaded = 1, buflisted = 1 })) do
+  for _, buffer in ipairs(vim.fn.getbufinfo { bufloaded = 1, buflisted = 1 }) do
     if buffer.changed == 1 then
       table.insert(unsave_buffers, buffer)
     end

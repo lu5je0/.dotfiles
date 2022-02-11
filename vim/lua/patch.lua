@@ -10,16 +10,16 @@ function _G.lsp_attach_on_no_filename()
   end
 
   vim.api.nvim_buf_set_name(0, '/tmp/tmp' .. vim.bo.filetype)
-  vim.cmd("LspStart")
+  vim.cmd('LspStart')
   vim.api.nvim_buf_set_name(0, buf_name)
 end
 
-vim.cmd[[
+vim.cmd([[
 augroup confirm_lsp_attach 
     autocmd!
     autocmd FileType json lua _G.lsp_attach_on_no_filename()
 augroup END
-]]
+]])
 
 -- 修复set filetype后无法使用treesitter fold
 function _G.fold_patch()

@@ -1,7 +1,7 @@
 local M = {}
 
 local bl = require('bufferline')
-bl.setup({
+bl.setup {
   options = {
     numbers = 'ordinal',
     offsets = {
@@ -32,9 +32,9 @@ bl.setup({
     },
     max_name_length = 12,
   },
-})
+}
 
-vim.cmd[[
+vim.cmd([[
 nnoremap <silent><leader>1 :lua require'bufferline'.go_to_buffer(1, true)<cr>
 nnoremap <silent><leader>2 :lua require'bufferline'.go_to_buffer(2, true)<cr>
 nnoremap <silent><leader>3 :lua require'bufferline'.go_to_buffer(3, true)<cr>
@@ -45,6 +45,6 @@ nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
 nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
 nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
 nnoremap <silent><leader>0 <cmd>BufferLinePick<cr>
-]]
+]])
 
 return M
