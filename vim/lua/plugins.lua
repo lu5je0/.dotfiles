@@ -35,12 +35,12 @@ return packer.startup(function(use)
     disable = (vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1),
   }
 
-  use {
-    'nathom/filetype.nvim',
-    config = function()
-      require('core.filetype')
-    end,
-  }
+  -- use({
+  --   'nathom/filetype.nvim',
+  --   config = function()
+  --     require('core.filetype')
+  --   end,
+  -- })
 
   use {
     'nvim-lualine/lualine.nvim',
@@ -274,6 +274,8 @@ return packer.startup(function(use)
       vim.cmd([[
         let g:VM_maps = {}
         let g:VM_maps["Select Cursor Down"] = '<m-n>'
+        let g:VM_maps["Remove Region"] = '<c-p>'
+        let g:VM_maps["Skip Region"] = '<c-x>'
       ]])
     end,
     keys = { '<c-n>', '<m-n>' },
@@ -506,6 +508,7 @@ return packer.startup(function(use)
     requires = 'kyazdani42/nvim-web-devicons',
     keys = { '<leader>e', '<leader>fe' },
     opt = true,
+    branch = 'dev',
     config = function()
       require('core.nvimtree').setup()
     end,

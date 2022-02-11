@@ -41,26 +41,18 @@ endfunction
 
 local comfirm = function(fallback)
   if cmp.visible() then
-    if
-      vim.fn['vsnip#expandable']() == 1
-      and cmp.get_selected_entry() == cmp.core.view:get_first_entry()
-      and require('core.vsnip').is_snippet_contain(cmp.get_selected_entry().completion_item.label)
-    then
-      vim.fn['vsnip#expand']()
-    else
-      local entry = cmp.get_selected_entry()
-      if entry == nil then
-        cmp.close()
-        return
-      end
+    local entry = cmp.get_selected_entry()
+    if entry == nil then
+      cmp.close()
+      return
+    end
 
-      local label = entry.completion_item.label
-      if table.contain(indent_change_items, label) then
-        cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert })
-        vim.cmd([[call timer_start(0, 'CmpLineFormat')]])
-      else
-        cmp.confirm({ select = false, behavior = cmp.ConfirmBehavior.Insert })
-      end
+    local label = entry.completion_item.label
+    if table.contain(indent_change_items, label) then
+      cmp.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert })
+      vim.cmd([[call timer_start(0, 'CmpLineFormat')]])
+    else
+      cmp.confirm({ select = true, behavior = cmp.ConfirmBehavior.Insert })
     end
   elseif vim.fn['vsnip#jumpable'](1) == 1 then
     utils.feedkey('<Plug>(vsnip-jump-next)', '')
