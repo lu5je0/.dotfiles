@@ -5,7 +5,7 @@ local methods = require('null-ls.methods')
 
 local FORMATTING = methods.internal.FORMATTING
 
-return h.make_builtin({
+return h.make_builtin {
   method = FORMATTING,
   filetypes = { 'sql' },
   generator_opts = {
@@ -14,4 +14,4 @@ return h.make_builtin({
     to_stdin = true,
   },
   factory = h.formatter_factory,
-})
+}

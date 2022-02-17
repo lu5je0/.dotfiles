@@ -1,7 +1,7 @@
 local M = {}
 
 function M.setup()
-  require('gitsigns').setup({
+  require('gitsigns').setup {
     keymaps = {
       -- Default keymap options
       noremap = true,
@@ -27,7 +27,7 @@ function M.setup()
       ['x ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
     },
     sign_priority = 999,
-  })
+  }
 end
 
 return M

@@ -122,7 +122,7 @@ local function ins_right(component)
   table.insert(config.sections.lualine_x, component)
 end
 
-ins_left({
+ins_left {
   -- mode component
   function()
     -- auto change color according to neovims mode
@@ -153,17 +153,17 @@ ins_left({
   end,
   color = 'LualineMode',
   padding = { left = 1, right = 1 },
-})
+}
 
-ins_left({
+ins_left {
   'filetype',
   icon_only = true,
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
   padding = { left = 1, right = 0 },
-})
+}
 
-ins_left({
+ins_left {
   'filename',
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
@@ -174,26 +174,26 @@ ins_left({
     readonly = '[-]', -- if the file is not modifiable or readonly
     unnamed = '[No Name]', -- default display name for unnamed buffers
   },
-})
+}
 
-ins_left({
+ins_left {
   -- filesize component
   'filesize',
   cond = conditions.hide_in_width,
   color = { fg = colors.yellow },
   padding = { left = 1, right = 0 },
-})
+}
 
-ins_left({
+ins_left {
   function()
     return [[ %2p%% %l:%c ]]
     -- return [[ %l:%c ]]
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
-})
+}
 
-ins_right({
+ins_right {
   'diagnostics',
   -- table of diagnostic sources, available sources:
   -- 'nvim_lsp', 'nvim_diagnostic', 'coc', 'ale', 'vim_lsp'
@@ -213,7 +213,7 @@ ins_right({
   colored = true, -- displays diagnostics status in color if set to true
   update_in_insert = false, -- Update diagnostics in insert mode
   padding = { left = 0, right = 1 },
-})
+}
 
 -- lsp status
 -- ins_right({
@@ -224,7 +224,7 @@ ins_right({
 --   padding = { left = 1, right = 1 },
 -- })
 
-ins_right({
+ins_right {
   -- Lsp server name .
   function()
     local msg = nil
@@ -252,18 +252,18 @@ ins_right({
   color = { fg = colors.cyan, gui = 'bold' },
   cond = conditions.lsp_cond,
   padding = { left = 0, right = 1 },
-})
+}
 
 -- Add components to right sections
-ins_right({
+ins_right {
   'o:encoding', -- option component same as &encoding in viml
   fmt = string.upper, -- I'm not sure why it's upper case either ;)
   cond = conditions.hide_in_width,
   color = { fg = colors.green, gui = 'bold' },
   padding = { left = 0, right = 0 },
-})
+}
 
-ins_right({
+ins_right {
   'fileformat',
   fmt = string.upper,
   icons_enabled = true, -- I think icons are cool but Eviline doesn't have them. sigh
@@ -275,14 +275,14 @@ ins_right({
     dos = 'CRLF',
     mac = 'CR',
   },
-})
+}
 
-ins_right({
+ins_right {
   'b:gitsigns_head',
   icon = '',
   color = { fg = colors.violet, gui = 'bold' },
   padding = { left = 0, right = 1 },
-})
+}
 
 local function diff_source()
   local gitsigns = vim.b.gitsigns_status_dict
@@ -295,10 +295,10 @@ local function diff_source()
   end
 end
 
-ins_right({
+ins_right {
   'diff',
   source = diff_source,
   padding = { left = 0, right = 1 },
-})
+}
 
 lualine.setup(config)

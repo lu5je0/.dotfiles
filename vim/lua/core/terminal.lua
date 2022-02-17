@@ -36,7 +36,7 @@ end
 
 M.setup = function()
   save_terminal_mode()
-  require('toggleterm').setup({
+  require('toggleterm').setup {
     size = function(term)
       if term.direction == 'horizontal' then
         return 18
@@ -54,7 +54,7 @@ M.setup = function()
     direction = M.direction,
     close_on_exit = true, -- close the terminal window when the process exits
     shell = vim.o.shell, -- change the default shell
-  })
+  }
   vim.cmd([[
   imap <silent> <m-i> <ESC>:lua require('core.terminal').toggle()<CR>
   imap <silent> <d-i> <ESC>:lua require('core.terminal').toggle()<CR>
