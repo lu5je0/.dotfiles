@@ -17,7 +17,7 @@ end
 vim.cmd[[
 augroup confirm_lsp_attach 
     autocmd!
-    autocmd FileType json lua _G.lsp_attach_on_no_filename()
+    autocmd FileType json,python lua _G.lsp_attach_on_no_filename()
 augroup END
 ]]
 
