@@ -4,6 +4,7 @@ vim/quicknote.md
 vim/parser/
 vim/parser-info/
 vim/plugin/packer_compiled.lua
+tmux/plugins
 __pycache__
 .idea/
 *.swp
