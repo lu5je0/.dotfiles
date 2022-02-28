@@ -164,16 +164,17 @@ ins_left {
 }
 
 ins_left {
-  'filename',
+  function ()
+    local max_len = 15
+    local filename = vim.fn.expand('%:t')
+    if #filename > max_len then
+      filename = string.sub(filename, 0, max_len) .. "…"
+    end
+    return filename
+  end,
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
   padding = { left = 1, right = 0 },
-  icons_enabled = true,
-  symbols = {
-    modified = '[+]', -- when the file was modified
-    readonly = '[-]', -- if the file is not modifiable or readonly
-    unnamed = '[No Name]', -- default display name for unnamed buffers
-  },
 }
 
 ins_left {

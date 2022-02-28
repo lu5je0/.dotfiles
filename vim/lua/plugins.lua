@@ -598,6 +598,14 @@ return packer.startup(function(use)
   -- }
 
   use {
+    'glacambre/firenvim',
+    run = function() vim.fn['firenvim#install'](0) end,
+    config = function ()
+      vim.cmd("set guifont=JetBrainsMono\\ Nerd\\ Font\\ Mono:h22")
+    end
+  }
+
+  use {
     'lu5je0/LeaderF',
     run = './install.sh',
     -- opt = true,
