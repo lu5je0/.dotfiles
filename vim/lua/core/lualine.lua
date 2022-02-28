@@ -165,7 +165,7 @@ ins_left {
 
 ins_left {
   function ()
-    local max_len = 15
+    local max_len = 20
     local filename = vim.fn.expand('%:t')
     if #filename > max_len then
       filename = string.sub(filename, 0, max_len) .. "…"
@@ -232,7 +232,7 @@ ins_right {
     local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
     local clients = vim.lsp.get_active_clients()
     if next(clients) == nil then
-      return ' LSP:' .. msg
+      return ' ' .. msg
     end
     for _, client in ipairs(clients) do
       local filetypes = client.config.filetypes
@@ -240,14 +240,14 @@ ins_right {
         if client.name == 'null-ls' then
           goto continue
         end
-        return ' LSP:' .. client.name
+        return ' ' .. client.name
       end
       ::continue::
     end
     if msg == nil then
       return ''
     else
-      return ' LSP:' .. msg
+      return ' ' .. msg
     end
   end,
   color = { fg = colors.cyan, gui = 'bold' },
