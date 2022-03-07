@@ -11,13 +11,14 @@ function _G.lsp_attach_on_no_filename()
 
   vim.api.nvim_buf_set_name(0, '/tmp/tmp' .. vim.bo.filetype)
   vim.cmd('LspStart')
+  require('null-ls/client').try_add(0)
   vim.api.nvim_buf_set_name(0, buf_name)
 end
 
 vim.cmd([[
 augroup confirm_lsp_attach 
     autocmd!
-    autocmd FileType json,python lua _G.lsp_attach_on_no_filename()
+    autocmd FileType json,python,sql lua _G.lsp_attach_on_no_filename()
 augroup END
 ]])
 

@@ -159,7 +159,7 @@ ins_left {
   'filetype',
   icon_only = true,
   inactive = true,
-  color = { fg = colors.magenta, gui = 'bold' },
+  color = { fg = colors.magenta, bg = colors.bg, gui = 'bold' },
   padding = { left = 1, right = 0 },
 }
 

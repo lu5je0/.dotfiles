@@ -122,6 +122,9 @@ xnoremap * m`:keepjumps <C-u>call VisualStarSearchSet('/')<CR>/<C-R>=@/<CR><CR>`
 nmap <leader>q <cmd>CloseBuffer<cr>
 nmap <leader>Q <cmd>lua require("base.quit-comfirm").exit()<cr>
 
+nmap <leader>cf <cmd>lua vim.lsp.buf.formatting()<CR>
+vmap <leader>cf <cmd>lua vim.lsp.buf.range_formatting()<CR>
+
 " ugly hack to start newline and keep indent
 " nnoremap o o<space><BS>
 " nnoremap O O<space><BS>
