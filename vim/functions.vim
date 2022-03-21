@@ -1,4 +1,4 @@
-function! SynStack ()
+function! SynStack()
     for i1 in synstack(line("."), col("."))
         let i2 = synIDtrans(i1)
         let n1 = synIDattr(i1, "name")
@@ -57,7 +57,6 @@ function! ToggleMouse()
     endif
 endfunction
 
-" 在gj和j之间切换
 function! ToggleDiff()
     if !exists("g:ToggleDiff")
         let g:ToggleDiff = 0

@@ -8,17 +8,6 @@ vnoremap <C-c> y
 vmap < <gv
 vmap > >gv
 
-nmap <silent><expr> j &wrap ? "gj" : "j"
-nmap <silent><expr> k &wrap ? "gk" : "k"
-
-nmap <silent><expr> H &wrap ? "g^" : "^"
-nmap <silent><expr> L &wrap ? "g$" : "$"
-vmap <silent><expr> H &wrap ? "g^" : "^"
-vmap <silent><expr> L &wrap ? "g$" : "$"
-omap <silent><expr> H &wrap ? "g^" : "^"
-omap <silent><expr> L &wrap ? "g$" : "$"
-nmap <silent><expr> Y &wrap ? "g^yg$" : "^y$"
-
 nnoremap go o0<C-D>
 nnoremap gO O0<C-D>
 
@@ -109,6 +98,43 @@ sunmap il
 " visual mode
 "----------------------------------------------------------------------
 vmap <silent> # :lua require("core.terminal").run_select_in_terminal()<cr>
+
+"----------------------------------------------------------------------
+" wrap
+"----------------------------------------------------------------------
+function! ToggleGj(echo)
+    if !exists("g:ToggleGj")
+        let g:ToggleGj = 1
+    endif
+    if g:ToggleGj == 1
+        vmap j gj
+        vmap k gk
+        nmap j gj
+        nmap k gk
+        nmap H g^
+        nmap L g$
+        vmap H g^
+        vmap L g$
+        omap H g^
+        omap L g$
+        nmap Y g^yg$
+        if a:echo
+            echo "gj on"
+        endif
+        let g:ToggleGj = 0
+    else
+        unmap j
+        unmap k
+        nmap H ^
+        nmap L $
+        nmap Y ^y$
+        if a:echo
+            echo "gj off"
+        endif
+        let g:ToggleGj = 1
+    endif
+endfunction
+call ToggleGj(0)
 
 "----------------------------------------------------------------------
 " other

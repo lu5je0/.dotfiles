@@ -151,7 +151,7 @@ M.setup = function()
       v = { ':edit ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim/init.lua | :cd ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim <cr>', 'edit init.lua' },
       s = { ':call ToggleSignColumn()<cr>', 'toggle signcolumn' },
       S = { ':set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes' },
-      j = { ':call ToggleGj()<cr>', 'toggle gj' },
+      j = { ':call ToggleGj(1)<cr>', 'toggle gj' },
       c = { ':set ic!<cr>', 'toggle case insensitive' },
       a = { ':call AutoPairsToggle()<cr>', 'toggle auto pairs' },
       b = { ':call ToggleSignColumn()<cr>', 'toggle blame' },
