@@ -509,7 +509,7 @@ return packer.startup(function(use)
     requires = 'kyazdani42/nvim-web-devicons',
     keys = { '<leader>e', '<leader>fe' },
     opt = true,
-    branch = 'dev',
+    branch = 'dev-20220326',
     config = function()
       require('core.nvimtree').setup()
     end,
