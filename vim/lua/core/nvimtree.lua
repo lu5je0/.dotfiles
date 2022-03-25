@@ -17,12 +17,11 @@ function M.locate_file()
     return
   end
 
-  -- what if pwd has .
+  -- if pwd has .
   cur_file_path = string.sub(cur_file_path, 0, cur_file_path:match('^.*()/') - 1)
 
   if string.match(string.sub(cur_file_path, string.len(pwd) + 2, -1), [[%.]]) ~= nil then
-    require('nvim-tree.populate').config.filter_dotfiles = false
-    require('nvim-tree.lib').refresh_tree()
+    require('nvim-tree.actions.toggles').dotfiles()
   end
 
   if not string.startswith(cur_file_path, pwd) then
