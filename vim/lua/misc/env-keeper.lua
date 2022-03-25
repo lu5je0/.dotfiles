@@ -30,6 +30,4 @@ function M.write(name, value)
   return write_file(config_file, vim.fn.json_encode(json))
 end
 
-M.write("23", '1')
-
 return M
