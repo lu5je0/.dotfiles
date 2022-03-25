@@ -128,6 +128,14 @@ function M.setup()
       deleted = '',
       ignored = '◌',
     },
+    actions = {
+      change_dir = {
+        enable_dir = {
+          enable = false,
+          global = true
+        }
+      }
+    },
     folder = {
       arrow_open = ' ',
       arrow_closed = ' ',
@@ -149,7 +157,6 @@ function M.setup()
   vim.g.nvim_tree_add_trailing = 1
   vim.g.nvim_tree_indent_markers = 1
   vim.g.nvim_tree_create_in_closed_folder = 1
-  vim.g.nvim_tree_change_dir_global = 1
 
   vim.cmd([[
     hi NvimTreeFolderName guifg=#e5c07b
@@ -172,7 +179,8 @@ function M.setup()
     lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
   ]])
 
-  vim.api.nvim_set_keymap('n', '<leader>e', ':NvimTreeToggle<cr><c-w>p', { noremap = true, silent = true })
+
+  vim.cmd("nmap <silent> <leader>e :lua require'nvim-tree'.toggle(false, true)<cr>")
   vim.api.nvim_set_keymap('n', '<leader>fe', ':lua require("core.nvimtree").locate_file()<cr>', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<leader>fp', ':cd ~/.local/share/nvim/site/pack/packer<cr>', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<leader>fd', ':cd ~/.dotfiles<cr>', { noremap = true, silent = true })
