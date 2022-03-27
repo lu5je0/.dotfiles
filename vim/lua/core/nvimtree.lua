@@ -166,8 +166,6 @@ function M.setup()
     hi NvimTreeRootFolder guifg=#e06c75
     hi NvimTreeGitDirty guifg=#e06c75
 
-    autocmd BufWinEnter NvimTree setlocal cursorline
-
     autocmd DirChanged * lua require('core.nvimtree').pwd_stack_push()
 
     function NvimLocateFile()
