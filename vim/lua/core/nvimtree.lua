@@ -294,6 +294,7 @@ function M.setup()
   }
 
   M.pwd_stack:push(vim.fn.getcwd())
+  M.loaded = true
 end
 
 return M
