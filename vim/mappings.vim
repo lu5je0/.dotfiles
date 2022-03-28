@@ -127,6 +127,10 @@ function! ToggleGj(echo)
         nmap k k
         nmap H ^
         nmap L $
+        vmap H ^
+        vmap L $
+        omap H ^
+        omap L $
         nmap Y ^y$
         if a:echo
             echo "gj off"
