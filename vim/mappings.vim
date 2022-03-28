@@ -104,7 +104,7 @@ vmap <silent> # :lua require("core.terminal").run_select_in_terminal()<cr>
 "----------------------------------------------------------------------
 function! ToggleGj(echo)
     if !exists("g:ToggleGj")
-        let g:ToggleGj = 1
+        let g:ToggleGj = 0
     endif
     if g:ToggleGj == 1
         vmap j gj
@@ -123,8 +123,8 @@ function! ToggleGj(echo)
         endif
         let g:ToggleGj = 0
     else
-        unmap j
-        unmap k
+        nmap j j
+        nmap k k
         nmap H ^
         nmap L $
         nmap Y ^y$
