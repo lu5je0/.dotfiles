@@ -3,7 +3,7 @@ require('plugins')
 require('enhance')
 require('commands')
 require('patch')
-require('misc.var_naming_converter').mappings()
+require('mappings')
 
 vim.cmd([[
 runtime settings.vim
