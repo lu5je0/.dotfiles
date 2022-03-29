@@ -107,9 +107,9 @@ vmap <leader>xns <plug>(ConvertToSnakeword)
 nmap <leader>xns <plug>(ConvertToSnakeword)
 nmap <leader>xnS <plug>(ConvertToSnakeWORD)
 
-vmap <leader>xnk <plug>(ConvertToKababword)
-nmap <leader>xnk <plug>(ConvertToKababword)
-nmap <leader>xnK <plug>(ConvertToKababWORD)
+vmap <leader>xnk <plug>(ConvertToKebabword)
+nmap <leader>xnk <plug>(ConvertToKebabword)
+nmap <leader>xnK <plug>(ConvertToKebabWORD)
 
 vmap <leader>xnp <plug>(ConvertToPascalword)
 nmap <leader>xnp <plug>(ConvertToPascalword)

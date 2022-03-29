@@ -125,8 +125,8 @@ M.mappings = function()
   map <plug>(ConvertToPascalWORD) <cmd>lua require('misc.var_naming_converter').convert_to_pascal('WORD')<cr>
   map <plug>(ConvertToPascalword) <cmd>lua require('misc.var_naming_converter').convert_to_pascal('word')<cr>
 
-  map <plug>(ConvertToKababWORD) <cmd>lua require('misc.var_naming_converter').convert_to_kabab('WORD')<cr>
-  map <plug>(ConvertToKababword) <cmd>lua require('misc.var_naming_converter').convert_to_kabab('word')<cr>
+  map <plug>(ConvertToKebabWORD) <cmd>lua require('misc.var_naming_converter').convert_to_kebab('WORD')<cr>
+  map <plug>(ConvertToKebabword) <cmd>lua require('misc.var_naming_converter').convert_to_kebab('word')<cr>
   ]])
 end
 return M
