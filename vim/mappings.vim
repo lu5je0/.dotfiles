@@ -99,6 +99,9 @@ sunmap il
 "----------------------------------------------------------------------
 vmap <silent> # :lua require("core.terminal").run_select_in_terminal()<cr>
 
+vmap <leader>xnc <cmd>lua require('misc.var_naming_converter').convert_to_camel()<cr>
+nmap <leader>xnc <cmd>lua require('misc.var_naming_converter').convert_to_camel()<cr>
+
 "----------------------------------------------------------------------
 " wrap
 "----------------------------------------------------------------------

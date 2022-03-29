@@ -17,6 +17,7 @@ endif
 
 local function load_plug()
   local plugins = {
+    'nvim-tree.lua',
     'nvim-cmp',
     'nvim-lspconfig',
     'nvim-autopairs',
