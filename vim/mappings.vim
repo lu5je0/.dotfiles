@@ -99,21 +99,21 @@ sunmap il
 "----------------------------------------------------------------------
 vmap <silent> # :lua require("core.terminal").run_select_in_terminal()<cr>
 
-vmap <leader>xnc <plug>(ConvertToCamelword)
-nmap <leader>xnc <plug>(ConvertToCamelword)
-nmap <leader>xnC <plug>(ConvertToCamelWORD)
+vmap <leader>cnc <plug>(ConvertToCamelword)
+nmap <leader>cnc <plug>(ConvertToCamelword)
+nmap <leader>cnC <plug>(ConvertToCamelWORD)
 
-vmap <leader>xns <plug>(ConvertToSnakeword)
-nmap <leader>xns <plug>(ConvertToSnakeword)
-nmap <leader>xnS <plug>(ConvertToSnakeWORD)
+vmap <leader>cns <plug>(ConvertToSnakeword)
+nmap <leader>cns <plug>(ConvertToSnakeword)
+nmap <leader>cnS <plug>(ConvertToSnakeWORD)
 
-vmap <leader>xnk <plug>(ConvertToKebabword)
-nmap <leader>xnk <plug>(ConvertToKebabword)
-nmap <leader>xnK <plug>(ConvertToKebabWORD)
+vmap <leader>cnk <plug>(ConvertToKebabword)
+nmap <leader>cnk <plug>(ConvertToKebabword)
+nmap <leader>cnK <plug>(ConvertToKebabWORD)
 
-vmap <leader>xnp <plug>(ConvertToPascalword)
-nmap <leader>xnp <plug>(ConvertToPascalword)
-nmap <leader>xnP <plug>(ConvertToPascalWORD)
+vmap <leader>cnp <plug>(ConvertToPascalword)
+nmap <leader>cnp <plug>(ConvertToPascalword)
+nmap <leader>cnP <plug>(ConvertToPascalWORD)
 
 "----------------------------------------------------------------------
 " wrap
