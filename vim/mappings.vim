@@ -123,8 +123,8 @@ function! ToggleGj(echo)
         endif
         let g:ToggleGj = 0
     else
-        nmap j j
-        nmap k k
+        silent! unmap j
+        silent! unmap k
         nmap H ^
         nmap L $
         vmap H ^
