@@ -1,51 +1,103 @@
 local M = {}
-local visual_utils = require("utils.visual-utils")
+local visual_utils = require('utils.visual-utils')
 
 local function is_contain_space(var_name)
-  return var_name:match(" ") ~= nil
+  return var_name:match(' ') ~= nil
 end
 
 local function split(var_name)
   var_name = var_name:gsub('(%S)(%u)', '%1_%2'):lower()
   local tokens = {}
-  for token in string.gmatch(var_name, "[a-zA-Z]+") do
+  for token in string.gmatch(var_name, '[a-zA-Z]+') do
     table.insert(tokens, token)
   end
   return tokens
 end
 
-local function get_var_name()
+local function get_var_name(word_mode)
   local var_name = nil
   if vim.api.nvim_get_mode()['mode'] == 'v' then
     var_name = visual_utils.selected_text()
   else
-    var_name = visual_utils.selected_text()
+    if word_mode == 'WORD' then
+      var_name = vim.fn.expand('<cWORD>')
+    else
+      var_name = vim.fn.expand('<cword>')
+    end
   end
   return var_name
 end
 
 local function replace_var(var_name)
-  if vim.api.nvim_get_mode()['mode'] == 'v' then
-    visual_utils.visual_replace(var_name)
-  else
-    -- var_name = visual_utils.selected_text()
-  end
+  visual_utils.visual_replace(var_name)
 end
 
-M.convert_to_camel = function ()
-  local var_name = get_var_name()
+local function base_convert(convert_strategy_fn, word_mode)
+  local var_name = get_var_name(word_mode)
   if not is_contain_space(var_name) then
     local tokens = split(var_name)
-    var_name = ""
-    for i, token in ipairs(tokens) do
-      if i == 1 then
-        var_name = var_name .. token
+    var_name = convert_strategy_fn(tokens)
+    if vim.api.nvim_get_mode()['mode'] == 'n' then
+      if word_mode == 'WORD' then
+        vim.cmd('norm viW')
       else
-        var_name = var_name .. token:gsub("^%l", string.upper)
+        vim.cmd('norm viw')
       end
     end
     replace_var(var_name)
   end
+end
+
+M.convert_to_camel = function(word_mode)
+  base_convert(function(tokens)
+    local var_name = ''
+    for i, token in ipairs(tokens) do
+      if i == 1 then
+        var_name = var_name .. token
+      else
+        var_name = var_name .. token:gsub('^%l', string.upper)
+      end
+    end
+    return var_name
+  end, word_mode)
+end
+
+M.convert_to_snake = function(word_mode)
+  base_convert(function(tokens)
+    local var_name = ''
+    for i, token in ipairs(tokens) do
+      if i == 1 then
+        var_name = var_name .. token
+      else
+        var_name = var_name .. '_' .. token
+      end
+    end
+    return var_name
+  end, word_mode)
+end
+
+M.convert_to_pascal = function(word_mode)
+  base_convert(function(tokens)
+    local var_name = ''
+    for _, token in ipairs(tokens) do
+      var_name = var_name .. token:gsub('^%l', string.upper)
+    end
+    return var_name
+  end, word_mode)
+end
+
+M.convert_to_kebab = function(word_mode)
+  base_convert(function(tokens)
+    local var_name = ''
+    for i, token in ipairs(tokens) do
+      if i == 1 then
+        var_name = var_name .. token
+      else
+        var_name = var_name .. '-' .. token
+      end
+    end
+    return var_name
+  end, word_mode)
 end
 
 return M

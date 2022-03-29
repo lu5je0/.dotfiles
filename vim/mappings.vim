@@ -99,8 +99,21 @@ sunmap il
 "----------------------------------------------------------------------
 vmap <silent> # :lua require("core.terminal").run_select_in_terminal()<cr>
 
-vmap <leader>xnc <cmd>lua require('misc.var_naming_converter').convert_to_camel()<cr>
-nmap <leader>xnc <cmd>lua require('misc.var_naming_converter').convert_to_camel()<cr>
+vmap <leader>xnc <cmd>lua require('misc.var_naming_converter').convert_to_camel('WORD')<cr>
+nmap <leader>xnc <cmd>lua require('misc.var_naming_converter').convert_to_camel('WORD')<cr>
+nmap <leader>xnC <cmd>lua require('misc.var_naming_converter').convert_to_camel('word')<cr>
+
+vmap <leader>xns <cmd>lua require('misc.var_naming_converter').convert_to_snake('WORD')<cr>
+nmap <leader>xns <cmd>lua require('misc.var_naming_converter').convert_to_snake('WORD')<cr>
+nmap <leader>xnS <cmd>lua require('misc.var_naming_converter').convert_to_snake('word')<cr>
+
+vmap <leader>xnk <cmd>lua require('misc.var_naming_converter').convert_to_kebab('WORD')<cr>
+nmap <leader>xnk <cmd>lua require('misc.var_naming_converter').convert_to_kebab('WORD')<cr>
+nmap <leader>xnK <cmd>lua require('misc.var_naming_converter').convert_to_kebab('word')<cr>
+
+vmap <leader>xnp <cmd>lua require('misc.var_naming_converter').convert_to_pascal('WORD')<cr>
+nmap <leader>xnp <cmd>lua require('misc.var_naming_converter').convert_to_pascal('WORD')<cr>
+nmap <leader>xnP <cmd>lua require('misc.var_naming_converter').convert_to_pascal('word')<cr>
 
 "----------------------------------------------------------------------
 " wrap

@@ -252,7 +252,7 @@ endfunction
 function! VisualReplace(text)
     let reg_tmp = @a
     let @a = a:text
-    normal! gv"ap
+    normal! "ap
     let @a = reg_tmp
     unlet reg_tmp
 endfunction
