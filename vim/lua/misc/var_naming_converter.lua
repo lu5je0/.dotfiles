@@ -48,6 +48,12 @@ local function base_convert(convert_strategy_fn, word_mode)
   end
 end
 
+local function vim_add_repeat(case_type, word_mode)
+  local cmd = [[call repeat#set("\<plug>(ConvertTo%s%s)", 1)]]
+  cmd = cmd:format(case_type, word_mode)
+  vim.cmd(cmd)
+end
+
 M.convert_to_camel = function(word_mode)
   base_convert(function(tokens)
     local var_name = ''
@@ -60,6 +66,8 @@ M.convert_to_camel = function(word_mode)
     end
     return var_name
   end, word_mode)
+
+  vim_add_repeat('Camel', word_mode)
 end
 
 M.convert_to_snake = function(word_mode)
@@ -74,6 +82,8 @@ M.convert_to_snake = function(word_mode)
     end
     return var_name
   end, word_mode)
+
+  vim_add_repeat('Snake', word_mode)
 end
 
 M.convert_to_pascal = function(word_mode)
@@ -84,6 +94,8 @@ M.convert_to_pascal = function(word_mode)
     end
     return var_name
   end, word_mode)
+
+  vim_add_repeat('Pascal', word_mode)
 end
 
 M.convert_to_kebab = function(word_mode)
@@ -98,6 +110,23 @@ M.convert_to_kebab = function(word_mode)
     end
     return var_name
   end, word_mode)
+
+  vim_add_repeat('Kebab', word_mode)
 end
 
+M.mappings = function()
+  vim.cmd([[
+  map <plug>(ConvertToCamelWORD) <cmd>lua require('misc.var_naming_converter').convert_to_camel('WORD')<cr>
+  map <plug>(ConvertToCamelWord) <cmd>lua require('misc.var_naming_converter').convert_to_camel('word')<cr>
+
+  map <plug>(ConvertToSnakeWORD) <cmd>lua require('misc.var_naming_converter').convert_to_snake('WORD')<cr>
+  map <plug>(ConvertToSnakeWord) <cmd>lua require('misc.var_naming_converter').convert_to_snake('word')<cr>
+
+  map <plug>(ConvertToPascalWORD) <cmd>lua require('misc.var_naming_converter').convert_to_pascal('WORD')<cr>
+  map <plug>(ConvertToPascalWord) <cmd>lua require('misc.var_naming_converter').convert_to_pascal('word')<cr>
+
+  map <plug>(ConvertToKababWORD) <cmd>lua require('misc.var_naming_converter').convert_to_kabab('WORD')<cr>
+  map <plug>(ConvertToKababWord) <cmd>lua require('misc.var_naming_converter').convert_to_kabab('word')<cr>
+  ]])
+end
 return M

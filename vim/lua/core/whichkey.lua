@@ -139,6 +139,17 @@ M.setup = function()
       m = { ':%s/\r$//<cr>', 'remove ^M' },
       q = '繁体转简体',
       Q = '简体转繁体',
+      n = {
+        name = '+naming case',
+        s = { 'snake_case' },
+        S = { 'snake_case(WORD)' },
+        k = { 'kebab-case' },
+        K = { 'kebab-case(WORD)' },
+        p = { 'PascalCase' },
+        P = { 'PascalCase(WORD)' },
+        c = { 'camelCase' },
+        C = { 'camelCase(WORD)' },
+      }
     },
     s = {
       name = '+translate',
@@ -219,6 +230,13 @@ M.setup = function()
       B = { 'unbase64' },
       s = { 'text escape' },
       r = { ":lua require('misc/replace').v_replace()<cr>", 'replace' },
+      n = {
+        name = '+naming case',
+        s = { 'snake_case' },
+        k = { 'kebab-case' },
+        p = { 'PascalCase' },
+        c = { 'camelCase' },
+      }
     },
     s = {
       name = '+translate'
