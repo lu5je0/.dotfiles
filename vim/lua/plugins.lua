@@ -524,17 +524,17 @@ return packer.startup(function(use)
     opt = true,
   }
 
-  use {
-    'petertriho/nvim-scrollbar',
-    config = function()
-      require('scrollbar').setup {
-        handle = {
-          color = '#5C6370',
-        },
-        excluded_filetypes = { 'NvimTree', 'confirm', 'toggleterm', 'vista' },
-      }
-    end,
-  }
+  -- use {
+  --   'petertriho/nvim-scrollbar',
+  --   config = function()
+  --     require('scrollbar').setup {
+  --       handle = {
+  --         color = '#5C6370',
+  --       },
+  --       excluded_filetypes = { 'NvimTree', 'confirm', 'toggleterm', 'vista' },
+  --     }
+  --   end,
+  -- }
 
   -- use({
   --   'diepm/vim-rest-console',
