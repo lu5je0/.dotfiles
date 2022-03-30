@@ -26,7 +26,7 @@ end
 
 local function replace_var(var_name)
   if vim.api.nvim_get_mode()['mode'] == 'v' then
-    visual_utils.replace_with(var_name)
+    visual_utils.visual_replace(var_name)
   else
     -- var_name = visual_utils.selected_text()
   end

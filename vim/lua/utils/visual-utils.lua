@@ -4,7 +4,7 @@ function M.selected_text()
   return vim.fn['visual#visual_selection']()
 end
 
-function M.replace_with(text)
+function M.visual_replace(text)
   local cmd = [[
   function! TempString(s)
     return '%s'
