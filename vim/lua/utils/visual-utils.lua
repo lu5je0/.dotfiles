@@ -5,14 +5,7 @@ function M.selected_text()
 end
 
 function M.visual_replace(text)
-  local cmd = [[
-  function! TempString(s)
-    return '%s'
-  endfunction
-  ]]
-  cmd = cmd:format(text)
-  vim.cmd(cmd)
-  vim.fn['ReplaceSelect']('TempString')
+  vim.fn['VisualReplace'](text)
 end
 
 return M
