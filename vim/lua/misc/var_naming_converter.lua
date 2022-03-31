@@ -8,7 +8,7 @@ end
 local function split(var_name)
   var_name = var_name:gsub('(%S)(%u)', '%1_%2'):lower()
   local tokens = {}
-  for token in string.gmatch(var_name, '[a-zA-Z]+') do
+  for token in string.gmatch(var_name, '[a-zA-Z0-9]+') do
     table.insert(tokens, token)
   end
   return tokens
