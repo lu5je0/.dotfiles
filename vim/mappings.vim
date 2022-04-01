@@ -66,7 +66,7 @@ nmap <silent> <left> :bp<cr>
 nmap <silent> <right> :bn<cr>
 nmap <silent> <c-b>o <c-w>p
 nmap <silent> <c-b><c-o> <c-w>p
-nmap Q <Nop>
+nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
 
 command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
 
