@@ -1,4 +1,7 @@
-require('impatient')
+local impatient_status, _ = pcall(require, 'impatient')
+if not impatient_status then
+  vim.notify("impatient fail")
+end
 require('plugins')
 require('enhance')
 require('commands')
