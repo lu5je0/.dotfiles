@@ -1,8 +1,12 @@
-require('impatient')
+local impatient_status, _ = pcall(require, 'impatient')
+if not impatient_status then
+  vim.notify("impatient fail")
+end
 require('plugins')
 require('enhance')
 require('commands')
 require('patch')
+require('mappings')
 
 vim.cmd([[
 runtime settings.vim
@@ -17,6 +21,7 @@ endif
 
 local function load_plug()
   local plugins = {
+    'nvim-tree.lua',
     'nvim-cmp',
     'nvim-lspconfig',
     'nvim-autopairs',

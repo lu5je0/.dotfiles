@@ -221,6 +221,13 @@ return packer.startup(function(use)
   use('gruvbox-community/gruvbox')
 
   -- use {
+  --   'Mofiqul/vscode.nvim',
+  --   config = function()
+  --     -- vim.g.vscode_style = "dark"
+  --   end
+  -- }
+
+  -- use {
   --   'wfxr/minimap.vim',
   --   config = function()
   --     vim.g.minimap_width = 10
@@ -524,17 +531,17 @@ return packer.startup(function(use)
     opt = true,
   }
 
-  use {
-    'petertriho/nvim-scrollbar',
-    config = function()
-      require('scrollbar').setup {
-        handle = {
-          color = '#5C6370',
-        },
-        excluded_filetypes = { 'NvimTree', 'confirm', 'toggleterm', 'vista' },
-      }
-    end,
-  }
+  -- use {
+  --   'petertriho/nvim-scrollbar',
+  --   config = function()
+  --     require('scrollbar').setup {
+  --       handle = {
+  --         color = '#5C6370',
+  --       },
+  --       excluded_filetypes = { 'NvimTree', 'confirm', 'toggleterm', 'vista' },
+  --     }
+  --   end,
+  -- }
 
   -- use({
   --   'diepm/vim-rest-console',
@@ -600,10 +607,12 @@ return packer.startup(function(use)
 
   use {
     'glacambre/firenvim',
-    run = function() vim.fn['firenvim#install'](0) end,
-    config = function ()
-      vim.cmd("set guifont=JetBrainsMono\\ Nerd\\ Font\\ Mono:h22")
-    end
+    run = function()
+      vim.fn['firenvim#install'](0)
+    end,
+    config = function()
+      vim.cmd('set guifont=JetBrainsMono\\ Nerd\\ Font\\ Mono:h22')
+    end,
   }
 
   use {

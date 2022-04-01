@@ -7,7 +7,7 @@ end
 M.node_global_modules_path = ''
 
 function M.convert()
-  local tl = vim.fn.input('Target language:', 'python')
+  local tl = vim.fn.input('Target language: ', 'python')
   if tl == nil or tl == '' then
     return
   end

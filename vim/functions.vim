@@ -249,6 +249,14 @@ function! ReplaceSelect(fn)
 	let &paste = l:paste
 endfunction
 
+function! VisualReplace(text)
+    let reg_tmp = @a
+    let @a = a:text
+    normal! "ap
+    let @a = reg_tmp
+    unlet reg_tmp
+endfunction
+
 function! CDTerminalToCWD()
     call TerminalSend("cd '" . getcwd() . "'")
     call TerminalSend("\r")

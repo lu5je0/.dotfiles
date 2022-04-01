@@ -66,7 +66,7 @@ nmap <silent> <left> :bp<cr>
 nmap <silent> <right> :bn<cr>
 nmap <silent> <c-b>o <c-w>p
 nmap <silent> <c-b><c-o> <c-w>p
-nmap Q <Nop>
+nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
 
 command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
 
@@ -98,6 +98,22 @@ sunmap il
 " visual mode
 "----------------------------------------------------------------------
 vmap <silent> # :lua require("core.terminal").run_select_in_terminal()<cr>
+
+vmap <leader>cnc <plug>(ConvertToCamelword)
+nmap <leader>cnc <plug>(ConvertToCamelword)
+nmap <leader>cnC <plug>(ConvertToCamelWORD)
+
+vmap <leader>cns <plug>(ConvertToSnakeword)
+nmap <leader>cns <plug>(ConvertToSnakeword)
+nmap <leader>cnS <plug>(ConvertToSnakeWORD)
+
+vmap <leader>cnk <plug>(ConvertToKebabword)
+nmap <leader>cnk <plug>(ConvertToKebabword)
+nmap <leader>cnK <plug>(ConvertToKebabWORD)
+
+vmap <leader>cnp <plug>(ConvertToPascalword)
+nmap <leader>cnp <plug>(ConvertToPascalword)
+nmap <leader>cnP <plug>(ConvertToPascalWORD)
 
 "----------------------------------------------------------------------
 " wrap

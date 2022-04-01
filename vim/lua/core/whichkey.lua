@@ -87,9 +87,21 @@ M.setup = function()
       d = { '<cmd>PackerClean<cr>', 'clean' },
     },
     c = {
+      name = '+code',
       r = 'rename-variable',
       c = 'code-action',
       f = 'code-formatting',
+      n = {
+        name = '+naming case',
+        s = { 'snake_case' },
+        S = { 'snake_case(WORD)' },
+        k = { 'kebab-case' },
+        K = { 'kebab-case(WORD)' },
+        p = { 'PascalCase' },
+        P = { 'PascalCase(WORD)' },
+        c = { 'camelCase' },
+        C = { 'camelCase(WORD)' },
+      }
     },
     t = {
       name = '+tab',
@@ -212,20 +224,34 @@ M.setup = function()
 
   local v_mappings = {
     x = {
+      name = '+text',
       c = { 'g<c-g>', 'count in the selection region' },
       b = { 'base64' },
       B = { 'unbase64' },
       s = { 'text escape' },
       r = { ":lua require('misc/replace').v_replace()<cr>", 'replace' },
     },
+    s = {
+      name = '+translate'
+    },
     f = {
+      name = '+search/files',
       f = { ":lua require('core.leaderf').visual_leaderf('file')<cr>", 'file' },
       r = { ":lua require('core.leaderf').visual_leaderf('rg')<cr>", 'rg' },
     },
     c = {
+      name = '+code',
       f = 'range formatting',
+      n = {
+        name = '+naming case',
+        s = { 'snake_case' },
+        k = { 'kebab-case' },
+        p = { 'PascalCase' },
+        c = { 'camelCase' },
+      }
     },
     g = {
+      name = '+git',
       l = { ":lua require('core/fugitive').lines_changes()<cr>", 'show changs on select lines' },
     },
   }

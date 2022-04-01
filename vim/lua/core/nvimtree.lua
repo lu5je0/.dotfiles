@@ -1,6 +1,6 @@
 local M = {}
 
-M.loaded = false
+M.loaded = true
 
 function M.locate_file()
   if not M.loaded then
