@@ -66,7 +66,11 @@ function M.forward()
 end
 
 function M.cd()
-  require('nvim-tree.actions').on_keypress('cd')
+  -- require('nvim-tree.actions').on_keypress('cd')
+  local lib = require('nvim-tree.lib')
+  if lib ~= nil then
+    vim.cmd(':cd ' .. vim.fn.fnamemodify(lib.get_node_at_cursor().absolute_path, ':p:h'))
+  end
   vim.cmd('norm gg')
 end
 
