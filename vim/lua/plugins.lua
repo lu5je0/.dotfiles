@@ -9,12 +9,11 @@ packer.init {
   max_jobs = 15,
 }
 
-vim.cmd([[
-augroup packer_user_config
-autocmd!
-autocmd BufWritePost plugins.lua source <afile> | PackerCompile
-augroup end
-]])
+vim.api.nvim_create_autocmd('BufWritePost', {
+  group = vim.api.nvim_create_augroup("packer_reload_augroup", {clear = true}),
+  pattern = { 'plugins.lua' },
+  command = 'source <afile> | PackerCompile'
+})
 
 return packer.startup(function(use)
   -- Speed up loading Lua modules in Neovim to improve startup time.
