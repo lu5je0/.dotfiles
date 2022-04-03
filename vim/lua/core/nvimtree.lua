@@ -275,7 +275,7 @@ function M.setup()
     },
     filters = {
       dotfiles = true,
-      custom = { '.git' },
+      custom = {},
     },
     view = {
       width = 25,
