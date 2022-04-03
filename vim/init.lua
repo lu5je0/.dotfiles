@@ -1,5 +1,5 @@
 if not pcall(require, 'impatient') then
-  vim.notify("impatient fail")
+  vim.notify('impatient fail')
 end
 require('plugins')
 require('enhance')

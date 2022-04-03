@@ -45,16 +45,21 @@ map <c-m-p> <Plug>(VM-Add-Cursor-Up)
 
 nmap <F2> :bp<cr>
 nmap <F3> :bn<cr>
-nnoremap <PageUp>   :bprevious<CR>
-nnoremap <PageDown> :bnext<CR>
+nmap <PageUp>   :bprevious<CR>
+nmap <PageDown> :bnext<CR>
+
+"----------------------------------------------------------------------
+" <leader>
+"----------------------------------------------------------------------
+nmap <silent> <leader>tN :tabnew<cr>
 
 "----------------------------------------------------------------------
 " window control
 "----------------------------------------------------------------------
-noremap <silent><space>= :resize +3<cr>
-noremap <silent><space>- :resize -3<cr>
-noremap <silent><space>, :vertical resize -3<cr>
-noremap <silent><space>. :vertical resize +3<cr>
+nmap <silent><space>= :resize +3<cr>
+nmap <silent><space>- :resize -3<cr>
+nmap <silent><space>, :vertical resize -3<cr>
+nmap <silent><space>. :vertical resize +3<cr>
 
 " 快速切换窗口
 nmap <silent> <C-J> <C-w>j
