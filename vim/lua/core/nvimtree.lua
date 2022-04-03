@@ -233,8 +233,8 @@ function M.setup()
     { key = 'o', action = 'system_open' },
     { key = 'q', action = 'close' },
     { key = 'g?', action = 'toggle_help' },
-    { key = '<c-o>', cb = ":lua require('core.nvimtree').back()<cr>" },
-    { key = '<c-i>', cb = ":lua require('core.nvimtree').forward()<cr>" },
+    { key = '<c-o>', action = 'backward', action_cb = M.back },
+    { key = { '<tab>', '<c-i>' }, action = 'forward', action_cb = M.forward },
   }
 
   require('nvim-tree').setup {
