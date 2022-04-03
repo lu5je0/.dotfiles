@@ -4,6 +4,16 @@
     "body": ["feat: $1"],
     "description": "feat"
   },
+  "style": {
+    "prefix": "style",
+    "body": ["style: $1"],
+    "description": "style"
+  },
+  "test": {
+    "prefix": "test",
+    "body": ["test: $1"],
+    "description": "test"
+  },
   "chore": {
     "prefix": "chore",
     "body": ["chore: $1"],
