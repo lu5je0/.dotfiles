@@ -183,7 +183,7 @@ function M.setup()
   vim.cmd([[
   augroup nvim_tree_group
       autocmd!
-      autocmd BufWinEnter NvimTree_1 setlocal cursorline
+      autocmd BufWinEnter NvimTree_* setlocal cursorline
   augroup END
   ]])
 
