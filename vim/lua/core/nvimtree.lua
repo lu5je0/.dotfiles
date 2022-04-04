@@ -180,6 +180,13 @@ function M.setup()
     lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
   ]])
 
+  vim.cmd([[
+  augroup nvim_tree_group
+      autocmd!
+      autocmd BufWinEnter NvimTree_1 setlocal cursorline
+  augroup END
+  ]])
+
   vim.keymap.set('n', '<leader>e', function() require'nvim-tree'.toggle(false, true) end)
   vim.keymap.set('n', '<leader>fe', require("core.nvimtree").locate_file)
   vim.api.nvim_set_keymap('n', '<leader>fp', ':cd ~/.local/share/nvim/site/pack/packer<cr>', { noremap = true, silent = true })
