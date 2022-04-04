@@ -220,14 +220,23 @@ ins_right {
   padding = { left = 0, right = 1 },
 }
 
+local function percentage_icon(per)
+  local icons = { '', '', '', ''}
+  -- local icons = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'}
+  return icons[((math.ceil(per / 7)) % #icons) + 1]
+end
+
 -- lsp status
--- ins_right({
---   function()
---     return require('lsp-status').status()
---   end,
---   color = 'LualineMode',
---   padding = { left = 1, right = 1 },
--- })
+ins_right({
+  function()
+    local message = require('lsp-status').messages()[1]
+    local s = '%s %s %s(%s%%%%)'
+    return s:format(percentage_icon(message.percentage), message.title, message.message, message.percentage)
+    -- return require('lsp-status').status()
+  end,
+  color = { fg = colors.green, gui = 'bold' },
+  padding = { left = 1, right = 1 },
+})
 
 ins_right {
   -- Lsp server name .
