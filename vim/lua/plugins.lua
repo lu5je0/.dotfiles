@@ -244,6 +244,7 @@ return packer.startup(function(use)
 
   use {
     'akinsho/toggleterm.nvim',
+    opt = true,
     config = function()
       require('core.terminal').setup()
     end,
@@ -604,20 +605,20 @@ return packer.startup(function(use)
   --   keys = { '<leader>fc' },
   -- }
 
-  use {
-    'glacambre/firenvim',
-    run = function()
-      vim.fn['firenvim#install'](0)
-    end,
-    config = function()
-      vim.cmd('set guifont=JetBrainsMono\\ Nerd\\ Font\\ Mono:h22')
-    end,
-  }
+  -- use {
+  --   'glacambre/firenvim',
+  --   run = function()
+  --     vim.fn['firenvim#install'](0)
+  --   end,
+  --   config = function()
+  --     vim.cmd('set guifont=JetBrainsMono\\ Nerd\\ Font\\ Mono:h22')
+  --   end,
+  -- }
 
   use {
     'lu5je0/LeaderF',
     run = './install.sh',
-    -- opt = true,
+    opt = true,
     -- cmd = {'Leaderf', 'Git'},
     config = function()
       require('core.leaderf').setup()

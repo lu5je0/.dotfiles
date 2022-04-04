@@ -18,21 +18,26 @@ if has("mac")
 endif
 ]])
 
-local function load_plug()
-  local plugins = {
-    'nvim-tree.lua',
-    'nvim-cmp',
-    'nvim-lspconfig',
-    'nvim-autopairs',
-    'null-ls.nvim',
-  }
+local defer_plugins = {
+  'nvim-tree.lua',
+  'nvim-cmp',
+  'nvim-lspconfig',
+  'nvim-autopairs',
+  'null-ls.nvim',
+  'LeaderF',
+  'toggleterm.nvim',
+}
 
-  if vim.fn.has('wsl') == 1 then
-    table.insert(plugins, 'im-switcher.nvim')
-  end
-
-  require('packer').loader(unpack(plugins))
-  vim.o.clipboard = 'unnamedplus'
+if vim.fn.has('wsl') == 1 then
+  table.insert(defer_plugins, 'im-switcher.nvim')
 end
 
-vim.defer_fn(load_plug, 10)
+for _, plugin in ipairs(defer_plugins) do
+  vim.schedule(function()
+    vim.cmd("PackerLoad " .. plugin)
+  end)
+end
+
+vim.defer_fn(function()
+  vim.o.clipboard = 'unnamedplus'
+end, 10)
