@@ -239,16 +239,16 @@ local function percentage_icon(per)
 end
 
 -- lsp status
-ins_right({
-  function()
-    local message = require('lsp-status').messages()[1]
-    local s = '%s %s %s(%s%%%%)'
-    return s:format(percentage_icon(message.percentage), message.title, message.message, message.percentage)
-    -- return require('lsp-status').status()
-  end,
-  color = { fg = colors.green },
-  padding = { left = 1, right = 1 },
-})
+-- ins_right({
+--   function()
+--     local message = require('lsp-status').messages()[1]
+--     local s = '%s %s %s(%s%%%%)'
+--     return s:format(percentage_icon(message.percentage), message.title, message.message, message.percentage)
+--     -- return require('lsp-status').status()
+--   end,
+--   color = { fg = colors.green },
+--   padding = { left = 1, right = 1 },
+-- })
 
 ins_right {
   -- Lsp server name .
