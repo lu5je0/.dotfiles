@@ -150,14 +150,6 @@ EOF
 endfunction
 command! -nargs=* KeepLines call KeepLines(<f-args>)
 
-function! JsonFormat(...)
-call PyFuncInit()
-python3 << EOF
-functions.jsonFormat()
-EOF
-endfunction
-command! -nargs=* JsonFormat call JsonFormat(<f-args>)
-
 function! DelLines(...)
 call PyFuncInit()
 python3 << EOF
