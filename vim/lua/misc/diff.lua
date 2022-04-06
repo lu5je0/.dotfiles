@@ -13,6 +13,4 @@ function M.toggle_diff()
   end
 end
 
-M.toggle_diff()
-
 return M

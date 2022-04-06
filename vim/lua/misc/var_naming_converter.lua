@@ -115,18 +115,16 @@ M.convert_to_kebab = function(word_mode)
 end
 
 M.mappings = function()
-  vim.cmd([[
-  map <plug>(ConvertToCamelWORD) <cmd>lua require('misc.var_naming_converter').convert_to_camel('WORD')<cr>
-  map <plug>(ConvertToCamelword) <cmd>lua require('misc.var_naming_converter').convert_to_camel('word')<cr>
+  vim.keymap.set('n', '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end)
+  vim.keymap.set('n', '<plug>(ConvertToCamelword)', function() M.convert_to_camel('word') end)
 
-  map <plug>(ConvertToSnakeWORD) <cmd>lua require('misc.var_naming_converter').convert_to_snake('WORD')<cr>
-  map <plug>(ConvertToSnakeword) <cmd>lua require('misc.var_naming_converter').convert_to_snake('word')<cr>
+  vim.keymap.set('n', '<plug>(ConvertToSnakeWORD)', function() M.convert_to_snake('WORD') end)
+  vim.keymap.set('n', '<plug>(ConvertToSnakeword)', function() M.convert_to_snake('word') end)
 
-  map <plug>(ConvertToPascalWORD) <cmd>lua require('misc.var_naming_converter').convert_to_pascal('WORD')<cr>
-  map <plug>(ConvertToPascalword) <cmd>lua require('misc.var_naming_converter').convert_to_pascal('word')<cr>
+  vim.keymap.set('n', '<plug>(ConvertToPascalWORD)', function() M.convert_to_pascal('WORD') end)
+  vim.keymap.set('n', '<plug>(ConvertToPascalword)', function() M.convert_to_pascal('word') end)
 
-  map <plug>(ConvertToKebabWORD) <cmd>lua require('misc.var_naming_converter').convert_to_kebab('WORD')<cr>
-  map <plug>(ConvertToKebabword) <cmd>lua require('misc.var_naming_converter').convert_to_kebab('word')<cr>
-  ]])
+  vim.keymap.set('n', '<plug>(ConvertToKebabWORD)', function() M.convert_to_kebab('WORD') end)
+  vim.keymap.set('n', '<plug>(ConvertToKebabword)', function() M.convert_to_kebab('word') end)
 end
 return M

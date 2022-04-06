@@ -32,6 +32,7 @@ end
 function M.key_mappings()
   local opts = {}
   vim.api.nvim_set_keymap('n', '<leader>fC', ':Leaderf colorscheme<cr>', opts)
+  vim.api.nvim_set_keymap('n', '<leader>fc', ':Leaderf command<cr>', opts)
   vim.api.nvim_set_keymap('n', '<leader>ff', ':Leaderf file<cr>', opts)
   vim.api.nvim_set_keymap('n', '<leader>fs', ':Leaderf --recall<cr>', opts)
   vim.api.nvim_set_keymap('n', '<leader>fg', ':Leaderf bcommit<cr>', opts)

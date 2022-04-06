@@ -44,11 +44,6 @@ endif
 " set cot=noinsert,menuone
 set completeopt=menu,menuone,noselect
 
-" 自动打开上次位置
-if has("autocmd")
-    au BufReadPost * if line("'\"") > 1 && &ft != "gitcommit" && line("'\"") <= line("$") | exe "normal! g'\"" | endif
-endif
-
 set undofile
 
 " 不显示启动界面
