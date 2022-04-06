@@ -222,6 +222,7 @@ ins_right {
 
 local function percentage_icon(per)
   local icons = { '', '', '', ''}
+  -- local icons = {'⠏', '⠙', '⠸', '⠴', '⠧', '⠇', '⠋'}
   -- local icons = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'}
   return icons[((math.ceil(per / 7)) % #icons) + 1]
 end
