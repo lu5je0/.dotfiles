@@ -66,11 +66,11 @@ function M.forward()
 end
 
 function M.cd()
-  -- require('nvim-tree.actions').on_keypress('cd')
-  local lib = require('nvim-tree.lib')
-  if lib ~= nil then
-    vim.cmd(':cd ' .. vim.fn.fnamemodify(lib.get_node_at_cursor().absolute_path, ':p:h'))
-  end
+  require('nvim-tree.actions').on_keypress('cd')
+  -- local lib = require('nvim-tree.lib')
+  -- if lib ~= nil then
+  --   vim.cmd(':cd ' .. vim.fn.fnamemodify(lib.get_node_at_cursor().absolute_path, ':p:h'))
+  -- end
   vim.cmd('norm gg')
 end
 
@@ -270,6 +270,12 @@ function M.setup()
       enable = false,
       update_cwd = false,
       ignore_list = {},
+    },
+    actions = {
+      change_dir = {
+        enable = true,
+        global = true
+      }
     },
     git = {
       enable = true,

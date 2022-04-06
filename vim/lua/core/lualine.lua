@@ -199,10 +199,12 @@ ins_left {
 }
 
 -- lsp status
+local nvim_gps = require('nvim-gps')
 ins_left({
   function()
-    return require("nvim-gps").get_location()
+    return nvim_gps.get_location()
   end,
+  cond = nvim_gps.is_available,
   color = { fg = colors.grey },
   padding = { left = 1, right = 1 },
 })
