@@ -142,6 +142,9 @@ return packer.startup(function(use)
       require('core.treesiter')
     end,
     ft = _G.ts_filtypes,
+    requires = {
+      { 'SmiteshP/nvim-gps', config = function() require("nvim-gps").setup() end }
+    }
   }
 
   -- highlighting

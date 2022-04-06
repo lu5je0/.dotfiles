@@ -198,6 +198,15 @@ ins_left {
   color = { fg = colors.violet },
 }
 
+-- lsp status
+ins_left({
+  function()
+    return require("nvim-gps").get_location()
+  end,
+  color = { fg = colors.grey },
+  padding = { left = 1, right = 1 },
+})
+
 ins_right {
   'diagnostics',
   -- table of diagnostic sources, available sources:
@@ -235,7 +244,7 @@ ins_right({
     return s:format(percentage_icon(message.percentage), message.title, message.message, message.percentage)
     -- return require('lsp-status').status()
   end,
-  color = { fg = colors.green, gui = 'bold' },
+  color = { fg = colors.green },
   padding = { left = 1, right = 1 },
 })
 
