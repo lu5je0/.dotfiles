@@ -176,6 +176,63 @@ nmap <leader>Q <cmd>lua require("base.quit-comfirm").exit()<cr>
 nmap <leader>cf <cmd>lua vim.lsp.buf.formatting()<CR>
 vmap <leader>cf <cmd>lua vim.lsp.buf.range_formatting()<CR>
 
+" Echo translation in the cmdline
+nmap <silent> <Leader>sc <Plug>Translate
+vmap <silent> <Leader>sc <Plug>TranslateV
+
+" say it
+nmap <silent> <Leader>sa :call misc#say_it()<cr><Plug>TranslateW
+vmap <silent> <Leader>sa :call misc#visual_say_it()<cr><Plug>TranslateWV
+
+" vmap <silent> <Leader>sc <Plug>TranslateV
+" Display translation in a window
+nmap <silent> <Leader>ss <Plug>TranslateW
+vmap <silent> <Leader>ss <Plug>TranslateWV
+" Replace the text with translation
+nmap <silent> <Leader>sr <Plug>TranslateR
+vmap <silent> <Leader>sr <Plug>TranslateRV
+
+"----------------------------------------------------------------------
+" 繁体简体
+"----------------------------------------------------------------------
+vmap <leader>xq :!opencc -c t2s<cr>
+nmap <leader>xq :%!opencc -c t2s<cr>
+
+vmap <leader>xQ :!opencc -c s2t<cr>
+nmap <leader>xQ :%!opencc -c s2t<cr>
+
+
+"----------------------------------------------------------------------
+" base64
+"----------------------------------------------------------------------
+vmap <silent> <leader>xB :<c-u>call base64#v_atob()<cr>
+vmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
+
+
+"----------------------------------------------------------------------
+" unicode escape
+"----------------------------------------------------------------------
+vmap <silent> <leader>xu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
+vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+
+"----------------------------------------------------------------------
+" text escape
+"----------------------------------------------------------------------
+vmap <silent> <leader>xs :<c-u>call ReplaceSelect("EscapeText")<cr>
+" vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+
+"----------------------------------------------------------------------
+" url encode
+"----------------------------------------------------------------------
+nmap <leader>xh :%!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+nmap <leader>xH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+
+xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
+
+vnoremap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+vnoremap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+
 " ugly hack to start newline and keep indent
 " nnoremap o o<space><BS>
 " nnoremap O O<space><BS>
