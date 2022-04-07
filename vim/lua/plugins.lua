@@ -187,6 +187,7 @@ return packer.startup(function(use)
 
   use {
     'numToStr/Comment.nvim',
+    opt = true,
     config = function()
       require('Comment').setup {
         opleader = {

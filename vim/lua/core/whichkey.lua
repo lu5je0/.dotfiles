@@ -12,9 +12,9 @@ M.setup = function()
         motions = false, -- adds help for motions
         text_objects = false, -- help for text objects triggered after entering an operator
         windows = true, -- default bindings on <c-w>
-        nav = true, -- misc bindings to work with windows
+        nav = false, -- misc bindings to work with windows
         z = true, -- bindings for folds, spelling and others prefixed with z
-        g = true, -- bindings for prefixed with g
+        g = false, -- bindings for prefixed with g
       },
       spelling = { enabled = true, suggestions = 20 }, -- use which-key for spelling hints
     },
@@ -34,6 +34,7 @@ M.setup = function()
       width = { min = 20, max = 80 }, -- min and max width of the columns
       spacing = 2, -- spacing between columns
     },
+    triggers = { '<leader>', '<c-w>', 'z' },
     -- hidden = { "<silent>", "<cmd>", "<Cmd>", "<CR>", "call", "lua", "^:", "^ " }, -- hide mapping boilerplate
     show_help = true, -- show help message on the command line when the popup is visible
   }
@@ -101,7 +102,7 @@ M.setup = function()
         P = { 'PascalCase(WORD)' },
         c = { 'camelCase' },
         C = { 'camelCase(WORD)' },
-      }
+      },
     },
     t = {
       name = '+tab',
@@ -234,7 +235,7 @@ M.setup = function()
       r = { ":lua require('misc/replace').v_replace()<cr>", 'replace' },
     },
     s = {
-      name = '+translate'
+      name = '+translate',
     },
     f = {
       name = '+search/files',
@@ -250,7 +251,7 @@ M.setup = function()
         k = { 'kebab-case' },
         p = { 'PascalCase' },
         c = { 'camelCase' },
-      }
+      },
     },
     g = {
       name = '+git',
@@ -327,9 +328,10 @@ M.setup = function()
   ]])
 
   local wk = require('which-key')
+  wk.setup(setup)
+
   wk.register(n_mappings, n_opts)
   wk.register(v_mappings, v_opts)
-  wk.setup(setup)
 end
 
 return M
