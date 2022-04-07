@@ -247,6 +247,7 @@ return packer.startup(function(use)
 
   use {
     'akinsho/toggleterm.nvim',
+    branch = 'main',
     opt = true,
     config = function()
       require('core.terminal').setup()
