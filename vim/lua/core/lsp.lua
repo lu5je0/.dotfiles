@@ -104,16 +104,18 @@ local function on_attach(client, bufnr)
   vim.keymap.set('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
   vim.keymap.set('n', '<leader><space>', function() vim.diagnostic.open_float({scope='line', opts}) end)
 
-  -- cursor word highlight
+  -- illuminate
   require('illuminate').on_attach(client)
+  vim.keymap.set('i', '<c-p>', require('lsp_signature').on_InsertEnter, { silent = true })
   vim.cmd([[
+  " cursor word highlight
   highlight LspReferenceText guibg=none gui=none
   highlight LspReferenceWrite guibg=#344134 gui=none
   highlight LspReferenceRead guibg=#344134 gui=none
   
   autocmd! Signature InsertEnter
-  imap <c-p> <cmd>lua require'lsp_signature'.on_InsertEnter()<cr>
   ]])
+
 end
 
 local capabilities = (function()

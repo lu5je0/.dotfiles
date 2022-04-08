@@ -26,7 +26,7 @@ local defer_plugins = {
   'null-ls.nvim',
   'LeaderF',
   'toggleterm.nvim',
-  'Comment.nvim'
+  'Comment.nvim',
 }
 
 if vim.fn.has('wsl') == 1 then
@@ -35,7 +35,7 @@ end
 
 for _, plugin in ipairs(defer_plugins) do
   vim.schedule(function()
-    vim.cmd("PackerLoad " .. plugin)
+    vim.cmd('PackerLoad ' .. plugin)
   end)
 end
 

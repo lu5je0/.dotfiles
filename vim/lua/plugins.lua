@@ -1,6 +1,5 @@
-local fn = vim.fn
-local install_path = fn.stdpath('data') .. '/site/pack/packer/start/packer.nvim'
-if fn.empty(fn.glob(install_path)) > 0 then
+local install_path = vim.fn.stdpath('data') .. '/site/pack/packer/start/packer.nvim'
+if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
   vim.cmd('term git clone --depth 1 https://github.com/wbthomason/packer.nvim ' .. install_path)
 end
 
@@ -10,9 +9,9 @@ packer.init {
 }
 
 vim.api.nvim_create_autocmd('BufWritePost', {
-  group = vim.api.nvim_create_augroup("packer_reload_augroup", {clear = true}),
+  group = vim.api.nvim_create_augroup('packer_reload_augroup', { clear = true }),
   pattern = { 'plugins.lua' },
-  command = 'source <afile> | PackerCompile'
+  command = 'source <afile> | PackerCompile',
 })
 
 return packer.startup(function(use)
@@ -143,8 +142,13 @@ return packer.startup(function(use)
     end,
     ft = _G.ts_filtypes,
     requires = {
-      { 'SmiteshP/nvim-gps', config = function() require("nvim-gps").setup() end }
-    }
+      {
+        'SmiteshP/nvim-gps',
+        config = function()
+          require('nvim-gps').setup()
+        end,
+      },
+    },
   }
 
   -- highlighting

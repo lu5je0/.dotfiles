@@ -1,7 +1,10 @@
-vim.cmd([[
-command! -nargs=0 CurlConvert lua require("misc/curlconverter").convert()
-command! -nargs=* CronParser call luaeval("require('misc/cron-parser').parse_line(_A)", [<f-args>])
-]])
+vim.api.nvim_add_user_command('CronParser', function(t)
+  require('misc/cron-parser').parse_line(t.fargs[1])
+end, { force = true, nargs='*' })
+
+vim.api.nvim_add_user_command('CurlConvert', function()
+  require("misc/curlconverter").convert()
+end, { force = true })
 
 -- json-helper
 vim.api.nvim_add_user_command('JsonCompress', function()
