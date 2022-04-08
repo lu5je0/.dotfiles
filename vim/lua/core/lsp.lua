@@ -6,6 +6,8 @@ local lua_setting = {
   Lua = {
     completion = {
       callSnippet = 'Disable',
+      postfix = ".",
+      autoRequire = false
     },
     runtime = {
       -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
