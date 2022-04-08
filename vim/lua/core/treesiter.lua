@@ -37,6 +37,10 @@ define_modules {
       ]])
     end,
     detach = function(bufnr)
+      if foldmethod_backups[bufnr] == nil then
+        foldmethod_backups[bufnr] = 'manual'
+        foldexpr_backups[bufnr] = ''
+      end
       vim.wo.foldmethod = foldmethod_backups[bufnr]
       vim.wo.foldexpr = foldexpr_backups[bufnr]
       foldmethod_backups[bufnr] = nil
