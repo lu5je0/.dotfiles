@@ -23,7 +23,6 @@ function M.setup()
     file = { '*.sw?', '~$*', '*.bak', '*.exe', '*.o', '*.so', '*.py[co]' },
   }
 
-  vim.cmd('silent! unmap <leader>f')
 
   M.on_colorscheme()
   M.key_mappings()
@@ -31,18 +30,21 @@ end
 
 function M.key_mappings()
   local opts = {}
-  vim.api.nvim_set_keymap('n', '<leader>fC', ':Leaderf colorscheme<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fc', ':Leaderf command<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>ff', ':Leaderf file<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fs', ':Leaderf --recall<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fg', ':Leaderf bcommit<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fr', ':Leaderf rg<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fl', ':Leaderf line<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fn', ':Leaderf filetype<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fb', ':Leaderf buffer<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fm', ':Leaderf --nowrap mru<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fh', ':Leaderf help<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fj', ':JunkList<cr>', opts)
+
+  vim.keymap.del('n', '<Leader>f')
+  vim.keymap.del('n', '<Leader>b')
+  vim.keymap.set('n', '<leader>fC', ':Leaderf colorscheme<cr>', opts)
+  vim.keymap.set('n', '<leader>fc', ':Leaderf command<cr>', opts)
+  vim.keymap.set('n', '<leader>ff', ':Leaderf file<cr>', opts)
+  vim.keymap.set('n', '<leader>fs', ':Leaderf --recall<cr>', opts)
+  vim.keymap.set('n', '<leader>fg', ':Leaderf bcommit<cr>', opts)
+  vim.keymap.set('n', '<leader>fr', ':Leaderf rg<cr>', opts)
+  vim.keymap.set('n', '<leader>fl', ':Leaderf line<cr>', opts)
+  vim.keymap.set('n', '<leader>fn', ':Leaderf filetype<cr>', opts)
+  vim.keymap.set('n', '<leader>fb', ':Leaderf buffer<cr>', opts)
+  vim.keymap.set('n', '<leader>fm', ':Leaderf --nowrap mru<cr>', opts)
+  vim.keymap.set('n', '<leader>fh', ':Leaderf help<cr>', opts)
+  vim.keymap.set('n', '<leader>fj', ':JunkList<cr>', opts)
 end
 
 function M.visual_leaderf(lf_cmd)

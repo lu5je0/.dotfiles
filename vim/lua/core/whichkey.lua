@@ -91,6 +91,7 @@ M.setup = function()
       name = '+code',
       r = 'rename-variable',
       c = 'code-action',
+      e = 'setloclist',
       f = 'code-formatting',
       n = {
         name = '+naming case',

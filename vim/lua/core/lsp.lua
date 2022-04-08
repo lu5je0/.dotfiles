@@ -57,13 +57,6 @@ local pyright_setting = {
 }
 
 local function on_attach(client, bufnr)
-  local function buf_set_keymap(...)
-    vim.api.nvim_buf_set_keymap(bufnr, ...)
-  end
-  local function buf_set_option(...)
-    vim.api.nvim_buf_set_option(bufnr, ...)
-  end
-
   -- Show diagnostics in a pop-up window on hover
   -- _G.LspDiagnosticsPopupHandler = function()
   --   local current_cursor = vim.api.nvim_win_get_cursor(0)
@@ -88,32 +81,28 @@ local function on_attach(client, bufnr)
   -- augroup END
   -- ]])
 
-  -- Enable completion triggered by <c-x><c-o>
-  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-
   -- Mappings.
-  local opts = { noremap = true, silent = true }
+  local opts = { noremap = true, silent = true, buffer = bufnr }
 
-  -- See `:help vim.lsp.*` for documentation on any of the below functions
-  buf_set_keymap('n', 'gu', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
-  buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
-  buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
-  buf_set_keymap('n', 'gn', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-  -- buf_set_keymap('i', '<c-p>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-  buf_set_keymap('n', '<leader>Wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<leader>Wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<leader>Wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
-  buf_set_keymap('n', 'gy', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
-  buf_set_keymap('n', '<leader>cr', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-  buf_set_keymap('n', '<leader>cc', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-  buf_set_keymap('v', '<leader>cc', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-  buf_set_keymap('n', 'gb', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-  buf_set_keymap('n', '[e', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
-  buf_set_keymap('n', ']e', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
-  buf_set_keymap('n', '<leader>ce', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
-  buf_set_keymap('n', '<leader>cf', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
-  buf_set_keymap('v', '<leader>cf', '<cmd>lua vim.lsp.buf.range_formatting()<CR>', opts)
-  buf_set_keymap('n', '<leader><space>', "<cmd>lua vim.diagnostic.open_float({scope='line'})<CR>", opts)
+  vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
+  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+  vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+  vim.keymap.set('n', 'gn', vim.lsp.buf.implementation, opts)
+  -- vim.keymap.set('i', '<c-p>', vim.lsp.buf.signature_help, opts)
+  vim.keymap.set('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
+  vim.keymap.set('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
+  vim.keymap.set('n', '<leader>Wl', function() print(vim.inspect(vim.lsp.buf.list_workspace_folders())) end, opts)
+  vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
+  vim.keymap.set('n', '<leader>cr', vim.lsp.buf.rename, opts)
+  vim.keymap.set('n', '<leader>cc', vim.lsp.buf.code_action, opts)
+  vim.keymap.set('v', '<leader>cc', vim.lsp.buf.code_action, opts)
+  vim.keymap.set('n', 'gb', vim.lsp.buf.references, opts)
+  vim.keymap.set('n', '[e', vim.diagnostic.goto_prev, opts)
+  vim.keymap.set('n', ']e', vim.diagnostic.goto_next, opts)
+  vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, opts)
+  vim.keymap.set('n', '<leader>cf', vim.lsp.buf.formatting, opts)
+  vim.keymap.set('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
+  vim.keymap.set('n', '<leader><space>', function() vim.diagnostic.open_float({scope='line', opts}) end)
 
   -- cursor word highlight
   require('illuminate').on_attach(client)
