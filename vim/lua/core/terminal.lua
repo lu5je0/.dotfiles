@@ -40,9 +40,9 @@ end
 
 local function save_terminal_mode()
   vim.cmd([[
-  " autocmd TermOpen * startinsert
-  " autocmd TermEnter * let g:terminal_mode='i'
-  " autocmd BufEnter * if (&buftype ==# 'terminal' && get(g:, 'terminal_mode', 'i') == 'i') | startinsert! | endif
+  autocmd TermOpen * startinsert
+  autocmd TermEnter * let g:terminal_mode='i'
+  autocmd BufEnter * if (&buftype ==# 'terminal' && get(g:, 'terminal_mode', 'i') == 'i') | startinsert! | endif
   ]])
 end
 

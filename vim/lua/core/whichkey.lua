@@ -228,6 +228,8 @@ M.setup = function()
       c = { 'g<c-g>', 'count in the selection region' },
       b = { 'base64' },
       B = { 'unbase64' },
+      h = { 'http encode' },
+      H = { 'http encode' },
       s = { 'text escape' },
       r = { ":lua require('misc/replace').v_replace()<cr>", 'replace' },
     },

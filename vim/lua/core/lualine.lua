@@ -199,15 +199,20 @@ ins_left {
 }
 
 -- lsp status
-local nvim_gps = require('nvim-gps')
-ins_left({
-  function()
-    return nvim_gps.get_location()
-  end,
-  cond = nvim_gps.is_available,
-  color = { fg = colors.grey },
-  padding = { left = 1, right = 1 },
-})
+local b, nvim_gps = pcall(require, 'nvim-gps')
+if b then
+  ins_left({
+    function()
+      return nvim_gps.get_location()
+    end,
+    inactive = true,
+    cond = nvim_gps.is_available,
+    color = { fg = colors.grey },
+    padding = { left = 1, right = 1 },
+  })
+else
+  print('nvim-gps is required')
+end
 
 ins_right {
   'diagnostics',
