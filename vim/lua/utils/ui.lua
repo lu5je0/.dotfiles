@@ -35,10 +35,11 @@ M.preview = function(file_path)
 
   popup:mount()
 
+  vim.fn.win_execute(popup.winid, 'e ' .. file_path)
   vim.wo[popup.winid].number = true
   vim.wo[popup.winid].signcolumn = 'no'
-  vim.fn.win_execute(popup.winid, 'e ' .. file_path)
   vim.bo[vim.fn.winbufnr(popup.winid)].buflisted = false
+  vim.api.nvim_win_set_cursor(popup.winid, { 1, 0 })
 
   -- unmount component when cursor leaves buffer
   popup:on(event.BufLeave, function()
