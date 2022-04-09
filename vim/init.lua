@@ -6,6 +6,7 @@ require('enhance')
 require('commands')
 require('patch')
 require('mappings')
+require('autocmds')
 
 vim.cmd([[
 runtime settings.vim
