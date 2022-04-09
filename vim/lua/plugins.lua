@@ -434,7 +434,7 @@ return packer.startup(function(use)
 
   -- highlight cursor word
   use {
-    'RRethy/vim-illuminate',
+    'lu5je0/vim-illuminate',
     config = function()
       vim.g.Illuminate_delay = 0
       vim.cmd([[
