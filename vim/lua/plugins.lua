@@ -436,7 +436,7 @@ return packer.startup(function(use)
   use {
     'RRethy/vim-illuminate',
     config = function()
-      vim.g.Illuminate_delay = 500
+      vim.g.Illuminate_delay = 0
       vim.cmd([[
       hi! illuminatedWord ctermbg=green guibg=#344134
       ]])
