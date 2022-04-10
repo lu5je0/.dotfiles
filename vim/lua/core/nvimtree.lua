@@ -158,7 +158,6 @@ function M.setup()
   }
   vim.g.nvim_tree_special_files = {}
   vim.g.nvim_tree_add_trailing = 1
-  vim.g.nvim_tree_indent_markers = 1
   vim.g.nvim_tree_create_in_closed_folder = 1
 
   vim.cmd([[
@@ -289,6 +288,11 @@ function M.setup()
     filters = {
       dotfiles = true,
       custom = {},
+    },
+    renderer = {
+      indent_markers = {
+        enable = true,
+      },
     },
     view = {
       width = 25,
