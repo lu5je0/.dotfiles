@@ -42,4 +42,5 @@ end
 
 vim.defer_fn(function()
   vim.o.clipboard = 'unnamedplus'
+  vim.cmd('packadd matchit')
 end, 10)

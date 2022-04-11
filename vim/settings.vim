@@ -83,6 +83,9 @@ if has('wsl')
           \ }
 endif
 
+let g:loaded_2html_plugin = 1
+let g:loaded_matchit = 1
+
 if has('mac')
     let g:python3_host_prog = '/usr/local/bin/python3'
 endif
