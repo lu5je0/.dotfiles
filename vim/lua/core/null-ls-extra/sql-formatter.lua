@@ -1,12 +1,8 @@
--- npm install -g sql-formatter
-
 local h = require('null-ls.helpers')
 local methods = require('null-ls.methods')
 
-local FORMATTING = methods.internal.FORMATTING
-
 return h.make_builtin {
-  method = FORMATTING,
+  method = methods.internal.FORMATTING,
   filetypes = { 'sql' },
   generator_opts = {
     command = 'sql-formatter',
@@ -15,3 +11,5 @@ return h.make_builtin {
   },
   factory = h.formatter_factory,
 }
+
+-- npm install -g sql-formatter

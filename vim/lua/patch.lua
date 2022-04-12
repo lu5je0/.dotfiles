@@ -9,10 +9,31 @@ function _G.lsp_attach_on_no_filename()
     return
   end
 
-  vim.api.nvim_buf_set_name(0, '/tmp/tmp' .. vim.bo.filetype)
+  vim.api.nvim_buf_set_name(0, '/tmp/tmp.' .. vim.bo.filetype)
   vim.cmd('LspStart')
   require('null-ls/client').try_add(0)
+  -- if buf_name == nil or buf_name == '' then
+  --   buf_name = '[No Name]'
+  -- end
   vim.api.nvim_buf_set_name(0, buf_name)
+end
+
+function _G.lsp_format_wrapper(fn)
+  local function wrapper()
+    local buf_name = vim.api.nvim_buf_get_name(0)
+
+    local update_buf_name = false
+    if vim.bo.filetype == 'sql' and vim.api.nvim_buf_get_name(0) == '' then
+      vim.api.nvim_buf_set_name(0, 'tmp')
+      update_buf_name = true
+    end
+    fn()
+
+    if update_buf_name then
+      vim.api.nvim_buf_set_name(0, buf_name)
+    end
+  end
+  return wrapper
 end
 
 vim.cmd([[
