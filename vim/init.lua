@@ -7,6 +7,7 @@ require('commands')
 require('patch')
 require('mappings')
 require('autocmds')
+require('filetype')
 
 vim.cmd([[
 runtime settings.vim
