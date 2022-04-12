@@ -12,6 +12,10 @@ null_ls.setup {
     -- require("null-ls").builtins.diagnostics.eslint,
     -- require("null-ls").builtins.completion.spell,
   },
+  on_attach = function(client)
+    vim.keymap.set('n', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.formatting), { silent = true, buffer = true })
+    vim.keymap.set('v', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.range_formatting), { silent = true, buffer = true })
+  end
 }
 
 local trailing_space = {
