@@ -84,7 +84,9 @@ local function lsp_installer_config()
     }
 
     if server.name == 'sumneko_lua' then
-      opts.settings = require('core.lsp-config.sumneke-lua-config').settings
+      local sumneko_lua_config = require('core.lsp-config.sumneke-lua-config')
+      opts.settings = sumneko_lua_config.settings
+      opts.on_attach = sumneko_lua_config.on_attach(opts.on_attach)
       local luadev = require('lua-dev').setup {
         lspconfig = opts,
       }

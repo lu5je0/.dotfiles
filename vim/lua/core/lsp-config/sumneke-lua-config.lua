@@ -1,4 +1,11 @@
 return {
+  on_attach = function(origin_on_attach_fn)
+    return function(client, bufnr)
+      origin_on_attach_fn(client, bufnr)
+      client.resolved_capabilities.document_formatting = false
+      client.resolved_capabilities.document_range_formatting = false
+    end
+  end,
   settings = {
     Lua = {
       completion = {
