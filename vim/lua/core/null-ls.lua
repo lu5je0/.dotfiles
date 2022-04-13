@@ -15,7 +15,7 @@ null_ls.setup {
   on_attach = function(client)
     vim.keymap.set('n', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.formatting), { silent = true, buffer = true })
     vim.keymap.set('v', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.range_formatting), { silent = true, buffer = true })
-  end
+  end,
 }
 
 local trailing_space = {

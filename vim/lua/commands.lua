@@ -1,9 +1,9 @@
 vim.api.nvim_create_user_command('CronParser', function(t)
   require('misc/cron-parser').parse_line(t.fargs[1])
-end, { force = true, nargs='*' })
+end, { force = true, nargs = '*' })
 
 vim.api.nvim_create_user_command('CurlConvert', function()
-  require("misc/curlconverter").convert()
+  require('misc/curlconverter').convert()
 end, { force = true })
 
 -- json-helper

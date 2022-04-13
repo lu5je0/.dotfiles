@@ -16,7 +16,7 @@ M.send_to_terminal = function(cmd, opts)
   end
 
   direction_init()
-  local v_cmd = "TermExec cmd='%s' go_back=" .. opts.go_back .. " direction=" .. M.direction
+  local v_cmd = "TermExec cmd='%s' go_back=" .. opts.go_back .. ' direction=' .. M.direction
   v_cmd = v_cmd:format(cmd)
   vim.cmd(v_cmd)
 end

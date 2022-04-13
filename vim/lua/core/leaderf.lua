@@ -27,7 +27,6 @@ function M.setup()
     file = { '*.sw?', '~$*', '*.bak', '*.exe', '*.o', '*.so', '*.py[co]' },
   }
 
-
   M.on_colorscheme()
   M.key_mappings()
 end

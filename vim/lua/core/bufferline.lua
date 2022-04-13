@@ -17,7 +17,7 @@ vim.api.nvim_create_autocmd({ 'BufEnter' }, {
       set = _G.belong_tab_map[buf_key]
     end
     set[tostring(vim.api.nvim_get_current_tabpage())] = ''
-  end
+  end,
 })
 
 vim.api.nvim_create_autocmd({ 'BufDelete' }, {
@@ -31,7 +31,7 @@ vim.api.nvim_create_autocmd({ 'BufDelete' }, {
     if _G.belong_tab_map[buf_key] ~= nil then
       _G.belong_tab_map[buf_key] = nil
     end
-  end
+  end,
 })
 
 local bl = require('bufferline')
@@ -75,7 +75,7 @@ bl.setup {
         return true
       end
       return false
-    end
+    end,
   },
 }
 

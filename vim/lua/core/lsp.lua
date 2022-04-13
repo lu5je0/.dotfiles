@@ -13,7 +13,9 @@ local function on_attach(client, bufnr)
   -- vim.keymap.set('i', '<c-p>', vim.lsp.buf.signature_help, opts)
   vim.keymap.set('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
   vim.keymap.set('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
-  vim.keymap.set('n', '<leader>Wl', function() print(vim.inspect(vim.lsp.buf.list_workspace_folders())) end, opts)
+  vim.keymap.set('n', '<leader>Wl', function()
+    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+  end, opts)
   vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
   vim.keymap.set('n', '<leader>cr', vim.lsp.buf.rename, opts)
   vim.keymap.set('n', '<leader>cc', vim.lsp.buf.code_action, opts)
@@ -24,7 +26,9 @@ local function on_attach(client, bufnr)
   vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, opts)
   vim.keymap.set('n', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.formatting), opts)
   vim.keymap.set('v', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.range_formatting), opts)
-  vim.keymap.set('n', '<leader><space>', function() vim.diagnostic.open_float({scope='line', opts}) end)
+  vim.keymap.set('n', '<leader><space>', function()
+    vim.diagnostic.open_float { scope = 'line', opts }
+  end)
 
   -- illuminate
   require('illuminate').on_attach(client)
@@ -37,7 +41,6 @@ local function on_attach(client, bufnr)
   
   autocmd! Signature InsertEnter
   ]])
-
 end
 
 local capabilities = (function()

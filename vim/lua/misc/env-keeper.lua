@@ -2,12 +2,12 @@ local M = {}
 
 local io = require('io')
 
-local config_file = vim.fn.stdpath("data") .. "/nvim.env.json"
+local config_file = vim.fn.stdpath('data') .. '/nvim.env.json'
 
 local function read_file(filename)
   local f = io.open(filename, 'r')
   if f == nil then
-    return "{}"
+    return '{}'
   end
   local content = f:read('*all')
   f:close()

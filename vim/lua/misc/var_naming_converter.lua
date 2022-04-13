@@ -115,6 +115,7 @@ M.convert_to_kebab = function(word_mode)
 end
 
 M.mappings = function()
+  -- stylua: ignore start
   vim.keymap.set('n', '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end)
   vim.keymap.set('n', '<plug>(ConvertToCamelword)', function() M.convert_to_camel('word') end)
 
@@ -126,5 +127,6 @@ M.mappings = function()
 
   vim.keymap.set('n', '<plug>(ConvertToKebabWORD)', function() M.convert_to_kebab('WORD') end)
   vim.keymap.set('n', '<plug>(ConvertToKebabword)', function() M.convert_to_kebab('word') end)
+  -- stylua: ignore end
 end
 return M

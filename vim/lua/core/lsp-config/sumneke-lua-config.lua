@@ -3,8 +3,8 @@ return {
     Lua = {
       completion = {
         callSnippet = 'Disable',
-        postfix = ".",
-        autoRequire = false
+        postfix = '.',
+        autoRequire = false,
       },
       runtime = {
         -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
@@ -20,5 +20,5 @@ return {
       },
       telemetry = { enable = false },
     },
-  }
+  },
 }

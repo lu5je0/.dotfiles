@@ -1,5 +1,5 @@
 vim.g.do_filetype_lua = 1
-vim.filetype.add({
+vim.filetype.add {
   extension = {
     zsh = 'sh',
   },
@@ -16,4 +16,4 @@ vim.filetype.add({
   -- pattern = {
   --   [".*/etc/foo/.*%.conf"] = "foorc",
   -- },
-})
+}

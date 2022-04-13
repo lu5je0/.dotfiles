@@ -165,12 +165,12 @@ ins_left {
 }
 
 ins_left {
-  function ()
+  function()
     local max_len = 22
     local filename = vim.fn.expand('%:t')
     if #filename > max_len then
-      local suffix = filename:match(".+%.(%w+)$")
-      filename = string.sub(filename, 0, max_len - 6) .. "…"
+      local suffix = filename:match('.+%.(%w+)$')
+      filename = string.sub(filename, 0, max_len - 6) .. '…'
       if suffix ~= nil then
         filename = filename .. '.' .. suffix
       end
@@ -202,7 +202,7 @@ ins_left {
 -- lsp status
 local b, nvim_gps = pcall(require, 'nvim-gps')
 if b then
-  ins_left({
+  ins_left {
     function()
       return nvim_gps.get_location()
     end,
@@ -210,7 +210,7 @@ if b then
     cond = nvim_gps.is_available,
     color = { fg = colors.grey },
     padding = { left = 1, right = 1 },
-  })
+  }
 else
   print('nvim-gps is required')
 end
@@ -238,7 +238,7 @@ ins_right {
 }
 
 local function percentage_icon(per)
-  local icons = { '', '', '', ''}
+  local icons = { '', '', '', '' }
   -- local icons = {'⠏', '⠙', '⠸', '⠴', '⠧', '⠇', '⠋'}
   -- local icons = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'}
   return icons[((math.ceil(per / 7)) % #icons) + 1]

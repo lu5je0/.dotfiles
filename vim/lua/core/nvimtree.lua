@@ -135,9 +135,9 @@ function M.setup()
       change_dir = {
         enable_dir = {
           enable = false,
-          global = true
-        }
-      }
+          global = true,
+        },
+      },
     },
     folder = {
       arrow_open = ' ',
@@ -186,8 +186,10 @@ function M.setup()
   augroup END
   ]])
 
-  vim.keymap.set('n', '<leader>e', function() require'nvim-tree'.toggle(false, true) end)
-  vim.keymap.set('n', '<leader>fe', require("core.nvimtree").locate_file)
+  vim.keymap.set('n', '<leader>e', function()
+    require('nvim-tree').toggle(false, true)
+  end)
+  vim.keymap.set('n', '<leader>fe', require('core.nvimtree').locate_file)
   vim.api.nvim_set_keymap('n', '<leader>fp', ':cd ~/.local/share/nvim/site/pack/packer<cr>', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<leader>fd', ':cd ~/.dotfiles<cr>', { noremap = true, silent = true })
 
@@ -215,8 +217,8 @@ function M.setup()
     { key = '<', action = 'prev_sibling' },
     { key = '>', action = 'next_sibling' },
     -- { key = 'f', cb = ":lua require('core.nvimtree').file_info()<cr>" },
-    { key = "f", action = "toggle_file_info" },
-    { key = ".", action = "run_file_command" },
+    { key = 'f', action = 'toggle_file_info' },
+    { key = '.', action = 'run_file_command' },
     -- { key = 'P', action = 'parent_node' },
     { key = { '<BS>', 'h' }, action = 'close_node' },
     { key = 'K', action = 'first_sibling' },
@@ -273,8 +275,8 @@ function M.setup()
     actions = {
       change_dir = {
         enable = true,
-        global = true
-      }
+        global = true,
+      },
     },
     git = {
       enable = true,
