@@ -458,6 +458,16 @@ return packer.startup(function(use)
     opt = true,
   }
 
+  -- use {
+  --   'github/copilot.vim',
+  --   config = function()
+  --     vim.cmd([[
+  --       imap <silent><script><expr> <c-j> copilot#Accept("\<c-j>")
+  --       let g:copilot_no_tab_map = v:true
+  --     ]])
+  --   end,
+  -- }
+
   use {
     'hrsh7th/nvim-cmp',
     config = function()
