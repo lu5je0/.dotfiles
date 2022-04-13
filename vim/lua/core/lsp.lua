@@ -87,10 +87,8 @@ local function lsp_installer_config()
       local sumneko_lua_config = require('core.lsp-config.sumneke-lua-config')
       opts.settings = sumneko_lua_config.settings
       opts.on_attach = sumneko_lua_config.on_attach(opts.on_attach)
-      local luadev = require('lua-dev').setup {
-        lspconfig = opts,
-      }
-      server:setup(luadev)
+      opts = sumneko_lua_config.wrap_opts(opts)
+      server:setup(opts)
     elseif server.name == 'pyright' then
       opts.on_init = require('core.lsp-config.pyright-config').on_init
       server:setup(opts)
