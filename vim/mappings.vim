@@ -11,6 +11,8 @@ vmap > >gv
 nnoremap go o0<C-D>
 nnoremap gO O0<C-D>
 
+xnoremap gp p<Cmd>let @+ = @0<CR><Cmd>let @" = @0<CR>
+
 imap <M-j> <down>
 imap <M-k> <up>
 imap <M-h> <left>

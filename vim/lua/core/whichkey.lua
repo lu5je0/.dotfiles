@@ -67,7 +67,7 @@ M.setup = function()
       ['s'] = { ':vsplit<cr>', 'vspilt' },
       ['S'] = { ':split<cr>', 'spilt' },
       ['q'] = { ':only<cr>', 'break window' },
-      ['d'] = { ':BufferLinePickSplit<cr>', 'spilit with' },
+      ['m'] = { ':BufferLinePickSplit<cr>', 'spilit with' },
       ['p'] = { ':BufferLinePick<cr>', 'buffer pick' },
       ['u'] = { '<c-w>x', 'buffer pick' },
     },

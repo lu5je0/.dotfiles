@@ -14,3 +14,12 @@ end, { force = true })
 vim.api.nvim_create_user_command('JsonFormat', function()
   require('misc.json-helper').format()
 end, { force = true })
+
+-- base-64
+vim.api.nvim_create_user_command('Base64Encode', function()
+  require('misc.base64').encode_buffer()
+end, { force = true })
+
+vim.api.nvim_create_user_command('Base64Decode', function()
+  require('misc.base64').decode_buffer()
+end, { force = true })
