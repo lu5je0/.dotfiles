@@ -39,7 +39,7 @@ function! CmpLineFormat(timer) abort
 endfunction
 ]])
 
-local comfirm = function(fallback)
+local function comfirm(fallback)
   if cmp.visible() then
     local entry = cmp.get_selected_entry()
     if entry == nil then
@@ -61,6 +61,14 @@ local comfirm = function(fallback)
   end
 end
 
+local function complete()
+  if cmp.visible() then
+    cmp.mapping.abort()()
+  else
+    cmp.mapping.complete()()
+  end
+end
+
 cmp.setup {
   snippet = {
     expand = function(args)
@@ -70,21 +78,16 @@ cmp.setup {
   completion = {
     completeopt = 'menu,menuone,noinsert',
   },
-  -- experimental = {
-  --   native_menu = true,
-  --   -- ghost_text = true
-  -- },
+  view = {
+    -- entries = 'native',
+    -- ghost_text = true
+  },
   mapping = {
     ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
-    ['<c-n>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
-    ['<c-p>'] = cmp.config.disable,
+    ['<c-n>'] = cmp.mapping(complete, { 'i', 'c' }),
     ['<down>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
     ['<up>'] = cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select },
-    ['<c-e>'] = cmp.mapping {
-      i = cmp.mapping.abort(),
-      c = cmp.mapping.close(),
-    },
     ['<cr>'] = cmp.mapping(comfirm, { 'i' }),
     ['<tab>'] = cmp.mapping(comfirm, { 'i' }),
   },
