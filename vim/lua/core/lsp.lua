@@ -2,62 +2,6 @@ local M = {}
 
 M.servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls' }
 
-local lua_setting = {
-  Lua = {
-    completion = {
-      callSnippet = 'Disable',
-      postfix = ".",
-      autoRequire = false
-    },
-    runtime = {
-      -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
-      version = 'LuaJIT',
-    },
-    workspace = {
-      maxPreload = 100000,
-      preloadFileSize = 10000,
-    },
-    diagnostics = {
-      -- Get the language server to recognize the `vim` global
-      globals = { 'vim' },
-    },
-    telemetry = { enable = false },
-  },
-}
-
-local pyright_setting = {
-  on_init = function(client)
-    local orig_rpc_request = client.rpc.request
-    function client.rpc.request(method, params, handler, ...)
-      local orig_handler = handler
-      if method == 'textDocument/completion' then
-        -- Idiotic take on <https://github.com/fannheyward/coc-pyright/blob/6a091180a076ec80b23d5fc46e4bc27d4e6b59fb/src/index.ts#L90-L107>.
-        handler = function(...)
-          local err, result = ...
-          if not err and result then
-            local items = result.items or result
-            for _, item in ipairs(items) do
-              if
-                not (item.data and item.data.funcParensDisabled)
-                and (
-                  item.kind == vim.lsp.protocol.CompletionItemKind.Function
-                  or item.kind == vim.lsp.protocol.CompletionItemKind.Method
-                  or item.kind == vim.lsp.protocol.CompletionItemKind.Constructor
-                )
-              then
-                item.insertText = item.label .. '$1'
-                item.insertTextFormat = vim.lsp.protocol.InsertTextFormat.Snippet
-              end
-            end
-          end
-          return orig_handler(...)
-        end
-      end
-      return orig_rpc_request(method, params, handler, ...)
-    end
-  end,
-}
-
 local function on_attach(client, bufnr)
   -- Mappings.
   local opts = { noremap = true, silent = true, buffer = bufnr }
@@ -137,13 +81,13 @@ local function lsp_installer_config()
     }
 
     if server.name == 'sumneko_lua' then
-      opts.settings = lua_setting
+      opts.settings = require('core.lsp-config.sumneke-lua-config').settings
       local luadev = require('lua-dev').setup {
         lspconfig = opts,
       }
       server:setup(luadev)
     elseif server.name == 'pyright' then
-      opts.on_init = pyright_setting.on_init
+      opts.on_init = require('core.lsp-config.pyright-config').on_init
       server:setup(opts)
     else
       server:setup(opts)
