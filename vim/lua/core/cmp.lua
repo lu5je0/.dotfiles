@@ -27,7 +27,11 @@ local function fix_indent()
     --   return
     -- endif
 
-    vim.api.nvim_feedkeys('==', 'x', false)
+    vim.cmd("norm ==")
+    vim.defer_fn(function()
+      cmp.close()
+    end, 30)
+    -- vim.api.nvim_feedkeys('==', 'x', false)
     local sw = vim.fn.shiftwidth()
 
     if vim.fn.indent('.') < indent_num then
@@ -51,6 +55,7 @@ local function comfirm(fallback)
     local label = entry.completion_item.label
     if table.contain(indent_change_items, label) then
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
+      cmp.close()
       fix_indent()
     else
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
