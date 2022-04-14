@@ -401,15 +401,15 @@ return packer.startup(function(use)
 
   use { 'kevinhwang91/nvim-bqf' }
 
-  use {
-    'github/copilot.vim',
-    config = function()
-      vim.cmd([[
-        imap <silent><script><expr> <c-j> copilot#Accept("\<c-j>")
-        let g:copilot_no_tab_map = v:true
-      ]])
-    end,
-  }
+  -- use {
+  --   'github/copilot.vim',
+  --   config = function()
+  --     vim.cmd([[
+  --       imap <silent><script><expr> <c-j> copilot#Accept("\<c-j>")
+  --       let g:copilot_no_tab_map = v:true
+  --     ]])
+  --   end,
+  -- }
 
   use {
     'windwp/nvim-autopairs',
