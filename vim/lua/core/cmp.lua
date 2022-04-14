@@ -17,27 +17,28 @@ local indent_change_items = {
   'catch',
 }
 
-vim.cmd([[
-function! CmpLineFormat(timer) abort
-  let c = getpos(".")
-  let indent_num = indent('.')
-  
-  " todo
-  if nvim_get_mode()['mode'] == 's'
-    return
-  endif
+local function fix_indent()
+  vim.schedule(function()
+    local c = vim.fn.getpos(".")
+    local indent_num = vim.fn.indent('.')
 
-  norm ==
-  let sw = shiftwidth()
-  if indent('.') < indent_num
-    call cursor(c[1], c[2] - sw)
-  elseif indent('.') > indent_num
-    call cursor(c[1], c[2] + sw)
-  else
-    call cursor(c[1], c[2])
-  endif
-endfunction
-]])
+    -- " todo
+    -- if nvim_get_mode()['mode'] == 's'
+    --   return
+    -- endif
+
+    vim.api.nvim_feedkeys('==', 'x', false)
+    local sw = vim.fn.shiftwidth()
+
+    if vim.fn.indent('.') < indent_num then
+      vim.api.nvim_win_set_cursor(0, { c[2], c[3] - sw })
+    elseif vim.fn.indent('.') > indent_num then
+      vim.api.nvim_win_set_cursor(0, { c[2], c[3] + sw })
+    else
+      vim.api.nvim_win_set_cursor(0, { c[2], c[3] })
+    end
+  end)
+end
 
 local function comfirm(fallback)
   if cmp.visible() then
@@ -50,7 +51,7 @@ local function comfirm(fallback)
     local label = entry.completion_item.label
     if table.contain(indent_change_items, label) then
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
-      vim.cmd([[call timer_start(0, 'CmpLineFormat')]])
+      fix_indent()
     else
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
