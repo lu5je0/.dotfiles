@@ -21,10 +21,10 @@ endif
 ]])
 
 local defer_plugins = {
-  -- 'nvim-cmp',
-  -- 'nvim-lspconfig',
-  -- 'nvim-autopairs',
-  -- 'null-ls.nvim',
+  'nvim-cmp',
+  'nvim-lspconfig',
+  'nvim-autopairs',
+  'null-ls.nvim',
   'nvim-tree.lua',
   'LeaderF',
   'toggleterm.nvim',

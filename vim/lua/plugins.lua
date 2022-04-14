@@ -401,94 +401,94 @@ return packer.startup(function(use)
 
   use { 'kevinhwang91/nvim-bqf' }
 
-  -- use {
-  --   'github/copilot.vim',
-  --   config = function()
-  --     vim.cmd([[
-  --       imap <silent><script><expr> <c-j> copilot#Accept("\<c-j>")
-  --       let g:copilot_no_tab_map = v:true
-  --     ]])
-  --   end,
-  -- }
+  use {
+    'github/copilot.vim',
+    config = function()
+      vim.cmd([[
+        imap <silent><script><expr> <c-j> copilot#Accept("\<c-j>")
+        let g:copilot_no_tab_map = v:true
+      ]])
+    end,
+  }
 
-  -- -- lsp
-  -- use { 'williamboman/nvim-lsp-installer' }
-  -- use { 'ray-x/lsp_signature.nvim' }
-  -- use { 'folke/lua-dev.nvim' }
-  -- use {
-  --   'jose-elias-alvarez/null-ls.nvim',
-  --   config = function()
-  --     require('core.null-ls')
-  --   end,
-  --   opt = true,
-  -- }
-  --
-  -- -- highlight cursor word
-  -- use {
-  --   'lu5je0/vim-illuminate',
-  --   config = function()
-  --     vim.g.Illuminate_delay = 0
-  --     vim.cmd([[
-  --     hi! illuminatedWord ctermbg=green guibg=#344134
-  --     ]])
-  --     vim.defer_fn(function()
-  --       vim.cmd([[
-  --       augroup illuminated_autocmd
-  --         autocmd!
-  --       augroup END
-  --       ]])
-  --     end, 0)
-  --   end,
-  -- }
+  -- lsp
+  use { 'williamboman/nvim-lsp-installer' }
+  use { 'ray-x/lsp_signature.nvim' }
+  use { 'folke/lua-dev.nvim' }
+  use {
+    'jose-elias-alvarez/null-ls.nvim',
+    config = function()
+      require('core.null-ls')
+    end,
+    opt = true,
+  }
 
-  -- use {
-  --   'neovim/nvim-lspconfig',
-  --   config = function()
-  --     require('core.lsp').setup()
-  --   end,
-  --   opt = true,
-  -- }
-
-  -- use {
-  --   'hrsh7th/nvim-cmp',
-  --   config = function()
-  --     require('core.cmp')
-  --   end,
-  --   requires = {
-  --     'hrsh7th/cmp-nvim-lsp',
-  --     'hrsh7th/cmp-buffer',
-  --     'hrsh7th/cmp-path',
-  --     {
-  --       'hrsh7th/vim-vsnip',
-  --       config = function()
-  --         require('core.vsnip').setup()
-  --       end,
-  --     },
-  --     'hrsh7th/cmp-vsnip',
-  --   },
-  --   opt = true,
-  -- }
-
-  -- use {
-  --   'windwp/nvim-autopairs',
-  --   commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
-  --   config = function()
-  --     require('nvim-autopairs').setup {}
-  --     -- If you want insert `(` after select function or method item
-  --     local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-  --     local cmp = require('cmp')
-  --     cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })
-  --   end,
-  --   opt = true,
-  -- }
+  -- highlight cursor word
+  use {
+    'lu5je0/vim-illuminate',
+    config = function()
+      vim.g.Illuminate_delay = 0
+      vim.cmd([[
+      hi! illuminatedWord ctermbg=green guibg=#344134
+      ]])
+      vim.defer_fn(function()
+        vim.cmd([[
+        augroup illuminated_autocmd
+          autocmd!
+        augroup END
+        ]])
+      end, 0)
+    end,
+  }
 
   use {
-    'neoclide/coc.nvim',
-    branch = 'release',
+    'neovim/nvim-lspconfig',
     config = function()
-      vim.cmd('runtime plug-config/coc.vim')
-    end
+      require('core.lsp').setup()
+    end,
+    opt = true,
   }
+
+  use {
+    'hrsh7th/nvim-cmp',
+    config = function()
+      require('core.cmp')
+    end,
+    requires = {
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-path',
+      {
+        'hrsh7th/vim-vsnip',
+        config = function()
+          require('core.vsnip').setup()
+        end,
+      },
+      'hrsh7th/cmp-vsnip',
+    },
+    opt = true,
+  }
+
+  use {
+    'windwp/nvim-autopairs',
+    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    config = function()
+      require('nvim-autopairs').setup {}
+      -- If you want insert `(` after select function or method item
+      local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+      local cmp = require('cmp')
+      cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })
+    end,
+    opt = true,
+  }
+
+  -- use {
+  --   'neoclide/coc.nvim',
+  --   branch = 'release',
+  --   config = function()
+  --     vim.cmd('runtime plug-config/coc.vim')
+  --   end
+  -- }
 
   -- _G.indent_blankline_filetypes = { 'vim', 'lua', 'json', 'java', 'c', 'python', 'sql', 'xml', 'html', 'bash' }
   use {
@@ -548,42 +548,6 @@ return packer.startup(function(use)
   --       excluded_filetypes = { 'NvimTree', 'confirm', 'toggleterm', 'vista' },
   --     }
   --   end,
-  -- }
-
-  -- use({
-  --   'diepm/vim-rest-console',
-  --   config = function()
-  --     vim.g.vrc_output_buffer_name = '__VRC_OUTPUT.json'
-  --   end
-  -- })
-
-  -- use {
-  --   "NTBBloodbath/rest.nvim",
-  --   requires = { "nvim-lua/plenary.nvim" },
-  --   config = function()
-  --     require("rest-nvim").setup({
-  --       -- Open request results in a horizontal split
-  --       result_split_horizontal = false,
-  --       -- Skip SSL verification, useful for unknown certificates
-  --       skip_ssl_verification = false,
-  --       -- Highlight request on run
-  --       highlight = {
-  --         enabled = true,
-  --         timeout = 150,
-  --       },
-  --       result = {
-  --         -- toggle showing URL, HTTP info, headers at top the of result window
-  --         show_url = true,
-  --         show_http_info = true,
-  --         show_headers = true,
-  --       },
-  --       -- Jump to request line on run
-  --       jump_to_request = false,
-  --       env_file = '.env',
-  --       custom_dynamic_variables = {},
-  --       yank_dry_run = true,
-  --     })
-  --   end
   -- }
 
   -- use {
