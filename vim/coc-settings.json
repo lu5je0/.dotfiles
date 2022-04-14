@@ -11,6 +11,7 @@
   "sumneko-lua.locale": "zh-cn",
   "python.formatting.autopep8Path": "~/.local/bin/autopep8",
   "sumneko-lua.enableNvimLuaDev": true,
+  "sumneko-lua.completion.postfix": ".",
   "suggest.completionItemKindLabels": {
     "method": "  Method",
     "function": "  Function",

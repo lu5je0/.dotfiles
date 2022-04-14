@@ -411,6 +411,15 @@ return packer.startup(function(use)
     end,
   }
 
+  use {
+    'windwp/nvim-autopairs',
+    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    config = function()
+      require('nvim-autopairs').setup {}
+    end,
+    opt = true,
+  }
+
   -- lsp
   use { 'williamboman/nvim-lsp-installer' }
   use { 'ray-x/lsp_signature.nvim' }
@@ -454,6 +463,7 @@ return packer.startup(function(use)
     config = function()
       require('core.cmp')
     end,
+    after = { 'nvim-lspconfig', 'nvim-autopairs' },
     requires = {
       'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-buffer',
@@ -466,19 +476,6 @@ return packer.startup(function(use)
       },
       'hrsh7th/cmp-vsnip',
     },
-    opt = true,
-  }
-
-  use {
-    'windwp/nvim-autopairs',
-    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
-    config = function()
-      require('nvim-autopairs').setup {}
-      -- If you want insert `(` after select function or method item
-      local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-      local cmp = require('cmp')
-      cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })
-    end,
     opt = true,
   }
 
