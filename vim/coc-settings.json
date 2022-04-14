@@ -38,5 +38,6 @@
     "value": "  Variable",
     "enumMember": "  EnumMember",
     "default": "  "
-  }
+  },
+  "Lua.telemetry.enable": true
 }

@@ -33,13 +33,6 @@ return packer.startup(function(use)
     disable = (vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1),
   }
 
-  -- use({
-  --   'nathom/filetype.nvim',
-  --   config = function()
-  --     require('core.filetype')
-  --   end,
-  -- })
-
   use {
     'nvim-lualine/lualine.nvim',
     requires = {
@@ -234,15 +227,6 @@ return packer.startup(function(use)
   --   end
   -- }
 
-  -- use {
-  --   'wfxr/minimap.vim',
-  --   config = function()
-  --     vim.g.minimap_width = 10
-  --     vim.g.minimap_auto_start = 1
-  --     vim.g.minimap_auto_start_win_enter = 1
-  --   end
-  -- }
-
   use {
     'lu5je0/im-switcher.nvim',
     opt = true,
@@ -330,9 +314,6 @@ return packer.startup(function(use)
     opt = true,
     cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
     fn = { 'fugitive#repo' },
-    -- requires = {
-    --   { 'skywind3000/asynctasks.vim', opt = true },
-    -- },
   }
 
   use {
@@ -420,44 +401,6 @@ return packer.startup(function(use)
 
   use { 'kevinhwang91/nvim-bqf' }
 
-  -- lsp
-  use { 'williamboman/nvim-lsp-installer' }
-  use { 'ray-x/lsp_signature.nvim' }
-  use { 'folke/lua-dev.nvim' }
-  use {
-    'jose-elias-alvarez/null-ls.nvim',
-    config = function()
-      require('core.null-ls')
-    end,
-    opt = true,
-  }
-
-  -- highlight cursor word
-  use {
-    'lu5je0/vim-illuminate',
-    config = function()
-      vim.g.Illuminate_delay = 0
-      vim.cmd([[
-      hi! illuminatedWord ctermbg=green guibg=#344134
-      ]])
-      vim.defer_fn(function()
-        vim.cmd([[
-        augroup illuminated_autocmd
-          autocmd!
-        augroup END
-        ]])
-      end, 0)
-    end,
-  }
-
-  use {
-    'neovim/nvim-lspconfig',
-    config = function()
-      require('core.lsp').setup()
-    end,
-    opt = true,
-  }
-
   -- use {
   --   'github/copilot.vim',
   --   config = function()
@@ -468,37 +411,83 @@ return packer.startup(function(use)
   --   end,
   -- }
 
-  use {
-    'hrsh7th/nvim-cmp',
-    config = function()
-      require('core.cmp')
-    end,
-    requires = {
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-buffer',
-      'hrsh7th/cmp-path',
-      {
-        'hrsh7th/vim-vsnip',
-        config = function()
-          require('core.vsnip').setup()
-        end,
-      },
-      'hrsh7th/cmp-vsnip',
-    },
-    opt = true,
-  }
+  -- -- lsp
+  -- use { 'williamboman/nvim-lsp-installer' }
+  -- use { 'ray-x/lsp_signature.nvim' }
+  -- use { 'folke/lua-dev.nvim' }
+  -- use {
+  --   'jose-elias-alvarez/null-ls.nvim',
+  --   config = function()
+  --     require('core.null-ls')
+  --   end,
+  --   opt = true,
+  -- }
+  --
+  -- -- highlight cursor word
+  -- use {
+  --   'lu5je0/vim-illuminate',
+  --   config = function()
+  --     vim.g.Illuminate_delay = 0
+  --     vim.cmd([[
+  --     hi! illuminatedWord ctermbg=green guibg=#344134
+  --     ]])
+  --     vim.defer_fn(function()
+  --       vim.cmd([[
+  --       augroup illuminated_autocmd
+  --         autocmd!
+  --       augroup END
+  --       ]])
+  --     end, 0)
+  --   end,
+  -- }
+
+  -- use {
+  --   'neovim/nvim-lspconfig',
+  --   config = function()
+  --     require('core.lsp').setup()
+  --   end,
+  --   opt = true,
+  -- }
+
+  -- use {
+  --   'hrsh7th/nvim-cmp',
+  --   config = function()
+  --     require('core.cmp')
+  --   end,
+  --   requires = {
+  --     'hrsh7th/cmp-nvim-lsp',
+  --     'hrsh7th/cmp-buffer',
+  --     'hrsh7th/cmp-path',
+  --     {
+  --       'hrsh7th/vim-vsnip',
+  --       config = function()
+  --         require('core.vsnip').setup()
+  --       end,
+  --     },
+  --     'hrsh7th/cmp-vsnip',
+  --   },
+  --   opt = true,
+  -- }
+
+  -- use {
+  --   'windwp/nvim-autopairs',
+  --   commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+  --   config = function()
+  --     require('nvim-autopairs').setup {}
+  --     -- If you want insert `(` after select function or method item
+  --     local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+  --     local cmp = require('cmp')
+  --     cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })
+  --   end,
+  --   opt = true,
+  -- }
 
   use {
-    'windwp/nvim-autopairs',
-    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    'neoclide/coc.nvim',
+    branch = 'release',
     config = function()
-      require('nvim-autopairs').setup {}
-      -- If you want insert `(` after select function or method item
-      local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-      local cmp = require('cmp')
-      cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })
-    end,
-    opt = true,
+      vim.cmd('runtime plug-config/coc.vim')
+    end
   }
 
   -- _G.indent_blankline_filetypes = { 'vim', 'lua', 'json', 'java', 'c', 'python', 'sql', 'xml', 'html', 'bash' }
@@ -621,16 +610,6 @@ return packer.startup(function(use)
   --   },
   --   opt = true,
   --   keys = { '<leader>fc' },
-  -- }
-
-  -- use {
-  --   'glacambre/firenvim',
-  --   run = function()
-  --     vim.fn['firenvim#install'](0)
-  --   end,
-  --   config = function()
-  --     vim.cmd('set guifont=JetBrainsMono\\ Nerd\\ Font\\ Mono:h22')
-  --   end,
   -- }
 
   use {
