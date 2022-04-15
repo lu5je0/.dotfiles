@@ -17,6 +17,15 @@ local indent_change_items = {
   'catch',
 }
 
+local origin_emit = require('cmp.utils.autocmd').emit
+
+local ignore_text_changed_emit = function(s)
+  if s == 'TextChanged' then
+    return
+  end
+  origin_emit(s)
+end
+
 local function fix_indent()
   vim.schedule(function()
     if vim.api.nvim_get_mode()['mode'] == 's' then
@@ -26,8 +35,9 @@ local function fix_indent()
     local cursor = vim.fn.getpos(".")
     local indent_num = vim.fn.indent('.')
 
+    require('cmp.utils.autocmd').emit = ignore_text_changed_emit
+
     vim.cmd("norm ==")
-    -- vim.api.nvim_feedkeys('==', 'x', false)
     local sw = vim.fn.shiftwidth()
 
     if vim.fn.indent('.') < indent_num then
@@ -39,8 +49,8 @@ local function fix_indent()
     end
 
     vim.defer_fn(function()
-      cmp.close()
-    end, 30)
+      require('cmp.utils.autocmd').emit = origin_emit
+    end, 10)
   end)
 end
 
