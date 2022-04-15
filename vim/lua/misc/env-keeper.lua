@@ -20,11 +20,15 @@ local function write_file(filename, content)
   f:close()
 end
 
-function M.read(name)
-  return vim.fn.json_decode(read_file(config_file))[name]
+function M.get(name, default)
+  local value = vim.fn.json_decode(read_file(config_file))[name]
+  if value == nil or value == "" then
+    return default
+  end
+  return value
 end
 
-function M.write(name, value)
+function M.set(name, value)
   local json = vim.fn.json_decode(read_file(config_file))
   json[name] = value
   return write_file(config_file, vim.fn.json_encode(json))

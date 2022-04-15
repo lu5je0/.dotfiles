@@ -3,7 +3,7 @@ if !has("mac")
 endif
 
 let s:std_config_path = stdpath("config")
-let g:save_last_ime = 0
+let g:save_last_ime = v:lua.require('misc/env-keeper').get('save_last_ime', '0')
 
 function! ImFuncInit()
 if get(g:, "im_init", 0) == 1
@@ -48,13 +48,15 @@ EOF
 endfunction
 
 function! ToggleSaveLastIme()
-    if g:save_last_ime == 0
+    let v = v:lua.require('misc/env-keeper').get('save_last_ime', '0')
+    if v == '0'
         let g:save_last_ime = 1
         echo "keep last ime enabled"
     else
         let g:save_last_ime = 0
         echo "keep last ime disabled"
     endif
+    lua require('misc/env-keeper').set('save_last_ime', tostring(vim.g.save_last_ime))
 endfunction
 
 " 无操作自动加载

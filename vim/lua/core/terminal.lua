@@ -2,10 +2,7 @@ local M = {}
 
 local direction_init = function()
   if M.direction == nil then
-    M.direction = require('misc.env-keeper').read('terminal_direction')
-    if M.direction == nil then
-      M.direction = 'float'
-    end
+    M.direction = require('misc.env-keeper').get('terminal_direction', 'float')
   end
 end
 
@@ -30,7 +27,7 @@ end
 
 M.change_terminal_direction = function(direction)
   M.direction = direction
-  require('misc.env-keeper').write('terminal_direction', direction)
+  require('misc.env-keeper').set('terminal_direction', direction)
   M.toggle()
 end
 
