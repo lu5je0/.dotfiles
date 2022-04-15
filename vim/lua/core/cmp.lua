@@ -19,28 +19,28 @@ local indent_change_items = {
 
 local function fix_indent()
   vim.schedule(function()
-    local c = vim.fn.getpos(".")
+    if vim.api.nvim_get_mode()['mode'] == 's' then
+      return
+    end
+
+    local cursor = vim.fn.getpos(".")
     local indent_num = vim.fn.indent('.')
 
-    -- " todo
-    -- if nvim_get_mode()['mode'] == 's'
-    --   return
-    -- endif
-
     vim.cmd("norm ==")
-    vim.defer_fn(function()
-      cmp.close()
-    end, 30)
     -- vim.api.nvim_feedkeys('==', 'x', false)
     local sw = vim.fn.shiftwidth()
 
     if vim.fn.indent('.') < indent_num then
-      vim.api.nvim_win_set_cursor(0, { c[2], c[3] - sw })
+      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] - sw })
     elseif vim.fn.indent('.') > indent_num then
-      vim.api.nvim_win_set_cursor(0, { c[2], c[3] + sw })
+      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] + sw })
     else
-      vim.api.nvim_win_set_cursor(0, { c[2], c[3] })
+      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] })
     end
+
+    vim.defer_fn(function()
+      cmp.close()
+    end, 30)
   end)
 end
 
