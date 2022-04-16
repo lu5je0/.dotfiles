@@ -582,4 +582,11 @@ return packer.startup(function(use)
       require('core.leaderf').setup()
     end,
   }
+
+  use {
+    'dstein64/nvim-scrollview',
+    config = function()
+      require('core.scrollview').setup()
+    end
+  }
 end)

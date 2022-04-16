@@ -171,7 +171,7 @@ function M.setup()
 
     autocmd DirChanged * lua require('core.nvimtree').pwd_stack_push()
 
-    function NvimLocateFile()
+    function! NvimLocateFile()
       PackerLoad nvim-tree.lua
       lua require("core.nvimtree").locate_file()
     endfunction
