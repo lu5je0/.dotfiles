@@ -32,9 +32,10 @@ function M.setup()
     },
   }
   telescope.load_extension('fzf')
-  telescope.load_extension('opener')
   key_mapping()
 end
+
+M.setup()
 
 function M.visual_telescope(lf_cmd)
   local search = vim.call('visual#visual_selection')

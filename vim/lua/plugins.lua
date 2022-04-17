@@ -535,11 +535,11 @@ return packer.startup(function(use)
     opt = true,
   }
 
-  -- use {
-  --   'nvim-telescope/telescope-fzf-native.nvim',
-  --   run = 'make',
-  -- }
-  --
+  use {
+    'nvim-telescope/telescope-fzf-native.nvim',
+    run = 'make',
+  }
+
   -- use {
   --   'nvim-telescope/telescope.nvim',
   --   config = function()
@@ -557,8 +557,8 @@ return packer.startup(function(use)
   --       end,
   --     },
   --   },
-  --   opt = true,
-  --   keys = { '<leader>fc' },
+  --   -- opt = true,
+  --   -- keys = { '<leader>f' },
   -- }
 
   use {
