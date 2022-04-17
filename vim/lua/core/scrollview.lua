@@ -55,7 +55,7 @@ M.setup = function()
     winblend = 88,
     base = 'right',
     column = 1,
-    on_startup = 0,
+    on_startup = 1,
   }
   vim.cmd[[
   " Link ScrollView highlight to Pmenu highlight
@@ -64,7 +64,7 @@ M.setup = function()
   " Specify custom highlighting for ScrollView
   highlight ScrollView guibg=LightCyan guifg=NONE
   ]]
-  M.begin_timer()
+  -- M.begin_timer()
 end
 
 return M

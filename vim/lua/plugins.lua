@@ -536,18 +536,6 @@ return packer.startup(function(use)
   }
 
   -- use {
-  --   'petertriho/nvim-scrollbar',
-  --   config = function()
-  --     require('scrollbar').setup {
-  --       handle = {
-  --         color = '#5C6370',
-  --       },
-  --       excluded_filetypes = { 'NvimTree', 'confirm', 'toggleterm', 'vista' },
-  --     }
-  --   end,
-  -- }
-
-  -- use {
   --   'nvim-telescope/telescope-fzf-native.nvim',
   --   run = 'make',
   -- }
@@ -586,7 +574,7 @@ return packer.startup(function(use)
   use {
     'dstein64/nvim-scrollview',
     opt = true,
-    event = 'WinScrolled',
+    event = { 'WinScrolled', 'BufRead' },
     config = function()
       require('core.scrollview').setup()
     end
