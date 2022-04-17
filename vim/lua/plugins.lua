@@ -271,12 +271,11 @@ return packer.startup(function(use)
     'mg979/vim-visual-multi',
     opt = true,
     setup = function()
-      vim.cmd([[
-        let g:VM_maps = {}
-        let g:VM_maps["Select Cursor Down"] = '<m-n>'
-        let g:VM_maps["Remove Region"] = '<c-p>'
-        let g:VM_maps["Skip Region"] = '<c-x>'
-      ]])
+      vim.g.VM_maps = {
+        ['Select Cursor Down'] = '<m-n>',
+        ['Remove Region'] = '<c-p>',
+        ['Skip Region'] = '<c-x>'
+      }
     end,
     keys = { '<c-n>', '<m-n>' },
   }
@@ -352,7 +351,8 @@ return packer.startup(function(use)
     opt = true,
     cmd = { 'UndotreeToggle' },
     config = function()
-      vim.cmd('let g:undotree_WindowLayout = 3 | let g:undotree_SetFocusWhenToggle = 1')
+      vim.g.undotree_WindowLayout = 3
+      vim.g.undotree_SetFocusWhenToggle = 1
     end,
   }
 

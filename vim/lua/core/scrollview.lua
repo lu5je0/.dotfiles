@@ -1,11 +1,21 @@
 local M = {}
 
-local scrollbar = require('scrollview')
+local scrollview = require('scrollview')
 
 M.begin_timer = function()
   local visible_duration = 3000
-
   local timer = nil
+
+  -- hack mouse handel
+  local handle_mouse = scrollview.handle_mouse
+  scrollview.handle_mouse = function(button)
+    if timer then
+      timer:stop()
+      timer = nil
+    end
+    handle_mouse(button)
+  end
+
   local show = function()
     vim.cmd("ScrollViewEnable")
 
@@ -19,7 +29,8 @@ M.begin_timer = function()
   end
 
   local scroll_view_group = vim.api.nvim_create_augroup('scroll_view_group', { clear = true })
-  vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'BufWinEnter', 'FocusGained', 'CursorMoved', 'VimResized' }, {
+  -- vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'BufWinEnter', 'FocusGained', 'CursorMoved', 'VimResized' }, {
+  vim.api.nvim_create_autocmd({ 'WinScrolled' }, {
     group = scroll_view_group,
     pattern = { '*' },
     callback = show,
@@ -36,15 +47,21 @@ M.begin_timer = function()
 end
 
 M.setup = function()
-  scrollbar.setup {
+  scrollview.setup {
     excluded_filetypes = { 'nerdtree' },
-    current_only = true,
-    -- winblend = 10,
+    current_only = false,
+    winblend = 88,
     base = 'right',
     column = 1,
   }
+  vim.cmd[[
+  " Link ScrollView highlight to Pmenu highlight
+  " highlight link ScrollView CursorLine
 
-  -- M.begin_timer()
+  " Specify custom highlighting for ScrollView
+  highlight ScrollView guibg=LightCyan guifg=NONE
+  ]]
+  M.begin_timer()
 end
 
 return M
