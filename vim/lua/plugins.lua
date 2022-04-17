@@ -540,26 +540,26 @@ return packer.startup(function(use)
     run = 'make',
   }
 
-  -- use {
-  --   'nvim-telescope/telescope.nvim',
-  --   config = function()
-  --     require('core.telescope').setup()
-  --   end,
-  --   after = 'telescope-fzf-native.nvim',
-  --   requires = {
-  --     { 'nvim-lua/plenary.nvim' },
-  --     {
-  --       'AckslD/nvim-neoclip.lua',
-  --       config = function()
-  --         require('neoclip').setup {
-  --           default_register = '*',
-  --         }
-  --       end,
-  --     },
-  --   },
-  --   -- opt = true,
-  --   -- keys = { '<leader>f' },
-  -- }
+  use {
+    'nvim-telescope/telescope.nvim',
+    config = function()
+      require('core.telescope').setup(false)
+    end,
+    after = 'telescope-fzf-native.nvim',
+    requires = {
+      { 'nvim-lua/plenary.nvim' },
+      {
+        'AckslD/nvim-neoclip.lua',
+        config = function()
+          require('neoclip').setup {
+            default_register = '*',
+          }
+        end,
+      },
+    },
+    -- opt = true,
+    -- keys = { '<leader>f' },
+  }
 
   use {
     'lu5je0/LeaderF',

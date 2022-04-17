@@ -6,21 +6,26 @@ local function on_attach(client, bufnr)
   -- Mappings.
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
+  if packer_plugins and packer_plugins['telescope.nvim'].loaded then
+    require('core.telescope').lsp_keymaping(bufnr)
+  else
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+    vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
+    vim.keymap.set('n', 'gn', vim.lsp.buf.implementation, opts)
+    vim.keymap.set('n', 'gb', vim.lsp.buf.references, opts)
+  end
+
   vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
-  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
   vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-  vim.keymap.set('n', 'gn', vim.lsp.buf.implementation, opts)
   -- vim.keymap.set('i', '<c-p>', vim.lsp.buf.signature_help, opts)
   vim.keymap.set('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
   vim.keymap.set('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
   vim.keymap.set('n', '<leader>Wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, opts)
-  vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
   vim.keymap.set('n', '<leader>cr', vim.lsp.buf.rename, opts)
   vim.keymap.set('n', '<leader>cc', vim.lsp.buf.code_action, opts)
   vim.keymap.set('v', '<leader>cc', vim.lsp.buf.code_action, opts)
-  vim.keymap.set('n', 'gb', vim.lsp.buf.references, opts)
   vim.keymap.set('n', '[e', vim.diagnostic.goto_prev, opts)
   vim.keymap.set('n', ']e', vim.diagnostic.goto_next, opts)
   vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, opts)

@@ -18,7 +18,7 @@ local function key_mapping()
   vim.api.nvim_set_keymap('n', '<leader>fd', ':Telescope opener<cr>', opts)
 end
 
-function M.setup()
+function M.setup(enbale_key_mapping)
   local actions = require('telescope.actions')
   local telescope = require('telescope')
   telescope.setup {
@@ -32,10 +32,19 @@ function M.setup()
     },
   }
   telescope.load_extension('fzf')
-  key_mapping()
+  if enbale_key_mapping then
+    key_mapping()
+  end
 end
 
-M.setup()
+M.lsp_keymaping = function(bufnr)
+    local opts = { noremap = true, silent = true, buffer = bufnr }
+    -- vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
+    vim.keymap.set('n', 'gd', require('telescope.builtin').lsp_definitions, opts)
+    vim.keymap.set('n', 'gy', require('telescope.builtin').lsp_type_definitions, opts)
+    vim.keymap.set('n', 'gn', require('telescope.builtin').lsp_implementations, opts)
+    vim.keymap.set('n', 'gb', require('telescope.builtin').lsp_references, opts)
+end
 
 function M.visual_telescope(lf_cmd)
   local search = vim.call('visual#visual_selection')
