@@ -17,6 +17,8 @@ M.begin_timer = function()
   end
 
   local show = function()
+    -- local max_row = vim.fn.winheight(0)
+
     vim.cmd("ScrollViewEnable")
 
     if timer then
@@ -53,6 +55,7 @@ M.setup = function()
     winblend = 88,
     base = 'right',
     column = 1,
+    on_startup = 0,
   }
   vim.cmd[[
   " Link ScrollView highlight to Pmenu highlight
