@@ -546,18 +546,18 @@ return packer.startup(function(use)
       require('core.telescope').setup(false)
     end,
     after = 'telescope-fzf-native.nvim',
-    requires = {
-      { 'nvim-lua/plenary.nvim' },
-      {
-        'AckslD/nvim-neoclip.lua',
-        config = function()
-          require('neoclip').setup {
-            default_register = '*',
-          }
-        end,
-      },
-    },
-    -- opt = true,
+    -- requires = {
+    --   { 'nvim-lua/plenary.nvim' },
+    --   {
+    --     'AckslD/nvim-neoclip.lua',
+    --     config = function()
+    --       require('neoclip').setup {
+    --         default_register = '*',
+    --       }
+    --     end,
+    --   },
+    -- },
+    opt = true,
     -- keys = { '<leader>f' },
   }
 

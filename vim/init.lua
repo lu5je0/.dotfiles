@@ -27,6 +27,7 @@ local defer_plugins = {
   'null-ls.nvim',
   'nvim-tree.lua',
   'LeaderF',
+  'telescope.nvim',
   'toggleterm.nvim',
   'Comment.nvim',
 }
