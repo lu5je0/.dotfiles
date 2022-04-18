@@ -594,6 +594,14 @@ return packer.startup(function(use)
   }
 
   use {
+    'Pocco81/HighStr.nvim',
+    config = function()
+      require('core.highstr')
+    end,
+    keys = {'<f1>', '<f2>', '<f3>', '<f4>'}
+  }
+
+  use {
     'dstein64/nvim-scrollview',
     opt = true,
     event = { 'WinScrolled', 'BufRead' },
