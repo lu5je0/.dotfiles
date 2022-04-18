@@ -149,7 +149,7 @@ ins_left {
       t = colors.red,
     }
     vim.api.nvim_command('hi! LualineMode guifg=' .. mode_color[vim.fn.mode()] .. ' guibg=' .. colors.bg)
-    -- return string.upper(vim.api.nvim_get_mode()['mode'])
+    -- return string.upper(vim.api.nvim_get_mode().mode)
     return ''
   end,
   color = 'LualineMode',
@@ -199,7 +199,6 @@ ins_left {
   color = { fg = colors.violet },
 }
 
--- lsp status
 local b, nvim_gps = pcall(require, 'nvim-gps')
 if b then
   ins_left {

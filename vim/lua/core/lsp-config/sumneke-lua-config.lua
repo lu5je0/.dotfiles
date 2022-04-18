@@ -2,12 +2,21 @@ return {
   on_attach = function(origin_on_attach_fn)
     return function(client, bufnr)
       origin_on_attach_fn(client, bufnr)
-      client.resolved_capabilities.document_formatting = false
-      client.resolved_capabilities.document_range_formatting = false
+      -- client.resolved_capabilities.document_formatting = false
+      -- client.resolved_capabilities.document_range_formatting = false
     end
   end,
   settings = {
     Lua = {
+      format = {
+        enable = true,
+        -- Put format options here
+        -- NOTE: the value should be STRING!!
+        defaultConfig = {
+          indent_style = "space",
+          indent_size = "2",
+        }
+      },
       completion = {
         callSnippet = 'Disable',
         postfix = '.',

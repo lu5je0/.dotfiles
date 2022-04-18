@@ -16,7 +16,7 @@ end
 
 local function get_var_name(word_mode)
   local var_name = nil
-  if vim.api.nvim_get_mode()['mode'] == 'v' then
+  if vim.api.nvim_get_mode().mode == 'v' then
     var_name = visual_utils.selected_text()
   else
     if word_mode == 'WORD' then
@@ -37,7 +37,7 @@ local function base_convert(convert_strategy_fn, word_mode)
   if not is_contain_space(var_name) then
     local tokens = split(var_name)
     var_name = convert_strategy_fn(tokens)
-    if vim.api.nvim_get_mode()['mode'] == 'n' then
+    if vim.api.nvim_get_mode().mode == 'n' then
       if word_mode == 'WORD' then
         vim.cmd('norm viW')
       else

@@ -22,6 +22,8 @@ function! RunFile()
         MarkdownPreview
     elseif file_type == 'java'
         call RunFileInner("java", "")
+    elseif file_type == 'rust'
+        call v:lua.require("core.terminal").send_to_terminal('cargo run')
     elseif file_type == 'rest'
       call VrcQuery()
     elseif file_type == 'c'

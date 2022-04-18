@@ -28,7 +28,7 @@ end
 
 local function fix_indent()
   vim.schedule(function()
-    if vim.api.nvim_get_mode()['mode'] == 's' then
+    if vim.api.nvim_get_mode().mode == 's' then
       return
     end
 
