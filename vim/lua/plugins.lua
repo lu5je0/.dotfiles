@@ -15,6 +15,19 @@ vim.api.nvim_create_autocmd('BufWritePost', {
 })
 
 return packer.startup(function(use)
+  _G.defer_plugins = {}
+  local origin_use = use
+  use = function(...)
+    if type(...) == 'table' then
+      local t = ...
+      if t['defer'] then
+        t['opt'] = true
+        table.insert(_G.defer_plugins, t[1]:match('/(.*)$'))
+      end
+    end
+    origin_use(...)
+  end
+
   -- Speed up loading Lua modules in Neovim to improve startup time.
   use('lewis6991/impatient.nvim')
 
@@ -185,6 +198,7 @@ return packer.startup(function(use)
   use {
     'numToStr/Comment.nvim',
     opt = true,
+    defer = true,
     config = function()
       require('Comment').setup {
         opleader = {
@@ -238,6 +252,7 @@ return packer.startup(function(use)
     'akinsho/toggleterm.nvim',
     branch = 'main',
     opt = true,
+    defer = true,
     config = function()
       require('core.terminal').setup()
     end,
@@ -414,6 +429,7 @@ return packer.startup(function(use)
   use {
     'windwp/nvim-autopairs',
     commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    defer = true,
     config = function()
       require('nvim-autopairs').setup {}
     end,
@@ -429,6 +445,7 @@ return packer.startup(function(use)
     config = function()
       require('core.null-ls')
     end,
+    defer = true,
     opt = true,
   }
 
@@ -455,6 +472,7 @@ return packer.startup(function(use)
     config = function()
       require('core.lsp').setup()
     end,
+    defer = true,
     opt = true,
   }
 
@@ -463,6 +481,7 @@ return packer.startup(function(use)
     config = function()
       require('core.cmp')
     end,
+    defer = true,
     after = { 'nvim-lspconfig', 'nvim-autopairs' },
     requires = {
       'hrsh7th/cmp-nvim-lsp',
@@ -521,6 +540,7 @@ return packer.startup(function(use)
     requires = 'kyazdani42/nvim-web-devicons',
     keys = { '<leader>e', '<leader>fe' },
     opt = true,
+    defer = true,
     config = function()
       require('core.nvimtree').setup()
     end,
@@ -535,36 +555,38 @@ return packer.startup(function(use)
     opt = true,
   }
 
-  use {
-    'nvim-telescope/telescope-fzf-native.nvim',
-    run = 'make',
-  }
+  -- use {
+  --   'nvim-telescope/telescope-fzf-native.nvim',
+  --   run = 'make',
+  -- }
 
-  use {
-    'nvim-telescope/telescope.nvim',
-    config = function()
-      require('core.telescope').setup(false)
-    end,
-    after = 'telescope-fzf-native.nvim',
-    -- requires = {
-    --   { 'nvim-lua/plenary.nvim' },
-    --   {
-    --     'AckslD/nvim-neoclip.lua',
-    --     config = function()
-    --       require('neoclip').setup {
-    --         default_register = '*',
-    --       }
-    --     end,
-    --   },
-    -- },
-    opt = true,
-    -- keys = { '<leader>f' },
-  }
+  -- use {
+  --   'nvim-telescope/telescope.nvim',
+  --   config = function()
+  --     require('core.telescope').setup(false)
+  --   end,
+  --   defer = true,
+  --   after = 'telescope-fzf-native.nvim',
+  --   -- requires = {
+  --   --   { 'nvim-lua/plenary.nvim' },
+  --   --   {
+  --   --     'AckslD/nvim-neoclip.lua',
+  --   --     config = function()
+  --   --       require('neoclip').setup {
+  --   --         default_register = '*',
+  --   --       }
+  --   --     end,
+  --   --   },
+  --   -- },
+  --   opt = true,
+  --   -- keys = { '<leader>f' },
+  -- }
 
   use {
     'lu5je0/LeaderF',
     run = './install.sh',
     opt = true,
+    defer = true,
     -- cmd = {'Leaderf', 'Git'},
     config = function()
       require('core.leaderf').setup()

@@ -20,23 +20,11 @@ if has("mac")
 endif
 ]])
 
-local defer_plugins = {
-  'nvim-autopairs',
-  'nvim-lspconfig',
-  'nvim-cmp',
-  'null-ls.nvim',
-  'nvim-tree.lua',
-  'LeaderF',
-  'telescope.nvim',
-  'toggleterm.nvim',
-  'Comment.nvim',
-}
-
 if vim.fn.has('wsl') == 1 then
-  table.insert(defer_plugins, 'im-switcher.nvim')
+  table.insert(_G.defer_plugins, 'im-switcher.nvim')
 end
 
-for _, plugin in ipairs(defer_plugins) do
+for _, plugin in ipairs(_G.defer_plugins) do
   vim.schedule(function()
     vim.cmd('PackerLoad ' .. plugin)
   end)

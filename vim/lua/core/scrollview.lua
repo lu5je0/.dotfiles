@@ -64,7 +64,7 @@ M.setup = function()
   " Specify custom highlighting for ScrollView
   highlight ScrollView guibg=LightCyan guifg=NONE
   ]]
-  -- M.begin_timer()
+  M.begin_timer()
 end
 
 return M

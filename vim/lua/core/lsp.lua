@@ -6,7 +6,7 @@ local function on_attach(client, bufnr)
   -- Mappings.
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
-  if packer_plugins and packer_plugins['telescope.nvim'].loaded then
+  if packer_plugins and packer_plugins['telescope.nvim'] and packer_plugins['telescope.nvim'].loaded then
     require('core.telescope').lsp_keymaping(bufnr)
   else
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
