@@ -175,6 +175,8 @@ xnoremap * m`:keepjumps <C-u>call VisualStarSearchSet('/')<CR>/<C-R>=@/<CR><CR>`
 nmap <leader>q <cmd>CloseBuffer<cr>
 nmap <leader>Q <cmd>lua require("base.quit-comfirm").exit()<cr>
 
+nmap <leader>wo <c-w>o
+
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
 vmap <silent> <Leader>sc <Plug>TranslateV
