@@ -379,7 +379,7 @@ return packer.startup(function(use)
     'tpope/vim-surround',
   }
 
-  local nvim_colorizer_ft = { 'vim', 'lua', 'css' }
+  local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf' }
   use {
     'norcalli/nvim-colorizer.lua',
     config = function()
