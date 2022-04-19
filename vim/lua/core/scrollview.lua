@@ -32,7 +32,7 @@ M.begin_timer = function()
 
   local scroll_view_group = vim.api.nvim_create_augroup('scroll_view_group', { clear = true })
   -- vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'BufWinEnter', 'FocusGained', 'CursorMoved', 'VimResized' }, {
-  vim.api.nvim_create_autocmd({ 'WinScrolled' }, {
+  vim.api.nvim_create_autocmd({ 'WinScrolled', 'FileReadPost' }, {
     group = scroll_view_group,
     pattern = { '*' },
     callback = show,
@@ -52,7 +52,7 @@ M.setup = function()
   scrollview.setup {
     excluded_filetypes = { 'nerdtree' , 'NvimTree'},
     current_only = false,
-    winblend = 88,
+    winblend = 85,
     base = 'right',
     column = 1,
     on_startup = 1,

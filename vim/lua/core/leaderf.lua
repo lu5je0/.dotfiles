@@ -32,7 +32,7 @@ function M.setup()
 end
 
 function M.key_mappings()
-  local opts = {}
+  local opts = { desc = 'leaderf.lua' }
 
   vim.keymap.del('n', '<Leader>f')
   vim.keymap.del('n', '<Leader>b')
@@ -45,7 +45,7 @@ function M.key_mappings()
   vim.keymap.set('n', '<leader>fl', ':Leaderf line<cr>', opts)
   vim.keymap.set('n', '<leader>fn', ':Leaderf filetype<cr>', opts)
   vim.keymap.set('n', '<leader>fb', ':Leaderf buffer<cr>', opts)
-  vim.keymap.set('n', '<leader>fm', ':Leaderf --nowrap mru<cr>', opts)
+  vim.keymap.set('n', '<leader>fm', ':Leaderf --nowrap mru --absolute-path<cr>', opts)
   vim.keymap.set('n', '<leader>fh', ':Leaderf help<cr>', opts)
   vim.keymap.set('n', '<leader>fj', ':JunkList<cr>', opts)
 end

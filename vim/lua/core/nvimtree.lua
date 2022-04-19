@@ -186,12 +186,17 @@ function M.setup()
   augroup END
   ]])
 
+  local opts = {
+    noremap = true,
+    silent = true,
+    desc = 'nvim_tree'
+  }
   vim.keymap.set('n', '<leader>e', function()
     require('nvim-tree').toggle(false, true)
-  end)
-  vim.keymap.set('n', '<leader>fe', require('core.nvimtree').locate_file)
-  vim.api.nvim_set_keymap('n', '<leader>fp', ':cd ~/.local/share/nvim/site/pack/packer<cr>', { noremap = true, silent = true })
-  vim.api.nvim_set_keymap('n', '<leader>fd', ':cd ~/.dotfiles<cr>', { noremap = true, silent = true })
+  end, opts)
+  vim.keymap.set('n', '<leader>fe', require('core.nvimtree').locate_file, opts)
+  vim.api.nvim_set_keymap('n', '<leader>fp', ':cd ~/.local/share/nvim/site/pack/packer<cr>', opts)
+  vim.api.nvim_set_keymap('n', '<leader>fd', ':cd ~/.dotfiles<cr>', opts)
 
   local view = require('nvim-tree.view')
   view.View.winopts.signcolumn = 'no'

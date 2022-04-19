@@ -4,7 +4,7 @@ M.servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls' }
 
 local function on_attach(client, bufnr)
   -- Mappings.
-  local opts = { noremap = true, silent = true, buffer = bufnr }
+  local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
 
   if packer_plugins and packer_plugins['telescope.nvim'] and packer_plugins['telescope.nvim'].loaded then
     require('core.telescope').lsp_keymaping(bufnr)

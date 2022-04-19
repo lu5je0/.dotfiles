@@ -23,7 +23,6 @@ set expandtab
 set encoding=utf8
 set fileencoding=utf-8
 set fileencodings=ucs-bom,utf-8,gb18030,utf-16,big5,ISO-8859,latin1
-" syntax on
 set foldmethod=manual
 set foldlevelstart=99 " 打开文件默认不折叠
 set termguicolors
