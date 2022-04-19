@@ -116,17 +116,17 @@ end
 
 M.mappings = function()
   -- stylua: ignore start
-  vim.keymap.set('n', '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end)
-  vim.keymap.set('n', '<plug>(ConvertToCamelword)', function() M.convert_to_camel('word') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToCamelword)', function() M.convert_to_camel('word') end)
 
-  vim.keymap.set('n', '<plug>(ConvertToSnakeWORD)', function() M.convert_to_snake('WORD') end)
-  vim.keymap.set('n', '<plug>(ConvertToSnakeword)', function() M.convert_to_snake('word') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToSnakeWORD)', function() M.convert_to_snake('WORD') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToSnakeword)', function() M.convert_to_snake('word') end)
 
-  vim.keymap.set('n', '<plug>(ConvertToPascalWORD)', function() M.convert_to_pascal('WORD') end)
-  vim.keymap.set('n', '<plug>(ConvertToPascalword)', function() M.convert_to_pascal('word') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToPascalWORD)', function() M.convert_to_pascal('WORD') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToPascalword)', function() M.convert_to_pascal('word') end)
 
-  vim.keymap.set('n', '<plug>(ConvertToKebabWORD)', function() M.convert_to_kebab('WORD') end)
-  vim.keymap.set('n', '<plug>(ConvertToKebabword)', function() M.convert_to_kebab('word') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToKebabWORD)', function() M.convert_to_kebab('WORD') end)
+  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToKebabword)', function() M.convert_to_kebab('word') end)
   -- stylua: ignore end
 end
 return M

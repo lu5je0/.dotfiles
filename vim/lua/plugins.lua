@@ -598,7 +598,7 @@ return packer.startup(function(use)
     config = function()
       require('core.highstr')
     end,
-    keys = {'<f1>', '<f2>', '<f3>', '<f4>'}
+    keys = {'<f1>', '<f2>', '<f3>', '<f4>', '<f6>'}
   }
 
   use {
