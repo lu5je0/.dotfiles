@@ -255,42 +255,42 @@ end
 --   padding = { left = 1, right = 1 },
 -- })
 
-ins_right {
-  -- Lsp server name .
-  function()
-    local clients = vim.lsp.get_active_clients()
-    if next(clients) ~= nil then
-      return ''
-    else
-      return ''
-    end
-
-    -- local msg = nil
-    -- local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
-    -- local clients = vim.lsp.get_active_clients()
-    -- if next(clients) == nil then
-    --   return ' ' .. msg
-    -- end
-    -- for _, client in ipairs(clients) do
-    --   local filetypes = client.config.filetypes
-    --   if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
-    --     if client.name == 'null-ls' then
-    --       goto continue
-    --     end
-    --     return ' ' .. client.name
-    --   end
-    --   ::continue::
-    -- end
-    -- if msg == nil then
-    --   return ''
-    -- else
-    --   return ' ' .. msg
-    -- end
-  end,
-  color = { fg = colors.cyan, gui = 'bold' },
-  cond = conditions.lsp_cond,
-  padding = { left = 0, right = 1 },
-}
+-- ins_right {
+--   -- Lsp server name .
+--   function()
+--     local clients = vim.lsp.get_active_clients()
+--     if next(clients) ~= nil then
+--       return ''
+--     else
+--       return ''
+--     end
+--
+--     -- local msg = nil
+--     -- local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
+--     -- local clients = vim.lsp.get_active_clients()
+--     -- if next(clients) == nil then
+--     --   return ' ' .. msg
+--     -- end
+--     -- for _, client in ipairs(clients) do
+--     --   local filetypes = client.config.filetypes
+--     --   if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
+--     --     if client.name == 'null-ls' then
+--     --       goto continue
+--     --     end
+--     --     return ' ' .. client.name
+--     --   end
+--     --   ::continue::
+--     -- end
+--     -- if msg == nil then
+--     --   return ''
+--     -- else
+--     --   return ' ' .. msg
+--     -- end
+--   end,
+--   color = { fg = colors.cyan, gui = 'bold' },
+--   cond = conditions.lsp_cond,
+--   padding = { left = 0, right = 1 },
+-- }
 
 -- Add components to right sections
 ins_right {
