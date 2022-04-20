@@ -16,8 +16,13 @@ M.begin_timer = function()
     handle_mouse(button)
   end
 
-  local show = function()
-    -- local max_row = vim.fn.winheight(0)
+  local show = function(params)
+    if params.event == 'CmdWinLeave' then
+      vim.schedule(function()
+        vim.cmd("ScrollViewDisable")
+      end)
+      return
+    end
 
     vim.cmd("ScrollViewEnable")
 
@@ -26,13 +31,16 @@ M.begin_timer = function()
       timer = nil
     end
     timer = vim.defer_fn(function()
+      if vim.bo.buftype == 'nofile' and vim.bo.filetype == 'vim' then
+        return
+      end
       vim.cmd("ScrollViewDisable")
     end, visible_duration)
   end
 
   local scroll_view_group = vim.api.nvim_create_augroup('scroll_view_group', { clear = true })
   -- vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'BufWinEnter', 'FocusGained', 'CursorMoved', 'VimResized' }, {
-  vim.api.nvim_create_autocmd({ 'WinScrolled', 'FileReadPost' }, {
+  vim.api.nvim_create_autocmd({ 'WinScrolled', 'FileReadPost', 'CmdwinLeave' }, {
     group = scroll_view_group,
     pattern = { '*' },
     callback = show,
