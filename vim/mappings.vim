@@ -168,6 +168,8 @@ call ToggleGj(0)
 "----------------------------------------------------------------------
 nnoremap * m`:keepjumps normal! *``<cr>
 xnoremap * m`:keepjumps <C-u>call VisualStarSearchSet('/')<CR>/<C-R>=@/<CR><CR>``
+nnoremap v m'v
+nnoremap V m'V
 
 "----------------------------------------------------------------------
 " leader
