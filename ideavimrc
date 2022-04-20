@@ -174,3 +174,7 @@ let g:NERDTreeMapToggleZoom='z'
 nmap <F10> <Action>(ToggleLineBreakpoint)
 nmap <S-F9> <Action>(RunToCursor)
 nmap <F12> <Action>(Stop)
+
+" visual select
+vmap v <Action>(EditorSelectWord)
+vmap V <Action>(EditorUnSelectWord)
