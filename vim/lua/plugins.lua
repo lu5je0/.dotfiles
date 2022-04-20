@@ -160,12 +160,6 @@ return packer.startup(function(use)
   -- highlighting
   use { 'chr4/nginx.vim' }
   use { 'lu5je0/vim-java-bytecode' }
-  use {
-    'elzr/vim-json',
-    config = function()
-      vim.cmd('let g:vim_json_syntax_conceal = 0')
-    end,
-  }
   use { 'MTDL9/vim-log-highlighting' }
 
   -- use {
@@ -296,7 +290,7 @@ return packer.startup(function(use)
   }
 
   -- textobj
-  use('kana/vim-textobj-user')
+  -- use('kana/vim-textobj-user')
   -- use('michaeljsmith/vim-indent-object')
   -- use({
   --   'sgur/vim-textobj-parameter',
@@ -414,7 +408,12 @@ return packer.startup(function(use)
     ft = { 'markdown' },
   }
 
-  use { 'kevinhwang91/nvim-bqf' }
+  -- use {
+  --   'kevinhwang91/nvim-bqf',
+  --   config = function()
+  --     vim.cmd('autocmd FileType qf nnoremap <buffer> p <CR><C-W>p')
+  --   end
+  -- }
 
   -- use {
   --   'github/copilot.vim',
