@@ -2,6 +2,8 @@ local M = {}
 
 M.loaded = true
 
+local lib = require('nvim-tree.lib')
+
 function M.locate_file()
   if not M.loaded then
     vim.cmd('sleep 150m')
@@ -37,6 +39,57 @@ M.pwd_back_state = 0
 function M.terminal_cd()
   local cmd = 'cd ' .. vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
   require('core.terminal').send_to_terminal(cmd)
+end
+
+function M.remove()
+  local bufs = require("base.buffers").invild_buffers()
+  -- local bufs = vim.api.nvim_list_bufs()
+
+  local is_remove_cur_file = false
+  local cur_file_win_id = nil
+  for _, win_id in pairs(vim.api.nvim_list_wins()) do
+    local buf_id = vim.api.nvim_win_get_buf(win_id)
+    if vim.fn.buflisted(buf_id) then
+      local path = vim.fn.expand("#" .. tostring(buf_id) .. ":p")
+      if path == lib.get_node_at_cursor().absolute_path then
+        is_remove_cur_file = true
+        cur_file_win_id = win_id
+        break
+      end
+    end
+  end
+
+  -- try to get substitute file when remove cur file
+  local substitute_buf_id = nil
+  if is_remove_cur_file then
+    for _, buf_id in pairs(bufs) do
+      if vim.fn.buflisted(buf_id) then
+        if vim.bo[buf_id].filetype == 'NvimTree' then
+          goto continue
+        end
+        local path = vim.fn.expand("#" .. tostring(buf_id) .. ":p")
+        if path ~= lib.get_node_at_cursor().absolute_path
+          and vim.bo[buf_id].buftype == ''
+          and not string.find(path, 'undotree')
+        then
+          substitute_buf_id = buf_id
+          break
+        end
+      end
+      ::continue::
+    end
+  end
+
+  if is_remove_cur_file and substitute_buf_id ~= nil then
+    vim.api.nvim_win_set_buf(cur_file_win_id, substitute_buf_id)
+  end
+  local cur_width = vim.api.nvim_win_get_width(0)
+  require('nvim-tree.actions').on_keypress('remove')
+  if is_remove_cur_file and substitute_buf_id == nil then
+    vim.cmd("vnew")
+    vim.cmd('NvimTreeResize ' .. cur_width)
+    require('utils.utils').feedkey('<c-w>p', '')
+  end
 end
 
 function M.edit()
@@ -75,7 +128,6 @@ function M.cd()
 end
 
 function M.preview()
-  local lib = require('nvim-tree.lib')
   local path = lib.get_node_at_cursor().absolute_path
   if vim.fn.isdirectory(path) == 1 then
     return
@@ -84,7 +136,6 @@ function M.preview()
 end
 
 function M.file_info()
-  local lib = require('nvim-tree.lib')
   local info = vim.fn.system('ls -alhd "' .. lib.get_node_at_cursor().absolute_path .. '" -l --time-style="+%Y-%m-%d %H:%M:%S"')
   info = info .. vim.fn.system('du -h --max-depth=0 "' .. lib.get_node_at_cursor().absolute_path .. '"'):sub(1, -2)
   require('utils.ui').popup_info_window(info)
@@ -213,6 +264,7 @@ function M.setup()
     { key = '_', cb = ":lua require('core.nvimtree').reduce_width(1)<cr>" },
     { key = 'p', cb = ":lua require('core.nvimtree').preview()<cr>" },
     { key = 'x', cb = ":lua require('core.nvimtree').toggle_width()<cr>" },
+    { key = 'D', cb = ":lua require('core.nvimtree').remove()<cr>" },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
     { key = 's', action = 'vsplit' },
@@ -232,7 +284,6 @@ function M.setup()
     { key = 'I', action = 'toggle_dotfiles' },
     { key = 'r', action = 'refresh' },
     { key = 'ma', action = 'create' },
-    { key = 'D', action = 'remove' },
     { key = 'mv', action = 'rename' },
     -- { key = "mv", cb = tree_cb("cut") },
     { key = 'yy', action = 'copy' },

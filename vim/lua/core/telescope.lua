@@ -32,7 +32,6 @@ function M.setup(enbale_key_mapping)
   vim.cmd [[
   augroup telescope_mapping_group
     autocmd!
-    autocmd FileType TelescopePrompt echo 1
     autocmd FileType TelescopePrompt imap <buffer> <esc> <esc><esc>
   augroup END
   ]]
