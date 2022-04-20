@@ -19,31 +19,32 @@ local function key_mapping()
 end
 
 function M.setup(enbale_key_mapping)
-  local actions = require('telescope.actions')
   local telescope = require('telescope')
   telescope.setup {
     defaults = {
       path_display = { truncate = 2 },
-      mappings = {
-        i = {
-          ['<esc>'] = actions.close,
-        },
-      },
     },
   }
   telescope.load_extension('fzf')
   if enbale_key_mapping then
     key_mapping()
   end
+  vim.cmd [[
+  augroup telescope_mapping_group
+    autocmd!
+    autocmd FileType TelescopePrompt echo 1
+    autocmd FileType TelescopePrompt imap <buffer> <esc> <esc><esc>
+  augroup END
+  ]]
 end
 
 M.lsp_keymaping = function(bufnr)
-    local opts = { noremap = true, silent = true, buffer = bufnr }
-    -- vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
-    vim.keymap.set('n', 'gd', require('telescope.builtin').lsp_definitions, opts)
-    vim.keymap.set('n', 'gy', require('telescope.builtin').lsp_type_definitions, opts)
-    vim.keymap.set('n', 'gn', require('telescope.builtin').lsp_implementations, opts)
-    vim.keymap.set('n', 'gb', require('telescope.builtin').lsp_references, opts)
+  local opts = { noremap = true, silent = true, buffer = bufnr }
+  -- vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
+  vim.keymap.set('n', 'gd', require('telescope.builtin').lsp_definitions, opts)
+  vim.keymap.set('n', 'gy', require('telescope.builtin').lsp_type_definitions, opts)
+  vim.keymap.set('n', 'gn', require('telescope.builtin').lsp_implementations, opts)
+  vim.keymap.set('n', 'gb', require('telescope.builtin').lsp_references, opts)
 end
 
 function M.visual_telescope(lf_cmd)
