@@ -1,5 +1,5 @@
 local M = {}
-local visual_utils = require('utils.visual-utils')
+local visual_core_api = require('lu5je0.core.visual')
 
 local function is_contain_space(var_name)
   return var_name:match(' ') ~= nil
@@ -17,7 +17,7 @@ end
 local function get_var_name(word_mode)
   local var_name = nil
   if vim.api.nvim_get_mode().mode == 'v' then
-    var_name = visual_utils.selected_text()
+    var_name = visual_core_api.selected_text()
   else
     if word_mode == 'WORD' then
       var_name = vim.fn.expand('<cWORD>')
@@ -29,7 +29,7 @@ local function get_var_name(word_mode)
 end
 
 local function replace_var(var_name)
-  visual_utils.visual_replace(var_name)
+  visual_core_api.visual_replace(var_name)
 end
 
 local function base_convert(convert_strategy_fn, word_mode)
@@ -116,7 +116,7 @@ end
 
 M.mappings = function()
   -- stylua: ignore start
-  local opts = { desc = 'var_naming_converter.lua' }
+  local opts = { desc = 'var-naming-converter.lua' }
   vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end, opts)
   vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToCamelword)', function() M.convert_to_camel('word') end, opts)
 

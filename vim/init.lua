@@ -1,13 +1,13 @@
 if not pcall(require, 'impatient') then
   vim.notify('impatient fail')
 end
-require('plugins')
-require('enhance')
-require('commands')
-require('patch')
-require('mappings')
-require('autocmds')
-require('filetype')
+require('lu5je0.plugins')
+require('lu5je0.enhance')
+require('lu5je0.commands')
+require('lu5je0.patch')
+require('lu5je0.mappings')
+require('lu5je0.autocmds')
+require('lu5je0.filetype')
 
 vim.cmd([[
 runtime settings.vim

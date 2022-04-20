@@ -1,5 +1,5 @@
 local cmp = require('cmp')
-local utils = require('utils.utils')
+local utils = require('lu5je0.core.keys')
 
 local indent_change_items = {
   'endif',

@@ -7,7 +7,7 @@ local function on_attach(client, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
 
   if packer_plugins and packer_plugins['telescope.nvim'] and packer_plugins['telescope.nvim'].loaded then
-    require('core.telescope').lsp_keymaping(bufnr)
+    require('lu5je0.ext.telescope').lsp_keymaping(bufnr)
   else
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
     vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
@@ -89,13 +89,13 @@ local function lsp_installer_config()
     }
 
     if server.name == 'sumneko_lua' then
-      local sumneko_lua_config = require('core.lsp-config.sumneke-lua-config')
+      local sumneko_lua_config = require('lu5je0.ext.lsp-config.sumneke-lua-config')
       opts.settings = sumneko_lua_config.settings
       opts.on_attach = sumneko_lua_config.on_attach(opts.on_attach)
       opts = sumneko_lua_config.wrap_opts(opts)
       server:setup(opts)
     elseif server.name == 'pyright' then
-      opts.on_init = require('core.lsp-config.pyright-config').on_init
+      opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
       server:setup(opts)
     else
       server:setup(opts)

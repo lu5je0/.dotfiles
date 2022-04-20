@@ -143,7 +143,7 @@ M.setup = function()
     },
     x = {
       name = '+text',
-      r = { ":lua require('misc/replace').n_replace()<cr>", 'replace word' },
+      r = { ":lua require('lu5je0.misc.replace').n_replace()<cr>", 'replace word' },
       u = 'escape unicode',
       U = 'unescape unicode',
       h = 'url encode',
@@ -208,7 +208,7 @@ M.setup = function()
       D = { ':Git diff --cached<cr>', 'diff --cached' },
       v = { ':Gvdiffsplit!<cr>', 'gvdiffsplit' },
       L = { ':Flogsplit<cr>', 'git log in repository' },
-      l = { ":lua require('core/fugitive').current_file_logs()<cr>", 'show changs on current file' },
+      l = { ":lua require('lu5je0.ext.fugitive').current_file_logs()<cr>", 'show changs on current file' },
       i = { ':Gist -l<cr>', 'gist' },
       p = { ':AsyncRun -focus=0 -mode=term -rows=10 git push<cr>', 'git push' },
       s = { ':Git status<cr>', 'status' },
@@ -233,15 +233,15 @@ M.setup = function()
       h = { 'http encode' },
       H = { 'http encode' },
       s = { 'text escape' },
-      r = { ":lua require('misc/replace').v_replace()<cr>", 'replace' },
+      r = { ":lua require('lu5je0.misc.replace').v_replace()<cr>", 'replace' },
     },
     s = {
       name = '+translate',
     },
     f = {
       name = '+search/files',
-      f = { ":lua require('core.leaderf').visual_leaderf('file')<cr>", 'file' },
-      r = { ":lua require('core.leaderf').visual_leaderf('rg')<cr>", 'rg' },
+      f = { ":lua require('lu5je0.ext.leaderf').visual_leaderf('file')<cr>", 'file' },
+      r = { ":lua require('lu5je0.ext.leaderf').visual_leaderf('rg')<cr>", 'rg' },
     },
     c = {
       name = '+code',
@@ -256,7 +256,7 @@ M.setup = function()
     },
     g = {
       name = '+git',
-      l = { ":lua require('core/fugitive').lines_changes()<cr>", 'show changs on select lines' },
+      l = { ":lua require('lu5je0.ext.fugitive').lines_changes()<cr>", 'show changs on select lines' },
     },
   }
 

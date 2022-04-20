@@ -1,6 +1,6 @@
 local M = {}
 
-local cursor_utils = require('utils.cursor-utils')
+local cursor_utils = require('lu5je0.core.cursor')
 
 local function replace(mode)
   cursor_utils.save_position()

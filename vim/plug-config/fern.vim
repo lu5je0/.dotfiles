@@ -78,7 +78,7 @@ function! s:init_fern() abort
 
   nmap <silent> <buffer> <expr> <Plug>(fern-quit-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", ":q\<CR>")
   nmap <silent> <buffer> <expr> <Plug>(fern-esc-or-close-preview) fern_preview#smart_preview("\<Plug>(fern-action-preview:close)", "<c-w>l")
-  nmap <silent> <buffer> p :lua require("core/fern").preview_toggle()<cr>
+  nmap <silent> <buffer> p :lua require("ext.fern").preview_toggle()<cr>
   nmap <buffer> q <Plug>(fern-quit-or-close-preview)
   nmap <buffer> <ESC> <Plug>(fern-esc-or-close-preview)
   nmap <buffer> P gg

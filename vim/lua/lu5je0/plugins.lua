@@ -59,7 +59,7 @@ return packer.startup(function(use)
       -- }
     },
     config = function()
-      require('core.lualine')
+      require('lu5je0.ext.lualine')
     end,
   }
 
@@ -107,7 +107,7 @@ return packer.startup(function(use)
   use {
     'lu5je0/bufferline.nvim',
     config = function()
-      require('core.bufferline')
+      require('lu5je0.ext.bufferline')
     end,
     requires = { 'nvim-web-devicons' },
   }
@@ -144,7 +144,7 @@ return packer.startup(function(use)
     run = ':TSUpdate',
     opt = true,
     config = function()
-      require('core.treesiter')
+      require('lu5je0.ext.treesiter')
     end,
     ft = _G.ts_filtypes,
     requires = {
@@ -248,7 +248,7 @@ return packer.startup(function(use)
     opt = true,
     defer = true,
     config = function()
-      require('core.terminal').setup()
+      require('lu5je0.ext.terminal').setup()
     end,
   }
 
@@ -305,7 +305,7 @@ return packer.startup(function(use)
       'nvim-lua/plenary.nvim',
     },
     config = function()
-      require('core.gitsigns').setup()
+      require('lu5je0.ext.gitsigns').setup()
     end,
     event = 'BufRead',
   }
@@ -442,7 +442,7 @@ return packer.startup(function(use)
   use {
     'jose-elias-alvarez/null-ls.nvim',
     config = function()
-      require('core.null-ls')
+      require('lu5je0.ext.null-ls')
     end,
     defer = true,
     opt = true,
@@ -469,7 +469,7 @@ return packer.startup(function(use)
   use {
     'neovim/nvim-lspconfig',
     config = function()
-      require('core.lsp').setup()
+      require('lu5je0.ext.lsp').setup()
     end,
     defer = true,
     opt = true,
@@ -478,7 +478,7 @@ return packer.startup(function(use)
   use {
     'hrsh7th/nvim-cmp',
     config = function()
-      require('core.cmp')
+      require('lu5je0.ext.cmp')
     end,
     defer = true,
     after = { 'nvim-lspconfig', 'nvim-autopairs' },
@@ -489,7 +489,7 @@ return packer.startup(function(use)
       {
         'hrsh7th/vim-vsnip',
         config = function()
-          require('core.vsnip').setup()
+          require('lu5je0.ext.vsnip').setup()
         end,
       },
       'hrsh7th/cmp-vsnip',
@@ -528,7 +528,7 @@ return packer.startup(function(use)
   use {
     'puremourning/vimspector',
     config = function()
-      require('core.vimspector').setup()
+      require('lu5je0.ext.vimspector').setup()
     end,
     keys = { '<F10>', '<S-F10>' },
     fn = { 'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations' },
@@ -541,14 +541,14 @@ return packer.startup(function(use)
     opt = true,
     defer = true,
     config = function()
-      require('core.nvimtree').setup()
+      require('lu5je0.ext.nvimtree').setup()
     end,
   }
 
   use {
     'folke/which-key.nvim',
     config = function()
-      require('core.whichkey').setup()
+      require('lu5je0.ext.whichkey').setup()
     end,
     keys = { ',' },
     opt = true,
@@ -562,7 +562,7 @@ return packer.startup(function(use)
   use {
     'nvim-telescope/telescope.nvim',
     config = function()
-      require('core.telescope').setup(false)
+      require('lu5je0.ext.telescope').setup(false)
     end,
     defer = true,
     after = 'telescope-fzf-native.nvim',
@@ -588,14 +588,14 @@ return packer.startup(function(use)
     defer = true,
     -- cmd = {'Leaderf', 'Git'},
     config = function()
-      require('core.leaderf').setup()
+      require('lu5je0.ext.leaderf').setup()
     end,
   }
 
   use {
     'Pocco81/HighStr.nvim',
     config = function()
-      require('core.highstr')
+      require('lu5je0.ext.highstr')
     end,
     keys = {'<f1>', '<f2>', '<f3>', '<f4>', '<f6>'}
   }
@@ -605,7 +605,7 @@ return packer.startup(function(use)
     opt = true,
     event = { 'WinScrolled', 'BufRead' },
     config = function()
-      require('core.scrollview').setup()
+      require('lu5je0.ext.scrollview').setup()
     end
   }
 end)

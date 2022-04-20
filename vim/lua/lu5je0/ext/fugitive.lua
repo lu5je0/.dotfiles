@@ -1,7 +1,7 @@
 local M = {}
 
 local function load_plugin()
-  require('core/plugins_helper').load_plugin('vim-fugitive')
+  require('lu5je0.ext.plugins_helper').load_plugin('vim-fugitive')
 end
 
 function M.lines_changes()

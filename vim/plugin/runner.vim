@@ -4,7 +4,7 @@ command! -nargs=0 LuaDevOff let g:lua_dev=0
 
 function! RunFileInner(cmd, append)
     w
-    call v:lua.require("core.terminal").send_to_terminal(a:cmd .. ' ' .. expand('%:p') .. a:append, {"go_back": 1})
+    call v:lua.require("ext.terminal").send_to_terminal(a:cmd .. ' ' .. expand('%:p') .. a:append, {"go_back": 1})
 endfunction
 
 function! RunFile()
@@ -23,7 +23,7 @@ function! RunFile()
     elseif file_type == 'java'
         call RunFileInner("java", "")
     elseif file_type == 'rust'
-        call v:lua.require("core.terminal").send_to_terminal('cargo run')
+        call v:lua.require("ext.terminal").send_to_terminal('cargo run')
     elseif file_type == 'rest'
       call VrcQuery()
     elseif file_type == 'c'

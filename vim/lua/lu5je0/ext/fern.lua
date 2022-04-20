@@ -1,6 +1,6 @@
 local M = {}
 
-local plugins_helper = require('core/plugins_helper')
+local plugins_helper = require('lu5je0.ext.plugins_helper')
 
 function M.get_cursor_node()
   return vim.api.nvim_eval("fern#helper#new().sync.get_cursor_node()['_path']")
