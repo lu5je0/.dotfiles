@@ -15,13 +15,12 @@ runtime functions.vim
 runtime mappings.vim
 runtime misc.vim
 runtime autocmd.vim
-if has("mac")
-  runtime im.vim
-endif
 ]])
 
 if vim.fn.has('wsl') == 1 then
-  table.insert(_G.defer_plugins, 'im-switcher.nvim')
+  require('lu5je0.misc.im.win.im').boostrap()
+elseif vim.fn.has('mac') == 1 then
+  vim.cmd('runtime im.vim')
 end
 
 for _, plugin in ipairs(_G.defer_plugins) do
