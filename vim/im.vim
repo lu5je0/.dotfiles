@@ -3,7 +3,7 @@ if !has("mac")
 endif
 
 let s:std_config_path = stdpath("config")
-let g:save_last_ime = v:lua.require('lu5ej0.misc.env-keeper').get('save_last_ime', '0')
+let g:save_last_ime = v:lua.require('lu5je0.misc.env-keeper').get('save_last_ime', '0')
 
 function! ImFuncInit()
 if get(g:, "im_init", 0) == 1
