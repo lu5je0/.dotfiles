@@ -4,7 +4,7 @@ command! -nargs=0 LuaDevOff let g:lua_dev=0
 
 function! RunFileInner(cmd, append)
     w
-    call v:lua.require("ext.terminal").send_to_terminal(a:cmd .. ' ' .. expand('%:p') .. a:append, {"go_back": 1})
+    call v:lua.require("lu5je0.ext.terminal").send_to_terminal(a:cmd .. ' ' .. expand('%:p') .. a:append, {"go_back": 1})
 endfunction
 
 function! RunFile()
