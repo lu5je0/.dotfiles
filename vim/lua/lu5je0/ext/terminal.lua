@@ -1,11 +1,7 @@
 local M = {}
 
-M.direction = function(direction)
-  if direction then
-    require('lu5je0.misc.env-keeper').set('terminal_direction', direction)
-  end
-  return require('lu5je0.misc.env-keeper').get('terminal_direction', 'float')
-end
+
+local env_keeper = require('lu5je0.misc.env-keeper').keeper({ terminal_direction = 'float' })
 
 M.send_to_terminal = function(cmd, opts)
   if opts == nil then
@@ -13,17 +9,17 @@ M.send_to_terminal = function(cmd, opts)
     opts.go_back = 0
   end
 
-  local v_cmd = "TermExec cmd='%s' go_back=" .. opts.go_back .. ' direction=' .. M.direction()
+  local v_cmd = "TermExec cmd='%s' go_back=" .. opts.go_back .. ' direction=' .. env_keeper.terminal_direction
   v_cmd = v_cmd:format(cmd)
   vim.cmd(v_cmd)
 end
 
 M.toggle = function()
-  vim.cmd('ToggleTerm direction=' .. M.direction())
+  vim.cmd('ToggleTerm direction=' .. env_keeper.terminal_direction)
 end
 
 M.change_terminal_direction = function(direction)
-  M.direction(direction)
+  env_keeper.terminal_direction = direction
   M.toggle()
 end
 
@@ -56,7 +52,7 @@ M.setup = function()
     start_in_insert = false,
     insert_mappings = true, -- whether or not the open mapping applies in insert mode
     persist_size = true,
-    direction = M.direction(),
+    direction = env_keeper.terminal_direction,
     close_on_exit = true, -- close the terminal window when the process exits
     shell = vim.o.shell, -- change the default shell
   }

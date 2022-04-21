@@ -41,4 +41,22 @@ function M.set(name, value)
   cache[name] = nil
 end
 
+local metatable = {
+  __index = function(t, key)
+    return M.get(key, t.default_values[key])
+  end,
+  __newindex = function(_, key, value)
+    M.set(key, value)
+  end
+}
+
+M.keeper = function(default_values)
+  if not default_values then
+    default_values = {}
+  end
+  local t = {}
+  t.default_values = default_values
+  return setmetatable(t, metatable)
+end
+
 return M
