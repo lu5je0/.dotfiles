@@ -35,7 +35,6 @@ class ImSwitcher():
     def __init__(self) -> None:
         self.text_input_context = NSTextInputContext.alloc().initWithClient_(NSTextView.new())
         self.last_ime = ImSwitcher.english_ime
-        self.is_save_ime = True
         manager = multiprocessing.Manager()
         self.cur_ime = manager.Value(ctypes.c_wchar_p, ImSwitcher.english_ime)
         multiprocessing.Process(target=Observer.watch,
@@ -54,17 +53,12 @@ class ImSwitcher():
     def get_cur_ime(self):
         return self.cur_ime.value
 
-    def toggle_save_last_ime(self):
-        self.is_save_ime = not self.is_save_ime
-
     def save_last_ime(self):
         self.last_ime = self.get_cur_ime()
 
-    def switch_normal_mode(self):
-        if self.is_save_ime:
+    def switch_normal_mode(self, is_save_last_ime):
+        if is_save_last_ime:
             self.save_last_ime()
-        # if self.cur_ime.value == self.english_ime:
-        #     return
         self.switch_input_source(self.english_ime)
 
     def switch_input_source(self, input_method):

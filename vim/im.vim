@@ -31,20 +31,22 @@ EOF
 endfunction
 
 function! SwitchInsertMode()
-    call ImFuncInit()
     if g:save_last_ime == 1
+        call ImFuncInit()
         call libcall(s:std_config_path . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
-    else
-        call libcall(s:std_config_path . "/lib/libinput-source-switcher.dylib", "switchInputSource", "com.apple.keylayout.ABC")
     endif
 endfunction
 
 function! SwitchNormalMode()
+if g:save_last_ime == 1
 call ImFuncInit()
 python3 << EOF
 if switcher != None:
-    switcher.switch_normal_mode()
+    switcher.switch_normal_mode(True)
 EOF
+else
+    call libcall(s:std_config_path . "/lib/libinput-source-switcher.dylib", "switchInputSource", "com.apple.keylayout.ABC")
+endif
 endfunction
 
 function! ToggleSaveLastIme()
@@ -59,16 +61,7 @@ function! ToggleSaveLastIme()
     lua require('lu5je0.misc.env-keeper').set('save_last_ime', tostring(vim.g.save_last_ime))
 endfunction
 
-" 无操作自动加载
-function! ImFuncJob(timer) abort
-    call ImFuncInit()
-endfunction
-call timer_start(5000, 'ImFuncJob')
-
-command! SwitchNormalMode call SwitchNormalMode()
-command! SwitchInsertMode call SwitchInsertMode()
-command! ToggleSaveLastIme call ToggleSaveLastIme()
-
+nmap <silent> <leader>vi :call ToggleSaveLastIme()<cr>
 augroup switch_im
     autocmd!
     autocmd InsertLeave * call SwitchNormalMode()
