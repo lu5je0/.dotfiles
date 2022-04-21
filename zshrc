@@ -7,7 +7,7 @@ fi
 source ~/.zinit/bin/zinit.zsh
 
 export UNAME_INFO=`uname -a`
-if [[ -f ~/.mac ]]; then
+if [[ $UNAME_INFO =~ "Darwin" ]]; then
     autoload -Uz compinit && compinit
 fi
 
