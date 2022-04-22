@@ -14,6 +14,8 @@ elif [[ $UNAME_INFO =~ "Darwin" ]]; then
         # nohup luajit /Users/lu5je0/1.lua > /dev/null 2>&1
         # /usr/local/bin/im-select 'com.apple.keylayout.ABC'
     }
+else
+    return 1
 fi
 
 vi-escape-im() {

@@ -48,7 +48,7 @@ endfunction
 command! -nargs=* SaveAsJunkFile call s:save_as_junk_file(<f-args>)
 function! s:save_as_junk_file(...)
     let cur_file_name = expand('%:t')
-    if a:000[0] != ''
+    if len(a:000) > 0 && a:000[0] != ''
         let cur_file_name = a:000[0]
     endif
     let filename = s:get_junk_filename(cur_file_name)
