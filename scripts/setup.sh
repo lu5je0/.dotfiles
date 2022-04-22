@@ -63,6 +63,11 @@ if [[ ! -d ~/.tmux/plugins/tpm ]]; then
 fi
 ln -s ~/.dotfiles/tmux/tmux.conf ~/.tmux.conf
 
+# wezterm
+if [[ ! -d ~/.config/wezterm ]]; then
+    ln -s ~/.dotfiles/wezterm ~/.config/wezterm
+fi
+
 mkdir -p ~/.aria2
 ln -s ~/.dotfiles/aria2/aria2.conf ~/.aria2/aria2.conf
 
