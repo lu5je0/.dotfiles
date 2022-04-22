@@ -1,31 +1,37 @@
 local wezterm = require('wezterm');
 
-return {
+local uname = (function()
+  if string.find(wezterm.target_triple, 'apple') then
+    return "mac"
+  elseif string.find(wezterm.target_triple, 'windows') then
+    return "win"
+  end
+end)()
+
+local font = (function()
+  if uname == 'win' then
+    return wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
+  elseif uname == 'mac' then
+    return wezterm.font("JetBrainsMono Nerd Font Mono", { weight = "Bold", stretch = "Normal", style = "Normal" })
+  end
+end)()
+
+local config = {
   initial_cols = 155,
   initial_rows = 45,
-  -- default_prog = { "wsl" },
+  default_prog = (function ()
+    if uname == 'win' then
+      return { "wsl" }
+    end
+  end)(),
   color_scheme = "Gruvbox Dark",
   use_resize_increments = true,
   -- ./wezterm.exe ls-fonts --list-system
-  font = wezterm.font("JetBrainsMono Nerd Font Mono", { weight = "Bold", stretch = "Normal", style = "Normal" }),
+  font = font,
   hide_tab_bar_if_only_one_tab = true,
   window_frame = {
-    -- The font used in the tab bar.
-    -- Roboto Bold is the default; this font is bundled
-    -- with wezterm.
-    -- Whatever font is selected here, it will have the
-    -- main font setting appended to it to pick up any
-    -- fallback fonts you may have used there.
-    -- font = wezterm.font({family="Roboto", weight="Bold"}),
-
-    -- The size of the font in the tab bar.
-    -- Default to 10. on Windows but 12.0 on other systems
     font_size = 8.0,
-    -- The overall background color of the tab bar when
-    -- the window is focused
     active_titlebar_bg = "#333333",
-    -- The overall background color of the tab bar when
-    -- the window is not focused
     inactive_titlebar_bg = "#333333",
   },
   font_size = 15,
@@ -37,6 +43,9 @@ return {
     { key = "k", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Up" } },
     { key = "j", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Down" } },
     { key = "o", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Prev" } },
+    { key = "v", mods = "LEADER", action = wezterm.action_callback(function(win, pane)
+      wezterm.log_info(wezterm.target_triple)
+    end) },
     -- { key = "o", mods = "LEADER", action = "ActivateLastTab" },
     { key = "x", mods = "LEADER", action = wezterm.action { CloseCurrentPane = { confirm = true } } },
     { key = "\"", mods = "LEADER", action = wezterm.action { SplitVertical = { domain = "CurrentPaneDomain" } } },
@@ -53,3 +62,5 @@ return {
     bottom = 0,
   }
 }
+
+return config
