@@ -29,7 +29,7 @@ return {
     inactive_titlebar_bg = "#333333",
   },
   font_size = 15,
-  leader = { key = "b", mods = "CTRL", timeout_milliseconds = 2000 },
+  leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 },
   keys = {
     { key = "%", mods = "LEADER", action = wezterm.action { SplitHorizontal = { domain = "CurrentPaneDomain" } } },
     { key = "h", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Left" } },
