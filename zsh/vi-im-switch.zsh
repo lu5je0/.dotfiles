@@ -9,11 +9,11 @@ elif [[ $UNAME_INFO =~ "Darwin" ]]; then
     # if [[ ! -f /tmp/im-fifo ]]; then
     #     mkfifo /tmp/im-fifo
     # fi
-    # function disable_ime_cmd {
-    #     echo 1 > /tmp/im-fifo
-    #     # nohup luajit /Users/lu5je0/1.lua > /dev/null 2>&1
-    #     # /usr/local/bin/im-select 'com.apple.keylayout.ABC'
-    # }
+    function disable_ime_cmd {
+        # echo 1 > /tmp/im-fifo
+        # nohup luajit /Users/lu5je0/1.lua > /dev/null 2>&1
+        # /usr/local/bin/im-select 'com.apple.keylayout.ABC'
+    }
 fi
 
 vi-escape-im() {
