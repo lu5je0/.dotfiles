@@ -28,13 +28,19 @@ local config = {
   use_resize_increments = true,
   -- ./wezterm.exe ls-fonts --list-system
   font = font,
-  hide_tab_bar_if_only_one_tab = true,
+  -- hide_tab_bar_if_only_one_tab = true,
   window_frame = {
     font_size = 8.0,
     active_titlebar_bg = "#333333",
     inactive_titlebar_bg = "#333333",
   },
-  font_size = 15,
+  font_size = (function()
+    if uname == 'mac' then
+      return 15
+    elseif uname == 'win' then
+      return 10.5
+    end
+  end)(),
   leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 },
   keys = {
     { key = "%", mods = "LEADER", action = wezterm.action { SplitHorizontal = { domain = "CurrentPaneDomain" } } },
@@ -53,8 +59,8 @@ local config = {
     { key = "n", mods = "LEADER", action = wezterm.action { ActivateTabRelative = 1 } },
     { key = "t", mods = "ALT", action = wezterm.action { SpawnTab = "DefaultDomain" } },
   },
-  -- use_fancy_tab_bar = false,
-  -- window_decorations = "RESIZE",
+  use_fancy_tab_bar = false,
+  window_decorations = "RESIZE",
   window_padding = {
     left = 0,
     right = 0,

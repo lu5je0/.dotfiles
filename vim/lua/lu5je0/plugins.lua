@@ -149,6 +149,12 @@ return packer.startup(function(use)
     ft = _G.ts_filtypes,
     requires = {
       {
+        'm-demare/hlargs.nvim',
+        config = function()
+          require('hlargs').setup()
+        end
+      },
+      {
         'SmiteshP/nvim-gps',
         config = function()
           require('nvim-gps').setup()
