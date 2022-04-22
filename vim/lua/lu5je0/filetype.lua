@@ -1,4 +1,3 @@
-vim.g.do_filetype_lua = 1
 vim.filetype.add {
   extension = {
     zsh = 'sh',
@@ -10,10 +9,8 @@ vim.filetype.add {
     ['zshrc'] = 'sh',
     ['bashrc'] = 'sh',
     ['.ohmyenv'] = 'sh',
-    ['*tmux.conf'] = 'tmux',
-    ['tmux.conf'] = 'tmux',
   },
-  -- pattern = {
-  --   [".*/etc/foo/.*%.conf"] = "foorc",
-  -- },
+  pattern = {
+    ['.*%.tmux.conf'] = 'tmux',
+  },
 }

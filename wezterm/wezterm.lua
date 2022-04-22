@@ -1,0 +1,66 @@
+local wezterm = require('wezterm');
+
+local uname = (function()
+  if string.find(wezterm.target_triple, 'apple') then
+    return "mac"
+  elseif string.find(wezterm.target_triple, 'windows') then
+    return "win"
+  end
+end)()
+
+local font = (function()
+  if uname == 'win' then
+    return wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
+  elseif uname == 'mac' then
+    return wezterm.font("JetBrainsMono Nerd Font Mono", { weight = "Bold", stretch = "Normal", style = "Normal" })
+  end
+end)()
+
+local config = {
+  initial_cols = 155,
+  initial_rows = 45,
+  default_prog = (function ()
+    if uname == 'win' then
+      return { "wsl" }
+    end
+  end)(),
+  color_scheme = "Gruvbox Dark",
+  use_resize_increments = true,
+  -- ./wezterm.exe ls-fonts --list-system
+  font = font,
+  hide_tab_bar_if_only_one_tab = true,
+  window_frame = {
+    font_size = 8.0,
+    active_titlebar_bg = "#333333",
+    inactive_titlebar_bg = "#333333",
+  },
+  font_size = 15,
+  leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 },
+  keys = {
+    { key = "%", mods = "LEADER", action = wezterm.action { SplitHorizontal = { domain = "CurrentPaneDomain" } } },
+    { key = "h", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Left" } },
+    { key = "l", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Right" } },
+    { key = "k", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Up" } },
+    { key = "j", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Down" } },
+    { key = "o", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Prev" } },
+    { key = "v", mods = "LEADER", action = wezterm.action_callback(function(win, pane)
+      wezterm.log_info(wezterm.target_triple)
+    end) },
+    -- { key = "o", mods = "LEADER", action = "ActivateLastTab" },
+    { key = "x", mods = "LEADER", action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+    { key = "\"", mods = "LEADER", action = wezterm.action { SplitVertical = { domain = "CurrentPaneDomain" } } },
+    { key = "c", mods = "LEADER", action = wezterm.action { SpawnTab = "DefaultDomain" } },
+    { key = "n", mods = "LEADER", action = wezterm.action { ActivateTabRelative = 1 } },
+    { key = "t", mods = "ALT", action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  },
+  -- use_fancy_tab_bar = false,
+  -- window_decorations = "RESIZE",
+  window_padding = {
+    left = 0,
+    right = 0,
+    top = 0,
+    bottom = 0,
+  }
+}
+
+return config

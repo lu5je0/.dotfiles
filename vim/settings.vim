@@ -85,6 +85,7 @@ endif
 let g:loaded_2html_plugin = 1
 let g:loaded_matchit = 1
 let g:did_load_filetypes = 0
+let g:do_filetype_lua = 1
 
 if has('mac')
     let g:python3_host_prog = '/usr/local/bin/python3'
