@@ -114,7 +114,7 @@ M.convert_to_kebab = function(word_mode)
   vim_add_repeat('Kebab', word_mode)
 end
 
-M.mappings = function()
+M.key_mapping = function()
   -- stylua: ignore start
   local opts = { desc = 'var-naming-converter.lua' }
   vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end, opts)
