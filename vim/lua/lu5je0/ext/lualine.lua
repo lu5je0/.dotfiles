@@ -342,7 +342,7 @@ ins_right {
 -- tmux status
 ins_right({
   function()
-    return '﬿'
+    return ''
   end,
   cond = function()
     return os.getenv('TMUX') ~= nil

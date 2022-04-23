@@ -34,12 +34,12 @@ local config = {
     active_titlebar_bg = "#2C2E34",
     inactive_titlebar_bg = "#2C2E34",
   },
-  -- window_background_opacity = 0.9,
-  -- text_background_opacity = 0.5,
+  -- window_background_opacity = 0.992,
+  -- text_background_opacity = 0.9,
   colors = {
     tab_bar = {
       active_tab = {
-        bg_color = "#202328",
+        bg_color = "#2C2E34",
         fg_color = "#c0c0c0",
         intensity = "Normal",
         underline = "None",

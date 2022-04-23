@@ -177,3 +177,7 @@ if [[ ! -f ~/.ohmyenv ]]; then
     echo "HTTP_PROXY_PORT=1080\nSOCKS5_PROXY_PORT=1080" > ~/.ohmyenv
 fi
 source ~/.ohmyenv
+
+# if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
+#   exec tmux
+# fi
