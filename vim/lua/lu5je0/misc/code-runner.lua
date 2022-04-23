@@ -12,12 +12,25 @@ local function execute_in_terminal(cmd, append_cmd)
   require("lu5je0.ext.terminal").send_to_terminal(cmd, { go_back = 1 })
 end
 
+local function special()
+  local fullpath = vim.fn.expand("%:p")
+  if vim.bo.filetype == 'lua' and fullpath == '/home/lu5je0/.dotfiles/wezterm/wezterm.lua' and vim.fn.has('wsl') == 1 then
+    vim.api.nvim_command('silent write')
+    vim.fn.system('cp ' .. fullpath .. ' ' .. '/mnt/d/Program\\ Files/WezTerm/wezterm.lua')
+    print("copied to windows")
+    return true
+  end
+  return false
+end
+
 M.run_file = function()
   local filetype = vim.bo.filetype
-  print(filetype)
   if filetype == 'vim' then
     vim.cmd('w | so %')
   elseif filetype == 'lua' then
+    if special() then
+      return
+    end
     if vim.g.lua_dev == 1 then
       vim.cmd [[
       w

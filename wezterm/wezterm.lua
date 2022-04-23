@@ -18,8 +18,8 @@ end)()
 
 local config = {
   initial_cols = 155,
-  initial_rows = 45,
-  default_prog = (function ()
+  initial_rows = 50,
+  default_prog = (function()
     if uname == 'win' then
       return { "wsl" }
     end
@@ -30,9 +30,31 @@ local config = {
   font = font,
   -- hide_tab_bar_if_only_one_tab = true,
   window_frame = {
-    font_size = 8.0,
-    active_titlebar_bg = "#333333",
-    inactive_titlebar_bg = "#333333",
+    font_size = 8.5,
+    active_titlebar_bg = "#2C2E34",
+    inactive_titlebar_bg = "#2C2E34",
+  },
+  -- window_background_opacity = 0.9,
+  -- text_background_opacity = 0.5,
+  colors = {
+    tab_bar = {
+      active_tab = {
+        bg_color = "#202328",
+        fg_color = "#c0c0c0",
+        intensity = "Normal",
+        underline = "None",
+        italic = false,
+        strikethrough = false,
+      },
+      inactive_tab = {
+        bg_color = "#2C2E34",
+        fg_color = "#808080",
+      },
+     new_tab = {
+        bg_color = "#2C2E34",
+        fg_color = "#808080",
+      },
+    },
   },
   font_size = (function()
     if uname == 'mac' then
@@ -49,6 +71,7 @@ local config = {
     { key = "k", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Up" } },
     { key = "j", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Down" } },
     { key = "o", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Prev" } },
+    ---@diagnostic disable-next-line: unused-local
     { key = "v", mods = "LEADER", action = wezterm.action_callback(function(win, pane)
       wezterm.log_info(wezterm.target_triple)
     end) },
@@ -59,14 +82,14 @@ local config = {
     { key = "n", mods = "LEADER", action = wezterm.action { ActivateTabRelative = 1 } },
     { key = "t", mods = "ALT", action = wezterm.action { SpawnTab = "DefaultDomain" } },
   },
-  use_fancy_tab_bar = false,
+  -- use_fancy_tab_bar = false,
   window_decorations = "RESIZE",
   window_padding = {
     left = 0,
     right = 0,
     top = 0,
     bottom = 0,
-  }
+  },
 }
 
 return config
