@@ -1,3 +1,5 @@
+local treesitter = require('nvim-treesitter')
+
 require('nvim-treesitter.configs').setup {
   -- Modules and its options go here
   ensure_installed = _G.ts_filtypes,
@@ -12,15 +14,11 @@ require('nvim-treesitter.configs').setup {
   },
 }
 
-local define_modules = require('nvim-treesitter').define_modules
-local query = require('nvim-treesitter.query')
 
 local foldmethod_backups = {}
 local foldexpr_backups = {}
-
 local fold_skip_filetypes = { 'markdown' }
-
-define_modules {
+treesitter.define_modules {
   folding = {
     enable = true,
     attach = function(bufnr)
@@ -49,14 +47,12 @@ define_modules {
       foldexpr_backups[bufnr] = nil
 
       vim.cmd([[
-      silent! unmap zc 
-      silent! unmap v
-      silent! unmap V
-      nnoremap v m'v
-      nnoremap V m'V
+      silent! unmap <buffer> zc 
+      silent! unmap <buffer> v
+      silent! unmap <buffer> V
       ]])
     end,
-    is_supported = query.has_folds,
+    is_supported = require('nvim-treesitter.query').has_folds,
   },
 }
 

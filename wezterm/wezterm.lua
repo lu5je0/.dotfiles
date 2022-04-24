@@ -9,11 +9,15 @@ local uname = (function()
 end)()
 
 local font = (function()
+  local r = {}
   if uname == 'win' then
-    return wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
+    r.text_font = wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
+    r.tab_bar_font_size = 8.5
   elseif uname == 'mac' then
-    return wezterm.font("JetBrainsMono Nerd Font Mono", { weight = "Bold", stretch = "Normal", style = "Normal" })
+    r.text_font = wezterm.font("JetBrainsMono Nerd Font Mono", { weight = "Bold", stretch = "Normal", style = "Normal" })
+    r.tab_bar_font_size = 11.5
   end
+  return r
 end)()
 
 local config = {
@@ -27,10 +31,10 @@ local config = {
   color_scheme = "Gruvbox Dark",
   use_resize_increments = true,
   -- ./wezterm.exe ls-fonts --list-system
-  font = font,
+  font = font.text_font,
   -- hide_tab_bar_if_only_one_tab = true,
   window_frame = {
-    font_size = 8.5,
+    font_size = font.tab_bar_font_size,
     active_titlebar_bg = "#2C2E34",
     inactive_titlebar_bg = "#2C2E34",
   },
