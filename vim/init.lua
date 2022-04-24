@@ -14,7 +14,6 @@ runtime settings.vim
 runtime functions.vim
 runtime mappings.vim
 runtime misc.vim
-runtime autocmd.vim
 ]])
 
 if vim.fn.has('wsl') == 1 then
