@@ -196,6 +196,7 @@ M.setup = function()
     g = {
       name = '+git',
       a = 'stage buffer',
+      r = 'unstage buffer',
       h = 'stage hunk',
       H = 'undo stage hunk',
       u = 'reset hunk',
@@ -203,14 +204,13 @@ M.setup = function()
       A = { ':Git add -A<cr>', 'add all' },
       b = { ':Git blame<cr>', 'blame' },
       B = { ':Git blame<cr>', 'blame line' },
-      c = { ':Git commit<cr>', 'commit' },
+      c = { ':Gread<cr>', 'git checkout -- current file' },
       d = { ':Git diff<cr>', 'diff' },
       D = { ':Git diff --cached<cr>', 'diff --cached' },
       v = { ':Gvdiffsplit!<cr>', 'gvdiffsplit' },
       L = { ':Flogsplit<cr>', 'git log in repository' },
       l = { ":lua require('lu5je0.ext.fugitive').current_file_logs()<cr>", 'show changs on current file' },
       i = { ':Gist -l<cr>', 'gist' },
-      p = { ':AsyncRun -focus=0 -mode=term -rows=10 git push<cr>', 'git push' },
       s = { ':Git status<cr>', 'status' },
     },
   }
