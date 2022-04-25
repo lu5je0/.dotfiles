@@ -35,6 +35,9 @@ function M.setup(enbale_key_mapping)
     autocmd FileType TelescopePrompt imap <buffer> <esc> <esc><esc>
   augroup END
   ]]
+
+  -- make sure treesitter is loaded
+  vim.cmd("PackerLoad nvim-treesitter")
 end
 
 M.lsp_keymaping = function(bufnr)

@@ -163,27 +163,6 @@ return packer.startup(function(use)
     },
   }
 
-  -- highlighting
-  use { 'chr4/nginx.vim' }
-  use { 'lu5je0/vim-java-bytecode' }
-  use { 'MTDL9/vim-log-highlighting' }
-
-  -- use {
-  --   'tpope/vim-dadbod',
-  --   config = function ()
-  --     vim.g.db_ui_use_nerd_fonts = 1
-  --     vim.g.db_ui_winwidth = 30
-  --   end,
-  --   opt = true,
-  --   cmd = {'DB', 'DBUI'}
-  -- }
-
-  -- use {
-  --   'kristijanhusak/vim-dadbod-ui',
-  --   opt = true,
-  --   cmd = {'DB', 'DBUI'}
-  -- }
-
   use {
     'othree/eregex.vim',
     opt = true,
