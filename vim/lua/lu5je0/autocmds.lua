@@ -30,7 +30,6 @@ vim.api.nvim_create_autocmd('BufReadPost', {
         return
       end
       vim.fn.setpos('.', vim.fn.getpos("'\""))
-      vim.api.nvim_feedkeys('zz', 'n', true)
     end
   end
 })

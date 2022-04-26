@@ -18,9 +18,9 @@ function _G.lsp_attach_on_no_filename()
   vim.api.nvim_buf_set_name(0, buf_name)
 end
 
+
 -- 避免null-ls在没有文件名的时候报错
 local make_params = require('null-ls.utils').make_params
-
 require('null-ls.utils').make_params = function(...)
   if vim.bo.filetype == 'sql' and vim.api.nvim_buf_get_name(0) == '' then
     select(1, ...).method = nil
@@ -28,6 +28,8 @@ require('null-ls.utils').make_params = function(...)
   return make_params(...)
 end
 
+
+-- null ls 没有文件名 format
 function _G.lsp_format_wrapper(fn)
   local function wrapper()
     local buf_name = vim.api.nvim_buf_get_name(0)
@@ -46,12 +48,15 @@ function _G.lsp_format_wrapper(fn)
   return wrapper
 end
 
+
+-- lsp 没有文件名 attach
 vim.cmd([[
 augroup confirm_lsp_attach 
     autocmd!
     autocmd FileType json,python,sql lua _G.lsp_attach_on_no_filename()
 augroup END
 ]])
+
 
 -- 修复set filetype后无法使用treesitter fold
 function _G.fold_patch()
