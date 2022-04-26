@@ -52,7 +52,7 @@ M.run_file = function()
   elseif filetype == 'bash' or filetype == 'zsh' then
     execute_in_terminal(build_cmd_with_file('bash'))
   elseif filetype == 'python' then
-    execute_in_terminal(build_cmd_with_file('python'))
+    execute_in_terminal(build_cmd_with_file('python3'))
   elseif filetype == 'rust' then
     execute_in_terminal('cargo run')
   elseif filetype == 'java' then
