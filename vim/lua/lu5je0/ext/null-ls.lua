@@ -23,7 +23,7 @@ end
 -- 避免null-ls在没有文件名的时候报错
 local make_params = require('null-ls.utils').make_params
 require('null-ls.utils').make_params = function(...)
-  if vim.bo.filetype == 'sql' and vim.api.nvim_buf_get_name(0) == '' then
+  if vim.api.nvim_buf_get_name(0) == '' then
     select(1, ...).method = nil
   end
   return make_params(...)
