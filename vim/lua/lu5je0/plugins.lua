@@ -42,6 +42,22 @@ return packer.startup(function(use)
   use('MunifTanjim/nui.nvim')
 
   use {
+    'kyazdani42/nvim-web-devicons',
+    config = function()
+      require('nvim-web-devicons').setup {
+        override = {
+          xml = {
+            icon = '',
+            color = '#e37933',
+            name = 'Xml',
+          },
+        },
+        default = true,
+      }
+    end,
+  }
+
+  use {
     'ojroques/vim-oscyank',
     config = function()
       vim.cmd("autocmd TextYankPost * execute 'OSCYankReg \"'")
@@ -52,7 +68,6 @@ return packer.startup(function(use)
   use {
     'nvim-lualine/lualine.nvim',
     requires = {
-      { 'kyazdani42/nvim-web-devicons', opt = true },
       -- {
       --   'nvim-lua/lsp-status.nvim',
       --   config = function()
@@ -89,23 +104,6 @@ return packer.startup(function(use)
   --     ]])
   --   end,
   -- }
-
-  use {
-    'kyazdani42/nvim-web-devicons',
-    config = function()
-      local plugin = require('nvim-web-devicons')
-      plugin.setup {
-        override = {
-          xml = {
-            icon = '',
-            color = '#e37933',
-            name = 'Xml',
-          },
-        },
-        default = true,
-      }
-    end,
-  }
 
   use {
     'lu5je0/bufferline.nvim',
