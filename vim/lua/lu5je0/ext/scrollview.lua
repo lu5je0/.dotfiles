@@ -59,7 +59,7 @@ end
 M.setup = function()
   scrollview.setup {
     -- excluded_filetypes = { 'nerdtree' , 'NvimTree'},
-    current_only = false,
+    current_only = true,
     winblend = 88,
     base = 'right',
     column = 1,
