@@ -34,13 +34,6 @@ local conditions = {
   end,
 }
 
-conditions.lsp_cond = function()
-  if not conditions.buffer_not_empty() then
-    return false
-  end
-  return conditions.hide_in_width()
-end
-
 local extensions_type_icon = {
   function()
     return ''
@@ -236,12 +229,12 @@ ins_right {
   padding = { left = 0, right = 1 },
 }
 
-local function percentage_icon(per)
-  local icons = { '', '', '', '' }
-  -- local icons = {'⠏', '⠙', '⠸', '⠴', '⠧', '⠇', '⠋'}
-  -- local icons = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'}
-  return icons[((math.ceil(per / 7)) % #icons) + 1]
-end
+-- local function percentage_icon(per)
+--   local icons = { '', '', '', '' }
+--   -- local icons = {'⠏', '⠙', '⠸', '⠴', '⠧', '⠇', '⠋'}
+--   -- local icons = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'}
+--   return icons[((math.ceil(per / 7)) % #icons) + 1]
+-- end
 
 -- lsp status
 -- ins_right({
@@ -288,7 +281,7 @@ end
 --     -- end
 --   end,
 --   color = { fg = colors.cyan, gui = 'bold' },
---   cond = conditions.lsp_cond,
+--   cond = function() return not conditions.buffer_not_empty() and conditions.hide_in_width() end,
 --   padding = { left = 0, right = 1 },
 -- }
 
@@ -322,20 +315,18 @@ ins_right {
   padding = { left = 0, right = 1 },
 }
 
-local function diff_source()
-  local gitsigns = vim.b.gitsigns_status_dict
-  if gitsigns then
-    return {
-      added = gitsigns.added,
-      modified = gitsigns.changed,
-      removed = gitsigns.removed,
-    }
-  end
-end
-
 ins_right {
   'diff',
-  source = diff_source,
+  source = function()
+    local gitsigns = vim.b.gitsigns_status_dict
+    if gitsigns then
+      return {
+        added = gitsigns.added,
+        modified = gitsigns.changed,
+        removed = gitsigns.removed,
+      }
+    end
+  end,
   padding = { left = 0, right = 1 },
 }
 
