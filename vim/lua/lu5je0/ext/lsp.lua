@@ -37,15 +37,16 @@ local function on_attach(client, bufnr)
 
   -- illuminate
   require('illuminate').on_attach(client)
-  vim.keymap.set('i', '<c-p>', require('lsp_signature').on_InsertEnter, { silent = true })
-  vim.cmd([[
+  vim.cmd [[
   " cursor word highlight
   highlight LspReferenceText guibg=none gui=none
   highlight LspReferenceWrite guibg=#344134 gui=none
   highlight LspReferenceRead guibg=#344134 gui=none
-  
-  autocmd! Signature InsertEnter
-  ]])
+  ]]
+
+  -- lsp_signature
+  vim.keymap.set('i', '<c-p>', require('lsp_signature').on_InsertEnter, { silent = true })
+  vim.cmd('autocmd! Signature InsertEnter')
 end
 
 local capabilities = (function()
@@ -55,9 +56,8 @@ end)()
 local function lsp_signature_config()
   require('lsp_signature').setup {
     floating_window = true, -- show hint in a floating window, set to false for virtual text only mode
-    floating_window_above_cur_line = true, -- try to place the floating above the current line when possible Note:
-    -- will set to true when fully tested, set to false will use whichever side has more space
-    -- this setting will be helpful if you do not want the PUM and floating win overlap
+    floating_window_above_cur_line = true,
+    check_completion_visible = true,
     hint_enable = false, -- virtual hint enable
     timer_interval = 200,
     handler_opts = {

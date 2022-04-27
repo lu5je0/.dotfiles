@@ -14,7 +14,7 @@ local font = (function()
     r.text_font = wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
     r.tab_bar_font_size = 10.0
   elseif uname == 'mac' then
-    r.text_font = wezterm.font("JetBrainsMono Nerd Font Mono", { weight = "Bold", stretch = "Normal", style = "Normal" })
+    r.text_font = wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
     r.tab_bar_font_size = 11.5
   end
   return r
