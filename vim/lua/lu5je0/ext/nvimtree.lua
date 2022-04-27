@@ -141,6 +141,25 @@ function M.file_info()
   require('lu5je0.core.ui').popup_info_window(info)
 end
 
+function M.open_node()
+  local node = lib.get_node_at_cursor()
+  if not node.open and (node.has_children or #node.nodes ~= 0) then
+    vim.schedule(function()
+      vim.cmd('norm j')
+    end)
+  end
+  require('nvim-tree.actions').on_keypress('edit')
+end
+
+function M.close_node()
+  local node = lib.get_node_at_cursor()
+  if node.open then
+    require('nvim-tree.actions').on_keypress('edit')
+  else
+    require('nvim-tree.actions').on_keypress('close_node')
+  end
+end
+
 function M.toggle_width()
   local cur_width = vim.api.nvim_win_get_width(0)
   local after_width = math.floor(vim.api.nvim_eval('&co') * 2 / 5)
@@ -255,7 +274,7 @@ function M.setup()
 
   -- default mappings
   local list = {
-    { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = ":lua require('lu5je0.ext.nvimtree').edit()<cr>" },
+    -- { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = ":lua require('lu5je0.ext.nvimtree').edit()<cr>" },
     { key = { 'cd', 'C' }, cb = ":lua require('lu5je0.ext.nvimtree').cd()<cr>" },
     { key = { 't' }, cb = ":lua require('lu5je0.ext.nvimtree').terminal_cd()<cr>" },
     { key = '=', cb = ":lua require('lu5je0.ext.nvimtree').increase_width(2)<cr>" },
@@ -265,6 +284,8 @@ function M.setup()
     { key = 'p', cb = ":lua require('lu5je0.ext.nvimtree').preview()<cr>" },
     { key = 'x', cb = ":lua require('lu5je0.ext.nvimtree').toggle_width()<cr>" },
     { key = 'D', cb = ":lua require('lu5je0.ext.nvimtree').remove()<cr>" },
+    { key = 'l', cb = ":lua require('lu5je0.ext.nvimtree').open_node()<cr>" },
+    { key = 'h', cb = ":lua require('lu5je0.ext.nvimtree').close_node()<cr>" },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
     { key = 's', action = 'vsplit' },
@@ -277,7 +298,7 @@ function M.setup()
     { key = 'f', action = 'toggle_file_info' },
     { key = '.', action = 'run_file_command' },
     -- { key = 'P', action = 'parent_node' },
-    { key = { '<BS>', 'h' }, action = 'close_node' },
+    -- { key = { '<BS>', 'h' }, action = 'close_node' },
     { key = 'K', action = 'first_sibling' },
     { key = 'J', action = 'last_sibling' },
     -- { key = "I", cb = tree_cb("toggle_ignored") },
@@ -306,14 +327,9 @@ function M.setup()
     hijack_netrw = true,
     open_on_setup = false,
     ignore_ft_on_setup = {},
-    auto_close = false,
     open_on_tab = false,
     hijack_cursor = false,
     update_cwd = true,
-    update_to_buf_dir = {
-      enable = false,
-      auto_open = true,
-    },
     diagnostics = {
       enable = false,
       icons = {
@@ -357,7 +373,6 @@ function M.setup()
       height = 30,
       hide_root_folder = false,
       side = 'left',
-      auto_resize = false,
       mappings = {
         custom_only = true,
         list = list,

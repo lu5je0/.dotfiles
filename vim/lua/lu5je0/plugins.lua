@@ -513,7 +513,7 @@ return packer.startup(function(use)
   }
 
   use {
-    'lu5je0/nvim-tree.lua',
+    'kyazdani42/nvim-tree.lua',
     requires = 'kyazdani42/nvim-web-devicons',
     keys = { '<leader>e', '<leader>fe' },
     opt = true,
