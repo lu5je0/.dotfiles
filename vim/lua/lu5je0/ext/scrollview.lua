@@ -3,7 +3,7 @@ local M = {}
 local scrollview = require('scrollview')
 
 M.begin_timer = function()
-  local visible_duration = 1500
+  local visible_duration = 1100
   local timer = nil
 
   -- hack mouse handel
@@ -58,7 +58,7 @@ end
 
 M.setup = function()
   scrollview.setup {
-    excluded_filetypes = { 'nerdtree' , 'NvimTree'},
+    -- excluded_filetypes = { 'nerdtree' , 'NvimTree'},
     current_only = false,
     winblend = 88,
     base = 'right',

@@ -143,7 +143,7 @@ end
 
 function M.open_node()
   local node = lib.get_node_at_cursor()
-  if not node.open and (node.has_children or #node.nodes ~= 0) then
+  if not node.open and (node.has_children or (node.nodes and #node.nodes ~= 0)) then
     vim.schedule(function()
       vim.cmd('norm j')
     end)
@@ -369,7 +369,7 @@ function M.setup()
       },
     },
     view = {
-      width = 25,
+      width = 27,
       height = 30,
       hide_root_folder = false,
       side = 'left',
