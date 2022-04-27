@@ -140,14 +140,12 @@ return packer.startup(function(use)
     requires = { 'mattn/webapi-vim' },
   }
 
+  -- stylua: ignore
+  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'http' }
   use {
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',
     opt = true,
-    on_compile = function()
-      -- stylua: ignore
-      _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'http' }
-    end,
     config = function()
       require('lu5je0.ext.treesiter')
     end,
@@ -369,15 +367,13 @@ return packer.startup(function(use)
     'tpope/vim-surround',
   }
 
+  local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf' }
   use {
     'norcalli/nvim-colorizer.lua',
-    on_compile = function()
-      _G.nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf' }
-    end,
     config = function()
-      require('colorizer').setup(_G.nvim_colorizer_ft, { names = false })
+      require('colorizer').setup(nvim_colorizer_ft, { names = false })
     end,
-    ft = _G.nvim_colorizer_ft,
+    ft = nvim_colorizer_ft,
   }
 
   use {
@@ -503,6 +499,7 @@ return packer.startup(function(use)
   --   end
   -- }
 
+  -- _G.indent_blankline_filetypes = { 'vim', 'lua', 'json', 'java', 'c', 'python', 'sql', 'xml', 'html', 'bash' }
   use {
     'lukas-reineke/indent-blankline.nvim',
     config = function()
@@ -518,7 +515,8 @@ return packer.startup(function(use)
           'IndentBlanklineIndent',
         },
       }
-    end
+    end,
+    -- ft = _G.indent_blankline_filetypes
   }
 
   use {
@@ -604,5 +602,4 @@ return packer.startup(function(use)
       require('lu5je0.ext.scrollview').setup()
     end
   }
-
 end)
