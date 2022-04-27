@@ -20,9 +20,12 @@ return packer.startup(function(use)
   use = function(...)
     if type(...) == 'table' then
       local t = ...
-      if t['defer'] then
-        t['opt'] = true
+      if t.defer then
+        t.opt = true
         table.insert(_G.defer_plugins, t[1]:match('/(.*)$'))
+      end
+      if t.on_compile then
+        t.on_compile()
       end
     end
     origin_use(...)
@@ -210,7 +213,20 @@ return packer.startup(function(use)
   use('lu5je0/vim-one')
   use('lu5je0/one-nvim')
   use('sainnhe/sonokai')
-  use('sainnhe/edge')
+
+  use {
+    'sainnhe/edge',
+    on_compile = function()
+      vim.g.edge_better_performance = 1
+      vim.g.edge_enable_italic = 0
+      vim.g.edge_disable_italic_comment = 1
+    end,
+    config = function()
+      vim.g.edge_loaded_file_types = { 'NvimTree' }
+      vim.cmd [[ hi! Folded guifg=#282c34 guibg=#5c6370 ]]
+    end
+  }
+
   use('gruvbox-community/gruvbox')
 
   -- use {

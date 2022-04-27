@@ -88,6 +88,8 @@ function M.on_colorscheme()
   hi! link Lf_hl_popup_cwd Pmenu
   hi! link Lf_hl_popup_blank Lf_hl_popup_window
   hi! link Lf_hl_popup_spin Yellow
+
+  " hi! FoldColumn guibg=none
   ]])
 end
 
