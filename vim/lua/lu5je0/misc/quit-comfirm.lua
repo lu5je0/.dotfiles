@@ -1,11 +1,12 @@
 local M = {}
 
+local devicons = require('nvim-web-devicons')
+
 local function exit_vim_pupop(msg)
   local Popup = require('nui.popup')
   local event = require('nui.utils.autocmd').event
-  local content = msg
-  local lines = string.split(content, '\n')
 
+  local width = 55
   local popup_options = {
     enter = true,
     border = {
@@ -23,8 +24,8 @@ local function exit_vim_pupop(msg)
     },
     relative = 'editor',
     size = {
-      width = 55,
-      height = #lines,
+      width = width,
+      height = 2 + #msg.text,
     },
     opacity = 1,
     zindex = 100,
@@ -35,7 +36,25 @@ local function exit_vim_pupop(msg)
   popup:mount()
 
   vim.fn.win_execute(popup.winid, 'set ft=confirm')
-  vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
+
+  local function text_align_center(text)
+    text = string.rep(' ', math.floor((width - #text) / 2)) .. text
+    return text
+  end
+
+  local function get_extension(filename)
+    return filename:match(".+%.(%w+)$")
+  end
+
+  vim.api.nvim_buf_set_lines(0, 0, 1, false, { text_align_center(msg.title) })
+  vim.api.nvim_buf_add_highlight(0, -1, "Red", 0, 0, -1)
+  for i, filename in ipairs(msg.text) do
+    local icon, hi_group = devicons.get_icon(filename, get_extension(filename), {})
+    vim.api.nvim_buf_set_lines(0, i, i + 1, false, { ' ' .. icon .. ' ' .. filename })
+    vim.api.nvim_buf_add_highlight(0, -1, hi_group, i, 1, 5)
+  end
+  vim.api.nvim_buf_set_lines(0, #msg.text + 1, #msg.text + 2, false, { text_align_center(msg.choice) })
+
   vim.api.nvim_buf_set_option(popup.bufnr, 'modifiable', false)
   vim.api.nvim_buf_set_option(popup.bufnr, 'readonly', true)
   vim.fn.cursor { 99, 99 }
@@ -73,26 +92,25 @@ local function exit_vim_with_dialog()
     end
   end
 
-  local msg = nil
+  local content = { title = '', choice = '', text = {} }
   if #unsave_buffers ~= 0 then
-    msg = 'The change of the following buffers will be discarded.\n'
+    content.title = 'The change of the following buffers will be discarded.'
+
     for _, buffer in ipairs(unsave_buffers) do
-      local file_icon = require('nvim-web-devicons').get_icon(buffer.name, vim.fn.getbufvar(buffer.bufnr, '&filetype'), { default = true })
       local filename = vim.fn.fnamemodify(buffer.name, ':t')
       if filename == '' then
         filename = '[No Name] '
       end
-      local name = file_icon .. ' ' .. filename
-      name = '  ' .. name
-      msg = msg .. '\n' .. name
+      table.insert(content.text, filename)
     end
-    msg = msg .. '\n\n             [N]o, (Y)es, (S)ave ALl: '
+
+    content.choice = '[N]o, (Y)es, (S)ave ALl'
   else
-    msg = '                       Exit vim?'
-    msg = msg .. '\n                     [N]o, (Y)es: '
+    content.title = 'Exit vim?'
+    content.choice = '[N]o, (Y)es: '
   end
 
-  local popup = exit_vim_pupop(msg)
+  local popup = exit_vim_pupop(content)
 
   popup:map('n', 'n', function()
     popup:unmount()

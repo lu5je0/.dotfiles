@@ -131,8 +131,7 @@ M.setup = function()
       d = { 'dir .dotfiles' },
       p = { 'dir packer' },
       w = { ':w<cr>', 'write' },
-      J = { ':JunkFile<cr>', 'new-junk-file' },
-      u = { ':SaveAsJunkFile<cr>', 'save-as-junk-file' },
+      J = { ':SaveAsJunkFile<cr>', 'new-junk-file' },
       x = {
         name = '+encoding',
         a = { ':set ff=unix<cr>', '2unix' },
