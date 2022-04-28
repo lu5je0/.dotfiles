@@ -16,7 +16,7 @@ local function special()
   local fullpath = vim.fn.expand("%:p")
   if vim.bo.filetype == 'lua' and fullpath == '/home/lu5je0/.dotfiles/wezterm/wezterm.lua' and vim.fn.has('wsl') == 1 then
     vim.api.nvim_command('silent write')
-    vim.fn.system('cp ' .. fullpath .. ' ' .. '/mnt/d/Program\\ Files/WezTerm/wezterm.lua')
+    vim.fn.system('cp ' .. fullpath .. ' ' .. '/mnt/c/Users/73995/.wezterm.lua"')
     print("copied to windows")
     return true
   end
