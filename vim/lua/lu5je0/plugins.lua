@@ -177,7 +177,6 @@ return packer.startup(function(use)
 
   use {
     'numToStr/Comment.nvim',
-    opt = true,
     defer = true,
     config = function()
       require('Comment').setup {
@@ -237,7 +236,6 @@ return packer.startup(function(use)
   use {
     'akinsho/toggleterm.nvim',
     branch = 'main',
-    opt = true,
     defer = true,
     config = function()
       require('lu5je0.ext.terminal').setup()
@@ -424,7 +422,6 @@ return packer.startup(function(use)
     config = function()
       require('nvim-autopairs').setup {}
     end,
-    opt = true,
   }
 
   -- lsp
@@ -437,7 +434,6 @@ return packer.startup(function(use)
       require('lu5je0.ext.null-ls')
     end,
     defer = true,
-    opt = true,
   }
 
   -- highlight cursor word
@@ -464,7 +460,6 @@ return packer.startup(function(use)
       require('lu5je0.ext.lsp').setup()
     end,
     defer = true,
-    opt = true,
   }
 
   use {
@@ -486,7 +481,6 @@ return packer.startup(function(use)
       },
       'hrsh7th/cmp-vsnip',
     },
-    opt = true,
   }
 
   -- use {
@@ -531,7 +525,6 @@ return packer.startup(function(use)
     requires = 'kyazdani42/nvim-web-devicons',
     keys = { '<leader>e', '<leader>fe' },
     opt = true,
-    -- defer = true,
     config = function()
       require('lu5je0.ext.nvimtree').setup()
     end,
@@ -569,14 +562,12 @@ return packer.startup(function(use)
     --     end,
     --   },
     -- },
-    opt = true,
     -- keys = { '<leader>f' },
   }
 
   use {
     'lu5je0/LeaderF',
     run = './install.sh',
-    opt = true,
     defer = true,
     -- cmd = {'Leaderf', 'Git'},
     config = function()

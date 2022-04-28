@@ -17,7 +17,7 @@ function M.setup()
     ['<C-K>'] = { '<UP>' },
   }
 
-  vim.g.Lf_ShortcutF = '<leader>ff'
+  vim.g.Lf_ShortcutF = ''
   vim.g.Lf_ShortcutB = ''
   vim.g.Lf_PreviewInPopup = 1
   vim.g.Lf_PopupHeight = 0.7
@@ -34,8 +34,8 @@ end
 function M.key_mappings()
   local opts = { desc = 'leaderf.lua' }
 
-  vim.keymap.del('n', '<Leader>f')
-  vim.keymap.del('n', '<Leader>b')
+  vim.cmd('silent! unmap<leader>f')
+  vim.cmd('silent! unmap<leader>b')
   vim.keymap.set('n', '<leader>fC', ':Leaderf colorscheme<cr>', opts)
   vim.keymap.set('n', '<leader>fc', ':Leaderf command<cr>', opts)
   vim.keymap.set('n', '<leader>ff', ':Leaderf file<cr>', opts)
