@@ -58,6 +58,7 @@ function! ToggleSaveLastIme()
         let g:save_last_ime = 0
         echo "keep last ime disabled"
     endif
+    call ImFuncInit()
     lua require('lu5je0.misc.env-keeper').set('save_last_ime', tostring(vim.g.save_last_ime))
 endfunction
 

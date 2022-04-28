@@ -22,10 +22,12 @@ elseif vim.fn.has('mac') == 1 then
   vim.cmd('runtime mac_im.vim')
 end
 
+local delay = 0;
 for _, plugin in ipairs(_G.defer_plugins) do
-  vim.schedule(function()
+  vim.defer_fn(function()
     vim.cmd('PackerLoad ' .. plugin)
-  end)
+  end, delay)
+  delay = delay + 10
 end
 
 vim.defer_fn(function()

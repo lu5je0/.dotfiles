@@ -58,6 +58,37 @@ return packer.startup(function(use)
   }
 
   use {
+    'nvim-telescope/telescope.nvim',
+    config = function()
+      require('lu5je0.ext.telescope').setup(false)
+    end,
+    defer = true,
+    after = 'telescope-fzf-native.nvim',
+    -- requires = {
+    --   { 'nvim-lua/plenary.nvim' },
+    --   {
+    --     'AckslD/nvim-neoclip.lua',
+    --     config = function()
+    --       require('neoclip').setup {
+    --         default_register = '*',
+    --       }
+    --     end,
+    --   },
+    -- },
+    -- keys = { '<leader>f' },
+  }
+
+  use {
+    'lu5je0/LeaderF',
+    run = './install.sh',
+    defer = true,
+    -- cmd = {'Leaderf', 'Git'},
+    config = function()
+      require('lu5je0.ext.leaderf').setup()
+    end,
+  }
+
+  use {
     'ojroques/vim-oscyank',
     config = function()
       vim.cmd("autocmd TextYankPost * execute 'OSCYankReg \"'")
@@ -542,37 +573,6 @@ return packer.startup(function(use)
   use {
     'nvim-telescope/telescope-fzf-native.nvim',
     run = 'make',
-  }
-
-  use {
-    'nvim-telescope/telescope.nvim',
-    config = function()
-      require('lu5je0.ext.telescope').setup(false)
-    end,
-    defer = true,
-    after = 'telescope-fzf-native.nvim',
-    -- requires = {
-    --   { 'nvim-lua/plenary.nvim' },
-    --   {
-    --     'AckslD/nvim-neoclip.lua',
-    --     config = function()
-    --       require('neoclip').setup {
-    --         default_register = '*',
-    --       }
-    --     end,
-    --   },
-    -- },
-    -- keys = { '<leader>f' },
-  }
-
-  use {
-    'lu5je0/LeaderF',
-    run = './install.sh',
-    defer = true,
-    -- cmd = {'Leaderf', 'Git'},
-    config = function()
-      require('lu5je0.ext.leaderf').setup()
-    end,
   }
 
   use {
