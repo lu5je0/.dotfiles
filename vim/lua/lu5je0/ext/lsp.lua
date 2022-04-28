@@ -1,6 +1,6 @@
 local M = {}
 
-M.servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls' }
+M.servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls', 'yamlls' }
 
 local function on_attach(client, bufnr)
   -- Mappings.
