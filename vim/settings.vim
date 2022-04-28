@@ -55,8 +55,8 @@ set bg=dark
 colorscheme edge
 
 " " StatusLine 左边
-" hi! StatusLine guibg=#5C6370
-" hi! StatusLineNC guibg=#5C6370
+hi! StatusLine guibg=#373943
+hi! StatusLineNC guibg=#373943
 
 " }}}
 

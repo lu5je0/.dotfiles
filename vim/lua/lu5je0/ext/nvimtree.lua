@@ -387,6 +387,12 @@ function M.setup()
 
   M.pwd_stack:push(vim.fn.getcwd())
   M.loaded = true
+
+  vim.defer_fn(function()
+    if vim.bo.filetype == 'NvimTree' then
+      require('lu5je0.core.keys').feedkey('<c-w>p', '')
+    end
+  end, 0)
 end
 
 return M
