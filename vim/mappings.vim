@@ -175,7 +175,7 @@ nnoremap V m'V
 " leader
 "----------------------------------------------------------------------
 nmap <leader>q <cmd>CloseBuffer<cr>
-nmap <leader>Q <cmd>lua require("lu5je0.misc.quit-comfirm").exit()<cr>
+nmap <leader>Q <cmd>lua require("lu5je0.misc.quit-prompt").exit()<cr>
 
 nmap <leader>wo <c-w>o
 
