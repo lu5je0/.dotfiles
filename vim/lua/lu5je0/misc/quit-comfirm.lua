@@ -47,7 +47,15 @@ local function exit_vim_pupop(msg)
   end
 
   vim.api.nvim_buf_set_lines(0, 0, 1, false, { text_align_center(msg.title) })
-  vim.api.nvim_buf_add_highlight(0, -1, "Red", 0, 0, -1)
+
+  local title_group
+  if #msg.text == 0 then
+    title_group = 'Green'
+  else
+    title_group = 'Red'
+  end
+
+  vim.api.nvim_buf_add_highlight(0, -1, title_group, 0, 0, -1)
   for i, filename in ipairs(msg.text) do
     local icon, hi_group = devicons.get_icon(filename, get_extension(filename), {})
     vim.api.nvim_buf_set_lines(0, i, i + 1, false, { ' ' .. icon .. ' ' .. filename })
