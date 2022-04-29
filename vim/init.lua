@@ -19,7 +19,7 @@ runtime misc.vim
 if vim.fn.has('wsl') == 1 then
   require('lu5je0.misc.im.win.im').boostrap()
 elseif vim.fn.has('mac') == 1 then
-  vim.cmd('runtime mac_im.vim')
+  require('lu5je0.misc.im.mac.im')
 end
 
 local delay = 0
