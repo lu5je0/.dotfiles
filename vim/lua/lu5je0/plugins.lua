@@ -458,7 +458,7 @@ return packer.startup(function(use)
   -- lsp
   use { 'williamboman/nvim-lsp-installer' }
   use { 'ray-x/lsp_signature.nvim' }
-  use { 'folke/lua-dev.nvim' }
+  use { 'max397574/lua-dev.nvim' }
   use {
     'jose-elias-alvarez/null-ls.nvim',
     config = function()
