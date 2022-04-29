@@ -29,12 +29,32 @@ function M.setup(enbale_key_mapping)
   if enbale_key_mapping then
     key_mapping()
   end
-  vim.cmd [[
-  augroup telescope_mapping_group
-    autocmd!
-    autocmd FileType TelescopePrompt imap <buffer> <esc> <esc><esc>
-  augroup END
-  ]]
+
+  vim.api.nvim_create_autocmd('FileType', {
+    group = vim.api.nvim_create_augroup('telescope', { clear = true }),
+    pattern = { 'TelescopePrompt' },
+    callback = function()
+      vim.cmd [[
+      imap <buffer> <esc> <esc><esc>
+      " inoremap <buffer> <c-q> <esc>
+      ]]
+      -- local opts = {
+      --   noremap = true,
+      --   silent = true,
+      --   buffer = true,
+      --   desc = 'telescope'
+      -- }
+      -- vim.defer_fn(function()
+      --   if _G.telescope_last_search ~= "" and _G.telescope_last_search ~= nil then
+      --     vim.api.nvim_input(_G.telescope_last_search .. "<c-q>viw<c-g>")
+      --   end
+      --   vim.keymap.set('n', '<esc>', function()
+      --     _G.telescope_last_search = string.sub(vim.api.nvim_get_current_line(), 3, -1)
+      --     require('telescope.actions').close(vim.api.nvim_win_get_buf(0))
+      --   end, opts)
+      -- end, 30)
+    end
+  })
 
   -- make sure treesitter is loaded
   vim.cmd("PackerLoad nvim-treesitter")
