@@ -1,14 +1,16 @@
 local M = {}
 
-M.loaded = true
-
 local lib = require('nvim-tree.lib')
 
+M.pwd_stack = require('lu5je0.lang.stack'):create()
+M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
+M.pwd_back_state = 0
+
 function M.locate_file()
-  if not M.loaded then
-    vim.cmd('sleep 150m')
-    M.loaded = true
-  end
+  -- if not M.loaded then
+  --   vim.cmd('sleep 150m')
+  --   M.loaded = true
+  -- end
 
   local pwd = vim.fn.getcwd()
 
@@ -31,10 +33,6 @@ function M.locate_file()
   end
   vim.cmd('NvimTreeFindFile')
 end
-
-M.pwd_stack = require('lu5je0.lang.stack'):create()
-M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
-M.pwd_back_state = 0
 
 function M.terminal_cd()
   local cmd = 'cd ' .. vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
@@ -120,10 +118,6 @@ end
 
 function M.cd()
   require('nvim-tree.actions').on_keypress('cd')
-  -- local lib = require('nvim-tree.lib')
-  -- if lib ~= nil then
-  --   vim.cmd(':cd ' .. vim.fn.fnamemodify(lib.get_node_at_cursor().absolute_path, ':p:h'))
-  -- end
   vim.cmd('norm gg')
 end
 
