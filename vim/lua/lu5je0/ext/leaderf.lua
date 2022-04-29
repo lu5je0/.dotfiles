@@ -15,6 +15,8 @@ function M.setup()
   vim.g.Lf_CommandMap = {
     ['<C-J>'] = { '<DOWN>' },
     ['<C-K>'] = { '<UP>' },
+    ['<UP>'] = { '<C-K>' },
+    ['<DOWN>'] = { '<C-J>' },
   }
 
   vim.g.Lf_ShortcutF = ''
