@@ -9,7 +9,7 @@ function M.setup()
       ['n ]g'] = { expr = true, "&diff ? ']c' : '<cmd>lua require\"gitsigns.actions\".next_hunk()<CR>'" },
       ['n [g'] = { expr = true, "&diff ? '[c' : '<cmd>lua require\"gitsigns.actions\".prev_hunk()<CR>'" },
       ['n <leader>ga'] = '<cmd>lua require"gitsigns".stage_buffer()<CR>',
-      ['n <leader>gr'] = '<cmd>lua require"gitsigns".reset_buffer_index()<CR>',
+      ['n <leader>gR'] = '<cmd>lua require"gitsigns".reset_buffer_index()<CR>',
       ['n <leader>gh'] = '<cmd>lua require"gitsigns".stage_hunk()<CR>',
       ['v <leader>gh'] = '<cmd>lua require"gitsigns".stage_hunk({vim.fn.line("."), vim.fn.line("v")})<CR>',
       ['n <leader>gH'] = '<cmd>lua require"gitsigns".undo_stage_hunk()<CR>',

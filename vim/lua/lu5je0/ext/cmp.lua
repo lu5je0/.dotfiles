@@ -1,6 +1,5 @@
 local cmp = require('cmp')
 local utils = require('lu5je0.core.keys')
-
 local indent_change_items = {
   'endif',
   'end',
@@ -16,9 +15,35 @@ local indent_change_items = {
   'except',
   'catch',
 }
+local kind_icons = {
+  Text = '',
+  Method = '',
+  Function = '',
+  Constructor = '',
+  Field = '',
+  Variable = '',
+  Class = 'ﴯ',
+  Interface = '',
+  Module = '',
+  Property = 'ﰠ',
+  Unit = '',
+  Value = '',
+  Enum = '',
+  Keyword = '',
+  Snippet = '',
+  Color = '',
+  File = '',
+  Reference = '',
+  Folder = '',
+  EnumMember = '',
+  Constant = '',
+  Struct = '',
+  Event = '',
+  Operator = '',
+  TypeParameter = '',
+}
 
 local origin_emit = require('cmp.utils.autocmd').emit
-
 local ignore_text_changed_emit = function(s)
   if s == 'TextChanged' then
     return
@@ -77,14 +102,6 @@ local function comfirm(fallback)
   end
 end
 
-local function complete()
-  if cmp.visible() then
-    cmp.mapping.abort()()
-  else
-    cmp.mapping.complete()()
-  end
-end
-
 cmp.setup {
   snippet = {
     expand = function(args)
@@ -96,12 +113,20 @@ cmp.setup {
   },
   view = {
     -- entries = 'native',
+  },
+  experimental = {
     -- ghost_text = true
   },
   mapping = {
     ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
-    ['<c-n>'] = cmp.mapping(complete, { 'i', 'c' }),
+    ['<c-n>'] = cmp.mapping(function(...)
+      if cmp.visible() then
+        cmp.mapping.abort()()
+      else
+        cmp.mapping.complete(...)()
+      end
+    end, { 'i', 'c' }),
     ['<down>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
     ['<up>'] = cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select },
     ['<cr>'] = cmp.mapping(comfirm, { 'i' }),
@@ -113,53 +138,6 @@ cmp.setup {
     { name = 'path' },
     { name = 'buffer' },
   },
-}
-
--- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
--- cmp.setup.cmdline('/', {
---   sources = {
---     { name = 'buffer' }
---   }
--- })
-
--- -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
--- cmp.setup.cmdline(':', {
---   sources = cmp.config.sources({
---     { name = 'path' }
---   }, {
---     { name = 'cmdline' }
---   })
--- })
-
-local kind_icons = {
-  Text = '',
-  Method = '',
-  Function = '',
-  Constructor = '',
-  Field = '',
-  Variable = '',
-  Class = 'ﴯ',
-  Interface = '',
-  Module = '',
-  Property = 'ﰠ',
-  Unit = '',
-  Value = '',
-  Enum = '',
-  Keyword = '',
-  Snippet = '',
-  Color = '',
-  File = '',
-  Reference = '',
-  Folder = '',
-  EnumMember = '',
-  Constant = '',
-  Struct = '',
-  Event = '',
-  Operator = '',
-  TypeParameter = '',
-}
-
-cmp.setup {
   formatting = {
     format = function(entry, vim_item)
       -- Kind icons
@@ -177,6 +155,22 @@ cmp.setup {
     end,
   },
 }
+
+-- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
+-- cmp.setup.cmdline('/', {
+--   sources = {
+--     { name = 'buffer' }
+--   }
+-- })
+
+-- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+-- cmp.setup.cmdline(':', {
+--   sources = cmp.config.sources({
+--     { name = 'path' }
+--   }, {
+--     { name = 'cmdline' }
+--   })
+-- })
 
 vim.cmd([[
 " gray

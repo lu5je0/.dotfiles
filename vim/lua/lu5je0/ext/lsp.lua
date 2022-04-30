@@ -14,7 +14,7 @@ local function extensions()
     hint_enable = false, -- virtual hint enable
     timer_interval = 200,
     handler_opts = {
-      border = 'single', -- double, rounded, single, shadow, none
+      border = 'rounded', -- double, rounded, single, shadow, none
     },
     always_trigger = true,
     toggle_key = nil, -- toggle signature on and off in insert mode,  e.g. toggle_key = '<M-x>'
