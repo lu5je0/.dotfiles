@@ -1,5 +1,5 @@
 if not pcall(require, 'impatient') then
-  vim.notify('impatient fail')
+  vim.notify('failed to enable impatient')
 end
 require('lu5je0.plugins')
 require('lu5je0.enhance')

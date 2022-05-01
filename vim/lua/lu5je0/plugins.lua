@@ -486,14 +486,6 @@ return packer.startup(function(use)
   }
 
   use {
-    'neovim/nvim-lspconfig',
-    config = function()
-      require('lu5je0.ext.lsp').setup()
-    end,
-    defer = true,
-  }
-
-  use {
     'hrsh7th/nvim-cmp',
     config = function()
       require('lu5je0.ext.cmp')
@@ -512,6 +504,14 @@ return packer.startup(function(use)
       },
       'hrsh7th/cmp-vsnip',
     },
+  }
+
+  use {
+    'neovim/nvim-lspconfig',
+    config = function()
+      require('lu5je0.ext.lsp').setup()
+    end,
+    defer = true,
   }
 
   -- use {
