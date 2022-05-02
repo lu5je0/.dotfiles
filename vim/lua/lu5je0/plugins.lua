@@ -456,7 +456,19 @@ return packer.startup(function(use)
   }
 
   -- lsp
-  use { 'williamboman/nvim-lsp-installer' }
+  use {
+    'williamboman/nvim-lsp-installer',
+    defer = true,
+    requires = {
+      {
+        'neovim/nvim-lspconfig',
+        config = function()
+          require('lu5je0.ext.lsp').setup()
+        end,
+      }
+    }
+  }
+
   use { 'ray-x/lsp_signature.nvim' }
   use { 'max397574/lua-dev.nvim' }
   use {
@@ -504,14 +516,6 @@ return packer.startup(function(use)
       },
       'hrsh7th/cmp-vsnip',
     },
-  }
-
-  use {
-    'neovim/nvim-lspconfig',
-    config = function()
-      require('lu5je0.ext.lsp').setup()
-    end,
-    defer = true,
   }
 
   -- use {
