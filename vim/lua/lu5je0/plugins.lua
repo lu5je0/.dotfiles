@@ -170,7 +170,8 @@ return packer.startup(function(use)
   }
 
   -- stylua: ignore
-  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go', 'rust', 'toml', 'yaml', 'markdown', 'bash', 'http' }
+  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
+    'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
   use {
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate',

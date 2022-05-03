@@ -307,7 +307,7 @@ function M.setup()
     { key = 'yp', action = 'copy_absolute_path' },
     { key = '[g', action = 'prev_git_item' },
     { key = ']g', action = 'next_git_item' },
-    { key = 'U', action = 'dir_up' },
+    { key = 'u', action = 'dir_up' },
     { key = 'o', action = 'system_open' },
     { key = 'q', action = 'close' },
     { key = 'g?', action = 'toggle_help' },

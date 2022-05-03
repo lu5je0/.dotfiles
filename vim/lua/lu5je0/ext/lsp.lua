@@ -103,6 +103,7 @@ local function config()
     elseif server_name == 'pyright' then
       opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
     elseif server_name == 'tsserver' then
+      opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
       -- opts.root_dir = require('lu5je0.ext.lsp-config.tsserver').root_dir(server.document_config.default_config.root_dir);
     end
 
