@@ -9,6 +9,7 @@ vim.filetype.add {
     ['zshrc'] = 'sh',
     ['bashrc'] = 'sh',
     ['.ohmyenv'] = 'sh',
+    ['crontab'] = 'crontab',
   },
   pattern = {
     ['.*%.tmux.conf'] = 'tmux',
