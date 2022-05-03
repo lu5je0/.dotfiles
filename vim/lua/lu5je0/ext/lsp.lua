@@ -102,6 +102,8 @@ local function config()
       opts = sumneko_lua_config.wrap_opts(opts)
     elseif server_name == 'pyright' then
       opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
+    elseif server_name == 'tsserver' then
+      -- opts.root_dir = require('lu5je0.ext.lsp-config.tsserver').root_dir(server.document_config.default_config.root_dir);
     end
 
     server.setup(opts)
