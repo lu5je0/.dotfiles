@@ -469,7 +469,7 @@ return packer.startup(function(use)
       },
       {
         'stevearc/dressing.nvim',
-        setup = function()
+        config = function()
           require('dressing').setup({
             input = {
             },
