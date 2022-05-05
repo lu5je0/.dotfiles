@@ -466,6 +466,18 @@ return packer.startup(function(use)
         config = function()
           require('lu5je0.ext.lsp').setup()
         end,
+      },
+      {
+        'stevearc/dressing.nvim',
+        setup = function()
+          require('dressing').setup({
+            input = {
+            },
+            select = {
+              backend = { 'telescope', 'nui' },
+            }
+          })
+        end
       }
     }
   }
