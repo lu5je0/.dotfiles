@@ -27,7 +27,7 @@ for _, plugin in ipairs(_G.defer_plugins) do
   vim.defer_fn(function()
     vim.cmd('PackerLoad ' .. plugin)
   end, delay)
-  delay = delay + 10
+  delay = delay + 3
 end
 
 vim.defer_fn(function()

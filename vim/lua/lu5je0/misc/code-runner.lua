@@ -25,19 +25,20 @@ end
 
 M.run_file = function()
   local filetype = vim.bo.filetype
+
+  if vim.bo.modified then
+    vim.cmd('w')
+    print('save')
+  end
+
   if filetype == 'vim' then
-    vim.cmd('w | so %')
+    vim.cmd('so %')
   elseif filetype == 'lua' then
     if special() then
       return
     end
     if vim.g.lua_dev == 1 then
-      vim.cmd [[
-      w
-      luafile %
-      " let file = expand('%')
-      " vnew | pu=execute('luafile ' . file)
-      ]]
+      vim.cmd('luafile %')
     else
       execute_in_terminal(build_cmd_with_file('luajit'))
     end
