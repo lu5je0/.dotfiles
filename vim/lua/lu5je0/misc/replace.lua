@@ -1,6 +1,7 @@
 local M = {}
 
 local cursor_utils = require('lu5je0.core.cursor')
+local fn = vim.fn
 
 local function replace(mode)
   cursor_utils.save_position()
@@ -13,16 +14,16 @@ local function replace(mode)
 
   local source = nil
   if mode == 'n' then
+    ---@diagnostic disable-next-line: missing-parameter
     source = vim.fn.expand('<cword>')
   elseif mode == 'v' then
     source = vim.call('visual#visual_selection_by_yank')
   end
 
-  log.info(source, target)
-  local fn = vim.fn
-  for index, line in ipairs(fn.getbufline(fn.bufnr('%'), 1, '$')) do
-    -- print(index, value)
-    fn.setline(index, fn.substitute(line, source, target, 'g'))
+  print(source .. ' ' ..  target)
+  for i, line in ipairs(fn.getbufline(0, 1, '$')) do
+    line = string.gsub(line, source, target)
+    fn.setline(i, line)
   end
 
   cursor_utils.goto_saved_position()
