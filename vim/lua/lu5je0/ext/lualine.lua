@@ -105,6 +105,9 @@ local config = {
 -- Inserts a component in lualine_c at left section
 local function ins_left(component)
   table.insert(config.sections.lualine_c, component)
+  if component.setup then
+    component.setup()
+  end
   if component.inactive == true then
     table.insert(config.inactive_sections.lualine_c, component)
   end
@@ -113,6 +116,9 @@ end
 -- Inserts a component in lualine_x ot right section
 local function ins_right(component)
   table.insert(config.sections.lualine_x, component)
+  if component.setup then
+    component.setup()
+  end
 end
 
 ins_left {
@@ -177,7 +183,21 @@ ins_left {
 
 ins_left {
   -- filesize component
-  'filesize',
+  function()
+    if not vim.b.filesize then
+      vim.b.filesize = vim.fn['FileSize']()
+    end
+    return vim.b.filesize
+  end,
+  setup = function()
+    vim.api.nvim_create_autocmd('BufWritePost', {
+      group = require('lu5je0.autocmds').default_group,
+      pattern = '*',
+      callback = function()
+        vim.b.filesize = nil
+      end,
+    })
+  end,
   cond = conditions.hide_in_width,
   color = { fg = colors.yellow },
   padding = { left = 1, right = 0 },
