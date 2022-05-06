@@ -5,27 +5,29 @@ local cursor_utils = require('lu5je0.core.cursor')
 local function replace(mode)
   cursor_utils.save_position()
 
-  local target = vim.fn.input('replace with:')
-
-  if target == nil or target == '' then
-    return
-  end
-
-  local source = nil
+  local pattern = nil
   if mode == 'n' then
-    source = vim.fn.expand('<cword>')
+    ---@diagnostic disable-next-line: missing-parameter
+    pattern = vim.fn.expand('<cword>')
   elseif mode == 'v' then
-    source = vim.call('visual#visual_selection_by_yank')
+    pattern = require('lu5je0.core.visual').selected_text_by_yank()
   end
 
-  log.info(source, target)
-  local fn = vim.fn
-  for index, line in ipairs(fn.getbufline(fn.bufnr('%'), 1, '$')) do
-    -- print(index, value)
-    fn.setline(index, fn.substitute(line, source, target, 'g'))
-  end
+  vim.ui.input({ prompt = string.format('Replace "%s" with: ', pattern) }, function(repl)
+    if repl == nil or repl == '' then
+      return
+    end
 
-  cursor_utils.goto_saved_position()
+    pattern = string.escape_pattern(pattern)
+    for i, line_text in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
+      local replaced_text = string.gsub(line_text, pattern, repl)
+      if replaced_text ~= line_text then
+        vim.api.nvim_buf_set_lines(0, i - 1, i, false, { replaced_text })
+      end
+    end
+
+    cursor_utils.goto_saved_position()
+  end)
 end
 
 function M.v_replace()
