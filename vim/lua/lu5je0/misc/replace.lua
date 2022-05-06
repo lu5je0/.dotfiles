@@ -1,32 +1,30 @@
 local M = {}
 
 local cursor_utils = require('lu5je0.core.cursor')
-local fn = vim.fn
 
 local function replace(mode)
   cursor_utils.save_position()
 
-  local target = vim.fn.input('replace with:')
-
-  if target == nil or target == '' then
-    return
-  end
-
-  local source = nil
+  local pattern = nil
   if mode == 'n' then
     ---@diagnostic disable-next-line: missing-parameter
-    source = vim.fn.expand('<cword>')
+    pattern = vim.fn.expand('<cword>')
   elseif mode == 'v' then
-    source = vim.call('visual#visual_selection_by_yank')
+    pattern = require('lu5je0.core.visual').selected_text()
   end
 
-  print(source .. ' ' ..  target)
-  for i, line in ipairs(fn.getbufline(0, 1, '$')) do
-    line = string.gsub(line, source, target)
-    fn.setline(i, line)
-  end
+  vim.ui.input({}, function(repl)
+    if repl == nil or repl == '' then
+      return
+    end
 
-  cursor_utils.goto_saved_position()
+    for i, line_text in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
+      line_text = string.gsub(line_text, pattern, repl)
+      vim.api.nvim_buf_set_lines(0, i - 1, i, false, { line_text })
+    end
+
+    cursor_utils.goto_saved_position()
+  end)
 end
 
 function M.v_replace()
