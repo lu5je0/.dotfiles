@@ -33,6 +33,9 @@ return {
       diagnostics = {
         -- Get the language server to recognize the `vim` global
         globals = { 'vim' },
+        neededFileStatus = {
+          ['trailing-space'] = 'None'
+        }
       },
       telemetry = { enable = false },
     },
