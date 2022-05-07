@@ -188,11 +188,11 @@ function! FileSize()
   endif
 
   if (exists('mbytes'))
-    return mbytes . 'MB '
+    return mbytes . 'MB'
   elseif (exists('kbytes'))
-    return kbytes . 'KB '
+    return kbytes . 'KB'
   else
-    return bytes . 'B '
+    return bytes . 'B'
   endif
 endfunction
 
