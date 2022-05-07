@@ -15,6 +15,7 @@ local indent_change_items = {
   'except',
   'catch',
 }
+
 local kind_icons = {
   Text = '',
   Method = '',
@@ -140,6 +141,21 @@ cmp.setup {
     { name = 'buffer' },
   },
   formatting = {
+    -- fields = { "kind", "abbr", "menu" },
+    -- format = function(entry, vim_item)
+    --   -- vim_item.menu = vim_item.kind
+    --   vim_item.menu = ({
+    --     buffer = '[B]',
+    --     nvim_lsp = '[L]',
+    --     ultisnips = '[U]',
+    --     luasnip = '[LuaSnip]',
+    --     nvim_lua = '[Lua]',
+    --     latex_symbols = '[LaTeX]',
+    --   })[entry.source.name]
+    --
+    --   vim_item.kind = kind_icons[vim_item.kind]
+    --   return vim_item
+    -- end,
     format = function(entry, vim_item)
       -- Kind icons
       vim_item.kind = string.format('%s %s', kind_icons[vim_item.kind], vim_item.kind) -- This concatonates the icons with the name of the item kind
@@ -154,7 +170,7 @@ cmp.setup {
       })[entry.source.name]
       return vim_item
     end,
-  },
+  }
 }
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
