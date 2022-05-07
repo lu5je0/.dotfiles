@@ -1,10 +1,8 @@
--- Eviline config for lualine
--- Author: shadmansaleh
--- Credit: glepnir
 local lualine = require('lualine')
 
--- Color table for highlights
--- stylua: ignore
+---@diagnostic disable: missing-parameter
+local expand = vim.fn.expand
+
 local colors = {
   bg       = '#202328',
   grey     = '#cccccc',
@@ -22,13 +20,13 @@ local colors = {
 
 local conditions = {
   buffer_not_empty = function()
-    return vim.fn.empty(vim.fn.expand('%:t')) ~= 1
+    return vim.fn.empty(expand('%:t')) ~= 1
   end,
   hide_in_width = function()
     return vim.fn.winwidth(0) > 80
   end,
   check_git_workspace = function()
-    local filepath = vim.fn.expand('%:p:h')
+    local filepath = expand('%:p:h')
     local gitdir = vim.fn.finddir('.git', filepath .. ';')
     return gitdir and #gitdir > 0 and #gitdir < #filepath
   end,
@@ -102,58 +100,68 @@ local config = {
   },
 }
 
--- Inserts a component in lualine_c at left section
-local function ins_left(component)
-  table.insert(config.sections.lualine_c, component)
+local function component_init(component)
+  if component.should_inc then
+    if not component.should_inc then
+      return false;
+    end
+  end
   if component.setup then
     component.setup()
   end
-  if component.inactive == true then
-    table.insert(config.inactive_sections.lualine_c, component)
+  return true
+end
+
+-- Inserts a component in lualine_c at left section
+local function ins_left(component)
+  if component_init(component) then
+    table.insert(config.sections.lualine_c, component)
+    if component.inactive == true then
+      table.insert(config.inactive_sections.lualine_c, component)
+    end
   end
 end
 
 -- Inserts a component in lualine_x ot right section
 local function ins_right(component)
-  table.insert(config.sections.lualine_x, component)
-  if component.setup then
-    component.setup()
+  if component_init(component) then
+    table.insert(config.sections.lualine_x, component)
   end
 end
 
-ins_left {
-  -- mode component
-  function()
-    -- auto change color according to neovims mode
-    local mode_color = {
-      n = colors.red,
-      i = colors.green,
-      v = colors.blue,
-      [''] = colors.blue,
-      V = colors.blue,
-      c = colors.magenta,
-      no = colors.red,
-      s = colors.orange,
-      S = colors.orange,
-      [''] = colors.orange,
-      ic = colors.yellow,
-      R = colors.violet,
-      Rv = colors.violet,
-      cv = colors.red,
-      ce = colors.red,
-      r = colors.cyan,
-      rm = colors.cyan,
-      ['r?'] = colors.cyan,
-      ['!'] = colors.red,
-      t = colors.red,
-    }
-    vim.api.nvim_command('hi! LualineMode guifg=' .. mode_color[vim.fn.mode()] .. ' guibg=' .. colors.bg)
-    -- return string.upper(vim.api.nvim_get_mode().mode)
-    return ''
-  end,
-  color = 'LualineMode',
-  padding = { left = 1, right = 1 },
-}
+-- ins_left {
+--   -- mode component
+--   function()
+--     -- auto change color according to neovims mode
+--     local mode_color = {
+--       n = colors.red,
+--       i = colors.green,
+--       v = colors.blue,
+--       [''] = colors.blue,
+--       V = colors.blue,
+--       c = colors.magenta,
+--       no = colors.red,
+--       s = colors.orange,
+--       S = colors.orange,
+--       [''] = colors.orange,
+--       ic = colors.yellow,
+--       R = colors.violet,
+--       Rv = colors.violet,
+--       cv = colors.red,
+--       ce = colors.red,
+--       r = colors.cyan,
+--       rm = colors.cyan,
+--       ['r?'] = colors.cyan,
+--       ['!'] = colors.red,
+--       t = colors.red,
+--     }
+--     vim.api.nvim_command('hi! LualineMode guifg=' .. mode_color[vim.fn.mode()] .. ' guibg=' .. colors.bg)
+--     -- return string.upper(vim.api.nvim_get_mode().mode)
+--     return ''
+--   end,
+--   color = 'LualineMode',
+--   padding = { left = 1, right = 1 },
+-- }
 
 ins_left {
   'filetype',
@@ -166,7 +174,7 @@ ins_left {
 ins_left {
   function()
     local max_len = 22
-    local filename = vim.fn.expand('%:t')
+    local filename = expand('%:t')
     if #filename > max_len then
       local suffix = filename:match('.+%.(%w+)$')
       filename = string.sub(filename, 0, max_len - 6) .. '…'
@@ -182,28 +190,6 @@ ins_left {
 }
 
 ins_left {
-  -- filesize component
-  function()
-    if not vim.b.filesize then
-      vim.b.filesize = vim.fn['FileSize']()
-    end
-    return vim.b.filesize
-  end,
-  setup = function()
-    vim.api.nvim_create_autocmd('BufWritePost', {
-      group = require('lu5je0.autocmds').default_group,
-      pattern = '*',
-      callback = function()
-        vim.b.filesize = nil
-      end,
-    })
-  end,
-  cond = conditions.hide_in_width,
-  color = { fg = colors.yellow },
-  padding = { left = 1, right = 0 },
-}
-
-ins_left {
   function()
     -- return [[ %2p%% %l:%c ]]
     return [[ %l:%c ]]
@@ -212,20 +198,19 @@ ins_left {
   color = { fg = colors.violet },
 }
 
-local b, nvim_gps = pcall(require, 'nvim-gps')
-if b then
-  ins_left {
-    function()
-      return nvim_gps.get_location()
-    end,
-    inactive = true,
-    cond = nvim_gps.is_available,
-    color = { fg = colors.grey },
-    padding = { left = 1, right = 1 },
-  }
-else
-  print('nvim-gps is required')
-end
+ins_left {
+  function()
+    return require('nvim-gps').get_location()
+  end,
+  inactive = true,
+  should_inc = function()
+    local ok = pcall(require, 'nvim-gps')
+    return ok
+  end,
+  cond = require('nvim-gps').is_available,
+  color = { fg = colors.grey },
+  padding = { left = 0, right = 1 },
+}
 
 ins_right {
   'diagnostics',
@@ -305,7 +290,30 @@ ins_right {
 --   padding = { left = 0, right = 1 },
 -- }
 
--- Add components to right sections
+ins_right {
+  -- filesize component
+  function()
+    if not vim.b.filesize then
+      vim.b.filesize = vim.fn['FileSize']()
+    end
+    return vim.b.filesize
+  end,
+  cond = function()
+    return vim.b.filesize ~= '0B' and conditions.hide_in_width()
+  end,
+  setup = function()
+    vim.api.nvim_create_autocmd('BufWritePost', {
+      group = require('lu5je0.autocmds').default_group,
+      pattern = '*',
+      callback = function()
+        vim.b.filesize = nil
+      end,
+    })
+  end,
+  color = { fg = colors.grey },
+  padding = { left = 0, right = 1 },
+}
+
 ins_right {
   'o:encoding', -- option component same as &encoding in viml
   fmt = string.upper, -- I'm not sure why it's upper case either ;)
