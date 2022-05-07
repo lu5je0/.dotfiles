@@ -5,6 +5,7 @@ local expand = vim.fn.expand
 
 local colors = {
   bg       = '#202328',
+  white    = '#bcc6d3',
   grey     = '#cccccc',
   fg       = '#bbc2cf',
   yellow   = '#ECBE7B',
@@ -36,7 +37,7 @@ local extensions_type_icon = {
   function()
     return ''
   end,
-  color = { fg = colors.grey, bg = colors.bg, gui = 'bold' },
+  color = { fg = colors.white, bg = colors.bg, gui = 'bold' },
 }
 
 local extensions_name = {
@@ -208,7 +209,7 @@ ins_left {
     return ok
   end,
   cond = require('nvim-gps').is_available,
-  color = { fg = colors.grey },
+  color = { fg = colors.white },
   padding = { left = 0, right = 1 },
 }
 
@@ -227,7 +228,7 @@ ins_right {
     error = { fg = colors.red },
     warn = { fg = colors.yellow },
     info = { fg = colors.fg },
-    hint = { fg = colors.grey },
+    hint = { fg = colors.white },
   },
   colored = true, -- displays diagnostics status in color if set to true
   update_in_insert = false, -- Update diagnostics in insert mode
@@ -310,7 +311,7 @@ ins_right {
       end,
     })
   end,
-  color = { fg = colors.grey },
+  color = { fg = colors.white },
   padding = { left = 0, right = 1 },
 }
 
@@ -366,7 +367,7 @@ ins_right({
   cond = function()
     return os.getenv('TMUX') ~= nil
   end,
-  color = { fg = colors.grey },
+  color = { fg = colors.white },
   padding = { left = 0, right = 1 },
 })
 
