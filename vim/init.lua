@@ -16,7 +16,7 @@ local core_modules = {
 for _, module in ipairs(core_modules) do
   local ok, err = pcall(require, module)
   if not ok then
-    vim.notify("Error loading " .. module .. "\n\n" .. err)
+    vim.notify('Error loading ' .. module .. '\n\n' .. err)
   end
 end
 
@@ -27,7 +27,6 @@ elseif vim.fn.has('mac') == 1 then
 end
 
 vim.cmd([[
-runtime settings.vim
 runtime functions.vim
 runtime mappings.vim
 runtime misc.vim
