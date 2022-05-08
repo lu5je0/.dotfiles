@@ -18,7 +18,7 @@ local function replace(mode)
       return
     end
 
-    pattern = string.escape_pattern(pattern)
+    pattern = vim.pesc(pattern)
     for i, line_text in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
       local replaced_text = string.gsub(line_text, pattern, repl)
       if replaced_text ~= line_text then

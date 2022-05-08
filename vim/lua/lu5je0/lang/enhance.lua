@@ -40,7 +40,3 @@ function _G.dump(arg, depth)
 end
 
 _G.log = require('plenary.log')
-
-function string.escape_pattern(text)
-  return text:gsub('([^%w])', '%%%1')
-end

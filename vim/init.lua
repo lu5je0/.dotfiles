@@ -3,7 +3,7 @@ if not pcall(require, 'impatient') then
 end
 
 local core_modules = {
-  'lu5je0.enhance',
+  'lu5je0.lang.enhance',
   'lu5je0.plugins',
   'lu5je0.options',
   'lu5je0.commands',
