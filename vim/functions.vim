@@ -227,33 +227,6 @@ function! UnicodeUnescapeString(str)
   return escaped
 endfunction
 
-function! ReplaceSelect(fn)
-	" Preserve line breaks
-	let l:paste = &paste
-	set paste
-	" Reselect the visual mode text
-	normal! gv
-	" Apply transformation to the text
-	execute "normal! c\<c-r>=" . a:fn . "(@\")\<cr>\<esc>"
-	" Select the new text
-	normal! `[v`]h
-	" Revert to previous mode
-	let &paste = l:paste
-endfunction
-
-function! VisualReplace(text)
-    let reg_tmp = @a
-    let @a = a:text
-    normal! "ap
-    let @a = reg_tmp
-    unlet reg_tmp
-endfunction
-
-function! CDTerminalToCWD()
-    call TerminalSend("cd '" . getcwd() . "'")
-    call TerminalSend("\r")
-endfunction
-
 function! EscapeText(text)
     let l:escaped_text = a:text
     " Map characters to named C backslash escapes. Normally, single-quoted

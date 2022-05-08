@@ -82,7 +82,7 @@ for _, plugin in pairs(default_plugins) do
 end
 
 vim.schedule(function()
-  vim.opt.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
+  opt.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
   vim.cmd [[ silent! rsh ]]
 end)
 

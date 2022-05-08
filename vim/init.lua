@@ -26,11 +26,10 @@ elseif vim.fn.has('mac') == 1 then
   require('lu5je0.misc.im.mac.im')
 end
 
-vim.cmd([[
+vim.cmd [[
 runtime functions.vim
 runtime mappings.vim
-runtime misc.vim
-]])
+]]
 
 local delay = 0
 for _, plugin in ipairs(_G.defer_plugins) do

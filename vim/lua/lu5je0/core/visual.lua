@@ -9,7 +9,7 @@ function M.selected_text_by_yank()
 end
 
 function M.visual_replace(text)
-  vim.fn['VisualReplace'](text)
+  vim.fn['visual#replace'](text)
 end
 
 return M

@@ -210,14 +210,14 @@ vmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
 "----------------------------------------------------------------------
 " unicode escape
 "----------------------------------------------------------------------
-vmap <silent> <leader>xu :<c-u>call ReplaceSelect("UnicodeEscapeString")<cr>
-vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+vmap <silent> <leader>xu :<c-u>call visual#replace_by_fn("UnicodeEscapeString")<cr>
+vmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
 
 "----------------------------------------------------------------------
 " text escape
 "----------------------------------------------------------------------
-vmap <silent> <leader>xs :<c-u>call ReplaceSelect("EscapeText")<cr>
-" vmap <silent> <leader>xU :<c-u>call ReplaceSelect("UnicodeUnescapeString")<cr>
+vmap <silent> <leader>xs :<c-u>call visual#replace_by_fn("EscapeText")<cr>
+" vmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
 
 "----------------------------------------------------------------------
 " url encode

@@ -1,17 +1,3 @@
-command! -nargs=+ Log call s:quick_note(<q-args>)
-function! s:quick_note(text)
-	let text = substitute(a:text, '^\s*\(.\{-}\)\s*$', '\1', '')
-	if exists('*writefile') && text != ''
-		let filename = get(g:, 'quicknote_file', '~/.vim/quicknote.md')
-		" let notehead = get(g:, 'quicknote_head', '- ')
-		let notetime = strftime("[%Y-%m-%d %H:%M:%S] ")
-		let realname = expand(filename)
-		call writefile([notetime . text], realname, 'a')
-		checktime
-		echo notetime . text
-	endif
-endfunc
-
 function! s:get_junk_filename(name)
 	let junk_dir = '~/junk-file'
 	let junk_dir = junk_dir . strftime('/%Y/%m')

@@ -355,6 +355,9 @@ function M.setup()
       indent_markers = {
         enable = true,
       },
+      icons = {
+        -- git_placement = 'after'
+      }
     },
     view = {
       width = 27,
