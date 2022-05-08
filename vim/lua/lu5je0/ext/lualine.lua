@@ -35,7 +35,7 @@ local conditions = {
 
 local extensions_type_icon = {
   function()
-    return ''
+    return ' '
   end,
   color = { fg = colors.white, bg = colors.bg, gui = 'bold' },
 }
