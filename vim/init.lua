@@ -1,13 +1,30 @@
 if not pcall(require, 'impatient') then
-  vim.notify('failed to enable impatient')
+  vim.notify('Failed to enable impatient')
 end
-require('lu5je0.plugins')
-require('lu5je0.enhance')
-require('lu5je0.commands')
-require('lu5je0.patch')
-require('lu5je0.mappings')
-require('lu5je0.autocmds')
-require('lu5je0.filetype')
+
+local core_modules = {
+  'lu5je0.enhance',
+  'lu5je0.plugins',
+  'lu5je0.options',
+  'lu5je0.commands',
+  'lu5je0.patch',
+  'lu5je0.mappings',
+  'lu5je0.autocmds',
+  'lu5je0.filetype',
+}
+
+for _, module in ipairs(core_modules) do
+  local ok, err = pcall(require, module)
+  if not ok then
+    vim.notify("Error loading " .. module .. "\n\n" .. err)
+  end
+end
+
+if vim.fn.has('wsl') == 1 then
+  require('lu5je0.misc.im.win.im').boostrap()
+elseif vim.fn.has('mac') == 1 then
+  require('lu5je0.misc.im.mac.im')
+end
 
 vim.cmd([[
 runtime settings.vim
@@ -16,12 +33,6 @@ runtime mappings.vim
 runtime misc.vim
 ]])
 
-if vim.fn.has('wsl') == 1 then
-  require('lu5je0.misc.im.win.im').boostrap()
-elseif vim.fn.has('mac') == 1 then
-  require('lu5je0.misc.im.mac.im')
-end
-
 local delay = 0
 for _, plugin in ipairs(_G.defer_plugins) do
   vim.defer_fn(function()
@@ -29,8 +40,3 @@ for _, plugin in ipairs(_G.defer_plugins) do
   end, delay)
   delay = delay + 3
 end
-
-vim.defer_fn(function()
-  vim.o.clipboard = 'unnamedplus'
-  vim.cmd('packadd matchit')
-end, 10)
