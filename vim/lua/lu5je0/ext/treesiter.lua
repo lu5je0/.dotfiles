@@ -32,8 +32,8 @@ treesitter.define_modules {
       vim.wo.foldexpr = 'nvim_treesitter#foldexpr()'
       vim.cmd([[
       nmap <buffer> <silent> zc :lua _G.fold_patch()<cr>
-      vmap <buffer> <silent> v <esc>m':lua require'nvim-treesitter.incremental_selection'.node_incremental()<CR>
-      vmap <buffer> <silent> V <esc>:lua require'nvim-treesitter.incremental_selection'.node_decremental()<CR>
+      xmap <buffer> <silent> v <esc>m':lua require'nvim-treesitter.incremental_selection'.node_incremental()<CR>
+      xmap <buffer> <silent> V <esc>:lua require'nvim-treesitter.incremental_selection'.node_decremental()<CR>
       ]])
     end,
     detach = function(bufnr)
@@ -47,9 +47,9 @@ treesitter.define_modules {
       foldexpr_backups[bufnr] = nil
 
       vim.cmd([[
-      silent! unmap <buffer> zc 
-      silent! unmap <buffer> v
-      silent! unmap <buffer> V
+      nunmap <buffer> zc
+      xunmap <buffer> v
+      xunmap <buffer> V
       ]])
     end,
     is_supported = require('nvim-treesitter.query').has_folds,
