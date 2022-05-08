@@ -48,14 +48,15 @@ bl.setup {
       {
         filetype = 'fern',
         text = 'File Explorer',
-        highlight = 'Directory',
+        highlight = 'NvimTreeNormal',
         text_align = 'center',
       },
       {
         filetype = 'NvimTree',
         text = 'File Explorer',
-        highlight = 'Directory',
+        highlight = 'NvimTreeNormal',
         text_align = 'center',
+        -- padding = 1
       },
       {
         filetype = 'vista',
