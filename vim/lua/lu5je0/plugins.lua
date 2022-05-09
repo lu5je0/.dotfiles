@@ -607,7 +607,6 @@ return packer.startup(function(use)
   use {
     'dstein64/nvim-scrollview',
     defer = true,
-    event = { 'WinScrolled' },
     config = function()
       require('lu5je0.ext.scrollview').setup()
     end
