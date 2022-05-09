@@ -302,6 +302,7 @@ return packer.startup(function(use)
     'mg979/vim-visual-multi',
     opt = true,
     setup = function()
+      vim.cmd [[autocmd User visual_multi_mappings nmap <buffer> p "+<Plug>(VM-p-Paste)]]
       vim.g.VM_maps = {
         ['Select Cursor Down'] = '<m-n>',
         ['Remove Region'] = '<c-p>',
@@ -455,7 +456,7 @@ return packer.startup(function(use)
       require('nvim-autopairs').setup {}
     end,
   }
-  
+
   -- lsp
   use {
     'hrsh7th/nvim-cmp',
