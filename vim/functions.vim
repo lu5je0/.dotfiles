@@ -166,14 +166,6 @@ EOF
 endfunction
 command! -nargs=1 KeepMatchs call KeepMatchs(<f-args>)
 
-function! CloseBuffer()
-call PyFuncInit()
-python3 << EOF
-functions.closeBuffer()
-EOF
-endfunction
-command! CloseBuffer call CloseBuffer()
-
 function! FileSize()
   let bytes = getfsize(expand('%:p'))
   if (bytes >= 1024)

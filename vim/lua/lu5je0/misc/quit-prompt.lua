@@ -172,6 +172,40 @@ local function exit_vim_by_comfirm()
   end
 end
 
+M.close_buffer = function()
+  local valid_buffers = require('lu5je0.core.buffers').valid_buffers()
+  local cur_buf_nr = vim.api.nvim_get_current_buf()
+  
+  local txt_window_cnt = 0
+  for _, v in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if table.contain(valid_buffers, vim.api.nvim_win_get_buf(v)) then
+      txt_window_cnt = txt_window_cnt + 1
+    end
+  end
+  
+  -- 如果在非text window下，直接quit
+  if txt_window_cnt ~= 0 and not table.contain(valid_buffers, cur_buf_nr) then
+    vim.cmd("q")
+    return
+  end
+
+  -- 如果编辑过buffer，则需要确认
+  if vim.bo.modified and txt_window_cnt == 1 then
+    local confirm_result = vim.fn.confirm("Close without saving?", "&No\n&Yes")
+    if confirm_result ~= 2 then
+      return
+    end
+  end
+
+  -- 一个tab页中有两个以上的buffer时，直接quit
+  if txt_window_cnt > 1 then
+    vim.cmd("q")
+  else
+    vim.cmd("bp")
+    vim.cmd("bd! " .. cur_buf_nr)
+  end
+end
+
 M.exit = exit_vim_with_dialog
 
 return M
