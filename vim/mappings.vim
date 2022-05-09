@@ -135,7 +135,7 @@ function! ToggleGj(echo)
         vmap L g$
         omap H g^
         omap L g$
-        nmap Y g^yg$
+        nmap Y gyg$
         if a:echo
             echo "gj on"
         endif
@@ -149,7 +149,7 @@ function! ToggleGj(echo)
         vmap L $
         omap H ^
         omap L $
-        nmap Y ^y$
+        nmap Y y$
         if a:echo
             echo "gj off"
         endif

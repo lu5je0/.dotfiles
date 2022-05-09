@@ -455,8 +455,29 @@ return packer.startup(function(use)
       require('nvim-autopairs').setup {}
     end,
   }
-
+  
   -- lsp
+  use {
+    'hrsh7th/nvim-cmp',
+    config = function()
+      require('lu5je0.ext.cmp')
+    end,
+    defer = true,
+    after = { 'nvim-lspconfig', 'nvim-autopairs' },
+    requires = {
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-path',
+      {
+        'hrsh7th/vim-vsnip',
+        config = function()
+          require('lu5je0.ext.vsnip').setup()
+        end,
+      },
+      'hrsh7th/cmp-vsnip',
+    },
+  }
+
   use {
     'williamboman/nvim-lsp-installer',
     defer = true,
@@ -508,27 +529,6 @@ return packer.startup(function(use)
         ]])
       end, 0)
     end,
-  }
-
-  use {
-    'hrsh7th/nvim-cmp',
-    config = function()
-      require('lu5je0.ext.cmp')
-    end,
-    defer = true,
-    after = { 'nvim-lspconfig', 'nvim-autopairs' },
-    requires = {
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-buffer',
-      'hrsh7th/cmp-path',
-      {
-        'hrsh7th/vim-vsnip',
-        config = function()
-          require('lu5je0.ext.vsnip').setup()
-        end,
-      },
-      'hrsh7th/cmp-vsnip',
-    },
   }
 
   -- use {
@@ -606,7 +606,7 @@ return packer.startup(function(use)
   use {
     'dstein64/nvim-scrollview',
     defer = true,
-    event = { 'WinScrolled', 'BufRead' },
+    event = { 'WinScrolled' },
     config = function()
       require('lu5je0.ext.scrollview').setup()
     end
