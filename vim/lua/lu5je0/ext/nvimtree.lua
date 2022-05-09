@@ -101,6 +101,19 @@ function M.pwd_stack_push()
   M.pwd_stack:push(vim.fn.getcwd())
 end
 
+function M.create_dir()
+  local origin_input = vim.ui.input
+  vim.ui.input = function(input_opts, fn)
+    local origin_fn = fn
+    fn = function(new_file_path)
+      return origin_fn(new_file_path .. '/')
+    end
+    origin_input(input_opts, fn)
+  end
+  require'nvim-tree.actions'.on_keypress('create')
+  vim.ui.input = origin_input
+end
+
 function M.back()
   if M.pwd_stack:count() >= 2 then
     M.pwd_back_state = 1
@@ -273,6 +286,7 @@ function M.setup()
     { key = '_', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(1)<cr>" },
     { key = '<space>', cb = ":lua require('lu5je0.ext.nvimtree').preview()<cr>" },
     { key = 'x', cb = ":lua require('lu5je0.ext.nvimtree').toggle_width()<cr>" },
+    { key = 'mk', cb = ":lua require('lu5je0.ext.nvimtree').create_dir()<cr>" },
     { key = 'D', cb = ":lua require('lu5je0.ext.nvimtree').remove()<cr>" },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
