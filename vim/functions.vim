@@ -7,27 +7,6 @@ function! SynStack()
     endfor
 endfunction
 
-" Toggle signcolumn. Works on vim>=8.1 or NeoVim
-function! ToggleSignColumn()
-    if &signcolumn == 'yes:1'
-        set signcolumn=no
-        echo "signcolumn=no"
-    else
-        set signcolumn=yes:1
-        echo "signcolumn=yes:1"
-    endif
-endfunction
-
-" Toggles foldcolumn
-function! s:ToggleFoldColumn()
-    if &foldcolumn == 'auto:9'
-        set foldcolumn=0
-    else
-        set foldcolumn=auto:9
-    endif
-endfunction
-nnoremap <silent> <Plug>FoldToggleColumn :call <SID>ToggleFoldColumn()<CR>
-
 function! VisualStarSearchSet(cmdtype,...)
   let temp = @"
   normal! gvy
@@ -39,69 +18,6 @@ function! VisualStarSearchSet(cmdtype,...)
   let @/ = substitute(@/, '\~', '\\~', 'g')
   let @/ = substitute(@/, '\.', '\\.', 'g')
   let @" = temp
-endfunction
-
-" 在gj和j之间切换
-function! ToggleMouse()
-    if !exists("g:ToggleMouse")
-        let g:ToggleMouse = "a"
-    endif
-
-    if &mouse == ""
-        let &mouse = g:ToggleMouse
-        echo "Mouse is for Vim (" . &mouse . ")"
-    else
-        let g:ToggleMouse = &mouse
-        let &mouse=""
-        echo "Mouse is for terminal"
-    endif
-endfunction
-
-function! ToggleDiff()
-    if !exists("g:ToggleDiff")
-        let g:ToggleDiff = 0
-    endif
-    if g:ToggleDiff == 0
-        windo difft
-        let g:ToggleDiff = 1
-        echo "diff on"
-    else
-        windo diffo
-        let g:ToggleDiff = 0
-        echo "diff off"
-    endif
-endfunction
-
-function! TogglePaste()
-    set paste!
-endfunction
-
-function! IsVisualMode()
-    if mode() == "v"
-        return "'<,'>"
-    else
-        return ""
-    endif
-endfunction
-
-function! ToggleWrap()
-    set wrap!
-endfunction
-
-function! IsWSL()
-    if exists("g:isWsl")
-        return g:isWsl
-    endif
-
-    if has("unix")
-        let lines = readfile("/proc/version")
-        if lines[0] =~ "Microsoft"
-            let g:isWsl=1
-            return 1
-        endif
-    endif
-    let g:isWsl=0
-    return 0
 endfunction
 
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')

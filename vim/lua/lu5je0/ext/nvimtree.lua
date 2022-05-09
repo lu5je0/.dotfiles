@@ -40,7 +40,7 @@ function M.terminal_cd()
 end
 
 function M.remove()
-  local bufs = require("lu5je0.core.buffers").invild_buffers()
+  local bufs = require("lu5je0.core.buffers").valid_buffers()
   -- local bufs = vim.api.nvim_list_bufs()
 
   local is_remove_cur_file = false
