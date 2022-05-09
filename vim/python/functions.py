@@ -10,7 +10,6 @@ def executeTime(func):
         return r
     return wrapper
 
-
 def resetFileTypeTemporary(func):
     def wrapper(*args, **kw):
         ft = vim.eval("&ft")
@@ -19,9 +18,6 @@ def resetFileTypeTemporary(func):
         vim.command("set ft=" + ft)
         return r
     return wrapper
-
-# @executeTime
-
 
 @resetFileTypeTemporary
 def keepLines(str_patterns):
@@ -39,8 +35,6 @@ def keepLines(str_patterns):
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
 
-
-# @executeTime
 @resetFileTypeTemporary
 def keepMatchs(pattern):
     ft = vim.eval("&ft")
@@ -58,8 +52,6 @@ def keepMatchs(pattern):
     print('del {} lines'.format(rm_line_cnt))
     vim.command("set ft=" + ft)
 
-
-# @executeTime
 @resetFileTypeTemporary
 def delLines(str_patterns):
     patterns = [re.compile(pattern) for pattern in str_patterns]
@@ -75,11 +67,3 @@ def delLines(str_patterns):
             rm_line_cnt += 1
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
-
-
-def getBufType(number):
-    return vim.eval("getbufvar({}, \"&buftype\")".format(number))
-
-
-def getBufListed(number):
-    return int(vim.eval("getbufvar({}, \"&buflisted\")".format(number)))

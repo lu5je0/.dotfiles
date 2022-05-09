@@ -162,7 +162,7 @@ call ToggleGj(0)
 " other
 "----------------------------------------------------------------------
 nnoremap * m`:keepjumps normal! *``<cr>
-xnoremap * m`:keepjumps <C-u>call VisualStarSearchSet('/')<CR>/<C-R>=@/<CR><CR>``
+xnoremap * m`:keepjumps <C-u>call visual#star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
 nnoremap v m'v
 nnoremap V m'V
 
