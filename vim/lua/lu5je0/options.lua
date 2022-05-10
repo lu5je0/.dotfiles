@@ -8,6 +8,7 @@ opt.ignorecase = true
 opt.incsearch = true
 opt.splitbelow = true -- 默认在下侧分屏
 opt.splitright = true -- 默认在右侧分屏
+opt.shadafile = 'NONE'
 
 opt.completeopt = 'menu,menuone,noselect'
 
@@ -81,16 +82,6 @@ for _, plugin in pairs(default_plugins) do
   g["loaded_" .. plugin] = 1
 end
 
-vim.schedule(function()
-  opt.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
-  vim.cmd [[ silent! rsh ]]
-end)
-
-vim.defer_fn(function()
-  opt.clipboard = 'unnamedplus'
-  vim.cmd [[ packadd matchit ]]
-end, 10)
-
 if has('wsl') then
   g.clipboard = {
     name = 'win32yank',
@@ -108,4 +99,18 @@ end
 
 if has('mac') then
   vim.g.python3_host_prog = '/usr/local/bin/python3'
+end
+
+local defer_options = {
+  function()
+    opt.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
+    vim.cmd [[ silent! rsh ]]
+  end,
+  function()
+    opt.clipboard = 'unnamedplus'
+    vim.cmd [[ packadd matchit ]]
+  end
+}
+for delay, fn in ipairs(defer_options) do
+  vim.defer_fn(fn, 2 * delay)
 end
