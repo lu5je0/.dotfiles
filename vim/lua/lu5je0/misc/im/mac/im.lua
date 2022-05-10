@@ -59,7 +59,6 @@ function! ToggleSaveLastIme()
     lua require('lu5je0.misc.env-keeper').set('save_last_ime', tostring(vim.g.save_last_ime))
 endfunction
 
-nmap <silent> <leader>vi :call ToggleSaveLastIme()<cr>
 augroup switch_im
     autocmd!
     autocmd InsertLeave * call SwitchNormalMode()
