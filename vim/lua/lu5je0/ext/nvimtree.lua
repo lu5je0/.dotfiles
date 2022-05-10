@@ -105,8 +105,12 @@ function M.create_dir()
   local origin_input = vim.ui.input
   vim.ui.input = function(input_opts, fn)
     local origin_fn = fn
+    input_opts.prompt = 'Create Directory'
     fn = function(new_file_path)
-      return origin_fn(new_file_path .. '/')
+      if new_file_path ~= nil then
+        new_file_path = new_file_path .. '/'
+      end
+      return origin_fn()
     end
     origin_input(input_opts, fn)
   end
