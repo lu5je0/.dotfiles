@@ -31,8 +31,14 @@ runtime functions.vim
 runtime mappings.vim
 ]]
 
-for delay, plugin in ipairs(_G.defer_plugins) do
-  vim.defer_fn(function()
-    vim.cmd('PackerLoad ' .. plugin)
-  end, delay * 3)
+local i = 1
+local function defer_loads()
+  vim.cmd('PackerLoad ' .. _G.__defer_plugins[i])
+  i = i + 1
+  if i <= #_G.__defer_plugins then
+    vim.defer_fn(defer_loads, 3)
+  end
 end
+vim.defer_fn(function()
+  defer_loads()
+end, 0)
