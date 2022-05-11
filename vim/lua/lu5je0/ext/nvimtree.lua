@@ -110,7 +110,7 @@ function M.create_dir()
       if new_file_path ~= nil then
         new_file_path = new_file_path .. '/'
       end
-      return origin_fn()
+      return origin_fn(new_file_path)
     end
     origin_input(input_opts, fn)
   end
