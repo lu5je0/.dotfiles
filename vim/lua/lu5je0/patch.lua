@@ -1,5 +1,8 @@
+_G.__patch = {}
+local patch = _G.__patch
+
 -- 让lsp能够attach到未命名文件
-function _G.lsp_attach_on_no_filename()
+function patch.lsp_attach_on_no_filename()
   local buf_name = vim.api.nvim_buf_get_name(0)
   if buf_name ~= nil and buf_name ~= '' then
     return
@@ -17,17 +20,15 @@ function _G.lsp_attach_on_no_filename()
   -- end
   vim.api.nvim_buf_set_name(0, buf_name)
 end
-
 vim.cmd([[
 augroup confirm_lsp_attach
     autocmd!
-    autocmd FileType json,python,sql lua _G.lsp_attach_on_no_filename()
+    autocmd FileType json,python,sql lua _G.__patch.lsp_attach_on_no_filename()
 augroup END
 ]])
 
-
 -- 修复set filetype后无法使用treesitter fold
-function _G.fold_patch()
+function patch.fold_patch()
   local cursor = vim.api.nvim_win_get_cursor(0)
   if vim.fn.foldlevel(cursor[1]) == 0 then
     vim.api.nvim_buf_set_lines(0, cursor[1], cursor[1], false, vim.api.nvim_buf_get_lines(0, cursor[1], cursor[1], true))

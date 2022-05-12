@@ -31,7 +31,7 @@ treesitter.define_modules {
       vim.wo.foldmethod = 'expr'
       vim.wo.foldexpr = 'nvim_treesitter#foldexpr()'
       vim.cmd([[
-      nmap <buffer> <silent> zc :lua _G.fold_patch()<cr>
+      nmap <buffer> <silent> zc :lua _G.__patch.fold_patch()<cr>
       xmap <buffer> <silent> v <esc>m':lua require'nvim-treesitter.incremental_selection'.node_incremental()<CR>
       xmap <buffer> <silent> V <esc>:lua require'nvim-treesitter.incremental_selection'.node_decremental()<CR>
       ]])
