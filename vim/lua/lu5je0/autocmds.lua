@@ -42,7 +42,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end
 })
 
-_G.__update_select_mode = false
+local update_select_mode = false
 vim.api.nvim_create_autocmd('ModeChanged', {
   group = M.default_group,
   pattern = '*',
@@ -54,11 +54,11 @@ vim.api.nvim_create_autocmd('ModeChanged', {
       else
         vim.cmd('hi Visual guibg=#ead6ac guifg=#242424')
       end
-      _G.__update_select_mode = true
+      update_select_mode = true
     elseif mode == 'v' or mode == 'n' then
-      if _G.__update_select_mode then
+      if update_select_mode then
         vim.cmd('hi Visual guibg=#3b3e48 guifg=none')
-        _G.__update_select_mode = false
+        update_select_mode = false
       end
     end
   end,
