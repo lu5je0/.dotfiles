@@ -49,7 +49,7 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   callback = function()
     local mode = vim.api.nvim_get_mode().mode
     if mode == 's' then
-      if vim.fn.has('wsl') then
+      if vim.fn.has('wsl') == 1 then
         vim.cmd('hi Visual guibg=#D1D3CB guifg=#242424')
       else
         vim.cmd('hi Visual guibg=#ead6ac guifg=#242424')

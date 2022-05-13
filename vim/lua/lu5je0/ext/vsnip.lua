@@ -4,6 +4,12 @@ M.setup = function()
   vim.g.vsnip_snippet_dir = vim.fn.stdpath('config') .. '/snippets/vsnip'
   vim.cmd([[
   nmap <silent> <expr> <cr> v:lua.require('lu5je0.ext.vsnip').jump_next_able() ? 'i<Plug>(vsnip-jump-next)' : '<d-r>'
+  
+  imap <expr> <c-j>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<c-j>'
+  smap <expr> <c-j>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<c-j>'
+  
+  imap <expr> <c-k>   vsnip#jumpable(-1)   ? '<Plug>(vsnip-jump-prev)'      : '<c-k>'
+  smap <expr> <c-k>   vsnip#jumpable(-1)   ? '<Plug>(vsnip-jump-prev)'      : '<c-k>'
   nnoremap <d-r> <cr>
   ]])
 end

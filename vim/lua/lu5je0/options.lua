@@ -13,7 +13,7 @@ opt.shadafile = 'NONE'
 opt.completeopt = 'menu,menuone,noselect'
 
 opt.number = true
-opt.numberwidth = 2
+opt.numberwidth = 3
 
 opt.laststatus = 2
 opt.showmode = false
