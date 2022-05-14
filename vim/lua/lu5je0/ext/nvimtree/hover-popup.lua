@@ -7,9 +7,11 @@ local function hide(win)
 end
 
 local popup_win = nil
-local function show_popup_win()
-  print('show')
+local function show()
   hide(popup_win)
+  if vim.api.nvim_win_get_cursor(0)[1] == 1 then
+    return
+  end
 
   local line = vim.fn.getline('.')
   local width = vim.fn.strdisplaywidth(vim.fn.substitute(line, '[^[:print:]]*$', '', 'g'))
@@ -29,20 +31,20 @@ local function show_popup_win()
     vim.fn.setbufline('%', 1, line)
     vim.cmd [[ setlocal nowrap cursorline noswapfile nobuflisted buftype=nofile bufhidden=hide ]]
   end)
-
-  vim.api.nvim_create_autocmd({ 'BufLeave', 'CursorMoved' }, {
-    group = vim.api.nvim_create_augroup('nvim_tree_filename_popup_hide_group', { clear = true }),
-    pattern = { 'NvimTree_*' },
-    callback = function()
-      hide(popup_win)
-    end
-  })
 end
+
+vim.api.nvim_create_autocmd({ 'BufLeave', 'CursorMoved' }, {
+  group = vim.api.nvim_create_augroup('nvim_tree_filename_popup_hide_group', { clear = true }),
+  pattern = { 'NvimTree_*' },
+  callback = function()
+    hide(popup_win)
+  end
+})
 
 vim.api.nvim_create_autocmd({ 'CursorMoved' }, {
   group = vim.api.nvim_create_augroup('nvim_tree_filename_popup_group', { clear = true }),
   pattern = { 'NvimTree_*' },
   callback = function()
-    show_popup_win()
+    show()
   end
 })
