@@ -513,8 +513,6 @@ return packer.startup(function(use)
     end,
     defer = true,
   }
-
-  -- highlight cursor word
   use {
     'lu5je0/vim-illuminate',
     config = function()

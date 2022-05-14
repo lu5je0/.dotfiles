@@ -1,3 +1,4 @@
+---@diagnostic disable: missing-parameter
 local M = {}
 
 local lib = require('nvim-tree.lib')
@@ -7,30 +8,21 @@ M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
 M.pwd_back_state = 0
 
 function M.locate_file()
-  -- if not M.loaded then
-  --   vim.cmd('sleep 150m')
-  --   M.loaded = true
-  -- end
-
-  local pwd = vim.fn.getcwd()
-
-  -- current file path
-  local cur_file_path = vim.fn.expand('%:p')
-
-  if cur_file_path == nil or cur_file_path == '' then
+  local cur_file_dir_path = vim.fn.expand('%:p:h')
+  if cur_file_dir_path == '' then
     return
   end
-
-  -- if pwd has .
-  cur_file_path = string.sub(cur_file_path, 0, cur_file_path:match('^.*()/') - 1)
-
-  if string.match(string.sub(cur_file_path, string.len(pwd) + 2, -1), [[%.]]) ~= nil then
-    require('nvim-tree.actions.toggles').dotfiles()
+  
+  local cwd = vim.fn.getcwd()
+  if not string.startswith(cur_file_dir_path, cwd) then
+    vim.cmd(':cd ' .. cur_file_dir_path)
+  else
+    -- dotfiles check
+    if vim.fn.expand('%:p'):sub(#cwd + 2, #cwd + 2) == '.' then
+      require('nvim-tree.actions.toggles').dotfiles()
+    end
   end
 
-  if not string.startswith(cur_file_path, pwd) then
-    vim.cmd(':cd ' .. cur_file_path)
-  end
   vim.cmd('NvimTreeFindFile')
 end
 
