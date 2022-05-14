@@ -154,9 +154,13 @@ end
 
 function M.open_node()
   local node = lib.get_node_at_cursor()
+  local parent_absolute_path = node.absolute_path
   if not node.open and (node.has_children or (node.nodes and #node.nodes ~= 0)) then
     vim.schedule(function()
       vim.cmd('norm j')
+      if lib.get_node_at_cursor().parent.absolute_path ~= parent_absolute_path then
+        vim.cmd('norm k')
+      end
     end)
   end
   require('nvim-tree.actions').on_keypress('edit')
