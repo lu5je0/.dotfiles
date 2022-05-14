@@ -396,10 +396,12 @@ function M.setup()
     filetype = { 'notify', 'packer', 'qf', 'confirm', 'popup' },
     buftype = { 'terminal', 'nowrite' },
   }
+  
+  require('lu5je0.ext.nvimtree.filename-hover-popup')
 
   M.pwd_stack:push(vim.fn.getcwd())
   M.loaded = true
-
+  
   vim.defer_fn(function()
     if vim.bo.filetype == 'NvimTree' then
       require('lu5je0.core.keys').feedkey('<c-w>p', '')

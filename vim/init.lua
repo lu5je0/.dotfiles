@@ -39,6 +39,7 @@ local function defer_loads()
     vim.defer_fn(defer_loads, 3)
   end
 end
+
 vim.defer_fn(function()
   defer_loads()
 end, 0)
