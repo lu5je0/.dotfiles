@@ -19,7 +19,9 @@ function M.locate_file()
   else
     -- dotfiles check
     if vim.fn.expand('%:p'):sub(#cwd + 2, #cwd + 2) == '.' then
-      require('nvim-tree.actions.toggles').dotfiles()
+      if require("nvim-tree.explorer.filters").config.filter_dotfiles then
+        require('nvim-tree.actions.toggles').dotfiles()
+      end
     end
   end
 
