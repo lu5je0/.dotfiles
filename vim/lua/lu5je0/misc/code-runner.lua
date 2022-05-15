@@ -70,7 +70,7 @@ end
 M.key_mapping = function()
   local opts = {
     noremap = true,
-    silent = true,
+    silent = false,
     desc = 'runner.lua'
   }
   vim.keymap.set('n', '<leader>rr', function()
