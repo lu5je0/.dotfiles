@@ -187,6 +187,10 @@ return packer.startup(function(use)
           require('hlargs').setup()
         end
       },
+      -- {
+      --   'nvim-treesitter/playground',
+      --   run = 'TSInstall query'
+      -- },
       {
         'SmiteshP/nvim-gps',
         config = function()

@@ -47,9 +47,9 @@ treesitter.define_modules {
       foldexpr_backups[bufnr] = nil
 
       vim.cmd([[
-      nunmap <buffer> zc
-      xunmap <buffer> v
-      xunmap <buffer> V
+      silent! nunmap <buffer> zc
+      silent! xunmap <buffer> v
+      silent! xunmap <buffer> V
       ]])
     end,
     is_supported = require('nvim-treesitter.query').has_folds,
