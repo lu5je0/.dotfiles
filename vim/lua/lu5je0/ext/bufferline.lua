@@ -80,6 +80,11 @@ bl.setup {
       return false
     end,
   },
+  highlights = {
+    buffer_selected = {
+      gui = "bold"
+    },
+  },
 }
 
 vim.cmd([[
