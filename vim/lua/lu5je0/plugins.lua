@@ -255,7 +255,10 @@ return packer.startup(function(use)
     end,
     config = function()
       vim.g.edge_loaded_file_types = { 'NvimTree' }
-      vim.cmd [[ hi! Folded guifg=#282c34 guibg=#5c6370 ]]
+      vim.cmd [[
+      hi! Folded guifg=#282c34 guibg=#5c6370
+      hi MatchParen guifg=#ffef28
+      ]]
     end
   }
   -- use {
