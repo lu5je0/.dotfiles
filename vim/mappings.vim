@@ -232,9 +232,9 @@ vnoremap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.
 vnoremap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
 
 " ugly hack to start newline and keep indent
-nnoremap <silent> o o<space><BS>
-nnoremap <silent> O O<space><BS>
-inoremap <silent> <cr> <cr><space><BS>
+nnoremap <silent> o o<space><bs>
+nnoremap <silent> O O<space><bs>
+inoremap <silent> <cr> <cr><space><bs>
 
 " augroup AutoReIndentAfterPaste
 "     autocmd!

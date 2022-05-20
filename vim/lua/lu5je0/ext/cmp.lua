@@ -100,6 +100,7 @@ local function comfirm(fallback)
     utils.feedkey('<Plug>(vsnip-jump-next)', '')
   else
     fallback()
+    utils.feedkey('<space><bs>', '')
   end
 end
 
