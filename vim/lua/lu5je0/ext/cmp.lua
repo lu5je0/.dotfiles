@@ -105,6 +105,9 @@ local function comfirm(fallback)
 end
 
 cmp.setup {
+  -- window = {
+  --   documentation = cmp.config.disable
+  -- },
   snippet = {
     expand = function(args)
       vim.fn['vsnip#anonymous'](args.body) -- For `vsnip` users.
@@ -171,7 +174,7 @@ cmp.setup {
       })[entry.source.name]
       return vim_item
     end,
-  }
+  },
 }
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).

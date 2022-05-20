@@ -1,8 +1,10 @@
 local M = {}
 
-local servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls', 'yamlls', 'tsserver' }
+local servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls', 'yamlls', 'tsserver', 'clangd', 'jdtls' }
 
-require('nvim-lsp-installer').setup { ensure_installed = servers }
+require('nvim-lsp-installer').setup {
+  -- ensure_installed = servers
+}
 
 local lspconfig = require("lspconfig")
 
