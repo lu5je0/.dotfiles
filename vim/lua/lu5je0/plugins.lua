@@ -141,6 +141,7 @@ return packer.startup(function(use)
     config = function()
       require('lu5je0.ext.bufferline')
     end,
+    branch = 'main',
     requires = { 'nvim-web-devicons' },
   }
 
@@ -243,10 +244,8 @@ return packer.startup(function(use)
   use('lu5je0/vim-base64')
 
   -- themes
-  use('lu5je0/vim-one')
-  use('lu5je0/one-nvim')
   use('sainnhe/sonokai')
-
+  use('sainnhe/gruvbox-material')
   use {
     'sainnhe/edge',
     on_compile = function()
@@ -259,9 +258,6 @@ return packer.startup(function(use)
       vim.cmd [[ hi! Folded guifg=#282c34 guibg=#5c6370 ]]
     end
   }
-
-  use('gruvbox-community/gruvbox')
-
   -- use {
   --   'Mofiqul/vscode.nvim',
   --   config = function()
@@ -284,7 +280,6 @@ return packer.startup(function(use)
   --     vim.g.loaded_fern_git_status = 1
   --   end
   -- }
-
   use {
     'lambdalisue/fern.vim',
     opt = true,

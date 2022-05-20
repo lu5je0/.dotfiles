@@ -37,7 +37,9 @@ vim.api.nvim_create_autocmd({ 'BufDelete' }, {
 local bl = require('bufferline')
 bl.setup {
   options = {
-    numbers = 'ordinal',
+    numbers = function(opts)
+      return string.format('%s', opts.raise(opts.ordinal))
+    end,
     offsets = {
       {
         filetype = 'dbui',
