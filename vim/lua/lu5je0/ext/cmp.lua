@@ -1,5 +1,5 @@
 local cmp = require('cmp')
-local utils = require('lu5je0.core.keys')
+local keys_helper = require('lu5je0.core.keys')
 local indent_change_items = {
   'endif',
   'end',
@@ -97,10 +97,10 @@ local function comfirm(fallback)
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
   elseif vim.fn['vsnip#jumpable'](1) == 1 then
-    utils.feedkey('<Plug>(vsnip-jump-next)', '')
+    keys_helper.feedkey('<Plug>(vsnip-jump-next)')
   else
     fallback()
-    utils.feedkey('<space><bs>', '')
+    keys_helper.feedkey('<space><bs>')
   end
 end
 

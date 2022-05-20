@@ -2,6 +2,7 @@
 local M = {}
 
 local lib = require('nvim-tree.lib')
+local keys_helper = require('lu5je0.core.keys')
 
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
@@ -80,7 +81,7 @@ function M.remove()
   if is_remove_cur_file and substitute_buf_id == nil then
     vim.cmd("vnew")
     vim.cmd('NvimTreeResize ' .. cur_width)
-    require('lu5je0.core.keys').feedkey('<c-w>p', '')
+    keys_helper.feedkey('<c-w>p')
   end
 end
 
@@ -398,7 +399,7 @@ function M.setup()
   
   vim.defer_fn(function()
     if vim.bo.filetype == 'NvimTree' then
-      require('lu5je0.core.keys').feedkey('<c-w>p', '')
+      keys_helper.feedkey('<c-w>p')
     end
   end, 0)
 end
