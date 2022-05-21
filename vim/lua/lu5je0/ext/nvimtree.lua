@@ -162,7 +162,13 @@ function M.open_node()
 end
 
 function M.close_node()
+  local node = lib.get_node_at_cursor()
   require('nvim-tree.actions').on_keypress('close_node')
+  if vim.fn.getcwd() == '/' then
+    if node ~= lib.get_node_at_cursor() then
+      keys_helper.feedkey('k')
+    end
+  end
 end
 
 function M.toggle_width()
