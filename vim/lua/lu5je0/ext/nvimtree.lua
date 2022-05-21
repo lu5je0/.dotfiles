@@ -275,7 +275,7 @@ function M.setup()
 
   local view = require('nvim-tree.view')
   view.View.winopts.signcolumn = 'no'
-  view.View.winopts.foldcolumn = 1
+  view.View.winopts.foldcolumn = '1'
 
   -- default mappings
   local list = {
