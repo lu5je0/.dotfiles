@@ -8,6 +8,24 @@
     ],
     "description": "Code snippet for 'for' loop"
   },
+  "while": {
+    "prefix": "while",
+    "body": [
+      "while ($1) {",
+      "    $2",
+      "}"
+    ],
+    "description": "sout"
+  },
+  "psvm": {
+    "prefix": "psvm",
+    "body": [
+      "public static void main(String[] args) {",
+      "    $0",
+      "}"
+    ],
+    "description": "sout"
+  },
   "sout": {
     "prefix": "sout",
     "body": [

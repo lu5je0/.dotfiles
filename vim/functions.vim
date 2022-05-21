@@ -167,3 +167,22 @@ function! EscapeText(text)
 
     return l:escaped_text
 endfunction
+
+function! MarkdownFold() abort
+  let line = getline(v:lnum)
+
+  if line =~# '^#\+ ' && s:NotCodeBlock(v:lnum)
+    return ">" . match(line, ' ')
+  endif
+
+  let nextline = getline(v:lnum + 1)
+  if (line =~ '^.\+$') && (nextline =~ '^=\+$') && s:NotCodeBlock(v:lnum + 1)
+    return ">1"
+  endif
+
+  if (line =~ '^.\+$') && (nextline =~ '^-\+$') && s:NotCodeBlock(v:lnum + 1)
+    return ">2"
+  endif
+
+  return "="
+endfunction

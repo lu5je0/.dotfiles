@@ -141,7 +141,7 @@ return packer.startup(function(use)
     config = function()
       require('lu5je0.ext.bufferline')
     end,
-    branch = 'main',
+    -- branch = 'main',
     requires = { 'nvim-web-devicons' },
   }
 
