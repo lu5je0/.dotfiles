@@ -112,7 +112,7 @@ local function config()
     server.setup(opts)
   end
 
-  vim.cmd("LspStart")
+  -- vim.cmd("LspStart")
 end
 
 function M.setup()

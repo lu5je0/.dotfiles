@@ -5,7 +5,7 @@ end
 
 local packer = require('packer')
 packer.init {
-  max_jobs = 30,
+  max_jobs = 15,
 }
 
 vim.api.nvim_create_autocmd('BufWritePost', {
