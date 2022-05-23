@@ -20,10 +20,12 @@ for _, module in ipairs(core_modules) do
   end
 end
 
-if vim.fn.has('wsl') == 1 then
-  require('lu5je0.misc.im.win.im').boostrap()
-elseif vim.fn.has('mac') == 1 then
-  require('lu5je0.misc.im.mac.im')
+if vim.g.gonvim_running == nil then
+  if vim.fn.has('wsl') == 1 then
+    require('lu5je0.misc.im.win.im').boostrap()
+  elseif vim.fn.has('mac') == 1 then
+    require('lu5je0.misc.im.mac.im')
+  end
 end
 
 vim.cmd [[

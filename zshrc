@@ -181,3 +181,21 @@ source ~/.ohmyenv
 # if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
 #   exec tmux
 # fi
+
+setopt ignore_eof
+function bash-ctrl-d() {
+  if [[ $CURSOR == 0 && -z $BUFFER ]] then
+    [[ -z $IGNOREEOF || $IGNOREEOF == 0 ]] && exit
+    if [[ "$LASTWIDGET" == "bash-ctrl-d" ]] then
+      (( --__BASH_IGNORE_EOF <= 1 )) && exit
+    else
+      echo 'repeat ^D to exit shell'
+      (( __BASH_IGNORE_EOF = IGNOREEOF ))
+    fi
+  else
+    zle delete-char-or-list
+  fi
+}
+export IGNOREEOF=2
+zle -N bash-ctrl-d
+bindkey '^D' bash-ctrl-d
