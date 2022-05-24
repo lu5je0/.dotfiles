@@ -52,7 +52,7 @@ treesitter.define_modules {
       silent! xunmap <buffer> V
       ]])
     end,
-    is_supported = require('nvim-treesitter.query').has_folds,
+    -- is_supported = require('nvim-treesitter.query').has_folds,
   },
 }
 

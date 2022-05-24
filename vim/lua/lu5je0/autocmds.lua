@@ -15,8 +15,7 @@ vim.api.nvim_create_autocmd('BufWinEnter', {
   pattern = '*',
   callback = function()
     if vim.fn.line2byte(vim.fn.line('$') + 1) > 1024 * 1024 * 3 then
-      vim.cmd("echom 'syntax cleared on large file'")
-      vim.cmd('syntax clear')
+      vim.cmd('silent! syntax clear')
     end
   end,
 })
