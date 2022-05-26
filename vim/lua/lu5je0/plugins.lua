@@ -139,6 +139,7 @@ return packer.startup(function(use)
   use {
     'lu5je0/bufferline.nvim',
     config = function()
+      vim.g.bufferline_separator = true
       require('lu5je0.ext.bufferline')
     end,
     -- branch = 'main',

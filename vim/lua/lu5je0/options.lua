@@ -1,6 +1,11 @@
 local opt = vim.opt
 local g = vim.g
-local has = function(...) return vim.fn.has(...) == 1 end
+local has = function(feature)
+  if feature == 'gui' then
+    return vim.g.gonvim_running
+  end
+  return vim.fn.has(feature) == 1
+end
 
 opt.mouse = "a"
 opt.hlsearch = true
@@ -100,6 +105,10 @@ end
 
 if has('mac') then
   vim.g.python3_host_prog = '/usr/local/bin/python3'
+end
+
+if has('gui') then
+  vim.o.guifontwide ='Microsoft YaHei UI'
 end
 
 local defer_options = {
