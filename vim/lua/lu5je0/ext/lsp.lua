@@ -1,10 +1,16 @@
 local M = {}
 
-local servers = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls', 'yamlls', 'tsserver', 'clangd', 'jdtls' }
-
 require('nvim-lsp-installer').setup {
-  -- ensure_installed = servers
+  ensure_installed = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls', 'yamlls' }
 }
+
+local installed_server_names = (function()
+  local r = {}
+  for _, v in pairs(require('nvim-lsp-installer').get_installed_servers()) do
+    table.insert(r, v.name)
+  end
+  return r;
+end)()
 
 local lspconfig = require("lspconfig")
 
@@ -89,7 +95,7 @@ end
 local function config()
   local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
-  for _, server_name in ipairs(servers) do
+  for _, server_name in pairs(installed_server_names) do
     local server = lspconfig[server_name]
 
     local opts = {
@@ -103,6 +109,8 @@ local function config()
       opts.on_attach = sumneko_lua_config.on_attach(opts.on_attach)
       opts = sumneko_lua_config.wrap_opts(opts)
     elseif server_name == 'pyright' then
+      opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
+    elseif server_name == 'tsserver' then
       opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
     elseif server_name == 'tsserver' then
       opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
