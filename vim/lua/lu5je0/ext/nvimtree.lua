@@ -13,7 +13,7 @@ function M.locate_file()
   if cur_file_dir_path == '' then
     return
   end
-  
+
   local cwd = vim.fn.getcwd()
   if not string.startswith(cur_file_dir_path, cwd) then
     vim.cmd(':cd ' .. cur_file_dir_path)
@@ -62,8 +62,8 @@ function M.remove()
         end
         local path = vim.fn.expand("#" .. tostring(buf_id) .. ":p")
         if path ~= lib.get_node_at_cursor().absolute_path
-          and vim.bo[buf_id].buftype == ''
-          and not string.find(path, 'undotree')
+            and vim.bo[buf_id].buftype == ''
+            and not string.find(path, 'undotree')
         then
           substitute_buf_id = buf_id
           break
@@ -109,7 +109,7 @@ function M.create_dir()
     end
     origin_input(input_opts, fn)
   end
-  require'nvim-tree.actions'.on_keypress('create')
+  require 'nvim-tree.actions'.on_keypress('create')
   vim.ui.input = origin_input
 end
 
@@ -200,47 +200,6 @@ function M.reduce_width(w)
 end
 
 function M.setup()
-  vim.g.nvim_tree_icons = {
-    default = '',
-    symlink = '',
-    git = {
-      unstaged = '✗',
-      staged = '✓',
-      unmerged = '',
-      renamed = '➜',
-      untracked = '★',
-      deleted = '',
-      ignored = '◌',
-    },
-    actions = {
-      change_dir = {
-        enable_dir = {
-          enable = false,
-          global = true,
-        },
-      },
-    },
-    folder = {
-      arrow_open = ' ',
-      arrow_closed = ' ',
-      default = '',
-      open = '',
-      empty = '',
-      empty_open = '',
-      symlink = '',
-      symlink_open = '',
-    },
-  }
-  vim.g.nvim_tree_show_icons = {
-    git = 1,
-    folders = 1,
-    files = 1,
-    folder_arrows = 1,
-  }
-  vim.g.nvim_tree_special_files = {}
-  vim.g.nvim_tree_add_trailing = 1
-  vim.g.nvim_tree_create_in_closed_folder = 1
-
   vim.cmd([[
     hi NvimTreeFolderName guifg=#e5c07b
     hi Directory ctermfg=107 guifg=#61afef
@@ -293,7 +252,7 @@ function M.setup()
     { key = '-', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(2)<cr>" },
     { key = '+', cb = ":lua require('lu5je0.ext.nvimtree').increase_width(1)<cr>" },
     { key = '_', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(1)<cr>" },
-    { key = '<space>', cb = ":lua require('lu5je0.ext.nvimtree').preview()<cr>" },
+    { key = 'v', cb = ":lua require('lu5je0.ext.nvimtree').preview()<cr>" },
     { key = 'x', cb = ":lua require('lu5je0.ext.nvimtree').toggle_width()<cr>" },
     { key = 'mk', cb = ":lua require('lu5je0.ext.nvimtree').create_dir()<cr>" },
     { key = 'D', cb = ":lua require('lu5je0.ext.nvimtree').remove()<cr>" },
@@ -335,6 +294,7 @@ function M.setup()
     disable_netrw = true,
     hijack_netrw = true,
     open_on_setup = false,
+    create_in_closed_folder = true,
     ignore_ft_on_setup = {},
     open_on_tab = false,
     hijack_cursor = false,
@@ -377,8 +337,41 @@ function M.setup()
         enable = true,
       },
       icons = {
-        -- git_placement = 'after'
-      }
+        webdev_colors = true,
+        git_placement = "before",
+        padding = " ",
+        symlink_arrow = " ➛ ",
+        show = {
+          file = true,
+          folder = true,
+          folder_arrow = true,
+          git = true,
+        },
+        glyphs = {
+          default = "",
+          symlink = "",
+          folder = {
+            arrow_closed = "",
+            arrow_open = "",
+            default = "",
+            open = "",
+            empty = "",
+            empty_open = "",
+            symlink = "",
+            symlink_open = "",
+          },
+          git = {
+            unstaged = "✗",
+            staged = "✓",
+            unmerged = "",
+            renamed = "➜",
+            untracked = "★",
+            deleted = "",
+            ignored = "◌",
+          },
+        },
+      },
+      special_files = {},
     },
     view = {
       width = 27,
@@ -397,12 +390,12 @@ function M.setup()
     filetype = { 'notify', 'packer', 'qf', 'confirm', 'popup' },
     buftype = { 'terminal', 'nowrite' },
   }
-  
+
   require('lu5je0.ext.nvimtree.hover-popup')
 
   M.pwd_stack:push(vim.fn.getcwd())
   M.loaded = true
-  
+
   vim.defer_fn(function()
     if vim.bo.filetype == 'NvimTree' then
       keys_helper.feedkey('<c-w>p')
