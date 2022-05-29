@@ -391,7 +391,7 @@ function M.setup()
     buftype = { 'terminal', 'nowrite' },
   }
 
-  require('lu5je0.ext.nvimtree.hover-popup')
+  -- require('lu5je0.ext.nvimtree.hover-popup')
 
   M.pwd_stack:push(vim.fn.getcwd())
   M.loaded = true

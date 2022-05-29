@@ -571,7 +571,9 @@ return packer.startup(function(use)
   }
 
   use {
-    'kyazdani42/nvim-tree.lua',
+    -- '~/nvim-tree.lua',
+    'lu5je0/nvim-tree.lua',
+    branch = 'feat/floating-node',
     requires = 'kyazdani42/nvim-web-devicons',
     keys = { '<leader>e', '<leader>fe' },
     on_compile = function()
