@@ -333,6 +333,7 @@ function M.setup()
       custom = {},
     },
     renderer = {
+      floating_node = true,
       indent_markers = {
         enable = true,
       },
