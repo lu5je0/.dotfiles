@@ -161,14 +161,28 @@ cmp.setup {
     --   return vim_item
     -- end,
     format = function(entry, vim_item)
+      local ELLIPSIS_CHAR = '…'
+      local MAX_LABEL_WIDTH = 37
+      local MIN_LABEL_WIDTH = 0
+      local label = vim_item.abbr
+      local truncated_label = vim.fn.strcharpart(label, 0, MAX_LABEL_WIDTH)
+      if truncated_label ~= label then
+        vim_item.abbr = truncated_label .. ELLIPSIS_CHAR
+      elseif string.len(label) < MIN_LABEL_WIDTH then
+        local padding = string.rep(' ', MIN_LABEL_WIDTH - string.len(label))
+        vim_item.abbr = label .. padding
+      end
+
       -- Kind icons
-      vim_item.kind = string.format('%s %s', kind_icons[vim_item.kind], vim_item.kind) -- This concatonates the icons with the name of the item kind
+      -- vim_item.kind = string.format('%s %s', kind_icons[vim_item.kind], vim_item.kind)
+      vim_item.kind = string.format(' %s', kind_icons[vim_item.kind])
       -- Source
       vim_item.menu = ({
         buffer = '[B]',
         nvim_lsp = '[L]',
         ultisnips = '[U]',
-        luasnip = '[LuaSnip]',
+        luasnip = '[S]',
+        vsnip = '[S]',
         nvim_lua = '[Lua]',
         latex_symbols = '[LaTeX]',
       })[entry.source.name]
