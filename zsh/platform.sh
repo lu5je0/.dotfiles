@@ -35,6 +35,7 @@ elif [[ $UNAME_INFO =~ "microsoft" ]]; then
     alias gaa='__git_prompt_git add -A'
     alias gc='__git_prompt_git commit'
     alias gd='__git_prompt_git diff'
+    alias grep='grep --color'
     alias e='explorer.exe'
     alias yy='win32yank.exe -i'
     alias p='win32yank.exe -o'
