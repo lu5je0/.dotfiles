@@ -208,6 +208,7 @@ function M.setup()
     hi NvimTreeEmptyFolderName guifg=#e5c07b
     hi NvimTreeRootFolder guifg=#e06c75
     hi NvimTreeGitDirty guifg=#e06c75
+    hi NvimTreeGitNew guifg=#c678dd
 
     autocmd DirChanged * lua require('lu5je0.ext.nvimtree').pwd_stack_push()
 
@@ -299,6 +300,10 @@ function M.setup()
     open_on_tab = false,
     hijack_cursor = false,
     update_cwd = true,
+    filesystem_watchers = {
+      enable = true,
+      interval = 500,
+    },
     diagnostics = {
       enable = false,
       icons = {
@@ -366,7 +371,7 @@ function M.setup()
             staged = "✓",
             unmerged = "",
             renamed = "➜",
-            untracked = "★",
+            untracked = "",
             deleted = "",
             ignored = "◌",
           },
