@@ -511,7 +511,9 @@ return packer.startup(function(use)
   use {
     'jose-elias-alvarez/null-ls.nvim',
     config = function()
-      require('lu5je0.ext.null-ls')
+      if vim.fn.has('nvim-0.8') == 0 then
+        require('lu5je0.ext.null-ls')
+      end
     end,
     defer = true,
   }
