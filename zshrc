@@ -30,8 +30,8 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 
 zinit snippet ~/.dotfiles/zsh/z/z.sh
 
-zinit ice lucid wait='1'
-zinit snippet ~/.dotfiles/zsh/platform-alias.sh
+# zinit ice lucid wait='1'
+zinit snippet ~/.dotfiles/zsh/platform.sh
 
 zinit ice lucid wait='1'
 zinit snippet ~/.dotfiles/zsh/functions.sh

@@ -3,7 +3,7 @@ local M = {}
 local scrollview = require('scrollview')
 
 M.begin_timer = function()
-  local visible_duration = 1100
+  local visible_duration = 1500
   local timer = nil
 
   -- hack mouse handel

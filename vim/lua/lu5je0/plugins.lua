@@ -139,6 +139,7 @@ return packer.startup(function(use)
   use {
     'lu5je0/bufferline.nvim',
     config = function()
+      vim.g.bufferline_separator = true
       require('lu5je0.ext.bufferline')
     end,
     -- branch = 'main',
@@ -491,18 +492,18 @@ return packer.startup(function(use)
           require('lu5je0.ext.lsp').setup()
         end,
       },
-      {
-        'stevearc/dressing.nvim',
-        config = function()
-          require('dressing').setup({
-            input = {
-            },
-            select = {
-              backend = { 'telescope', 'nui' },
-            }
-          })
-        end
-      }
+      -- {
+      --   'stevearc/dressing.nvim',
+      --   config = function()
+      --     require('dressing').setup({
+      --       input = {
+      --       },
+      --       select = {
+      --         backend = { 'telescope', 'nui' },
+      --       }
+      --     })
+      --   end
+      -- }
     }
   }
 

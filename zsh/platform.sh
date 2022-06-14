@@ -16,6 +16,11 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
     alias iterm='open -a iTerm .'
     export JAVA_HOME=$JAVA_HOME_11
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
+    
+    # iterm title bar
+    echo -en "\033]6;1;bg;red;brightness;44\a"
+    echo -en "\033]6;1;bg;green;brightness;46\a"
+    echo -en "\033]6;1;bg;blue;brightness;51\a"
 elif [[ $UNAME_INFO =~ "microsoft" ]]; then
     function __git_prompt_git() {
         if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]] ; then
@@ -30,6 +35,7 @@ elif [[ $UNAME_INFO =~ "microsoft" ]]; then
     alias gaa='__git_prompt_git add -A'
     alias gc='__git_prompt_git commit'
     alias gd='__git_prompt_git diff'
+    alias grep='grep --color'
     alias e='explorer.exe'
     alias yy='win32yank.exe -i'
     alias p='win32yank.exe -o'
