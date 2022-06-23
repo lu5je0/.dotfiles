@@ -193,7 +193,7 @@ ins_left {
 ins_left {
   function()
     -- return [[ %2p%% %l:%c ]]
-    return [[ %l:%c ]]
+    return [[ %l:%c]]
   end,
   padding = { left = 1, right = 0 },
   color = { fg = colors.violet },
@@ -210,7 +210,7 @@ ins_left {
   end,
   cond = require('nvim-gps').is_available,
   color = { fg = colors.white },
-  padding = { left = 0, right = 1 },
+  padding = { left = 1, right = 0 },
 }
 
 ins_right {

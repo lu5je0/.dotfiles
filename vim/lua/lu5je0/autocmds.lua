@@ -14,8 +14,8 @@ vim.api.nvim_create_autocmd('BufWinEnter', {
   group = M.default_group,
   pattern = '*',
   callback = function()
-    if vim.fn.line2byte(vim.fn.line('$') + 1) > 1024 * 1024 * 3 then
-      vim.cmd('set signcolumn=auto')
+    if vim.fn.line2byte(vim.fn.line('$') + 1) > 1024 * 1024 * 3 and not vim.b.gitsigns_status_dict then
+      vim.cmd('setlocal signcolumn=auto')
       vim.cmd('silent! syntax clear')
     end
   end,
