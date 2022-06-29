@@ -1,7 +1,7 @@
 local M = {}
 
 require('nvim-lsp-installer').setup {
-  ensure_installed = { 'sumneko_lua', 'pyright', 'jsonls', 'bashls', 'vimls', 'yamlls' }
+  ensure_installed = {}
 }
 
 local installed_server_names = (function()
