@@ -5,8 +5,9 @@ local env_keeper = require('lu5je0.misc.env-keeper').keeper({ terminal_direction
 
 M.send_to_terminal = function(cmd, opts)
   if opts == nil then
-    opts = {}
-    opts.go_back = 0
+    opts = {
+      go_back = 0
+    }
   end
 
   local v_cmd = "TermExec cmd='%s' go_back=" .. opts.go_back .. ' direction=' .. env_keeper.terminal_direction
@@ -27,16 +28,16 @@ M.run_select_in_terminal = function()
   M.send_to_terminal(vim.fn['visual#visual_selection']())
 end
 
-local function save_terminal_mode()
+local function keep_terminal_mode()
   vim.cmd([[
-  autocmd TermOpen * startinsert
+  autocmd TermOpen * startinsert | setlocal signcolumn=no
   autocmd TermEnter * let g:terminal_mode='i'
   autocmd BufEnter * if (&buftype ==# 'terminal' && get(g:, 'terminal_mode', 'i') == 'i') | startinsert! | endif
   ]])
 end
 
 M.setup = function()
-  save_terminal_mode()
+  keep_terminal_mode()
   require('toggleterm').setup {
     size = function(term)
       if term.direction == 'horizontal' then
@@ -75,11 +76,6 @@ M.setup = function()
   tmap <silent> <c-j> <c-\><c-n><c-w>j
   tmap <silent> <c-k> <c-\><c-n><c-w>k
   tmap <silent> <c-q> <c-\><c-n>:let g:terminal_mode='n'<cr>
-  
-  augroup TerminalConfig
-    autocmd!
-    autocmd TermOpen * setlocal signcolumn=no
-  augroup END
   ]])
 end
 
