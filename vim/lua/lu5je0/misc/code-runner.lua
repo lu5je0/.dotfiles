@@ -1,7 +1,10 @@
+---@diagnostic disable: missing-parameter
+
 local M = {}
+local expand = vim.fn.expand
 
 local function build_cmd_with_file(cmd)
-  return cmd .. ' ' .. vim.fn.expand('%:p')
+  return cmd .. ' ' .. expand('%:p')
 end
 
 local function execute_in_terminal(cmd, append_cmd)
@@ -9,11 +12,11 @@ local function execute_in_terminal(cmd, append_cmd)
   if append_cmd ~= nil then
     cmd = cmd .. ' && ' .. append_cmd
   end
-  require("lu5je0.ext.terminal").send_to_terminal(cmd, { go_back = 1 })
+  require("lu5je0.ext.terminal").send_to_terminal(cmd, { go_back = 0 })
 end
 
 local function special()
-  local fullpath = vim.fn.expand("%:p")
+  local fullpath = expand("%:p")
   if vim.bo.filetype == 'lua' and fullpath == '/home/lu5je0/.dotfiles/wezterm/wezterm.lua' and vim.fn.has('wsl') == 1 then
     vim.api.nvim_command('silent write')
     vim.fn.system('cp ' .. fullpath .. ' ' .. '/mnt/c/Users/73995/.wezterm.lua"')
