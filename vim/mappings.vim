@@ -194,11 +194,10 @@ vmap <silent> <Leader>sr <Plug>TranslateRV
 "----------------------------------------------------------------------
 " 繁体简体
 "----------------------------------------------------------------------
-vmap <leader>xq :!opencc -c t2s<cr>
-nmap <leader>xq :%!opencc -c t2s<cr>
-
-vmap <leader>xQ :!opencc -c s2t<cr>
-nmap <leader>xQ :%!opencc -c s2t<cr>
+vmap <leader>xz :!opencc -c t2s<cr>
+nmap <leader>xz :%!opencc -c t2s<cr>
+vmap <leader>xZ :!opencc -c s2t<cr>
+nmap <leader>xZ :%!opencc -c s2t<cr>
 
 
 "----------------------------------------------------------------------

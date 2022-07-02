@@ -38,4 +38,15 @@ function patch.fold_patch()
     end
   end
   vim.api.nvim_feedkeys('zc', 'n', true)
+  
+  vim.defer_fn(function()
+    vim.cmd [[IndentBlanklineRefresh]]
+  end, 0)
+end
+
+function patch.fold_open_patch()
+  vim.api.nvim_feedkeys('zo', 'n', true)
+  vim.defer_fn(function()
+    vim.cmd [[IndentBlanklineRefresh]]
+  end, 0)
 end
