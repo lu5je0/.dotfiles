@@ -21,7 +21,7 @@ function M.locate_file()
     -- dotfiles check
     if vim.fn.expand('%:p'):sub(#cwd + 2, #cwd + 2) == '.' then
       if require("nvim-tree.explorer.filters").config.filter_dotfiles then
-        require('nvim-tree.actions.toggles').dotfiles()
+        require'nvim-tree.actions.dispatch'.dispatch('dotfiles')
       end
     end
   end
@@ -77,7 +77,7 @@ function M.remove()
     vim.api.nvim_win_set_buf(cur_file_win_id, substitute_buf_id)
   end
   local cur_width = vim.api.nvim_win_get_width(0)
-  require('nvim-tree.actions').on_keypress('remove')
+  require'nvim-tree.actions.dispatch'.dispatch('remove')
   if is_remove_cur_file and substitute_buf_id == nil then
     vim.cmd("vnew")
     vim.cmd('NvimTreeResize ' .. cur_width)
@@ -89,7 +89,7 @@ function M.edit()
   if _G.preview_popup then
     _G.preview_popup:unmount()
   end
-  require('nvim-tree.actions').on_keypress('edit')
+  require'nvim-tree.actions.dispatch'.dispatch('edit')
 end
 
 function M.pwd_stack_push()
@@ -109,7 +109,7 @@ function M.create_dir()
     end
     origin_input(input_opts, fn)
   end
-  require 'nvim-tree.actions'.on_keypress('create')
+  require'nvim-tree.actions.dispatch'.dispatch('create')
   vim.ui.input = origin_input
 end
 
@@ -129,7 +129,7 @@ function M.forward()
 end
 
 function M.cd()
-  require('nvim-tree.actions').on_keypress('cd')
+  require'nvim-tree.actions.dispatch'.dispatch('cd')
   vim.cmd('norm gg')
 end
 
@@ -158,12 +158,12 @@ function M.open_node()
       end
     end)
   end
-  require('nvim-tree.actions').on_keypress('edit')
+  require'nvim-tree.actions.dispatch'.dispatch('edit')
 end
 
 function M.close_node()
   local node = lib.get_node_at_cursor()
-  require('nvim-tree.actions').on_keypress('close_node')
+  require'nvim-tree.actions.dispatch'.dispatch('close_node')
   if vim.fn.getcwd() == '/' then
     if node ~= lib.get_node_at_cursor() then
       keys_helper.feedkey('k')
@@ -350,7 +350,7 @@ function M.setup()
         show = {
           file = true,
           folder = true,
-          folder_arrow = true,
+          folder_arrow = false,
           git = true,
         },
         glyphs = {
