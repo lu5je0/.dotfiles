@@ -37,7 +37,7 @@ null_ls.setup {
     --   extra_args = { '--config-path', vim.fn.stdpath('config') .. '/stylua.toml' },
     -- },
     require('null-ls').builtins.formatting.autopep8,
-    require('lu5je0.ext.null-ls-extra.sql-formatter'),
+    require('lu5je0.ext.null-ls.sql-formatter'),
     -- require("null-ls").builtins.code_actions.refactoring
     -- require("null-ls").builtins.diagnostics.eslint,
     -- require("null-ls").builtins.completion.spell,

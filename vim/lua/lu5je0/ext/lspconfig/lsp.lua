@@ -85,25 +85,30 @@ local function config()
     }
 
     if server_name == 'sumneko_lua' then
-      local sumneko_lua_config = require('lu5je0.ext.lsp-config.sumneke-lua-config')
+      local sumneko_lua_config = require('lu5je0.ext.lspconfig.lspservers.sumneke-lua-config')
       opts.settings = sumneko_lua_config.settings
       opts.on_attach = sumneko_lua_config.on_attach(opts.on_attach)
       opts = sumneko_lua_config.wrap_opts(opts)
     elseif server_name == 'pyright' then
-      opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
+      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
     elseif server_name == 'tsserver' then
-      opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
+      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
     elseif server_name == 'tsserver' then
-      opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
-      -- opts.root_dir = require('lu5je0.ext.lsp-config.tsserver').root_dir(server.document_config.default_config.root_dir);
+      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
+      -- opts.root_dir = require('lu5je0.ext.lspconfig.lspservers.tsserver').root_dir(server.document_config.default_config.root_dir);
     elseif server_name == 'jdtls' then
-      -- opts.on_init = require('lu5je0.ext.lsp-config.pyright-config').on_init
+      -- opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
     end
 
     server.setup(opts)
   end
 
-  -- vim.cmd("LspStart")
+  vim.lsp.handlers['textDocument/signatureHelp'] = vim.lsp.with(
+    vim.lsp.handlers.signature_help, {
+    border = 'rounded',
+    close_events = { 'InsertLeave' },
+    focusable = false
+  })
 end
 
 function M.setup()
