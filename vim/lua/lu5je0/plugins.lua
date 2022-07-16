@@ -507,7 +507,6 @@ return packer.startup(function(use)
     }
   }
 
-  use { 'ray-x/lsp_signature.nvim' }
   use { 'max397574/lua-dev.nvim' }
   use {
     'jose-elias-alvarez/null-ls.nvim',
