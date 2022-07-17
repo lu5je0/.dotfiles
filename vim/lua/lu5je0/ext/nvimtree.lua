@@ -286,6 +286,7 @@ function M.setup()
     { key = 'u', action = 'dir_up' },
     { key = 'o', action = 'system_open' },
     { key = 'q', action = 'close' },
+    { key = '<space>', action = 'toggle_mark' },
     { key = 'g?', action = 'toggle_help' },
     { key = '<c-o>', action = 'backward', action_cb = M.back },
     { key = { '<tab>', '<c-i>' }, action = 'forward', action_cb = M.forward },
