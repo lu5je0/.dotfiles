@@ -199,6 +199,7 @@ ins_left {
   color = { fg = colors.violet },
 }
 
+local gps_ft_white_list = { 'json' }
 ins_left {
   function()
     return require('nvim-gps').get_location()
@@ -208,7 +209,9 @@ ins_left {
     local ok = pcall(require, 'nvim-gps')
     return ok
   end,
-  cond = require('nvim-gps').is_available,
+  cond = function()
+    return table.contain(gps_ft_white_list, vim.bo.filetype) and require('nvim-gps').is_available()
+  end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },
 }
