@@ -38,7 +38,7 @@ local function defer_loads()
   vim.cmd('PackerLoad ' .. _G.__defer_plugins[i])
   i = i + 1
   if i <= #_G.__defer_plugins then
-    vim.defer_fn(defer_loads, 3)
+    vim.defer_fn(defer_loads, 1)
   end
 end
 
