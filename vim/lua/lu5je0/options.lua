@@ -1,4 +1,4 @@
-local opt = vim.opt
+local o = vim.o
 local g = vim.g
 local has = function(feature)
   if feature == 'gui' then
@@ -7,54 +7,54 @@ local has = function(feature)
   return vim.fn.has(feature) == 1
 end
 
-opt.mouse = "a"
-opt.hlsearch = true
-opt.ignorecase = true
-opt.incsearch = true
-opt.splitbelow = true -- 默认在下侧分屏
-opt.splitright = true -- 默认在右侧分屏
-opt.shadafile = 'NONE'
-opt.wrap = false
+o.mouse = "a"
+o.hlsearch = true
+o.ignorecase = true
+o.incsearch = true
+o.splitbelow = true -- 默认在下侧分屏
+o.splitright = true -- 默认在右侧分屏
+o.shadafile = 'NONE'
+o.wrap = false
 
-opt.completeopt = 'menu,menuone,noselect'
+o.completeopt = 'menu,menuone,noselect'
 
-opt.number = true
-opt.numberwidth = 3
+o.number = true
+o.numberwidth = 3
 
-opt.laststatus = 2
-opt.showmode = false
--- opt.cursorline = true
-opt.undofile = true
-opt.foldmethod = 'manual'
-opt.foldlevel = 99 -- 打开文件默认不折叠
-opt.hidden = true
-opt.updatetime = 100
-opt.signcolumn = 'yes:1'
+o.laststatus = 2
+o.showmode = false
+-- o.cursorline = true
+o.undofile = true
+o.foldmethod = 'manual'
+o.foldlevel = 99 -- 打开文件默认不折叠
+o.hidden = true
+o.updatetime = 100
+o.signcolumn = 'yes:1'
 
 -- encodeing
-opt.fileformat = 'unix'
-opt.encoding = 'utf8'
-opt.fileencoding = 'utf-8'
-opt.fileencodings = 'ucs-bom,utf-8,gb18030,utf-16,big5,ISO-8859,latin1'
+o.fileformat = 'unix'
+o.encoding = 'utf8'
+o.fileencoding = 'utf-8'
+o.fileencodings = 'ucs-bom,utf-8,gb18030,utf-16,big5,ISO-8859,latin1'
 
 -- indent
-opt.tabstop = 4
-opt.shiftwidth = 4
-opt.softtabstop = 4
-opt.expandtab = true
-opt.autoindent = true
+o.tabstop = 4
+o.shiftwidth = 4
+o.softtabstop = 4
+o.expandtab = true
+o.autoindent = true
 
 -- filetype.lua
 g.did_load_filetypes = 0
 g.do_filetype_lua = 1
 
 -- 不显示启动界面
-opt.shortmess = 'atI'
-opt.foldtext = 'misc#fold_text()'
+o.shortmess = 'atI'
+o.foldtext = 'misc#fold_text()'
 
 -- colorscheme
-opt.termguicolors = true
-opt.bg = 'dark'
+o.termguicolors = true
+o.bg = 'dark'
 vim.cmd [[
 colorscheme edge
 
@@ -113,11 +113,11 @@ end
 
 local defer_options = {
   function()
-    opt.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
+    o.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
     vim.cmd [[ silent! rsh ]]
   end,
   function()
-    opt.clipboard = 'unnamedplus'
+    o.clipboard = 'unnamedplus'
     vim.cmd [[ packadd matchit ]]
   end
 }
