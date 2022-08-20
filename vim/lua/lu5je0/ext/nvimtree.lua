@@ -379,6 +379,7 @@ function M.setup()
         },
       },
       special_files = {},
+      symlink_destination = false,
     },
     view = {
       width = 27,
