@@ -547,7 +547,8 @@ return packer.startup(function(use)
     'lukas-reineke/indent-blankline.nvim',
     config = function()
       vim.g.indent_blankline_char = '▏'
-      vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm', 'confirm' }
+      vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer',
+        'lsp-installer', 'toggleterm', 'confirm' }
       -- vim.g.indent_blankline_filetype = _G.indent_blankline_filetypes
       vim.g.indent_blankline_show_first_indent_level = false
       vim.g.indent_blankline_show_trailing_blankline_indent = false
@@ -611,6 +612,13 @@ return packer.startup(function(use)
     defer = true,
     config = function()
       require('lu5je0.ext.scrollview').setup()
+    end
+  }
+
+  use {
+    'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async',
+    config = function()
+      -- require('lu5je0.ext.nvim-ufo').setup()
     end
   }
 
