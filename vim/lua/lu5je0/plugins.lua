@@ -618,7 +618,7 @@ return packer.startup(function(use)
   use {
     'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async',
     config = function()
-      -- require('lu5je0.ext.nvim-ufo').setup()
+      require('lu5je0.ext.nvim-ufo')
     end
   }
 

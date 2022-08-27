@@ -68,11 +68,6 @@ local function on_attach(client, bufnr)
   
   -- nvim-ufo
   -- require('ufo').setup()
-  require('ufo').setup({
-    provider_selector = function(bufnr, filetype, buftype)
-      return {'treesitter', 'indent'}
-    end
-  })
   
   vim.cmd [[
   " cursor word highlight

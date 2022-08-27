@@ -25,28 +25,3 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.api.nvim_buf_set_name(0, buf_name)
   end,
 })
-
--- 修复set filetype后无法使用treesitter fold
-function patch.fold_patch()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  if vim.fn.foldlevel(cursor[1]) == 0 then
-    vim.api.nvim_buf_set_lines(0, cursor[1], cursor[1], false, vim.api.nvim_buf_get_lines(0, cursor[1], cursor[1], true))
-    if vim.fn.has('nvim-0.8') == 1 then
-      vim.cmd("undo!")
-    else
-      vim.cmd("undo")
-    end
-  end
-  vim.api.nvim_feedkeys('zc', 'n', true)
-  
-  vim.defer_fn(function()
-    vim.cmd [[IndentBlanklineRefresh]]
-  end, 0)
-end
-
-function patch.fold_open_patch()
-  vim.api.nvim_feedkeys('zo', 'n', true)
-  vim.defer_fn(function()
-    vim.cmd [[IndentBlanklineRefresh]]
-  end, 0)
-end
