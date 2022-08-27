@@ -457,7 +457,6 @@ return packer.startup(function(use)
 
   use {
     'windwp/nvim-autopairs',
-    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
     defer = true,
     config = function()
       require('nvim-autopairs').setup {}
