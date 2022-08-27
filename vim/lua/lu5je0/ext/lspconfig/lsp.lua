@@ -65,6 +65,10 @@ local function on_attach(client, bufnr)
 
   -- illuminate
   require('illuminate').on_attach(client)
+  
+  -- nvim-ufo
+  -- require('ufo').setup()
+  
   vim.cmd [[
   " cursor word highlight
   highlight LspReferenceText guibg=none gui=none
@@ -75,6 +79,12 @@ end
 
 local function config()
   local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+  
+  -- nvim-ufo
+  capabilities.textDocument.foldingRange = {
+    dynamicRegistration = false,
+    lineFoldingOnly = true
+  }
 
   for _, server_name in pairs(installed_server_names) do
     local server = lspconfig[server_name]

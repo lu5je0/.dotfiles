@@ -14,63 +14,88 @@ require('nvim-treesitter.configs').setup {
   },
 }
 
-
-local foldmethod_backups = {}
-local foldexpr_backups = {}
-local fold_skip_filetypes = { 'markdown' }
+-- incremental select
 treesitter.define_modules {
-  folding = {
+  incremental_select = {
     enable = true,
-    attach = function(bufnr)
-      if table.contain(fold_skip_filetypes, vim.bo.filetype) then
-        return
-      end
-      -- Fold settings are actually window based...
-      foldmethod_backups[bufnr] = vim.wo.foldmethod
-      foldexpr_backups[bufnr] = vim.wo.foldexpr
-      vim.wo.foldmethod = 'expr'
-      vim.wo.foldexpr = 'nvim_treesitter#foldexpr()'
+    attach = function()
       vim.cmd([[
-      nmap <buffer> <silent> zc :lua _G.__patch.fold_patch()<cr>
-      nmap <buffer> <silent> zo :lua _G.__patch.fold_open_patch()<cr>
       xmap <buffer> <silent> v <esc>m':lua require'nvim-treesitter.incremental_selection'.node_incremental()<CR>
       xmap <buffer> <silent> V <esc>:lua require'nvim-treesitter.incremental_selection'.node_decremental()<CR>
       ]])
     end,
-    detach = function(bufnr)
-      if foldmethod_backups[bufnr] == nil then
-        foldmethod_backups[bufnr] = 'manual'
-        foldexpr_backups[bufnr] = ''
-      end
-      vim.wo.foldmethod = foldmethod_backups[bufnr]
-      vim.wo.foldexpr = foldexpr_backups[bufnr]
-      foldmethod_backups[bufnr] = nil
-      foldexpr_backups[bufnr] = nil
-
+    detach = function()
       vim.cmd([[
-      silent! nunmap <buffer> zc
       silent! xunmap <buffer> v
       silent! xunmap <buffer> V
       ]])
+    end
+  }
+}
+
+local fold_helper = {
+  -- 修复set filetype后无法使用treesitter fold
+  fold_patch = function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    if vim.fn.foldlevel(cursor[1]) == 0 then
+      vim.api.nvim_buf_set_lines(0, cursor[1], cursor[1], false,
+        vim.api.nvim_buf_get_lines(0, cursor[1], cursor[1], true))
+      if vim.fn.has('nvim-0.8') == 1 then
+        vim.cmd("undo!")
+      else
+        vim.cmd("undo")
+      end
+    end
+    vim.api.nvim_feedkeys('zc', 'n', true)
+
+    vim.defer_fn(function()
+      vim.cmd [[IndentBlanklineRefresh]]
+    end, 0)
+  end,
+  fold_open_patch = function()
+    vim.api.nvim_feedkeys('zo', 'n', true)
+    vim.defer_fn(function()
+      vim.cmd [[IndentBlanklineRefresh]]
+    end, 0)
+  end,
+  foldmethod_backups = {},
+  foldexpr_backups = {}
+}
+
+treesitter.define_modules {
+  folding = {
+    enable = true,
+    attach = function(bufnr)
+      -- local fold_skip_filetypes = { 'markdown' }
+      -- if table.contain(fold_skip_filetypes, vim.bo.filetype) then
+      --   return
+      -- end
+      -- foldmethod_backups[bufnr] = vim.wo.foldmethod
+      -- foldexpr_backups[bufnr] = vim.wo.foldexpr
+      -- vim.wo.foldmethod = 'expr'
+      -- vim.wo.foldexpr = 'nvim_treesitter#foldexpr()'
+      -- vim.cmd[[
+      -- nmap <buffer> <silent> zc :lua _G.__patch.fold_patch()<cr>
+      -- nmap <buffer> <silent> zo :lua _G.__patch.fold_open_patch()<cr>
+      -- ]]
     end,
-    -- is_supported = require('nvim-treesitter.query').has_folds,
+    detach = function(bufnr)
+      -- if foldmethod_backups[bufnr] == nil then
+      --   foldmethod_backups[bufnr] = 'manual'
+      --   foldexpr_backups[bufnr] = ''
+      -- end
+      -- vim.wo.foldmethod = foldmethod_backups[bufnr]
+      -- vim.wo.foldexpr = foldexpr_backups[bufnr]
+      -- foldmethod_backups[bufnr] = nil
+      -- foldexpr_backups[bufnr] = nil
+      -- vim.cmd[[
+      -- silent! nunmap <buffer> zc
+      -- ]]
+    end,
   },
 }
 
+-- highlights
 vim.cmd([[
 hi TSPunctBracket guifg=#ABB2BF
-
-" hi! TSTitle ctermfg=168 guifg=#e06c75
-" hi! link TSURI markdownUrl
-" hi! link TSStrong markdownBold
 ]])
-
--- local parsers = require('nvim-treesitter.parsers').available_parsers()
--- table.remove_by_value(parsers, 'markdown')
--- vim.cmd(([[
---
--- augroup ts_fold_fix
---     autocmd!
---     autocmd Filetype %s setlocal foldmethod=expr | setlocal foldexpr=nvim_treesitter#foldexpr()
--- augroup END
--- ]]):format(table.concat(parsers, ',')))
