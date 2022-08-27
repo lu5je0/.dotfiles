@@ -13,7 +13,7 @@ local function execute_in_terminal(cmd, append_cmd)
     cmd = cmd .. ' && ' .. append_cmd
   end
   require("lu5je0.ext.terminal").send_to_terminal(cmd, { go_back = 0 })
-  if vim.bo.buftype == 'terminal' then
+  if vim.bo.buftype == 'terminal' and vim.api.nvim_win_get_config(0).relative == '' then
     require('lu5je0.core.keys').feedkey('<c-q><c-w>p')
   end
 end

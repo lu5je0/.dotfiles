@@ -276,6 +276,7 @@ return packer.startup(function(use)
     'akinsho/toggleterm.nvim',
     branch = 'main',
     defer = true,
+    commit = '62683d927dfd30dc68441a5811fdcb6c9f176c42',
     config = function()
       require('lu5je0.ext.terminal').setup()
     end,
