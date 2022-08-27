@@ -39,7 +39,10 @@ return packer.startup(function(use)
 
   use('nvim-lua/plenary.nvim')
 
-  use('MunifTanjim/nui.nvim')
+  use {
+    'MunifTanjim/nui.nvim',
+    commit = '042cceb497cc4cfa3ae735a5e7bc01b4b6f19ef1'
+  }
 
   use {
     'kyazdani42/nvim-web-devicons',
@@ -547,7 +550,8 @@ return packer.startup(function(use)
     'lukas-reineke/indent-blankline.nvim',
     config = function()
       vim.g.indent_blankline_char = '▏'
-      vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer', 'lsp-installer', 'toggleterm', 'confirm' }
+      vim.g.indentLine_fileTypeExclude = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer',
+        'lsp-installer', 'toggleterm', 'confirm' }
       -- vim.g.indent_blankline_filetype = _G.indent_blankline_filetypes
       vim.g.indent_blankline_show_first_indent_level = false
       vim.g.indent_blankline_show_trailing_blankline_indent = false
