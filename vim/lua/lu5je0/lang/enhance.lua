@@ -39,4 +39,15 @@ function _G.dump(arg, depth)
   print(vim.inspect(arg, { depth = depth }))
 end
 
+local original_has = vim.fn.has
+vim.fn.has = function(feature)
+  local r = original_has(feature)
+  
+  if feature == 'gui' then
+    return vim.g.gonvim_running or r
+  end
+  
+  return r
+end
+
 _G.log = require('plenary.log')
