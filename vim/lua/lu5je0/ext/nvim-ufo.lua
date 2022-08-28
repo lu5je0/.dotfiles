@@ -36,6 +36,7 @@ require('ufo').setup({
     end
     return { 'lsp' }
   end,
+  close_fold_kinds = {},
   open_fold_hl_timeout = 200,
   fold_virt_text_handler = fold_virt_text_handler
 })
