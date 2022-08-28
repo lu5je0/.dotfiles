@@ -59,27 +59,32 @@ return packer.startup(function(use)
       }
     end,
   }
-
-  use {
-    'nvim-telescope/telescope.nvim',
-    config = function()
-      require('lu5je0.ext.telescope').setup(false)
-    end,
-    defer = true,
-    after = 'telescope-fzf-native.nvim',
-    -- requires = {
-    --   { 'nvim-lua/plenary.nvim' },
-    --   {
-    --     'AckslD/nvim-neoclip.lua',
-    --     config = function()
-    --       require('neoclip').setup {
-    --         default_register = '*',
-    --       }
-    --     end,
-    --   },
-    -- },
-    -- keys = { '<leader>f' },
-  }
+  
+  -- use {
+  --   'nvim-telescope/telescope-fzf-native.nvim',
+  --   run = 'make',
+  -- }
+  --
+  -- use {
+  --   'nvim-telescope/telescope.nvim',
+  --   config = function()
+  --     require('lu5je0.ext.telescope').setup(false)
+  --   end,
+  --   defer = true,
+  --   after = 'telescope-fzf-native.nvim',
+  --   -- requires = {
+  --   --   { 'nvim-lua/plenary.nvim' },
+  --   --   {
+  --   --     'AckslD/nvim-neoclip.lua',
+  --   --     config = function()
+  --   --       require('neoclip').setup {
+  --   --         default_register = '*',
+  --   --       }
+  --   --     end,
+  --   --   },
+  --   -- },
+  --   -- keys = { '<leader>f' },
+  -- }
 
   use {
     'lu5je0/LeaderF',
@@ -114,30 +119,6 @@ return packer.startup(function(use)
       require('lu5je0.ext.lualine')
     end,
   }
-
-  -- use {
-  --   'hrsh7th/vim-eft',
-  --   config = function()
-  --     vim.cmd([[
-  --     nmap ; <Plug>(eft-repeat)
-  --     xmap ; <Plug>(eft-repeat)
-  --
-  --     nmap f <Plug>(eft-f)
-  --     xmap f <Plug>(eft-f)
-  --     omap f <Plug>(eft-f)
-  --     nmap F <Plug>(eft-F)
-  --     xmap F <Plug>(eft-F)
-  --     omap F <Plug>(eft-F)
-  --
-  --     nmap t <Plug>(eft-t)
-  --     xmap t <Plug>(eft-t)
-  --     omap t <Plug>(eft-t)
-  --     nmap T <Plug>(eft-T)
-  --     xmap T <Plug>(eft-T)
-  --     omap T <Plug>(eft-T)
-  --     ]])
-  --   end,
-  -- }
 
   use {
     'lu5je0/bufferline.nvim',
@@ -367,24 +348,6 @@ return packer.startup(function(use)
     cmd = { 'StartupTime' },
   }
 
-  -- use({
-  --   'skywind3000/asyncrun.vim',
-  --   opt = true,
-  --   cmd = 'AsyncRun',
-  --   requires = {
-  --     { 'skywind3000/asynctasks.vim', opt = true },
-  --     { 'skywind3000/asyncrun.extra', opt = true },
-  --     {
-  --       'preservim/vimux',
-  --       config = function()
-  --         vim.g.VimuxHeight = '50'
-  --         vim.g.VimuxOrientation = 'h'
-  --       end,
-  --       opt = true,
-  --     },
-  --   },
-  -- })
-
   use {
     'mbbill/undotree',
     opt = true,
@@ -438,23 +401,6 @@ return packer.startup(function(use)
     ft = { 'markdown' },
   }
 
-  -- use {
-  --   'kevinhwang91/nvim-bqf',
-  --   config = function()
-  --     vim.cmd('autocmd FileType qf nnoremap <buffer> p <CR><C-W>p')
-  --   end
-  -- }
-
-  -- use {
-  --   'github/copilot.vim',
-  --   config = function()
-  --     vim.cmd([[
-  --       imap <silent><script><expr> <c-j> copilot#Accept("\<c-j>")
-  --       let g:copilot_no_tab_map = v:true
-  --     ]])
-  --   end,
-  -- }
-
   use {
     'windwp/nvim-autopairs',
     defer = true,
@@ -495,18 +441,24 @@ return packer.startup(function(use)
           require('lu5je0.ext.lspconfig.lsp').setup()
         end,
       },
-      -- {
-      --   'stevearc/dressing.nvim',
-      --   config = function()
-      --     require('dressing').setup({
-      --       input = {
-      --       },
-      --       select = {
-      --         backend = { 'telescope', 'nui' },
-      --       }
-      --     })
-      --   end
-      -- }
+      {
+        "glepnir/lspsaga.nvim",
+        branch = "main",
+        config = function()
+          local saga = require("lspsaga")
+          saga.init_lsp_saga({
+            finder_action_keys = {
+              open = "<cr>",
+            },
+            code_action_lightbulb = {
+              enable = false,
+            },
+            code_action_keys = {
+              quit = "<ESC>",
+            },
+          })
+        end,
+      }
     }
   }
 
@@ -595,11 +547,6 @@ return packer.startup(function(use)
     end,
     keys = { ',' },
     opt = true,
-  }
-
-  use {
-    'nvim-telescope/telescope-fzf-native.nvim',
-    run = 'make',
   }
 
   use {

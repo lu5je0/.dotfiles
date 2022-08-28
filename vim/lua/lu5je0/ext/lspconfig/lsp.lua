@@ -33,42 +33,51 @@ end
 
 local function on_attach(client, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
+  local keymap = vim.keymap.set
 
-  if require('lu5je0.core.plugin-loader').is_loaded('telescope.nvim') then
-    require('lu5je0.ext.telescope').lsp_keymaping(bufnr)
-  else
-    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-    vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
-    vim.keymap.set('n', 'gn', vim.lsp.buf.implementation, opts)
-    vim.keymap.set('n', 'gb', vim.lsp.buf.references, opts)
-  end
+  -- ****
+  -- lspsaga
+  -- ****
+  keymap('n', 'gd', '<cmd>Lspsaga lsp_finder<CR>', opts)
+  -- Code action
+  keymap('n', '<leader>cc', '<cmd>Lspsaga code_action<CR>', opts)
+  keymap('v', '<leader>cc', '<cmd><C-U>Lspsaga range_code_action<CR>', opts)
+  keymap('n', 'K', '<cmd>Lspsaga hover_doc<CR>', opts)
 
-  vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
-  vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-  vim.keymap.set('i', '<c-p>', vim.lsp.buf.signature_help, opts)
-  vim.keymap.set('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
-  vim.keymap.set('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
-  vim.keymap.set('n', '<leader>Wl', function()
+  -- ****
+  -- basic
+  -- ****
+  -- keymap('n', 'gd', vim.lsp.buf.definition, opts)
+  keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
+  keymap('n', 'gn', vim.lsp.buf.implementation, opts)
+  keymap('n', 'gb', vim.lsp.buf.references, opts)
+
+  keymap('n', 'gu', vim.lsp.buf.declaration, opts)
+  -- keymap('n', 'K', vim.lsp.buf.hover, opts)
+  keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)
+  keymap('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
+  keymap('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
+  keymap('n', '<leader>Wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, opts)
-  vim.keymap.set('n', '<leader>cr', vim.lsp.buf.rename, opts)
-  vim.keymap.set('n', '<leader>cc', vim.lsp.buf.code_action, opts)
-  vim.keymap.set('v', '<leader>cc', vim.lsp.buf.code_action, opts)
-  vim.keymap.set('n', '[e', vim.diagnostic.goto_prev, opts)
-  vim.keymap.set('n', ']e', vim.diagnostic.goto_next, opts)
-  vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, opts)
-  vim.keymap.set('n', '<leader>cf', vim.lsp.buf.formatting, opts)
-  vim.keymap.set('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
-  vim.keymap.set('n', '<leader><space>', function()
+  keymap('n', '<leader>cr', vim.lsp.buf.rename, opts)
+  -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
+  -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
+  keymap('n', '[e', vim.diagnostic.goto_prev, opts)
+  keymap('n', ']e', vim.diagnostic.goto_next, opts)
+  keymap('n', '<leader>ce', vim.diagnostic.setloclist, opts)
+  keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
+  keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
+  keymap('n', '<leader><space>', function()
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
 
   -- illuminate
   require('illuminate').on_attach(client)
-  
+
   -- nvim-ufo
   -- require('ufo').setup()
-  
+
   vim.cmd [[
   " cursor word highlight
   highlight LspReferenceText guibg=none gui=none
@@ -79,7 +88,7 @@ end
 
 local function config()
   local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
-  
+
   -- nvim-ufo
   capabilities.textDocument.foldingRange = {
     dynamicRegistration = false,
