@@ -1,6 +1,9 @@
 local o = vim.o
 local g = vim.g
-local has = vim.fn.has
+
+local has = function(feature)
+  return vim.fn.has(feature) == 1
+end
 
 o.mouse = "a"
 o.hlsearch = true
