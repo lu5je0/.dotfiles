@@ -59,7 +59,7 @@ return packer.startup(function(use)
       }
     end,
   }
-  
+
   -- use {
   --   'nvim-telescope/telescope-fzf-native.nvim',
   --   run = 'make',
@@ -450,6 +450,7 @@ return packer.startup(function(use)
           saga.init_lsp_saga({
             finder_action_keys = {
               open = "<cr>",
+              quit = "<ESC>",
             },
             code_action_lightbulb = {
               enable = false,
@@ -572,5 +573,12 @@ return packer.startup(function(use)
       require('lu5je0.ext.nvim-ufo')
     end
   }
+
+  -- use {
+  --   'mhartington/formatter.nvim',
+  --   config = function()
+  --     require('lu5je0.ext.formatter')
+  --   end
+  -- }
 
 end)
