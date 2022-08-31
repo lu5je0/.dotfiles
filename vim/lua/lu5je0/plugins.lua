@@ -187,6 +187,19 @@ return packer.startup(function(use)
   }
 
   use {
+    'sgur/vim-textobj-parameter',
+    requires = {
+      {
+        'kana/vim-textobj-user'
+      }
+    },
+    setup = function()
+      vim.g.vim_textobj_parameter_mapping = 'a'
+    end,
+    keys = { "via", "cia", "dia", "yia" }
+  }
+
+  use {
     'othree/eregex.vim',
     opt = true,
     keys = { '/', '?' },

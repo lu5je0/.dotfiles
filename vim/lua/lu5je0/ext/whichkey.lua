@@ -84,7 +84,6 @@ M.setup = function()
       c = { '<cmd>PackerCompile<cr>', 'compile' },
       i = { '<cmd>PackerInstall<cr>', 'install' },
       u = { '<cmd>PackerUpdate<cr>', 'update' },
-      C = { '<cmd>PackerClean<cr>', 'clean' },
       d = { '<cmd>PackerClean<cr>', 'clean' },
     },
     c = {
