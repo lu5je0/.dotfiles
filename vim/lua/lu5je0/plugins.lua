@@ -191,12 +191,21 @@ return packer.startup(function(use)
     requires = {
       {
         'kana/vim-textobj-user'
-      }
+      },
+      opt = true
+    },
+    after = {
+      'vim-exchange',
     },
     setup = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
     end,
-    keys = { "via", "cia", "dia", "yia" }
+    keys = { { 'x', 'ia' }, { 'o', 'ia' }, { 'x', 'aa' }, { 'o', 'aa' }, { 'n', 'cxia' }, { 'n', 'cxaa' } }
+  }
+  
+  use {
+    'tommcdo/vim-exchange',
+    keys = { { 'n', 'cx' } },
   }
 
   use {
@@ -212,7 +221,6 @@ return packer.startup(function(use)
 
   use {
     'numToStr/Comment.nvim',
-    defer = true,
     config = function()
       require('Comment').setup {
         opleader = {
@@ -229,16 +237,16 @@ return packer.startup(function(use)
         },
       }
     end,
+    keys = { { 'x', 'gc' }, { 'n', 'gc' } }
   }
 
   use('tpope/vim-repeat')
 
   use {
     'vim-scripts/ReplaceWithRegister',
-    keys = { 'gr' },
+    keys = { { 'x', 'gr' }, { 'n', 'gr' } },
   }
 
-  use('tommcdo/vim-exchange')
   use('lu5je0/vim-base64')
 
   -- themes
@@ -377,6 +385,7 @@ return packer.startup(function(use)
 
   use {
     'tpope/vim-surround',
+    keys = { { 'n', 'cs' }, { 'n', 'cS' }, { 'n', 'ys' }, { 'n', 'ds' }, { 'x', 'S' } }
   }
 
   local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux' }
@@ -478,6 +487,7 @@ return packer.startup(function(use)
   }
 
   use { 'max397574/lua-dev.nvim' }
+
   use {
     'jose-elias-alvarez/null-ls.nvim',
     config = function()
@@ -487,6 +497,7 @@ return packer.startup(function(use)
     end,
     defer = true,
   }
+
   use {
     'lu5je0/vim-illuminate',
     config = function()
