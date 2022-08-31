@@ -35,6 +35,9 @@ runtime mappings.vim
 
 local i = 1
 local function defer_loads()
+  if #_G.__defer_plugins == 0 then
+    return
+  end
   vim.cmd('PackerLoad ' .. _G.__defer_plugins[i])
   i = i + 1
   if i <= #_G.__defer_plugins then
