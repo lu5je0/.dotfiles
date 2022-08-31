@@ -84,13 +84,13 @@ inoremap . <c-g>u.
 " text-objects
 "----------------------------------------------------------------------
 onoremap il :<c-u>normal! v$o^oh<cr>
-snoremap il $o^oh
+xnoremap il $o^oh
 
 onoremap ie :<c-u>normal! vgg0oG$<cr>
-snoremap ie gg0oG$
+xnoremap ie gg0oG$
 
 onoremap ae :<c-u>normal! vgg0oG$<cr>
-snoremap ae gg0oG$
+xnoremap ae gg0oG$
 
 "----------------------------------------------------------------------
 " visual mode
