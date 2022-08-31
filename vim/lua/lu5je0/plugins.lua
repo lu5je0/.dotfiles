@@ -200,7 +200,7 @@ return packer.startup(function(use)
     setup = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
     end,
-    keys = { { 's', 'ia' }, { 'o', 'ia' }, { 's', 'aa' }, { 'o', 'aa' }, { 'n', 'cxia' }, { 'n', 'cxaa' } }
+    keys = { { 'x', 'ia' }, { 'o', 'ia' }, { 'x', 'aa' }, { 'o', 'aa' }, { 'n', 'cxia' }, { 'n', 'cxaa' } }
   }
   
   use {
@@ -237,14 +237,14 @@ return packer.startup(function(use)
         },
       }
     end,
-    keys = { { 's', 'gc' }, { 'n', 'gc' } }
+    keys = { { 'x', 'gc' }, { 'n', 'gc' } }
   }
 
   use('tpope/vim-repeat')
 
   use {
     'vim-scripts/ReplaceWithRegister',
-    keys = { { 's', 'gr' }, { 'n', 'gr' } },
+    keys = { { 'x', 'gr' }, { 'n', 'gr' } },
   }
 
   use('lu5je0/vim-base64')
@@ -321,16 +321,6 @@ return packer.startup(function(use)
     keys = { '<c-n>', '<m-n>' },
   }
 
-  -- textobj
-  -- use('kana/vim-textobj-user')
-  -- use('michaeljsmith/vim-indent-object')
-  -- use({
-  --   'sgur/vim-textobj-parameter',
-  --   setup = function()
-  --     vim.g.vim_textobj_parameter_mapping = 'a'
-  --   end
-  -- })
-
   use {
     'lewis6991/gitsigns.nvim',
     requires = {
@@ -385,7 +375,7 @@ return packer.startup(function(use)
 
   use {
     'tpope/vim-surround',
-    keys = { { 'n', 'cs' }, { 'n', 'cS' }, { 'n', 'ys' }, { 'n', 'ds' }, { 's', 'S' } }
+    keys = { { 'n', 'cs' }, { 'n', 'cS' }, { 'n', 'ys' }, { 'n', 'ds' }, { 'x', 'S' } }
   }
 
   local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux' }
