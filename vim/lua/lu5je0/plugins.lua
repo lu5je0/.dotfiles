@@ -200,7 +200,7 @@ return packer.startup(function(use)
     setup = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
     end,
-    keys = { { 'x', 'ia' }, { 'o', 'ia' }, { 'x', 'aa' }, { 'o', 'aa' }, { 'n', 'cxia' }, { 'n', 'cxaa' } }
+    keys = { { 's', 'ia' }, { 'o', 'ia' }, { 's', 'aa' }, { 'o', 'aa' }, { 'n', 'cxia' }, { 'n', 'cxaa' } }
   }
   
   use {
@@ -237,14 +237,14 @@ return packer.startup(function(use)
         },
       }
     end,
-    keys = { { 'x', 'gc' }, { 'n', 'gc' } }
+    keys = { { 's', 'gc' }, { 'n', 'gc' } }
   }
 
   use('tpope/vim-repeat')
 
   use {
     'vim-scripts/ReplaceWithRegister',
-    keys = { { 'x', 'gr' }, { 'n', 'gr' } },
+    keys = { { 's', 'gr' }, { 'n', 'gr' } },
   }
 
   use('lu5je0/vim-base64')
@@ -385,7 +385,7 @@ return packer.startup(function(use)
 
   use {
     'tpope/vim-surround',
-    keys = { { 'n', 'cs' }, { 'n', 'cS' }, { 'n', 'ys' }, { 'n', 'ds' }, { 'x', 'S' } }
+    keys = { { 'n', 'cs' }, { 'n', 'cS' }, { 'n', 'ys' }, { 'n', 'ds' }, { 's', 'S' } }
   }
 
   local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux' }

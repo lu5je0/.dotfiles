@@ -5,8 +5,8 @@ let g:terminal_key='<c-_>'
 vnoremap <C-c> y
 
 " 缩进后重新选择
-vmap < <gv
-vmap > >gv
+xmap < <gv
+xmap > >gv
 
 nnoremap go o0<C-D>
 nnoremap gO O0<C-D>
@@ -84,36 +84,32 @@ inoremap . <c-g>u.
 " text-objects
 "----------------------------------------------------------------------
 onoremap il :<c-u>normal! v$o^oh<cr>
-vnoremap il $o^oh
+snoremap il $o^oh
 
 onoremap ie :<c-u>normal! vgg0oG$<cr>
-vnoremap ie gg0oG$
+snoremap ie gg0oG$
 
 onoremap ae :<c-u>normal! vgg0oG$<cr>
-vnoremap ae gg0oG$
-
-sunmap ae
-sunmap ie
-sunmap il
+snoremap ae gg0oG$
 
 "----------------------------------------------------------------------
 " visual mode
 "----------------------------------------------------------------------
-vmap <silent> # :lua require("ext.terminal").run_select_in_terminal()<cr>
+xmap <silent> # :lua require("ext.terminal").run_select_in_terminal()<cr>
 
-vmap <leader>cnc <plug>(ConvertToCamelword)
+xmap <leader>cnc <plug>(ConvertToCamelword)
 nmap <leader>cnc <plug>(ConvertToCamelword)
 nmap <leader>cnC <plug>(ConvertToCamelWORD)
 
-vmap <leader>cns <plug>(ConvertToSnakeword)
+xmap <leader>cns <plug>(ConvertToSnakeword)
 nmap <leader>cns <plug>(ConvertToSnakeword)
 nmap <leader>cnS <plug>(ConvertToSnakeWORD)
 
-vmap <leader>cnk <plug>(ConvertToKebabword)
+xmap <leader>cnk <plug>(ConvertToKebabword)
 nmap <leader>cnk <plug>(ConvertToKebabword)
 nmap <leader>cnK <plug>(ConvertToKebabWORD)
 
-vmap <leader>cnp <plug>(ConvertToPascalword)
+xmap <leader>cnp <plug>(ConvertToPascalword)
 nmap <leader>cnp <plug>(ConvertToPascalword)
 nmap <leader>cnP <plug>(ConvertToPascalWORD)
 
@@ -125,14 +121,14 @@ function! ToggleGj(echo)
         let g:ToggleGj = 0
     endif
     if g:ToggleGj == 1
-        vmap j gj
-        vmap k gk
+        xmap j gj
+        xmap k gk
         nmap j gj
         nmap k gk
         nmap H g^
         nmap L g$
-        vmap H g^
-        vmap L g$
+        xmap H g^
+        xmap L g$
         omap H g^
         omap L g$
         nmap Y gyg$
@@ -145,8 +141,8 @@ function! ToggleGj(echo)
         silent! unmap k
         nmap H ^
         nmap L $
-        vmap H ^
-        vmap L $
+        xmap H ^
+        xmap L $
         omap H ^
         omap L $
         nmap Y y$
@@ -177,47 +173,47 @@ nmap <leader>wo <c-w>o
 
 " Echo translation in the cmdline
 nmap <silent> <Leader>sc <Plug>Translate
-vmap <silent> <Leader>sc <Plug>TranslateV
+xmap <silent> <Leader>sc <Plug>TranslateV
 
 " say it
 nmap <silent> <Leader>sa :call misc#say_it()<cr><Plug>TranslateW
-vmap <silent> <Leader>sa :call misc#visual_say_it()<cr><Plug>TranslateWV
+xmap <silent> <Leader>sa :call misc#visual_say_it()<cr><Plug>TranslateWV
 
-" vmap <silent> <Leader>sc <Plug>TranslateV
+" xmap <silent> <Leader>sc <Plug>TranslateV
 " Display translation in a window
 nmap <silent> <Leader>ss <Plug>TranslateW
-vmap <silent> <Leader>ss <Plug>TranslateWV
+xmap <silent> <Leader>ss <Plug>TranslateWV
 " Replace the text with translation
 nmap <silent> <Leader>sr <Plug>TranslateR
-vmap <silent> <Leader>sr <Plug>TranslateRV
+xmap <silent> <Leader>sr <Plug>TranslateRV
 
 "----------------------------------------------------------------------
 " 繁体简体
 "----------------------------------------------------------------------
-vmap <leader>xz :!opencc -c t2s<cr>
+xmap <leader>xz :!opencc -c t2s<cr>
 nmap <leader>xz :%!opencc -c t2s<cr>
-vmap <leader>xZ :!opencc -c s2t<cr>
+xmap <leader>xZ :!opencc -c s2t<cr>
 nmap <leader>xZ :%!opencc -c s2t<cr>
 
 
 "----------------------------------------------------------------------
 " base64
 "----------------------------------------------------------------------
-vmap <silent> <leader>xB :<c-u>call base64#v_atob()<cr>
-vmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
+xmap <silent> <leader>xB :<c-u>call base64#v_atob()<cr>
+xmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
 
 
 "----------------------------------------------------------------------
 " unicode escape
 "----------------------------------------------------------------------
-vmap <silent> <leader>xu :<c-u>call visual#replace_by_fn("UnicodeEscapeString")<cr>
-vmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
+xmap <silent> <leader>xu :<c-u>call visual#replace_by_fn("UnicodeEscapeString")<cr>
+xmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
 
 "----------------------------------------------------------------------
 " text escape
 "----------------------------------------------------------------------
-vmap <silent> <leader>xs :<c-u>call visual#replace_by_fn("EscapeText")<cr>
-" vmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
+xmap <silent> <leader>xs :<c-u>call visual#replace_by_fn("EscapeText")<cr>
+" xmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
 
 "----------------------------------------------------------------------
 " url encode
@@ -228,8 +224,8 @@ nmap <leader>xH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.r
 xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
 
-vnoremap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
-vnoremap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
+xmap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
+xmap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
 
 " ugly hack to start newline and keep indent
 nnoremap <silent> o o<space><bs>

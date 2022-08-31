@@ -39,8 +39,8 @@ nmap <leader>fw :w<cr>
 
 nmap <leader>fe :NERDTreeFind<CR>
 
-vmap < <gv
-vmap > >gv
+xmap < <gv
+xmap > >gv
 
 " tab页
 nmap <silent> <leader>tn :action NewScratchFile<cr>
@@ -101,17 +101,17 @@ nmap <leader><space> <Action>(ShowErrorDescription)
 nmap <c-n> <A-n>
 nmap <c-x> <A-x>
 nmap <c-p> <A-p>
-vmap <c-n> <A-n>
-vmap <c-x> <A-x>
-vmap <c-p> <A-p>
+xmap <c-n> <A-n>
+xmap <c-x> <A-x>
+xmap <c-p> <A-p>
 
 " mac multiple0-cursors key maps
 nmap <m-n> <A-n>
 nmap <m-x> <A-x>
 nmap <m-p> <A-p>
-vmap <m-n> <A-n>
-vmap <m-x> <A-x>
-vmap <m-p> <A-p>
+xmap <m-n> <A-n>
+xmap <m-x> <A-x>
+xmap <m-p> <A-p>
 
 " history
 sethandler <c-o> n-v:vim i:vim
@@ -125,8 +125,8 @@ imap <A-p> <Action>(ParameterInfo)
 
 nmap H ^
 nmap L $
-vmap H ^
-vmap L $
+xmap H ^
+xmap L $
 omap H ^
 omap L $
 
@@ -135,9 +135,9 @@ nmap Y ^y$
 omap ij i"
 omap aj a"
 omap oj o"
-vmap ij i"
-vmap aj a"
-vmap oj o"
+xmap ij i"
+xmap aj a"
+xmap oj o"
 
 imap <m-j> <c-n>
 imap <m-k> <c-p>
@@ -158,7 +158,7 @@ map <leader>gb <Action>(Annotate)
 map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 map <leader>gv <Action>(Compare.SameVersion)
 map <leader>gl <Action>(Vcs.ShowTabbedFileHistory)
-vmap <leader>gl <Action>(Vcs.ShowHistoryForBlock)
+xmap <leader>gl <Action>(Vcs.ShowHistoryForBlock)
 map <leader>gL <Action>(Git.Log)
 
 " navicat
@@ -179,5 +179,5 @@ nmap <S-F9> <Action>(RunToCursor)
 nmap <F12> <Action>(Stop)
 
 " visual select
-vmap v <Action>(EditorSelectWord)
-vmap V <Action>(EditorUnSelectWord)
+xmap v <Action>(EditorSelectWord)
+xmap V <Action>(EditorUnSelectWord)
