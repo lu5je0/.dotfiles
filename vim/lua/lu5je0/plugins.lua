@@ -388,15 +388,6 @@ return packer.startup(function(use)
   }
 
   use {
-    'liuchengxu/vista.vim',
-    config = function()
-      vim.cmd('runtime plug-config/vista.vim')
-    end,
-    opt = true,
-    cmd = { 'Vista' },
-  }
-
-  use {
     'lambdalisue/suda.vim',
     opt = true,
     cmd = { 'SudaRead', 'SudaWrite' },
@@ -586,6 +577,14 @@ return packer.startup(function(use)
     config = function()
       require('lu5je0.ext.nvim-ufo')
     end
+  }
+  
+  use {
+    'stevearc/aerial.nvim',
+    config = function()
+      require('lu5je0.ext.aerial')
+    end,
+    cmd = { 'AerialToggle' }
   }
 
   -- use {
