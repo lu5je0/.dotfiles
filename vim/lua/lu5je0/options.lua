@@ -43,8 +43,10 @@ o.expandtab = true
 o.autoindent = true
 
 -- filetype.lua
-g.did_load_filetypes = 0
-g.do_filetype_lua = 1
+if not has('nvim-0.8.0') then
+  g.did_load_filetypes = 0
+  g.do_filetype_lua = 1
+end
 
 -- 不显示启动界面
 o.shortmess = 'atI'
