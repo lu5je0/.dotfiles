@@ -202,7 +202,7 @@ return packer.startup(function(use)
     end,
     keys = { { 'x', 'ia' }, { 'o', 'ia' }, { 'x', 'aa' }, { 'o', 'aa' }, { 'n', 'cxia' }, { 'n', 'cxaa' } }
   }
-  
+
   use {
     'tommcdo/vim-exchange',
     keys = { { 'n', 'cx' } },
@@ -412,8 +412,47 @@ return packer.startup(function(use)
       require('nvim-autopairs').setup {}
     end,
   }
+  
+  use {
+    'williamboman/mason.nvim',
+    config = function()
+      require("mason").setup()
+    end
+  }
 
   -- lsp
+  use {
+    'williamboman/mason-lspconfig.nvim',
+    after = 'mason.nvim',
+    config = function()
+      require('mason-lspconfig').setup {
+        ensure_installed = {}
+      }
+    end,
+  }
+
+  use {
+    'neovim/nvim-lspconfig',
+    after = {
+      'mason-lspconfig.nvim',
+      'lua-dev.nvim',
+    },
+    defer = true,
+    config = function()
+      require('lu5je0.ext.lspconfig.lsp').setup()
+    end,
+    requires = {
+      {
+        "glepnir/lspsaga.nvim",
+        branch = "main",
+        config = function()
+          require('lu5je0.ext.lspsaga')
+        end,
+        opt = true,
+      }
+    }
+  }
+  
   use {
     'hrsh7th/nvim-cmp',
     config = function()
@@ -434,53 +473,24 @@ return packer.startup(function(use)
       'hrsh7th/cmp-vsnip',
     },
   }
-
+  
   use {
-    'williamboman/nvim-lsp-installer',
-    defer = true,
-    requires = {
-      {
-        'neovim/nvim-lspconfig',
-        config = function()
-          require('lu5je0.ext.lspconfig.lsp').setup()
-        end,
-      },
-      {
-        "glepnir/lspsaga.nvim",
-        branch = "main",
-        config = function()
-          local saga = require("lspsaga")
-          saga.init_lsp_saga({
-            finder_action_keys = {
-              open = "<cr>",
-              quit = "<ESC>",
-            },
-            code_action_lightbulb = {
-              enable = false,
-            },
-            code_action_keys = {
-              quit = "<ESC>",
-            },
-          })
-        end,
-      }
-    }
+    'max397574/lua-dev.nvim'
   }
-
-  use { 'max397574/lua-dev.nvim' }
-
+  
   use {
     'jose-elias-alvarez/null-ls.nvim',
+    after = 'nvim-lspconfig',
     config = function()
       if vim.fn.has('nvim-0.8') == 0 then
         require('lu5je0.ext.null-ls.null-ls')
       end
     end,
-    defer = true,
   }
-
+  
   use {
     'lu5je0/vim-illuminate',
+    after = 'nvim-lspconfig',
     config = function()
       vim.g.Illuminate_delay = 0
       vim.cmd([[
@@ -578,7 +588,7 @@ return packer.startup(function(use)
       require('lu5je0.ext.nvim-ufo')
     end
   }
-  
+
   use {
     'stevearc/aerial.nvim',
     config = function()

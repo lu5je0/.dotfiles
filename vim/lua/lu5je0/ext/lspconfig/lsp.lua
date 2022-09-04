@@ -1,16 +1,6 @@
 local M = {}
 
-require('nvim-lsp-installer').setup {
-  ensure_installed = {}
-}
-
-local installed_server_names = (function()
-  local r = {}
-  for _, v in pairs(require('nvim-lsp-installer').get_installed_servers()) do
-    table.insert(r, v.name)
-  end
-  return r;
-end)()
+local installed_server_names = require('mason-lspconfig').get_installed_servers()
 
 local lspconfig = require("lspconfig")
 
