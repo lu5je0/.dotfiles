@@ -190,9 +190,9 @@ return packer.startup(function(use)
     'sgur/vim-textobj-parameter',
     requires = {
       {
-        'kana/vim-textobj-user'
-      },
-      opt = true
+        'kana/vim-textobj-user',
+        opt = true
+      }
     },
     after = {
       'vim-exchange',
