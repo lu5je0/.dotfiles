@@ -17,15 +17,35 @@ vim.api.nvim_create_autocmd('BufWritePost', {
 return packer.startup(function(use)
   _G.__defer_plugins = {}
   local origin_use = use
+
+  local function is_array(t)
+    local i = 0
+    for _ in pairs(t) do
+      i = i + 1
+      if t[i] == nil then return false end
+    end
+    return true
+  end
+
+  local function inject_use(params)
+    if params.defer then
+      params.opt = true
+      table.insert(_G.__defer_plugins, params[1]:match('/(.*)$'))
+    end
+    if params.on_compile then
+      params.on_compile()
+    end
+  end
+
   use = function(...)
     if type(...) == 'table' then
       local t = ...
-      if t.defer then
-        t.opt = true
-        table.insert(_G.__defer_plugins, t[1]:match('/(.*)$'))
-      end
-      if t.on_compile then
-        t.on_compile()
+      if is_array(t) then
+        for _, v in ipairs(t) do
+          inject_use(v)
+        end
+      else
+        inject_use(...)
       end
     end
     origin_use(...)
@@ -145,16 +165,6 @@ return packer.startup(function(use)
     fn = { 'hexedit#ToggleHexEdit' },
   }
 
-  use {
-    'mattn/vim-gist',
-    config = function()
-      vim.cmd("let github_user = 'lu5je0@gmail.com'")
-      vim.cmd('let g:gist_show_privates = 1')
-      vim.cmd('let g:gist_post_private = 1')
-    end,
-    requires = { 'mattn/webapi-vim' },
-  }
-
   -- stylua: ignore
   _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
     'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
@@ -250,29 +260,31 @@ return packer.startup(function(use)
   use('lu5je0/vim-base64')
 
   -- themes
-  use('sainnhe/sonokai')
-  use('sainnhe/gruvbox-material')
   use {
-    'sainnhe/edge',
-    on_compile = function()
-      vim.g.edge_better_performance = 1
-      vim.g.edge_enable_italic = 0
-      vim.g.edge_disable_italic_comment = 1
-    end,
-    config = function()
-      vim.g.edge_loaded_file_types = { 'NvimTree' }
-      vim.cmd [[
+    'sainnhe/sonokai',
+    'sainnhe/gruvbox-material',
+    {
+      'sainnhe/edge',
+      on_compile = function()
+        vim.g.edge_better_performance = 1
+        vim.g.edge_enable_italic = 0
+        vim.g.edge_disable_italic_comment = 1
+      end,
+      config = function()
+        vim.g.edge_loaded_file_types = { 'NvimTree' }
+        vim.cmd [[
       hi! Folded guifg=#282c34 guibg=#5c6370
       hi MatchParen guifg=#ffef28
       ]]
-    end
+      end
+    },
+    -- {
+    --   'Mofiqul/vscode.nvim',
+    --   config = function()
+    --     vim.g.vscode_style = "dark"
+    --   end
+    -- }
   }
-  -- use {
-  --   'Mofiqul/vscode.nvim',
-  --   config = function()
-  --     vim.g.vscode_style = "dark"
-  --   end
-  -- }
 
   use {
     'akinsho/toggleterm.nvim',
@@ -321,15 +333,39 @@ return packer.startup(function(use)
     keys = { '<c-n>', '<m-n>' },
   }
 
+  -- git
   use {
-    'lewis6991/gitsigns.nvim',
-    requires = {
-      'nvim-lua/plenary.nvim',
+    {
+      'lewis6991/gitsigns.nvim',
+      requires = {
+        'nvim-lua/plenary.nvim',
+      },
+      config = function()
+        require('lu5je0.ext.gitsigns').setup()
+      end,
+      event = 'BufRead',
     },
-    config = function()
-      require('lu5je0.ext.gitsigns').setup()
-    end,
-    event = 'BufRead',
+    {
+      'tpope/vim-fugitive',
+      opt = true,
+      cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
+      fn = { 'fugitive#repo' },
+    },
+    {
+      'rbong/vim-flog',
+      cmd = 'Flogsplit',
+      opt = true,
+      requires = { { 'tpope/vim-fugitive' } },
+    },
+    {
+      'mattn/vim-gist',
+      config = function()
+        vim.cmd("let github_user = 'lu5je0@gmail.com'")
+        vim.cmd('let g:gist_show_privates = 1')
+        vim.cmd('let g:gist_post_private = 1')
+      end,
+      requires = { 'mattn/webapi-vim' },
+    }
   }
 
   use {
@@ -337,20 +373,6 @@ return packer.startup(function(use)
     config = function()
       vim.g.translator_default_engines = { 'disk' }
     end,
-  }
-
-  use {
-    'tpope/vim-fugitive',
-    opt = true,
-    cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
-    fn = { 'fugitive#repo' },
-  }
-
-  use {
-    'rbong/vim-flog',
-    cmd = 'Flogsplit',
-    opt = true,
-    requires = { { 'tpope/vim-fugitive' } },
   }
 
   use {
@@ -412,7 +434,7 @@ return packer.startup(function(use)
       require('nvim-autopairs').setup {}
     end,
   }
-  
+
   use {
     'williamboman/mason.nvim',
     config = function()
@@ -422,88 +444,85 @@ return packer.startup(function(use)
 
   -- lsp
   use {
-    'williamboman/mason-lspconfig.nvim',
-    after = 'mason.nvim',
-    config = function()
-      require('mason-lspconfig').setup {
-        ensure_installed = {}
-      }
-    end,
-  }
-
-  use {
-    'neovim/nvim-lspconfig',
-    after = {
-      'mason-lspconfig.nvim',
-      'lua-dev.nvim',
+    {
+      'williamboman/mason-lspconfig.nvim',
+      after = 'mason.nvim',
+      config = function()
+        require('mason-lspconfig').setup {
+          ensure_installed = {}
+        }
+      end,
     },
-    defer = true,
-    config = function()
-      require('lu5je0.ext.lspconfig.lsp').setup()
-    end,
-    requires = {
-      {
-        "glepnir/lspsaga.nvim",
-        branch = "main",
-        config = function()
-          require('lu5je0.ext.lspsaga')
-        end,
-        opt = true,
-      }
-    }
-  }
-  
-  use {
-    'hrsh7th/nvim-cmp',
-    config = function()
-      require('lu5je0.ext.cmp')
-    end,
-    defer = true,
-    after = { 'nvim-lspconfig', 'nvim-autopairs' },
-    requires = {
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-buffer',
-      'hrsh7th/cmp-path',
-      {
-        'hrsh7th/vim-vsnip',
-        config = function()
-          require('lu5je0.ext.vsnip').setup()
-        end,
+    {
+      'neovim/nvim-lspconfig',
+      after = {
+        'mason-lspconfig.nvim',
+        'lua-dev.nvim',
       },
-      'hrsh7th/cmp-vsnip',
+      defer = true,
+      config = function()
+        require('lu5je0.ext.lspconfig.lsp').setup()
+      end,
+      requires = {
+        {
+          "glepnir/lspsaga.nvim",
+          branch = "main",
+          config = function()
+            require('lu5je0.ext.lspsaga')
+          end,
+          opt = true,
+        }
+      }
     },
-  }
-  
-  use {
-    'max397574/lua-dev.nvim'
-  }
-  
-  use {
-    'jose-elias-alvarez/null-ls.nvim',
-    after = 'nvim-lspconfig',
-    config = function()
-      if vim.fn.has('nvim-0.8') == 0 then
-        require('lu5je0.ext.null-ls.null-ls')
-      end
-    end,
-  }
-  
-  use {
-    'lu5je0/vim-illuminate',
-    after = 'nvim-lspconfig',
-    config = function()
-      vim.g.Illuminate_delay = 0
-      vim.cmd([[
-      hi! illuminatedWord ctermbg=green guibg=#344134
-      ]])
-      vim.defer_fn(function()
+    {
+      'hrsh7th/nvim-cmp',
+      config = function()
+        require('lu5je0.ext.cmp')
+      end,
+      defer = true,
+      after = { 'nvim-lspconfig', 'nvim-autopairs' },
+      requires = {
+        'hrsh7th/cmp-nvim-lsp',
+        'hrsh7th/cmp-buffer',
+        'hrsh7th/cmp-path',
+        {
+          'hrsh7th/vim-vsnip',
+          config = function()
+            require('lu5je0.ext.vsnip').setup()
+          end,
+        },
+        'hrsh7th/cmp-vsnip',
+      },
+    },
+    {
+      'max397574/lua-dev.nvim'
+    },
+    {
+      'jose-elias-alvarez/null-ls.nvim',
+      after = 'nvim-lspconfig',
+      config = function()
+        if vim.fn.has('nvim-0.8') == 0 then
+          require('lu5je0.ext.null-ls.null-ls')
+        end
+      end,
+    },
+    {
+      'lu5je0/vim-illuminate',
+      after = 'nvim-lspconfig',
+      config = function()
+        vim.g.Illuminate_delay = 0
         vim.cmd([[
+      hi! illuminatedWord ctermbg=green guibg=#344134
+      ]] )
+        vim.defer_fn(function()
+          vim.cmd([[
         augroup illuminated_autocmd
           autocmd!
         augroup END
-        ]])
-      end, 0)
-    end,
+        ]] )
+        end, 0)
+      end,
+    },
   }
 
   -- use {
@@ -569,7 +588,8 @@ return packer.startup(function(use)
   }
 
   use {
-    'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async',
+    'kevinhwang91/nvim-ufo',
+    requires = 'kevinhwang91/promise-async',
     config = function()
       require('lu5je0.ext.nvim-ufo')
     end
