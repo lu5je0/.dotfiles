@@ -2,7 +2,7 @@ local treesitter = require('nvim-treesitter')
 
 require('nvim-treesitter.configs').setup {
   -- Modules and its options go here
-  ensure_installed = _G.ts_filtypes,
+  ensure_installed = _G.__ts_filtypes,
   highlight = {
     enable = true,
   },
