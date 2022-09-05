@@ -34,7 +34,7 @@ require('ufo').setup({
     if parsers.get_parser(bufnr) then
       return { 'treesitter' }
     end
-    return { 'lsp' }
+    return { 'treesitter' }
   end,
   close_fold_kinds = {},
   open_fold_hl_timeout = 200,

@@ -123,6 +123,7 @@ end
 function M.setup()
   diagnostic()
   config()
+  vim.cmd("LspStart")
 end
 
 return M

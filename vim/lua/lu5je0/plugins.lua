@@ -305,9 +305,6 @@ return packer.startup(function(use)
   batch_use {
     {
       'lewis6991/gitsigns.nvim',
-      requires = {
-        'nvim-lua/plenary.nvim',
-      },
       config = function()
         require('lu5je0.ext.gitsigns').setup()
       end,
