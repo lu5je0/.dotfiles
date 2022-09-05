@@ -18,15 +18,6 @@ return packer.startup(function(use)
   _G.__defer_plugins = {}
   local origin_use = use
 
-  local function is_array(t)
-    local i = 0
-    for _ in pairs(t) do
-      i = i + 1
-      if t[i] == nil then return false end
-    end
-    return true
-  end
-
   local function inject_use(params)
     if params.defer then
       params.opt = true
@@ -37,16 +28,15 @@ return packer.startup(function(use)
     end
   end
 
+  local batch_use = function(arr)
+    for _, v in ipairs(arr) do
+      use(v)
+    end
+  end
+
   use = function(...)
     if type(...) == 'table' then
-      local t = ...
-      if is_array(t) then
-        for _, v in ipairs(t) do
-          inject_use(v)
-        end
-      else
-        inject_use(...)
-      end
+      inject_use(...)
     end
     origin_use(...)
   end
@@ -165,37 +155,6 @@ return packer.startup(function(use)
     fn = { 'hexedit#ToggleHexEdit' },
   }
 
-  -- stylua: ignore
-  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
-    'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
-  use {
-    'nvim-treesitter/nvim-treesitter',
-    run = ':TSUpdate',
-    opt = true,
-    config = function()
-      require('lu5je0.ext.treesiter')
-    end,
-    ft = _G.ts_filtypes,
-    requires = {
-      {
-        'm-demare/hlargs.nvim',
-        config = function()
-          require('hlargs').setup()
-        end
-      },
-      -- {
-      --   'nvim-treesitter/playground',
-      --   run = 'TSInstall query'
-      -- },
-      {
-        'SmiteshP/nvim-gps',
-        config = function()
-          require('nvim-gps').setup()
-        end,
-      },
-    },
-  }
-
   use {
     'sgur/vim-textobj-parameter',
     requires = {
@@ -260,7 +219,7 @@ return packer.startup(function(use)
   use('lu5je0/vim-base64')
 
   -- themes
-  use {
+  batch_use {
     'sainnhe/sonokai',
     'sainnhe/gruvbox-material',
     {
@@ -334,7 +293,7 @@ return packer.startup(function(use)
   }
 
   -- git
-  use {
+  batch_use {
     {
       'lewis6991/gitsigns.nvim',
       requires = {
@@ -442,8 +401,49 @@ return packer.startup(function(use)
     end
   }
 
+  -- treesitter
+  -- stylua: ignore
+  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
+    'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
+  batch_use {
+    {
+      'nvim-treesitter/nvim-treesitter',
+      run = ':TSUpdate',
+      opt = true,
+      config = function()
+        require('lu5je0.ext.treesiter')
+      end,
+      ft = _G.ts_filtypes,
+      requires = {
+        {
+          'm-demare/hlargs.nvim',
+          config = function()
+            require('hlargs').setup()
+          end
+        },
+        -- {
+        --   'nvim-treesitter/playground',
+        --   run = 'TSInstall query'
+        -- },
+        {
+          'SmiteshP/nvim-gps',
+          config = function()
+            require('nvim-gps').setup()
+          end,
+        },
+      },
+    },
+    {
+      'stevearc/aerial.nvim',
+      config = function()
+        require('lu5je0.ext.aerial')
+      end,
+      cmd = { 'AerialToggle' }
+    }
+  }
+
   -- lsp
-  use {
+  batch_use {
     {
       'williamboman/mason-lspconfig.nvim',
       after = 'mason.nvim',
@@ -539,6 +539,27 @@ return packer.startup(function(use)
       require('lu5je0.ext.indent-blankline')
     end,
   }
+  
+  -- debug dap
+  -- batch_use {
+  --   {
+  --     "rcarriga/nvim-dap-ui",
+  --     requires = { "mfussenegger/nvim-dap" },
+  --     config = function()
+  --       require("dapui").setup()
+  --       local dap, dapui = require("dap"), require("dapui")
+  --       dap.listeners.after.event_initialized["dapui_config"] = function()
+  --         dapui.open()
+  --       end
+  --       dap.listeners.before.event_terminated["dapui_config"] = function()
+  --         dapui.close()
+  --       end
+  --       dap.listeners.before.event_exited["dapui_config"] = function()
+  --         dapui.close()
+  --       end
+  --     end
+  --   }
+  -- }
 
   use {
     'puremourning/vimspector',
@@ -593,14 +614,6 @@ return packer.startup(function(use)
     config = function()
       require('lu5je0.ext.nvim-ufo')
     end
-  }
-
-  use {
-    'stevearc/aerial.nvim',
-    config = function()
-      require('lu5je0.ext.aerial')
-    end,
-    cmd = { 'AerialToggle' }
   }
 
   -- use {
