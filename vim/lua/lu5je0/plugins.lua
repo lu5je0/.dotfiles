@@ -402,6 +402,7 @@ return packer.startup(function(use)
 
   use {
     'williamboman/mason.nvim',
+    defer = true,
     config = function()
       require("mason").setup()
     end
@@ -411,7 +412,7 @@ return packer.startup(function(use)
   batch_use {
     function()
       -- stylua: ignore
-      _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
+      _G.__ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
         'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
     end,
     {
@@ -421,7 +422,7 @@ return packer.startup(function(use)
       config = function()
         require('lu5je0.ext.treesiter')
       end,
-      ft = _G.ts_filtypes,
+      ft = _G.__ts_filtypes,
       requires = {
         {
           'm-demare/hlargs.nvim',
@@ -550,23 +551,23 @@ return packer.startup(function(use)
 
   -- debug dap
   batch_use {
-  --   {
-  --     "rcarriga/nvim-dap-ui",
-  --     requires = { "mfussenegger/nvim-dap" },
-  --     config = function()
-  --       require("dapui").setup()
-  --       local dap, dapui = require("dap"), require("dapui")
-  --       dap.listeners.after.event_initialized["dapui_config"] = function()
-  --         dapui.open()
-  --       end
-  --       dap.listeners.before.event_terminated["dapui_config"] = function()
-  --         dapui.close()
-  --       end
-  --       dap.listeners.before.event_exited["dapui_config"] = function()
-  --         dapui.close()
-  --       end
-  --     end
-  --   }
+    --   {
+    --     "rcarriga/nvim-dap-ui",
+    --     requires = { "mfussenegger/nvim-dap" },
+    --     config = function()
+    --       require("dapui").setup()
+    --       local dap, dapui = require("dap"), require("dapui")
+    --       dap.listeners.after.event_initialized["dapui_config"] = function()
+    --         dapui.open()
+    --       end
+    --       dap.listeners.before.event_terminated["dapui_config"] = function()
+    --         dapui.close()
+    --       end
+    --       dap.listeners.before.event_exited["dapui_config"] = function()
+    --         dapui.close()
+    --       end
+    --     end
+    --   }
   }
 
   use {
@@ -616,12 +617,16 @@ return packer.startup(function(use)
     end
   }
 
-  use {
-    'kevinhwang91/nvim-ufo',
-    requires = 'kevinhwang91/promise-async',
-    config = function()
-      require('lu5je0.ext.nvim-ufo')
-    end
+  -- fold
+  batch_use {
+    { 'kevinhwang91/promise-async' },
+    {
+      'kevinhwang91/nvim-ufo',
+      defer = true,
+      config = function()
+        require('lu5je0.ext.nvim-ufo')
+      end,
+    }
   }
 
   -- use {
