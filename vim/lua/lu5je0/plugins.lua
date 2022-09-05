@@ -30,7 +30,11 @@ return packer.startup(function(use)
 
   local batch_use = function(arr)
     for _, v in ipairs(arr) do
-      use(v)
+      if type(v) == 'function' then
+        v()
+      else
+        use(v)
+      end
     end
   end
 
@@ -70,32 +74,6 @@ return packer.startup(function(use)
     end,
   }
 
-  -- use {
-  --   'nvim-telescope/telescope-fzf-native.nvim',
-  --   run = 'make',
-  -- }
-  --
-  -- use {
-  --   'nvim-telescope/telescope.nvim',
-  --   config = function()
-  --     require('lu5je0.ext.telescope').setup(false)
-  --   end,
-  --   defer = true,
-  --   after = 'telescope-fzf-native.nvim',
-  --   -- requires = {
-  --   --   { 'nvim-lua/plenary.nvim' },
-  --   --   {
-  --   --     'AckslD/nvim-neoclip.lua',
-  --   --     config = function()
-  --   --       require('neoclip').setup {
-  --   --         default_register = '*',
-  --   --       }
-  --   --     end,
-  --   --   },
-  --   -- },
-  --   -- keys = { '<leader>f' },
-  -- }
-
   use {
     'lu5je0/LeaderF',
     run = './install.sh',
@@ -104,6 +82,34 @@ return packer.startup(function(use)
     config = function()
       require('lu5je0.ext.leaderf').setup()
     end,
+  }
+
+  -- telescope
+  batch_use {
+    -- {
+    --   'nvim-telescope/telescope-fzf-native.nvim',
+    --   run = 'make',
+    -- },
+    -- {
+    --   'nvim-telescope/telescope.nvim',
+    --   config = function()
+    --     require('lu5je0.ext.telescope').setup(false)
+    --   end,
+    --   defer = true,
+    --   after = 'telescope-fzf-native.nvim',
+    --   -- requires = {
+    --   --   { 'nvim-lua/plenary.nvim' },
+    --   --   {
+    --   --     'AckslD/nvim-neoclip.lua',
+    --   --     config = function()
+    --   --       require('neoclip').setup {
+    --   --         default_register = '*',
+    --   --       }
+    --   --     end,
+    --   --   },
+    --   -- },
+    --   -- keys = { '<leader>f' },
+    -- }
   }
 
   use {
@@ -255,27 +261,30 @@ return packer.startup(function(use)
     end,
   }
 
-  -- use {
-  --   'lambdalisue/fern-git-status.vim',
-  --   setup = function ()
-  --     vim.g.loaded_fern_git_status = 1
-  --   end
-  -- }
-  use {
-    'lambdalisue/fern.vim',
-    opt = true,
-    cmd = { 'Fern', 'FernLocateFile' },
-    fn = { 'FernLocateFile' },
-    requires = {
-      { 'lambdalisue/fern-hijack.vim' },
-      { 'lambdalisue/nerdfont.vim' },
-      { 'lu5je0/fern-renderer-nerdfont.vim' },
-      { 'lambdalisue/glyph-palette.vim' },
-      { 'yuki-yano/fern-preview.vim', opt = true },
+  -- fern
+  batch_use {
+    -- {
+    --   'lambdalisue/fern-git-status.vim',
+    --   setup = function ()
+    --     vim.g.loaded_fern_git_status = 1
+    --   end
+    -- },
+    {
+      'lambdalisue/fern.vim',
+      opt = true,
+      cmd = { 'Fern', 'FernLocateFile' },
+      fn = { 'FernLocateFile' },
+      requires = {
+        { 'lambdalisue/fern-hijack.vim' },
+        { 'lambdalisue/nerdfont.vim' },
+        { 'lu5je0/fern-renderer-nerdfont.vim' },
+        { 'lambdalisue/glyph-palette.vim' },
+        { 'yuki-yano/fern-preview.vim', opt = true },
+      },
+      config = function()
+        vim.cmd('runtime plug-config/fern.vim')
+      end,
     },
-    config = function()
-      vim.cmd('runtime plug-config/fern.vim')
-    end,
   }
 
   use {
@@ -402,10 +411,12 @@ return packer.startup(function(use)
   }
 
   -- treesitter
-  -- stylua: ignore
-  _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
-    'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
   batch_use {
+    function()
+      -- stylua: ignore
+      _G.ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
+        'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
+    end,
     {
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
@@ -539,9 +550,9 @@ return packer.startup(function(use)
       require('lu5je0.ext.indent-blankline')
     end,
   }
-  
+
   -- debug dap
-  -- batch_use {
+  batch_use {
   --   {
   --     "rcarriga/nvim-dap-ui",
   --     requires = { "mfussenegger/nvim-dap" },
@@ -559,7 +570,7 @@ return packer.startup(function(use)
   --       end
   --     end
   --   }
-  -- }
+  }
 
   use {
     'puremourning/vimspector',
