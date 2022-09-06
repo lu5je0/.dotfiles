@@ -38,16 +38,13 @@ null_ls.setup {
     -- },
     require('null-ls').builtins.formatting.autopep8,
     require('lu5je0.ext.null-ls.sql-formatter'),
+    require("null-ls").builtins.diagnostics.markdownlint,
     -- require("null-ls").builtins.code_actions.refactoring
     -- require("null-ls").builtins.diagnostics.eslint,
     -- require("null-ls").builtins.completion.spell,
   },
   ---@diagnostic disable-next-line: unused-local
-  on_attach = function(client)
-    local opts = { silent = true, buffer = true, desc = 'null-ls'}
-    vim.keymap.set('n', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.formatting), opts)
-    vim.keymap.set('v', '<leader>cf', _G.lsp_format_wrapper(vim.lsp.buf.range_formatting), opts)
-  end,
+  on_attach = require('lu5je0.ext.lspconfig.lsp').on_attach
 }
 
 local trailing_space = {

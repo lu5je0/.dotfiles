@@ -21,7 +21,7 @@ local function diagnostic()
   end
 end
 
-local function on_attach(client, bufnr)
+M.on_attach = function(client, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
   local keymap = vim.keymap.set
 
@@ -90,7 +90,7 @@ local function config()
 
     local opts = {
       capabilities = capabilities,
-      on_attach = on_attach,
+      on_attach = M.on_attach,
     }
 
     if server_name == 'sumneko_lua' then
