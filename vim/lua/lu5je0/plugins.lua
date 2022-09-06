@@ -510,9 +510,7 @@ return packer.startup(function(use)
       'jose-elias-alvarez/null-ls.nvim',
       after = 'nvim-lspconfig',
       config = function()
-        if vim.fn.has('nvim-0.8') == 0 then
-          require('lu5je0.ext.null-ls.null-ls')
-        end
+        require('lu5je0.ext.null-ls.null-ls')
       end,
     },
     {
