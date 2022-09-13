@@ -474,7 +474,7 @@ return packer.startup(function(use)
       end,
       requires = {
         {
-          "glepnir/lspsaga.nvim",
+          "lu5je0/lspsaga.nvim",
           branch = "main",
           config = function()
             require('lu5je0.ext.lspsaga')
