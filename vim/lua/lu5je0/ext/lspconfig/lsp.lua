@@ -56,8 +56,10 @@ M.on_attach = function(client, bufnr)
   keymap('n', '[e', vim.diagnostic.goto_prev, opts)
   keymap('n', ']e', vim.diagnostic.goto_next, opts)
   keymap('n', '<leader>ce', vim.diagnostic.setloclist, opts)
-  keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
-  keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
+  
+  -- keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
+  -- keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
+  
   keymap('n', '<leader><space>', function()
     vim.diagnostic.open_float { scope = 'line', opts }
   end)

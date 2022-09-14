@@ -16,9 +16,9 @@ function _G.lsp_format_wrapper(fn)
       vim.api.nvim_buf_set_name(0, buf_name)
     end
   end
+
   return wrapper
 end
-
 
 -- 避免null-ls在没有文件名的时候报错
 local make_params = require('null-ls.utils').make_params

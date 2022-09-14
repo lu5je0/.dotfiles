@@ -11,20 +11,13 @@ local core_modules = {
   'lu5je0.mappings',
   'lu5je0.autocmds',
   'lu5je0.filetype',
+  'lu5je0.ext-loader',
 }
 
 for _, module in ipairs(core_modules) do
   local ok, err = pcall(require, module)
   if not ok then
     vim.notify('Error loading ' .. module .. '\n\n' .. err)
-  end
-end
-
-if vim.fn.has('gui') == 0 then
-  if vim.fn.has('wsl') == 1 then
-    require('lu5je0.misc.im.win.im').boostrap()
-  elseif vim.fn.has('mac') == 1 then
-    require('lu5je0.misc.im.mac.im')
   end
 end
 

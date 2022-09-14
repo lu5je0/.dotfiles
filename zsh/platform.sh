@@ -17,6 +17,9 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
     export JAVA_HOME=$JAVA_HOME_11
     ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
     
+    # brew
+    export HOMEBREW_NO_AUTO_UPDATE=true
+    
     # iterm title bar
     echo -en "\033]6;1;bg;red;brightness;44\a"
     echo -en "\033]6;1;bg;green;brightness;46\a"
