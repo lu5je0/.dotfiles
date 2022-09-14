@@ -72,4 +72,18 @@ function M.decode_buffer()
   vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
 end
 
+M.setup = function()
+  vim.api.nvim_create_user_command('Base64Encode', function()
+    require('lu5je0.misc.base64').encode_buffer()
+  end, { force = true })
+
+  vim.api.nvim_create_user_command('Base64Decode', function()
+    require('lu5je0.misc.base64').decode_buffer()
+  end, { force = true })
+
+  vim.api.nvim_create_user_command('TimestampToDate', function()
+    require('lu5je0.misc.timestamp').show_in_date()
+  end, { force = true })
+end
+
 return M

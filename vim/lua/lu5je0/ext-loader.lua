@@ -7,6 +7,12 @@ if vim.fn.has('gui') == 0 then
   end
 end
 
+-- json-helper
+require('lu5je0.misc.json-helper').setup()
+
+-- base64
+require('lu5je0.misc.base64').setup()
+
 -- formatter
 local formatter = require('lu5je0.misc.formatter.formatter')
 formatter.setup({
