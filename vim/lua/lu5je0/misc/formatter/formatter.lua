@@ -27,8 +27,7 @@ local function is_exists_lsp_format_capabilities()
     range_format = false
   }
 
-  for _, v in ipairs(attached_lsps) do
-    print(_, v.server_capabilities.documentFormattingProvider)
+  for _, v in pairs(attached_lsps) do
     if v.server_capabilities.documentFormattingProvider then
       result.format = true
     end
