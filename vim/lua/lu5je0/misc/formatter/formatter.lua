@@ -41,7 +41,6 @@ end
 
 local function lsp_format(format_type)
   local server_capabilities = is_exists_lsp_format_capabilities()
-  print(dump(server_capabilities))
   if format_type == M.FORMAT_TYPE.FORMAT then
     if server_capabilities.format then
       vim.lsp.buf.formatting({})
