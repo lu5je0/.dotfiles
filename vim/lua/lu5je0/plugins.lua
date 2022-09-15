@@ -166,11 +166,12 @@ return packer.startup(function(use)
     requires = {
       {
         'kana/vim-textobj-user',
-        opt = true
+        -- opt = true
       }
     },
     after = {
       'vim-exchange',
+      'vim-textobj-user'
     },
     setup = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
@@ -414,7 +415,7 @@ return packer.startup(function(use)
       -- stylua: ignore
       _G.__ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
         'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
-        'gitignore', 'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
+        'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
     end,
     {
       'nvim-treesitter/nvim-treesitter',
