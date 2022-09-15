@@ -1,5 +1,7 @@
 local M = {}
 
+local cursor_util = require('lu5je0.core.cursor')
+
 
 M.FORMAT_TOOL_TYPE = {
   LSP = 'LSP',
@@ -48,29 +50,34 @@ local function lsp_format(format_type)
     end
   elseif format_type == M.FORMAT_TYPE.RANGE_FORMAT then
     if server_capabilities.format then
+      ---@diagnostic disable-next-line: missing-parameter
       vim.lsp.buf.range_formatting()
       return true
     end
   end
 end
 
-local function external_format(filetype)
-  print('external_format')
-  if not config.external_formatter[filetype] or not config.external_formatter[filetype].format then
-    print('miss external_format')
-    return false
+local function external_format(format_type, filetype)
+  if not config.external_formatter[filetype] then
+    print('miss format config')
   end
-  config.external_formatter[filetype].format()
-  print("external format done")
-  return true
-end
-
-local function external_range_format(filetype)
+  
+  cursor_util.save_position()
   print('external_format')
-  if not config.external_formatter[filetype] or not config.external_formatter[filetype].range_format then
-    return false
+  if format_type == M.FORMAT_TYPE.FORMAT then
+    if not config.external_formatter[filetype].format then
+      print('miss external_format')
+      return false
+    end
+    config.external_formatter[filetype].format()
+  elseif format_type == M.FORMAT_TYPE.RANGE_FORMAT then
+    if not config.external_formatter[filetype].range_format then
+      print('miss range external_format')
+      return false
+    end
+    config.external_formatter[filetype].range_format()
   end
-  config.external_formatter[filetype].range_format()
+  cursor_util.goto_saved_position()
   return true
 end
 
@@ -89,17 +96,9 @@ function M.format(format_type)
 
     -- external format
     if v == M.FORMAT_TOOL_TYPE.EXTERNAL then
-      if format_type == M.FORMAT_TYPE.FORMAT then
-        if external_format(filetype) then
-          print('external_format')
-          return
-        end
-      end
-      if format_type == M.FORMAT_TYPE.RANGE_FORMAT then
-        if external_range_format(filetype) then
-          print('external_range_format')
-          return
-        end
+      if external_format(format_type, filetype) then
+        print('external format')
+        return
       end
     end
   end
