@@ -60,6 +60,7 @@ end
 local function external_format(format_type, filetype)
   if not config.external_formatter[filetype] then
     print('miss format config')
+    return
   end
   
   cursor_util.save_position()

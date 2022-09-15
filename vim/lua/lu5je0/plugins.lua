@@ -413,7 +413,8 @@ return packer.startup(function(use)
     function()
       -- stylua: ignore
       _G.__ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
-        'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript' }
+        'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
+        'gitignore', 'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
     end,
     {
       'nvim-treesitter/nvim-treesitter',
