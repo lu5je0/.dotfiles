@@ -49,8 +49,9 @@ if not has('nvim-0.8.0') then
 end
 
 -- 不显示启动界面
-o.shortmess = 'atI'
+o.shortmess = o.shortmess .. 'I'
 o.foldtext = 'misc#fold_text()'
+o.showcmd = false
 
 -- colorscheme
 o.termguicolors = true
