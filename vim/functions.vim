@@ -91,11 +91,6 @@ function! FileSize()
   endif
 endfunction
 
-function! CurVimPath()
-    let name = getcwd()
-    return fnamemodify(name, ':p:h:t')
-endfunction
-
 " A function to clear the undo history
 function! <SID>ForgetUndo()
     let old_undolevels = &undolevels
@@ -166,23 +161,4 @@ function! EscapeText(text)
     \   'g')
 
     return l:escaped_text
-endfunction
-
-function! MarkdownFold() abort
-  let line = getline(v:lnum)
-
-  if line =~# '^#\+ ' && s:NotCodeBlock(v:lnum)
-    return ">" . match(line, ' ')
-  endif
-
-  let nextline = getline(v:lnum + 1)
-  if (line =~ '^.\+$') && (nextline =~ '^=\+$') && s:NotCodeBlock(v:lnum + 1)
-    return ">1"
-  endif
-
-  if (line =~ '^.\+$') && (nextline =~ '^-\+$') && s:NotCodeBlock(v:lnum + 1)
-    return ">2"
-  endif
-
-  return "="
 endfunction
