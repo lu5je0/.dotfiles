@@ -55,9 +55,8 @@ o.foldtext = 'misc#fold_text()'
 -- colorscheme
 o.termguicolors = true
 o.bg = 'dark'
+vim.cmd.colorscheme('edge')
 vim.cmd [[
-colorscheme edge
-
 " " StatusLine 左边
 hi! StatusLine guibg=#373943
 hi! StatusLineNC guibg=#373943

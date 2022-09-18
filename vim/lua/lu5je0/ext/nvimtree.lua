@@ -3,25 +3,42 @@ local M = {}
 
 local lib = require('nvim-tree.lib')
 local keys_helper = require('lu5je0.core.keys')
+local api = require('nvim-tree.api')
 
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
 M.pwd_back_state = 0
 
 function M.locate_file()
-  local cur_file_dir_path = vim.fn.expand('%:p:h')
+  local cur_filepath = vim.fn.expand('%:p')
+  local cur_file_dir_path = vim.fs.dirname(cur_filepath)
+  local cwd = vim.fn.getcwd()
+  
   if cur_file_dir_path == '' then
     return
   end
+  
+  local function turn_on_hidden_filter()
+    if require("nvim-tree.explorer.filters").config.filter_dotfiles then
+      api.tree.toggle_hidden_filter()
+    end
+  end
+  
+  local is_dotfile = vim.fs.basename(cur_filepath):sub(1, 1) == '.'
+  if is_dotfile then
+    turn_on_hidden_filter()
+  end
 
-  local cwd = vim.fn.getcwd()
   if not string.startswith(cur_file_dir_path, cwd) then
     vim.cmd(':cd ' .. cur_file_dir_path)
   else
-    -- dotfiles check
-    if vim.fn.expand('%:p'):sub(#cwd + 2, #cwd + 2) == '.' then
-      if require("nvim-tree.explorer.filters").config.filter_dotfiles then
-        require'nvim-tree.actions.dispatch'.dispatch('dotfiles')
+    -- check if file in dotdir
+    if not is_dotfile then
+      for dir in vim.fs.parents(cur_filepath) do
+          if vim.fs.basename(dir):sub(1, 1) == '.' then
+            turn_on_hidden_filter()
+            break
+          end
       end
     end
   end
