@@ -25,25 +25,21 @@ M.on_attach = function(client, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
   local keymap = vim.keymap.set
 
-  -- ****
-  -- lspsaga
-  -- ****
-  keymap('n', 'gd', '<cmd>Lspsaga lsp_finder<CR>', opts)
-  -- Code action
-  keymap('n', '<leader>cc', '<cmd>Lspsaga code_action<CR>', opts)
-  keymap('v', '<leader>cc', '<cmd><C-U>Lspsaga range_code_action<CR>', opts)
-  keymap('n', 'K', '<cmd>Lspsaga hover_doc<CR>', opts)
-
-  -- ****
-  -- basic
-  -- ****
   -- keymap('n', 'gd', vim.lsp.buf.definition, opts)
+  -- keymap('n', 'K', vim.lsp.buf.hover, opts)
+  -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
+  -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
+  
+  -- format
+  -- keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
+  -- keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
+  
+  
   keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
   keymap('n', 'gn', vim.lsp.buf.implementation, opts)
   keymap('n', 'gb', vim.lsp.buf.references, opts)
 
   keymap('n', 'gu', vim.lsp.buf.declaration, opts)
-  -- keymap('n', 'K', vim.lsp.buf.hover, opts)
   keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)
   keymap('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
   keymap('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
@@ -51,31 +47,13 @@ M.on_attach = function(client, bufnr)
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, opts)
   keymap('n', '<leader>cr', vim.lsp.buf.rename, opts)
-  -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
-  -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
   keymap('n', '[e', vim.diagnostic.goto_prev, opts)
   keymap('n', ']e', vim.diagnostic.goto_next, opts)
   keymap('n', '<leader>ce', vim.diagnostic.setloclist, opts)
   
-  -- keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
-  -- keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
-  
   keymap('n', '<leader><space>', function()
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
-
-  -- illuminate
-  require('illuminate').on_attach(client)
-
-  -- nvim-ufo
-  -- require('ufo').setup()
-
-  vim.cmd [[
-  " cursor word highlight
-  highlight LspReferenceText guibg=none gui=none
-  highlight LspReferenceWrite guibg=#344134 gui=none
-  highlight LspReferenceRead guibg=#344134 gui=none
-  ]]
 end
 
 local function config()

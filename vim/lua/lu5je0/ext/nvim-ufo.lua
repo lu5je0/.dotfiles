@@ -48,3 +48,12 @@ require('ufo').setup({
   open_fold_hl_timeout = 200,
   fold_virt_text_handler = fold_virt_text_handler
 })
+
+-- local group = vim.api.nvim_create_augroup('illuminate', { clear = true })
+-- vim.api.nvim_create_autocmd("LspAttach", {
+--   group = group,
+--   ---@diagnostic disable-next-line: unused-local
+--   callback = function(args)
+--     require('ufo').setup()
+--   end
+-- })

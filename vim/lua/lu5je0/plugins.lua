@@ -479,7 +479,7 @@ return packer.startup(function(use)
           "lu5je0/lspsaga.nvim",
           branch = "main",
           config = function()
-            require('lu5je0.ext.lspsaga')
+            require('lu5je0.ext.lspconfig.lspsaga')
           end,
           opt = true,
         }
@@ -519,17 +519,7 @@ return packer.startup(function(use)
       'lu5je0/vim-illuminate',
       after = 'nvim-lspconfig',
       config = function()
-        vim.g.Illuminate_delay = 0
-        vim.cmd([[
-      hi! illuminatedWord ctermbg=green guibg=#344134
-      ]] )
-        vim.defer_fn(function()
-          vim.cmd([[
-        augroup illuminated_autocmd
-          autocmd!
-        augroup END
-        ]] )
-        end, 0)
+        require('lu5je0.ext.lspconfig.illuminate')
       end,
     },
   }
