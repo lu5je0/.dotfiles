@@ -45,9 +45,6 @@ return packer.startup(function(use)
     origin_use(...)
   end
 
-  -- Speed up loading Lua modules in Neovim to improve startup time.
-  use('lewis6991/impatient.nvim')
-
   -- Packer can manage itself
   use('wbthomason/packer.nvim')
 
@@ -469,6 +466,7 @@ return packer.startup(function(use)
       after = {
         'mason-lspconfig.nvim',
         'lua-dev.nvim',
+        'nvim-cmp',
       },
       defer = true,
       config = function()
@@ -491,7 +489,7 @@ return packer.startup(function(use)
         require('lu5je0.ext.cmp')
       end,
       defer = true,
-      after = { 'nvim-lspconfig', 'nvim-autopairs' },
+      after = { 'nvim-autopairs' },
       requires = {
         'hrsh7th/cmp-nvim-lsp',
         'hrsh7th/cmp-buffer',
@@ -612,7 +610,7 @@ return packer.startup(function(use)
     { 'kevinhwang91/promise-async' },
     {
       'kevinhwang91/nvim-ufo',
-      defer = true,
+      after = 'nvim-treesitter',
       config = function()
         require('lu5je0.ext.nvim-ufo')
       end,
