@@ -407,13 +407,10 @@ return packer.startup(function(use)
   }
 
   -- treesitter
+  _G.__ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
+  'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
+  'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
   batch_use {
-    function()
-      -- stylua: ignore
-      _G.__ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
-        'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
-        'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
-    end,
     {
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
