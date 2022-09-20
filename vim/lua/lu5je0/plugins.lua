@@ -407,7 +407,7 @@ return packer.startup(function(use)
   }
 
   -- treesitter
-  _G.__ts_filtypes = { 'json', 'python', 'java', 'lua', 'c', 'vim', 'bash', 'go',
+  _G.__ts_filtypes = { 'json', 'python', 'java', 'bash', 'go',
   'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
   'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
   batch_use {
@@ -418,7 +418,13 @@ return packer.startup(function(use)
       config = function()
         require('lu5je0.ext.treesiter')
       end,
-      ft = _G.__ts_filtypes,
+      ft = (function()
+        local t = vim.tbl_values(_G.__ts_filtypes)
+        table.insert(t, 'lua')
+        table.insert(t, 'lua')
+        table.insert(t, 'c')
+        return t
+      end)(),
       requires = {
         {
           'm-demare/hlargs.nvim',
