@@ -105,9 +105,13 @@ local function comfirm(fallback)
 end
 
 cmp.setup {
-  -- window = {
-  --   documentation = cmp.config.disable
-  -- },
+  window = {
+    -- documentation = cmp.config.disable,
+    documentation = {
+      max_width = 40,
+      max_height = 25,
+    },
+  },
   snippet = {
     expand = function(args)
       vim.fn['vsnip#anonymous'](args.body) -- For `vsnip` users.
@@ -162,7 +166,7 @@ cmp.setup {
     -- end,
     format = function(entry, vim_item)
       local ELLIPSIS_CHAR = '…'
-      local MAX_LABEL_WIDTH = 37
+      local MAX_LABEL_WIDTH = 34
       local MIN_LABEL_WIDTH = 0
       local label = vim_item.abbr
       local truncated_label = vim.fn.strcharpart(label, 0, MAX_LABEL_WIDTH)
