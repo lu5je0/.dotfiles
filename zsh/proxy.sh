@@ -42,7 +42,5 @@ unproxy() {
 
     unset https_proxy
     unset HTTPS_PROXY
-
-
 }
 
