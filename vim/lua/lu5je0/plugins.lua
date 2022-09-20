@@ -72,7 +72,7 @@ return packer.startup(function(use)
   }
 
   use {
-    'lu5je0/LeaderF',
+    'Yggdroot/LeaderF',
     run = './install.sh',
     defer = true,
     -- cmd = {'Leaderf', 'Git'},
