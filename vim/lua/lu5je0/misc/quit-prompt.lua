@@ -2,6 +2,16 @@ local M = {}
 
 local devicons = require('nvim-web-devicons')
 
+local function keymap(mode, lhs, rhs, opts)
+  if type(lhs) == 'table' then
+    for _, v in ipairs(lhs) do
+      vim.keymap.set(mode, v, rhs, opts)
+    end
+  else
+    vim.keymap.set(mode, lhs, rhs, opts)
+  end
+end
+
 local function create_popup(msg)
   local Popup = require('nui.popup')
   local event = require('nui.utils.autocmd').event
@@ -38,30 +48,18 @@ local function create_popup(msg)
     popup:unmount()
   end, opts)
 
-  vim.keymap.set('n', 'q', function()
+  keymap('n', { 'i', 'o', 'v', 'V', '<leader>Q' }, '<nop>', opts)
+
+  keymap('n', { 'q', '<c-c>', '<cr>', 'n' }, function()
     popup:unmount()
   end, opts)
 
-  vim.keymap.set('n', '<c-c>', function()
-    popup:unmount()
-  end, opts)
-
-  vim.keymap.set('n', '<cr>', function()
-    popup:unmount()
-  end, opts)
-
-  vim.keymap.set('n', 'n', function()
-    popup:unmount()
-  end, opts)
-
-  vim.keymap.set('n', '<leader>Q', function() end, opts)
-
-  vim.keymap.set('n', 'y', function()
+  keymap('n', { 'Y', 'y' }, function()
     popup:unmount()
     vim.cmd('qa!')
   end, opts)
 
-  vim.keymap.set('n', 's', function()
+  keymap('n', 's', function()
     popup:unmount()
     vim.cmd('wqa!')
   end, opts)
@@ -100,10 +98,6 @@ local function create_popup(msg)
   -- unmount component when cursor leaves buffer
   popup:on(event.BufLeave, function()
     popup:unmount()
-    vim.defer_fn(function ()
-      -- 删除原有buffer中的y映射
-      vim.keymap.del('n', 'y', { buffer = true })
-    end, 0)
   end)
 
   popup:mount()
@@ -111,9 +105,6 @@ local function create_popup(msg)
 end
 
 local function exit_vim_with_dialog()
-  -- 防止窗口还没弹出就按下了y
-  vim.keymap.set('n', 'y', function() vim.cmd('qa!') end, { buffer = true })
-
   local unsave_buffers = {}
 
   for _, buffer in ipairs(vim.fn.getbufinfo { bufloaded = 1, buflisted = 1 }) do
