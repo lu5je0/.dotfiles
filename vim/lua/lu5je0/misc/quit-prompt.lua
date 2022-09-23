@@ -57,10 +57,12 @@ local function create_popup(msg)
   vim.keymap.set('n', '<leader>Q', function() end, opts)
 
   vim.keymap.set('n', 'y', function()
+    popup:unmount()
     vim.cmd('qa!')
   end, opts)
 
   vim.keymap.set('n', 's', function()
+    popup:unmount()
     vim.cmd('wqa!')
   end, opts)
 

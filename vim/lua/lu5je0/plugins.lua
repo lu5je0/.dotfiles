@@ -52,7 +52,7 @@ return packer.startup(function(use)
 
   use {
     'MunifTanjim/nui.nvim',
-    commit = '042cceb497cc4cfa3ae735a5e7bc01b4b6f19ef1'
+    -- commit = '042cceb497cc4cfa3ae735a5e7bc01b4b6f19ef1'
   }
 
   use {
