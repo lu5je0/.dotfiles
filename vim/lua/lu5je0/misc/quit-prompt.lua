@@ -208,4 +208,10 @@ end
 
 M.exit = exit_vim_with_dialog
 
+M.setup = function ()
+  local opts = { desc = 'mappings.lua', silent = true }
+  vim.keymap.set('n', '<leader>q', M.close_buffer, opts)
+  vim.keymap.set('n', '<leader>Q', M.exit, opts)
+end
+
 return M

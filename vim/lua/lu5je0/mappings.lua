@@ -1,63 +1,74 @@
 vim.g.mapleader = ','
 
-vim.schedule(function()
-  require('lu5je0.misc.var-naming-converter').key_mapping()
-  require('lu5je0.misc.code-runner').key_mapping()
-end)
-
 -- option toggle
 local option_toggler = require('lu5je0.misc.option-toggler')
-local opts = { desc = 'mappings.lua', silent = true }
+local default_opts = { desc = 'mappings.lua', silent = true }
 
-local function nmap_fn(rhs, fn)
-  vim.keymap.set('n', rhs, fn, opts)
+local function del_map(modes, lhs, opts)
+  if type(lhs) == 'table' then
+    for _, v in ipairs(lhs) do
+      vim.keymap.del(modes, v, opts)
+    end
+  else
+    vim.keymap.del(modes, lhs, opts)
+  end
 end
+
+local function set_map(modes, lhs, rhs, opts)
+  if opts == nil then
+    opts = default_opts
+  end
+  
+  if type(rhs) == 'table' then
+    for _, v in ipairs(lhs) do
+      vim.keymap.set(modes, v, rhs, default_opts)
+    end
+  else
+    vim.keymap.set(modes, lhs, rhs, default_opts)
+  end
+end
+
+local set_n_map = function(...) set_map('n', ...) end
+local set_x_map = function(...) set_map('x', ...) end
 
 vim.defer_fn(function()
   -- movement
-  vim.keymap.set({ 'x', 'n', 'o' }, 'H', '^', opts)
-  vim.keymap.set({ 'x', 'n', 'o' }, 'L', '$', opts)
-
-  -- quit
-  vim.keymap.set({ 'n' }, '<leader>q', require("lu5je0.misc.quit-prompt").close_buffer, opts)
-  vim.keymap.set({ 'n' }, '<leader>Q', require("lu5je0.misc.quit-prompt").exit, opts)
+  set_map({ 'x', 'n', 'o' }, 'H', '^')
+  set_map({ 'x', 'n', 'o' }, 'L', '$')
 
   -- toggle
-  nmap_fn('<leader>vn', option_toggler.new_toggle_fn({ 'set nonumber', 'set number' }))
-  nmap_fn('<leader>vp', option_toggler.new_toggle_fn({ 'set nopaste', 'set paste' }))
-  nmap_fn('<leader>vm', option_toggler.new_toggle_fn({ 'set mouse=c', 'set mouse=a' }))
-  nmap_fn('<leader>vs', option_toggler.new_toggle_fn({ 'set signcolumn=no', 'set signcolumn=yes:1' }))
-  nmap_fn('<leader>vl', option_toggler.new_toggle_fn({ 'set cursorline', 'set nocursorline' }))
-  nmap_fn('<leader>vf', option_toggler.new_toggle_fn({ 'set foldcolumn=auto:9', 'set foldcolumn=0' }))
-  nmap_fn('<leader>vd', option_toggler.new_toggle_fn({ 'windo difft', 'windo diffo' }))
-  nmap_fn('<leader>vh', option_toggler.new_toggle_fn({ 'call hexedit#ToggleHexEdit()' }))
-  nmap_fn('<leader>vc', option_toggler.new_toggle_fn({ 'set noignorecase', 'set ignorecase' }))
-  nmap_fn('<leader>vi', option_toggler.new_toggle_fn(function() vim.fn['ToggleSaveLastIme']() end))
-
-  nmap_fn('<leader>vw', function()
-    local buffer_opts = vim.deepcopy(opts)
+  set_n_map('<leader>vn', option_toggler.new_toggle_fn({ 'set nonumber', 'set number' }))
+  set_n_map('<leader>vp', option_toggler.new_toggle_fn({ 'set nopaste', 'set paste' }))
+  set_n_map('<leader>vm', option_toggler.new_toggle_fn({ 'set mouse=c', 'set mouse=a' }))
+  set_n_map('<leader>vs', option_toggler.new_toggle_fn({ 'set signcolumn=no', 'set signcolumn=yes:1' }))
+  set_n_map('<leader>vl', option_toggler.new_toggle_fn({ 'set cursorline', 'set nocursorline' }))
+  set_n_map('<leader>vf', option_toggler.new_toggle_fn({ 'set foldcolumn=auto:9', 'set foldcolumn=0' }))
+  set_n_map('<leader>vd', option_toggler.new_toggle_fn({ 'windo difft', 'windo diffo' }))
+  set_n_map('<leader>vh', option_toggler.new_toggle_fn({ 'call hexedit#ToggleHexEdit()' }))
+  set_n_map('<leader>vc', option_toggler.new_toggle_fn({ 'set noignorecase', 'set ignorecase' }))
+  set_n_map('<leader>vi', option_toggler.new_toggle_fn(function() vim.fn['ToggleSaveLastIme']() end))
+  set_n_map('<leader>vw', function()
+    local buffer_opts = vim.deepcopy(default_opts)
     buffer_opts.buffer = true
     if vim.wo.wrap then
       vim.wo.wrap = false
-      vim.keymap.del({ 'x', 'n' }, 'j', { buffer = 0 })
-      vim.keymap.del({ 'x', 'n' }, 'k', { buffer = 0 })
-      vim.keymap.del({ 'x', 'n', 'o' }, 'H', { buffer = 0 })
-      vim.keymap.del({ 'x', 'n', 'o' }, 'L', { buffer = 0 })
-      vim.keymap.del({ 'o' }, 'Y', { buffer = 0 })
+      del_map({ 'x', 'n' }, { 'j', 'k' }, { buffer = 0 })
+      del_map({ 'x', 'n', 'o' }, { 'H', 'L' }, { buffer = 0 })
+      del_map({ 'o' }, 'Y', { buffer = 0 })
     else
       vim.wo.wrap = true
-      vim.keymap.set({ 'x', 'n' }, 'j', 'gj', buffer_opts)
-      vim.keymap.set({ 'x', 'n' }, 'k', 'gk', buffer_opts)
-      vim.keymap.set({ 'x', 'n', 'o' }, 'H', 'g^', buffer_opts)
-      vim.keymap.set({ 'x', 'n', 'o' }, 'L', 'g$', buffer_opts)
-      vim.keymap.set({ 'o' }, 'Y', 'gyg$', buffer_opts)
+      set_map({ 'x', 'n' }, 'j', 'gj', buffer_opts)
+      set_map({ 'x', 'n' }, 'k', 'gk', buffer_opts)
+      set_map({ 'x', 'n', 'o' }, 'H', 'g^', buffer_opts)
+      set_map({ 'x', 'n', 'o' }, 'L', 'g$', buffer_opts)
+      set_map({ 'o' }, 'Y', 'gyg$', buffer_opts)
     end
   end)
-
-  vim.cmd [[
-  " ctrl-c 复制
-  vnoremap <C-c> y
   
+  -- ctrl-c 复制
+  set_x_map('<C-c>', 'y')
+  
+  vim.cmd [[
   nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
 
   " 缩进后重新选择
@@ -80,11 +91,6 @@ vim.defer_fn(function()
   map <c-m-n> <Plug>(VM-Add-Cursor-Down)
   map <c-m-p> <Plug>(VM-Add-Cursor-Up)
 
-  nmap <F2> :bp<cr>
-  nmap <F3> :bn<cr>
-  nmap <PageUp>   :bprevious<CR>
-  nmap <PageDown> :bnext<CR>
-
   "----------------------------------------------------------------------
   " <leader>
   "----------------------------------------------------------------------
@@ -94,10 +100,10 @@ vim.defer_fn(function()
   " window control
   "----------------------------------------------------------------------
   " 快速切换窗口
-  nmap <silent> <C-J> <C-w>j
-  nmap <silent> <C-K> <C-w>k
-  nmap <silent> <C-H> <C-w>h
-  nmap <silent> <C-L> <C-w>l
+  nmap <silent> <c-j> <c-w>j
+  nmap <silent> <c-k> <c-w>k
+  nmap <silent> <c-h> <c-w>h
+  nmap <silent> <c-l> <c-w>l
 
   nmap <silent> <left> :bp<cr>
   nmap <silent> <right> :bn<cr>

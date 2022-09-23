@@ -15,7 +15,7 @@ require('lu5je0.misc.base64').setup()
 
 -- formatter
 local formatter = require('lu5je0.misc.formatter.formatter')
-formatter.setup({
+formatter.setup {
   format_priority = {
     json = { formatter.FORMAT_TOOL_TYPE.LSP, formatter.FORMAT_TOOL_TYPE.EXTERNAL },
   },
@@ -28,4 +28,13 @@ formatter.setup({
       end,
     }
   }
-})
+}
+
+-- var-naming-converter
+require('lu5je0.misc.var-naming-converter').key_mapping()
+
+-- code-runner
+require('lu5je0.misc.code-runner').key_mapping()
+
+-- quit-prompt
+require('lu5je0.misc.quit-prompt').setup()
