@@ -45,7 +45,7 @@ local function lsp_format(format_type)
   local server_capabilities = is_exists_lsp_format_capabilities()
   if format_type == M.FORMAT_TYPE.FORMAT then
     if server_capabilities.format then
-      vim.lsp.buf.formatting({})
+      vim.lsp.buf.format { async = true }
       return true
     end
   elseif format_type == M.FORMAT_TYPE.RANGE_FORMAT then
@@ -62,7 +62,7 @@ local function external_format(format_type, filetype)
     print('miss format config')
     return
   end
-  
+
   cursor_util.save_position()
   print('external_format')
   if format_type == M.FORMAT_TYPE.FORMAT then

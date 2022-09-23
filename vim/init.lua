@@ -17,10 +17,7 @@ for _, module in ipairs(core_modules) do
   end
 end
 
-vim.cmd [[
-runtime functions.vim
-runtime mappings.vim
-]]
+vim.cmd('runtime functions.vim')
 
 local i = 1
 local function defer_loads()
