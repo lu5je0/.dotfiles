@@ -57,6 +57,8 @@ vim.defer_fn(function()
   vim.cmd [[
   " ctrl-c 复制
   vnoremap <C-c> y
+  
+  nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
 
   " 缩进后重新选择
   xmap < <gv
@@ -101,14 +103,6 @@ vim.defer_fn(function()
   nmap <silent> <right> :bn<cr>
   nmap <silent> <c-b>o <c-w>p
   nmap <silent> <c-b><c-o> <c-w>p
-  nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
-
-  command! -nargs=1 SplitWithBuffer call SplitWithBuffer(<f-args>)
-
-  " undotree esc映射
-  function g:Undotree_CustomMap()
-      nmap <buffer> <ESC> <plug>UndotreeClose
-  endfunc
 
   " 打断undo
   inoremap . <c-g>u.
