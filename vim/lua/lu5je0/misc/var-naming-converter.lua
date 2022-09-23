@@ -117,17 +117,36 @@ end
 M.key_mapping = function()
   -- stylua: ignore start
   local opts = { desc = 'var-naming-converter.lua' }
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end, opts)
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToCamelword)', function() M.convert_to_camel('word') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToCamelword)', function() M.convert_to_camel('word') end, opts)
 
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToSnakeWORD)', function() M.convert_to_snake('WORD') end, opts)
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToSnakeword)', function() M.convert_to_snake('word') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToSnakeWORD)', function() M.convert_to_snake('WORD') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToSnakeword)', function() M.convert_to_snake('word') end, opts)
 
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToPascalWORD)', function() M.convert_to_pascal('WORD') end, opts)
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToPascalword)', function() M.convert_to_pascal('word') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToPascalWORD)', function() M.convert_to_pascal('WORD') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToPascalword)', function() M.convert_to_pascal('word') end, opts)
 
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToKebabWORD)', function() M.convert_to_kebab('WORD') end, opts)
-  vim.keymap.set({ 'n', 'v' }, '<plug>(ConvertToKebabword)', function() M.convert_to_kebab('word') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToKebabWORD)', function() M.convert_to_kebab('WORD') end, opts)
+  vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToKebabword)', function() M.convert_to_kebab('word') end, opts)
+  
+  vim.cmd[[
+  xmap <leader>cnc <plug>(ConvertToCamelword)
+  nmap <leader>cnc <plug>(ConvertToCamelword)
+  nmap <leader>cnC <plug>(ConvertToCamelWORD)
+
+  xmap <leader>cns <plug>(ConvertToSnakeword)
+  nmap <leader>cns <plug>(ConvertToSnakeword)
+  nmap <leader>cnS <plug>(ConvertToSnakeWORD)
+
+  xmap <leader>cnk <plug>(ConvertToKebabword)
+  nmap <leader>cnk <plug>(ConvertToKebabword)
+  nmap <leader>cnK <plug>(ConvertToKebabWORD)
+
+  xmap <leader>cnp <plug>(ConvertToPascalword)
+  nmap <leader>cnp <plug>(ConvertToPascalword)
+  nmap <leader>cnP <plug>(ConvertToPascalWORD)
+  ]]
   -- stylua: ignore end
 end
+
 return M
