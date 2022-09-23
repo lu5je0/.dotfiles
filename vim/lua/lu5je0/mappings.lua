@@ -18,6 +18,10 @@ vim.defer_fn(function()
   vim.keymap.set({ 'x', 'n', 'o' }, 'H', '^', opts)
   vim.keymap.set({ 'x', 'n', 'o' }, 'L', '$', opts)
 
+  -- quit
+  vim.keymap.set({ 'n' }, '<leader>q', require("lu5je0.misc.quit-prompt").close_buffer, opts)
+  vim.keymap.set({ 'n' }, '<leader>Q', require("lu5je0.misc.quit-prompt").exit, opts)
+
   -- toggle
   nmap_fn('<leader>vn', option_toggler.new_toggle_fn({ 'set nonumber', 'set number' }))
   nmap_fn('<leader>vp', option_toggler.new_toggle_fn({ 'set nopaste', 'set paste' }))
@@ -137,8 +141,6 @@ vim.defer_fn(function()
   "----------------------------------------------------------------------
   " leader
   "----------------------------------------------------------------------
-  nmap <leader>q <cmd>lua require("lu5je0.misc.quit-prompt").close_buffer()<cr>
-  nmap <leader>Q <cmd>lua require("lu5je0.misc.quit-prompt").exit()<cr>
   nmap <leader>% :%s/
 
   nmap <leader>wo <c-w>o

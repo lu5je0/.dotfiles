@@ -100,6 +100,10 @@ local function create_popup(msg)
   -- unmount component when cursor leaves buffer
   popup:on(event.BufLeave, function()
     popup:unmount()
+    vim.defer_fn(function ()
+      -- 删除原有buffer中的y映射
+      vim.keymap.del('n', 'y', { buffer = true })
+    end, 0)
   end)
 
   popup:mount()
@@ -107,6 +111,9 @@ local function create_popup(msg)
 end
 
 local function exit_vim_with_dialog()
+  -- 防止窗口还没弹出就按下了y
+  vim.keymap.set('n', 'y', function() vim.cmd('qa!') end, { buffer = true })
+
   local unsave_buffers = {}
 
   for _, buffer in ipairs(vim.fn.getbufinfo { bufloaded = 1, buflisted = 1 }) do
