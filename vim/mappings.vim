@@ -114,47 +114,6 @@ nmap <leader>cnp <plug>(ConvertToPascalword)
 nmap <leader>cnP <plug>(ConvertToPascalWORD)
 
 "----------------------------------------------------------------------
-" wrap
-"----------------------------------------------------------------------
-function! ToggleGj(echo)
-    if !exists("g:ToggleGj")
-        let g:ToggleGj = 0
-    endif
-    if g:ToggleGj == 1
-        xmap j gj
-        xmap k gk
-        nmap j gj
-        nmap k gk
-        nmap H g^
-        nmap L g$
-        xmap H g^
-        xmap L g$
-        omap H g^
-        omap L g$
-        nmap Y gyg$
-        if a:echo
-            echo "gj on"
-        endif
-        let g:ToggleGj = 0
-    else
-        silent! unmap j
-        silent! unmap k
-        nmap H ^
-        nmap L $
-        xmap H ^
-        xmap L $
-        omap H ^
-        omap L $
-        nmap Y y$
-        if a:echo
-            echo "gj off"
-        endif
-        let g:ToggleGj = 1
-    endif
-endfunction
-call ToggleGj(0)
-
-"----------------------------------------------------------------------
 " other
 "----------------------------------------------------------------------
 nnoremap * m`:keepjumps normal! *``<cr>
