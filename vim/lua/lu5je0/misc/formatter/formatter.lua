@@ -50,8 +50,7 @@ local function lsp_format(format_type)
     end
   elseif format_type == M.FORMAT_TYPE.RANGE_FORMAT then
     if server_capabilities.format then
-      ---@diagnostic disable-next-line: missing-parameter
-      vim.lsp.buf.range_formatting()
+      vim.lsp.buf.format { async = true }
       return true
     end
   end
@@ -113,9 +112,11 @@ local function keymapping()
       M.format(M.FORMAT_TYPE.FORMAT)
     end, opts)
 
-    vim.keymap.set('x', '<leader>cf', function()
-      M.format(M.FORMAT_TYPE.RANGE_FORMAT)
-    end, opts)
+    vim.cmd("xmap <leader>cf :lua require('lu5je0.misc.formatter.formatter').format('RANGE_FORMAT')<cr>")
+    -- 会在末尾加上一行 todo
+    -- vim.keymap.set('x', '<leader>cf', function()
+    --   M.format(M.FORMAT_TYPE.RANGE_FORMAT)
+    -- end, opts)
   end, 10)
 end
 
