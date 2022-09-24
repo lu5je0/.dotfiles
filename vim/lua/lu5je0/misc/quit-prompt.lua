@@ -1,6 +1,7 @@
 local M = {}
 
 local devicons = require('nvim-web-devicons')
+local cursor_utils = require('lu5je0.core.cursor')
 
 local function keymap(mode, lhs, rhs, opts)
   if type(lhs) == 'table' then
@@ -97,11 +98,12 @@ local function create_popup(msg)
 
   -- unmount component when cursor leaves buffer
   popup:on(event.BufLeave, function()
+    cursor_utils.cursor_visible(true)
     popup:unmount()
   end)
 
+  cursor_utils.cursor_visible(false)
   popup:mount()
-  vim.fn.cursor { 99, 99 }
 end
 
 local function exit_vim_with_dialog()
@@ -128,7 +130,7 @@ local function exit_vim_with_dialog()
     content.choice = '[N]o, (Y)es, (S)ave ALl'
   else
     content.title = 'Exit vim?'
-    content.choice = '[N]o, (Y)es: '
+    content.choice = '[N]o, (Y)es'
   end
 
   create_popup(content)

@@ -18,8 +18,8 @@ local function set_map(modes, lhs, rhs, opts)
   if opts == nil then
     opts = default_opts
   end
-  
-  if type(rhs) == 'table' then
+
+  if type(lhs) == 'table' then
     for _, v in ipairs(lhs) do
       vim.keymap.set(modes, v, rhs, default_opts)
     end
@@ -64,10 +64,13 @@ vim.defer_fn(function()
       set_map({ 'o' }, 'Y', 'gyg$', buffer_opts)
     end
   end)
-  
+
+  -- lsp
+  set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')
+
   -- ctrl-c 复制
   set_x_map('<C-c>', 'y')
-  
+
   vim.cmd [[
   nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
 
@@ -79,17 +82,6 @@ vim.defer_fn(function()
   imap <M-k> <up>
   imap <M-h> <left>
   imap <M-l> <right>
-
-  map <silent> <m-cr> <leader>cc
-  imap <silent> <m-cr> <leader>cc
-  map <silent> <d-cr> <leader>cc
-  imap <silent> <d-cr> <leader>cc
-
-  " visual-multi
-  map <c-d-n> <Plug>(VM-Add-Cursor-Down)
-  map <c-d-p> <Plug>(VM-Add-Cursor-Up)
-  map <c-m-n> <Plug>(VM-Add-Cursor-Down)
-  map <c-m-p> <Plug>(VM-Add-Cursor-Up)
 
   "----------------------------------------------------------------------
   " <leader>
