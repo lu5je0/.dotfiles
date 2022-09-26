@@ -21,10 +21,10 @@ local function set_map(modes, lhs, rhs, opts)
 
   if type(lhs) == 'table' then
     for _, v in ipairs(lhs) do
-      vim.keymap.set(modes, v, rhs, default_opts)
+      vim.keymap.set(modes, v, rhs, opts)
     end
   else
-    vim.keymap.set(modes, lhs, rhs, default_opts)
+    vim.keymap.set(modes, lhs, rhs, opts)
   end
 end
 
@@ -48,20 +48,22 @@ vim.defer_fn(function()
   set_n_map('<leader>vc', option_toggler.new_toggle_fn({ 'set noignorecase', 'set ignorecase' }))
   set_n_map('<leader>vi', option_toggler.new_toggle_fn(function() vim.fn['ToggleSaveLastIme']() end))
   set_n_map('<leader>vw', function()
-    local buffer_opts = vim.deepcopy(default_opts)
-    buffer_opts.buffer = true
     if vim.wo.wrap then
+      print("set unwrap")
       vim.wo.wrap = false
       del_map({ 'x', 'n' }, { 'j', 'k' }, { buffer = 0 })
       del_map({ 'x', 'n', 'o' }, { 'H', 'L' }, { buffer = 0 })
-      del_map({ 'o' }, 'Y', { buffer = 0 })
+      -- del_map({ 'n' }, 'Y', { buffer = 0 })
     else
+      print("set wrap")
       vim.wo.wrap = true
+      local buffer_opts = vim.deepcopy(default_opts)
+      buffer_opts.buffer = 0
       set_map({ 'x', 'n' }, 'j', 'gj', buffer_opts)
       set_map({ 'x', 'n' }, 'k', 'gk', buffer_opts)
       set_map({ 'x', 'n', 'o' }, 'H', 'g^', buffer_opts)
       set_map({ 'x', 'n', 'o' }, 'L', 'g$', buffer_opts)
-      set_map({ 'o' }, 'Y', 'gyg$', buffer_opts)
+      -- set_map({ 'n' }, 'Y', 'gyg$', buffer_opts)
     end
   end)
 
