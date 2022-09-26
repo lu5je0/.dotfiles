@@ -1,6 +1,11 @@
 local M = {}
 
 local cursor_util = require('lu5je0.core.cursor')
+local log = function(...)
+  if vim.g.enable_formatter_log then
+    print(...)
+  end
+end
 
 M.FORMAT_TOOL_TYPE = {
   LSP = 'LSP',
@@ -84,21 +89,20 @@ local function external_format(format_type, filetype)
   local external_formatter = get_external_formatter(filetype)
   
   if not external_formatter then
-    print('miss format config')
+    log('miss format config')
     return
   end
 
   cursor_util.save_position()
-  print('external_format')
   if format_type == M.FORMAT_TYPE.FORMAT then
     if not external_formatter.format then
-      print('miss external_format')
+      log('miss external_format')
       return false
     end
     external_formatter.format()
   elseif format_type == M.FORMAT_TYPE.RANGE_FORMAT then
     if not external_formatter.range_format then
-      print('miss range external_format')
+      log('miss range external_format')
       return false
     end
     external_formatter.range_format()
@@ -115,7 +119,7 @@ function M.format(format_type)
     -- lsp format
     if v == M.FORMAT_TOOL_TYPE.LSP then
       if lsp_format(format_type) then
-        print('lsp_format')
+        print('lsp format')
         return
       end
     end
