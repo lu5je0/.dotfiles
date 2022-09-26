@@ -1,26 +1,26 @@
 if [[ $UNAME_INFO =~ "microsoft" ]]; then
-    function disable_ime_cmd {
-        $HOME"/.dotfiles/vim/lib/toDisableIME.exe"
-    }
-    function enable_ime_cmd {
-        $HOME"/.dotfiles/vim/lib/toEnableIME.exe"
-    }
+  function disable_ime_cmd {
+    $HOME"/.dotfiles/vim/lib/toDisableIME.exe"
+  }
+  function enable_ime_cmd {
+    $HOME"/.dotfiles/vim/lib/toEnableIME.exe"
+  }
 elif [[ $UNAME_INFO =~ "Darwin" ]]; then
-    # if [[ ! -f /tmp/im-fifo ]]; then
-    #     mkfifo /tmp/im-fifo
-    # fi
-    function disable_ime_cmd {
-        # echo 1 > /tmp/im-fifo
-        # nohup luajit /Users/lu5je0/1.lua > /dev/null 2>&1
-        # /usr/local/bin/im-select 'com.apple.keylayout.ABC'
-    }
+  # if [[ ! -f /tmp/im-fifo ]]; then
+  #     mkfifo /tmp/im-fifo
+  # fi
+  function disable_ime_cmd {
+    # echo 1 > /tmp/im-fifo
+    # nohup luajit /Users/lu5je0/1.lua > /dev/null 2>&1
+    # /usr/local/bin/im-select 'com.apple.keylayout.ABC'
+  }
 else
-    return 1
+  return 1
 fi
 
 vi-escape-im() {
-disable_ime_cmd
-zle vi-cmd-mode
+  disable_ime_cmd
+  zle vi-cmd-mode
 }
 zle -N vi-escape-im
 bindkey "^[" vi-escape-im

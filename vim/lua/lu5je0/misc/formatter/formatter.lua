@@ -2,7 +2,6 @@ local M = {}
 
 local cursor_util = require('lu5je0.core.cursor')
 
-
 M.FORMAT_TOOL_TYPE = {
   LSP = 'LSP',
   EXTERNAL = 'EXTERNAL'
@@ -15,11 +14,36 @@ M.FORMAT_TYPE = {
 
 local config = {}
 
-local get_format_priority = function(filetype)
+local function get_format_priority(filetype)
   if config.format_priority[filetype] then
     return config.format_priority[filetype]
   end
+  for k, v in pairs(config.format_priority) do
+    if type(k) == "table" then
+      for _, ft in ipairs(k) do
+        if ft == filetype then
+          return v
+        end
+      end
+    end
+  end
+  
   return { M.FORMAT_TOOL_TYPE.LSP, M.FORMAT_TOOL_TYPE.EXTERNAL }
+end
+
+local function get_external_formatter(filetype)
+  if config.external_formatter[filetype] then
+    return config.external_formatter[filetype]
+  end
+  for k, v in pairs(config.external_formatter) do
+    if type(k) == "table" then
+      for _, ft in ipairs(k) do
+        if ft == filetype then
+          return v
+        end
+      end
+    end
+  end
 end
 
 local function is_exists_lsp_format_capabilities()
@@ -57,7 +81,9 @@ local function lsp_format(format_type)
 end
 
 local function external_format(format_type, filetype)
-  if not config.external_formatter[filetype] then
+  local external_formatter = get_external_formatter(filetype)
+  
+  if not external_formatter then
     print('miss format config')
     return
   end
@@ -65,17 +91,17 @@ local function external_format(format_type, filetype)
   cursor_util.save_position()
   print('external_format')
   if format_type == M.FORMAT_TYPE.FORMAT then
-    if not config.external_formatter[filetype].format then
+    if not external_formatter.format then
       print('miss external_format')
       return false
     end
-    config.external_formatter[filetype].format()
+    external_formatter.format()
   elseif format_type == M.FORMAT_TYPE.RANGE_FORMAT then
-    if not config.external_formatter[filetype].range_format then
+    if not external_formatter.range_format then
       print('miss range external_format')
       return false
     end
-    config.external_formatter[filetype].range_format()
+    external_formatter.range_format()
   end
   cursor_util.goto_saved_position()
   return true

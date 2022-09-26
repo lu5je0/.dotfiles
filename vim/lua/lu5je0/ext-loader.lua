@@ -18,7 +18,7 @@ local formatter = require('lu5je0.misc.formatter.formatter')
 formatter.setup {
   format_priority = {
     json = { formatter.FORMAT_TOOL_TYPE.LSP, formatter.FORMAT_TOOL_TYPE.EXTERNAL },
-    bash = { formatter.FORMAT_TOOL_TYPE.EXTERNAL, formatter.FORMAT_TOOL_TYPE.LSP },
+    [{ 'bash', 'sh' }] = { formatter.FORMAT_TOOL_TYPE.EXTERNAL, formatter.FORMAT_TOOL_TYPE.LSP },
   },
   external_formatter = {
     json = {
@@ -28,9 +28,9 @@ formatter.setup {
       range_format = function()
       end,
     },
-    bash = {
+    [{ 'bash', 'sh' }] = {
       format = function()
-        vim.cmd(':%!shfmt -i 2')
+        vim.cmd(':%!shfmt -i ' .. vim.bo.shiftwidth)
       end,
       range_format = function()
       end,
