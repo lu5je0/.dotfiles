@@ -80,3 +80,7 @@ local trailing_space = {
 }
 
 null_ls.register(trailing_space)
+
+vim.api.nvim_create_user_command("NullLsToggle", function()
+  require("null-ls").toggle({})
+end, {})
