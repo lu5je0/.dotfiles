@@ -2,13 +2,13 @@
 # zinit
 ##########################################
 if [[ ! -d ~/.zinit ]]; then
-    git clone --depth=1 https://github.com/zdharma-continuum/zinit.git ~/.zinit/bin
+  git clone --depth=1 https://github.com/zdharma-continuum/zinit.git ~/.zinit/bin
 fi
 source ~/.zinit/bin/zinit.zsh
 
-export UNAME_INFO=`uname -a`
+export UNAME_INFO=$(uname -a)
 if [[ $UNAME_INFO =~ "Darwin" ]]; then
-    autoload -Uz compinit && compinit
+  autoload -Uz compinit && compinit
 fi
 
 # OMZ
@@ -58,7 +58,6 @@ zinit light hlissner/zsh-autopair
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
 # zinit light zsh-users/zsh-autosuggestions
 
-
 ## THEME
 # lu5je0
 zinit snippet OMZ::lib/theme-and-appearance.zsh
@@ -75,8 +74,6 @@ zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
 bindkey "^[[5~" history-beginning-search-backward
 bindkey "^[[6~" history-beginning-search-forward
 # bindkey "^n" autosuggest-accept
-
-
 
 ##########################################
 # ENV
@@ -138,12 +135,12 @@ bindkey -a K history-beginning-search-backward
 bindkey -a J history-beginning-search-forward
 
 end-of-buffer() {
-CURSOR=9999999
+  CURSOR=9999999
 }
 zle -N end-of-buffer
 
 begin-of-buffer() {
-CURSOR=0
+  CURSOR=0
 }
 zle -N begin-of-buffer
 
@@ -175,8 +172,8 @@ bindkey -M visual S add-surround
 #   'r:|?=** m:{a-z\-}={A-Z\_}'
 
 if [[ ! -f ~/.ohmyenv ]]; then
-    touch ~/.ohmyenv
-    echo "HTTP_PROXY_PORT=1080\nSOCKS5_PROXY_PORT=1080" > ~/.ohmyenv
+  touch ~/.ohmyenv
+  echo "HTTP_PROXY_PORT=1080\nSOCKS5_PROXY_PORT=1080" >~/.ohmyenv
 fi
 source ~/.ohmyenv
 
@@ -186,13 +183,13 @@ source ~/.ohmyenv
 
 setopt ignore_eof
 function bash-ctrl-d() {
-  if [[ $CURSOR == 0 && -z $BUFFER ]] then
+  if [[ $CURSOR == 0 && -z $BUFFER ]]; then
     [[ -z $IGNOREEOF || $IGNOREEOF == 0 ]] && exit
-    if [[ "$LASTWIDGET" == "bash-ctrl-d" ]] then
-      (( --__BASH_IGNORE_EOF <= 1 )) && exit
+    if [[ "$LASTWIDGET" == "bash-ctrl-d" ]]; then
+      ((--__BASH_IGNORE_EOF <= 1)) && exit
     else
       echo 'repeat ^D to exit shell'
-      (( __BASH_IGNORE_EOF = IGNOREEOF ))
+      ((__BASH_IGNORE_EOF = IGNOREEOF))
     fi
   else
     zle delete-char-or-list
