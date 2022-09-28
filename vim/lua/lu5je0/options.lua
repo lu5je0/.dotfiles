@@ -58,10 +58,12 @@ o.termguicolors = true
 o.bg = 'dark'
 vim.cmd.colorscheme('edge')
 vim.cmd [[
-" " StatusLine 左边
-hi! StatusLine guibg=#373943
-hi! StatusLineNC guibg=#373943
+hi StatusLine ctermfg=250 ctermbg=237 guifg=#c5cdd9 guibg=#1d2024
+" " " StatusLine 左边
+" hi! StatusLine guibg=#373943
+" hi! StatusLineNC guibg=#373943
 ]]
+o.statusline = " "
 
 local default_plugins = {
   "2html_plugin",
@@ -108,7 +110,7 @@ if has('mac') then
 end
 
 if has('gui') then
-  vim.o.guifontwide ='Microsoft YaHei UI'
+  vim.o.guifontwide = 'Microsoft YaHei UI'
 end
 
 local defer_options = {
