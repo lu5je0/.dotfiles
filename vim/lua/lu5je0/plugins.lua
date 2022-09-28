@@ -430,7 +430,8 @@ return packer.startup(function(use)
           'm-demare/hlargs.nvim',
           config = function()
             require('hlargs').setup()
-          end
+          end,
+          commit = '49f5c4b16246f9c27d9024108d74090086c1abb6'
         },
         -- {
         --   'nvim-treesitter/playground',
