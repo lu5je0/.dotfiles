@@ -57,12 +57,10 @@ o.showcmd = false
 o.termguicolors = true
 o.bg = 'dark'
 vim.cmd.colorscheme('edge')
-vim.cmd [[
-hi StatusLine ctermfg=250 ctermbg=237 guifg=#c5cdd9 guibg=#1d2024
-" " " StatusLine 左边
-" hi! StatusLine guibg=#373943
-" hi! StatusLineNC guibg=#373943
-]]
+vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#1d2024' })
+-- StatusLine 左边
+-- vim.api.nvim_set_hl(0, "StatusLine", { fg = '#373943' })
+-- vim.api.nvim_set_hl(0, "StatusLineNC", { fg = '#373943' })
 o.statusline = " "
 
 local default_plugins = {

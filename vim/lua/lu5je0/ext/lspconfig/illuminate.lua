@@ -24,9 +24,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end
 })
 
+-- cursor word highlight
 vim.cmd [[
-" cursor word highlight
-highlight LspReferenceText guibg=none gui=none
-highlight LspReferenceWrite guibg=#344134 gui=none
-highlight LspReferenceRead guibg=#344134 gui=none
+hi! LspReferenceText guibg=none gui=none
+hi! LspReferenceWrite guibg=#344134 gui=none
+hi! LspReferenceRead guibg=#344134 gui=none
 ]]

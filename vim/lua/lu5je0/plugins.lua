@@ -431,7 +431,6 @@ return packer.startup(function(use)
           config = function()
             require('hlargs').setup()
           end,
-          commit = '49f5c4b16246f9c27d9024108d74090086c1abb6'
         },
         -- {
         --   'nvim-treesitter/playground',
