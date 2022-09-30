@@ -365,9 +365,15 @@ return packer.startup(function(use)
 
   local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux' }
   use {
-    'norcalli/nvim-colorizer.lua',
+    'NvChad/nvim-colorizer.lua',
     config = function()
-      require('colorizer').setup(nvim_colorizer_ft, { names = false })
+      require('colorizer').setup {
+        filetypes = nvim_colorizer_ft,
+        user_default_options = {
+          names = false,
+          mode = "virtualtext"
+        }
+      }
     end,
     ft = nvim_colorizer_ft,
   }
@@ -408,8 +414,8 @@ return packer.startup(function(use)
 
   -- treesitter
   _G.__ts_filtypes = { 'json', 'python', 'java', 'bash', 'go',
-  'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
-  'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
+    'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
+    'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
   batch_use {
     {
       'nvim-treesitter/nvim-treesitter',
@@ -618,6 +624,22 @@ return packer.startup(function(use)
         require('lu5je0.ext.nvim-ufo')
       end,
     }
+  }
+
+  use {
+    'AckslD/messages.nvim',
+    config = function()
+      require("messages").setup {
+        post_open_float = function(_)
+          vim.cmd [[
+          au! BufLeave * ++once lua vim.cmd(":q")
+          set number
+          ]]
+          vim.fn.cursor { 99999, 0 }
+        end
+      }
+    end,
+    command = 'Messages',
   }
 
   -- use {
