@@ -236,9 +236,9 @@ return packer.startup(function(use)
       config = function()
         vim.g.edge_loaded_file_types = { 'NvimTree' }
         vim.cmd [[
-      hi! Folded guifg=#282c34 guibg=#5c6370
-      hi MatchParen guifg=#ffef28
-      ]]
+        hi! Folded guifg=#282c34 guibg=#5c6370
+        hi MatchParen guifg=#ffef28
+        ]]
       end
     },
     -- {
@@ -247,6 +247,13 @@ return packer.startup(function(use)
     --     vim.g.vscode_style = "dark"
     --   end
     -- }
+  }
+
+  -- syntax
+  batch_use {
+    {
+      'aklt/plantuml-syntax',
+    },
   }
 
   use {
@@ -413,7 +420,7 @@ return packer.startup(function(use)
   }
 
   -- treesitter
-  _G.__ts_filtypes = { 'json', 'python', 'java', 'bash', 'go',
+  _G.__ts_filetypes = { 'json', 'python', 'java', 'bash', 'go',
     'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
     'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
   batch_use {
@@ -425,7 +432,7 @@ return packer.startup(function(use)
         require('lu5je0.ext.treesiter')
       end,
       ft = (function()
-        local t = vim.tbl_values(_G.__ts_filtypes)
+        local t = vim.tbl_values(_G.__ts_filetypes)
         table.insert(t, 'lua')
         table.insert(t, 'lua')
         table.insert(t, 'c')
