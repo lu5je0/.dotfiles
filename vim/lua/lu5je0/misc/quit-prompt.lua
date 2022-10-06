@@ -204,7 +204,7 @@ M.close_buffer = function()
     vim.cmd("q")
   else
     vim.cmd("bp")
-    vim.cmd("bd! " .. cur_buf_nr)
+    vim.cmd("silent! bd! " .. cur_buf_nr)
   end
 end
 

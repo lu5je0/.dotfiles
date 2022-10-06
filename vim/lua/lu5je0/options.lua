@@ -41,7 +41,7 @@ o.shiftwidth = 4
 o.softtabstop = 4
 o.expandtab = true
 o.autoindent = true
-o.cmdheight = 0
+-- o.cmdheight = 0
 
 -- filetype.lua
 if not has('nvim-0.8.0') then

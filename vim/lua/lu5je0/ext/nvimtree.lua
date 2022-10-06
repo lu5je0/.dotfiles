@@ -13,17 +13,17 @@ function M.locate_file()
   local cur_filepath = vim.fn.expand('%:p')
   local cur_file_dir_path = vim.fs.dirname(cur_filepath)
   local cwd = vim.fn.getcwd()
-  
+
   if cur_file_dir_path == '' then
     return
   end
-  
+
   local function turn_on_hidden_filter()
     if require("nvim-tree.explorer.filters").config.filter_dotfiles then
       api.tree.toggle_hidden_filter()
     end
   end
-  
+
   local is_dotfile = vim.fs.basename(cur_filepath):sub(1, 1) == '.'
   if is_dotfile then
     turn_on_hidden_filter()
@@ -35,10 +35,10 @@ function M.locate_file()
     -- check if file in dotdir
     if not is_dotfile then
       for dir in vim.fs.parents(cur_filepath) do
-          if vim.fs.basename(dir):sub(1, 1) == '.' then
-            turn_on_hidden_filter()
-            break
-          end
+        if vim.fs.basename(dir):sub(1, 1) == '.' then
+          turn_on_hidden_filter()
+          break
+        end
       end
     end
   end
@@ -94,7 +94,7 @@ function M.remove()
     vim.api.nvim_win_set_buf(cur_file_win_id, substitute_buf_id)
   end
   local cur_width = vim.api.nvim_win_get_width(0)
-  require'nvim-tree.actions.dispatch'.dispatch('remove')
+  require 'nvim-tree.actions.dispatch'.dispatch('remove')
   if is_remove_cur_file and substitute_buf_id == nil then
     vim.cmd("vnew")
     vim.cmd('NvimTreeResize ' .. cur_width)
@@ -106,7 +106,7 @@ function M.edit()
   if _G.preview_popup then
     _G.preview_popup:unmount()
   end
-  require'nvim-tree.actions.dispatch'.dispatch('edit')
+  require 'nvim-tree.actions.dispatch'.dispatch('edit')
 end
 
 function M.pwd_stack_push()
@@ -126,7 +126,7 @@ function M.create_dir()
     end
     origin_input(input_opts, fn)
   end
-  require'nvim-tree.actions.dispatch'.dispatch('create')
+  require 'nvim-tree.actions.dispatch'.dispatch('create')
   vim.ui.input = origin_input
 end
 
@@ -146,7 +146,7 @@ function M.forward()
 end
 
 function M.cd()
-  require'nvim-tree.actions.dispatch'.dispatch('cd')
+  require 'nvim-tree.actions.dispatch'.dispatch('cd')
   vim.cmd('norm gg')
 end
 
@@ -159,7 +159,8 @@ function M.preview()
 end
 
 function M.file_info()
-  local info = vim.fn.system('ls -alhd "' .. lib.get_node_at_cursor().absolute_path .. '" -l --time-style="+%Y-%m-%d %H:%M:%S"')
+  local info = vim.fn.system('ls -alhd "' ..
+    lib.get_node_at_cursor().absolute_path .. '" -l --time-style="+%Y-%m-%d %H:%M:%S"')
   info = info .. vim.fn.system('du -h --max-depth=0 "' .. lib.get_node_at_cursor().absolute_path .. '"'):sub(1, -2)
   require('lu5je0.core.ui').popup_info_window(info)
 end
@@ -179,12 +180,12 @@ function M.open_node()
       end
     end)
   end
-  require'nvim-tree.actions.dispatch'.dispatch('edit')
+  require 'nvim-tree.actions.dispatch'.dispatch('edit')
 end
 
 function M.close_node()
   local node = lib.get_node_at_cursor()
-  require'nvim-tree.actions.dispatch'.dispatch('close_node')
+  require 'nvim-tree.actions.dispatch'.dispatch('close_node')
   if vim.fn.getcwd() == '/' then
     if node ~= lib.get_node_at_cursor() then
       keys_helper.feedkey('k')
@@ -345,6 +346,14 @@ function M.setup()
         enable = true,
         global = true,
       },
+      open_file = {
+        window_picker = {
+          exclude = {
+            filetype = { 'notify', 'packer', 'qf', 'confirm', 'popup' },
+            buftype = { 'terminal', 'nowrite' },
+          }
+        }
+      }
     },
     git = {
       enable = true,
@@ -412,11 +421,6 @@ function M.setup()
       },
       signcolumn = 'auto',
     },
-  }
-
-  vim.g.nvim_tree_window_picker_exclude = {
-    filetype = { 'notify', 'packer', 'qf', 'confirm', 'popup' },
-    buftype = { 'terminal', 'nowrite' },
   }
 
   -- require('lu5je0.ext.nvimtree.hover-popup')
