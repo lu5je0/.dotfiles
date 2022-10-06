@@ -64,4 +64,20 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   end,
 })
 
+vim.api.nvim_create_autocmd('CmdlineEnter', {
+  group = M.default_group,
+  pattern = '*',
+  callback = function()
+    vim.cmd('set cmdheight=1')
+  end,
+})
+
+vim.api.nvim_create_autocmd('CmdlineLeave', {
+  group = M.default_group,
+  pattern = '*',
+  callback = function()
+    vim.cmd('set cmdheight=0')
+  end,
+})
+
 return M

@@ -49,7 +49,7 @@ function M.setup()
 end
 
 function M.key_mappings()
-  local opts = { desc = 'leaderf.lua' }
+  local opts = { desc = 'leaderf.lua', silent = true }
 
   vim.cmd('silent! unmap<leader>f')
   vim.cmd('silent! unmap<leader>b')
