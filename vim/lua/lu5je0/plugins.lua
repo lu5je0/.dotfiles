@@ -224,8 +224,6 @@ return packer.startup(function(use)
 
   -- themes
   batch_use {
-    'sainnhe/sonokai',
-    'sainnhe/gruvbox-material',
     {
       'sainnhe/edge',
       on_compile = function()
@@ -242,9 +240,11 @@ return packer.startup(function(use)
       end
     },
     -- {
-    --   'Mofiqul/vscode.nvim',
+    --   "catppuccin/nvim",
+    --   as = "catppuccin",
     --   config = function()
-    --     vim.g.vscode_style = "dark"
+    --     vim.g.catppuccin_flavour = "macchiato" -- latte, frappe, macchiato, mocha
+    --     require("catppuccin").setup()
     --   end
     -- }
   }
