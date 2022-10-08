@@ -25,10 +25,11 @@ local function process_json_keys()
       to_entries[] | [.key, if .value | type == "array" then "[" else "" end] | join("")
     else
       empty
-    end' |
-    sort --uniq]], json))
+    end'  2>/dev/null |
+    sort --uniq ]], json))
     ---@diagnostic disable-next-line: need-check-nil
     jq_result = jq:read('*a')
+    jq:close()
     vim.b.__jq_result = jq_result
   else
     jq_result = vim.b.__jq_result

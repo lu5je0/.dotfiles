@@ -4,11 +4,11 @@ local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
 local path = vim.fn.stdpath('config')
 
 local function disable_ime()
-  io.popen(path .. '/lib/toDisableIME.exe'):close()
+  io.popen(path .. '/lib/toDisableIME.exe 2>/dev/null'):close()
 end
 
 local function enable_ime()
-  io.popen(path .. '/lib/toEnableIME.exe'):close()
+  io.popen(path .. '/lib/toEnableIME.exe 2>/dev/null'):close()
 end
 
 local function create_autocmd()
