@@ -646,7 +646,7 @@ return packer.startup(function(use)
         end
       }
     end,
-    command = 'Messages',
+    cmd = 'Messages',
   }
 
   use {
@@ -660,6 +660,7 @@ return packer.startup(function(use)
         },
       }
     end,
+    event = "CmdlineEnter",
   }
 
   -- use {
