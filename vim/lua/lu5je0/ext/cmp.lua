@@ -127,8 +127,8 @@ cmp.setup {
     -- ghost_text = true
   },
   mapping = {
-    ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
-    ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
+    ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i' --[[ , 'c' ]] }),
+    ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i' --[[ , 'c' ]] }),
     ['<c-n>'] = cmp.mapping(function()
       if cmp.visible() then
         cmp.mapping.abort()()
@@ -136,7 +136,7 @@ cmp.setup {
         ---@diagnostic disable-next-line: missing-parameter
         cmp.mapping.complete()()
       end
-    end, { 'i', 'c' }),
+    end, { 'i', --[[ 'c' ]] }),
     ['<down>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
     ['<up>'] = cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select },
     ['<cr>'] = cmp.mapping(comfirm, { 'i' }),
