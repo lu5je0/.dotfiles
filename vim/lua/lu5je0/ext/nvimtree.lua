@@ -323,7 +323,7 @@ function M.setup()
     update_cwd = true,
     filesystem_watchers = {
       enable = true,
-      debounce_delay = 100,
+      debounce_delay = 1000,
     },
     diagnostics = {
       enable = false,
