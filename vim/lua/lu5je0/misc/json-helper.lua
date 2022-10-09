@@ -12,24 +12,22 @@ M.jq = function(args)
   vim.cmd(string.format(':%%!jq \'%s\'', args))
 end
 
-local function process_json_keys()
+local function process_json_keys(complete_text)
   local jq_result = ''
   if not vim.b.__jq_result or vim.bo.modified then
-    local json = ''
-    for _, line in ipairs(vim.fn.getline(1, '$')) do
-      json = json .. '\n' .. line
-    end
+    local json_string = table.concat(vim.api.nvim_buf_get_text(0, 0, 0, -1, -1, {}), '\n')
+    
     local jq = io.popen(string.format([[echo '%s' |
     jq '.. |
     if type == "object" then
-      to_entries[] | [.key, if .value | type == "array" then "[" else "" end] | join("")
+      to_entries[] | [.key, if .value | type == "array" then "[]" else "" end] | join("")
     else
       empty
     end'  2>/dev/null |
-    sort --uniq ]], json))
-    ---@diagnostic disable-next-line: need-check-nil
+    sort --uniq ]], json_string))
     jq_result = jq:read('*a')
     jq:close()
+    
     vim.b.__jq_result = jq_result
   else
     jq_result = vim.b.__jq_result
@@ -52,19 +50,19 @@ local function jq_complete(text)
     return {}
   end
 
-  local completeText = ''
+  local complete_text = ''
   for s in text:gmatch('%w+$') do
-    completeText = s
+    complete_text = s
   end
 
   -- get json keys
-  local json_keys = process_json_keys()
+  local json_keys = process_json_keys(text)
 
   -- match
   local words = {}
   for _, json_key in ipairs(json_keys) do
-    if json_key:startswith(completeText) then
-      table.insert(words, text .. json_key:sub(#completeText + 1, -1))
+    if json_key:startswith(complete_text) then
+      table.insert(words, text .. json_key:sub(#complete_text + 1, -1))
     end
   end
   return words

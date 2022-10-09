@@ -31,6 +31,11 @@ end
 local set_n_map = function(...) set_map('n', ...) end
 local set_x_map = function(...) set_map('x', ...) end
 
+local cmd_and_print = function(...)
+  vim.cmd(...)
+  print(...)
+end
+
 vim.defer_fn(function()
   -- movement
   set_map({ 'x', 'n', 'o' }, 'H', '^')
@@ -66,6 +71,11 @@ vim.defer_fn(function()
       -- set_map({ 'n' }, 'Y', 'gyg$', buffer_opts)
     end
   end)
+  
+  -- dir
+  set_n_map('<leader>fp', function() cmd_and_print('cd ~/.local/share/nvim/site/pack/packer') end)
+  set_n_map('<leader>fd', function() cmd_and_print(':cd ~/.dotfiles') end)
+  set_n_map('<leader>ft', function() cmd_and_print(':cd ~/test') end)
 
   -- lsp
   set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')
