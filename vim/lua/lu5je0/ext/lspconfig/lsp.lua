@@ -57,6 +57,7 @@ M.on_attach = function(client, bufnr)
 end
 
 local function config()
+  -- nvim-cmp
   local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
   -- nvim-ufo
@@ -103,7 +104,7 @@ end
 function M.setup()
   diagnostic()
   config()
-  vim.cmd("LspStart")
+  -- vim.cmd("LspStart")
 end
 
 return M

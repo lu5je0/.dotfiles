@@ -231,7 +231,3 @@ hi! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
 
 smap <expr> <cr>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<cr>'
 ]])
-
--- nvim-autopairs If you want insert `(` after select function or method item
-local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })

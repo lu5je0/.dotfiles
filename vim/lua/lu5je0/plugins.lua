@@ -402,23 +402,6 @@ return packer.startup(function(use)
     ft = { 'markdown' },
   }
 
-  use {
-    'windwp/nvim-autopairs',
-    defer = true,
-    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
-    config = function()
-      require('nvim-autopairs').setup {}
-    end,
-  }
-
-  use {
-    'williamboman/mason.nvim',
-    defer = true,
-    config = function()
-      require("mason").setup()
-    end
-  }
-
   -- treesitter
   _G.__ts_filetypes = { 'json', 'python', 'java', 'bash', 'go',
     'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
@@ -465,7 +448,45 @@ return packer.startup(function(use)
       cmd = { 'AerialToggle' }
     }
   }
-
+  
+  use {
+    'williamboman/mason.nvim',
+    defer = true,
+    config = function()
+      require("mason").setup()
+    end
+  }
+  
+  use {
+    'hrsh7th/nvim-cmp',
+    config = function()
+      require('lu5je0.ext.cmp')
+    end,
+    defer = true,
+    requires = {
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-path',
+      {
+        'hrsh7th/vim-vsnip',
+        config = function()
+          require('lu5je0.ext.vsnip').setup()
+        end,
+      },
+      'hrsh7th/cmp-vsnip',
+    },
+  }
+  
+  use {
+    'windwp/nvim-autopairs',
+    after = { 'nvim-cmp' },
+    defer = true,
+    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    config = function()
+      require('lu5je0.ext.nvim-autopairs');
+    end,
+  }
+  
   -- lsp
   batch_use {
     {
@@ -500,26 +521,6 @@ return packer.startup(function(use)
       }
     },
     {
-      'hrsh7th/nvim-cmp',
-      config = function()
-        require('lu5je0.ext.cmp')
-      end,
-      defer = true,
-      after = { 'nvim-autopairs' },
-      requires = {
-        'hrsh7th/cmp-nvim-lsp',
-        'hrsh7th/cmp-buffer',
-        'hrsh7th/cmp-path',
-        {
-          'hrsh7th/vim-vsnip',
-          config = function()
-            require('lu5je0.ext.vsnip').setup()
-          end,
-        },
-        'hrsh7th/cmp-vsnip',
-      },
-    },
-    {
       'max397574/lua-dev.nvim'
     },
     {
@@ -537,7 +538,7 @@ return packer.startup(function(use)
       end,
     },
   }
-
+  
   -- use {
   --   'neoclide/coc.nvim',
   --   branch = 'release',

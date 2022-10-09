@@ -33,4 +33,4 @@ end
 
 vim.defer_fn(function()
   defer_loads()
-end, 0)
+end, 1)
