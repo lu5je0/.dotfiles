@@ -348,7 +348,7 @@ function M.setup()
         window_picker = {
           exclude = {
             filetype = { 'notify', 'packer', 'qf', 'confirm', 'popup' },
-            buftype = { 'terminal', 'nowrite' },
+            buftype = { 'terminal', 'nowrite', 'nofile' },
           }
         }
       }
