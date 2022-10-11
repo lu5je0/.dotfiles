@@ -432,12 +432,13 @@ return packer.startup(function(use)
         --   'nvim-treesitter/playground',
         --   run = 'TSInstall query'
         -- },
-        {
-          'SmiteshP/nvim-gps',
-          config = function()
-            require('nvim-gps').setup()
-          end,
-        },
+        { 'phelipetls/jsonpath.nvim' },
+        -- {
+        --   'SmiteshP/nvim-gps',
+        --   config = function()
+        --     require('nvim-gps').setup()
+        --   end,
+        -- },
       },
     },
     {
@@ -448,7 +449,7 @@ return packer.startup(function(use)
       cmd = { 'AerialToggle' }
     }
   }
-  
+
   use {
     'williamboman/mason.nvim',
     defer = true,
@@ -456,7 +457,7 @@ return packer.startup(function(use)
       require("mason").setup()
     end
   }
-  
+
   use {
     'hrsh7th/nvim-cmp',
     config = function()
@@ -476,7 +477,7 @@ return packer.startup(function(use)
       'hrsh7th/cmp-vsnip',
     },
   }
-  
+
   use {
     'windwp/nvim-autopairs',
     after = { 'nvim-cmp' },
@@ -486,7 +487,7 @@ return packer.startup(function(use)
       require('lu5je0.ext.nvim-autopairs');
     end,
   }
-  
+
   -- lsp
   batch_use {
     {
@@ -538,7 +539,7 @@ return packer.startup(function(use)
       end,
     },
   }
-  
+
   -- use {
   --   'neoclide/coc.nvim',
   --   branch = 'release',

@@ -42,12 +42,6 @@ o.expandtab = true
 o.autoindent = true
 -- o.cmdheight = 0
 
--- filetype.lua
-if not has('nvim-0.8.0') then
-  g.did_load_filetypes = 0
-  g.do_filetype_lua = 1
-end
-
 -- 不显示启动界面
 o.shortmess = o.shortmess .. 'I'
 o.foldtext = 'misc#fold_text()'

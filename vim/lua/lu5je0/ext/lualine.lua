@@ -102,8 +102,8 @@ local config = {
 }
 
 local function component_init(component)
-  if component.should_inc then
-    if not component.should_inc then
+  if component.should_insert then
+    if not component.should_insert then
       return false;
     end
   end
@@ -202,15 +202,17 @@ ins_left {
 local gps_ft_white_list = { 'json' }
 ins_left {
   function()
-    return require('nvim-gps').get_location()
+    -- return require('nvim-gps').get_location()
+    return require('jsonpath').get()
   end,
   inactive = true,
-  should_inc = function()
-    local ok = pcall(require, 'nvim-gps')
+  should_insert = function()
+    -- local ok = pcall(require, 'nvim-gps')
+    local ok = pcall(require, 'jsonpath.nvim')
     return ok
   end,
   cond = function()
-    return table.contain(gps_ft_white_list, vim.bo.filetype) and require('nvim-gps').is_available()
+    return table.contain(gps_ft_white_list, vim.bo.filetype) --[[  and require('nvim-gps').is_available() ]]
   end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },
