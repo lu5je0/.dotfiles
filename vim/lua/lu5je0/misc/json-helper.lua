@@ -8,10 +8,10 @@ M.format = function()
   vim.cmd(':%!jq')
 end
 
-M.path = function()
+M.path_copy = function()
   local path = require('jsonpath').get()
+  vim.cmd(string.format('let @*=\'%s\'', path))
   print(path)
-  -- vim.cmd('')
 end
 
 M.jq = function(args)
@@ -87,8 +87,8 @@ M.setup = function()
     M.extract()
   end, { force = true })
   
-  vim.api.nvim_create_user_command('JsonPath', function()
-    M.path()
+  vim.api.nvim_create_user_command('JsonPathCopy', function()
+    M.path_copy()
   end, { force = true })
 
   vim.api.nvim_create_user_command('JsonFormat', function()
