@@ -147,7 +147,7 @@ M.setup = function()
       h = 'url encode',
       H = 'url decode',
       c = { 'g<c-g>', 'count in the selection region' },
-      m = { ':%s/\r$//<cr>', 'remove ^M' },
+      m = { [[:%s/\r$//<cr>]], 'remove ^M' },
       z = '繁体转简体',
       Z = '简体转繁体',
     },
