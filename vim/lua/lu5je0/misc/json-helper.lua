@@ -8,6 +8,12 @@ M.format = function()
   vim.cmd(':%!jq')
 end
 
+M.path = function()
+  local path = require('jsonpath').get()
+  print(path)
+  -- vim.cmd('')
+end
+
 M.jq = function(args)
   vim.cmd(string.format(':%%!jq \'%s\'', args))
 end
@@ -60,7 +66,7 @@ local function jq_complete(text)
   end
 
   -- get json keys
-  local json_keys = process_json_keys(text)
+  local json_keys = process_json_keys()
 
   -- match
   local words = {}
@@ -79,6 +85,10 @@ M.setup = function()
   
   vim.api.nvim_create_user_command('JsonExtract', function()
     M.extract()
+  end, { force = true })
+  
+  vim.api.nvim_create_user_command('JsonPath', function()
+    M.path()
   end, { force = true })
 
   vim.api.nvim_create_user_command('JsonFormat', function()
