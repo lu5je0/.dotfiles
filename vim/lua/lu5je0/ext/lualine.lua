@@ -235,7 +235,7 @@ ins_left {
   end,
   inactive = true,
   cond = function()
-    return require('lu5je0.misc.gps-path').is_available()
+    return require('lu5je0.misc.gps-path').is_available() and conditions.hide_in_width()
   end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },
