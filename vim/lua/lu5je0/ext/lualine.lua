@@ -174,15 +174,29 @@ ins_left {
 
 ins_left {
   function()
+    return ''
+  end,
+  cond = function() return vim.bo.filetype == '' end,
+  inactive = true,
+  color = { fg = colors.white, gui = 'bold' },
+  padding = { left = 1, right = 0 },
+}
+
+ins_left {
+  function()
     local max_len = 20
     local filename = expand('%:t')
-    if #filename > max_len then
+    local filename_len = #filename
+    if filename_len > max_len then
       local suffix = filename:match('.+%.(%w+)$')
       filename = vim.fn.strcharpart(filename, 0, max_len - 6) .. '…'
       if suffix ~= nil then
         filename = filename .. '.' .. suffix
       end
+    elseif filename_len == 0 then
+      return 'untitled'
     end
+    
     return filename
   end,
   inactive = true,
