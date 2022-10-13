@@ -194,7 +194,7 @@ ins_left {
         filename = filename .. '.' .. suffix
       end
     elseif filename_len == 0 then
-      return 'untitled'
+      return '[Untitled]'
     end
     
     return filename

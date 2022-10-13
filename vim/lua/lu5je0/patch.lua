@@ -20,7 +20,7 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.cmd('LspStart')
     require('null-ls/client').try_add(0)
     -- if buf_name == nil or buf_name == '' then
-    --   buf_name = 'untitled'
+    --   buf_name = '[Untitled]'
     -- end
     vim.api.nvim_buf_set_name(0, buf_name)
   end,

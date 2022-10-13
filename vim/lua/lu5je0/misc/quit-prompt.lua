@@ -122,7 +122,7 @@ local function exit_vim_with_dialog()
     for _, buffer in ipairs(unsave_buffers) do
       local filename = vim.fn.fnamemodify(buffer.name, ':t')
       if filename == '' then
-        filename = 'untitled '
+        filename = '[Untitled] '
       end
       table.insert(content.text, filename)
     end
@@ -154,7 +154,7 @@ local function exit_vim_by_comfirm()
       local name = require('nvim-web-devicons').get_icon(buffer.name, string.split(buffer.name, '.')[-1]) ..
           ' ' .. vim.fn.fnamemodify(buffer.name, ':t')
       if name == '' then
-        name = 'untitled ' .. buffer.bufnr
+        name = '[Untitled] ' .. buffer.bufnr
       end
       msg = msg .. '\n' .. name
     end
