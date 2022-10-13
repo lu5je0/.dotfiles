@@ -1,6 +1,6 @@
 local M = {}
 
-local gps_ft_white_list = { 'json', 'lua' }
+local gps_ft_white_list = { 'json', 'lua', 'java' }
 
 M.path = function()
   if vim.bo.filetype == 'json' then
