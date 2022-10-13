@@ -433,12 +433,12 @@ return packer.startup(function(use)
         --   run = 'TSInstall query'
         -- },
         { 'phelipetls/jsonpath.nvim' },
-        -- {
-        --   'SmiteshP/nvim-gps',
-        --   config = function()
-        --     require('nvim-gps').setup()
-        --   end,
-        -- },
+        {
+          'SmiteshP/nvim-gps',
+          config = function()
+            require('nvim-gps').setup()
+          end,
+        },
       },
     },
     {
