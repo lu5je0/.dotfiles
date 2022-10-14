@@ -459,7 +459,7 @@ return packer.startup(function(use)
       require("mason").setup()
     end
   }
-
+  
   use {
     'hrsh7th/nvim-cmp',
     config = function()
@@ -467,7 +467,6 @@ return packer.startup(function(use)
     end,
     defer = true,
     requires = {
-      'hrsh7th/cmp-nvim-lsp',
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-path',
       {
@@ -480,21 +479,12 @@ return packer.startup(function(use)
     },
   }
 
-  use {
-    'windwp/nvim-autopairs',
-    after = { 'nvim-cmp' },
-    defer = true,
-    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
-    config = function()
-      require('lu5je0.ext.nvim-autopairs');
-    end,
-  }
-
   -- lsp
   batch_use {
     {
       'williamboman/mason-lspconfig.nvim',
       after = 'mason.nvim',
+      defer = true,
       config = function()
         require('mason-lspconfig').setup {
           ensure_installed = {}
@@ -502,11 +492,13 @@ return packer.startup(function(use)
       end,
     },
     {
+      'hrsh7th/cmp-nvim-lsp',
+    },
+    {
       'neovim/nvim-lspconfig',
       after = {
         'mason-lspconfig.nvim',
         'lua-dev.nvim',
-        'nvim-cmp',
       },
       defer = true,
       config = function()
@@ -540,6 +532,16 @@ return packer.startup(function(use)
         require('lu5je0.ext.lspconfig.illuminate')
       end,
     },
+  }
+
+  use {
+    'windwp/nvim-autopairs',
+    after = { 'nvim-cmp' },
+    defer = true,
+    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    config = function()
+      require('lu5je0.ext.nvim-autopairs');
+    end,
   }
 
   -- use {
