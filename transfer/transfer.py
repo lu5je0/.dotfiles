@@ -5,6 +5,7 @@ import os
 import sys
 import requests
 import getpass
+import socket
 from requests.auth import HTTPBasicAuth
 
 from tqdm import tqdm
@@ -17,7 +18,7 @@ class HostType:
     @staticmethod
     def get_host(host_type):
         if host_type == HostType.PRIVATE:
-            return 'http://101.43.32.104:20404/'
+            return 'http://{}:20404/'.format(socket.gethostbyname('sh.665665.xyz'))
         elif host_type == HostType.TRANSFER:
             return 'https://transfer.sh/'
 
@@ -28,7 +29,9 @@ class Cache:
 
     def get_token(self):
         if self.token == None:
-            self.token = getpass.getpass('token: ')
+            self.token = os.getenv('TRANSFER_PRIVATE_TOKEN')
+            if self.token == None:
+                self.token = getpass.getpass('token: ')
         return self.token
 
 
