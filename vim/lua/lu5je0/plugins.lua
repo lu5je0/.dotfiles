@@ -478,6 +478,16 @@ return packer.startup(function(use)
       'hrsh7th/cmp-vsnip',
     },
   }
+  
+  use {
+    'windwp/nvim-autopairs',
+    after = { 'nvim-cmp' },
+    defer = true,
+    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    config = function()
+      require('lu5je0.ext.nvim-autopairs');
+    end,
+  }
 
   -- lsp
   batch_use {
@@ -532,16 +542,6 @@ return packer.startup(function(use)
         require('lu5je0.ext.lspconfig.illuminate')
       end,
     },
-  }
-
-  use {
-    'windwp/nvim-autopairs',
-    after = { 'nvim-cmp' },
-    defer = true,
-    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
-    config = function()
-      require('lu5je0.ext.nvim-autopairs');
-    end,
   }
 
   -- use {
