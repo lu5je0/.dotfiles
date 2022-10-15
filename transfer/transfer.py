@@ -69,8 +69,9 @@ class Uploader:
                 resp = put(filename, data=wrapped_file)
         
         print('Delete command: curl --request DELETE', resp.headers['X-Url-Delete'])
-        print('Delete token:', re.findall('/.*$', resp.headers['X-Url-Delete'])[0])
+        print('Delete token:', re.findall('/([^/]*?)$', resp.headers['X-Url-Delete'])[0])
         print('Download link:', resp.text)
+        print()
 
     def put(self, host_type):
         if host_type == HostType.PRIVATE:
