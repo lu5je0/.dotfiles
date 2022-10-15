@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 import sys
 import requests
 import getpass
@@ -66,8 +67,10 @@ class Uploader:
             with tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as t:
                 wrapped_file = CallbackIOWrapper(t.update, f, "read")
                 resp = put(filename, data=wrapped_file)
-
-        print(resp.text)
+        
+        print('Delete command: curl --request DELETE', resp.headers['X-Url-Delete'])
+        print('Delete token:', re.findall('/.*$', resp.headers['X-Url-Delete'])[0])
+        print('Download link:', resp.text)
 
     def put(self, host_type):
         if host_type == HostType.PRIVATE:
