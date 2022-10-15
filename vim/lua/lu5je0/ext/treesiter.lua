@@ -9,6 +9,9 @@ require('nvim-treesitter.configs').setup {
   incremental_selection = {
     enable = false,
   },
+  indent = {
+    enable = true
+  }
 }
 
 -- incremental select

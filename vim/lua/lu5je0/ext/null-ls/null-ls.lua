@@ -36,7 +36,9 @@ null_ls.setup {
     -- require('null-ls').builtins.formatting.stylua.with {
     --   extra_args = { '--config-path', vim.fn.stdpath('config') .. '/stylua.toml' },
     -- },
-    require('null-ls').builtins.formatting.autopep8,
+    require('null-ls').builtins.formatting.autopep8.with {
+      extra_args = { '--max-line-length', '120' }
+    },
     require('null-ls').builtins.formatting.yamlfmt,
     require("null-ls").builtins.diagnostics.markdownlint,
     require('lu5je0.ext.null-ls.sql-formatter'),

@@ -12,6 +12,7 @@ from requests.auth import HTTPBasicAuth
 from tqdm import tqdm
 from tqdm.utils import CallbackIOWrapper
 
+
 class HostType:
     PRIVATE = 'private'
     TRANSFER = 'transfer'
@@ -67,7 +68,7 @@ class Uploader:
             with tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as t:
                 wrapped_file = CallbackIOWrapper(t.update, f, "read")
                 resp = put(filename, data=wrapped_file)
-        
+
         print('Delete command: curl --request DELETE', resp.headers['X-Url-Delete'])
         print('Delete token:', re.findall('/([^/]*?)$', resp.headers['X-Url-Delete'])[0])
         print('Download link:', resp.text)
