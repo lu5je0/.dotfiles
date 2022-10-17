@@ -1,33 +1,33 @@
 local null_ls = require('null-ls')
 
--- null-ls 没有文件名 format
-function _G.lsp_format_wrapper(fn)
-  local function wrapper()
-    local buf_name = vim.api.nvim_buf_get_name(0)
-
-    local update_buf_name = false
-    if vim.bo.filetype == 'sql' and vim.api.nvim_buf_get_name(0) == '' then
-      vim.api.nvim_buf_set_name(0, 'tmp')
-      update_buf_name = true
-    end
-    fn()
-
-    if update_buf_name then
-      vim.api.nvim_buf_set_name(0, buf_name)
-    end
-  end
-
-  return wrapper
-end
-
--- 避免null-ls在没有文件名的时候报错
-local make_params = require('null-ls.utils').make_params
-require('null-ls.utils').make_params = function(...)
-  if vim.api.nvim_buf_get_name(0) == '' then
-    select(1, ...).method = nil
-  end
-  return make_params(...)
-end
+-- -- null-ls 没有文件名 format
+-- function _G.lsp_format_wrapper(fn)
+--   local function wrapper()
+--     local buf_name = vim.api.nvim_buf_get_name(0)
+--
+--     local update_buf_name = false
+--     if vim.bo.filetype == 'sql' and vim.api.nvim_buf_get_name(0) == '' then
+--       vim.api.nvim_buf_set_name(0, 'tmp')
+--       update_buf_name = true
+--     end
+--     fn()
+--
+--     if update_buf_name then
+--       vim.api.nvim_buf_set_name(0, buf_name)
+--     end
+--   end
+--
+--   return wrapper
+-- end
+--
+-- -- 避免null-ls在没有文件名的时候报错
+-- local make_params = require('null-ls.utils').make_params
+-- require('null-ls.utils').make_params = function(...)
+--   if vim.api.nvim_buf_get_name(0) == '' then
+--     select(1, ...).method = nil
+--   end
+--   return make_params(...)
+-- end
 
 
 null_ls.setup {
