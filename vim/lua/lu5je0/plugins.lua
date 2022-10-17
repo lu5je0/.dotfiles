@@ -56,6 +56,38 @@ return packer.startup(function(use)
     'MunifTanjim/nui.nvim',
     -- commit = '042cceb497cc4cfa3ae735a5e7bc01b4b6f19ef1'
   }
+  
+  -- git
+  batch_use {
+    {
+      'lewis6991/gitsigns.nvim',
+      config = function()
+        require('lu5je0.ext.gitsigns').setup()
+      end,
+      defer = true
+    },
+    {
+      'tpope/vim-fugitive',
+      opt = true,
+      cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
+      fn = { 'fugitive#repo' },
+    },
+    {
+      'rbong/vim-flog',
+      cmd = 'Flogsplit',
+      opt = true,
+      requires = { { 'tpope/vim-fugitive' } },
+    },
+    {
+      'mattn/vim-gist',
+      config = function()
+        vim.cmd("let github_user = 'lu5je0@gmail.com'")
+        vim.cmd('let g:gist_show_privates = 1')
+        vim.cmd('let g:gist_post_private = 1')
+      end,
+      requires = { 'mattn/webapi-vim' },
+    }
+  }
 
   use {
     'kyazdani42/nvim-web-devicons',
@@ -308,38 +340,6 @@ return packer.startup(function(use)
     keys = { '<c-n>', '<m-n>' },
   }
 
-  -- git
-  batch_use {
-    {
-      'lewis6991/gitsigns.nvim',
-      config = function()
-        require('lu5je0.ext.gitsigns').setup()
-      end,
-      event = 'BufRead',
-    },
-    {
-      'tpope/vim-fugitive',
-      opt = true,
-      cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
-      fn = { 'fugitive#repo' },
-    },
-    {
-      'rbong/vim-flog',
-      cmd = 'Flogsplit',
-      opt = true,
-      requires = { { 'tpope/vim-fugitive' } },
-    },
-    {
-      'mattn/vim-gist',
-      config = function()
-        vim.cmd("let github_user = 'lu5je0@gmail.com'")
-        vim.cmd('let g:gist_show_privates = 1')
-        vim.cmd('let g:gist_post_private = 1')
-      end,
-      requires = { 'mattn/webapi-vim' },
-    }
-  }
-
   use {
     'lu5je0/vim-translator',
     config = function()
@@ -459,7 +459,7 @@ return packer.startup(function(use)
       require("mason").setup()
     end
   }
-  
+
   use {
     'hrsh7th/nvim-cmp',
     config = function()
@@ -478,7 +478,7 @@ return packer.startup(function(use)
       'hrsh7th/cmp-vsnip',
     },
   }
-  
+
   use {
     'windwp/nvim-autopairs',
     after = { 'nvim-cmp' },

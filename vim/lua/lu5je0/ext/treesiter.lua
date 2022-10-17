@@ -10,7 +10,7 @@ require('nvim-treesitter.configs').setup {
     enable = false,
   },
   indent = {
-    enable = true
+    enable = false
   }
 }
 
