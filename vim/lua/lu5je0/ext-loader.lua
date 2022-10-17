@@ -28,6 +28,13 @@ formatter.setup {
       range_format = function()
       end,
     },
+    sql = {
+      format = function()
+        vim.cmd(':%!sql-formatter -l mysql')
+      end,
+      range_format = function()
+      end,
+    },
     [{ 'bash', 'sh' }] = {
       format = function()
         vim.cmd(':%!shfmt -i ' .. vim.bo.shiftwidth)

@@ -669,11 +669,4 @@ return packer.startup(function(use)
     event = "CmdlineEnter",
   }
 
-  -- use {
-  --   'mhartington/formatter.nvim',
-  --   config = function()
-  --     require('lu5je0.ext.formatter')
-  --   end
-  -- }
-
 end)
