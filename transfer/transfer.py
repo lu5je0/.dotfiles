@@ -43,7 +43,7 @@ class FileHelper:
     def convert_bytes(num):
         for x in ['B', 'KB', 'MB', 'GB', 'TB']:
             if num < 1024.0:
-                return ('%f' % num).rstrip('0').rstrip('.') + x
+                return ('%.2f' % num).rstrip('0').rstrip('.') + x
             num /= 1024.0
 
     @staticmethod
