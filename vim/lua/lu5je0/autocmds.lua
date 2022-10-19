@@ -64,6 +64,25 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   end,
 })
 
+vim.cmd[[
+command -bar -nargs=? -complete=help Help execute HelpCurwin(<q-args>)
+let s:did_open_help = v:false
+
+function HelpCurwin(subject) abort
+  let mods = 'silent noautocmd keepalt'
+  if !s:did_open_help
+    execute mods .. ' help'
+    execute mods .. ' helpclose'
+    let s:did_open_help = v:true
+  endif
+  if !empty(getcompletion(a:subject, 'help'))
+    execute mods .. ' edit ' .. &helpfile
+    set buftype=help
+  endif
+  return 'help ' .. a:subject
+endfunction
+]]
+
 -- vim.api.nvim_create_autocmd('CmdlineEnter', {
 --   group = M.default_group,
 --   pattern = '*',
