@@ -1,9 +1,10 @@
+---@diagnostic disable: unused-local
+
 vim.filetype.add {
   extension = {
     zsh = 'sh',
   },
   filename = {
-    -- Set the filetype of files named "MyBackupFile" to lua
     ['.bashrc'] = 'bash',
     ['.zshrc'] = 'bash',
     ['zshrc'] = 'bash',
@@ -11,6 +12,12 @@ vim.filetype.add {
     ['.ohmyenv'] = 'bash',
     ['crontab'] = 'crontab',
     ['aria2.conf'] = 'dosini',
+    ['requirements.txt'] = function(path, bufnr)
+      vim.defer_fn(function()
+        vim.bo[bufnr].commentstring='#%s'
+      end, 0)
+      return 'text'
+    end
   },
   pattern = {
     ['.*%.tmux.conf'] = 'tmux',
