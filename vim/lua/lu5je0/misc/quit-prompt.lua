@@ -2,6 +2,7 @@ local M = {}
 
 local devicons = require('nvim-web-devicons')
 local cursor_utils = require('lu5je0.core.cursor')
+local keys = require('lu5je0.core.keys')
 
 local function keymap(mode, lhs, rhs, opts)
   if type(lhs) == 'table' then
@@ -202,6 +203,7 @@ M.close_buffer = function()
   -- 一个tab页中有两个以上的buffer时，直接quit
   if txt_window_cnt > 1 then
     vim.cmd("q")
+    keys.feedkey('<c-w>p')
   else
     vim.cmd("bp")
     vim.cmd("silent! bd! " .. cur_buf_nr)
