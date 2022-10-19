@@ -9,9 +9,9 @@ function! s:get_junk_filename(name)
 	let filename = junk_dir . '/'
 	let filename = tr(filename, '\', '/')
     if a:name != ""
-        let partname = input('Junk Code: ', a:name)
+        let partname = input('Junk File: ', a:name)
     else
-        let partname = input('Junk Code: ', strftime('%Y-%m-%dT%H%M%S-'))
+        let partname = input('Junk File: ', strftime('%Y-%m-%dT%H%M%S-'))
     endif
 	let filename = filename . partname
     
@@ -23,9 +23,14 @@ function! s:get_junk_filename(name)
 endfunction
 
 " Open junk file.
-command! -nargs=0 JunkFile call s:open_junk_file()
-function! s:open_junk_file()
-    let filename = s:get_junk_filename("")
+command! -nargs=* NewJunkFile call s:open_junk_file(<f-args>)
+function! s:open_junk_file(...)
+    let filename = ''
+    if len(a:000) > 0 && a:000[0] != ''
+        let filename = a:000[0]
+    endif
+    let filename = s:get_junk_filename(filename)
+    
 	if filename != ''
 		execute 'edit ' . fnameescape(filename)
 	endif
