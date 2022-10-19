@@ -56,7 +56,7 @@ return packer.startup(function(use)
     'MunifTanjim/nui.nvim',
     -- commit = '042cceb497cc4cfa3ae735a5e7bc01b4b6f19ef1'
   }
-  
+
   -- git
   batch_use {
     {
@@ -67,16 +67,24 @@ return packer.startup(function(use)
       defer = true
     },
     {
-      'tpope/vim-fugitive',
-      opt = true,
-      cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
-      fn = { 'fugitive#repo' },
-    },
-    {
       'rbong/vim-flog',
-      cmd = 'Flogsplit',
+      cmd = { 'Flogsplit', 'Floggit', 'Flog' },
       opt = true,
-      requires = { { 'tpope/vim-fugitive' } },
+      requires = {
+        {
+          'tpope/vim-fugitive',
+          opt = true,
+          cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread', 'help', 'translator' },
+          fn = { 'fugitive#repo' },
+        },
+      },
+      config = function ()
+        vim.cmd[[
+        augroup flog
+          autocmd FileType floggraph nmap <buffer> <leader>q ZZ
+        augroup END
+        ]]
+      end
     },
     {
       'mattn/vim-gist',

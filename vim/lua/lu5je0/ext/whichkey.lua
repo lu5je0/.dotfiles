@@ -203,10 +203,10 @@ M.setup = function()
       d = { ':Git diff<cr>', 'diff' },
       D = { ':Git diff --cached<cr>', 'diff --cached' },
       v = { ':Gvdiffsplit!<cr>', 'gvdiffsplit' },
-      L = { ':Flogsplit<cr>', 'git log in repository' },
-      l = { ":lua require('lu5je0.ext.fugitive').current_file_logs()<cr>", 'show changs on current file' },
+      l = { ':Flogsplit<cr>', 'git log in repository' },
+      s = { ':Floggit<cr>', 'Floggit' },
+      L = { ":lua require('lu5je0.ext.fugitive').current_file_logs()<cr>", 'show changs on current file' },
       i = { ':Gist -l<cr>', 'gist' },
-      s = { ':Git status<cr>', 'status' },
     },
   }
 

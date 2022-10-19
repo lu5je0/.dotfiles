@@ -68,6 +68,12 @@ bl.setup {
       },
     },
     max_name_length = 12,
+    custom_filter = function(buf_number, buf_numbers)
+      if vim.bo[buf_number].filetype == 'fugitive' then
+        return false
+      end
+      return true
+    end,
     -- custom_filter = function(buf_number, buf_numbers)
     --   local buf_key = tostring(buf_number)
     --   local tab_key = tostring(vim.api.nvim_get_current_tabpage())
