@@ -141,7 +141,7 @@ M.setup = function()
     },
     x = {
       name = '+text',
-      r = { ":lua require('lu5je0.misc.replace').n_replace()<cr>", 'replace word' },
+      r = { function() require('lu5je0.misc.replace').n_replace() end, 'replace word' },
       u = 'escape unicode',
       U = 'unescape unicode',
       h = 'url encode',
@@ -160,7 +160,9 @@ M.setup = function()
     },
     v = {
       name = '+vim',
-      v = { ':edit ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim/init.lua | :cd ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim <cr>', 'edit init.lua' },
+      v = { ':edit ' ..
+          vim.api.nvim_eval('$HOME') ..
+          '/.dotfiles/vim/init.lua | :cd ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim <cr>', 'edit init.lua' },
       s = 'toggle signcolumn',
       S = { ':set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes' },
       c = 'toggle case insensitive',
@@ -205,7 +207,7 @@ M.setup = function()
       v = { ':Gvdiffsplit!<cr>', 'gvdiffsplit' },
       l = { ':Flogsplit<cr>', 'git log in repository' },
       s = { ':Floggit<cr>', 'Floggit' },
-      L = { ":lua require('lu5je0.ext.fugitive').current_file_logs()<cr>", 'show changs on current file' },
+      L = { function() require('lu5je0.ext.fugitive').current_file_logs() end, 'show changs on current file' },
       i = { ':Gist -l<cr>', 'gist' },
     },
   }

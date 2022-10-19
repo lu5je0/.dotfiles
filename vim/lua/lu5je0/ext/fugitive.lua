@@ -11,19 +11,17 @@ function M.lines_changes()
   local end_line = vim.fn.getpos("'>")[2]
   local filepath = vim.fn.expand('%:p')
 
-  local cmd = string.format('Git log -L%s,%s:%s', begin_line, end_line, filepath)
+  local cmd = string.format("Flogsplit -raw-args=-L%s,%s:%s", begin_line, end_line, filepath)
   vim.cmd(cmd)
 end
 
 function M.current_file_logs()
   load_plugin()
 
-  local filepath = vim.fn.expand('%:p')
-  if filepath == '' then
-    return
+  local filepath = vim.fn.expand('%')
+  if filepath ~= "" then
+    vim.cmd('Flogsplit -path=' .. filepath)
   end
-  local cmd = string.format('Gclog -p %s', filepath)
-  vim.cmd(cmd)
 end
 
 return M
