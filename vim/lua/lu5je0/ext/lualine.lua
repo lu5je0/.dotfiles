@@ -208,7 +208,7 @@ ins_left {
   -- filesize component
   function()
     if not vim.b.filesize then
-      vim.b.filesize = vim.fn['FileSize']()
+      vim.b.filesize = require('lua.lu5je0.core.file').hunman_readable_file_size(vim.fn.expand('%'))
     end
     return vim.b.filesize
   end,

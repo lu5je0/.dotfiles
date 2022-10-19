@@ -1,12 +1,3 @@
-function! SynStack()
-    for i1 in synstack(line("."), col("."))
-        let i2 = synIDtrans(i1)
-        let n1 = synIDattr(i1, "name")
-        let n2 = synIDattr(i2, "name")
-        echo n1 "->" n2
-    endfor
-endfunction
-
 let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
 
 let g:py_func_init = 0
@@ -68,28 +59,6 @@ functions.keepMatchs(vim.eval("a:pattern"))
 EOF
 endfunction
 command! -nargs=1 KeepMatchs call KeepMatchs(<f-args>)
-
-function! FileSize()
-  let bytes = getfsize(expand('%:p'))
-  if (bytes >= 1024)
-    let kbytes = bytes / 1024
-  endif
-  if (exists('kbytes') && kbytes >= 1000)
-    let mbytes = kbytes / 1000
-  endif
-
-  if bytes <= 0
-    return '0B'
-  endif
-
-  if (exists('mbytes'))
-    return mbytes . 'MB'
-  elseif (exists('kbytes'))
-    return kbytes . 'KB'
-  else
-    return bytes . 'B'
-  endif
-endfunction
 
 " A function to clear the undo history
 function! <SID>ForgetUndo()
