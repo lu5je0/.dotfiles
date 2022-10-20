@@ -337,20 +337,16 @@ return packer.startup(function(use)
   use {
     'mg979/vim-visual-multi',
     opt = true,
-    setup = function()
-      vim.g.VM_show_warnings = 0
-      vim.g.VM_set_statusline = 0
-      vim.cmd [[autocmd User visual_multi_mappings nmap <buffer> p "+<Plug>(VM-p-Paste)]]
+    setup = function ()
       vim.g.VM_maps = {
         ['Select Cursor Down'] = '<m-n>',
         ['Remove Region'] = '<c-p>',
         ['Skip Region'] = '<c-x>',
-        ['Visual'] = 'v',
+        ['VM-Switch-Mode'] = 'v',
       }
-      vim.g.VM_custom_motions = {
-        ['L'] = '}',
-        ['H'] = '{',
-      }
+    end,
+    config = function()
+      require('lu5je0.ext.vim-visual-multi').setup()
     end,
     keys = { '<c-n>', '<m-n>' },
   }
