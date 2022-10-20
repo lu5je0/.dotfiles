@@ -78,8 +78,8 @@ return packer.startup(function(use)
           fn = { 'fugitive#repo' },
         },
       },
-      config = function ()
-        vim.cmd[[
+      config = function()
+        vim.cmd [[
         augroup flog
           autocmd FileType floggraph nmap <buffer> <leader>q ZZ
         augroup END
@@ -338,6 +338,8 @@ return packer.startup(function(use)
     'mg979/vim-visual-multi',
     opt = true,
     setup = function()
+      vim.g.VM_show_warnings = 0
+      vim.g.VM_set_statusline = 0
       vim.cmd [[autocmd User visual_multi_mappings nmap <buffer> p "+<Plug>(VM-p-Paste)]]
       vim.g.VM_maps = {
         ['Select Cursor Down'] = '<m-n>',
