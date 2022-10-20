@@ -337,7 +337,7 @@ return packer.startup(function(use)
   use {
     'mg979/vim-visual-multi',
     opt = true,
-    setup = function ()
+    setup = function()
       vim.g.VM_maps = {
         ['Select Cursor Down'] = '<m-n>',
         ['Remove Region'] = '<c-p>',
@@ -678,6 +678,24 @@ return packer.startup(function(use)
       }
     end,
     event = "CmdlineEnter",
+  }
+
+  use {
+    'nat-418/boole.nvim',
+    config = function()
+      require('boole').setup({
+        mappings = {
+          increment = '<c-a>',
+          decrement = '<c-x>'
+        },
+        -- User defined loops
+        additions = {
+          -- {'Foo', 'Bar'},
+          -- {'tic', 'tac', 'toe'}
+        },
+      })
+    end,
+    keys = { '<c-a>', '<c-x>' }
   }
 
 end)
