@@ -344,7 +344,12 @@ return packer.startup(function(use)
       vim.g.VM_maps = {
         ['Select Cursor Down'] = '<m-n>',
         ['Remove Region'] = '<c-p>',
-        ['Skip Region'] = '<c-x>'
+        ['Skip Region'] = '<c-x>',
+        ['Visual'] = 'v',
+      }
+      vim.g.VM_custom_motions = {
+        ['L'] = '}',
+        ['H'] = '{',
       }
     end,
     keys = { '<c-n>', '<m-n>' },
