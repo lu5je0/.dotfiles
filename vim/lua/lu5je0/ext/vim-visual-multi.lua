@@ -52,8 +52,8 @@ M.setup = function()
   })
 
   vim.g.VM_custom_motions = {
-    ['L'] = '}',
-    ['H'] = '{',
+    ['L'] = '$',
+    ['H'] = '^',
   }
 end
 
