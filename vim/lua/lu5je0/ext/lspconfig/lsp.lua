@@ -104,7 +104,9 @@ end
 function M.setup()
   diagnostic()
   config()
-  -- vim.cmd("LspStart")
+  vim.defer_fn(function()
+    vim.cmd("LspStart")
+  end, 0)
 end
 
 return M
