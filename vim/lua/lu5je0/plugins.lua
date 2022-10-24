@@ -680,22 +680,4 @@ return packer.startup(function(use)
     event = "CmdlineEnter",
   }
 
-  use {
-    'nat-418/boole.nvim',
-    config = function()
-      require('boole').setup({
-        mappings = {
-          increment = '<c-a>',
-          decrement = '<c-x>'
-        },
-        -- User defined loops
-        additions = {
-          -- {'Foo', 'Bar'},
-          -- {'tic', 'tac', 'toe'}
-        },
-      })
-    end,
-    keys = { '<c-a>', '<c-x>' }
-  }
-
 end)
