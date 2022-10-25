@@ -158,7 +158,7 @@ map <leader>gb <Action>(Annotate)
 map <leader>gg <Action>(VcsShowCurrentChangeMarker)
 map <leader>gv <Action>(Compare.SameVersion)
 map <leader>gL <Action>(Vcs.ShowTabbedFileHistory)
-map <leader>gl <Action>(Git.Log)
+map <leader>gl <Action>(Vcs.Show.Log)
 xmap <leader>gl <Action>(Vcs.ShowHistoryForBlock)
 
 " navicat
