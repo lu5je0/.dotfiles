@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import time
 import os
 import re
 import sys
@@ -35,6 +36,29 @@ class Cache:
             if self.token == None:
                 self.token = getpass.getpass('token: ')
         return self.token
+
+class Downloader:
+    
+    @staticmethod
+    def get_file_name(url, headers):
+        filename = ''
+        if 'Content-Disposition' in headers and headers['Content-Disposition']:
+            disposition_split = headers['Content-Disposition'].split(';')
+            if len(disposition_split) > 1:
+                if disposition_split[1].strip().lower().startswith('filename='):
+                    file_name = disposition_split[1].split('=')
+                    if len(file_name) > 1:
+                        filename = unquote(file_name[1])
+        if not filename and os.path.basename(url):
+            filename = os.path.basename(url).split("?")[0]
+        if not filename:
+            return time.time()
+        return filename
+    
+    @staticmethod
+    def download_file_from_remote_url(url):
+        requests.get('url')
+        
 
 
 class FileHelper:
@@ -104,13 +128,14 @@ class Uploader:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--private', '-p', help='private', action='store_true')
+    parser.add_argument('--remote', '-r', help='remote-file')
     parser.add_argument('files', metavar='file', type=str,
                         nargs='*', help='files', default=[])
-
+    
     args = parser.parse_args()
-
-    if len(args.files) == 0:
-        print('files required')
+    
+    if len(args.files) == 0 and args.remote == None:
+        print('files or remote url is required')
         return
 
     if not Uploader.check_and_print_files_size(args.files):
