@@ -74,7 +74,7 @@ zinit snippet OMZ::lib/theme-and-appearance.zsh
 # p10k
 zinit ice depth=1
 zinit light romkatv/powerlevel10k
-source ~/.p10k.zsh
+source ~/.dotfiles/.p10k.zsh
 
 ##########################################
 # zsh key mappings
