@@ -316,22 +316,22 @@ return packer.startup(function(use)
     --     vim.g.loaded_fern_git_status = 1
     --   end
     -- },
-    {
-      'lambdalisue/fern.vim',
-      opt = true,
-      cmd = { 'Fern', 'FernLocateFile' },
-      fn = { 'FernLocateFile' },
-      requires = {
-        { 'lambdalisue/fern-hijack.vim' },
-        { 'lambdalisue/nerdfont.vim' },
-        { 'lu5je0/fern-renderer-nerdfont.vim' },
-        { 'lambdalisue/glyph-palette.vim' },
-        { 'yuki-yano/fern-preview.vim', opt = true },
-      },
-      config = function()
-        vim.cmd('runtime plug-config/fern.vim')
-      end,
-    },
+    -- {
+    --   'lambdalisue/fern.vim',
+    --   opt = true,
+    --   cmd = { 'Fern', 'FernLocateFile' },
+    --   fn = { 'FernLocateFile' },
+    --   requires = {
+    --     { 'lambdalisue/fern-hijack.vim' },
+    --     { 'lambdalisue/nerdfont.vim' },
+    --     { 'lu5je0/fern-renderer-nerdfont.vim' },
+    --     { 'lambdalisue/glyph-palette.vim' },
+    --     { 'yuki-yano/fern-preview.vim', opt = true },
+    --   },
+    --   config = function()
+    --     vim.cmd('runtime plug-config/fern.vim')
+    --   end,
+    -- },
   }
 
   use {
@@ -383,7 +383,7 @@ return packer.startup(function(use)
     keys = { { 'n', 'cs' }, { 'n', 'cS' }, { 'n', 'ys' }, { 'n', 'ds' }, { 'x', 'S' } }
   }
 
-  local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux' }
+  local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
   use {
     'NvChad/nvim-colorizer.lua',
     config = function()
@@ -678,6 +678,29 @@ return packer.startup(function(use)
       }
     end,
     event = "CmdlineEnter",
+  }
+  
+  use {
+    "elihunter173/dirbuf.nvim",
+    config = function()
+      require("dirbuf").setup {
+        write_cmd = 'DirbufSync -confirm',
+        sort_order = 'directories_first',
+      }
+      
+      vim.api.nvim_create_autocmd('FileType', {
+        group = vim.api.nvim_create_augroup('dirbuf', { clear = true }),
+        pattern = 'dirbuf',
+        callback = function()
+          vim.keymap.set('n', '<leader>e', '<nop>', { buffer = true })
+          vim.keymap.set('n', '<leader>fe', '<nop>', { buffer = true })
+        end,
+      })
+      -- require("nvim-tree").setup {
+      --   update_to_buf_dir = { enable = false }
+      -- }
+    end,
+    cmd = 'Dirbuf'
   }
 
 end)
