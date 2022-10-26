@@ -108,6 +108,7 @@ M.setup = function()
       name = '+tab',
       o = { ':call buffer#CloseOtherBuffers()<cr>', 'close-other-buffers' },
       n = { ':enew<cr>', 'new-buffer' },
+      t = { ':TSBufToggle highlight<cr>', 'toggle treesitter highlight' },
     },
     f = {
       name = '+search/files',

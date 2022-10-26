@@ -54,6 +54,12 @@ bl.setup {
         text_align = 'center',
       },
       {
+        filetype = 'neo-tree',
+        text = 'NeoTree',
+        highlight = 'Normal',
+        text_align = 'center',
+      },
+      {
         filetype = 'NvimTree',
         text = 'File Explorer',
         highlight = 'NvimTreeNormal',

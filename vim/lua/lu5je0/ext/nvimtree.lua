@@ -47,8 +47,8 @@ function M.locate_file()
 end
 
 function M.terminal_cd()
-  local cmd = 'cd ' .. vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
-  require('lu5je0.ext.terminal').send_to_terminal(cmd)
+  local path = vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
+  require('lu5je0.ext.terminal').send_to_terminal(('cd "%s"'):format(path))
 end
 
 function M.remove()
