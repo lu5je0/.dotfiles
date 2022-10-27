@@ -599,34 +599,57 @@ return packer.startup(function(use)
     keys = { '<F10>', '<S-F10>' },
     fn = { 'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations' },
   }
-  
-  -- use {
-  --   "nvim-neo-tree/neo-tree.nvim",
-  --   branch = "v2.x",
-  --   config = function()
-  --     require('lu5je0.ext.neo-tree')
-  --   end,
-  --   requires = {
-  --     "nvim-lua/plenary.nvim",
-  --     "kyazdani42/nvim-web-devicons",
-  --     "MunifTanjim/nui.nvim",
-  --   },
-  --   cmd = 'Neotree'
-  -- }
 
-  use {
-    'kyazdani42/nvim-tree.lua',
-    requires = 'kyazdani42/nvim-web-devicons',
-    keys = { '<leader>e', '<leader>fe' },
-    on_compile = function()
-      require('lu5je0.ext.nvim-tree-hijack')
-    end,
-    opt = true,
-    config = function()
-      require('lu5je0.ext.nvimtree').setup()
-    end,
+  -- file manager
+  batch_use {
+    -- use {
+    --   "nvim-neo-tree/neo-tree.nvim",
+    --   branch = "v2.x",
+    --   config = function()
+    --     require('lu5je0.ext.neo-tree')
+    --   end,
+    --   requires = {
+    --     "nvim-lua/plenary.nvim",
+    --     "kyazdani42/nvim-web-devicons",
+    --     "MunifTanjim/nui.nvim",
+    --   },
+    --   cmd = 'Neotree'
+    -- },
+    {
+      'kyazdani42/nvim-tree.lua',
+      requires = 'kyazdani42/nvim-web-devicons',
+      keys = { '<leader>e', '<leader>fe' },
+      on_compile = function()
+        require('lu5je0.ext.nvim-tree-hijack')
+      end,
+      opt = true,
+      config = function()
+        require('lu5je0.ext.nvimtree').setup()
+      end,
+    },
+    {
+      "elihunter173/dirbuf.nvim",
+      config = function()
+        require("dirbuf").setup {
+          write_cmd = 'DirbufSync -confirm',
+          sort_order = 'directories_first',
+        }
+        vim.api.nvim_create_autocmd('FileType', {
+          group = vim.api.nvim_create_augroup('dirbuf', { clear = true }),
+          pattern = 'dirbuf',
+          callback = function()
+            vim.keymap.set('n', '<leader>e', '<nop>', { buffer = true })
+            vim.keymap.set('n', '<leader>fe', '<nop>', { buffer = true })
+            vim.keymap.set('n', '<leader>q', function() vim.cmd('DirbufQuit') end, { buffer = true })
+            vim.keymap.set('n', '<c-i>', '<Plug>(dirbuf_history_forward)', { buffer = true })
+            vim.keymap.set('n', '<c-o>', '<Plug>(dirbuf_history_backward)', { buffer = true })
+          end,
+        })
+      end,
+      cmd = 'Dirbuf'
+    }
   }
-
+  
   use {
     'folke/which-key.nvim',
     config = function()
@@ -692,28 +715,6 @@ return packer.startup(function(use)
       }
     end,
     event = "CmdlineEnter",
-  }
-  
-  use {
-    "elihunter173/dirbuf.nvim",
-    config = function()
-      require("dirbuf").setup {
-        write_cmd = 'DirbufSync -confirm',
-        sort_order = 'directories_first',
-      }
-      vim.api.nvim_create_autocmd('FileType', {
-        group = vim.api.nvim_create_augroup('dirbuf', { clear = true }),
-        pattern = 'dirbuf',
-        callback = function()
-          vim.keymap.set('n', '<leader>e', '<nop>', { buffer = true })
-          vim.keymap.set('n', '<leader>fe', '<nop>', { buffer = true })
-          vim.keymap.set('n', '<leader>q', function() vim.cmd('DirbufQuit') end, { buffer = true })
-          vim.keymap.set('n', '<c-i>', '<Plug>(dirbuf_history_forward)', { buffer = true })
-          vim.keymap.set('n', '<c-o>', '<Plug>(dirbuf_history_backward)', { buffer = true })
-        end,
-      })
-    end,
-    cmd = 'Dirbuf'
   }
 
 end)
