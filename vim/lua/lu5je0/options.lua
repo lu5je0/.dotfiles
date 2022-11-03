@@ -98,7 +98,7 @@ if has('wsl') then
 end
 
 if has('mac') then
-  vim.g.python3_host_prog = '/usr/local/bin/python3'
+  vim.g.python3_host_prog = '/usr/bin/python3'
 end
 
 if has('gui') then

@@ -11,7 +11,7 @@ fi
 if [[ ! -d ~/.zinit ]]; then
   git clone --depth=1 https://github.com/zdharma-continuum/zinit.git ~/.zinit/bin
 fi
-source ~/.zinit/bin/zinit.zsh
+source ~/.local/share/zinit/zinit.git/zinit.zsh
 
 export UNAME_INFO=$(uname -a)
 if [[ $UNAME_INFO =~ "Darwin" ]]; then
@@ -66,9 +66,12 @@ zinit light hlissner/zsh-autopair
 # zinit light zsh-users/zsh-autosuggestions
 
 ## THEME
+
 # lu5je0
 zinit snippet OMZ::lib/theme-and-appearance.zsh
 # zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme
+
+# jovial
 # zinit snippet ~/jovial.zsh-theme
 
 # p10k

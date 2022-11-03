@@ -1,10 +1,16 @@
 # mac
 if [[ $UNAME_INFO =~ "Darwin" ]]; then
-  PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+  # todo
+  # intel
+  # PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+  
+  # arm
+  PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+  
   alias ls='ls -F --show-control-chars --color=auto'
   eval $(gdircolors -b $HOME/.dir_colors)
-  export JAVA_HOME_8=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
-  export JAVA_HOME_11=/Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk/Contents/Home
+  export JAVA_HOME_8='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-11.0.17'
+  export JAVA_HOME_11='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-11.0.17'
   export JAVA_HOME_17=/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home
   alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
   alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
