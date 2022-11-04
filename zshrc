@@ -8,8 +8,8 @@ fi
 ##########################################
 # zinit
 ##########################################
-if [[ ! -d ~/.zinit ]]; then
-  git clone --depth=1 https://github.com/zdharma-continuum/zinit.git ~/.zinit/bin
+if [[ ! -d ~/.local/share/zinit/zinit.git ]]; then
+  git clone --depth=1 https://github.com/zdharma-continuum/zinit.git ~/.local/share/zinit/zinit.git
 fi
 source ~/.local/share/zinit/zinit.git/zinit.zsh
 
@@ -209,3 +209,4 @@ function bash-ctrl-d() {
 export IGNOREEOF=2
 zle -N bash-ctrl-d
 bindkey '^D' bash-ctrl-d
+### End of Zinit's installer chunk
