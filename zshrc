@@ -184,7 +184,7 @@ bindkey -M visual S add-surround
 
 if [[ ! -f ~/.ohmyenv ]]; then
   touch ~/.ohmyenv
-  echo "HTTP_PROXY_PORT=1080\nSOCKS5_PROXY_PORT=1080" >~/.ohmyenv
+  echo "PROXY_HTTP_PORT=1080\nPROXY_SOCKS5_PORT=1080" >~/.ohmyenv
 fi
 source ~/.ohmyenv
 
