@@ -710,4 +710,16 @@ return packer.startup(function(use)
     event = "CmdlineEnter",
   }
 
+  use {
+    "samjwill/nvim-unception",
+    config = function ()
+      vim.api.nvim_create_autocmd("User",{
+        pattern = "UnceptionEditRequestReceived",
+        callback = function()
+          require('lu5je0.ext.terminal').toggle()
+        end
+      })
+    end
+  }
+
 end)
