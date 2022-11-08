@@ -716,7 +716,9 @@ return packer.startup(function(use)
       vim.api.nvim_create_autocmd("User",{
         pattern = "UnceptionEditRequestReceived",
         callback = function()
-          require('lu5je0.ext.terminal').toggle()
+          if vim.bo.filetype == 'toggleterm' then
+            require('lu5je0.ext.terminal').toggle()
+          end
         end
       })
     end
