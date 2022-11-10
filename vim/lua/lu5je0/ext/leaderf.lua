@@ -18,6 +18,8 @@ function M.setup()
     ['<UP>'] = { '<C-K>' },
     ['<DOWN>'] = { '<C-J>' },
   }
+  
+  vim.g.Lf_CacheDirectory = vim.fs.normalize('~/') .. '.cache/nvim/'
 
   -- vim.g.Lf_PreviewResult = {
   --   File = 1,
