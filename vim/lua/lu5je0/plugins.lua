@@ -710,6 +710,7 @@ return packer.startup(function(use)
     event = "CmdlineEnter",
   }
 
+  -- disable unception by nvim --cmd 'let g:unception_disable=1'
   use {
     "samjwill/nvim-unception",
     config = function ()
