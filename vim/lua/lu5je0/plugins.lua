@@ -302,7 +302,6 @@ return packer.startup(function(use)
     'akinsho/toggleterm.nvim',
     branch = 'main',
     defer = true,
-    after = 'nvim-unception',
     commit = '62683d927dfd30dc68441a5811fdcb6c9f176c42',
     config = function()
       require('lu5je0.ext.terminal').setup()
@@ -362,6 +361,9 @@ return packer.startup(function(use)
   use {
     'dstein64/vim-startuptime',
     opt = true,
+    config = function()
+      vim.cmd("let $NEOVIM_MEASURE_STARTUP_TIME = 'TRUE'")
+    end,
     cmd = { 'StartupTime' },
   }
 
@@ -713,7 +715,7 @@ return packer.startup(function(use)
 
   use {
     "samjwill/nvim-unception",
-    opt = true,
+    cond = function() return os.getenv('NEOVIM_MEASURE_STARTUP_TIME') ~= 'TRUE' end,
     config = function ()
       vim.api.nvim_create_autocmd("User",{
         -- disable unception by nvim --cmd 'let g:unception_disable=1'
