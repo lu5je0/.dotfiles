@@ -302,6 +302,7 @@ return packer.startup(function(use)
     'akinsho/toggleterm.nvim',
     branch = 'main',
     defer = true,
+    after = 'nvim-unception',
     commit = '62683d927dfd30dc68441a5811fdcb6c9f176c42',
     config = function()
       require('lu5je0.ext.terminal').setup()
@@ -710,11 +711,12 @@ return packer.startup(function(use)
     event = "CmdlineEnter",
   }
 
-  -- disable unception by nvim --cmd 'let g:unception_disable=1'
   use {
     "samjwill/nvim-unception",
+    opt = true,
     config = function ()
       vim.api.nvim_create_autocmd("User",{
+        -- disable unception by nvim --cmd 'let g:unception_disable=1'
         pattern = "UnceptionEditRequestReceived",
         callback = function()
           if vim.bo.filetype == 'toggleterm' then
