@@ -382,13 +382,14 @@ return packer.startup(function(use)
   }
 
   use {
-    "kylechui/nvim-surround",
-    tag = "*", -- Use for stability; omit to use `main` branch for the latest features
-    config = function()
-      require("nvim-surround").setup {
-        move_cursor = false
-      }
-    end,
+    'tpope/vim-surround',
+    -- "kylechui/nvim-surround",
+    -- tag = "*", -- Use for stability; omit to use `main` branch for the latest features
+    -- config = function()
+    --   require("nvim-surround").setup {
+    --     move_cursor = false
+    --   }
+    -- end,
     keys = { { 'n', 'cs' }, { 'n', 'cS' }, { 'n', 'ys' }, { 'n', 'ds' }, { 'x', 'S' } }
   }
 
