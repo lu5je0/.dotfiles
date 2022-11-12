@@ -552,10 +552,12 @@ return packer.startup(function(use)
     },
     {
       'jose-elias-alvarez/null-ls.nvim',
-      after = 'nvim-lspconfig',
+      -- after = 'nvim-lspconfig',
       config = function()
         require('lu5je0.ext.null-ls.null-ls')
       end,
+      opt = true,
+      cmd = 'NullLsEnable',
     },
     {
       'lu5je0/vim-illuminate',
@@ -717,8 +719,8 @@ return packer.startup(function(use)
   use {
     "samjwill/nvim-unception",
     cond = function() return os.getenv('NEOVIM_MEASURE_STARTUP_TIME') ~= 'TRUE' end,
-    config = function ()
-      vim.api.nvim_create_autocmd("User",{
+    config = function()
+      vim.api.nvim_create_autocmd("User", {
         -- disable unception by nvim --cmd 'let g:unception_disable=1'
         pattern = "UnceptionEditRequestReceived",
         callback = function()
