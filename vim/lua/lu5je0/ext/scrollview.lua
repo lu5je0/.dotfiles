@@ -34,7 +34,10 @@ M.begin_timer = function()
       if vim.bo.buftype == 'nofile' and vim.bo.filetype == 'vim' then
         return
       end
-      vim.cmd("ScrollViewDisable")
+      local ok, err = pcall(vim.cmd, "ScrollViewDisable")
+      if not ok then
+        print(err)
+      end
     end, visible_duration)
   end
 

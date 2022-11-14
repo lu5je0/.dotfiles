@@ -3,14 +3,14 @@ local null_ls = require('null-ls')
 null_ls.setup {
   -- debug = true,
   sources = {
-    require('null-ls').builtins.formatting.autopep8.with {
+    null_ls.builtins.formatting.autopep8.with {
       extra_args = { '--max-line-length', '120' }
     },
-    require('null-ls').builtins.formatting.yamlfmt,
-    require("null-ls").builtins.diagnostics.markdownlint,
-    -- require("null-ls").builtins.code_actions.refactoring
-    -- require("null-ls").builtins.diagnostics.eslint,
-    -- require("null-ls").builtins.completion.spell,
+    null_ls.builtins.formatting.yamlfmt,
+    null_ls.builtins.diagnostics.markdownlint,
+    -- null_ls.builtins.code_actions.refactoring
+    -- null_ls.builtins.diagnostics.eslint,
+    -- null_ls.builtins.completion.spell,
   },
   ---@diagnostic disable-next-line: unused-local
   on_attach = require('lu5je0.ext.lspconfig.lsp').on_attach
@@ -50,4 +50,8 @@ null_ls.register(trailing_space)
 
 vim.api.nvim_create_user_command("NullLsToggle", function()
   require("null-ls").toggle({})
+end, {})
+
+vim.api.nvim_create_user_command("NullLsEnable", function()
+  vim.notify('NullLsEnabled')
 end, {})

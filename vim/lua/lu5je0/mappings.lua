@@ -113,6 +113,11 @@ vim.defer_fn(function()
   nmap <silent> <right> :bn<cr>
   nmap <silent> <c-b>o <c-w>p
   nmap <silent> <c-b><c-o> <c-w>p
+  
+  nnoremap <s-up> <c-w>+
+  nnoremap <s-down> <c-w>-
+  nnoremap <s-right> <c-w>>
+  nnoremap <s-left> <c-w><
 
   " 打断undo
   inoremap . <c-g>u.
