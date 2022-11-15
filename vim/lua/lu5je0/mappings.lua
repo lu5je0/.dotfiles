@@ -7,10 +7,10 @@ local default_opts = { desc = 'mappings.lua', silent = true }
 local function del_map(modes, lhs, opts)
   if type(lhs) == 'table' then
     for _, v in ipairs(lhs) do
-      vim.keymap.del(modes, v, opts)
+      pcall(vim.keymap.del, modes, v, opts)
     end
   else
-    vim.keymap.del(modes, lhs, opts)
+    pcall(vim.keymap.del, modes, lhs, opts)
   end
 end
 
@@ -54,13 +54,13 @@ vim.defer_fn(function()
   set_n_map('<leader>vi', option_toggler.new_toggle_fn(function() vim.fn['ToggleSaveLastIme']() end))
   set_n_map('<leader>vw', function()
     if vim.wo.wrap then
-      print("set unwrap")
+      print("setlocal nowrap")
       vim.wo.wrap = false
-      del_map({ 'x', 'n' }, { 'j', 'k' }, { buffer = 0 })
-      del_map({ 'x', 'n', 'o' }, { 'H', 'L' }, { buffer = 0 })
+      del_map({ 'x', 'n' }, { 'j', 'k' }, { buffer = 0, silent = true })
+      del_map({ 'x', 'n', 'o' }, { 'H', 'L' }, { buffer = 0, silent = true })
       -- del_map({ 'n' }, 'Y', { buffer = 0 })
     else
-      print("set wrap")
+      print("setlocal wrap")
       vim.wo.wrap = true
       local buffer_opts = vim.deepcopy(default_opts)
       buffer_opts.buffer = 0

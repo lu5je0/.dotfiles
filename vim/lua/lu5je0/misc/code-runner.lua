@@ -4,7 +4,7 @@ local M = {}
 local expand = vim.fn.expand
 
 local function build_cmd_with_file(cmd)
-  return cmd .. ' ' .. expand('%:p')
+  return cmd .. ' ' .. ('"%s"'):format(expand('%:p'))
 end
 
 local function execute_in_terminal(cmd, append_cmd)
