@@ -96,8 +96,10 @@ local function comfirm(fallback)
     else
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
-  elseif vim.fn['vsnip#jumpable'](1) == 1 then
-    keys_helper.feedkey('<Plug>(vsnip-jump-next)')
+  elseif require('luasnip').expand_or_jumpable() then -- luasnip
+    require('luasnip').expand_or_jump()
+  -- elseif vim.fn['vsnip#jumpable'](1) == 1 then -- vsnip
+  --   keys_helper.feedkey('<Plug>(vsnip-jump-next)')
   else
     fallback()
     keys_helper.feedkey('<space><bs>')
@@ -114,7 +116,10 @@ cmp.setup {
   },
   snippet = {
     expand = function(args)
-      vim.fn['vsnip#anonymous'](args.body) -- For `vsnip` users.
+      require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+      -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+      -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
+      -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
     end,
   },
   completion = {
@@ -145,6 +150,7 @@ cmp.setup {
   sources = cmp.config.sources {
     { name = 'nvim_lsp' },
     { name = 'vsnip' },
+    { name = 'luasnip' },
     { name = 'path' },
     { name = 'buffer' },
   },

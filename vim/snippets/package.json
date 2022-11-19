@@ -1,0 +1,50 @@
+{
+  "name": "vs-snippets",
+  "contributes": {
+    "snippets": [
+      {
+        "language": [
+          "plaintext",
+          "markdown",
+          "tex",
+          "html",
+          "global",
+          "all"
+        ],
+        "path": "./vsnip/global.json"
+      },
+      {
+        "language": "c",
+        "path": "./vsnip/c.json"
+      },
+      {
+        "language": "java",
+        "path": "./vsnip/java.json"
+      },
+      {
+        "language": "lua",
+        "path": "./vsnip/lua.json"
+      },
+      {
+        "language": "vim",
+        "path": "./vsnip/vim.json"
+      },
+      {
+        "language": "sh",
+        "path": "./vsnip/sh.json"
+      },
+      {
+        "language": "gitcommit",
+        "path": "./vsnip/gitcommit.json"
+      },
+      {
+        "language": "python",
+        "path": "./vsnip/python.json"
+      },
+      {
+        "language": "markdown",
+        "path": "./vsnip/markdown.json"
+      }
+    ]
+  }
+}

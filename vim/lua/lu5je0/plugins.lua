@@ -491,12 +491,19 @@ return packer.startup(function(use)
     requires = {
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-path',
+      'L3MON4D3/LuaSnip',
       {
-        'hrsh7th/vim-vsnip',
+        'saadparwaiz1/cmp_luasnip',
         config = function()
-          require('lu5je0.ext.vsnip').setup()
+          require('lu5je0.ext.luasnip').setup()
         end,
       },
+      -- {
+      --   'hrsh7th/vim-vsnip',
+      --   config = function()
+      --     require('lu5je0.ext.vsnip').setup()
+      --   end,
+      -- },
       'hrsh7th/cmp-vsnip',
     },
   }
