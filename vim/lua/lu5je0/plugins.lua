@@ -494,6 +494,7 @@ return packer.startup(function(use)
       'L3MON4D3/LuaSnip',
       {
         'saadparwaiz1/cmp_luasnip',
+        defer = true,
         config = function()
           require('lu5je0.ext.luasnip').setup()
         end,
