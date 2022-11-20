@@ -1,16 +1,26 @@
 local M = {}
 
-function keymap()
-  local luasnip = require('luasnip')
+local luasnip = require('luasnip')
+
+M.jump_next_able = function()
+  return luasnip.expand_or_jumpable() and (vim.fn.line("'^") - vim.fn.line('.')) <= 2
+end
+
+local function keymap()
   local opts = { silent = true }
 
   vim.keymap.set({ 's', 'i' }, '<c-j>', function() luasnip.jump(1) end, opts)
   vim.keymap.set({ 's', 'i' }, '<c-k>', function() luasnip.jump(-1) end, opts)
+  vim.keymap.set({ 's' }, '<cr>', function()
+    if luasnip.jumpable() then
+      luasnip.jump(1)
+    end
+  end, opts)
 
   require("luasnip.loaders.from_vscode").lazy_load({ paths = { "./snippets/" } })
 end
 
-function snippets()
+local function snippets()
   local ls = require "luasnip"
   local s = ls.snippet
   local sn = ls.snippet_node
@@ -30,7 +40,7 @@ function snippets()
   local postfix = require "luasnip.extras.postfix".postfix
 
   ls.add_snippets("all", {
-    postfix({ trig = ".par", match_pattern = "[%w%.%_%-%(%)]+$" }, {
+    postfix({ trig = ".parr", match_pattern = "[%w%.%_%-%(%)]+$" }, {
       t("("),
       f(function(_, parent)
         return parent.snippet.env.POSTFIX_MATCH
@@ -40,7 +50,7 @@ function snippets()
   })
 
   ls.add_snippets("all", {
-    postfix({ trig = ".arg", match_pattern = "[%w%.%_%-%(%)]+$" }, {
+    postfix({ trig = ".argg", match_pattern = "[%w%.%_%-%(%)]+$" }, {
       i(1, ""),
       t("("),
       f(function(_, parent)
@@ -51,7 +61,7 @@ function snippets()
   })
 
   ls.add_snippets("lua", {
-    postfix({ trig = ".var", match_pattern = "^ +(.+)$" }, {
+    postfix({ trig = ".varr", match_pattern = "^ +(.+)$" }, {
       t("local "), i(1, ""), t(" = "),
       f(function(_, parent)
         return parent.snippet.env.POSTFIX_MATCH
@@ -60,7 +70,7 @@ function snippets()
   })
 
   ls.add_snippets("python", {
-    postfix({ trig = ".var", match_pattern = "^ +(.+)$" }, {
+    postfix({ trig = ".varr", match_pattern = "^ +(.+)$" }, {
       i(1, ""), t(" = "),
       f(function(_, parent)
         return parent.snippet.env.POSTFIX_MATCH

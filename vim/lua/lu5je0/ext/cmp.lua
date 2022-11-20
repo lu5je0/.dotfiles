@@ -96,10 +96,10 @@ local function comfirm(fallback)
     else
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
-  elseif require('luasnip').expand_or_jumpable() then -- luasnip
-    require('luasnip').expand_or_jump()
-  -- elseif vim.fn['vsnip#jumpable'](1) == 1 then -- vsnip
-  --   keys_helper.feedkey('<Plug>(vsnip-jump-next)')
+  elseif require('lu5je0.ext.luasnip').jump_next_able() then -- luasnip
+    require('luasnip').jump(1)
+    -- elseif vim.fn['vsnip#jumpable'](1) == 1 then -- vsnip
+    --   keys_helper.feedkey('<Plug>(vsnip-jump-next)')
   else
     fallback()
     keys_helper.feedkey('<space><bs>')
@@ -122,11 +122,11 @@ cmp.setup {
       -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
     end,
   },
+  performance = {
+    debounce = 25,
+  },
   completion = {
     completeopt = 'menu,menuone,noinsert',
-  },
-  view = {
-    -- entries = 'native',
   },
   experimental = {
     -- ghost_text = true
@@ -148,9 +148,9 @@ cmp.setup {
     ['<tab>'] = cmp.mapping(comfirm, { 'i' }),
   },
   sources = cmp.config.sources {
-    { name = 'nvim_lsp' },
-    { name = 'vsnip' },
-    { name = 'luasnip' },
+    { name = 'nvim_lsp', },
+    { name = 'luasnip', },
+    -- { name = 'vsnip' },
     { name = 'path' },
     { name = 'buffer' },
   },

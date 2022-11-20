@@ -505,7 +505,7 @@ return packer.startup(function(use)
       --     require('lu5je0.ext.vsnip').setup()
       --   end,
       -- },
-      'hrsh7th/cmp-vsnip',
+      -- 'hrsh7th/cmp-vsnip',
     },
   }
 
