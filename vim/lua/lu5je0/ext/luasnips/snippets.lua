@@ -38,14 +38,14 @@ ls.add_snippets("markdown", {
 --   })
 -- })
 --
--- ls.add_snippets("lua", {
---   postfix({ trig = ".local", match_pattern = "^ +(.+)$" }, {
---     t("local "), i(1, ""), t(" = "),
---     f(function(_, parent)
---       return parent.snippet.env.POSTFIX_MATCH
---     end, {}),
---   })
--- })
+ls.add_snippets("lua", {
+  postfix({ trig = ".local", match_pattern = "^ +(.+)$" }, {
+    t("local "), i(1, ""), t(" = "),
+    f(function(_, parent)
+      return parent.snippet.env.POSTFIX_MATCH
+    end, {}),
+  })
+})
 --
 --
 -- -- for i = 1, 10, 1 do

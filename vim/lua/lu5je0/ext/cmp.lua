@@ -136,10 +136,9 @@ cmp.setup {
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i' --[[ , 'c' ]] }),
     ['<c-n>'] = cmp.mapping(function()
       if cmp.visible() then
-        cmp.mapping.abort()()
+        cmp.abort()
       else
-        ---@diagnostic disable-next-line: missing-parameter
-        cmp.mapping.complete()()
+        cmp.complete()
       end
     end, { 'i', --[[ 'c' ]] }),
     ['<down>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
