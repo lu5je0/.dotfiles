@@ -18,15 +18,14 @@ local m = extras.m
 local l = extras.l
 local postfix = require "luasnip.extras.postfix".postfix
 
--- ls.add_snippets("all", {
---   postfix({ trig = ".parr", match_pattern = "[%w%.%_%-%(%)]+$" }, {
---     t("("),
---     f(function(_, parent)
---       return parent.snippet.env.POSTFIX_MATCH
---     end, {}),
---     t(")"),
---   })
--- })
+ls.add_snippets("markdown", {
+  postfix({ trig = "%dtable", match_pattern = "%dtable$" }, {
+    f(function(_, parent)
+      return "hhhhh"
+    end, {})
+  })
+})
+
 --
 -- ls.add_snippets("all", {
 --   postfix({ trig = ".argg", match_pattern = "[%w%.%_%-%(%)]+$" }, {

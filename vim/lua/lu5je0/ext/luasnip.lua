@@ -3,9 +3,10 @@ local M = {}
 local luasnip = require('luasnip')
 
 M.jump_next_able = function()
-  local modified_line = vim.fn.line("'^")
-  local current_line = vim.fn.line(".")
-  return modified_line >= current_line and modified_line - current_line <= 2 and luasnip.expand_or_jumpable()
+  return luasnip.expand_or_locally_jumpable() 
+  -- local modified_line = vim.fn.line("'^")
+  -- local current_line = vim.fn.line(".")
+  -- return modified_line >= current_line and modified_line - current_line <= 2 and luasnip.expand_or_jumpable()
 end
 
 local function keymap()
