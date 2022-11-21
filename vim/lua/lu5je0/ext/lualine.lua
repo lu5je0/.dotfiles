@@ -196,8 +196,7 @@ ins_left {
     elseif filename_len == 0 then
       return '[Untitled]'
     end
-    
-    return filename
+    return vim.pesc(filename)
   end,
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
