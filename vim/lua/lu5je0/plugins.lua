@@ -374,7 +374,7 @@ return packer.startup(function(use)
     config = function()
       vim.g.undotree_WindowLayout = 3
       vim.g.undotree_SetFocusWhenToggle = 1
-      
+
       local function undotree_toggle()
         if vim.bo.filetype ~= 'undotree' and vim.bo.filetype ~= 'diff' then
           local winnr = vim.fn.bufwinnr(0)
@@ -385,7 +385,7 @@ return packer.startup(function(use)
           vim.cmd('UndotreeToggle')
         end
       end
-      
+
       vim.keymap.set('n', '<leader>u', undotree_toggle, {})
     end,
   }
@@ -504,14 +504,8 @@ return packer.startup(function(use)
     requires = {
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-path',
-      { 'L3MON4D3/LuaSnip', defer = true },
-      {
-        'saadparwaiz1/cmp_luasnip',
-        defer = true,
-        config = function()
-          require('lu5je0.ext.luasnip').setup()
-        end,
-      },
+      { 'L3MON4D3/LuaSnip', config = function() require('lu5je0.ext.luasnip').setup() end },
+      { 'saadparwaiz1/cmp_luasnip' },
       -- {
       --   'hrsh7th/vim-vsnip',
       --   config = function()
