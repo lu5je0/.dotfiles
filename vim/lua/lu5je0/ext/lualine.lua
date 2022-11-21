@@ -196,7 +196,7 @@ ins_left {
     elseif filename_len == 0 then
       return '[Untitled]'
     end
-    return vim.pesc(filename)
+    return string.gsub(filename, '%%', '%%%%')
   end,
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
