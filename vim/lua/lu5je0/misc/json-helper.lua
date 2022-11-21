@@ -46,6 +46,10 @@ local function process_json_keys()
   local keys = {}
   for s in jq_result:gmatch("[^\r\n]+") do
     s = string.sub(s, 2, -2)
+    if s:match('%.') then
+      s = ('"%s"'):format(s)
+      -- todo fix s end with []
+    end
     table.insert(keys, s)
   end
   return keys
