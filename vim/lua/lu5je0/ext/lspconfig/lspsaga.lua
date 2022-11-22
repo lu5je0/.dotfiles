@@ -12,6 +12,7 @@ local function init()
     code_action_keys = {
       quit = "<ESC>",
     },
+    preview_lines_above = 2,
   })
 end
 
