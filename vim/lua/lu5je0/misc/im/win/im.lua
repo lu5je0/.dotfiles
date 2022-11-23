@@ -16,7 +16,7 @@ local function create_autocmd()
     group = group,
     pattern = { '*' },
     callback = function()
-      disable_ime()
+      M.disable_ime()
     end
   })
 
@@ -24,22 +24,13 @@ local function create_autocmd()
     group = group,
     pattern = { '*' },
     callback = function()
-      enable_ime()
+      M.enable_ime()
     end
   })
 end
 
-local function defer_normal_keep()
-  vim.defer_fn(function()
-    if vim.api.nvim_get_mode().mode == 'n' then
-      disable_ime()
-    end
-  end, 20)
-end
-
 M.setup = function()
   create_autocmd()
-  defer_normal_keep()
 end
 
 return M

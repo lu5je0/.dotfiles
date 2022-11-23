@@ -13,7 +13,10 @@ packer.init {
 vim.api.nvim_create_autocmd('BufWritePost', {
   group = vim.api.nvim_create_augroup('packer_reload_augroup', { clear = true }),
   pattern = { 'plugins.lua' },
-  command = 'source <afile> | PackerCompile',
+  callback = function()
+    vim.cmd('source <afile> | PackerCompile | echo PackerCompiled')
+    vim.defer_fn(function() print('PackerCompiled ' .. os.clock()) end, 10)
+  end
 })
 
 return packer.startup(function(use)

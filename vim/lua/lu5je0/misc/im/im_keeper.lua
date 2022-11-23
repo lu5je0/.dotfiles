@@ -1,11 +1,9 @@
 local M = {}
 
-local group = vim.api.nvim_create_augroup('im-keeper', { clear = true })
-
 local function switch_to_en()
-  if vim.fn.has('mac') == 1 then
+  if M.os == 'mac' then
     require('lu5je0.misc.im.mac.im').switch_to_en()
-  elseif vim.fn.has('wsl') == 1 then
+  elseif M.os == 'win' then
     require('lu5je0.misc.im.win.im').disable_ime()
   end
 end
@@ -13,8 +11,9 @@ end
 local focus_gained = true
 local function keep_normal_mode_with_abc_im()
   local timer = vim.loop.new_timer()
+  local group = vim.api.nvim_create_augroup('im-keeper', { clear = true })
 
-  timer:start(0, 400, vim.schedule_wrap(function()
+  timer:start(0, M.interval, vim.schedule_wrap(function()
     if focus_gained then
       if vim.api.nvim_get_mode().mode == 'n' then
         switch_to_en()
@@ -40,11 +39,22 @@ local function keep_normal_mode_with_abc_im()
   })
 end
 
-M.setup = function()
-  if vim.fn.has('mac') == 0 then
-    return
+M.setup = function(config)
+  config = vim.tbl_deep_extend('force', {
+    mac = false,
+    win = false,
+    interval = 1000
+  }, config)
+  M.interval = config.interval
+  
+  if vim.fn.has('mac') == 1 then
+    M.os = 'mac'
+  elseif vim.fn.has('wsl') == 1 then
+    M.os = 'win'
   end
-  keep_normal_mode_with_abc_im()
+  if (config.mac and M.os == 'mac') or (config.win and M.os == 'win') then
+    keep_normal_mode_with_abc_im()
+  end
 end
 
 return M
