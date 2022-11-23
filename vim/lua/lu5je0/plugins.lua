@@ -692,28 +692,49 @@ return packer.startup(function(use)
     end
   }
 
-  -- fold
+  -- strengthen the vim features
   batch_use {
-    { 'kevinhwang91/promise-async' },
     {
       'kevinhwang91/nvim-ufo',
       after = 'nvim-treesitter',
+      requires = 'kevinhwang91/promise-async',
       config = function()
         require('lu5je0.ext.nvim-ufo')
       end,
+    },
+    {
+      'kevinhwang91/nvim-fundo',
+      requires = 'kevinhwang91/promise-async',
+      run = function()
+        require('fundo').install()
+      end,
+      config = function()
+        vim.o.undofile = true
+        require('fundo').setup()
+      end
+    },
+    {
+      'nat-418/boole.nvim',
+      config = function()
+        require('boole').setup {
+          mappings = {
+            increment = '<c-a>',
+            decrement = '<c-x>'
+          },
+          -- User defined loops
+          additions = {
+            -- {'Foo', 'Bar'},
+          },
+          allow_caps_additions = {
+            -- enable → disable
+            -- Enable → Disable
+            -- ENABLE → DISABLE
+            {'enable', 'disable'},
+          }
+        }
+      end,
+      keys = { '<c-a>', '<c-x>' }
     }
-  }
-
-  use {
-    'kevinhwang91/nvim-fundo',
-    requires = 'kevinhwang91/promise-async',
-    run = function()
-      require('fundo').install()
-    end,
-    config = function()
-      vim.o.undofile = true
-      require('fundo').setup()
-    end
   }
 
   use {
@@ -761,5 +782,5 @@ return packer.startup(function(use)
       })
     end
   }
-
+  
 end)
