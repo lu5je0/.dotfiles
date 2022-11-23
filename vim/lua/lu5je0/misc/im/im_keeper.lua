@@ -5,8 +5,8 @@ local group = vim.api.nvim_create_augroup('im-keeper', { clear = true })
 local function switch_to_en()
   if vim.fn.has('mac') == 1 then
     require('lu5je0.misc.im.mac.im').switch_to_en()
-  else
-    print('switch_to_en error')
+  elseif vim.fn.has('wsl') == 1 then
+    require('lu5je0.misc.im.win.im').disable_ime()
   end
 end
 
