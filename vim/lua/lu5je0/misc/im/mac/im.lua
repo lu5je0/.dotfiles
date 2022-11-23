@@ -2,24 +2,25 @@ local M = {}
 
 local py3eval = vim.fn.pyeval
 
-local std_config_path = vim.fn.stdpath('config')
-
-local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
-
-local ffi = require('ffi')
-
-local im_switcher = ffi.load(std_config_path .. '/lib/libinput-source-switcher.dylib')
-
 local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
 
-ffi.cdef([[
-int switchInputSource(const char *s);
-const char* getCurrentInputSourceID();
-]])
+local std_config_path = vim.fn.stdpath('config')
 
-local switch_to_im = function(im_code)
-  im_switcher.switchInputSource(im_code)
-end
+local im_switcher = (function()
+  local ffi = require('ffi')
+  local switcher = ffi.load(std_config_path .. '/lib/libinput-source-switcher.dylib')
+  ffi.cdef([[
+  int switchInputSource(const char *s);
+  const char* getCurrentInputSourceID();
+  ]])
+  
+  return {
+    switch_to_im = function(im_code)
+      ---@diagnostic disable-next-line: undefined-field
+      switcher.switchInputSource(im_code)
+    end
+  }
+end)()
 
 M.py_im_init_script = ([[
 python3 << EOF
@@ -46,14 +47,13 @@ threading.Thread(target=im_init).start()
 EOF
 ]]):format(std_config_path)
 
-M.python_im_helper_is_init = false
-
+local python_im_helper_is_init = false
 local function init_python_im_helper()
-  if M.python_im_helper_is_init then
+  if python_im_helper_is_init then
     return
   end
   vim.cmd(M.py_im_init_script)
-  M.python_im_helper_is_init = true
+  python_im_helper_is_init = true
 end
 
 M.toggle_save_last_ime = function()
@@ -72,9 +72,9 @@ M.switch_insert_mode = function()
   if M.save_last_ime then
     init_python_im_helper()
     local py_watched_im_source = py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime")
-    switch_to_im(py_watched_im_source)
+    im_switcher.switch_to_im(py_watched_im_source)
   else
-    switch_to_im(ABC_IM_SOURCE_CODE)
+    im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
   end
 end
 
@@ -83,11 +83,14 @@ M.switch_normal_mode = function()
     init_python_im_helper()
     py3eval("switch_normal_mode()")
   else
-    switch_to_im(ABC_IM_SOURCE_CODE)
+    im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
   end
 end
 
 M.setup = function()
+  M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
+  
+  local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
   vim.api.nvim_create_autocmd('InsertLeave', {
     group = group,
     pattern = { '*' },
@@ -103,8 +106,6 @@ M.setup = function()
       M.switch_insert_mode()
     end
   })
-  
-  M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
 end
 
 return M
