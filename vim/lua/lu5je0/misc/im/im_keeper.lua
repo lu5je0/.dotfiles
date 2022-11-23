@@ -1,6 +1,6 @@
 local M = {}
 
-local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
+local group = vim.api.nvim_create_augroup('im-keeper', { clear = true })
 
 local function switch_to_en()
   if vim.fn.has('mac') == 1 then
