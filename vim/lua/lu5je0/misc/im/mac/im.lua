@@ -1,12 +1,27 @@
-vim.cmd[[
-let s:std_config_path = stdpath("config")
-let g:save_last_ime = v:lua.require('lu5je0.misc.env-keeper').get('save_last_ime', '0')
+local M = {}
 
-function! ImFuncInit()
-if get(g:, "im_init", 0) == 1
-    return
-endif
-let g:im_init = 1
+local py3eval = vim.fn.pyeval
+
+local std_config_path = vim.fn.stdpath('config')
+
+local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
+
+local ffi = require('ffi')
+
+local im_switcher = ffi.load(std_config_path .. '/lib/libinput-source-switcher.dylib')
+
+local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
+
+ffi.cdef([[
+int switchInputSource(const char *s);
+const char* getCurrentInputSourceID();
+]])
+
+local switch_to_im = function(im_code)
+  im_switcher.switchInputSource(im_code)
+end
+
+M.py_im_init_script = ([[
 python3 << EOF
 import threading
 
@@ -14,54 +29,82 @@ import sys
 import time
 from os.path import normpath, join
 import vim
-python_root_dir = vim.eval('s:std_config_path') + "/python"
+python_root_dir = "%s" + "/python"
 sys.path.insert(0, python_root_dir)
 switcher = None
 
 def im_init():
-    import im
-    global switcher
-    switcher = im.ImSwitcher()
+  import im
+  global switcher
+  switcher = im.ImSwitcher()
+
+def switch_normal_mode():
+  if switcher != None:
+    switcher.switch_normal_mode(True)
 
 threading.Thread(target=im_init).start()
 EOF
-endfunction
+]]):format(std_config_path)
 
-function! SwitchInsertMode()
-    if g:save_last_ime == 1
-        call ImFuncInit()
-        call libcall(s:std_config_path . "/lib/libinput-source-switcher.dylib", "switchInputSource", py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime"))
-    endif
-endfunction
+M.python_im_helper_is_init = false
 
-function! SwitchNormalMode()
-if g:save_last_ime == 1
-call ImFuncInit()
-python3 << EOF
-if switcher != None:
-    switcher.switch_normal_mode(True)
-EOF
-else
-    call libcall(s:std_config_path . "/lib/libinput-source-switcher.dylib", "switchInputSource", "com.apple.keylayout.ABC")
-endif
-endfunction
+local function init_python_im_helper()
+  if M.python_im_helper_is_init then
+    return
+  end
+  vim.cmd(M.py_im_init_script)
+  M.python_im_helper_is_init = true
+end
 
-function! ToggleSaveLastIme()
-    let v = v:lua.require('lu5je0.misc.env-keeper').get('save_last_ime', '0')
-    if v == '0'
-        let g:save_last_ime = 1
-        echo "keep last ime enabled"
-    else
-        let g:save_last_ime = 0
-        echo "keep last ime disabled"
-    endif
-    call ImFuncInit()
-    lua require('lu5je0.misc.env-keeper').set('save_last_ime', tostring(vim.g.save_last_ime))
-endfunction
+M.toggle_save_last_ime = function()
+  local keeper = require('lu5je0.misc.env-keeper')
+  local v = keeper.get('save_last_ime', true)
+  if v then
+    print("keep last ime disabled")
+  else
+    print("keep last ime enabled")
+  end
+  M.save_last_ime = not v
+  keeper.set('save_last_ime', M.save_last_ime)
+end
 
-augroup switch_im
-    autocmd!
-    autocmd InsertLeave * call SwitchNormalMode()
-    autocmd InsertEnter * call SwitchInsertMode()
-augroup END
-]]
+M.switch_insert_mode = function()
+  if M.save_last_ime then
+    init_python_im_helper()
+    local py_watched_im_source = py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime")
+    switch_to_im(py_watched_im_source)
+  else
+    switch_to_im(ABC_IM_SOURCE_CODE)
+  end
+end
+
+M.switch_normal_mode = function()
+  if M.save_last_ime then
+    init_python_im_helper()
+    py3eval("switch_normal_mode()")
+  else
+    switch_to_im(ABC_IM_SOURCE_CODE)
+  end
+end
+
+M.setup = function()
+  vim.api.nvim_create_autocmd('InsertLeave', {
+    group = group,
+    pattern = { '*' },
+    callback = function()
+      M.switch_normal_mode()
+    end
+  })
+
+  vim.api.nvim_create_autocmd('InsertEnter', {
+    group = group,
+    pattern = { '*' },
+    callback = function()
+      M.switch_insert_mode()
+    end
+  })
+  
+  M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
+end
+
+return M

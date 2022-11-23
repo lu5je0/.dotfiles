@@ -37,7 +37,7 @@ local function defer_normal_keep()
   end, 20)
 end
 
-M.boostrap = function()
+M.setup = function()
   create_autocmd()
   defer_normal_keep()
 end

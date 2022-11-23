@@ -1,9 +1,9 @@
 -- im
 if vim.fn.has('gui') == 0 then
   if vim.fn.has('wsl') == 1 then
-    require('lu5je0.misc.im.win.im').boostrap()
+    require('lu5je0.misc.im.win.im').setup()
   elseif vim.fn.has('mac') == 1 then
-    require('lu5je0.misc.im.mac.im')
+    require('lu5je0.misc.im.mac.im').setup()
   end
 end
 
