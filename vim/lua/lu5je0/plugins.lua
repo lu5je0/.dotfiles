@@ -702,17 +702,17 @@ return packer.startup(function(use)
         require('lu5je0.ext.nvim-ufo')
       end,
     },
-    {
-      'kevinhwang91/nvim-fundo',
-      requires = 'kevinhwang91/promise-async',
-      run = function()
-        require('fundo').install()
-      end,
-      config = function()
-        vim.o.undofile = true
-        require('fundo').setup()
-      end
-    },
+    -- {
+    --   'kevinhwang91/nvim-fundo',
+    --   requires = 'kevinhwang91/promise-async',
+    --   run = function()
+    --     require('fundo').install()
+    --   end,
+    --   config = function()
+    --     vim.o.undofile = true
+    --     require('fundo').setup()
+    --   end
+    -- },
     {
       'nat-418/boole.nvim',
       config = function()
@@ -729,58 +729,56 @@ return packer.startup(function(use)
             -- enable → disable
             -- Enable → Disable
             -- ENABLE → DISABLE
-            {'enable', 'disable'},
+            { 'enable', 'disable' },
           }
         }
       end,
       keys = { '<c-a>', '<c-x>' }
-    }
-  }
-
-  use {
-    'AckslD/messages.nvim',
-    config = function()
-      require("messages").setup {
-        post_open_float = function(_)
-          vim.cmd [[
+    },
+    {
+      "smjonas/live-command.nvim",
+      -- live-command supports semantic versioning via tags
+      -- tag = "1.*",
+      config = function()
+        require("live-command").setup {
+          commands = {
+            Norm = { cmd = "norm" },
+          },
+        }
+      end,
+      event = "CmdlineEnter",
+    },
+    {
+      'AckslD/messages.nvim',
+      config = function()
+        require("messages").setup {
+          post_open_float = function(_)
+            vim.cmd [[
           au! BufLeave * ++once lua vim.cmd(":q")
           set number
           ]]
-          vim.fn.cursor { 99999, 0 }
-        end
-      }
-    end,
-    cmd = 'Messages',
-  }
-
-  use {
-    "smjonas/live-command.nvim",
-    -- live-command supports semantic versioning via tags
-    -- tag = "1.*",
-    config = function()
-      require("live-command").setup {
-        commands = {
-          Norm = { cmd = "norm" },
-        },
-      }
-    end,
-    event = "CmdlineEnter",
-  }
-
-  use {
-    "samjwill/nvim-unception",
-    cond = function() return os.getenv('NEOVIM_MEASURE_STARTUP_TIME') ~= 'TRUE' end,
-    config = function()
-      vim.api.nvim_create_autocmd("User", {
-        -- disable unception by nvim --cmd 'let g:unception_disable=1'
-        pattern = "UnceptionEditRequestReceived",
-        callback = function()
-          if vim.bo.filetype == 'toggleterm' then
-            require('lu5je0.ext.terminal').toggle()
+            vim.fn.cursor { 99999, 0 }
           end
-        end
-      })
-    end
+        }
+      end,
+      cmd = 'Messages',
+    }
   }
-  
+
+  -- use {
+  --   "samjwill/nvim-unception",
+  --   cond = function() return os.getenv('NEOVIM_MEASURE_STARTUP_TIME') ~= 'TRUE' end,
+  --   config = function()
+  --     vim.api.nvim_create_autocmd("User", {
+  --       -- disable unception by nvim --cmd 'let g:unception_disable=1'
+  --       pattern = "UnceptionEditRequestReceived",
+  --       callback = function()
+  --         if vim.bo.filetype == 'toggleterm' then
+  --           require('lu5je0.ext.terminal').toggle()
+  --         end
+  --       end
+  --     })
+  --   end
+  -- }
+
 end)
