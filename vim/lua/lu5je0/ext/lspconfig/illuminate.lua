@@ -1,4 +1,4 @@
-vim.g.Illuminate_delay = 0
+vim.g.Illuminate_delay = 500
 
 vim.cmd([[
 hi! illuminatedWord ctermbg=green guibg=#344134
