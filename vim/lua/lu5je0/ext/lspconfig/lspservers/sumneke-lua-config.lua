@@ -29,6 +29,7 @@ return {
       workspace = {
         maxPreload = 100000,
         preloadFileSize = 10000,
+        checkThirdParty = false,
       },
       diagnostics = {
         -- Get the language server to recognize the `vim` global
