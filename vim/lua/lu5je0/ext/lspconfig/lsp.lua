@@ -37,7 +37,7 @@ M.on_attach = function(client, bufnr)
   
   keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
   keymap('n', 'gn', vim.lsp.buf.implementation, opts)
-  keymap('n', 'gb', vim.lsp.buf.references, opts)
+  -- keymap('n', 'gb', vim.lsp.buf.references, opts)
 
   keymap('n', 'gu', vim.lsp.buf.declaration, opts)
   keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)

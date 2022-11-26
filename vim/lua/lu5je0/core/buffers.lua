@@ -22,6 +22,7 @@ M.jump_to_specific_location = function(filename, position)
       vim.fn.cursor({ position[1], position[2] })
     else
       vim.cmd(('e +call\\ cursor(%d,%d) %s'):format(position[1], position[2], filename))
+      -- vim.cmd(('e +call\\ cursor(%d,%d)|norm\\ zz %s'):format(position[1], position[2], filename))
     end
   end
 end
