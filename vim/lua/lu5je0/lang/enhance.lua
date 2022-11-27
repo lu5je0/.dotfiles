@@ -36,7 +36,7 @@ function table:contain(value)
 end
 
 function _G.dump(arg, depth)
-  print(vim.inspect(arg, { depth = depth }))
+  return vim.inspect(arg, { depth = depth })
 end
 
 local original_has = vim.fn.has

@@ -3,7 +3,7 @@ local visual_core_api = require('lu5je0.core.visual')
 
 local function get_timestamp()
   if vim.api.nvim_get_mode().mode == 'v' then
-    return visual_core_api.selected_text()
+    return visual_core_api.get_visual_selection_as_string()
   else
     return vim.fn.expand('<cword>')
   end

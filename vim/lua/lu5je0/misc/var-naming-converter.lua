@@ -1,5 +1,5 @@
 local M = {}
-local visual_core_api = require('lu5je0.core.visual')
+local visual_util = require('lu5je0.core.visual')
 
 local function is_contain_space(var_name)
   return var_name:match(' ') ~= nil
@@ -17,7 +17,7 @@ end
 local function get_var_name(word_mode)
   local var_name = nil
   if vim.api.nvim_get_mode().mode == 'v' then
-    var_name = visual_core_api.selected_text()
+    var_name = visual_util.get_visual_selection_as_string()
   else
     if word_mode == 'WORD' then
       var_name = vim.fn.expand('<cWORD>')
@@ -29,7 +29,7 @@ local function get_var_name(word_mode)
 end
 
 local function replace_var(var_name)
-  visual_core_api.visual_replace(var_name)
+  visual_util.visual_replace(var_name)
 end
 
 local function base_convert(convert_strategy_fn, word_mode)

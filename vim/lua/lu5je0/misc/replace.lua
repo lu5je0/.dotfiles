@@ -10,7 +10,7 @@ local function replace(mode)
     ---@diagnostic disable-next-line: missing-parameter
     pattern = vim.fn.expand('<cword>')
   elseif mode == 'v' then
-    pattern = require('lu5je0.core.visual').selected_text_by_yank()
+    pattern = require('lu5je0.core.visual').get_visual_selection_as_string()
   end
 
   vim.ui.input({ prompt = string.format('Replace "%s" with: ', pattern) }, function(repl)
