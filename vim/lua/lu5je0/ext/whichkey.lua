@@ -226,10 +226,6 @@ M.setup = function()
     x = {
       name = '+text',
       c = { 'g<c-g>', 'count in the selection region' },
-      b = { 'base64' },
-      B = { 'unbase64' },
-      h = { 'http encode' },
-      H = { 'http decode' },
       s = { 'text escape' },
       r = { ":lua require('lu5je0.misc.replace').v_replace()<cr>", 'replace' },
     },

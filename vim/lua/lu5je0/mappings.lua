@@ -181,34 +181,10 @@ vim.defer_fn(function()
   nmap <leader>xZ :%!opencc -c s2t<cr>
 
   "----------------------------------------------------------------------
-  " base64
-  "----------------------------------------------------------------------
-  xmap <silent> <leader>xB :<c-u>call base64#v_atob()<cr>
-  xmap <silent> <leader>xb :<c-u>call base64#v_btoa()<cr>
-
-  "----------------------------------------------------------------------
   " unicode escape
   "----------------------------------------------------------------------
   xmap <silent> <leader>xu :<c-u>call visual#replace_by_fn("UnicodeEscapeString")<cr>
   xmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
-
-  "----------------------------------------------------------------------
-  " text escape
-  "----------------------------------------------------------------------
-  xmap <silent> <leader>xs :<c-u>call visual#replace_by_fn("EscapeText")<cr>
-  " xmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
-
-  "----------------------------------------------------------------------
-  " url encode
-  "----------------------------------------------------------------------
-  nmap <leader>xh :%!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
-  nmap <leader>xH :%!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
-
-  xmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
-  nmap <silent> <leader>cc <Plug>(coc-codeaction-selected)<cr>
-
-  xmap <leader>xh :!python -c 'import sys,urllib;print urllib.quote(sys.stdin.read().strip())'<cr>
-  xmap <leader>xH :!python -c 'import sys,urllib;print urllib.unquote(sys.stdin.read().strip())'<cr>
 
   " ugly hack to start newline and keep indent
   nnoremap <silent> o o<space><bs>

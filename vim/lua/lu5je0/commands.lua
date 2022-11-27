@@ -16,6 +16,21 @@ require('lu5je0.misc.code-runner').create_command()
 
 require('lu5je0.misc.base64').create_command()
 
-require('lu5je0.misc.encode-command-creater').create_encode_command('TestCommand', function(text)
-  return '(' .. text .. ')'
+require('lu5je0.misc.encode-command-creater').create_encode_command('UrlEncode', function(url)
+  if url == nil then
+    return
+  end
+  url = url:gsub("\n", "\r\n")
+  url = url:gsub("([^%w _ %- . ~])", function(c) return string.format("%%%02X", string.byte(c)) end)
+  url = url:gsub(" ", "+")
+  return url
+end)
+
+require('lu5je0.misc.encode-command-creater').create_encode_command('UrlDecode', function(url)
+  if url == nil then
+    return
+  end
+  url = url:gsub("+", " ")
+  url = url:gsub("%%(%x%x)", function(x) return string.char(tonumber(x, 16)) end)
+  return url
 end)

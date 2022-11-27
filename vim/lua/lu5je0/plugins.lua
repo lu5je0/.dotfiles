@@ -265,8 +265,6 @@ return packer.startup(function(use)
     keys = { { 'x', 'gr' }, { 'n', 'gr' } },
   }
 
-  use('lu5je0/vim-base64')
-
   -- themes
   batch_use {
     {
