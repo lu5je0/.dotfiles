@@ -84,7 +84,7 @@ M.key_mapping = function()
   end, opts)
 end
 
-M.command = function()
+M.create_command = function()
   vim.api.nvim_create_user_command('RunFile', function()
     M.run_file()
   end, { force = true, nargs = '*' })

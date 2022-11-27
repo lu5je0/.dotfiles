@@ -70,7 +70,7 @@ function M.key_mappings()
 end
 
 function M.visual_leaderf(lf_cmd)
-  local search = vim.call('visual#visual_selection')
+  local search = require('lu5je0.core.visual').get_visual_selection_as_string()
   search = string.gsub(search, "'", '')
   search = string.gsub(search, '\n', '')
 

@@ -12,4 +12,10 @@ end, { force = true, nargs = 1, complete = function()
   return { 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }
 end })
 
-require('lu5je0.misc.code-runner').command()
+require('lu5je0.misc.code-runner').create_command()
+
+require('lu5je0.misc.base64').create_command()
+
+require('lu5je0.misc.encode-command-creater').create_encode_command('TestCommand', function(text)
+  return '(' .. text .. ')'
+end)

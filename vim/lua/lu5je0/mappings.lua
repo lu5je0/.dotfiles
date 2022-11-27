@@ -89,6 +89,8 @@ vim.defer_fn(function()
   " 缩进后重新选择
   xmap < <gv
   xmap > >gv
+  
+  " xmap : :<c-u>
 
   imap <M-j> <down>
   imap <M-k> <up>
