@@ -6,10 +6,19 @@ function M.get_visual_selection_as_array()
   if vim.api.nvim_get_mode().mode == 'v' then
     _, ls, cs = unpack(vim.fn.getpos('v'))
     le, ce = unpack(vim.api.nvim_win_get_cursor(0))
+  elseif vim.api.nvim_get_mode().mode == 'V' then
+    _, ls, cs = unpack(vim.fn.getpos('v'))
+    le, ce = unpack(vim.api.nvim_win_get_cursor(0))
+    return vim.api.nvim_buf_get_lines(0, ls - 1, le, false)
   else
     _, ls, cs = unpack(vim.fn.getpos("'<"))
     _, le, ce = unpack(vim.fn.getpos("'>"))
     ce = ce - 1
+    
+    -- 之前是V模式
+    if ce == 2147483646 then
+      return vim.api.nvim_buf_get_lines(0, ls - 1, le, false)
+    end
   end
 
   -- 判断当前字符是否为多字节字符
@@ -33,5 +42,9 @@ end
 function M.visual_replace_by_fn(fn)
   M.visual_replace(fn(M.get_visual_selection_as_string()))
 end
+
+-- vim.keymap.set('x', 'M', function()
+--   print(M.get_visual_selection_as_string())
+-- end, {})
 
 return M
