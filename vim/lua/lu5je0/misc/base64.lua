@@ -1,5 +1,7 @@
 local M = {}
 
+local encode_command_creater = require('lu5je0.misc.encode-command-creater')
+
 local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 function M.encode(data)
@@ -58,43 +60,14 @@ local function split_by_chunk(text, chunk_size)
   return s
 end
 
-local function encode_buffer()
-  local encode_str = M.encode(vim.fn.join(vim.fn.getline(1, '$'), '\n'))
-  local lines = split_by_chunk(encode_str, 76)
-  vim.cmd('normal! gg_dG')
-  vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
-end
-
-local function decode_buffer()
-  local decode_str = M.decode(vim.fn.join(vim.fn.getline(1, '$'), ''))
-  local lines = string.split(decode_str, '\n')
-  vim.cmd('normal! gg_dG')
-  vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
-end
-
--- todo
 M.create_command = function()
-  vim.api.nvim_create_user_command('Base64Encode', function(args)
-    if args.range == 2 then
-      vim.cmd('norm gv')
-      require('lu5je0.core.visual').visual_replace_by_fn(function(text)
-        return M.encode(text)
-      end)
-    else
-      encode_buffer()
-    end
-  end, { force = true, range = true })
-
-  vim.api.nvim_create_user_command('Base64Decode', function(args)
-    if args.range == 2 then
-      vim.cmd('norm gv')
-      require('lu5je0.core.visual').visual_replace_by_fn(function(text)
-        return M.decode(text)
-      end)
-    else
-      decode_buffer()
-    end
-  end, { force = true, range = true })
+  encode_command_creater.create_encode_command_by_type('Base64Encode', M.encode, function(text)
+    return table.concat(split_by_chunk(M.encode(text), 76), '\n')
+  end)
+  
+  encode_command_creater.create_encode_command_by_type('Base64Decode', M.decode, function(text)
+    return M.decode(string.gsub(text, '\n', ''))
+  end)
 end
 
 return M

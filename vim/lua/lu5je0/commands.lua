@@ -1,3 +1,5 @@
+local encode_command_creater = require('lu5je0.misc.encode-command-creater')
+
 vim.api.nvim_create_user_command('CronParser', function(t)
   require('lu5je0.misc.cron-parser').parse_line(t.fargs[1])
 end, { force = true, nargs = '*' })
@@ -16,7 +18,7 @@ require('lu5je0.misc.code-runner').create_command()
 
 require('lu5je0.misc.base64').create_command()
 
-require('lu5je0.misc.encode-command-creater').create_encode_command('UrlEncode', function(url)
+encode_command_creater.create_encode_command('UrlEncode', function(url)
   if url == nil then
     return
   end
@@ -26,7 +28,7 @@ require('lu5je0.misc.encode-command-creater').create_encode_command('UrlEncode',
   return url
 end)
 
-require('lu5je0.misc.encode-command-creater').create_encode_command('UrlDecode', function(url)
+encode_command_creater.create_encode_command('UrlDecode', function(url)
   if url == nil then
     return
   end
