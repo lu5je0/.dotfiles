@@ -309,32 +309,6 @@ return packer.startup(function(use)
     end,
   }
 
-  -- fern
-  batch_use {
-    -- {
-    --   'lambdalisue/fern-git-status.vim',
-    --   setup = function ()
-    --     vim.g.loaded_fern_git_status = 1
-    --   end
-    -- },
-    -- {
-    --   'lambdalisue/fern.vim',
-    --   opt = true,
-    --   cmd = { 'Fern', 'FernLocateFile' },
-    --   fn = { 'FernLocateFile' },
-    --   requires = {
-    --     { 'lambdalisue/fern-hijack.vim' },
-    --     { 'lambdalisue/nerdfont.vim' },
-    --     { 'lu5je0/fern-renderer-nerdfont.vim' },
-    --     { 'lambdalisue/glyph-palette.vim' },
-    --     { 'yuki-yano/fern-preview.vim', opt = true },
-    --   },
-    --   config = function()
-    --     vim.cmd('runtime plug-config/fern.vim')
-    --   end,
-    -- },
-  }
-
   use {
     'mg979/vim-visual-multi',
     opt = true,
@@ -583,14 +557,6 @@ return packer.startup(function(use)
       end,
     },
   }
-
-  -- use {
-  --   'neoclide/coc.nvim',
-  --   branch = 'release',
-  --   config = function()
-  --     vim.cmd('runtime plug-config/coc.vim')
-  --   end
-  -- }
 
   use {
     'lukas-reineke/indent-blankline.nvim',
