@@ -78,7 +78,7 @@ M.switch_insert_mode = function()
   if M.save_last_ime then
     init_python_im_helper()
     local py_watched_im_source = py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime")
-    im_switcher.switch_to_im(py_watched_im_source)
+    im_switcher.switch_to_im(tostring(py_watched_im_source))
   else
     im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
   end
