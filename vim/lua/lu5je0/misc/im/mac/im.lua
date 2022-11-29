@@ -111,6 +111,8 @@ M.setup = function()
       M.switch_insert_mode()
     end
   })
+  
+  vim.keymap.set('n', '<leader>vi', M.toggle_save_last_ime)
 end
 
 return M
