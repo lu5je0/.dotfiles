@@ -421,7 +421,6 @@ return packer.startup(function(use)
     {
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
-      commit = '3b040ce8',
       opt = true,
       config = function()
         require('lu5je0.ext.treesiter')
