@@ -615,9 +615,9 @@ return packer.startup(function(use)
       'kyazdani42/nvim-tree.lua',
       requires = 'kyazdani42/nvim-web-devicons',
       keys = { '<leader>e', '<leader>fe' },
-      on_compile = function()
-        require('lu5je0.ext.nvim-tree-hijack')
-      end,
+      -- on_compile = function()
+      --   require('lu5je0.ext.nvim-tree-hijack')
+      -- end,
       opt = true,
       config = function()
         require('lu5je0.ext.nvimtree').setup()

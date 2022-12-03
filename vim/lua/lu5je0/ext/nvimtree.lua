@@ -334,6 +334,9 @@ function M.setup()
         error = '',
       },
     },
+    hijack_directories = {
+      enable = false
+    },
     update_focused_file = {
       enable = false,
       update_cwd = false,
