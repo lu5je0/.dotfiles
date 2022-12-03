@@ -118,6 +118,7 @@ local defer_options = {
 for delay, fn in ipairs(defer_options) do
   vim.defer_fn(fn, 2 * delay)
 end
-vim.g.ts_highlight_c = true
-vim.g.ts_highlight_vim = true
-vim.g.ts_highlight_lua = true
+
+-- vim.g.ts_highlight_c = true
+-- vim.g.ts_highlight_vim = true
+-- vim.g.ts_highlight_lua = true
