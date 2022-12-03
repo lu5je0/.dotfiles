@@ -11,7 +11,7 @@ local function disable(features, buf_nr, max_size)
           v(buf_nr)
         end
       elseif type(v) == "table" then
-        if stats.size > v[2] then
+        if stats.size > v.size then
           v[1](buf_nr)
         end
       end
