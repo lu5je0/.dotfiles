@@ -1,8 +1,15 @@
 local treesitter = require('nvim-treesitter')
 
+local ts_filetypes = {
+  'json', 'python', 'java', 'bash', 'go', 'vim', 'lua',
+  'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript',
+  'javascript', 'sql', 'html', 'json5', 'jsonc', 'regex',
+  'vue', 'css', 'dockerfile'
+}
+
 require('nvim-treesitter.configs').setup {
   -- Modules and its options go here
-  ensure_installed = _G.__ts_filetypes,
+  ensure_installed = ts_filetypes,
   highlight = {
     enable = true,
   },

@@ -414,26 +414,19 @@ return packer.startup(function(use)
   }
 
   -- treesitter
-  _G.__ts_filetypes = { 'json', 'python', 'java', 'bash', 'go',
-    'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript', 'javascript', 'sql',
-    'html', 'json5', 'jsonc', 'regex', 'vue', 'css', 'dockerfile' }
   batch_use {
     {
       'nvim-treesitter/nvim-treesitter',
       run = ':TSUpdate',
-      commit = '3b040ce8',
-      opt = true,
       config = function()
         require('lu5je0.ext.treesiter')
       end,
-      ft = (function()
-        local t = vim.tbl_values(_G.__ts_filetypes)
-        table.insert(t, 'lua')
-        table.insert(t, 'lua')
-        table.insert(t, 'c')
-        return t
-      end)(),
-      cmd = { 'TSInstall', 'TSUpdate' },
+      defer = true,
+      -- ft = (function()
+      --   local t = vim.tbl_values(_G.__ts_filetypes)
+      --   return t
+      -- end)(),
+      -- cmd = { 'TSInstall', 'TSUpdate' },
       requires = {
         {
           'm-demare/hlargs.nvim',
