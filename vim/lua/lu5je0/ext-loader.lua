@@ -15,6 +15,23 @@ end
 -- json-helper
 require('lu5je0.misc.json-helper').setup()
 
+-- big-file
+require('lu5je0.misc.big-file').setup {
+  size = 1024 * 1024, -- 1000 KB
+  features = {
+    {
+      function()
+        vim.cmd [[ CmpAutocompleteDisable ]]
+        print('hhhh')
+      end, 500 * 1024
+    },
+    function()
+      vim.cmd [[ IndentBlanklineDisable ]]
+      vim.treesitter.stop(0)
+    end
+  }
+}
+
 -- formatter
 local formatter = require('lu5je0.misc.formatter.formatter')
 formatter.setup {

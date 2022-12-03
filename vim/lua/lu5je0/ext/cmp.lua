@@ -234,3 +234,11 @@ hi! CmpItemKindKeyword guibg=NONE guifg=#D4D4D4
 hi! CmpItemKindProperty guibg=NONE guifg=#D4D4D4
 hi! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
 ]])
+
+vim.api.nvim_create_user_command("CmpAutocompleteDisable", function()
+  require('cmp').setup.buffer { enabled = false }
+end, {})
+
+vim.api.nvim_create_user_command("CmpAutocompleteEnable", function()
+  require('cmp').setup.buffer { enabled = true }
+end, {})

@@ -19,7 +19,11 @@ M.is_available = function()
   if filetype == 'json' then
     return true
   else
-    return require('nvim-gps').is_available()
+    local ok, nvim_gps = pcall(require, 'nvim-gps')
+    if not ok then
+      return false
+    end
+    return nvim_gps.is_available()
   end
 end
 
