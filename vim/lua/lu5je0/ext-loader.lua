@@ -22,12 +22,12 @@ require('lu5je0.misc.big-file').setup {
     {
       function()
         vim.cmd [[ CmpAutocompleteDisable ]]
-        print('hhhh')
       end, 500 * 1024
     },
-    function()
+    function(buf_nr)
       vim.cmd [[ IndentBlanklineDisable ]]
-      vim.treesitter.stop(0)
+      vim.treesitter.stop(buf_nr)
+      require('hlargs').disable()
     end
   }
 }
