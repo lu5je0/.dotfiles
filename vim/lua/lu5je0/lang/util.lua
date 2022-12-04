@@ -1,6 +1,6 @@
 local M = {}
 
-local function now()
+M.now = function()
   local timestamp, s = vim.loop.gettimeofday()
   return timestamp * 1000 + math.floor(s / 1000)
 end
@@ -10,11 +10,11 @@ M.measure = function(fn, cnt)
     cnt = 10000
   end
   
-  local t = now()
+  local t = M.now()
   for _ = 1, cnt do
     fn()
   end
-  local total = now() - t
+  local total = M.now() - t
   print(('total: %sms, avg: %.4fms'):format(total, total / cnt))
 end
 
