@@ -6,6 +6,8 @@ local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
 
 local std_config_path = vim.fn.stdpath('config')
 
+local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
+
 local im_switcher = (function()
   local ffi = require('ffi')
   local switcher = ffi.load(std_config_path .. '/lib/libinput-source-switcher.dylib')
@@ -74,7 +76,7 @@ M.toggle_save_last_ime = function()
   keeper.set('save_last_ime', M.save_last_ime)
 end
 
-M.switch_insert_mode = function()
+M.switch_insert_mode = rate_limiter:wrap(function()
   if M.save_last_ime then
     init_python_im_helper()
     local py_watched_im_source = py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime")
@@ -82,16 +84,16 @@ M.switch_insert_mode = function()
   else
     im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
   end
-end
+end)
 
-M.switch_normal_mode = function()
+M.switch_normal_mode = rate_limiter:wrap(function()
   if M.save_last_ime then
     init_python_im_helper()
     py3eval("switch_normal_mode()")
   else
     im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
   end
-end
+end)
 
 M.setup = function()
   M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)

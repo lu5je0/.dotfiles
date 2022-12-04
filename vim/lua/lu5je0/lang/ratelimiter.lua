@@ -28,4 +28,12 @@ function RateLimiter:get()
   return false
 end
 
+function RateLimiter:wrap(fn)
+  return function(...)
+    if self:get() then
+      fn(...)
+    end
+  end
+end
+
 return RateLimiter

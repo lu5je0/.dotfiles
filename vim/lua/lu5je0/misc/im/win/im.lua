@@ -4,23 +4,19 @@ local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
 local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
 -- local path = vim.fn.stdpath('config')
 
-M.disable_ime = function()
-  if rate_limiter:get() then
+M.disable_ime = rate_limiter:wrap(function()
+  vim.loop.new_thread(function()
+    io.popen('~/.dotfiles/vim/lib/toDisableIME.exe 2>/dev/null'):close()
+  end)
+end)
+
+M.enable_ime = rate_limiter:wrap(function()
+  if M.save_last_ime then
     vim.loop.new_thread(function()
-      io.popen('~/.dotfiles/vim/lib/toDisableIME.exe 2>/dev/null'):close()
+      io.popen('~/.dotfiles/vim/lib/toEnableIME.exe 2>/dev/null'):close()
     end)
   end
-end
-
-M.enable_ime = function()
-  if rate_limiter:get() then
-    if M.save_last_ime then
-      vim.loop.new_thread(function()
-        io.popen('~/.dotfiles/vim/lib/toEnableIME.exe 2>/dev/null'):close()
-      end)
-    end
-  end
-end
+end)
 
 M.toggle_save_last_ime = function()
   local keeper = require('lu5je0.misc.env-keeper')
