@@ -310,7 +310,7 @@ ins_left {
 ins_right {
   function()
     -- return [[ %2p%% %l:%c ]]
-    return [[%l:%c ]]
+    return ([[%%l:%s ]]):format(vim.fn.charcol('.'))
   end,
   padding = { left = 0, right = 1 },
   color = { fg = colors.grey },
