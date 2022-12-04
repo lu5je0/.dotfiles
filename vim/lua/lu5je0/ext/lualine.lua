@@ -1,4 +1,5 @@
 local lualine = require('lualine')
+local file_util = require('lu5je0.core.file')
 
 ---@diagnostic disable: missing-parameter
 local expand = vim.fn.expand
@@ -206,13 +207,13 @@ ins_left {
 ins_left {
   -- filesize component
   function()
-    if not vim.b.filesize then
-      vim.b.filesize = require('lua.lu5je0.core.file').hunman_readable_file_size(vim.fn.expand('%'))
+    if vim.b.filesize == nil then
+      vim.b.filesize = file_util.hunman_readable_file_size(vim.api.nvim_buf_get_name(0))
     end
     return vim.b.filesize
   end,
   cond = function()
-    return vim.b.filesize ~= '0B' and conditions.hide_in_width()
+    return conditions.hide_in_width()
   end,
   setup = function()
     vim.api.nvim_create_autocmd('BufWritePost', {
