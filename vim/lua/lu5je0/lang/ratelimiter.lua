@@ -31,8 +31,9 @@ end
 function RateLimiter:wrap(fn)
   return function(...)
     if self:get() then
-      fn(...)
+      return fn(...)
     end
+    return nil
   end
 end
 
