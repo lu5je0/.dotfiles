@@ -666,6 +666,7 @@ return packer.startup(function(use)
       run = function()
         require('fundo').install()
       end,
+      disable = (vim.fn.has('mac') == 1),
       config = function()
         vim.o.undofile = true
         require('fundo').setup()
