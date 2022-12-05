@@ -105,6 +105,14 @@ M.setup = function()
       M.switch_normal_mode()
     end
   })
+  
+  vim.api.nvim_create_autocmd('CmdlineLeave', {
+    group = group,
+    pattern = { '*' },
+    callback = function()
+      M.switch_normal_mode()
+    end
+  })
 
   vim.api.nvim_create_autocmd('InsertEnter', {
     group = group,

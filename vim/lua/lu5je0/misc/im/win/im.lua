@@ -38,6 +38,14 @@ local function create_autocmd()
       M.disable_ime()
     end
   })
+  
+  vim.api.nvim_create_autocmd('CmdlineLeave', {
+    group = group,
+    pattern = { '*' },
+    callback = function()
+      M.enable_ime()
+    end
+  })
 
   vim.api.nvim_create_autocmd('InsertEnter', {
     group = group,
