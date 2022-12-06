@@ -28,12 +28,23 @@ function RateLimiter:get()
   return false
 end
 
-function RateLimiter:wrap(fn)
+function RateLimiter:wrap(fn, timing)
+  timing = false
   return function(...)
-    if self:get() then
-      return fn(...)
+    local t = nil
+    if timing then
+      t = util.now()
     end
-    return nil
+    
+    local r = nil
+    if self:get() then
+      r = fn(...)
+    end
+    
+    if timing then
+      print(('cost %.1f'):format(util.now() - t))
+    end
+    return r
   end
 end
 
