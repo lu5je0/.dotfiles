@@ -43,7 +43,7 @@ local function create_autocmd()
     group = group,
     pattern = { '*' },
     callback = function()
-      M.enable_ime()
+      M.disable_ime()
     end
   })
 
