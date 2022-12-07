@@ -48,6 +48,14 @@ M.begin_timer = function()
     pattern = { '*' },
     callback = show,
   })
+  
+  vim.api.nvim_create_autocmd('User', {
+    group = scroll_view_group,
+    pattern = 'FoldChanged',
+    callback = function()
+      vim.cmd('IndentBlanklineRefresh')
+    end,
+  })
 
   -- vim.api.nvim_create_autocmd({ 'WinLeave', 'BufLeave', 'BufWinLeave', 'FocusLost', 'QuitPre' }, {
   --   group = scroll_view_group,

@@ -11,3 +11,12 @@ require('indent_blankline').setup {
     'IndentBlanklineIndent',
   },
 }
+
+local group = vim.api.nvim_create_augroup('indent_blankline_augroup', { clear = true })
+vim.api.nvim_create_autocmd('User', {
+  group = group,
+  pattern = 'FoldChanged',
+  callback = function()
+    vim.cmd('IndentBlanklineRefresh')
+  end,
+})
