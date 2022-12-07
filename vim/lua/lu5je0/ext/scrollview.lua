@@ -53,7 +53,7 @@ M.begin_timer = function()
     group = scroll_view_group,
     pattern = 'FoldChanged',
     callback = function()
-      vim.cmd('IndentBlanklineRefresh')
+      vim.cmd('ScrollViewRefresh')
     end,
   })
 
