@@ -110,8 +110,26 @@ local defer_options = {
     vim.cmd [[ silent! rsh ]]
   end,
   function()
-    o.clipboard = 'unnamedplus'
+    o.clipboard = 'unnamed'
     vim.cmd [[ packadd matchit ]]
+    vim.cmd [[
+    " Remap 'c', 'C', 'd', 'D', 'x' and 'X' to save text in a custom register
+    nnoremap c "cc
+    xnoremap c "cc
+    nnoremap C "cC
+    xnoremap C "cC
+
+    nnoremap d "dd
+    xnoremap d "dd  
+    nnoremap D "dD
+    xnoremap D "dD
+
+    nnoremap x "xx
+    xnoremap x "xx
+    nnoremap X "xX
+    xnoremap X "xX
+    ]]
+    
   end
 }
 for delay, fn in ipairs(defer_options) do

@@ -8,6 +8,9 @@ end
 local packer = require('packer')
 packer.init {
   max_jobs = 15,
+  git = {
+    clone_timeout = 600, -- Timeout, in seconds, for git clones
+  }
 }
 
 vim.api.nvim_create_autocmd('BufWritePost', {
