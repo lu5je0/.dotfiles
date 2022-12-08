@@ -6,11 +6,12 @@ if vim.fn.has('gui') == 0 then
     require('lu5je0.misc.im.mac.im').setup()
   end
 end
--- require('lu5je0.misc.im.im_keeper').setup({
---   mac = false,
---   win = false,
---   interval = 300
--- })
+
+require('lu5je0.misc.im.im_keeper').setup({
+  mac = true,
+  win = false,
+  focus_gained = true
+})
 
 -- json-helper
 require('lu5je0.misc.json-helper').setup()
