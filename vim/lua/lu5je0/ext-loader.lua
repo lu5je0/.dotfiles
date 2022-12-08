@@ -8,9 +8,16 @@ if vim.fn.has('gui') == 0 then
 end
 
 require('lu5je0.misc.im.im_keeper').setup({
-  mac = true,
-  win = false,
-  focus_gained = true
+    mac = {
+      keep = false,
+      interval = 1000,
+      focus_gained = true,
+    },
+    win = {
+      keep = false,
+      interval = 1000,
+      focus_gained = true,
+    }
 })
 
 -- json-helper

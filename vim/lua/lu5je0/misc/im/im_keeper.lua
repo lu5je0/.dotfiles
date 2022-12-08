@@ -54,11 +54,16 @@ end
 
 M.setup = function(config)
   config = vim.tbl_deep_extend('force', {
-    mac = false,
-    win = false,
-    keep = false,
-    focus_gained = true,
-    interval = 1000
+    mac = {
+      keep = false,
+      interval = 1000,
+      focus_gained = true,
+    },
+    win = {
+      keep = false,
+      interval = 1000,
+      focus_gained = true,
+    }
   }, config)
   M.interval = config.interval
   
@@ -68,12 +73,11 @@ M.setup = function(config)
     M.os = 'win'
   end
   
-  if (config.mac and M.os == 'mac') or (config.win and M.os == 'win') then
-    if config.keep then
-      keep_normal_mode_with_abc_im()
-    elseif config.focus_gained then
-      switch_normal_mode_on_focus_gained()
-    end
+  local platform_config = config[M.os]
+  if platform_config.keep then
+    keep_normal_mode_with_abc_im()
+  elseif platform_config.focus_gained then
+    switch_normal_mode_on_focus_gained()
   end
 end
 
