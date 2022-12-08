@@ -94,6 +94,19 @@ if has('wsl') then
     },
     cache_enabled = 1,
   }
+elseif has('mac') then
+  g.clipboard = {
+    name = 'pbcopy',
+    copy = {
+      ['+'] = { 'pbcopy' },
+      ['*'] = { 'pbcopy'},
+    },
+    paste = {
+      ['+'] = { 'pbpaste' },
+      ['*'] = { 'pbpaste' },
+    },
+    cache_enabled = 1,
+  }
 end
 
 if has('mac') then
@@ -110,22 +123,7 @@ local defer_options = {
     vim.cmd [[ silent! rsh ]]
   end,
   function()
-    if has("clipboard") then
-      -- o.clipboard = 'unnamed'
-      vim.cmd [[
-      " " Copy to clipboard
-      nnoremap  <space>Y  "+yg_
-      nnoremap  <space>y  "+y
-      nnoremap  <space>yy  "+yy
-      xnoremap  <space>y  "+y
-
-      " " Paste from clipboard
-      nnoremap <space>p "+p
-      nnoremap <space>P "+P
-      xnoremap <space>p "+p
-      xnoremap <space>P "+P
-      ]]
-    end
+    o.clipboard = 'unnamed'
     vim.cmd [[ packadd matchit ]]
   end
 }
