@@ -329,8 +329,9 @@ return packer.startup(function(use)
   use {
     'lu5je0/vim-translator',
     config = function()
-      vim.g.translator_default_engines = { 'disk' }
+      require('lu5je0.ext.vim-translator')
     end,
+    keys = { { 'x', '<leader>sa' }, { 'x', '<leader>ss' }, { 'n', '<leader>ss' }, { 'n', '<leader>sa' } }
   }
 
   use {

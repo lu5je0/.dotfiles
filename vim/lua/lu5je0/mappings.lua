@@ -156,22 +156,6 @@ vim.defer_fn(function()
 
   nmap <leader>wo <c-w>o
 
-  " Echo translation in the cmdline
-  nmap <silent> <Leader>sc <Plug>Translate
-  xmap <silent> <Leader>sc <Plug>TranslateV
-
-  " say it
-  nmap <silent> <Leader>sa :call misc#say_it()<cr><Plug>TranslateW
-  xmap <silent> <Leader>sa :call misc#visual_say_it()<cr><Plug>TranslateWV
-
-  " xmap <silent> <Leader>sc <Plug>TranslateV
-  " Display translation in a window
-  nmap <silent> <Leader>ss <Plug>TranslateW
-  xmap <silent> <Leader>ss <Plug>TranslateWV
-  " Replace the text with translation
-  nmap <silent> <Leader>sr <Plug>TranslateR
-  xmap <silent> <Leader>sr <Plug>TranslateRV
-
   "----------------------------------------------------------------------
   " 繁体简体
   "----------------------------------------------------------------------
