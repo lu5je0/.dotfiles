@@ -10,16 +10,20 @@ local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
 
 local im_switcher = (function()
   local ffi = require('ffi')
-  local switcher = ffi.load(std_config_path .. '/lib/libinput-source-switcher.dylib')
+  local xkb_switch_lib = ffi.load(std_config_path .. '/lib/XkbSwitchLib.lib')
   ffi.cdef([[
-  int switchInputSource(const char *s);
-  const char* getCurrentInputSourceID();
+  const char* Xkb_Switch_getXkbLayout();
+  void Xkb_Switch_setXkbLayout(const char *s);
   ]])
   
   return {
     switch_to_im = function(im_code)
       ---@diagnostic disable-next-line: undefined-field
-      switcher.switchInputSource(im_code)
+      xkb_switch_lib.Xkb_Switch_setXkbLayout(im_code)
+    end,
+    get_im = function()
+      ---@diagnostic disable-next-line: undefined-field
+      return ffi.string(xkb_switch_lib.Xkb_Switch_getXkbLayout())
     end
   }
 end)()
