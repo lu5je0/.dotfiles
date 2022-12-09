@@ -1,6 +1,8 @@
-local M = {}
-
 local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
+
+local M = {
+  last_ime = ABC_IM_SOURCE_CODE
+}
 
 local std_config_path = vim.fn.stdpath('config')
 
@@ -48,10 +50,8 @@ M.toggle_save_last_ime = function()
 end
 
 M.switch_insert_mode = rate_limiter:wrap(function()
-  if M.save_last_ime then
+  if M.save_last_ime and M.last_ime ~= ABC_IM_SOURCE_CODE then
     im_switcher.switch_to_im(M.last_ime)
-  else
-    im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
   end
 end)
 
