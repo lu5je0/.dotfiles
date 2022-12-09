@@ -29,7 +29,7 @@ function RateLimiter:get()
 end
 
 function RateLimiter:wrap(fn, timing)
-  timing = false
+  timing = timing or false
   return function(...)
     local t = nil
     if timing then

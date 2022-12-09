@@ -1,7 +1,7 @@
 local treesitter = require('nvim-treesitter')
 
 local ts_filetypes = {
-  'json', 'python', 'java', 'bash', 'go', 'vim', 'lua',
+  'json', 'python', 'java', 'bash', 'go', 'vim', 'lua', 'swift',
   'rust', 'toml', 'yaml', 'markdown', 'bash', 'http', 'typescript',
   'javascript', 'sql', 'html', 'json5', 'jsonc', 'regex',
   'vue', 'css', 'dockerfile'

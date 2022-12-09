@@ -16,6 +16,11 @@ local im_switcher = (function()
   void Xkb_Switch_setXkbLayout(const char *s);
   ]])
   
+  local macism = ffi.load(std_config_path .. '/lib/libmacism.dylib')
+  ffi.cdef([[
+  void switch_to_cn();
+  ]])
+  
   return {
     switch_to_im = function(im_code)
       if im_code == nil then
@@ -23,6 +28,9 @@ local im_switcher = (function()
       end
       ---@diagnostic disable-next-line: undefined-field
       xkb_switch_lib.Xkb_Switch_setXkbLayout(im_code)
+    end,
+    switch_to_cn = function()
+      macism.switch_to_cn()
     end,
     get_im = function()
       ---@diagnostic disable-next-line: undefined-field
@@ -52,8 +60,9 @@ end
 M.switch_insert_mode = rate_limiter:wrap(function()
   if M.save_last_ime and M.last_ime ~= ABC_IM_SOURCE_CODE then
     -- im_switcher.switch_to_im(M.last_ime)
+    im_switcher.switch_to_cn()
     vim.loop.new_thread(function()
-      io.popen('~/.local/bin/macism com.sogou.inputmethod.sogou.pinyin 2>/dev/null'):close()
+      io.popen('~/.local/bin/macism com.sogou.inputmethod.sogou.pinyin 3000 2>/dev/null'):close()
     end)
   end
 end)
