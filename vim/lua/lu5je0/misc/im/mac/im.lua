@@ -1,7 +1,5 @@
 local M = {}
 
-local py3eval = vim.fn.pyeval
-
 local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
 
 local std_config_path = vim.fn.stdpath('config')
@@ -18,6 +16,9 @@ local im_switcher = (function()
   
   return {
     switch_to_im = function(im_code)
+      if im_code == nil then
+        return
+      end
       ---@diagnostic disable-next-line: undefined-field
       xkb_switch_lib.Xkb_Switch_setXkbLayout(im_code)
     end,
@@ -29,40 +30,6 @@ local im_switcher = (function()
 end)()
 
 local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
-
-M.py_im_init_script = ([[
-python3 << EOF
-import threading
-
-import sys
-import time
-from os.path import normpath, join
-import vim
-python_root_dir = "%s" + "/python"
-sys.path.insert(0, python_root_dir)
-switcher = None
-
-def im_init():
-  import im
-  global switcher
-  switcher = im.ImSwitcher()
-
-def switch_normal_mode():
-  if switcher != None:
-    switcher.switch_normal_mode(True)
-
-threading.Thread(target=im_init).start()
-EOF
-]]):format(std_config_path)
-
-local python_im_helper_is_init = false
-local function init_python_im_helper()
-  if python_im_helper_is_init then
-    return
-  end
-  vim.cmd(M.py_im_init_script)
-  python_im_helper_is_init = true
-end
 
 M.switch_to_en = function()
   im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
@@ -82,9 +49,7 @@ end
 
 M.switch_insert_mode = rate_limiter:wrap(function()
   if M.save_last_ime then
-    init_python_im_helper()
-    local py_watched_im_source = py3eval("'com.apple.keylayout.ABC' if switcher is None else switcher.last_ime")
-    im_switcher.switch_to_im(tostring(py_watched_im_source))
+    im_switcher.switch_to_im(M.last_ime)
   else
     im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
   end
@@ -92,11 +57,9 @@ end)
 
 M.switch_normal_mode = rate_limiter:wrap(function()
   if M.save_last_ime then
-    init_python_im_helper()
-    py3eval("switch_normal_mode()")
-  else
-    im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
+    M.last_ime = im_switcher.get_im()
   end
+  im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
 end)
 
 M.setup = function()
