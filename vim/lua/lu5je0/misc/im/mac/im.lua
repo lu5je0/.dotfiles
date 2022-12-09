@@ -51,7 +51,10 @@ end
 
 M.switch_insert_mode = rate_limiter:wrap(function()
   if M.save_last_ime and M.last_ime ~= ABC_IM_SOURCE_CODE then
-    im_switcher.switch_to_im(M.last_ime)
+    -- im_switcher.switch_to_im(M.last_ime)
+    vim.loop.new_thread(function()
+      io.popen('~/.local/bin/macism com.sogou.inputmethod.sogou.pinyin 2>/dev/null'):close()
+    end)
   end
 end)
 
