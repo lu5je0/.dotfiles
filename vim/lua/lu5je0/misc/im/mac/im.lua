@@ -4,35 +4,35 @@ local M = {
   last_ime = ABC_IM_SOURCE_CODE
 }
 
-local std_config_path = vim.fn.stdpath('config')
+local std_path = vim.fn.stdpath('config')
 
 local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
 
 local im_switcher = (function()
   local ffi = require('ffi')
-  local xkb_switch_lib = ffi.load(std_config_path .. '/lib/XkbSwitchLib.lib')
+  local xkb_switch_lib = ffi.load(std_path .. '/lib/XkbSwitchLib.lib')
   ffi.cdef([[
   const char* Xkb_Switch_getXkbLayout();
   void Xkb_Switch_setXkbLayout(const char *s);
   ]])
-  
-  local macism = ffi.load(std_config_path .. '/lib/libmacism.dylib')
+
+  local macism = ffi.load(std_path .. '/lib/libmacism.dylib')
   ffi.cdef([[
   void switch_to_cn();
   ]])
-  
+
   return {
-    switch_to_im = function(im_code)
+    switch_to_ime = function(im_code)
       if im_code == nil then
         return
       end
       ---@diagnostic disable-next-line: undefined-field
       xkb_switch_lib.Xkb_Switch_setXkbLayout(im_code)
     end,
-    switch_to_cn = function()
+    switch_to_ime_macism = function(im_code)
       macism.switch_to_cn()
     end,
-    get_im = function()
+    get_ime = function()
       ---@diagnostic disable-next-line: undefined-field
       return ffi.string(xkb_switch_lib.Xkb_Switch_getXkbLayout())
     end
@@ -42,7 +42,7 @@ end)()
 local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
 
 M.switch_to_en = function()
-  im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
+  im_switcher.switch_to_ime(ABC_IM_SOURCE_CODE)
 end
 
 M.toggle_save_last_ime = function()
@@ -59,24 +59,23 @@ end
 
 M.switch_insert_mode = rate_limiter:wrap(function()
   if M.save_last_ime and M.last_ime ~= ABC_IM_SOURCE_CODE then
-    -- im_switcher.switch_to_im(M.last_ime)
-    im_switcher.switch_to_cn()
-    vim.loop.new_thread(function()
-      io.popen('~/.local/bin/macism com.sogou.inputmethod.sogou.pinyin 3000 2>/dev/null'):close()
-    end)
+    im_switcher.switch_to_ime_macism(M.last_ime)
+    vim.loop.new_thread(function(path, ime)
+      io.popen(('%s %s 3000 2>/dev/null'):format(path, ime)):close()
+    end, std_path .. '/bin/macism', M.last_ime)
   end
 end)
 
 M.switch_normal_mode = rate_limiter:wrap(function()
   if M.save_last_ime then
-    M.last_ime = im_switcher.get_im()
+    M.last_ime = im_switcher.get_ime()
   end
-  im_switcher.switch_to_im(ABC_IM_SOURCE_CODE)
+  im_switcher.switch_to_ime(ABC_IM_SOURCE_CODE)
 end)
 
 M.setup = function()
   M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
-  
+
   vim.api.nvim_create_autocmd('InsertLeave', {
     group = group,
     pattern = { '*' },
@@ -84,7 +83,7 @@ M.setup = function()
       M.switch_normal_mode()
     end
   })
-  
+
   vim.api.nvim_create_autocmd('CmdlineLeave', {
     group = group,
     pattern = { '*' },
@@ -100,7 +99,7 @@ M.setup = function()
       M.switch_insert_mode()
     end
   })
-  
+
   vim.keymap.set('n', '<leader>vi', M.toggle_save_last_ime)
 end
 
