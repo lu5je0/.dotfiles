@@ -73,6 +73,10 @@ M.setup = function(config)
   end
   
   local platform_config = config[M.os]
+  if platform_config == nil then
+    return
+  end
+  
   if platform_config.keep then
     keep_normal_mode_with_abc_im(platform_config.interval)
   elseif platform_config.focus_gained then

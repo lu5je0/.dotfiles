@@ -18,7 +18,7 @@ vim.api.nvim_create_autocmd('FocusGained', {
   end
 })
 
-vim.api.nvim_create_autocmd('FocusLost', {
+vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter' }, {
   group = group,
   pattern = { '*' },
   callback = function()
