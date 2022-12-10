@@ -106,11 +106,9 @@ M.setup = function()
     },
     t = {
       name = '+tab',
-      o = { function()
-        if vim.fn.confirm("Close other buffers?", "&No\n&Yes") == 2 then
-          vim.cmd('BufOnly!')
-        end
-      end, 'close-other-buffers' },
+      o = { 'close-other-buffers' },
+      h = { 'close-to-left' },
+      l = { 'close-to-right' },
       n = { ':enew<cr>', 'new-buffer' },
       t = { ':TSBufToggle highlight<cr>', 'toggle treesitter highlight' },
     },

@@ -100,16 +100,31 @@ bl.setup {
 }
 
 vim.cmd([[
-nnoremap <silent><leader>1 :lua require'bufferline'.go_to_buffer(1, true)<cr>
-nnoremap <silent><leader>2 :lua require'bufferline'.go_to_buffer(2, true)<cr>
-nnoremap <silent><leader>3 :lua require'bufferline'.go_to_buffer(3, true)<cr>
-nnoremap <silent><leader>4 :lua require'bufferline'.go_to_buffer(4, true)<cr>
-nnoremap <silent><leader>5 :lua require'bufferline'.go_to_buffer(5, true)<cr>
-nnoremap <silent><leader>6 :lua require'bufferline'.go_to_buffer(6, true)<cr>
-nnoremap <silent><leader>7 :lua require'bufferline'.go_to_buffer(7, true)<cr>
-nnoremap <silent><leader>8 :lua require'bufferline'.go_to_buffer(8, true)<cr>
-nnoremap <silent><leader>9 :lua require'bufferline'.go_to_buffer(9, true)<cr>
 nnoremap <silent><leader>0 <cmd>BufferLinePick<cr>
 ]])
+
+for i = 1, 9, 1 do
+  vim.keymap.set('n', '<leader>' .. i, function() bl.go_to_buffer(i, true) end)
+end
+
+-- vim.cmd('nmap <leader>to :BufferLineCloseLeft<cr>:BufferLineCloseRight<cr>')
+
+vim.keymap.set('n', '<leader>to', function()
+  vim.cmd [[
+  BufferLineCloseLeft
+  BufferLineCloseRight
+  ]]
+  vim.cmd('norm :<cr>')
+end)
+
+vim.keymap.set('n', '<leader>th', function()
+  vim.cmd [[ BufferLineCloseLeft ]]
+  vim.cmd('norm :<cr>')
+end)
+
+vim.keymap.set('n', '<leader>tl', function()
+  vim.cmd [[ BufferLineCloseRight ]]
+  vim.cmd('norm :<cr>')
+end)
 
 return M
