@@ -242,13 +242,6 @@ function M.setup()
     lua vim.api.nvim_set_keymap('n', '<leader>fe', ':call NvimLocateFile()<cr>', { noremap = true, silent = true })
   ]])
 
-  vim.cmd([[
-  augroup nvim_tree_group
-      autocmd!
-      autocmd BufWinEnter NvimTree_* setlocal cursorline
-  augroup END
-  ]])
-
   local opts = {
     noremap = true,
     silent = true,
