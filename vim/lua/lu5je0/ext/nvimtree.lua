@@ -155,7 +155,7 @@ function M.preview()
   if vim.fn.isdirectory(path) == 1 then
     return
   end
-  require('lu5je0.core.ui').preview(path)
+  pcall(require('lu5je0.core.ui').preview, path)
 end
 
 function M.file_info()
@@ -260,27 +260,29 @@ function M.setup()
   local list = {
     { key = { '<CR>', 'l', 'o', '<2-LeftMouse>' }, cb = ":lua require('lu5je0.ext.nvimtree').open_node()<cr>" },
     { key = { '<BS>', 'h' }, cb = ":lua require('lu5je0.ext.nvimtree').close_node()<cr>" },
-    { key = { 'cd', 'C' }, cb = ":lua require('lu5je0.ext.nvimtree').cd()<cr>" },
+    { key = { 'cd' }, cb = ":lua require('lu5je0.ext.nvimtree').cd()<cr>" },
+    { key = { 'C' }, action = 'toggle_git_clean' },
+    { key = { 'B' }, action = 'toggle_no_buffer' },
     { key = { 't' }, cb = ":lua require('lu5je0.ext.nvimtree').terminal_cd()<cr>" },
     { key = '=', cb = ":lua require('lu5je0.ext.nvimtree').increase_width(2)<cr>" },
     { key = '-', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(2)<cr>" },
     { key = '+', cb = ":lua require('lu5je0.ext.nvimtree').increase_width(1)<cr>" },
     { key = '_', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(1)<cr>" },
-    { key = 'v', cb = ":lua require('lu5je0.ext.nvimtree').preview()<cr>" },
+    { key = '<space>', cb = ":lua require('lu5je0.ext.nvimtree').preview()<cr>" },
     { key = 'x', cb = ":lua require('lu5je0.ext.nvimtree').toggle_width()<cr>" },
     { key = 'mk', cb = ":lua require('lu5je0.ext.nvimtree').create_dir()<cr>" },
     { key = 'D', cb = ":lua require('lu5je0.ext.nvimtree').remove()<cr>" },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
     { key = 's', action = 'vsplit' },
-    -- { key = 's', action = 'split' },
+    { key = 'v', action = 'split' },
     { key = 'S', action = 'search_node' },
     -- { key = 'K', action = 'first_sibling' },
     -- { key = 'J', action = 'last_sibling' },
     { key = '<', action = 'prev_sibling' },
     { key = '>', action = 'next_sibling' },
     -- { key = 'f', cb = ":lua require('lu5je0.ext.nvimtree').file_info()<cr>" },
-    { key = 'K', action = 'toggle_file_info' },
+    { key = { 'K', 'F' }, action = 'toggle_file_info' },
     { key = 'f', action = 'live_filter' },
     { key = '.', action = 'run_file_command' },
     -- { key = 'P', action = 'parent_node' },
@@ -299,7 +301,7 @@ function M.setup()
     { key = 'u', action = 'dir_up' },
     { key = 'o', action = 'system_open' },
     { key = 'q', action = 'close' },
-    { key = '<space>', action = 'toggle_mark' },
+    { key = 'x', action = 'toggle_mark' },
     { key = 'g?', action = 'toggle_help' },
     { key = '<c-o>', action = 'backward', action_cb = M.back },
     { key = { '<tab>', '<c-i>' }, action = 'forward', action_cb = M.forward },
