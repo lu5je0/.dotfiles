@@ -60,17 +60,8 @@ function M.setup(enbale_key_mapping)
   vim.cmd("PackerLoad nvim-treesitter")
 end
 
-M.lsp_keymaping = function(bufnr)
-  local opts = { noremap = true, silent = true, buffer = bufnr }
-  -- vim.keymap.set('n', 'gu', vim.lsp.buf.declaration, opts)
-  vim.keymap.set('n', 'gd', require('telescope.builtin').lsp_definitions, opts)
-  vim.keymap.set('n', 'gy', require('telescope.builtin').lsp_type_definitions, opts)
-  vim.keymap.set('n', 'gn', require('telescope.builtin').lsp_implementations, opts)
-  vim.keymap.set('n', 'gb', require('telescope.builtin').lsp_references, opts)
-end
-
 function M.visual_telescope(lf_cmd)
-  local search = vim.call('visual#visual_selection')
+  local search = require('lu5je0.core.visual').get_visual_selection_as_string()
   search = string.gsub(search, "'", '')
   search = string.gsub(search, '\n', '')
 

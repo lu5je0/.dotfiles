@@ -79,7 +79,3 @@ if [[ ! -d ~/.config/nvim ]]; then
 fi
 
 ask "Install pip3 requirements?" && sh ~/.dotfiles/scripts/pip3-requirements.sh
-
-if [ "$(uname)" = "Darwin" ]; then
-    ask "pip3 install pyobjc?" && pip3 install pyobjc
-fi

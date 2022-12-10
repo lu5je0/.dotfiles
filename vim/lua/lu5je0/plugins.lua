@@ -130,32 +130,20 @@ return packer.startup(function(use)
   }
 
   -- telescope
-  batch_use {
-    -- {
-    --   'nvim-telescope/telescope-fzf-native.nvim',
-    --   run = 'make',
-    -- },
-    -- {
-    --   'nvim-telescope/telescope.nvim',
-    --   config = function()
-    --     require('lu5je0.ext.telescope').setup(false)
-    --   end,
-    --   defer = true,
-    --   after = 'telescope-fzf-native.nvim',
-    --   -- requires = {
-    --   --   { 'nvim-lua/plenary.nvim' },
-    --   --   {
-    --   --     'AckslD/nvim-neoclip.lua',
-    --   --     config = function()
-    --   --       require('neoclip').setup {
-    --   --         default_register = '*',
-    --   --       }
-    --   --     end,
-    --   --   },
-    --   -- },
-    --   -- keys = { '<leader>f' },
-    -- }
-  }
+  -- batch_use {
+  --   {
+  --     'nvim-telescope/telescope-fzf-native.nvim',
+  --     run = 'make',
+  --   },
+  --   {
+  --     'nvim-telescope/telescope.nvim',
+  --     config = function()
+  --       require('lu5je0.ext.telescope').setup(true)
+  --     end,
+  --     defer = true,
+  --     after = 'telescope-fzf-native.nvim'
+  --   }
+  -- }
 
   use {
     'ojroques/vim-oscyank',
