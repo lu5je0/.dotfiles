@@ -11,10 +11,10 @@ local function switch_to_en()
 end
 
 local focus_gained = true
-local function keep_normal_mode_with_abc_im()
+local function keep_normal_mode_with_abc_im(interval)
   local timer = vim.loop.new_timer()
 
-  timer:start(0, M.interval, vim.schedule_wrap(function()
+  timer:start(0, interval, vim.schedule_wrap(function()
     if focus_gained then
       if vim.api.nvim_get_mode().mode == 'n' then
         switch_to_en()
@@ -65,7 +65,6 @@ M.setup = function(config)
       focus_gained = true,
     }
   }, config)
-  M.interval = config.interval
   
   if vim.fn.has('mac') == 1 then
     M.os = 'mac'
@@ -75,7 +74,7 @@ M.setup = function(config)
   
   local platform_config = config[M.os]
   if platform_config.keep then
-    keep_normal_mode_with_abc_im()
+    keep_normal_mode_with_abc_im(platform_config.interval)
   elseif platform_config.focus_gained then
     switch_normal_mode_on_focus_gained()
   end

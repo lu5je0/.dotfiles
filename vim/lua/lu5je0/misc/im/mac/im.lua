@@ -47,7 +47,9 @@ end)()
 local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
 
 M.switch_to_en = function()
-  im_switcher.switch_to_ime(ABC_IM_SOURCE_CODE)
+  if im_switcher.get_ime() ~= ABC_IM_SOURCE_CODE then
+    im_switcher.switch_to_ime(ABC_IM_SOURCE_CODE)
+  end
 end
 
 M.toggle_save_last_ime = function()
