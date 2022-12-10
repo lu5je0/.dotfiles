@@ -179,8 +179,6 @@ return packer.startup(function(use)
     requires = { 'nvim-web-devicons' },
   }
 
-  use { 'schickling/vim-bufonly' }
-
   use {
     'theniceboy/vim-calc',
     opt = true,
