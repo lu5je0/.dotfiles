@@ -52,7 +52,7 @@ return packer.startup(function(use)
     end
     origin_use(...)
   end
-  
+
   use('lewis6991/impatient.nvim')
 
   -- Packer can manage itself
@@ -101,7 +101,11 @@ return packer.startup(function(use)
         vim.cmd('let g:gist_show_privates = 1')
         vim.cmd('let g:gist_post_private = 1')
       end,
-      requires = { 'mattn/webapi-vim' },
+      requires = {
+        'mattn/webapi-vim',
+        opt = true
+      },
+      cmd = 'Gist'
     }
   }
 
@@ -287,6 +291,7 @@ return packer.startup(function(use)
   batch_use {
     {
       'aklt/plantuml-syntax',
+      ft = 'plantuml'
     },
   }
 
@@ -430,7 +435,10 @@ return packer.startup(function(use)
         --   'nvim-treesitter/playground',
         --   run = 'TSInstall query'
         -- },
-        { 'phelipetls/jsonpath.nvim' },
+        {
+          'phelipetls/jsonpath.nvim',
+          ft = { 'json', 'jsonc' }
+        },
         {
           'SmiteshP/nvim-gps',
           config = function()
@@ -553,32 +561,23 @@ return packer.startup(function(use)
 
   -- debug dap
   batch_use {
-    --   {
-    --     "rcarriga/nvim-dap-ui",
-    --     requires = { "mfussenegger/nvim-dap" },
-    --     config = function()
-    --       require("dapui").setup()
-    --       local dap, dapui = require("dap"), require("dapui")
-    --       dap.listeners.after.event_initialized["dapui_config"] = function()
-    --         dapui.open()
-    --       end
-    --       dap.listeners.before.event_terminated["dapui_config"] = function()
-    --         dapui.close()
-    --       end
-    --       dap.listeners.before.event_exited["dapui_config"] = function()
-    --         dapui.close()
-    --       end
-    --     end
-    --   }
-  }
-
-  use {
-    'puremourning/vimspector',
-    config = function()
-      require('lu5je0.ext.vimspector').setup()
-    end,
-    keys = { '<F10>', '<S-F10>' },
-    fn = { 'vimspector#Launch', 'vimspector#Reset', 'vimspector#LaunchWithConfigurations' },
+    {
+      "mfussenegger/nvim-dap",
+      requires = 'rcarriga/nvim-dap-ui',
+      config = function()
+        require('lu5je0.ext.dap').setup()
+      end,
+      keys = { '<F10>', '<S-F10>' },
+    },
+    {
+      'jbyuki/one-small-step-for-vimkind',
+      config = function()
+        vim.api.nvim_create_user_command('LuaDebug', function()
+          require("osv").launch({ port = 8086 })
+        end, { force = true })
+      end,
+      cmd = 'LuaDebug'
+    }
   }
 
   -- file manager
@@ -696,8 +695,7 @@ return packer.startup(function(use)
             Norm = { cmd = "norm" },
           },
         }
-      end,
-      event = "CmdlineEnter",
+      end
     },
     {
       'AckslD/messages.nvim',

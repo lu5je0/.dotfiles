@@ -1,7 +1,5 @@
 local group = vim.api.nvim_create_augroup('clipboard_event_group', { clear = true })
 
-local focus_gained = false
-
 local function read_clipboard()
   local r = nil
   if vim.g.clipboard and vim.g.clipboard.paste then
@@ -28,7 +26,6 @@ vim.api.nvim_create_autocmd({ 'FocusGained' }, {
   pattern = { '*' },
   callback = function()
     read_clipboard()
-    focus_gained = true
   end
 })
 
@@ -36,8 +33,6 @@ vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter' }, {
   group = group,
   pattern = { '*' },
   callback = function()
-    if focus_gained then
-      write_to_clipboard()
-    end
+    write_to_clipboard()
   end
 })
