@@ -311,7 +311,6 @@ function M.setup()
     disable_netrw = true,
     hijack_netrw = true,
     open_on_setup = false,
-    create_in_closed_folder = true,
     ignore_ft_on_setup = {},
     open_on_tab = false,
     hijack_cursor = false,

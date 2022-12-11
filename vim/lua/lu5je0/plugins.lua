@@ -52,6 +52,8 @@ return packer.startup(function(use)
     end
     origin_use(...)
   end
+  
+  use('lewis6991/impatient.nvim')
 
   -- Packer can manage itself
   use('wbthomason/packer.nvim')
@@ -650,18 +652,18 @@ return packer.startup(function(use)
         require('lu5je0.ext.nvim-ufo')
       end,
     },
-    {
-      'kevinhwang91/nvim-fundo',
-      requires = 'kevinhwang91/promise-async',
-      run = function()
-        require('fundo').install()
-      end,
-      disable = (vim.fn.has('mac') == 1),
-      config = function()
-        vim.o.undofile = true
-        require('fundo').setup()
-      end
-    },
+    -- {
+    --   'kevinhwang91/nvim-fundo',
+    --   requires = 'kevinhwang91/promise-async',
+    --   run = function()
+    --     require('fundo').install()
+    --   end,
+    --   disable = (vim.fn.has('mac') == 1),
+    --   config = function()
+    --     vim.o.undofile = true
+    --     require('fundo').setup()
+    --   end
+    -- },
     {
       'nat-418/boole.nvim',
       config = function()
