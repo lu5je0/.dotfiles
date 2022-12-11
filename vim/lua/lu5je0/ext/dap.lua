@@ -42,15 +42,15 @@ end
 local function keymap()
   local opts = {}
 
-  set_map('n', '<F7>', require "dap".step_into, opts)
-  set_map('n', '<F8>', require "dap".step_over, opts)
-  set_map('n', '<F9>', require "dap".continue, opts)
-  set_map('n', '<F10>', require "dap".toggle_breakpoint, opts)
-  set_map('n', '<F12>', require "dap.ui.widgets".hover, opts)
+  set_map('n', '<F7>', require("dap").step_into, opts)
+  set_map('n', '<F8>', require("dap").step_over, opts)
+  set_map('n', '<F9>', require("dap").continue, opts)
+  set_map('n', '<F10>', require("dap").toggle_breakpoint, opts)
+  set_map('n', '<F12>', require("dap.ui.widgets").hover, opts)
 
-  set_map('n', { '<S-F7>', 'F20' }, require "dap".step_out, opts)
-  set_map('n', { '<S-F9>', 'F21' }, require "dap".run_to_cursor, opts)
-  set_map('n', { '<S-F10>', 'F22' }, function()
+  set_map('n', { '<S-F7>', '<F20>' }, require("dap").step_out, opts)
+  set_map('n', { '<S-F9>', '<F21>' }, require("dap").run_to_cursor, opts)
+  set_map('n', { '<S-F10>', '<F22>' }, function()
     require 'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))
   end, opts)
 
