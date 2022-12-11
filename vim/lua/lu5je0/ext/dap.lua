@@ -62,7 +62,7 @@ local function dupui()
     icons = { expanded = "", collapsed = "", current_frame = "" },
     element_mappings = {
       scopes = {
-        expand = { "l", "<cr>" },
+        expand = { "h", "l", "<cr>" },
         -- close = "h",
       }
     },

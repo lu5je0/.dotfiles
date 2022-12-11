@@ -48,6 +48,12 @@ bl.setup {
         text_align = 'center',
       },
       {
+        filetype = 'dapui_scopes',
+        text = 'DEBUG',
+        highlight = 'Directory',
+        text_align = 'center',
+      },
+      {
         filetype = 'fern',
         text = 'Fern',
         highlight = 'NvimTreeNormal',
