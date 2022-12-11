@@ -1,4 +1,6 @@
-require('impatient')
+if not pcall(require, 'impatient') then
+  vim.notify('require impatient failed')
+end
 
 local core_modules = {
   'lu5je0.lang.enhance',
