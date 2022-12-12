@@ -56,6 +56,12 @@ M.setup = function()
     direction = env_keeper.terminal_direction,
     close_on_exit = true, -- close the terminal window when the process exits
     shell = vim.o.shell, -- change the default shell
+    -- winbar = {
+    --   enabled = true,
+    --   name_formatter = function(term) --  term: Terminal
+    --     return term.name
+    --   end
+    -- },
   }
   vim.cmd([[
   imap <silent> <m-i> <ESC>:lua require('lu5je0.ext.terminal').toggle()<CR>

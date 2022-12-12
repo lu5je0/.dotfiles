@@ -33,6 +33,8 @@ vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter' }, {
   group = group,
   pattern = { '*' },
   callback = function()
-    write_to_clipboard()
+    vim.defer_fn(function()
+      write_to_clipboard()
+    end, 0)
   end
 })
