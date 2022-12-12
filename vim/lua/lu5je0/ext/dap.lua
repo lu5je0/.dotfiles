@@ -75,7 +75,7 @@ local function dupui()
           -- "stacks",
           -- "watches",
         },
-        size = 40, -- 40 columns
+        size = 30, -- 40 columns
         position = "left",
       },
       -- {

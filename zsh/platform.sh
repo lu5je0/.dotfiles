@@ -11,7 +11,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   eval $(gdircolors -b $HOME/.dir_colors)
   export JAVA_HOME_8='/Users/lu5je0/Library/Java/JavaVirtualMachines/azul-1.8.0_352/Contents/Home'
   export JAVA_HOME_11='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-11.0.17/Contents/Home'
-  export JAVA_HOME_17='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-17.0.5/Contents/Home'
+  export JAVA_HOME_17='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-17.0.5-2/Contents/Home'
   alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
   alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
   alias jdk17='export JAVA_HOME=$JAVA_HOME_17'
