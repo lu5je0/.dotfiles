@@ -20,10 +20,10 @@ M.get_im_switcher = function()
     void Xkb_Switch_setXkbLayout(const char *s);
     ]])
 
-    local macism = ffi.load(std_path .. '/lib/libmacism.dylib')
-    ffi.cdef([[
-    void switch_ime(const char *ime);
-    ]])
+    -- local macism = ffi.load(std_path .. '/lib/libmacism.dylib')
+    -- ffi.cdef([[
+    -- void switch_ime(const char *ime);
+    -- ]])
 
     return {
       switch_to_ime = function(im_code)
@@ -34,7 +34,7 @@ M.get_im_switcher = function()
         xkb_switch_lib.Xkb_Switch_setXkbLayout(im_code)
       end,
       switch_to_ime_macism_dylib = function(im_code)
-        macism.switch_ime(im_code)
+        -- macism.switch_ime(im_code)
       end,
       switch_to_ime_macism_executed_file = function(im_code)
         vim.loop.new_thread(function(path, ime)

@@ -25,15 +25,17 @@ vim.api.nvim_create_autocmd('User', {
 vim.defer_fn(function()
   vim.keymap.set('n', 'H', function()
     require('lu5je0.core.keys').feedkey('^')
-    vim.defer_fn(function()
+    
+    if require('lu5je0.core.window').is_cur_line_out_of_window() then
       vim.cmd('IndentBlanklineRefresh')
-    end, 0)
+    end
   end)
 
   vim.keymap.set('n', 'L', function()
     require('lu5je0.core.keys').feedkey('$')
-    vim.defer_fn(function()
+    
+    if require('lu5je0.core.window').is_cur_line_out_of_window() then
       vim.cmd('IndentBlanklineRefresh')
-    end, 0)
+    end
   end)
 end, 100)

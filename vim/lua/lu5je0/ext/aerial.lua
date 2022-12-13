@@ -5,5 +5,12 @@ require('aerial').setup {
   float = {
     relative = 'editor',
     height = 0.5
-  }
+  },
+  icons = {
+    markdown = {
+      InterfaceCollapsed = "",
+      Interface = "",
+    }
+  },
+  show_guides = true,
 }
