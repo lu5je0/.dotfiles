@@ -33,9 +33,9 @@ M.get_im_switcher = function()
         ---@diagnostic disable-next-line: undefined-field
         xkb_switch_lib.Xkb_Switch_setXkbLayout(im_code)
       end,
-      switch_to_ime_macism_dylib = function(im_code)
-        -- macism.switch_ime(im_code)
-      end,
+      -- switch_to_ime_macism_dylib = function(im_code)
+      --   macism.switch_ime(im_code)
+      -- end,
       switch_to_ime_macism_executed_file = function(im_code)
         vim.loop.new_thread(function(path, ime)
           io.popen(('%s %s 3000 2>/dev/null'):format(path, ime)):close()
@@ -70,8 +70,8 @@ end
 
 M.switch_insert_mode = rate_limiter:wrap(function()
   if M.save_last_ime and M.last_ime ~= ABC_IM_SOURCE_CODE then
-    M.get_im_switcher().switch_to_ime_macism_dylib(M.last_ime)
-    M.get_im_switcher().switch_to_ime_macism_executed_file(M.last_ime)
+    M.get_im_switcher().switch_to_ime(M.last_ime)
+    -- M.get_im_switcher().switch_to_ime_macism_executed_file(M.last_ime)
   end
 end)
 
