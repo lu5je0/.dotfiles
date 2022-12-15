@@ -175,14 +175,21 @@ return packer.startup(function(use)
     end,
   }
 
-  use {
-    'lu5je0/bufferline.nvim',
-    config = function()
-      vim.g.bufferline_separator = true
-      require('lu5je0.ext.bufferline')
-    end,
-    -- branch = 'main',
-    requires = { 'nvim-web-devicons' },
+  batch_use {
+    {
+      'lu5je0/bufferline.nvim',
+      config = function()
+        vim.g.bufferline_separator = true
+        require('lu5je0.ext.bufferline')
+      end,
+      requires = { 'nvim-web-devicons' },
+    },
+    {
+      "tiagovla/scope.nvim",
+      config = function()
+        require("scope").setup()
+      end
+    }
   }
 
   use {
@@ -713,6 +720,8 @@ return packer.startup(function(use)
       cmd = 'Messages',
     }
   }
+
+  -- use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
 
   -- use {
   --   "samjwill/nvim-unception",
