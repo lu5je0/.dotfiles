@@ -184,12 +184,12 @@ return packer.startup(function(use)
       end,
       requires = { 'nvim-web-devicons' },
     },
-    {
-      "tiagovla/scope.nvim",
-      config = function()
-        require("scope").setup()
-      end
-    }
+    -- {
+    --   "tiagovla/scope.nvim",
+    --   config = function()
+    --     require("scope").setup()
+    --   end
+    -- }
   }
 
   use {
