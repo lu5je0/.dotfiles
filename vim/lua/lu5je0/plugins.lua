@@ -24,7 +24,7 @@ vim.api.nvim_create_autocmd('BufWritePost', {
 
 return packer.startup(function(use)
   _G.__defer_plugins = {}
-  local origin_use = use
+  local original_use = use
 
   local function inject_use(params)
     if params.defer then
@@ -50,19 +50,52 @@ return packer.startup(function(use)
     if type(...) == 'table' then
       inject_use(...)
     end
-    origin_use(...)
+    original_use(...)
   end
 
-  use('lewis6991/impatient.nvim')
+  use 'lewis6991/impatient.nvim'
 
-  -- Packer can manage itself
-  use('wbthomason/packer.nvim')
+  use 'wbthomason/packer.nvim'
 
-  use('nvim-lua/plenary.nvim')
+  use 'nvim-lua/plenary.nvim'
 
-  use {
-    'MunifTanjim/nui.nvim',
-    -- commit = '042cceb497cc4cfa3ae735a5e7bc01b4b6f19ef1'
+  use 'MunifTanjim/nui.nvim'
+  
+  use 'tpope/vim-repeat'
+  
+  -- themes
+  batch_use {
+    {
+      'sainnhe/edge',
+      on_compile = function()
+        vim.g.edge_better_performance = 1
+        vim.g.edge_enable_italic = 0
+        vim.g.edge_disable_italic_comment = 1
+      end,
+      config = function()
+        vim.g.edge_loaded_file_types = { 'NvimTree' }
+        vim.cmd [[
+        hi! Folded guifg=#282c34 guibg=#5c6370
+        hi MatchParen guifg=#ffef28
+        ]]
+      end
+    },
+    -- {
+    --   "catppuccin/nvim",
+    --   as = "catppuccin",
+    --   config = function()
+    --     vim.g.catppuccin_flavour = "macchiato" -- latte, frappe, macchiato, mocha
+    --     require("catppuccin").setup()
+    --   end
+    -- }
+  }
+  
+  -- syntax
+  batch_use {
+    {
+      'aklt/plantuml-syntax',
+      ft = 'plantuml'
+    },
   }
 
   -- git
@@ -241,7 +274,7 @@ return packer.startup(function(use)
           -- Line-comment keymap
           line = 'gc',
           -- Block-comment keymap
-          block = 'gB',
+          block = 'gC',
         },
         toggler = {
           -- Line-comment toggle keymap
@@ -251,44 +284,7 @@ return packer.startup(function(use)
         },
       }
     end,
-    keys = { { 'x', 'gc' }, { 'n', 'gc' } }
-  }
-
-  use('tpope/vim-repeat')
-
-  -- themes
-  batch_use {
-    {
-      'sainnhe/edge',
-      on_compile = function()
-        vim.g.edge_better_performance = 1
-        vim.g.edge_enable_italic = 0
-        vim.g.edge_disable_italic_comment = 1
-      end,
-      config = function()
-        vim.g.edge_loaded_file_types = { 'NvimTree' }
-        vim.cmd [[
-        hi! Folded guifg=#282c34 guibg=#5c6370
-        hi MatchParen guifg=#ffef28
-        ]]
-      end
-    },
-    -- {
-    --   "catppuccin/nvim",
-    --   as = "catppuccin",
-    --   config = function()
-    --     vim.g.catppuccin_flavour = "macchiato" -- latte, frappe, macchiato, mocha
-    --     require("catppuccin").setup()
-    --   end
-    -- }
-  }
-
-  -- syntax
-  batch_use {
-    {
-      'aklt/plantuml-syntax',
-      ft = 'plantuml'
-    },
+    keys = { { 'x', 'gc' }, { 'n', 'gc' }, { 'n' , 'gC'} }
   }
 
   use {
