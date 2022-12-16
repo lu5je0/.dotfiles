@@ -60,9 +60,9 @@ return packer.startup(function(use)
   use 'nvim-lua/plenary.nvim'
 
   use 'MunifTanjim/nui.nvim'
-  
+
   use 'tpope/vim-repeat'
-  
+
   -- themes
   batch_use {
     {
@@ -89,7 +89,7 @@ return packer.startup(function(use)
     --   end
     -- }
   }
-  
+
   -- syntax
   batch_use {
     {
@@ -284,7 +284,7 @@ return packer.startup(function(use)
         },
       }
     end,
-    keys = { { 'x', 'gc' }, { 'n', 'gc' }, { 'n' , 'gC'} }
+    keys = { { 'x', 'gc' }, { 'n', 'gc' }, { 'n', 'gC' } }
   }
 
   use {
