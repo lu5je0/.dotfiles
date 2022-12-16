@@ -207,15 +207,7 @@ return packer.startup(function(use)
 
   use {
     'sgur/vim-textobj-parameter',
-    requires = {
-      {
-        'kana/vim-textobj-user',
-        -- opt = true
-      }
-    },
-    after = {
-      'vim-textobj-user'
-    },
+    requires = 'kana/vim-textobj-user',
     setup = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
     end,
@@ -226,7 +218,15 @@ return packer.startup(function(use)
     "gbprod/substitute.nvim",
     config = function()
       require("substitute").setup {}
-      vim.keymap.set("n", "cx", require('substitute.exchange').operator, { noremap = true })
+      vim.keymap.set("n", "cx", function ()
+        local range = vim.highlight.range
+        vim.highlight.range = function(...)
+          local params = {...}
+          if params[3] == 'SubstituteExchange' then params[6].priority = 500 end
+          range(...)
+        end
+        require('substitute.exchange').operator()
+      end, { noremap = true })
       vim.keymap.set("n", "gr", require('substitute').operator, { noremap = true })
       vim.keymap.set("n", "grr", require('substitute').line, { noremap = true })
       vim.keymap.set("x", "gr", require('substitute').visual, { noremap = true })
