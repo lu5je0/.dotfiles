@@ -101,6 +101,9 @@ vim.defer_fn(function()
   " <leader>
   "----------------------------------------------------------------------
   nmap <silent> <leader>tN :tabnew<cr>
+  nmap <silent> <leader>tc :tabclose<cr>
+  nmap <silent> <space><space> gt
+  nmap <silent> <leader><leader> <c-^>
 
   "----------------------------------------------------------------------
   " window control

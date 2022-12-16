@@ -268,7 +268,7 @@ function M.setup()
     { key = '-', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(2)<cr>" },
     { key = '+', cb = ":lua require('lu5je0.ext.nvimtree').increase_width(1)<cr>" },
     { key = '_', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(1)<cr>" },
-    { key = '<space>', action = 'preview', action_cb = M.preview },
+    { key = ';', action = 'preview', action_cb = M.preview },
     { key = 'x', action = 'toggle_width', action_cb = M.toggle_width },
     { key = 'mk', action = 'create_dir', action_cb = M.create_dir },
     { key = 'D', action = 'delete', action_cb = M.delete_node },
