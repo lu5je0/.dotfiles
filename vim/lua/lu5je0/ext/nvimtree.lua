@@ -51,7 +51,7 @@ function M.terminal_cd()
   require('lu5je0.ext.terminal').send_to_terminal(('cd "%s"'):format(path))
 end
 
-function M.remove()
+function M.delete_node()
   local bufs = require("lu5je0.core.buffers").valid_buffers()
   -- local bufs = vim.api.nvim_list_bufs()
 
@@ -268,10 +268,10 @@ function M.setup()
     { key = '-', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(2)<cr>" },
     { key = '+', cb = ":lua require('lu5je0.ext.nvimtree').increase_width(1)<cr>" },
     { key = '_', cb = ":lua require('lu5je0.ext.nvimtree').reduce_width(1)<cr>" },
-    { key = '<space>', cb = ":lua require('lu5je0.ext.nvimtree').preview()<cr>" },
-    { key = 'x', cb = ":lua require('lu5je0.ext.nvimtree').toggle_width()<cr>" },
-    { key = 'mk', cb = ":lua require('lu5je0.ext.nvimtree').create_dir()<cr>" },
-    { key = 'D', cb = ":lua require('lu5je0.ext.nvimtree').remove()<cr>" },
+    { key = '<space>', action = 'preview', action_cb = M.preview },
+    { key = 'x', action = 'toggle_width', action_cb = M.toggle_width },
+    { key = 'mk', action = 'create_dir', action_cb = M.create_dir },
+    { key = 'D', action = 'delete', action_cb = M.delete_node },
     { key = 'H', cb = ':cd ~<cr>' },
     { key = 'd', cb = '<nop>' },
     { key = 's', action = 'vsplit' },
