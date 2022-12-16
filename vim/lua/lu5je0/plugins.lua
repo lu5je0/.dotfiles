@@ -214,7 +214,6 @@ return packer.startup(function(use)
       }
     },
     after = {
-      'vim-exchange',
       'vim-textobj-user'
     },
     setup = function()
@@ -224,8 +223,15 @@ return packer.startup(function(use)
   }
 
   use {
-    'tommcdo/vim-exchange',
-    keys = { { 'n', 'cx' } },
+    "gbprod/substitute.nvim",
+    config = function()
+      require("substitute").setup {}
+      vim.keymap.set("n", "cx", require('substitute.exchange').operator, { noremap = true })
+      vim.keymap.set("n", "gr", require('substitute').operator, { noremap = true })
+      vim.keymap.set("n", "grr", require('substitute').line, { noremap = true })
+      vim.keymap.set("x", "gr", require('substitute').visual, { noremap = true })
+    end,
+    keys = { { 'n', 'cx' }, { 'x', 'gr' }, { 'n', 'gr' } }
   }
 
   use {
@@ -261,11 +267,6 @@ return packer.startup(function(use)
   }
 
   use('tpope/vim-repeat')
-
-  use {
-    'vim-scripts/ReplaceWithRegister',
-    keys = { { 'x', 'gr' }, { 'n', 'gr' } },
-  }
 
   -- themes
   batch_use {
