@@ -269,22 +269,9 @@ return packer.startup(function(use)
   use {
     'numToStr/Comment.nvim',
     config = function()
-      require('Comment').setup {
-        opleader = {
-          -- Line-comment keymap
-          line = 'gc',
-          -- Block-comment keymap
-          block = 'gC',
-        },
-        toggler = {
-          -- Line-comment toggle keymap
-          line = 'gcc',
-          -- Block-comment toggle keymap
-          block = 'gcgc',
-        },
-      }
+      require('lu5je0.ext.comment')
     end,
-    keys = { { 'x', 'gc' }, { 'n', 'gc' }, { 'n', 'gC' } }
+    keys = { { 'x', 'gc' }, { 'n', 'gc' }, { 'n', 'gcc' }, { 'n', 'gC' } }
   }
 
   use {
