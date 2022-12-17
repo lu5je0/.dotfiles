@@ -16,34 +16,6 @@ local indent_change_items = {
   'catch',
 }
 
-local kind_icons = {
-  Text = '',
-  Method = '',
-  Function = '',
-  Constructor = '',
-  Field = '',
-  Variable = '',
-  Class = 'ﴯ',
-  Interface = '',
-  Module = '',
-  Property = 'ﰠ',
-  Unit = '',
-  Value = '',
-  Enum = '',
-  Keyword = '',
-  Snippet = '',
-  Color = '',
-  File = '',
-  Reference = '',
-  Folder = '',
-  EnumMember = '',
-  Constant = '',
-  Struct = '',
-  Event = '',
-  Operator = '',
-  TypeParameter = '',
-}
-
 local origin_emit = require('cmp.utils.autocmd').emit
 local ignore_text_changed_emit = function(s)
   if s == 'TextChanged' then
@@ -106,13 +78,53 @@ local function comfirm(fallback)
   end
 end
 
+local function truncate(label)
+  local ELLIPSIS_CHAR = '…'
+  local MAX_LABEL_WIDTH = 25
+  local MIN_LABEL_WIDTH = 25
+
+  local truncated_label = vim.fn.strcharpart(label, 0, MAX_LABEL_WIDTH)
+
+  if #truncated_label ~= #label then
+    label = truncated_label .. ELLIPSIS_CHAR
+  elseif string.len(label) < MIN_LABEL_WIDTH then
+    local padding = string.rep(' ', MIN_LABEL_WIDTH - #label)
+    label = label .. padding
+  end
+  return label
+end
+
+local format = function(entry, vim_item)
+  vim_item = require('lspkind').cmp_format({ mode = 'symbol_text', maxwidth = 50 })(entry, vim_item)
+  local strings = vim.split(vim_item.kind, '%s', { trimempty = true })
+  vim_item.kind = ' ' .. strings[1] .. ''
+  vim_item.abbr = truncate(vim_item.abbr)
+  vim_item.menu = ({
+    buffer = '[B]',
+    nvim_lsp = '[L]',
+    ultisnips = '[U]',
+    luasnip = '[LuaSnip]',
+    nvim_lua = '[Lua]',
+    latex_symbols = '[LaTeX]',
+  })[entry.source.name]
+
+  return vim_item
+end
+
+---@diagnostic disable-next-line: redundant-parameter
 cmp.setup {
   window = {
-    -- documentation = cmp.config.disable,
-    documentation = {
-      max_width = 40,
-      max_height = 25,
+    completion = {
+      -- winhighlight = "Normal:Pmenu,FloatBorder:Pmenu,Search:None",
+      max_height = 10,
+      col_offset = -2,
+      side_padding = 0,
+      scroll_off = 10
     },
+  },
+  formatting = {
+    fields = { 'kind', 'abbr', 'menu' },
+    format = format
   },
   snippet = {
     expand = function(args)
@@ -123,7 +135,7 @@ cmp.setup {
     end,
   },
   performance = {
-    debounce = 25,
+    debounce = 40,
   },
   completion = {
     completeopt = 'menu,menuone,noinsert',
@@ -152,51 +164,6 @@ cmp.setup {
     -- { name = 'vsnip' },
     { name = 'path' },
     { name = 'buffer' },
-  },
-  formatting = {
-    -- fields = { "kind", "abbr", "menu" },
-    -- format = function(entry, vim_item)
-    --   -- vim_item.menu = vim_item.kind
-    --   vim_item.menu = ({
-    --     buffer = '[B]',
-    --     nvim_lsp = '[L]',
-    --     ultisnips = '[U]',
-    --     luasnip = '[LuaSnip]',
-    --     nvim_lua = '[Lua]',
-    --     latex_symbols = '[LaTeX]',
-    --   })[entry.source.name]
-    --
-    --   vim_item.kind = kind_icons[vim_item.kind]
-    --   return vim_item
-    -- end,
-    format = function(entry, vim_item)
-      local ELLIPSIS_CHAR = '…'
-      local MAX_LABEL_WIDTH = 34
-      local MIN_LABEL_WIDTH = 0
-      local label = vim_item.abbr
-      local truncated_label = vim.fn.strcharpart(label, 0, MAX_LABEL_WIDTH)
-      if truncated_label ~= label then
-        vim_item.abbr = truncated_label .. ELLIPSIS_CHAR
-      elseif string.len(label) < MIN_LABEL_WIDTH then
-        local padding = string.rep(' ', MIN_LABEL_WIDTH - string.len(label))
-        vim_item.abbr = label .. padding
-      end
-
-      -- Kind icons
-      -- vim_item.kind = string.format('%s %s', kind_icons[vim_item.kind], vim_item.kind)
-      vim_item.kind = string.format(' %s', kind_icons[vim_item.kind])
-      -- Source
-      vim_item.menu = ({
-        buffer = '[B]',
-        nvim_lsp = '[L]',
-        ultisnips = '[U]',
-        luasnip = '[S]',
-        vsnip = '[S]',
-        nvim_lua = '[Lua]',
-        latex_symbols = '[LaTeX]',
-      })[entry.source.name]
-      return vim_item
-    end,
   },
 }
 
