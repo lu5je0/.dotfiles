@@ -428,6 +428,9 @@ function M.setup()
       keys_helper.feedkey('<c-w>p')
     end
   end, 0)
+  
+  -- 关闭wsl executable检测，性能太低了
+  require('nvim-tree.utils').is_wsl_windows_fs_exe = function() return false end
 end
 
 return M
