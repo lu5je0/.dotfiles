@@ -1,5 +1,6 @@
 local cmp = require('cmp')
 local keys_helper = require('lu5je0.core.keys')
+
 local indent_change_items = {
   'endif',
   'end',
@@ -14,6 +15,36 @@ local indent_change_items = {
   'endtry',
   'except',
   'catch',
+}
+
+local lsp_kind_icons = {
+  -- if you change or add symbol here
+  -- replace corresponding line in readme
+  Text = "",
+  Method = "",
+  Function = "",
+  Constructor = "",
+  Field = "ﰠ",
+  Variable = "",
+  Class = "ﴯ",
+  Interface = "",
+  Module = "",
+  Property = "ﰠ",
+  Unit = "塞",
+  Value = "",
+  Enum = "",
+  Keyword = "",
+  Snippet = "",
+  Color = "",
+  File = "",
+  Reference = "",
+  Folder = "",
+  EnumMember = "",
+  Constant = "",
+  Struct = "פּ",
+  Event = "",
+  Operator = "",
+  TypeParameter = "",
 }
 
 local origin_emit = require('cmp.utils.autocmd').emit
@@ -95,9 +126,7 @@ local function truncate(label)
 end
 
 local format = function(entry, vim_item)
-  vim_item = require('lspkind').cmp_format({ mode = 'symbol_text', maxwidth = 50 })(entry, vim_item)
-  local strings = vim.split(vim_item.kind, '%s', { trimempty = true })
-  vim_item.kind = ' ' .. strings[1] .. ''
+  vim_item.kind = ' ' .. (lsp_kind_icons[vim_item.kind] or ' ') .. ''
   vim_item.abbr = truncate(vim_item.abbr)
   vim_item.menu = ({
     buffer = '[B]',

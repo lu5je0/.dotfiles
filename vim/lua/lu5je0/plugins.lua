@@ -465,7 +465,6 @@ return packer.startup(function(use)
     requires = {
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-path',
-      'onsails/lspkind.nvim',
       { 'L3MON4D3/LuaSnip', config = function() require('lu5je0.ext.luasnip').setup() end },
       { 'saadparwaiz1/cmp_luasnip' },
       -- {
