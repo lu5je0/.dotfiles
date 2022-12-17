@@ -15,6 +15,7 @@ o.shadafile = 'NONE'
 o.wrap = false
 
 o.completeopt = 'menu,menuone,noselect'
+o.pumheight = 13
 
 o.number = true
 o.numberwidth = 3
