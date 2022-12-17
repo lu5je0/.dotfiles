@@ -8,14 +8,14 @@ local DISABLE_IME = stdpath .. '/lib/toDisableIME.exe'
 local ENABLE_IME = stdpath .. '/lib/toEnableIME.exe'
 
 M.disable_ime = rate_limiter:wrap(function()
-  vim.loop.new_thread(function(path)
+  pcall(vim.loop.new_thread, function(path)
     io.popen(path .. ' 2>/dev/null'):close()
   end, DISABLE_IME)
 end)
 
 M.enable_ime = rate_limiter:wrap(function()
   if M.save_last_ime then
-    vim.loop.new_thread(function(path)
+   pcall(vim.loop.new_thread, function(path)
       io.popen(path .. ' 2>/dev/null'):close()
     end, ENABLE_IME)
   end

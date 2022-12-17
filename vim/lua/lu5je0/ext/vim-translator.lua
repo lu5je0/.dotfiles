@@ -5,7 +5,7 @@ vim.g.translator_default_engines = { 'disk' }
 local function say(word)
   if vim.fn.has('mac') == 1 then
     vim.fn.jobstart("say -v 'Moira (Enhanced)' '" .. word .. "'")
-  elseif vim.fn['platform#is_wsl'] == 1 then
+  elseif vim.fn.has('wsl') == 1 then
     vim.fn.jobstart("wsay -v 2 '" .. word .. "'")
   end
 end
