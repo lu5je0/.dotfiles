@@ -68,8 +68,6 @@ for i = 1, 9, 1 do
   vim.keymap.set('n', '<leader>' .. i, function() bl.go_to_buffer(i, true) end)
 end
 
--- vim.cmd('nmap <leader>to :BufferLineCloseLeft<cr>:BufferLineCloseRight<cr>')
-
 vim.keymap.set('n', '<leader>to', function()
   vim.cmd [[
   BufferLineCloseLeft

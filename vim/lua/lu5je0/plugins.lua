@@ -523,7 +523,7 @@ return packer.startup(function(use)
       cmd = 'NullLsEnable',
     },
     {
-      'lu5je0/vim-illuminate',
+      'RRethy/vim-illuminate',
       after = 'nvim-lspconfig',
       config = function()
         require('lu5je0.ext.lspconfig.illuminate')
