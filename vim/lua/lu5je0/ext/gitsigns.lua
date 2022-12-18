@@ -25,6 +25,9 @@ function M.setup()
       ['x ig'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
     },
     sign_priority = 999,
+    on_attach = function()
+      -- vim.cmd('setlocal signcolumn=yes:1')
+    end
   }
 end
 
