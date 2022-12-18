@@ -7,7 +7,7 @@ vim.keymap.set("n", "cx", function()
     local params = { ... }
     -- 只有再exchange的时候修改优先级
     if params[3] == 'SubstituteExchange' then
-      params[6].priority = 500
+      params[6].priority = 5000
     end
     backup_range(...)
   end

@@ -85,6 +85,8 @@ vim.defer_fn(function()
 
   vim.cmd [[
   nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
+  
+  inoremap <S-Tab> <C-V><Tab>
 
   " 缩进后重新选择
   xmap < <gv
