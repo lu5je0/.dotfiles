@@ -236,8 +236,8 @@ M.setup = function()
     },
     f = {
       name = '+search/files',
-      f = { ":lua require('lu5je0.ext.leaderf').visual_leaderf('file')<cr>", 'file' },
-      r = { ":lua require('lu5je0.ext.leaderf').visual_leaderf('rg')<cr>", 'rg' },
+      f = { 'file' },
+      r = { 'rg' },
     },
     c = {
       name = '+code',

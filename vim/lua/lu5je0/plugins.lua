@@ -158,31 +158,26 @@ return packer.startup(function(use)
     end,
   }
 
-  use {
-    'Yggdroot/LeaderF',
-    run = './install.sh',
-    defer = true,
-    -- cmd = {'Leaderf', 'Git'},
-    config = function()
-      require('lu5je0.ext.leaderf').setup()
-    end,
-  }
+  -- use {
+  --   'Yggdroot/LeaderF',
+  --   run = './install.sh',
+  --   defer = true,
+  --   -- cmd = {'Leaderf', 'Git'},
+  --   config = function()
+  --     require('lu5je0.ext.leaderf').setup()
+  --   end,
+  -- }
 
   -- telescope
-  -- batch_use {
-  --   {
-  --     'nvim-telescope/telescope-fzf-native.nvim',
-  --     run = 'make',
-  --   },
-  --   {
-  --     'nvim-telescope/telescope.nvim',
-  --     config = function()
-  --       require('lu5je0.ext.telescope').setup(true)
-  --     end,
-  --     defer = true,
-  --     after = 'telescope-fzf-native.nvim'
-  --   }
-  -- }
+  batch_use {
+    {
+      'nvim-telescope/telescope.nvim',
+      config = function()
+        require('lu5je0.ext.telescope').setup()
+      end,
+      defer = true,
+    }
+  }
 
   use {
     'ojroques/vim-oscyank',

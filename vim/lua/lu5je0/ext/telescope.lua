@@ -1,34 +1,45 @@
 local M = {}
 
-local function key_mapping()
-  local opts = { noremap = true, silent = true }
-  vim.api.nvim_set_keymap('n', '<leader>fC', ":lua require('telescope.builtin').colorscheme{}<cr>", opts)
-  -- vim.api.nvim_set_keymap('n', '<leader>fc', ":lua require('telescope.builtin').commands{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>ff', ":lua require('telescope.builtin').find_files{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fg', ":lua require('telescope.builtin').resume{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fr', ":lua require('telescope.builtin').live_grep{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fb', ":lua require('telescope.builtin').buffers{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fm', ":lua require('telescope.builtin').oldfiles{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fh', ":lua require('telescope.builtin').help_tags{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fl', ":lua require('telescope.builtin').current_buffer_fuzzy_find{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fn', ":lua require('telescope.builtin').filetypes{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fa', ":lua require('telescope').extensions.project.project{}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fj', ":lua require('telescope.builtin').find_files{search_dirs={'~/junk-file'}}<cr>", opts)
-  vim.api.nvim_set_keymap('n', '<leader>fc', ':Telescope neoclip star<cr>', opts)
-  vim.api.nvim_set_keymap('n', '<leader>fd', ':Telescope opener<cr>', opts)
+function M.visual_telescope()
+  local search = require('lu5je0.core.visual').get_visual_selection_as_string()
+  search = string.gsub(search, "'", '')
+  search = string.gsub(search, '\n', '')
+
+  -- require('telescope.builtin').live_grep {}
+
+  print(search)
 end
 
-function M.setup(enbale_key_mapping)
+local function key_mapping()
+  local opts = { noremap = true, silent = true }
+  vim.keymap.set('n', '<leader>fC', require('telescope.builtin').colorscheme, opts)
+  vim.keymap.set('n', '<leader>fc', require('telescope.builtin').commands, opts)
+  vim.keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, opts)
+  vim.keymap.set('n', '<leader>fg', require('telescope.builtin').resume, opts)
+  vim.keymap.set('n', '<leader>fr', require('telescope.builtin').live_grep, opts)
+  vim.keymap.set('n', '<leader>fb', require('telescope.builtin').buffers, opts)
+  vim.keymap.set('n', '<leader>fm', require('telescope.builtin').oldfiles, opts)
+  vim.keymap.set('n', '<leader>fh', require('telescope.builtin').help_tags, opts)
+  vim.keymap.set('n', '<leader>fl', require('telescope.builtin').current_buffer_fuzzy_find, opts)
+  vim.keymap.set('n', '<leader>fn', require('telescope.builtin').filetypes, opts)
+  vim.keymap.set('n', '<leader>fj', function()
+    require('telescope.builtin').find_files { search_dirs = { '~/junk-file' } }
+  end, opts)
+
+  vim.keymap.set('x', '<leader>fr', M.visual_telescope, opts)
+  -- vim.keymap.set('n', '<leader>fa', require('telescope').extensions.project.project, opts)
+  -- vim.api.nvim_set_keymap('n', '<leader>fd', ':Telescope opener<cr>', opts)
+end
+
+function M.setup()
   local telescope = require('telescope')
   telescope.setup {
     defaults = {
       path_display = { truncate = 2 },
     },
   }
-  telescope.load_extension('fzf')
-  if enbale_key_mapping then
-    key_mapping()
-  end
+
+  key_mapping()
 
   vim.api.nvim_create_autocmd('FileType', {
     group = vim.api.nvim_create_augroup('telescope', { clear = true }),
@@ -55,17 +66,6 @@ function M.setup(enbale_key_mapping)
       -- end, 30)
     end
   })
-
-  -- make sure treesitter is loaded
-  vim.cmd("PackerLoad nvim-treesitter")
-end
-
-function M.visual_telescope(lf_cmd)
-  local search = require('lu5je0.core.visual').get_visual_selection_as_string()
-  search = string.gsub(search, "'", '')
-  search = string.gsub(search, '\n', '')
-
-  vim.cmd(':Leaderf ' .. lf_cmd .. " --input '" .. search .. "'")
 end
 
 return M
