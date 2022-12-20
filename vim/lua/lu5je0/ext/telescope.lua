@@ -10,20 +10,56 @@ function M.visual_telescope()
   print(search)
 end
 
+local no_preview_theme = function()
+  return require('telescope.themes').get_dropdown({
+    borderchars = {
+      { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
+      prompt = { "─", "│", " ", "│", '┌', '┐', "│", "│" },
+      results = { "─", "│", "─", "│", "├", "┤", "┘", "└" },
+      preview = { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
+    },
+    width = 0.8,
+    height = 50,
+    results_height = 50,
+    previewer = false,
+    prompt_title = false
+  })
+end
+
 local function key_mapping()
   local opts = { noremap = true, silent = true }
-  vim.keymap.set('n', '<leader>fC', require('telescope.builtin').colorscheme, opts)
-  vim.keymap.set('n', '<leader>fc', require('telescope.builtin').commands, opts)
-  vim.keymap.set('n', '<leader>ff', require('telescope.builtin').find_files, opts)
-  vim.keymap.set('n', '<leader>fg', require('telescope.builtin').resume, opts)
-  vim.keymap.set('n', '<leader>fr', require('telescope.builtin').live_grep, opts)
-  vim.keymap.set('n', '<leader>fb', require('telescope.builtin').buffers, opts)
-  vim.keymap.set('n', '<leader>fm', require('telescope.builtin').oldfiles, opts)
-  vim.keymap.set('n', '<leader>fh', require('telescope.builtin').help_tags, opts)
-  vim.keymap.set('n', '<leader>fl', require('telescope.builtin').current_buffer_fuzzy_find, opts)
-  vim.keymap.set('n', '<leader>fn', require('telescope.builtin').filetypes, opts)
+  vim.keymap.set('n', '<leader>fC', function()
+    require('telescope.builtin').colorscheme(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fc', function()
+    require('telescope.builtin').commands(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>ff', function()
+    require('telescope.builtin').find_files(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fg', function()
+    require('telescope.builtin').resume(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fr', function ()
+    require('telescope.builtin').live_grep(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fb', function()
+    require('telescope.builtin').buffers(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fm', function()
+    require('telescope.builtin').oldfiles(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fh', function()
+    require('telescope.builtin').help_tags(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fl', function()
+    require('telescope.builtin').current_buffer_fuzzy_find(no_preview_theme())
+  end, opts)
+  vim.keymap.set('n', '<leader>fn', function()
+    require('telescope.builtin').filetypes(no_preview_theme())
+  end, opts)
   vim.keymap.set('n', '<leader>fj', function()
-    require('telescope.builtin').find_files { search_dirs = { '~/junk-file' } }
+    require('telescope.builtin').find_files(vim.tbl_deep_extend("force", no_preview_theme(), { no_preview_theme, search_dirs = { '~/junk-file' } }))
   end, opts)
 
   vim.keymap.set('x', '<leader>fr', M.visual_telescope, opts)
@@ -36,6 +72,8 @@ function M.setup()
   telescope.setup {
     defaults = {
       path_display = { truncate = 2 },
+      layout_config = {
+      },
     },
   }
 

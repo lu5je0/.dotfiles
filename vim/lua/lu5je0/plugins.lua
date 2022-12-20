@@ -689,19 +689,6 @@ return packer.startup(function(use)
   }
 
   use {
-    'phaazon/hop.nvim',
-    branch = 'v2', -- optional but strongly recommended
-    config = function()
-      -- you can configure Hop the way you like here; see :h hop-config
-      require 'hop'.setup { keys = 'etovxqpdygfblzhckisuran' }
-      vim.keymap.set('n', '<space>', function()
-        vim.cmd("HopWord")
-      end)
-    end,
-    keys = { '<space>' }
-  }
-
-  use {
     'stevearc/profile.nvim',
     config = function() require('lu5je0.ext.profile') end,
     keys = { { 'n', '<S-F1>' } }
