@@ -10,8 +10,8 @@ function M.visual_telescope()
   print(search)
 end
 
-local no_preview_theme = function()
-  return require('telescope.themes').get_dropdown({
+local theme = function(preview)
+  local t = {
     borderchars = {
       { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
       prompt = { "─", "│", " ", "│", '┌', '┐', "│", "│" },
@@ -21,46 +21,51 @@ local no_preview_theme = function()
     width = 0.8,
     height = 50,
     results_height = 50,
-    previewer = false,
     prompt_title = false
-  })
+  }
+  if not preview then
+    t.previewer = false
+  end
+  local r = require('telescope.themes').get_dropdown(t)
+  r.layout_config.height = 20
+  return r
 end
 
 local function key_mapping()
   local opts = { noremap = true, silent = true }
   vim.keymap.set('n', '<leader>fC', function()
-    require('telescope.builtin').colorscheme(no_preview_theme())
+    require('telescope.builtin').colorscheme(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fc', function()
-    require('telescope.builtin').commands(no_preview_theme())
+    require('telescope.builtin').commands(theme())
   end, opts)
   vim.keymap.set('n', '<leader>ff', function()
-    require('telescope.builtin').find_files(no_preview_theme())
+    require('telescope.builtin').find_files(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fg', function()
-    require('telescope.builtin').resume(no_preview_theme())
+    require('telescope.builtin').resume(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fr', function()
-    require('telescope.builtin').live_grep()
+    require('telescope.builtin').live_grep(theme(true))
   end, opts)
   vim.keymap.set('n', '<leader>fb', function()
-    require('telescope.builtin').buffers(no_preview_theme())
+    require('telescope.builtin').buffers(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fm', function()
-    require('telescope.builtin').oldfiles(no_preview_theme())
+    require('telescope.builtin').oldfiles(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fh', function()
-    require('telescope.builtin').help_tags(no_preview_theme())
+    require('telescope.builtin').help_tags(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fl', function()
-    require('telescope.builtin').current_buffer_fuzzy_find(no_preview_theme())
+    require('telescope.builtin').current_buffer_fuzzy_find(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fn', function()
-    require('telescope.builtin').filetypes(no_preview_theme())
+    require('telescope.builtin').filetypes(theme())
   end, opts)
   vim.keymap.set('n', '<leader>fj', function()
-    require('telescope.builtin').find_files(vim.tbl_deep_extend("force", no_preview_theme(),
-      { no_preview_theme, search_dirs = { '~/junk-file' } }))
+    require('telescope.builtin').find_files(vim.tbl_deep_extend("force", theme(),
+      { theme, search_dirs = { '~/junk-file' } }))
   end, opts)
 
   vim.keymap.set('x', '<leader>fr', M.visual_telescope, opts)
@@ -80,39 +85,48 @@ function M.setup()
 
   key_mapping()
 
+  local group = vim.api.nvim_create_augroup('telescope', { clear = true })
+
   M.telescope_last_search = ''
+  vim.api.nvim_create_autocmd('BufLeave', {
+    group = group,
+    pattern = { '*' },
+    callback = function()
+      if vim.o.buftype == 'prompt' then
+        M.telescope_last_search = string.sub(vim.api.nvim_get_current_line(), 3, -1)
+      end
+    end
+  })
+
   vim.api.nvim_create_autocmd('FileType', {
-    group = vim.api.nvim_create_augroup('telescope', { clear = true }),
+    group = group,
     pattern = { 'TelescopePrompt' },
     callback = function()
-      local opts = { noremap = true, silent = true, buffer = true, desc = 'telescope' }
+      local opts = { noremap = true, silent = true, buffer = true, desc = 'telescope', nowait = true }
 
       if M.telescope_last_search ~= nil and M.telescope_last_search ~= "" then
         require('lu5je0.core.keys').feedkey(M.telescope_last_search)
-        require('lu5je0.core.keys').feedkey('<esc>viw<c-g>', 'n')
+        require('lu5je0.core.keys').feedkey('<esc>v$o^lloh<c-g>', 'n')
       end
 
-      vim.keymap.set('i', '<esc>', function()
-        M.telescope_last_search = string.sub(vim.api.nvim_get_current_line(), 3, -1)
-        require('telescope.actions').close(vim.api.nvim_win_get_buf(0))
+      local bufnr = vim.api.nvim_win_get_buf(0)
+      vim.keymap.set({ 'i', 'v' }, '<esc>', function()
+        require('telescope.actions').close(bufnr)
       end, opts)
 
-      vim.keymap.set('v', '<esc>', function()
-        M.telescope_last_search = string.sub(vim.api.nvim_get_current_line(), 3, -1)
-        require('telescope.actions').close(vim.api.nvim_win_get_buf(0))
+      vim.keymap.set({ 'v', 's' }, '<down>', function()
+        require('telescope.actions').move_selection_next(bufnr)
       end, opts)
 
-      vim.keymap.set('v', '<down>', function()
-        require('telescope.actions').move_selection_next(vim.api.nvim_win_get_buf(0))
+      vim.keymap.set({ 'v', 's' }, '<up>', function()
+        require('telescope.actions').move_selection_previous(bufnr)
       end, opts)
 
-      vim.keymap.set('v', '<up>', function()
-        require('telescope.actions').move_selection_previous(vim.api.nvim_win_get_buf(0))
+      vim.keymap.set({ 'v', 's' }, '<cr>', function()
+        require('telescope.actions').select_default(bufnr)
       end, opts)
-      
-      vim.keymap.set('v', '<backspace>', function()
-        require('lu5je0.core.keys').feedkey('<esc>viw<c-g>', 'n')
-      end, opts)
+
+      vim.keymap.set({ 'v', 's' }, '<bs>', '<c-g>c', opts)
     end
   })
 end

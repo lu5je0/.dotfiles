@@ -37,7 +37,8 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   pattern = '*',
   callback = function()
     local mode = vim.api.nvim_get_mode().mode
-    if mode == 's' then
+    -- telescope不变色
+    if mode == 's' and vim.o.buftype ~= 'prompt' then
       if vim.fn.has('wsl') == 1 then
         vim.cmd('hi Visual guibg=#D1D3CB guifg=#242424')
       else

@@ -677,9 +677,9 @@ return packer.startup(function(use)
         require("messages").setup {
           post_open_float = function(_)
             vim.cmd [[
-          au! BufLeave * ++once lua vim.cmd(":q")
-          set number
-          ]]
+            au! BufLeave * ++once lua vim.cmd(":q")
+            set number
+            ]]
             vim.fn.cursor { 99999, 0 }
           end
         }
