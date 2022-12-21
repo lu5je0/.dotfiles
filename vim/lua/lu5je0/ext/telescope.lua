@@ -21,7 +21,9 @@ local theme = function(preview)
     width = 0.8,
     height = 50,
     results_height = 50,
-    prompt_title = false
+    prompt_title = false,
+    results_title = false,
+    preview_title = false
   }
   if not preview then
     t.previewer = false
@@ -45,8 +47,12 @@ local function key_mapping()
   vim.keymap.set('n', '<leader>fg', function()
     require('telescope.builtin').resume(theme())
   end, opts)
-  vim.keymap.set('n', '<leader>fr', function()
+  vim.keymap.set('n', '<leader>fR', function()
     require('telescope.builtin').live_grep(theme(true))
+  end, opts)
+  vim.keymap.set('n', '<leader>fr', function()
+    require('telescope.builtin').grep_string(vim.tbl_deep_extend('force', theme(true),
+      { shorten_path = true, word_match = "-w", only_sort_text = true, search = '' }))
   end, opts)
   vim.keymap.set('n', '<leader>fb', function()
     require('telescope.builtin').buffers(theme())
@@ -127,6 +133,11 @@ function M.setup()
       end, opts)
 
       vim.keymap.set({ 'v', 's' }, '<bs>', '<c-g>c', opts)
+
+      vim.keymap.set({ 'i' }, '<c-c>', function()
+        require('lu5je0.core.keys').feedkey('<esc>', 'n')       
+      end, opts)
+      
     end
   })
 end

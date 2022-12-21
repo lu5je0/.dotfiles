@@ -59,7 +59,10 @@ return packer.startup(function(use)
 
   use 'nvim-lua/plenary.nvim'
 
-  use 'MunifTanjim/nui.nvim'
+  use {
+    'MunifTanjim/nui.nvim',
+    commit = '7427f979cc0dc991d8d177028e738463f17bcfcb'
+  }
 
   use 'tpope/vim-repeat'
 

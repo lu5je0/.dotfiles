@@ -11,8 +11,8 @@ M.preview = function(file_path)
   local popup_options = {
     enter = false,
     border = {
-      style = 'rounded',
-      highlight = 'FloatBorder',
+      style = 'single',
+      highlight = 'Fg',
       text = {
         top_align = 'left',
       },
