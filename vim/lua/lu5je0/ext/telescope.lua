@@ -1,16 +1,6 @@
 local M = {}
 
-function M.visual_telescope()
-  local search = require('lu5je0.core.visual').get_visual_selection_as_string()
-  search = string.gsub(search, "'", '')
-  search = string.gsub(search, '\n', '')
-
-  -- require('telescope.builtin').live_grep {}
-
-  print(search)
-end
-
-local theme = function(preview)
+local function theme(preview)
   local t = {
     borderchars = {
       { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
@@ -33,64 +23,48 @@ local theme = function(preview)
   return r
 end
 
-local function key_mapping()
-  local opts = { noremap = true, silent = true }
-  vim.keymap.set('n', '<leader>fC', function()
-    require('telescope.builtin').colorscheme(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fc', function()
-    require('telescope.builtin').commands(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>ff', function()
-    require('telescope.builtin').find_files(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fg', function()
-    require('telescope.builtin').resume(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fR', function()
-    require('telescope.builtin').live_grep(theme(true))
-  end, opts)
-  vim.keymap.set('n', '<leader>fr', function()
-    require('telescope.builtin').grep_string(vim.tbl_deep_extend('force', theme(true),
-      { shorten_path = true, word_match = "-w", only_sort_text = true, search = '' }))
-  end, opts)
-  vim.keymap.set('n', '<leader>fb', function()
-    require('telescope.builtin').buffers(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fm', function()
-    require('telescope.builtin').oldfiles(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fh', function()
-    require('telescope.builtin').help_tags(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fl', function()
-    require('telescope.builtin').current_buffer_fuzzy_find(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fn', function()
-    require('telescope.builtin').filetypes(theme())
-  end, opts)
-  vim.keymap.set('n', '<leader>fj', function()
-    require('telescope.builtin').find_files(vim.tbl_deep_extend("force", theme(),
-      { theme, search_dirs = { '~/junk-file' } }))
-  end, opts)
-
-  vim.keymap.set('x', '<leader>fr', M.visual_telescope, opts)
-  -- vim.keymap.set('n', '<leader>fa', require('telescope').extensions.project.project, opts)
-  -- vim.api.nvim_set_keymap('n', '<leader>fd', ':Telescope opener<cr>', opts)
+local function fuzzy_grep()
+  require('telescope.builtin').grep_string(vim.tbl_deep_extend('force', theme(true),
+    { shorten_path = true, word_match = "-w", only_sort_text = true, search = '' }))
 end
 
-function M.setup()
-  local telescope = require('telescope')
-  telescope.setup {
-    defaults = {
-      path_display = { truncate = 2 },
-      layout_config = {
-      },
-    },
-  }
+local function set_telescope_last_search_by_visual_selection()
+  local search = require('lu5je0.core.visual').get_visual_selection_as_string()
+  search = string.gsub(search, "'", '')
+  search = string.gsub(search, '\n', '')
 
-  key_mapping()
+  M.telescope_last_search = search
+end
 
+local function key_mapping()
+  local opts = { noremap = true, silent = true }
+
+  local set_map = function(lhs, fn)
+    vim.keymap.set('n', lhs, fn, opts)
+    vim.keymap.set('x', lhs, function()
+      set_telescope_last_search_by_visual_selection()
+      fn()
+    end, opts)
+  end
+
+  set_map('<leader>fC', function() require('telescope.builtin').colorscheme(theme()) end)
+  set_map('<leader>fc', function() require('telescope.builtin').commands(theme()) end)
+  set_map('<leader>ff', function() require('telescope.builtin').find_files(theme()) end)
+  set_map('<leader>fg', function() require('telescope.builtin').resume(theme()) end)
+  set_map('<leader>fR', function() require('telescope.builtin').live_grep(theme(true)) end)
+  set_map('<leader>fr', function() fuzzy_grep() end)
+  set_map('<leader>fb', function() require('telescope.builtin').buffers(theme()) end)
+  set_map('<leader>fm', function() require('telescope.builtin').oldfiles(theme()) end)
+  set_map('<leader>fh', function() require('telescope.builtin').help_tags(theme()) end)
+  set_map('<leader>fl', function() require('telescope.builtin').current_buffer_fuzzy_find(theme()) end)
+  set_map('<leader>fn', function() require('telescope.builtin').filetypes(theme()) end)
+  set_map('<leader>fj', function()
+    require('telescope.builtin').find_files(vim.tbl_deep_extend("force", theme(),
+      { theme, search_dirs = { '~/junk-file' } }))
+  end)
+end
+
+local function remember_last_search()
   local group = vim.api.nvim_create_augroup('telescope', { clear = true })
 
   M.telescope_last_search = ''
@@ -134,12 +108,29 @@ function M.setup()
 
       vim.keymap.set({ 'v', 's' }, '<bs>', '<c-g>c', opts)
 
-      vim.keymap.set({ 'i' }, '<c-c>', function()
-        require('lu5je0.core.keys').feedkey('<esc>', 'n')       
+      vim.keymap.set({ 's' }, '<c-c>', function()
+        require('lu5je0.core.keys').feedkey('<esc>a', 'n')
       end, opts)
-      
+
+      vim.keymap.set({ 'i', 'n' }, '<tab>', function()
+        require('lu5je0.core.keys').feedkey('<esc>', 'n')
+      end, opts)
     end
   })
+end
+
+function M.setup()
+  local telescope = require('telescope')
+  telescope.setup {
+    defaults = {
+      path_display = { truncate = 2 },
+      layout_config = {
+      },
+    },
+  }
+
+  key_mapping()
+  remember_last_search()
 end
 
 return M
