@@ -19,7 +19,7 @@ local function theme(preview)
     t.previewer = false
   end
   local r = require('telescope.themes').get_dropdown(t)
-  r.layout_config.height = 20
+  r.layout_config.height = 23
   return r
 end
 

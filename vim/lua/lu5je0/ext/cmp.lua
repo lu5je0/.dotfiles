@@ -112,7 +112,7 @@ end
 local function truncate(label)
   local ELLIPSIS_CHAR = '…'
   local MAX_LABEL_WIDTH = 25
-  local MIN_LABEL_WIDTH = 25
+  local MIN_LABEL_WIDTH = 0
 
   local truncated_label = vim.fn.strcharpart(label, 0, MAX_LABEL_WIDTH)
 
@@ -164,7 +164,7 @@ cmp.setup {
     end,
   },
   performance = {
-    debounce = 40,
+    debounce = 25,
   },
   completion = {
     completeopt = 'menu,menuone,noinsert',
