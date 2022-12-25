@@ -1,6 +1,8 @@
+local M = {}
+
 local GROUP_NAME = 'clipboard_event_group'
 
-local function read_clipboard()
+function M.read_clipboard()
   local r = nil
   if vim.g.clipboard and vim.g.clipboard.paste then
     local cmd = ''
@@ -14,12 +16,10 @@ local function read_clipboard()
   end
 end
 
-local function write_to_clipboard()
+function M.write_to_clipboard()
   ---@diagnostic disable-next-line: missing-parameter
   vim.fn.setreg('*', vim.fn.getreg('"'))
 end
-
-vim.defer_fn(read_clipboard, 10)
 
 local function create_autocmd()
   local group = vim.api.nvim_create_augroup(GROUP_NAME, { clear = true })
@@ -28,7 +28,16 @@ local function create_autocmd()
     group = group,
     pattern = { '*' },
     callback = function()
-      read_clipboard()
+      M.read_clipboard()
+    end
+  })
+  
+  -- telescope
+  vim.api.nvim_create_autocmd("FileType", {
+    group = group,
+    pattern = { 'TelescopePrompt' },
+    callback = function()
+      M.write_to_clipboard()
     end
   })
 
@@ -37,7 +46,7 @@ local function create_autocmd()
     pattern = { '*' },
     callback = function()
       vim.defer_fn(function()
-        write_to_clipboard()
+        M.write_to_clipboard()
       end, 0)
     end
   })
@@ -47,17 +56,28 @@ local function clear_autocmd()
   vim.api.nvim_create_augroup(GROUP_NAME, { clear = true })
 end
 
-local autocmd_created = true
-vim.api.nvim_create_user_command('ClipboardAutocmdToggle', function()
-  if autocmd_created then
-    clear_autocmd()
-    print('The clipboard autocmd has cleared')
-  else
-    create_autocmd()
-    print('The clipboard autocmd has started')
-  end
-  autocmd_created = not autocmd_created
-end, { force = true })
+local function create_user_command()
+  local autocmd_created = true
+  vim.api.nvim_create_user_command('ClipboardAutocmdToggle', function()
+    if autocmd_created then
+      clear_autocmd()
+      print('The clipboard autocmd has cleared')
+    else
+      create_autocmd()
+      print('The clipboard autocmd has started')
+    end
+    autocmd_created = not autocmd_created
+  end, { force = true })
+end
 
--- 默认启用
-create_autocmd()
+M.setup = function()
+  vim.defer_fn(M.read_clipboard, 10)
+
+  -- 默认启用
+  create_autocmd()
+  
+  -- 创建toggle命令
+  create_user_command()
+end
+
+return M
