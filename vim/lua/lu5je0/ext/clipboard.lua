@@ -71,6 +71,11 @@ local function create_user_command()
 end
 
 M.setup = function()
+  if os.getenv('TERMINAL_EMULATOR') == 'JetBrains-JediTerm' then
+    vim.o.clipboard = 'unnamedplus'
+    return
+  end
+  
   vim.defer_fn(M.read_clipboard, 10)
 
   -- 默认启用

@@ -31,7 +31,7 @@ M.get_im_switcher = function()
           return
         end
         ---@diagnostic disable-next-line: undefined-field
-        xkb_switch_lib.Xkb_Switch_setXkbLayout(im_code)
+        pcall(xkb_switch_lib.Xkb_Switch_setXkbLayout, im_code)
       end,
       -- switch_to_ime_macism_dylib = function(im_code)
       --   macism.switch_ime(im_code)
@@ -43,7 +43,11 @@ M.get_im_switcher = function()
       end,
       get_ime = function()
         ---@diagnostic disable-next-line: undefined-field
-        return ffi.string(xkb_switch_lib.Xkb_Switch_getXkbLayout())
+        local ok, ime = pcall(xkb_switch_lib.Xkb_Switch_getXkbLayout)
+        if ok then
+          return ffi.string(ime)
+        end
+        return ABC_IM_SOURCE_CODE
       end
     }
   end)()
