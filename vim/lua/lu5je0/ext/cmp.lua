@@ -132,9 +132,7 @@ local format = function(entry, vim_item)
     buffer = '[B]',
     nvim_lsp = '[L]',
     ultisnips = '[U]',
-    luasnip = '[LuaSnip]',
-    nvim_lua = '[Lua]',
-    latex_symbols = '[LaTeX]',
+    luasnip = '[S]',
   })[entry.source.name]
 
   return vim_item

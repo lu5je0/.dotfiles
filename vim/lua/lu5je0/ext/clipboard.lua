@@ -37,11 +37,13 @@ local function create_autocmd()
     group = group,
     pattern = { 'TelescopePrompt' },
     callback = function()
-      M.write_to_clipboard()
+      if vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1 then
+        M.write_to_clipboard()
+      end
     end
   })
 
-  vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter' }, {
+  vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter', 'QuitPre' }, {
     group = group,
     pattern = { '*' },
     callback = function()
@@ -71,6 +73,11 @@ local function create_user_command()
 end
 
 M.setup = function()
+  if os.getenv('TERMINAL_EMULATOR') == 'JetBrains-JediTerm' then
+    vim.o.clipboard = 'unnamedplus'
+    return
+  end
+  
   vim.defer_fn(M.read_clipboard, 10)
 
   -- 默认启用
