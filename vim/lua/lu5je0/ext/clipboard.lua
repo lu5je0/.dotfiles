@@ -37,7 +37,9 @@ local function create_autocmd()
     group = group,
     pattern = { 'TelescopePrompt' },
     callback = function()
-      M.write_to_clipboard()
+      if vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1 then
+        M.write_to_clipboard()
+      end
     end
   })
 
