@@ -13,7 +13,7 @@ local function replace(mode)
     pattern = require('lu5je0.core.visual').get_visual_selection_as_string()
   end
 
-  vim.ui.input({ prompt = string.format('Replace "%s" with: ', pattern) }, function(repl)
+  vim.ui.input({ prompt = string.format('Replace "%s" with: ', pattern), default = pattern }, function(repl)
     if repl == nil or repl == '' then
       return
     end
