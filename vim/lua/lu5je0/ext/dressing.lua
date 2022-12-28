@@ -73,6 +73,6 @@ vim.api.nvim_create_autocmd('FileType', {
   callback = function()
     vim.keymap.del('i', '<esc>', { buffer = true })
     require('lu5je0.core.keys').feedkey('$')
-    vim.cmd('set winhighlight=NormalFloat:Normal,FloatBorder:Grey')
+    vim.cmd('set winhighlight=NormalFloat:Normal,FloatBorder:Comment')
   end,
 })
