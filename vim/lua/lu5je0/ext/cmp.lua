@@ -162,7 +162,7 @@ cmp.setup {
     end,
   },
   performance = {
-    debounce = 25,
+    -- debounce = 25,
   },
   completion = {
     completeopt = 'menu,menuone,noinsert',

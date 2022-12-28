@@ -697,6 +697,23 @@ return packer.startup(function(use)
     keys = { { 'n', '<S-F1>' } }
   }
 
+  batch_use {
+    function()
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.ui.input = function(...)
+        vim.cmd("PackerLoad dressing.nvim")
+        return vim.ui.input(...)
+      end
+    end,
+    {
+      'stevearc/dressing.nvim',
+      config = function()
+        require('lu5je0.ext.dressing')
+      end,
+      opt = true
+    }
+  }
+
   -- use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
 
   -- use {
