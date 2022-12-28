@@ -41,7 +41,7 @@ local function create_autocmd()
     end
   })
 
-  vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter' }, {
+  vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter', 'QuitPre' }, {
     group = group,
     pattern = { '*' },
     callback = function()
