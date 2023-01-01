@@ -383,16 +383,4 @@ ins_right {
   padding = { left = 0, right = 1 },
 }
 
--- tmux status
-ins_right({
-  function()
-    return ''
-  end,
-  cond = function()
-    return os.getenv('TMUX') ~= nil
-  end,
-  color = { fg = colors.white },
-  padding = { left = 0, right = 1 },
-})
-
 lualine.setup(config)
