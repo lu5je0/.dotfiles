@@ -4,6 +4,7 @@ local M = {}
 local lib = require('nvim-tree.lib')
 local keys_helper = require('lu5je0.core.keys')
 local api = require('nvim-tree.api')
+local log = require('lu5je0.core.log')
 
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
@@ -221,6 +222,29 @@ function M.reduce_width(w)
   vim.cmd('NvimTreeResize ' .. (width - w))
 end
 
+local recursion_limit = 20
+function M.target_git_item_reveal_to_file(action, recursion_count)
+  recursion_count = recursion_count or 0
+  if recursion_count > recursion_limit then
+    return
+  end
+  
+  local old_node = api.tree.get_node_under_cursor()
+  require 'nvim-tree.actions.dispatch'.dispatch(action)
+  local node = api.tree.get_node_under_cursor()
+  if node == old_node and node.git_status and node.git_status.dir and next(node.git_status.dir) == nil then
+    return
+  end
+  
+  if node.type == 'directory' then
+    if not node.open and node.git_status and node.git_status.dir and next(node.git_status.dir) ~= nil then
+      require 'nvim-tree.actions.dispatch'.dispatch('edit')
+    end
+    M.target_git_item_reveal_to_file(action, recursion_count + 1)
+  end
+  vim.cmd('norm zz')
+end
+
 function M.setup()
   vim.cmd([[
     hi NvimTreeFolderName guifg=#e5c07b
@@ -277,8 +301,8 @@ function M.setup()
     { key = 's', action = 'vsplit' },
     { key = 'v', action = 'split' },
     { key = 'S', action = 'search_node' },
-    -- { key = 'K', action = 'first_sibling' },
-    -- { key = 'J', action = 'last_sibling' },
+    { key = '[f', action = 'first_sibling' },
+    { key = ']f', action = 'last_sibling' },
     { key = '<', action = 'prev_sibling' },
     { key = '>', action = 'next_sibling' },
     -- { key = 'f', cb = ":lua require('lu5je0.ext.nvimtree').file_info()<cr>" },
@@ -296,8 +320,18 @@ function M.setup()
     { key = 'yn', action = 'copy_name' },
     { key = 'yP', action = 'copy_path' },
     { key = 'yp', action = 'copy_absolute_path' },
-    { key = '[g', action = 'prev_git_item' },
-    { key = ']g', action = 'next_git_item' },
+    -- { key = '[g', action = 'prev_git_item' },
+    -- { key = ']g', action = 'next_git_item' },
+    { key = '[g', action = 'prev_git_item_reveal_to_file',
+      action_cb = function()
+        M.target_git_item_reveal_to_file('prev_git_item')
+      end
+    },
+    { key = ']g', action = 'next_git_item_reveal_to_file',
+      action_cb = function()
+        M.target_git_item_reveal_to_file('next_git_item')
+      end
+    },
     { key = 'u', action = 'dir_up' },
     { key = 'o', action = 'system_open' },
     { key = 'q', action = 'close' },
@@ -428,7 +462,7 @@ function M.setup()
       keys_helper.feedkey('<c-w>p')
     end
   end, 0)
-  
+
   -- 关闭wsl executable检测，性能太低了
   require('nvim-tree.utils').is_wsl_windows_fs_exe = function() return false end
 end
