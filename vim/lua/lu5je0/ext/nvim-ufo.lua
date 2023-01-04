@@ -1,12 +1,14 @@
 local parsers = require('nvim-treesitter.parsers')
 local string_utils = require('lu5je0.lang.string-util')
+local render = require('ufo.render')
 
 local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
   local newVirtText = {}
 
   -- 获取下一行，并移除首尾空格
   local next_line = string_utils.trim(vim.fn.getline(endLnum))
-  local suffix = (' … %s  %d '):format(next_line, endLnum - lnum)
+  -- todo 冗余
+  local suffix = (' … %s  %d'):format(next_line, endLnum - lnum)
 
   -- local suffix = ('  %d '):format(endLnum - lnum)
   local sufWidth = vim.fn.strdisplaywidth(suffix)
@@ -31,7 +33,21 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
     curWidth = curWidth + chunkWidth
   end
   
-  table.insert(newVirtText, { suffix, 'TSPunctBracket' })
+  local suffix_list = suffix:split('')
+  table.insert(newVirtText, { ' … ', 'TSPunctBracket' })
+  
+  local nss = {}
+  for _, ns in pairs(vim.api.nvim_get_namespaces()) do
+    table.insert(nss, ns)
+  end
+  local end_line_virt_text = render.captureVirtText(1, vim.fn.getline(endLnum), endLnum, nil, nss)
+  for _, v in ipairs(end_line_virt_text) do
+    if not string_utils.is_blank(v[1]) then
+      table.insert(newVirtText, v)
+    end
+  end
+  
+  table.insert(newVirtText, { ' ' .. suffix_list[2], 'MoreMsg' })
   return newVirtText
 end
 
