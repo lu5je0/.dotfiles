@@ -11,14 +11,6 @@ function string:split(delimiter)
   return result
 end
 
-function table:remove_by_value(v)
-  for i, item in ipairs(self) do
-    if item == v then
-      table.remove(self, i)
-    end
-  end
-end
-
 function table:contain(value)
   if self and type(self) == 'table' and value then
     for _, v in ipairs(self) do
@@ -45,5 +37,3 @@ vim.fn.has = function(feature)
   
   return r
 end
-
-_G.log = require('plenary.log')
