@@ -16,4 +16,8 @@ M.trim = function(s)
   return s:match"^%s*(.*)":match"(.-)%s*$"
 end
 
+M.starts_with = function(a, b)
+  return string.sub(a, 1, string.len(b)) == b
+end
+
 return M

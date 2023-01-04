@@ -5,6 +5,7 @@ local lib = require('nvim-tree.lib')
 local keys_helper = require('lu5je0.core.keys')
 local api = require('nvim-tree.api')
 local log = require('lu5je0.core.log')
+local string_utils = require('lu5je0.lang.string-utils')
 
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
@@ -30,7 +31,7 @@ function M.locate_file()
     turn_on_hidden_filter()
   end
 
-  if not string.startswith(cur_file_dir_path, cwd) then
+  if not string_utils.starts_with(cur_file_dir_path, cwd) then
     vim.cmd(':cd ' .. cur_file_dir_path)
   else
     -- check if file in dotdir
