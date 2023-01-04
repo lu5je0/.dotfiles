@@ -18,11 +18,11 @@ local function theme(preview)
   if not preview then
     t.previewer = false
   end
-  
+
   local dropdown = require('telescope.themes').get_dropdown(t)
   ---@diagnostic disable-next-line: assign-type-mismatch
   dropdown.layout_config.height = 23
-  
+
   return dropdown
 end
 
@@ -115,11 +115,11 @@ local function remember_last_search()
       vim.keymap.set({ 's' }, '<c-c>', function()
         require('lu5je0.core.keys').feedkey('<esc>', 'n')
       end, opts)
-      
+
       vim.keymap.set({ 'i' }, '<c-c>', function()
         require('lu5je0.core.keys').feedkey('<esc>', 'n')
       end, opts)
-      
+
       vim.keymap.set({ 'n' }, 'H', '^', opts)
       vim.keymap.set({ 'n' }, 'L', '$', opts)
 
@@ -135,8 +135,7 @@ function M.setup()
   telescope.setup {
     defaults = {
       path_display = { truncate = 2 },
-      layout_config = {
-      },
+      layout_config = {},
     },
   }
 

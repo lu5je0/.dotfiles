@@ -1,10 +1,14 @@
 local parsers = require('nvim-treesitter.parsers')
-local keys = require('lu5je0.core.keys')
+local string_utils = require('lu5je0.lang.string-util')
 
 local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
   local newVirtText = {}
-  -- local suffix = (' … %s  %d '):format(vim.fn.getline(endLnum), endLnum - lnum)
-  local suffix = ('  %d '):format(endLnum - lnum)
+
+  -- 获取下一行，并移除首尾空格
+  local next_line = string_utils.trim(vim.fn.getline(endLnum))
+  local suffix = (' … %s  %d '):format(next_line, endLnum - lnum)
+
+  -- local suffix = ('  %d '):format(endLnum - lnum)
   local sufWidth = vim.fn.strdisplaywidth(suffix)
   local targetWidth = width - sufWidth
   local curWidth = 0
@@ -26,7 +30,8 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
     end
     curWidth = curWidth + chunkWidth
   end
-  table.insert(newVirtText, { suffix, 'MoreMsg' })
+  
+  table.insert(newVirtText, { suffix, 'TSPunctBracket' })
   return newVirtText
 end
 
@@ -80,7 +85,7 @@ require('ufo').setup({
   fold_virt_text_handler = fold_virt_text_handler
 })
 
--- local group = vim.api.nvim_create_augroup('illuminate', { clear = true })
+-- local group = vim.api.nvim_create_augroup('nvim-ufo', { clear = true })
 -- vim.api.nvim_create_autocmd("LspAttach", {
 --   group = group,
 --   ---@diagnostic disable-next-line: unused-local
