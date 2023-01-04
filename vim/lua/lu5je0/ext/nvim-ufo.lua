@@ -1,5 +1,5 @@
 local parsers = require('nvim-treesitter.parsers')
-local string_utils = require('lu5je0.lang.string-util')
+local string_utils = require('lu5je0.lang.string-utils')
 local render = require('ufo.render')
 
 local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
