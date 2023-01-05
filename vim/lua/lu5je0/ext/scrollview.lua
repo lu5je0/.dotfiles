@@ -42,8 +42,7 @@ M.begin_timer = function()
   end
 
   local scroll_view_group = vim.api.nvim_create_augroup('scroll_view_group', { clear = true })
-  -- vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'BufWinEnter', 'FocusGained', 'CursorMoved', 'VimResized' }, {
-  vim.api.nvim_create_autocmd({ 'WinScrolled', 'FileReadPost', 'CmdwinLeave' }, {
+  vim.api.nvim_create_autocmd({ 'WinScrolled', 'FileReadPost', 'CmdwinLeave', 'WinEnter' }, {
     group = scroll_view_group,
     pattern = { '*' },
     callback = show,

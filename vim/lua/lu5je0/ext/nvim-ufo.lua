@@ -40,7 +40,7 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
   for _, ns in pairs(vim.api.nvim_get_namespaces()) do
     table.insert(nss, ns)
   end
-  local end_line_virt_text = render.captureVirtText(1, vim.fn.getline(endLnum), endLnum, nil, nss)
+  local end_line_virt_text = render.captureVirtText(vim.api.nvim_get_current_buf(), vim.fn.getline(endLnum), endLnum, nil, nss)
   for _, v in ipairs(end_line_virt_text) do
     if not string_utils.is_blank(v[1]) then
       table.insert(newVirtText, v)
