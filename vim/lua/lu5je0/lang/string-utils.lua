@@ -16,8 +16,16 @@ M.trim = function(s)
   return s:match"^%s*(.*)":match"(.-)%s*$"
 end
 
-M.starts_with = function(a, b)
-  return string.sub(a, 1, string.len(b)) == b
+M.starts_with = function(str, prefix)
+  return string.sub(str, 1, string.len(prefix)) == prefix
+end
+
+M.ends_with = function(str, suffix)
+  return suffix == "" or str:sub(-#suffix) ==suffix
+end
+
+M.contains = function(old, new)
+  return old:find(new) ~= nil
 end
 
 return M
