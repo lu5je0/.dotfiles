@@ -41,10 +41,18 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
     table.insert(nss, ns)
   end
   local end_line_virt_text = render.captureVirtText(vim.api.nvim_get_current_buf(), vim.fn.getline(endLnum), endLnum, nil, nss)
+  
+  -- 移除前导空格
+  local encounter_text = false
   for _, v in ipairs(end_line_virt_text) do
-    if not string_utils.is_blank(v[1]) then
-      table.insert(newVirtText, v)
+    if not encounter_text and string_utils.is_blank(v[1]) then
+      goto continue
     end
+    
+    table.insert(newVirtText, v)
+    encounter_text = true
+    
+    ::continue::
   end
   
   table.insert(newVirtText, { ' ' .. suffix_list[2], 'MoreMsg' })
