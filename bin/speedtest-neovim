@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd /tmp
+git clone https://github.com/neovim/neovim.git
+rm -rf /tmp/neovim
