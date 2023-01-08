@@ -18,13 +18,54 @@ local m = extras.m
 local l = extras.l
 local postfix = require "luasnip.extras.postfix".postfix
 
-ls.add_snippets("markdown", {
-  postfix({ trig = "%dtable", match_pattern = "%dtable$" }, {
-    f(function(_, parent)
-      return "hhhhh"
-    end, {})
+local python_postfix_snippets = (function()
+  -- python
+  ls.add_snippets('python', {
+    postfix({ trig = ".var", match_pattern = "^[\t ]*(.+)$" }, {
+      i(1, ""), t(" = "),
+      f(function(_, parent)
+        return parent.snippet.env.POSTFIX_MATCH
+      end, {}),
+    })
   })
-})
+
+  ls.add_snippets('python', {
+    postfix({ trig = ".arg", match_pattern = "^[\t ]*(.+)$" }, {
+      i(1, ""),
+      t("("),
+      f(function(_, parent)
+        return parent.snippet.env.POSTFIX_MATCH
+      end, {}),
+      t(")"),
+    })
+  })
+
+  ls.add_snippets('python', {
+    postfix({ trig = '.fori', match_pattern = '^[\t ]*(%d+)$' }, {
+      f(function(_, parent)
+        return ('for i in range(%s):'):format(parent.snippet.env.POSTFIX_MATCH)
+      end, {}), t({'', ''}),
+      t('    '), i(''), t(''),
+    })
+  })
+end)()
+
+-- ls.add_snippets('lua', {
+--   postfix({ trig = '.fori', match_pattern = '^[\t ]*(%d+)$' }, {
+--     f(function(_, parent)
+--       return ('for i = 1, %d, 1 do'):format(parent.snippet.env.POSTFIX_MATCH)
+--     end, {}), t({'', ''}),
+--     t('  '), i(''), t({'', 'end'}),
+--   })
+-- })
+
+-- ls.add_snippets("markdown", {
+--   postfix({ trig = "%dtable", match_pattern = "%dtable$" }, {
+--     f(function(_, parent)
+--       return "hhhhh"
+--     end, {})
+--   })
+-- })
 
 --
 -- ls.add_snippets("all", {
@@ -38,42 +79,12 @@ ls.add_snippets("markdown", {
 --   })
 -- })
 --
-ls.add_snippets("lua", {
-  postfix({ trig = ".local", match_pattern = "^ +(.+)$" }, {
-    t("local "), i(1, ""), t(" = "),
-    f(function(_, parent)
-      return parent.snippet.env.POSTFIX_MATCH
-    end, {}),
-  })
-})
---
---
--- -- for i = 1, 10, 1 do
--- --
--- -- end
--- ls.add_snippets("all", {
---   postfix({ trig = ".fori", match_pattern = " %d+$" }, {
---     f(function(_, parent)
---       return ("for i = 1, %d, 1 do"):format(parent.snippet.env.POSTFIX_MATCH)
---     end, {}), t(""),
---     t("  "), i(""), t(""),
---     t("end"),
---   })
--- })
-
--- ls.add_snippets("python", {
---   postfix({ trig = ".varr", match_pattern = "^ +(.+)$" }, {
---     i(1, ""), t(" = "),
+-- ls.add_snippets("lua", {
+--   postfix({ trig = ".local", match_pattern = "^ +(.+)$" }, {
+--     t("local "), i(1, ""), t(" = "),
 --     f(function(_, parent)
 --       return parent.snippet.env.POSTFIX_MATCH
 --     end, {}),
---   })
--- })
-
--- ls.add_snippets("all", {
---   s("ternary", {
---     -- equivalent to "${1:cond} ? ${2:then} : ${3:else}"
---     i(1, "cond"), t(" ? "), i(2, "then"), t(" : "), i(3, "else")
 --   })
 -- })
 

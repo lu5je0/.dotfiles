@@ -24,7 +24,7 @@ end
 
 M.setup = function()
   keymap()
-  -- require('lu5je0.ext.luasnips.snippets')
+  require('lu5je0.ext.luasnips.snippets')
 end
 
 
