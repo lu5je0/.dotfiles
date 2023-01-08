@@ -1,5 +1,6 @@
 local cmp = require('cmp')
 local keys_helper = require('lu5je0.core.keys')
+local string_utils = require('lu5je0.lang.string-utils')
 
 local indent_change_items = {
   'endif',
@@ -187,8 +188,15 @@ cmp.setup {
   },
   sources = cmp.config.sources {
     { name = 'nvim_lsp', },
-    { name = 'luasnip', },
-    -- { name = 'vsnip' },
+    {
+      name = 'luasnip',
+      entry_filter = function(entry, ctx)
+        if string_utils.starts_with(entry.completion_item.label, '.') then
+          return string_utils.contains(ctx.cursor_before_line, '%.')
+        end
+        return true
+      end,
+    },
     { name = 'path' },
     { name = 'buffer' },
   },
