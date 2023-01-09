@@ -167,6 +167,12 @@ nmap ]g <Action>(VcsShowNextChangeMarker)
 nmap [e :action GotoPreviousError<CR>
 nmap ]e :action GotoNextError<CR>
 
+" templates
+vnoremap <c-j> <c-o><left>:action NextTemplateVariable<cr>i
+inoremap <c-j> <c-o>:action NextTemplateVariable<cr>
+" vnoremap <c-k> <c-o><left>:action NextTemplateVariable<cr>i
+inoremap <c-k> <c-o>:action PreviousTemplateVariable<cr>
+
 imap <c-n> <Action>(CodeCompletion)
 
 let g:NERDTreeMapActivateNode='l'
