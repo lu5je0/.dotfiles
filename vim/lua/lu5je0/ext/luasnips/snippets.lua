@@ -48,6 +48,16 @@ local python_postfix_snippets = (function()
       t('    '), i(''), t(''),
     })
   })
+  
+  ls.add_snippets('python', {
+    postfix({ trig = ".if", match_pattern = "^[\t ]*(.+)$" }, {
+      t("if "),
+      f(function(_, parent)
+        return parent.snippet.env.POSTFIX_MATCH
+      end, {}),t({':', ''}),
+      t('    '), i(1, ""),
+    })
+  })
 end)()
 
 -- ls.add_snippets('lua', {
