@@ -102,8 +102,6 @@ local function comfirm(fallback)
     end
   elseif require('lu5je0.ext.luasnip').jump_next_able() then -- luasnip
     require('luasnip').jump(1)
-    -- elseif vim.fn['vsnip#jumpable'](1) == 1 then -- vsnip
-    --   keys_helper.feedkey('<Plug>(vsnip-jump-next)')
   else
     fallback()
     keys_helper.feedkey('<space><bs>')
@@ -183,8 +181,8 @@ cmp.setup {
     end, { 'i', --[[ 'c' ]] }),
     ['<down>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
     ['<up>'] = cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select },
-    ['<cr>'] = cmp.mapping(comfirm, { 'i' }),
-    ['<tab>'] = cmp.mapping(comfirm, { 'i' }),
+    ['<cr>'] = cmp.mapping(comfirm, { 'i', 's' }),
+    ['<tab>'] = cmp.mapping(comfirm, { 'i', 's' }),
   },
   sources = cmp.config.sources {
     { name = 'nvim_lsp', },

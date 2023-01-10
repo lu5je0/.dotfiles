@@ -3,15 +3,16 @@ local M = {}
 local GROUP_NAME = 'clipboard_event_group'
 
 function M.read_clipboard()
-  local r = nil
   if vim.g.clipboard and vim.g.clipboard.paste then
     local cmd = ''
     for _, v in ipairs(vim.g.clipboard.paste['*']) do
       cmd = cmd .. v .. ' '
     end
-    r = io.popen(cmd)
-    if r then
+    local ok, r = pcall(io.popen, cmd)
+    if ok and r then
       vim.fn.setreg('"', r:read("*a"))
+    else
+      print('read clipboard fail', r)
     end
   end
 end
