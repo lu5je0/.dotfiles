@@ -573,7 +573,7 @@ return packer.startup(function(use)
     --   cmd = 'Neotree'
     -- },
     {
-      'nvim-tree/nvim-tree.lua',
+      'kyazdani42/nvim-tree.lua',
       requires = 'kyazdani42/nvim-web-devicons',
       keys = { '<leader>e', '<leader>fe' },
       -- on_compile = function()
