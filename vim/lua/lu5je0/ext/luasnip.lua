@@ -36,6 +36,8 @@ local function keymap()
       if luasnip.jumpable() then
         luasnip.jump(1)
         cmp_hotfix()
+      else
+        keys.feedkey(lhs, 'n')
       end
     end, opts)
   end
