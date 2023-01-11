@@ -19,13 +19,22 @@ local l = extras.l
 local postfix = require "luasnip.extras.postfix".postfix
 
 local python_postfix_snippets = (function()
-  -- python
   ls.add_snippets('python', {
     postfix({ trig = ".var", match_pattern = "^[\t ]*(.+)$" }, {
       i(1, ""), t(" = "),
       f(function(_, parent)
         return parent.snippet.env.POSTFIX_MATCH
       end, {}),
+    })
+  })
+  
+  ls.add_snippets('python', {
+    postfix({ trig = ".par", match_pattern = "^[\t ]*(.+)$" }, {
+      t('('),
+      f(function(_, parent)
+        return parent.snippet.env.POSTFIX_MATCH
+      end, {}),
+      t(')'), i(1, '')
     })
   })
 

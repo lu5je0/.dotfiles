@@ -196,9 +196,13 @@ cmp.setup {
         end
         return true
       end,
+      keyword_length = 2
     },
     { name = 'path' },
-    { name = 'buffer' },
+    {
+      name = 'buffer',
+      keyword_length = 2
+    },
   },
 }
 
