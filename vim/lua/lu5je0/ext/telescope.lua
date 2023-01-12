@@ -89,7 +89,7 @@ local function remember_last_search()
       local opts = { noremap = true, silent = true, buffer = true, desc = 'telescope', nowait = true }
 
       if M.telescope_last_search ~= nil and M.telescope_last_search ~= "" then
-        require('lu5je0.core.keys').feedkey(M.telescope_last_search)
+        vim.api.nvim_feedkeys(M.telescope_last_search, '', false)
         require('lu5je0.core.keys').feedkey('<esc>v$o^lloh<c-g>', 'n')
       end
 
