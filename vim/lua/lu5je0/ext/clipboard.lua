@@ -8,7 +8,7 @@ function M.read_clipboard()
     for _, v in ipairs(vim.g.clipboard.paste['*']) do
       cmd = cmd .. v .. ' '
     end
-    local ok, r = pcall(io.popen, cmd)
+    local ok, r = pcall(io.popen, cmd .. ' 2>/dev/null')
     if ok and r then
       vim.fn.setreg('"', r:read("*a"))
     else
