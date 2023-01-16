@@ -57,7 +57,9 @@ function _G.__statuscolumn_gitsign_bar()
 
   local bar = ' '
   if hl == 'GitSignsDelete' then
-    bar = '_'
+    bar = '▁'
+  elseif hl == 'GitSignsTopdelete' then
+    bar = '▔'
   elseif hl ~= 'NonText' then
     bar = '▎'
   end
