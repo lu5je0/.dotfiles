@@ -97,9 +97,18 @@ vim.api.nvim_create_autocmd({ 'BufAdd', 'BufEnter', 'BufRead' }, {
   group = vim.api.nvim_create_augroup('gitsign_bar_group', { clear = true }),
   pattern = '*',
   callback = function()
-    if not vim.api.nvim_buf_get_option(0, 'modifiable') then
+    if not vim.bo.modifiable then
       return
     end
+    
+    if not vim.bo.buflisted then
+      return
+    end
+    
+    if vim.fn.getcmdwintype() ~= '' then
+      return
+    end
+    
     if vim.bo.buftype ~= "" then
       return
     end
