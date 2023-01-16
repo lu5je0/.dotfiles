@@ -117,6 +117,7 @@ end
 
 function M.create_dir()
   local origin_input = vim.ui.input
+  --- @diagnostic disable-next-line: duplicate-set-field
   vim.ui.input = function(input_opts, fn)
     local origin_fn = fn
     input_opts.prompt = 'Create Directory '
@@ -229,14 +230,14 @@ function M.target_git_item_reveal_to_file(action, recursion_count)
   if recursion_count > recursion_limit then
     return
   end
-  
+
   local old_node = api.tree.get_node_under_cursor()
   require 'nvim-tree.actions.dispatch'.dispatch(action)
   local node = api.tree.get_node_under_cursor()
   if node == old_node and node.git_status and node.git_status.dir and next(node.git_status.dir) == nil then
     return
   end
-  
+
   if node.type == 'directory' then
     if not node.open and node.git_status and node.git_status.dir and next(node.git_status.dir) ~= nil then
       require 'nvim-tree.actions.dispatch'.dispatch('edit')

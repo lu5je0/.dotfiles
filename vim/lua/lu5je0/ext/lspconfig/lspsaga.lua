@@ -17,7 +17,7 @@ local function init()
 end
 
 local function find_definition()
-  ---@diagnostic disable-next-line: missing-parameter
+  --- @diagnostic disable-next-line: missing-parameter
   local params = vim.lsp.util.make_position_params()
   vim.lsp.buf_request_all(0, 'textDocument/definition', params, function(results)
     for _, res in pairs(results or {}) do
