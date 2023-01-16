@@ -46,7 +46,7 @@ function _G.gitsign_bar()
   if hl == 'GitSignsDelete' then
     bar = '_'
   elseif hl ~= 'NonText' then
-    bar = '│'
+    bar = '▎'
   end
   
   local lnum = vim.v.lnum
