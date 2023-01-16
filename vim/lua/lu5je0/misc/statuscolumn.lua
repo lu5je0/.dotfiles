@@ -1,8 +1,10 @@
+local string_utils = require('lu5je0.lang.string-utils')
+
 local function get_ln_gitsign(bufnr)
   local lnum = vim.v.lnum
 
   local cur_sign = vim.fn.sign_getplaced(bufnr, {
-    group = "gitsigns_vimfn_signs_",
+    group = '*',
     lnum = lnum
   })
 
@@ -22,13 +24,13 @@ local function get_ln_gitsign(bufnr)
     return nil
   end
 
-  cur_sign = cur_sign[1]
-
-  if cur_sign == nil then
-    return nil
+  local sign_names = {}
+  
+  for _, sign in ipairs(cur_sign) do
+    table.insert(sign_names, sign.name)
   end
-
-  return cur_sign["name"]
+  
+  return sign_names
 end
 
 -- function _G.gitsign_bar()
@@ -53,15 +55,24 @@ end
 
 function _G.__statuscolumn_gitsign_bar()
   local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
-  local hl = get_ln_gitsign(bufnr) or 'NonText'
+  local sign_names = get_ln_gitsign(bufnr) or {}
 
   local git_sign_bar = ' '
-  if hl == 'GitSignsDelete' then
-    git_sign_bar = '▁'
-  elseif hl == 'GitSignsTopdelete' then
-    git_sign_bar = '▔'
-  elseif hl ~= 'NonText' then
-    git_sign_bar = '▎'
+  local number_hl = 'LineNr'
+  local git_sign_hl = 'NonText'
+  for _, sign_name in ipairs(sign_names) do
+    if string_utils.starts_with(sign_name, 'Git') then
+      if sign_name == 'GitSignsDelete' then
+        git_sign_bar = '▁'
+      elseif sign_name == 'GitSignsTopdelete' then
+        git_sign_bar = '▔'
+      else
+        git_sign_bar = '▎'
+      end
+      git_sign_hl = sign_name
+    elseif string_utils.starts_with(sign_name, 'Diag') then
+      number_hl = sign_name
+    end
   end
 
   local nr_format = '%l'
@@ -76,7 +87,7 @@ function _G.__statuscolumn_gitsign_bar()
     end
   end
 
-  return table.concat({ build_highlight(hl, git_sign_bar), build_highlight('LineNr', nr_format .. ' '), --[[ , highlight('IndentBlanklineIndent', '│')  ]] })
+  return table.concat({ build_highlight(git_sign_hl, git_sign_bar), build_highlight(number_hl, nr_format .. ' '), --[[ , highlight('IndentBlanklineIndent', '│')  ]] })
 end
 
 vim.cmd('set signcolumn=no')
