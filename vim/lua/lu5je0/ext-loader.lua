@@ -92,4 +92,4 @@ require('lu5je0.misc.code-runner').key_mapping()
 -- quit-prompt
 require('lu5je0.misc.quit-prompt').setup()
 
--- require('lu5je0.misc.statuscolumn')
+require('lu5je0.misc.statuscolumn')

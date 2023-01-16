@@ -1,5 +1,5 @@
 local function get_ln_gitsign()
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
   local lnum = vim.v.lnum
 
   local cur_sign = vim.fn.sign_getplaced(bufnr, {
@@ -58,4 +58,15 @@ function _G.gitsign_bar()
 end
 
 vim.cmd('set signcolumn=no')
-vim.o.statuscolumn = '%!v:lua.gitsign_bar()'
+
+vim.opt_local.statuscolumn = '%!v:lua.gitsign_bar()'
+vim.api.nvim_create_autocmd('BufEnter', {
+  group = vim.api.nvim_create_augroup('gitsign_bar_group', { clear = true }),
+  pattern = '*',
+  callback = function()
+    if not vim.api.nvim_buf_get_option(0, 'modifiable') then
+      return
+    end
+    vim.opt_local.statuscolumn = '%!v:lua.gitsign_bar()'
+  end
+})
