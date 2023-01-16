@@ -36,3 +36,17 @@ encode_command_creater.create_encode_command('UrlDecode', function(url)
   url = url:gsub("%%(%x%x)", function(x) return string.char(tonumber(x, 16)) end)
   return url
 end)
+
+encode_command_creater.create_encode_command('MarkdownLink', function(url)
+  if url == nil then
+    return
+  end
+  return ('[link_name](%s)'):format(url)
+end, { range = true, buffer = false })
+
+encode_command_creater.create_encode_command('MarkdownBold', function(text)
+  if text == nil then
+    return
+  end
+  return ('**%s**'):format(text)
+end, { range = true, buffer = false })

@@ -540,7 +540,9 @@ return packer.startup(function(use)
   batch_use {
     {
       "mfussenegger/nvim-dap",
-      requires = 'rcarriga/nvim-dap-ui',
+      requires = {
+        'rcarriga/nvim-dap-ui',
+      },
       config = function()
         require('lu5je0.ext.dap').setup()
       end,
@@ -713,7 +715,7 @@ return packer.startup(function(use)
       opt = true
     }
   }
-  
+
   use {
     'phaazon/hop.nvim',
     branch = 'v2', -- optional but strongly recommended

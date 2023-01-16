@@ -6,25 +6,25 @@ local function get_ln_gitsign(bufnr)
     lnum = lnum
   })
 
-  if (cur_sign == nil) then
+  if cur_sign == nil then
     return nil
   end
 
   cur_sign = cur_sign[1]
 
-  if (cur_sign == nil) then
+  if cur_sign == nil then
     return nil
   end
 
   cur_sign = cur_sign.signs
 
-  if (cur_sign == nil) then
+  if cur_sign == nil then
     return nil
   end
 
   cur_sign = cur_sign[1]
 
-  if (cur_sign == nil) then
+  if cur_sign == nil then
     return nil
   end
 
@@ -55,13 +55,13 @@ function _G.__statuscolumn_gitsign_bar()
   local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
   local hl = get_ln_gitsign(bufnr) or 'NonText'
 
-  local bar = ' '
+  local git_sign_bar = ' '
   if hl == 'GitSignsDelete' then
-    bar = '▁'
+    git_sign_bar = '▁'
   elseif hl == 'GitSignsTopdelete' then
-    bar = '▔'
+    git_sign_bar = '▔'
   elseif hl ~= 'NonText' then
-    bar = '▎'
+    git_sign_bar = '▎'
   end
 
   local nr_format = '%l'
@@ -76,13 +76,13 @@ function _G.__statuscolumn_gitsign_bar()
     end
   end
 
-  return table.concat({ build_highlight(hl, bar), build_highlight('LineNr', nr_format .. ' '), --[[ , highlight('IndentBlanklineIndent', '│')  ]] })
+  return table.concat({ build_highlight(hl, git_sign_bar), build_highlight('LineNr', nr_format .. ' '), --[[ , highlight('IndentBlanklineIndent', '│')  ]] })
 end
 
 vim.cmd('set signcolumn=no')
 
 vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_gitsign_bar()'
-vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufEnter' }, {
+vim.api.nvim_create_autocmd({ 'BufAdd', 'BufEnter', 'BufRead' }, {
   group = vim.api.nvim_create_augroup('gitsign_bar_group', { clear = true }),
   pattern = '*',
   callback = function()
