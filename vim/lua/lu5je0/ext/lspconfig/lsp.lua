@@ -78,7 +78,6 @@ local function config()
       local sumneko_lua_config = require('lu5je0.ext.lspconfig.lspservers.sumneke-lua-config')
       opts.settings = sumneko_lua_config.settings
       opts.on_attach = sumneko_lua_config.on_attach(opts.on_attach)
-      opts = sumneko_lua_config.wrap_opts(opts)
     elseif server_name == 'pyright' then
       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
     elseif server_name == 'jdtls' then

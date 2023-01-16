@@ -41,9 +41,4 @@ return {
       telemetry = { enable = false },
     },
   },
-  wrap_opts = function(opts)
-    return require('lua-dev').setup {
-      lspconfig = opts,
-    }
-  end
 }

@@ -488,10 +488,25 @@ return packer.startup(function(use)
       'hrsh7th/cmp-nvim-lsp',
     },
     {
+      'folke/neodev.nvim',
+      config = function()
+        require("neodev").setup {
+          library = {
+            enabled = true, -- when not enabled, neodev will not change any settings to the LSP server
+            -- these settings will be used for your Neovim config directory
+            runtime = true, -- runtime path
+            types = true, -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
+            plugins = false
+            -- plugins = { 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
+          },
+        }
+      end
+    },
+    {
       'neovim/nvim-lspconfig',
       after = {
         'mason-lspconfig.nvim',
-        'lua-dev.nvim',
+        'neodev.nvim',
       },
       defer = true,
       config = function()
@@ -507,9 +522,6 @@ return packer.startup(function(use)
           opt = true,
         }
       }
-    },
-    {
-      'max397574/lua-dev.nvim'
     },
     {
       'jose-elias-alvarez/null-ls.nvim',
