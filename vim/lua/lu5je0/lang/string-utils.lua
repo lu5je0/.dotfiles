@@ -13,17 +13,23 @@ M.is_blank = function(s)
 end
 
 M.trim = function(s)
-  return s:match"^%s*(.*)":match"(.-)%s*$"
+  return s:match "^%s*(.*)":match "(.-)%s*$"
 end
 
+--- @param str string
+--- @param prefix string
 M.starts_with = function(str, prefix)
   return string.sub(str, 1, string.len(prefix)) == prefix
 end
 
+--- @param str string
+--- @param suffix string
 M.ends_with = function(str, suffix)
-  return suffix == "" or str:sub(-#suffix) ==suffix
+  return suffix == "" or str:sub(- #suffix) == suffix
 end
 
+--- @param old string
+--- @param new string
 M.contains = function(old, new)
   return old:find(new) ~= nil
 end

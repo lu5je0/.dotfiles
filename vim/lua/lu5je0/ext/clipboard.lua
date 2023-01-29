@@ -63,9 +63,11 @@ local function create_user_command()
   local autocmd_created = true
   vim.api.nvim_create_user_command('ClipboardAutocmdToggle', function()
     if autocmd_created then
+      vim.o.clipboard = 'unnamedplus'
       clear_autocmd()
       print('The clipboard autocmd has cleared')
     else
+      vim.o.clipboard = ''
       create_autocmd()
       print('The clipboard autocmd has started')
     end
