@@ -98,21 +98,20 @@ vim.api.nvim_create_autocmd({ 'BufAdd', 'BufEnter', 'BufRead', 'WinEnter', 'BufN
   pattern = '*',
   callback = function()
     if not vim.bo.modifiable then
+      vim.opt_local.statuscolumn = ''
       return
     end
     
     if vim.fn.getcmdwintype() ~= '' then
+      vim.opt_local.statuscolumn = ''
       return
     end
     
-    if vim.bo.buftype ~= "" then
+    if vim.bo.buftype ~= '' then
+      vim.opt_local.statuscolumn = ''
       return
     end
     
-    if vim.bo.buftype == 'nowrite' then
-      return
-    end
-    
-    -- vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_gitsign_bar()'
+    vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_gitsign_bar()'
   end
 })
