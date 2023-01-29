@@ -74,6 +74,10 @@ local function create_user_command()
 end
 
 M.setup = function()
+  if vim.fn.has('clipboard') == 0 then
+    return
+  end
+  
   if os.getenv('TERMINAL_EMULATOR') == 'JetBrains-JediTerm' then
     vim.o.clipboard = 'unnamedplus'
     return
