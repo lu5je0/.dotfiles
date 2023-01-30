@@ -93,7 +93,7 @@ end
 vim.cmd('set signcolumn=no')
 
 vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_gitsign_bar()'
-vim.api.nvim_create_autocmd({ 'BufAdd', 'BufEnter', 'BufRead', 'WinEnter', 'BufNew' }, {
+vim.api.nvim_create_autocmd({ 'BufAdd', 'BufEnter', 'BufRead', 'WinEnter', 'BufNew', 'TermEnter', 'WinResized' }, {
   group = vim.api.nvim_create_augroup('gitsign_bar_group', { clear = true }),
   pattern = '*',
   callback = function()
