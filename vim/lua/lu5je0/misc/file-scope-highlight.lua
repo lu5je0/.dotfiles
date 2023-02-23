@@ -6,10 +6,7 @@ local win_ids = {}
 
 local group = vim.api.nvim_create_augroup('l_file_highlight', { clear = true })
 
-vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'FileType' }, {
-  group = group,
-  pattern = '*',
-  callback = function()
+local function handle()
     local filetype = vim.bo.filetype
     local win_id = vim.api.nvim_get_current_win()
 
@@ -32,6 +29,21 @@ vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'FileType' }, {
 
     vim.api.nvim_win_set_hl_ns(win_id, ns_id)
     win_ids[win_id] = true
+end
+
+vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'FileType' }, {
+  group = group,
+  pattern = '*',
+  callback = function()
+    handle()
+  end,
+})
+
+vim.api.nvim_create_autocmd({ 'User' }, {
+  group = group,
+  pattern = 'FoldChanged',
+  callback = function()
+    handle()
   end,
 })
 
