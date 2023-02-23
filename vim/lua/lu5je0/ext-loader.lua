@@ -95,3 +95,10 @@ require('lu5je0.misc.quit-prompt').setup()
 if vim.fn.has('nvim-0.9') == 1 then
   require('lu5je0.misc.statuscolumn')
 end
+
+require('lu5je0.misc.file-highlight').file_handlers = {
+  json = function(ns_id)
+    vim.api.nvim_set_hl(ns_id, '@boolean', { fg = '#deb974' })
+    vim.api.nvim_set_hl(ns_id, '@number', { fg = '#6cb6eb' })
+  end,
+}
