@@ -31,7 +31,7 @@ local function handle()
     win_ids[win_id] = true
 end
 
-vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter', 'FileType' }, {
+vim.api.nvim_create_autocmd({ 'BufEnter', 'WinNew' }, {
   group = group,
   pattern = '*',
   callback = function()
