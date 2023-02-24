@@ -27,7 +27,7 @@ let mapleader=","
 
 let g:WhichKeyDesc_windows="<leader>w Windows"
 
-nmap yr <Action>(CopyReference)
+nmap yp <Action>(CopyReference)
 
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
@@ -160,6 +160,8 @@ map <leader>gv <Action>(Compare.SameVersion)
 map <leader>gL <Action>(Vcs.ShowTabbedFileHistory)
 map <leader>gl <Action>(Vcs.Show.Log)
 xmap <leader>gl <Action>(Vcs.ShowHistoryForBlock)
+
+nmap <leader>mc <Action>(CompileFile)
 
 " navicat
 nmap [g <Action>(VcsShowPrevChangeMarker)
