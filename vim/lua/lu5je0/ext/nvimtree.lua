@@ -37,6 +37,10 @@ function M.locate_file()
     -- check if file in dotdir
     if not is_dotfile then
       for dir in vim.fs.parents(cur_filepath) do
+        if dir == vim.fn.getcwd() then
+          -- 如果和当前目录一样，就直接跳过吧
+          break
+        end
         if vim.fs.basename(dir):sub(1, 1) == '.' then
           turn_on_hidden_filter()
           break

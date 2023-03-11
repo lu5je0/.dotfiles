@@ -118,7 +118,7 @@ alias ll='ls -lh'
 alias md='mkdir -p'
 
 # tmux
-alias ta="tmux attach -t"
+# alias ta="tmux attach -t"
 alias td="tmux detach"
 alias tl="tmux ls"
 alias tkss="tmux kill-session -t"

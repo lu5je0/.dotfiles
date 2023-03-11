@@ -13,6 +13,22 @@ function q-ip-location
   curl cip.cc/$1
 }
 
+function q-ask
+{
+  echo -n $1$' (y/n):'
+  read choice
+  case $choice in
+    Y | y)
+      return 0
+  esac
+  return -1
+}
+
+function ta
+{
+  tmux attach -t $1 || (q-ask 'create new session?' && tmux new-session -s $1)
+}
+
 function q-zsh-speed-test
 {
   for i ({1..10}) { time zsh -i -c 'exit' }

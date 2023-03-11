@@ -54,6 +54,8 @@ M.on_attach = function(client, bufnr)
   keymap('n', '<leader><space>', function()
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
+  
+  client.server_capabilities.semanticTokensProvider = nil
 end
 
 local function config()
