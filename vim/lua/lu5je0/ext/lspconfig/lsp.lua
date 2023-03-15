@@ -55,7 +55,7 @@ M.on_attach = function(client, bufnr)
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
   
-  client.server_capabilities.semanticTokensProvider = nil
+  -- client.server_capabilities.semanticTokensProvider = nil
 end
 
 local function config()
@@ -97,9 +97,18 @@ local function config()
   })
 end
 
+local function semantic_token_highlight()
+  vim.cmd [[
+    hi! link @lsp.type.variable.lua RedItalic
+    hi! link @lsp.typemod.variable.defaultLibrary.lua CyanItalic
+    " hi! link @lsp.mod.defaultLibrary.lua CyanItalic
+  ]]
+end
+
 function M.setup()
   diagnostic()
   config()
+  semantic_token_highlight()
   vim.defer_fn(function()
     vim.cmd("LspStart")
   end, 0)
