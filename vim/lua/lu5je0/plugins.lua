@@ -460,6 +460,7 @@ return packer.startup(function(use)
       -- },
       -- 'hrsh7th/cmp-vsnip',
     },
+    event = 'InsertEnter',
   }
 
   use {

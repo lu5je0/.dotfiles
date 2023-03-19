@@ -124,8 +124,8 @@ local defer_options = {
     vim.cmd [[ silent! rsh ]]
   end,
   function()
-    o.clipboard = 'unnamedplus'
-    -- require('lu5je0.ext.clipboard').setup()
+    -- o.clipboard = 'unnamedplus'
+    require('lu5je0.ext.clipboard').setup()
     vim.cmd [[ packadd matchit ]]
   end
 }
