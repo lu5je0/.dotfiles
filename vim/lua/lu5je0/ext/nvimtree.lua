@@ -100,7 +100,7 @@ function M.delete_node()
     vim.api.nvim_win_set_buf(cur_file_win_id, substitute_buf_id)
   end
   local cur_width = vim.api.nvim_win_get_width(0)
-  require 'nvim-tree.actions.dispatch'.dispatch('remove')
+  api.fs.remove()
   if is_remove_cur_file and substitute_buf_id == nil then
     vim.cmd("vnew")
     vim.cmd('NvimTreeResize ' .. cur_width)
@@ -153,7 +153,7 @@ function M.forward()
 end
 
 function M.cd()
-  require 'nvim-tree.actions.dispatch'.dispatch('cd')
+  api.tree.change_root_to_node()
   vim.cmd('norm gg')
 end
 
@@ -187,12 +187,12 @@ function M.open_node()
       end
     end)
   end
-  require 'nvim-tree.actions.dispatch'.dispatch('edit')
+  api.node.open.edit()
 end
 
 function M.close_node()
   local node = lib.get_node_at_cursor()
-  require 'nvim-tree.actions.dispatch'.dispatch('close_node')
+  api.node.navigate.parent_close()
   if vim.fn.getcwd() == '/' then
     if node ~= lib.get_node_at_cursor() then
       keys_helper.feedkey('k')
@@ -251,6 +251,64 @@ function M.target_git_item_reveal_to_file(action, recursion_count)
   vim.cmd('norm zz')
 end
 
+local function on_attach(bufnr)
+  local set = vim.keymap.set
+
+  local function opts(desc)
+    return { desc = 'nvim-tree: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+  end
+
+  set('n', 'C', api.tree.toggle_git_clean_filter, opts('Toggle Git Clean'))
+  set('n', 'cd', M.cd, opts('cd'))
+  set('n', 'B', api.tree.toggle_no_buffer_filter, opts('Toggle No Buffer'))
+  set('n', 'i', M.preview, opts('Open Preview'))
+  set('n', 'x', M.toggle_width, opts('toggle_width'))
+  -- set('n', 'x', api.marks.toggle, opts('Toggle Bookmark'))
+  set('n', 'mk', M.create_dir, opts('create_dir'))
+  set('n', 'D', api.fs.remove, opts('delete'))
+  set('n', 'l', M.open_node, opts('Open Node'))
+  set('n', 'h', M.close_node, opts('Close Node'))
+  set('n', 's', api.node.open.vertical, opts('Open: Vertical Split'))
+  set('n', 'v', api.node.open.horizontal, opts('Open: Horizontal Split'))
+  set('n', 'S', api.tree.search_node, opts('Search'))
+  set('n', '[f', api.node.navigate.sibling.first, opts('First Sibling'))
+  set('n', ']f', api.node.navigate.sibling.last, opts('Last Sibling'))
+  set('n', '<', api.node.navigate.sibling.prev, opts('Previous Sibling'))
+  set('n', '>', api.node.navigate.sibling.next, opts('Next Sibling'))
+  set('n', 'K', api.node.show_info_popup, opts('Info'))
+  set('n', 'F', api.node.show_info_popup, opts('Info'))
+  set('n', 'f', api.live_filter.start, opts('Filter'))
+  set('n', '.', api.node.run.cmd, opts('Run Command'))
+  set('n', 'I', api.tree.toggle_hidden_filter, opts('Toggle Dotfiles'))
+  set('n', 'r', api.tree.reload, opts('Refresh'))
+  set('n', 'ma', api.fs.create, opts('Create'))
+  set('n', 'mv', api.fs.rename, opts('Rename'))
+  set('n', 'dd', api.fs.cut, opts('Cut'))
+  set('n', 'yy', api.fs.copy.node, opts('Copy'))
+  set('n', 'p', api.fs.paste, opts('Paste'))
+  set('n', 'yn', api.fs.copy.filename, opts('Copy Name'))
+  set('n', 'yP', api.fs.copy.relative_path, opts('Copy Relative Path'))
+  set('n', 'yp', api.fs.copy.absolute_path, opts('Copy Absolute Path'))
+
+  -- { key = '[g', action = 'prev_git_item' },
+  -- { key = ']g', action = 'next_git_item' },
+  set('n', '[g', function()
+    M.target_git_item_reveal_to_file('prev_git_item')
+  end, opts('prev_git_item_reveal_to_file'))
+  set('n', ']g', function()
+    M.target_git_item_reveal_to_file('next_git_item')
+  end, opts('next_git_item_reveal_to_file'))
+
+  set('n', 'u', api.tree.change_root_to_parent, opts('Up'))
+  set('n', 'o', api.node.run.system, opts('Run System'))
+  set('n', 'q', api.tree.close, opts('Close'))
+  set('n', 'g?', api.tree.toggle_help, opts('Help'))
+  set('n', '<c-o>', M.back, opts('backward'))
+
+  set('n', '<tab>', M.forward, opts('forward'))
+  set('n', '<c-i>', M.forward, opts('forward'))
+end
+
 function M.setup()
   vim.cmd([[
     hi NvimTreeFolderName guifg=#e5c07b
@@ -278,7 +336,7 @@ function M.setup()
     desc = 'nvim_tree'
   }
   vim.keymap.set('n', '<leader>e', function()
-    require('nvim-tree').toggle(false, true)
+    api.tree.toggle(false, true)
   end, opts)
   vim.keymap.set('n', '<leader>fe', require('lu5je0.ext.nvimtree').locate_file, opts)
 
@@ -355,6 +413,7 @@ function M.setup()
     open_on_tab = false,
     hijack_cursor = false,
     update_cwd = true,
+    on_attach = on_attach,
     filesystem_watchers = {
       enable = true,
       debounce_delay = 1000,
@@ -452,7 +511,6 @@ function M.setup()
       side = 'left',
       mappings = {
         custom_only = true,
-        list = list,
       },
       signcolumn = 'auto',
     },

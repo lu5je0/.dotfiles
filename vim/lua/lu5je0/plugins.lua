@@ -591,7 +591,7 @@ return packer.startup(function(use)
       'kyazdani42/nvim-tree.lua',
       requires = 'kyazdani42/nvim-web-devicons',
       keys = { '<leader>e', '<leader>fe' },
-      commit = '9c97e6449b0b0269bd44e1fd4857184dfa57bb4c',
+      -- commit = '9c97e6449b0b0269bd44e1fd4857184dfa57bb4c',
       -- on_compile = function()
       --   require('lu5je0.ext.nvim-tree-hijack')
       -- end,
