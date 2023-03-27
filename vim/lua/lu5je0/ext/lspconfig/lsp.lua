@@ -76,10 +76,10 @@ local function config()
       on_attach = M.on_attach,
     }
 
-    if server_name == 'sumneko_lua' then
-      local sumneko_lua_config = require('lu5je0.ext.lspconfig.lspservers.sumneke-lua-config')
-      opts.settings = sumneko_lua_config.settings
-      opts.on_attach = sumneko_lua_config.on_attach(opts.on_attach)
+    if server_name == 'lua_ls' then
+      local lua_ls_config = require('lu5je0.ext.lspconfig.lspservers.lua-ls-config')
+      opts.settings = lua_ls_config.settings
+      opts.on_attach = lua_ls_config.on_attach(opts.on_attach)
     elseif server_name == 'pyright' then
       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
     elseif server_name == 'jdtls' then

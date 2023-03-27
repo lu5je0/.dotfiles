@@ -1,11 +1,7 @@
 local M = {}
 
-local hex_to_char = function(s)
-  return string.char(tonumber(s, 16))
-end
-
 M.url_decode = function(s)
-  return s:gsub("%%(%x%x)", hex_to_char)
+  return s:gsub("%%(%x%x)", function(x) return string.char(tonumber(x, 16)) end)
 end
 
 M.is_blank = function(s)
@@ -32,6 +28,19 @@ end
 --- @param new string
 M.contains = function(old, new)
   return old:find(new) ~= nil
+end
+
+M.split = function(str, delimiter)
+  local result = {}
+  local from = 1
+  local delim_from, delim_to = string.find(str, delimiter, from)
+  while delim_from do
+    table.insert(result, string.sub(str, from, delim_from - 1))
+    from = delim_to + 1
+    delim_from, delim_to = string.find(str, delimiter, from)
+  end
+  table.insert(result, string.sub(str, from))
+  return result
 end
 
 return M
