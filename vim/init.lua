@@ -15,10 +15,6 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-vim.g.edge_better_performance = 1
-vim.g.edge_enable_italic = 0
-vim.g.edge_disable_italic_comment = 1
-
 local core_modules = {
   'lu5je0.lang.enhance',
   'lu5je0.options',
