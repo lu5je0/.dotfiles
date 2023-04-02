@@ -2,15 +2,32 @@ if not pcall(require, 'impatient') then
   vim.notify('require impatient failed')
 end
 
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
+vim.g.edge_better_performance = 1
+vim.g.edge_enable_italic = 0
+vim.g.edge_disable_italic_comment = 1
+
 local core_modules = {
   'lu5je0.lang.enhance',
-  'lu5je0.plugins',
   'lu5je0.options',
   'lu5je0.commands',
   'lu5je0.mappings',
   'lu5je0.autocmds',
   'lu5je0.filetype',
   'lu5je0.ext-loader',
+  'lu5je0.plugins-lazy',
 }
 
 for _, module in ipairs(core_modules) do
@@ -21,19 +38,3 @@ for _, module in ipairs(core_modules) do
 end
 
 vim.cmd('runtime functions.vim')
-
-local i = 1
-local function defer_loads()
-  if #_G.__defer_plugins == 0 then
-    return
-  end
-  vim.cmd('PackerLoad ' .. _G.__defer_plugins[i])
-  i = i + 1
-  if i <= #_G.__defer_plugins then
-    vim.defer_fn(defer_loads, 1)
-  end
-end
-
-vim.defer_fn(function()
-  defer_loads()
-end, 1)

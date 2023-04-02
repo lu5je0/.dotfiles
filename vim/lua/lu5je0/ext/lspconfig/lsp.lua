@@ -55,8 +55,10 @@ M.on_attach = function(client, bufnr)
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
   
-  local navic = require("nvim-navic")
-  navic.attach(client, bufnr)
+  if client.server_capabilities.documentSymbolProvider then
+    local navic = require("nvim-navic")
+    navic.attach(client, bufnr)
+  end
   
   -- client.server_capabilities.semanticTokensProvider = nil
 end
@@ -112,9 +114,6 @@ function M.setup()
   diagnostic()
   config()
   semantic_token_highlight()
-  vim.defer_fn(function()
-    vim.cmd("LspStart")
-  end, 0)
 end
 
 return M

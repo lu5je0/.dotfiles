@@ -246,3 +246,7 @@ end, {})
 vim.api.nvim_create_user_command("CmpAutocompleteEnable", function()
   require('cmp').setup.buffer { enabled = true }
 end, {})
+
+-- nvim-autopairs If you want insert `(` after select function or method item
+local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })
