@@ -31,7 +31,9 @@ require('lu5je0.misc.big-file').setup {
       size = 500 * 1024,
       function()
         vim.defer_fn(function()
-          vim.cmd [[ CmpAutocompleteDisable ]]
+          if vim.fn.exists('CmpAutocompleteDisable') > 0 then
+            vim.cmd [[ CmpAutocompleteDisable ]]
+          end
         end, 200)
       end
     },

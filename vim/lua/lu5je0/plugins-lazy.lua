@@ -246,7 +246,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.scrollview').setup()
     end,
-    cmd = { 'VeryLazy' }
+    event = { 'VeryLazy' }
   },
 
   {
