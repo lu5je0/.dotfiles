@@ -415,13 +415,7 @@ return packer.startup(function(use)
         {
           'phelipetls/jsonpath.nvim',
           ft = { 'json', 'jsonc' }
-        },
-        {
-          'SmiteshP/nvim-gps',
-          config = function()
-            require('nvim-gps').setup()
-          end,
-        },
+        }
       },
     },
     {
@@ -487,6 +481,9 @@ return packer.startup(function(use)
     },
     {
       'hrsh7th/cmp-nvim-lsp',
+    },
+    {
+      'SmiteshP/nvim-navic'
     },
     {
       'folke/neodev.nvim',
