@@ -1,7 +1,6 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 
 require("lazy").setup({
-  'lewis6991/impatient.nvim',
   { 'tpope/vim-repeat', keys = '.' },
   {
     'aklt/plantuml-syntax',

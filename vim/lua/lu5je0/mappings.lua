@@ -36,6 +36,7 @@ local cmd_and_print = function(...)
   print(...)
 end
 
+---@diagnostic disable-next-line: param-type-mismatch
 vim.defer_fn(function()
   -- movement
   set_map({ 'x', 'n', 'o' }, 'H', '^')
@@ -73,7 +74,7 @@ vim.defer_fn(function()
   end)
 
   -- dir
-  set_n_map('<leader>fp', function() cmd_and_print('cd ~/.local/share/nvim/site/pack/packer') end)
+  set_n_map('<leader>fp', function() cmd_and_print('cd ~/.local/share/nvim/lazy') end)
   set_n_map('<leader>fd', function() cmd_and_print(':cd ~/.dotfiles') end)
   set_n_map('<leader>ft', function() cmd_and_print(':cd ~/test') end)
 
