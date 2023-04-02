@@ -348,7 +348,7 @@ require("lazy").setup({
   },
   {
     'nvim-treesitter/nvim-treesitter',
-    run = ':TSUpdate',
+    build = ':TSUpdate',
     config = function()
       require('lu5je0.ext.treesiter')
     end,
@@ -491,7 +491,7 @@ require("lazy").setup({
   },
   {
     'iamcco/markdown-preview.nvim',
-    run = function()
+    build = function()
       vim.fn['mkdp#util#install']()
     end,
     config = function()

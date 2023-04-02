@@ -4,6 +4,8 @@ local M = {}
 local env_keeper = require('lu5je0.misc.env-keeper').keeper({ terminal_direction = 'float' })
 
 M.send_to_terminal = function(cmd, opts)
+  require('lu5je0.ext.plugins_helper').load_plugin('toggleterm.nvim')
+  
   if opts == nil then
     opts = {
       go_back = 0

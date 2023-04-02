@@ -77,15 +77,13 @@ M.setup = function()
       r = 'remove workspace folder',
       l = 'list workspace folder',
     },
-    -- p = {
-    --   name = 'Packer',
-    --   w = { '<cmd>PackerCompile profile=true<cr><cmd>PackerProfile<cr>', 'profile' },
-    --   s = { '<cmd>PackerSync<cr>', 'sync' },
-    --   c = { '<cmd>PackerCompile<cr>', 'compile' },
-    --   i = { '<cmd>PackerInstall<cr>', 'install' },
-    --   u = { '<cmd>PackerUpdate<cr>', 'update' },
-    --   d = { '<cmd>PackerClean<cr>', 'clean' },
-    -- },
+    p = {
+      name = 'Lazy',
+      i = { '<cmd>Lazy install<cr>', 'install' },
+      u = { '<cmd>Lazy update<cr>', 'update' },
+      d = { '<cmd>Lazy clean<cr>', 'delete' },
+      c = { '<cmd>Lazy check<cr>', 'check update' },
+    },
     c = {
       name = '+code',
       r = 'rename-variable',
