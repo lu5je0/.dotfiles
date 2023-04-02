@@ -240,7 +240,7 @@ ins_left {
 
 ins_left {
   function()
-    return require('lu5je0.misc.gps-path').path()
+    return string.sub(require('lu5je0.misc.gps-path').path(), 1, 100)
   end,
   inactive = true,
   cond = function()
