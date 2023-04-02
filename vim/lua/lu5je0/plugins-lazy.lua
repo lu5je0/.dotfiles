@@ -14,6 +14,13 @@ require("lazy").setup({
     event = 'VeryLazy'
   },
   {
+    'ojroques/vim-oscyank',
+    config = function()
+      vim.cmd("autocmd TextYankPost * execute 'OSCYankRegister \"'")
+    end,
+    enabled = (vim.fn.has('wsl') == 0 and vim.fn.has('mac') == 0),
+  },
+  {
     'rbong/vim-flog',
     cmd = { 'Flogsplit', 'Floggit', 'Flog' },
     opt = true,
