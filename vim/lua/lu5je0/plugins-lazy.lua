@@ -114,12 +114,6 @@ require("lazy").setup({
   {
     'sainnhe/edge',
     config = function()
-      -- edge
-      vim.g.edge_better_performance = 1
-      vim.g.edge_enable_italic = 0
-      vim.g.edge_disable_italic_comment = 1
-      vim.cmd.colorscheme('edge')
-      vim.g.edge_loaded_file_types = { 'NvimTree' }
       vim.cmd [[
       hi! Folded guifg=#282c34 guibg=#5c6370
       hi MatchParen guifg=#ffef28
