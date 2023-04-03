@@ -18,7 +18,7 @@ require("lazy").setup({
     config = function()
       vim.cmd("autocmd TextYankPost * execute 'OSCYankRegister \"'")
     end,
-    enabled = (vim.fn.has('wsl') == 0 and vim.fn.has('mac') == 0),
+    cond = (vim.fn.has('wsl') == 0 and vim.fn.has('mac') == 0),
   },
   {
     'rbong/vim-flog',
@@ -84,14 +84,15 @@ require("lazy").setup({
       hi! Folded guifg=#282c34 guibg=#5c6370
       hi MatchParen guifg=#ffef28
       ]]
-    end
+    end,
+    priority = 1000
   },
   {
     'nvim-lualine/lualine.nvim',
     config = function()
       require('lu5je0.ext.lualine')
     end,
-    -- event = 'VeryLazy'
+    event = 'VeryLazy'
   },
   {
     'lu5je0/bufferline.nvim',
@@ -127,7 +128,7 @@ require("lazy").setup({
     init = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
     end,
-    keys = { { mode = 'x', 'ia' }, { mode = 'o', 'ia' }, { mode = 'x', 'aa' }, { 'o', 'aa' }, { mode = 'n', 'cxia' }, { mode = 'n', 'cxaa' } }
+    keys = { { mode = 'x', 'ia' }, { mode = 'o', 'ia' }, { mode = 'x', 'aa' }, { mode = 'o', 'aa' }, { mode = 'n', 'cxia' }, { mode = 'n', 'cxaa' } }
   },
   {
     "gbprod/substitute.nvim",
