@@ -105,7 +105,7 @@ require('ufo').setup({
     return { 'treesitter' }
   end,
   close_fold_kinds = {},
-  open_fold_hl_timeout = 200,
+  open_fold_hl_timeout = 0,
   fold_virt_text_handler = fold_virt_text_handler
 })
 

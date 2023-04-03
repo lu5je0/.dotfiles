@@ -1,5 +1,40 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 
+
+local opts = {
+  performance = {
+    rtp = {
+      disabled_plugins = {
+        "2html_plugin",
+        "editorconfig",
+        "getscript",
+        "getscriptPlugin",
+        "gzip",
+        "logipat",
+        "man",
+        "matchit",
+        "matchparen",
+        "netrw",
+        "netrwFileHandlers",
+        "netrwPlugin",
+        "netrwSettings",
+        "rplugin",
+        "rrhelper",
+        "spellfile",
+        "spellfile_plugin",
+        "tar",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "vimball",
+        "vimballPlugin",
+        "zip",
+        "zipPlugin",
+      },
+    },
+  },
+}
+
 require("lazy").setup({
   { 'tpope/vim-repeat', keys = '.' },
   {
@@ -520,4 +555,4 @@ require("lazy").setup({
     end,
     ft = { 'markdown' },
   },
-})
+}, opts)
