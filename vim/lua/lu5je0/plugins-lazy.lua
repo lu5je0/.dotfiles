@@ -128,7 +128,8 @@ require("lazy").setup({
     init = function()
       vim.g.vim_textobj_parameter_mapping = 'a'
     end,
-    keys = { { mode = 'x', 'ia' }, { mode = 'o', 'ia' }, { mode = 'x', 'aa' }, { mode = 'o', 'aa' }, { mode = 'n', 'cxia' }, { mode = 'n', 'cxaa' } }
+    keys = { { mode = 'x', 'ia' }, { mode = 'o', 'ia' }, { mode = 'x', 'aa' }, { mode = 'o', 'aa' },
+      { mode = 'n', 'cxia' }, { mode = 'n', 'cxaa' } }
   },
   {
     "gbprod/substitute.nvim",
@@ -193,7 +194,8 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.vim-translator')
     end,
-    keys = { { mode = 'x', '<leader>sa' }, { mode = 'x', '<leader>ss' }, { mode = 'n', '<leader>ss' }, { mode = 'n', '<leader>sa' } }
+    keys = { { mode = 'x', '<leader>sa' }, { mode = 'x', '<leader>ss' }, { mode = 'n', '<leader>ss' },
+      { mode = 'n', '<leader>sa' } }
   },
 
   {
@@ -399,6 +401,13 @@ require("lazy").setup({
 
   -- lsp
   {
+    'williamboman/mason.nvim',
+    config = function()
+      require("mason").setup()
+    end,
+    event = 'VeryLazy'
+  },
+  {
     'williamboman/mason-lspconfig.nvim',
     config = function()
       require('mason-lspconfig').setup {
@@ -407,13 +416,7 @@ require("lazy").setup({
     end,
     event = 'VeryLazy',
     dependencies = {
-      {
-        'williamboman/mason.nvim',
-        config = function()
-          require("mason").setup()
-        end,
-        event = 'VeryLazy'
-      },
+      'williamboman/mason.nvim',
       {
         'hrsh7th/cmp-nvim-lsp',
       },
@@ -431,36 +434,45 @@ require("lazy").setup({
                   enabled = true, -- when not enabled, neodev will not change any settings to the LSP server
                   -- these settings will be used for your Neovim config directory
                   runtime = true, -- runtime path
-                  types = true, -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
-                  -- plugins = false,
-                  plugins = { 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
+                  types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
+                  plugins = false,
+                  -- plugins = { 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
                 },
               }
             end
           },
-          {
-            "lu5je0/lspsaga.nvim",
-            branch = "main",
-            config = function()
-              require('lu5je0.ext.lspconfig.lspsaga')
-            end,
-            opt = true,
-          },
-          'RRethy/vim-illuminate'
         },
         config = function()
           require('lu5je0.ext.lspconfig.lsp').setup()
         end,
       },
       {
-        'jose-elias-alvarez/null-ls.nvim',
+        "lu5je0/lspsaga.nvim",
+        branch = "main",
         config = function()
-          require('lu5je0.ext.null-ls.null-ls')
+          require('lu5je0.ext.lspconfig.lspsaga')
         end,
-        opt = true,
-        cmd = 'NullLsEnable',
+        dependencies = {
+          'neovim/nvim-lspconfig'
+        }
       },
+      {
+        'RRethy/vim-illuminate',
+        config = function()
+          require('lu5je0.ext.lspconfig.illuminate')
+        end,
+        dependencies = {
+          'neovim/nvim-lspconfig'
+        }
+      }
     }
+  },
+  {
+    'jose-elias-alvarez/null-ls.nvim',
+    config = function()
+      require('lu5je0.ext.null-ls.null-ls')
+    end,
+    cmd = 'NullLsEnable',
   },
 
   {

@@ -234,6 +234,10 @@ function M.target_git_item_reveal_to_file(action, recursion_count)
   local old_node = api.tree.get_node_under_cursor()
   action()
   local node = api.tree.get_node_under_cursor()
+  if node == nil then
+    return
+  end
+  
   if node == old_node and node.git_status and node.git_status.dir and next(node.git_status.dir) == nil then
     return
   end
