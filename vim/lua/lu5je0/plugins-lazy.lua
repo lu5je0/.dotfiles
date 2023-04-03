@@ -65,6 +65,7 @@ require("lazy").setup({
         default = true,
       }
     end,
+    lazy = true,
   },
   {
     'nvim-telescope/telescope.nvim',
@@ -149,13 +150,12 @@ require("lazy").setup({
   },
   {
     'othree/eregex.vim',
-    opt = true,
-    keys = { '/', '?' },
     init = function()
       vim.g.eregex_default_enable = 0
     end,
     fn = { 'eregex#toggle' },
     cmd = 'S',
+    keys = { '<leader>/' },
   },
   {
     'numToStr/Comment.nvim',
@@ -395,6 +395,7 @@ require("lazy").setup({
     'lukas-reineke/indent-blankline.nvim',
     config = function()
       require('lu5je0.ext.indent-blankline')
+      vim.cmd('IndentBlanklineRefresh')
     end,
     event = 'VeryLazy'
   },
