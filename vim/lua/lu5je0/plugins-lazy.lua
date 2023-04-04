@@ -1,6 +1,5 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 
-
 local opts = {
   performance = {
     rtp = {
@@ -36,6 +35,27 @@ local opts = {
 }
 
 require("lazy").setup({
+  {
+    'sainnhe/edge',
+    init = function()
+      vim.g.edge_better_performance = 1
+      vim.g.edge_enable_italic = 0
+      vim.g.edge_disable_italic_comment = 1
+      -- StatusLine 左边
+      -- vim.api.nvim_set_hl(0, "StatusLine", { fg = '#373943' })
+      -- vim.api.nvim_set_hl(0, "StatusLineNC", { fg = '#373943' })
+    end,
+    config = function()
+      vim.cmd.colorscheme('edge')
+      vim.g.edge_loaded_file_types = { 'NvimTree' }
+      vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#1d2024' })
+      
+      vim.cmd [[
+      hi! Folded guifg=#282c34 guibg=#5c6370
+      hi MatchParen guifg=#ffef28
+      ]]
+    end,
+  },
   { 'tpope/vim-repeat', keys = '.' },
   {
     'aklt/plantuml-syntax',
@@ -110,16 +130,6 @@ require("lazy").setup({
       'nvim-lua/plenary.nvim',
     },
     keys = { ',' }
-  },
-  {
-    'sainnhe/edge',
-    config = function()
-      vim.cmd [[
-      hi! Folded guifg=#282c34 guibg=#5c6370
-      hi MatchParen guifg=#ffef28
-      ]]
-    end,
-    priority = 1000
   },
   {
     'nvim-lualine/lualine.nvim',

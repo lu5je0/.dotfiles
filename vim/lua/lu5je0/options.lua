@@ -50,17 +50,6 @@ o.showcmd = false
 -- colorscheme
 o.termguicolors = true
 o.bg = 'dark'
-
--- edge
-vim.g.edge_better_performance = 1
-vim.g.edge_enable_italic = 0
-vim.g.edge_disable_italic_comment = 1
-vim.cmd.colorscheme('edge')
-
-vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#1d2024' })
--- StatusLine 左边
--- vim.api.nvim_set_hl(0, "StatusLine", { fg = '#373943' })
--- vim.api.nvim_set_hl(0, "StatusLineNC", { fg = '#373943' })
 o.statusline = " "
 
 if has('wsl') then
