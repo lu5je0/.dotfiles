@@ -48,7 +48,7 @@ require("lazy").setup({
     config = function()
       vim.cmd.colorscheme('edge')
       vim.g.edge_loaded_file_types = { 'NvimTree' }
-      vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#1d2024' })
+      vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
       
       vim.cmd [[
       hi! Folded guifg=#282c34 guibg=#5c6370
