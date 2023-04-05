@@ -1,6 +1,7 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 
 local opts = {
+  concurrency = 20,
   performance = {
     rtp = {
       disabled_plugins = {
