@@ -49,7 +49,7 @@ require("lazy").setup({
       vim.cmd.colorscheme('edge')
       vim.g.edge_loaded_file_types = { 'NvimTree' }
       vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
-      
+
       vim.cmd [[
       hi! Folded guifg=#282c34 guibg=#5c6370
       hi MatchParen guifg=#ffef28
@@ -70,10 +70,19 @@ require("lazy").setup({
   },
   {
     'ojroques/vim-oscyank',
-    config = function()
-      vim.cmd("autocmd TextYankPost * execute 'OSCYankRegister \"'")
-    end,
     cond = (vim.fn.has('wsl') == 0 and vim.fn.has('mac') == 0),
+    init = function()
+      vim.g.oscyank_silent = 1
+      vim.g.oscyank_trim = 0
+    end,
+    config = function()
+      vim.api.nvim_create_autocmd('TextYankPost', {
+        pattern = '*',
+        callback = function()
+          vim.cmd [[ OSCYankRegister " ]]
+        end,
+      })
+    end,
   },
   {
     'rbong/vim-flog',
@@ -478,7 +487,7 @@ require("lazy").setup({
                   enabled = true, -- when not enabled, neodev will not change any settings to the LSP server
                   -- these settings will be used for your Neovim config directory
                   runtime = true, -- runtime path
-                  types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
+                  types = true, -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
                   plugins = false,
                   -- plugins = { 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
                 },
