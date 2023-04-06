@@ -12,7 +12,6 @@ local opts = {
         "logipat",
         "man",
         "matchit",
-        "matchparen",
         "netrw",
         "netrwFileHandlers",
         "netrwPlugin",
@@ -49,7 +48,7 @@ require("lazy").setup({
       vim.cmd.colorscheme('edge')
       vim.g.edge_loaded_file_types = { 'NvimTree' }
       vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
-      
+
       vim.cmd [[
       hi! Folded guifg=#282c34 guibg=#5c6370
       hi MatchParen guifg=#ffef28
@@ -229,7 +228,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.vim-visual-multi').setup()
     end,
-    keys = { '<c-n>', '<m-n>' },
+    keys = { { mode = { 'n', 'x' }, '<c-n>' }, { mode = { 'n', 'x' }, '<m-n>' } },
   },
 
   {
@@ -274,7 +273,7 @@ require("lazy").setup({
   },
 
   {
-    'junegunn/vim-peekaboo', keys = '"'
+    'junegunn/vim-peekaboo'
   },
 
   {
