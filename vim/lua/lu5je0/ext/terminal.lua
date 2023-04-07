@@ -2,6 +2,7 @@ local M = {}
 
 
 local env_keeper = require('lu5je0.misc.env-keeper').keeper({ terminal_direction = 'float' })
+local visual_utils = require('lu5je0.core.visual')
 
 M.send_to_terminal = function(cmd, opts)
   require('lu5je0.ext.plugins_helper').load_plugin('toggleterm.nvim')
@@ -27,7 +28,7 @@ M.change_terminal_direction = function(direction)
 end
 
 M.run_select_in_terminal = function()
-  M.send_to_terminal(vim.fn['visual#visual_selection']())
+  M.send_to_terminal(visual_utils.get_visual_selection_as_string())
 end
 
 local function keep_terminal_mode()

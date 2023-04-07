@@ -47,8 +47,9 @@ local function create_autocmd()
   vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter', 'QuitPre' }, {
     group = group,
     pattern = { '*' },
-    callback = function()
+    callback = function(args)
       vim.defer_fn(function()
+        print(dump(args.event), vim.fn.getreg('"'))
         M.write_to_clipboard()
       end, 0)
     end

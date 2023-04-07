@@ -103,8 +103,8 @@ vim.defer_fn(function()
   "----------------------------------------------------------------------
   " <leader>
   "----------------------------------------------------------------------
-  nmap <silent> <leader>tN :tabnew<cr>
-  nmap <silent> <leader>tc :tabclose<cr>
+  nmap <silent> <leader>tN <cmd>tabnew<cr>
+  nmap <silent> <leader>tc <cmd>tabclose<cr>
   nmap <silent> <leader><leader> <c-^>
 
   "----------------------------------------------------------------------
@@ -116,8 +116,8 @@ vim.defer_fn(function()
   nmap <silent> <c-h> <c-w>h
   nmap <silent> <c-l> <c-w>l
 
-  nmap <silent> <left> :bp<cr>
-  nmap <silent> <right> :bn<cr>
+  nmap <silent> <left> <cmd>bp<cr>
+  nmap <silent> <right> <cmd>bn<cr>
   nmap <silent> <c-b>o <c-w>p
   nmap <silent> <c-b><c-o> <c-w>p
   
@@ -132,48 +132,48 @@ vim.defer_fn(function()
   "----------------------------------------------------------------------
   " text-objects
   "----------------------------------------------------------------------
-  onoremap il :<c-u>normal! v$o^oh<cr>
+  onoremap il <cmd><c-u>normal! v$o^oh<cr>
   xnoremap il $o^oh
 
-  onoremap ie :<c-u>normal! vgg0oG$<cr>
+  onoremap ie <cmd><c-u>normal! vgg0oG$<cr>
   xnoremap ie gg0oG$
 
-  onoremap ae :<c-u>normal! vgg0oG$<cr>
+  onoremap ae <cmd><c-u>normal! vgg0oG$<cr>
   xnoremap ae gg0oG$
 
   "----------------------------------------------------------------------
   " visual mode
   "----------------------------------------------------------------------
-  xmap <silent> # :lua require("ext.terminal").run_select_in_terminal()<cr>
+  xmap <silent> # <cmd>lua require("lu5je0.ext.terminal").run_select_in_terminal()<cr>
 
   "----------------------------------------------------------------------
   " other
   "----------------------------------------------------------------------
-  nnoremap * m`:keepjumps normal! *``<cr>
-  xnoremap * m`:keepjumps <C-u>call visual#star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
+  nnoremap * m`<cmd>keepjumps normal! *``<cr>
+  xnoremap * m`<cmd>keepjumps <C-u>call visual#star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
   nnoremap v m'v
   nnoremap V m'V
 
   "----------------------------------------------------------------------
   " leader
   "----------------------------------------------------------------------
-  nmap <leader>% :%s/
+  nmap <leader>% <cmd>%s/
 
   nmap <leader>wo <c-w>o
 
   "----------------------------------------------------------------------
   " 繁体简体
   "----------------------------------------------------------------------
-  xmap <leader>xz :!opencc -c t2s<cr>
-  nmap <leader>xz :%!opencc -c t2s<cr>
-  xmap <leader>xZ :!opencc -c s2t<cr>
-  nmap <leader>xZ :%!opencc -c s2t<cr>
+  xmap <leader>xz <cmd>!opencc -c t2s<cr>
+  nmap <leader>xz <cmd>%!opencc -c t2s<cr>
+  xmap <leader>xZ <cmd>!opencc -c s2t<cr>
+  nmap <leader>xZ <cmd>%!opencc -c s2t<cr>
 
   "----------------------------------------------------------------------
   " unicode escape
   "----------------------------------------------------------------------
-  xmap <silent> <leader>xu :<c-u>call visual#replace_by_fn("UnicodeEscapeString")<cr>
-  xmap <silent> <leader>xU :<c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
+  xmap <silent> <leader>xu <cmd><c-u>call visual#replace_by_fn("UnicodeEscapeString")<cr>
+  xmap <silent> <leader>xU <cmd><c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
 
   " ugly hack to start newline and keep indent
   nnoremap <silent> o o<space><bs>
