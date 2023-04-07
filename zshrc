@@ -14,7 +14,7 @@ fi
 source ~/.local/share/zinit/zinit.git/zinit.zsh
 
 export UNAME_INFO=$(uname -a)
-if [[ $UNAME_INFO =~ "Darwin" ]]; then
+if [[ $UNAME_INFO =~ "Darwin" || $UNAME_INFO =~ "android" ]]; then
   autoload -Uz compinit && compinit
 fi
 
