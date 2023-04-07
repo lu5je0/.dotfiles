@@ -5,11 +5,11 @@ vim.filetype.add {
     zsh = 'bash',
   },
   filename = {
-    ['.bashrc'] = 'bash',
-    ['.zshrc'] = 'bash',
-    ['zshrc'] = 'bash',
-    ['bashrc'] = 'bash',
-    ['.ohmyenv'] = 'bash',
+    -- ['.bashrc'] = 'bash',
+    -- ['.zshrc'] = 'bash',
+    -- ['zshrc'] = 'bash',
+    -- ['bashrc'] = 'bash',
+    -- ['.ohmyenv'] = 'bash',
     ['crontab'] = 'crontab',
     ['aria2.conf'] = 'dosini',
     ['requirements.txt'] = function(path, bufnr)
