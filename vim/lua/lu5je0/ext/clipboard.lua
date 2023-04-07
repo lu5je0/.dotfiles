@@ -49,7 +49,7 @@ local function create_autocmd()
     pattern = { '*' },
     callback = function(args)
       vim.defer_fn(function()
-        print(dump(args.event), vim.fn.getreg('"'))
+        -- print(dump(args.event), vim.fn.getreg('"'))
         M.write_to_clipboard()
       end, 0)
     end
