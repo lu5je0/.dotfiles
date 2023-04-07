@@ -17,9 +17,16 @@ function M.read_clipboard()
   end
 end
 
+local last_write = nil
 function M.write_to_clipboard()
+  if last_write and last_write == vim.fn.getreg('"') then
+    return
+  end
+      
   ---@diagnostic disable-next-line: missing-parameter
-  vim.fn.setreg('*', vim.fn.getreg('"'))
+  local reg_content = vim.fn.getreg('"')
+  vim.fn.setreg('*', reg_content)
+  last_write = reg_content
 end
 
 local function create_autocmd()
@@ -44,12 +51,18 @@ local function create_autocmd()
     end
   })
 
+  local last_write = nil
   vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter', 'QuitPre' }, {
     group = group,
     pattern = { '*' },
     callback = function(args)
+      if vim.bo.buftype == 'terminal' then
+        if vim.api.nvim_get_mode().mode ~= 'nt' then
+          return
+        end
+      end
+      
       vim.defer_fn(function()
-        -- print(dump(args.event), vim.fn.getreg('"'))
         M.write_to_clipboard()
       end, 0)
     end

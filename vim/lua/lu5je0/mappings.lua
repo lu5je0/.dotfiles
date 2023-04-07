@@ -75,8 +75,8 @@ vim.defer_fn(function()
 
   -- dir
   set_n_map('<leader>fp', function() cmd_and_print('cd ~/.local/share/nvim/lazy') end)
-  set_n_map('<leader>fd', function() cmd_and_print(':cd ~/.dotfiles') end)
-  set_n_map('<leader>ft', function() cmd_and_print(':cd ~/test') end)
+  set_n_map('<leader>fd', function() cmd_and_print('cd ~/.dotfiles') end)
+  set_n_map('<leader>ft', function() cmd_and_print('cd ~/test') end)
 
   -- lsp
   set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')
@@ -132,13 +132,13 @@ vim.defer_fn(function()
   "----------------------------------------------------------------------
   " text-objects
   "----------------------------------------------------------------------
-  onoremap il <cmd><c-u>normal! v$o^oh<cr>
+  onoremap il <cmd>normal! v$o^oh<cr>
   xnoremap il $o^oh
 
-  onoremap ie <cmd><c-u>normal! vgg0oG$<cr>
+  onoremap ie <cmd>normal! vgg0oG$<cr>
   xnoremap ie gg0oG$
 
-  onoremap ae <cmd><c-u>normal! vgg0oG$<cr>
+  onoremap ae <cmd>normal! vgg0oG$<cr>
   xnoremap ae gg0oG$
 
   "----------------------------------------------------------------------
@@ -150,7 +150,7 @@ vim.defer_fn(function()
   " other
   "----------------------------------------------------------------------
   nnoremap * m`<cmd>keepjumps normal! *``<cr>
-  xnoremap * m`<cmd>keepjumps <C-u>call visual#star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
+  xnoremap * m`:keepjumps <C-u>call visual#star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
   nnoremap v m'v
   nnoremap V m'V
 
@@ -172,8 +172,8 @@ vim.defer_fn(function()
   "----------------------------------------------------------------------
   " unicode escape
   "----------------------------------------------------------------------
-  xmap <silent> <leader>xu <cmd><c-u>call visual#replace_by_fn("UnicodeEscapeString")<cr>
-  xmap <silent> <leader>xU <cmd><c-u>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
+  xmap <silent> <leader>xu <cmd>call visual#replace_by_fn("UnicodeEscapeString")<cr>
+  xmap <silent> <leader>xU <cmd>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
 
   " ugly hack to start newline and keep indent
   nnoremap <silent> o o<space><bs>
