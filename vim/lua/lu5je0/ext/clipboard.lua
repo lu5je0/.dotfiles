@@ -51,7 +51,6 @@ local function create_autocmd()
     end
   })
 
-  local last_write = nil
   vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter', 'QuitPre' }, {
     group = group,
     pattern = { '*' },
