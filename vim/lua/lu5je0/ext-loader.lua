@@ -31,6 +31,7 @@ require('lu5je0.misc.big-file').setup {
       size = 500 * 1024,
       function()
         vim.defer_fn(function()
+          require('lu5je0.ext.plugins_helper').load_plugin('nvim-cmp')
           if vim.fn.exists('CmpAutocompleteDisable') > 0 then
             vim.cmd [[ CmpAutocompleteDisable ]]
           end
@@ -46,9 +47,12 @@ require('lu5je0.misc.big-file').setup {
       end
     },
     function(buf_nr)
-      vim.cmd [[ IndentBlanklineDisable ]]
-      vim.treesitter.stop(buf_nr)
-      require('hlargs').disable()
+      vim.defer_fn(function()
+        require('lu5je0.ext.plugins_helper').load_plugin('indent-blankline.nvim')
+        vim.cmd [[ IndentBlanklineDisable ]]
+        vim.treesitter.stop(buf_nr)
+        require('hlargs').disable()
+      end, 200)
     end
   }
 }
