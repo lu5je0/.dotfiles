@@ -1,3 +1,7 @@
+if vim.fn.has('nvim-0.9') == 1 then
+  vim.loader.enable()
+end
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
