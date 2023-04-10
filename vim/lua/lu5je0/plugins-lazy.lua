@@ -84,28 +84,27 @@ require("lazy").setup({
       })
     end,
   },
+  
   {
     'tpope/vim-fugitive',
     cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' },
-    keys = { { mode = 'n', '<leader>gL' }, { mode = 'x', '<leader>gl' } },
-    dependencies = {
-      {
-        'rbong/vim-flog',
-        cmd = { 'Flogsplit', 'Floggit', 'Flog' },
-        dependencies = {
-          'tpope/vim-fugitive',
-        },
-        config = function()
-          vim.cmd [[
-          augroup flog
-          autocmd FileType floggraph nmap <buffer> <leader>q ZZ
-          augroup END
-          ]]
-        end
-      },
-    },
     config = function()
       require('lu5je0.ext.fugitive').setup()
+    end
+  },
+  {
+    'rbong/vim-flog',
+    cmd = { 'Flogsplit', 'Floggit', 'Flog' },
+    keys = { { mode = 'n', '<leader>gL' }, { mode = 'x', '<leader>gl' } },
+    dependencies = {
+      'tpope/vim-fugitive',
+    },
+    config = function()
+      vim.cmd [[
+      augroup flog
+      autocmd FileType floggraph nmap <buffer> <leader>q ZZ
+      augroup END
+      ]]
     end
   },
   {
@@ -120,6 +119,7 @@ require("lazy").setup({
     },
     cmd = 'Gist'
   },
+  
   {
     'kyazdani42/nvim-web-devicons',
     config = function()
