@@ -85,22 +85,27 @@ require("lazy").setup({
     end,
   },
   {
-    'rbong/vim-flog',
-    cmd = { 'Flogsplit', 'Floggit', 'Flog' },
-    opt = true,
+    'tpope/vim-fugitive',
+    cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' },
+    keys = { { mode = 'n', '<leader>gL' }, { mode = 'x', '<leader>gl' } },
     dependencies = {
       {
-        'tpope/vim-fugitive',
-        cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' },
-        fn = { 'fugitive#repo' },
+        'rbong/vim-flog',
+        cmd = { 'Flogsplit', 'Floggit', 'Flog' },
+        dependencies = {
+          'tpope/vim-fugitive',
+        },
+        config = function()
+          vim.cmd [[
+          augroup flog
+          autocmd FileType floggraph nmap <buffer> <leader>q ZZ
+          augroup END
+          ]]
+        end
       },
     },
     config = function()
-      vim.cmd [[
-      augroup flog
-      autocmd FileType floggraph nmap <buffer> <leader>q ZZ
-      augroup END
-      ]]
+      require('lu5je0.ext.fugitive').setup()
     end
   },
   {
@@ -487,7 +492,7 @@ require("lazy").setup({
                   enabled = true, -- when not enabled, neodev will not change any settings to the LSP server
                   -- these settings will be used for your Neovim config directory
                   runtime = true, -- runtime path
-                  types = true, -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
+                  types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
                   plugins = false,
                   -- plugins = { 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
                 },

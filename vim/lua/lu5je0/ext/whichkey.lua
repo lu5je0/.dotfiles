@@ -250,7 +250,7 @@ M.setup = function()
     },
     g = {
       name = '+git',
-      l = { "<cmd>lua require('lu5je0.ext.fugitive').lines_changes()<cr>", 'show changs on select lines' },
+      l = 'show changs on select lines',
     },
   }
 
