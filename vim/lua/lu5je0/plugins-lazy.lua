@@ -137,6 +137,8 @@ require("lazy").setup({
   },
   {
     'nvim-telescope/telescope.nvim',
+    -- 2023/4/9 这个commit有问题,<leader>fr无法定位到对应的行 feat: utilize last window cursor position
+    commit = '10ebb30f0de54feb0f0647772e168f846a878011',
     config = function()
       require('lu5je0.ext.telescope').setup()
     end,

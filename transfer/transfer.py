@@ -61,7 +61,7 @@ class Uploader:
         
     @staticmethod
     def print_qr_code_ascii(url):
-        qr = qrcode.QRCode(version=1, box_size=20, border=1)
+        qr = qrcode.QRCode(version=2, box_size=10, border=2)
         qr.add_data(url)
         qr.make(fit=True)
         qr.print_ascii()
