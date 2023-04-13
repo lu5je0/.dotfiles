@@ -171,6 +171,7 @@ require("lazy").setup({
   },
   {
     'kyazdani42/nvim-tree.lua',
+    commit = '086bf310bd19a7103ee7d761eb59f89f3dd23e21',
     dependencies = {
       'kyazdani42/nvim-web-devicons',
     },
