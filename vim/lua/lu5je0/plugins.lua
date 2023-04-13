@@ -171,6 +171,7 @@ require("lazy").setup({
   },
   {
     'kyazdani42/nvim-tree.lua',
+    -- 2023/4/15 第一次 <leader>e 光标位置不对
     commit = '086bf310bd19a7103ee7d761eb59f89f3dd23e21',
     dependencies = {
       'kyazdani42/nvim-web-devicons',
