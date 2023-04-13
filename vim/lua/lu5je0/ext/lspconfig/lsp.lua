@@ -37,7 +37,7 @@ M.on_attach = function(client, bufnr)
   
   keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
   keymap('n', 'gn', vim.lsp.buf.implementation, opts)
-  -- keymap('n', 'gb', vim.lsp.buf.references, opts)
+  keymap('n', 'gr', vim.lsp.buf.references, opts)
 
   keymap('n', 'gu', vim.lsp.buf.declaration, opts)
   keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)
@@ -114,6 +114,9 @@ function M.setup()
   diagnostic()
   config()
   semantic_token_highlight()
+  vim.defer_fn(function()
+    vim.cmd("LspStart")
+  end, 0)
 end
 
 return M

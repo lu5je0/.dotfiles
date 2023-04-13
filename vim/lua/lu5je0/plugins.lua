@@ -196,7 +196,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.substitute')
     end,
-    keys = { { mode = 'n', 'cx' }, { mode = 'x', 'gr' }, { mode = 'n', 'gr' } }
+    keys = { { mode = 'n', 'cx' }, { mode = 'x', 'gb' }, { mode = 'n', 'gb' } }
   },
   {
     "kylechui/nvim-surround",

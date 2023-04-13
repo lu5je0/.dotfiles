@@ -45,7 +45,7 @@ local function keymap(bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lspsaga' }
 
   vim.keymap.set('n', 'gd', find_definition, opts)
-  vim.keymap.set('n', 'gb', '<cmd>Lspsaga lsp_finder<CR>', opts)
+  vim.keymap.set('n', 'gr', '<cmd>Lspsaga lsp_finder<CR>', opts)
 
   -- Code action
   vim.keymap.set('n', '<leader>cc', '<cmd>Lspsaga code_action<CR>', opts)

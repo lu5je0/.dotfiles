@@ -3,6 +3,7 @@ require("substitute").setup {}
 vim.keymap.set("n", "cx", function()
   local backup_range = vim.highlight.range
   
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.highlight.range = function(...)
     local params = { ... }
     -- 只有再exchange的时候修改优先级
@@ -20,6 +21,6 @@ vim.keymap.set("n", "cx", function()
   end, 1000)
 end, { noremap = true })
 
-vim.keymap.set("n", "gr", require('substitute').operator, { noremap = true })
-vim.keymap.set("n", "grr", require('substitute').line, { noremap = true })
-vim.keymap.set("x", "gr", require('substitute').visual, { noremap = true })
+vim.keymap.set("n", "gb", require('substitute').operator, { noremap = true })
+vim.keymap.set("n", "gbb", require('substitute').line, { noremap = true })
+vim.keymap.set("x", "gb", require('substitute').visual, { noremap = true })

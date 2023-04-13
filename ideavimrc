@@ -29,6 +29,11 @@ let g:WhichKeyDesc_windows="<leader>w Windows"
 
 nmap yp <Action>(CopyReference)
 
+" ReplaceWithRegister
+nmap gb  <Plug>ReplaceWithRegisterOperator
+nmap gbb <Plug>ReplaceWithRegisterLine
+xmap gb  <Plug>ReplaceWithRegisterVisual
+
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
 nmap <leader>ff :action SearchEverywhere<CR>
