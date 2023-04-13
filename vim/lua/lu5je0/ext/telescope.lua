@@ -39,6 +39,13 @@ local function set_telescope_last_search_by_visual_selection()
   M.telescope_last_search = search
 end
 
+local function clear_last_search()
+  M.disable_keep_last_search = true
+  vim.defer_fn(function()
+    M.disable_keep_last_search = false
+  end, 300)
+end
+
 local function key_mapping()
   local opts = { noremap = true, silent = true }
 
@@ -52,7 +59,10 @@ local function key_mapping()
 
   local telescope_builtin = require('telescope.builtin')
   set_map('<leader>fC', function() telescope_builtin.colorscheme(theme()) end)
-  set_map('<leader>fc', function() telescope_builtin.commands(theme()) end)
+  set_map('<leader>fc', function()
+    clear_last_search()
+    telescope_builtin.commands(theme())
+  end)
   set_map('<leader>ff', function() telescope_builtin.find_files(theme()) end)
   set_map('<leader>fg', function() telescope_builtin.git_status(theme()) end)
   set_map('<leader>fR', function() telescope_builtin.live_grep(theme(true)) end)
@@ -62,7 +72,11 @@ local function key_mapping()
   set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
   set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end)
   set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
-  set_map('<leader>f"', function() telescope_builtin.registers(theme()) end)
+  set_map('<leader>f"', function()
+    -- 不保存上次搜索的结果
+    clear_last_search()
+    telescope_builtin.registers(theme())
+  end)
   set_map('<leader>fj', function()
     telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
       { theme, search_dirs = { '~/junk-file' } }))
@@ -77,6 +91,10 @@ local function remember_last_search()
     group = group,
     pattern = { '*' },
     callback = function()
+      if M.disable_keep_last_search then
+        return
+      end
+      
       if vim.o.buftype == 'prompt' then
         M.telescope_last_search = string.sub(vim.api.nvim_get_current_line(), 3, -1)
       end
@@ -89,7 +107,7 @@ local function remember_last_search()
     callback = function()
       local opts = { noremap = true, silent = true, buffer = true, desc = 'telescope', nowait = true }
 
-      if M.telescope_last_search ~= nil and M.telescope_last_search ~= "" then
+      if not M.disable_keep_last_search and M.telescope_last_search ~= nil and M.telescope_last_search ~= "" then
         vim.api.nvim_feedkeys(M.telescope_last_search, '', false)
         require('lu5je0.core.keys').feedkey('<esc>v$o^lloh<c-g>', 'n')
       end
