@@ -62,6 +62,7 @@ local function key_mapping()
   set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
   set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end)
   set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
+  set_map('<leader>f"', function() telescope_builtin.registers(theme()) end)
   set_map('<leader>fj', function()
     telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
       { theme, search_dirs = { '~/junk-file' } }))

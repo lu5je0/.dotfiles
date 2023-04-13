@@ -134,6 +134,7 @@ require("lazy").setup({
         default = true,
       }
     end,
+    lazy = true
   },
   {
     'nvim-telescope/telescope.nvim',
@@ -289,9 +290,9 @@ require("lazy").setup({
     end,
   },
 
-  {
-    'junegunn/vim-peekaboo'
-  },
+  -- {
+  --   'junegunn/vim-peekaboo'
+  -- },
 
   {
     'folke/which-key.nvim',
