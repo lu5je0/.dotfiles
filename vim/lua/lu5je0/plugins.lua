@@ -1,7 +1,13 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 
 local opts = {
-  concurrency = 40,
+  concurrency = (function()
+    if vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1 then
+      return 80
+    else
+      return 40
+    end
+  end)(),
   performance = {
     rtp = {
       disabled_plugins = {
