@@ -104,8 +104,8 @@ end
 
 local function semantic_token_highlight()
   vim.cmd [[
-    hi! link @lsp.type.variable.lua RedItalic
-    hi! link @lsp.typemod.variable.defaultLibrary.lua CyanItalic
+    " hi! link @lsp.type.variable.lua RedItalic
+    " hi! link @lsp.typemod.variable.defaultLibrary.lua CyanItalic
     " hi! link @lsp.mod.defaultLibrary.lua CyanItalic
   ]]
 end
