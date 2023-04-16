@@ -86,9 +86,6 @@ M.setup = function()
   imap <silent> <m-i> <ESC>:lua require('lu5je0.ext.terminal').toggle()<CR>
   imap <silent> <d-i> <ESC>:lua require('lu5je0.ext.terminal').toggle()<CR>
 
-  tmap <silent> <m-i> <c-\><c-n>:lua require('lu5je0.ext.terminal').toggle()<CR>
-  tmap <silent> <d-i> <c-\><c-n>:lua require('lu5je0.ext.terminal').toggle()<CR>
-  
   nmap <silent> <m-i> :lua require('lu5je0.ext.terminal').toggle()<CR>
   nmap <silent> <d-i> :lua require('lu5je0.ext.terminal').toggle()<CR>
   
@@ -96,10 +93,13 @@ M.setup = function()
   tmap <silent> <c-w>J <c-\><c-n><m-i>:lua require('lu5je0.ext.terminal').change_terminal_direction('horizontal')<CR>
   tmap <silent> <c-w>F <c-\><c-n><m-i>:lua require('lu5je0.ext.terminal').change_terminal_direction('float')<CR>
   
-  tmap <silent> <c-h> <c-\><c-n><c-w>h
-  tmap <silent> <c-l> <c-\><c-n><c-w>l
-  tmap <silent> <c-j> <c-\><c-n><c-w>j
-  tmap <silent> <c-k> <c-\><c-n><c-w>k
+  
+  tmap <silent> <m-i> <c-\><c-n>:lua require('lu5je0.ext.terminal').toggle()<CR>:let g:terminal_mode='i'<cr>
+  tmap <silent> <d-i> <c-\><c-n>:lua require('lu5je0.ext.terminal').toggle()<CR>:let g:terminal_mode='i'<cr>
+  tmap <silent> <c-h> <c-\><c-n><c-w>h:let g:terminal_mode='i'<cr>
+  tmap <silent> <c-l> <c-\><c-n><c-w>l:let g:terminal_mode='i'<cr>
+  tmap <silent> <c-j> <c-\><c-n><c-w>j:let g:terminal_mode='i'<cr>
+  tmap <silent> <c-k> <c-\><c-n><c-w>k:let g:terminal_mode='i'<cr>
   tmap <silent> <c-q> <c-\><c-n>:let g:terminal_mode='n'<cr>
   ]])
   
