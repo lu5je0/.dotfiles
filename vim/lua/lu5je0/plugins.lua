@@ -183,7 +183,10 @@ require("lazy").setup({
   },
   {
     'theniceboy/vim-calc',
-    keys = { "<leader>a" }
+    config = function ()
+      vim.keymap.set('n', '<leader>a', vim.fn.Calc)
+    end,
+    keys = { '<leader>a' }
   },
   {
     'rootkiter/vim-hexedit',

@@ -32,15 +32,31 @@ M.run_select_in_terminal = function()
 end
 
 local function keep_terminal_mode()
-  vim.cmd([[
-  autocmd TermOpen * startinsert | setlocal signcolumn=no
-  autocmd TermEnter * let g:terminal_mode='i'
-  autocmd BufEnter * if (&buftype ==# 'terminal' && get(g:, 'terminal_mode', 'i') == 'i') | startinsert! | endif
-  ]])
+  local group = vim.api.nvim_create_augroup('keep_terminal_mode', { clear = true })
+  
+  vim.api.nvim_create_autocmd('BufEnter', {
+    group = group,
+    pattern = '*',
+    callback = function()
+      if vim.bo.buftype == 'terminal' then
+        if vim.g.terminal_mode == 'i' then
+          vim.cmd('startinsert')
+        end
+      end
+    end,
+  })
+  
+  vim.api.nvim_create_autocmd('TermOpen', {
+    group = group,
+    pattern = '*',
+    callback = function()
+      vim.g.terminal_mode = 'i'
+      vim.cmd('startinsert')
+    end,
+  })
 end
 
 M.setup = function()
-  keep_terminal_mode()
   require('toggleterm').setup {
     size = function(term)
       if term.direction == 'horizontal' then
@@ -86,6 +102,8 @@ M.setup = function()
   tmap <silent> <c-k> <c-\><c-n><c-w>k
   tmap <silent> <c-q> <c-\><c-n>:let g:terminal_mode='n'<cr>
   ]])
+  
+  keep_terminal_mode()
 end
 
 return M
