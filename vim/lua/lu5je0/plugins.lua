@@ -65,7 +65,7 @@ require("lazy").setup({
       ]]
     end,
   },
-  { 'tpope/vim-repeat', keys = '.' },
+  { 'tpope/vim-repeat', event = 'VeryLazy' },
   {
     'aklt/plantuml-syntax',
     ft = 'plantuml'
