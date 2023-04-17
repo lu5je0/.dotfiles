@@ -1,8 +1,11 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 
+local has_mac = vim.fn.has('mac') == 1
+local has_wsl = vim.fn.has('wsl') == 1
+
 local opts = {
   concurrency = (function()
-    if vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1 then
+    if has_wsl or has_mac == 1 then
       return 80
     else
       return 40
@@ -76,7 +79,7 @@ require("lazy").setup({
   },
   {
     'ojroques/vim-oscyank',
-    cond = (vim.fn.has('wsl') == 0 and vim.fn.has('mac') == 0),
+    cond = (not has_wsl and not has_mac),
     init = function()
       vim.g.oscyank_silent = 1
       vim.g.oscyank_trim = 0
@@ -185,7 +188,6 @@ require("lazy").setup({
   },
   {
     'rootkiter/vim-hexedit',
-    opt = true,
     ft = 'bin',
     fn = { 'hexedit#ToggleHexEdit' },
   },
@@ -240,7 +242,6 @@ require("lazy").setup({
   },
   {
     'mg979/vim-visual-multi',
-    opt = true,
     init = function()
       vim.g.VM_maps = {
         ['Select Cursor Down'] = '<m-n>',
@@ -266,7 +267,6 @@ require("lazy").setup({
 
   {
     'dstein64/vim-startuptime',
-    opt = true,
     config = function()
       vim.cmd("let $NEOVIM_MEASURE_STARTUP_TIME = 'TRUE'")
     end,
@@ -275,7 +275,6 @@ require("lazy").setup({
 
   {
     'mbbill/undotree',
-    opt = true,
     keys = { '<leader>u' },
     config = function()
       vim.g.undotree_WindowLayout = 3
@@ -573,7 +572,6 @@ require("lazy").setup({
   },
   {
     'lambdalisue/suda.vim',
-    opt = true,
     cmd = { 'SudaRead', 'SudaWrite' },
   },
   {
