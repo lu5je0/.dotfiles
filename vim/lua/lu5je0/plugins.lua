@@ -174,6 +174,8 @@ require("lazy").setup({
   },
   {
     'kyazdani42/nvim-tree.lua',
+    -- 2023/4/15 第一次 <leader>e 光标位置不对
+    commit = '086bf310bd19a7103ee7d761eb59f89f3dd23e21',
     dependencies = {
       'kyazdani42/nvim-web-devicons',
     },
@@ -184,7 +186,10 @@ require("lazy").setup({
   },
   {
     'theniceboy/vim-calc',
-    keys = { "<leader>a" }
+    config = function ()
+      vim.keymap.set('n', '<leader>a', vim.fn.Calc)
+    end,
+    keys = { '<leader>a' }
   },
   {
     'rootkiter/vim-hexedit',
