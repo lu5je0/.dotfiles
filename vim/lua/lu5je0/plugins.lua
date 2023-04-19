@@ -556,7 +556,7 @@ require("lazy").setup({
 
   {
     'windwp/nvim-autopairs',
-    commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
+    -- commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
     config = function()
       require('nvim-autopairs').setup()
     end,

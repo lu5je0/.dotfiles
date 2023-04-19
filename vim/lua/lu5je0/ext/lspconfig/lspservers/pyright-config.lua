@@ -18,7 +18,8 @@ return {
                   or item.kind == vim.lsp.protocol.CompletionItemKind.Constructor
                 )
               then
-                item.insertText = item.label .. '$1'
+                item.insertText = item.label
+                item.label = item.label .. '(...)'
                 item.insertTextFormat = vim.lsp.protocol.InsertTextFormat.Snippet
               end
             end

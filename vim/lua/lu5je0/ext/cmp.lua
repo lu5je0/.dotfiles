@@ -128,11 +128,11 @@ local format = function(entry, vim_item)
   vim_item.kind = ' ' .. (lsp_kind_icons[vim_item.kind] or ' ') .. ''
   vim_item.abbr = truncate(vim_item.abbr)
   vim_item.menu = ({
-    buffer = '[B]',
-    nvim_lsp = '[L]',
-    ultisnips = '[U]',
-    luasnip = '[S]',
-  })[entry.source.name]
+        buffer = '[B]',
+        nvim_lsp = '[L]',
+        ultisnips = '[U]',
+        luasnip = '[S]',
+      })[entry.source.name]
 
   return vim_item
 end
@@ -170,7 +170,7 @@ cmp.setup {
     -- ghost_text = true
   },
   mapping = {
-    ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i' --[[ , 'c' ]] }),
+    ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs( -4), { 'i' --[[ , 'c' ]] }),
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i' --[[ , 'c' ]] }),
     ['<c-n>'] = cmp.mapping(function()
       if cmp.visible() then
@@ -247,6 +247,43 @@ vim.api.nvim_create_user_command("CmpAutocompleteEnable", function()
   require('cmp').setup.buffer { enabled = true }
 end, {})
 
--- nvim-autopairs If you want insert `(` after select function or method item
+local handlers = require('nvim-autopairs.completion.handlers')
 local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done { map_char = { tex = '' } })
+
+cmp.event:on(
+  'confirm_done',
+  cmp_autopairs.on_confirm_done({
+    filetypes = {
+      -- "*" is a alias to all filetypes
+      ["*"] = {
+        ["("] = {
+          kind = {
+            cmp.lsp.CompletionItemKind.Function,
+            cmp.lsp.CompletionItemKind.Method,
+            cmp.lsp.CompletionItemKind.Class,
+          },
+          handler = handlers["*"]
+        }
+      },
+      bash = false
+      -- java = {
+      --   ["("] = {
+      --     kind = {
+      --       cmp.lsp.CompletionItemKind.Function,
+      --       cmp.lsp.CompletionItemKind.Method
+      --     },
+      --     ---@param char string
+      --     ---@param item table item completion
+      --     ---@param bufnr number buffer number
+      --     ---@param rules table
+      --     ---@param commit_character table<string>
+      --     handler = function(char, item, bufnr, rules, commit_character)
+      --       print(dump(item))
+      --       -- Your handler function. Inpect with print(vim.inspect{char, item, bufnr, rules, commit_character})
+      --     end
+      --   }
+      -- },
+      -- Disable for tex
+    }
+  })
+)
