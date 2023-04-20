@@ -87,6 +87,8 @@ local function config()
       opts.on_attach = lua_ls_config.on_attach(opts.on_attach)
     elseif server_name == 'pyright' then
       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
+    elseif server_name == 'pylsp' then
+      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
     elseif server_name == 'jdtls' then
       -- todo
     end
