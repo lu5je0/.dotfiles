@@ -543,7 +543,10 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.null-ls.null-ls')
     end,
-    cmd = 'NullLsEnable',
+    dependencies = {
+      'neovim/nvim-lspconfig'
+    }
+    -- cmd = 'NullLsEnable',
   },
 
   {

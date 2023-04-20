@@ -265,7 +265,7 @@ cmp.event:on(
           handler = handlers["*"]
         }
       },
-      bash = false
+      sh = false
       -- java = {
       --   ["("] = {
       --     kind = {
