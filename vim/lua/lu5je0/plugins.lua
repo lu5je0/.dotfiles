@@ -4,13 +4,7 @@ local has_mac = vim.fn.has('mac') == 1
 local has_wsl = vim.fn.has('wsl') == 1
 
 local opts = {
-  concurrency = (function()
-    if has_wsl or has_mac == 1 then
-      return 80
-    else
-      return 40
-    end
-  end)(),
+  -- concurrency = 50,
   performance = {
     rtp = {
       disabled_plugins = {
