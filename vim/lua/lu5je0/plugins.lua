@@ -62,7 +62,14 @@ require("lazy").setup({
   { 'tpope/vim-repeat', event = 'VeryLazy' },
   {
     'aklt/plantuml-syntax',
-    ft = 'plantuml'
+    ft = 'plantuml',
+    keys = '<leader>fn',
+    dependencies = {
+      {
+        'weirongxu/plantuml-previewer.vim',
+        'tyru/open-browser.vim'
+      }
+    }
   },
   {
     'lewis6991/gitsigns.nvim',
