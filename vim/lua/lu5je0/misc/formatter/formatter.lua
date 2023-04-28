@@ -119,7 +119,7 @@ function M.format(format_type)
     -- lsp format
     if v == M.FORMAT_TOOL_TYPE.LSP then
       if lsp_format(format_type) then
-        print('lsp format')
+        -- print('lsp format')
         return
       end
     end
@@ -127,7 +127,7 @@ function M.format(format_type)
     -- external format
     if v == M.FORMAT_TOOL_TYPE.EXTERNAL then
       if external_format(format_type, filetype) then
-        print('external format')
+        -- print('external format')
         return
       end
     end
