@@ -32,7 +32,7 @@ local function get_format_priority(filetype)
       end
     end
   end
-  
+
   return { M.FORMAT_TOOL_TYPE.LSP, M.FORMAT_TOOL_TYPE.EXTERNAL }
 end
 
@@ -87,7 +87,7 @@ end
 
 local function external_format(format_type, filetype)
   local external_formatter = get_external_formatter(filetype)
-  
+
   if not external_formatter then
     log('miss format config')
     return
@@ -119,7 +119,7 @@ function M.format(format_type)
     -- lsp format
     if v == M.FORMAT_TOOL_TYPE.LSP then
       if lsp_format(format_type) then
-        print('lsp format')
+        -- print('lsp format')
         return
       end
     end
@@ -127,7 +127,7 @@ function M.format(format_type)
     -- external format
     if v == M.FORMAT_TOOL_TYPE.EXTERNAL then
       if external_format(format_type, filetype) then
-        print('external format')
+        -- print('external format')
         return
       end
     end
@@ -142,11 +142,9 @@ local function keymapping()
       M.format(M.FORMAT_TYPE.FORMAT)
     end, opts)
 
-    vim.cmd("xmap <leader>cf :lua require('lu5je0.misc.formatter.formatter').format('RANGE_FORMAT')<cr>")
-    -- 会在末尾加上一行 todo
-    -- vim.keymap.set('x', '<leader>cf', function()
-    --   M.format(M.FORMAT_TYPE.RANGE_FORMAT)
-    -- end, opts)
+    vim.keymap.set('x', '<leader>cf', function()
+      M.format(M.FORMAT_TYPE.RANGE_FORMAT)
+    end, opts)
   end, 10)
 end
 
