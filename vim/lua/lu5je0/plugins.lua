@@ -6,7 +6,7 @@ local has_wsl = vim.fn.has('wsl') == 1
 local opts = {
   concurrency = (function()
     if has_wsl or has_mac == 1 then
-      return 80
+      return 120
     else
       return 40
     end
@@ -492,7 +492,13 @@ require("lazy").setup({
         'hrsh7th/cmp-nvim-lsp',
       },
       {
-        'SmiteshP/nvim-navic'
+        'SmiteshP/nvim-navic',
+        config = function ()
+          require('nvim-navic').setup {
+            depth_limit = 4,
+            depth_limit_indicator = "..",
+          }
+        end
       },
       {
         'neovim/nvim-lspconfig',
