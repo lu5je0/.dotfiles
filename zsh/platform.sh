@@ -5,7 +5,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   # PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
   
   # arm
-  PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
   
   alias ls='ls -F --show-control-chars --color=auto'
   eval $(gdircolors -b $HOME/.dir_colors)
@@ -21,7 +21,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   alias p='pbpaste'
   alias iterm='open -a iTerm .'
   export JAVA_HOME=$JAVA_HOME_8
-  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
+  export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 
   # brew
   export HOMEBREW_NO_AUTO_UPDATE=true
@@ -33,9 +33,9 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
 elif [[ $UNAME_INFO =~ "microsoft" ]]; then
   function __git_prompt_git() {
     if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]]; then
-      GIT_OPTIONAL_LOCKS=0 command git.exe "$@"
+      export GIT_OPTIONAL_LOCKS=0 command git.exe "$@"
     else
-      GIT_OPTIONAL_LOCKS=0 command git "$@"
+      export GIT_OPTIONAL_LOCKS=0 command git "$@"
     fi
   }
   export WSL_IP=$(hostname -I | awk '{print $1}')
