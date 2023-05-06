@@ -117,3 +117,25 @@ require('ufo').setup({
 --     require('ufo').setup()
 --   end
 -- })
+
+-- 切换virt text
+local ori_virt_text_func = require('ufo.model.foldedline').updateVirtText
+local virt_text_status = false
+local function toggle_ufo_virt_text()
+  if virt_text_status then
+    vim.cmd("set foldtext=v:lua.require('ufo.main').foldtext()")
+    require('ufo.model.foldedline').updateVirtText = ori_virt_text_func
+  else
+    vim.cmd("set foldtext=v:lua.require('pretty-fold').foldtext.global()")
+    require('ufo.model.foldedline').updateVirtText = function() end
+  end
+  virt_text_status = not virt_text_status
+end
+
+vim.defer_fn(function()
+ vim.cmd("set foldtext=v:lua.require('ufo.main').foldtext()")  
+end, 300)
+
+vim.api.nvim_create_user_command("FoldTextToggle", function()
+  toggle_ufo_virt_text()
+end, {})

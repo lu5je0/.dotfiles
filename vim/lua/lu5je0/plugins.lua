@@ -379,6 +379,12 @@ require("lazy").setup({
     'kevinhwang91/nvim-ufo',
     dependencies = {
       'kevinhwang91/promise-async',
+      {
+        'anuvyklack/pretty-fold.nvim',
+        config = function()
+          require('pretty-fold').setup()
+        end
+      }
     },
     config = function()
       require('lu5je0.ext.nvim-ufo')
@@ -558,7 +564,8 @@ require("lazy").setup({
     end,
     dependencies = {
       'neovim/nvim-lspconfig'
-    }
+    },
+    event = 'VeryLazy'
     -- cmd = 'NullLsEnable',
   },
 
