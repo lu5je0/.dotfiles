@@ -1,6 +1,7 @@
 local cmp = require('cmp')
 local keys_helper = require('lu5je0.core.keys')
 local string_utils = require('lu5je0.lang.string-utils')
+local luasnip = require('luasnip')
 
 local indent_change_items = {
   'endif',
@@ -100,8 +101,8 @@ local function comfirm(fallback)
     else
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
-  elseif require('lu5je0.ext.luasnip').jump_next_able() then -- luasnip
-    require('luasnip').jump(1)
+  elseif luasnip.locally_jumpable(1) then -- luasnip
+    luasnip.jump(1)
   else
     fallback()
     keys_helper.feedkey('<space><bs>')
@@ -260,12 +261,13 @@ cmp.event:on(
           kind = {
             cmp.lsp.CompletionItemKind.Function,
             cmp.lsp.CompletionItemKind.Method,
-            cmp.lsp.CompletionItemKind.Class,
+            -- cmp.lsp.CompletionItemKind.Class,
           },
           handler = handlers["*"]
         }
       },
-      sh = false
+      sh = false,
+      java = false
       -- java = {
       --   ["("] = {
       --     kind = {
