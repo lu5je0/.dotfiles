@@ -52,4 +52,6 @@ elif [[ $UNAME_INFO =~ "microsoft" ]]; then
   clippaste() {
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
   }
+elif [[ $UNAME_INFO =~ "Android" ]]; then
+  alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
 fi
