@@ -55,11 +55,6 @@ M.on_attach = function(client, bufnr)
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
   
-  if client.server_capabilities.documentSymbolProvider then
-    local navic = require("nvim-navic")
-    navic.attach(client, bufnr)
-  end
-  
   -- client.server_capabilities.semanticTokensProvider = nil
 end
 
