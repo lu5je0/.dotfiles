@@ -511,15 +511,6 @@ require("lazy").setup({
             depth_limit = 4,
             depth_limit_indicator = "..",
           }
-          local group = vim.api.nvim_create_augroup('nvim-navic-attach', { clear = true })
-          vim.api.nvim_create_autocmd("LspAttach", {
-            group = group,
-            ---@diagnostic disable-next-line: unused-local
-            callback = function(args)
-              local navic = require("nvim-navic")
-              navic.attach(vim.lsp.get_client_by_id(args.data.client_id), args.buf)
-            end
-          })
         end
       },
       {

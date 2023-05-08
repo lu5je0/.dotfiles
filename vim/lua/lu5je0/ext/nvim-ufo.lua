@@ -134,7 +134,7 @@ end
 
 vim.defer_fn(function()
  vim.cmd("set foldtext=v:lua.require('ufo.main').foldtext()")  
-end, 1000)
+end, 300)
 
 vim.api.nvim_create_user_command("FoldTextToggle", function()
   toggle_ufo_virt_text()
