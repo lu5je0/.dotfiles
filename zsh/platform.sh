@@ -20,7 +20,11 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   alias yy='pbcopy'
   alias p='pbpaste'
   alias iterm='open -a iTerm .'
-  export JAVA_HOME=$JAVA_HOME_8
+  
+  if test -z "$JAVA_HOME";then
+    export JAVA_HOME=$JAVA_HOME_8
+  fi
+  
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 
   # brew
