@@ -375,22 +375,26 @@ require("lazy").setup({
     commit = '7427f979cc0dc991d8d177028e738463f17bcfcb',
     lazy = true
   },
+  
   {
     'kevinhwang91/nvim-ufo',
     dependencies = {
       'kevinhwang91/promise-async',
-      {
-        'anuvyklack/pretty-fold.nvim',
-        config = function()
-          require('pretty-fold').setup()
-        end
-      }
     },
     config = function()
       require('lu5je0.ext.nvim-ufo')
     end,
+    cmd = 'FoldTextToggle',
     keys = { 'zf', 'zo', 'za', 'zc', 'zM', 'zR' }
   },
+  {
+    'anuvyklack/pretty-fold.nvim',
+    config = function()
+      require('pretty-fold').setup()
+    end,
+    lazy = true
+  },
+  
   {
     'nat-418/boole.nvim',
     config = function()

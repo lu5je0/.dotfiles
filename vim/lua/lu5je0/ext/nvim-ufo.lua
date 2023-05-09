@@ -132,10 +132,7 @@ local function toggle_ufo_virt_text()
   virt_text_status = not virt_text_status
 end
 
-vim.defer_fn(function()
- vim.cmd("set foldtext=v:lua.require('ufo.main').foldtext()")  
-end, 300)
-
 vim.api.nvim_create_user_command("FoldTextToggle", function()
+  vim.cmd('Lazy load pretty-fold.nvim')
   toggle_ufo_virt_text()
 end, {})
