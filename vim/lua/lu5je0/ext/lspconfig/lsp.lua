@@ -92,7 +92,7 @@ local function config()
     elseif server_name == 'pylsp' then
       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pyright-config').on_init
     elseif server_name == 'jdtls' then
-      -- todo
+      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.jdtls').on_init
     end
 
     server.setup(opts)
