@@ -8,6 +8,7 @@ import requests
 import getpass
 import socket
 import qrcode
+import console_color
 from requests.auth import HTTPBasicAuth
 
 from tqdm import tqdm
@@ -131,11 +132,9 @@ def main():
     if args.private:
         host_type = HostType.PRIVATE
 
-    CRED = '\033[91m'
-    CEND = '\033[0m'
     if not args.yes:
         is_upload = input(
-            CRED + 'Do you really want to upload the above files to {}? (y/n): '.format(HostType.get_host(host_type)) + CEND)
+            console_color.CRED + 'Do you really want to upload the above files to {}? (y/n): '.format(HostType.get_host(host_type)) + console_color.CEND)
         if is_upload != 'Y' and is_upload != 'y' and is_upload != '':
             return
 
