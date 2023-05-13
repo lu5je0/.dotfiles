@@ -48,6 +48,26 @@ local python_postfix_snippets = (function()
       t(")"),
     })
   })
+  
+  ls.add_snippets('python', {
+    postfix({ trig = ".print", match_pattern = "^[\t ]*(.+)$" }, {
+      t("print("),
+      f(function(_, parent)
+        return parent.snippet.env.POSTFIX_MATCH
+      end, {}),
+      t(")"), i(1, '')
+    })
+  })
+  
+  ls.add_snippets('python', {
+    postfix({ trig = ".sout", match_pattern = "^[\t ]*(.+)$" }, {
+      t("print("),
+      f(function(_, parent)
+        return parent.snippet.env.POSTFIX_MATCH
+      end, {}),
+      t(")"), i(1, '')
+    })
+  })
 
   ls.add_snippets('python', {
     postfix({ trig = '.fori', match_pattern = '^[\t ]*(%d+)$' }, {
