@@ -146,6 +146,10 @@ require("lazy").setup({
             color = '#e37933',
             name = 'Xml',
           },
+          txt = {
+            icon = '',
+            name = 'Txt',
+          },
         },
         default = true,
       }
