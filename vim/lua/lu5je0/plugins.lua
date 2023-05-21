@@ -138,22 +138,18 @@ require("lazy").setup({
   
   {
     'kyazdani42/nvim-web-devicons',
-    config = function()
-      require('nvim-web-devicons').setup {
-        override = {
-          xml = {
-            icon = '󰈛',
-            color = '#e37933',
-            name = 'Xml',
-          },
-          txt = {
-            icon = '󰈙',
-            name = 'Txt',
-          },
-        },
-        default = true,
-      }
-    end,
+    -- config = function()
+    --   require('nvim-web-devicons').setup {
+    --     override = {
+    --       xml = {
+    --         icon = '󰈛',
+    --         color = '#e37933',
+    --         name = 'Xml',
+    --       },
+    --     },
+    --     default = true,
+    --   }
+    -- end,
     lazy = true
   },
   {
