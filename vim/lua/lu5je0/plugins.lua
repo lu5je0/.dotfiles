@@ -142,12 +142,12 @@ require("lazy").setup({
       require('nvim-web-devicons').setup {
         override = {
           xml = {
-            icon = '',
+            icon = '󰈛',
             color = '#e37933',
             name = 'Xml',
           },
           txt = {
-            icon = '',
+            icon = '󰈙',
             name = 'Txt',
           },
         },
