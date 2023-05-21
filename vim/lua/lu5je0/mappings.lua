@@ -144,7 +144,7 @@ vim.defer_fn(function()
   "----------------------------------------------------------------------
   " visual mode
   "----------------------------------------------------------------------
-  xmap <silent> # <cmd>lua require("lu5je0.ext.terminal").run_select_in_terminal()<cr>
+  xmap <silent> <m-i> <cmd>lua require("lu5je0.ext.terminal").run_select_in_terminal()<cr>
 
   "----------------------------------------------------------------------
   " other
