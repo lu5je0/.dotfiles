@@ -53,6 +53,25 @@ local function length_of_number(n)
   return sum
 end
 
+local git_sign_map = {
+  GitSignsDeleteDelete = {
+    bar = '▁',
+    hl = 'GitSignsDelete'
+  },
+  GitSignsTopdeleteTopdelete = {
+    bar = '▔',
+    hl = 'GitSignsTopdelete'
+  },
+  GitSignsAddAdd = {
+    bar = '▎',
+    hl = 'GitSignsAdd'
+  },
+  GitSignsChangeChange = {
+    bar = '▎',
+    hl = 'GitSignsChange'
+  },
+}
+
 function _G.__statuscolumn_gitsign_bar()
   local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
   local sign_names = get_ln_gitsign(bufnr) or {}
@@ -61,17 +80,10 @@ function _G.__statuscolumn_gitsign_bar()
   local number_hl = 'LineNr'
   local git_sign_hl = 'NonText'
   for _, sign_name in ipairs(sign_names) do
-    if string_utils.starts_with(sign_name, 'Git') then
-      if sign_name == 'GitSignsDelete' then
-        git_sign_bar = '▁'
-      elseif sign_name == 'GitSignsTopdelete' then
-        git_sign_bar = '▔'
-      else
-        git_sign_bar = '▎'
-      end
-      git_sign_hl = sign_name
-    elseif string_utils.starts_with(sign_name, 'Diag') then
-      number_hl = sign_name
+    local sign = git_sign_map[sign_name]
+    if sign ~= nil then
+      git_sign_bar = sign.bar
+      git_sign_hl = sign.hl
     end
   end
 
