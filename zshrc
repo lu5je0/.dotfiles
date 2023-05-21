@@ -113,7 +113,7 @@ alias ll='ls -lh'
 # alias l='exa -laF'
 # alias ll='exa -lF'
 
-alias md='mkdir -p'
+alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
 
 # tmux
 # alias ta="tmux attach -t"
