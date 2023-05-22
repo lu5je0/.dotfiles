@@ -89,6 +89,8 @@ local function create_popup(msg)
   vim.api.nvim_buf_add_highlight(popup.bufnr, -1, title_group, 0, 0, -1)
   for i, filename in ipairs(msg.text) do
     local icon, hi_group = devicons.get_icon(filename, get_extension(filename), {})
+    icon = icon or ''
+    hi_group = hi_group or 'Normal'
     vim.api.nvim_buf_set_lines(popup.bufnr, i, i + 1, false, { ' ' .. icon .. ' ' .. filename })
     vim.api.nvim_buf_add_highlight(popup.bufnr, -1, hi_group, i, 1, 5)
   end

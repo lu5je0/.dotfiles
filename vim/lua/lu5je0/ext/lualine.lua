@@ -175,7 +175,7 @@ ins_left {
 
 ins_left {
   function()
-    return ''
+    return ''
   end,
   cond = function() return vim.bo.filetype == '' end,
   inactive = true,
