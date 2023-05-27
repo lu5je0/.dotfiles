@@ -3,6 +3,7 @@ local M = {}
 local PATH = vim.fn.stdpath("state") .. '/time-machine/'
 local MAX_KEEP_LINES = 2000
 local MAX_KEEP_FILE_CNT = 5
+local lang_util = require('lu5je0.lang.util')
 
 local cnt = 0
 local function assemble_file_name(buf_nr)
@@ -57,8 +58,14 @@ local function create_dir_if_absent()
   end
 end
 
+local function now()
+  local timestamp, s = vim.loop.gettimeofday()
+  return timestamp * 1000 + math.floor(s / 1000)
+end
+
 -- 保存buffer
 function M.save_buffer(buf_nr)
+  local timestamp = now()
   -- 只有buffer没有文件名并且文件编辑过才保存
   if vim.api.nvim_buf_get_name(buf_nr) ~= "" and vim.bo.modified then
     return
@@ -67,6 +74,11 @@ function M.save_buffer(buf_nr)
   create_dir_if_absent()
   do_save(buf_nr)
   clear_old_file()
+  
+  local spent_mills = now() - timestamp
+  if spent_mills > 300 then
+    print('time-machine save buffer spent more than 300 mills')
+  end
 end
 
 -- 返回保存目录
