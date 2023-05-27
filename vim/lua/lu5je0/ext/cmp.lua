@@ -46,7 +46,7 @@ local lsp_kind_icons = {
   EnumMember = "",
   Constant = "󰏿",
   Struct = "󰙅",
-  Event = "",
+  Event = "",
   Operator = "󰆕",
   TypeParameter = "",
 }
