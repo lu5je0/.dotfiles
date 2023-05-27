@@ -58,7 +58,7 @@ local function clear_old_file()
     if i <= max_process_cnt then
       local stat = vim.loop.fs_stat(PATH .. filename)
       if stat and stat.birthtime and vim.loop.gettimeofday() - stat.birthtime.sec > MAX_KEEP_DAYS * 24 * 60 * 60 then
-        print('clear 过期文件' .. filename)
+        -- print('clear 过期文件' .. filename)
         vim.fn.delete(PATH .. filename)
       end
     end
