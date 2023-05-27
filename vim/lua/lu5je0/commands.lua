@@ -8,6 +8,12 @@ vim.api.nvim_create_user_command('CurlConvert', function()
   require('lu5je0.misc.curlconverter').convert()
 end, { force = true })
 
+vim.api.nvim_create_user_command('TimeMachine', function()
+  local cmd = 'cd ' .. require('lu5je0.misc.time-machine').get_path()
+  print(cmd)
+  vim.cmd(cmd)
+end, { force = true })
+
 vim.api.nvim_create_user_command('ReloadAsEncoding', function(t)
   vim.cmd('e ++enc=' .. t.fargs[1])
 end, { force = true, nargs = 1, complete = function()
