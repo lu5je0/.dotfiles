@@ -2,8 +2,7 @@ local M = {}
 
 local PATH = vim.fn.stdpath("state") .. '/time-machine/'
 local MAX_KEEP_LINES = 2000
-local MAX_KEEP_FILE_CNT = 5
-local lang_util = require('lu5je0.lang.util')
+local MAX_KEEP_FILE_CNT = 300
 
 local cnt = 0
 local function assemble_file_name(buf_nr)
@@ -76,7 +75,7 @@ function M.save_buffer(buf_nr)
   clear_old_file()
   
   local spent_mills = now() - timestamp
-  if spent_mills > 300 then
+  if spent_mills > 100 then
     print('time-machine save buffer spent more than 300 mills')
   end
 end
