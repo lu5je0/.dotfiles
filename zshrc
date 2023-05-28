@@ -112,11 +112,11 @@ alias sudo="sudo "
 alias crontab="cron.sh"
 
 # ls
-alias l='ls -lah'
-alias ll='ls -lh'
+# alias l='ls -lah'
+# alias ll='ls -lh'
 
-# alias l='exa -laF'
-# alias ll='exa -lF'
+alias l='exa -laF'
+alias ll='exa -lF'
 
 alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
 
