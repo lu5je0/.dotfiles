@@ -16,14 +16,25 @@ local function assemble_file_name(buf_nr)
   return filename
 end
 
+local function create_dir_if_absent()
+  if vim.fn.isdirectory(PATH) == 0 then
+    vim.fn.system('mkdir -p ' .. PATH)
+  end
+end
+
 local function do_save(buf_nr)
   local filename = assemble_file_name(buf_nr)
   local lines = vim.api.nvim_buf_get_lines(buf_nr, 0, -1, false)
+  
+  if #lines == 1 and lines[1] == '' then
+    return
+  end
   
   if #lines > MAX_KEEP_LINES then
     return
   end
   
+  create_dir_if_absent()
   local file = io.open(PATH .. filename, "w+")
   if file then
     for _, line in ipairs(lines) do
@@ -66,12 +77,6 @@ local function clear_old_file()
   end
 end
 
-local function create_dir_if_absent()
-  if vim.fn.isdirectory(PATH) == 0 then
-    vim.fn.system('mkdir -p ' .. PATH)
-  end
-end
-
 local function now()
   local timestamp, s = vim.loop.gettimeofday()
   return timestamp * 1000 + math.floor(s / 1000)
@@ -85,7 +90,6 @@ function M.save_buffer(buf_nr)
     return
   end
   
-  create_dir_if_absent()
   do_save(buf_nr)
   clear_old_file()
   
