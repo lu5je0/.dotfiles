@@ -115,8 +115,10 @@ alias crontab="cron.sh"
 # alias l='ls -lah'
 # alias ll='ls -lh'
 
-alias l='exa -laF'
-alias ll='exa -lF'
+alias ll='exa -laF'
+alias l='exa -lF'
+
+alias bat='batcat'
 
 alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
 
