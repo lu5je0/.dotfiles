@@ -31,6 +31,7 @@ local function do_save(buf_nr)
       file:write('\n')
     end
     file:flush()
+    file:close()
   end
 end
 

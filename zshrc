@@ -116,7 +116,7 @@ alias ll='ls -lh'
 alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
 
 # tmux
-# alias ta="tmux attach -t"
+alias ta="tmux attach -t"
 alias td="tmux detach"
 alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
