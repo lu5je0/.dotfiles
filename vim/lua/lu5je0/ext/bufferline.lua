@@ -52,6 +52,7 @@ bl.setup {
       end
       return true
     end,
+    buffer_close_icon = '󰅖',
   },
   highlights = {
     buffer_selected = {
