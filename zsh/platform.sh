@@ -54,7 +54,7 @@ elif [[ $UNAME_INFO =~ "microsoft" ]]; then
   alias p='win32yank.exe -o'
   alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
   export PATH=$PATH:'/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/'
-  export PATH='~/.dotfiles/bin/wsl/':$PATH
+  export PATH=~/.dotfiles/bin/wsl/:$PATH
   clippaste() {
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
   }
