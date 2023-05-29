@@ -5,7 +5,7 @@ local has_wsl = vim.fn.has('wsl') == 1
 
 local opts = {
   concurrency = (function()
-    if has_wsl or has_mac == 1 then
+    if has_wsl or has_mac then
       return 120
     else
       return 40
