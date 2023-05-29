@@ -189,7 +189,7 @@ bindkey -M visual S add-surround
 
 if [[ ! -f ~/.ohmyenv ]]; then
   touch ~/.ohmyenv
-  echo "export PROXY_HTTP_PORT=1080\nexport PROXY_SOCKS5_PORT=1080" >~/.ohmyenv
+  echo "# export PATH=~/.local/share/neovim/bin:$PATH\n# export USER_HTTP_PROXY='http://127.0.0.1:1081'" >~/.ohmyenv
 fi
 source ~/.ohmyenv
 
