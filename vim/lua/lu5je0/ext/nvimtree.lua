@@ -5,6 +5,7 @@ local lib = require('nvim-tree.lib')
 local keys_helper = require('lu5je0.core.keys')
 local api = require('nvim-tree.api')
 local string_utils = require('lu5je0.lang.string-utils')
+local ui = require('lu5je0.core.ui')
 
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
@@ -149,25 +150,20 @@ function M.cd()
   vim.cmd('norm gg')
 end
 
-function M.preview()
+function M.preview(toggle)
   local path = lib.get_node_at_cursor().absolute_path
   if vim.fn.isdirectory(path) == 1 then
     return
   end
-  pcall(require('lu5je0.core.ui').preview, path)
-end
-
-function M.file_info()
-  local info = vim.fn.system('ls -alhd "' ..
-    lib.get_node_at_cursor().absolute_path .. '" -l --time-style="+%Y-%m-%d %H:%M:%S"')
-  info = info .. vim.fn.system('du -h --max-depth=0 "' .. lib.get_node_at_cursor().absolute_path .. '"'):sub(1, -2)
-  require('lu5je0.core.ui').popup_info_window(info)
+  if ui.current_popup ~= nil and toggle then
+    ui.close_current_popup()
+  else
+    ui.preview(path)
+  end
 end
 
 function M.open_node()
-  if _G.preview_popup then
-    _G.preview_popup:unmount()
-  end
+  ui.close_current_popup()
 
   local node = lib.get_node_at_cursor()
   if node == nil then
@@ -263,18 +259,15 @@ local function on_attach(bufnr)
   for k, v in pairs(arrows) do
     set('n', k, function()
       keys_helper.feedkey(k, 'n')
-      if _G.preview_popup ~= nil then
-        vim.defer_fn(M.preview, 0)
+      if ui.current_popup ~= nil then
+        vim.defer_fn(function() M.preview(false) end, 0)
       end
     end, opts(v))
   end
   set('n', '<esc>', function()
-    if _G.preview_popup ~= nil then
-      _G.preview_popup:unmount()
-      _G.preview_popup = nil
-    end
+    ui.close_current_popup()
   end, opts("quit"))
-  set('n', '<space>', M.preview, opts('Open Preview'))
+  set('n', '<space>', function() M.preview(true) end, opts('Open Preview'))
 
   set('n', 'C', api.tree.toggle_git_clean_filter, opts('Toggle Git Clean'))
   set('n', 'cd', M.cd, opts('cd'))

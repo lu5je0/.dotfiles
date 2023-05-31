@@ -529,8 +529,8 @@ require("lazy").setup({
                   -- these settings will be used for your Neovim config directory
                   runtime = true, -- runtime path
                   types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
-                  plugins = false,
-                  -- plugins = { 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
+                  -- plugins = false,
+                  plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
                 },
               }
             end
