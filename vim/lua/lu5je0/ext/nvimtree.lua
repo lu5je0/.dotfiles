@@ -269,8 +269,10 @@ local function on_attach(bufnr)
     end, opts(v))
   end
   set('n', '<esc>', function()
-    _G.preview_popup:unmount()
-    _G.preview_popup = nil
+    if _G.preview_popup ~= nil then
+      _G.preview_popup:unmount()
+      _G.preview_popup = nil
+    end
   end, opts("quit"))
   set('n', '<space>', M.preview, opts('Open Preview'))
 
