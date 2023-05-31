@@ -257,11 +257,26 @@ local function on_attach(bufnr)
   local function opts(desc)
     return { desc = 'nvim-tree: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
   end
+  
+  -- preview
+  local arrows = { j = 'down', k = 'up' }
+  for k, v in pairs(arrows) do
+    set('n', k, function()
+      keys_helper.feedkey(k, 'n')
+      if _G.preview_popup ~= nil then
+        vim.defer_fn(M.preview, 0)
+      end
+    end, opts(v))
+  end
+  set('n', '<esc>', function()
+    _G.preview_popup:unmount()
+    _G.preview_popup = nil
+  end, opts("quit"))
+  set('n', '<space>', M.preview, opts('Open Preview'))
 
   set('n', 'C', api.tree.toggle_git_clean_filter, opts('Toggle Git Clean'))
   set('n', 'cd', M.cd, opts('cd'))
   set('n', 'B', api.tree.toggle_no_buffer_filter, opts('Toggle No Buffer'))
-  set('n', 'i', M.preview, opts('Open Preview'))
   set('n', 'x', M.toggle_width, opts('toggle_width'))
   -- set('n', 'x', api.marks.toggle, opts('Toggle Bookmark'))
   set('n', 'mk', M.create_dir, opts('create_dir'))

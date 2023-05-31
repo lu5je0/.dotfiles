@@ -1,5 +1,13 @@
 local M = {}
 
+local function read_lines_from_file(file_path)
+  local lines = {}
+  for line in io.lines(file_path) do
+    table.insert(lines, line)
+  end
+  return lines
+end
+
 M.preview = function(file_path)
   if _G.preview_popup ~= nil then
     _G.preview_popup:unmount()
@@ -31,12 +39,19 @@ M.preview = function(file_path)
 
   local popup = Popup(popup_options)
   _G.preview_popup = popup
-  vim.cmd('au! CursorMoved,CursorMovedI,InsertEnter,BufLeave * ++once lua _G.preview_popup:unmount()')
+  vim.cmd('au! CursorMoved,CursorMovedI,InsertEnter,BufLeave * ++once lua if _G.preview_popup ~= nil then _G.preview_popup:unmount() end')
 
   popup:mount()
 
-  vim.fn.win_execute(popup.winid, 'e ' .. file_path)
+  local buf_id = vim.api.nvim_win_get_buf(popup.winid)
+  local lines = read_lines_from_file(file_path)
+  vim.api.nvim_buf_set_lines(buf_id, 0, #lines, false, lines)
   vim.wo[popup.winid].number = true
+  local ft, _ = vim.filetype.match(({ filename = file_path }))
+  if not ft then
+    ft, _ = vim.filetype.match(({ buf = buf_id }))
+  end
+  vim.bo[buf_id].filetype = ft or ''
   vim.wo[popup.winid].signcolumn = 'no'
   vim.bo[vim.fn.winbufnr(popup.winid)].buflisted = false
   vim.api.nvim_win_set_cursor(popup.winid, { 1, 0 })
@@ -49,6 +64,8 @@ M.preview = function(file_path)
   popup:map('n', '<esc>', function()
     popup:unmount()
   end, { noremap = true })
+  
+  return popup
 end
 
 M.popup_info_window = function(content)
