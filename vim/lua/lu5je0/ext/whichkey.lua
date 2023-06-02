@@ -79,9 +79,7 @@ M.setup = function()
     },
     p = {
       name = 'Lazy',
-      i = { '<cmd>Lazy install<cr>', 'install' },
       u = { '<cmd>Lazy update<cr>', 'update' },
-      d = { '<cmd>Lazy clean<cr>', 'delete' },
       c = { '<cmd>Lazy check<cr>', 'check update' },
     },
     c = {

@@ -327,10 +327,18 @@ require("lazy").setup({
     keys = { '<f1>', '<f2>', '<f3>', '<f4>', '<f6>' }
   },
 
+  -- {
+  --   'dstein64/nvim-scrollview',
+  --   config = function()
+  --     require('lu5je0.ext.scrollview').setup()
+  --   end,
+  --   event = { 'VeryLazy' }
+  -- },
+  
   {
-    'dstein64/nvim-scrollview',
+    'lewis6991/satellite.nvim',
     config = function()
-      require('lu5je0.ext.scrollview').setup()
+      require('lu5je0.ext.satellite').setup()
     end,
     event = { 'VeryLazy' }
   },

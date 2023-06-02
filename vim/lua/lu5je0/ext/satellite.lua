@@ -1,0 +1,116 @@
+local M = {}
+
+-- local satellite = require('satellite')
+
+local last_line_nr = nil
+
+M.begin_timer = function()
+  local visible_duration = 1500
+  local timer = nil
+
+  local function show(params)
+    if vim.api.nvim_get_current_buf() ~= params.buf then
+      return
+    end
+    local current_last_line_nr = vim.fn.line("w$")
+    if last_line_nr == current_last_line_nr then
+      return
+    end
+    last_line_nr = current_last_line_nr
+    -- vim.api.get
+    -- if params.event == 'CmdWinLeave' then
+    --   vim.schedule(function()
+    --     vim.cmd("SatelliteDisable")
+    --   end)
+    --   return
+    -- end
+
+    vim.cmd("SatelliteEnable")
+    vim.cmd("SatelliteRefresh")
+
+    if timer then
+      timer:stop()
+    end
+    
+    -- 搜索时不自动隐藏
+    if vim.v.hlsearch == 1 then
+      return
+    end
+    
+    timer = vim.defer_fn(function()
+      if vim.bo.buftype == 'nofile' and vim.bo.filetype == 'vim' then
+        return
+      end
+      ---@diagnostic disable-next-line: param-type-mismatch
+      local ok, err = pcall(vim.cmd, "SatelliteDisable")
+      if not ok then
+        print(err)
+      end
+    end, visible_duration)
+  end
+
+  local satellite_group = vim.api.nvim_create_augroup('satellite_group', { clear = true })
+  vim.api.nvim_create_autocmd({ 'WinScrolled', 'CmdlineEnter' }, {
+    group = satellite_group,
+    pattern = { '*' },
+    callback = show,
+  })
+
+  -- vim.api.nvim_create_autocmd('User', {
+  --   group = satellite_group,
+  --   pattern = 'FoldChanged',
+  --   callback = function()
+  --     vim.cmd('SatelliteRefresh')
+  --   end,
+  -- })
+
+  -- vim.api.nvim_create_autocmd({ 'WinLeave', 'BufLeave', 'BufWinLeave', 'FocusLost', 'QuitPre' }, {
+  --   group = satellite_group,
+  --   pattern = { '*' },
+  --   callback = function()
+  --     vim.cmd("SatelliteDisable")
+  --     -- scrollbar.clear()
+  --   end,
+  -- })
+end
+
+M.setup = function()
+  require('satellite').setup({
+    current_only = true,
+    winblend = 80,
+    zindex = 40,
+    excluded_filetypes = {},
+    width = 2,
+    handlers = {
+      search = {
+        enable = true,
+      },
+      diagnostic = {
+        enable = true,
+        signs = { '-', '=', '≡' },
+        min_severity = vim.diagnostic.severity.HINT,
+      },
+      gitsigns = {
+        enable = true,
+        signs = {
+          -- can only be a single character (multibyte is okay)
+          add = "│",
+          change = "│",
+          delete = "-",
+        },
+      },
+      marks = {
+        enable = true,
+        show_builtins = false, -- shows the builtin marks like [ ] < >
+      },
+    },
+  })
+
+  vim.defer_fn(function()
+    vim.cmd("highlight ScrollView guibg=LightCyan guifg=NONE")
+  end, 100)
+
+  M.begin_timer()
+end
+
+return M

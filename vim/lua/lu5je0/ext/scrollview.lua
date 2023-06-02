@@ -3,7 +3,7 @@ local M = {}
 local scrollview = require('scrollview')
 
 M.begin_timer = function()
-  local visible_duration = 1500
+  local visible_duration = 2500
   local timer = nil
 
   -- hack mouse handel
@@ -34,6 +34,7 @@ M.begin_timer = function()
       if vim.bo.buftype == 'nofile' and vim.bo.filetype == 'vim' then
         return
       end
+      ---@diagnostic disable-next-line: param-type-mismatch
       local ok, err = pcall(vim.cmd, "ScrollViewDisable")
       if not ok then
         print(err)
