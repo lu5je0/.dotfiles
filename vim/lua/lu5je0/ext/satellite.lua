@@ -84,9 +84,9 @@ M.setup = function()
         enable = true,
         signs = {
           -- can only be a single character (multibyte is okay)
-          add = "│",
-          change = "│",
-          delete = "-",
+          add = "▕",
+          change = "▕",
+          delete = "╶",
         },
       },
       marks = {

@@ -83,6 +83,7 @@ local function gitsigns()
   local add = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsAdd',
+    -- symbol = '▕',
     symbol = '│',
   }).name
 
@@ -95,6 +96,7 @@ local function gitsigns()
   local delete = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsDelete',
+    -- symbol = '╶',
     symbol = '-',
   }).name
 
@@ -145,6 +147,7 @@ local function gitsigns()
 end
 
 M.setup = function()
+  vim.g.scrollview_signs_max_per_row = 1 
   scrollview.setup {
     -- excluded_filetypes = { 'nerdtree' , 'NvimTree'},
     current_only = true,
@@ -152,6 +155,8 @@ M.setup = function()
     base = 'right',
     column = 1,
     on_startup = 1,
+    max_per_row = 1,
+    overflow = 'right',
   }
   vim.cmd[[
   " Link ScrollView highlight to Pmenu highlight
