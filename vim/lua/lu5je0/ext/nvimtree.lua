@@ -158,7 +158,9 @@ function M.preview(toggle)
   if ui.current_popup ~= nil and toggle then
     ui.close_current_popup()
   else
-    ui.preview(path)
+    if path ~= nil then
+      ui.preview(path)
+    end
   end
 end
 

@@ -309,6 +309,7 @@ ins_left {
 ins_right {
   function()
     -- return [[ %2p%% %l:%c ]]
+    -- ' %02p%% ' percentage
     return ([[%%l:%s ]]):format(vim.fn.charcol('.'))
   end,
   padding = { left = 0, right = 1 },
