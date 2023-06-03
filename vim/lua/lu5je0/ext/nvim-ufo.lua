@@ -2,6 +2,7 @@ local parsers = require('nvim-treesitter.parsers')
 local string_utils = require('lu5je0.lang.string-utils')
 local render = require('ufo.render')
 
+local suffix_ft_black_list = { 'norg', 'markdown' }
 local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
   local newVirtText = {}
 
@@ -32,29 +33,35 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
     end
     curWidth = curWidth + chunkWidth
   end
-  
+
   local suffix_list = suffix:split('󰁂')
-  table.insert(newVirtText, { ' … ', 'TSPunctBracket' })
-  
-  local nss = {}
-  for _, ns in pairs(vim.api.nvim_get_namespaces()) do
-    table.insert(nss, ns)
-  end
-  local end_line_virt_text = render.captureVirtText(vim.api.nvim_get_current_buf(), vim.fn.getline(endLnum), endLnum, nil, nss)
-  
-  -- 移除前导空格
-  local encounter_text = false
-  for _, v in ipairs(end_line_virt_text) do
-    if not encounter_text and string_utils.is_blank(v[1]) then
-      goto continue
+
+  local filetype = vim.bo.filetype
+  -- 不是代码文件跳过最后一行折叠
+  if not table.contain(suffix_ft_black_list, filetype) then
+    table.insert(newVirtText, { ' … ', 'TSPunctBracket' })
+
+    local nss = {}
+    for _, ns in pairs(vim.api.nvim_get_namespaces()) do
+      table.insert(nss, ns)
     end
-    
-    table.insert(newVirtText, v)
-    encounter_text = true
-    
-    ::continue::
+
+    local end_line_virt_text = render.captureVirtText(vim.api.nvim_get_current_buf(), vim.fn.getline(endLnum), endLnum,
+      nil, nss)
+    -- 移除前导空格
+    local encounter_text = false
+    for _, v in ipairs(end_line_virt_text) do
+      if not encounter_text and string_utils.is_blank(v[1]) then
+        goto continue
+      end
+
+      table.insert(newVirtText, v)
+      encounter_text = true
+
+      ::continue::
+    end
   end
-  
+
   table.insert(newVirtText, { ' 󰁂' .. suffix_list[2], 'MoreMsg' })
   return newVirtText
 end
@@ -127,7 +134,8 @@ local function toggle_ufo_virt_text()
     require('ufo.model.foldedline').updateVirtText = ori_virt_text_func
   else
     vim.cmd("set foldtext=v:lua.require('pretty-fold').foldtext.global()")
-    require('ufo.model.foldedline').updateVirtText = function() end
+    require('ufo.model.foldedline').updateVirtText = function()
+    end
   end
   virt_text_status = not virt_text_status
 end

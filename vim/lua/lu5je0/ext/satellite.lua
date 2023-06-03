@@ -25,12 +25,12 @@ M.begin_timer = function()
     --   return
     -- end
 
-    vim.cmd("SatelliteEnable")
-    vim.cmd("SatelliteRefresh")
-
     if timer then
       timer:stop()
     end
+    
+    vim.cmd("SatelliteEnable")
+    vim.cmd("SatelliteRefresh")
     
     -- 搜索时不自动隐藏
     if vim.v.hlsearch == 1 then
