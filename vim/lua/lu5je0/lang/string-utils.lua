@@ -15,6 +15,9 @@ end
 --- @param str string
 --- @param prefix string
 M.starts_with = function(str, prefix)
+  if prefix == nil then
+    return true
+  end
   return string.sub(str, 1, string.len(prefix)) == prefix
 end
 
