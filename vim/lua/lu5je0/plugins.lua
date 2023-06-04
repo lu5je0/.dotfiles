@@ -645,4 +645,25 @@ require("lazy").setup({
     }
     end,
   },
+  
+  {
+    "mfussenegger/nvim-dap",
+    dependencies = {
+      'rcarriga/nvim-dap-ui',
+    },
+    config = function()
+      require('lu5je0.ext.dap').setup()
+    end,
+    keys = { '<F10>', '<S-F10>' },
+  },
+  {
+    'jbyuki/one-small-step-for-vimkind',
+    config = function()
+      vim.api.nvim_create_user_command('LuaDebug', function()
+        require("osv").launch({ port = 8086 })
+      end, { force = true })
+    end,
+    cmd = 'LuaDebug'
+  }
+  
 }, opts)
