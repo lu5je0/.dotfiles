@@ -83,21 +83,25 @@ local function gitsigns()
   local add = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsAdd',
-    -- symbol = '▕',
-    symbol = '│',
+    symbol = '▕',
+    priority = '300'
+    -- symbol = '│',
   }).name
 
   local change = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsChange',
-    symbol = '│',
+    symbol = '▕',
+    priority = '300'
+    -- symbol = '│',
   }).name
 
   local delete = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsDelete',
-    -- symbol = '╶',
-    symbol = '-',
+    symbol = '╶',
+    priority = '300'
+    -- symbol = '-',
   }).name
 
   scrollview.set_sign_group_state(group, enable)
@@ -147,7 +151,6 @@ local function gitsigns()
 end
 
 M.setup = function()
-  vim.g.scrollview_signs_max_per_row = 1 
   scrollview.setup {
     -- excluded_filetypes = { 'nerdtree' , 'NvimTree'},
     current_only = true,
@@ -155,7 +158,8 @@ M.setup = function()
     base = 'right',
     column = 1,
     on_startup = 1,
-    max_per_row = 1,
+    signs_max_per_row = 1,
+    -- signs_on_startup = { 'conflicts', 'search', '' },
     overflow = 'right',
   }
   vim.cmd[[
