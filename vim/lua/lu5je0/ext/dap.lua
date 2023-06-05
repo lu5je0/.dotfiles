@@ -53,8 +53,6 @@ local function keymap()
   set_map('n', { '<S-F10>', '<F22>' }, function()
     require 'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))
   end, opts)
-
-  -- set_map('n', '<F5>', require "osv".launch({ port = 8086 }), opts)
 end
 
 local function dupui()
