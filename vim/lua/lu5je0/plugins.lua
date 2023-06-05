@@ -479,12 +479,19 @@ require("lazy").setup({
       ft = { 'json', 'jsonc' }
     }
   },
+  -- {
+  --   'stevearc/aerial.nvim',
+  --   config = function()
+  --     require('lu5je0.ext.aerial')
+  --   end,
+  --   cmd = { 'AerialToggle' }
+  -- },
   {
-    'stevearc/aerial.nvim',
+    'simrat39/symbols-outline.nvim',
     config = function()
-      require('lu5je0.ext.aerial')
+      require("symbols-outline").setup()
     end,
-    cmd = { 'AerialToggle' }
+    cmd = { 'SymbolsOutline' }
   },
   {
     'lukas-reineke/indent-blankline.nvim',
@@ -672,7 +679,7 @@ require("lazy").setup({
       local builtin = require("statuscol.builtin")
       require("statuscol").setup({
         -- configuration goes here, for example:
-        ft_ignore = { 'NvimTree', 'undotree', 'diff' },
+        ft_ignore = { 'NvimTree', 'undotree', 'diff', 'Outline' },
         bt_ignore = { 'terminal' },
         segments = {
           -- {
@@ -707,6 +714,56 @@ require("lazy").setup({
       -- vim.o.foldcolumn = '1'
     end,
     event = 'VeryLazy'
-  }
+  },
+  
+  {
+    'simrat39/symbols-outline.nvim',
+    config = function()
+      require("symbols-outline").setup()
+    end
+  },
+  
+  -- {
+  --   "folke/edgy.nvim",
+  --   event = "VeryLazy",
+  --   opts = {
+  --     animate = {
+  --       enabled = false
+  --     },
+  --     wo = {
+  --       winbar = false,
+  --       winfixwidth = true,
+  --       winfixheight = false,
+  --       winhighlight = "",
+  --       spell = false,
+  --       signcolumn = "no",
+  --     },
+  --     bottom = {
+  --       -- toggleterm / lazyterm at the bottom with a height of 40% of the screen
+  --       { ft = "toggleterm", size = { height = 0.4 } },
+  --       {
+  --         ft = "help",
+  --         size = { height = 20 },
+  --         -- only show help buffers
+  --         filter = function(buf)
+  --           return vim.bo[buf].buftype == "help"
+  --         end,
+  --       },
+  --       { ft = "spectre_panel", size = { height = 0.4 } },
+  --     },
+  --     left = {
+  --       {
+  --         title = "nvimtree",
+  --         ft = "NvimTree",
+  --         size = { height = 0.5 },
+  --       },
+  --       {
+  --         ft = "Outline",
+  --         -- pinned = true,
+  --         open = "SymbolsOutline",
+  --       },
+  --     },
+  --   },
+  -- }
   
 }, opts)
