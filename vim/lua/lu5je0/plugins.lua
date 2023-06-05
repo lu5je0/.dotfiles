@@ -672,7 +672,8 @@ require("lazy").setup({
       local builtin = require("statuscol.builtin")
       require("statuscol").setup({
         -- configuration goes here, for example:
-        ft_ignore = {'toggleterm'},
+        ft_ignore = { 'NvimTree', 'undotree', 'diff' },
+        bt_ignore = { 'terminal' },
         segments = {
           -- { text = { "%C" }, click = "v:lua.ScFa" },
           -- { text = { "%s" }, click = "v:lua.ScSa" }, -- signs
