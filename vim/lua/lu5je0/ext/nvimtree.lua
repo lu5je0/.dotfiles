@@ -282,7 +282,10 @@ local function on_attach(bufnr)
     api.fs.remove()
     vim.defer_fn(api.tree.reload, 500)
   end, opts('delete'))
+  
   set('n', 'l', M.open_node, opts('Open Node'))
+  set('n', '<cr>', M.open_node, opts('Open Node'))
+  
   set('n', 'h', M.close_node, opts('Close Node'))
   set('n', 's', api.node.open.vertical, opts('Open: Vertical Split'))
   set('n', 'v', api.node.open.horizontal, opts('Open: Horizontal Split'))
