@@ -729,10 +729,11 @@ require("lazy").setup({
   --   opts = {
   --     animate = {
   --       enabled = false
+  --       -- cps = 300,
   --     },
   --     wo = {
   --       winbar = false,
-  --       winfixwidth = true,
+  --       winfixwidth = false,
   --       winfixheight = false,
   --       winhighlight = "",
   --       spell = false,
