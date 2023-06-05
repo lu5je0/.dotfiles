@@ -69,7 +69,7 @@ M.setup = function()
     current_only = true,
     winblend = 80,
     zindex = 40,
-    excluded_filetypes = {},
+    excluded_filetypes = { 'lazy' },
     width = 2,
     handlers = {
       search = {
@@ -90,7 +90,7 @@ M.setup = function()
         },
       },
       marks = {
-        enable = true,
+        enable = false,
         show_builtins = false, -- shows the builtin marks like [ ] < >
       },
     },

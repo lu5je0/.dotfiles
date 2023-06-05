@@ -664,6 +664,40 @@ require("lazy").setup({
       end, { force = true })
     end,
     cmd = 'LuaDebug'
+  },
+  
+  {
+    "luukvbaal/statuscol.nvim",
+    config = function()
+      local builtin = require("statuscol.builtin")
+      require("statuscol").setup({
+        -- configuration goes here, for example:
+        ft_ignore = {'toggleterm'},
+        segments = {
+          -- { text = { "%C" }, click = "v:lua.ScFa" },
+          -- { text = { "%s" }, click = "v:lua.ScSa" }, -- signs
+          {
+            sign = { name = { "DapBreakpoint" }, maxwidth = 2, colwidth = 2, auto = true },
+            click = "v:lua.ScSa"
+          },
+          {
+            sign = { name = { "GitSigns.*" }, maxwidth = 1, colwidth = 1, auto = false },
+            click = "v:lua.ScSa",
+          },
+          {
+            text = { function(args)
+              if args.lnum < 10 then
+                return ' ' .. builtin.lnumfunc(args)
+              end
+              return builtin.lnumfunc(args)
+            end, " " },
+            condition = { true, builtin.not_empty },
+            click = "v:lua.ScLa",
+          }
+        },
+      })
+    end,
+    event = 'VeryLazy'
   }
   
 }, opts)
