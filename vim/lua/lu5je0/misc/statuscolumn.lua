@@ -125,26 +125,29 @@ end
 
 vim.cmd('set signcolumn=no')
 
-vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_bar()'
-vim.api.nvim_create_autocmd({ 'BufAdd', 'BufEnter', 'BufRead', 'WinEnter', 'BufNew', 'TermEnter', 'WinResized' }, {
-  group = vim.api.nvim_create_augroup('gitsign_bar_group', { clear = true }),
-  pattern = '*',
-  callback = function()
-    if not vim.bo.modifiable then
-      vim.opt_local.statuscolumn = ''
-      return
-    end
+-- vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_bar()'
+-- vim.api.nvim_create_autocmd({ 'BufAdd', 'BufEnter', 'BufRead', 'WinEnter', 'BufNew', 'TermEnter', 'WinResized' }, {
+--   group = vim.api.nvim_create_augroup('gitsign_bar_group', { clear = true }),
+--   pattern = '*',
+--   callback = function()
+--     if not vim.bo.modifiable then
+--       vim.opt_local.statuscolumn = ''
+--       return
+--     end
+--
+--     if vim.fn.getcmdwintype() ~= '' then
+--       vim.opt_local.statuscolumn = ''
+--       return
+--     end
+--
+--     if vim.bo.buftype ~= '' then
+--       vim.opt_local.statuscolumn = ''
+--       return
+--     end
+--
+--     vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_bar()'
+--   end
+-- })
 
-    if vim.fn.getcmdwintype() ~= '' then
-      vim.opt_local.statuscolumn = ''
-      return
-    end
-
-    if vim.bo.buftype ~= '' then
-      vim.opt_local.statuscolumn = ''
-      return
-    end
-
-    vim.opt_local.statuscolumn = '%!v:lua.__statuscolumn_bar()'
-  end
-})
+-- statuscol.nvim
+vim.o.statuscolumn = '%!v:lua.__statuscolumn_bar()'
