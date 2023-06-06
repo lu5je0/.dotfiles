@@ -675,8 +675,14 @@ require("lazy").setup({
         ft_ignore = { 'NvimTree', 'undotree', 'diff' },
         bt_ignore = { 'terminal' },
         segments = {
-          -- { text = { "%C" }, click = "v:lua.ScFa" },
-          -- { text = { "%s" }, click = "v:lua.ScSa" }, -- signs
+          -- {
+          --   text = { function(args)
+          --     return builtin.foldfunc(args):sub(1, -2)
+          --   end, " " },
+          --   click = "v:lua.ScFa",
+          --   condition = { builtin.not_empty }
+          -- },
+          { text = { "%s" }, click = "v:lua.ScSa" }, -- signs
           {
             sign = { name = { "DapBreakpoint" }, maxwidth = 2, colwidth = 2, auto = true },
             click = "v:lua.ScSa"
@@ -697,6 +703,8 @@ require("lazy").setup({
           }
         },
       })
+      -- vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
+      -- vim.o.foldcolumn = '1'
     end,
     event = 'VeryLazy'
   }
