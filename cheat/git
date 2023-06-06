@@ -1,0 +1,5 @@
+# list all the deleted files
+git log --diff-filter=D --summary
+
+# restore file
+git checkout <deleting_commit>^ -- <file_path>
