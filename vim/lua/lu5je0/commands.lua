@@ -61,6 +61,22 @@ encode_command_creater.create_encode_command('UrlDecode', function(url)
   return url
 end)
 
+encode_command_creater.create_encode_command('Unescape', function(text)
+  local t = {}
+  local escaping = false
+  for i = 1, #text do
+    local char = text:sub(i, i)
+    if char == '\\' and not escaping then
+      escaping = true
+    else
+      table.insert(t, char)
+      escaping = false
+    end
+  end
+
+  return table.concat(t, "")
+end)
+
 encode_command_creater.create_encode_command('MarkdownLink', function(url)
   if url == nil then
     return
