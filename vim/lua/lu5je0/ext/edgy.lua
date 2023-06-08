@@ -44,6 +44,15 @@ M.setup = function()
           -- pinned = true,
           open = "SymbolsOutline",
         },
+        {
+          ft = "dapui_scopes",
+        },
+        {
+          ft = "dapui_breakpoints",
+        },
+        {
+          ft = "dap-repl",
+        },
         -- {
         --   title = "undotree",
         --   ft = "undotree",
@@ -56,6 +65,13 @@ M.setup = function()
         -- },
       },
       right = {
+        -- {
+        --   ft = "toggleterm",
+        --   size = { width = 0.3 },
+        --   filter = function(buf, win)
+        --     return vim.api.nvim_win_get_config(win).relative == ""
+        --   end,
+        -- },
       }
     }
 end

@@ -679,7 +679,7 @@ require("lazy").setup({
       local builtin = require("statuscol.builtin")
       require("statuscol").setup({
         -- configuration goes here, for example:
-        ft_ignore = { 'NvimTree', 'undotree', 'diff', 'Outline' },
+        ft_ignore = { 'NvimTree', 'undotree', 'diff', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
         bt_ignore = { 'terminal' },
         segments = {
           -- {
