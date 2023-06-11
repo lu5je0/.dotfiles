@@ -15,9 +15,9 @@ ask "Enable http proxy(http://127.0.0.1:1080)?" && export http_proxy=http://${HT
 
 if [ "$(uname)" = "Linux" ]; then
     if [ -f /etc/lsb-release ]; then
-        ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
+        # ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
         ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requirements.sh
-        ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt install -y nodejs
+        # ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt install -y nodejs
     fi
     ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
 fi
@@ -64,9 +64,9 @@ fi
 ln -s ~/.dotfiles/tmux/tmux.conf ~/.tmux.conf
 
 # wezterm
-if [[ ! -d ~/.config/wezterm ]]; then
-    ln -s ~/.dotfiles/wezterm ~/.config/wezterm
-fi
+# if [[ ! -d ~/.config/wezterm ]]; then
+#     ln -s ~/.dotfiles/wezterm ~/.config/wezterm
+# fi
 
 mkdir -p ~/.aria2
 ln -s ~/.dotfiles/aria2/aria2.conf ~/.aria2/aria2.conf
