@@ -52,7 +52,7 @@
   "substitute.nvim": { "branch": "main", "commit": "46a78e02b5b009d22df7566cbc25f4ef565c5731" },
   "suda.vim": { "branch": "master", "commit": "08abd39dfe1cee681b8ce3e7321da5fa03e045c1" },
   "symbols-outline.nvim": { "branch": "master", "commit": "512791925d57a61c545bc303356e8a8f7869763c" },
-  "telescope.nvim": { "branch": "master", "commit": "10ebb30f0de54feb0f0647772e168f846a878011" },
+  "telescope.nvim": { "branch": "master", "commit": "776b509f80dd49d8205b9b0d94485568236d1192" },
   "toggleterm.nvim": { "branch": "main", "commit": "cf146a267a6a7db62b1e2aff40414b20081048a1" },
   "undotree": { "branch": "master", "commit": "485f01efde4e22cb1ce547b9e8c9238f36566f21" },
   "vim-calc": { "branch": "master", "commit": "fdae42d412f5835e2c3341d87b0be85b51f1ecc5" },
