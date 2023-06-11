@@ -588,14 +588,6 @@ require("lazy").setup({
   },
 
   {
-    'RRethy/vim-illuminate',
-    config = function()
-      require('lu5je0.ext.lspconfig.illuminate')
-    end,
-    lazy = true
-  },
-
-  {
     'windwp/nvim-autopairs',
     config = function()
       require('nvim-autopairs').setup()
