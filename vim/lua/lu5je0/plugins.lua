@@ -180,8 +180,8 @@ require("lazy").setup({
   },
   {
     'kyazdani42/nvim-tree.lua',
-    -- 2023/4/15 第一次 <leader>e 光标位置不对
-    commit = '086bf310bd19a7103ee7d761eb59f89f3dd23e21',
+    -- just lock，in case of break changes
+    commit = 'e0c7eb50442922920cf6727a80ae09028947ddc6',
     dependencies = {
       'kyazdani42/nvim-web-devicons',
     },
@@ -597,7 +597,6 @@ require("lazy").setup({
 
   {
     'windwp/nvim-autopairs',
-    -- commit = '94d42cd1afd22f5dcf5aa4d9dbd9f516b04c892e',
     config = function()
       require('nvim-autopairs').setup()
     end,

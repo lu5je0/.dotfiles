@@ -151,7 +151,11 @@ function M.cd()
 end
 
 function M.preview(toggle)
-  local path = lib.get_node_at_cursor().absolute_path
+  local node = lib.get_node_at_cursor()
+  if node == nil then
+    return
+  end
+  local path = node.absolute_path
   if vim.fn.isdirectory(path) == 1 then
     return
   end
@@ -190,7 +194,9 @@ function M.open_node()
 
   -- 还原光标位置
   vim.defer_fn(function()
-    vim.api.nvim_win_set_cursor(win_id, { cursor_line, 1 })
+    if vim.api.nvim_get_current_win() ~= win_id then
+      vim.api.nvim_win_set_cursor(win_id, { cursor_line, 1 })  
+    end
   end, 0)
 end
 
