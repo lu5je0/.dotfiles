@@ -181,7 +181,17 @@ function M.open_node()
       end
     end)
   end
+
+  -- 记住光标位置
+  local win_id = vim.api.nvim_get_current_win()
+  local cursor_line = vim.api.nvim_win_get_cursor(win_id)[1]
+
   api.node.open.edit()
+
+  -- 还原光标位置
+  vim.defer_fn(function()
+    vim.api.nvim_win_set_cursor(win_id, { cursor_line, 1 })
+  end, 0)
 end
 
 function M.close_node()
@@ -235,7 +245,7 @@ function M.target_git_item_reveal_to_file(action, recursion_count)
   if node == nil then
     return
   end
-  
+
   if node == old_node and node.git_status and node.git_status.dir and next(node.git_status.dir) == nil then
     return
   end
@@ -255,7 +265,7 @@ local function on_attach(bufnr)
   local function opts(desc)
     return { desc = 'nvim-tree: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
   end
-  
+
   -- preview
   local arrows = { j = 'down', k = 'up' }
   for k, v in pairs(arrows) do
@@ -282,10 +292,10 @@ local function on_attach(bufnr)
     api.fs.remove()
     vim.defer_fn(api.tree.reload, 500)
   end, opts('delete'))
-  
+
   set('n', 'l', M.open_node, opts('Open Node'))
   set('n', '<cr>', M.open_node, opts('Open Node'))
-  
+
   set('n', 'h', M.close_node, opts('Close Node'))
   set('n', 's', api.node.open.vertical, opts('Open: Vertical Split'))
   set('n', 'v', api.node.open.horizontal, opts('Open: Horizontal Split'))

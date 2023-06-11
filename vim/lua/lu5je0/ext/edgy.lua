@@ -23,14 +23,14 @@ M.setup = function()
         --     return vim.api.nvim_win_get_config(win).relative == ""
         --   end,
         -- },
-        {
-          ft = "help",
-          size = { height = 20 },
-          -- only show help buffers
-          filter = function(buf)
-            return vim.bo[buf].buftype == "help"
-          end,
-        },
+        -- {
+        --   ft = "help",
+        --   size = { height = 20 },
+        --   -- only show help buffers
+        --   filter = function(buf)
+        --     return vim.bo[buf].buftype == "help"
+        --   end,
+        -- },
         { ft = "spectre_panel", size = { height = 0.4 } },
       },
       left = {
