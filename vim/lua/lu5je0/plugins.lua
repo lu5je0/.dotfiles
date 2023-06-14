@@ -719,6 +719,8 @@ require("lazy").setup({
     config = function()
       require("lu5je0.ext.edgy").setup()
     end
-  }
+  },
+  
+  {'akinsho/git-conflict.nvim', version = "*", config = true}
   
 }, opts)
