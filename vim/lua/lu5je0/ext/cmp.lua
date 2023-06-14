@@ -225,6 +225,10 @@ cmp.setup.cmdline(':', {
   completion = {
     autocomplete = false
   },
+  -- not working
+  -- window = {
+  --   documentation = cmp.config.disable, 
+  -- },
   mapping = {
     ['<tab>'] = cmp.mapping(function()
       if cmp.visible() then
