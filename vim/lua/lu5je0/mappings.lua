@@ -41,6 +41,14 @@ vim.defer_fn(function()
   -- movement
   set_map({ 'x', 'n', 'o' }, 'H', '^')
   set_map({ 'x', 'n', 'o' }, 'L', '$')
+  
+  --cmdline
+  vim.cmd [[
+  cnoremap <expr> <up> wildmenumode() ? "\<c-p>" : "\<up>"
+  cnoremap <expr> <down> wildmenumode() ? "\<c-n>" : "\<down>"
+  ]]
+  -- set_map({ 'c' }, '<down>', '<c-n>')
+  -- set_map({ 'c' }, '<up>', '<s-tab>')
 
   -- toggle
   set_n_map('<leader>vn', option_toggler.new_toggle_fn({ 'set nonumber', 'set number' }))

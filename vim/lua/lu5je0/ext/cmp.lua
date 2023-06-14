@@ -220,38 +220,38 @@ cmp.setup {
 -- })
 
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline(':', {
-  sources = cmp.config.sources({ { name = 'path' } }, { { name = 'cmdline' } }, { { name = 'cmdline_history' } } ),
-  completion = {
-    autocomplete = false
-  },
-  -- not working
-  -- window = {
-  --   documentation = cmp.config.disable, 
-  -- },
-  mapping = {
-    ['<tab>'] = cmp.mapping(function()
-      if cmp.visible() then
-        cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
-        vim.defer_fn(function()
-          cmp.complete()
-        end, 0)
-      else
-        cmp.complete()
-      end
-    end, { 'c' }),
-    ['<down>'] = cmp.mapping(cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select }, { 'c' }),
-    ['<up>'] = cmp.mapping(cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select }, { 'c' }),
-    ['<cr>'] = cmp.mapping(comfirm, { 'c' }),
-    -- ['<esc>'] = cmp.mapping(function()
-    --   if cmp.visible() then
-    --     cmp.abort()
-    --   else
-    --     keys_helper.feedkey('<c-c>')
-    --   end
-    -- end, { 'c' }),
-  }
-})
+-- cmp.setup.cmdline(':', {
+--   sources = cmp.config.sources({ { name = 'path' } }, { { name = 'cmdline' } }, { { name = 'cmdline_history' } } ),
+--   completion = {
+--     autocomplete = false
+--   },
+--   -- not working
+--   -- window = {
+--   --   documentation = cmp.config.disable, 
+--   -- },
+--   mapping = {
+--     ['<tab>'] = cmp.mapping(function()
+--       if cmp.visible() then
+--         cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
+--         vim.defer_fn(function()
+--           cmp.complete()
+--         end, 0)
+--       else
+--         cmp.complete()
+--       end
+--     end, { 'c' }),
+--     ['<down>'] = cmp.mapping(cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select }, { 'c' }),
+--     ['<up>'] = cmp.mapping(cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select }, { 'c' }),
+--     ['<cr>'] = cmp.mapping(comfirm, { 'c' }),
+--     -- ['<esc>'] = cmp.mapping(function()
+--     --   if cmp.visible() then
+--     --     cmp.abort()
+--     --   else
+--     --     keys_helper.feedkey('<c-c>')
+--     --   end
+--     -- end, { 'c' }),
+--   }
+-- })
 
 vim.cmd([[
 " gray
