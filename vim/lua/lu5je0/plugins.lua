@@ -351,6 +351,7 @@ require("lazy").setup({
     dependencies = {
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-path',
+      'hrsh7th/cmp-cmdline',
       'windwp/nvim-autopairs',
       {
         'L3MON4D3/LuaSnip',
@@ -367,7 +368,7 @@ require("lazy").setup({
       -- },
       -- 'hrsh7th/cmp-vsnip',
     },
-    event = 'InsertEnter',
+    event = 'VeryLazy',
   },
 
   {

@@ -186,11 +186,11 @@ cmp.setup {
       else
         cmp.complete()
       end
-    end, { 'i', --[[ 'c' ]] }),
-    ['<down>'] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select },
-    ['<up>'] = cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select },
-    ['<cr>'] = cmp.mapping(comfirm, { 'i', 's' }),
-    ['<tab>'] = cmp.mapping(comfirm, { 'i', 's' }),
+    end, { 'i', 'c' }),
+    ['<down>'] = cmp.mapping(cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select }, { 'i', 'c' }),
+    ['<up>'] = cmp.mapping(cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select }, { 'i', 'c' }),
+    ['<cr>'] = cmp.mapping(comfirm, { 'i', 's', 'c' }),
+    ['<tab>'] = cmp.mapping(comfirm, { 'i', 's', 'c' }),
   },
   sources = cmp.config.sources {
     { name = 'nvim_lsp', },
@@ -220,13 +220,13 @@ cmp.setup {
 -- })
 
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
--- cmp.setup.cmdline(':', {
---   sources = cmp.config.sources({
---     { name = 'path' }
---   }, {
---     { name = 'cmdline' }
---   })
--- })
+cmp.setup.cmdline(':', {
+  sources = cmp.config.sources({
+    { name = 'path' }
+  }, {
+    { name = 'cmdline' }
+  })
+})
 
 vim.cmd([[
 " gray
