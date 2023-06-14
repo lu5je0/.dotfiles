@@ -187,10 +187,10 @@ cmp.setup {
         cmp.complete()
       end
     end, { 'i' }),
-    ['<down>'] = cmp.mapping(cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select }, { 'i', 'c' }),
-    ['<up>'] = cmp.mapping(cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select }, { 'i', 'c' }),
-    ['<cr>'] = cmp.mapping(comfirm, { 'i', 's', 'c' }),
-    ['<tab>'] = cmp.mapping(comfirm, { 'i', 's', 'c' }),
+    ['<down>'] = cmp.mapping(cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select }, { 'i' }),
+    ['<up>'] = cmp.mapping(cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select }, { 'i' }),
+    ['<cr>'] = cmp.mapping(comfirm, { 'i', 's' }),
+    ['<tab>'] = cmp.mapping(comfirm, { 'i', 's' }),
   },
   sources = cmp.config.sources {
     { name = 'nvim_lsp', },
@@ -221,7 +221,7 @@ cmp.setup {
 
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
 cmp.setup.cmdline(':', {
-  sources = cmp.config.sources({ { name = 'path' } }, { { name = 'cmdline' } }),
+  sources = cmp.config.sources({ { name = 'path' } }, { { name = 'cmdline' } }, { { name = 'cmdline_history' } } ),
   completion = {
     autocomplete = false
   },
@@ -236,13 +236,16 @@ cmp.setup.cmdline(':', {
         cmp.complete()
       end
     end, { 'c' }),
-    ['<esc>'] = cmp.mapping(function()
-      if cmp.visible() then
-        cmp.abort()
-      else
-        keys_helper.feedkey('<c-c>')
-      end
-    end, { 'c' }),
+    ['<down>'] = cmp.mapping(cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select }, { 'c' }),
+    ['<up>'] = cmp.mapping(cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select }, { 'c' }),
+    ['<cr>'] = cmp.mapping(comfirm, { 'c' }),
+    -- ['<esc>'] = cmp.mapping(function()
+    --   if cmp.visible() then
+    --     cmp.abort()
+    --   else
+    --     keys_helper.feedkey('<c-c>')
+    --   end
+    -- end, { 'c' }),
   }
 })
 
