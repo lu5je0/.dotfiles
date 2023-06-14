@@ -365,9 +365,9 @@ ins_right {
 -- git_branch
 ins_right {
   function()
-    local gitsigns = vim.b.gitsigns_status_dict
-    if gitsigns then
-      return ' ' .. gitsigns.head
+    local head = vim.b.gitsigns_head
+    if head then
+      return ' ' .. head
     end
   end,
   cond = function()
