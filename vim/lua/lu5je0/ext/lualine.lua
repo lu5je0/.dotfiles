@@ -362,9 +362,17 @@ ins_right {
   },
 }
 
+-- git_branch
 ins_right {
-  'b:gitsigns_head',
-  icon = '',
+  function()
+    local gitsigns = vim.b.gitsigns_status_dict
+    if gitsigns then
+      return ' ' .. gitsigns.head
+    end
+  end,
+  cond = function()
+    return vim.b.gitsigns_status_dict ~= nil
+  end,
   color = { fg = colors.violet, gui = 'bold' },
   padding = { left = 0, right = 1 },
 }
