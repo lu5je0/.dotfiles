@@ -1,6 +1,6 @@
 local RateLimiter = {}
 
-local util = require('lu5je0.lang.util')
+local timer = require('lu5je0.lang.timer')
 
 function RateLimiter:create(limit, second)
   local t = {}
@@ -12,7 +12,7 @@ function RateLimiter:create(limit, second)
 end
 
 function RateLimiter:get()
-  local now = util.now()
+  local now = timer.now()
   
   for i = #self.queue, 1, -1 do
     if #self.queue > self.limit or ((now - self.queue[i]) / 1000) > self.second then
@@ -33,7 +33,7 @@ function RateLimiter:wrap(fn, timing)
   return function(...)
     local t = nil
     if timing then
-      t = util.now()
+      t = timer.now()
     end
     
     local r = nil
@@ -42,7 +42,7 @@ function RateLimiter:wrap(fn, timing)
     end
     
     if timing then
-      print(('cost %.1f'):format(util.now() - t))
+      print(('cost %.1f'):format(timer.now() - t))
     end
     return r
   end

@@ -95,10 +95,11 @@ function M.setup()
           \ }
   ]]
   
-  vim.api.nvim_create_autocmd({ "FocusGained", "VimEnter" }, {
+  vim.api.nvim_create_autocmd({ "FocusGained" }, {
     group = augroup,
     callback = sync_from,
   })
+  sync_from()
 end
 
 return M
