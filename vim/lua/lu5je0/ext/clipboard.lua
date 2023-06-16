@@ -1,6 +1,56 @@
 local M = {}
 
 local GROUP_NAME = 'clipboard_event_group'
+local STD_PATH = vim.fn.stdpath('config')
+
+local has = function(feature)
+  return vim.fn.has(feature) == 1
+end
+
+local function set_g_clipboard()
+  if has('wsl') then
+    vim.g.clipboard = {
+      name = 'win32yank',
+      copy = {
+        ['+'] = { 'win32yank.exe', '-i', '--crlf' },
+        ['*'] = { 'win32yank.exe', '-i', '--crlf' },
+      },
+      paste = {
+        ['+'] = { 'win32yank.exe', '-o', '--lf' },
+        ['*'] = { 'win32yank.exe', '-o', '--lf' },
+      },
+      cache_enabled = 1,
+    }
+  elseif has('mac') then
+    vim.cmd[[
+    function s:get_active()
+      return luaeval('require("lu5je0.ext.clipboard").read_clipboard_ffi()')
+    endfunction
+    let g:clipboard = {
+          \   'name': 'pbcopy',
+          \   'copy': {
+          \      '+': 'pbcopy',
+          \      '*': 'pbcopy',
+          \    },
+          \   'paste': {
+          \      '+': {-> s:get_active()},
+          \      '*': {-> s:get_active()},
+          \   },
+          \   'cache_enabled': 1,
+          \ }
+    ]]
+  end
+end
+
+local ffi = require('ffi')
+local lib_clipboard = ffi.load(STD_PATH .. '/lib/liblibclipboard.dylib')
+ffi.cdef([[
+const char* get_contents();
+]])
+
+function M.read_clipboard_ffi()
+  return string.split(ffi.string(lib_clipboard.get_contents()), '\n')
+end
 
 function M.read_clipboard()
   if vim.g.clipboard and vim.g.clipboard.paste then
@@ -29,10 +79,10 @@ function M.write_to_clipboard()
   last_write = reg_content
 end
 
-local function create_autocmd()
+local function create_defer_autocmd()
   local group = vim.api.nvim_create_augroup(GROUP_NAME, { clear = true })
 
-  vim.api.nvim_create_autocmd({ 'FocusGained' }, {
+  vim.api.nvim_create_autocmd({ 'FocusGained', 'VimEnter' }, {
     group = group,
     pattern = { '*' },
     callback = function()
@@ -68,20 +118,20 @@ local function create_autocmd()
   })
 end
 
-local function clear_autocmd()
+local function clear_defer_autocmd()
   vim.api.nvim_create_augroup(GROUP_NAME, { clear = true })
 end
 
-local function create_user_command()
+local function create_defer_toggle_command()
   local autocmd_created = true
   vim.api.nvim_create_user_command('ClipboardAutocmdToggle', function()
     if autocmd_created then
       vim.o.clipboard = 'unnamedplus'
-      clear_autocmd()
+      clear_defer_autocmd()
       print('The clipboard autocmd has cleared')
     else
       vim.o.clipboard = ''
-      create_autocmd()
+      create_defer_autocmd()
       print('The clipboard autocmd has started')
     end
     autocmd_created = not autocmd_created
@@ -89,22 +139,25 @@ local function create_user_command()
 end
 
 M.setup = function()
-  if vim.fn.has('clipboard') == 0 then
+  set_g_clipboard()
+  if not has('clipboard') then
     return
   end
-  
+
   if os.getenv('TERMINAL_EMULATOR') == 'JetBrains-JediTerm' then
     vim.o.clipboard = 'unnamedplus'
     return
   end
-  
-  vim.defer_fn(M.read_clipboard, 10)
 
-  -- 默认启用
-  create_autocmd()
-  
-  -- 创建toggle命令
-  create_user_command()
+  if has('wsl') then
+    -- 默认启用
+    create_defer_autocmd()
+
+    -- 创建toggle命令
+    create_defer_toggle_command()
+  else
+    vim.o.clipboard = 'unnamedplus'
+  end
 end
 
 return M

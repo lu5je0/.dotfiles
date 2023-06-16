@@ -52,34 +52,6 @@ o.termguicolors = true
 o.bg = 'dark'
 o.statusline = " "
 
-if has('wsl') then
-  g.clipboard = {
-    name = 'win32yank',
-    copy = {
-      ['+'] = { 'win32yank.exe', '-i', '--crlf' },
-      ['*'] = { 'win32yank.exe', '-i', '--crlf' },
-    },
-    paste = {
-      ['+'] = { 'win32yank.exe', '-o', '--lf' },
-      ['*'] = { 'win32yank.exe', '-o', '--lf' },
-    },
-    cache_enabled = 1,
-  }
-elseif has('mac') then
-  g.clipboard = {
-    name = 'pbcopy',
-    copy = {
-      ['+'] = { 'pbcopy' },
-      ['*'] = { 'pbcopy'},
-    },
-    paste = {
-      ['+'] = { 'pbpaste' },
-      ['*'] = { 'pbpaste' },
-    },
-    cache_enabled = 1,
-  }
-end
-
 if has('mac') then
   vim.g.python3_host_prog = '/usr/bin/python3'
 end
@@ -94,7 +66,6 @@ local defer_options = {
     vim.cmd [[ silent! rsh ]]
   end,
   function()
-    -- o.clipboard = 'unnamedplus'
     require('lu5je0.ext.clipboard').setup()
     vim.cmd [[ packadd matchit ]]
   end
