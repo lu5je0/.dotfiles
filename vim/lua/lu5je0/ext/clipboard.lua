@@ -46,7 +46,12 @@ local ffi = require('ffi')
 local lib_clipboard = ffi.load(STD_PATH .. '/lib/liblibclipboard.dylib')
 ffi.cdef([[
 const char* get_contents();
+void set_contents(const char *s);
 ]])
+
+function M.set_clipboard_ffi(contents)
+  return lib_clipboard.set_contents(contents)
+end
 
 function M.read_clipboard_ffi()
   return string.split(ffi.string(lib_clipboard.get_contents()), '\n')
