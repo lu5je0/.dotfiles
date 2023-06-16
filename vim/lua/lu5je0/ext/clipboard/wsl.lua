@@ -1,65 +1,6 @@
 local M = {}
 
 local GROUP_NAME = 'clipboard_event_group'
-local STD_PATH = vim.fn.stdpath('config')
-
-local has = function(feature)
-  return vim.fn.has(feature) == 1
-end
-
-local function set_g_clipboard()
-  if has('wsl') then
-    vim.g.clipboard = {
-      name = 'win32yank',
-      copy = {
-        ['+'] = { 'win32yank.exe', '-i', '--crlf' },
-        ['*'] = { 'win32yank.exe', '-i', '--crlf' },
-      },
-      paste = {
-        ['+'] = { 'win32yank.exe', '-o', '--lf' },
-        ['*'] = { 'win32yank.exe', '-o', '--lf' },
-      },
-      cache_enabled = 1,
-    }
-  elseif has('mac') then
-    vim.cmd[[
-    function s:get_active()
-      return luaeval('require("lu5je0.ext.clipboard").read_clipboard_ffi()')
-    endfunction
-    let g:clipboard = {
-          \   'name': 'pbcopy',
-          \   'copy': {
-          \      '+': 'pbcopy',
-          \      '*': 'pbcopy',
-          \    },
-          \   'paste': {
-          \      '+': {-> s:get_active()},
-          \      '*': {-> s:get_active()},
-          \   },
-          \   'cache_enabled': 1,
-          \ }
-    ]]
-  end
-end
-
-local lib_clipboard
-local ffi
-if has('mac') then
-  ffi = require('ffi')
-  lib_clipboard = ffi.load(STD_PATH .. '/lib/liblibclipboard.dylib')
-  ffi.cdef([[
-  const char* get_contents();
-  void set_contents(const char *s);
-  ]])
-end
-
-function M.set_clipboard_ffi(contents)
-  return lib_clipboard.set_contents(contents)
-end
-
-function M.read_clipboard_ffi()
-  return string.split(ffi.string(lib_clipboard.get_contents()), '\n')
-end
 
 function M.read_clipboard()
   if vim.g.clipboard and vim.g.clipboard.paste then
@@ -148,25 +89,24 @@ local function create_defer_toggle_command()
 end
 
 M.setup = function()
-  set_g_clipboard()
-  if not has('clipboard') then
-    return
-  end
+  vim.g.clipboard = {
+    name = 'win32yank',
+    copy = {
+      ['+'] = { 'win32yank.exe', '-i', '--crlf' },
+      ['*'] = { 'win32yank.exe', '-i', '--crlf' },
+    },
+    paste = {
+      ['+'] = { 'win32yank.exe', '-o', '--lf' },
+      ['*'] = { 'win32yank.exe', '-o', '--lf' },
+    },
+    cache_enabled = 1,
+  }
+  
+  -- 默认启用
+  create_defer_autocmd()
 
-  if os.getenv('TERMINAL_EMULATOR') == 'JetBrains-JediTerm' then
-    vim.o.clipboard = 'unnamedplus'
-    return
-  end
-
-  if has('wsl') then
-    -- 默认启用
-    create_defer_autocmd()
-
-    -- 创建toggle命令
-    create_defer_toggle_command()
-  else
-    vim.o.clipboard = 'unnamedplus'
-  end
+  -- 创建toggle命令
+  create_defer_toggle_command()
 end
 
 return M

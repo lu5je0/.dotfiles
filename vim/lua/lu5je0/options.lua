@@ -66,7 +66,11 @@ local defer_options = {
     vim.cmd [[ silent! rsh ]]
   end,
   function()
-    require('lu5je0.ext.clipboard').setup()
+    if has('mac') then
+      require('lu5je0.ext.clipboard.mac').setup()  
+    elseif has('wsl') then
+      require('lu5je0.ext.clipboard.wsl').setup()  
+    end
     vim.cmd [[ packadd matchit ]]
   end
 }
