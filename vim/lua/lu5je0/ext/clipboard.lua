@@ -42,12 +42,16 @@ local function set_g_clipboard()
   end
 end
 
-local ffi = require('ffi')
-local lib_clipboard = ffi.load(STD_PATH .. '/lib/liblibclipboard.dylib')
-ffi.cdef([[
-const char* get_contents();
-void set_contents(const char *s);
-]])
+local lib_clipboard
+local ffi
+if has('mac') then
+  ffi = require('ffi')
+  lib_clipboard = ffi.load(STD_PATH .. '/lib/liblibclipboard.dylib')
+  ffi.cdef([[
+  const char* get_contents();
+  void set_contents(const char *s);
+  ]])
+end
 
 function M.set_clipboard_ffi(contents)
   return lib_clipboard.set_contents(contents)
