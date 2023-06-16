@@ -1,112 +1,104 @@
 local M = {}
 
-local GROUP_NAME = 'clipboard_event_group'
+local augroup = vim.api.nvim_create_augroup("deferClip", {})
 
-function M.read_clipboard()
-  if vim.g.clipboard and vim.g.clipboard.paste then
-    local cmd = ''
-    for _, v in ipairs(vim.g.clipboard.paste['*']) do
-      cmd = cmd .. v .. ' '
-    end
-    local ok, r = pcall(io.popen, cmd .. ' 2>/dev/null')
-    if ok and r then
-      vim.fn.setreg('"', r:read("*a"))
-    else
-      print('read clipboard fail', r)
-    end
+local entries = {
+  first = 1,
+  last = 1,
+}
+local active_entry = {}
+
+local function add_entry(entry)
+  entries[entries.last] = entry
+  entries.last = entries.last + 1
+end
+
+local function pop_entry()
+  if entries.first < entries.last then
+    local entry = entries[entries.first]
+    entries[entries.first] = nil
+    entries.first = entries.first + 1
+    return entry
   end
 end
 
-local last_write = nil
-function M.write_to_clipboard()
-  if last_write and last_write == vim.fn.getreg('"') then
-    return
-  end
-      
-  ---@diagnostic disable-next-line: missing-parameter
-  local reg_content = vim.fn.getreg('"')
-  vim.fn.setreg('*', reg_content)
-  last_write = reg_content
+local function sync_from()
+  vim.fn.jobstart({ "win32yank.exe", "-o", "--lf" }, {
+    stdout_buffered = true,
+    on_stdout = function(_, data)
+      active_entry = { lines = data, regtype = "v" }
+    end,
+  })
 end
 
-local function create_defer_autocmd()
-  local group = vim.api.nvim_create_augroup(GROUP_NAME, { clear = true })
-
-  vim.api.nvim_create_autocmd({ 'FocusGained', 'VimEnter' }, {
-    group = group,
-    pattern = { '*' },
-    callback = function()
-      M.read_clipboard()
-    end
-  })
-  
-  -- telescope
-  vim.api.nvim_create_autocmd("FileType", {
-    group = group,
-    pattern = { 'TelescopePrompt' },
-    callback = function()
-      if vim.fn.has('wsl') == 1 or vim.fn.has('mac') == 1 then
-        M.write_to_clipboard()
-      end
-    end
-  })
-
-  vim.api.nvim_create_autocmd({ 'FocusLost', 'CmdlineEnter', 'QuitPre' }, {
-    group = group,
-    pattern = { '*' },
-    callback = function(args)
-      if vim.bo.buftype == 'terminal' then
-        if vim.api.nvim_get_mode().mode ~= 'nt' then
-          return
+local sync_to
+do
+  local cur_sync_job
+  local function sync_next(entry)
+    local chan = vim.fn.jobstart({ "win32yank.exe", "-i" }, {
+      on_exit = function(_)
+        local next_entry = pop_entry()
+        if next_entry then
+          sync_next(next_entry)
+        else
+          cur_sync_job = nil
         end
-      end
-      
-      vim.defer_fn(function()
-        M.write_to_clipboard()
-      end, 0)
-    end
-  })
-end
+      end,
+    })
+    cur_sync_job = chan
+    vim.fn.chansend(chan, entry.lines)
+    vim.fn.chanclose(chan, "stdin")
+  end
 
-local function clear_defer_autocmd()
-  vim.api.nvim_create_augroup(GROUP_NAME, { clear = true })
-end
-
-local function create_defer_toggle_command()
-  local autocmd_created = true
-  vim.api.nvim_create_user_command('ClipboardAutocmdToggle', function()
-    if autocmd_created then
-      vim.o.clipboard = 'unnamedplus'
-      clear_defer_autocmd()
-      print('The clipboard autocmd has cleared')
+  sync_to = function()
+    if cur_sync_job then
+      return
     else
-      vim.o.clipboard = ''
-      create_defer_autocmd()
-      print('The clipboard autocmd has started')
+      local entry = pop_entry()
+      if entry then
+        sync_next(entry)
+      end
     end
-    autocmd_created = not autocmd_created
-  end, { force = true })
+  end
 end
 
-M.setup = function()
-  vim.g.clipboard = {
-    name = 'win32yank',
-    copy = {
-      ['+'] = { 'win32yank.exe', '-i', '--crlf' },
-      ['*'] = { 'win32yank.exe', '-i', '--crlf' },
-    },
-    paste = {
-      ['+'] = { 'win32yank.exe', '-o', '--lf' },
-      ['*'] = { 'win32yank.exe', '-o', '--lf' },
-    },
-    cache_enabled = 1,
-  }
-  
-  -- 默认启用
-  create_defer_autocmd()
+function M.copy(lines, regtype)
+  add_entry({ lines = lines, regtype = regtype })
+  active_entry = { lines = lines, regtype = regtype }
+  sync_to()
+end
 
-  -- 创建toggle命令
-  create_defer_toggle_command()
+function M.get_active()
+  return { active_entry.lines, active_entry.regtype }
+end
+
+function M.setup()
+  vim.o.clipboard = 'unnamedplus'
+  vim.cmd [[
+    function s:copy(lines, regtype)
+      call luaeval('require("lu5je0.ext.clipboard.wsl").copy(_A[1], _A[2])', [a:lines, a:regtype])
+    endfunction
+    function s:get_active()
+      return luaeval('require("lu5je0.ext.clipboard.wsl").get_active()')
+    endfunction
+
+    let g:clipboard = {
+          \   'name': 'deferClip',
+          \   'copy': {
+          \      '+': {lines, regtype -> s:copy(lines, regtype)},
+          \      '*': {lines, regtype -> s:copy(lines, regtype)},
+          \    },
+          \   'paste': {
+          \      '+': {-> s:get_active()},
+          \      '*': {-> s:get_active()},
+          \   },
+          \ }
+  ]]
+  
+  vim.api.nvim_create_autocmd({ "FocusGained", "VimEnter" }, {
+    group = augroup,
+    callback = sync_from,
+  })
 end
 
 return M

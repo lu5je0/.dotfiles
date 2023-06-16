@@ -18,9 +18,10 @@ function M.read_clipboard_ffi()
 end
 
 function M.setup()
+  vim.o.clipboard = 'unamedplus'
   vim.cmd[[
   function s:get_active()
-    return luaeval('require("lu5je0.ext.clipboard").read_clipboard_ffi()')
+    return luaeval('require("lu5je0.ext.clipboard.mac").read_clipboard_ffi()')
   endfunction
   let g:clipboard = {
         \   'name': 'pbcopy',
