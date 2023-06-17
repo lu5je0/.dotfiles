@@ -5,9 +5,19 @@ M.now = function()
   return timestamp * 1000 + math.floor(s / 1000)
 end
 
-M.measure = function(fn, cnt)
+M.timer_wrap = function(fn)
+  return function(...)
+    local t = M.now()
+    local r = fn(...)
+    local total = M.now() - t
+    print(('total: %sms'):format(total))
+    return r
+  end
+end
+
+M.measure_fn = function(fn, cnt)
   if not cnt then
-    cnt = 10000
+    cnt = 100
   end
   
   local t = M.now()
