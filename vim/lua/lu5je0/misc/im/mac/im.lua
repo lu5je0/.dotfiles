@@ -41,6 +41,7 @@ M.get_im_switcher = function()
           io.popen(('%s %s 3000 2>/dev/null'):format(path, ime)):close()
         end, std_path .. '/lib/macism', im_code)
       end,
+      -- avg: 0.0035ms
       get_ime = function()
         ---@diagnostic disable-next-line: undefined-field
         local ok, ime = pcall(xkb_switch_lib.Xkb_Switch_getXkbLayout)
