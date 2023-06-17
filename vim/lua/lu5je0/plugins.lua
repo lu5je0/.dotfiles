@@ -727,6 +727,21 @@ require("lazy").setup({
     version = "*",
     config = true,
     event = 'VeryLazy'
-  }
+  },
+  
+  -- {
+  --   'tzachar/highlight-undo.nvim',
+  --   config = function()
+  --     require('highlight-undo').setup({
+  --       hlgroup = 'Visual',
+  --       duration = 300,
+  --       keymaps = {
+  --         {'n', 'u', 'undo', {}},
+  --         {'n', '<C-r>', 'redo', {}},
+  --       }
+  --     })
+  --   end,
+  --   event = 'VeryLazy'
+  -- },
   
 }, opts)
