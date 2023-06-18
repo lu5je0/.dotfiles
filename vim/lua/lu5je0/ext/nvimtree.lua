@@ -238,6 +238,37 @@ function M.reduce_width(w)
   vim.cmd('NvimTreeResize ' .. (width - w))
 end
 
+function M.copy_relative_path()
+  local node = require('nvim-tree.lib').get_node_at_cursor()
+  if not node then
+    return
+  end
+  if node.name == '..' then
+    return
+  end
+  api.fs.copy.relative_path()
+end
+
+function M.copy_absolute_path()
+  local node = require('nvim-tree.lib').get_node_at_cursor()
+  if not node then
+    return
+  end
+  
+  local path
+  if node.name == '..' then
+    path = vim.fn.getcwd()
+  else
+    path = node.absolute_path
+  end
+
+  vim.fn.setreg('"', path)
+  if vim.fn.has('clipboard') then
+    vim.fn.setreg('*', path)
+  end
+  print('copied absolute path')
+end
+
 local recursion_limit = 20
 function M.target_git_item_reveal_to_file(action, recursion_count)
   recursion_count = recursion_count or 0
@@ -322,14 +353,8 @@ local function on_attach(bufnr)
   set('n', 'yy', api.fs.copy.node, opts('Copy'))
   set('n', 'p', api.fs.paste, opts('Paste'))
   set('n', 'yn', api.fs.copy.filename, opts('Copy Name'))
-  set('n', 'yP', api.fs.copy.relative_path, opts('Copy Relative Path'))
-  set('n', 'yp', function()
-    local path = vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
-    vim.fn.setreg('"', path)
-    if vim.fn.has('clipboard') then
-      vim.fn.setreg('*', path)
-    end
-  end, opts('Copy Absolute Path'))
+  set('n', 'yP', M.copy_relative_path, opts('Copy Relative Path'))
+  set('n', 'yp', M.copy_absolute_path, opts('Copy Absolute Path'))
 
   set('n', '[g', function()
     M.target_git_item_reveal_to_file(api.node.navigate.git.prev)
