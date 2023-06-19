@@ -729,6 +729,27 @@ require("lazy").setup({
     event = 'VeryLazy'
   },
   
+  {
+    'nvim-pack/nvim-spectre',
+    config = function()
+      require('spectre').setup({
+        highlight = {
+          ui = "String",
+          search = "DiffChange",
+          replace = "DiffDelete"
+        },
+        mapping = {
+          ['send_to_qf'] = {
+            map = "Q",
+            cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
+            desc = "send all item to quickfix"
+          },
+        }
+      })
+    end,
+    cmd = 'Spectre'
+  }
+  
   -- {
   --   'tzachar/highlight-undo.nvim',
   --   config = function()
