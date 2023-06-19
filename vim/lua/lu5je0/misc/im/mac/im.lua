@@ -81,11 +81,19 @@ M.switch_insert_mode = rate_limiter:wrap(function()
 end)
 
 M.switch_normal_mode = rate_limiter:wrap(function()
+  local active_ime = M.get_im_switcher().get_ime()
   if M.save_last_ime then
-    M.last_ime = M.get_im_switcher().get_ime()
+    M.last_ime = active_ime
+  end
+  if active_ime == ABC_IM_SOURCE_CODE then
+    return
   end
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
 end)
+
+-- local timer = require('lu5je0.lang.timer')
+-- M.switch_normal_mode = timer.timer_wrap(M.switch_normal_mode)
+-- M.switch_insert_mode = timer.timer_wrap(M.switch_insert_mode)
 
 M.setup = function()
   M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
