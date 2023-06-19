@@ -238,12 +238,21 @@ function M.reduce_width(w)
   vim.cmd('NvimTreeResize ' .. (width - w))
 end
 
+local function set_clipboard(text)
+  vim.fn.setreg('"', text)
+  if vim.fn.has('clipboard') then
+    vim.fn.setreg('*', text)
+  end
+end
+
 function M.copy_relative_path()
   local node = require('nvim-tree.lib').get_node_at_cursor()
   if not node then
     return
   end
   if node.name == '..' then
+    set_clipboard(vim.fs.basename(vim.fn.getcwd()))
+    print('copied relative path')
     return
   end
   api.fs.copy.relative_path()
@@ -262,10 +271,7 @@ function M.copy_absolute_path()
     path = node.absolute_path
   end
 
-  vim.fn.setreg('"', path)
-  if vim.fn.has('clipboard') then
-    vim.fn.setreg('*', path)
-  end
+  set_clipboard(path)
   print('copied absolute path')
 end
 
