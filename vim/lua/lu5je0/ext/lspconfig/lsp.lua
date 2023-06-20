@@ -26,7 +26,10 @@ M.on_attach = function(client, bufnr)
   local keymap = vim.keymap.set
 
   -- keymap('n', 'gd', vim.lsp.buf.definition, opts)
-  -- keymap('n', 'K', vim.lsp.buf.hover, opts)
+  -- keymap('n', 'gn', vim.lsp.buf.implementation, opts)
+  -- keymap('n', 'gr', vim.lsp.buf.references, opts)
+  
+  keymap('n', 'K', vim.lsp.buf.hover, opts)
   -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
   -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
   
@@ -36,8 +39,6 @@ M.on_attach = function(client, bufnr)
   
   
   keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
-  keymap('n', 'gn', vim.lsp.buf.implementation, opts)
-  -- keymap('n', 'gr', vim.lsp.buf.references, opts)
 
   keymap('n', 'gu', vim.lsp.buf.declaration, opts)
   keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)

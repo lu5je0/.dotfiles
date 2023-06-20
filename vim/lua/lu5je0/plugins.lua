@@ -545,7 +545,7 @@ require("lazy").setup({
                   runtime = true, -- runtime path
                   types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
                   -- plugins = false,
-                  plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" }, -- installed opt or start plugins in packpath
+                  plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim", "glance.nvim" }, -- installed opt or start plugins in packpath
                 },
               }
             end
@@ -555,15 +555,21 @@ require("lazy").setup({
           require('lu5je0.ext.lspconfig.lsp').setup()
         end,
       },
+      -- {
+      --   "lu5je0/lspsaga.nvim",
+      --   branch = "main",
+      --   config = function()
+      --     require('lu5je0.ext.lspconfig.lspsaga')
+      --   end,
+      --   dependencies = {
+      --     'neovim/nvim-lspconfig'
+      --   }
+      -- },
       {
-        "lu5je0/lspsaga.nvim",
-        branch = "main",
+        "dnlhc/glance.nvim",
         config = function()
-          require('lu5je0.ext.lspconfig.lspsaga')
+          require('lu5je0.ext.glance').setup()
         end,
-        dependencies = {
-          'neovim/nvim-lspconfig'
-        }
       },
       {
         'RRethy/vim-illuminate',
@@ -728,6 +734,7 @@ require("lazy").setup({
     config = true,
     event = 'VeryLazy'
   },
+  
   
   -- {
   --   'tzachar/highlight-undo.nvim',
