@@ -30,9 +30,9 @@ let g:WhichKeyDesc_windows="<leader>w Windows"
 nmap yp <Action>(CopyReference)
 
 " ReplaceWithRegister
-nmap gb  <Plug>ReplaceWithRegisterOperator
-nmap gbb <Plug>ReplaceWithRegisterLine
-xmap gb  <Plug>ReplaceWithRegisterVisual
+nmap gr  <Plug>ReplaceWithRegisterOperator
+nmap grr <Plug>ReplaceWithRegisterLine
+xmap gr  <Plug>ReplaceWithRegisterVisual
 
 " 搜索
 nmap <leader>fm :action RecentChangedFiles<CR>
@@ -81,7 +81,7 @@ map <leader>sr :action $TranslateAndReplaceAction<CR>
 nmap gu :action GotoSuperMethod<CR>
 nmap gn :action GotoImplementation<CR>
 nmap gy :action GotoTypeDeclaration<CR>
-nmap gr :action ShowUsages<CR>
+nmap gb :action ShowUsages<CR>
 
 " code
 map <leader>cf :action ReformatCode<CR>
