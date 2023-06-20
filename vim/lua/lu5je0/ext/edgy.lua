@@ -31,7 +31,6 @@ M.setup = function()
         --     return vim.bo[buf].buftype == "help"
         --   end,
         -- },
-        { ft = "spectre_panel", size = { height = 0.4 } },
       },
       left = {
         {
@@ -65,13 +64,10 @@ M.setup = function()
         -- },
       },
       right = {
-        -- {
-        --   ft = "toggleterm",
-        --   size = { width = 0.3 },
-        --   filter = function(buf, win)
-        --     return vim.api.nvim_win_get_config(win).relative == ""
-        --   end,
-        -- },
+        {
+          ft = "spectre_panel",
+          size = { width = 0.5 },
+        },
       }
     }
 end
