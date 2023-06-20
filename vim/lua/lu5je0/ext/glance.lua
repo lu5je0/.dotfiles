@@ -51,7 +51,7 @@ local function keymap(bufnr)
       }
     })
   end, opts)
-  vim.keymap.set('n', 'gr', '<cmd>Glance references<cr>', opts)
+  vim.keymap.set('n', 'gb', '<cmd>Glance references<cr>', opts)
   vim.keymap.set('n', 'gn', '<cmd>Glance implementations<CR>', opts)
 
   -- Code action
