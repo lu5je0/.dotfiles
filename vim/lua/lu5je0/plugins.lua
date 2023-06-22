@@ -544,8 +544,9 @@ require("lazy").setup({
                   -- these settings will be used for your Neovim config directory
                   runtime = true, -- runtime path
                   types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
-                  -- plugins = false,
-                  plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim", "glance.nvim" }, -- installed opt or start plugins in packpath
+                  plugins = false,
+                  -- plugins = true,
+                  -- plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" },
                 },
               }
             end
@@ -741,8 +742,8 @@ require("lazy").setup({
       require('lu5je0.ext.spectre').setup()
     end,
     cmd = 'Spectre',
-    event = 'VeryLazy'
-    -- keys = { { mode = { 'x', 'v' }, '<leader>sw' }, { mode = 'n', '<leader>sf' } },
+    -- event = 'VeryLazy'
+    keys = { { mode = { 'x', 'v' }, '<leader>sw' }, { mode = 'n', '<leader>sf' } },
   }
   
   -- {

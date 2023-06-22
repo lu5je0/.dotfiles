@@ -1,4 +1,5 @@
 local M = {}
+local visul_util = require('lu5je0.core.visual')
 
 local function keymap()
   vim.keymap.set('n', '<leader>sw', function()
@@ -6,7 +7,7 @@ local function keymap()
   end, { desc = "Search current word" })
 
   vim.keymap.set('x', '<leader>sw', function()
-    require("spectre").open_visual()
+    require("spectre").open({ search_text = visul_util.get_visual_selection_as_string() })
   end, { desc = "Search current word" })
 
   vim.keymap.set('n', '<leader>sf', function()
