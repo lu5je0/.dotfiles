@@ -1,3 +1,7 @@
+local M = {}
+
+local ft = require('Comment.ft')
+
 local function gcc()
   local line = vim.api.nvim_win_get_cursor(0)[1]
   local fold_close_end_line = vim.fn.foldclosedend(line)
@@ -26,18 +30,32 @@ local function gcc()
   end
 end
 
-require('Comment').setup {
-  opleader = {
-    -- Line-comment keymap
-    line = 'gc',
-    -- Block-comment keymap
-    block = 'gC',
-  },
-  toggler = {
-    -- Line-comment toggle keymap
-    line = 'gcc',
-    -- Block-comment toggle keymap
-    block = 'gcgc',
-  },
-}
-vim.keymap.set('n', 'gcc', gcc)
+local function ft_config()
+  ft
+  .set('debsources', '# %s')
+  .set('yaml', '# %s')
+  .set('autohothey', '; %s')
+  .set('crontab', '# %s')
+end
+
+function M.setup()
+  require('Comment').setup {
+    opleader = {
+      -- Line-comment keymap
+      line = 'gc',
+      -- Block-comment keymap
+      block = 'gC',
+    },
+    toggler = {
+      -- Line-comment toggle keymap
+      line = 'gcc',
+      -- Block-comment toggle keymap
+      block = 'gcgc',
+    },
+  }
+  ft_config()
+  
+  vim.keymap.set('n', 'gcc', gcc)
+end
+
+return M

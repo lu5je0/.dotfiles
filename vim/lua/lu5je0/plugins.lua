@@ -239,7 +239,7 @@ require("lazy").setup({
   {
     'numToStr/Comment.nvim',
     config = function()
-      require('lu5je0.ext.comment')
+      require('lu5je0.ext.comment').setup()
     end,
     keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' }, { mode = 'n', 'gC' } }
   },
