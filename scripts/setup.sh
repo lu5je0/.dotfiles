@@ -68,6 +68,11 @@ ln -s ~/.dotfiles/tmux/tmux.conf ~/.tmux.conf
 #     ln -s ~/.dotfiles/wezterm ~/.config/wezterm
 # fi
 
+# kitty
+if [[ ! -f ~/.config/kitty/kitty.conf ]]; then
+    ln -s ~/.dotfiles/kitty/kitty.conf ~/.config/kitty/kitty.conf
+fi
+
 mkdir -p ~/.aria2
 ln -s ~/.dotfiles/aria2/aria2.conf ~/.aria2/aria2.conf
 
