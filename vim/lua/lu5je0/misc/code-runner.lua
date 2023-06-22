@@ -29,7 +29,7 @@ local function special()
   return false
 end
 
-M.run_file = function(debug)
+function M.run_file(debug)
   debug = debug or false
   
   local filetype = vim.bo.filetype
@@ -79,7 +79,7 @@ M.run_file = function(debug)
   end
 end
 
-M.key_mapping = function()
+function M.key_mapping()
   local opts = {
     noremap = true,
     silent = false,
@@ -98,7 +98,7 @@ M.key_mapping = function()
   end, opts)
 end
 
-M.create_command = function()
+function M.create_command()
   vim.api.nvim_create_user_command('RunFile', function()
     M.run_file()
   end, { force = true, nargs = '*' })

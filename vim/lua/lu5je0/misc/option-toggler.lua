@@ -1,6 +1,6 @@
 local M = {}
 
-M.new_toggle_fn = function(fns, silent)
+function M.new_toggle_fn(fns, silent)
   if type(fns) ~= "table" then
     fns = { fns }
   end

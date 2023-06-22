@@ -1,6 +1,6 @@
 local M = {}
 
-M.setup = function()
+function M.setup()
   local setup = {
     plugins = {
       marks = true, -- shows a list of your marks on ' and `

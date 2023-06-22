@@ -1,6 +1,6 @@
 local M = {}
 
-M.create_encode_command_by_type = function(name, range_encode_fn, buffer_encode_fn, opts)
+function M.create_encode_command_by_type(name, range_encode_fn, buffer_encode_fn, opts)
   opts = vim.tbl_deep_extend('force', {
     range = true,
     buffer = true,
@@ -27,7 +27,7 @@ M.create_encode_command_by_type = function(name, range_encode_fn, buffer_encode_
   end
 end
 
-M.create_encode_command = function(name, encode_fn, opts)
+function M.create_encode_command(name, encode_fn, opts)
   M.create_encode_command_by_type(name, encode_fn, encode_fn, opts)
 end
 

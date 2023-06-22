@@ -1,11 +1,11 @@
 local M = {}
 
-M.now = function()
+function M.now()
   local timestamp, s = vim.loop.gettimeofday()
   return timestamp * 1000 + math.floor(s / 1000)
 end
 
-M.timer_wrap = function(fn)
+function M.timer_wrap(fn)
   return function(...)
     local t = M.now()
     local r = fn(...)
@@ -15,7 +15,7 @@ M.timer_wrap = function(fn)
   end
 end
 
-M.measure_fn = function(fn, cnt)
+function M.measure_fn(fn, cnt)
   if not cnt then
     cnt = 100
   end
@@ -29,11 +29,11 @@ M.measure_fn = function(fn, cnt)
 end
 
 local now
-M.begin_timer = function()
+function M.begin_timer()
   now = M.now()
 end
 
-M.end_timer = function()
+function M.end_timer()
   print(M.now() - now)
 end
 

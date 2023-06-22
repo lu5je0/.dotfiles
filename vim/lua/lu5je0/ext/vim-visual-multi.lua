@@ -9,7 +9,7 @@ local MODE = {
   VISUAL = 'VISUAL',
 }
 
-M.mode = function()
+function M.mode()
   if vim.g['Vm'].extend_mode == 1 then
     return MODE.VISUAL
   else
@@ -17,7 +17,7 @@ M.mode = function()
   end
 end
 
-M.setup = function()
+function M.setup()
   vim.g.VM_show_warnings = 0
   vim.g.VM_set_statusline = 0
   vim.g.VM_silent_exit = 1

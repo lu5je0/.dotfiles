@@ -8,7 +8,7 @@ local M = {
   last_ime = ABC_IM_SOURCE_CODE
 }
 
-M.get_im_switcher = function()
+function M.get_im_switcher()
   if M.im_switcher ~= nil then
     return M.im_switcher
   end
@@ -55,13 +55,13 @@ M.get_im_switcher = function()
   return M.im_switcher
 end
 
-M.switch_to_en = function()
+function M.switch_to_en()
   if M.get_im_switcher().get_ime() ~= ABC_IM_SOURCE_CODE then
     M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
   end
 end
 
-M.toggle_save_last_ime = function()
+function M.toggle_save_last_ime()
   local keeper = require('lu5je0.misc.env-keeper')
   local v = keeper.get('save_last_ime', true)
   if v then
@@ -95,7 +95,7 @@ end)
 -- M.switch_normal_mode = timer.timer_wrap(M.switch_normal_mode)
 -- M.switch_insert_mode = timer.timer_wrap(M.switch_insert_mode)
 
-M.setup = function()
+function M.setup()
   M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
 
   vim.api.nvim_create_autocmd('InsertLeave', {

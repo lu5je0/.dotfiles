@@ -2,7 +2,7 @@ local M = {}
 
 local gps_ft_white_list = { 'json', 'lua', 'java' }
 
-M.path = function()
+function M.path()
   if vim.bo.filetype == 'json' then
     return require('jsonpath').get()
   else
@@ -10,7 +10,7 @@ M.path = function()
   end
 end
 
-M.is_available = function()
+function M.is_available()
   local filetype = vim.bo.filetype
   if not table.contain(gps_ft_white_list, filetype) then
     return false

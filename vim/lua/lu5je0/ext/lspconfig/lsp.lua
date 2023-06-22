@@ -21,7 +21,7 @@ local function diagnostic()
   end
 end
 
-M.on_attach = function(client, bufnr)
+function M.on_attach(client, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
   local keymap = vim.keymap.set
 

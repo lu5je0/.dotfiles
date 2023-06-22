@@ -54,7 +54,7 @@ local function vim_add_repeat(case_type, word_mode)
   vim.cmd(cmd)
 end
 
-M.convert_to_camel = function(word_mode)
+function M.convert_to_camel(word_mode)
   base_convert(function(tokens)
     local var_name = ''
     for i, token in ipairs(tokens) do
@@ -70,7 +70,7 @@ M.convert_to_camel = function(word_mode)
   vim_add_repeat('Camel', word_mode)
 end
 
-M.convert_to_snake = function(word_mode)
+function M.convert_to_snake(word_mode)
   base_convert(function(tokens)
     local var_name = ''
     for i, token in ipairs(tokens) do
@@ -86,7 +86,7 @@ M.convert_to_snake = function(word_mode)
   vim_add_repeat('Snake', word_mode)
 end
 
-M.convert_to_pascal = function(word_mode)
+function M.convert_to_pascal(word_mode)
   base_convert(function(tokens)
     local var_name = ''
     for _, token in ipairs(tokens) do
@@ -98,7 +98,7 @@ M.convert_to_pascal = function(word_mode)
   vim_add_repeat('Pascal', word_mode)
 end
 
-M.convert_to_kebab = function(word_mode)
+function M.convert_to_kebab(word_mode)
   base_convert(function(tokens)
     local var_name = ''
     for i, token in ipairs(tokens) do
@@ -114,7 +114,7 @@ M.convert_to_kebab = function(word_mode)
   vim_add_repeat('Kebab', word_mode)
 end
 
-M.key_mapping = function()
+function M.key_mapping()
   -- stylua: ignore start
   local opts = { desc = 'var-naming-converter.lua' }
   vim.keymap.set({ 'n', 'x' }, '<plug>(ConvertToCamelWORD)', function() M.convert_to_camel('WORD') end, opts)

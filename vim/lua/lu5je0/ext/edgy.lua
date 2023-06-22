@@ -1,6 +1,6 @@
 local M = {}
 
-M.setup = function()
+function M.setup()
   require('edgy').setup {
       animate = {
         enabled = false

@@ -10,14 +10,14 @@ end
 
 M.current_popup = nil
 
-M.close_current_popup = function()
+function M.close_current_popup()
   if M.current_popup ~= nil then
     M.current_popup:unmount()
     M.current_popup = nil
   end
 end
 
-M.preview = function(file_path)
+function M.preview(file_path)
   M.close_current_popup()
 
   local Popup = require('nui.popup')

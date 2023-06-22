@@ -18,7 +18,7 @@ local function cmp_hotfix()
   end
 end
 
-M.jump_next_able = function()
+function M.jump_next_able()
   local modified_line = vim.fn.line("'^")
   local current_line = vim.fn.line(".")
   return modified_line >= current_line and modified_line - current_line <= 2 and luasnip.locally_jumpable(1)
@@ -39,7 +39,7 @@ local function keymap()
   
 end
 
-M.setup = function()
+function M.setup()
   keymap()
   require("luasnip.loaders.from_vscode").lazy_load({ paths = { "./snippets/" } })
   require('lu5je0.ext.luasnips.snippets')

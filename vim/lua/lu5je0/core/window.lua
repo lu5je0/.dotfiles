@@ -1,6 +1,6 @@
 local M = {}
 
-M.effective_win_width = function()
+function M.effective_win_width()
   local win_width = vim.fn.winwidth(0)
 
   -- return zero if the window cannot be found
@@ -21,7 +21,7 @@ M.effective_win_width = function()
   return win_width - win_info[1].textoff
 end
 
-M.is_cur_line_out_of_window = function()
+function M.is_cur_line_out_of_window()
   local line = vim.fn.getline(".")
   local text_width = vim.fn.strdisplaywidth(vim.fn.substitute(line, "[^[:print:]]*$", "", "g"))
   local win_width = M.effective_win_width()

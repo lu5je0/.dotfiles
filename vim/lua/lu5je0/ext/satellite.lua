@@ -1,7 +1,7 @@
 local M = {}
 
 local last_line_nr = nil
-M.begin_timer = function(enable_cmd, disable_cmd, refresh_cmd)
+function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
   local visible_duration = 1500
   local timer = nil
 
@@ -64,7 +64,7 @@ M.begin_timer = function(enable_cmd, disable_cmd, refresh_cmd)
   -- })
 end
 
-M.setup = function()
+function M.setup()
   require('satellite').setup({
     current_only = true,
     winblend = 80,

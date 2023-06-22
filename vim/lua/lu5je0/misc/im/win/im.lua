@@ -28,7 +28,7 @@ M.enable_ime = rate_limiter:wrap(function()
   end
 end)
 
-M.toggle_save_last_ime = function()
+function M.toggle_save_last_ime()
   local keeper = require('lu5je0.misc.env-keeper')
   local v = keeper.get('save_last_ime', true)
   if v then
@@ -66,7 +66,7 @@ local function create_autocmd()
   })
 end
 
-M.setup = function()
+function M.setup()
   M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
   create_autocmd()
   vim.keymap.set('n', '<leader>vi', M.toggle_save_last_ime)

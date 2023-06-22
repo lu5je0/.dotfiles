@@ -4,7 +4,7 @@ local M = {}
 local env_keeper = require('lu5je0.misc.env-keeper').keeper({ terminal_direction = 'float' })
 local visual_utils = require('lu5je0.core.visual')
 
-M.send_to_terminal = function(cmd, opts)
+function M.send_to_terminal(cmd, opts)
   require('lu5je0.ext.plugins_helper').load_plugin('toggleterm.nvim')
   
   if opts == nil then
@@ -18,16 +18,16 @@ M.send_to_terminal = function(cmd, opts)
   vim.cmd(v_cmd)
 end
 
-M.toggle = function()
+function M.toggle()
   vim.cmd('ToggleTerm direction=' .. env_keeper.terminal_direction)
 end
 
-M.change_terminal_direction = function(direction)
+function M.change_terminal_direction(direction)
   env_keeper.terminal_direction = direction
   M.toggle()
 end
 
-M.run_select_in_terminal = function()
+function M.run_select_in_terminal()
   M.send_to_terminal(visual_utils.get_visual_selection_as_string())
 end
 
@@ -56,7 +56,7 @@ local function keep_terminal_mode()
   })
 end
 
-M.setup = function()
+function M.setup()
   require('toggleterm').setup {
     size = function(term)
       if term.direction == 'horizontal' then

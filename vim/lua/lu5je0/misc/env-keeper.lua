@@ -50,7 +50,7 @@ local metatable = {
   end
 }
 
-M.keeper = function(default_values)
+function M.keeper(default_values)
   if not default_values then
     default_values = {}
   end

@@ -13,7 +13,7 @@ local scrollview = require('scrollview')
 -- end
 
 local last_line_nr = nil
-M.begin_timer = function(enable_cmd, disable_cmd, refresh_cmd)
+function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
   local visible_duration = 1500
   local timer = nil
 
@@ -150,7 +150,7 @@ local function gitsigns()
   })
 end
 
-M.setup = function()
+function M.setup()
   scrollview.setup {
     -- excluded_filetypes = { 'nerdtree' , 'NvimTree'},
     current_only = true,

@@ -17,7 +17,7 @@ local function parse(timestamp)
   return os.date('%Y-%m-%d %H:%M:%S', timestamp)
 end
 
-M.show_in_date = function()
+function M.show_in_date()
   print(parse(get_timestamp()))
 end
 

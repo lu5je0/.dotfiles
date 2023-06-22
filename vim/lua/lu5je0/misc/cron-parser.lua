@@ -4,7 +4,7 @@ local function all_trim(s)
   return s:match('^%s*(.*)'):match('(.-)%s*$')
 end
 
-M.parse_line = function(count)
+function M.parse_line(count)
   if count == '' or count == nil then
     count = 10
   end

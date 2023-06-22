@@ -19,7 +19,7 @@ local function disable(features, buf_nr, max_size)
   end
 end
 
-M.setup = function(config)
+function M.setup(config)
   config = vim.tbl_deep_extend('force', {
     size = 1024 * 1024, -- 1000 KB
     features = {}

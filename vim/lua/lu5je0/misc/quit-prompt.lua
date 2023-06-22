@@ -183,7 +183,7 @@ end
 --   end
 -- end
 
-M.close_buffer = function()
+function M.close_buffer()
   local valid_buffers = require('lu5je0.core.buffers').valid_buffers()
   local cur_buf_nr = vim.api.nvim_get_current_buf()
 
@@ -223,7 +223,7 @@ end
 
 M.exit = exit_vim_with_dialog
 
-M.setup = function ()
+function M.setup ()
   local opts = { desc = 'mappings.lua', silent = true }
   vim.keymap.set('n', '<leader>q', M.close_buffer, opts)
   vim.keymap.set('n', '<leader>Q', M.exit, opts)

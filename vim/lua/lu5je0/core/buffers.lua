@@ -1,13 +1,13 @@
 local M = {}
 
-M.valid_buffers = function()
+function M.valid_buffers()
   local bufs = require("bufferline.utils").get_valid_buffers()
   -- local bufs = vim.api.nvim_list_bufs()
   return bufs
 end
 
 -- location {x, y}
-M.jump_to_specific_location = function(filename, position)
+function M.jump_to_specific_location(filename, position)
   local same_file = vim.fn.expand('%:p:') == filename
   
   -- mark position for <c-o>

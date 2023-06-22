@@ -105,7 +105,7 @@ local function dupui()
   end
 end
 
-M.setup = function()
+function M.setup()
   vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'Red', linehl = '', numhl = '' })
   vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'Yellow', linehl = '', numhl = '' })
   vim.fn.sign_define('DapStopped', { text = '', texthl = '', linehl = 'debugPC', numhl = '' })

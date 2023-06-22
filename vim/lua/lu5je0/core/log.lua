@@ -13,7 +13,7 @@ local function init_log()
   init = true
 end
 
-M.error = function(msg)
+function M.error(msg)
   init_log()
   
   print(msg)
@@ -21,7 +21,7 @@ M.error = function(msg)
   log:flush()
 end
 
-M.info = function(msg)
+function M.info(msg)
   init_log()
   
   print(msg)
@@ -29,7 +29,7 @@ M.info = function(msg)
   log:flush()
 end
 
-M.debug = function(msg)
+function M.debug(msg)
   init_log()
   
   print(msg)
@@ -37,7 +37,7 @@ M.debug = function(msg)
   log:flush()
 end
 
-M.set_level = function(level)
+function M.set_level(level)
   M.level = level
 end
 

@@ -1,6 +1,6 @@
 local M = {}
 
-M.setup = function()
+function M.setup()
   vim.g.vsnip_snippet_dir = vim.fn.stdpath('config') .. '/snippets/vsnip'
   vim.cmd([[
   nmap <silent> <expr> <cr> v:lua.require('lu5je0.ext.vsnip').jump_next_able() ? 'i<Plug>(vsnip-jump-next)' : '<d-r>'
@@ -31,7 +31,7 @@ function M.is_snippet_contain(snippet)
   return false
 end
 
-M.jump_next_able = function()
+function M.jump_next_able()
   return math.abs(vim.fn.line("'^") - vim.fn.line('.')) <= 1 and vim.fn['vsnip#jumpable'](1) == 1
 end
 

@@ -2,15 +2,15 @@ local M = {}
 local string_utils = require('lu5je0.lang.string-utils')
 local cursor_utils = require('lu5je0.core.cursor')
 
-M.compress = function()
+function M.compress()
   vim.cmd(':%!jq -c')
 end
 
-M.format = function()
+function M.format()
   vim.cmd(':%!jq')
 end
 
-M.path_copy = function()
+function M.path_copy()
   local path = require('jsonpath').get()
   
   print(path)
@@ -18,11 +18,11 @@ M.path_copy = function()
   vim.fn.setreg('"', path)
 end
 
-M.jq = function(args)
+function M.jq(args)
   vim.cmd(string.format(':%%!jq \'%s\'', args))
 end
 
-M.extract = function()
+function M.extract()
   vim.cmd(string.format(':%%!jq \'%s\'', require('jsonpath').get()))
 end
 
@@ -86,7 +86,7 @@ local function jq_complete(text)
   return words
 end
 
-M.setup = function()
+function M.setup()
   vim.api.nvim_create_user_command('JsonCompress', function()
     M.compress()
   end, { force = true })

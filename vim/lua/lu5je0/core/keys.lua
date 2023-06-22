@@ -1,6 +1,6 @@
 local M = {}
 
-M.feedkey = function(key, mode)
+function M.feedkey(key, mode)
   if not mode then
     mode = 'm'
   end

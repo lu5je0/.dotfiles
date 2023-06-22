@@ -60,7 +60,7 @@ local function split_by_chunk(text, chunk_size)
   return s
 end
 
-M.create_command = function()
+function M.create_command()
   encode_command_creater.create_encode_command_by_type('Base64Encode', M.encode, function(text)
     return table.concat(split_by_chunk(M.encode(text), 76), '\n')
   end)

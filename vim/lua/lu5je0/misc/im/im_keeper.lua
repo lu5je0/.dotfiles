@@ -52,7 +52,7 @@ local function switch_normal_mode_on_focus_gained()
   })
 end
 
-M.setup = function(config)
+function M.setup(config)
   config = vim.tbl_deep_extend('force', {
     mac = {
       keep = false,

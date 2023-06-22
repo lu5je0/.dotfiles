@@ -60,7 +60,7 @@ local function keymap(bufnr)
   -- vim.keymap.set('n', 'K', '<cmd>Lspsaga hover_doc<CR>', opts)
 end
 
-M.setup = function()
+function M.setup()
   require('glance').setup({
     detached = false,
     -- your configuration
