@@ -31,7 +31,7 @@ function M.read_clipboard_ffi()
 end
 
 function M.setup()
-  vim.o.clipboard = 'unnamedplus'
+  vim.o.clipboard = 'unnamed'
   vim.cmd[[
   function s:copy(contents, regtype)
     call luaeval('require("lu5je0.misc.clipboard.mac").set_clipboard_ffi(_A[1], _A[2])', [a:contents, a:regtype])

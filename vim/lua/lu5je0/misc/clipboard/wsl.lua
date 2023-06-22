@@ -73,7 +73,8 @@ function M.get_active()
 end
 
 function M.setup()
-  vim.o.clipboard = 'unnamedplus'
+  -- vim.o.clipboard = 'unnamedplus'
+  vim.o.clipboard = 'unnamed'
   vim.cmd [[
     function s:copy(lines, regtype)
       call luaeval('require("lu5je0.misc.clipboard.wsl").copy(_A[1], _A[2])', [a:lines, a:regtype])
