@@ -738,22 +738,10 @@ require("lazy").setup({
   {
     'nvim-pack/nvim-spectre',
     config = function()
-      require('spectre').setup({
-        highlight = {
-          ui = "String",
-          search = "DiffChange",
-          replace = "DiffDelete"
-        },
-        mapping = {
-          ['send_to_qf'] = {
-            map = "Q",
-            cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
-            desc = "send all item to quickfix"
-          },
-        }
-      })
+      require('lu5je0.ext.spectre').setup()
     end,
-    cmd = 'Spectre'
+    cmd = 'Spectre',
+    keys = { { mode = { 'x', 'v' }, '<leader>sw' }, { mode = 'n', '<leader>sf' } },
   }
   
   -- {
