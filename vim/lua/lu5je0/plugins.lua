@@ -741,7 +741,8 @@ require("lazy").setup({
       require('lu5je0.ext.spectre').setup()
     end,
     cmd = 'Spectre',
-    keys = { { mode = { 'x', 'v' }, '<leader>sw' }, { mode = 'n', '<leader>sf' } },
+    event = 'VeryLazy'
+    -- keys = { { mode = { 'x', 'v' }, '<leader>sw' }, { mode = 'n', '<leader>sf' } },
   }
   
   -- {

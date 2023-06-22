@@ -34,10 +34,10 @@ function M.setup()
   vim.o.clipboard = 'unnamedplus'
   vim.cmd[[
   function s:copy(contents, regtype)
-    call luaeval('require("lu5je0.ext.clipboard.mac").set_clipboard_ffi(_A[1], _A[2])', [a:contents, a:regtype])
+    call luaeval('require("lu5je0.misc.clipboard.mac").set_clipboard_ffi(_A[1], _A[2])', [a:contents, a:regtype])
   endfunction
   function s:get_active()
-    return luaeval('require("lu5je0.ext.clipboard.mac").read_clipboard_ffi()')
+    return luaeval('require("lu5je0.misc.clipboard.mac").read_clipboard_ffi()')
   endfunction
   let g:clipboard = {
         \   'name': 'pbcopy',

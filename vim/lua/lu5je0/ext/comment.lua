@@ -36,6 +36,7 @@ local function ft_config()
   .set('yaml', '# %s')
   .set('autohothey', '; %s')
   .set('crontab', '# %s')
+  .set('', '# %s')
 end
 
 function M.setup()

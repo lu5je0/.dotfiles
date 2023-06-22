@@ -76,10 +76,10 @@ function M.setup()
   vim.o.clipboard = 'unnamedplus'
   vim.cmd [[
     function s:copy(lines, regtype)
-      call luaeval('require("lu5je0.ext.clipboard.wsl").copy(_A[1], _A[2])', [a:lines, a:regtype])
+      call luaeval('require("lu5je0.misc.clipboard.wsl").copy(_A[1], _A[2])', [a:lines, a:regtype])
     endfunction
     function s:get_active()
-      return luaeval('require("lu5je0.ext.clipboard.wsl").get_active()')
+      return luaeval('require("lu5je0.misc.clipboard.wsl").get_active()')
     endfunction
 
     let g:clipboard = {
