@@ -1,6 +1,7 @@
 local timer = require('lu5je0.lang.timer')
 local lualine = require('lualine')
 local file_util = require('lu5je0.core.file')
+local big_file = require('lu5je0.misc.big-file')
 
 ---@diagnostic disable: missing-parameter
 local expand = vim.fn.expand
@@ -245,7 +246,7 @@ ins_left {
   end,
   inactive = true,
   cond = function()
-    return require('lu5je0.misc.gps-path').is_available() and conditions.hide_in_width()
+    return not big_file.is_big_file(0) and require('lu5je0.misc.gps-path').is_available() and conditions.hide_in_width()
   end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },

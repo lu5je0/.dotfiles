@@ -748,6 +748,7 @@ require("lazy").setup({
   
   {
     'stevearc/profile.nvim',
+    -- 最新的版本直接报错了，先lock到这个版本
     commit = 'd0d74adabb90830bd96e5cdfc8064829ed88b1bb',
     config = function()
       local function toggle_profile()
@@ -765,7 +766,7 @@ require("lazy").setup({
           prof.start("*")
         end
       end
-      vim.keymap.set("", "<f1>", toggle_profile)
+      vim.keymap.set("", "<f3>", toggle_profile)
     end,
     keys = { { mode = { 'n' }, '<f3>' } }
   }

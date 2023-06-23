@@ -6,17 +6,20 @@ local function disable(features, buf_nr, max_size)
   local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(0))
   if ok and stats then
     for _, v in ipairs(features) do
-      if type(v) == "function" then
-        if stats.size > max_size then
+      if stats.size > max_size then
+        vim.b[buf_nr].is_big_file = true
+        if type(v) == "function" then
           v(buf_nr)
-        end
-      elseif type(v) == "table" then
-        if stats.size > v.size then
+        elseif type(v) == "table" then
           v[1](buf_nr)
         end
       end
     end
   end
+end
+
+function M.is_big_file(buf_nr)
+  return vim.b[buf_nr].is_big_file == true
 end
 
 function M.setup(config)
