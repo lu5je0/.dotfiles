@@ -79,7 +79,7 @@ zinit snippet ~/.dotfiles/zsh/vi-im-switch.zsh
 # p10k
 zinit ice depth=1
 zinit light romkatv/powerlevel10k
-source ~/.dotfiles/.p10k.zsh
+source ~/.dotfiles/zsh/p10k.zsh
 
 ##########################################
 # zsh key mappings
