@@ -105,6 +105,7 @@
     time                    # current time
     # =========================[ Line #2 ]=========================
     newline
+    set_title # lu5je0
     # ip                    # ip address and bandwidth usage for a specified network interface
     # public_ip             # public IP address
     # battery               # internal battery
@@ -1576,6 +1577,11 @@
   # Type `p10k help segment` for documentation and a more sophisticated example.
   function prompt_example() {
     p10k segment -f 208 -i '*' -t 'hello, %n'
+  }
+
+  # 用于退出tumux后更新title
+  function prompt_set_title() {
+    echo -en "\e]0;zsh\a"
   }
 
   # User-defined prompt segments may optionally provide an instant_prompt_* function. Its job

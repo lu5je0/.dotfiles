@@ -2,7 +2,7 @@
 
 vim.filetype.add {
   extension = {
-    zsh = 'bash',
+    -- zsh = 'zsh',
   },
   filename = {
     -- ['.bashrc'] = 'bash',
