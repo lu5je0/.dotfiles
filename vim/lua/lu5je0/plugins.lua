@@ -744,6 +744,30 @@ require("lazy").setup({
     cmd = 'Spectre',
     -- event = 'VeryLazy'
     keys = { { mode = { 'x', 'v' }, '<leader>sw' }, { mode = 'n', '<leader>sf' } },
+  },
+  
+  {
+    'stevearc/profile.nvim',
+    commit = 'd0d74adabb90830bd96e5cdfc8064829ed88b1bb',
+    config = function()
+      local function toggle_profile()
+        local prof = require("profile")
+        if prof.is_recording() then
+          prof.stop()
+          vim.ui.input({ prompt = "Save profile to:", completion = "file", default = "profile.json" }, function(filename)
+            if filename then
+              prof.export(filename)
+              vim.notify(string.format("Wrote %s", filename))
+            end
+          end)
+        else
+          print('profile started')
+          prof.start("*")
+        end
+      end
+      vim.keymap.set("", "<f1>", toggle_profile)
+    end,
+    keys = { { mode = { 'n' }, '<f3>' } }
   }
   
   -- {

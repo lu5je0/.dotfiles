@@ -536,6 +536,12 @@ function M.setup()
 
   -- 关闭wsl executable检测，性能太低了
   require('nvim-tree.utils').is_wsl_windows_fs_exe = function() return false end
+  
+  -- wsl 关闭highlight overwrite, 就算没有配置highlight_override，
+  -- 也会检查每个node是否是opened和modified, wsl2下性能极差
+  require('nvim-tree.renderer.builder')._get_highlight_override = function(...)
+    return nil, nil
+  end
 end
 
 return M
