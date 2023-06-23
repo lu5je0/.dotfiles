@@ -7,7 +7,7 @@ local function keymap()
   end, { desc = "Search current word" })
 
   vim.keymap.set('x', '<leader>sw', function()
-    require("spectre").open({ search_text = visul_util.get_visual_selection_as_string() })
+    require("spectre").open({ search_text = visul_util.get_visual_selection_as_array()[1] })
   end, { desc = "Search current word" })
 
   vim.keymap.set('n', '<leader>sf', function()
