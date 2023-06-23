@@ -1581,7 +1581,7 @@
 
   # 用于退出tumux后更新title
   function prompt_set_title() {
-    echo -en "\e]0;zsh\a"
+    echo -en "\e]0;`hostname`\a"
   }
 
   # User-defined prompt segments may optionally provide an instant_prompt_* function. Its job
