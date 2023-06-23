@@ -106,6 +106,10 @@ function M.setup()
   local disable_cmd = 'SatelliteDisable'
   local refresh_cmd = 'SatelliteRefresh'
   M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
+  
+  -- workaroud for builtin keymap
+  vim.cmd('nnoremap zfa zfa')
+  vim.cmd('nnoremap zfi zfi')
 end
 
 return M
