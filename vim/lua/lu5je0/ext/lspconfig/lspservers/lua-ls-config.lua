@@ -8,6 +8,10 @@ return {
   end,
   settings = {
     Lua = {
+      hint = {
+        -- inlay_hint
+        enable = true
+      },
       format = {
         enable = true,
         -- Put format options here
