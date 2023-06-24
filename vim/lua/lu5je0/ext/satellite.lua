@@ -26,8 +26,8 @@ function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
     end
     
     vim.cmd(enable_cmd)
-    -- 这里似乎没用了
-    -- vim.cmd(refresh_cmd)
+    -- 不加refresh，需要<c-d>两次才会出现satellite
+    vim.cmd(refresh_cmd)
     
     -- 搜索时不自动隐藏
     if vim.v.hlsearch == 1 then
