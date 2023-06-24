@@ -53,22 +53,15 @@ function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
     callback = show,
   })
 
-  -- vim.api.nvim_create_autocmd('User', {
-  --   group = satellite_group,
-  --   pattern = 'FoldChanged',
-  --   callback = function()
-  --     vim.cmd(refresh_cmd)
-  --   end,
-  -- })
-
-  -- vim.api.nvim_create_autocmd({ 'WinLeave', 'BufLeave', 'BufWinLeave', 'FocusLost', 'QuitPre' }, {
-  --   group = satellite_group,
-  --   pattern = { '*' },
-  --   callback = function()
-  --     vim.cmd("SatelliteDisable")
-  --     -- scrollbar.clear()
-  --   end,
-  -- })
+  vim.api.nvim_create_autocmd({ 'BufLeave' }, {
+    group = satellite_group,
+    pattern = { '*' },
+    callback = function()
+      -- if big_file.is_big_file(0) then
+      vim.cmd("SatelliteDisable")
+      -- end
+    end,
+  })
 end
 
 function M.setup()
