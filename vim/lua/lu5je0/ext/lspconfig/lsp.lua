@@ -62,6 +62,7 @@ function M.on_attach(client, bufnr)
   end
   
   -- client.server_capabilities.semanticTokensProvider = nil
+  -- vim.lsp.buf.inlay_hint(bufnr, true)
 end
 
 local function config()
