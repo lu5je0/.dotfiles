@@ -32,7 +32,6 @@ function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
     end
     
     vim.cmd(enable_cmd)
-    vim.cmd(refresh_cmd)
     
     -- 搜索时不自动隐藏
     if vim.v.hlsearch == 1 then
@@ -83,25 +82,25 @@ local function gitsigns()
   local add = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsAdd',
-    symbol = '▕',
-    priority = '300'
-    -- symbol = '│',
+    -- symbol = '▕',
+    priority = '300',
+    symbol = '│',
   }).name
 
   local change = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsChange',
-    symbol = '▕',
-    priority = '300'
-    -- symbol = '│',
+    -- symbol = '▕',
+    priority = '300',
+    symbol = '│',
   }).name
 
   local delete = scrollview.register_sign_spec({
     group = group,
     highlight = 'GitSignsDelete',
-    symbol = '╶',
-    priority = '300'
-    -- symbol = '-',
+    -- symbol = '╶',
+    priority = '300',
+    symbol = '-',
   }).name
 
   scrollview.set_sign_group_state(group, enable)

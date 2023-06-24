@@ -1,4 +1,5 @@
 local M = {}
+local big_file = require('lu5je0.misc.big-file')
 
 local last_line_nr = nil
 function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
@@ -14,6 +15,11 @@ function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
       return
     end
     last_line_nr = current_last_line_nr
+    
+    if big_file.is_big_file(0) then
+      vim.cmd(disable_cmd)
+      return
+    end
 
     if timer then
       timer:stop()
@@ -85,8 +91,11 @@ function M.setup()
         enable = true,
         signs = {
           -- can only be a single character (multibyte is okay)
-          add = "▕",
-          change = "▕",
+          -- add = "▕",
+          -- change = "▕",
+          -- delete = "╶",
+          add = "│",
+          change = "│",
           delete = "╶",
         },
       },
