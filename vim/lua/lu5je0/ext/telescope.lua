@@ -1,5 +1,7 @@
 local M = {}
 
+local telescope = require('telescope')
+
 local function theme(preview)
   local t = {
     borderchars = {
@@ -70,6 +72,7 @@ local function key_mapping()
   set_map('<leader>fb', function() telescope_builtin.buffers(theme()) end)
   set_map('<leader>fm', function() telescope_builtin.oldfiles(theme()) end)
   set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
+  set_map('<leader>fp', function() telescope.extensions.projects.projects() end)
   set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end)
   set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
   set_map('<leader>f"', function()
@@ -150,12 +153,15 @@ local function remember_last_search()
 end
 
 function M.setup()
-  local telescope = require('telescope')
   telescope.setup {
-    defaults = {
-      path_display = { truncate = 2 },
-      layout_config = {},
-    },
+    defaults = vim.tbl_extend(
+      "keep",
+      theme(false), -- or get_cursor, get_ivy
+      {
+        path_display = { truncate = 2 },
+        layout_config = {},
+      }
+    ),
   }
 
   key_mapping()

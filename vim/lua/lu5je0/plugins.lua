@@ -152,6 +152,7 @@ require("lazy").setup({
     -- end,
     lazy = true
   },
+  
   {
     'nvim-telescope/telescope.nvim',
     tag = '0.1.2',
@@ -163,6 +164,19 @@ require("lazy").setup({
     },
     keys = { ',' }
   },
+  
+  {
+    'ahmedkhalf/project.nvim',
+    config = function()
+      require('project_nvim').setup()
+      require('telescope').load_extension('projects')
+    end,
+    dependencies = {
+      'nvim-telescope/telescope.nvim',
+    },
+    event = 'VeryLazy'
+  },
+  
   {
     'nvim-lualine/lualine.nvim',
     config = function()
