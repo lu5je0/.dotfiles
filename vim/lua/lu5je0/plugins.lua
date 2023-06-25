@@ -202,6 +202,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.nvimtree').setup()
     end,
+    cmd = { 'NvimTreeOpen' },
     keys = { '<leader>e', '<leader>fe' },
   },
   {

@@ -32,6 +32,14 @@ vim.api.nvim_create_user_command('TimeMachine', function()
   local cmd = 'cd ' .. require('lu5je0.misc.time-machine').get_path()
   print(cmd)
   vim.cmd(cmd)
+  vim.cmd('NvimTreeOpen')
+end, { force = true })
+
+vim.api.nvim_create_user_command('Plugins', function()
+  local cmd = 'cd ~/.local/share/nvim/lazy'
+  print(cmd)
+  vim.cmd(cmd)
+  vim.cmd('NvimTreeOpen')
 end, { force = true })
 
 vim.api.nvim_create_user_command('FileEncodingReload', function(t)
