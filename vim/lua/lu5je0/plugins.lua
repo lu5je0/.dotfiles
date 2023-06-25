@@ -168,8 +168,32 @@ require("lazy").setup({
   {
     'ahmedkhalf/project.nvim',
     config = function()
-      require('project_nvim').setup()
-      require('telescope').load_extension('projects')
+      require('project_nvim').setup({
+        manual_mode = true
+      })
+      local telescope = require('telescope')
+      telescope.load_extension('projects')
+      
+      vim.keymap.set('n', '<leader>fp', function() telescope.extensions.projects.projects({
+        attach_mappings = function(prompt_bufnr, map)
+          local actions = require("telescope.actions")
+          local state = require("telescope.actions.state")
+          local api = require('nvim-tree.api')
+
+          actions.select_default:replace(function()
+            local selected_entry = state.get_selected_entry()
+            if selected_entry == nil then
+              actions.close(prompt_bufnr)
+              return
+            end
+            local path = selected_entry.value
+            actions.close(prompt_bufnr)
+            vim.cmd('cd ' .. path)
+            api.tree.open({ path = path })
+          end)
+          return true
+        end
+      }) end)
     end,
     dependencies = {
       'nvim-telescope/telescope.nvim',
