@@ -72,7 +72,26 @@ local function key_mapping()
   set_map('<leader>fb', function() telescope_builtin.buffers(theme()) end)
   set_map('<leader>fm', function() telescope_builtin.oldfiles(theme()) end)
   set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
-  set_map('<leader>fp', function() telescope.extensions.projects.projects() end)
+  set_map('<leader>fp', function() telescope.extensions.projects.projects({
+    attach_mappings = function(prompt_bufnr, map)
+      local actions = require("telescope.actions")
+      local state = require("telescope.actions.state")
+      local api = require('nvim-tree.api')
+      
+      actions.select_default:replace(function()
+        local selected_entry = state.get_selected_entry()
+        if selected_entry == nil then
+          actions.close(prompt_bufnr)
+          return
+        end
+        local path = selected_entry.value
+        vim.cmd('cd ' .. path)
+        actions.close(prompt_bufnr)
+        api.tree.open({ path = path })
+      end)
+      return true
+    end
+  }) end)
   set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end)
   set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
   set_map('<leader>f"', function()

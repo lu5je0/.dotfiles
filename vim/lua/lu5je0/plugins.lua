@@ -560,7 +560,6 @@ require("lazy").setup({
                   runtime = true, -- runtime path
                   types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
                   plugins = false,
-                  -- plugins = true,
                   -- plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" },
                 },
               }
