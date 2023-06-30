@@ -176,9 +176,9 @@ require("lazy").setup({
       
       vim.keymap.set('n', '<leader>fp', function() telescope.extensions.projects.projects({
         attach_mappings = function(prompt_bufnr, map)
-          local actions = require("telescope.actions")
-          local state = require("telescope.actions.state")
-          local api = require('nvim-tree.api')
+          local actions = require('telescope.actions')
+          local state = require('telescope.actions.state')
+          local filetree = require('lu5je0.core.filetree')
 
           actions.select_default:replace(function()
             local selected_entry = state.get_selected_entry()
@@ -188,8 +188,7 @@ require("lazy").setup({
             end
             local path = selected_entry.value
             actions.close(prompt_bufnr)
-            vim.cmd('cd ' .. path)
-            api.tree.open({ path = path })
+            filetree.open_path(path)
           end)
           return true
         end

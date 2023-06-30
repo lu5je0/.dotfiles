@@ -540,6 +540,7 @@ function M.setup()
   
   -- wsl 关闭highlight overwrite, 就算没有配置highlight_override，
   -- 也会检查每个node是否是opened和modified, wsl2下性能极差
+  ---@diagnostic disable-next-line: unused-vararg
   require('nvim-tree.renderer.builder')._get_highlight_override = function(...)
     return nil, nil
   end

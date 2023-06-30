@@ -30,7 +30,7 @@ function M.on_attach(client, bufnr)
   -- keymap('n', 'gb', vim.lsp.buf.references, opts)
   
   keymap('n', 'K', vim.lsp.buf.hover, opts)
-  -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
+  keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
   -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
   
   -- format
