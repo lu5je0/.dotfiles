@@ -111,7 +111,7 @@ local function remember_last_search()
 
       if not M.disable_keep_last_search and M.telescope_last_search ~= nil and M.telescope_last_search ~= "" then
         vim.api.nvim_feedkeys(M.telescope_last_search, '', false)
-        require('lu5je0.core.keys').feedkey('<esc>v$o^lloh<c-g>', 'n')
+        require('lu5je0.core.keys').feedkey('<esc>v$o^lloh<c-g><c-r>_', 'n')
       end
 
       local bufnr = vim.api.nvim_win_get_buf(0)
