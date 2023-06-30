@@ -105,6 +105,8 @@ vim.defer_fn(function()
   " nnoremap <leader>> `[v`]>gv
   nnoremap <leader>< `[v`]<
   nnoremap <leader>> `[v`]>
+  nnoremap <space>< `[v`]<
+  nnoremap <space>> `[v`]>
   
   " xmap : :<c-u>
 
