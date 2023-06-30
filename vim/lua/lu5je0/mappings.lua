@@ -1,3 +1,5 @@
+local keys_helper = require('lu5je0.core.keys')
+
 vim.g.mapleader = ','
 
 -- option toggle
@@ -80,6 +82,13 @@ vim.defer_fn(function()
       -- set_map({ 'n' }, 'Y', 'gyg$', buffer_opts)
     end
   end)
+  -- 
+  -- set_n_map('<space><', function()
+  --   keys_helper.feedkey('`[v`]')
+  -- end)
+  -- set_n_map('<space>>', function()
+  --   
+  -- end)
 
   -- dir
   -- set_n_map('<leader>fp', function() cmd_and_print('cd ~/.local/share/nvim/lazy') end)
@@ -103,10 +112,13 @@ vim.defer_fn(function()
   
   " nnoremap <leader>< `[v`]<gv
   " nnoremap <leader>> `[v`]>gv
-  nnoremap <leader>< `[v`]<
-  nnoremap <leader>> `[v`]>
-  nnoremap <space>< `[v`]<
-  nnoremap <space>> `[v`]>
+  nnoremap <leader>< `[v`]<^
+  nnoremap <leader>> `[v`]>^
+  nnoremap <space>< `[v`]<^
+  nnoremap <space>> `[v`]>^
+  
+  nnoremap <space>H H
+  nnoremap <space>L L
   
   " xmap : :<c-u>
 
