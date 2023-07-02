@@ -414,6 +414,7 @@ function M.setup()
   local view = require('nvim-tree.view')
   view.View.winopts.signcolumn = 'no'
   view.View.winopts.foldcolumn = '1'
+  view.View.winopts.statuscolumn = ''
 
   require('nvim-tree').setup {
     disable_netrw = true,
