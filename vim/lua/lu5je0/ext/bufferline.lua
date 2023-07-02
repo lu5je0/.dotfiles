@@ -39,6 +39,12 @@ bl.setup {
         -- padding = 1
       },
       {
+        filetype = 'Outline',
+        text = 'Symbols',
+        highlight = 'Red',
+        text_align = 'center',
+      },
+      {
         filetype = 'vista',
         text = 'Vista',
         highlight = 'Directory',
