@@ -2,15 +2,15 @@ local M = {}
 local visul_util = require('lu5je0.core.visual')
 
 local function keymap()
-  vim.keymap.set('n', '<leader>sw', function()
+  vim.keymap.set('n', '<leader>xr', function()
     require("spectre").open_visual({ select_word = true })
   end, { desc = "Search current word" })
 
-  vim.keymap.set('x', '<leader>sw', function()
+  vim.keymap.set('x', '<leader>xr', function()
     require("spectre").open({ search_text = visul_util.get_visual_selection_as_array()[1] })
   end, { desc = "Search current word" })
 
-  vim.keymap.set('n', '<leader>sf', function()
+  vim.keymap.set('n', '<leader>xf', function()
     require("spectre").open_file_search({ select_word = true })
   end, { desc = "Search on current file" })
 end

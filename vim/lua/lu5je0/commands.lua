@@ -35,7 +35,7 @@ vim.api.nvim_create_user_command('TimeMachine', function()
 end, { force = true })
 
 vim.api.nvim_create_user_command('Plugins', function()
-  require('lu5je0.core.filetree').open_path('cd ~/.local/share/nvim/lazy', {
+  require('lu5je0.core.filetree').open_path('~/.local/share/nvim/lazy', {
     print_path = true
   })
 end, { force = true })

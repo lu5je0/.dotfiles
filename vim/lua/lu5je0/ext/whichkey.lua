@@ -139,7 +139,7 @@ function M.setup()
     },
     x = {
       name = '+text',
-      r = { function() require('lu5je0.misc.replace').n_replace() end, 'replace word' },
+      r = 'replace word',
       u = 'escape unicode',
       U = 'unescape unicode',
       h = 'url encode',

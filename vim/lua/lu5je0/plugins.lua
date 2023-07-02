@@ -168,31 +168,7 @@ require("lazy").setup({
   {
     'ahmedkhalf/project.nvim',
     config = function()
-      require('project_nvim').setup({
-        manual_mode = true
-      })
-      local telescope = require('telescope')
-      telescope.load_extension('projects')
-      
-      vim.keymap.set('n', '<leader>fp', function() telescope.extensions.projects.projects({
-        attach_mappings = function(prompt_bufnr, map)
-          local actions = require('telescope.actions')
-          local state = require('telescope.actions.state')
-          local filetree = require('lu5je0.core.filetree')
-
-          actions.select_default:replace(function()
-            local selected_entry = state.get_selected_entry()
-            if selected_entry == nil then
-              actions.close(prompt_bufnr)
-              return
-            end
-            local path = selected_entry.value
-            actions.close(prompt_bufnr)
-            filetree.open_path(path)
-          end)
-          return true
-        end
-      }) end)
+      require('lu5je0.ext.projects').setup()
     end,
     dependencies = {
       'nvim-telescope/telescope.nvim',
@@ -502,6 +478,13 @@ require("lazy").setup({
     event = 'VeryLazy'
   },
   {
+    "ThePrimeagen/refactoring.nvim",
+    config = function()
+      require('lu5je0.ext.refactoring').setup()
+    end,
+    keys = { { mode = { 'n', 'x' }, '<leader>c' } },
+  },
+  {
     'm-demare/hlargs.nvim',
     config = function()
       require('hlargs').setup()
@@ -780,7 +763,7 @@ require("lazy").setup({
     end,
     cmd = 'Spectre',
     -- event = 'VeryLazy'
-    keys = { { mode = { 'x', 'v' }, '<leader>sw' }, { mode = 'n', '<leader>sf' } },
+    keys = { { mode = { 'x' }, '<leader>xr' }, { mode = 'n', '<leader>xf' } },
   },
   
   {
@@ -806,7 +789,7 @@ require("lazy").setup({
       vim.keymap.set("", "<f3>", toggle_profile)
     end,
     keys = { { mode = { 'n' }, '<f3>' } }
-  }
+  },
   
   -- {
   --   'tzachar/highlight-undo.nvim',

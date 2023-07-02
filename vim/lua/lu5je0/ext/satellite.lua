@@ -72,6 +72,9 @@ function M.setup()
     excluded_filetypes = { 'lazy' },
     width = 2,
     handlers = {
+      cursor = {
+        enable = false,
+      },
       search = {
         enable = true,
       },
