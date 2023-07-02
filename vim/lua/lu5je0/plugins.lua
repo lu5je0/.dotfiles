@@ -510,9 +510,10 @@ require("lazy").setup({
   {
     'simrat39/symbols-outline.nvim',
     config = function()
-      require("symbols-outline").setup()
+      require('lu5je0.ext.symbols-outline').setup()
     end,
-    cmd = { 'SymbolsOutline' }
+    cmd = { 'SymbolsOutline' },
+    keys = { { mode = { 'n' }, '<leader>i' }, { mode = { 'n' }, '<leader>I' } }
   },
   {
     'lukas-reineke/indent-blankline.nvim',
@@ -732,13 +733,6 @@ require("lazy").setup({
       -- vim.o.foldcolumn = '1'
     end,
     event = 'VeryLazy'
-  },
-  
-  {
-    'simrat39/symbols-outline.nvim',
-    config = function()
-      require("symbols-outline").setup()
-    end
   },
   
   {

@@ -53,7 +53,7 @@ function M.setup()
     ['q'] = 'close buffer',
     ['Q'] = 'exit vim',
     ['u'] = 'undotree',
-    ['i'] = { '<cmd>SymbolsOutline<cr>', 'SymbolsOutline' },
+    ['i'] = { 'SymbolsOutline' },
     ['n'] = { '<cmd>noh<cr>', 'no highlight' },
     ['d'] = { '<c-^>', 'buffer switch' },
     ['e'] = { 'file explorer' },

@@ -25,7 +25,7 @@ local lsp_kind_icons = {
   -- if you change or add symbol here
   -- replace corresponding line in readme
   Text = "󰉿",
-  Method = "󰆧",
+  Method = "󰊕",
   Function = "󰊕",
   Constructor = "",
   Field = "󰜢",
