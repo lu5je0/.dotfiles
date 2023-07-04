@@ -406,9 +406,15 @@ function M.setup()
     silent = true,
     desc = 'nvim_tree'
   }
+  
   vim.keymap.set('n', '<leader>e', function()
     api.tree.toggle(false, true)
   end, opts)
+  
+  vim.keymap.set('n', '<leader>E', function()
+    vim.cmd('NvimTreeFocus')
+  end, opts)
+  
   vim.keymap.set('n', '<leader>fe', require('lu5je0.ext.nvimtree').locate_file, opts)
 
   local view = require('nvim-tree.view')
