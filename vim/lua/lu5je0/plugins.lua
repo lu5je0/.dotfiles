@@ -786,6 +786,13 @@ require("lazy").setup({
   },
   
   -- {
+  --   '3rd/image.nvim',
+  --   config = function()
+  --     require("image").setup()
+  --   end
+  -- }
+  
+  -- {
   --   'tzachar/highlight-undo.nvim',
   --   config = function()
   --     require('highlight-undo').setup({
