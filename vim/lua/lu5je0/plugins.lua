@@ -487,7 +487,10 @@ require("lazy").setup({
   {
     'm-demare/hlargs.nvim',
     config = function()
-      require('hlargs').setup()
+      require('hlargs').setup { 
+        -- flash.nvim 5000
+        hl_priority = 4999
+      }
     end,
     dependencies = {
       'nvim-treesitter/nvim-treesitter'
@@ -791,7 +794,9 @@ require("lazy").setup({
     config = function()
       require('flash').setup {
         search = { multi_window = false },
-        modes = { char = { enabled = false } }
+        modes = { char = { enabled = false } },
+        prompt = { enabled = false },
+        highlight = { priority = 9999 }
       }
       vim.keymap.set('n', 's', require("flash").jump)
       vim.keymap.set('n', 'S', require("flash").treesitter)
