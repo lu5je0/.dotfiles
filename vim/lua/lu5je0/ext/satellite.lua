@@ -103,15 +103,17 @@ function M.setup()
   })
 
   vim.defer_fn(function()
+    -- 0.10
+    vim.cmd("highlight SatelliteBar guibg=LightCyan guifg=NONE")
     vim.cmd("highlight ScrollView guibg=LightCyan guifg=NONE")
   end, 100)
-  
-  
+
+
   local enable_cmd = 'SatelliteEnable'
   local disable_cmd = 'SatelliteDisable'
   local refresh_cmd = 'SatelliteRefresh'
   M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
-  
+
   -- workaroud for builtin keymap
   vim.cmd('nnoremap zfa zfa')
   vim.cmd('nnoremap zfi zfi')

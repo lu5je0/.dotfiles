@@ -16,6 +16,8 @@ source ~/.local/share/zinit/zinit.git/zinit.zsh
 export UNAME_INFO=$(uname -a)
 autoload -Uz compinit && compinit
 
+setopt AUTO_CD
+
 ##########################################
 # OMZ
 ##########################################
