@@ -22,7 +22,8 @@ o.numberwidth = 3
 
 o.laststatus = 2
 o.showmode = false
--- o.cursorline = true
+o.cursorline = true
+o.cursorlineopt='number'
 o.undofile = true
 o.foldmethod = 'manual'
 o.foldlevel = 99 -- 打开文件默认不折叠
