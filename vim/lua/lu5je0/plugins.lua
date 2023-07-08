@@ -800,6 +800,8 @@ require("lazy").setup({
       }
       vim.keymap.set('n', 's', require("flash").jump)
       vim.keymap.set('n', 'S', require("flash").treesitter)
+      vim.keymap.set('o', 'r', require("flash").remote)
+      vim.api.nvim_create_user_command('FlashSearchToggle', function() require("flash").toggle() end, {})
     end
   },
   

@@ -118,6 +118,8 @@ vim.defer_fn(function()
   nnoremap <space>L L
   nnoremap <space>l L
   
+  nnoremap <space><space> %
+  
   " xmap : :<c-u>
 
   imap <M-j> <down>
