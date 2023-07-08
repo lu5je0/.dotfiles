@@ -785,6 +785,19 @@ require("lazy").setup({
     keys = { { mode = { 'n' }, '<f3>' } }
   },
   
+  {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    config = function()
+      require('flash').setup {
+        search = { multi_window = false },
+        modes = { char = { enabled = false } }
+      }
+      vim.keymap.set('n', 's', require("flash").jump)
+      vim.keymap.set('n', 'S', require("flash").treesitter)
+    end
+  },
+  
   -- {
   --   '3rd/image.nvim',
   --   config = function()
