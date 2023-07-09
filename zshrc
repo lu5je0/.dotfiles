@@ -28,8 +28,9 @@ zinit snippet OMZ::lib/git.zsh
 # 注释后没有文件颜色
 zinit snippet OMZ::lib/theme-and-appearance.zsh
 
-zinit ice lucid wait='0'
+# zinit ice lucid wait='0'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
+unalias gcp
 
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
