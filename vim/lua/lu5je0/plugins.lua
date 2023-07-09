@@ -2,6 +2,7 @@ local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 
 local has_mac = vim.fn.has('mac') == 1
 local has_wsl = vim.fn.has('wsl') == 1
+local has_tmux = os.getenv('TMUX') ~= nil
 
 local opts = {
   concurrency = (function()
@@ -91,7 +92,7 @@ require("lazy").setup({
       vim.g.oscyank_trim = 0
     end,
     config = function()
-      if has_wsl and has_mac then
+      if has_wsl or has_mac or has_tmux then
         return
       end
       vim.api.nvim_create_autocmd('TextYankPost', {
@@ -797,7 +798,7 @@ require("lazy").setup({
     config = function()
       require('flash').setup {
         search = { multi_window = false },
-        modes = { char = { enabled = false } },
+        modes = { char = { enabled = false }, search = { enabled = false } },
         prompt = { enabled = false },
         highlight = { priority = 9999 }
       }

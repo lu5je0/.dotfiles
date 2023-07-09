@@ -71,6 +71,8 @@ local defer_options = {
       require('lu5je0.misc.clipboard.mac').setup()  
     elseif has('wsl') then
       require('lu5je0.misc.clipboard.wsl').setup()  
+    else
+      o.clipboard = 'unnamed'
     end
     vim.cmd [[ packadd matchit ]]
   end
