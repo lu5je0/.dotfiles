@@ -86,12 +86,14 @@ require("lazy").setup({
   },
   {
     'ojroques/vim-oscyank',
-    cond = (not has_wsl and not has_mac),
     init = function()
       vim.g.oscyank_silent = 1
       vim.g.oscyank_trim = 0
     end,
     config = function()
+      if has_wsl and has_mac then
+        return
+      end
       vim.api.nvim_create_autocmd('TextYankPost', {
         pattern = '*',
         callback = function()
@@ -99,6 +101,7 @@ require("lazy").setup({
         end,
       })
     end,
+    event = 'VeryLazy'
   },
   
   {
