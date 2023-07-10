@@ -794,7 +794,7 @@ require("lazy").setup({
   
   {
     "folke/flash.nvim",
-    event = "VeryLazy",
+    keys = { { mode = { 'n' }, 's' }, { mode = { 'n' }, 'S' }, { mode = { 'o' }, 'r' } },
     config = function()
       require('flash').setup {
         search = { multi_window = false },
