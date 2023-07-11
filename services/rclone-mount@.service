@@ -21,6 +21,7 @@
 Description=rclone FUSE mount for %i
 Documentation=http://rclone.org/docs/
 After=network-online.target 
+After=docker.service
 # externo.mount # This is only needed if you use an external USB hard drive in order to wait for it to be mounted
 # Mount point in my system is on a USB drive, don't ask why :))), that's why I have to wait for it to get mounted
 # Requires=externo.mount
