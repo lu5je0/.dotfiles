@@ -1,0 +1,43 @@
+# Rclone mount on boot
+# Copy file to: /etc/systemd/system
+# You need to create a remote on RClone and a folder on your disk, both with same name <rclone-remote>
+# This example uses /cloud/ folder as origin to mount all remotes, change it to your needs
+# This example use a linux user named rclone. Create it or adapt it to your needs. Rclone will get config from that user's home folder
+# Register new service by typing:
+# sudo systemctl daemon-reload
+# Do the next one for every remote you want to load on boot
+# sudo systemctl enable rclone-mount@<rclone-remote>.service
+# systemctl start rclone-mount@<rclone-remote>.service
+# Usage:
+# To unmount drive use
+# systemctl stop rclone-mount@<rclone-remote>.service
+# To mount use:
+# systemctl start rclone-mount@<rclone-remote>.service
+# To disable mount on boot use:
+# systemctl disable rclone-mount@<rclone-remote>.service
+
+
+[Unit]
+Description=rclone FUSE mount for %i
+Documentation=http://rclone.org/docs/
+After=network-online.target 
+# externo.mount # This is only needed if you use an external USB hard drive in order to wait for it to be mounted
+# Mount point in my system is on a USB drive, don't ask why :))), that's why I have to wait for it to get mounted
+# Requires=externo.mount
+
+[Service]
+#Type=forking
+# This example use a linux user named rclone. Create it or adapt it to your needs. Rclone will get config from that user's home folder
+User=lu5je0
+Group=lu5je0
+# This example uses /cloud/ folder as origin to mount all remotes, change it to your needs
+# --vfs-cache-mode full activates cache for writting and reading. Check RClone documentation
+# --allow-other 
+ExecStart=/usr/bin/rclone mount %i: /home/lu5je0/cloud/%i --vfs-cache-mode full -v --allow-non-empty
+ExecStop=/bin/fusermount -uz /cloud/%i
+
+[Install]
+#Wants=network-online.target
+#Alias=rclone-rs
+#RequiredBy=
+WantedBy=multi-user.target
