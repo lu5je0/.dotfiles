@@ -66,6 +66,50 @@ require("lazy").setup({
       ]]
     end,
   },
+  
+  -- treesiter
+  {
+    {
+      'nvim-treesitter/nvim-treesitter',
+      build = ':TSUpdate',
+      config = function()
+        require('lu5je0.ext.treesiter')
+      end,
+      event = 'VeryLazy'
+    },
+    {
+      "ThePrimeagen/refactoring.nvim",
+      config = function()
+        require('lu5je0.ext.refactoring').setup()
+      end,
+      keys = { { mode = { 'n', 'x' }, '<leader>c' } },
+    },
+    {
+      'm-demare/hlargs.nvim',
+      config = function()
+        require('hlargs').setup {
+          -- flash.nvim 5000
+          hl_priority = 4999
+        }
+      end,
+      dependencies = {
+        'nvim-treesitter/nvim-treesitter'
+      },
+      event = 'VeryLazy'
+    },
+    {
+      'phelipetls/jsonpath.nvim',
+      ft = { 'json', 'jsonc' }
+    },
+    -- {
+    --   'stevearc/aerial.nvim',
+    --   config = function()
+    --     require('lu5je0.ext.aerial')
+    --   end,
+    --   cmd = { 'AerialToggle' }
+    -- },
+  },
+  
   { 'tpope/vim-repeat', event = 'VeryLazy' },
   {
     'aklt/plantuml-syntax',
@@ -473,49 +517,6 @@ require("lazy").setup({
       }
     end,
     cmd = 'Messages',
-  },
-  
-  -- treesiter
-  {
-    {
-      'nvim-treesitter/nvim-treesitter',
-      build = ':TSUpdate',
-      config = function()
-        require('lu5je0.ext.treesiter')
-      end,
-      event = 'VeryLazy'
-    },
-    {
-      "ThePrimeagen/refactoring.nvim",
-      config = function()
-        require('lu5je0.ext.refactoring').setup()
-      end,
-      keys = { { mode = { 'n', 'x' }, '<leader>c' } },
-    },
-    {
-      'm-demare/hlargs.nvim',
-      config = function()
-        require('hlargs').setup {
-          -- flash.nvim 5000
-          hl_priority = 4999
-        }
-      end,
-      dependencies = {
-        'nvim-treesitter/nvim-treesitter'
-      },
-      event = 'VeryLazy'
-    },
-    {
-      'phelipetls/jsonpath.nvim',
-      ft = { 'json', 'jsonc' }
-    },
-    -- {
-    --   'stevearc/aerial.nvim',
-    --   config = function()
-    --     require('lu5je0.ext.aerial')
-    --   end,
-    --   cmd = { 'AerialToggle' }
-    -- },
   },
   
   {
