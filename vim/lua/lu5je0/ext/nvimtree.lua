@@ -429,6 +429,9 @@ function M.setup()
     hijack_cursor = false,
     update_cwd = true,
     on_attach = on_attach,
+    notify = {
+      threshold = vim.log.levels.WARN,
+    },
     filesystem_watchers = {
       enable = true,
       debounce_delay = 1000,
