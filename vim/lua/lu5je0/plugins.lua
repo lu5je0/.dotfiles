@@ -215,11 +215,10 @@ require("lazy").setup({
     end,
     keys = { '<leader>a' }
   },
-  {
-    'rootkiter/vim-hexedit',
-    ft = 'bin',
-    fn = { 'hexedit#ToggleHexEdit' },
-  },
+  -- {
+  --   'rootkiter/vim-hexedit',
+  --   ft = 'bin',
+  -- },
   {
     'sgur/vim-textobj-parameter',
     dependencies = { 'kana/vim-textobj-user' },
@@ -250,7 +249,6 @@ require("lazy").setup({
     init = function()
       vim.g.eregex_default_enable = 0
     end,
-    fn = { 'eregex#toggle' },
     cmd = 'S',
     keys = { '<leader>/' },
   },
@@ -365,7 +363,6 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.cmp')
     end,
-    defer = true,
     dependencies = {
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-path',
