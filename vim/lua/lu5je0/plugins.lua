@@ -473,9 +473,6 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.treesiter')
     end,
-    dependencies = {
-      'RRethy/vim-illuminate'
-    },
     event = 'VeryLazy'
   },
   {
@@ -597,16 +594,17 @@ require("lazy").setup({
           require('lu5je0.ext.glance').setup()
         end,
       },
-      {
-        'RRethy/vim-illuminate',
-        config = function()
-          require('lu5je0.ext.lspconfig.illuminate')
-        end,
-        dependencies = {
-          'neovim/nvim-lspconfig'
-        }
-      }
     }
+  },
+  {
+    'RRethy/vim-illuminate',
+    config = function()
+      require('lu5je0.ext.lspconfig.illuminate')
+    end,
+    dependencies = {
+      'neovim/nvim-lspconfig'
+    },
+    event = 'CursorHold'
   },
   {
     'jose-elias-alvarez/null-ls.nvim',
