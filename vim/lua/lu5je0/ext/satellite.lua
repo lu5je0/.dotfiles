@@ -115,8 +115,26 @@ function M.setup()
   M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
 
   -- workaroud for builtin keymap
-  vim.cmd('nnoremap zfa zfa')
-  vim.cmd('nnoremap zfi zfi')
+  vim.cmd [[
+  nnoremap zfa zfa
+  nnoremap zfi zfi
+  
+  sunmap zi
+  sunmap zN
+  sunmap zn
+  sunmap zr
+  sunmap zm
+  sunmap zX
+  sunmap zx
+  sunmap zv
+  sunmap zA
+  sunmap zC
+  sunmap zO
+  sunmap zE
+  sunmap zD
+  sunmap zd
+  sunmap zF
+  ]]
 end
 
 return M

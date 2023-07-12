@@ -177,7 +177,7 @@ require("lazy").setup({
     dependencies = {
       'nvim-telescope/telescope.nvim',
     },
-    event = 'VeryLazy'
+    keys = { '<leader>fp' },
   },
   
   {
@@ -355,7 +355,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.satellite').setup()
     end,
-    -- event = { 'WinScrolled' }
+    event = { 'WinScrolled' }
   },
 
   {
@@ -407,8 +407,9 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.nvim-ufo')
     end,
-    cmd = 'FoldTextToggle',
-    keys = { 'zf', 'zo', 'za', 'zc', 'zM', 'zR' }
+    event = 'VeryLazy'
+    -- cmd = 'FoldTextToggle',
+    -- keys = { 'zf', 'zo', 'za', 'zc', 'zM', 'zR' }
   },
   {
     'anuvyklack/pretty-fold.nvim',
@@ -473,7 +474,6 @@ require("lazy").setup({
       require('lu5je0.ext.treesiter')
     end,
     dependencies = {
-      'kevinhwang91/nvim-ufo',
       'RRethy/vim-illuminate'
     },
     event = 'VeryLazy'
