@@ -368,6 +368,15 @@ require("lazy").setup({
       dependencies = {
         -- 'hrsh7th/cmp-cmdline',
         'windwp/nvim-autopairs',
+        'saadparwaiz1/cmp_luasnip',
+        'hrsh7th/cmp-buffer',
+        'hrsh7th/cmp-path',
+        {
+          'L3MON4D3/LuaSnip',
+          config = function()
+            require('lu5je0.ext.luasnip').setup()
+          end
+        },
         -- {
         --   'hrsh7th/vim-vsnip',
         --   config = function()
@@ -378,15 +387,6 @@ require("lazy").setup({
       },
       event = 'VeryLazy',
     },
-    {
-      'L3MON4D3/LuaSnip',
-      config = function()
-        require('lu5je0.ext.luasnip').setup()
-      end
-    },
-    'saadparwaiz1/cmp_luasnip',
-    'hrsh7th/cmp-buffer',
-    'hrsh7th/cmp-path',
     {
       'hrsh7th/cmp-nvim-lsp',
       event = 'LspAttach'
