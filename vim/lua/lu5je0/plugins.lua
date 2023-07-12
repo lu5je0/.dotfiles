@@ -385,7 +385,7 @@ require("lazy").setup({
         -- },
         -- 'hrsh7th/cmp-vsnip',
       },
-      event = 'VeryLazy',
+      event = 'InsertEnter',
     },
     {
       'hrsh7th/cmp-nvim-lsp',
