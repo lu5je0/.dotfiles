@@ -358,32 +358,39 @@ require("lazy").setup({
     event = { 'WinScrolled' }
   },
 
+  -- nvim-cmp
   {
-    'hrsh7th/nvim-cmp',
-    config = function()
-      require('lu5je0.ext.cmp')
-    end,
-    dependencies = {
-      'hrsh7th/cmp-buffer',
-      'hrsh7th/cmp-path',
-      -- 'hrsh7th/cmp-cmdline',
-      'windwp/nvim-autopairs',
-      {
-        'L3MON4D3/LuaSnip',
-        config = function()
-          require('lu5je0.ext.luasnip').setup()
-        end
+    {
+      'hrsh7th/nvim-cmp',
+      config = function()
+        require('lu5je0.ext.cmp')
+      end,
+      dependencies = {
+        -- 'hrsh7th/cmp-cmdline',
+        'windwp/nvim-autopairs',
+        -- {
+        --   'hrsh7th/vim-vsnip',
+        --   config = function()
+        --     require('lu5je0.ext.vsnip').setup()
+        --   end,
+        -- },
+        -- 'hrsh7th/cmp-vsnip',
       },
-      { 'saadparwaiz1/cmp_luasnip' },
-      -- {
-      --   'hrsh7th/vim-vsnip',
-      --   config = function()
-      --     require('lu5je0.ext.vsnip').setup()
-      --   end,
-      -- },
-      -- 'hrsh7th/cmp-vsnip',
+      event = 'VeryLazy',
     },
-    event = 'VeryLazy',
+    {
+      'L3MON4D3/LuaSnip',
+      config = function()
+        require('lu5je0.ext.luasnip').setup()
+      end
+    },
+    'saadparwaiz1/cmp_luasnip',
+    'hrsh7th/cmp-buffer',
+    'hrsh7th/cmp-path',
+    {
+      'hrsh7th/cmp-nvim-lsp',
+      event = 'LspAttach'
+    },
   },
 
   {
@@ -467,55 +474,50 @@ require("lazy").setup({
     end,
     cmd = 'Messages',
   },
+  
+  -- treesiter
   {
-    'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
-    config = function()
-      require('lu5je0.ext.treesiter')
-    end,
-    event = 'VeryLazy'
-  },
-  {
-    "ThePrimeagen/refactoring.nvim",
-    config = function()
-      require('lu5je0.ext.refactoring').setup()
-    end,
-    keys = { { mode = { 'n', 'x' }, '<leader>c' } },
-  },
-  {
-    'm-demare/hlargs.nvim',
-    config = function()
-      require('hlargs').setup { 
-        -- flash.nvim 5000
-        hl_priority = 4999
-      }
-    end,
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter'
+    {
+      'nvim-treesitter/nvim-treesitter',
+      build = ':TSUpdate',
+      config = function()
+        require('lu5je0.ext.treesiter')
+      end,
+      event = 'VeryLazy'
     },
-    event = 'VeryLazy'
-  },
-  {
+    {
+      "ThePrimeagen/refactoring.nvim",
+      config = function()
+        require('lu5je0.ext.refactoring').setup()
+      end,
+      keys = { { mode = { 'n', 'x' }, '<leader>c' } },
+    },
+    {
+      'm-demare/hlargs.nvim',
+      config = function()
+        require('hlargs').setup {
+          -- flash.nvim 5000
+          hl_priority = 4999
+        }
+      end,
+      dependencies = {
+        'nvim-treesitter/nvim-treesitter'
+      },
+      event = 'VeryLazy'
+    },
     {
       'phelipetls/jsonpath.nvim',
       ft = { 'json', 'jsonc' }
-    }
+    },
+    -- {
+    --   'stevearc/aerial.nvim',
+    --   config = function()
+    --     require('lu5je0.ext.aerial')
+    --   end,
+    --   cmd = { 'AerialToggle' }
+    -- },
   },
-  -- {
-  --   'stevearc/aerial.nvim',
-  --   config = function()
-  --     require('lu5je0.ext.aerial')
-  --   end,
-  --   cmd = { 'AerialToggle' }
-  -- },
-  {
-    'simrat39/symbols-outline.nvim',
-    config = function()
-      require('lu5je0.ext.symbols-outline').setup()
-    end,
-    cmd = { 'SymbolsOutline' },
-    keys = { { mode = { 'n' }, '<leader>i' }, { mode = { 'n' }, '<leader>I' } }
-  },
+  
   {
     'lukas-reineke/indent-blankline.nvim',
     config = function()
@@ -527,95 +529,104 @@ require("lazy").setup({
 
   -- lsp
   {
-    'williamboman/mason.nvim',
-    config = function()
-      require("mason").setup()
-    end,
-    event = 'VeryLazy'
-  },
-  {
-    'williamboman/mason-lspconfig.nvim',
-    config = function()
-      require('mason-lspconfig').setup {
-        ensure_installed = {}
-      }
-    end,
-    event = 'VeryLazy',
-    dependencies = {
+    {
       'williamboman/mason.nvim',
-      {
-        'hrsh7th/cmp-nvim-lsp',
-      },
-      {
-        'SmiteshP/nvim-navic',
-        config = function ()
-          require('nvim-navic').setup {
-            depth_limit = 4,
-            depth_limit_indicator = "..",
-          }
-        end
-      },
-      {
-        'neovim/nvim-lspconfig',
-        dependencies = {
-          {
-            'folke/neodev.nvim',
-            config = function()
-              require("neodev").setup {
-                library = {
-                  enabled = true, -- when not enabled, neodev will not change any settings to the LSP server
-                  -- these settings will be used for your Neovim config directory
-                  runtime = true, -- runtime path
-                  types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
-                  plugins = false,
-                  -- plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" },
-                },
-              }
-            end
+      config = function()
+        require("mason").setup()
+      end,
+      event = 'VeryLazy'
+    },
+    {
+      'williamboman/mason-lspconfig.nvim',
+      config = function()
+        require('mason-lspconfig').setup {
+          ensure_installed = {}
+        }
+      end,
+      event = 'VeryLazy',
+      dependencies = {
+        'williamboman/mason.nvim',
+        {
+          'neovim/nvim-lspconfig',
+          dependencies = {
+            {
+              'folke/neodev.nvim',
+              config = function()
+                require("neodev").setup {
+                  library = {
+                    enabled = true, -- when not enabled, neodev will not change any settings to the LSP server
+                    -- these settings will be used for your Neovim config directory
+                    runtime = true, -- runtime path
+                    types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
+                    plugins = false,
+                    -- plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" },
+                  },
+                }
+              end
+            },
           },
+          config = function()
+            require('lu5je0.ext.lspconfig.lsp').setup()
+          end,
         },
-        config = function()
-          require('lu5je0.ext.lspconfig.lsp').setup()
-        end,
-      },
-      -- {
-      --   "lu5je0/lspsaga.nvim",
-      --   branch = "main",
-      --   config = function()
-      --     require('lu5je0.ext.lspconfig.lspsaga')
-      --   end,
-      --   dependencies = {
-      --     'neovim/nvim-lspconfig'
-      --   }
-      -- },
-      {
-        "dnlhc/glance.nvim",
-        config = function()
-          require('lu5je0.ext.glance').setup()
-        end,
-      },
-    }
-  },
-  {
-    'RRethy/vim-illuminate',
-    config = function()
-      require('lu5je0.ext.lspconfig.illuminate')
-    end,
-    dependencies = {
-      'neovim/nvim-lspconfig'
+        -- {
+        --   "lu5je0/lspsaga.nvim",
+        --   branch = "main",
+        --   config = function()
+        --     require('lu5je0.ext.lspconfig.lspsaga')
+        --   end,
+        --   dependencies = {
+        --     'neovim/nvim-lspconfig'
+        --   }
+        -- },
+      }
     },
-    event = 'CursorHold'
-  },
-  {
-    'jose-elias-alvarez/null-ls.nvim',
-    config = function()
-      require('lu5je0.ext.null-ls.null-ls')
-    end,
-    dependencies = {
-      'neovim/nvim-lspconfig'
+    {
+      'SmiteshP/nvim-navic',
+      config = function()
+        require('nvim-navic').setup {
+          depth_limit = 4,
+          depth_limit_indicator = "..",
+        }
+      end,
+      event = { 'LspAttach' }
     },
-    event = 'VeryLazy'
-    -- cmd = 'NullLsEnable',
+    {
+      'simrat39/symbols-outline.nvim',
+      config = function()
+        require('lu5je0.ext.symbols-outline').setup()
+      end,
+      cmd = { 'SymbolsOutline' },
+      keys = { { mode = { 'n' }, '<leader>i' }, { mode = { 'n' }, '<leader>I' } }
+    },
+    {
+      "dnlhc/glance.nvim",
+      config = function()
+        require('lu5je0.ext.glance').setup()
+      end,
+      event = { 'LspAttach' }
+    },
+    {
+      'RRethy/vim-illuminate',
+      config = function()
+        require('lu5je0.ext.lspconfig.illuminate')
+      end,
+      dependencies = {
+        'neovim/nvim-lspconfig'
+      },
+      event = { 'CursorHold', 'LspAttach' }
+    },
+    {
+      'jose-elias-alvarez/null-ls.nvim',
+      config = function()
+        require('lu5je0.ext.null-ls.null-ls')
+      end,
+      dependencies = {
+        'neovim/nvim-lspconfig'
+      },
+      event = 'VeryLazy'
+      -- cmd = 'NullLsEnable',
+    },
   },
 
   {
@@ -745,12 +756,12 @@ require("lazy").setup({
     end
   },
   
-  {
-    'akinsho/git-conflict.nvim',
-    version = "*",
-    config = true,
-    event = 'VeryLazy'
-  },
+  -- {
+  --   'akinsho/git-conflict.nvim',
+  --   version = "*",
+  --   config = true,
+  --   event = 'VeryLazy'
+  -- },
   
   {
     'nvim-pack/nvim-spectre',
