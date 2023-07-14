@@ -1,5 +1,5 @@
 function! s:get_junk_filename(name)
-	let junk_dir = '~/junk-file'
+	let junk_dir = '~/cloud/junk-file'
 	let junk_dir = junk_dir . strftime('/%Y/%m')
 	let real_dir = expand(junk_dir)
 	if !isdirectory(real_dir)
@@ -50,7 +50,7 @@ endfunction
 
 command! -nargs=0 JunkList call s:open_junk_list()
 function! s:open_junk_list()
-	let junk_dir = '~/junk-file'
+	let junk_dir = '~/cloud/junk-file'
 	" let junk_dir = expand(junk_dir) . strftime('/%Y/%m')
 	let junk_dir = tr(junk_dir, '\', '/')
 	echo junk_dir
