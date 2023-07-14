@@ -37,9 +37,9 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
 elif [[ $UNAME_INFO =~ "microsoft" ]]; then
   function __git_prompt_git() {
     if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]]; then
-      export GIT_OPTIONAL_LOCKS=0 command git.exe "$@"
+      command git.exe "$@"
     else
-      export GIT_OPTIONAL_LOCKS=0 command git "$@"
+      command git "$@"
     fi
   }
   export WSL_IP=$(hostname -I | awk '{print $1}')
