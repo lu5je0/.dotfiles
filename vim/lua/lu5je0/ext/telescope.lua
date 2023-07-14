@@ -81,7 +81,7 @@ local function key_mapping()
   end)
   set_map('<leader>fj', function()
     telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
-      { theme, search_dirs = { '~/cloud/junk-file' } }))
+      { theme, search_dirs = { '~/junk-file' } }))
   end)
 end
 
