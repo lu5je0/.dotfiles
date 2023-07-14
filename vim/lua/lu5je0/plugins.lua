@@ -819,7 +819,12 @@ require("lazy").setup({
   -- {
   --   '3rd/image.nvim',
   --   config = function()
-  --     require("image").setup()
+  --     package.path = package.path .. ";" .. vim.fs.normalize('~') .. '/.luarocks/share/lua/5.1/?/init.lua'
+  --     package.path = package.path .. ";" .. vim.fs.normalize('~') .. '/.luarocks/share/lua/5.1/?.lua'
+  --     require('image').setup({
+  --      -- backend = 'ueberzug',
+  --       max_width_window_percentage = 80,
+  --     })
   --   end
   -- }
   

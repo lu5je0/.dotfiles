@@ -47,6 +47,8 @@ nmap <leader>fe :NERDTreeFind<CR>
 xmap < <gv
 xmap > >gv
 
+nnoremap * *<c-o>
+
 " tab页
 nmap <silent> <leader>tn :action NewScratchFile<cr>
 nmap <learer>tr :action ReopenClosedTab<CR>
