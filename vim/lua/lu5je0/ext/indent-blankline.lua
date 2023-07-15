@@ -24,7 +24,6 @@ vim.api.nvim_create_autocmd('User', {
 vim.api.nvim_create_autocmd('WinScrolled', {
   group = group,
   callback = function()
-    print(vim.v.event.all.leftcol)
     if vim.v.event.all.leftcol ~= 0 then
       vim.cmd('silent! IndentBlanklineRefresh')
     end
