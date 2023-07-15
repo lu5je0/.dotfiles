@@ -21,21 +21,13 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
-
-vim.defer_fn(function()
-  vim.keymap.set('n', 'H', function()
-    require('lu5je0.core.keys').feedkey('^')
-    
-    if require('lu5je0.core.window').is_cur_line_out_of_window() then
-      vim.cmd('IndentBlanklineRefresh')
+vim.api.nvim_create_augroup('IndentBlankLineFix', {})
+vim.api.nvim_create_autocmd('WinScrolled', {
+  group = 'IndentBlankLineFix',
+  callback = function()
+    print(vim.v.event.all.leftcol)
+    if vim.v.event.all.leftcol ~= 0 then
+      vim.cmd('silent! IndentBlanklineRefresh')
     end
-  end)
-
-  vim.keymap.set('n', 'L', function()
-    require('lu5je0.core.keys').feedkey('$')
-    
-    if require('lu5je0.core.window').is_cur_line_out_of_window() then
-      vim.cmd('IndentBlanklineRefresh')
-    end
-  end)
-end, 100)
+  end,
+})

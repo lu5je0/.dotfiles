@@ -12,7 +12,7 @@
   "edge": { "branch": "master", "commit": "358cb6688ac577470a4eafcb53bdd63899dfc937" },
   "edgy.nvim": { "branch": "main", "commit": "0d3b64f9159442cf9edcad451a0dd9fb7e31bc41" },
   "eregex.vim": { "branch": "master", "commit": "950027d5942c7dc5f4cbcfdea7df360da9360697" },
-  "flash.nvim": { "branch": "main", "commit": "fc36b5792da9f6d6c5c6777ff36431ece58d011b" },
+  "flash.nvim": { "branch": "main", "commit": "9c53dad391801acb9ce9aa49820f15f6692aec91" },
   "gitsigns.nvim": { "branch": "main", "commit": "5a04466685008f29c71fa5ec25d421deb1c83fea" },
   "glance.nvim": { "branch": "master", "commit": "3e7158ffaaa0fa1f7268df30ae40f24c07b840d1" },
   "hlargs.nvim": { "branch": "main", "commit": "cfc9beab4e176a13311efe03e38e6b6fed5df4f6" },
