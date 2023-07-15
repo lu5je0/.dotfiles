@@ -12,7 +12,7 @@ require('indent_blankline').setup {
   },
 }
 
-local group = vim.api.nvim_create_augroup('indent_blankline_augroup', { clear = true })
+local group = vim.api.nvim_create_augroup('IndentBlankLineFix', { clear = true })
 vim.api.nvim_create_autocmd('User', {
   group = group,
   pattern = 'FoldChanged',
@@ -21,9 +21,8 @@ vim.api.nvim_create_autocmd('User', {
   end,
 })
 
-vim.api.nvim_create_augroup('IndentBlankLineFix', {})
 vim.api.nvim_create_autocmd('WinScrolled', {
-  group = 'IndentBlankLineFix',
+  group = group,
   callback = function()
     print(vim.v.event.all.leftcol)
     if vim.v.event.all.leftcol ~= 0 then
