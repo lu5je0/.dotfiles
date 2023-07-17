@@ -94,6 +94,9 @@ vim.defer_fn(function()
   -- set_n_map('<leader>fp', function() cmd_and_print('cd ~/.local/share/nvim/lazy') end)
   set_n_map('<leader>fd', function() cmd_and_print('cd ~/.dotfiles') end)
   set_n_map('<leader>ft', function() cmd_and_print('cd ~/test') end)
+  
+  -- selection search
+  set_map('x', { '<leader>/', '<space>/' }, '<Esc>/\\%V', {})
 
   -- lsp
   set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')
