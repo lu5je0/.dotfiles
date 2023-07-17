@@ -122,6 +122,7 @@ alias crontab="cron.sh"
 alias ll='exa -laF'
 alias l='exa -lF'
 
+alias grep='grep --color'
 alias bat='batcat'
 
 alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
