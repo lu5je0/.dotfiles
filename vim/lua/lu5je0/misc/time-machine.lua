@@ -1,7 +1,7 @@
 local M = {}
 
 local PATH = vim.fn.stdpath("state") .. '/time-machine/'
-local MAX_KEEP_LINES = 2000
+local MAX_KEEP_LINES = 5000
 local MAX_KEEP_FILE_CNT = 300
 local MAX_KEEP_DAYS = 10
 
