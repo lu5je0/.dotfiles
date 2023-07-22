@@ -110,7 +110,13 @@ require("lazy").setup({
     -- },
   },
   
-  { 'tpope/vim-repeat', event = 'VeryLazy' },
+  {
+    'tpope/vim-repeat',
+    event = 'VeryLazy',
+    config = function()
+      require('lu5je0.ext.repeat').setup()
+    end
+  },
   {
     'aklt/plantuml-syntax',
     ft = 'plantuml',

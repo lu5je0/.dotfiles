@@ -119,21 +119,21 @@ function M.setup()
   nnoremap zfa zfa
   nnoremap zfi zfi
   
-  sunmap zi
-  sunmap zN
-  sunmap zn
-  sunmap zr
-  sunmap zm
-  sunmap zX
-  sunmap zx
-  sunmap zv
-  sunmap zA
-  sunmap zC
-  sunmap zO
-  sunmap zE
-  sunmap zD
-  sunmap zd
-  sunmap zF
+  silent! sunmap zi
+  silent! sunmap zN
+  silent! sunmap zn
+  silent! sunmap zr
+  silent! sunmap zm
+  silent! sunmap zX
+  silent! sunmap zx
+  silent! sunmap zv
+  silent! sunmap zA
+  silent! sunmap zC
+  silent! sunmap zO
+  silent! sunmap zE
+  silent! sunmap zD
+  silent! sunmap zd
+  silent! sunmap zF
   ]]
 end
 
