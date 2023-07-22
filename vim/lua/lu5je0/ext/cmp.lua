@@ -207,7 +207,7 @@ cmp.setup {
     { name = 'path' },
     {
       name = 'buffer',
-      keyword_length = 2
+      option = { keyword_pattern = [[\k\+]], keyword_length = 1 }
     },
   },
 }
