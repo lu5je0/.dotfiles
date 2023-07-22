@@ -7,7 +7,7 @@ M.repeat_rhs = nil
 local function do_repeat_rhs(rhs)
   keys.feedkey(rhs, 'n')
   M.repeat_rhs = rhs
-  vim.go.operatorfunc = "v:lua.callback"
+  vim.go.operatorfunc = "v:lua.__repeat_callback"
   return "g@l"
 end
 
@@ -17,7 +17,7 @@ local function create_repeat_keys(rhs)
   end
 end
 
-function _G.callback()
+function _G.__repeat_callback()
   do_repeat_rhs(M.repeat_rhs)
 end
 
