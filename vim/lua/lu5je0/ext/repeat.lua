@@ -18,7 +18,6 @@ local function create_repeat_keys(rhs)
 end
 
 function _G.callback()
-  print('callback')
   do_repeat_rhs(M.repeat_rhs)
 end
 
