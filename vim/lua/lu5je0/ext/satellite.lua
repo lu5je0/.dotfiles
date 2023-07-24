@@ -21,13 +21,14 @@ function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
       return
     end
 
-    if timer then
-      timer:stop()
+    if timer and not timer:is_closing() then
+      timer:close()
+    else
+      -- print('refresh ', vim.loop.gettimeofday())
+      vim.cmd(enable_cmd)
+      -- 不加refresh，需要<c-d>两次才会出现satellite
+      vim.cmd(refresh_cmd)
     end
-    
-    vim.cmd(enable_cmd)
-    -- 不加refresh，需要<c-d>两次才会出现satellite
-    vim.cmd(refresh_cmd)
     
     -- 搜索时不自动隐藏
     if vim.v.hlsearch == 1 then
