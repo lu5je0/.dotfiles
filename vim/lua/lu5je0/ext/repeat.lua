@@ -39,9 +39,6 @@ M.setup = function()
     register_nmap('zfip')
     register_nmap('zfap')
     
-    register_nmap('zo')
-    register_nmap('zc')
-    
     register_nmap('zfib')
     register_nmap('zfab')
     
