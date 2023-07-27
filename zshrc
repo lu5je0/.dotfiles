@@ -48,6 +48,9 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit ice depth=1 lucid wait='0'
 zinit light hlissner/zsh-autopair
 
+zinit ice depth=1 lucid wait='0'
+zinit light jimhester/per-directory-history
+
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
 # zinit light zsh-users/zsh-autosuggestions
 
