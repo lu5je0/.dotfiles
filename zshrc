@@ -48,9 +48,6 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit ice depth=1 lucid wait='0'
 zinit light hlissner/zsh-autopair
 
-zinit ice depth=1 lucid wait='0'
-zinit light jimhester/per-directory-history
-
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
 # zinit light zsh-users/zsh-autosuggestions
 
@@ -75,6 +72,12 @@ zinit snippet ~/.dotfiles/zsh/proxy.sh
 
 zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 zinit snippet ~/.dotfiles/zsh/vi-im-switch.zsh
+
+zinit ice depth=1 lucid wait='0'
+zinit light jimhester/per-directory-history
+# TODO 有问题
+# per_directory_history_is_global='true' 
+# per-directory-history-set-global-history
 
 ##########################################
 # theme
