@@ -73,11 +73,12 @@ zinit snippet ~/.dotfiles/zsh/proxy.sh
 zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
 zinit snippet ~/.dotfiles/zsh/vi-im-switch.zsh
 
-zinit ice depth=1 lucid wait='0'
-zinit light jimhester/per-directory-history
-# TODO 有问题
-# per_directory_history_is_global='true' 
-# per-directory-history-set-global-history
+# zinit wait'2' lucid \
+#   atinit"source $ZHOMEDIR/rc/pluginconfig/per-directory-history.zsh" \
+#   atload"_per-directory-history-set-global-history" \
+#   light-mode for @CyberShadow/per-directory-history
+# https://github.com/jimhester/per-directory-history/issues/21
+# https://github.com/jimhester/per-directory-history/issues/27
 
 ##########################################
 # theme
