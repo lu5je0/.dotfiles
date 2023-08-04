@@ -122,6 +122,9 @@ alias fetch_subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias sudo="sudo "
 alias crontab="cron.sh"
 
+# git
+alias gcof='git checkout `git branch | fzf`'
+
 # ls
 # alias l='ls -lah'
 # alias ll='ls -lh'

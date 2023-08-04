@@ -189,7 +189,7 @@ ins_left {
   function()
     local max_len = 20
     local filename = expand('%:t')
-    if #filename > max_len then
+    if vim.fn.strutf16len(filename) > max_len then
       local suffix = filename:match('.+%.(%w+)$')
       filename = vim.fn.strcharpart(filename, 0, max_len - 6) .. '…'
       if suffix ~= nil then
