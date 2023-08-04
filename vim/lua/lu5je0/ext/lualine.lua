@@ -1,4 +1,5 @@
 local timer = require('lu5je0.lang.timer')
+local string_utils = require('lu5je0.lang.string-utils')
 local lualine = require('lualine')
 local file_util = require('lu5je0.core.file')
 local big_file = require('lu5je0.misc.big-file')
@@ -189,9 +190,15 @@ ins_left {
   function()
     local max_len = 20
     local filename = expand('%:t')
-    if vim.fn.strutf16len(filename) > max_len then
+    if #filename > max_len then
       local suffix = filename:match('.+%.(%w+)$')
-      filename = vim.fn.strcharpart(filename, 0, max_len - 6) .. '…'
+      local end_pos
+      if suffix == "" or suffix == nil then
+        end_pos = max_len
+      else
+        end_pos = max_len - 4
+      end
+      filename = string_utils.get_short_filename(filename, end_pos)
       if suffix ~= nil then
         filename = filename .. '.' .. suffix
       end
