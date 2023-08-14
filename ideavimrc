@@ -95,7 +95,6 @@ map <leader>cc <Action>(ShowIntentionActions)
 map <leader>ca <Action>(ShowErrorDescription)
 
 " run
-nmap <leader>re :action ChooseRunConfiguration<CR>
 nmap <leader>rc :action CompileDirty<CR>
 nmap <leader>rD :action Debug<CR>
 nmap <leader>rd :action DebugClass<CR>
@@ -170,6 +169,8 @@ map <leader>gl <Action>(Vcs.Show.Log)
 xmap <leader>gl <Action>(Vcs.ShowHistoryForBlock)
 
 nmap <leader>mc <Action>(CompileFile)
+nmap <leader>me :action EvaluateExpression<CR>
+vmap <leader>me :action EvaluateExpression<CR>
 
 " navicat
 nmap [g <Action>(VcsShowPrevChangeMarker)
