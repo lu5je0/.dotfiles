@@ -72,7 +72,9 @@ local defer_options = {
     elseif has('wsl') then
       require('lu5je0.misc.clipboard.wsl').setup()  
     else
-      o.clipboard = 'unnamed'
+      if has('clipboard') == 1 then
+        o.clipboard = 'unnamed'
+      end
     end
     vim.cmd [[ packadd matchit ]]
   end
