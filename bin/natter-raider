@@ -1,0 +1,2 @@
+#!/bin/sh
+`curl https://ghproxy.com/https://gist.githubusercontent.com/lu5je0/6d79c674edd5a38692c95233a4815140/raw`
