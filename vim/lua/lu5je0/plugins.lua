@@ -526,9 +526,10 @@ require("lazy").setup({
   
   {
     'lukas-reineke/indent-blankline.nvim',
+    branch = 'v3',
     config = function()
       require('lu5je0.ext.indent-blankline')
-      vim.cmd('IndentBlanklineRefresh')
+      -- vim.cmd('IndentBlanklineRefresh')
     end,
     event = 'VeryLazy'
   },

@@ -137,6 +137,8 @@ alias bat='batcat'
 
 alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
 
+alias qrencode-ansi='qrencode -t ansiutf8'
+
 # tmux
 alias ta="tmux attach -t"
 alias td="tmux detach"
