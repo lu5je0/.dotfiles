@@ -119,8 +119,9 @@ alias sftp="sftp -C"
 alias wd="~/.dotfiles/submodule/wd/wd.py"
 alias fpp="~/.dotfiles/submodule/PathPicker/fpp"
 alias fetch_subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
-alias sudo="sudo "
 alias crontab="cron.sh"
+# alias sudo="sudo "
+alias sudo='sudo env PATH=$PATH'
 
 # git
 alias gcof='git checkout `git branch | fzf`'
