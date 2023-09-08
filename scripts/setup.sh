@@ -23,7 +23,8 @@ if [ "$(uname)" = "Linux" ]; then
 fi
 
 if [[ -f ~/.ssh/config ]]; then
-    cp ~/.dotfiles/ssh/config ~/.ssh/config
+    mkdir -p ~/.ssh/config.d
+    ln -s ~/.dotfiles/ssh/config ~/.ssh/config
 else
     echo "~/.ssh/config existed"
 fi
