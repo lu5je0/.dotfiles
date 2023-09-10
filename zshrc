@@ -140,6 +140,8 @@ alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
 
 alias qrencode-ansi='qrencode -t ansiutf8'
 
+alias time-204='time curl "https://www.gstatic.com/generate_204"'
+
 # tmux
 alias ta="tmux attach -t"
 alias td="tmux detach"
