@@ -1,11 +1,17 @@
 # get public IP
 function q-myip
 {
-  if command -v curl &> /dev/null; then
-    curl ifconfig.co
-  elif command -v wget &> /dev/null; then
-    wget -qO- ifconfig.co
-  fi
+  curl -s http://ip-api.com/json | jq
+  # if command -v curl &> /dev/null; then
+  #   curl ifconfig.co
+  # elif command -v wget &> /dev/null; then
+  #   wget -qO- ifconfig.co
+  # fi
+}
+
+function q-ip
+{
+  curl -s http://ip-api.com/json/$1 | jq
 }
 
 function q-ip-location
