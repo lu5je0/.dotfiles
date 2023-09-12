@@ -224,7 +224,7 @@ function M.setup()
       name = '+text',
       c = { 'g<c-g>', 'count in the selection region' },
       s = { 'text escape' },
-      r = { "<cmd>lua require('lu5je0.misc.replace').v_replace()<cr>", 'replace' },
+      r = { 'spectre replace' },
     },
     s = {
       name = '+translate',
