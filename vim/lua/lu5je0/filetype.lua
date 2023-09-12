@@ -5,9 +5,9 @@ vim.filetype.add {
     -- zsh = 'zsh',
   },
   filename = {
-    -- ['.bashrc'] = 'bash',
-    -- ['.zshrc'] = 'bash',
-    -- ['zshrc'] = 'bash',
+    ['.bashrc'] = 'bash',
+    ['.zshrc'] = 'bash',
+    ['zshrc'] = 'bash',
     ['bashrc'] = 'bash',
     ['.ohmyenv'] = 'bash',
     ['crontab'] = 'crontab',
@@ -21,5 +21,7 @@ vim.filetype.add {
   },
   pattern = {
     ['.*%.tmux.conf'] = 'tmux',
+    ['.*%.zsh'] = 'tmux',
+    ['.*/ssh/config'] = 'sshconfig',
   },
 }
