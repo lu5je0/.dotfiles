@@ -49,7 +49,7 @@ require('lu5je0.misc.big-file').setup {
     function(buf_nr)
       vim.defer_fn(function()
         require('lu5je0.ext.plugins_helper').load_plugin('indent-blankline.nvim')
-        vim.cmd [[ IndentBlanklineDisable ]]
+        vim.cmd [[ IBLDisable ]]
         vim.treesitter.stop(buf_nr)
         require('hlargs').disable()
       end, 200)
