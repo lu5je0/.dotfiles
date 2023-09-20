@@ -40,7 +40,7 @@
   "nvim-surround": { "branch": "main", "commit": "1c2ef599abeeb98e40706830bcd27e90e259367a" },
   "nvim-tree.lua": { "branch": "master", "commit": "e0c7eb50442922920cf6727a80ae09028947ddc6" },
   "nvim-treesitter": { "branch": "master", "commit": "0ba881b7a2af0e24962e4522cf15ebd642261a90" },
-  "nvim-ufo": { "branch": "main", "commit": "16c730dbb89befa437775f0c430a9ff62d67a0cd" },
+  "nvim-ufo": { "branch": "main", "commit": "ddec0c27e9cd2d22df4ecacc45e9d6ce567f7c35" },
   "nvim-web-devicons": { "branch": "master", "commit": "973ab742f143a796a779af4d786ec409116a0d87" },
   "one-small-step-for-vimkind": { "branch": "main", "commit": "edbb34ee779049f2071dc7becff0bbf51c865906" },
   "open-browser.vim": { "branch": "master", "commit": "7d4c1d8198e889d513a030b5a83faa07606bac27" },
