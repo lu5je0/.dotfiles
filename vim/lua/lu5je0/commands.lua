@@ -48,6 +48,8 @@ require('lu5je0.misc.code-runner').create_command()
 
 require('lu5je0.misc.base64').create_command()
 
+require('lu5je0.misc.gmt').create_command()
+
 encode_command_creater.create_encode_command('UrlEncode', function(url)
   if url == nil then
     return
