@@ -37,8 +37,6 @@ function M.decode(data)
   return timestamp_to_date(data)
 end
 
-print(M.encode('1970-01-01 08:00:01\r'))
-
 function M.create_command()
   encode_command_creater.create_encode_command_by_type('TimestampDecode', M.decode, M.decode)
 
