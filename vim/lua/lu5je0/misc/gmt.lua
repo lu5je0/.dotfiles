@@ -1,5 +1,7 @@
 local M = {}
 
+local string_utils = require('lu5je0.lang.string-utils')
+
 local encode_command_creater = require('lu5je0.misc.encode-command-creater')
 
 local function is_number(str)
@@ -33,14 +35,16 @@ function M.encode(str)
   return tostring(converted_time)
 end
 
-function M.decode(data)
-  return timestamp_to_date(data)
+function M.toggle(data)
+  if string_utils.contains(data, ':') then
+    return M.encode(data)
+  else
+    return timestamp_to_date(data)
+  end
 end
 
 function M.create_command()
-  encode_command_creater.create_encode_command_by_type('TimestampDecode', M.decode, M.decode)
-
-  encode_command_creater.create_encode_command_by_type('TimestampEncode', M.encode, M.encode)
+  encode_command_creater.create_encode_command_by_type('TimestampToggle', M.toggle, M.toggle)
 end
 
 return M

@@ -27,10 +27,10 @@ function M.ends_with(str, suffix)
   return suffix == "" or str:sub(- #suffix) == suffix
 end
 
---- @param old string
---- @param new string
-function M.contains(old, new)
-  return old:find(new) ~= nil
+--- @param str string
+--- @param sub_str string
+function M.contains(str, sub_str)
+  return str:find(sub_str) ~= nil
 end
 
 function M.split(str, delimiter)
