@@ -26,7 +26,7 @@ set NERDTree
 Plug 'easymotion/vim-easymotion'
 let g:EasyMotion_do_mapping=0
 set easymotion
-map s <Plug>(easymotion-s)
+nmap s <Plug>(easymotion-s)
 
 let mapleader=","
 
