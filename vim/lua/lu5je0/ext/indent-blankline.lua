@@ -7,6 +7,11 @@ local highlight = {
 }
 vim.api.nvim_set_hl(0, "IndentBlankline", { fg = "#373C44" })
 
+hooks.register(
+  hooks.type.WHITESPACE,
+  hooks.builtin.hide_first_space_indent_level
+)
+
 require "ibl".overwrite {
   exclude = {
     filetypes = { 'undotree', 'vista', 'git', 'diff', 'translator', 'help', 'packer',
@@ -24,8 +29,3 @@ ibl.setup {
   },
   scope = { enabled = false, },
 }
-
-hooks.register(
-  hooks.type.WHITESPACE,
-  hooks.builtin.hide_first_space_indent_level
-)
