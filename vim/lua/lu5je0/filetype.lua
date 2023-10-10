@@ -20,8 +20,8 @@ vim.filetype.add {
     end
   },
   pattern = {
-    ['.*%.tmux.conf'] = 'tmux',
-    ['.*%.zsh'] = 'tmux',
+    ['.*.tmux.conf'] = 'tmux',
+    ['.*.zsh'] = 'bash',
     ['.*/ssh/config'] = 'sshconfig',
   },
 }
