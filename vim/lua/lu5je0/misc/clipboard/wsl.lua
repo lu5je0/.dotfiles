@@ -26,7 +26,11 @@ local function sync_from()
   vim.fn.jobstart({ "win32yank.exe", "-o", "--lf" }, {
     stdout_buffered = true,
     on_stdout = function(_, data)
-      active_entry = { lines = data, regtype = "v" }
+      -- 避免切换窗口后regtype丢失
+      if #data < 100 and table.concat(data, '\n') == vim.fn.getreg('"') then
+        return
+      end
+      active_entry = { lines = data, regtype = 'v' }
     end,
   })
 end
