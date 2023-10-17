@@ -27,7 +27,7 @@ local function sync_from()
     stdout_buffered = true,
     on_stdout = function(_, data)
       -- 避免切换窗口后regtype丢失
-      if #data < 100 and table.concat(data, '\n') == vim.fn.getreg('"') then
+      if active_entry ~= nil and #data < 100 and table.concat(data, '\n') == vim.fn.getreg('"') then
         return
       end
       active_entry = { lines = data, regtype = 'v' }
