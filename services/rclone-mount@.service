@@ -33,8 +33,8 @@ User=lu5je0
 Group=lu5je0
 # This example uses /cloud/ folder as origin to mount all remotes, change it to your needs
 # --vfs-cache-mode full activates cache for writting and reading. Check RClone documentation
-ExecStart=/usr/bin/rclone mount %i: /home/lu5je0/cloud/%i --vfs-cache-mode full -v --allow-non-empty --allow-other
-ExecStop=/bin/fusermount -uz /home/lu5je0/cloud/%i
+ExecStart=/usr/bin/rclone mount %i: /mnt/%i --vfs-cache-mode full -v --allow-non-empty --allow-other
+ExecStop=/bin/fusermount -uz /mnt/%i
 
 [Install]
 #Wants=network-online.target
