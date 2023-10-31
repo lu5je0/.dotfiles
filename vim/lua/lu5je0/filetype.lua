@@ -11,6 +11,7 @@ vim.filetype.add {
     ['bashrc'] = 'bash',
     ['.ohmyenv'] = 'bash',
     ['crontab'] = 'crontab',
+    ['kitty.conf'] = 'config',
     ['aria2.conf'] = 'dosini',
     ['requirements.txt'] = function(path, bufnr)
       vim.defer_fn(function()
