@@ -6,6 +6,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   
   # arm
   export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+  export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
   
   alias ls='ls -F --show-control-chars --color=auto'
   eval $(gdircolors -b $HOME/.dir_colors)
