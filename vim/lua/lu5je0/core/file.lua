@@ -19,4 +19,24 @@ function M.hunman_readable_file_size(filepath)
   return M.format_bytes(vim.loop.fs_stat(filepath).size)
 end
 
+local function print_with_red(msg)
+    vim.cmd (([[
+    echohl Red
+    echo "%s"
+    echohl NONE
+    ]]):format(msg))
+end
+
+function M.save_buffer()
+  if vim.api.nvim_buf_get_name(0) == "" then
+    print_with_red('E32: No file name')
+  elseif not vim.bo.buftype == 'nofile' then
+    print_with_red("E382: Cannot write, buffer is not modifiable")
+  elseif not vim.bo.modifiable then
+    print_with_red("Cannot write, 'buftype' option is set.")
+  else
+    vim.cmd(':silent! write')
+  end
+end
+
 return M

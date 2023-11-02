@@ -127,7 +127,7 @@ function M.setup()
       W = { '<cmd>SudaWrite<cr>', 'sudo-write' },
       d = { 'dir .dotfiles' },
       p = { 'dir packer' },
-      w = { '<cmd>w<cr>', 'write' },
+      w = { require('lu5je0.core.file').save_buffer, 'write' },
       J = { '<cmd>SaveAsJunkFile<cr>', 'new-junk-file' },
       x = {
         name = '+encoding',
