@@ -31,8 +31,8 @@ function M.save_buffer()
   local bufname = vim.api.nvim_buf_get_name(0)
   if bufname == "" then
     print_with_red('E32: No file name')
-  elseif vim.bo.buftype == 'nofile' then
-    print_with_red("E382: Cannot write, 'buftype' option is set.")
+  elseif vim.bo.buftype == 'nofile' or vim.bo.buftype == 'nowrite' then
+    print_with_red("E382: Cannot write, 'buftype' option is set")
   elseif not vim.bo.modifiable then
     print_with_red("Cannot write, buffer is not modifiable")
   else
