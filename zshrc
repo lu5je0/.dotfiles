@@ -126,6 +126,9 @@ alias sudo_keep_path='sudo env PATH=$PATH'
 # git
 alias gcof='git checkout `git branch | fzf`'
 
+alias speedtest-hz='speedtest -s 54312'
+alias speedtest-hk='speedtest -s 1536'
+
 # ls
 # alias l='ls -lah'
 # alias ll='ls -lh'
