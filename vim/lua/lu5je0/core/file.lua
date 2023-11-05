@@ -28,14 +28,16 @@ local function print_with_red(msg)
 end
 
 function M.save_buffer()
-  if vim.api.nvim_buf_get_name(0) == "" then
+  local bufname = vim.api.nvim_buf_get_name(0)
+  if bufname == "" then
     print_with_red('E32: No file name')
-  elseif not vim.bo.buftype == 'nofile' then
-    print_with_red("E382: Cannot write, buffer is not modifiable")
+  elseif vim.bo.buftype == 'nofile' or vim.bo.buftype == 'nowrite' then
+    print_with_red("E382: Cannot write, 'buftype' option is set")
   elseif not vim.bo.modifiable then
-    print_with_red("Cannot write, 'buftype' option is set.")
+    print_with_red("Cannot write, buffer is not modifiable")
   else
     vim.cmd(':silent! write')
+    print(('"%s" %sL, %s written'):format(vim.fn.expand('%:t'), vim.api.nvim_buf_line_count(0), M.hunman_readable_file_size(bufname)))
   end
 end
 
