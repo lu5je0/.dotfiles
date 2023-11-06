@@ -1,4 +1,5 @@
 local M = {}
+local string_utils = require('lu5je0.lang.string-utils')
 
 function M.format_bytes(bytes)
   local units = {'B', 'K', 'M', 'G', 'T'}
@@ -35,6 +36,8 @@ function M.save_buffer()
     print_with_red("E382: Cannot write, 'buftype' option is set")
   elseif not vim.bo.modifiable then
     print_with_red("Cannot write, buffer is not modifiable")
+  elseif vim.bo.readonly then
+    print_with_red(("E505: '%s' is read-only (add ! to override)"):format(bufname))
   else
     vim.cmd(':silent! write')
     print(('"%s" %sL, %s written'):format(vim.fn.expand('%:t'), vim.api.nvim_buf_line_count(0), M.hunman_readable_file_size(bufname)))
