@@ -22,7 +22,7 @@ end
 
 local function print_with_red(msg)
     vim.cmd (([[
-    echohl ErrorMsg
+    echohl Error
     echo "%s"
     echohl NONE
     ]]):format(msg))
