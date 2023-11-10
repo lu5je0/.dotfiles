@@ -85,6 +85,13 @@ formatter.setup {
       end,
       range_format = function()
       end,
+    },
+    [{ 'xml' }] = {
+      format = function()
+        vim.cmd(':%!xmllint - --format')
+      end,
+      range_format = function()
+      end,
     }
   }
 }
