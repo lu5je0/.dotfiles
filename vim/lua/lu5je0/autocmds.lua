@@ -10,6 +10,16 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+vim.api.nvim_create_autocmd({ 'VimEnter' }, {
+  group = M.default_group,
+  pattern = '*',
+  callback = function(args)
+    if args.file ~= "" and vim.fn.isdirectory(args.file) == 1 then
+      vim.bo.swapfile = false
+    end
+  end,
+})
+
 vim.api.nvim_create_autocmd('BufReadPost', {
   group = M.default_group,
   pattern = '*',
@@ -27,7 +37,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = M.default_group,
   pattern = '*',
   callback = function()
-    pcall(vim.highlight.on_yank, { higroup="Visual", timeout = 300 })
+    pcall(vim.highlight.on_yank, { higroup = "Visual", timeout = 300 })
   end
 })
 
@@ -54,7 +64,7 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   end,
 })
 
-vim.cmd[[
+vim.cmd [[
 command -bar -nargs=? -complete=help Help execute HelpCurwin(<q-args>)
 let s:did_open_help = v:false
 
