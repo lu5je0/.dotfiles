@@ -56,6 +56,7 @@ elif [[ $UNAME_INFO =~ "microsoft" ]]; then
   alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
   export PATH=$PATH:'/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/'
   export PATH=~/.dotfiles/bin/wsl/:$PATH
+  export PATH=/mnt/c/Users/lu5je0/scoop/shims:$PATH
   clippaste() {
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
   }
