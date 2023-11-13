@@ -106,6 +106,7 @@ function M.setup()
   end, { force = true })
   
   vim.api.nvim_create_user_command('JsonSortByKey', function()
+    vim.cmd('set ft=json')
     vim.cmd(':%!jq --sort-keys')
   end, { force = true })
 
