@@ -40,6 +40,12 @@ vim.api.nvim_create_user_command('Plugins', function()
   })
 end, { force = true })
 
+vim.api.nvim_create_user_command('SwapFiles', function()
+  require('lu5je0.core.filetree').open_path('~/.local/state/nvim/swap', {
+    print_path = true
+  })
+end, { force = true })
+
 vim.api.nvim_create_user_command('FileEncodingReload', function(t)
   vim.cmd('e ++enc=' .. t.fargs[1])
 end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
