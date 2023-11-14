@@ -11,7 +11,14 @@ local function assemble_file_name(buf_nr)
   if filetype == '' then
     filetype = 'txt'
   end
-  local filename = os.date("%Y-%m-%dT%H:%M:%S-", os.time()) .. cnt .. '.' .. filetype
+  
+  local cur_buf_name = vim.fn.expand('%:t')
+  if cur_buf_name ~= "" then
+    cur_buf_name = "-" .. cur_buf_name
+  end
+  
+  local filename = os.date("%Y-%m-%dT%H:%M:%S-", os.time()) .. cnt .. cur_buf_name .. '.' .. filetype
+  
   cnt = cnt + 1
   return filename
 end
@@ -85,8 +92,10 @@ end
 -- 保存buffer
 function M.save_buffer(buf_nr)
   local timestamp = now()
-  -- 只有buffer没有文件名并且文件编辑过才保存
-  if vim.api.nvim_buf_get_name(buf_nr) ~= "" and vim.bo.modified then
+  
+  -- 只有buffer没有文件名并且文件编辑过 或者 文件不存在 才保存
+  local filepath = vim.fn.expand('%:p')
+  if vim.fn.filereadable(filepath) == 1 and vim.api.nvim_buf_get_name(buf_nr) ~= "" and vim.bo.modified then
     return
   end
   
