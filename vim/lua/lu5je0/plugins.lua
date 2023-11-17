@@ -470,7 +470,9 @@ require("lazy").setup({
   {
     'anuvyklack/pretty-fold.nvim',
     config = function()
-      require('pretty-fold').setup()
+      require('pretty-fold').setup({
+        fill_char = ' ',
+      })
     end,
     lazy = true
   },
