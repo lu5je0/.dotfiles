@@ -18,6 +18,11 @@ autoload -Uz compinit && compinit
 
 setopt AUTO_CD
 
+# 设置 Zsh 在命令补全时删除后缀的字符，只设置一个空格，那么只有空格会被删除。
+# If ZLE_REMOVE_SUFFIX_CHARS is not set, the default behaviour is equivalent to: 
+# ZLE_REMOVE_SUFFIX_CHARS=$' \t\n;&|'
+export ZLE_REMOVE_SUFFIX_CHARS=''
+
 ##########################################
 # OMZ
 ##########################################
