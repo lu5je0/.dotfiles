@@ -36,11 +36,18 @@ function M.encode(str)
 end
 
 function M.toggle(data)
-  if string_utils.contains(data, ':') then
-    return M.encode(data)
-  else
-    return timestamp_to_date(data)
+  local lines = string_utils.split(data, '\n')
+  
+  local results = {}
+  for _, line in pairs(lines) do
+    if string_utils.contains(line, ':') then
+      table.insert(results, M.encode(line))
+    else
+      table.insert(results, timestamp_to_date(line))
+    end
   end
+  
+  return table.concat(results, '\n')
 end
 
 function M.create_command()
