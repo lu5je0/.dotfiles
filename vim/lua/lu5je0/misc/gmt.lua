@@ -22,7 +22,7 @@ local function timestamp_to_date(timestamp)
 
   local len = #tostring(timestamp)
   while len > 10 do
-    timestamp = timestamp / 10
+    timestamp = math.floor(timestamp / 10)
     len = #tostring(timestamp)
   end
   return os.date("%Y-%m-%d %H:%M:%S", timestamp)
