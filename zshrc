@@ -126,7 +126,7 @@ alias fpp="~/.dotfiles/submodule/PathPicker/fpp"
 alias fetch_subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias crontab="cron.sh"
 alias sudo="sudo "
-alias sudo_keep_path='sudo env PATH=$PATH'
+alias sudo_with_path='sudo env PATH=$PATH'
 
 # git
 alias gcof='git checkout `git branch | fzf`'
