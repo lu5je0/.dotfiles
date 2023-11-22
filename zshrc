@@ -123,10 +123,11 @@ alias pc="proxychains4 -q"
 alias sftp="sftp -C"
 alias wd="~/.dotfiles/submodule/wd/wd.py"
 alias fpp="~/.dotfiles/submodule/PathPicker/fpp"
-alias fetch_subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
+alias fetch-subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias crontab="cron.sh"
 alias sudo="sudo "
-alias sudo_with_path='sudo env PATH=$PATH'
+alias sudo-with-path='sudo env PATH=$PATH'
+alias awk-map-count="awk '{a[\$1]++} END {for (i in a) print i,a[i]}'"
 
 # git
 alias gcof='git checkout `git branch | fzf`'
