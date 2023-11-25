@@ -35,7 +35,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   echo -en "\033]6;1;bg;red;brightness;44\a"
   echo -en "\033]6;1;bg;green;brightness;46\a"
   echo -en "\033]6;1;bg;blue;brightness;51\a"
-elif [[ $UNAME_INFO =~ "microsoft" ]]; then
+elif [[ $UNAME_INFO =~ "icrosoft" ]]; then # wsl1=microsoft wsl2:Microsoft
   function __git_prompt_git() {
     if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]]; then
       command git.exe "$@"
