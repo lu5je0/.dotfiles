@@ -46,8 +46,7 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
       table.insert(nss, ns)
     end
 
-    local end_line_virt_text = render.captureVirtText(vim.api.nvim_get_current_buf(), vim.fn.getline(endLnum), endLnum,
-      nil, nss)
+    local end_line_virt_text = render.captureVirtText(vim.api.nvim_get_current_buf(), vim.fn.getline(endLnum), endLnum, nil, nss, 0)
     -- 移除前导空格
     local encounter_text = false
     for _, v in ipairs(end_line_virt_text) do
