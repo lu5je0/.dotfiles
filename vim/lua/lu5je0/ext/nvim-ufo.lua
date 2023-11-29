@@ -2,7 +2,7 @@ local parsers = require('nvim-treesitter.parsers')
 local string_utils = require('lu5je0.lang.string-utils')
 local render = require('ufo.render')
 
-local suffix_ft_black_list = { 'norg', 'markdown', 'python', 'yaml', '' }
+local suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
 local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
   local newVirtText = {}
 
@@ -37,8 +37,7 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
   local suffix_list = suffix:split('󰁂')
 
   local filetype = vim.bo.filetype
-  -- 不是代码文件跳过最后一行折叠
-  if not table.contain(suffix_ft_black_list, filetype) then
+  if table.contain(suffix_ft_white_list, filetype) then
     table.insert(newVirtText, { ' … ', 'TSPunctBracket' })
 
     local nss = {}
