@@ -120,7 +120,7 @@ export NODE_NO_WARNINGS=1
 # alias
 ##########################################
 alias pc="proxychains4 -q"
-alias sftp="sftp -C"
+# alias sftp="sftp -C"
 alias wd="~/.dotfiles/submodule/wd/wd.py"
 alias fpp="~/.dotfiles/submodule/PathPicker/fpp"
 alias fetch-subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
