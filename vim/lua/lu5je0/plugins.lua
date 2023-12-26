@@ -386,10 +386,10 @@ require("lazy").setup({
     end,
     keys = {
       { mode = { 'v' }, '<leader>my' },
-      { mode = { 'v' }, '<leader>mb' },
-      { mode = { 'v' }, '<leader>mc' },
+      { mode = { 'v' }, '<leader>mg' },
       { mode = { 'v' }, '<leader>mr' },
-      { mode = { 'v' }, '<leader>mb' }
+      { mode = { 'v' }, '<leader>mb' },
+      { mode = { 'v', 'n' }, '<leader>mc' }
     }
   },
 

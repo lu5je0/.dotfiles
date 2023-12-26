@@ -22,6 +22,7 @@ vim.api.nvim_set_keymap("v", "<leader>my", ":<c-u>HSHighlight 1<CR>", opts)
 vim.api.nvim_set_keymap("v", "<leader>mr", ":<c-u>HSHighlight 2<CR>", opts)
 vim.api.nvim_set_keymap("v", "<leader>mg", ":<c-u>HSHighlight 3<CR>", opts)
 vim.api.nvim_set_keymap("v", "<leader>mb", ":<c-u>HSHighlight 4<CR>", opts)
+vim.api.nvim_set_keymap("v", "<leader>mc", ":<c-u>HSRmHighlight<CR>", opts)
 vim.api.nvim_set_keymap("n", "<leader>mc", ":<c-u>HSRmHighlight<CR>", opts)
 
 -- vim.keymap.set('v', '<F6>', function()
