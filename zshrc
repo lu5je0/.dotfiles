@@ -134,6 +134,7 @@ alias gcof='git checkout `git branch | fzf`'
 
 alias speedtest-hz='speedtest -s 54312'
 alias speedtest-hk='speedtest -s 1536'
+alias speedtest-js='speedtest -s 5396'
 
 # ls
 # alias l='ls -lah'
