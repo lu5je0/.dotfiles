@@ -384,7 +384,13 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.highstr')
     end,
-    keys = { '<f1>', '<f2>', '<f3>', '<f4>', '<f6>' }
+    keys = {
+      { mode = { 'v' }, '<leader>my' },
+      { mode = { 'v' }, '<leader>mb' },
+      { mode = { 'v' }, '<leader>mc' },
+      { mode = { 'v' }, '<leader>mr' },
+      { mode = { 'v' }, '<leader>mb' }
+    }
   },
 
   -- {
