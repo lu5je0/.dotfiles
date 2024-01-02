@@ -102,6 +102,16 @@ vim.keymap.set('n', 'zo', function()
   trigger_fold_opened()
 end, { noremap = true })
 
+local group = vim.api.nvim_create_augroup('nvim-ufo-patch', { clear = true })
+vim.api.nvim_create_autocmd('WinNew', {
+  group = group,
+  pattern = '*',
+  callback = function()
+    vim.cmd('UfoDetach')
+    vim.cmd('UfoAttach')
+  end,
+})
+
 require('ufo').setup({
   provider_selector = function(bufnr, filetype, buftype)
     if parsers.get_parser(bufnr) then
