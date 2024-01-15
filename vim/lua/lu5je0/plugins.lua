@@ -852,6 +852,8 @@ require("lazy").setup({
   --      max_height = nil,
   --      max_width_window_percentage = nil,
   --      max_height_window_percentage = 50,
+  --      window_overlap_clear_enabled = true, -- toggles images when windows are overlapped
+  --      window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
   --      kitty_method = "normal",
   --     })
   --   end
