@@ -626,7 +626,7 @@ require("lazy").setup({
       event = { 'CursorHold', 'LspAttach' }
     },
     {
-      'jose-elias-alvarez/null-ls.nvim',
+      'nvimtools/none-ls.nvim',
       config = function()
         require('lu5je0.ext.null-ls.null-ls')
       end,

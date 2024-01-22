@@ -6,7 +6,9 @@ null_ls.setup {
     null_ls.builtins.formatting.autopep8.with {
       extra_args = { '--max-line-length', '120' }
     },
-    null_ls.builtins.formatting.yamlfmt,
+    -- null_ls.builtins.diagnostics.yamllint.with {
+    --   extra_args = { '--no-warnings' }
+    -- },
     null_ls.builtins.formatting.jq,
     -- null_ls.builtins.diagnostics.markdownlint,
     -- null_ls.builtins.code_actions.refactoring
