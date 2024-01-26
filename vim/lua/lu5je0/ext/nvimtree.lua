@@ -383,7 +383,7 @@ end
 function M.setup()
   vim.cmd([[
     hi NvimTreeFolderName guifg=#e5c07b
-    hi Directory ctermfg=107 guifg=#61afef
+    " hi Directory ctermfg=107 guifg=#61afef
     hi NvimTreeOpenedFolderName guifg=#e5c07b
     hi default link NvimTreeFolderIcon Directory
     hi NvimTreeEmptyFolderName guifg=#e5c07b

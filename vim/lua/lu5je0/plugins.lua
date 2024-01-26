@@ -459,6 +459,14 @@ require("lazy").setup({
       require("oil").setup {
         buf_options = {
           buflisted = true
+        },
+        use_default_keymaps = false,
+        keymaps = {
+          ["g?"] = "actions.show_help",
+          ["<CR>"] = "actions.select",
+          ["gs"] = "actions.change_sort",
+          ["g."] = "actions.toggle_hidden",
+          ["-"] = "actions.parent",
         }
       }
     end,
