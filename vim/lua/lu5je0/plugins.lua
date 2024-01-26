@@ -460,6 +460,11 @@ require("lazy").setup({
         buf_options = {
           buflisted = true
         },
+        columns = {
+          -- "icon",
+          -- "size",
+          -- "mtime",
+        },
         use_default_keymaps = false,
         keymaps = {
           ["g?"] = "actions.show_help",
