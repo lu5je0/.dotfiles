@@ -33,6 +33,11 @@ function M.save_buffer()
   
   ---@diagnostic disable-next-line: param-type-mismatch
   local ok, err = pcall(vim.cmd, ':silent write')
+  
+  if string_utils.starts_with(bufname, 'oil') then
+    return
+  end
+  
   if ok then
     print(('"%s" %sL, %s written'):format(vim.fn.expand('%:t'), vim.api.nvim_buf_line_count(0), M.hunman_readable_file_size(bufname)))
   else

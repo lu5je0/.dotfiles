@@ -444,13 +444,27 @@ require("lazy").setup({
     },
   },
 
+  -- {
+  --   "elihunter173/dirbuf.nvim",
+  --   config = function()
+  --     require('lu5je0.ext.dirbuf')
+  --   end,
+  --   cmd = 'Dirbuf'
+  -- },
+  
   {
-    "elihunter173/dirbuf.nvim",
+    'stevearc/oil.nvim',
+    dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
-      require('lu5je0.ext.dirbuf')
+      require("oil").setup {
+        buf_options = {
+          buflisted = true
+        }
+      }
     end,
-    cmd = 'Dirbuf'
+    cmd = 'Oil'
   },
+  
   {
     'MunifTanjim/nui.nvim',
     commit = '7427f979cc0dc991d8d177028e738463f17bcfcb',

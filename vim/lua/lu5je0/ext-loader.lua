@@ -105,7 +105,8 @@ require('lu5je0.misc.code-runner').key_mapping()
 -- quit-prompt
 require('lu5je0.misc.quit-prompt').setup()
 
-require('lu5je0.misc.dirbuf-hijack').setup()
+-- require('lu5je0.misc.dirbuf-hijack').setup()
+require('lu5je0.misc.oil-hijack').setup()
 
 if vim.fn.has('nvim-0.9') == 1 then
   require('lu5je0.misc.statuscolumn')
