@@ -900,4 +900,17 @@ require("lazy").setup({
   --   event = 'VeryLazy'
   -- },
   
+  {
+    "FabijanZulj/blame.nvim",
+    cmd = "ToggleBlame",
+    config = function()
+      require('blame').setup {
+        width = 40
+      }
+    end,
+    keys = {
+      { "<leader>gb", ":ToggleBlame window<cr>", desc = "ToggleGitBlame" },
+    },
+  }
+  
 }, opts)

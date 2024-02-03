@@ -67,8 +67,8 @@ function M.setup()
       map('n', '<leader>gU', gs.reset_buffer)
 
       map('n', '<leader>gg', gs.preview_hunk)
-      map('n', '<leader>gb', function() gs.blame_line { full = true } end)
-      map('n', '<leader>gB', gs.toggle_current_line_blame)
+      -- map('n', '<leader>gb', function() gs.blame_line { full = true } end)
+      -- map('n', '<leader>gB', gs.toggle_current_line_blame)
 
       map('n', '<leader>gd', gs.diffthis)
       map('n', '<leader>gD', function() gs.diffthis('~') end)
