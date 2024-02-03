@@ -243,7 +243,7 @@ require("lazy").setup({
   {
     'kyazdani42/nvim-tree.lua',
     -- just lock，in case of break changes
-    -- commit = 'e0c7eb50442922920cf6727a80ae09028947ddc6',
+    commit = 'f39f7b6fcd3865ac2146de4cb4045286308f2935',
     dependencies = {
       'kyazdani42/nvim-web-devicons',
     },
