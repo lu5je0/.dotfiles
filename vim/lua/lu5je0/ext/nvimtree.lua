@@ -187,18 +187,7 @@ function M.open_node()
     end)
   end
 
-  -- 记住光标位置
-  local win_id = vim.api.nvim_get_current_win()
-  local cursor_line = vim.api.nvim_win_get_cursor(win_id)[1]
-
   api.node.open.edit()
-
-  -- 还原光标位置
-  vim.defer_fn(function()
-    if vim.api.nvim_get_current_win() ~= win_id then
-      vim.api.nvim_win_set_cursor(win_id, { cursor_line, 1 })  
-    end
-  end, 0)
 end
 
 function M.close_node()
@@ -371,7 +360,7 @@ local function on_attach(bufnr)
   end, opts('next_git_item_reveal_to_file'))
 
   set('n', 'u', api.tree.change_root_to_parent, opts('Up'))
-  set('n', 'o', api.node.run.system, opts('Run System'))
+  -- set('n', 'o', api.node.run.system, opts('Run System'))
   set('n', 'q', api.tree.close, opts('Close'))
   set('n', '?', api.tree.toggle_help, opts('Help'))
   set('n', '<c-o>', M.back, opts('backward'))
@@ -524,12 +513,9 @@ function M.setup()
       symlink_destination = false,
     },
     view = {
-      width = 27,
-      hide_root_folder = false,
+      -- 取消注释后edit文件后光标跳动
+      -- width = 27,
       side = 'left',
-      mappings = {
-        custom_only = true,
-      },
       signcolumn = 'auto',
     },
   }
