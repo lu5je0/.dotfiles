@@ -104,7 +104,17 @@ local function comfirm(fallback)
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
   elseif luasnip.locally_jumpable(1) then -- luasnip
-    luasnip.jump(1)
+    local next_node = luasnip.jump_destination(1)
+    if next_node ~= nil then
+      local pos = next_node:get_buf_position()
+      pos = { pos[1] + 1, pos[2] }
+      local cursor = vim.api.nvim_win_get_cursor(0)
+      if pos[1] > cursor[1] or (pos[1] == cursor[1] and pos[2] > cursor[2]) then
+        luasnip.jump(1)
+      else
+        print('block luasnip回退 target:' .. dump(pos) .. ', current:' .. dump(cursor))
+      end
+    end
   else
     fallback()
     keys_helper.feedkey('<space><bs>')
