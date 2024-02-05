@@ -750,6 +750,7 @@ require("lazy").setup({
         ft_ignore = { 'NvimTree', 'undotree', 'diff', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
         bt_ignore = { 'terminal' },
         segments = {
+          { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
           {
             sign = { name = { "DapBreakpoint" }, maxwidth = 2, colwidth = 2, auto = true },
             click = "v:lua.ScSa"
@@ -762,7 +763,6 @@ require("lazy").setup({
               -- return vim.wo[args.win].signcolumn ~= 'no'
             end }
           },
-          { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
           {
             text = { function(args)
               if not vim.wo[args.win].number then
@@ -782,8 +782,6 @@ require("lazy").setup({
           }
         },
       })
-      -- vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
-      -- vim.o.foldcolumn = '1'
     end,
     event = 'VeryLazy'
   },

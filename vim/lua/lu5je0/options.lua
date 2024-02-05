@@ -33,6 +33,7 @@ o.updatetime = 2000
 -- o.signcolumn = 'yes:1'
 o.signcolumn = 'no'
 o.foldcolumn = '1'
+vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 -- encodeing
 o.fileformat = 'unix'
