@@ -919,7 +919,7 @@ require("lazy").setup({
   {
     "LunarVim/bigfile.nvim",
     config = function()
-      require('lu5je0.misc.big-file').setup()
+      require('lu5je0.ext.big-file').setup()
     end
   }
   

@@ -1,5 +1,5 @@
 local M = {}
-local big_file = require('lu5je0.misc.big-file')
+local big_file = require('lu5je0.ext.big-file')
 
 local last_line_nr = nil
 function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)

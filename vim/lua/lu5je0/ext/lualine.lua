@@ -2,7 +2,7 @@ local timer = require('lu5je0.lang.timer')
 local string_utils = require('lu5je0.lang.string-utils')
 local lualine = require('lualine')
 local file_util = require('lu5je0.core.file')
-local big_file = require('lu5je0.misc.big-file')
+local big_file = require('lu5je0.ext.big-file')
 
 ---@diagnostic disable: missing-parameter
 local expand = vim.fn.expand
