@@ -29,7 +29,10 @@ o.foldmethod = 'manual'
 o.foldlevel = 99 -- 打开文件默认不折叠
 o.hidden = true
 o.updatetime = 2000
-o.signcolumn = 'yes:1'
+
+-- o.signcolumn = 'yes:1'
+o.signcolumn = 'no'
+o.foldcolumn = '1'
 
 -- encodeing
 o.fileformat = 'unix'

@@ -108,10 +108,6 @@ require('lu5je0.misc.quit-prompt').setup()
 -- require('lu5je0.misc.dirbuf-hijack').setup()
 require('lu5je0.misc.oil-hijack').setup()
 
-if vim.fn.has('nvim-0.9') == 1 then
-  require('lu5je0.misc.statuscolumn')
-end
-
 -- require('lu5je0.misc.file-scope-highlight').file_handlers = {
 --   json = function(ns_id)
 --     vim.api.nvim_set_hl(ns_id, '@boolean', { fg = '#deb974' })
