@@ -35,6 +35,11 @@ function M.save_buffer()
     return
   end
   
+  if require('lu5je0.ext.big-file').is_big_file(0) then
+    print_with_red('The big file should use :w to save!')
+    return
+  end
+  
   ---@diagnostic disable-next-line: param-type-mismatch
   local ok, err = pcall(vim.cmd, ':silent write')
   
