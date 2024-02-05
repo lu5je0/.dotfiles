@@ -23,40 +23,6 @@ require('lu5je0.misc.im.im_keeper').setup({
 -- json-helper
 require('lu5je0.misc.json-helper').setup()
 
--- big-file
-require('lu5je0.misc.big-file').setup {
-  size = 1024 * 1024, -- 1000 KB
-  features = {
-    {
-      size = 500 * 1024,
-      function()
-        vim.defer_fn(function()
-          require('lu5je0.ext.plugins_helper').load_plugin('nvim-cmp')
-          if vim.fn.exists('CmpAutocompleteDisable') > 0 then
-            vim.cmd [[ CmpAutocompleteDisable ]]
-          end
-        end, 200)
-      end
-    },
-    {
-      size = 300 * 1024,
-      function()
-        if not vim.b.gitsigns_status_dict then
-          vim.cmd('setlocal signcolumn=auto')
-        end
-      end
-    },
-    function(buf_nr)
-      vim.defer_fn(function()
-        require('lu5je0.ext.plugins_helper').load_plugin('indent-blankline.nvim')
-        vim.cmd [[ IBLDisable ]]
-        vim.treesitter.stop(buf_nr)
-        require('hlargs').disable()
-      end, 200)
-    end
-  }
-}
-
 -- formatter
 local formatter = require('lu5je0.misc.formatter.formatter')
 formatter.setup {
