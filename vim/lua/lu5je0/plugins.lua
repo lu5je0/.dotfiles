@@ -393,21 +393,21 @@ require("lazy").setup({
     }
   },
 
-  -- {
-  --   'dstein64/nvim-scrollview',
-  --   config = function()
-  --     require('lu5je0.ext.scrollview').setup()
-  --   end,
-  --   event = { 'VeryLazy' }
-  -- },
-  
   {
-    'lewis6991/satellite.nvim',
+    'dstein64/nvim-scrollview',
     config = function()
-      require('lu5je0.ext.satellite').setup()
+      require('lu5je0.ext.scrollview').setup()
     end,
-    event = { 'WinScrolled' }
+    event = { 'VeryLazy' }
   },
+  
+  -- {
+  --   'lewis6991/satellite.nvim',
+  --   config = function()
+  --     require('lu5je0.ext.satellite').setup()
+  --   end,
+  --   event = { 'WinScrolled' }
+  -- },
 
   -- nvim-cmp
   {
