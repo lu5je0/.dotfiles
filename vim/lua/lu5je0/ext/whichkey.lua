@@ -82,6 +82,7 @@ function M.setup()
     p = {
       name = '+lazy',
       c = { '<cmd>Lazy check<cr>', 'check update' },
+      p = 'profile.nvim',
     },
     m = {
       name = '+mark',

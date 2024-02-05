@@ -811,7 +811,7 @@ require("lazy").setup({
   {
     'stevearc/profile.nvim',
     -- 最新的版本直接报错了，先lock到这个版本
-    commit = 'd0d74adabb90830bd96e5cdfc8064829ed88b1bb',
+    -- commit = 'd0d74adabb90830bd96e5cdfc8064829ed88b1bb',
     config = function()
       local function toggle_profile()
         local prof = require("profile")
@@ -828,9 +828,9 @@ require("lazy").setup({
           prof.start("*")
         end
       end
-      vim.keymap.set("", "<f3>", toggle_profile)
+      vim.keymap.set("", "<leader>pp", toggle_profile)
     end,
-    keys = { { mode = { 'n' }, '<f3>' } }
+    keys = { { mode = { 'n' }, '<leader>pp' } }
   },
   
   {
@@ -911,6 +911,26 @@ require("lazy").setup({
     keys = {
       { "<leader>gb", ":ToggleBlame window<cr>", desc = "ToggleGitBlame" },
     },
-  }
+  },
+  
+  -- {
+  --   "LunarVim/bigfile.nvim",
+  --   config = function()
+  --     require("bigfile").setup {
+  --       filesize = 3, -- size of the file in MiB, the plugin round file sizes to the closest MiB
+  --       pattern = { "*" }, -- autocmd pattern or function see <### Overriding the detection of big files>
+  --       features = { -- features to disable
+  --         "indent_blankline",
+  --         "illuminate",
+  --         "lsp",
+  --         "treesitter",
+  --         "syntax",
+  --         "matchparen",
+  --         "vimopts",
+  --         "filetype",
+  --       },
+  --     }
+  --   end
+  -- }
   
 }, opts)

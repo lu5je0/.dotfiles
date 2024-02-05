@@ -49,7 +49,7 @@
   "plantuml-syntax": { "branch": "master", "commit": "845abb56dcd3f12afa6eb47684ef5ba3055802b8" },
   "plenary.nvim": { "branch": "master", "commit": "4f71c0c4a196ceb656c824a70792f3df3ce6bb6d" },
   "pretty-fold.nvim": { "branch": "master", "commit": "a7d8b424abe0eedf50116c460fbe6dfd5783b1d5" },
-  "profile.nvim": { "branch": "master", "commit": "d0d74adabb90830bd96e5cdfc8064829ed88b1bb" },
+  "profile.nvim": { "branch": "master", "commit": "3c5aaf2f8b2e4c2bc48d2cde396a55892e0267ad" },
   "project.nvim": { "branch": "main", "commit": "8c6bad7d22eef1b71144b401c9f74ed01526a4fb" },
   "promise-async": { "branch": "main", "commit": "94f6f03c6c1e2aab551aacdf0c1e597a7269abb6" },
   "refactoring.nvim": { "branch": "master", "commit": "aff2e21e2f1a19d302adceb4e7d0fafbb3ae59a9" },
