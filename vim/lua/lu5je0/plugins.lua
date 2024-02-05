@@ -750,32 +750,36 @@ require("lazy").setup({
         ft_ignore = { 'NvimTree', 'undotree', 'diff', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
         bt_ignore = { 'terminal' },
         segments = {
-        {
-          sign = { name = { ".*" }, maxwidth = 1, colwidth = 1, auto = false, wrap = true },
-          click = "v:lua.ScSa",
-          condition = { function(args)
-            return vim.wo[args.win].number
-            -- return vim.wo[args.win].signcolumn ~= 'no'
-          end }
-        },
-        { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
-        {
-          text = { function(args)
-            if not vim.wo[args.win].number then
-              return builtin.lnumfunc(args)
-            end
-            
-            local num = ''
-            if args.lnum < 10 then
-              num = ' ' .. builtin.lnumfunc(args)
-            else
-              num = builtin.lnumfunc(args)
-            end
-            return num .. ' '
-          end },
-          condition = { true, builtin.not_empty },
-          click = "v:lua.ScLa",
-        }
+          {
+            sign = { name = { "DapBreakpoint" }, maxwidth = 2, colwidth = 2, auto = true },
+            click = "v:lua.ScSa"
+          },
+          {
+            sign = { name = { ".*" }, maxwidth = 1, colwidth = 1, auto = false, wrap = true },
+            click = "v:lua.ScSa",
+            condition = { function(args)
+              return vim.wo[args.win].number
+              -- return vim.wo[args.win].signcolumn ~= 'no'
+            end }
+          },
+          { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
+          {
+            text = { function(args)
+              if not vim.wo[args.win].number then
+                return builtin.lnumfunc(args)
+              end
+
+              local num = ''
+              if args.lnum < 10 then
+                num = ' ' .. builtin.lnumfunc(args)
+              else
+                num = builtin.lnumfunc(args)
+              end
+              return num .. ' '
+            end },
+            condition = { true, builtin.not_empty },
+            click = "v:lua.ScLa",
+          }
         },
       })
       -- vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
