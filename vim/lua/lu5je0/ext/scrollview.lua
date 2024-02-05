@@ -158,6 +158,8 @@ function M.setup()
     column = 1,
     on_startup = 1,
     signs_max_per_row = 1,
+    byte_limit = 2 * 1024 * 1024,
+    line_limit = 10000,
     -- signs_on_startup = { 'conflicts', 'search', '' },
     overflow = 'right',
   }
