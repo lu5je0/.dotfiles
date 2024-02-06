@@ -1,3 +1,6 @@
+-- font: mac JetBrainsMonoNLNerdFontMono-SemiBold 
+-- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/SemiBold/JetBrainsMonoNLNerdFontMono-SemiBold.ttf
+
 vim.loader.enable()
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
