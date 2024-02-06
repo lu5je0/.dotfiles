@@ -1,7 +1,12 @@
 local M = {}
 
 function M.load_plugin(plugin)
-  vim.cmd('Lazy load ' .. plugin)
+  require("lazy").load({
+    plugins = { plugin },
+    opt = {
+      force = true
+    }
+  })
 end
 
 return M

@@ -29,9 +29,9 @@ function M.setup()
       },
       {
         name = "cmp",
-        opts = {
-          defer = true, -- set to true if `disable` should be called on `BufReadPost` and not `BufReadPre`
-        },
+        -- opts = {
+        --   defer = true, -- set to true if `disable` should be called on `BufReadPost` and not `BufReadPre`
+        -- },
         disable = function()
           vim.defer_fn(function()
             require('lu5je0.ext.plugins_helper').load_plugin('nvim-cmp')
