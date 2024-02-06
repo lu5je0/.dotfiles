@@ -52,7 +52,20 @@ require("lazy").setup({
     end,
     config = function()
       vim.cmd.colorscheme('edge')
+      
       vim.g.edge_loaded_file_types = { 'NvimTree' }
+      -- local bg = '#2c2e34'
+      -- vim.cmd(string.gsub([[
+      -- " hi NvimTreeNormal guibg=%s
+      -- " hi NvimTreeNormalNC guibg=%s
+      -- " hi NvimTreeEndOfBuffer guifg=%s
+      --
+      -- hi VertSplit guifg=#27292d guibg=bg
+      -- hi NvimTreeVertSplit guifg=bg guibg=bg
+      --
+      -- hi NvimTreeWinSeparator guibg=%s guifg=%s
+      -- ]], '%%s', bg))
+      
       vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
 
       vim.cmd [[
