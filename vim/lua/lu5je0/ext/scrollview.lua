@@ -154,6 +154,7 @@ function M.setup()
     -- excluded_filetypes = { 'nerdtree' , 'NvimTree'},
     current_only = true,
     winblend = 85,
+    winblend_gui = 85,
     base = 'right',
     column = 1,
     on_startup = 1,

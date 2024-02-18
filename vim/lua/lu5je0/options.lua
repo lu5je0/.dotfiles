@@ -5,6 +5,13 @@ local has = function(feature)
   return vim.fn.has(feature) == 1
 end
 
+-- neovide
+if g.neovide then
+  -- o.guifont = "JetBrainsMono:h14" -- text below applies for VimScript
+  g.neovide_remember_window_size = true
+  g.neovide_hide_mouse_when_typing = true
+end
+
 o.mouse = "a"
 o.hlsearch = true
 o.ignorecase = true

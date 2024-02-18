@@ -60,7 +60,7 @@ function M.setup()
     ['d'] = { '<c-^>', 'buffer switch' },
     ['e'] = { 'file explorer' },
     ['a'] = { 'calcultor' },
-    ['/'] = { '<cmd>call eregex#toggle()<cr>', 'eregex toggle' },
+    ['/'] = { 'eregex toggle' },
     ['<space>'] = 'diagnostic',
     w = {
       name = '+windows',

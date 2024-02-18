@@ -308,7 +308,9 @@ require("lazy").setup({
       vim.g.eregex_default_enable = 0
     end,
     cmd = 'S',
-    keys = { '<leader>/' },
+    keys = {
+      { mode = 'n', "<leader>/", "<cmd>call eregex#toggle()<cr>", desc = "EregexToggle" },
+    },
   },
   {
     'numToStr/Comment.nvim',
@@ -925,7 +927,7 @@ require("lazy").setup({
       }
     end,
     keys = {
-      { "<leader>gb", ":ToggleBlame window<cr>", desc = "ToggleGitBlame" },
+      { mode = 'n', "<leader>gb", ":ToggleBlame window<cr>", desc = "ToggleGitBlame" },
     },
   },
   
