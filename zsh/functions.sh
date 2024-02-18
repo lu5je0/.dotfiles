@@ -106,7 +106,7 @@ function q-compress
       *.tar.xz) shift && tar -cJf $FILE $* ;;
       *.tar.gz) shift && tar -czf $FILE $* ;;
       *.tgz) shift && tar -czf $FILE $* ;;
-      *.zip) shift && zip $FILE $* ;;
+      *.zip) shift && zip -r $FILE $* ;;
       *.7z) shift && 7za a $FILE $* ;;
       *.rar) shift && rar $FILE $* ;;
     esac
