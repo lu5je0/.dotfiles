@@ -5,6 +5,9 @@ local has = function(feature)
   return vim.fn.has(feature) == 1
 end
 
+-- font: mac JetBrainsMonoNLNerdFontMono-SemiBold 
+-- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/SemiBold/JetBrainsMonoNLNerdFontMono-SemiBold.ttf
+
 -- neovide
 if g.neovide then
   -- o.guifont = "JetBrainsMono:h14" -- text below applies for VimScript

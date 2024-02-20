@@ -95,7 +95,7 @@ function M.setup()
     M.extract()
   end, { force = true })
   
-  vim.api.nvim_create_user_command('JsonPathCopy', function()
+  vim.api.nvim_create_user_command('JsonCopyPath', function()
     M.path_copy()
   end, { force = true })
 
