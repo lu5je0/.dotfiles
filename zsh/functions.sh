@@ -111,7 +111,7 @@ function q-compress
       *.rar) shift && rar $FILE $* ;;
     esac
   else
-    echo "usage: q-compress <foo.tar.gz> ./foo ./bar"
+    echo "usage: q-compress <foobar.tar.gz> ./foo ./bar"
   fi
 }
 
