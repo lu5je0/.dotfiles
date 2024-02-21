@@ -932,6 +932,16 @@ require("lazy").setup({
   },
   
   {
+    'kevinhwang91/nvim-fundo',
+    dependencies = 'kevinhwang91/promise-async',
+    build = function() require('fundo').install() end,
+    config = function ()
+      vim.o.undofile = true
+      require('fundo').setup()
+    end
+  },
+  
+  {
     "LunarVim/bigfile.nvim",
     config = function()
       require('lu5je0.ext.big-file').setup()
