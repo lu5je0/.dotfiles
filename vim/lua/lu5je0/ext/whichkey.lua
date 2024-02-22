@@ -72,6 +72,7 @@ function M.setup()
       ['m'] = { '<cmd>BufferLinePickSplit<cr>', 'spilit with' },
       ['p'] = { '<cmd>BufferLinePick<cr>', 'buffer pick' },
       ['u'] = { '<c-w>x', 'buffer pick' },
+      ['o'] = 'hide other windows',
     },
     W = {
       name = '+workspace',
@@ -123,15 +124,19 @@ function M.setup()
 
       -- fuzzy search
       C = 'colorscheme',
+      c = 'commnad',
       f = 'file',
       s = 'recall',
-      r = 'rg',
+      r = 'regex search',
+      ['"'] = 'register',
+      R = 'fuzzy search',
       l = 'line',
       n = 'filetype',
       b = 'buffer',
       m = 'mru',
       h = 'help',
       j = 'junk-list',
+      g = 'git-changes',
 
       q = { "<cmd>echom 'detecting' | GuessLang<cr>", 'GuessLang' },
       e = { 'locate-file' },
