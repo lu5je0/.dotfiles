@@ -540,6 +540,12 @@ function M.setup()
   require('nvim-tree.renderer.builder')._get_highlight_override = function(...)
     return nil, nil
   end
+  
+  -- 覆盖
+  vim.cmd [[
+    hi NvimTreeSymlink gui=none
+    hi NvimTreeExecFile gui=none
+  ]]
 end
 
 return M
