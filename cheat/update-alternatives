@@ -1,0 +1,8 @@
+config
+sudo update-alternatives --config java
+
+install
+sudo update-alternatives --install /usr/bin/java java /home/linuxbrew/.linuxbrew/Cellar/openjdk@11/11.0.22/bin/java 0
+
+remove
+sudo update-alternatives --remove java /home/linuxbrew/.linuxbrew/Cellar/openjdk@11/11.0.22/bin/java 0

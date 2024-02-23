@@ -70,5 +70,5 @@ elif [[ $UNAME_INFO =~ "Android" ]]; then
 fi
 
 if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
-  # export JAVA_HOME='/home/linuxbrew/.linuxbrew/Cellar/openjdk@11/11.0.22'
+  # export JAVA_HOME_11='/home/linuxbrew/.linuxbrew/Cellar/openjdk@11/11.0.22'
 fi
