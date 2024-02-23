@@ -58,7 +58,7 @@ function M.run_file(debug)
   elseif filetype == 'go' then
     execute_in_terminal(build_cmd_with_file('go run'))
   elseif filetype == 'sh' then
-    execute_in_terminal(build_cmd_with_file('sh'))
+    execute_in_terminal(build_cmd_with_file('bash'))
   elseif filetype == 'markdown' then
     vim.cmd('MarkdownPreview')
   elseif filetype == 'bash' or filetype == 'zsh' then
