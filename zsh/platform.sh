@@ -68,3 +68,7 @@ elif [[ $UNAME_INFO =~ "icrosoft" ]]; then # wsl1=microsoft wsl2:Microsoft
 elif [[ $UNAME_INFO =~ "Android" ]]; then
   alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
 fi
+
+if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
+  # export JAVA_HOME='/home/linuxbrew/.linuxbrew/Cellar/openjdk@11/11.0.22'
+fi
