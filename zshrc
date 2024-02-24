@@ -127,8 +127,13 @@ alias wd="~/.dotfiles/submodule/wd/wd.py"
 alias fpp="~/.dotfiles/submodule/PathPicker/fpp"
 alias fetch-subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias crontab="cron.sh"
-alias sudo="sudo "
-alias sudo-with-path='sudo env PATH=$PATH'
+
+alias sudo='sudo env PATH=$PATH'
+alias sudo-default-path='\sudo'
+
+# alias sudo="sudo "
+# alias sudo-with-path='sudo env PATH=$PATH'
+
 alias awk-map-count="awk '{a[\$1]++} END {for (i in a) print i,a[i]}'"
 
 # git
@@ -250,3 +255,13 @@ export IGNOREEOF=2
 zle -N bash-ctrl-d
 bindkey '^D' bash-ctrl-d
 ### End of Zinit's installer chunk
+
+# bob
+[[ -s "$HOME/.local/share/bob/nvim-bin" ]] && export PATH=$PATH:"$HOME/.local/share/bob/nvim-bin"
+
+# linuxbrew
+[[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
