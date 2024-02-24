@@ -257,7 +257,7 @@ bindkey '^D' bash-ctrl-d
 ### End of Zinit's installer chunk
 
 # bob
-[[ -s "$HOME/.local/share/bob/nvim-bin" ]] && export PATH=$PATH:"$HOME/.local/share/bob/nvim-bin"
+[[ -s "$HOME/.local/share/bob/nvim-bin" ]] && export PATH="$HOME/.local/share/bob/nvim-bin":$PATH
 
 # linuxbrew
 [[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin
