@@ -1,6 +1,5 @@
 # mac
 if [[ $UNAME_INFO =~ "Darwin" ]]; then
-  # todo
   # intel
   # PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
   
@@ -10,21 +9,22 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   
   alias ls='ls -F --show-control-chars --color=auto'
   eval $(gdircolors -b $HOME/.dir_colors)
-  export JAVA_HOME_8='/Users/lu5je0/Library/Java/JavaVirtualMachines/azul-1.8.0_352/Contents/Home'
-  export JAVA_HOME_11='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-11.0.17/Contents/Home'
-  export JAVA_HOME_17='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-17.0.5-2/Contents/Home'
-  alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
-  alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
-  alias jdk17='export JAVA_HOME=$JAVA_HOME_17'
+  
+  # export JAVA_HOME_8='/Users/lu5je0/Library/Java/JavaVirtualMachines/azul-1.8.0_352/Contents/Home'
+  # export JAVA_HOME_11='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-11.0.17/Contents/Home'
+  # export JAVA_HOME_17='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-17.0.5-2/Contents/Home'
+  # alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
+  # alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
+  # alias jdk17='export JAVA_HOME=$JAVA_HOME_17'
+  # if test -z "$JAVA_HOME";then
+  #   export JAVA_HOME=$JAVA_HOME_8
+  # fi
+  
   alias e='open'
   alias sed='gsed'
   alias yy='pbcopy'
   alias p='pbpaste'
   alias iterm='open -a iTerm .'
-  
-  if test -z "$JAVA_HOME";then
-    export JAVA_HOME=$JAVA_HOME_8
-  fi
   
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 
