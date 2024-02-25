@@ -325,7 +325,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.terminal').setup()
     end,
-    keys = { { mode = { 'i', 'n' }, '<m-i>' }, { mode = { 'i', 'n' }, '<d-i>' } }
+    keys = { { mode = { 'i', 'n' }, '<m-i>' }, { mode = { 'i', 'n' }, '<d-i>' }, { mode = { 'n' }, '<leader>go' } }
   },
   {
     'mg979/vim-visual-multi',

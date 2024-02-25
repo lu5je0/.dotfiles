@@ -56,6 +56,15 @@ local function keep_terminal_mode()
   })
 end
 
+local function lazygit_setup()
+  local Terminal  = require('toggleterm.terminal').Terminal
+  local lazygit = Terminal:new({ cmd = "lazygit", hidden = true })
+
+  vim.keymap.set('n', '<leader>go', function()
+    lazygit:toggle()
+  end, {noremap = true, silent = true})
+end
+
 function M.setup()
   require('toggleterm').setup {
     size = function(term)
@@ -104,6 +113,7 @@ function M.setup()
   ]])
   
   keep_terminal_mode()
+  lazygit_setup()
 end
 
 return M
