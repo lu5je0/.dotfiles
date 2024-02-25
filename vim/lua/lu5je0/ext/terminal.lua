@@ -58,7 +58,11 @@ end
 
 local function lazygit_setup()
   local Terminal  = require('toggleterm.terminal').Terminal
-  local lazygit = Terminal:new({ cmd = "lazygit", hidden = true })
+  local lazygit  = Terminal:new({
+    cmd = "lazygit",
+    hidden = true,
+    direction = "float",
+  })
 
   vim.keymap.set('n', '<leader>go', function()
     lazygit:toggle()
