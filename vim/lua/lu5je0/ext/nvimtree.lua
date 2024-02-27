@@ -62,7 +62,7 @@ function M.delete_node()
   -- local bufs = vim.api.nvim_list_bufs()
 
   local is_remove_cur_file = false
-  local cur_file_win_id = nil
+  local cur_file_win_id = 0
   for _, win_id in pairs(vim.api.nvim_list_wins()) do
     local buf_id = vim.api.nvim_win_get_buf(win_id)
     if vim.fn.buflisted(buf_id) then
@@ -75,7 +75,7 @@ function M.delete_node()
     end
   end
 
-  -- try to get substitute file when remove cur file
+  -- 获取替换后的buf_id
   local substitute_buf_id = nil
   if is_remove_cur_file then
     for _, buf_id in pairs(bufs) do
@@ -104,7 +104,7 @@ function M.delete_node()
   if is_remove_cur_file and substitute_buf_id == nil then
     vim.cmd("vnew")
     vim.cmd('NvimTreeResize ' .. cur_width)
-    keys_helper.feedkey('<c-w>p')
+    vim.cmd('NvimTreeFocus')
   end
 end
 
@@ -322,7 +322,7 @@ local function on_attach(bufnr)
   set('n', 'mk', M.create_dir, opts('create_dir'))
   set('n', 't', M.terminal_cd, opts('terminal cd'))
   set('n', 'D', function()
-    api.fs.remove()
+    M.delete_node()
     vim.defer_fn(api.tree.reload, 500)
   end, opts('delete'))
 
