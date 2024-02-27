@@ -18,9 +18,26 @@ require('nvim-treesitter.configs').setup {
   },
   indent = {
     enable = false
-  }
+  },
+  textobjects = {
+    select = {
+      enable = true,
+      -- Automatically jump forward to textobj, similar to targets.vim
+      lookahead = false,
+      keymaps = {
+        -- You can use the capture groups defined in textobjects.scm
+        ["af"] = "@function.outer",
+        ["if"] = "@function.inner",
+        ["ac"] = "@comment.outer",
+        ["ic"] = "@comment.outer",
+        -- You can also use captures from other query groups like `locals.scm`
+        -- ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" },
+      },
+      include_surrounding_whitespace = false,
+    },
+  },
 }
-
+--
 -- incremental select
 treesitter.define_modules {
   incremental_select = {

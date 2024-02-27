@@ -74,6 +74,13 @@ require("lazy").setup({
       ]]
     end,
   },
+  {
+    'nvim-lualine/lualine.nvim',
+    config = function()
+      require('lu5je0.ext.lualine')
+    end,
+    event = 'VeryLazy',
+  },
   
   -- treesiter
   {
@@ -83,6 +90,9 @@ require("lazy").setup({
       config = function()
         require('lu5je0.ext.treesiter')
       end,
+      dependencies = {
+        'nvim-treesitter/nvim-treesitter-textobjects'
+      },
       event = 'VeryLazy'
     },
     {
@@ -236,14 +246,6 @@ require("lazy").setup({
       'nvim-telescope/telescope.nvim',
     },
     keys = { '<leader>fp' },
-  },
-  
-  {
-    'nvim-lualine/lualine.nvim',
-    config = function()
-      require('lu5je0.ext.lualine')
-    end,
-    event = 'VeryLazy'
   },
   {
     'lu5je0/bufferline.nvim',
