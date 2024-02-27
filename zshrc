@@ -260,7 +260,7 @@ bindkey '^D' bash-ctrl-d
 [[ -s "$HOME/.local/share/bob/nvim-bin" ]] && export PATH="$HOME/.local/share/bob/nvim-bin":$PATH
 
 # linuxbrew
-[[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin
+[[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH="/home/linuxbrew/.linuxbrew/bin:"$PATH
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
