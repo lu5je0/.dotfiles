@@ -323,7 +323,7 @@ local function on_attach(bufnr)
   set('n', 't', M.terminal_cd, opts('terminal cd'))
   set('n', 'D', function()
     M.delete_node()
-    vim.defer_fn(api.tree.reload, 500)
+    api.tree.reload()
   end, opts('delete'))
 
   set('n', 'l', M.open_node, opts('Open Node'))
