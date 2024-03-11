@@ -97,6 +97,11 @@ vim.defer_fn(function()
   
   -- selection search
   set_map('x', { '<leader>/', '<space>/' }, '<Esc>/\\%V', {})
+  
+  -- text
+  set_map('n', '<leader>xx', ":%!", {
+    nowait = true
+  })
 
   -- lsp
   set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')

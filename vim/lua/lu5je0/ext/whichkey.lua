@@ -164,6 +164,7 @@ function M.setup()
       m = { [[:%s/\r$//<cr>]], 'remove ^M' },
       z = '繁体转简体',
       Z = '简体转繁体',
+      x = ':%!',
     },
     s = {
       name = '+translate',
