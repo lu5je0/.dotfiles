@@ -644,6 +644,19 @@ require("lazy").setup({
       event = { 'LspAttach' }
     },
     {
+      "aznhe21/actions-preview.nvim",
+      keys = {
+        {
+          mode = { "v", "n" },
+          "<leader>cc",
+          function()
+            require("actions-preview").code_actions()
+          end,
+          desc = "actions-preview"
+        },
+      },
+    },
+    {
       'simrat39/symbols-outline.nvim',
       config = function()
         require('lu5je0.ext.symbols-outline').setup()
@@ -948,6 +961,6 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.big-file').setup()
     end
-  }
+  },
   
 }, opts)
