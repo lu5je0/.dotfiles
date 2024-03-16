@@ -74,9 +74,9 @@ if [[ ! -f ~/.config/kitty/kitty.conf ]]; then
     ln -s ~/.dotfiles/kitty/kitty.conf ~/.config/kitty/kitty.conf
 fi
 
-# kitty
+# alacritty
 if [[ ! -f ~/.config/alacritty/alacritty.conf ]]; then
-    ln -s ~/.dotfiles/alacritty/alacritty.yml ~/.config/alacritty/alacritty.yml
+    ln -s ~/.dotfiles/alacritty/mac/alacritty.yml ~/.config/alacritty/alacritty.yml
 fi
 
 mkdir -p ~/.aria2
