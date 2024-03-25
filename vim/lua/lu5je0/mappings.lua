@@ -118,6 +118,9 @@ vim.defer_fn(function()
   xmap < <gv
   xmap > >gv
   
+  " visual模式搜索
+  xnoremap / :/\%V
+  
   nnoremap <space>< `[v`]<^
   nnoremap <space>> `[v`]>^
   
