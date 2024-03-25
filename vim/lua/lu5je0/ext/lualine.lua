@@ -203,13 +203,13 @@ ins_left {
         filename = filename .. '.' .. suffix
       end
     elseif #filename == 0 then
-      return '[Untitled]'
+      return ' [Untitled]'
     end
     return string.gsub(filename, '%%', '%%%%')
   end,
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
-  padding = { left = 1, right = 0 },
+  padding = { left = 0, right = 0 },
 }
 
 ins_left {
