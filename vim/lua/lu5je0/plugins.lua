@@ -512,15 +512,15 @@ require("lazy").setup({
     -- cmd = 'FoldTextToggle',
     -- keys = { 'zf', 'zo', 'za', 'zc', 'zM', 'zR' }
   },
-  {
-    'anuvyklack/pretty-fold.nvim',
-    config = function()
-      require('pretty-fold').setup({
-        fill_char = ' ',
-      })
-    end,
-    lazy = true
-  },
+  -- {
+  --   'anuvyklack/pretty-fold.nvim',
+  --   config = function()
+  --     require('pretty-fold').setup({
+  --       fill_char = ' ',
+  --     })
+  --   end,
+  --   lazy = true
+  -- },
   
   {
     'nat-418/boole.nvim',
