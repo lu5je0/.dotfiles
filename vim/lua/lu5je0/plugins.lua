@@ -916,7 +916,7 @@ require("lazy").setup({
   --      kitty_method = "normal",
   --     })
   --   end
-  -- }
+  -- },
   
   -- {
   --   'tzachar/highlight-undo.nvim',
