@@ -938,7 +938,7 @@ require("lazy").setup({
     cmd = "ToggleBlame",
     config = function()
       require('blame').setup {
-        width = 40,
+        width = 35,
       }
     end,
     keys = {
