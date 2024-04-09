@@ -47,15 +47,3 @@ function! s:save_as_junk_file(...)
 		execute 'w ' . fnameescape(filename)
 	endif
 endfunction
-
-command! -nargs=0 JunkList call s:open_junk_list()
-function! s:open_junk_list()
-	let junk_dir = '~/junk-file'
-	" let junk_dir = expand(junk_dir) . strftime('/%Y/%m')
-	let junk_dir = tr(junk_dir, '\', '/')
-	echo junk_dir
-    silent! py3 from leaderf.tagExpl import *
-    silent! py3 tagExplManager.refresh()
-    silent! :exec g:Lf_py "fileExplManager.refresh()"
-	exec "Leaderf file " . fnameescape(expand(junk_dir))
-endfunction
