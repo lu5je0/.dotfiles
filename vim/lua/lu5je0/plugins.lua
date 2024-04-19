@@ -227,7 +227,7 @@ require("lazy").setup({
   
   {
     'nvim-telescope/telescope.nvim',
-    tag = '0.1.2',
+    tag = '0.1.6',
     config = function()
       require('lu5je0.ext.telescope').setup()
     end,
