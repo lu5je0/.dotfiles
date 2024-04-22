@@ -1,6 +1,6 @@
 function gcof
 {
-  local branch=$(git for-each-ref --sort=-committerdate refs/heads/ --format="%(refname:short)" | fzf --preview "git log {}")
+  local branch=$(git for-each-ref --sort=-committerdate refs/heads/ --format="%(refname:short)" | fzf --preview "git log --date=format:\"%Y-%m-%d %H:%M:%S\" --max-count=30 {}")
   [ -z $branch ] && return
   git checkout $branch
 }
