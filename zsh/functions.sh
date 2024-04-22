@@ -1,3 +1,10 @@
+function gcof
+{
+  local branch=$(git for-each-ref --sort=-committerdate refs/heads/ --format="%(refname:short)" | fzf --preview "git log {}")
+  [ -z $branch ] && return
+  git checkout $branch
+}
+
 # get public IP
 function q-myip
 {
