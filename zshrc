@@ -137,7 +137,7 @@ alias sudo-default-path='\sudo'
 alias awk-map-count="awk '{a[\$1]++} END {for (i in a) print i,a[i]}'"
 
 # git
-alias gcof='git checkout `git branch | fzf`'
+alias gcof='git checkout $(git branch --format="%(refname:short)" | fzf --preview "git log {}")'
 
 alias speedtest-hz='speedtest -s 54312'
 alias speedtest-hk='speedtest -s 1536'
