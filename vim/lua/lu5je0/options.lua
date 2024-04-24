@@ -82,9 +82,9 @@ local defer_options = {
   end,
   function()
     if has('mac') then
-      require('lu5je0.misc.clipboard.mac').setup()  
+      require('lu5je0.misc.clipboard.mac').setup()
     elseif has('wsl') then
-      require('lu5je0.misc.clipboard.wsl').setup()  
+      require('lu5je0.misc.clipboard.wsl').setup()
     else
       if has('clipboard') == 1 then
         o.clipboard = 'unnamed'
