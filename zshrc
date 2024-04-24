@@ -160,11 +160,25 @@ alias time-204-http='time curl "http://www.gstatic.com/generate_204"'
 alias curl-post-json='curl -H "Content-Type:application/json" -X POST'
 
 # tmux
-alias ta="tmux attach -t"
 alias td="tmux detach"
 alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
+# alias ta="tmux attach -t"
 alias tn="tmux new-session -s"
+function ta() {
+    # 检查是否提供了会话名
+    if [ -z "$1" ]; then
+        echo "Usage: ta <session-name>"
+        return 1
+    fi
+
+    # 尝试连接到会话，如果不存在则创建
+    if tmux has-session -t "$1" 2>/dev/null; then
+      tmux attach -t "$1"
+    else
+      tmux new-session -s "$1"
+    fi
+}
 
 # nvim
 alias vi='nvim'

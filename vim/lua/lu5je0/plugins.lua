@@ -497,7 +497,6 @@ require("lazy").setup({
   
   {
     'MunifTanjim/nui.nvim',
-    commit = '7427f979cc0dc991d8d177028e738463f17bcfcb',
     lazy = true
   },
   

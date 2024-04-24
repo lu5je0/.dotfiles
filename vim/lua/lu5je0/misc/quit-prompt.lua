@@ -24,13 +24,14 @@ local function create_popup(msg, bufinfo_list)
     enter = true,
     border = {
       style = 'single',
-      highlight = 'Fg',
       text = {
         -- top = 'Exiting',
         -- top_align = 'center',
       },
     },
-    highlight = 'Normal:Normal',
+    win_options = {
+      winhighlight = "Normal:Normal,FloatBorder:Normal",
+    },
     position = {
       row = '45%',
       col = '48%',
