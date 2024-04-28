@@ -185,10 +185,11 @@ nmap [e :action GotoPreviousError<CR>
 nmap ]e :action GotoNextError<CR>
 
 " templates
-vnoremap <c-j> <c-o><left>:action NextTemplateVariable<cr>i
-inoremap <c-j> <c-o>:action NextTemplateVariable<cr>
-vnoremap <c-k> <c-o>i
-inoremap <c-k> <c-o>:action PreviousTemplateVariable<cr>
+vnoremap <c-j> <esc>:action NextTemplateVariable<CR>i
+vnoremap <c-k> <esc>:action PreviousTemplateVariable<CR>i
+
+inoremap <C-j> <c-o>:action NextTemplateVariable<CR>i
+inoremap <C-k> <c-o>:action PreviousTemplateVariable<CR>i
 
 imap <c-n> <Action>(CodeCompletion)
 
