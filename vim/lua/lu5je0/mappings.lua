@@ -221,6 +221,9 @@ vim.defer_fn(function()
   " command line map
   "----------------------------------------------------------------------
   cmap <c-a> <c-b>
+  
+  " remove default mapppings
+  silent! vunmap crr
   ]]
 
 end, 0)
