@@ -29,11 +29,11 @@ local function keymap()
 
   vim.keymap.set({ 's', 'i' }, '<c-j>', function()
     luasnip.jump(1)
-    cmp_hotfix()
+    -- cmp_hotfix()
   end, opts)
   vim.keymap.set({ 's', 'i' }, '<c-k>', function()
     luasnip.jump(-1)
-    cmp_hotfix()
+    -- cmp_hotfix()
   end, opts)
 
   
