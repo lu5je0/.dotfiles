@@ -103,6 +103,10 @@ local function comfirm(fallback)
     else
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
+  -- elseif vim.snippet.jumpable(1) then -- vim.snippet
+  --   vim.cmd[[hi SnippetTabstop guibg=#3b3e48]] TODO
+  --   vim.snippet.jump(1)
+  -- else
   elseif luasnip.locally_jumpable(1) then -- luasnip
     local next_node = luasnip.jump_destination(1)
     if next_node ~= nil then
@@ -175,6 +179,7 @@ cmp.setup {
   snippet = {
     expand = function(args)
       require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+      -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
       -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
       -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
       -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
