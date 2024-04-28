@@ -107,19 +107,21 @@ local function comfirm(fallback)
   --   vim.snippet.jump(1)
   -- else
   elseif luasnip.locally_jumpable(1) then -- luasnip
-    local next_node = luasnip.jump_destination(1)
-    if next_node ~= nil then
-      local cursor = vim.api.nvim_win_get_cursor(0)
-      local pos = next_node:get_buf_position()
-      pos = { pos[1] + 1, pos[2] }
-      
-      if pos[1] > cursor[1] or (pos[1] == cursor[1] and pos[2] > cursor[2]) then
-        luasnip.jump(1)
-      else
-        -- print('block luasnip回退 target:' .. dump(pos) .. ', current:' .. dump(cursor))
-        fallback()
-      end
-    end
+    luasnip.jump(1)
+    -- 测试region_check_events能不能解决，先注释
+    -- local next_node = luasnip.jump_destination(1)
+    -- if next_node ~= nil then
+    --   local cursor = vim.api.nvim_win_get_cursor(0)
+    --   local pos = next_node:get_buf_position()
+    --   pos = { pos[1] + 1, pos[2] }
+    --   
+    --   if pos[1] > cursor[1] or (pos[1] == cursor[1] and pos[2] > cursor[2]) then
+    --     luasnip.jump(1)
+    --   else
+    --     -- print('block luasnip回退 target:' .. dump(pos) .. ', current:' .. dump(cursor))
+    --     fallback()
+    --   end
+    -- end
   else
     fallback()
     keys_helper.feedkey('<space><bs>')
