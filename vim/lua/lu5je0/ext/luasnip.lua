@@ -35,8 +35,14 @@ local function keymap()
     luasnip.jump(-1)
     -- cmp_hotfix()
   end, opts)
-
   
+  vim.keymap.set({ 'n' }, '<cr>', function()
+    if luasnip.locally_jumpable(1) then
+      luasnip.jump(1)
+    else
+      keys.feedkey('<cr>', 'n')
+    end
+  end, opts)
 end
 
 function M.setup()
