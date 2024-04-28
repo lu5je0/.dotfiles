@@ -447,12 +447,15 @@ require("lazy").setup({
           end
         },
         -- {
-        --   'hrsh7th/vim-vsnip',
+        --   "garymjr/nvim-snippets",
         --   config = function()
-        --     require('lu5je0.ext.vsnip').setup()
-        --   end,
-        -- },
-        -- 'hrsh7th/cmp-vsnip',
+        --     require('snippets').setup({
+        --       search_paths = { vim.fn.stdpath('config') .. '/snippets/vsnip' },
+        --       create_autocmd = true,
+        --       create_cmp_source = true
+        --     })
+        --   end
+        -- }
       },
       event = 'InsertEnter',
     },

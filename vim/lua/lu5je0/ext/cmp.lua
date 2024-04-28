@@ -104,7 +104,6 @@ local function comfirm(fallback)
       cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
   -- elseif vim.snippet.jumpable(1) then -- vim.snippet
-  --   vim.cmd[[hi SnippetTabstop guibg=#3b3e48]] TODO
   --   vim.snippet.jump(1)
   -- else
   elseif luasnip.locally_jumpable(1) then -- luasnip
@@ -151,6 +150,7 @@ local format = function(entry, vim_item)
         nvim_lsp = '[L]',
         ultisnips = '[U]',
         luasnip = '[S]',
+        snippets = '[S]',
       })[entry.source.name]
       
   -- 移除java方法后面的~
@@ -211,6 +211,7 @@ cmp.setup {
   },
   sources = cmp.config.sources {
     { name = 'nvim_lsp', },
+    -- { name = 'snippets', },
     {
       name = 'luasnip',
       entry_filter = function(entry, ctx)

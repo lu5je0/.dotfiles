@@ -23,6 +23,9 @@ require('lu5je0.misc.im.im_keeper').setup({
 -- json-helper
 require('lu5je0.misc.json-helper').setup()
 
+-- snippets
+-- require('lu5je0.core.snippets').setup()
+
 -- formatter
 local formatter = require('lu5je0.misc.formatter.formatter')
 formatter.setup {
