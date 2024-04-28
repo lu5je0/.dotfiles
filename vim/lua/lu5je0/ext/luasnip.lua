@@ -71,6 +71,9 @@ function M.setup()
       -- Add this to also have a placeholder in the final tabstop. 
       -- See the discussion below for more context.
       [types.exitNode] = {
+        visited = {
+          hl_group = 'None',
+        },
         unvisited = {
           hl_group = 'None'
           -- virt_text = { { '|', 'Conceal' } },

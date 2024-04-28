@@ -1,37 +1,37 @@
 {
   "feat": {
     "prefix": "feat",
-    "body": ["feat: $1"],
+    "body": ["feat: "],
     "description": "feat"
   },
   "style": {
     "prefix": "style",
-    "body": ["style: $1"],
+    "body": ["style: "],
     "description": "style"
   },
   "test": {
     "prefix": "test",
-    "body": ["test: $1"],
+    "body": ["test: "],
     "description": "test"
   },
   "chore": {
     "prefix": "chore",
-    "body": ["chore: $1"],
+    "body": ["chore: "],
     "description": "chore"
   },
   "fix": {
     "prefix": "fix",
-    "body": ["fix: $1"],
+    "body": ["fix: "],
     "description": "fix"
   },
   "refactor": {
     "prefix": "refactor",
-    "body": ["refactor: $1"],
+    "body": ["refactor: "],
     "description": "refactor"
   },
   "docs": {
     "prefix": "docs",
-    "body": ["docs: $1"],
+    "body": ["docs: "],
     "description": "docs"
   }
 }
