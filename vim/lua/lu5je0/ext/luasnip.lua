@@ -40,6 +40,37 @@ local function keymap()
 end
 
 function M.setup()
+  -- local types = require("luasnip.util.types")
+  -- vim.cmd[[hi SnippetTabstop guibg=#3b3e48]]
+  -- luasnip.setup({
+  --   ext_opts = {
+  --     [types.insertNode] = {
+  --       visited = {
+  --         hl_group = 'SnippetTabstop',
+  --       },
+  --       -- active = {
+  --       --   hl_group = 'SnippetTabstop',
+  --       -- },
+  --       unvisited = {
+  --         hl_group = 'SnippetTabstop',
+  --         -- virt_text = { { '|', 'Conceal' } },
+  --         -- virt_text_pos = 'inline',
+  --       },
+  --       passive = {
+  --         hl_group = 'None'
+  --       }
+  --     },
+  --     -- Add this to also have a placeholder in the final tabstop. 
+  --     -- See the discussion below for more context.
+  --     [types.exitNode] = {
+  --       unvisited = {
+  --         hl_group = 'None'
+  --         -- virt_text = { { '|', 'Conceal' } },
+  --         -- virt_text_pos = 'inline',
+  --       },
+  --     },
+  --   }
+  -- })
   keymap()
   require("luasnip.loaders.from_vscode").lazy_load({ paths = { "./snippets/" } })
   require('lu5je0.ext.luasnips.snippets')
