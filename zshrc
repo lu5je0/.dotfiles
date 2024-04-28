@@ -128,7 +128,7 @@ alias fpp="~/.dotfiles/submodule/PathPicker/fpp"
 alias fetch-subs="~/.dotfiles/submodule/SubtitlesDownloader/fetch_subs.py"
 alias crontab="cron.sh"
 
-alias sudo='sudo env PATH=$PATH'
+alias sudo='sudo env PATH=/sbin:$PATH'
 alias sudo-default-path='\sudo'
 
 # alias sudo="sudo "
