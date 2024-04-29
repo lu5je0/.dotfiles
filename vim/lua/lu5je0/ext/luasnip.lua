@@ -53,33 +53,34 @@ function M.setup()
     region_check_events = { 'InsertEnter' },
     ext_opts = {
       [types.insertNode] = {
-        visited = {
-          hl_group = 'SnippetTabstop',
-        },
-        -- active = {
+        -- visited = {
         --   hl_group = 'SnippetTabstop',
         -- },
-        unvisited = {
-          hl_group = 'SnippetTabstop',
-          -- virt_text = { { '|', 'Conceal' } },
-          -- virt_text_pos = 'inline',
-        },
+        -- unvisited = {
+        --   hl_group = 'SnippetTabstop',
+        --   -- virt_text = { { '|', 'Conceal' } },
+        --   -- virt_text_pos = 'inline',
+        -- },
         passive = {
-          hl_group = 'None'
-        }
+          hl_group = 'SnippetTabstop',
+        },
+        -- this is the table actually passed to `nvim_buf_set_extmark`.
+        active = {
+          hl_group = "None"
+        },
       },
       -- Add this to also have a placeholder in the final tabstop. 
       -- See the discussion below for more context.
-      [types.exitNode] = {
-        visited = {
-          hl_group = 'None',
-        },
-        unvisited = {
-          hl_group = 'None'
-          -- virt_text = { { '|', 'Conceal' } },
-          -- virt_text_pos = 'inline',
-        },
-      },
+      -- [types.exitNode] = {
+      --   visited = {
+      --     hl_group = 'None',
+      --   },
+      --   unvisited = {
+      --     hl_group = 'None'
+      --     -- virt_text = { { '|', 'Conceal' } },
+      --     -- virt_text_pos = 'inline',
+      --   },
+      -- },
     }
   })
   keymap()
