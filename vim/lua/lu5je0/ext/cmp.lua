@@ -74,7 +74,7 @@ local function fix_indent()
     local sw = vim.fn.shiftwidth()
 
     if vim.fn.indent('.') < indent_num then
-      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] - sw })
+      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] - sw - 1 })
     elseif vim.fn.indent('.') > indent_num then
       vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] + sw })
     else
