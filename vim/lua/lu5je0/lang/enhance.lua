@@ -28,12 +28,19 @@ function _G.dump(arg, depth)
 end
 
 local original_has = vim.fn.has
+---@diagnostic disable-next-line: duplicate-set-field
 vim.fn.has = function(feature)
-  local r = original_has(feature)
+  local has = original_has(feature) == 1
   
   if feature == 'gui' then
-    return vim.g.gonvim_running or r
+    has = vim.g.gonvim_running ~= nil
+  elseif feature == 'wsl' then
+    has = os.getenv('WSLENV') ~= nil
   end
   
-  return r
+  if has then
+    return 1
+  else
+    return 0
+  end
 end
