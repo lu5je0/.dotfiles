@@ -51,26 +51,16 @@ local lsp_kind_icons = {
   TypeParameter = "",
 }
 
-local origin_emit = require('cmp.utils.autocmd').emit
-local ignore_text_changed_emit = function(s)
-  if s == 'TextChanged' then
-    return
-  end
-  origin_emit(s)
-end
-
 local function fix_indent()
-  vim.schedule(function()
+  vim.defer_fn(function()
+    local cursor = vim.fn.getpos(".")
+    local indent_num = vim.fn.indent('.')
+ 
     if vim.api.nvim_get_mode().mode == 's' then
       return
     end
-
-    local cursor = vim.fn.getpos(".")
-    local indent_num = vim.fn.indent('.')
-
-    require('cmp.utils.autocmd').emit = ignore_text_changed_emit
-
-    vim.cmd("norm ==")
+    vim.cmd("norm! ==")
+    
     local sw = vim.fn.shiftwidth()
 
     if vim.fn.indent('.') < indent_num then
@@ -80,11 +70,7 @@ local function fix_indent()
     else
       vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] })
     end
-
-    vim.defer_fn(function()
-      require('cmp.utils.autocmd').emit = origin_emit
-    end, 10)
-  end)
+  end, 0)
 end
 
 local function comfirm(fallback)
@@ -95,14 +81,11 @@ local function comfirm(fallback)
       return
     end
 
-    local label = entry.completion_item.label
-    if table.contain(indent_change_items, label) then
-      cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
-      cmp.close()
+    cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
+    if table.contain(indent_change_items, entry.completion_item.label) then
       fix_indent()
-    else
-      cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
     end
+    
   -- elseif vim.snippet.jumpable(1) then -- vim.snippet
   --   vim.snippet.jump(1)
   -- else
