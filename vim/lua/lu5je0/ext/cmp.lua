@@ -5,6 +5,10 @@ local keys_helper = require('lu5je0.core.keys')
 local string_utils = require('lu5je0.lang.string-utils')
 local luasnip = require('luasnip')
 
+local indent_change_filetypes = {
+  'lua'
+}
+
 local indent_change_items = {
   'endif',
   'end',
@@ -82,7 +86,7 @@ local function comfirm(fallback)
     end
 
     cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
-    if table.contain(indent_change_items, entry.completion_item.label) then
+    if table.contain(indent_change_filetypes, vim.bo.filetype) and table.contain(indent_change_items, entry.completion_item.label) then
       fix_indent()
     end
     

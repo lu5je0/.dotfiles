@@ -56,6 +56,7 @@ o.shiftwidth = 4
 o.softtabstop = 4
 o.expandtab = true
 o.autoindent = true
+-- o.smartindent = true
 -- o.cmdheight = 0
 
 -- 不显示启动界面
