@@ -87,14 +87,15 @@ local defer_options = {
     elseif has('wsl') then
       require('lu5je0.misc.clipboard.wsl').setup()
     else
-      if has('clipboard') == 1 then
-        o.clipboard = 'unnamed'
-      else
+      -- if has('clipboard') == 1 then
+      --   o.clipboard = 'unnamed'
+      -- else
         local function no_paste(reg)
           return function(lines)
             -- Do nothing! We can't paste with OSC52
           end
         end
+        o.clipboard = 'unnamed'
         vim.g.clipboard = {
           name = "OSC 52",
           copy = {
@@ -107,7 +108,7 @@ local defer_options = {
           }
         }
       end
-    end
+    -- end
     vim.cmd [[ packadd matchit ]]
   end
 }
