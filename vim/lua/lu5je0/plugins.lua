@@ -153,25 +153,25 @@ require("lazy").setup({
     end,
     event = 'VeryLazy'
   },
-  {
-    'ojroques/vim-oscyank',
-    init = function()
-      vim.g.oscyank_silent = 1
-      vim.g.oscyank_trim = 0
-    end,
-    config = function()
-      if has_wsl or has_mac then
-        return
-      end
-      vim.api.nvim_create_autocmd('TextYankPost', {
-        pattern = '*',
-        callback = function()
-          vim.cmd [[ OSCYankRegister " ]]
-        end,
-      })
-    end,
-    event = 'VeryLazy'
-  },
+  -- {
+  --   'ojroques/vim-oscyank',
+  --   init = function()
+  --     vim.g.oscyank_silent = 1
+  --     vim.g.oscyank_trim = 0
+  --   end,
+  --   config = function()
+  --     if has_wsl or has_mac then
+  --       return
+  --     end
+  --     vim.api.nvim_create_autocmd('TextYankPost', {
+  --       pattern = '*',
+  --       callback = function()
+  --         vim.cmd [[ OSCYankRegister " ]]
+  --       end,
+  --     })
+  --   end,
+  --   event = 'VeryLazy'
+  -- },
   
   {
     'tpope/vim-fugitive',
