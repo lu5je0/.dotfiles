@@ -29,12 +29,21 @@ EOF
 endfunction
 command! -nargs=* GuessLang call GuessLang(<f-args>)
 
-function! KeepLines(...)
+function! SetOperation(...)
 call PyFuncInit()
 python3 << EOF
-functions.keepLines(vim.eval("a:000"))
+functions.set_operation(vim.eval("a:000"))
 EOF
 endfunction
+
+function! SetOperationCompletion(A, L, P)
+  " 定义集合操作的候选列表
+  let completions = ['intersection', 'difference', 'union', 'complement']
+
+  " 使用 complete() 函数设置自动补全的候选项
+  return filter(completions, 'v:val =~ "^" . a:A')
+endfunction
+command! -complete=customlist,SetOperationCompletion -nargs=* SetOperation call SetOperation(<f-args>)
 
 function! KeepLines(...)
 call PyFuncInit()
