@@ -68,6 +68,8 @@ def set_operation(operations):
         result_set = set_a | set_b
     elif operation == 'complement':
         result_set = set_a ^ set_b
+    elif operation == 'symmetric-difference': # 对称差是指两个集合的并集减去其交集的部分
+        result_set = (set_a | set_b) - (set_a & set_b)
     else:
         print('Unknown operation: ' + str(operation))
         return
