@@ -37,7 +37,12 @@ def keepLines(str_patterns):
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
     
 @resetFileTypeTemporary
-def replace_all_timestamp():
+def replace_all_timestamp(surround):
+    if len(surround) != 0:
+        surround = surround[0]
+    else:
+        surround = ''
+    
     # 获取当前时间
     current_time = datetime.now()
 
@@ -60,7 +65,7 @@ def replace_all_timestamp():
         # 检查时间戳是否在范围内
         if timestamp_five_years_ago <= timestamp <= timestamp_five_years_later:
             dt = datetime.fromtimestamp(timestamp)
-            return dt.strftime('%Y-%m-%d %H:%M:%S')
+            return surround + dt.strftime('%Y-%m-%d %H:%M:%S') + surround
         return match.group()
 
     buffer = vim.current.buffer
