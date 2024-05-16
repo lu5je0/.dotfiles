@@ -53,6 +53,14 @@ EOF
 endfunction
 command! -nargs=* KeepLines call KeepLines(<f-args>)
 
+function! ReplaceAllTimestamp(...)
+call PyFuncInit()
+python3 << EOF
+functions.replace_all_timestamp()
+EOF
+endfunction
+command! -nargs=* TimestampReplaceAll call ReplaceAllTimestamp()
+
 function! DelLines(...)
 call PyFuncInit()
 python3 << EOF

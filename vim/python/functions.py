@@ -1,6 +1,7 @@
 import vim
 import time
 import re
+from datetime import datetime, timedelta
 
 def executeTime(func):
     def wrapper(*args, **kw):
@@ -34,6 +35,37 @@ def keepLines(str_patterns):
             rm_line_cnt += 1
             del(buffer[num])
     print(str_patterns, ', del {} lines'.format(rm_line_cnt))
+    
+@resetFileTypeTemporary
+def replace_all_timestamp():
+    # 获取当前时间
+    current_time = datetime.now()
+
+    # 计算五年前和五年后的时间
+    five_years_ago = current_time - timedelta(days=365*5)
+    five_years_later = current_time + timedelta(days=365*5)
+
+    # 将时间转换为时间戳（以秒为单位）
+    timestamp_five_years_ago = five_years_ago.timestamp()
+    timestamp_five_years_later = five_years_later.timestamp()
+
+    # 正则表达式匹配时间戳（秒或毫秒）
+    timestamp_pattern = re.compile(r'\b\d{10,13}\b')
+
+    def convert_timestamp(match):
+        timestamp = int(match.group())
+        # 如果是毫秒时间戳，转换为秒
+        if len(match.group()) == 13:
+            timestamp /= 1000
+        # 检查时间戳是否在范围内
+        if timestamp_five_years_ago <= timestamp <= timestamp_five_years_later:
+            dt = datetime.fromtimestamp(timestamp)
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+        return match.group()
+
+    buffer = vim.current.buffer
+    for i, line in enumerate(buffer):
+        buffer[i] = timestamp_pattern.sub(convert_timestamp, line)
     
 @resetFileTypeTemporary
 def set_operation(operations):
