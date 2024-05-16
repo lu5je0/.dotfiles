@@ -46,13 +46,13 @@ def replace_all_timestamp(surround):
     # 获取当前时间
     current_time = datetime.now()
 
-    # 计算五年前和五年后的时间
-    five_years_ago = current_time - timedelta(days=365*5)
-    five_years_later = current_time + timedelta(days=365*5)
+    # 计算10年前和5年后的时间
+    years_ago = current_time - timedelta(days=365*10)
+    years_later = current_time + timedelta(days=365*5)
 
     # 将时间转换为时间戳（以秒为单位）
-    timestamp_five_years_ago = five_years_ago.timestamp()
-    timestamp_five_years_later = five_years_later.timestamp()
+    timestamp_five_years_ago = years_ago.timestamp()
+    timestamp_five_years_later = years_later.timestamp()
 
     # 正则表达式匹配时间戳（秒或毫秒）
     timestamp_pattern = re.compile(r'\b\d{10,13}\b')
