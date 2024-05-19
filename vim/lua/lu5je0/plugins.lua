@@ -689,6 +689,7 @@ require("lazy").setup({
       config = function()
         require('lu5je0.ext.null-ls.null-ls')
       end,
+      commit = 'c10b7be7751aee820a02f2d1fafe76bc316fe223',
       dependencies = {
         'neovim/nvim-lspconfig'
       },
@@ -735,6 +736,7 @@ require("lazy").setup({
     "nvim-neorg/neorg",
     build = ":Neorg sync-parsers",
     dependencies = { "nvim-lua/plenary.nvim" },
+    commit = '086891d396ac9fccd91faf1520f563b6eb9eb942',
     ft = { 'norg' },
     config = function()
       require("neorg").setup {
