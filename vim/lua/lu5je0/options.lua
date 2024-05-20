@@ -5,8 +5,11 @@ local has = function(feature)
   return vim.fn.has(feature) == 1
 end
 
--- font: mac JetBrainsMonoNLNerdFontMono-SemiBold 
+-- mac: JetBrainsMonoNLNerdFontMono-SemiBold 
 -- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/SemiBold/JetBrainsMonoNLNerdFontMono-SemiBold.ttf
+
+-- win: JetBrainsMonoNL Nerd Font Mono
+-- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf
 
 -- neovide
 if g.neovide then
