@@ -1,7 +1,7 @@
 local M = {}
 
 local PATH = vim.fn.stdpath("state") .. '/time-machine/'
-local MAX_KEEP_LINES = 5000
+local MAX_KEEP_LINES = 30000
 local MAX_KEEP_FILE_CNT = 300
 local MAX_KEEP_DAYS = 10
 
@@ -71,8 +71,8 @@ local function clear_old_file()
     end
   end
   
-  -- 最长日期清理，每次最多清理三个
-  local max_process_cnt = 2
+  -- 最长日期清理，每次最多清理max_process_cnt个
+  local max_process_cnt = 5
   for i, filename in ipairs(files) do
     if i <= max_process_cnt then
       local stat = vim.loop.fs_stat(PATH .. filename)
