@@ -38,6 +38,9 @@ function M.on_attach(client, bufnr)
   -- keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
   -- keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
   
+  keymap("n", "<leader>ch", function()
+    vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+  end, { desc = "LSP | Toggle Inlay Hints", silent = true })
   
   keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
 

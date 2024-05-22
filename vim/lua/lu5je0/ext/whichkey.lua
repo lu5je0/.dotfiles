@@ -99,6 +99,7 @@ function M.setup()
       c = 'code-action',
       e = 'setloclist',
       f = 'code-formatting',
+      h = 'toggle-inlay-hints',
       n = {
         name = '+naming case',
         s = { 'snake_case' },
