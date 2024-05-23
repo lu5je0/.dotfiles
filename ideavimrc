@@ -134,6 +134,7 @@ nmap <c-i> <Action>(Forward)
 imap <m-p> <Action>(ParameterInfo)
 imap <c-p> <Action>(ParameterInfo)
 imap <A-p> <Action>(ParameterInfo)
+" imap <c-k> <Action>(AcceptInlineCompletionAction)
 
 nmap H ^
 nmap L $

@@ -581,6 +581,18 @@ require("lazy").setup({
     end,
     event = 'VeryLazy'
   },
+  
+  -- {
+  --   'nvimdev/indentmini.nvim',
+  --   config = function()
+  --     require("indentmini").setup {
+  --       char = '▏'
+  --     }
+  --     vim.cmd.highlight('IndentLine guifg=#373C44')
+  --     vim.cmd.highlight('IndentLineCurrent guifg=#373C44')
+  --   end,
+  --   event = 'VeryLazy'
+  -- },
 
   -- lsp
   {
