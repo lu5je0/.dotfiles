@@ -33,7 +33,7 @@ function RateLimiter:wrap(fn, timing)
   return function(...)
     local t = nil
     if timing then
-      t = timer.now()
+      t = vim.fn.reltime()
     end
     
     local r = nil
@@ -42,7 +42,7 @@ function RateLimiter:wrap(fn, timing)
     end
     
     if timing then
-      print(('cost %.1f'):format(timer.now() - t))
+      print(('cost %ss'):format(vim.fn.reltimestr(vim.fn.reltime(t))))
     end
     return r
   end
