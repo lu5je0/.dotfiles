@@ -5,8 +5,8 @@ local keys = require('lu5je0.core.keys')
 local group = vim.api.nvim_create_augroup('VM_custom', { clear = true })
 
 local MODE = {
-  NORMAL = 'NORMAL',
-  VISUAL = 'VISUAL',
+  NORMAL = 'n',
+  VISUAL = 'v',
 }
 
 function M.mode()

@@ -168,6 +168,38 @@ end
 --   padding = { left = 1, right = 1 },
 -- }
 
+
+local mode_mappings = {
+  n = 'NOR',      -- Normal 模式
+  i = 'INS',      -- Insert 模式
+  c = 'COM',      -- Command-line 模式
+  v = 'VIS',      -- Visual 模式
+  V = 'VIL',      -- Visual Line 模式
+  [''] = 'VIB', -- Visual Block 模式
+  R = 'REP',      -- Replace 模式
+  Rv = 'VRP',     -- Virtual Replace 模式
+  s = 'SEL',      -- Select 模式
+  S = 'SIL',      -- Select Line 模式
+  [''] = 'SIB', -- Select Block 模式
+  t = 'TER'       -- Terminal 模式
+}
+ins_left {
+  function()
+    local mode = nil
+    local is_visual_multi = vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
+    if is_visual_multi then
+      mode = require('lu5je0.ext.vim-visual-multi').mode()
+    else
+      mode = vim.api.nvim_get_mode().mode
+    end
+    return mode_mappings[mode]
+  end,
+  icon_only = true,
+  inactive = true,
+  color = { fg = colors.yellow, bg = colors.bg, gui = 'bold' },
+  padding = { left = 1, right = 0 },
+}
+
 ins_left {
   'filetype',
   icon_only = true,
@@ -240,9 +272,9 @@ ins_left {
 ins_left {
   function()
     local vm_infos = vim.fn.VMInfos()
-    return ('%s [%s/%s]'):format(require('lu5je0.ext.vim-visual-multi').mode(), vm_infos['current'], vm_infos['total'])
+    return ('[%s/%s]'):format(vm_infos['current'], vm_infos['total'])
   end,
-  cond = function() return vim.fn.exists('b:VM_Selection') == 1 and vim.api.nvim_eval('empty(b:VM_Selection)') == 0 end,
+  cond = function() return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0 end,
   color = { fg = colors.white, gui = 'bold' },
   padding = { left = 1, right = 0 },
 }
