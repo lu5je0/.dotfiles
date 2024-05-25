@@ -93,7 +93,7 @@ local defer_options = {
       local function no_paste(reg)
         return function(lines)
           -- Do nothing! We can't paste with OSC52
-          return {}
+          return vim.fn.getreg('"')
         end
       end
       o.clipboard = 'unnamedplus'
@@ -104,6 +104,8 @@ local defer_options = {
           ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
         },
         paste = {
+          -- ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+          -- ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
           ["+"] = no_paste("+"), -- Pasting disabled
           ["*"] = no_paste("*"), -- Pasting disabled
         }
