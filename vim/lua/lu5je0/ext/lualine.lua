@@ -210,7 +210,7 @@ ins_left {
 
 ins_left {
   function()
-    return ''
+    return ' '
   end,
   cond = function() return vim.bo.filetype == '' end,
   inactive = true,
@@ -235,7 +235,7 @@ ins_left {
         filename = filename .. '.' .. suffix
       end
     elseif #filename == 0 then
-      return ' [Untitled]'
+      return '[Untitled]'
     end
     return string.gsub(filename, '%%', '%%%%')
   end,
