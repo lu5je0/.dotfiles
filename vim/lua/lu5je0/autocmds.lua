@@ -30,6 +30,8 @@ vim.api.nvim_create_autocmd('BufReadPost', {
       end
       vim.fn.setpos('.', vim.fn.getpos("'\""))
     end
+    
+    require('lu5je0.misc.time-machine').read_undo_if_is_time_machine_file()
   end
 })
 
