@@ -51,6 +51,8 @@ local function do_save(buf_nr)
     file:flush()
     file:close()
   end
+  -- save undo
+  vim.cmd('wundo ' .. PATH .. filename .. '.undo')
 end
 
 local function clear_old_file()
@@ -72,7 +74,7 @@ local function clear_old_file()
   end
   
   -- 最长日期清理，每次最多清理max_process_cnt个
-  local max_process_cnt = 5
+  local max_process_cnt = 6
   for i, filename in ipairs(files) do
     if i <= max_process_cnt then
       local stat = vim.loop.fs_stat(PATH .. filename)
@@ -111,6 +113,13 @@ end
 -- 返回保存目录
 function M.get_path()
   return PATH
+end
+
+function M.read_undo()
+  local filepath = vim.fn.expand('%:p') .. '.undo'
+  if vim.fn.filereadable(filepath) then
+    vim.cmd('rundo ' ..  filepath)
+  end
 end
 
 return M

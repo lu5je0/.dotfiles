@@ -34,6 +34,16 @@ vim.api.nvim_create_user_command('TimeMachine', function()
   })
 end, { force = true })
 
+vim.api.nvim_create_user_command('TimeMachineReadUndo', function()
+  require('lu5je0.core.filetree').open_path(require('lu5je0.misc.time-machine').get_path(), {
+    print_path = true
+  })
+end, { force = true })
+
+vim.api.nvim_create_user_command('TimeMachineReadUndo', function()
+  require('lu5je0.misc.time-machine').read_undo()
+end, { force = true })
+
 vim.api.nvim_create_user_command('Plugins', function()
   require('lu5je0.core.filetree').open_path('~/.local/share/nvim/lazy', {
     print_path = true
