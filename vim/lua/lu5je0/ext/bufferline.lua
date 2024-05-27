@@ -9,6 +9,11 @@ bl.setup {
     numbers = function(opts)
       return string.format('%s', opts.raise(opts.ordinal))
     end,
+    hover = {
+      enabled = true,
+      delay = 100,
+      reveal = {'close'}
+    },
     style_preset = bl.style_preset.no_italic,
     offsets = {
       {
@@ -79,20 +84,21 @@ bl.setup {
         end
       end
       table.sort(numbers)
-      local target_num = 1
-      for i = 1, #numbers do
-        if i == 1 and numbers[1] ~= 1 then
-          return 1
+      local function get_next_number()
+        for i = 1, #numbers do
+          if i == 1 and numbers[1] ~= 1 then
+            return 1
+          end
+          if numbers[i + 1] == nil then
+            return i + 1
+          end
+          if numbers[i + 1] - numbers[i] > 1 then
+            return i + 1
+          end
         end
-        if numbers[i + 1] == nil then
-          target_num = i + 1
-          break
-        end
-        if numbers[i + 1] - numbers[i] > 1 then
-          target_num = i + 1
-          break
-        end
+        return 1
       end
+      local target_num = get_next_number()
       buffer_name_map[buf.bufnr] = target_num
       return 'Untitled-' .. target_num
     end

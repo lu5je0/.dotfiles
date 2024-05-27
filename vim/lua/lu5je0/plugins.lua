@@ -953,14 +953,14 @@ require("lazy").setup({
   
   {
     "FabijanZulj/blame.nvim",
-    cmd = "ToggleBlame",
+    cmd = "BlameToggle",
     config = function()
       require('blame').setup {
         width = 35,
       }
     end,
     keys = {
-      { mode = 'n', "<leader>gb", ":ToggleBlame window<cr>", desc = "ToggleGitBlame" },
+      { mode = 'n', "<leader>gb", ":BlameToggle window<cr>", desc = "ToggleGitBlame" },
     },
   },
   

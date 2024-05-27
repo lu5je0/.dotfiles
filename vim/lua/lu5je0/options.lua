@@ -26,6 +26,7 @@ o.splitbelow = true -- 默认在下侧分屏
 o.splitright = true -- 默认在右侧分屏
 o.shadafile = 'NONE'
 o.wrap = false
+o.mousemoveevent=true
 
 o.completeopt = 'menu,menuone,noselect'
 o.pumheight = 13
