@@ -81,6 +81,9 @@ bl.setup {
       table.sort(numbers)
       local target_num = 1
       for i = 1, #numbers do
+        if i == 1 and numbers[1] ~= 1 then
+          return 1
+        end
         if numbers[i + 1] == nil then
           target_num = i + 1
           break
