@@ -61,6 +61,7 @@ bl.setup {
       },
     },
     max_name_length = 12,
+    tab_size = 15,
     -- custom_filter = function(buf_number, buf_numbers)
     --   if vim.bo[buf_number].filetype == 'fugitive' then
     --     return false
@@ -79,7 +80,7 @@ bl.setup {
       local numbers = {}
       local valid_buffers = require("bufferline.utils").get_valid_buffers()
       for _, valid_bufnr in ipairs(valid_buffers) do
-        if buffer_name_map[valid_bufnr] ~= nil then
+        if buffer_name_map[valid_bufnr] ~= nil and vim.api.nvim_buf_get_name(valid_bufnr) == '' then
           table.insert(numbers, buffer_name_map[valid_bufnr])
         end
       end
