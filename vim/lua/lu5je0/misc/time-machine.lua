@@ -59,8 +59,8 @@ end
 
 local function clear_old_file()
   local files = {}
-  for file in vim.fs.dir(TIME_MACHINE_PATH) do
-    if vim.fn.isdirectory(file) == 0 then
+  for file, type in vim.fs.dir(TIME_MACHINE_PATH) do
+    if type == 'file' then
       table.insert(files, file)
     end
   end
@@ -70,16 +70,16 @@ local function clear_old_file()
     table.sort(files)
     local need_del_cnt = #files - MAX_KEEP_FILE_CNT 
     for i, filename in ipairs(files) do
-      if i <= need_del_cnt then
-        -- print('deleting ' .. filename)
-        vim.fn.delete(TIME_MACHINE_PATH .. filename)
-        vim.fn.delete(TIME_MACHINE_UNDO_PATH .. filename)
+      if i > need_del_cnt then
+        break
       end
+      vim.fn.delete(TIME_MACHINE_PATH .. filename)
+      vim.fn.delete(TIME_MACHINE_UNDO_PATH .. filename)
     end
   end
   
   -- 最长日期清理，每次最多清理max_process_cnt个
-  local max_process_cnt = 20
+  local max_process_cnt = 10
   for i, filename in ipairs(files) do
     if i <= max_process_cnt then
       local stat = vim.loop.fs_stat(TIME_MACHINE_PATH .. filename)

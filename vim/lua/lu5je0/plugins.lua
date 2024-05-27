@@ -249,7 +249,7 @@ require("lazy").setup({
     keys = { '<leader>fp' },
   },
   {
-    'lu5je0/bufferline.nvim',
+    'akinsho/bufferline.nvim',
     config = function()
       vim.g.bufferline_separator = true
       require('lu5je0.ext.bufferline')
