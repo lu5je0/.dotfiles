@@ -60,7 +60,9 @@ end
 local function clear_old_file()
   local files = {}
   for file in vim.fs.dir(TIME_MACHINE_PATH) do
-    table.insert(files, file)
+    if vim.fn.isdirectory(file) == 0 then
+      table.insert(files, file)
+    end
   end
   
   -- 最大文件数清理
@@ -77,7 +79,7 @@ local function clear_old_file()
   end
   
   -- 最长日期清理，每次最多清理max_process_cnt个
-  local max_process_cnt = 6
+  local max_process_cnt = 20
   for i, filename in ipairs(files) do
     if i <= max_process_cnt then
       local stat = vim.loop.fs_stat(TIME_MACHINE_PATH .. filename)
