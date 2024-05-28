@@ -65,7 +65,7 @@ o.autoindent = true
 
 -- 不显示启动界面
 o.shortmess = o.shortmess .. 'I'
--- o.showcmd = false
+o.showcmd = false
 
 -- colorscheme
 o.termguicolors = true
