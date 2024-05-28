@@ -741,8 +741,9 @@ require("lazy").setup({
     end,
     config = function()
       vim.g.mkdp_auto_close = 0
+      vim.cmd('command MarkdownPreview call mkdp#util#open_preview_page()')
     end,
-    ft = { 'markdown' },
+    cmd = { "MarkdownPreview" },
   },
   {
     "nvim-neorg/neorg",
