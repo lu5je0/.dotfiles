@@ -30,7 +30,7 @@ end
 
 function M.save_buffer()
   local bufname = vim.api.nvim_buf_get_name(0)
-  if string_utils.starts_with(bufname, 'oil') then
+  if string_utils.starts_with(bufname, 'oil') or string_utils.starts_with(bufname, 'zipfile') then
     vim.cmd(':w')
     return
   end
