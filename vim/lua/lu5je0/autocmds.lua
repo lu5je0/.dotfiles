@@ -85,20 +85,23 @@ function HelpCurwin(subject) abort
 endfunction
 ]]
 
--- vim.api.nvim_create_autocmd('CmdlineEnter', {
---   group = M.default_group,
---   pattern = '*',
---   callback = function()
---     vim.cmd('set cmdheight=1')
---   end,
--- })
---
--- vim.api.nvim_create_autocmd('CmdlineLeave', {
---   group = M.default_group,
---   pattern = '*',
---   callback = function()
---     vim.cmd('set cmdheight=0')
---   end,
--- })
+
+-- 进入 Visual 模式时设置 showcmd 为 true
+vim.api.nvim_create_autocmd('ModeChanged', {
+    group = M.default_group,
+    pattern = '*:[vV\x16]*',  -- \x16 是 Ctrl-V 的十六进制表示
+    callback = function()
+        vim.opt.showcmd = true
+    end,
+})
+
+-- 退出 Visual 模式时设置 showcmd 为 false
+vim.api.nvim_create_autocmd('ModeChanged', {
+    group = M.default_group,
+    pattern = '[vV\x16]*:*',  -- \x16 是 Ctrl-V 的十六进制表示
+    callback = function()
+        vim.opt.showcmd = false
+    end,
+})
 
 return M

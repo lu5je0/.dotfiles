@@ -854,6 +854,7 @@ require("lazy").setup({
   
   {
     'stevearc/profile.nvim',
+    -- https://ui.perfetto.dev/
     config = function()
       local function toggle_profile()
         local prof = require("profile")
