@@ -788,8 +788,16 @@ require("lazy").setup({
             sign = { name = { "DapBreakpoint" }, maxwidth = 2, colwidth = 2, auto = true },
             click = "v:lua.ScSa"
           },
+          -- {
+          --   sign = { name = { ".*" }, maxwidth = 1, colwidth = 0, auto = false, wrap = true },
+          --   click = "v:lua.ScSa",
+          --   condition = { function(args)
+          --     return vim.wo[args.win].number
+          --     -- return vim.wo[args.win].signcolumn ~= 'no'
+          --   end }
+          -- },
           {
-            sign = { name = { ".*" }, maxwidth = 1, colwidth = 1, auto = false, wrap = true },
+            sign = { namespace = { "gitsigns" }, maxwidth = 1, colwidth = 1, auto = false, wrap = true },
             click = "v:lua.ScSa",
             condition = { function(args)
               return vim.wo[args.win].number

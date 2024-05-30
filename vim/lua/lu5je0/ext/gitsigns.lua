@@ -2,7 +2,6 @@ local M = {}
 
 function M.setup()
   require('gitsigns').setup {
-    _extmark_signs = false,
     signs = {
       add          = { text = '▎' },
       change       = { text = '▎' },
