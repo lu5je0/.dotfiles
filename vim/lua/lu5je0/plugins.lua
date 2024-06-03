@@ -136,12 +136,7 @@ require("lazy").setup({
     'aklt/plantuml-syntax',
     ft = 'plantuml',
     keys = '<leader>fn',
-    dependencies = {
-      {
-        'weirongxu/plantuml-previewer.vim',
-        'tyru/open-browser.vim'
-      }
-    }
+    lazy = true
   },
   {
     'lewis6991/gitsigns.nvim',
@@ -237,7 +232,6 @@ require("lazy").setup({
   {
     'akinsho/bufferline.nvim',
     config = function()
-      vim.g.bufferline_separator = true
       require('lu5je0.ext.bufferline')
     end,
     dependencies = { 'kyazdani42/nvim-web-devicons' },
@@ -720,28 +714,28 @@ require("lazy").setup({
     end,
     cmd = { "MarkdownPreview" },
   },
-  {
-    "nvim-neorg/neorg",
-    build = ":Neorg sync-parsers",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    commit = '086891d396ac9fccd91faf1520f563b6eb9eb942',
-    ft = { 'norg' },
-    config = function()
-      require("neorg").setup {
-        load = {
-          ["core.defaults"] = {}, -- Loads default behaviour
-          ["core.concealer"] = {}, -- Adds pretty icons to your documents
-          ["core.dirman"] = { -- Manages Neorg workspaces
-          config = {
-            workspaces = {
-              notes = "~/notes",
-            },
-          },
-        },
-      },
-    }
-    end,
-  },
+  -- {
+  --   "nvim-neorg/neorg",
+  --   build = ":Neorg sync-parsers",
+  --   dependencies = { "nvim-lua/plenary.nvim" },
+  --   commit = '086891d396ac9fccd91faf1520f563b6eb9eb942',
+  --   ft = { 'norg' },
+  --   config = function()
+  --     require("neorg").setup {
+  --       load = {
+  --         ["core.defaults"] = {}, -- Loads default behaviour
+  --         ["core.concealer"] = {}, -- Adds pretty icons to your documents
+  --         ["core.dirman"] = { -- Manages Neorg workspaces
+  --         config = {
+  --           workspaces = {
+  --             notes = "~/notes",
+  --           },
+  --         },
+  --       },
+  --     },
+  --   }
+  --   end,
+  -- },
   
   {
     "mfussenegger/nvim-dap",
