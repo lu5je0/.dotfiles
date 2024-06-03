@@ -110,7 +110,7 @@ require("lazy").setup({
       dependencies = {
         'nvim-treesitter/nvim-treesitter'
       },
-      event = 'VeryLazy'
+      event = 'LspAttach'
     },
     {
       'phelipetls/jsonpath.nvim',
@@ -597,37 +597,28 @@ require("lazy").setup({
         'williamboman/mason.nvim',
         {
           'neovim/nvim-lspconfig',
-          dependencies = {
-            {
-              'folke/neodev.nvim',
-              config = function()
-                require("neodev").setup {
-                  library = {
-                    enabled = true, -- when not enabled, neodev will not change any settings to the LSP server
-                    -- these settings will be used for your Neovim config directory
-                    runtime = true, -- runtime path
-                    types = true,   -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
-                    plugins = false,
-                    -- plugins = { 'nui.nvim', 'nvim-tree.lua', "nvim-treesitter", "plenary.nvim", "telescope.nvim" },
-                  },
-                }
-              end
-            },
-          },
           config = function()
             require('lu5je0.ext.lspconfig.lsp').setup()
           end,
         },
-        -- {
-        --   "lu5je0/lspsaga.nvim",
-        --   branch = "main",
-        --   config = function()
-        --     require('lu5je0.ext.lspconfig.lspsaga')
-        --   end,
-        --   dependencies = {
-        --     'neovim/nvim-lspconfig'
-        --   }
-        -- },
+      }
+    },
+    {
+      "folke/lazydev.nvim",
+      ft = "lua", -- only load on lua files
+      opts = {
+        library = {
+          -- Library items can be absolute paths
+          -- "~/projects/my-awesome-lib",
+          -- Or relative, which means they will be resolved as a plugin
+          -- "LazyVim",
+          -- When relative, you can also provide a path to the library in the plugin dir
+          "luvit-meta/library", -- see below
+        },
+      },
+      lazy = true,
+      dependencies = {
+        { "Bilal2453/luvit-meta", lazy = true }, -- optional `vim.uv` typings
       }
     },
     {

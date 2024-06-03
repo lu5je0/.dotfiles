@@ -140,6 +140,7 @@ local format = function(entry, vim_item)
         ultisnips = '[U]',
         luasnip = '[S]',
         snippets = '[S]',
+        lazydev = '[N]',
       })[entry.source.name]
       
   -- 移除java方法后面的~
@@ -199,6 +200,7 @@ cmp.setup {
     ['<tab>'] = cmp.mapping(comfirm, { 'i', 's' }),
   },
   sources = cmp.config.sources {
+    { name = 'lazydev',  group_index = 0 },
     { name = 'nvim_lsp', },
     -- { name = 'snippets', },
     {
