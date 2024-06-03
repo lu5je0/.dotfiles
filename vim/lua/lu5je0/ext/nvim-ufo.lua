@@ -1,17 +1,11 @@
 local parsers = require('nvim-treesitter.parsers')
 local string_utils = require('lu5je0.lang.string-utils')
-local render = require('ufo.render')
 
 local suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
-local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
+
+local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate, ctx)
   local newVirtText = {}
-
-  -- 获取下一行，并移除首尾空格
-  local next_line = string_utils.trim(vim.fn.getline(endLnum))
-  -- todo 冗余
-  local suffix = (' … %s 󰁂 %d'):format(next_line, endLnum - lnum)
-
-  -- local suffix = (' 󰁂 %d '):format(endLnum - lnum)
+  local suffix = (' 󰁂 %d '):format(endLnum - lnum)
   local sufWidth = vim.fn.strdisplaywidth(suffix)
   local targetWidth = width - sufWidth
   local curWidth = 0
@@ -33,22 +27,13 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
     end
     curWidth = curWidth + chunkWidth
   end
-
-  local suffix_list = suffix:split('󰁂')
-
-  local filetype = vim.bo.filetype
-  if table.contain(suffix_ft_white_list, filetype) then
+  
+  if table.contain(suffix_ft_white_list, vim.bo.filetype) then
     table.insert(newVirtText, { ' … ', 'TSPunctBracket' })
 
-    local nss = {}
-    for _, ns in pairs(vim.api.nvim_get_namespaces()) do
-      table.insert(nss, ns)
-    end
-
-    local end_line_virt_text = render.captureVirtText(vim.api.nvim_get_current_buf(), vim.fn.getline(endLnum), endLnum, nil, nss, 0)
     -- 移除前导空格
     local encounter_text = false
-    for _, v in ipairs(end_line_virt_text) do
+    for _, v in ipairs(ctx.get_fold_virt_text(endLnum)) do
       if not encounter_text and string_utils.is_blank(v[1]) then
         goto continue
       end
@@ -59,8 +44,9 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
       ::continue::
     end
   end
+  
+  table.insert(newVirtText, { suffix, 'MoreMsg' })
 
-  table.insert(newVirtText, { ' 󰁂' .. suffix_list[2], 'MoreMsg' })
   return newVirtText
 end
 
@@ -121,6 +107,7 @@ require('ufo').setup({
   end,
   close_fold_kinds_for_ft = {},
   open_fold_hl_timeout = 0,
+  enable_get_fold_virt_text = true,
   fold_virt_text_handler = fold_virt_text_handler
 })
 
