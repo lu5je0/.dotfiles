@@ -285,16 +285,16 @@ require("lazy").setup({
     end,
     keys = { { mode = 'n', 'cs' }, { mode = 'n', 'cS' }, { mode = 'n', 'ys' }, { mode = 'n', 'ds' }, { mode = 'x', 'S' } }
   },
-  {
-    'othree/eregex.vim',
-    init = function()
-      vim.g.eregex_default_enable = 0
-    end,
-    cmd = 'S',
-    keys = {
-      { mode = 'n', "<leader>/", "<cmd>call eregex#toggle()<cr>", desc = "EregexToggle" },
-    },
-  },
+  -- {
+  --   'othree/eregex.vim',
+  --   init = function()
+  --     vim.g.eregex_default_enable = 0
+  --   end,
+  --   cmd = 'S',
+  --   keys = {
+  --     { mode = 'n', "<leader>/", "<cmd>call eregex#toggle()<cr>", desc = "EregexToggle" },
+  --   },
+  -- },
   {
     'numToStr/Comment.nvim',
     config = function()
