@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# 检查是否有来自管道的数据
+if [ -p /dev/stdin ]; then
+    # 如果有管道输入，从 stdin 读取数据
+    input=$(cat -)
+elif [ $# -gt 0 ]; then
+    # 如果没有管道输入但有参数，使用第一个参数
+    input="$1"
+else
+    # 如果没有输入和参数，显示错误消息
+    echo "Usage: echo \"text\" | qrencode-kitty or qrencode-kitty \"text\""
+    exit 1
+fi
+
+# 生成 QR 码并显示
+echo "$input" | qrencode -s 10 -o /tmp/1.png && kitty +kitten icat /tmp/1.png 2>/dev/null
