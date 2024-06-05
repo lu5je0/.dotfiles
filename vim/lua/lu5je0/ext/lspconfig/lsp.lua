@@ -45,7 +45,7 @@ function M.on_attach(client, bufnr)
   keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
 
   keymap('n', 'gu', vim.lsp.buf.declaration, opts)
-  keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)
+  -- keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)
   keymap('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
   keymap('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
   keymap('n', '<leader>Wl', function()

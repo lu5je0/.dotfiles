@@ -6,7 +6,9 @@ function M.path()
   if vim.bo.filetype == 'json' then
     return require('jsonpath').get()
   else
-    return require('nvim-navic').get_location()
+    return require('nvim-navic').get_location({
+      depth_limit_indicator = "…"
+    })
   end
 end
 

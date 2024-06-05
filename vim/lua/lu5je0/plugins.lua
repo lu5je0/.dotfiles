@@ -49,7 +49,7 @@ require("lazy").setup({
     end,
     config = function()
       vim.cmd.colorscheme('edge')
-      
+
       vim.g.edge_loaded_file_types = { 'NvimTree' }
       -- local bg = '#2c2e34'
       -- vim.cmd(string.gsub([[
@@ -62,7 +62,7 @@ require("lazy").setup({
       --
       -- hi NvimTreeWinSeparator guibg=%s guifg=%s
       -- ]], '%%s', bg))
-      
+
       vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
 
       vim.cmd [[
@@ -78,7 +78,7 @@ require("lazy").setup({
     end,
     event = 'VeryLazy',
   },
-  
+
   -- treesiter
   {
     {
@@ -124,7 +124,7 @@ require("lazy").setup({
     --   cmd = { 'AerialToggle' }
     -- },
   },
-  
+
   {
     'tpope/vim-repeat',
     event = 'VeryLazy',
@@ -166,7 +166,7 @@ require("lazy").setup({
   --   end,
   --   event = 'VeryLazy'
   -- },
-  
+
   {
     'tpope/vim-fugitive',
     cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' },
@@ -205,7 +205,7 @@ require("lazy").setup({
     -- end,
     lazy = true
   },
-  
+
   {
     'nvim-telescope/telescope.nvim',
     -- tag = '0.1.7',
@@ -218,7 +218,7 @@ require("lazy").setup({
     },
     keys = { ',' }
   },
-  
+
   {
     'ahmedkhalf/project.nvim',
     config = function()
@@ -251,7 +251,7 @@ require("lazy").setup({
   },
   {
     'theniceboy/vim-calc',
-    config = function ()
+    config = function()
       vim.keymap.set('n', '<leader>a', vim.fn.Calc)
     end,
     keys = { '<leader>a' }
@@ -379,10 +379,10 @@ require("lazy").setup({
       require('lu5je0.ext.highstr')
     end,
     keys = {
-      { mode = { 'v' }, '<leader>my' },
-      { mode = { 'v' }, '<leader>mg' },
-      { mode = { 'v' }, '<leader>mr' },
-      { mode = { 'v' }, '<leader>mb' },
+      { mode = { 'v' },      '<leader>my' },
+      { mode = { 'v' },      '<leader>mg' },
+      { mode = { 'v' },      '<leader>mr' },
+      { mode = { 'v' },      '<leader>mb' },
       { mode = { 'v', 'n' }, '<leader>mc' }
     }
   },
@@ -394,7 +394,7 @@ require("lazy").setup({
     end,
     event = { 'VeryLazy' }
   },
-  
+
   -- {
   --   'lewis6991/satellite.nvim',
   --   config = function()
@@ -448,7 +448,7 @@ require("lazy").setup({
   --   end,
   --   cmd = 'Dirbuf'
   -- },
-  
+
   {
     'stevearc/oil.nvim',
     config = function()
@@ -473,12 +473,12 @@ require("lazy").setup({
     end,
     cmd = 'Oil'
   },
-  
+
   {
     'MunifTanjim/nui.nvim',
     lazy = true
   },
-  
+
   {
     'kevinhwang91/nvim-ufo',
     dependencies = {
@@ -500,7 +500,7 @@ require("lazy").setup({
   --   end,
   --   lazy = true
   -- },
-  
+
   {
     'nat-418/boole.nvim',
     config = function()
@@ -549,7 +549,7 @@ require("lazy").setup({
     end,
     cmd = 'Messages',
   },
-  
+
   {
     'lukas-reineke/indent-blankline.nvim',
     config = function()
@@ -557,7 +557,7 @@ require("lazy").setup({
     end,
     event = 'VeryLazy'
   },
-  
+
   -- {
   --   'nvimdev/indentmini.nvim',
   --   config = function()
@@ -736,7 +736,7 @@ require("lazy").setup({
   --   }
   --   end,
   -- },
-  
+
   {
     "mfussenegger/nvim-dap",
     dependencies = {
@@ -757,7 +757,7 @@ require("lazy").setup({
     end,
     cmd = 'LuaDebug'
   },
-  
+
   {
     "luukvbaal/statuscol.nvim",
     config = function()
@@ -811,7 +811,7 @@ require("lazy").setup({
     end,
     event = 'VeryLazy'
   },
-  
+
   {
     "folke/edgy.nvim",
     event = "VeryLazy",
@@ -819,14 +819,14 @@ require("lazy").setup({
       require("lu5je0.ext.edgy").setup()
     end
   },
-  
+
   -- {
   --   'akinsho/git-conflict.nvim',
   --   version = "*",
   --   config = true,
   --   event = 'VeryLazy'
   -- },
-  
+
   {
     'nvim-pack/nvim-spectre',
     config = function()
@@ -836,7 +836,7 @@ require("lazy").setup({
     -- event = 'VeryLazy'
     keys = { { mode = { 'x' }, '<leader>xr' }, { mode = 'n', '<leader>xf' } },
   },
-  
+
   {
     'stevearc/profile.nvim',
     -- https://ui.perfetto.dev/
@@ -860,7 +860,7 @@ require("lazy").setup({
     end,
     keys = { { mode = { 'n' }, '<leader>pp' } }
   },
-  
+
   {
     "folke/flash.nvim",
     keys = { { mode = { 'n', 'x' }, 's' }, { mode = { 'n' }, 'S' }, { mode = { 'o' }, 'r' } },
@@ -877,7 +877,7 @@ require("lazy").setup({
       vim.api.nvim_create_user_command('FlashSearchToggle', function() require("flash").toggle() end, {})
     end
   },
-  
+
   -- {
   --   '3rd/image.nvim',
   --   config = function()
@@ -912,7 +912,7 @@ require("lazy").setup({
   --     })
   --   end
   -- },
-  
+
   -- {
   --   'tzachar/highlight-undo.nvim',
   --   config = function()
@@ -927,7 +927,7 @@ require("lazy").setup({
   --   end,
   --   event = 'VeryLazy'
   -- },
-  
+
   {
     "FabijanZulj/blame.nvim",
     cmd = "BlameToggle",
@@ -940,22 +940,49 @@ require("lazy").setup({
       { mode = 'n', "<leader>gb", ":BlameToggle window<cr>", desc = "ToggleGitBlame" },
     },
   },
-  
+
   {
     'kevinhwang91/nvim-fundo',
     dependencies = 'kevinhwang91/promise-async',
     build = function() require('fundo').install() end,
-    config = function ()
+    config = function()
       vim.o.undofile = true
       require('fundo').setup()
     end
   },
-  
+
   {
     "LunarVim/bigfile.nvim",
     config = function()
       require('lu5je0.ext.big-file').setup()
     end
   },
-  
+
+  {
+    "ray-x/lsp_signature.nvim",
+    event = "VeryLazy",
+    config = function()
+      require('lsp_signature').setup {
+        hint_enable = false,
+        floating_window = false,
+        toggle_key = '<c-p>',
+        max_height = 10,
+        max_width = 70,
+        toggle_key_flip_floatwin_setting = true,
+        -- auto_close_after = 3
+        handler_opts = {
+          border = "single"
+        }
+      }
+      
+      vim.api.nvim_create_autocmd({ 'InsertLeave' }, {
+        group = vim.api.nvim_create_augroup('lsp_signature.nvim', { clear = true }),
+        pattern = '*',
+        callback = function(_)
+          _LSP_SIG_CFG.floating_window=false
+        end,
+      })
+    end
+  }
+
 }, opts)
