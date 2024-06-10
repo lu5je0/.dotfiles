@@ -40,22 +40,31 @@ require('nvim-treesitter.configs').setup {
 --
 -- incremental select
 treesitter.define_modules {
-  incremental_select = {
+  attach_module = {
     enable = true,
-    attach = function()
+    attach = function(bufnr)
+      -- vim.cmd [[
+      -- xmap <buffer> <silent> v <esc>m':lua require'nvim-treesitter.incremental_selection'.node_incremental()<CR>
+      -- xmap <buffer> <silent> V <esc>:lua require'nvim-treesitter.incremental_selection'.node_decremental()<CR>
+      -- ]]
+      
+      -- highlights
       vim.cmd([[
-      xmap <buffer> <silent> v <esc>m':lua require'nvim-treesitter.incremental_selection'.node_incremental()<CR>
-      xmap <buffer> <silent> V <esc>:lua require'nvim-treesitter.incremental_selection'.node_decremental()<CR>
-      "  highlights
       hi TSPunctBracket guifg=#ABB2BF
       hi @constructor.lua guifg=#ABB2BF
       ]])
+      
+      -- indent_for_specify_filetype   
+      local ft = vim.bo[bufnr].filetype
+      if ft == 'python' then
+        vim.o.indentexpr='nvim_treesitter#indent()'
+      end
     end,
     detach = function()
-      vim.cmd([[
-      silent! xunmap <buffer> v
-      silent! xunmap <buffer> V
-      ]])
+      -- vim.cmd([[
+      -- silent! xunmap <buffer> v
+      -- silent! xunmap <buffer> V
+      -- ]])
     end
-  }
+  },
 }
