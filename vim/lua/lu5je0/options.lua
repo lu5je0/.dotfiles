@@ -86,6 +86,10 @@ local defer_options = {
     vim.cmd [[ silent! rsh ]]
   end,
   function()
+    -- windows和macos中regtype * 和 + 相同，都是系统剪切板
+    -- linux中 * 是selection clipboard，+ 是system clipboard，
+    -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard 
+    
     if has('mac') then
       require('lu5je0.misc.clipboard.mac').setup()
     elseif has('wsl') then

@@ -32,25 +32,19 @@ end
 
 function M.setup()
   vim.o.clipboard = 'unnamed'
-  vim.cmd[[
-  function s:copy(contents, regtype)
-    call luaeval('require("lu5je0.misc.clipboard.mac").set_clipboard_ffi(_A[1], _A[2])', [a:contents, a:regtype])
-  endfunction
-  function s:get_active()
-    return luaeval('require("lu5je0.misc.clipboard.mac").read_clipboard_ffi()')
-  endfunction
-  let g:clipboard = {
-        \   'name': 'pbcopy',
-        \   'copy': {
-        \      '+': {lines, regtype -> s:copy(lines, regtype)},
-        \      '*': {lines, regtype -> s:copy(lines, regtype)},
-        \    },
-        \   'paste': {
-        \      '+': {-> s:get_active()},
-        \      '*': {-> s:get_active()},
-        \   },
-        \ }
-  ]]
+  vim.g.clipboard = {
+    name = 'mac-clipboard',
+    copy = {
+      ['*'] = function(lines, regtype)
+        M.set_clipboard_ffi(lines, regtype)
+      end
+    },
+    paste = {
+      ["*"] = function()
+        return M.read_clipboard_ffi()
+      end
+    }
+  }
 end
 
 return M

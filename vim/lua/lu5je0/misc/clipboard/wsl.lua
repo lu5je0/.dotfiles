@@ -77,29 +77,20 @@ function M.get_active()
 end
 
 function M.setup()
-  -- vim.o.clipboard = 'unnamedplus'
   vim.o.clipboard = 'unnamed'
-  vim.cmd [[
-    function s:copy(lines, regtype)
-      call luaeval('require("lu5je0.misc.clipboard.wsl").copy(_A[1], _A[2])', [a:lines, a:regtype])
-    endfunction
-    function s:get_active()
-      return luaeval('require("lu5je0.misc.clipboard.wsl").get_active()')
-    endfunction
-
-    let g:clipboard = {
-          \   'name': 'deferClip',
-          \   'copy': {
-          \      '+': {lines, regtype -> s:copy(lines, regtype)},
-          \      '*': {lines, regtype -> s:copy(lines, regtype)},
-          \    },
-          \   'paste': {
-          \      '+': {-> s:get_active()},
-          \      '*': {-> s:get_active()},
-          \   },
-          \ }
-  ]]
-  
+  vim.g.clipboard = {
+    name = 'wsl-clipboard',
+    copy = {
+      ['*'] = function(lines, regtype)
+        M.copy(lines, regtype)
+      end
+    },
+    paste = {
+      ["*"] = function()
+        return M.get_active()
+      end
+    }
+  }
   vim.api.nvim_create_autocmd({ "FocusGained" }, {
     group = augroup,
     callback = sync_from,
