@@ -8,16 +8,16 @@ if vim.fn.has('gui') == 0 then
 end
 
 require('lu5je0.misc.im.im_keeper').setup({
-    mac = {
-      keep = false,
-      interval = 1000,
-      focus_gained = true,
-    },
-    win = {
-      keep = false,
-      interval = 1000,
-      focus_gained = true,
-    }
+  mac = {
+    keep = false,
+    interval = 1000,
+    focus_gained = true,
+  },
+  win = {
+    keep = false,
+    interval = 1000,
+    focus_gained = true,
+  }
 })
 
 -- json-helper
@@ -30,13 +30,13 @@ require('lu5je0.misc.json-helper').setup()
 local formatter = require('lu5je0.misc.formatter.formatter')
 formatter.setup {
   format_priority = {
-    json = { formatter.FORMAT_TOOL_TYPE.LSP, formatter.FORMAT_TOOL_TYPE.EXTERNAL },
-    [{ 'bash', 'sh' }] = { formatter.FORMAT_TOOL_TYPE.EXTERNAL, formatter.FORMAT_TOOL_TYPE.LSP },
+    [{ 'json' }] = { formatter.FORMAT_TOOL_TYPE.EXTERNAL, formatter.FORMAT_TOOL_TYPE.LSP },
+    [{ 'bash', 'sh', 'python', 'yaml' }] = { formatter.FORMAT_TOOL_TYPE.EXTERNAL, formatter.FORMAT_TOOL_TYPE.LSP },
   },
   external_formatter = {
     json = {
       format = function()
-        vim.cmd [[ JsonFormat ]]
+        vim.cmd(':%!prettier --parser json')
       end,
       range_format = function()
       end,
@@ -55,9 +55,30 @@ formatter.setup {
       range_format = function()
       end,
     },
+    [{ 'python' }] = {
+      format = function()
+        vim.cmd(':%!black -q -')
+      end,
+      range_format = function()
+      end,
+    },
     [{ 'xml' }] = {
       format = function()
         vim.cmd(':%!xmllint - --format')
+      end,
+      range_format = function()
+      end,
+    },
+    [{ 'yaml' }] = {
+      format = function()
+        vim.cmd(':%!prettier --parser yaml')
+      end,
+      range_format = function()
+      end,
+    },
+    [{ 'markdown' }] = {
+      format = function()
+        vim.cmd(':%!prettier --parser markdown')
       end,
       range_format = function()
       end,
