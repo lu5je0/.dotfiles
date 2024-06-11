@@ -1,11 +1,12 @@
 local o = vim.o
 local g = vim.g
+local string_util = require('lu5je0.lang.string-utils')
 
 local has = function(feature)
   return vim.fn.has(feature) == 1
 end
 
--- mac: JetBrainsMonoNLNerdFontMono-SemiBold 
+-- mac: JetBrainsMonoNLNerdFontMono-SemiBold
 -- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/SemiBold/JetBrainsMonoNLNerdFontMono-SemiBold.ttf
 
 -- win: JetBrainsMonoNL Nerd Font Mono
@@ -26,7 +27,7 @@ o.splitbelow = true -- 默认在下侧分屏
 o.splitright = true -- 默认在右侧分屏
 o.shadafile = 'NONE'
 o.wrap = false
-o.mousemoveevent=true
+o.mousemoveevent = true
 
 o.completeopt = 'menu,menuone,noselect'
 o.pumheight = 13
@@ -37,7 +38,7 @@ o.numberwidth = 3
 o.laststatus = 2
 o.showmode = false
 o.cursorline = true
-o.cursorlineopt='number'
+o.cursorlineopt = 'number'
 o.undofile = true
 o.foldmethod = 'manual'
 o.foldlevel = 99 -- 打开文件默认不折叠
@@ -88,8 +89,8 @@ local defer_options = {
   function()
     -- windows和macos中regtype * 和 + 相同，都是系统剪切板
     -- linux中 * 是selection clipboard，+ 是system clipboard，
-    -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard 
-    
+    -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard
+
     if has('mac') then
       require('lu5je0.misc.clipboard.mac').setup()
     elseif has('wsl') then
@@ -98,7 +99,7 @@ local defer_options = {
       local function no_paste(reg)
         return function()
           -- Do nothing! We can't paste with OSC52
-          return { vim.fn.getreg('"') }
+          return { string_util.split(vim.fn.getreg('"'), '\n'), vim.fn.getregtype('"') }
         end
       end
       o.clipboard = 'unnamedplus'
