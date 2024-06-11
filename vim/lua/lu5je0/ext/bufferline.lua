@@ -141,4 +141,10 @@ vim.keymap.set('n', '<leader>tl', function()
   vim.cmd('norm :<cr>')
 end)
 
+vim.api.nvim_create_user_command('BufferLinePickSplit', function(t)
+  require('bufferline.pick').choose_then(function(bufnr)
+    vim.cmd('vert sbuffer ' .. bufnr)
+  end)
+end, { force = true, nargs = '*', range = true })
+
 return M
