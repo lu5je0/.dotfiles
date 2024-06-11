@@ -92,9 +92,9 @@ local defer_options = {
       require('lu5je0.misc.clipboard.wsl').setup()
     else
       local function no_paste(reg)
-        return function(lines)
+        return function()
           -- Do nothing! We can't paste with OSC52
-          return vim.fn.getreg('"')
+          return { vim.fn.getreg('"') }
         end
       end
       o.clipboard = 'unnamedplus'
