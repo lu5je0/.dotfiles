@@ -78,19 +78,27 @@ end
 
 function M.setup()
   vim.o.clipboard = 'unnamed'
+  
+  local set_fn = function(lines, regtype)
+    M.copy(lines, regtype)
+  end
+  
+  local get_fn = function()
+    return M.get_active()
+  end
+  
   vim.g.clipboard = {
     name = 'wsl-clipboard',
     copy = {
-      ['*'] = function(lines, regtype)
-        M.copy(lines, regtype)
-      end
+      ["+"] = set_fn,
+      ['*'] = set_fn
     },
     paste = {
-      ["*"] = function()
-        return M.get_active()
-      end
+      ["+"] = get_fn,
+      ["*"] = get_fn
     }
   }
+  
   vim.api.nvim_create_autocmd({ "FocusGained" }, {
     group = augroup,
     callback = sync_from,
