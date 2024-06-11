@@ -74,6 +74,7 @@ formatter.setup {
         vim.cmd(':%!prettier --parser yaml')
       end,
       range_format = function()
+        vim.cmd(":'<,'>%!prettier --parser yaml")
       end,
     },
     [{ 'markdown' }] = {
@@ -81,6 +82,7 @@ formatter.setup {
         vim.cmd(':%!prettier --parser markdown')
       end,
       range_format = function()
+        vim.cmd(":'<,'>%!prettier --parser markdown")
       end,
     }
   }

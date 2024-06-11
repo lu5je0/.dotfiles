@@ -105,7 +105,17 @@ local function external_format(format_type, filetype)
       log('miss range external_format')
       return false
     end
-    external_formatter.range_format()
+    local back_to_n = vim.api.nvim_replace_termcodes("<esc>", true, false, true)
+    vim.api.nvim_feedkeys(back_to_n, "x", false)
+    
+    -- 使用 vim.fn.getpos() 获取 '< 和 '> 标记的位置
+    local start_pos = vim.fn.getpos("'<")
+    local end_pos = vim.fn.getpos("'>")
+    -- start_pos[2] 和 end_pos[2] 分别是开始和结束的行号
+    local start_line = start_pos[2]
+    local end_line = end_pos[2]
+    
+    external_formatter.range_format(start_line, end_line)
   end
   cursor_util.goto_saved_position()
   return true
