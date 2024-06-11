@@ -17,8 +17,8 @@
     ],
     "description": "for i in range"
   },
-  "now": {
-    "prefix": ["now"],
+  "yyyy": {
+    "prefix": ["time.strftime"],
     "body": [ 
       "time.strftime(\"%Y-%m-%d %H:%M:%S\", time.localtime())"
     ],
