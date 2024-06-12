@@ -31,7 +31,9 @@ function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
       timer:stop()
     end
     
-    vim.cmd(enable_cmd)
+    if vim.fn.exists(":" .. enable_cmd) > 0 then
+      vim.cmd(enable_cmd)
+    end
     
     -- 搜索时不自动隐藏
     if vim.v.hlsearch == 1 then
