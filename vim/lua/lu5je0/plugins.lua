@@ -663,18 +663,18 @@ require("lazy").setup({
       },
       event = { 'CursorHold', 'LspAttach' }
     },
-    {
-      'nvimtools/none-ls.nvim',
-      config = function()
-        require('lu5je0.ext.null-ls.null-ls')
-      end,
-      commit = 'c10b7be7751aee820a02f2d1fafe76bc316fe223',
-      dependencies = {
-        'neovim/nvim-lspconfig'
-      },
-      event = 'VeryLazy'
-      -- cmd = 'NullLsEnable',
-    },
+    -- {
+    --   'nvimtools/none-ls.nvim',
+    --   config = function()
+    --     require('lu5je0.ext.null-ls.null-ls')
+    --   end,
+    --   commit = 'c10b7be7751aee820a02f2d1fafe76bc316fe223',
+    --   dependencies = {
+    --     'neovim/nvim-lspconfig'
+    --   },
+    --   event = 'VeryLazy'
+    --   -- cmd = 'NullLsEnable',
+    -- },
   },
 
   {

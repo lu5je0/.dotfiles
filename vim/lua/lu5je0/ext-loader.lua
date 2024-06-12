@@ -84,6 +84,14 @@ formatter.setup {
       range_format = function()
         vim.cmd(":'<,'>%!prettier --parser markdown")
       end,
+    },
+    [{ 'javascript' }] = {
+      format = function()
+        vim.cmd(':%!prettier --parser babel')
+      end,
+      range_format = function()
+        vim.cmd(":'<,'>%!prettier --parser babel")
+      end,
     }
   }
 }
