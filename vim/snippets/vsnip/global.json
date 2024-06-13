@@ -4,7 +4,7 @@
     "body": "#!/usr/bin/env $1"
   },
   "yyyy": {
-    "prefix": ["yyyy"],
+    "prefix": ["yyyyMMddHHmmss"],
     "body": [ "yyyy-MM-dd HH:mm:ss" ],
     "description": "yyyy"
   },

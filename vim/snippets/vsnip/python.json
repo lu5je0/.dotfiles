@@ -9,7 +9,12 @@
       "#!/usr/bin/env python3\n"
     ]
   },
-  "def-sleep-until": {
+  "yyyy": {
+    "prefix": ["yyyyMMddHHmmss"],
+    "body": [ "%Y-%m-%d %H:%M:%S" ],
+    "description": "yyyy"
+  },
+  "def sleep_until():": {
     "prefix": ["defsleepuntil"],
     "body": "def sleep_until(year=-1, month=-1, day=-1, hour=0, minute=0, second=0, mills=0):\n    import time\n    import datetime\n\n    today = datetime.datetime.now()\n    if year == -1:\n        year = today.year\n\n    if month == -1:\n        month = today.month\n\n    if day == -1:\n        day = today.day\n\n    target_datetime = datetime.datetime(\n        year, month, day, hour, minute, second, mills * 1000\n    )\n    print('sleep until', target_datetime)\n\n    while True:\n        now = datetime.datetime.now()\n        if now >= target_datetime:\n            print(now)\n            return\n        time.sleep(0.001)",
     "description": "sleep until"
@@ -21,13 +26,6 @@
       "    ${3}"
     ],
     "description": "for i in range"
-  },
-  "yyyy": {
-    "prefix": ["time.strftime"],
-    "body": [ 
-      "time.strftime(\"%Y-%m-%d %H:%M:%S\", time.localtime())"
-    ],
-    "description": "time format to yyyy-MM-dd HH:mm:ss"
   },
   "if __name__ == \"__main__\"": {
       "prefix": "ifmain",
