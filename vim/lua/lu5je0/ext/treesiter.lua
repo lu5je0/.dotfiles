@@ -7,6 +7,10 @@ local ts_filetypes = {
   'vue', 'css', 'dockerfile', 'vimdoc', 'query', 'xml'
 }
 
+local ts_indent_filetyps = {
+  'python', 'javascript'
+}
+
 require('nvim-treesitter.configs').setup {
   -- Modules and its options go here
   ensure_installed = ts_filetypes,
@@ -56,7 +60,7 @@ treesitter.define_modules {
       
       -- indent_for_specify_filetype   
       local ft = vim.bo[bufnr].filetype
-      if ft == 'python' then
+      if table.contain(ts_indent_filetyps, ft) then
         vim.o.indentexpr='nvim_treesitter#indent()'
       end
     end,
