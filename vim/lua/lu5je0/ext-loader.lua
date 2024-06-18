@@ -36,7 +36,7 @@ formatter.setup {
   external_formatter = {
     json = {
       format = function()
-        vim.cmd(':%!prettier --parser json')
+        vim.cmd [[ JsonFormat ]]
       end,
       range_format = function()
       end,
