@@ -81,8 +81,13 @@ function M.setup()
       },
       diagnostic = {
         enable = true,
-        signs = { '-', '=', '≡' },
+        signs = {'-', '=', '≡'},
         min_severity = vim.diagnostic.severity.HINT,
+        -- Highlights:
+        -- - SatelliteDiagnosticError (default links to DiagnosticError)
+        -- - SatelliteDiagnosticWarn (default links to DiagnosticWarn)
+        -- - SatelliteDiagnosticInfo (default links to DiagnosticInfo)
+        -- - SatelliteDiagnosticHint (default links to DiagnosticHint)
       },
       gitsigns = {
         enable = true,
@@ -97,7 +102,7 @@ function M.setup()
         },
       },
       marks = {
-        enable = false,
+        enable = true,
         show_builtins = false, -- shows the builtin marks like [ ] < >
       },
     },
