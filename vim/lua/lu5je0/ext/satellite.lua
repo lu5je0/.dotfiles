@@ -95,7 +95,7 @@ function M.setup()
           -- can only be a single character (multibyte is okay)
           add = "▕",
           change = "▕",
-          delete = "╶",
+          delete = "▕",
           -- add = "│",
           -- change = "│",
           -- delete = "╶",

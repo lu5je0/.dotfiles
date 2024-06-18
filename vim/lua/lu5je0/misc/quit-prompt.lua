@@ -146,44 +146,6 @@ local function exit_vim_with_dialog()
   create_popup(content, unsave_bufinfo_list)
 end
 
--- local function exit_vim_by_comfirm()
---   local unsave_buffers = {}
---
---   for _, buffer in ipairs(vim.fn.getbufinfo { bufloaded = 1, buflisted = 1 }) do
---     if buffer.changed == 1 then
---       table.insert(unsave_buffers, buffer)
---     end
---   end
---
---   local msg = nil
---   local options = '&No\n&Yes'
---
---   if #unsave_buffers ~= 0 then
---     msg = 'The change of the following buffers will be discarded.'
---     for _, buffer in ipairs(unsave_buffers) do
---       local name = require('nvim-web-devicons').get_icon(buffer.name, string.split(buffer.name, '.')[-1]) ..
---           ' ' .. vim.fn.fnamemodify(buffer.name, ':t')
---       if name == '' then
---         name = '[Untitled] ' .. buffer.bufnr
---       end
---       msg = msg .. '\n' .. name
---     end
---
---     options = options .. '\n&Save All'
---   else
---     msg = 'Exit vim?'
---   end
---
---   local confirm_value = vim.fn.confirm(msg, options)
---   if confirm_value == 1 then
---     return
---   elseif confirm_value == 2 then
---     vim.cmd('qa!')
---   elseif confirm_value == 3 then
---     vim.cmd('wqa!')
---   end
--- end
-
 function M.close_buffer()
   local valid_buffers = require('lu5je0.core.buffers').valid_buffers()
   local cur_buf_nr = vim.api.nvim_get_current_buf()

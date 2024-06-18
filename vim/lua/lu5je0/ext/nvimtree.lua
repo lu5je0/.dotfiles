@@ -265,33 +265,6 @@ function M.copy_absolute_path()
   print('copied absolute path')
 end
 
-local recursion_limit = 20
-function M.target_git_item_reveal_to_file(action, recursion_count)
-  recursion_count = recursion_count or 0
-  if recursion_count > recursion_limit then
-    return
-  end
-
-  local old_node = api.tree.get_node_under_cursor()
-  action()
-  local node = api.tree.get_node_under_cursor()
-  if node == nil then
-    return
-  end
-
-  if node == old_node and node.git_status and node.git_status.dir and next(node.git_status.dir) == nil then
-    return
-  end
-
-  if node.type == 'directory' then
-    if not node.open and node.git_status and node.git_status.dir and next(node.git_status.dir) ~= nil then
-      api.node.open.edit()
-    end
-    M.target_git_item_reveal_to_file(action, recursion_count + 1)
-  end
-  vim.cmd('norm zz')
-end
-
 local function on_attach(bufnr)
   local set = vim.keymap.set
 
@@ -352,12 +325,8 @@ local function on_attach(bufnr)
   set('n', 'yP', M.copy_relative_path, opts('Copy Relative Path'))
   set('n', 'yp', M.copy_absolute_path, opts('Copy Absolute Path'))
 
-  set('n', '[g', function()
-    M.target_git_item_reveal_to_file(api.node.navigate.git.prev)
-  end, opts('prev_git_item_reveal_to_file'))
-  set('n', ']g', function()
-    M.target_git_item_reveal_to_file(api.node.navigate.git.next)
-  end, opts('next_git_item_reveal_to_file'))
+  set('n', '[g', api.node.navigate.git.prev_recursive, opts('prev_git_item_reveal_to_file'))
+  set('n', ']g', api.node.navigate.git.next_recursive, opts('next_git_item_reveal_to_file'))
 
   set('n', 'u', api.tree.change_root_to_parent, opts('Up'))
   -- set('n', 'o', api.node.run.system, opts('Run System'))
@@ -476,7 +445,7 @@ function M.setup()
       },
       icons = {
         webdev_colors = true,
-        git_placement = "before",
+        git_placement = "after",
         padding = " ",
         symlink_arrow = " ➛ ",
         show = {
