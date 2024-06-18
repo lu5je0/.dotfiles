@@ -948,7 +948,8 @@ require("lazy").setup({
     config = function()
       vim.o.undofile = true
       require('fundo').setup()
-    end
+    end,
+    event = 'BufReadPre'
   },
 
   {
