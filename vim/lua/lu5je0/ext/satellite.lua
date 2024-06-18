@@ -110,9 +110,9 @@ function M.setup()
   end, 100)
 
 
-  local enable_cmd = 'SatelliteEnable'
-  local disable_cmd = 'SatelliteDisable'
-  local refresh_cmd = 'SatelliteRefresh'
+  local enable_cmd = 'silent! SatelliteEnable'
+  local disable_cmd = 'silent! SatelliteDisable'
+  local refresh_cmd = 'silent! SatelliteRefresh'
   M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
 
   -- workaroud for builtin keymap
