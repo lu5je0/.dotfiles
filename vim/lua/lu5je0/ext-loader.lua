@@ -62,6 +62,14 @@ formatter.setup {
       range_format = function()
       end,
     },
+    html = {
+      format = function()
+        vim.cmd(':%!prettier --parser html')
+      end,
+      range_format = function()
+        vim.cmd(":'<,'>%!prettier --parser html")
+      end,
+    },
     [{ 'xml' }] = {
       format = function()
         vim.cmd(':%!xmllint - --format')
