@@ -22,6 +22,10 @@
         "path": "./vsnip/java.json"
       },
       {
+        "language": "javascript",
+        "path": "./vsnip/javascript.json"
+      },
+      {
         "language": "lua",
         "path": "./vsnip/lua.json"
       },

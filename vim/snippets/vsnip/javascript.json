@@ -1,0 +1,25 @@
+{
+  "Console Log": {
+    "prefix": "cl",
+    "body": "console.log($1);",
+    "description": "Console Log"
+  },
+  "Named Function": {
+    "prefix": "nfn",
+    "body": [
+      "function ${1:func}($2) {",
+      "  $3",
+      "}"
+    ],
+    "description": "Named Function"
+  },
+  "Anonymous Function": {
+    "prefix": "ufn",
+    "body": [
+      "function() {",
+      "  $2",
+      "}"
+    ],
+    "description": "Anonymous Function"
+  }
+}
