@@ -67,6 +67,7 @@ function M.setup()
 
       map('n', '<leader>gu', gs.reset_hunk)
       map('n', '<leader>gU', gs.reset_buffer)
+      map('v', '<leader>gu', function() gs.reset_hunk { vim.fn.line("."), vim.fn.line("v") } end)
 
       map('n', '<leader>gg', gs.preview_hunk)
       -- map('n', '<leader>gb', function() gs.blame_line { full = true } end)
@@ -77,8 +78,8 @@ function M.setup()
 
       map('n', '<leader>gt', gs.toggle_deleted)
 
-      map('v', '<leader>gs', function() gs.stage_hunk { vim.fn.line("."), vim.fn.line("v") } end)
-      map('v', '<leader>gr', function() gs.reset_hunk { vim.fn.line("."), vim.fn.line("v") } end)
+      map('v', '<leader>ga', function() gs.stage_hunk { vim.fn.line("."), vim.fn.line("v") } end)
+      map('v', '<leader>gr', function() gs.undo_stage_hunk { vim.fn.line("."), vim.fn.line("v") } end)
 
       -- Text object
       map({ 'o', 'x' }, 'ig', ':<C-U>Gitsigns select_hunk<CR>', { silent = true })
