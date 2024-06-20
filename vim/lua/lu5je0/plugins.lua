@@ -76,7 +76,8 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.lualine')
     end,
-    event = 'VeryLazy',
+    event = 'VimEnter',
+    priority = 999
   },
 
   -- treesiter
