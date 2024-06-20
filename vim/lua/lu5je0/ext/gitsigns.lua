@@ -70,8 +70,9 @@ function M.setup()
       map('v', '<leader>gu', function() gs.reset_hunk { vim.fn.line("."), vim.fn.line("v") } end)
 
       map('n', '<leader>gg', gs.preview_hunk)
-      -- map('n', '<leader>gb', function() gs.blame_line { full = true } end)
-      -- map('n', '<leader>gB', gs.toggle_current_line_blame)
+      
+      -- map('n', '<leader>gB', function() gs.blame_line { full = true } end)
+      -- map('n', '<leader>gb', function() vim.cmd('Gitsigns blame') end)
 
       map('n', '<leader>gd', gs.diffthis)
       map('n', '<leader>gD', function() gs.diffthis('~') end)
