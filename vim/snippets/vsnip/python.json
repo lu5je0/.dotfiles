@@ -66,7 +66,7 @@
   },
   "New function": {
       "prefix": "def",
-      "body": "def ${1:fname}(${2:arg}):\n\t${3:pass}$0",
+      "body": "def ${1}(${2}):\n\t${3}$0",
       "description" : "Code snippet for function definition."
   },
   "if": {

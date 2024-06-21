@@ -5,16 +5,16 @@
     "description": "Console Log"
   },
   "Named Function": {
-    "prefix": "nfn",
+    "prefix": "fnn",
     "body": [
-      "function ${1:func}($2) {",
-      "  $3",
+      "function ${1}() {",
+      "  $2",
       "}"
     ],
     "description": "Named Function"
   },
   "Anonymous Function": {
-    "prefix": "ufn",
+    "prefix": "fna",
     "body": [
       "function() {",
       "  $2",

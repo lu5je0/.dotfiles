@@ -19,5 +19,14 @@
       "-- stylua: ignore end"
     ],
     "description": "stylua-ignore-end"
+  },
+  "Anonymous Function": {
+    "prefix": "fna",
+    "body": [
+      "function()",
+      "  $2",
+      "end"
+    ],
+    "description": "Anonymous Function"
   }
 }
