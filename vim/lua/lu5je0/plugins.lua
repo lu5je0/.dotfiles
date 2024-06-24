@@ -664,6 +664,32 @@ require("lazy").setup({
       },
       event = { 'CursorHold', 'LspAttach' }
     },
+    {
+      "ray-x/lsp_signature.nvim",
+      event = "VeryLazy",
+      config = function()
+        require('lsp_signature').setup {
+          hint_enable = false,
+          floating_window = false,
+          toggle_key = '<c-p>',
+          max_height = 10,
+          max_width = 70,
+          toggle_key_flip_floatwin_setting = true,
+          -- auto_close_after = 3
+          handler_opts = {
+            border = "single"
+          }
+        }
+
+        vim.api.nvim_create_autocmd({ 'InsertLeave' }, {
+          group = vim.api.nvim_create_augroup('lsp_signature.nvim', { clear = true }),
+          pattern = '*',
+          callback = function(_)
+            _LSP_SIG_CFG.floating_window=false
+          end,
+        })
+      end
+    },
     -- {
     --   'nvimtools/none-ls.nvim',
     --   config = function()
@@ -959,32 +985,5 @@ require("lazy").setup({
       require('lu5je0.ext.big-file').setup()
     end
   },
-
-  {
-    "ray-x/lsp_signature.nvim",
-    event = "VeryLazy",
-    config = function()
-      require('lsp_signature').setup {
-        hint_enable = false,
-        floating_window = false,
-        toggle_key = '<c-p>',
-        max_height = 10,
-        max_width = 70,
-        toggle_key_flip_floatwin_setting = true,
-        -- auto_close_after = 3
-        handler_opts = {
-          border = "single"
-        }
-      }
-      
-      vim.api.nvim_create_autocmd({ 'InsertLeave' }, {
-        group = vim.api.nvim_create_augroup('lsp_signature.nvim', { clear = true }),
-        pattern = '*',
-        callback = function(_)
-          _LSP_SIG_CFG.floating_window=false
-        end,
-      })
-    end
-  }
 
 }, opts)
