@@ -1,6 +1,6 @@
 local keys = require('lu5je0.core.keys')
 
-vim.g.translator_default_engines = { 'disk' }
+vim.g.translator_default_engines = { 'disk', 'google' }
 
 local function say(word)
   if vim.fn.has('mac') == 1 then
