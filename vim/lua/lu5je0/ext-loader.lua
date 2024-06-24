@@ -1,5 +1,5 @@
 -- im
-if vim.fn.has('gui') == 0 then
+if vim.fn.has('gui') == 0 and not vim.g.neovide then
   if vim.fn.has('wsl') == 1 then
     require('lu5je0.misc.im.win.im').setup()
   elseif vim.fn.has('mac') == 1 then
@@ -30,6 +30,7 @@ require('lu5je0.misc.json-helper').setup()
 local formatter = require('lu5je0.misc.formatter.formatter')
 formatter.setup {
   format_priority = {
+    [{ 'javascript' }] = { formatter.FORMAT_TOOL_TYPE.LSP, formatter.FORMAT_TOOL_TYPE.EXTERNAL },
     [{ 'json' }] = { formatter.FORMAT_TOOL_TYPE.EXTERNAL, formatter.FORMAT_TOOL_TYPE.LSP },
     [{ 'bash', 'sh', 'python', 'yaml' }] = { formatter.FORMAT_TOOL_TYPE.EXTERNAL, formatter.FORMAT_TOOL_TYPE.LSP },
   },
