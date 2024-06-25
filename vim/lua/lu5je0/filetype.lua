@@ -14,9 +14,9 @@ vim.filetype.add {
     ['kitty.conf'] = 'config',
     ['aria2.conf'] = 'dosini',
     ['requirements.txt'] = function(path, bufnr)
-      vim.defer_fn(function()
+      vim.schedule(function()
         vim.bo[bufnr].commentstring='#%s'
-      end, 0)
+      end)
       return 'text'
     end
   },
