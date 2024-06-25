@@ -1,6 +1,8 @@
 HostKeyAlgorithms = +ssh-rsa
 PubkeyAcceptedAlgorithms = +ssh-rsa
 
+Include config.d/*
+
 Host github.com
     HostName ssh.github.com
     Port 443
@@ -12,5 +14,3 @@ Host gist.github.com
     Port 443
     User git
     # ProxyCommand nc -v -x 127.0.0.1:1080 %h %p
-    
-Include config.d/*
