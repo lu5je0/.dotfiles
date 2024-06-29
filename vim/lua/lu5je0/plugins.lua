@@ -39,18 +39,18 @@ local opts = {
 require("lazy").setup({
   {
     'sainnhe/edge',
+    lazy = true,
     init = function()
       vim.g.edge_better_performance = 1
       vim.g.edge_enable_italic = 0
       vim.g.edge_disable_italic_comment = 1
-      -- StatusLine 左边
-      -- vim.api.nvim_set_hl(0, "StatusLine", { fg = '#373943' })
-      -- vim.api.nvim_set_hl(0, "StatusLineNC", { fg = '#373943' })
-    end,
-    config = function()
       vim.cmd.colorscheme('edge')
-
+      vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
+      vim.api.nvim_set_hl(0, "Folded", { fg = '#282c34', bg = '#5c6370' })
+      vim.api.nvim_set_hl(0, "MatchParen", { fg = '#ffef28', bg = '#414550'})
+      
       vim.g.edge_loaded_file_types = { 'NvimTree' }
+      
       -- local bg = '#2c2e34'
       -- vim.cmd(string.gsub([[
       -- " hi NvimTreeNormal guibg=%s
@@ -62,14 +62,7 @@ require("lazy").setup({
       --
       -- hi NvimTreeWinSeparator guibg=%s guifg=%s
       -- ]], '%%s', bg))
-
-      vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
-
-      vim.cmd [[
-      hi! Folded guifg=#282c34 guibg=#5c6370
-      hi MatchParen guifg=#ffef28
-      ]]
-    end,
+    end
   },
   {
     'nvim-lualine/lualine.nvim',
