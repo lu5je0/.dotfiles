@@ -1,67 +1,40 @@
 local M = {}
 local big_file = require('lu5je0.ext.big-file')
+local function_utils = require('lu5je0.lang.function-utils')
 
-local last_line_nr = nil
-function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
-  local visible_duration = 1500
-  local timer = nil
+local ENABLE_CMD = 'silent! SatelliteEnable'
+local DISABLE_CMD = 'silent! SatelliteDisable'
+local REFRESH_CMD = 'silent! SatelliteRefresh'
 
-  local function show(params)
-    if vim.api.nvim_get_current_buf() ~= params.buf then
-      return
-    end
-    local current_last_line_nr = vim.fn.line("w$")
-    if last_line_nr == current_last_line_nr then
-      return
-    end
-    last_line_nr = current_last_line_nr
-    
-    if big_file.is_big_file(0) then
-      vim.cmd(disable_cmd)
-      return
-    end
+local hide_scroll_bar = function_utils.debounce(function()
+  -- 搜索时不自动隐藏
+  if vim.v.hlsearch == 1 then
+    return
+  end
+  vim.cmd(DISABLE_CMD)
+end, 1500)
 
-    if timer and not timer:is_closing() then
-      timer:close()
-    else
-      -- print('refresh ', vim.loop.gettimeofday())
-      vim.cmd(enable_cmd)
-      -- 不加refresh，需要<c-d>两次才会出现satellite
-      vim.cmd(refresh_cmd)
-    end
-    
-    -- 搜索时不自动隐藏
-    if vim.v.hlsearch == 1 then
-      return
-    end
-    
-    timer = vim.defer_fn(function()
-      if vim.bo.buftype == 'nofile' and vim.bo.filetype == 'vim' then
-        return
-      end
-      ---@diagnostic disable-next-line: param-type-mismatch
-      local ok, err = pcall(vim.cmd, disable_cmd)
-      if not ok then
-        print(err)
-      end
-    end, visible_duration)
+local show_scroll_bar = function_utils.throttle(function()
+  if big_file.is_big_file(0) then
+    vim.cmd(DISABLE_CMD)
+    return
   end
 
+  vim.cmd(ENABLE_CMD)
+  vim.schedule(function ()
+    -- 不加refresh，需要<c-d>两次才会出现satellite
+    vim.cmd(REFRESH_CMD)
+  end)
+
+  hide_scroll_bar()
+end, 500)
+
+local function register_hide_bar_task()
   local satellite_group = vim.api.nvim_create_augroup('satellite_group', { clear = true })
   vim.api.nvim_create_autocmd({ 'WinScrolled', 'CmdlineEnter' }, {
     group = satellite_group,
     pattern = { '*' },
-    callback = show,
-  })
-
-  vim.api.nvim_create_autocmd({ 'BufLeave' }, {
-    group = satellite_group,
-    pattern = { '*' },
-    callback = function()
-      -- if big_file.is_big_file(0) then
-      vim.cmd("SatelliteDisable")
-      -- end
-    end,
+    callback = show_scroll_bar,
   })
 end
 
@@ -114,12 +87,6 @@ function M.setup()
     vim.cmd("highlight ScrollView guibg=LightCyan guifg=NONE")
   end, 100)
 
-
-  local enable_cmd = 'silent! SatelliteEnable'
-  local disable_cmd = 'silent! SatelliteDisable'
-  local refresh_cmd = 'silent! SatelliteRefresh'
-  M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
-
   -- workaroud for builtin keymap
   vim.cmd [[
   nnoremap zfa zfa
@@ -141,6 +108,8 @@ function M.setup()
   silent! sunmap zd
   silent! sunmap zF
   ]]
+  
+  register_hide_bar_task()
 end
 
 return M
