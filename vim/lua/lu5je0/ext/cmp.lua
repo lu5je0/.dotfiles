@@ -59,11 +59,12 @@ local function fix_indent()
   vim.defer_fn(function()
     local cursor = vim.fn.getpos(".")
     local indent_num = vim.fn.indent('.')
- 
+
     if vim.api.nvim_get_mode().mode == 's' then
       return
     end
-    vim.cmd("norm! ==")
+    
+    vim.cmd("norm ==")
     
     local sw = vim.fn.shiftwidth()
 

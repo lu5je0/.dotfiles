@@ -517,17 +517,17 @@ require("lazy").setup({
     end,
     keys = { '<c-a>', '<c-x>' }
   },
-  {
-    "smjonas/live-command.nvim",
-    config = function()
-      require("live-command").setup {
-        commands = {
-          Norm = { cmd = "norm" },
-        },
-      }
-    end,
-    event = { 'CmdlineEnter' }
-  },
+  -- {
+  --   "smjonas/live-command.nvim",
+  --   config = function()
+  --     require("live-command").setup {
+  --       commands = {
+  --         Norm = { cmd = "norm" },
+  --       },
+  --     }
+  --   end,
+  --   event = { 'CmdlineEnter' }
+  -- },
   {
     'AckslD/messages.nvim',
     config = function()
