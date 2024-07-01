@@ -1,4 +1,5 @@
 local timer = require('lu5je0.lang.timer')
+local function_utils = require('lu5je0.lang.function-utils')
 local string_utils = require('lu5je0.lang.string-utils')
 local lualine = require('lualine')
 local file_util = require('lu5je0.core.file')
@@ -279,13 +280,19 @@ ins_left {
   padding = { left = 1, right = 0 },
 }
 
+local refresh_gps_text = function_utils.debounce(function(bufnr)
+  vim.b[bufnr].gps_text = string.sub(require('lu5je0.misc.gps-path').path(), 1, 60)
+end, 50)
 ins_left {
   function()
-    return string.sub(require('lu5je0.misc.gps-path').path(), 1, 60)
+    local bufnr = vim.api.nvim_get_current_buf()
+    refresh_gps_text(bufnr)
+    local text = vim.b[bufnr].gps_text
+    return text == nil and "" or text
   end,
   inactive = true,
   cond = function()
-    return not big_file.is_big_file(0) and require('lu5je0.misc.gps-path').is_available() and conditions.hide_in_width()
+    return not big_file.is_big_file(0) and conditions.hide_in_width() and require('lu5je0.misc.gps-path').is_available()
   end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },
