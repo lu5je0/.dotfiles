@@ -133,7 +133,7 @@ local function truncate(label)
 end
 
 local format = function(entry, vim_item)
-  vim_item.kind = ' ' .. (lsp_kind_icons[vim_item.kind] or ' ') .. ''
+  vim_item.kind = ' ' .. (lsp_kind_icons[vim_item.kind] or ' ')
   vim_item.abbr = truncate(vim_item.abbr)
   vim_item.menu = ({
         buffer = '[B]',
@@ -144,10 +144,10 @@ local format = function(entry, vim_item)
         lazydev = '[N]',
       })[entry.source.name]
       
-  -- 移除java方法后面的~
-  if vim_item.abbr:sub(-2, -1) == ')~' then
-    vim_item.abbr = vim_item.abbr:sub(1, -2)
-  end
+  -- -- 移除java方法后面的~
+  -- if vim_item.abbr:sub(-2, -1) == ')~' then
+  --   vim_item.abbr = vim_item.abbr:sub(1, -2)
+  -- end
 
   return vim_item
 end

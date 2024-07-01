@@ -1,8 +1,13 @@
 {
   "Console Log": {
     "prefix": "cl",
-    "body": "console.log($1);",
+    "body": "console.log($1)",
     "description": "Console Log"
+  },
+  "yyyy": {
+    "prefix": ["yyyyMMddHHmmss"],
+    "body": [ "YYYY-MM-DD HH:mm:ss" ],
+    "description": "yyyy"
   },
   "Named Function": {
     "prefix": "fnn",
