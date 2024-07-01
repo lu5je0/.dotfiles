@@ -39,7 +39,7 @@ local cmd_and_print = function(...)
 end
 
 ---@diagnostic disable-next-line: param-type-mismatch
-vim.defer_fn(function()
+vim.schedule(function()
   -- movement
   set_map({ 'x', 'n', 'o' }, 'H', '^')
   set_map({ 'x', 'n', 'o' }, 'L', '$')
@@ -108,6 +108,18 @@ vim.defer_fn(function()
 
   -- ctrl-c 复制
   set_x_map('<C-c>', 'y')
+  
+  set_map('n', '<space><space>', function()
+    -- 保存当前视图状态
+    local save = vim.fn.winsaveview()
+    -- 选择最后插入的文本
+    vim.cmd('normal! `[v`]')
+    -- 重新缩进选定文本
+    vim.cmd('silent! normal =')
+    -- 恢复视图状态
+    vim.fn.winrestview(save)
+    keys_helper.feedkey('^')
+  end)
 
   vim.cmd [[
   nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
@@ -128,8 +140,6 @@ vim.defer_fn(function()
   nnoremap <space>h H
   nnoremap <space>L L
   nnoremap <space>l L
-  
-  nnoremap <space><space> %
   
   " xmap : :<c-u>
 
@@ -226,4 +236,4 @@ vim.defer_fn(function()
   silent! vunmap crr
   ]]
 
-end, 0)
+end)
