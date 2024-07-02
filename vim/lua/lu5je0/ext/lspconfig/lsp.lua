@@ -4,6 +4,8 @@ local installed_server_names = require('mason-lspconfig').get_installed_servers(
 
 local lspconfig = require("lspconfig")
 
+local autostart_filetypes = {}
+
 local function diagnostic()
   vim.diagnostic.config {
     virtual_text = false,
@@ -85,6 +87,7 @@ local function config()
     local opts = {
       capabilities = capabilities,
       on_attach = M.on_attach,
+      autostart = false,
     }
 
     if server_name == 'lua_ls' then
@@ -102,6 +105,10 @@ local function config()
       opts.on_attach = require('lu5je0.ext.lspconfig.lspservers.tsserver').on_attach(opts.on_attach)
     elseif server_name == 'jdtls' then
       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.jdtls').on_init
+    end
+    
+    for _, filetype in ipairs(server.document_config.default_config.filetypes) do
+      table.insert(autostart_filetypes, filetype)
     end
 
     server.setup(opts)
@@ -123,13 +130,31 @@ local function semantic_token_highlight()
   ]]
 end
 
+local function start_lsp()
+  local bigfile = require('lu5je0.ext.big-file')
+  if table.contain(autostart_filetypes, vim.bo.filetype) then
+    if not bigfile.is_big_file(vim.api.nvim_get_current_buf()) then
+      vim.cmd('LspStart')
+    end
+  end
+end
+
 function M.setup()
   diagnostic()
   config()
   semantic_token_highlight()
+  
   vim.defer_fn(function()
-    vim.cmd("LspStart")
+    start_lsp()
   end, 0)
+  
+  vim.api.nvim_create_autocmd('FileType', {
+    group = vim.api.nvim_create_augroup('lsp_autocmd_group', { clear = true }),
+    pattern = autostart_filetypes,
+    callback = function()
+      start_lsp()
+    end,
+  })
 end
 
 return M

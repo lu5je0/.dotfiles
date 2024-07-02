@@ -30,8 +30,8 @@ return {
             local line = vim.api.nvim_get_current_line()
             local cursor = vim.api.nvim_win_get_cursor(0)[2]
 
-            local current = string.sub(line, cursor, cursor + 1)
-            if current == "." or current == "," or current == " " then
+            local current = string.sub(line, cursor, cursor)
+            if current == "." then
               cmp.setup.buffer {
                 window = {
                   completion = {

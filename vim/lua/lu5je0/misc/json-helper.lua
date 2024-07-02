@@ -111,8 +111,10 @@ function M.setup()
   end, { force = true })
 
   vim.api.nvim_create_user_command('Json', function()
-    vim.cmd('set ft=json')
     M.format()
+    if vim.fn.line("$") < 10000 then
+      vim.cmd('set ft=json')
+    end
   end, { force = true })
 
   vim.api.nvim_create_user_command('Jq', function(args)
