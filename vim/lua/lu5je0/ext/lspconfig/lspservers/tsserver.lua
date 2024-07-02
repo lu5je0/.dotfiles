@@ -1,20 +1,27 @@
-local cmp = require('cmp')
-cmp.event:on('menu_closed', function()
-  if vim.bo.filetype == 'javascript' or vim.bo.filetype == 'typescript' then
-    cmp.setup.buffer {
-      window = {
-        completion = {
-          col_offset = -2
-        }
-      }
-    }
-  end
-end)
-
 return {
   on_attach = function(on_attach)
     return function(client, bufnr)
       on_attach(client, bufnr)
+      
+      local cmp = require('cmp')
+      
+      vim.api.nvim_create_autocmd({ "User" },
+      {
+        buffer = bufnr,
+        callback = function(args)
+          if args.match == 'CmpMenuClosed' then
+            cmp.setup.buffer {
+              window = {
+                completion = {
+                  col_offset = -2
+                }
+              }
+            }
+          end
+        end
+      }
+      )
+      
       vim.api.nvim_create_autocmd({ "TextChangedI" },
       {
         buffer = bufnr,

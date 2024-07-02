@@ -331,3 +331,7 @@ cmp.event:on(
     }
   })
 )
+
+cmp.event:on('menu_closed', function()
+  vim.cmd('doautocmd User CmpMenuClosed')
+end)
