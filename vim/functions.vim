@@ -21,14 +21,6 @@ EOF
 let g:py_func_init = 1
 endfunction
 
-function! GuessLang(...)
-call PyFuncInit()
-python3 << EOF
-lang_detector.detect_filetype()
-EOF
-endfunction
-command! -nargs=* GuessLang call GuessLang(<f-args>)
-
 function! SetOperation(...)
 call PyFuncInit()
 python3 << EOF

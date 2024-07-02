@@ -139,7 +139,6 @@ function M.setup()
       j = 'junk-list',
       g = 'git-changes',
 
-      q = { "<cmd>echom 'detecting' | GuessLang<cr>", 'GuessLang' },
       e = { 'locate-file' },
       W = { '<cmd>SudaWrite<cr>', 'sudo-write' },
       d = { 'dir .dotfiles' },
