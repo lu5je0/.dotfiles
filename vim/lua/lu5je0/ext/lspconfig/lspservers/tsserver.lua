@@ -1,4 +1,44 @@
+local cmp = require('cmp')
+cmp.event:on('menu_closed', function()
+  if vim.bo.filetype == 'javascript' or vim.bo.filetype == 'typescript' then
+    cmp.setup.buffer {
+      window = {
+        completion = {
+          col_offset = -2
+        }
+      }
+    }
+  end
+end)
+
 return {
+  on_attach = function(on_attach)
+    return function(client, bufnr)
+      on_attach(client, bufnr)
+      vim.api.nvim_create_autocmd({ "TextChangedI" },
+      {
+        buffer = bufnr,
+        callback = function()
+          if vim.bo.filetype == 'javascript' or vim.bo.filetype == 'typescript' then
+            local line = vim.api.nvim_get_current_line()
+            local cursor = vim.api.nvim_win_get_cursor(0)[2]
+
+            local current = string.sub(line, cursor, cursor + 1)
+            if current == "." or current == "," or current == " " then
+              cmp.setup.buffer {
+                window = {
+                  completion = {
+                    col_offset = -1
+                  }
+                }
+              }
+            end
+          end
+        end
+      }
+      )
+    end
+  end,
   on_init = function(client)
     local orig_rpc_request = client.rpc.request
     function client.rpc.request(method, params, handler, ...)
