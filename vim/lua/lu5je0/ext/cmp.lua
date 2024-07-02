@@ -188,6 +188,13 @@ cmp.setup {
   mapping = {
     ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs( -4), { 'i' --[[ , 'c' ]] }),
     ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i' --[[ , 'c' ]] }),
+    ['<c-g>'] = cmp.mapping(function()
+      if cmp.visible_docs() then
+        cmp.close_docs()
+      else
+        cmp.open_docs()
+      end
+    end, { 'i' }),
     ['<c-n>'] = cmp.mapping(function()
       if cmp.visible() then
         cmp.abort()
@@ -221,6 +228,14 @@ cmp.setup {
     },
   },
 }
+
+cmp.setup.filetype({ 'java' }, {
+  view = {
+    docs = {
+      auto_open = false
+    }
+  }
+})
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
 -- cmp.setup.cmdline('/', {
