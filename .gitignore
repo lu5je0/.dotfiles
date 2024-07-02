@@ -9,3 +9,4 @@ __pycache__
 .idea/
 *.swp
 submodule/SubtitlesDownloader/.env/
+node_modules/
