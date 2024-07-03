@@ -1,7 +1,7 @@
-import pkg from '@vscode/vscode-languagedetection';
+import pkg from '@vscode/vscode-languagedetection'
 import * as readline from 'readline'
 
-const { ModelOperations } = pkg;
+const { ModelOperations } = pkg
 
 function readStdin() {
     return new Promise((resolve, reject) => {
@@ -9,28 +9,28 @@ function readStdin() {
             input: process.stdin,
             output: process.stdout,
             terminal: false
-        });
+        })
 
-        let data = '';
+        let data = ''
         rl.on('line', (line) => {
-            data += line + '\n';
-        });
+            data += line + '\n'
+        })
 
         rl.on('close', () => {
-            resolve(data);
-        });
+            resolve(data)
+        })
 
         rl.on('error', (err) => {
-            reject(err);
-        });
-    });
+            reject(err)
+        })
+    })
 }
 
 async function main() {
     let content = await readStdin()
-    const modulOperations = new ModelOperations();
-    const result = await modulOperations.runModel(content);
-    console.log(result[0].languageId);
+    const modulOperations = new ModelOperations()
+    const result = await modulOperations.runModel(content)
+    process.stdout.write(result[0].languageId)
 }
 
 main()

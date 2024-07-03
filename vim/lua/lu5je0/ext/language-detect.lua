@@ -1,49 +1,23 @@
 local M = {}
 
-local function detect_filetype()
-  local lines = vim.api.nvim_buf_get_lines(0, 0, 100, false)
-end
+local lang_map = {
+  ts = "typescript",
+}
 
-local uv = vim.uv
-
-local function grepText(text, pattern)
-  local stdin = uv.new_pipe()
-  local stdout = uv.new_pipe()
-  local stderr = uv.new_pipe()
-
-  local handle, pid = uv.spawn("grep", {
-    args = {'He'},
-    stdio = { stdin, stdout, stderr }
-  }, function(code, signal) -- on exit print("exit code", code) print("exit signal", signal)
-  end)
-
-  print("process opened", handle, pid)
-
-  uv.write(stdin, "Hello World")
-
-  uv.read_start(stdout, function(err, data)
-    assert(not err, err)
-    if data then
-      print("stdout chunk", stdout, data)
-    end
-  end)
-
-  uv.read_start(stderr, function(err, data)
-    assert(not err, err)
-    if data then
-      print("stderr chunk", stderr, data)
-    end
-  end)
-
-  uv.shutdown(stdin, function()
-    print("stdin shutdown", stdin)
-    uv.close(handle, function()
-      print("process closed", handle, pid)
+M.delect_and_set_filetype = function()
+  require('lu5je0.lang.uv-utils').runProcessAsync('node',
+    { vim.fn.stdpath('config') .. '/node/lanuagedetection.mjs' }, vim.api.nvim_buf_get_lines(0, 0, 1000, false),
+    function(out, err)
+      if out and out ~= "" then
+        if lang_map[out] then
+          out = lang_map[out]
+        end
+        
+        local cmd = 'set filetype=' .. out
+        vim.cmd(cmd)
+        print(cmd)
+      end
     end)
-  end)
-  print('end')
 end
-
-print(grepText('good\nhhh', 'g'))
 
 return M

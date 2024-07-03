@@ -98,6 +98,11 @@ vim.schedule(function()
   -- selection search
   set_map('x', { '<leader>/', '<space>/' }, '<Esc>/\\%V', {})
   
+  
+  set_map('n', '<leader>m', function()
+    require('lu5je0.ext.language-detect').delect_and_set_filetype()
+  end)
+  
   -- text
   set_map('n', '<leader>xx', ":%!", {
     nowait = true
