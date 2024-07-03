@@ -281,7 +281,12 @@ ins_left {
 }
 
 local refresh_gps_text = function_utils.debounce(function(bufnr)
-  vim.b[bufnr].gps_text = string.sub(require('lu5je0.misc.gps-path').path(), 1, 60)
+  local path = require('lu5je0.misc.gps-path').path()
+  local max_len = 50
+  if #path > max_len then
+    path = string.sub(path, 1, 50) .. '…'
+  end
+  vim.b[bufnr].gps_text = path
 end, 50)
 ins_left {
   function()

@@ -2,6 +2,8 @@ local M = {}
 
 local lang_map = {
   ts = "typescript",
+  js = "javascript",
+  rs = "rust",
 }
 
 M.delect_and_set_filetype = function()
