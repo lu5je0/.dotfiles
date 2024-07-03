@@ -1,7 +1,7 @@
 local M = {}
 
 function M.now()
-  local timestamp, s = vim.loop.gettimeofday()
+  local timestamp, s = vim.uv.gettimeofday()
   return timestamp * 1000 + math.floor(s / 1000)
 end
 

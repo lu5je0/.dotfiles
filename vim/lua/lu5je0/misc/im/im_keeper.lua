@@ -12,7 +12,7 @@ end
 
 local focus_gained = true
 local function keep_normal_mode_with_abc_im(interval)
-  local timer = vim.loop.new_timer()
+  local timer = vim.uv.new_timer()
 
   timer:start(0, interval, vim.schedule_wrap(function()
     if focus_gained then

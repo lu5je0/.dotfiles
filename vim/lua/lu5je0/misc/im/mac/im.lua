@@ -37,7 +37,7 @@ function M.get_im_switcher()
       --   macism.switch_ime(im_code)
       -- end,
       switch_to_ime_macism_executed_file = function(im_code)
-        vim.loop.new_thread(function(path, ime)
+        vim.uv.new_thread(function(path, ime)
           io.popen(('%s %s 3000 2>/dev/null'):format(path, ime)):close()
         end, std_path .. '/lib/macism', im_code)
       end,

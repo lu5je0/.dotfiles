@@ -1,6 +1,6 @@
 local M = {}
 
-local uv = vim.loop
+local uv = vim.uv
 
 local close_handle = function(handle)
   if handle and not handle:is_closing() then handle:close() end

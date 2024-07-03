@@ -17,7 +17,7 @@ function M.format_bytes(bytes)
 end
 
 function M.hunman_readable_file_size(filepath)
-  return M.format_bytes(vim.loop.fs_stat(filepath).size)
+  return M.format_bytes(vim.uv.fs_stat(filepath).size)
 end
 
 local function print_with_red(msg)
