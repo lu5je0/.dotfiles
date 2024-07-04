@@ -20,7 +20,7 @@ M.disable_ime = rate_limiter:wrap(function()
   vim.uv.new_thread(function(path)
     io.popen(path .. ' 2>&1 1>/dev/null'):close()
   end, DISABLE_IME)
-end, true)
+end)
 
 M.enable_ime = rate_limiter:wrap(function()
   if M.save_last_ime then
@@ -30,7 +30,7 @@ M.enable_ime = rate_limiter:wrap(function()
       io.popen(path .. ' 2>&1 1>/dev/null'):close()
     end, ENABLE_IME)
   end
-end, true)
+end)
 
 function M.toggle_save_last_ime()
   local keeper = require('lu5je0.misc.env-keeper')
