@@ -15,18 +15,22 @@ local DISABLE_IME = '/mnt/d/bin/toDisableIME.exe'
 local ENABLE_IME = '/mnt/d/bin/toEnableIME.exe'
 
 M.disable_ime = rate_limiter:wrap(function()
+  -- local handle = vim.uv.spawn(DISABLE_IME, { args = { '2>&1', '1>/dev/null' }})
+  -- if handle and not handle:is_closing() then handle:close() end
   vim.uv.new_thread(function(path)
     io.popen(path .. ' 2>&1 1>/dev/null'):close()
   end, DISABLE_IME)
-end)
+end, true)
 
 M.enable_ime = rate_limiter:wrap(function()
   if M.save_last_ime then
-   vim.uv.new_thread(function(path)
+    -- local handle = vim.uv.spawn(ENABLE_IME, { args = { '2>&1', '1>/dev/null' } })
+    -- if handle and not handle:is_closing() then handle:close() end
+    vim.uv.new_thread(function(path)
       io.popen(path .. ' 2>&1 1>/dev/null'):close()
     end, ENABLE_IME)
   end
-end)
+end, true)
 
 function M.toggle_save_last_ime()
   local keeper = require('lu5je0.misc.env-keeper')
@@ -48,7 +52,7 @@ local function create_autocmd()
       M.disable_ime()
     end
   })
-  
+
   vim.api.nvim_create_autocmd('CmdlineLeave', {
     group = group,
     pattern = { '*' },
