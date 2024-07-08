@@ -195,6 +195,9 @@ cmp.setup {
         cmp.open_docs()
       end
     end, { 'i' }),
+    ['<c-s>'] = cmp.mapping(function()
+      cmp.complete({ config = { sources = { { name = 'luasnip' } } } })
+    end, { 'i' }),
     ['<c-n>'] = cmp.mapping(function()
       if cmp.visible() then
         cmp.abort()
