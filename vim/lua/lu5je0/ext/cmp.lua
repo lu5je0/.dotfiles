@@ -4,6 +4,7 @@ local cmp = require('cmp')
 local keys_helper = require('lu5je0.core.keys')
 local string_utils = require('lu5je0.lang.string-utils')
 local luasnip = require('luasnip')
+local bigfile = require('lu5je0.ext.big-file')
 
 local indent_change_filetypes = {
   'lua'
@@ -301,11 +302,11 @@ hi! CmpItemKindUnit guibg=NONE guifg=#D4D4D4
 ]])
 
 vim.api.nvim_create_user_command("CmpAutocompleteDisable", function()
-  require('cmp').setup.buffer { enabled = false }
+  require('cmp').setup.buffer { completion = { autocomplete = false } }
 end, {})
 
 vim.api.nvim_create_user_command("CmpAutocompleteEnable", function()
-  require('cmp').setup.buffer { enabled = true }
+  require('cmp').setup.buffer { completion = { autocomplete = true } }
 end, {})
 
 local handlers = require('nvim-autopairs.completion.handlers')
