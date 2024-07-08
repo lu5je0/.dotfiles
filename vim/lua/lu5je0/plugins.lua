@@ -128,9 +128,7 @@ require("lazy").setup({
   },
   {
     'aklt/plantuml-syntax',
-    ft = 'plantuml',
-    keys = '<leader>fn',
-    lazy = true
+    ft = 'plantuml'
   },
   {
     'lewis6991/gitsigns.nvim',
