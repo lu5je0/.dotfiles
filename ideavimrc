@@ -111,8 +111,6 @@ nmap <leader><space> <Action>(ShowErrorDescription)
 
 " windows multiple0-cursors key maps
 nmap <c-n> <A-n>
-nmap <c-x> <A-x>
-nmap <c-p> <A-p>
 xmap <c-n> <A-n>
 xmap <c-x> <A-x>
 xmap <c-p> <A-p>
