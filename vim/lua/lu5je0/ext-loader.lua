@@ -123,3 +123,4 @@ require('lu5je0.misc.oil-hijack').setup()
 --     vim.api.nvim_set_hl(ns_id, '@number', { fg = '#6cb6eb' })
 --   end,
 -- }
+require('lu5je0.misc.redir')

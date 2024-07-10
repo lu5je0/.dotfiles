@@ -526,21 +526,21 @@ require("lazy").setup({
   --   end,
   --   event = { 'CmdlineEnter' }
   -- },
-  {
-    'AckslD/messages.nvim',
-    config = function()
-      require("messages").setup {
-        post_open_float = function(_)
-          vim.cmd [[
-          au! BufLeave * ++once lua vim.cmd(":q")
-          set number
-          ]]
-          vim.fn.cursor { 99999, 0 }
-        end
-      }
-    end,
-    cmd = 'Messages',
-  },
+  -- {
+  --   'AckslD/messages.nvim',
+  --   config = function()
+  --     require("messages").setup {
+  --       post_open_float = function(_)
+  --         vim.cmd [[
+  --         au! BufLeave * ++once lua vim.cmd(":q")
+  --         set number
+  --         ]]
+  --         vim.fn.cursor { 99999, 0 }
+  --       end
+  --     }
+  --   end,
+  --   cmd = 'Messages',
+  -- },
 
   {
     'lukas-reineke/indent-blankline.nvim',
