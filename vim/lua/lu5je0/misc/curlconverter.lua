@@ -1,5 +1,9 @@
 local M = {}
 
+local ft_map = {
+  ['javascript-axios'] = 'javascript'
+}
+
 function M.convert(language)
   local cmd = string.format(
     [[
@@ -7,7 +11,7 @@ function M.convert(language)
     set ft=%s
     ]],
     language,
-    language
+    ft_map[language] ~= nil and ft_map[language] or language
   )
 
   vim.cmd(cmd)

@@ -1,0 +1,60 @@
+{
+  "Console Log": {
+    "prefix": "cl",
+    "body": "console.log($1)",
+    "description": "Console Log"
+  },
+  "yyyy": {
+    "prefix": ["yyyyMMddHHmmss"],
+    "body": [ "YYYY-MM-DD HH:mm:ss" ],
+    "description": "yyyy"
+  },
+  "Named Function": {
+    "prefix": "fnn",
+    "body": [
+      "function ${1}() {",
+      "  $2",
+      "}"
+    ],
+    "description": "Named Function"
+  },
+  "Anonymous Function": {
+    "prefix": "fna",
+    "body": [
+      "function() {",
+      "  $2",
+      "}"
+    ],
+    "description": "Anonymous Function"
+  },
+  "fori": {
+    "prefix": "fori",
+    "body": [
+      "for (let ${1:i} = 0; $1 < ${2:}; $1++) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Anonymous Function"
+  },
+  "while": {
+    "prefix": "while",
+    "body": [
+      "while ($1)"
+    ],
+    "description": "while"
+  },
+  "af": {
+    "prefix": "af",
+    "body": [
+      "($1) => {$0}"
+    ],
+    "description": "arrow function"
+  },
+  "afr": {
+    "prefix": "afr",
+    "body": [
+      "($1) => { return $0 }"
+    ],
+    "description": "arrow function with return"
+  }
+}

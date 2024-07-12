@@ -28,7 +28,7 @@ end, {
   complete = starts_with_complete({ 'ansible', 'cfml', 'clojure', 'csharp', 'dart',
     'elixir', 'go', 'har', 'http', 'httpie', 'java', 'javascript', 'json',
     'matlab', 'node', 'node-axios', 'node-request', 'php', 'php-guzzle',
-    'php-requests', 'python', 'r', 'ruby', 'rust', 'wget' }),
+    'php-requests', 'python', 'r', 'ruby', 'rust', 'wget', 'javascript-axios' }),
   nargs = 1
 })
 
