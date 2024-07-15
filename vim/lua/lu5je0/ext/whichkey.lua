@@ -3,18 +3,18 @@ local M = {}
 function M.setup()
   local setup = {
     plugins = {
-      marks = true, -- shows a list of your marks on ' and `
+      marks = true,     -- shows a list of your marks on ' and `
       registers = true, -- shows your registers on " in NORMAL or <C-r> in INSERT mode
       -- the presets plugin, adds help for a bunch of default keybindings in Neovim
       -- No actual key bindings are created
       presets = {
-        operators = false, -- adds help for operators like d, y, ...
-        motions = false, -- adds help for motions
-        text_objects = false, -- help for text objects triggered after entering an operator
-        windows = true, -- default bindings on <c-w>
-        nav = false, -- misc bindings to work with windows
-        z = true, -- bindings for folds, spelling and others prefixed with z
-        g = false, -- bindings for prefixed with g
+        operators = false,                             -- adds help for operators like d, y, ...
+        motions = false,                               -- adds help for motions
+        text_objects = false,                          -- help for text objects triggered after entering an operator
+        windows = true,                                -- default bindings on <c-w>
+        nav = false,                                   -- misc bindings to work with windows
+        z = true,                                      -- bindings for folds, spelling and others prefixed with z
+        g = false,                                     -- bindings for prefixed with g
       },
       spelling = { enabled = true, suggestions = 20 }, -- use which-key for spelling hints
     },
@@ -24,15 +24,15 @@ function M.setup()
       group = '+', -- symbol prepended to a group
     },
     window = {
-      border = 'single', -- none, single, double, shadow
-      position = 'bottom', -- bottom, top
-      margin = { 1, 0, 1, 0 }, -- extra window margin [top, right, bottom, left]
+      border = 'single',        -- none, single, double, shadow
+      position = 'bottom',      -- bottom, top
+      margin = { 1, 0, 1, 0 },  -- extra window margin [top, right, bottom, left]
       padding = { 2, 2, 2, 2 }, -- extra window padding [top, right, bottom, left]
     },
     layout = {
       height = { min = 1, max = 10 }, -- min and max height of the columns
       width = { min = 20, max = 80 }, -- min and max width of the columns
-      spacing = 2, -- spacing between columns
+      spacing = 2,                    -- spacing between columns
     },
     triggers = { '<leader>', '<c-w>', 'z' },
     -- hidden = { "<silent>", "<cmd>", "<Cmd>", "<CR>", "call", "lua", "^:", "^ " }, -- hide mapping boilerplate
@@ -54,8 +54,8 @@ function M.setup()
     ['I'] = 'focus symbols',
     ['Q'] = 'exit',
     ['u'] = 'undotree',
-    ['i'] = 'symbols' ,
-    [','] = 'last buffer' ,
+    ['i'] = 'symbols',
+    [','] = 'last buffer',
     ['n'] = { '<cmd>noh<cr>', 'no highlight' },
     ['d'] = { '<c-^>', 'buffer switch' },
     ['e'] = { 'file explorer' },
@@ -87,11 +87,11 @@ function M.setup()
     },
     m = {
       name = '+mark',
-      c =  'clear color',
-      r =  'marked in red',
-      g =  'marked in green',
-      y =  'marked in yellow',
-      b =  'marked in brown',
+      c = 'clear color',
+      r = 'marked in red',
+      g = 'marked in green',
+      y = 'marked in yellow',
+      b = 'marked in brown',
     },
     c = {
       name = '+code',
@@ -176,8 +176,8 @@ function M.setup()
     v = {
       name = '+vim',
       v = { '<cmd>edit ' ..
-          vim.api.nvim_eval('$HOME') ..
-          '/.dotfiles/vim/init.lua | cd ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim <cr>', 'edit init.lua' },
+      vim.api.nvim_eval('$HOME') ..
+      '/.dotfiles/vim/init.lua | cd ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim <cr>', 'edit init.lua' },
       s = 'toggle signcolumn',
       S = { '<cmd>set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes' },
       c = 'toggle case insensitive',
@@ -228,12 +228,12 @@ function M.setup()
   }
 
   local n_opts = {
-    mode = 'n', -- NORMAL mode
+    mode = 'n',     -- NORMAL mode
     prefix = '<leader>',
-    buffer = nil, -- Global mappings. Specify a buffer number for buffer local mappings
-    silent = true, -- use `silent` when creating keymaps
+    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
+    silent = true,  -- use `silent` when creating keymaps
     noremap = true, -- use `noremap` when creating keymaps
-    nowait = true, -- use `nowait` when creating keymaps
+    nowait = true,  -- use `nowait` when creating keymaps
   }
 
   local x_mappings = {
@@ -269,12 +269,12 @@ function M.setup()
   }
 
   local x_opts = {
-    mode = 'x', -- VISUAL mode
+    mode = 'x',     -- VISUAL mode
     prefix = '<leader>',
-    buffer = nil, -- Global mappings. Specify a buffer number for buffer local mappings
-    silent = true, -- use `silent` when creating keymaps
+    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
+    silent = true,  -- use `silent` when creating keymaps
     noremap = true, -- use `noremap` when creating keymaps
-    nowait = true, -- use `nowait` when creating keymaps
+    nowait = true,  -- use `nowait` when creating keymaps
   }
 
   local wk = require('which-key')
@@ -284,4 +284,5 @@ function M.setup()
   wk.register(x_mappings, x_opts)
 end
 
+return M
 return M
