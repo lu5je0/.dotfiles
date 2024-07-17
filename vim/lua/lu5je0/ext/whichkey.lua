@@ -127,7 +127,7 @@ function M.setup()
       C = 'colorscheme',
       c = 'commnad',
       f = 'file',
-      s = 'recall',
+      -- s = 'recall',
       r = 'regex search',
       ['"'] = 'register',
       R = 'fuzzy search',
@@ -141,7 +141,7 @@ function M.setup()
 
       e = { 'locate-file' },
       W = { '<cmd>SudaWrite<cr>', 'sudo-write' },
-      d = { 'dir .dotfiles' },
+      s = { 'dir .dotfiles' },
       p = { 'dir packer' },
       w = { require('lu5je0.core.file').save_buffer, 'write' },
       J = { '<cmd>SaveAsJunkFile<cr>', 'new-junk-file' },
