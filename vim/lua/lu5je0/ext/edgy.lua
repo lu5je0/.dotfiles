@@ -59,15 +59,15 @@ function M.setup()
         -- },
       },
       right = {
-        {
-          ft = "spectre_panel",
-          size = { width = 0.5 },
-        },
-        {
-          ft = "Outline",
-          -- pinned = true,
-          open = "SymbolsOutline",
-        },
+        -- {
+        --   ft = "spectre_panel",
+        --   size = { width = 0.5 },
+        -- },
+        -- {
+        --   ft = "Outline",
+        --   -- pinned = true,
+        --   open = "SymbolsOutline",
+        -- },
       }
     }
 end
