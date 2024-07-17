@@ -5,8 +5,8 @@ local function keymap()
     vim.cmd('Outline!')
   end)
   
-  vim.keymap.set('n', '<leader>fs', function()
-  end)
+  -- vim.keymap.set('n', '<leader>fs', function()
+  -- end)
 end
 
 function M.setup()

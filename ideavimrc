@@ -74,7 +74,7 @@ nmap <silent> <right> <Action>(NextTab)
 nmap <leader>i <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
 " nmap <leader>dr <Action>(Debugger.ReloadFile)
-nmap <leader>d <Action>(Debugger.ReloadFile)
+nmap <leader>d <Action>(ActivateStructureToolWindow)
 nmap <leader>n :noh<cr>
 
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
