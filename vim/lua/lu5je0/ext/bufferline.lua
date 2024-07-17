@@ -52,6 +52,7 @@ bl.setup {
         text = 'Symbols',
         highlight = 'Red',
         text_align = 'center',
+        separator = '█'
       },
       {
         filetype = 'vista',
