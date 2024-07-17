@@ -20,7 +20,8 @@ require "ibl".overwrite {
 }
 
 ibl.setup {
-  -- debounce = 10,
+  -- <<时文本会闪烁
+  -- debounce = 500,
   indent = {
     char = "▏",
     highlight = highlight,
