@@ -34,7 +34,7 @@ function M.setup()
       width = { min = 20, max = 80 }, -- min and max width of the columns
       spacing = 2,                    -- spacing between columns
     },
-    triggers = { '<leader>', '<c-w>', 'z' },
+    triggers = { '<leader>', '<c-w>', 'z', '<space>' },
     -- hidden = { "<silent>", "<cmd>", "<Cmd>", "<CR>", "call", "lua", "^:", "^ " }, -- hide mapping boilerplate
     show_help = true, -- show help message on the command line when the popup is visible
   }

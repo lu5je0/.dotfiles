@@ -362,7 +362,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.whichkey').setup()
     end,
-    keys = { ',' },
+    keys = { '<leader>', '<space>' },
   },
 
   {
