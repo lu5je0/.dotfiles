@@ -39,11 +39,6 @@ function M.setup()
           size = { height = 0.5 },
         },
         {
-          ft = "Outline",
-          -- pinned = true,
-          open = "SymbolsOutline",
-        },
-        {
           ft = "dapui_scopes",
         },
         {
@@ -63,12 +58,17 @@ function M.setup()
         --   -- size = { height = 0.5 },
         -- },
       },
-      -- right = {
-      --   {
-      --     ft = "spectre_panel",
-      --     size = { width = 0.5 },
-      --   },
-      -- }
+      right = {
+        {
+          ft = "spectre_panel",
+          size = { width = 0.5 },
+        },
+        {
+          ft = "Outline",
+          -- pinned = true,
+          open = "SymbolsOutline",
+        },
+      }
     }
 end
 

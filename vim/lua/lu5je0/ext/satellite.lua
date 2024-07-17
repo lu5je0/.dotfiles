@@ -43,7 +43,7 @@ function M.setup()
     current_only = true,
     winblend = 80,
     zindex = 40,
-    excluded_filetypes = { 'lazy' },
+    excluded_filetypes = { 'lazy', 'Outline' },
     width = 2,
     handlers = {
       cursor = {

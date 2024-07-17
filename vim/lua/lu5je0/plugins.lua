@@ -631,12 +631,12 @@ require("lazy").setup({
       },
     },
     {
-      'simrat39/symbols-outline.nvim',
+      'hedyhli/outline.nvim',
       config = function()
         require('lu5je0.ext.symbols-outline').setup()
       end,
-      cmd = { 'SymbolsOutline' },
-      keys = { { mode = { 'n' }, '<leader>i' }, { mode = { 'n' }, '<leader>I' } }
+      cmd = { 'Outline' },
+      keys = { { mode = { 'n' }, '<leader>d' }, { mode = { 'n' }, '<leader>fs' } }
     },
     {
       "dnlhc/glance.nvim",
@@ -976,5 +976,17 @@ require("lazy").setup({
       require('lu5je0.ext.big-file').setup()
     end
   },
+  
+  {
+    'MeanderingProgrammer/markdown.nvim',
+    name = 'render-markdown', -- Only needed if you have another plugin named markdown.nvim
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' }, -- if you use the mini.nvim suite
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' }, -- if you use standalone mini plugins
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
+    config = function()
+      require('render-markdown').setup({})
+    end,
+    ft = 'markdown'
+  }
 
 }, opts)

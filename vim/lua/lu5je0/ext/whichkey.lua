@@ -57,7 +57,7 @@ function M.setup()
     ['i'] = 'symbols',
     [','] = 'last buffer',
     ['n'] = { '<cmd>noh<cr>', 'no highlight' },
-    ['d'] = { '<c-^>', 'buffer switch' },
+    -- ['d'] = { '<c-^>', 'buffer switch' },
     ['e'] = { 'file explorer' },
     ['a'] = { 'calcultor' },
     ['/'] = { 'eregex toggle' },
