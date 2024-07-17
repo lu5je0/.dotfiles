@@ -20,7 +20,7 @@ require "ibl".overwrite {
 }
 
 ibl.setup {
-  debounce = 500,
+  -- debounce = 10,
   indent = {
     char = "▏",
     highlight = highlight,

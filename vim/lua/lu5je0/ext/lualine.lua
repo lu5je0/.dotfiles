@@ -172,6 +172,7 @@ end
 
 local mode_mappings = {
   n = 'NOR',      -- Normal 模式
+  no = 'NOP',      -- Normal 模式
   i = 'INS',      -- Insert 模式
   c = 'COM',      -- Command-line 模式
   v = 'VIS',      -- Visual 模式
