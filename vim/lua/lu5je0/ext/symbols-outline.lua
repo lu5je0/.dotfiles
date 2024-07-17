@@ -6,7 +6,7 @@ local function keymap()
   end)
   
   vim.keymap.set('n', '<leader>fd', function()
-    vim.cmd('Outline')
+    vim.cmd('OutlineOpen')
     -- vim.cmd('norm zz')
   end)
 end
