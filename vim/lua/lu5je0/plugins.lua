@@ -329,6 +329,9 @@ require("lazy").setup({
 
   {
     'dstein64/vim-startuptime',
+    init = function()
+      vim.g.startuptime_tries = 20
+    end,
     config = function()
       vim.cmd("let $NEOVIM_MEASURE_STARTUP_TIME = 'TRUE'")
     end,
