@@ -1,4 +1,4 @@
-local timer = require('lu5je0.lang.timer')
+-- local timer = require('lu5je0.lang.timer')
 local function_utils = require('lu5je0.lang.function-utils')
 local string_utils = require('lu5je0.lang.string-utils')
 local lualine = require('lualine')

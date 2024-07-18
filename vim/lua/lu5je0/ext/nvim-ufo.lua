@@ -100,10 +100,11 @@ vim.api.nvim_create_autocmd('WinNew', {
 
 require('ufo').setup({
   provider_selector = function(bufnr, filetype, buftype)
-    if parsers.get_parser(bufnr) then
-      return { 'treesitter' }
-    end
-    return { 'treesitter' }
+    return { 'treesitter', 'indent' }
+    -- if parsers.get_parser(bufnr) then
+    --   return { 'treesitter' }
+    -- end
+    -- return { 'treesitter' }
   end,
   close_fold_kinds_for_ft = {},
   open_fold_hl_timeout = 0,
