@@ -182,7 +182,7 @@ require("lazy").setup({
     end
   },
   {
-    'kyazdani42/nvim-web-devicons',
+    'nvim-tree/nvim-web-devicons',
     -- config = function()
     --   require('nvim-web-devicons').setup {
     --     override = {
@@ -226,14 +226,14 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.bufferline')
     end,
-    dependencies = { 'kyazdani42/nvim-web-devicons' },
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
   },
   {
-    'kyazdani42/nvim-tree.lua',
+    'nvim-tree/nvim-tree.lua',
     -- just lock，in case of break changes
     -- commit = 'd52fdeb0a300ac42b9cfa65ae0600a299f8e8677',
     dependencies = {
-      'kyazdani42/nvim-web-devicons',
+      'nvim-tree/nvim-web-devicons',
     },
     config = function()
       require('lu5je0.ext.nvimtree').setup()
