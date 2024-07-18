@@ -327,13 +327,13 @@ require("lazy").setup({
       { mode = 'n', '<leader>sa' } }
   },
 
-  -- {
-  --   'dstein64/vim-startuptime',
-  --   config = function()
-  --     vim.cmd("let $NEOVIM_MEASURE_STARTUP_TIME = 'TRUE'")
-  --   end,
-  --   cmd = { 'StartupTime' },
-  -- },
+  {
+    'dstein64/vim-startuptime',
+    config = function()
+      vim.cmd("let $NEOVIM_MEASURE_STARTUP_TIME = 'TRUE'")
+    end,
+    cmd = { 'StartupTime' },
+  },
 
   {
     'mbbill/undotree',
