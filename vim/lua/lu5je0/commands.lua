@@ -64,7 +64,7 @@ vim.api.nvim_create_user_command('FileEncodingReload', function(t)
   vim.cmd('e ++enc=' .. t.fargs[1])
 end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
 
-require('lu5je0.misc.code-runner').create_command()
+-- require('lu5je0.misc.code-runner').create_command()
 
 require('lu5je0.misc.base64').create_command()
 

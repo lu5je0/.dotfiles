@@ -147,15 +147,13 @@ end
 local function keymapping()
   local opts = {}
 
-  vim.defer_fn(function()
-    vim.keymap.set('n', '<leader>cf', function()
-      M.format(M.FORMAT_TYPE.FORMAT)
-    end, opts)
+  vim.keymap.set('n', '<leader>cf', function()
+    M.format(M.FORMAT_TYPE.FORMAT)
+  end, opts)
 
-    vim.keymap.set('x', '<leader>cf', function()
-      M.format(M.FORMAT_TYPE.RANGE_FORMAT)
-    end, opts)
-  end, 10)
+  vim.keymap.set('x', '<leader>cf', function()
+    M.format(M.FORMAT_TYPE.RANGE_FORMAT)
+  end, opts)
 end
 
 function M.setup(params)
