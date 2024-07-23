@@ -14,6 +14,8 @@ end
 
 -- neovide
 if g.neovide then
+  -- wsl config path: config.toml
+  -- $HOME\AppData\Roaming\neovide 
   if has('wsl') then
     o.guifont="JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h11"
   else
