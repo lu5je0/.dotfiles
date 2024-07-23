@@ -66,10 +66,6 @@ end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk',
 
 -- require('lu5je0.misc.code-runner').create_command()
 
-require('lu5je0.misc.base64').create_command()
-
-require('lu5je0.misc.gmt').create_command()
-
 encode_command_creater.create_encode_command('InlineToArray', function(lines)
   return table.concat(string_util.split(lines, '\n'), ',')
 end)

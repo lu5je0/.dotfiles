@@ -228,3 +228,19 @@ lazy_load({
   end,
   commands = { 'Redir', "Messages" }
 })
+
+-- base64
+lazy_load({
+  config = function()
+    require('lu5je0.misc.base64').create_command()
+  end,
+  commands = { 'Base64Decode', 'Base64Encode' }
+})
+
+-- timestamp
+lazy_load({
+  config = function()
+    require('lu5je0.misc.gmt').create_command()
+  end,
+  commands = { 'TimestampToggle' }
+})
