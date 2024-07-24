@@ -365,6 +365,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.whichkey').setup()
     end,
+    commit = 'af4ded85542d40e190014c732fa051bdbf88be3d',
     keys = { '<leader>', '<space>' },
   },
 
