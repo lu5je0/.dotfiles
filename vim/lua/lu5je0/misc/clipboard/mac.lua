@@ -28,7 +28,7 @@ function M.read_clipboard_ffi()
     regtype = active_entry.regtype
   end
   ---@diagnostic disable-next-line: param-type-mismatch
-  return { string.split(text, '\n'), regtype }
+  return { string_util.split(text, '\n'), regtype }
 end
 
 function M.setup()

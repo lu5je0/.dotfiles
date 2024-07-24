@@ -83,7 +83,7 @@ function q-extract
 {
   filepath=$(realpath $1)
   if [ -f $1 ] ; then
-    if [ -n $2 ]; then
+    if [ "$2" ]; then
       mkdir $2
       echo "dir $2 created"
       cd $2
@@ -104,8 +104,8 @@ function q-extract
       *.7z)        7z x $filepath       ;;
       *)           echo "don't know how to extract '$1'..." ;;
     esac
-    if [ -n $2 ]; then
-      cd -
+    if [ "$2" ]; then
+      cd ..
     fi
   else
     echo "'$1' is not a valid file!"

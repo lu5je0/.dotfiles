@@ -45,6 +45,8 @@ o.splitright = true -- 默认在右侧分屏
 o.shadafile = 'NONE'
 o.wrap = false
 o.mousemoveevent = true
+-- peding模式下，关闭不变为hor20
+o.guicursor='n-v-c-sm:block,i-ci-ve:ver25,r-cr:hor20'
 
 o.completeopt = 'menu,menuone,noselect'
 o.pumheight = 13
