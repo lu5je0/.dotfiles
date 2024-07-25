@@ -501,10 +501,7 @@ require("lazy").setup({
     'nat-418/boole.nvim',
     config = function()
       require('boole').setup {
-        mappings = {
-          increment = '<c-a>',
-          decrement = '<c-x>'
-        },
+        mappings = { },
         -- User defined loops
         additions = {
           -- {'Foo', 'Bar'},
@@ -516,6 +513,13 @@ require("lazy").setup({
           { 'enable', 'disable' },
         }
       }
+      vim.keymap.set('n', '<c-a>', require('lu5je0.core.cursor').wapper_fn_for_solid_guicursor(function()
+        vim.cmd('Boole increment')
+      end))
+        
+      vim.keymap.set('n', '<c-x>', require('lu5je0.core.cursor').wapper_fn_for_solid_guicursor(function()
+        vim.cmd('Boole decrement')
+      end))
     end,
     keys = { '<c-a>', '<c-x>' }
   },

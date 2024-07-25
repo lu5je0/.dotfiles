@@ -1,5 +1,14 @@
 local M = {}
 
+function M.wapper_fn_for_solid_guicursor(fn)
+  return function(...)
+  local guicursor_backup = vim.o.guicursor
+    vim.o.guicursor=''
+    fn(...)
+    vim.o.guicursor = guicursor_backup
+  end
+end
+
 function M.save_position()
   M.cursor_position = vim.fn.getpos('.')
 end

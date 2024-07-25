@@ -65,17 +65,19 @@ local function fix_indent()
       return
     end
     
-    vim.cmd("norm ==")
-    
-    local sw = vim.fn.shiftwidth()
+    require('lu5je0.core.cursor').wapper_fn_for_solid_guicursor(function()
+      vim.cmd("norm ==")
 
-    if vim.fn.indent('.') < indent_num then
-      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] - sw - 1 })
-    elseif vim.fn.indent('.') > indent_num then
-      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] + sw })
-    else
-      vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] })
-    end
+      local sw = vim.fn.shiftwidth()
+
+      if vim.fn.indent('.') < indent_num then
+        vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] - sw - 1 })
+      elseif vim.fn.indent('.') > indent_num then
+        vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] + sw })
+      else
+        vim.api.nvim_win_set_cursor(0, { cursor[2], cursor[3] })
+      end
+    end)()
   end, 0)
 end
 

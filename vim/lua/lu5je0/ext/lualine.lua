@@ -257,6 +257,7 @@ ins_left {
   cond = function()
     return conditions.hide_in_width()
   end,
+  inactive = false,
   setup = function()
     vim.api.nvim_create_autocmd('BufWritePost', {
       group = require('lu5je0.autocmds').default_group,
@@ -296,7 +297,7 @@ ins_left {
     local text = vim.b[bufnr].gps_text
     return text == nil and "" or text
   end,
-  inactive = true,
+  inactive = false,
   cond = function()
     return not big_file.is_big_file(0) and conditions.hide_in_width() and require('lu5je0.misc.gps-path').is_available()
   end,
