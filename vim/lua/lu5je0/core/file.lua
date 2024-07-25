@@ -41,10 +41,11 @@ function M.save_buffer()
   end
   
   ---@diagnostic disable-next-line: param-type-mismatch
+  vim.cmd("redir => output")
   local ok, err = pcall(vim.cmd, ':silent write')
-  
+  vim.cmd("redir END")
   if ok then
-    print(('"%s" %sL, %s written'):format(vim.fn.expand('%:t'), vim.api.nvim_buf_line_count(0), M.hunman_readable_file_size(bufname)))
+    print(vim.g.output)
   else
     print_with_red(string.gsub(err, '^vim.+write%)%:', '', 1))
   end
