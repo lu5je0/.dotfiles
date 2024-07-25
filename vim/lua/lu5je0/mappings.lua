@@ -125,6 +125,17 @@ vim.schedule(function()
     vim.fn.winrestview(save)
     keys_helper.feedkey('^')
   end)
+  
+  -- neovim
+  -- 修复按u之后，光标闪烁问题
+  set_n_map('u', function()
+    vim.cmd("redir => output")
+    vim.cmd("silent!" .. 'undo')
+    vim.cmd("redir END")
+    vim.defer_fn(function()
+      print(vim.g.output)
+    end, 10)
+  end)
 
   vim.cmd [[
   nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
