@@ -28,8 +28,8 @@ local conditions = {
   buffer_not_empty = function()
     return vim.fn.empty(expand('%:t')) ~= 1
   end,
-  hide_in_width = function()
-    return vim.fn.winwidth(0) > 80
+  hide_in_width = function(max)
+    return vim.fn.winwidth(0) > (max or 80)
   end,
   check_git_workspace = function()
     local filepath = expand('%:p:h')
@@ -284,12 +284,12 @@ ins_left {
 
 local refresh_gps_text = function_utils.debounce(function(bufnr)
   local path = require('lu5je0.misc.gps-path').path()
-  local max_len = 50
+  local max_len = 40
   if #path > max_len then
-    path = string.sub(path, 1, 50) .. '…'
+    path = string.sub(path, 1, max_len) .. '…'
   end
   vim.b[bufnr].gps_text = path
-end, 50)
+end, 40)
 ins_left {
   function()
     local bufnr = vim.api.nvim_get_current_buf()
@@ -299,7 +299,7 @@ ins_left {
   end,
   inactive = false,
   cond = function()
-    return not big_file.is_big_file(0) and conditions.hide_in_width() and require('lu5je0.misc.gps-path').is_available()
+    return not big_file.is_big_file(0) and conditions.hide_in_width(80) and require('lu5je0.misc.gps-path').is_available()
   end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },
