@@ -8,12 +8,6 @@ function M.trim(s)
   return s:match "^%s*(.*)":match "(.-)%s*$"
 end
 
---- @param str string
---- @param sub_str string
-function M.contains(str, sub_str)
-  return str:find(sub_str) ~= nil
-end
-
 --@brief 切割字符串，并用“...”替换尾部
 --@param filename:要切割的字符串
 --@return max_len，字符串上限,中文字为2的倍数

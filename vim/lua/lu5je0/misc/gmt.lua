@@ -40,7 +40,7 @@ function M.toggle(data)
   
   local results = {}
   for _, line in pairs(lines) do
-    if string_utils.contains(line, ':') then
+    if line:find(':') then
       table.insert(results, M.encode(line))
     else
       table.insert(results, timestamp_to_date(line))
