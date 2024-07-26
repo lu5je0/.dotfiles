@@ -1,37 +1,50 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
+local has_mac = vim.fn.has('mac') == 1
+local has_wsl = vim.fn.has('wsl') == 1
+
+local disabled_plugins = {
+  "2html_plugin",
+  "editorconfig",
+  "getscript",
+  "getscriptPlugin",
+  "logipat",
+  "man",
+  "matchit",
+  "netrw",
+  "netrwFileHandlers",
+  "netrwPlugin",
+  "netrwSettings",
+  "rplugin",
+  "rrhelper",
+  "spellfile",
+  "spellfile_plugin",
+  -- "zip",
+  -- "zipPlugin",
+  -- "gzip",
+  -- "tar",
+  -- "tarPlugin",
+  "tohtml",
+  "tutor",
+  "vimball",
+  "vimballPlugin",
+}
+
+if has_mac or has_wsl then
+  table.insert(disabled_plugins, 'osc52')
+end
 
 local opts = {
-  concurrency = (function()
-    return 20
-  end)(),
+  concurrency = 20,
   performance = {
+    profiling = {
+      -- Enables extra stats on the debug tab related to the loader cache.
+      -- Additionally gathers stats about all package.loaders
+      loader = true,
+      -- Track each new require in the Lazy profiling tab
+      require = true,
+    },
     rtp = {
-      disabled_plugins = {
-        "2html_plugin",
-        "editorconfig",
-        "getscript",
-        "getscriptPlugin",
-        "logipat",
-        "man",
-        "matchit",
-        "netrw",
-        "netrwFileHandlers",
-        "netrwPlugin",
-        "netrwSettings",
-        "rplugin",
-        "rrhelper",
-        "spellfile",
-        "spellfile_plugin",
-        -- "zip",
-        -- "zipPlugin",
-        -- "gzip",
-        -- "tar",
-        -- "tarPlugin",
-        "tohtml",
-        "tutor",
-        "vimball",
-        "vimballPlugin",
-      },
+      disabled_plugins = disabled_plugins,
     },
   },
 }

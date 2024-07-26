@@ -4,7 +4,6 @@ local cmp = require('cmp')
 local keys_helper = require('lu5je0.core.keys')
 local string_utils = require('lu5je0.lang.string-utils')
 local luasnip = require('luasnip')
-local bigfile = require('lu5je0.ext.big-file')
 
 local indent_change_filetypes = {
   'lua'
