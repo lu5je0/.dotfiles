@@ -82,8 +82,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.lualine')
     end,
-    event = 'VimEnter',
-    priority = 999
+    event = 'VeryLazy',
   },
 
   -- treesiter
@@ -240,6 +239,8 @@ require("lazy").setup({
       require('lu5je0.ext.bufferline')
     end,
     dependencies = { 'nvim-tree/nvim-web-devicons' },
+    -- priority = 9999,
+    -- event = 'VeryLazy'
   },
   {
     'nvim-tree/nvim-tree.lua',
