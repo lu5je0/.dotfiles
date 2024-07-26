@@ -121,7 +121,7 @@ function M.get_path()
 end
 
 function M.read_undo_if_is_time_machine_file()
-  if require('lu5je0.lang.string-utils').starts_with(vim.fn.expand('%:p'), TIME_MACHINE_PATH) then
+  if vim.startswith(vim.fn.expand('%:p'), TIME_MACHINE_PATH) then
     M.read_undo()
   end
 end

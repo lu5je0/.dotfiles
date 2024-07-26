@@ -1,5 +1,4 @@
 local M = {}
-local string_utils = require('lu5je0.lang.string-utils')
 
 function M.format_bytes(bytes)
   local units = {'B', 'K', 'M', 'G', 'T'}
@@ -30,7 +29,7 @@ end
 
 function M.save_buffer()
   local bufname = vim.api.nvim_buf_get_name(0)
-  if string_utils.starts_with(bufname, 'oil') or string_utils.starts_with(bufname, 'zipfile') then
+  if vim.startswith(bufname, 'oil') or vim.startswith(bufname, 'zipfile') then
     vim.cmd(':w')
     return
   end

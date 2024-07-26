@@ -1,11 +1,10 @@
-local string_util = require('lu5je0.lang.string-utils')
 local encode_command_creater = require('lu5je0.misc.encode-command-creater')
 
 local starts_with_complete = function(words)
   return function(input)
     local completes = {}
     for _, word in ipairs(words) do
-      if string_util.starts_with(word, input) then
+      if vim.startswith(word, input) then
         table.insert(completes, word)
       end
     end
@@ -67,7 +66,7 @@ end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk',
 -- require('lu5je0.misc.code-runner').create_command()
 
 encode_command_creater.create_encode_command('InlineToArray', function(lines)
-  return table.concat(string_util.split(lines, '\n'), ',')
+  return table.concat(vim.split(lines, '\n'), ',')
 end)
 
 encode_command_creater.create_encode_command('UrlEncode', function(url)

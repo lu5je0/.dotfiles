@@ -1,5 +1,4 @@
 local M = {}
-local string_util = require('lu5je0.lang.string-utils')
 
 local STD_PATH = vim.fn.stdpath('config')
 
@@ -28,7 +27,7 @@ function M.read_clipboard_ffi()
     regtype = active_entry.regtype
   end
   ---@diagnostic disable-next-line: param-type-mismatch
-  return { string_util.split(text, '\n'), regtype }
+  return { vim.split(text, '\n'), regtype }
 end
 
 function M.setup()

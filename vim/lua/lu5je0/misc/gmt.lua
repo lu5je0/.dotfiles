@@ -36,7 +36,7 @@ function M.encode(str)
 end
 
 function M.toggle(data)
-  local lines = string_utils.split(data, '\n')
+  local lines = vim.split(data, '\n')
   
   local results = {}
   for _, line in pairs(lines) do

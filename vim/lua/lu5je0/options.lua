@@ -1,6 +1,5 @@
 local o = vim.o
 local g = vim.g
-local string_util = require('lu5je0.lang.string-utils')
 
 local has = function(feature)
   return vim.fn.has(feature) == 1
@@ -124,7 +123,7 @@ local defer_options = {
       local function no_paste(reg)
         return function()
           -- Do nothing! We can't paste with OSC52
-          return { string_util.split(vim.fn.getreg('"'), '\n'), vim.fn.getregtype('"') }
+          return { vim.split(vim.fn.getreg('"'), '\n'), vim.fn.getregtype('"') }
         end
       end
       o.clipboard = 'unnamedplus'

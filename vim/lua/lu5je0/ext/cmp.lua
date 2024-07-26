@@ -2,7 +2,6 @@
 
 local cmp = require('cmp')
 local keys_helper = require('lu5je0.core.keys')
-local string_utils = require('lu5je0.lang.string-utils')
 local luasnip = require('luasnip')
 
 local indent_change_filetypes = {
@@ -219,8 +218,8 @@ cmp.setup {
     {
       name = 'luasnip',
       entry_filter = function(entry, ctx)
-        if string_utils.starts_with(entry.completion_item.label, '.') then
-          return string_utils.contains(ctx.cursor_before_line, '%.')
+        if vim.startswith(entry.completion_item.label, '.') then
+          return vim.list_contains(ctx.cursor_before_line, '%.')
         end
         return true
       end,
