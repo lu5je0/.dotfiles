@@ -13,7 +13,6 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local core_modules = {
-  'lu5je0.lang.enhance',
   'lu5je0.options',
   'lu5je0.mappings',
   'lu5je0.plugins',

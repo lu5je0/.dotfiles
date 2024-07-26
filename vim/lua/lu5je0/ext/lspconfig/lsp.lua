@@ -132,7 +132,7 @@ end
 
 local function start_lsp()
   local bigfile = require('lu5je0.ext.big-file')
-  if table.contain(autostart_filetypes, vim.bo.filetype) then
+  if vim.tbl_contains(autostart_filetypes, vim.bo.filetype) then
     if not bigfile.is_big_file(vim.api.nvim_get_current_buf()) then
       vim.cmd('LspStart')
     end

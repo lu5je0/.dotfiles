@@ -88,7 +88,7 @@ local function comfirm(fallback)
     end
 
     cmp.confirm { select = true, behavior = cmp.ConfirmBehavior.Insert }
-    if table.contain(indent_change_filetypes, vim.bo.filetype) and table.contain(indent_change_items, entry.completion_item.label) then
+    if vim.tbl_contains(indent_change_filetypes, vim.bo.filetype) and vim.tbl_contains(indent_change_items, entry.completion_item.label) then
       fix_indent()
     end
     

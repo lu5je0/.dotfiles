@@ -14,7 +14,7 @@ end
 
 function M.is_available()
   local filetype = vim.bo.filetype
-  if not table.contain(gps_ft_white_list, filetype) then
+  if not vim.tbl_contains(gps_ft_white_list, filetype) then
     return false
   end
   

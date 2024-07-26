@@ -1,6 +1,24 @@
 local o = vim.o
 local g = vim.g
 
+local original_has = vim.fn.has
+---@diagnostic disable-next-line: duplicate-set-field
+vim.fn.has = function(feature)
+  local has = original_has(feature) == 1
+  
+  if feature == 'gui' then
+    has = vim.g.gonvim_running ~= nil
+  elseif feature == 'wsl' then
+    has = os.getenv('WSLENV') ~= nil
+  end
+  
+  if has then
+    return 1
+  else
+    return 0
+  end
+end
+
 local has = function(feature)
   return vim.fn.has(feature) == 1
 end

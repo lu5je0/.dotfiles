@@ -1,7 +1,5 @@
 local M = {}
 
-local string_utils = require('lu5je0.lang.string-utils')
-
 local encode_command_creater = require('lu5je0.misc.encode-command-creater')
 
 local function is_number(str)

@@ -60,7 +60,7 @@ treesitter.define_modules {
       
       -- indent_for_specify_filetype   
       local ft = vim.bo[bufnr].filetype
-      if table.contain(ts_indent_filetyps, ft) then
+      if vim.tbl_contains(ts_indent_filetyps, ft) then
         vim.o.indentexpr='nvim_treesitter#indent()'
       end
     end,

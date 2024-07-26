@@ -152,13 +152,13 @@ function M.close_buffer()
 
   local txt_window_cnt = 0
   for _, v in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if table.contain(valid_buffers, vim.api.nvim_win_get_buf(v)) then
+    if vim.tbl_contains(valid_buffers, vim.api.nvim_win_get_buf(v)) then
       txt_window_cnt = txt_window_cnt + 1
     end
   end
 
   -- 如果在非text window下，直接quit
-  if txt_window_cnt ~= 0 and not table.contain(valid_buffers, cur_buf_nr) then
+  if txt_window_cnt ~= 0 and not vim.tbl_contains(valid_buffers, cur_buf_nr) then
     vim.cmd("q")
     return
   end
