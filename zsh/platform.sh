@@ -60,11 +60,6 @@ elif [ -z $WSLENV ]; then
   clippaste() {
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
   }
-  
-  vi-escape() {
-    ~/.dotfiles/vim/lib/toDisableIME.exe
-    zle vi-cmd-mode
-  }
 elif [[ $UNAME_INFO =~ "Android" ]]; then
   alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
 fi

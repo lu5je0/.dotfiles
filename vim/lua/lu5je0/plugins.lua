@@ -633,8 +633,8 @@ require("lazy").setup({
       'SmiteshP/nvim-navic',
       config = function()
         require('nvim-navic').setup {
-          depth_limit = 4,
-          depth_limit_indicator = "..",
+          -- depth_limit = 10,
+          -- depth_limit_indicator = "..",
         }
       end,
       event = { 'LspAttach' }

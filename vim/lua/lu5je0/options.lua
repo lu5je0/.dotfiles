@@ -138,7 +138,7 @@ local defer_options = {
     elseif has('wsl') then
       require('lu5je0.misc.clipboard.wsl').setup()
     else
-      local function no_paste(reg)
+      local function no_paste(_)
         return function()
           -- Do nothing! We can't paste with OSC52
           return { vim.split(vim.fn.getreg('"'), '\n'), vim.fn.getregtype('"') }
