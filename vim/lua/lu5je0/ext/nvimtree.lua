@@ -247,6 +247,16 @@ function M.copy_relative_path()
   api.fs.copy.relative_path()
 end
 
+function M.copy_node_name()
+  local node = require('nvim-tree.lib').get_node_at_cursor()
+  if not node then
+    return
+  end
+  
+  set_clipboard(node.name)
+  print('copied node name')
+end
+
 function M.copy_absolute_path()
   local node = require('nvim-tree.lib').get_node_at_cursor()
   if not node then
@@ -327,7 +337,7 @@ local function on_attach(bufnr)
   set('n', 'dd', api.fs.cut, opts('Cut'))
   set('n', 'yy', api.fs.copy.node, opts('Copy'))
   set('n', 'p', api.fs.paste, opts('Paste'))
-  set('n', 'yn', api.fs.copy.filename, opts('Copy Name'))
+  set('n', 'yn', M.copy_node_name, opts('Copy Name'))
   set('n', 'yP', M.copy_relative_path, opts('Copy Relative Path'))
   set('n', 'yp', M.copy_absolute_path, opts('Copy Absolute Path'))
 
