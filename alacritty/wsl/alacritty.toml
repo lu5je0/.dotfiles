@@ -54,8 +54,8 @@ dynamic_padding = true
 dynamic_title = true
 
 [window.dimensions]
-columns = 124
-lines = 45
+columns = 127
+lines = 47
 
 [window.padding]
 x = 1

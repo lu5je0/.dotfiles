@@ -1,9 +1,9 @@
 if [[ $UNAME_INFO =~ "microsoft" ]]; then
   function disable_ime_cmd {
-    $HOME"/.dotfiles/vim/lib/toDisableIME.exe"
+    "/mnt/d/bin/toDisableIME.exe"
   }
   function enable_ime_cmd {
-    $HOME"/.dotfiles/vim/lib/toEnableIME.exe"
+    "/mnt/d/bin/toDisableIME.exe"
   }
 elif [[ $UNAME_INFO =~ "Darwin" ]]; then
   # if [[ ! -f /tmp/im-fifo ]]; then
