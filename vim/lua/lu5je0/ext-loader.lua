@@ -1,5 +1,17 @@
 local ext_loader_group = vim.api.nvim_create_augroup('ext_loader_group', { clear = true })
 
+local M = {}
+M.lazy_load_active_cmd_opts_map = {}
+
+local function load_ext(opts)
+  if not opts.loaded then
+    if type(opts.config) == 'function' then
+      opts.config()
+    end
+    opts.loaded = true
+  end
+end
+
 local function lazy_load(opts)
   if opts and opts.keys then
     for _, key in ipairs(opts.keys) do
@@ -7,14 +19,17 @@ local function lazy_load(opts)
         local lhs = key[1]
         vim.keymap.set(mode, lhs, function()
           vim.keymap.del(mode, lhs)
-          opts.config()
+          load_ext(opts)
           require('lu5je0.core.keys').feedkey(lhs)
         end)
       end
     end
   end
-  if opts and opts.commands then
-    for _, cmd in ipairs(opts.commands) do
+  
+  if opts and opts.cmd then
+    for _, cmd in ipairs(opts.cmd) do
+      M.lazy_load_active_cmd_opts_map[cmd] = opts
+      
       vim.api.nvim_create_user_command(cmd, function(event)
         local command = {
           cmd = cmd,
@@ -30,8 +45,7 @@ local function lazy_load(opts)
         end
         vim.api.nvim_del_user_command(cmd)
         
-        
-        opts.config()
+        load_ext(opts)
         
         local info = vim.api.nvim_get_commands({})[cmd] or vim.api.nvim_buf_get_commands(0, {})[cmd]
         command.nargs = info.nargs
@@ -43,23 +57,23 @@ local function lazy_load(opts)
         bang = true,
         range = true,
         nargs = "*",
-        -- complete = function(_, line)
-        --   self:_load(cmd)
-        --   -- NOTE: return the newly loaded command completion
-        --   return vim.fn.getcompletion(line, "cmdline")
-        -- end,
+        complete = opts.complete and function(_, line)
+          load_ext(M.lazy_load_active_cmd_opts_map[cmd])
+          -- NOTE: return the newly loaded command completion
+          return vim.fn.getcompletion(line, "cmdline")
+        end,
       })
     end
   end
   
-  if opts and opts.events then
-    for _, event in ipairs(opts.events) do
+  if opts and opts.event then
+    for _, event in ipairs(opts.event) do
       vim.api.nvim_create_autocmd(event, {
         group = ext_loader_group,
         once = true,
         pattern = { '*' },
         callback = function(_)
-          opts.config()
+          load_ext(opts)
         end
       })
     end
@@ -77,7 +91,7 @@ lazy_load({
       end
     end
   end,
-  events = { 'InsertEnter' },
+  event = { 'InsertEnter' },
   keys = {
     { mode = { 'n' }, '<leader>vi' },
   }
@@ -101,7 +115,7 @@ lazy_load({
   config = function()
     require('lu5je0.misc.json-helper').setup()
   end,
-  commands = { 'Json' }
+  cmd = { 'Json', 'JsonCompress', 'JsonExtract', 'JsonCopyPath', 'JsonFormat', 'JsonSortByKey', 'Jq' }
 })
 
 -- junkfile
@@ -109,7 +123,7 @@ lazy_load({
   config = function()
     require('lu5je0.misc.junkfile').setup()
   end,
-  commands = { 'JunkFileNew', 'JunkFileSaveAs' }
+  cmd = { 'JunkFileNew', 'JunkFileSaveAs' }
 })
 
 -- snippets
@@ -257,7 +271,8 @@ lazy_load({
   config = function()
     require('lu5je0.misc.redir')
   end,
-  commands = { 'Redir', "Messages" }
+  cmd = { 'Redir', "Messages" },
+  complete = true,
 })
 
 -- base64
@@ -265,7 +280,7 @@ lazy_load({
   config = function()
     require('lu5je0.misc.base64').create_command()
   end,
-  commands = { 'Base64Decode', 'Base64Encode' }
+  cmd = { 'Base64Decode', 'Base64Encode' }
 })
 
 -- timestamp
@@ -273,5 +288,5 @@ lazy_load({
   config = function()
     require('lu5je0.misc.gmt').create_command()
   end,
-  commands = { 'TimestampToggle' }
+  cmd = { 'TimestampToggle' }
 })
