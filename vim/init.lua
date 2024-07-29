@@ -16,10 +16,10 @@ local core_modules = {
   'lu5je0.options',
   'lu5je0.mappings',
   'lu5je0.plugins',
+  'lu5je0.ext-loader',
   'lu5je0.commands',
   'lu5je0.autocmds',
   'lu5je0.filetype',
-  'lu5je0.ext-loader',
 }
 
 for _, module in ipairs(core_modules) do

@@ -12,7 +12,7 @@ local function load_ext(opts)
   end
 end
 
-local function lazy_load(opts)
+M.lazy_load = function(opts)
   if opts and opts.keys then
     for _, key in ipairs(opts.keys) do
       for _, mode in ipairs(key.mode) do
@@ -79,6 +79,7 @@ local function lazy_load(opts)
     end
   end
 end
+local lazy_load = M.lazy_load
 
 -- im
 lazy_load({
@@ -290,3 +291,5 @@ lazy_load({
   end,
   cmd = { 'TimestampToggle' }
 })
+
+return M
