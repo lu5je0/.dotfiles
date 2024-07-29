@@ -23,11 +23,20 @@ local has = function(feature)
   return vim.fn.has(feature) == 1
 end
 
+-- 100 - Thin
+-- 200 - Extra Light (Ultra Light)
+-- 300 - Light
+-- 400 - Regular (Normal、Book、Roman)
+-- 500 - Medium
+-- 600 - Semi Bold (Demi Bold)
+-- 700 - Bold
+-- 800 - Extra Bold (Ultra Bold)
+-- 900 - Black (Heavy)
 -- mac: JetBrainsMonoNLNerdFontMono-SemiBold
 -- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf
 
 -- win: JetBrainsMonoNL Nerd Font Mono
--- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf
+-- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/SemiBold/JetBrainsMonoNLNerdFontMono-SemiBold.ttf
 
 -- neovide
 if g.neovide then
