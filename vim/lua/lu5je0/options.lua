@@ -36,7 +36,7 @@ end
 -- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf
 
 -- win: JetBrainsMonoNL Nerd Font Mono
--- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/SemiBold/JetBrainsMonoNLNerdFontMono-SemiBold.ttf
+-- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/Medium/JetBrainsMonoNLNerdFontMono-Medium.ttf
 
 -- neovide
 if g.neovide then
