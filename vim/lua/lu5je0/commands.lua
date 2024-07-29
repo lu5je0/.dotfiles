@@ -12,6 +12,16 @@ local starts_with_complete = function(words)
   end
 end
 
+vim.api.nvim_create_user_command('Sum', function(args)
+  local cmd = "!python3 -c 'import sys; print(sum(map(float, sys.stdin.read().strip().split())))'"
+  if args.range ~= 0 then
+    cmd = args.line1 .. ',' .. args.line2 .. cmd
+  else
+    cmd = '%' .. cmd
+  end
+  vim.cmd(cmd)
+end, { force = true, nargs = 0, range = true })
+
 vim.api.nvim_create_user_command('CronParser', function(t)
   require('lu5je0.misc.cron-parser').parse_line(t.fargs[1])
 end, { force = true, nargs = '*', range = true })

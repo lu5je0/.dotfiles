@@ -218,9 +218,10 @@ cmp.setup {
     {
       name = 'luasnip',
       entry_filter = function(entry, ctx)
-        if vim.startswith(entry.completion_item.label, '.') then
-          return vim.list_contains(ctx.cursor_before_line, '%.')
-        end
+        -- TODO 作用?
+        -- if vim.startswith(entry.completion_item.label, '.') then
+        --   return vim.list_contains(ctx.cursor_before_line, '%.')
+        -- end
         return true
       end,
       keyword_length = 2
