@@ -1,11 +1,4 @@
--- im
-if vim.fn.has('gui') == 0 and not vim.g.neovide then
-  if vim.fn.has('wsl') == 1 then
-    require('lu5je0.misc.im.win.im').setup()
-  elseif vim.fn.has('mac') == 1 then
-    require('lu5je0.misc.im.mac.im').setup()
-  end
-end
+local ext_loader_group = vim.api.nvim_create_augroup('ext_loader_group', { clear = true })
 
 local function lazy_load(opts)
   if opts and opts.keys then
@@ -58,7 +51,37 @@ local function lazy_load(opts)
       })
     end
   end
+  
+  if opts and opts.events then
+    for _, event in ipairs(opts.events) do
+      vim.api.nvim_create_autocmd(event, {
+        group = ext_loader_group,
+        once = true,
+        pattern = { '*' },
+        callback = function(_)
+          opts.config()
+        end
+      })
+    end
+  end
 end
+
+-- im
+lazy_load({
+  config = function()
+    if vim.fn.has('gui') == 0 and not vim.g.neovide then
+      if vim.fn.has('wsl') == 1 then
+        require('lu5je0.misc.im.win.im').setup()
+      elseif vim.fn.has('mac') == 1 then
+        require('lu5je0.misc.im.mac.im').setup()
+      end
+    end
+  end,
+  events = { 'InsertEnter' },
+  keys = {
+    { mode = { 'n' }, '<leader>vi' },
+  }
+})
 
 -- require('lu5je0.misc.im.im_keeper').setup({
 --   mac = {
