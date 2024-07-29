@@ -5,13 +5,13 @@ local original_has = vim.fn.has
 ---@diagnostic disable-next-line: duplicate-set-field
 vim.fn.has = function(feature)
   local has = original_has(feature) == 1
-  
+
   if feature == 'gui' then
     has = vim.g.gonvim_running ~= nil
   elseif feature == 'wsl' then
     has = os.getenv('WSLENV') ~= nil
   end
-  
+
   if has then
     return 1
   else
@@ -32,13 +32,13 @@ end
 -- neovide
 if g.neovide then
   -- wsl config path: config.toml
-  -- $HOME\AppData\Roaming\neovide 
+  -- $HOME\AppData\Roaming\neovide
   if has('wsl') then
-    o.guifont="JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h11"
+    o.guifont = "JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h11"
   else
-    o.guifont="JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h14"
+    o.guifont = "JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h14"
   end
-  
+
   g.neovide_input_ime = false
   vim.cmd [[
   augroup ime_input
@@ -63,7 +63,7 @@ o.shadafile = 'NONE'
 o.wrap = false
 o.mousemoveevent = true
 -- peding模式下，关闭不变为hor20
-o.guicursor='n-v-c-sm:block,i-ci-ve:ver25,r-cr:hor20'
+o.guicursor = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr:hor20'
 
 o.completeopt = 'menu,menuone,noselect'
 o.pumheight = 13
@@ -137,7 +137,7 @@ local defer_options = {
       require('lu5je0.misc.clipboard.mac').setup()
     elseif has('wsl') then
       require('lu5je0.misc.clipboard.wsl').setup()
-    else
+    elseif os.getenv('SSH_CLIENT') then
       local function no_paste(_)
         return function()
           -- Do nothing! We can't paste with OSC52
@@ -154,8 +154,8 @@ local defer_options = {
         paste = {
           -- ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
           -- ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
-          ["+"] = no_paste("+"), -- Pasting disabled
-          ["*"] = no_paste("*"), -- Pasting disabled
+          ["+"] = no_paste("+"),   -- Pasting disabled
+          ["*"] = no_paste("*"),   -- Pasting disabled
         }
       }
     end
