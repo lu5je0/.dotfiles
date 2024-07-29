@@ -17,7 +17,7 @@ function M.create_encode_command_by_type(name, range_encode_fn, buffer_encode_fn
     elseif opts.buffer then
       local encoded_str = buffer_encode_fn(vim.fn.join(vim.fn.getline(1, '$'), '\n'))
       vim.cmd('normal! gg_dG')
-      local lines = encoded_str:split('\n')
+      local lines = vim.split(encoded_str, '\n')
       vim.api.nvim_buf_set_lines(0, 0, #lines, false, lines)
     end
   end, { force = true, range = true })

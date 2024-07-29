@@ -90,7 +90,7 @@ end
 --   local Popup = require('nui.popup')
 --   local event = require('nui.utils.autocmd').event
 --
---   local content_array = content:split('\n')
+--   local content_array = vim.split(content, '\n')
 --
 --   local width = 0
 --   for _, line in ipairs(content_array) do

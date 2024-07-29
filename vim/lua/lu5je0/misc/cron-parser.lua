@@ -13,7 +13,7 @@ function M.parse_line(count)
 
   local crontab = ''
 
-  for i, v in ipairs(line:split(' ')) do
+  for i, v in ipairs(vim.split(line, ' ')) do
     if i <= 5 then
       crontab = crontab .. ' ' .. v
     end
