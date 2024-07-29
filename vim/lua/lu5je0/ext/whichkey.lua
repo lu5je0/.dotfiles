@@ -144,7 +144,7 @@ function M.setup()
       s = { 'dir .dotfiles' },
       p = { 'dir packer' },
       w = { require('lu5je0.core.file').save_buffer, 'write' },
-      J = { '<cmd>SaveAsJunkFile<cr>', 'new-junk-file' },
+      J = { '<cmd>JunkFileSaveAs<cr>', 'new-junk-file' },
       x = {
         name = '+encoding',
         a = { '<cmd>set ff=unix<cr>', '2unix' },

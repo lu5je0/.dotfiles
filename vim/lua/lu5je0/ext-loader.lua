@@ -104,6 +104,14 @@ lazy_load({
   commands = { 'Json' }
 })
 
+-- junkfile
+lazy_load({
+  config = function()
+    require('lu5je0.misc.junkfile').setup()
+  end,
+  commands = { 'JunkFileNew', 'JunkFileSaveAs' }
+})
+
 -- snippets
 -- require('lu5je0.core.snippets').setup()
 
