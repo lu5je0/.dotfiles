@@ -5,18 +5,19 @@ local original_has = vim.fn.has
 ---@diagnostic disable-next-line: duplicate-set-field
 vim.fn.has = function(feature)
   local has = original_has(feature) == 1
-
-  if feature == 'gui' then
-    has = vim.g.gonvim_running ~= nil
-  elseif feature == 'wsl' then
-    has = os.getenv('WSLENV') ~= nil
-  end
-
   if has then
     return 1
-  else
-    return 0
   end
+
+  if feature == 'gui' then
+    has = vim.g.gonvim_running ~= nil or vim.g.neovide
+  elseif feature == 'wsl' then
+    has = os.getenv('WSLENV') ~= nil
+  elseif feature == 'ssh_client' then
+    has = os.getenv('SSH_CLIENT') ~= nil
+  end
+
+  return has and 1 or 0
 end
 
 local has = function(feature)
@@ -128,10 +129,6 @@ if has('mac') then
   vim.g.python3_host_prog = '/usr/bin/python3'
 end
 
-if has('gui') then
-  vim.o.guifontwide = 'Microsoft YaHei UI'
-end
-
 local defer_options = {
   function()
     o.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
@@ -146,7 +143,7 @@ local defer_options = {
       require('lu5je0.misc.clipboard.mac').setup()
     elseif has('wsl') then
       require('lu5je0.misc.clipboard.wsl').setup()
-    elseif os.getenv('SSH_CLIENT') then
+    elseif has('ssh_client') then
       local function no_paste(_)
         return function()
           -- Do nothing! We can't paste with OSC52
