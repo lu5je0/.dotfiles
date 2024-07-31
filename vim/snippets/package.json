@@ -22,7 +22,10 @@
         "path": "./vsnip/java.json"
       },
       {
-        "language": "javascript",
+        "language": [
+          "javascript",
+          "javascriptreact"
+        ],
         "path": "./vsnip/javascript.json"
       },
       {
