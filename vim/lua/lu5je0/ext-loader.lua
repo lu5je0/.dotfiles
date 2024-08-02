@@ -20,7 +20,9 @@ M.lazy_load = function(opts)
         vim.keymap.set(mode, lhs, function()
           vim.keymap.del(mode, lhs)
           load_ext(opts)
-          require('lu5je0.core.keys').feedkey(lhs)
+          vim.defer_fn(function()
+            require('lu5je0.core.keys').feedkey(lhs)
+          end, opts.keys.defer or 0)
         end)
       end
     end
@@ -290,6 +292,19 @@ lazy_load({
     require('lu5je0.misc.gmt').create_command()
   end,
   cmd = { 'TimestampToggle' }
+})
+
+lazy_load({
+  config = function()
+    require('lu5je0.ext.plugins_helper').load_plugin('nvim-ufo')
+  end,
+  keys = {
+    { mode = { 'n' }, 'zc' },
+    { mode = { 'n' }, 'zo' },
+    { mode = { 'n' }, 'zM' },
+    { mode = { 'n' }, 'zR' },
+    defer = 60,
+  }
 })
 
 return M

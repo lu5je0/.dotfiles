@@ -497,7 +497,8 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.nvim-ufo')
     end,
-    event = 'VeryLazy'
+    lazy = true
+    -- event = 'VeryLazy'
     -- cmd = 'FoldTextToggle',
     -- keys = { 'zf', 'zo', 'za', 'zc', 'zM', 'zR' }
   },
