@@ -33,11 +33,11 @@ function M.setup()
         -- },
       },
       left = {
-        {
-          title = "nvimtree",
-          ft = "NvimTree",
-          size = { height = 0.5 },
-        },
+        -- {
+        --   title = "nvimtree",
+        --   ft = "NvimTree",
+        --   size = { height = 0.5 },
+        -- },
         {
           ft = "dapui_scopes",
         },

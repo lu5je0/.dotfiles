@@ -201,7 +201,7 @@ end
 
 function M.toggle_width()
   local cur_width = vim.api.nvim_win_get_width(0)
-  local after_width = math.floor(vim.api.nvim_eval('&co') * 2 / 5)
+  local after_width = math.floor(vim.api.nvim_eval('&co') * (1 / 2))
 
   if M.last_width == nil or cur_width ~= after_width then
     vim.cmd('NvimTreeResize ' .. after_width)
@@ -299,10 +299,12 @@ local function on_attach(bufnr)
   set('n', 'C', api.tree.toggle_git_clean_filter, opts('Toggle Git Clean'))
   set('n', 'cd', M.cd, opts('cd'))
   set('n', 'B', api.tree.toggle_no_buffer_filter, opts('Toggle No Buffer'))
-  set('n', 'x', M.toggle_width, opts('toggle_width'))
   -- set('n', 'x', api.marks.toggle, opts('Toggle Bookmark'))
   set('n', 'mk', M.create_dir, opts('create_dir'))
   set('n', 't', M.terminal_cd, opts('terminal cd'))
+  
+  set('n', 'z', M.toggle_width, opts('toggle nvimtree width'))
+  
   set('n', 'D', function()
     M.delete_node()
     api.tree.reload()

@@ -113,6 +113,10 @@ bl.setup {
       fg = '#33353f',
       bg = 'None',
     },
+    close_button_selected = {
+      fg = '#6a7487',
+      bg = 'None',
+    },
   },
 }
 
