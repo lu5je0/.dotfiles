@@ -40,10 +40,18 @@ local function sizeFocusedWindow(mode)
       f.w = max.w
       f.h = max.h
     elseif mode == "Center" then
-      f.x = 190
-      f.y = -960
-      f.w = 1021
-      f.h = 843
+      if tostring(win:application()):find('kitty') then
+        f.x = 190
+        f.y = -960
+        f.w = 1021
+        f.h = 843
+      else
+        f.w = max.w / 1.4
+        f.h = max.h / 1.2
+        win:setFrame(f, 0) -- 0 取消动画
+        hs.window.focusedWindow():centerOnScreen(0)
+        return
+      end
     elseif mode == "Half Left" then
       f.x = max.x
       f.y = max.y
