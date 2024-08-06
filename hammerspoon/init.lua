@@ -48,6 +48,7 @@ local function sizeFocusedWindow(mode)
       else
         f.w = max.w / 1.4
         f.h = max.h / 1.2
+        hs.window.focusedWindow():centerOnScreen(0)
         win:setFrame(f, 0) -- 0 取消动画
         hs.window.focusedWindow():centerOnScreen(0)
         return
