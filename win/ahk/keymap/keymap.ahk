@@ -58,3 +58,15 @@ return
 
 ; let window display on top
 #^t:: Winset, Alwaysontop, , A
+
+;-- 按 Ctrl + Alt + Left / Right 热键即可将当前的窗口调整到左 / 右半屏显示
+#^h::    
+#^l::
+SysGet, p, MonitorWorkArea
+x:=pLeft, y:=pTop, w:=pRight, h:=pBottom
+IfWinExist, A
+{
+  WinRestore
+  WinMove,,, x+w//2*(!!InStr(A_ThisLabel,"l")), y, w//2, h
+}
+return
