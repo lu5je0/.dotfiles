@@ -14,7 +14,12 @@ local function sizeFocusedWindow(mode)
     local screen = win:screen()
     local max = screen:frame()
 
-    if mode == "Center" then
+    if mode == "maximize" then
+      f.x = max.x
+      f.y = max.y
+      f.w = max.w
+      f.h = max.h
+    elseif mode == "center" then
       if tostring(win:application()):find('kitty') then
         f.x = 190
         f.y = -960
@@ -24,34 +29,43 @@ local function sizeFocusedWindow(mode)
         f.w = max.w / 1.4
         f.h = max.h / 1.2
         hs.window.focusedWindow():centerOnScreen(0)
-        win:setFrame(f, 0) -- 0 取消动画
+        win:setFrame(f, 0)   -- 0 取消动画
         hs.window.focusedWindow():centerOnScreen(0)
         return
       end
+    elseif mode == "halfleft" then
+      f.x = max.x
+      f.y = max.y
+      f.w = max.w / 2
+      f.h = max.h
+    elseif mode == "halfright" then
+      f.x = max.x + max.w / 2
+      f.y = max.y
+      f.w = max.w / 2
+      f.h = max.h
     end
 
-    win:setFrame(f, 0) -- 0 取消动画
+    win:setFrame(f, 0)   -- 0 取消动画
   end
 end
 
 -- bind hotkey
-hs.hotkey.bind({ "ctrl", "option" }, "J", sizeFocusedWindow('Center'))
+hs.hotkey.bind({ "ctrl", "option" }, "J", sizeFocusedWindow('center'))
 
-hs.hotkey.bind({ "ctrl", "option" }, "H", function() win_win:moveAndResize('halfleft') end)
-hs.hotkey.bind({ "ctrl", "option" }, "L", function() win_win:moveAndResize('halfright') end)
-hs.hotkey.bind({ "ctrl", "option" }, "K", function() win_win:moveAndResize('maximize') end)
-hs.hotkey.bind({ "ctrl", "option" }, "U", function() win_win:undo() end)
+hs.hotkey.bind({ "ctrl", "option" }, "H", sizeFocusedWindow('halfleft'))
+hs.hotkey.bind({ "ctrl", "option" }, "L", sizeFocusedWindow('halfright'))
+hs.hotkey.bind({ "ctrl", "option" }, "K", sizeFocusedWindow('maximize'))
 hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
   local win = hs.window.focusedWindow()
   local f = win:frame()
   local screen = win:screen()
   local max = screen:frame()
-  
+
   local width_rate = f.w / max.w
   win_win:moveToScreen("next")
-  
+
   if width_rate > 0.98 then
-    win_win:moveAndResize('maximize')
+    sizeFocusedWindow('maximize')()
   end
 end)
 
