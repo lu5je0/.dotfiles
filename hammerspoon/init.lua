@@ -13,7 +13,7 @@ local function sizeFocusedWindow(mode)
     local f = win:frame()
     local screen = win:screen()
     local max = screen:frame()
-    
+
     if mode == "Center" then
       if tostring(win:application()):find('kitty') then
         f.x = 190
@@ -41,7 +41,19 @@ hs.hotkey.bind({ "ctrl", "option" }, "H", function() win_win:moveAndResize('half
 hs.hotkey.bind({ "ctrl", "option" }, "L", function() win_win:moveAndResize('halfright') end)
 hs.hotkey.bind({ "ctrl", "option" }, "K", function() win_win:moveAndResize('maximize') end)
 hs.hotkey.bind({ "ctrl", "option" }, "U", function() win_win:undo() end)
-hs.hotkey.bind({ "ctrl", "option" }, 'n', function() win_win:moveToScreen("next") end)
+hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
+  local win = hs.window.focusedWindow()
+  local f = win:frame()
+  local screen = win:screen()
+  local max = screen:frame()
+  
+  local width_rate = f.w / max.w
+  win_win:moveToScreen("next")
+  
+  if width_rate > 0.98 then
+    win_win:moveAndResize('maximize')
+  end
+end)
 
 -- hs.hotkey.bind({ "ctrl", "option" }, "R", spoon.WinWin:redo)
 

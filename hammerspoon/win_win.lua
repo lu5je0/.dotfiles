@@ -161,7 +161,7 @@ function obj:moveToScreen(direction)
         elseif direction == "right" then
             cwin:moveOneScreenEast()
         elseif direction == "next" then
-            cwin:moveToScreen(cscreen:next())
+            cwin:moveToScreen(cscreen:next(), 0)
         else
             hs.alert.show("Unknown direction: " .. direction)
         end
