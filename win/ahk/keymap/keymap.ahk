@@ -63,32 +63,29 @@ ResizeWindow(position) {
     ; 获取屏幕宽度和高度
     SysGet, screenWidth, 78
     SysGet, screenHeight, 79
-    
+
+    ; 定义特定应用的窗口大小和位置映射
+    specialAppMap := {}
+    specialAppMap["alacritty.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
+    specialAppMap["WindowsTerminal.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
+
+    ; 判断位置参数
     if (position = "left" or position = "right") {
         ; 计算窗口的新宽度和高度
         newWidth := screenWidth / 2
         newHeight := screenHeight
         
         ; 计算窗口的新位置
-        if (position = "left") {
-            newX := 0
-        } else if (position = "right") {
-            newX := screenWidth / 2
-        }
+        newX := (position = "left") ? 0 : screenWidth / 2
         newY := 0
     } else if (position = "center_i" or position = "center_j") {
-        ; 判断是否是 Alacritty
-        if (processName = "alacritty.exe" or processName = "WindowsTerminal.exe") {
-            if (position = "center_i") {
-                newWidth := 2546
-                newHeight := 2038
-                newX := (screenWidth - newWidth) / 2
-                newY := 23
-            } else if (position = "center_j") {
-                newWidth := 1931
-                newHeight := 1596
-                newX := (screenWidth - newWidth) / 2
-                newY := (screenHeight - newHeight) / 2
+        ; 判断是否在特殊应用映射中
+        if (specialAppMap.HasKey(processName)) {
+            if (specialAppMap[processName].HasKey(position)) {
+                newWidth := specialAppMap[processName][position].width
+                newHeight := specialAppMap[processName][position].height
+                newX := specialAppMap[processName][position].x_offset
+                newY := specialAppMap[processName][position].y_offset
             }
         } else {
             if (position = "center_i") {
