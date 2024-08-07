@@ -138,12 +138,7 @@ local defer_options = {
     -- windows和macos中regtype * 和 + 相同，都是系统剪切板
     -- linux中 * 是selection clipboard，+ 是system clipboard，
     -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard
-
-    if has('mac') then
-      require('lu5je0.misc.clipboard.mac').setup()
-    elseif has('wsl') then
-      require('lu5je0.misc.clipboard.wsl').setup()
-    elseif has('ssh_client') then
+    if has('ssh_client') then
       local function no_paste(_)
         return function()
           -- Do nothing! We can't paste with OSC52
@@ -164,6 +159,10 @@ local defer_options = {
           ["*"] = no_paste("*"),   -- Pasting disabled
         }
       }
+    elseif has('mac') then
+      require('lu5je0.misc.clipboard.mac').setup()
+    elseif has('wsl') then
+      require('lu5je0.misc.clipboard.wsl').setup()
     end
     -- end
     vim.cmd [[ packadd matchit ]]
