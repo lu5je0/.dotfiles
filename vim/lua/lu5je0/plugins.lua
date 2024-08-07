@@ -1,6 +1,7 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
 local has_mac = vim.fn.has('mac') == 1
 local has_wsl = vim.fn.has('wsl') == 1
+local has_ssh_client = vim.fn.has('ssh_client') == 1
 
 local disabled_plugins = {
   "2html_plugin",
@@ -29,7 +30,7 @@ local disabled_plugins = {
   "vimballPlugin",
 }
 
-if has_mac or has_wsl then
+if not has_ssh_client then
   table.insert(disabled_plugins, 'osc52')
 end
 
