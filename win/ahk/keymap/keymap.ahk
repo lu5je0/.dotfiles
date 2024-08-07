@@ -93,16 +93,16 @@ ResizeWindow(position) {
         } else {
             if (position = "center_i") {
                 ; 计算窗口的新宽度和高度 (4/5 屏幕大小)
-                newWidth := screenWidth * 4 / 5
-                newHeight := screenHeight - 73
+                newWidth := screenWidth * (11 / 16)
+                newHeight := screenHeight - 120
 
                 ; 计算窗口的新位置 (居中)
                 newX := (screenWidth - newWidth) / 2
-                newY := 0
+                newY := 23
             } else if (position = "center_j") {
                 ; 计算窗口的新宽度和高度 (3/5 屏幕大小)
                 newWidth := screenWidth * 3 / 5
-                newHeight := screenHeight * 4 / 5
+                newHeight := screenHeight * (17 / 20)
 
                 ; 计算窗口的新位置 (居中)
                 newX := (screenWidth - newWidth) / 2
