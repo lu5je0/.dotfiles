@@ -33,6 +33,24 @@ local function sizeFocusedWindow(mode)
         hs.window.focusedWindow():centerOnScreen(0)
         return
       end
+    elseif mode == "43_center" then
+      if tostring(win:application()):find('kitty') then
+        f.x = max.x
+        f.y = max.y
+        f.w = max.w * (3 / 4) - 20
+        f.h = max.h - 8
+        win:setFrame(f, 0)
+        hs.window.focusedWindow():centerOnScreen(0)
+        return
+      else
+        f.x = max.x
+        f.y = max.y
+        f.w = max.w * (3 / 4)
+        f.h = max.h
+        win:setFrame(f, 0)
+        hs.window.focusedWindow():centerOnScreen(0)
+        return
+      end
     elseif mode == "halfleft" then
       f.x = max.x
       f.y = max.y
@@ -54,6 +72,7 @@ hs.hotkey.bind({ "ctrl", "option" }, "J", sizeFocusedWindow('center'))
 
 hs.hotkey.bind({ "ctrl", "option" }, "H", sizeFocusedWindow('halfleft'))
 hs.hotkey.bind({ "ctrl", "option" }, "L", sizeFocusedWindow('halfright'))
+hs.hotkey.bind({ "ctrl", "option" }, "I", sizeFocusedWindow('43_center'))
 hs.hotkey.bind({ "ctrl", "option" }, "K", sizeFocusedWindow('maximize'))
 hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
   local win = hs.window.focusedWindow()
