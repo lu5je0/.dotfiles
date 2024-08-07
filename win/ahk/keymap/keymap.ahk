@@ -68,26 +68,24 @@ ResizeWindow(position) {
     specialAppMap := {}
     specialAppMap["alacritty.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
     specialAppMap["WindowsTerminal.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
-
-    ; 判断位置参数
-    if (position = "left" or position = "right") {
-        ; 计算窗口的新宽度和高度
-        newWidth := screenWidth / 2
-        newHeight := screenHeight
-        
-        ; 计算窗口的新位置
-        newX := (position = "left") ? 0 : screenWidth / 2
-        newY := 0
-    } else if (position = "center_i" or position = "center_j") {
-        ; 判断是否在特殊应用映射中
-        if (specialAppMap.HasKey(processName)) {
-            if (specialAppMap[processName].HasKey(position)) {
-                newWidth := specialAppMap[processName][position].width
-                newHeight := specialAppMap[processName][position].height
-                newX := specialAppMap[processName][position].x_offset
-                newY := specialAppMap[processName][position].y_offset
-            }
-        } else {
+    
+    ; 判断是否在特殊应用映射中
+    if (specialAppMap[processName].HasKey(position)) {
+        newWidth := specialAppMap[processName][position].width
+        newHeight := specialAppMap[processName][position].height
+        newX := specialAppMap[processName][position].x_offset
+        newY := specialAppMap[processName][position].y_offset
+    } else {
+        ; 判断位置参数
+        if (position = "left" or position = "right") {
+            ; 计算窗口的新宽度和高度
+            newWidth := screenWidth / 2
+            newHeight := screenHeight
+            
+            ; 计算窗口的新位置
+            newX := (position = "left") ? 0 : screenWidth / 2
+            newY := 0
+        } else if (position = "center_i" or position = "center_j") {
             if (position = "center_i") {
                 ; 计算窗口的新宽度和高度 (4/5 屏幕大小)
                 newWidth := screenWidth * (11 / 16)
@@ -105,9 +103,9 @@ ResizeWindow(position) {
                 newX := (screenWidth - newWidth) / 2
                 newY := (screenHeight - newHeight) / 2
             }
+        } else {
+            return ; 无效的位置参数
         }
-    } else {
-        return ; 无效的位置参数
     }
 
     ; 调整窗口大小和位置
