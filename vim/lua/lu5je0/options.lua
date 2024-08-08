@@ -61,6 +61,7 @@ if g.neovide then
   ]]
   g.neovide_remember_window_size = true
   g.neovide_hide_mouse_when_typing = true
+  g.neovide_floating_shadow = false
 end
 
 o.mouse = "a"

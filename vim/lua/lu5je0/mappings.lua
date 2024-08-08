@@ -141,6 +141,9 @@ vim.schedule(function()
   nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
   
   inoremap <S-Tab> <C-V><Tab>
+  
+  " gui paste
+  inoremap <S-Insert> <C-R>+
 
   " 缩进后重新选择
   xmap < <gv
