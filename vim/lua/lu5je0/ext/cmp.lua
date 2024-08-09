@@ -214,8 +214,6 @@ cmp.setup {
       end
       if index == #cmp.get_entries() then
         cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select })()
-        cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select })()
-        return
       end
       cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select })()
     end, { 'i' }),
@@ -227,8 +225,6 @@ cmp.setup {
       end
       if index == 1 then
         cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select })()
-        cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select })()
-        return
       end
       cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select })()
     end, { 'i' }),
