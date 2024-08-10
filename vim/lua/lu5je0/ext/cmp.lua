@@ -206,8 +206,28 @@ cmp.setup {
         cmp.complete()
       end
     end, { 'i' }),
-    ['<down>'] = cmp.mapping(cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Select }, { 'i' }),
-    ['<up>'] = cmp.mapping(cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Select }, { 'i' }),
+    ['<down>'] = cmp.mapping(function(fallback)
+      local index = cmp.get_selected_index()
+      if not index then
+        fallback()
+        return
+      end
+      if index == #cmp.get_entries() then
+        cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select })()
+      end
+      cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select })()
+    end, { 'i' }),
+    ['<up>'] = cmp.mapping(function(fallback)
+      local index = cmp.get_selected_index()
+      if not index then
+        fallback()
+        return
+      end
+      if index == 1 then
+        cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select })()
+      end
+      cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select })()
+    end, { 'i' }),
     ['<cr>'] = cmp.mapping(comfirm, { 'i', 's' }),
     ['<tab>'] = cmp.mapping(comfirm, { 'i', 's' }),
   },

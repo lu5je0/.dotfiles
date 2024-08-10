@@ -58,9 +58,13 @@ if g.neovide then
   autocmd CmdlineLeave [/\?] execute "let g:neovide_input_ime=v:false"
   autocmd CmdlineEnter [/\?] execute "let g:neovide_input_ime=v:true"
   augroup END
+  
+  " gui paste
+  inoremap <S-Insert> <C-R>+
   ]]
   g.neovide_remember_window_size = true
   g.neovide_hide_mouse_when_typing = true
+  g.neovide_floating_shadow = false
 end
 
 o.mouse = "a"

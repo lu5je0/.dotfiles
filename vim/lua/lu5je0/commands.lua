@@ -127,3 +127,30 @@ encode_command_creater.create_encode_command('MarkdownBold', function(text)
   end
   return ('**%s**'):format(text)
 end, { range = true, buffer = false })
+
+-- 定义一个函数来执行转义操作
+local function escape_characters(input, char_to_escape, escape_with)
+  -- 如果没有提供第一个参数，默认为 "
+  char_to_escape = char_to_escape or '"'
+  -- 如果没有提供第二个参数，默认为 \
+  escape_with = escape_with or '\\'
+
+  -- 使用 Lua 的 gsub 函数进行转义
+  local escaped_input = input:gsub(char_to_escape, escape_with .. char_to_escape)
+  return escaped_input
+end
+
+-- 定义一个命令来调用上述函数
+vim.api.nvim_create_user_command('Escape', function(opts)
+  -- 获取当前行的内容
+  local line = vim.api.nvim_get_current_line()
+  -- 获取命令参数
+  local char_to_escape = opts.fargs[1]
+  local escape_with = opts.fargs[2]
+
+  -- 执行转义操作
+  local escaped_line = escape_characters(line, char_to_escape, escape_with)
+
+  -- 将转义后的内容设置回当前行
+  vim.api.nvim_set_current_line(escaped_line)
+end, { nargs = '*' })
