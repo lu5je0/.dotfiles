@@ -11,7 +11,7 @@ end)()
 local font = (function()
   local r = {}
   if uname == 'win' then
-    r.text_font = wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
+    r.text_font = wezterm.font("JetBrainsMonoNL Nerd Font Mono", { weight = "Medium", stretch = "Normal", style = "Normal" })
     r.tab_bar_font_size = 10.0
   elseif uname == 'mac' then
     r.text_font = wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
@@ -28,11 +28,10 @@ local config = {
       return { "wsl" }
     end
   end)(),
-  color_scheme = "Gruvbox Dark",
+  color_scheme = "Gruvbox Dark (Gogh)",
   use_resize_increments = true,
   -- ./wezterm.exe ls-fonts --list-system
   font = font.text_font,
-  -- hide_tab_bar_if_only_one_tab = true,
   window_frame = {
     font_size = font.tab_bar_font_size,
     active_titlebar_bg = "#2C2E34",
@@ -64,10 +63,10 @@ local config = {
     if uname == 'mac' then
       return 15
     elseif uname == 'win' then
-      return 10.5
+      return 11
     end
   end)(),
-  leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 },
+  leader = { key = "b", mods = "CTRL", timeout_milliseconds = 2000 },
   keys = {
     { key = "%", mods = "LEADER", action = wezterm.action { SplitHorizontal = { domain = "CurrentPaneDomain" } } },
     { key = "h", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Left" } },
@@ -86,6 +85,7 @@ local config = {
     { key = "n", mods = "LEADER", action = wezterm.action { ActivateTabRelative = 1 } },
     { key = "t", mods = "ALT", action = wezterm.action { SpawnTab = "DefaultDomain" } },
   },
+  -- hide_tab_bar_if_only_one_tab = true,
   -- use_fancy_tab_bar = false,
   window_decorations = "RESIZE",
   window_padding = {
