@@ -20,7 +20,7 @@ function M.locate_file()
   end
 
   local function turn_on_hidden_filter()
-    if require("nvim-tree.explorer.filters").config.filter_dotfiles then
+    if require("nvim-tree.core").get_explorer() == nil or require("nvim-tree.core").get_explorer().filters.config.filter_dotfiles then
       api.tree.toggle_hidden_filter()
     end
   end
