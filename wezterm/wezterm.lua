@@ -32,7 +32,6 @@ end)()
 local config = {
   -- initial_cols = 155,
   -- initial_rows = 50,
-  cursor_thickness = '0.06cell',
   -- for keymap alt t
   default_prog = (function(args)
     if is_win then
@@ -69,7 +68,7 @@ local config = {
     top = 0,
     bottom = 0,
   },
-  max_fps = 120,
+  -- max_fps = 120,
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
   colors = {
@@ -100,6 +99,10 @@ local config = {
     end
   end)(),
 }
+
+if is_mac then
+  config.cursor_thickness = '0.06cell'
+end
 
 -- config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 2000 }
 -- config.keys = {
@@ -139,6 +142,7 @@ config.keys = {
   { key = 't', mods = 'ALT', action = wezterm.action { SpawnTab = "DefaultDomain" } },
   { key = 't', mods = 'CMD', action = wezterm.action { SpawnTab = "DefaultDomain" } },
   { key = 'l', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'n', mods = mod_key, action = wezterm.action { ActivateTabRelative = 1 } },
   { key = 'h', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Left" } },
   { key = 'k', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Up" } },
   { key = 'j', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Down" } },
@@ -153,6 +157,11 @@ config.keys = {
   { key = '!', mods = mod_key, action = wezterm.action_callback(function(win, pane)
       pane:move_to_new_window()
     end),
+  },
+  {
+    key = 'r',
+    mods = mod_key,
+    action = wezterm.action.ReloadConfiguration,
   },
 }
 
