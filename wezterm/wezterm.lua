@@ -9,6 +9,18 @@ local uname = (function()
   end
 end)()
 
+-- "Thin"
+-- "ExtraLight"
+-- "Light"
+-- "DemiLight"
+-- "Book"
+-- "Regular"
+-- "Medium"
+-- "DemiBold"
+-- "Bold"
+-- "ExtraBold"
+-- "Black"
+-- "ExtraBlack".
 local font = (function()
   local r = {}
   if uname == 'win' then
@@ -41,6 +53,8 @@ local config = {
   },
   hide_tab_bar_if_only_one_tab = true,
   use_fancy_tab_bar = false,
+  tab_bar_at_bottom = true,
+  max_fps = 120,
   -- window_decorations = "RESIZE",
   window_padding = {
     left = 0,
@@ -74,32 +88,44 @@ local config = {
     if uname == 'mac' then
       return 15
     elseif uname == 'win' then
-      return 11
+      return 11.5
     end
   end)(),
-  leader = { key = "b", mods = "CTRL", timeout_milliseconds = 2000 },
-  keys = {
-    { key = "%", mods = "LEADER", action = wezterm.action { SplitHorizontal = { domain = "CurrentPaneDomain" } } },
-    { key = "h", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Left" } },
-    { key = "l", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Right" } },
-    { key = "k", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Up" } },
-    { key = "j", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Down" } },
-    { key = "o", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Prev" } },
-    ---@diagnostic disable-next-line: unused-local
-    {
-      key = "v",
-      mods = "LEADER",
-      action = wezterm.action_callback(function(win, pane)
-        wezterm.log_info(wezterm.target_triple)
-      end)
-    },
-    -- { key = "o", mods = "LEADER", action = "ActivateLastTab" },
-    { key = "x",  mods = "LEADER", action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-    { key = "\"", mods = "LEADER", action = wezterm.action { SplitVertical = { domain = "CurrentPaneDomain" } } },
-    { key = "c",  mods = "LEADER", action = wezterm.action { SpawnTab = "DefaultDomain" } },
-    { key = "n",  mods = "LEADER", action = wezterm.action { ActivateTabRelative = 1 } },
-    { key = "t",  mods = "ALT",    action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  },
+}
+
+-- config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 2000 }
+-- config.keys = {
+--   { key = "h", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Left" } },
+--   { key = "l", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Right" } },
+--   { key = "k", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Up" } },
+--   { key = "j", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Down" } },
+--   { key = "o", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Prev" } },
+--   ---@diagnostic disable-next-line: unused-local
+--   {
+--     key = "v",
+--     mods = "LEADER",
+--     action = wezterm.action_callback(function(win, pane)
+--       wezterm.log_info(wezterm.target_triple)
+--     end)
+--   },
+--   -- { key = "o", mods = "LEADER", action = "ActivateLastTab" },
+--   { key = "x",  mods = "LEADER", action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+--   { key = "\"", mods = "LEADER", action = wezterm.action { SplitVertical = { domain = "CurrentPaneDomain" } } },
+--   { key = "c",  mods = "LEADER", action = wezterm.action { SpawnTab = "DefaultDomain" } },
+--   { key = "n",  mods = "LEADER", action = wezterm.action { ActivateTabRelative = 1 } },
+--   { key = "t",  mods = "ALT",    action = wezterm.action { SpawnTab = "DefaultDomain" } },
+-- }
+
+config.keys = {
+  { key = '%', mods = 'CTRL|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = '"', mods = 'CTRL|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
+  { key = "o", mods = "CTRL|SHIFT", action = wezterm.action { ActivatePaneDirection = "Prev" } },
+  { key = 'c', mods = 'CTRL|SHIFT', action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 'l', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'h', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Left" } },
+  { key = 'k', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Up" } },
+  { key = 'j', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Down" } },
+  { key = 'x', mods = 'CTRL|SHIFT', action = wezterm.action { CloseCurrentPane = { confirm = true } } }
 }
 
 wezterm.on('gui-startup', function(cmd)
