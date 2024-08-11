@@ -125,7 +125,20 @@ config.keys = {
   { key = 'h', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Left" } },
   { key = 'k', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Up" } },
   { key = 'j', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Down" } },
-  { key = 'x', mods = 'CTRL|SHIFT', action = wezterm.action { CloseCurrentPane = { confirm = true } } }
+  { key = 'x', mods = 'CTRL|SHIFT', action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+  { key = 'l', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.ShowDebugOverlay },
+}
+
+config.skip_close_confirmation_for_processes_named = {
+  'bash',
+  'sh',
+  'zsh',
+  'fish',
+  'tmux',
+  'nu',
+  'cmd.exe',
+  'pwsh.exe',
+  'powershell.exe',
 }
 
 wezterm.on('gui-startup', function(cmd)
