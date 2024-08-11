@@ -1,13 +1,8 @@
 local wezterm = require('wezterm');
 local mux = wezterm.mux
 
-local uname = (function()
-  if string.find(wezterm.target_triple, 'apple') then
-    return "mac"
-  elseif string.find(wezterm.target_triple, 'windows') then
-    return "win"
-  end
-end)()
+local is_win = string.find(wezterm.target_triple, 'windows')
+local is_mac = string.find(wezterm.target_triple, 'apple')
 
 -- "Thin"
 -- "ExtraLight"
@@ -23,11 +18,11 @@ end)()
 -- "ExtraBlack".
 local font = (function()
   local r = {}
-  if uname == 'win' then
+  if is_win then
     r.text_font = wezterm.font("JetBrainsMonoNL Nerd Font Mono",
       { weight = "Medium", stretch = "Normal", style = "Normal" })
     r.tab_bar_font_size = 10.0
-  elseif uname == 'mac' then
+  elseif is_mac then
     r.text_font = wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
     r.tab_bar_font_size = 11.5
   end
@@ -37,7 +32,8 @@ end)()
 local config = {
   -- initial_cols = 155,
   -- initial_rows = 50,
-  -- cursor_thickness = '0.06cell',
+  cursor_thickness = '0.06cell',
+  -- for keymap alt t
   default_prog = (function(args)
     if uname == 'win' then
       return { "wsl", "--cd", "~" }
@@ -86,9 +82,9 @@ local config = {
     },
   },
   font_size = (function()
-    if uname == 'mac' then
+    if is_mac then
       return 14
-    elseif uname == 'win' then
+    elseif is_win then
       return 11.5
     end
   end)(),
@@ -118,9 +114,9 @@ local config = {
 -- }
 
 local mod_key
-if uname == 'mac' then
+if is_mac then
   mod_key = 'SHIFT|CMD'
-elseif uname == 'win' then
+elseif is_win then
   mod_key = 'SHIFT|ALT'
 end
 
@@ -137,6 +133,16 @@ config.keys = {
   { key = 'j', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Down" } },
   { key = 'x', mods = mod_key, action = wezterm.action { CloseCurrentPane = { confirm = true } } },
   { key = 'l', mods = mod_key, action = wezterm.action.ShowDebugOverlay },
+  ---@diagnostic disable-next-line: unused-local
+  { key = 'q', mods = mod_key, action = wezterm.action_callback(function(win, pane)
+      pane:move_to_new_tab()
+    end),
+  },
+  ---@diagnostic disable-next-line: unused-local
+  { key = '!', mods = mod_key, action = wezterm.action_callback(function(win, pane)
+      pane:move_to_new_window()
+    end),
+  },
 }
 
 config.skip_close_confirmation_for_processes_named = {
@@ -150,9 +156,10 @@ config.skip_close_confirmation_for_processes_named = {
   'pwsh.exe',
   'powershell.exe',
 }
+config.window_close_confirmation = 'NeverPrompt'
 
 wezterm.on('gui-startup', function(cmd)
-  if uname == 'win' then
+  if is_win then
     if cmd then
       mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", cmd.cwd } }
     else
