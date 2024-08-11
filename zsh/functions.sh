@@ -92,6 +92,7 @@ function q-extract
       *.tar.bz2)   tar -xvjf $filepath   ;;
       *.tar.gz)    tar -xvzf $filepath   ;;
       *.tar.xz)    tar -xvJf $filepath   ;;
+      *.txz)       tar -xvJf $filepath   ;;
       *.bz2)       bunzip2 $filepath    ;;
       *.rar)       rar x $filepath      ;;
       *.gz)        gunzip $filepath     ;;
@@ -121,6 +122,7 @@ function q-compress
       *.tar) shift && tar -cf $FILE $* ;;
       *.tar.bz2) shift && tar -cjf $FILE $* ;;
       *.tar.xz) shift && tar -cJf $FILE $* ;;
+      *.txz) shift && tar -cJf $FILE $* ;;
       *.tar.gz) shift && tar -czf $FILE $* ;;
       *.tgz) shift && tar -czf $FILE $* ;;
       *.zip) shift && zip -r $FILE $* ;;
