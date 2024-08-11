@@ -43,7 +43,7 @@ local config = {
     end
   end)(),
   color_scheme = "Gruvbox Dark (Gogh)",
-  -- use_resize_increments = true,
+  use_resize_increments = true,
   -- ./wezterm.exe ls-fonts --list-system
   font = font.text_font,
   window_frame = {
@@ -86,7 +86,7 @@ local config = {
   },
   font_size = (function()
     if uname == 'mac' then
-      return 15
+      return 14
     elseif uname == 'win' then
       return 11.5
     end
@@ -116,17 +116,24 @@ local config = {
 --   { key = "t",  mods = "ALT",    action = wezterm.action { SpawnTab = "DefaultDomain" } },
 -- }
 
+local mod_key
+if uname == 'mac' then
+  mod_key = 'SHIFT|CMD'
+elseif uname == 'WIN' then
+  mod_key = 'SHIFT|ALT'
+end
+
 config.keys = {
-  { key = '%', mods = 'CTRL|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-  { key = '"', mods = 'CTRL|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
-  { key = "o", mods = "CTRL|SHIFT", action = wezterm.action { ActivatePaneDirection = "Prev" } },
-  { key = 'c', mods = 'CTRL|SHIFT', action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 'l', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Right" } },
-  { key = 'h', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Left" } },
-  { key = 'k', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Up" } },
-  { key = 'j', mods = 'CTRL|SHIFT', action = wezterm.action { ActivatePaneDirection = "Down" } },
-  { key = 'x', mods = 'CTRL|SHIFT', action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-  { key = 'l', mods = 'CTRL|SHIFT|ALT', action = wezterm.action.ShowDebugOverlay },
+  { key = '%', mods = mod_key, action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = '"', mods = mod_key, action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
+  { key = "o", mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Prev" } },
+  { key = 'c', mods = mod_key, action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 'l', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'h', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Left" } },
+  { key = 'k', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Up" } },
+  { key = 'j', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Down" } },
+  { key = 'x', mods = mod_key, action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+  { key = 'l', mods = mod_key, action = wezterm.action.ShowDebugOverlay },
 }
 
 config.skip_close_confirmation_for_processes_named = {
@@ -142,10 +149,12 @@ config.skip_close_confirmation_for_processes_named = {
 }
 
 wezterm.on('gui-startup', function(cmd)
-  if cmd then
-    mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", cmd.cwd } }
-  else
-    mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", "~" } }
+  if uname == 'win' then
+    if cmd then
+      mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", cmd.cwd } }
+    else
+      mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", "~" } }
+    end
   end
 end)
 
