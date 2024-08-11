@@ -68,6 +68,12 @@ ResizeWindow(position) {
     specialAppMap := {}
     specialAppMap["alacritty.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
     specialAppMap["WindowsTerminal.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
+    ; font size 11
+    ; specialAppMap["wezterm-gui.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
+    ; font size 11.5
+    specialAppMap["wezterm-gui.exe"] := { "center_i": { "width": 2457, "height": 2008, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1928, "height": 1612, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
+    ; fancy tab bar
+    ; specialAppMap["wezterm-gui.exe"] := { "center_i": { "width": 2456, "height": 2034, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1928, "height": 1592, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
     
     ; 判断是否在特殊应用映射中
     if (specialAppMap[processName].HasKey(position)) {
