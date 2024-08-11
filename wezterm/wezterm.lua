@@ -37,6 +37,7 @@ end)()
 local config = {
   -- initial_cols = 155,
   -- initial_rows = 50,
+  -- cursor_thickness = '0.06cell',
   default_prog = (function(args)
     if uname == 'win' then
       return { "wsl", "--cd", "~" }
@@ -119,7 +120,7 @@ local config = {
 local mod_key
 if uname == 'mac' then
   mod_key = 'SHIFT|CMD'
-elseif uname == 'WIN' then
+elseif uname == 'win' then
   mod_key = 'SHIFT|ALT'
 end
 
@@ -128,6 +129,8 @@ config.keys = {
   { key = '"', mods = mod_key, action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = "o", mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Prev" } },
   { key = 'c', mods = mod_key, action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 't', mods = 'ALT', action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 't', mods = 'CMD', action = wezterm.action { SpawnTab = "DefaultDomain" } },
   { key = 'l', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Right" } },
   { key = 'h', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Left" } },
   { key = 'k', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Up" } },
