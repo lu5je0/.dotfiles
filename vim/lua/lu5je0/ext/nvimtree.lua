@@ -303,7 +303,7 @@ local function on_attach(bufnr)
   set('n', 'mk', M.create_dir, opts('create_dir'))
   set('n', 't', M.terminal_cd, opts('terminal cd'))
   
-  set('n', 'z', M.toggle_width, opts('toggle nvimtree width'))
+  set('n', 'x', M.toggle_width, opts('toggle nvimtree width'))
   
   set('n', 'D', function()
     M.delete_node()
