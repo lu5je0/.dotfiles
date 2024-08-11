@@ -35,7 +35,7 @@ local config = {
   cursor_thickness = '0.06cell',
   -- for keymap alt t
   default_prog = (function(args)
-    if uname == 'win' then
+    if is_win then
       return { "wsl", "--cd", "~" }
     end
   end)(),
@@ -48,17 +48,28 @@ local config = {
     active_titlebar_bg = "#2C2E34",
     inactive_titlebar_bg = "#2C2E34",
   },
+  
+  -- tab bar在上面
+  -- hide_tab_bar_if_only_one_tab = false,
+  -- use_fancy_tab_bar = true,
+  -- tab_bar_at_bottom = false,
+  -- window_decorations = "INTEGRATED_BUTTONS|RESIZE",
+  -- integrated_title_button_style = "Windows",
+  -- integrated_title_button_color = "auto",
+  -- integrated_title_button_alignment = "Right",
+  
+  -- tab bar在下面
   hide_tab_bar_if_only_one_tab = true,
   use_fancy_tab_bar = false,
   tab_bar_at_bottom = true,
-  max_fps = 120,
-  -- window_decorations = "RESIZE",
+  
   window_padding = {
     left = 0,
     right = 0,
     top = 0,
     bottom = 0,
   },
+  max_fps = 120,
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
   colors = {
