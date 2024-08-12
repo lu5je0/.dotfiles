@@ -458,6 +458,7 @@ function M.setup()
     },
     renderer = {
       full_name = true,
+      hidden_display = "all",
       indent_markers = {
         enable = true,
       },
