@@ -105,57 +105,26 @@ if is_mac then
   config.cursor_thickness = '0.06cell'
 end
 
--- config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 2000 }
--- config.keys = {
---   { key = "h", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Left" } },
---   { key = "l", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Right" } },
---   { key = "k", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Up" } },
---   { key = "j", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Down" } },
---   { key = "o", mods = "LEADER", action = wezterm.action { ActivatePaneDirection = "Prev" } },
---   ---@diagnostic disable-next-line: unused-local
---   {
---     key = "v",
---     mods = "LEADER",
---     action = wezterm.action_callback(function(win, pane)
---       wezterm.log_info(wezterm.target_triple)
---     end)
---   },
---   -- { key = "o", mods = "LEADER", action = "ActivateLastTab" },
---   { key = "x",  mods = "LEADER", action = wezterm.action { CloseCurrentPane = { confirm = true } } },
---   { key = "\"", mods = "LEADER", action = wezterm.action { SplitVertical = { domain = "CurrentPaneDomain" } } },
---   { key = "c",  mods = "LEADER", action = wezterm.action { SpawnTab = "DefaultDomain" } },
---   { key = "n",  mods = "LEADER", action = wezterm.action { ActivateTabRelative = 1 } },
---   { key = "t",  mods = "ALT",    action = wezterm.action { SpawnTab = "DefaultDomain" } },
--- }
-
-local mod_key
-if is_mac then
-  mod_key = 'SHIFT|CMD'
-elseif is_win then
-  mod_key = 'SHIFT|ALT'
-end
-
-config.keys = {
-  { key = '%', mods = mod_key, action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-  { key = '"', mods = mod_key, action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
-  { key = "o", mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Prev" } },
-  { key = 'c', mods = mod_key, action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 't', mods = 'ALT', action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 't', mods = 'CMD', action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 'l', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Right" } },
-  { key = 'n', mods = mod_key, action = wezterm.action { ActivateTabRelative = 1 } },
-  { key = 'h', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Left" } },
-  { key = 'k', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Up" } },
-  { key = 'j', mods = mod_key, action = wezterm.action { ActivatePaneDirection = "Down" } },
-  { key = 'x', mods = mod_key, action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-  { key = 'l', mods = mod_key, action = wezterm.action.ShowDebugOverlay },
+config.keys = {}
+local operate_keys = {
+  { key = '%', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = '"', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
+  { key = "o", action = wezterm.action { ActivatePaneDirection = "Prev" } },
+  { key = 'c', action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 'l', action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'n', action = wezterm.action { ActivateTabRelative = 1 } },
+  { key = 'h', action = wezterm.action { ActivatePaneDirection = "Left" } },
+  { key = 'k', action = wezterm.action { ActivatePaneDirection = "Up" } },
+  { key = 'j', action = wezterm.action { ActivatePaneDirection = "Down" } },
+  { key = 'x', action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+  { key = 'l', action = wezterm.action.ShowDebugOverlay },
   ---@diagnostic disable-next-line: unused-local
-  { key = 'q', mods = mod_key, action = wezterm.action_callback(function(win, pane)
+  { key = 'q', action = wezterm.action_callback(function(win, pane)
       pane:move_to_new_tab()
     end),
   },
   ---@diagnostic disable-next-line: unused-local
-  { key = '!', mods = mod_key, action = wezterm.action_callback(function(win, pane)
+  { key = '!', action = wezterm.action_callback(function(win, pane)
       pane:move_to_new_window()
     end),
   },
@@ -166,18 +135,32 @@ config.keys = {
   },
 }
 
-config.skip_close_confirmation_for_processes_named = {
-  'bash',
-  'sh',
-  'zsh',
-  'fish',
-  'tmux',
-  'nu',
-  'cmd.exe',
-  'pwsh.exe',
-  'powershell.exe',
-}
-config.window_close_confirmation = 'NeverPrompt'
+config.leader = { key = ",", mods = "CTRL", timeout_milliseconds = 2000 }
+for _, key in ipairs(operate_keys) do
+  local mod_key
+  if is_mac then
+    mod_key = 'SHIFT|CMD'
+  elseif is_win then
+    mod_key = 'SHIFT|ALT'
+  end
+  table.insert(config.keys, { key = key.key, mods = "LEADER", action = key.action })
+  table.insert(config.keys, { key = key.key, mods = mod_key, action = key.action })
+end
+table.insert(config.keys, { key = 't', mods = 'ALT', action = wezterm.action { SpawnTab = "DefaultDomain" } })
+table.insert(config.keys, { key = 't', mods = 'CMD', action = wezterm.action { SpawnTab = "DefaultDomain" } })
+
+-- config.skip_close_confirmation_for_processes_named = {
+--   'bash',
+--   'sh',
+--   'zsh',
+--   'fish',
+--   'tmux',
+--   'nu',
+--   'cmd.exe',
+--   'pwsh.exe',
+--   'powershell.exe',
+-- }
+-- config.window_close_confirmation = 'NeverPrompt'
 
 wezterm.on('gui-startup', function(cmd)
   if is_win then
@@ -186,6 +169,8 @@ wezterm.on('gui-startup', function(cmd)
     else
       mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", "~" } }
     end
+  elseif is_mac then
+    mux.spawn_window { width = 120, height = 42 }
   end
 end)
 
