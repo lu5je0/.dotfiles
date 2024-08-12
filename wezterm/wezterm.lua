@@ -53,6 +53,7 @@ local config = {
   -- use_fancy_tab_bar = true,
   -- tab_bar_at_bottom = false,
   -- window_decorations = "INTEGRATED_BUTTONS|RESIZE",
+  -- integrated_title_button_style = "MacOsNative",
   -- integrated_title_button_style = "Windows",
   -- integrated_title_button_color = "auto",
   -- integrated_title_button_alignment = "Right",
