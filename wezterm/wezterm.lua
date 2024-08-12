@@ -114,25 +114,13 @@ local operate_keys = {
   { key = 'l', action = wezterm.action { ActivatePaneDirection = "Right" } },
   { key = 'n', action = wezterm.action { ActivateTabRelative = 1 } },
   { key = 'h', action = wezterm.action { ActivatePaneDirection = "Left" } },
-  { key = 'k', action = wezterm.action { ActivatePaneDirection = "Up" } },
   { key = 'j', action = wezterm.action { ActivatePaneDirection = "Down" } },
+  { key = 'k', action = wezterm.action { ActivatePaneDirection = "Up" } },
+  { key = 'l', action = wezterm.action { ActivatePaneDirection = "Right" } },
   { key = 'x', action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-  { key = 'l', action = wezterm.action.ShowDebugOverlay },
-  ---@diagnostic disable-next-line: unused-local
-  { key = 'q', action = wezterm.action_callback(function(win, pane)
-      pane:move_to_new_tab()
-    end),
-  },
-  ---@diagnostic disable-next-line: unused-local
-  { key = '!', action = wezterm.action_callback(function(win, pane)
-      pane:move_to_new_window()
-    end),
-  },
-  {
-    key = 'r',
-    mods = mod_key,
-    action = wezterm.action.ReloadConfiguration,
-  },
+  { key = 'q', action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
+  { key = '!', action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
+  { key = 'r', action = wezterm.action.ReloadConfiguration },
 }
 
 config.leader = { key = ",", mods = "CTRL", timeout_milliseconds = 2000 }
