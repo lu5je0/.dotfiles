@@ -23,7 +23,7 @@ local font = (function()
       { weight = "Medium", stretch = "Normal", style = "Normal" })
     r.tab_bar_font_size = 10.0
   elseif is_mac then
-    r.text_font = wezterm.font("JetBrainsMonoNL NF", { weight = "Medium", stretch = "Normal", style = "Normal" })
+    r.text_font = wezterm.font("JetBrainsMonoNL Nerd Font Mono", { weight = "DemiBold", stretch = "Normal", style = "Normal" })
     r.tab_bar_font_size = 11.5
   end
   return r
@@ -93,7 +93,7 @@ local config = {
   },
   font_size = (function()
     if is_mac then
-      return 14
+      return 14.5
     elseif is_win then
       return 11.5
     end
