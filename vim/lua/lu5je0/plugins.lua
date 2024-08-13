@@ -753,6 +753,16 @@ require("lazy").setup({
       vim.cmd('command MarkdownPreview call mkdp#util#open_preview_page()')
       vim.cmd('command MarkdownPreviewStop call mkdp#util#stop_preview()')
       vim.g.mkdp_filetypes = { "markdown", "plantuml" }
+      
+      if os.getenv('KITTY_LISTEN_ON') ~= nil then
+        vim.g.mkdp_browserfunc='OpenMarkdownPreview'
+        vim.cmd [[
+        function OpenMarkdownPreview(url)
+          execute "silent ! kitty @ launch --location=split --cwd=current awrit " . a:url
+          execute "silent ! kitten @ action --match id:1 next_window"
+        endfunction
+        ]]
+      end
     end,
     cmd = { "MarkdownPreview" },
   },
@@ -1009,15 +1019,7 @@ require("lazy").setup({
     -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' }, -- if you use standalone mini plugins
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
     config = function()
-      if os.getenv('KITTY_LISTEN_ON') ~= nil then
-        vim.cmd[[
-        function OpenMarkdownPreview (url)
-          execute "silent ! kitty @ launch --location=split --cwd=current awrit " . a:url
-          endfunction
-          let g:mkdp_browserfunc = 'OpenMarkdownPreview'
-          ]]
-          require('render-markdown').setup({})
-      end
+      require('render-markdown').setup({})
     end,
     ft = 'markdown'
   }

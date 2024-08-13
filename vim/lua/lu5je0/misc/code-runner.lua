@@ -30,6 +30,13 @@ local function special()
   return false
 end
 
+function M.stop_running()
+  local filetype = vim.bo.filetype
+  if filetype == 'markdown' then
+    vim.cmd('MarkdownPreviewStop')
+  end
+end
+
 function M.run_file(debug)
   debug = debug or false
   
@@ -88,6 +95,10 @@ function M.key_mapping()
   }
   vim.keymap.set('n', '<leader>rr', function()
     M.run_file()
+  end, opts)
+  
+  vim.keymap.set('n', '<leader>rx', function()
+    M.stop_running()
   end, opts)
   
   vim.keymap.set('n', '<leader>rd', function()
