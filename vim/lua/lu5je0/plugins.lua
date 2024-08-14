@@ -642,6 +642,13 @@ require("lazy").setup({
       event = { 'LspAttach' }
     },
     {
+      "saecki/live-rename.nvim",
+      event = { 'LspAttach' },
+      config = function()
+        vim.keymap.set("n", "<leader>cr", require("live-rename").rename)
+      end
+    },
+    {
       "aznhe21/actions-preview.nvim",
       keys = {
         {
@@ -1022,6 +1029,6 @@ require("lazy").setup({
       require('render-markdown').setup({})
     end,
     ft = 'markdown'
-  }
+  },
 
 }, opts)
