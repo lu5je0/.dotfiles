@@ -101,9 +101,7 @@ local config = {
   end)(),
 }
 
-if is_mac then
-  config.cursor_thickness = '0.06cell'
-end
+config.cursor_thickness = '0.06cell'
 
 config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 10000 }
 config.keys = {
