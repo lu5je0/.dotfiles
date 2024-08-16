@@ -10,8 +10,8 @@ local window_special_cases = {
   kitty = {
     center = function(max)
       return {
-        x = 190,
-        y = -960,
+        x = max.x,
+        y = max.y,
         w = 1021,
         h = 843
       }
@@ -79,7 +79,7 @@ local function size_focused_window(mode)
       f.h = max.h
     elseif mode == "center" then
       f.w = max.w / 1.4
-      f.h = max.h / 1.2
+      f.h = max.h / 1.1
       hs.window.focusedWindow():centerOnScreen(0)
       win:setFrame(f, 0)   -- 0 取消动画
       hs.window.focusedWindow():centerOnScreen(0)
