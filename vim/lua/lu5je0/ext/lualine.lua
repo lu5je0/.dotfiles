@@ -135,56 +135,22 @@ local function ins_right(component)
   end
 end
 
--- ins_left {
---   -- mode component
---   function()
---     -- auto change color according to neovims mode
---     local mode_color = {
---       n = colors.red,
---       i = colors.green,
---       v = colors.blue,
---       [''] = colors.blue,
---       V = colors.blue,
---       c = colors.magenta,
---       no = colors.red,
---       s = colors.orange,
---       S = colors.orange,
---       [''] = colors.orange,
---       ic = colors.yellow,
---       R = colors.violet,
---       Rv = colors.violet,
---       cv = colors.red,
---       ce = colors.red,
---       r = colors.cyan,
---       rm = colors.cyan,
---       ['r?'] = colors.cyan,
---       ['!'] = colors.red,
---       t = colors.red,
---     }
---     vim.api.nvim_command('hi! LualineMode guifg=' .. mode_color[vim.fn.mode()] .. ' guibg=' .. colors.bg)
---     -- return string.upper(vim.api.nvim_get_mode().mode)
---     return ''
---   end,
---   color = 'LualineMode',
---   padding = { left = 1, right = 1 },
--- }
-
-
 local mode_mappings = {
-  n = 'NOR',      -- Normal 模式
-  no = 'NOP',      -- Normal 模式
-  i = 'INS',      -- Insert 模式
-  c = 'COM',      -- Command-line 模式
-  v = 'VIS',      -- Visual 模式
-  V = 'VIL',      -- Visual Line 模式
-  [''] = 'VIB', -- Visual Block 模式
-  R = 'REP',      -- Replace 模式
-  Rv = 'VRP',     -- Virtual Replace 模式
-  s = 'SEL',      -- Select 模式
-  S = 'SIL',      -- Select Line 模式
-  [''] = 'SIB', -- Select Block 模式
-  t = 'TER'       -- Terminal 模式
+  n = { text = 'NOR', color = colors.yellow }, -- Normal 模式
+  i = { text = 'INS', color = colors.yellow },  -- Insert 模式
+  no = { text = 'NOP' },      -- Normal 模式
+  c = { text = 'COM' },      -- Command-line 模式
+  v = { text = 'VIS', color = colors.red },      -- Visual 模式
+  V = { text = 'VIL', color = colors.red },      -- Visual Line 模式
+  [''] = { text = 'VIB', color = colors.red }, -- Visual Block 模式
+  R = { text = 'REP' },      -- Replace 模式
+  Rv = { text = 'VRP' },     -- Virtual Replace 模式
+  s = { text = 'SEL' },      -- Select 模式
+  S = { text = 'SIL' },      -- Select Line 模式
+  [''] = { text = 'SIB' }, -- Select Block 模式
+  t = { text = 'TER' }       -- Terminal 模式
 }
+
 ins_left {
   function()
     local mode = nil
@@ -194,11 +160,17 @@ ins_left {
     else
       mode = vim.api.nvim_get_mode().mode
     end
-    return mode_mappings[mode]
+    local mapping = mode_mappings[mode]
+    local fg_color = mapping.color or colors.yellow
+    if fg_color then
+      vim.api.nvim_set_hl(0, "LualineMode", { bold = true, fg = fg_color, bg = colors.bg })
+    end
+    return mapping.text
   end,
   icon_only = true,
   inactive = true,
-  color = { fg = colors.yellow, bg = colors.bg, gui = 'bold' },
+  -- color = { fg = colors.yellow, bg = colors.bg, gui = 'bold' },
+  color = 'LualineMode',
   padding = { left = 1, right = 0 },
 }
 
