@@ -2,6 +2,7 @@ local M = {}
 
 local telescope = require('telescope')
 
+vim.cmd('highlight TelescopePromptTitle guifg=white guibg=#DA70D6')
 local function theme(preview)
   local t = {
     borderchars = {
@@ -13,7 +14,7 @@ local function theme(preview)
     width = 0.8,
     height = 50,
     results_height = 50,
-    prompt_title = false,
+    -- prompt_title = false,
     results_title = false,
     preview_title = false
   }
@@ -72,14 +73,14 @@ local function key_mapping()
   set_map('<leader>fR', function() fuzzy_grep() end, true)
   set_map('<leader>fg', function() telescope_builtin.git_status(theme()) end)
   set_map('<leader>fb', function() telescope_builtin.buffers(theme()) end)
-  set_map('<leader>fm', function() telescope_builtin.oldfiles(theme()) end)
+  set_map('<leader>fm', function() telescope_builtin.oldfiles(vim.tbl_deep_extend("force", theme(), { prompt_title = 'Old Files' })) end)
   set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
   set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end, true)
   set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
   set_map('<leader>f"', function() telescope_builtin.registers(theme()) end)
   set_map('<leader>fj', function()
     telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
-      { theme, search_dirs = { '~/junk-file' } }))
+      { theme, search_dirs = { '~/junk-file' }, prompt_title = 'Junk Files' }))
   end)
 end
 

@@ -225,16 +225,6 @@ require("lazy").setup({
   },
 
   {
-    'ahmedkhalf/project.nvim',
-    config = function()
-      require('lu5je0.ext.projects').setup()
-    end,
-    dependencies = {
-      'nvim-telescope/telescope.nvim',
-    },
-    keys = { '<leader>fp' },
-  },
-  {
     'akinsho/bufferline.nvim',
     config = function()
       require('lu5je0.ext.bufferline')
