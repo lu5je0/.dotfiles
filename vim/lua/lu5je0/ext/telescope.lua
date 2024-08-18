@@ -161,7 +161,7 @@ function M.setup()
       {
         path_display = { truncate = 2 },
         layout_config = {},
-        selection_caret = "▋ ",
+        -- selection_caret = "▋ ",
       }
     ),
     extensions = {
