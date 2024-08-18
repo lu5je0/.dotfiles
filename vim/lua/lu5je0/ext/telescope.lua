@@ -2,7 +2,10 @@ local M = {}
 
 local telescope = require('telescope')
 
-vim.cmd('highlight TelescopePromptTitle guifg=white guibg=#DA70D6')
+vim.cmd [[
+highlight TelescopePromptTitle guifg=white guibg=#DA70D6
+" highlight TelescopeSelectionCaret guifg=#DA70D6 guibg=#394634
+]]
 local function theme(preview)
   local t = {
     borderchars = {
@@ -158,6 +161,7 @@ function M.setup()
       {
         path_display = { truncate = 2 },
         layout_config = {},
+        selection_caret = "▋ ",
       }
     ),
     extensions = {
