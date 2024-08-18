@@ -8,7 +8,6 @@ local ui = require('lu5je0.core.ui')
 
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
-M.pwd_back_state = 0
 
 -- 修复第一次定位问题
 local locate_file_loaded = false
@@ -139,10 +138,8 @@ end
 
 function M.back()
   if M.pwd_stack:count() >= 2 then
-    M.pwd_back_state = 1
     M.pwd_forward_stack:push(M.pwd_stack:pop())
     vim.cmd(':cd ' .. M.pwd_stack:pop())
-    M.pwd_back_state = 0
   end
 end
 
@@ -360,8 +357,8 @@ local function on_attach(bufnr)
   -- set('n', 'o', api.node.run.system, opts('Run System'))
   set('n', 'q', api.tree.close, opts('Close'))
 
-  set('n', '<tab>', M.forward, opts('forward'))
   set('n', '<c-i>', M.forward, opts('forward'))
+  set('n', '<c-o>', M.back, opts('back'))
 end
 
 function M.setup()
