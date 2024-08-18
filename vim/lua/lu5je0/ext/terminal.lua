@@ -40,7 +40,9 @@ local function keep_terminal_mode()
     callback = function()
       if vim.bo.buftype == 'terminal' then
         if vim.g.terminal_mode == 'i' then
-          vim.cmd('startinsert')
+          vim.schedule(function()
+            vim.cmd('startinsert')
+          end)
         end
       end
     end,
