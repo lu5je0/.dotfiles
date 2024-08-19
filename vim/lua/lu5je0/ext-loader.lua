@@ -92,26 +92,22 @@ lazy_load({
       elseif vim.fn.has('mac') == 1 then
         require('lu5je0.misc.im.mac.im').setup()
       end
+      
+      -- require('lu5je0.misc.im.im_keeper').setup({
+      --   mac = {
+      --     keep = true,
+      --   },
+      --   win = {
+      --     keep = false,
+      --   }
+      -- })
     end
   end,
-  event = { 'InsertEnter' },
+  event = { 'InsertEnter', 'CursorHold' },
   keys = {
     { mode = { 'n' }, '<leader>vi' },
   }
 })
-
--- require('lu5je0.misc.im.im_keeper').setup({
---   mac = {
---     keep = false,
---     interval = 1000,
---     focus_gained = true,
---   },
---   win = {
---     keep = false,
---     interval = 1000,
---     focus_gained = true,
---   }
--- })
 
 -- json-helper
 lazy_load({
@@ -304,7 +300,8 @@ lazy_load({
     { mode = { 'n' }, 'zM' },
     { mode = { 'n' }, 'zR' },
     defer = 60,
-  }
+  },
+  event = { 'CursorHold' }
 })
 
 return M
