@@ -1,0 +1,6 @@
+nmap -Pn -sS -p 1-65535 -v 192.168.1.1
+参数：
+-sS    TCP SYN扫描
+-p     指定端口扫描
+-v     verbose
+-Pn    忽略ping
