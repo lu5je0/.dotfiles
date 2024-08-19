@@ -244,6 +244,7 @@ require("lazy").setup({
       require('lu5je0.ext.nvimtree').setup()
     end,
     cmd = { 'NvimTreeOpen' },
+    event = { 'CursorHold', 'CursorHoldI' },
     keys = { '<leader>e', '<leader>fe' },
   },
   {
