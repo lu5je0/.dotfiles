@@ -211,6 +211,7 @@ lazy_load({
   end,
   keys = {
     { mode = { 'n', 'x' }, '<leader>cf' },
+    { mode = { 'n', 'x' }, '<leader>cF' },
   },
 })
 
