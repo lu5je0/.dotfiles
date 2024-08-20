@@ -13,6 +13,9 @@ M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
 local locate_file_loaded = false
 function M.locate_file()
   local cur_filepath = vim.fn.expand('%:p')
+  if vim.fn.filereadable(cur_filepath) == 0 then
+    return
+  end
   local cur_file_dir_path = vim.fs.dirname(cur_filepath)
   local cwd = vim.fn.getcwd()
   
