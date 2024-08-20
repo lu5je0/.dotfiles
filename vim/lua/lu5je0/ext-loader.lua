@@ -239,11 +239,13 @@ lazy_load({
 lazy_load({
   config = function()
     require('lu5je0.misc.code-runner').key_mapping()
+    require('lu5je0.misc.code-runner').create_command()
   end,
   keys = {
     { mode = { 'n' }, '<leader>rr' },
     { mode = { 'n' }, '<leader>rd' },
   },
+  cmd = { 'LuaDevOn', 'LuaDevOff' }
 })
 
 -- quit-prompt
