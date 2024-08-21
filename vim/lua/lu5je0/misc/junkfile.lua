@@ -4,10 +4,6 @@ local M = {}
 -- 获取垃圾文件名
 function M.get_junk_filename(name)
   local junk_dir = '~/junk-file' .. os.date('/%Y/%m')
-  local real_dir = vim.fn.expand(junk_dir)
-  if not vim.fn.isdirectory(real_dir) then
-    vim.fn.mkdir(real_dir, 'p')
-  end
 
   local filename = junk_dir .. '/'
   filename = filename:gsub('\\', '/')
@@ -38,7 +34,12 @@ function M.save_as_junk_file(specify_filename)
   local filename = M.get_junk_filename(cur_file_name)
 
   if filename ~= '' then
-    vim.cmd('w ' .. vim.fn.fnameescape(filename))
+    filename = vim.fs.normalize(filename)
+    local dir = vim.fs.dirname(filename)
+    if vim.fn.isdirectory(dir) == 0 then
+      vim.fn.mkdir(dir, 'p')
+    end
+    vim.cmd('w ' .. vim.fs.normalize(filename))
   end
 end
 
