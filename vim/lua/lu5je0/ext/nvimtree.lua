@@ -412,6 +412,10 @@ function M.setup()
     filesystem_watchers = {
       enable = true,
       debounce_delay = 1000,
+      ignore_dirs = {
+        -- neovim 退出时卡顿
+        "node_modules"
+      },
     },
     diagnostics = {
       enable = false,
