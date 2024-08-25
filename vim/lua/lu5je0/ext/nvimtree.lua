@@ -20,7 +20,8 @@ function M.locate_file()
   local cwd = vim.fn.getcwd()
   
   if not locate_file_loaded then
-    api.tree.open({ focus = false })
+    api.tree.toggle({ focus = false })
+    locate_file_loaded = true
   end
   vim.defer_fn(function()
     if cur_file_dir_path == '' then
@@ -57,8 +58,7 @@ function M.locate_file()
     end
 
     vim.cmd('NvimTreeFindFile')
-  end, locate_file_loaded and 0 or 100)
-  locate_file_loaded = true
+  end, 0)
 end
 
 function M.terminal_cd()
