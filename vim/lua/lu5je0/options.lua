@@ -15,6 +15,8 @@ vim.fn.has = function(feature)
     has = os.getenv('WSLENV') ~= nil
   elseif feature == 'ssh_client' then
     has = os.getenv('SSH_CLIENT') ~= nil
+  elseif feature == 'kitty' then
+    has = os.getenv('TERM') == 'xterm-kitty'
   end
 
   return has and 1 or 0
@@ -150,18 +152,23 @@ local defer_options = {
         end
       end
       o.clipboard = 'unnamedplus'
+      local paste = {
+        ["+"] = no_paste("+"),   -- Pasting disabled
+        ["*"] = no_paste("*"),   -- Pasting disabled
+      }
+      if has('kitty') then
+        paste = {
+          ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+          ['*'] = require('vim.ui.clipboard.osc52').paste('*')
+        }
+      end
       vim.g.clipboard = {
         name = 'OSC 52',
         copy = {
           ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
           ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
         },
-        paste = {
-          -- ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
-          -- ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
-          ["+"] = no_paste("+"),   -- Pasting disabled
-          ["*"] = no_paste("*"),   -- Pasting disabled
-        }
+        paste = paste
       }
     elseif has('mac') then
       require('lu5je0.misc.clipboard.mac').setup()
