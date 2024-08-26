@@ -57,7 +57,11 @@ function M.locate_file()
       end
     end
 
-    vim.cmd('NvimTreeFindFile')
+    api.tree.find_file({
+      open = true,
+      buf = cur_filepath,
+      focus = true,
+    })
   end, 0)
 end
 
