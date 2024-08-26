@@ -104,6 +104,10 @@ function M.setup()
     cursor_utils.goto_saved_position()
   end, { force = true })
   
+  vim.api.nvim_create_user_command('JsonFixNonStringKey', function()
+    vim.cmd(':%!java -jar ~/.local/bin/json-hanlder-1.0.jar')
+  end, { force = true })
+  
   vim.api.nvim_create_user_command('JsonSortByKey', function()
     vim.cmd('set ft=json')
     vim.cmd(':%!jq --sort-keys')

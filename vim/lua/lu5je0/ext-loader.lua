@@ -114,7 +114,7 @@ lazy_load({
   config = function()
     require('lu5je0.misc.json-helper').setup()
   end,
-  cmd = { 'Json', 'JsonCompress', 'JsonExtract', 'JsonCopyPath', 'JsonFormat', 'JsonSortByKey', 'Jq' }
+  cmd = { 'Json', 'JsonCompress', 'JsonExtract', 'JsonCopyPath', 'JsonFormat', 'JsonSortByKey', 'Jq', 'JsonFixNonStringKey' }
 })
 
 -- junkfile
