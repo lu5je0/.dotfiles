@@ -118,6 +118,41 @@ encode_command_creater.create_encode_command('UrlEncode', function(url)
   return url
 end)
 
+encode_command_creater.create_encode_command('HtmlEncode', function(str)
+  local entities = {
+    ['&'] = '&amp;',
+    ['<'] = '&lt;',
+    ['>'] = '&gt;',
+    ['"'] = '&quot;',
+    ["'"] = '&#39;'
+  }
+  return (str:gsub("[&<>\"']", function(c)
+    return entities[c]
+  end))
+end)
+
+encode_command_creater.create_encode_command('HtmlDecode', function(str)
+  local entities = {
+    ['&amp;'] = '&',
+    ['&lt;'] = '<',
+    ['&gt;'] = '>',
+    ['&quot;'] = '"',
+    ['&#39;'] = "'"
+  }
+  return (str:gsub('&#?%w+;', function(entity)
+    if entities[entity] then
+      return entities[entity]
+    else
+      local num = entity:match("^&#(%d+);$")
+      if num then
+        return string.char(tonumber(num))
+      else
+        return entity
+      end
+    end
+  end))
+end)
+
 encode_command_creater.create_encode_command('UrlDecode', function(url)
   if url == nil then
     return
