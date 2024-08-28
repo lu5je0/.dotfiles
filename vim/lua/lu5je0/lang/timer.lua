@@ -1,5 +1,8 @@
 local M = {}
 
+-- local time = vim.uv.hrtime()
+-- vim.print((vim.uv.hrtime() - time) / 1000000)
+
 function M.now()
   local timestamp, s = vim.uv.gettimeofday()
   return timestamp * 1000 + math.floor(s / 1000)

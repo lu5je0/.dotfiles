@@ -79,6 +79,35 @@ encode_command_creater.create_encode_command('InlineToArray', function(lines)
   return table.concat(vim.split(lines, '\n'), ',')
 end)
 
+-- -- 将字符串转换为Unicode转义序列
+-- function string_to_unicode(str)
+-- end
+--
+-- -- 将Unicode转义序列转换回原始字符串
+-- function unicode_to_string(str)
+-- end
+
+encode_command_creater.create_encode_command('UnicodeEncode', function(str)
+  local result = {}
+  for i = 1, vim.fn.strchars(str) do
+    local char = vim.fn.strcharpart(str, i - 1, 1)
+    local code = vim.fn.char2nr(char)
+    if code < 128 then
+      table.insert(result, string.format("\\u%04X", code))
+    else
+      table.insert(result, string.format("\\U%08X", code))
+    end
+  end
+  return table.concat(result)
+end)
+
+encode_command_creater.create_encode_command('UnicodeDecode', function(str)
+  return (str:gsub("\\[uU](%x+)", function(code)
+    local n = tonumber(code, 16)
+    return vim.fn.nr2char(n)
+  end))
+end)
+
 encode_command_creater.create_encode_command('UrlEncode', function(url)
   if url == nil then
     return

@@ -258,7 +258,12 @@ local refresh_gps_text = function_utils.debounce(function(bufnr)
   local path = require('lu5je0.misc.gps-path').path()
   local max_len = 40
   if #path > max_len then
-    path = string.sub(path, 1, max_len) .. '…'
+    path = vim.fn.strcharpart(path, 0, max_len)
+    if string.sub(path, #path, #path) ~= ' ' then
+      path = path .. ' …'
+    else
+      path = path .. '…'
+    end
   end
   vim.b[bufnr].gps_text = path
 end, 40)
