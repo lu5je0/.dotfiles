@@ -64,11 +64,8 @@ zinit light zsh-users/zsh-completions
 # 本地sh文件
 ##########################################
 
-# zinit snippet ~/.dotfiles/zsh/z/z.sh
-if command -v zoxide > /dev/null 2>&1; then
-  unalias zi
-  eval "$(zoxide init zsh)"
-fi
+zinit ice lucid wait='0'
+zinit snippet ~/.dotfiles/zsh/zoxide.sh
 
 # zinit ice lucid wait='1'
 zinit snippet ~/.dotfiles/zsh/platform.sh
