@@ -23,10 +23,9 @@ if [ "$(uname)" = "Linux" ]; then
 fi
 
 if [[ -f ~/.ssh/config ]]; then
-    mkdir -p ~/.ssh/config.d
-    ln -s ~/.dotfiles/ssh/config ~/.ssh/config
+    mkdir -p ~/.ssh/config
 else
-    echo "~/.ssh/config existed"
+    ln -s ~/.dotfiles/ssh/config ~/.ssh/config
 fi
 
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
