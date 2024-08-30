@@ -23,15 +23,16 @@ if [ "$(uname)" = "Linux" ]; then
 fi
 
 if [[ -f ~/.ssh/config ]]; then
-    mkdir -p ~/.ssh/config.d
-    ln -s ~/.dotfiles/ssh/config ~/.ssh/config
+    mkdir -p ~/.ssh/config
 else
-    echo "~/.ssh/config existed"
+    ln -s ~/.dotfiles/ssh/config ~/.ssh/config
 fi
 
 ask "Download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
 ask "Git config?" && cp ~/.dotfiles/.gitconfig ~/.gitconfig
+
+ask "termux config?" && ln -s ~/.dotfiles/termux/termux.properties ~/.termux/termux.properties
 
 ask "Copy maven config?" && if [[ ! -d ~/.m2 ]]; then mkdir ~/.m2; fi && cp -i ~/.dotfiles/m2/settings.xml ~/.m2/settings.xml
 
