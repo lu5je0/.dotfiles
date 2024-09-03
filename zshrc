@@ -144,8 +144,8 @@ alias speedtest-js='speedtest -s 5396'
 # alias l='ls -lah'
 # alias ll='ls -lh'
 
-alias ll='exa -laF'
-alias l='exa -lF'
+alias ll='eza -laF'
+alias l='eza -lF'
 
 alias grep='grep --color'
 alias bat='batcat'
