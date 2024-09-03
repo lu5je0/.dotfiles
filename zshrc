@@ -148,7 +148,6 @@ alias ll='eza -laF'
 alias l='eza -lF'
 
 alias grep='grep --color'
-alias bat='batcat'
 
 alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
 
