@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Users/lu5je0/.dotfiles/transfer/.env/bin/python3
 
 import argparse
 import os
@@ -7,7 +7,6 @@ import sys
 import requests
 import getpass
 import socket
-import qrcode
 import console_color
 from requests.auth import HTTPBasicAuth
 
@@ -62,6 +61,7 @@ class Uploader:
         
     @staticmethod
     def print_qr_code_ascii(url):
+        import qrcode
         qr = qrcode.QRCode(version=2, box_size=10, border=2)
         qr.add_data(url)
         qr.make(fit=True)
