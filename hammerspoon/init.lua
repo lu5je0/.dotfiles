@@ -1,7 +1,5 @@
 ---@diagnostic disable: undefined-global
 
-local win_win = require('win_win')
-
 hs.hotkey.bind({ "ctrl", "option" }, "R", function()
   hs.reload()
 end)
@@ -116,6 +114,7 @@ hs.hotkey.bind({ "ctrl", "option" }, "L", size_focused_window('halfright'))
 hs.hotkey.bind({ "ctrl", "option" }, "I", size_focused_window('43_center'))
 hs.hotkey.bind({ "ctrl", "option" }, "K", size_focused_window('maximize'))
 hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
+  local win_win = require('win_win')
   local win = hs.window.focusedWindow()
   local f = win:frame()
   local screen = win:screen()
