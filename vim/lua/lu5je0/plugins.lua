@@ -187,6 +187,9 @@ require("lazy").setup({
       'tpope/vim-fugitive',
     },
     config = function()
+      if vim.fn.has('kitty') == 1 then
+        vim.g.flog_enable_extended_chars = true
+      end
       vim.cmd [[
       augroup flog
       autocmd FileType floggraph nmap <buffer> <leader>q ZZ
