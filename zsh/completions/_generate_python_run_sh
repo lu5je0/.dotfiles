@@ -1,0 +1,8 @@
+#compdef generate_python_run_sh
+
+_arguments \
+  '1: :_files' \
+  '-c[Automatically create a virtual environment]' \
+  '-i[Automatically install dependencies from requirements.txt if it exists]' \
+  '-v[Specify virtual environment directory]:venv directory:_directories' \
+  '-o[Specify output directory]:output directory:_directories'
