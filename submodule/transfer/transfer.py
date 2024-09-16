@@ -132,6 +132,9 @@ def main():
                         nargs='*', help='files', default=[])
 
     args = parser.parse_args()
+    
+    # TODO transfer.sh已经关闭
+    args.private = True
 
     if len(args.files) == 0:
         print('files required')
