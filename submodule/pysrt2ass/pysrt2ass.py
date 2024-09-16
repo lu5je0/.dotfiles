@@ -45,6 +45,19 @@ def srt_to_ass(srt_file, ass_styles, output_ass_file):
             end = f"{end_time.hour:01}:{end_time.minute:02}:{end_time.second:02}.{int(end_time.microsecond / 10000):02}"
 
             # 写入字幕事件
+            
+            if "\n" in sub.text:
+                sub_list = list(sub.text)
+                replace_first_break = False
+                for i, char in enumerate(sub_list):
+                    if char == "\n":
+                        if not replace_first_break:
+                            replace_first_break = True
+                            sub_list[i] = "\\N{\\rEng}"
+                        else:
+                            sub_list[i] = " "
+                sub.text = "".join(sub_list)
+            
             ass_file.write(f"Dialogue: 0,{start},{end},Default,,0,0,0,,{sub.text}\n")
 
 def convert_srt_to_ass_with_style(srt_file, ass_template_file, output_ass_file):
