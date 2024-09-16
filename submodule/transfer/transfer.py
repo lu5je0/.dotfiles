@@ -1,4 +1,4 @@
-#!/Users/lu5je0/.dotfiles/transfer/.env/bin/python3
+#!/usr/bin/env python3
 
 import argparse
 import os
