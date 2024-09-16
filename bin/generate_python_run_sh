@@ -26,7 +26,7 @@ def generate_run_script(script_path, script_name, run_script_name, venv_path, ou
     run_script_content = f"""#!/bin/bash
 
 # 获取当前脚本所在目录
-script_path="{script_path}"
+script_path={script_path}
 
 # 虚拟环境中的 Python 解释器路径
 venv_python="$script_path/{venv_path}/bin/python"
@@ -50,6 +50,12 @@ fi
     # Make run.sh executable
     os.chmod(run_script_path, 0o755)
     print(f"run.sh script generated at {run_script_path}")
+    
+def replace_home_with_tilde(path):
+    home_dir = os.path.expanduser("~")
+    if path.startswith(home_dir):
+        return path.replace(home_dir, "~", 1)
+    return path
 
 def main():
     parser = argparse.ArgumentParser(description="Generate run.sh script for a Python project.")
@@ -89,7 +95,7 @@ def main():
         install_dependencies(venv_python, requirements_file)
 
     # Generate run.sh script
-    generate_run_script(os.getcwd(), python_script, run_script_name, args.venv_dir, output_dir)
+    generate_run_script(replace_home_with_tilde(os.getcwd()), python_script, run_script_name, args.venv_dir, output_dir)
 
 if __name__ == "__main__":
     main()
