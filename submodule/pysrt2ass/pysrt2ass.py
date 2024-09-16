@@ -53,7 +53,8 @@ def convert_srt_to_ass_with_style(srt_file, ass_template_file, output_ass_file):
     srt_to_ass(srt_file, ass_styles, output_ass_file)
 
 if __name__ == "__main__":
-    srt_file = sys.argv[1]
-    ass_template_file = os.path.split(os.path.realpath(__file__))[0] + "/template.ass"
-    output_ass_file = ".".join(os.path.basename(srt_file).split('.')[:-1]) + ".ass"
-    convert_srt_to_ass_with_style(srt_file, ass_template_file, output_ass_file)
+    srt_files = sys.argv[1:]
+    for srt_file in srt_files:
+        ass_template_file = os.path.split(os.path.realpath(__file__))[0] + "/template.ass"
+        output_ass_file = ".".join(os.path.basename(srt_file).split('.')[:-1]) + ".ass"
+        convert_srt_to_ass_with_style(srt_file, ass_template_file, output_ass_file)
