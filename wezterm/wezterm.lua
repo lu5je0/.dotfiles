@@ -115,7 +115,7 @@ config.keys = {
   { key = 'k',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Up" } },
   { key = 'l',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
   { key = 'x',  mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-  { key = 'C',  mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' }  },
+  { key = 's',  mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' }  },
   { key = ' ',  mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' }  },
   { key = 'q',  mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
   { key = 'Q',  mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
