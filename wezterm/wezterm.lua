@@ -115,8 +115,10 @@ config.keys = {
   { key = 'k',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Up" } },
   { key = 'l',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
   { key = 'x',  mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+  { key = 's',  mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' }  },
+  { key = ' ',  mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' }  },
   { key = 'q',  mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
-  { key = '!',  mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
+  { key = 'Q',  mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
   { key = 'r',  mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
   { key = '0',  mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
   { key = 't',  mods = 'ALT',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
@@ -124,6 +126,26 @@ config.keys = {
   { key = '%',  mods = 'LEADER|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
   { key = '"',  mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = 'b',  mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
+}
+
+config.launch_menu = {
+  {
+    args = { 'wsl' }
+  },
+  {
+    args = { 'cmd' }
+  },
+  {
+    label = 'sh-ubuntu',
+    args = { 'wsl', 'ssh', 'sh.665665.xyz' }
+  },
+  {
+    label = 'raider',
+    args = { 'wsl', 'ssh', 'raider.665665.xyz' }
+  },
+  {
+    args = { 'powershell' }
+  }
 }
 
 -- config.skip_close_confirmation_for_processes_named = {
