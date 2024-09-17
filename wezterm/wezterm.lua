@@ -136,6 +136,14 @@ config.launch_menu = {
     args = { 'cmd' }
   },
   {
+    label = 'sh-ubuntu',
+    args = { 'wsl', 'ssh', 'sh.665665.xyz' }
+  },
+  {
+    label = 'raider',
+    args = { 'wsl', 'ssh', 'raider.665665.xyz' }
+  },
+  {
     args = { 'powershell' }
   }
 }
