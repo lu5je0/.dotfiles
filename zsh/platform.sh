@@ -52,13 +52,12 @@ elif [[ $UNAME_INFO =~ "WSL" ]]; then
   alias yy='win32yank.exe -i'
   alias p='win32yank.exe -o'
   alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
-  alias scoop='/mnt/c/Users/lu5je0/scoop/shims/scoop'
-  # export PATH=$PATH:'/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/'
-  # export PATH=~/.dotfiles/bin/wsl/:$PATH
-  # export PATH=/mnt/c/Users/lu5je0/scoop/shims:$PATH
+  alias scoop='PATH=$PATH:/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/ /mnt/c/Users/lu5je0/scoop/shims/scoop'
+  alias tssh='/mnt/c/Users/lu5je0/scoop/shims/tssh.exe'
   clippaste() {
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
   }
+  # export PATH=/mnt/c/Users/lu5je0/scoop/shims:$PATH
 elif [[ $UNAME_INFO =~ "Android" ]]; then
   alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
 fi
