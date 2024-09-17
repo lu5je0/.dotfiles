@@ -19,17 +19,6 @@ local function execute_in_terminal(cmd, append_cmd)
   end
 end
 
-local function special()
-  local fullpath = expand("%:p")
-  if vim.bo.filetype == 'lua' and fullpath == '/home/lu5je0/.dotfiles/wezterm/wezterm.lua' and vim.fn.has('wsl') == 1 then
-    vim.api.nvim_command('silent write')
-    vim.fn.system('cp ' .. fullpath .. ' ' .. '/mnt/c/Users/73995/.wezterm.lua"')
-    print("copied to windows")
-    return true
-  end
-  return false
-end
-
 function M.stop_running()
   local filetype = vim.bo.filetype
   if filetype == 'markdown' then
@@ -50,9 +39,6 @@ function M.run_file(debug)
   if filetype == 'vim' then
     vim.cmd('so %')
   elseif filetype == 'lua' then
-    if special() then
-      return
-    end
     if vim.g.lua_dev == 1 then
       vim.cmd('luafile %')
     else

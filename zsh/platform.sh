@@ -53,6 +53,7 @@ elif [[ $UNAME_INFO =~ "WSL" ]]; then
   alias p='win32yank.exe -o'
   alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
   alias scoop='PATH=$PATH:/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/ /mnt/c/Users/lu5je0/scoop/shims/scoop'
+  alias powershell='/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe'
   alias tssh='/mnt/c/Users/lu5je0/scoop/shims/tssh.exe'
   clippaste() {
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
