@@ -137,6 +137,7 @@ end
 
 local defer_options = {
   function()
+    -- ~/.local/share/nvim/shada/main.shada
     o.shadafile = vim.fn.stdpath('data') .. "/shada/main.shada"
     vim.cmd [[ silent! rsh ]]
   end,

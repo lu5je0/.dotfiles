@@ -1,5 +1,6 @@
 import pysrt
 import os
+import argparse
 from pysrt.srtfile import sys
 
 def extract_ass_styles(ass_file):
@@ -63,19 +64,19 @@ def srt_to_ass(srt_file, ass_styles, output_ass_file, split_chinese_english):
                 if len(lines[last_chinese_line + 1:]) > 0:
                      sub.text += "\\N{\\rEng}" + " ".join(lines[last_chinese_line + 1:])
             else:
-                sub.text = sub.text.replace("\n", "\\N")
+                sub.text = sub.text.replace("\n", "\\N{\\rEng}")
             
             ass_file.write(f"Dialogue: 0,{start},{end},Default,,0,0,0,,{sub.text}\n")
 
 if __name__ == "__main__":
-    srt_files = sys.argv[1:]
-    split_chinese_english = "-s" in srt_files
+    parser = argparse.ArgumentParser(description="Generate run.sh script for a Python project.")
+    parser.add_argument('files', nargs='+')
+    parser.add_argument("-m", "--merge-lines", action="store_true")
     
-    for srt_file in srt_files:
-        if srt_file == "-s":
-            continue
-        ass_template_file = os.path.split(os.path.realpath(__file__))[0] + "/template.ass"
-        output_ass_file = ".".join(os.path.basename(srt_file).split('.')[:-1]) + ".ass"
-        """主函数：将 .srt 转换为带样式的 .ass 文件"""
+    args = parser.parse_args()
+    
+    ass_template_file = os.path.split(os.path.realpath(__file__))[0] + "/template.ass"
+    for sub_file in args.files:
         ass_styles = extract_ass_styles(ass_template_file)
-        srt_to_ass(srt_file, ass_styles, output_ass_file, split_chinese_english)
+        output_ass_file = ".".join(os.path.basename(sub_file).split('.')[:-1]) + ".ass"
+        srt_to_ass(sub_file, ass_styles, output_ass_file, args.merge_lines)
