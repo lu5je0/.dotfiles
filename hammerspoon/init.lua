@@ -26,8 +26,8 @@ local window_special_cases = {
   WezTerm = {
     center = function(max)
       return {
-        x = 190,
-        y = -960,
+        x = max.x,
+        y = max.y,
         w = 1021,
         h = 843
       }
@@ -37,7 +37,9 @@ local window_special_cases = {
         x = max.x,
         y = max.y,
         w = max.w * (3 / 4) - 20,
-        h = max.h - 8
+        h = max.h - 16
+        -- 原生title bar
+        -- h = max.h - 8
       }
     end
   },
