@@ -19,11 +19,15 @@ local is_mac = string.find(wezterm.target_triple, 'apple')
 local font = (function()
   local r = {}
   if is_win then
-    r.text_font = wezterm.font("JetBrainsMonoNL Nerd Font Mono",
-      { weight = "Medium", stretch = "Normal", style = "Normal" })
+    r.text_font = wezterm.font_with_fallback {
+      { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal"  },
+    }
     r.tab_bar_font_size = 10.0
   elseif is_mac then
-    r.text_font = wezterm.font("JetBrainsMonoNL Nerd Font Mono", { weight = "DemiBold", stretch = "Normal", style = "Normal" })
+    r.text_font = wezterm.font_with_fallback {
+      { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
+      { family = "PingFang SC",                    weight = "Regular",  stretch = "Normal", style = "Normal" }
+    }
     r.tab_bar_font_size = 11.5
   end
   return r
@@ -39,7 +43,6 @@ local config = {
     end
   end)(),
   color_scheme = "Gruvbox Dark (Gogh)",
-  use_resize_increments = true,
   -- ./wezterm.exe ls-fonts --list-system
   font = font.text_font,
   window_frame = {
@@ -47,22 +50,6 @@ local config = {
     active_titlebar_bg = "#2C2E34",
     inactive_titlebar_bg = "#2C2E34",
   },
-  
-  -- tab bar在上面
-  -- hide_tab_bar_if_only_one_tab = false,
-  -- use_fancy_tab_bar = true,
-  -- tab_bar_at_bottom = false,
-  -- window_decorations = "INTEGRATED_BUTTONS|RESIZE",
-  -- integrated_title_button_style = "MacOsNative",
-  -- integrated_title_button_style = "Windows",
-  -- integrated_title_button_color = "auto",
-  -- integrated_title_button_alignment = "Right",
-  
-  -- tab bar在下面
-  hide_tab_bar_if_only_one_tab = true,
-  use_fancy_tab_bar = false,
-  tab_bar_at_bottom = true,
-  
   window_padding = {
     left = 0,
     right = 0,
@@ -101,6 +88,25 @@ local config = {
   end)(),
 }
 
+if is_mac then
+  -- tab bar在上面
+  config.hide_tab_bar_if_only_one_tab = false
+  config.use_fancy_tab_bar = true
+  config.tab_bar_at_bottom = false
+  config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+  config.integrated_title_button_style = "MacOsNative"
+  -- config.integrated_title_button_style = "Windows"
+  config.integrated_title_button_color = "auto"
+  config.integrated_title_button_alignment = "Right"
+end
+if is_win then
+  -- tab bar在下面
+  config.hide_tab_bar_if_only_one_tab = true
+  config.use_fancy_tab_bar = false
+  config.tab_bar_at_bottom = true
+  config.use_resize_increments = true
+end
+
 config.cursor_thickness = '0.06cell'
 
 config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 10000 }
@@ -126,6 +132,9 @@ config.keys = {
   { key = '%',  mods = 'LEADER|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
   { key = '"',  mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = 'b',  mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
+  
+  { key = 'i',  mods = 'CMD',  action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
+  { key = 'n',  mods = 'CMD',  action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
 
 config.launch_menu = {
