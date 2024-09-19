@@ -20,7 +20,7 @@ local font = (function()
   local r = {}
   if is_win then
     r.text_font = wezterm.font_with_fallback {
-      { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal"  },
+      { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal" },
     }
     r.tab_bar_font_size = 10.0
   elseif is_mac then
@@ -111,30 +111,30 @@ config.cursor_thickness = '0.06cell'
 
 config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 10000 }
 config.keys = {
-  { key = "o",  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Prev" } },
-  { key = "o",  mods = 'LEADER|CTRL',  action = wezterm.action { ActivatePaneDirection = "Prev" } },
-  { key = 'c',  mods = 'LEADER',       action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 'l',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
-  { key = 'n',  mods = 'LEADER',       action = wezterm.action { ActivateTabRelative = 1 } },
-  { key = 'h',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Left" } },
-  { key = 'j',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Down" } },
-  { key = 'k',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Up" } },
-  { key = 'l',  mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
-  { key = 'x',  mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-  { key = 's',  mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' }  },
-  { key = ' ',  mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' }  },
-  { key = 'q',  mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
-  { key = 'Q',  mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
-  { key = 'r',  mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
-  { key = '0',  mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
-  { key = 't',  mods = 'ALT',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 't',  mods = 'CMD',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = '%',  mods = 'LEADER|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-  { key = '"',  mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
-  { key = 'b',  mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
-  
-  { key = 'i',  mods = 'CMD',  action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
-  { key = 'n',  mods = 'CMD',  action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
+  { key = "o", mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Prev" } },
+  { key = "o", mods = 'LEADER|CTRL',  action = wezterm.action { ActivatePaneDirection = "Prev" } },
+  { key = 'c', mods = 'LEADER',       action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 'l', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'n', mods = 'LEADER',       action = wezterm.action { ActivateTabRelative = 1 } },
+  { key = 'h', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Left" } },
+  { key = 'j', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Down" } },
+  { key = 'k', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Up" } },
+  { key = 'l', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'x', mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+  { key = 's', mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' } },
+  { key = ' ', mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
+  { key = 'q', mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
+  { key = 'Q', mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
+  { key = 'r', mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
+  { key = '0', mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
+  { key = 't', mods = 'ALT',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 't', mods = 'CMD',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = '%', mods = 'LEADER|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = '"', mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
+  { key = 'b', mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
+
+  { key = 'i', mods = 'CMD',          action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
+  { key = 'n', mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
 
 config.launch_menu = {
@@ -146,11 +146,11 @@ config.launch_menu = {
   },
   {
     label = 'sh-ubuntu',
-    args = { 'wsl', 'ssh', 'sh.665665.xyz' }
+    args = { 'ssh', 'sh.665665.xyz' }
   },
   {
     label = 'raider',
-    args = { 'wsl', 'ssh', 'raider.665665.xyz' }
+    args = { 'ssh', 'raider.665665.xyz' }
   },
   {
     args = { 'powershell' }
