@@ -163,6 +163,9 @@ function M.setup()
     line_limit = 10000,
     -- signs_on_startup = { 'conflicts', 'search', '' },
     overflow = 'right',
+    diagnostics_error_symbol = "·",
+    diagnostics_warn_symbol = "·",
+    diagnostics_hint_symbol = "·"
   }
   vim.cmd[[
   " Link ScrollView highlight to Pmenu highlight
