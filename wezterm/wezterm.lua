@@ -22,7 +22,7 @@ local font = (function()
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal" },
     }
-    r.tab_bar_font_size = 10.0
+    r.tab_bar_font_size = 10
   elseif is_mac then
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
@@ -46,9 +46,21 @@ local config = {
   -- ./wezterm.exe ls-fonts --list-system
   font = font.text_font,
   window_frame = {
+    -- The font used in the tab bar.
+    -- Roboto Bold is the default; this font is bundled
+    -- with wezterm.
+    -- Whatever font is selected here, it will have the
+    -- main font setting appended to it to pick up any
+    -- fallback fonts you may have used there.
     font_size = font.tab_bar_font_size,
-    active_titlebar_bg = "#2C2E34",
-    inactive_titlebar_bg = "#2C2E34",
+    -- The size of the font in the tab bar.
+    -- Default to 10.0 on Windows but 12.0 on other systems
+    -- The overall background color of the tab bar when
+    -- the window is focused
+    active_titlebar_bg = '#3C3C3C',
+    -- The overall background color of the tab bar when
+    -- the window is not focused
+    inactive_titlebar_bg = '#3C3C3C',   
   },
   window_padding = {
     left = 0,
@@ -74,8 +86,8 @@ local config = {
         fg_color = "#808080",
       },
       new_tab = {
-        bg_color = "#2C2E34",
-        fg_color = "#808080",
+        bg_color = "#3C3C3C",
+        fg_color = "#aaaaaa",
       },
     },
   },
@@ -101,10 +113,18 @@ if is_mac then
 end
 if is_win then
   -- tab bar在下面
-  config.hide_tab_bar_if_only_one_tab = true
-  config.use_fancy_tab_bar = false
-  config.tab_bar_at_bottom = true
-  config.use_resize_increments = true
+  -- config.hide_tab_bar_if_only_one_tab = true
+  -- config.use_fancy_tab_bar = false
+  -- config.tab_bar_at_bottom = true
+  -- config.use_resize_increments = true
+  
+  config.hide_tab_bar_if_only_one_tab = false
+  config.use_fancy_tab_bar = true
+  config.tab_bar_at_bottom = false
+  config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+  config.integrated_title_button_style = "Windows"
+  config.integrated_title_button_color = "auto"
+  config.integrated_title_button_alignment = "Right"
 end
 
 config.cursor_thickness = '0.06cell'
