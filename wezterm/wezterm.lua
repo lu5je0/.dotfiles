@@ -199,4 +199,11 @@ wezterm.on('gui-startup', function(cmd)
   end
 end)
 
+if is_mac then
+  local set_environment_variables = {
+    PATH = '/opt/homebrew/bin:' .. os.getenv('PATH')
+  }
+  config.set_environment_variables = set_environment_variables
+end
+
 return config
