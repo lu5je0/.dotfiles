@@ -68,7 +68,7 @@ local config = {
     top = 0,
     bottom = 0,
   },
-  -- max_fps = 120,
+  max_fps = 120,
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
   colors = {
@@ -138,7 +138,7 @@ config.keys = {
   { key = 'k', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Up" } },
   { key = 'l', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
   { key = 'x', mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-  { key = 's', mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' } },
+  { key = 'g', mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' } },
   { key = ' ', mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
   { key = 'q', mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
   { key = 'Q', mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
@@ -156,18 +156,18 @@ config.keys = {
 
 config.launch_menu = {
   {
+    label = 'raider',
+    args = { 'tssh', 'raider.665665.xyz' }
+  },
+  {
+    label = 'sh-ubuntu',
+    args = { 'tssh', 'sh.665665.xyz' }
+  },
+  {
     args = { 'wsl' }
   },
   {
     args = { 'cmd' }
-  },
-  {
-    label = 'sh-ubuntu',
-    args = { 'ssh', 'sh.665665.xyz' }
-  },
-  {
-    label = 'raider',
-    args = { 'ssh', 'raider.665665.xyz' }
   },
   {
     args = { 'powershell' }
