@@ -74,7 +74,7 @@ local config = {
   colors = {
     tab_bar = {
       active_tab = {
-        bg_color = "#2C2E34",
+        bg_color = "#3C3C3C",
         fg_color = "#c0c0c0",
         intensity = "Normal",
         underline = "None",
@@ -82,7 +82,7 @@ local config = {
         strikethrough = false,
       },
       inactive_tab = {
-        bg_color = "#2C2E34",
+        bg_color = "#3C3C3C",
         fg_color = "#808080",
       },
       new_tab = {
@@ -118,9 +118,6 @@ if is_win then
   -- config.tab_bar_at_bottom = true
   -- config.use_resize_increments = true
   
-  config.hide_tab_bar_if_only_one_tab = false
-  config.use_fancy_tab_bar = true
-  config.tab_bar_at_bottom = false
   config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
   config.integrated_title_button_style = "Windows"
   config.integrated_title_button_color = "auto"
