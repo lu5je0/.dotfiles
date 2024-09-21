@@ -147,6 +147,9 @@ alias speedtest-js='speedtest -s 5396'
 alias ll='eza -laF'
 alias l='eza -lF'
 
+alias rz='trz'
+alias sz='tsz'
+
 alias grep='grep --color'
 
 alias ntpdate-aliyun='sudo ntpdate -u time1.aliyun.com'
