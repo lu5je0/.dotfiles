@@ -1,0 +1,16 @@
+#!/bin/bash
+
+function ssh_copy_id {
+    local userAtMachine=$1
+    local port=${2:-22}
+    local publicKey="/mnt/c/Users/lu5je0/.ssh/id_rsa.pub"
+
+    if [ ! -f "$publicKey" ]; then
+        echo "ERROR: failed to open ID file '$publicKey': No such file"
+    else
+        ssh -p "$port" "$userAtMachine" "umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys" < "$publicKey"
+    fi
+}
+
+# 调用函数
+ssh_copy_id "$1" "$2"
