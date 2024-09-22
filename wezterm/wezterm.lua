@@ -154,25 +154,38 @@ config.keys = {
   { key = 'n', mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
 
-config.launch_menu = {
+config.launch_menu = {}
+local launch_menu = {
   {
     label = 'raider',
-    args = { 'tssh', 'raider.665665.xyz' }
+    args = { 'tssh', 'raider.665665.xyz' },
   },
   {
     label = 'sh-ubuntu',
-    args = { 'tssh', 'sh.665665.xyz' }
+    args = { 'tssh', 'sh.665665.xyz' },
   },
   {
-    args = { 'wsl' }
+    args = { 'wsl' },
+    type = 'win',
   },
   {
-    args = { 'cmd' }
+    args = { 'cmd' },
+    type = 'win',
   },
   {
-    args = { 'powershell' }
+    args = { 'powershell' },
+    type = 'win',
   }
 }
+for _, launch in ipairs(launch_menu) do
+  if not launch.type then
+    table.insert(config.launch_menu, launch)
+  elseif launch.type == 'win' and is_win then
+    table.insert(config.launch_menu, launch)
+  elseif launch.type == 'mac' and is_win then
+    table.insert(config.launch_menu, launch)
+  end
+end
 
 -- config.skip_close_confirmation_for_processes_named = {
 --   'bash',
