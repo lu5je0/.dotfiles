@@ -10,7 +10,6 @@ M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
 
 -- 修复第一次定位问题
-local locate_file_loaded = false
 function M.locate_file()
   local cur_filepath = vim.fn.expand('%:p')
   if vim.fn.filereadable(cur_filepath) == 0 then
@@ -19,9 +18,8 @@ function M.locate_file()
   local cur_file_dir_path = vim.fs.dirname(cur_filepath)
   local cwd = vim.fn.getcwd()
   
-  if not locate_file_loaded then
+  if not M.is_loaded then
     api.tree.toggle({ focus = false })
-    locate_file_loaded = true
   end
   vim.defer_fn(function()
     if cur_file_dir_path == '' then
@@ -545,6 +543,7 @@ function M.setup()
     " hi NvimTreeGitStagedIcon guifg=#a0c980
     hi NvimTreeGitStagedIcon guifg=#51afef
   ]]
+  M.is_loaded = true
 end
 
 return M
