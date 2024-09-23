@@ -67,8 +67,9 @@ local function size_focused_window(mode)
       else
         f = case
       end
+      f.x = max.x + (screen:frame().w - f.w) / 2
+      f.y = max.y + (screen:frame().h - f.h) / 2
       win:setFrame(f, 0)
-      hs.window.focusedWindow():centerOnScreen(0)
       return
     end
 
@@ -80,17 +81,18 @@ local function size_focused_window(mode)
     elseif mode == "center" then
       f.w = max.w / 1.4
       f.h = max.h / 1.1
-      hs.window.focusedWindow():centerOnScreen(0)
-      win:setFrame(f, 0)   -- 0 取消动画
-      hs.window.focusedWindow():centerOnScreen(0)
+      f.x = max.x + (screen:frame().w - f.w) / 2
+      f.y = max.y + (screen:frame().h - f.h) / 2
+      win:setFrame(f, 0)
       return
     elseif mode == "43_center" then
       f.x = max.x
       f.y = max.y
       f.w = max.w * (3 / 4)
       f.h = max.h
+      f.x = max.x + (screen:frame().w - f.w) / 2
+      f.y = max.y + (screen:frame().h - f.h) / 2
       win:setFrame(f, 0)
-      hs.window.focusedWindow():centerOnScreen(0)
       return
     elseif mode == "halfleft" then
       f.x = max.x
