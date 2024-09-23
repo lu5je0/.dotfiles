@@ -26,7 +26,7 @@ local font = (function()
   elseif is_mac then
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
-      { family = "PingFang SC",                    weight = "Regular",  stretch = "Normal", style = "Normal" }
+      { family = "PingFang SC",                    weight = "Medium",  stretch = "Normal", style = "Normal" }
     }
     r.tab_bar_font_size = 11.5
   end
