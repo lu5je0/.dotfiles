@@ -26,7 +26,7 @@ local font = (function()
   elseif is_mac then
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
-      { family = "PingFang SC",                    weight = "Medium",  stretch = "Normal", style = "Normal" }
+      { family = "PingFang SC",                    weight = "Medium",   stretch = "Normal", style = "Normal" }
     }
     r.tab_bar_font_size = 11.5
   end
@@ -34,14 +34,6 @@ local font = (function()
 end)()
 
 local config = {
-  -- initial_cols = 155,
-  -- initial_rows = 50,
-  -- for keymap alt t
-  default_prog = (function(args)
-    if is_win then
-      return { "wsl", "--cd", "~" }
-    end
-  end)(),
   color_scheme = "Gruvbox Dark (Gogh)",
   -- ./wezterm.exe ls-fonts --list-system
   font = font.text_font,
@@ -60,7 +52,7 @@ local config = {
     active_titlebar_bg = '#3C3C3C',
     -- The overall background color of the tab bar when
     -- the window is not focused
-    inactive_titlebar_bg = '#3C3C3C',   
+    inactive_titlebar_bg = '#3C3C3C',
   },
   window_padding = {
     left = 0,
@@ -117,7 +109,7 @@ if is_win then
   -- config.use_fancy_tab_bar = false
   -- config.tab_bar_at_bottom = true
   -- config.use_resize_increments = true
-  
+
   config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
   config.integrated_title_button_style = "Windows"
   config.integrated_title_button_color = "auto"
@@ -154,26 +146,35 @@ config.keys = {
   { key = 'n', mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
 
+local tssh = (function()
+  if is_mac then
+    return 'tssh'
+  elseif is_win then
+    return '/mnt/c/Users/lu5je0/scoop/shims/tssh.exe'
+  end
+end)()
 config.launch_menu = {}
 local launch_menu = {
   {
     label = 'raider',
-    args = { 'tssh', 'raider.665665.xyz' },
+    args = { tssh, 'raider.665665.xyz' },
   },
   {
     label = 'sh-ubuntu',
-    args = { 'tssh', 'sh.665665.xyz' },
+    args = { tssh, 'sh.665665.xyz' },
   },
   {
     args = { 'wsl' },
     type = 'win',
   },
   {
-    args = { 'cmd' },
+    args = { '/mnt/c/Windows/System32/cmd.exe' },
+    label = 'cmd',
     type = 'win',
   },
   {
-    args = { 'powershell' },
+    args = { '/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe' },
+    label = 'powershell',
     type = 'win',
   }
 }
@@ -185,6 +186,7 @@ for _, launch in ipairs(launch_menu) do
   elseif launch.type == 'mac' and is_win then
     table.insert(config.launch_menu, launch)
   end
+  launch.type = nil
 end
 
 -- config.skip_close_confirmation_for_processes_named = {
@@ -202,11 +204,7 @@ end
 
 wezterm.on('gui-startup', function(cmd)
   if is_win then
-    if cmd then
-      mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", cmd.cwd } }
-    else
-      mux.spawn_window { width = 119, height = 45, args = { "wsl", "--cd", "~" } }
-    end
+    mux.spawn_window { width = 119, height = 45, cwd = cmd and cmd.cwd or nil }
   elseif is_mac then
     mux.spawn_window { width = 120, height = 42 }
   end
@@ -217,6 +215,10 @@ if is_mac then
     PATH = '/opt/homebrew/bin:' .. os.getenv('PATH')
   }
   config.set_environment_variables = set_environment_variables
+end
+
+if is_win then
+  config.default_domain = "WSL:Debian"
 end
 
 return config
