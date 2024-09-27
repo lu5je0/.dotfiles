@@ -395,19 +395,19 @@ ins_right {
 }
 
 -- git_branch
-ins_right {
-  function()
-    local head = vim.b.gitsigns_head
-    if head then
-      return ' ' .. head
-    end
-  end,
-  cond = function()
-    return vim.b.gitsigns_status_dict ~= nil
-  end,
-  color = { fg = colors.violet, gui = 'bold' },
-  padding = { left = 0, right = 1 },
-}
+-- ins_right {
+--   function()
+--     local head = vim.b.gitsigns_head
+--     if head then
+--       return ' ' .. head
+--     end
+--   end,
+--   cond = function()
+--     return vim.b.gitsigns_status_dict ~= nil
+--   end,
+--   color = { fg = colors.violet, gui = 'bold' },
+--   padding = { left = 0, right = 1 },
+-- }
 
 -- ins_right {
 --   'diff',

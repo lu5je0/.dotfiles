@@ -30,6 +30,27 @@ vim.api.nvim_create_user_command('QrCodeEncode', function()
   vim.cmd('%!qrencode -t utf8 -m 2')
 end, { force = true, nargs = '*', range = true })
 
+vim.api.nvim_create_user_command('RemoveOldfiles', function(opts)
+  local oldfiles = vim.v.oldfiles
+  local new_oldfiles = {}
+
+  -- 遍历 oldfiles，将不匹配的文件保留
+  for _, file in ipairs(oldfiles) do
+    -- 检查文件路径是否以给定前缀开头
+    if not vim.startswith(file, opts.args) then
+      table.insert(new_oldfiles, file)
+    end
+  end
+
+  -- 更新 oldfiles
+  vim.v.oldfiles = new_oldfiles
+end, {
+  nargs = 1,
+  complete = function(arg_lead, cmd_line, cursor_pos)
+    return vim.fn.glob(arg_lead .. '*', false, true)
+  end
+})
+
 vim.api.nvim_create_user_command('CurlConvert', function(t)
   require('lu5je0.misc.curlconverter').convert(t.fargs[1])
 end, {
