@@ -340,10 +340,7 @@ ins_left {
 
 ins_right {
   function()
-    -- return [[ %2p%% %l:%c ]]
-    -- ' %02p%% ' percentage
-    return [[%l:%c ]]
-    -- return ([[%%l:%s ]]):format(vim.fn.charcol('.'))
+    return [[%l:%c %p%% ]]
   end,
   padding = { left = 0, right = 1 },
   color = { fg = colors.grey },
@@ -410,19 +407,19 @@ ins_right {
   padding = { left = 0, right = 1 },
 }
 
-ins_right {
-  'diff',
-  source = function()
-    local gitsigns = vim.b.gitsigns_status_dict
-    if gitsigns then
-      return {
-        added = gitsigns.added,
-        modified = gitsigns.changed,
-        removed = gitsigns.removed,
-      }
-    end
-  end,
-  padding = { left = 0, right = 1 },
-}
+-- ins_right {
+--   'diff',
+--   source = function()
+--     local gitsigns = vim.b.gitsigns_status_dict
+--     if gitsigns then
+--       return {
+--         added = gitsigns.added,
+--         modified = gitsigns.changed,
+--         removed = gitsigns.removed,
+--       }
+--     end
+--   end,
+--   padding = { left = 0, right = 1 },
+-- }
 
 lualine.setup(config)
