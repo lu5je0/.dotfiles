@@ -340,7 +340,9 @@ ins_left {
 
 ins_right {
   function()
-    return [[%l:%c %p%% ]]
+    -- percentage
+    -- %p%% 
+    return [[%l:%c ]]
   end,
   padding = { left = 0, right = 1 },
   color = { fg = colors.grey },
