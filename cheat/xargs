@@ -1,0 +1,6 @@
+# 批量转换CR到PNG
+# -P 4，四个进程
+# --verbose 打印命令
+ls | grep -v png | xargs --verbose -P 4 -I{} magick {} -depth 10 {}.png
+
+# -p 打印命令，并需要按y确认才执行

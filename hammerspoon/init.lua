@@ -43,11 +43,6 @@ local window_special_cases = {
       }
     end
   },
-  -- 你可以在这里添加其他应用程序的特殊处理逻辑
-  -- exampleApp = {
-  --   center = function(max) return { x = 100, y = 100, w = 800, h = 600 } end,
-  --   ["43_center"] = function(max) return { x = max.x, y = max.y, w = max.w * 0.75, h = max.h } end
-  -- }
 }
 
 local function size_focused_window(mode)
