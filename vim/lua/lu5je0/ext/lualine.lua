@@ -243,6 +243,21 @@ ins_left {
   padding = { left = 1, right = 0 },
 }
 
+ins_left {
+  'diff',
+  source = function()
+    local gitsigns = vim.b.gitsigns_status_dict
+    if gitsigns then
+      return {
+        added = gitsigns.added,
+        modified = gitsigns.changed,
+        removed = gitsigns.removed,
+      }
+    end
+  end,
+  padding = { left = 1, right = 0 },
+}
+
 -- vim-visual-multi
 ins_left {
   function()
@@ -340,10 +355,9 @@ ins_left {
 
 ins_right {
   function()
-    -- return [[ %2p%% %l:%c ]]
-    -- ' %02p%% ' percentage
+    -- percentage
+    -- %p%% 
     return [[%l:%c ]]
-    -- return ([[%%l:%s ]]):format(vim.fn.charcol('.'))
   end,
   padding = { left = 0, right = 1 },
   color = { fg = colors.grey },
@@ -396,33 +410,18 @@ ins_right {
 }
 
 -- git_branch
-ins_right {
-  function()
-    local head = vim.b.gitsigns_head
-    if head then
-      return ' ' .. head
-    end
-  end,
-  cond = function()
-    return vim.b.gitsigns_status_dict ~= nil
-  end,
-  color = { fg = colors.violet, gui = 'bold' },
-  padding = { left = 0, right = 1 },
-}
-
-ins_right {
-  'diff',
-  source = function()
-    local gitsigns = vim.b.gitsigns_status_dict
-    if gitsigns then
-      return {
-        added = gitsigns.added,
-        modified = gitsigns.changed,
-        removed = gitsigns.removed,
-      }
-    end
-  end,
-  padding = { left = 0, right = 1 },
-}
+-- ins_right {
+--   function()
+--     local head = vim.b.gitsigns_head
+--     if head then
+--       return ' ' .. head
+--     end
+--   end,
+--   cond = function()
+--     return vim.b.gitsigns_status_dict ~= nil
+--   end,
+--   color = { fg = colors.violet, gui = 'bold' },
+--   padding = { left = 0, right = 1 },
+-- }
 
 lualine.setup(config)

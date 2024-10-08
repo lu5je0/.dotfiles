@@ -5,50 +5,46 @@ hs.hotkey.bind({ "ctrl", "option" }, "R", function()
 end)
 
 local window_special_cases = {
-  kitty = {
-    center = function(max)
-      return {
-        x = max.x,
-        y = max.y,
-        w = 1021,
-        h = 843
-      }
-    end,
-    ["43_center"] = function(max)
-      return {
-        x = max.x,
-        y = max.y,
-        w = max.w * (3 / 4) - 20,
-        h = max.h - 8
-      }
-    end
-  },
   WezTerm = {
     center = function(max)
-      return {
-        x = max.x,
-        y = max.y,
-        w = 1021,
-        h = 843
-      }
+      local screen_id = hs.window.focusedWindow():screen():id()
+      if screen_id == 1 then
+        return {
+          x = max.x,
+          y = max.y,
+          w = 952,
+          h = 804
+        }
+      else
+        return {
+          x = max.x,
+          y = max.y,
+          w = 1021,
+          h = 843
+        }
+      end
     end,
     ["43_center"] = function(max)
-      return {
-        x = max.x,
-        y = max.y,
-        w = max.w * (3 / 4) - 20,
-        h = max.h - 16
-        -- 原生title bar
-        -- h = max.h - 8
-      }
+      local screen_id = hs.window.focusedWindow():screen():id()
+      if screen_id == 1 then
+        return {
+          x = max.x,
+          y = max.y,
+          w = 1105,
+          h = 863
+        }
+      else
+        return {
+          x = max.x,
+          y = max.y,
+          w = max.w * (3 / 4) - 20,
+          h = max.h - 16
+        }
+      end
     end
   },
-  -- 你可以在这里添加其他应用程序的特殊处理逻辑
-  -- exampleApp = {
-  --   center = function(max) return { x = 100, y = 100, w = 800, h = 600 } end,
-  --   ["43_center"] = function(max) return { x = max.x, y = max.y, w = max.w * 0.75, h = max.h } end
-  -- }
 }
+window_special_cases.kitty = window_special_cases.WezTerm
 
 local function size_focused_window(mode)
   return function()

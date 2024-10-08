@@ -157,15 +157,15 @@ function M.setup()
     winblend_gui = 85,
     base = 'right',
     column = 1,
-    on_startup = 1,
-    signs_max_per_row = 1,
+    on_startup = 0,
+    signs_max_per_row = 2,
     byte_limit = 2 * 1024 * 1024,
     line_limit = 10000,
     -- signs_on_startup = { 'conflicts', 'search', '' },
     overflow = 'right',
     diagnostics_error_symbol = "·",
     diagnostics_warn_symbol = "·",
-    diagnostics_hint_symbol = "·"
+    diagnostics_hint_symbol = "·",
   }
   vim.cmd[[
   " Link ScrollView highlight to Pmenu highlight
@@ -176,7 +176,19 @@ function M.setup()
   ]]
   
   gitsigns()
-  M.begin_timer('ScrollViewEnable', 'ScrollViewDisable', 'ScrollViewRefresh')
+  
+  vim.keymap.set('n', '<tab>', function()
+    if vim.g.scrollview_enabled then
+      vim.cmd('ScrollViewDisable')
+      return
+    end
+    
+    vim.cmd('ScrollViewEnable')
+    vim.defer_fn(function()
+      vim.cmd('ScrollViewDisable')
+    end, 3000)
+  end, { nowait = true })
+  -- M.begin_timer('ScrollViewEnable', 'ScrollViewDisable', 'ScrollViewRefresh')
 end
 
 return M

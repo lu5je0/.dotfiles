@@ -20,7 +20,7 @@ def extract_ass_styles(ass_file):
     
     return styles
 
-def srt_to_ass(srt_file, ass_styles, output_ass_file, split_chinese_english):
+def srt_to_ass(srt_file, ass_styles, output_ass_file, args):
     """将 .srt 文件转换为 .ass 格式，并使用给定的样式"""
     subs = pysrt.open(srt_file)
     
@@ -46,8 +46,12 @@ def srt_to_ass(srt_file, ass_styles, output_ass_file, split_chinese_english):
             end = f"{end_time.hour:01}:{end_time.minute:02}:{end_time.second:02}.{int(end_time.microsecond / 10000):02}"
 
             # 写入字幕事件
-            
-            if split_chinese_english:
+            if args.chinese_only:
+                eng_font = 'Default'
+            else:
+                eng_font = 'Eng'
+                
+            if args.merge_zh_and_en_lines:
                 lines = sub.text.split('\n')
                 last_chinese_line = 0
                 for i, line in enumerate(lines):
@@ -62,16 +66,17 @@ def srt_to_ass(srt_file, ass_styles, output_ass_file, split_chinese_english):
 
                 sub.text = " ".join(lines[:last_chinese_line+1])
                 if len(lines[last_chinese_line + 1:]) > 0:
-                     sub.text += "\\N{\\rEng}" + " ".join(lines[last_chinese_line + 1:])
+                     sub.text += f"\\N{{\\r{eng_font}}}" + " ".join(lines[last_chinese_line + 1:])
             else:
-                sub.text = sub.text.replace("\n", "\\N{\\rEng}")
+                sub.text = sub.text.replace("\n", f"\\N{{\\r{eng_font}}}")
             
             ass_file.write(f"Dialogue: 0,{start},{end},Default,,0,0,0,,{sub.text}\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate run.sh script for a Python project.")
     parser.add_argument('files', nargs='+')
-    parser.add_argument("-m", "--merge-lines", action="store_true")
+    parser.add_argument("-m", "--merge-zh-and-en-lines", action="store_true")
+    parser.add_argument("-c", "--chinese-only", action="store_true")
     
     args = parser.parse_args()
     
@@ -79,4 +84,4 @@ if __name__ == "__main__":
     for sub_file in args.files:
         ass_styles = extract_ass_styles(ass_template_file)
         output_ass_file = ".".join(os.path.basename(sub_file).split('.')[:-1]) + ".ass"
-        srt_to_ass(sub_file, ass_styles, output_ass_file, args.merge_lines)
+        srt_to_ass(sub_file, ass_styles, output_ass_file, args)

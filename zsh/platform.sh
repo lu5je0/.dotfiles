@@ -59,6 +59,7 @@ elif [[ $UNAME_INFO =~ "WSL" ]]; then
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
   }
   # export PATH=/mnt/c/Users/lu5je0/scoop/shims:$PATH
+  . $HOME'/.dotfiles/win/wsl2/wezterm.sh'
 elif [[ $UNAME_INFO =~ "Android" ]]; then
   alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
 fi
