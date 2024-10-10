@@ -1,2 +1,5 @@
+asstosrt==0.1.6
 chardet==5.2.0
+pyass==0.1.4
 pysrt==1.1.2
+setuptools==75.1.0

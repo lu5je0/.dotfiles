@@ -31,10 +31,10 @@ def srt_to_ass(source_sub_file_path: str, ass_template: str, output_ass_file, ar
             end = f"{end_time.hour:01}:{end_time.minute:02}:{end_time.second:02}.{int(end_time.microsecond / 10000):02}"
 
             # 写入字幕事件
-            if args.chinese_only:
-                eng_font = 'Default'
-            else:
+            if args.english_standone_font:
                 eng_font = 'Eng'
+            else:
+                eng_font = 'Default'
                 
             if args.merge_zh_and_en_lines:
                 lines = sub.text.split('\n')
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate run.sh script for a Python project.")
     parser.add_argument('files', nargs='+')
     parser.add_argument("-m", "--merge-zh-and-en-lines", action="store_true")
-    parser.add_argument("-c", "--chinese-only", action="store_true")
+    parser.add_argument("-e", "--english-standone-font", action="store_true")
     
     template_path = os.path.split(os.path.realpath(__file__))[0] + "/template/"
     parser.add_argument("-t", "--template-name", default="1", choices=[x.split(".")[0] for x in os.listdir(template_path)])
