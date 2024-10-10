@@ -57,11 +57,13 @@ if __name__ == "__main__":
     parser.add_argument('files', nargs='+')
     parser.add_argument("-m", "--merge-zh-and-en-lines", action="store_true")
     parser.add_argument("-c", "--chinese-only", action="store_true")
-    parser.add_argument("-t", "--template-name", default="1")
+    
+    template_path = os.path.split(os.path.realpath(__file__))[0] + "/template/"
+    parser.add_argument("-t", "--template-name", default="1", choices=[x.split(".")[0] for x in os.listdir(template_path)])
     
     args = parser.parse_args()
     
-    ass_template_file = os.path.split(os.path.realpath(__file__))[0] + f"/template/{args.template_name}.ass"
+    ass_template_file = template_path + f"{args.template_name}.ass"
     for sub_file in args.files:
         ass_template = read_ass_template(ass_template_file)
         output_ass_file = ".".join(os.path.basename(sub_file).split('.')[:-1]) + ".ass"

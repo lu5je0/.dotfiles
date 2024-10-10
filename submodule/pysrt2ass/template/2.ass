@@ -1,25 +1,13 @@
 ﻿[Script Info]
-;aBu 2020♪
 
-Title: Alien.Covenant.2017.PROPER.1080p.BluRay.H264.AAC-RARBG
-Original Script: aBu 2020-12-18
-Original Translation: CMCT
-Original Timing: 
-Original Editing: 
-Script Updated By: 
-Update Details: 
-ScriptType: v4.00+
 Collisions: Normal
 PlayResX: 384
-PlayResY: 288
-Timer: 100.0000
-Synch Point: 
-WrapStyle: 0
-ScaledBorderAndShadow: no
+PlayResY: 328
+ScaledBorderAndShadow: No
+ScriptType: v4.00+
+Synch Point: 1
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,微软雅黑,15,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,5,134
-Style:     Chs,微软雅黑,15,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,5,134
-Style:      Eng,微软雅黑,9,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,5,134
-; &H0066D7FF
+Style: Default,Microsoft YaHei,16,&H00FFFFFF,&Hf0000000,&H000d0500,&H00000000,0,0,0,0,100,100,0,0.00,1,1,0,2,5,5,2,1
+Style:             Eng,Calibri,10,&H00027CCF,&H00000000,&H00000000,&H00000000,0,1,0,0,100,100,0,0.00,1,1,0,2,5,5,2,1
