@@ -8,6 +8,12 @@ def read_ass_template(ass_file):
         lines = f.readlines()
         return "".join(lines)
 
+def is_chinese_line(line):
+    for char in line:
+        if '\u4e00' <= char <= '\u9fff':
+            return True
+    return False
+
 def srt_to_ass(source_sub_file_path: str, ass_template: str, output_ass_file, args):
     """将 .srt 文件转换为 .ass 格式，并使用给定的样式"""
     if source_sub_file_path.endswith("ass"):
@@ -36,22 +42,18 @@ def srt_to_ass(source_sub_file_path: str, ass_template: str, output_ass_file, ar
             else:
                 eng_font = 'Default'
                 
-            if args.merge_zh_and_en_lines:
+            if args.split_zh_and_en_lines:
                 lines = sub.text.split('\n')
-                last_chinese_line = 0
-                for i, line in enumerate(lines):
-                    has_chinese_char = False
-                    for char in line:
-                        if '\u4e00' <= char <= '\u9fff':
-                            has_chinese_char = True
-                            last_chinese_line = i
-                            break
-                    if not has_chinese_char:
-                        break
-
-                sub.text = " ".join(lines[:last_chinese_line+1])
-                if len(lines[last_chinese_line + 1:]) > 0:
-                     sub.text += f"\\N{{\\r{eng_font}}}" + " ".join(lines[last_chinese_line + 1:])
+                sub.text = ""
+                append_newline = False
+                for line in lines:
+                    if is_chinese_line(line):
+                        sub.text = sub.text + ("" if sub.text == "" else " ") + line
+                    else:
+                        if not append_newline and sub.text != "":
+                            sub.text += f"\\N{{\\r{eng_font}}}"
+                            append_newline = True
+                        sub.text = sub.text + (" " if sub.text == "" else "") + line
             else:
                 sub.text = sub.text.replace("\n", f"\\N{{\\r{eng_font}}}")
             
@@ -60,7 +62,7 @@ def srt_to_ass(source_sub_file_path: str, ass_template: str, output_ass_file, ar
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate run.sh script for a Python project.")
     parser.add_argument('files', nargs='+')
-    parser.add_argument("-m", "--merge-zh-and-en-lines", action="store_true")
+    parser.add_argument("-s", "--split-zh-and-en-lines", action="store_true")
     parser.add_argument("-e", "--english-standone-font", action="store_true")
     
     template_path = os.path.split(os.path.realpath(__file__))[0] + "/template/"
