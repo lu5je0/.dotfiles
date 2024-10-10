@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 获取当前脚本所在目录
-script_path=~/.dotfiles/submodule/pysrt2ass
+script_path=~/.dotfiles/submodule/pyass
 
 # 虚拟环境中的 Python 解释器路径
 venv_python="$script_path/.env/bin/python"
@@ -9,8 +9,8 @@ venv_python="$script_path/.env/bin/python"
 # 检查虚拟环境是否存在
 if [ -x "$venv_python" ]; then
     # 使用 exec 替换当前进程为虚拟环境中的 Python 解释器，传递所有参数
-    exec "$venv_python" ${script_path}/pysrt2ass.py "$@"
+    exec "$venv_python" ${script_path}/pyass.py "$@"
 else
-    exec python3 ${script_path}/pysrt2ass.py "$@"
+    exec python3 ${script_path}/pyass.py "$@"
     exit 1
 fi

@@ -1,15 +1,20 @@
 import pysrt
 import os
 import argparse
+import asstosrt
 
 def read_ass_template(ass_file):
     with open(ass_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         return "".join(lines)
 
-def srt_to_ass(srt_file, ass_template, output_ass_file, args):
+def srt_to_ass(source_sub_file_path: str, ass_template: str, output_ass_file, args):
     """将 .srt 文件转换为 .ass 格式，并使用给定的样式"""
-    subs = pysrt.open(srt_file)
+    if source_sub_file_path.endswith("ass"):
+        with open(source_sub_file_path) as source_ass_file:
+            subs = pysrt.from_string(asstosrt.convert(source_ass_file))
+    else:
+        subs = pysrt.open(source_sub_file_path)
     
     with open(output_ass_file, 'w', encoding='utf-8') as ass_file:
         # 写入 .ass 文件的基本信息和样式
@@ -64,7 +69,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     ass_template_file = template_path + f"{args.template_name}.ass"
-    for sub_file in args.files:
+    for source_sub_file in args.files:
         ass_template = read_ass_template(ass_template_file)
-        output_ass_file = ".".join(os.path.basename(sub_file).split('.')[:-1]) + ".ass"
-        srt_to_ass(sub_file, ass_template, output_ass_file, args)
+        output_ass_file = ".".join(os.path.basename(source_sub_file).split('.')[:-1]) + ".ass"
+        srt_to_ass(source_sub_file, ass_template, output_ass_file, args)
