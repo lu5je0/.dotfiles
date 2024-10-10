@@ -66,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--english-standone-font", action="store_true")
     
     template_path = os.path.split(os.path.realpath(__file__))[0] + "/template/"
-    parser.add_argument("-t", "--template-name", default="1", choices=[x.split(".")[0] for x in os.listdir(template_path)])
+    parser.add_argument("-t", "--template-name", default="1", choices=[x.split(".")[0] for x in sorted(os.listdir(template_path))])
     
     args = parser.parse_args()
     
