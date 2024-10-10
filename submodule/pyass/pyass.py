@@ -70,6 +70,9 @@ if __name__ == "__main__":
     
     ass_template_file = template_path + f"{args.template_name}.ass"
     for source_sub_file in args.files:
+        if not source_sub_file.endswith("srt") or not source_sub_file.endswith("ass"):
+            print(f'ingore {source_sub_file}')
+            continue
         ass_template = read_ass_template(ass_template_file)
         output_ass_file = ".".join(os.path.basename(source_sub_file).split('.')[:-1]) + ".ass"
         srt_to_ass(source_sub_file, ass_template, output_ass_file, args)
