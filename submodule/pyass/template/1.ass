@@ -10,8 +10,7 @@ WrapStyle: 0
 ScaledBorderAndShadow: No
 
 [V4+ Styles]
+
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,微软雅黑,15,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,20,134
-Style:     Chs,微软雅黑,15,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,20,134
-Style:      Eng,微软雅黑,9,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,20,134
-; &H0066D7FF
+Style: Default,微软雅黑,15,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,15,134
+Style:      Eng,微软雅黑,8,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,15,134
