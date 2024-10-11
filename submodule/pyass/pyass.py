@@ -2,6 +2,7 @@ import pysrt
 import os
 import argparse
 import asstosrt
+import chardet
 
 def read_ass_template(ass_file):
     with open(ass_file, 'r', encoding='utf-8') as f:
@@ -14,13 +15,21 @@ def is_chinese_line(line):
             return True
     return False
 
+def detect_file_encoding(file_path):
+    with open(file_path, 'rb') as f:
+        raw_data = f.read()
+        result = chardet.detect(raw_data)
+        encoding = result['encoding']
+        return encoding
+
 def srt_to_ass(source_sub_file_path: str, ass_template: str, output_ass_file, args):
     """将 .srt 文件转换为 .ass 格式，并使用给定的样式"""
-    if source_sub_file_path.endswith("ass"):
-        with open(source_sub_file_path) as source_ass_file:
+    fileencoding = detect_file_encoding(source_sub_file_path)
+    with open(source_sub_file_path, encoding=fileencoding) as source_ass_file:
+        if source_sub_file_path.endswith("ass"):
             subs = pysrt.from_string(asstosrt.convert(source_ass_file))
-    else:
-        subs = pysrt.open(source_sub_file_path)
+        else:
+            subs = pysrt.from_string("".join(source_ass_file.readlines()))
     
     with open(output_ass_file, 'w', encoding='utf-8') as ass_file:
         # 写入 .ass 文件的基本信息和样式
