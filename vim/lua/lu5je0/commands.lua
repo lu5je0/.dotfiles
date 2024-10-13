@@ -44,6 +44,7 @@ vim.api.nvim_create_user_command('RemoveOldfiles', function(opts)
 
   -- 更新 oldfiles
   vim.v.oldfiles = new_oldfiles
+  -- vim.cmd('wshada!')  -- 确保将修改后的 oldfiles 写入 shada 文件
 end, {
   nargs = 1,
   complete = function(arg_lead, cmd_line, cursor_pos)
