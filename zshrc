@@ -191,6 +191,8 @@ alias vimn='nvim -u None'
 alias mvni='mvn install -Dmaven.test.skip=true'
 alias mvnp='mvn package -Dmaven.test.skip=true'
 
+export HOMEBREW_NO_AUTO_UPDATE=1
+
 ##########################################
 # vi-mode
 ##########################################
