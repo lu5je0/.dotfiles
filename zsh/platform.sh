@@ -71,5 +71,4 @@ if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
   elif [[ $arch =~ 'aarch64' ]]; then
     export PATH=/home/lu5je0/.dotfiles/bin/linux_aarch64/:$PATH
   fi
-  export LANG='en_US.UTF-8'
 fi
