@@ -47,24 +47,26 @@ def srt_to_ass(source_sub_file_path: str, ass_template: str, output_ass_file, ar
 
             # 写入字幕事件
             if args.english_standone_font:
-                eng_font = 'Eng'
+                eng_font = '{\\rEng}'
             else:
-                eng_font = 'Default'
+                eng_font = ''
                 
             if args.split_zh_and_en_lines:
                 lines = sub.text.split('\n')
                 sub.text = ""
                 append_newline = False
+                contain_chinese = False
                 for line in lines:
                     if is_chinese_line(line):
                         sub.text = sub.text + ("" if sub.text == "" else " ") + line
+                        contain_chinese = True
                     else:
-                        if not append_newline and sub.text != "":
-                            sub.text += f"\\N{{\\r{eng_font}}}"
+                        if contain_chinese and not append_newline and sub.text != "":
+                            sub.text += f"\\N{eng_font}"
                             append_newline = True
-                        sub.text = sub.text + (" " if sub.text == "" else "") + line
+                        sub.text = sub.text + (f"{eng_font}" if sub.text == "" else "  ") + line
             else:
-                sub.text = sub.text.replace("\n", f"\\N{{\\r{eng_font}}}")
+                sub.text = sub.text.replace("\n", f"\\N{eng_font}")
             
             ass_file.write(f"Dialogue: 0,{start},{end},Default,,0,0,0,,{sub.text}\n")
 

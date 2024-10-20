@@ -55,7 +55,7 @@ def replace_all_timestamp(surround):
     timestamp_five_years_later = years_later.timestamp()
 
     # 正则表达式匹配时间戳（秒或毫秒）
-    timestamp_pattern = re.compile(r'\b\d{10,13}\b')
+    timestamp_pattern = re.compile(r'(?<!\d)(\d{10,13})(?!\d)')
 
     def convert_timestamp(match):
         timestamp = int(match.group())
