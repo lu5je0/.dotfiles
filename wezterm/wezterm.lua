@@ -142,18 +142,18 @@ config.keys = {
   { key = '"', mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = 'b', mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
   
-  -- { key = 'u', mods = 'LEADER', action = wezterm.action.AttachDomain 'raider', },
+  { key = 'u', mods = 'LEADER', action = wezterm.action.AttachDomain 'raider', },
 
   { key = 'i', mods = 'CMD',          action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
   { key = 'n', mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
 
--- config.ssh_domains = {
---   {
---     name = 'raider',
---     remote_address = 'raider.665665.xyz',
---   },
--- }
+config.ssh_domains = {
+  {
+    name = 'raider',
+    remote_address = 'raider.665665.xyz',
+  },
+}
 
 local tssh = (function()
   if is_mac then
@@ -164,12 +164,12 @@ local tssh = (function()
 end)()
 config.launch_menu = {}
 local launch_menu = {
-  -- {
-  --   label = "raider",
-  --   domain = { DomainName = "raider" }
-  -- },
   {
-    label = 'raider',
+    label = "raider-mux",
+    domain = { DomainName = "raider" }
+  },
+  {
+    label = 'raider-tssh',
     args = { tssh, 'raider.665665.xyz' },
   },
   {
