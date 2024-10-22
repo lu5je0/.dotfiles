@@ -154,6 +154,7 @@ config.ssh_domains = {
     remote_address = 'raider.665665.xyz',
   },
 }
+config.ssh_backend = 'Ssh2'
 
 local tssh = (function()
   if is_mac then
@@ -171,10 +172,6 @@ local launch_menu = {
   {
     label = 'raider-tssh',
     args = { tssh, 'raider.665665.xyz' },
-  },
-  {
-    label = 'sh-ubuntu',
-    args = { tssh, 'sh.665665.xyz' },
   },
   {
     args = { 'wsl' },
