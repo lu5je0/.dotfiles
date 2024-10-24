@@ -411,11 +411,10 @@ require("lazy").setup({
   -- nvim-cmp
   {
     {
-      'yioneko/nvim-cmp',
+      'hrsh7th/nvim-cmp',
       config = function()
         require('lu5je0.ext.cmp')
       end,
-      branch = 'perf',
       dependencies = {
         -- 'hrsh7th/cmp-cmdline',
         'windwp/nvim-autopairs',
