@@ -120,33 +120,40 @@ config.cursor_thickness = '0.06cell'
 
 config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 10000 }
 config.keys = {
-  { key = "o", mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Prev" } },
-  { key = "o", mods = 'LEADER|CTRL',  action = wezterm.action { ActivatePaneDirection = "Prev" } },
-  { key = 'c', mods = 'LEADER',       action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 'l', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
-  { key = 'n', mods = 'LEADER',       action = wezterm.action { ActivateTabRelative = 1 } },
-  { key = 'h', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Left" } },
-  { key = 'j', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Down" } },
-  { key = 'k', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Up" } },
-  { key = 'l', mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
-  { key = 'x', mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
-  { key = 'g', mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' } },
-  { key = ' ', mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
-  { key = 'q', mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
-  { key = 'Q', mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
-  { key = 'r', mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
-  { key = '0', mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
-  { key = 't', mods = 'ALT',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = 't', mods = 'CMD',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
-  { key = '%', mods = 'LEADER|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-  { key = '"', mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
-  { key = 'b', mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
-  
-  { key = 'u', mods = 'LEADER', action = wezterm.action.AttachDomain 'raider', },
-
-  { key = 'i', mods = 'CMD',          action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
-  { key = 'n', mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
+  { key = "o",      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Prev" } },
+  { key = "o",      mods = 'LEADER|CTRL',  action = wezterm.action { ActivatePaneDirection = "Prev" } },
+  { key = 'c',      mods = 'LEADER',       action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 'l',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'n',      mods = 'LEADER',       action = wezterm.action { ActivateTabRelative = 1 } },
+  { key = 'h',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Left" } },
+  { key = 'j',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Down" } },
+  { key = 'k',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Up" } },
+  { key = 'l',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
+  { key = 'x',      mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
+  { key = 'g',      mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' } },
+  { key = ' ',      mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
+  { key = 'q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
+  { key = 'Q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
+  { key = 'r',      mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
+  { key = '0',      mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
+  { key = 't',      mods = 'ALT',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = 't',      mods = 'CMD',          action = wezterm.action { SpawnTab = "DefaultDomain" } },
+  { key = '%',      mods = 'LEADER|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = '"',      mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
+  { key = 'b',      mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
+  { key = 'Escape', mods = 'LEADER',       action = wezterm.action.ActivateCopyMode },
+  { key = 'u',      mods = 'LEADER',       action = wezterm.action.AttachDomain 'raider', },
+  { key = 'i',      mods = 'CMD',          action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
+  { key = 'n',      mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
+for i = 1, 9 do
+  table.insert(config.keys, { key = tostring(i), mods = 'LEADER', action = wezterm.action.ActivateTab(i - 1) })
+end
+
+local copy_mode = wezterm.gui.default_key_tables().copy_mode
+table.insert(copy_mode, { key = 'L', mods = 'NONE', action = wezterm.action.CopyMode 'MoveToEndOfLineContent' })
+table.insert(copy_mode, { key = 'H', mods = 'NONE', action = wezterm.action.CopyMode 'MoveToStartOfLineContent' })
+config.key_tables = { copy_mode = copy_mode }
 
 config.ssh_domains = {
   {
