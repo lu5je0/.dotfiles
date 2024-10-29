@@ -67,18 +67,18 @@ vim.schedule(function()
     if vim.wo.wrap then
       print("setlocal nowrap")
       vim.wo.wrap = false
-      del_map({ 'x', 'n' }, { 'j', 'k' }, { buffer = 0, silent = true })
-      del_map({ 'x', 'n', 'o' }, { 'H', 'L' }, { buffer = 0, silent = true })
+      -- del_map({ 'x', 'n' }, { 'j', 'k' }, { buffer = 0, silent = true })
+      -- del_map({ 'x', 'n', 'o' }, { 'H', 'L' }, { buffer = 0, silent = true })
       -- del_map({ 'n' }, 'Y', { buffer = 0 })
     else
       print("setlocal wrap")
       vim.wo.wrap = true
-      local buffer_opts = vim.deepcopy(default_opts)
-      buffer_opts.buffer = 0
-      set_map({ 'x', 'n' }, 'j', 'gj', buffer_opts)
-      set_map({ 'x', 'n' }, 'k', 'gk', buffer_opts)
-      set_map({ 'x', 'n', 'o' }, 'H', 'g^', buffer_opts)
-      set_map({ 'x', 'n', 'o' }, 'L', 'g$', buffer_opts)
+      -- local buffer_opts = vim.deepcopy(default_opts)
+      -- buffer_opts.buffer = 0
+      -- set_map({ 'x', 'n' }, 'j', 'gj', buffer_opts)
+      -- set_map({ 'x', 'n' }, 'k', 'gk', buffer_opts)
+      -- set_map({ 'x', 'n', 'o' }, 'H', 'g^', buffer_opts)
+      -- set_map({ 'x', 'n', 'o' }, 'L', 'g$', buffer_opts)
       -- set_map({ 'n' }, 'Y', 'gyg$', buffer_opts)
     end
   end)
