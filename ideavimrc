@@ -77,8 +77,10 @@ nmap <leader>q :action CloseContent<CR>
 nmap <leader>d <Action>(ActivateStructureToolWindow)
 nmap <leader>n :noh<cr>
 
+
 nmap <leader>vs <Action>(IdeaVim.ReloadVimRc.reload)
 nmap <leader>vc :set ic!<cr>
+nmap <leader>vw <Action>(EditorToggleUseSoftWraps)
 nmap <leader>e :NERDTreeToggle<CR>
 
 map <leader>ss :action $EditorTranslateAction<CR>
