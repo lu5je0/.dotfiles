@@ -1,0 +1,5 @@
+#compdef python_generate_run_sh
+
+_arguments \
+  '1: :_files' \
+  '-o[Specify output directory]:output directory:_directories'
