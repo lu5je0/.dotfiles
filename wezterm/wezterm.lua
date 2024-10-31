@@ -257,4 +257,36 @@ if is_win then
   config.default_domain = "WSL:Debian"
 end
 
+-- -- This function returns the suggested title for a tab.
+-- -- It prefers the title that was set via `tab:set_title()`
+-- -- or `wezterm cli set-tab-title`, but falls back to the
+-- -- title of the active pane in that tab.
+-- local function tab_title(tab_info)
+--   local title = tab_info.tab_title
+--   -- if the tab title is explicitly set, take that
+--   if title and #title > 0 then
+--     return title
+--   end
+--   -- Otherwise, use the title from the active pane
+--   -- in that tab
+--   return tab_info.active_pane.title
+-- end
+--
+-- local function basename(path)
+-- 	return string.gsub(path, "(.*[/\\])(.*)", "%2")
+-- end
+--
+-- wezterm.on(
+--   'format-tab-title',
+--   function(tab, tabs, panes, config, hover, max_width)
+--     local title = tab_title(tab)
+--     -- if tab.is_active then
+--     --   return {
+--     --     { Text = ' ' .. title .. ' ' },
+--     --   }
+--     -- end
+--     return (tab.tab_index + 1) .. ": " .. title .. "(" .. basename(tab.active_pane.foreground_process_name) .. ")"
+--   end
+-- )
+
 return config

@@ -1,8 +1,0 @@
-[submodule "submodule/wd"]
-	path = submodule/wd
-	url = git@github.com:lu5je0/wd.git
-    branch = master
-[submodule "submodule/SubtitlesDownloader"]
-	path = submodule/SubtitlesDownloader
-	url = git@github.com:lu5je0/SubtitlesDownloader.git
-    branch = master
