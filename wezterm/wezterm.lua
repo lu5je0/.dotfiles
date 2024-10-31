@@ -240,7 +240,7 @@ wezterm.on('gui-startup', function(cmd)
     end
     
     local cwd = cmd and cmd.cwd or nil
-    mux.spawn_window { width = 119, height = 45, cwd = wsl_path(cwd) }
+    mux.spawn_window { width = 119, height = 43, cwd = wsl_path(cwd) }
   elseif is_mac then
     mux.spawn_window { width = 120, height = 42 }
   end
