@@ -221,7 +221,26 @@ end
 
 wezterm.on('gui-startup', function(cmd)
   if is_win then
-    mux.spawn_window { width = 119, height = 45, cwd = cmd and cmd.cwd or nil }
+    local function wsl_path(win_path)
+      if not win_path then
+        return win_path
+      end
+
+      -- 将反斜杠替换为斜杠
+      local path = win_path:gsub("\\", "/")
+
+      -- 提取驱动器号并转换为小写
+      local drive, rest_of_path = path:match("^(%a):[/\\](.*)")
+      if not drive then
+        return win_path
+      end
+
+      -- 构建 WSL 路径
+      return "/mnt/" .. drive:lower() .. "/" .. rest_of_path
+    end
+    
+    local cwd = cmd and cmd.cwd or nil
+    mux.spawn_window { width = 119, height = 45, cwd = wsl_path(cwd) }
   elseif is_mac then
     mux.spawn_window { width = 120, height = 42 }
   end
