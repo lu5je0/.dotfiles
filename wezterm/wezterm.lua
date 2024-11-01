@@ -216,8 +216,10 @@ end
 --   'cmd.exe',
 --   'pwsh.exe',
 --   'powershell.exe',
+--   'wsl.exe',
+--   'wsl',
 -- }
--- config.window_close_confirmation = 'NeverPrompt'
+config.window_close_confirmation = 'NeverPrompt'
 
 wezterm.on('gui-startup', function(cmd)
   if is_win then
