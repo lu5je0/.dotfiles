@@ -1,3 +1,6 @@
+; sudo ln -s ~/.dotfiles/services/wsl-mount.service /usr/lib/systemd/system/wsl-mount.service
+; sudo systemctl enable mount-smb.service
+
 [Unit]
 Description=Mount SMB Shares
 After=network-online.target

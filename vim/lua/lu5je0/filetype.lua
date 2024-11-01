@@ -24,5 +24,6 @@ vim.filetype.add {
     ['.*.tmux.conf'] = 'tmux',
     ['.*.zsh'] = 'bash',
     ['.*/ssh/config'] = 'sshconfig',
+    ['.*/.dotfiles/services/.*'] = 'systemd',
   },
 }
