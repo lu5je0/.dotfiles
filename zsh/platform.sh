@@ -38,17 +38,17 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   
   export PATH=/home/lu5je0/.dotfiles/bin/mac_arm64/:$PATH
 elif [[ $UNAME_INFO =~ "WSL" ]]; then
+  
+  # windows 目录使用windows的git
   function __git_prompt_git() {
-    if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]]; then
+    if [[ "$PWD" =~ '^/mnt/[cdefgh]' ]]; then
       command git.exe "$@"
     else
       command git "$@"
     fi
   }
-  alias gst='__git_prompt_git status'
-  alias gaa='__git_prompt_git add -A'
-  alias gc='__git_prompt_git commit'
-  alias gd='__git_prompt_git diff'
+  alias git='__git_prompt_git'
+  
   alias grep='grep --color'
   alias e='/mnt/c/Windows/explorer.exe'
   alias yy='win32yank.exe -i'
