@@ -1,0 +1,20 @@
+; sudo ln -s ~/.dotfiles/services/wsl-mount.service /usr/lib/systemd/system/wsl-mount.service
+; sudo systemctl enable mount-smb.service
+
+[Unit]
+Description=Mount SMB Shares
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/bin/mount -t cifs -o user=admin,password=lu5je0,rw,uid=1000,gid=1000 //192.168.1.10/st2000 /mnt/st2000
+ExecStart=/bin/mount -t cifs -o user=admin,password=lu5je0,rw,uid=1000,gid=1000 //192.168.1.10/mg08 /mnt/mg08
+ExecStart=/bin/mount -t cifs -o user=admin,password=lu5je0,rw,uid=1000,gid=1000 //192.168.1.10/share /mnt/share
+ExecStop=/bin/umount /mnt/st2000
+ExecStop=/bin/umount /mnt/mg08
+ExecStop=/bin/umount /mnt/share
+
+[Install]
+WantedBy=multi-user.target

@@ -33,15 +33,14 @@ if [ -n "$VENV_DIR" ]; then
         if ask "Virtual environment does not exist. Do you want to create it?"; then
             echo "Creating virtual environment..."
             python3 -m venv "$venv_dir"
-        fi
-        
-        # 安装依赖
-        if [ -f "$script_path/requirements.txt" ]; then
-            if ask "Installing dependencies?"; then
+            # 安装依赖
+            if [ -f "$script_path/requirements.txt" ]; then
                 echo "Installing dependencies..."
                 "$venv_python" -m pip install -r "$script_path/requirements.txt"
             fi
         fi
+        
+        exit 1
     fi
 
     # 使用 exec 替换当前进程为虚拟环境中的 Python 解释器，传递所有参数
