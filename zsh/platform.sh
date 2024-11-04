@@ -8,18 +8,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
   
   alias ls='ls -F --show-control-chars --color=auto'
-  eval $(gdircolors -b $HOME/.dir_colors)
-  
-  # export JAVA_HOME_8='/Users/lu5je0/Library/Java/JavaVirtualMachines/azul-1.8.0_352/Contents/Home'
-  # export JAVA_HOME_11='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-11.0.17/Contents/Home'
-  # export JAVA_HOME_17='/Users/lu5je0/Library/Java/JavaVirtualMachines/temurin-17.0.5-2/Contents/Home'
-  # alias jdk8='export JAVA_HOME=$JAVA_HOME_8'
-  # alias jdk11='export JAVA_HOME=$JAVA_HOME_11'
-  # alias jdk17='export JAVA_HOME=$JAVA_HOME_17'
-  # if test -z "$JAVA_HOME";then
-  #   export JAVA_HOME=$JAVA_HOME_8
-  # fi
-  
+  # eval $(gdircolors -b $HOME/.dir_colors)
   alias e='open'
   alias sed='gsed'
   alias yy='pbcopy'
@@ -32,9 +21,9 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   export HOMEBREW_NO_AUTO_UPDATE=true
 
   # iterm title bar
-  echo -en "\033]6;1;bg;red;brightness;44\a"
-  echo -en "\033]6;1;bg;green;brightness;46\a"
-  echo -en "\033]6;1;bg;blue;brightness;51\a"
+  # echo -en "\033]6;1;bg;red;brightness;44\a"
+  # echo -en "\033]6;1;bg;green;brightness;46\a"
+  # echo -en "\033]6;1;bg;blue;brightness;51\a"
   
   export PATH=/home/lu5je0/.dotfiles/bin/mac_arm64/:$PATH
 elif [[ $UNAME_INFO =~ "WSL" ]]; then
