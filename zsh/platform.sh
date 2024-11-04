@@ -27,17 +27,17 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   
   export PATH=/home/lu5je0/.dotfiles/bin/mac_arm64/:$PATH
 elif [[ $UNAME_INFO =~ "WSL" ]]; then
-  # function __git_prompt_git() {
-  #   if [[ "$PWD" =~ '^/mnt/[cdefgh]/' ]]; then
-  #     command git.exe "$@"
-  #   else
-  #     command git "$@"
-  #   fi
-  # }
-  alias gst='__git_prompt_git status'
-  alias gaa='__git_prompt_git add -A'
-  alias gc='__git_prompt_git commit'
-  alias gd='__git_prompt_git diff'
+  
+  # windows 目录使用windows的git
+  function __git_prompt_git() {
+    if [[ "$PWD" =~ '^/mnt/[cdefgh]' ]]; then
+      command git.exe "$@"
+    else
+      command git "$@"
+    fi
+  }
+  alias git='__git_prompt_git'
+  
   alias grep='grep --color'
   alias e='/mnt/c/Windows/explorer.exe'
   alias yy='win32yank.exe -i'
@@ -49,7 +49,7 @@ elif [[ $UNAME_INFO =~ "WSL" ]]; then
   clippaste() {
     powershell.exe -noprofile -command Get-Clipboard | tr -d '\r'
   }
-  # export PATH=/mnt/c/Users/lu5je0/scoop/shims:$PATH
+  export PATH=/mnt/c/Users/lu5je0/scoop/shims:$PATH
   . $HOME'/.dotfiles/win/wsl2/wezterm.sh'
 elif [[ $UNAME_INFO =~ "Android" ]]; then
   alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '

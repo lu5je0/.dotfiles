@@ -216,8 +216,10 @@ end
 --   'cmd.exe',
 --   'pwsh.exe',
 --   'powershell.exe',
+--   'wsl.exe',
+--   'wsl',
 -- }
--- config.window_close_confirmation = 'NeverPrompt'
+config.window_close_confirmation = 'NeverPrompt'
 
 wezterm.on('gui-startup', function(cmd)
   if is_win then
@@ -241,7 +243,7 @@ wezterm.on('gui-startup', function(cmd)
     
     local cwd = cmd and cmd.cwd or nil
     mux.spawn_window { width = 119, height = 43, cwd = wsl_path(cwd) }
-    wezterm.sleep_ms(500)
+    wezterm.sleep_ms(400)
     wezterm.run_child_process { "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe", "C:\\Users\\lu5je0\\.dotfiles\\win\\ahk\\wezterm\\resize.ahk" }
   elseif is_mac then
     mux.spawn_window { width = 120, height = 42 }
