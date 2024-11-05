@@ -12,5 +12,5 @@ ScaledBorderAndShadow: No
 [V4+ Styles]
 
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,微软雅黑,18,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,15,134
-Style:     Eng,微软雅黑,10,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,1,2,5,5,15,134
+Style: Default,微软雅黑,22,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,2,2,5,5,15,134
+Style:     Eng,微软雅黑,12,&H0066D7FF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,2,2,5,5,15,134

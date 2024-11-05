@@ -46,9 +46,6 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # plugins
 ##########################################
 
-zinit ice depth=1 lucid wait='1'
-zinit light paulirish/git-open
-
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-syntax-highlighting
 
@@ -57,6 +54,7 @@ zinit light hlissner/zsh-autopair
 
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
 # zinit light zsh-users/zsh-autosuggestions
+# bindkey '^K' autosuggest-accept
 
 # 额外补全
 zinit ice depth=1 lucid wait='0'
