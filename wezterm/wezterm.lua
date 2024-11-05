@@ -159,6 +159,7 @@ config.ssh_domains = {
   {
     name = 'raider',
     remote_address = 'raider.665665.xyz',
+    multiplexing = 'None'
   },
 }
 config.ssh_backend = 'Ssh2'
