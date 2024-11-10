@@ -4,3 +4,6 @@ nmap -Pn -sS -p 1-65535 -v 192.168.1.1
 -p     指定端口扫描
 -v     verbose
 -Pn    忽略ping
+
+范围扫描
+nmap -sS -p 80 192.168.1.0/24
