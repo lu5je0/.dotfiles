@@ -92,6 +92,10 @@ local config = {
   end)(),
 }
 
+local function basename(s)
+  return string.gsub(s, '(.*[/\\])(.*)', '%2')
+end
+
 if is_mac then
   -- tab bar在上面
   config.hide_tab_bar_if_only_one_tab = false
@@ -147,34 +151,41 @@ config.keys = {
       local choices = {}
       local cur_tab_id = cur_pane:tab():tab_id()
       
-      local tabs = win:mux_window():tabs()
-      for _, tab in ipairs(tabs) do
+      local tabs_with_info = win:mux_window():tabs_with_info()
+      for _, tab_info in ipairs(tabs_with_info) do
+        local tab = tab_info.tab
         if tab:tab_id() ~= cur_tab_id then
-          local panes = tab:panes()
-          for _, pane in ipairs(panes) do
-            table.insert(choices, { label = tostring(pane:pane_id()) })
+          local panes_with_info = tab:panes_with_info()
+          for _, pane_info in ipairs(panes_with_info) do
+            local pane = pane_info.pane
+            table.insert(choices, { label = tostring(tab_info.index + 1) .. '-' .. tostring(pane_info.index + 1) .. ':' .. basename(pane:get_foreground_process_info().executable), id = tostring(pane:pane_id()) })
           end
         end
       end
       wezterm.log_info(choices)
-
+      
+      -- win:perform_action(
+      --   wezterm.action.PaneSelect {
+      --     alphabet = '1234567890',
+      --     -- show_pane_ids = true
+      --   },
+      --   cur_pane
+      -- )
       win:perform_action(
         wezterm.action.InputSelector {
-          action = wezterm.action_callback(function(window, cur_pane, id, label)
+          action = wezterm.action_callback(function(window, cur_pane, id, label, pane_id)
             if not id and not label then
               wezterm.log_info 'cancelled'
             else
-              wezterm.run_child_process { '/opt/homebrew/bin/wezterm', 'cli', 'split-pane', '--move-pane-id', label, '--horizontal' }
+              wezterm.run_child_process { '/opt/homebrew/bin/wezterm', 'cli', 'split-pane', '--move-pane-id', id, '--horizontal' }
             end
           end),
           title = 'choose pane',
           choices = choices,
-          alphabet = '123456789',
-          description = 'Write the number you want to choose or press / to search.',
+          alphabet = 'abcdefghijk',
         },
         cur_pane
       )
-      
     end)
   },
   { key = 'Q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
