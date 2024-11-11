@@ -145,6 +145,18 @@ config.keys = {
     end)
   },
   {
+    key = 'u',
+    mods = 'LEADER',
+    action = wezterm.action { PaneSelect = { mode = "SwapWithActiveKeepFocus" } },
+    -- action = wezterm.action_callback(function(win, pane)
+    --   local tab = win:active_tab()
+    --   local next_pane = tab:get_pane_direction("Right")
+    --   if next_pane then
+    --     tab.swap_active_with_index(next_pane, true)
+    --   end
+    -- end)
+  },
+  {
     key = 'm',
     mods = 'LEADER',
     action = wezterm.action_callback(function(win, cur_pane)
@@ -203,7 +215,6 @@ config.keys = {
   { key = '"',      mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = 'b',      mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
   { key = 'Escape', mods = 'LEADER',       action = wezterm.action.ActivateCopyMode },
-  { key = 'u',      mods = 'LEADER',       action = wezterm.action.AttachDomain 'raider', },
   { key = 'i',      mods = 'CMD',          action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
   { key = 'n',      mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
