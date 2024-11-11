@@ -177,7 +177,13 @@ config.keys = {
             if not id and not label then
               wezterm.log_info 'cancelled'
             else
-              wezterm.run_child_process { '/opt/homebrew/bin/wezterm', 'cli', 'split-pane', '--move-pane-id', id, '--horizontal' }
+              local wezterm_path
+              if is_win then
+                wezterm_path = 'wezterm.exe'
+              else
+                wezterm_path = 'wezterm'
+              end
+              wezterm.run_child_process { wezterm_path, 'cli', 'split-pane', '--move-pane-id', id, '--horizontal' }
             end
           end),
           title = 'choose pane',
@@ -307,13 +313,15 @@ wezterm.on('gui-startup', function(cmd)
 end)
 
 if is_mac then
-  local set_environment_variables = {
+  config.set_environment_variables = {
     PATH = '/opt/homebrew/bin:' .. os.getenv('PATH')
   }
-  config.set_environment_variables = set_environment_variables
 end
 
 if is_win then
+  config.set_environment_variables = {
+    PATH = 'C:\\Program Files\\WezTerm:' .. os.getenv('PATH')
+  }
   config.default_domain = "WSL:Debian"
 end
 
