@@ -132,7 +132,51 @@ config.keys = {
   { key = 'x',      mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
   { key = 'g',      mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' } },
   { key = ' ',      mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
-  { key = 'q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
+  {
+    key = 'q',
+    mods = 'LEADER',
+    action = wezterm.action_callback(function(win, pane)
+      local tab = pane:move_to_new_tab()
+      tab:activate()
+    end)
+  },
+  {
+    key = 'm',
+    mods = 'LEADER',
+    action = wezterm.action_callback(function(win, cur_pane)
+      local choices = {}
+      local cur_tab_id = cur_pane:tab():tab_id()
+      
+      local tabs = win:mux_window():tabs()
+      for _, tab in ipairs(tabs) do
+        if tab:tab_id() ~= cur_tab_id then
+          local panes = tab:panes()
+          for _, pane in ipairs(panes) do
+            table.insert(choices, { label = tostring(pane:pane_id()) })
+          end
+        end
+      end
+      wezterm.log_info(choices)
+
+      win:perform_action(
+        wezterm.action.InputSelector {
+          action = wezterm.action_callback(function(window, cur_pane, id, label)
+            if not id and not label then
+              wezterm.log_info 'cancelled'
+            else
+              wezterm.run_child_process { '/opt/homebrew/bin/wezterm', 'cli', 'split-pane', '--move-pane-id', label, '--horizontal' }
+            end
+          end),
+          title = 'choose pane',
+          choices = choices,
+          alphabet = '123456789',
+          description = 'Write the number you want to choose or press / to search.',
+        },
+        cur_pane
+      )
+      
+    end)
+  },
   { key = 'Q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
   { key = 'r',      mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
   { key = '0',      mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
