@@ -92,6 +92,10 @@ local config = {
   end)(),
 }
 
+local function basename(s)
+  return string.gsub(s, '(.*[/\\])(.*)', '%2')
+end
+
 if is_mac then
   -- tab bar在上面
   config.hide_tab_bar_if_only_one_tab = false
@@ -132,7 +136,76 @@ config.keys = {
   { key = 'x',      mods = 'LEADER',       action = wezterm.action { CloseCurrentPane = { confirm = true } } },
   { key = 'g',      mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' } },
   { key = ' ',      mods = 'LEADER',       action = wezterm.action.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
-  { key = 'q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_tab() end) },
+  {
+    key = 'q',
+    mods = 'LEADER',
+    action = wezterm.action_callback(function(win, pane)
+      local tab = pane:move_to_new_tab()
+      tab:activate()
+    end)
+  },
+  {
+    key = 'u',
+    mods = 'LEADER',
+    action = wezterm.action { PaneSelect = { mode = "SwapWithActiveKeepFocus" } },
+    -- action = wezterm.action_callback(function(win, pane)
+    --   local tab = win:active_tab()
+    --   local next_pane = tab:get_pane_direction("Right")
+    --   if next_pane then
+    --     tab.swap_active_with_index(next_pane, true)
+    --   end
+    -- end)
+  },
+  {
+    key = 'm',
+    mods = 'LEADER',
+    action = wezterm.action_callback(function(win, cur_pane)
+      local choices = {}
+      local cur_tab_id = cur_pane:tab():tab_id()
+      
+      local tabs_with_info = win:mux_window():tabs_with_info()
+      for _, tab_info in ipairs(tabs_with_info) do
+        local tab = tab_info.tab
+        if tab:tab_id() ~= cur_tab_id then
+          local panes_with_info = tab:panes_with_info()
+          for _, pane_info in ipairs(panes_with_info) do
+            local pane = pane_info.pane
+            table.insert(choices, { label = tostring(tab_info.index + 1) .. '-' .. tostring(pane_info.index + 1) .. ':' .. basename(pane:get_foreground_process_info().executable), id = tostring(pane:pane_id()) })
+          end
+        end
+      end
+      wezterm.log_info(choices)
+      
+      -- win:perform_action(
+      --   wezterm.action.PaneSelect {
+      --     alphabet = '1234567890',
+      --     -- show_pane_ids = true
+      --   },
+      --   cur_pane
+      -- )
+      win:perform_action(
+        wezterm.action.InputSelector {
+          action = wezterm.action_callback(function(window, cur_pane, id, label, pane_id)
+            if not id and not label then
+              wezterm.log_info 'cancelled'
+            else
+              local wezterm_path
+              if is_win then
+                wezterm_path = 'wezterm.exe'
+              else
+                wezterm_path = 'wezterm'
+              end
+              wezterm.run_child_process { wezterm_path, 'cli', 'split-pane', '--move-pane-id', id, '--horizontal' }
+            end
+          end),
+          title = 'choose pane',
+          choices = choices,
+          alphabet = 'abcdefghijk',
+        },
+        cur_pane
+      )
+    end)
+  },
   { key = 'Q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
   { key = 'r',      mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
   { key = '0',      mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
@@ -142,7 +215,6 @@ config.keys = {
   { key = '"',      mods = 'LEADER|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = 'b',      mods = 'LEADER|CTRL',  action = wezterm.action.SendKey { key = 'b', mods = 'CTRL' } },
   { key = 'Escape', mods = 'LEADER',       action = wezterm.action.ActivateCopyMode },
-  { key = 'u',      mods = 'LEADER',       action = wezterm.action.AttachDomain 'raider', },
   { key = 'i',      mods = 'CMD',          action = wezterm.action.SendKey { key = 'i', mods = 'ALT' } },
   { key = 'n',      mods = 'CMD',          action = wezterm.action.SendKey { key = 'n', mods = 'ALT' } },
 }
@@ -252,13 +324,15 @@ wezterm.on('gui-startup', function(cmd)
 end)
 
 if is_mac then
-  local set_environment_variables = {
+  config.set_environment_variables = {
     PATH = '/opt/homebrew/bin:' .. os.getenv('PATH')
   }
-  config.set_environment_variables = set_environment_variables
 end
 
 if is_win then
+  config.set_environment_variables = {
+    PATH = 'C:\\Program Files\\WezTerm:' .. os.getenv('PATH')
+  }
   config.default_domain = "WSL:Debian"
 end
 
