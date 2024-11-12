@@ -146,31 +146,30 @@ local defer_options = {
     -- linux中 * 是selection clipboard，+ 是system clipboard，
     -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard
     if has('ssh_client') then
-      local function no_paste(_)
-        return function()
-          -- Do nothing! We can't paste with OSC52
-          return { vim.split(vim.fn.getreg('"'), '\n'), vim.fn.getregtype('"') }
-        end
-      end
-      o.clipboard = 'unnamedplus'
-      local paste = {
-        ["+"] = no_paste("+"),   -- Pasting disabled
-        ["*"] = no_paste("*"),   -- Pasting disabled
-      }
       if has('kitty') then
-        paste = {
-          ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
-          ['*'] = require('vim.ui.clipboard.osc52').paste('*')
+        o.clipboard = 'unnamedplus'
+        vim.g.clipboard = {
+          name = 'OSC 52',
+          copy = {
+            ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
+            ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
+          },
+          paste = {
+            ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+            ['*'] = require('vim.ui.clipboard.osc52').paste('*')
+          }
         }
+      else
+        vim.g.loaded_clipboard_provider = 1
+        local copy = require("vim.ui.clipboard.osc52").copy('\"')
+        vim.api.nvim_create_autocmd('TextYankPost', {
+          group = vim.api.nvim_create_augroup('osc52_autocmd_group', { clear = true }),
+          pattern = '*',
+          callback = function()
+            copy(vim.split(vim.fn.getreg('"'), '\n'))
+          end
+        })
       end
-      vim.g.clipboard = {
-        name = 'OSC 52',
-        copy = {
-          ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
-          ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
-        },
-        paste = paste
-      }
     elseif has('mac') then
       require('lu5je0.misc.clipboard.mac').setup()
     elseif has('wsl') then
