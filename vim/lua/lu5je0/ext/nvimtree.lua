@@ -9,6 +9,10 @@ local ui = require('lu5je0.core.ui')
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
 
+local function get_node_at_cursor()
+  return api.tree.get_node_under_cursor()
+end
+
 -- 修复第一次定位问题
 function M.locate_file()
   local cur_filepath = vim.fn.expand('%:p')
@@ -64,7 +68,7 @@ function M.locate_file()
 end
 
 function M.terminal_cd()
-  local path = vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
+  local path = vim.fn.fnamemodify(get_node_at_cursor().absolute_path, ':p:h')
   require('lu5je0.ext.terminal').send_to_terminal(('cd "%s"'):format(path))
 end
 
@@ -78,7 +82,7 @@ function M.delete_node()
     local buf_id = vim.api.nvim_win_get_buf(win_id)
     if vim.fn.buflisted(buf_id) then
       local path = vim.fn.expand("#" .. tostring(buf_id) .. ":p")
-      if path == lib.get_node_at_cursor().absolute_path then
+      if path == get_node_at_cursor().absolute_path then
         is_remove_cur_file = true
         cur_file_win_id = win_id
         break
@@ -95,7 +99,7 @@ function M.delete_node()
           goto continue
         end
         local path = vim.fn.expand("#" .. tostring(buf_id) .. ":p")
-        if path ~= lib.get_node_at_cursor().absolute_path
+        if path ~= get_node_at_cursor().absolute_path
             and vim.bo[buf_id].buftype == ''
             and not string.find(path, 'undotree')
         then
@@ -160,7 +164,7 @@ function M.cd()
 end
 
 function M.preview(toggle)
-  local node = lib.get_node_at_cursor()
+  local node = get_node_at_cursor()
   if node == nil then
     return
   end
@@ -180,7 +184,7 @@ end
 function M.open_node()
   ui.close_current_popup()
 
-  local node = lib.get_node_at_cursor()
+  local node = get_node_at_cursor()
   if node == nil then
     return
   end
@@ -190,7 +194,7 @@ function M.open_node()
     vim.schedule(function()
       vim.cmd('norm j')
       -- 这里忘记什么原因了，先注释掉，否则打开submodule下的文件夹有问题
-      -- if lib.get_node_at_cursor().parent.absolute_path ~= parent_absolute_path then
+      -- if get_node_at_cursor().parent.absolute_path ~= parent_absolute_path then
       --   vim.cmd('norm k')
       -- end
     end)
@@ -200,10 +204,10 @@ function M.open_node()
 end
 
 function M.close_node()
-  local node = lib.get_node_at_cursor()
+  local node = get_node_at_cursor()
   api.node.navigate.parent_close()
   if vim.fn.getcwd() == '/' then
-    if node ~= lib.get_node_at_cursor() then
+    if node ~= get_node_at_cursor() then
       keys_helper.feedkey('k')
     end
   end
@@ -245,7 +249,7 @@ local function set_clipboard(text)
 end
 
 function M.copy_relative_path()
-  local node = require('nvim-tree.lib').get_node_at_cursor()
+  local node = get_node_at_cursor()
   if not node then
     return
   end
@@ -258,7 +262,7 @@ function M.copy_relative_path()
 end
 
 function M.copy_node_name()
-  local node = require('nvim-tree.lib').get_node_at_cursor()
+  local node = get_node_at_cursor()
   if not node then
     return
   end
@@ -268,7 +272,7 @@ function M.copy_node_name()
 end
 
 function M.copy_absolute_path()
-  local node = require('nvim-tree.lib').get_node_at_cursor()
+  local node = get_node_at_cursor()
   if not node then
     return
   end
@@ -338,7 +342,7 @@ local function on_attach(bufnr)
   set('n', '?', api.tree.toggle_help, opts('Filter'))
   set('n', '.', api.node.run.cmd, opts('Run Command'))
   set('n', 'o', function()
-    local path = vim.fn.fnamemodify(require('nvim-tree.lib').get_node_at_cursor().absolute_path, ':p:h')
+    local path = vim.fn.fnamemodify(get_node_at_cursor().absolute_path, ':p:h')
     keys_helper.feedkey('<c-w>l')
     vim.schedule(function()
       vim.cmd('Oil' .. path)
