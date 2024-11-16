@@ -58,8 +58,8 @@ fi
 if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
   arch=`arch`
   if [[ $arch =~ 'x86_64' ]]; then
-    export PATH=/home/lu5je0/.dotfiles/bin/linux_x86_64/:$PATH
+    export PATH=/home/lu5je0/.dotfiles/bin/linux_x86_64:$PATH
   elif [[ $arch =~ 'aarch64' ]]; then
-    export PATH=/home/lu5je0/.dotfiles/bin/linux_aarch64/:$PATH
+    export PATH=/home/lu5je0/.dotfiles/bin/linux_aarch64:$PATH
   fi
 fi
