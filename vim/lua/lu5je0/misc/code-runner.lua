@@ -65,7 +65,7 @@ function M.run_file(debug)
   elseif filetype == 'rust' then
     execute_in_terminal('cargo run')
   elseif filetype == 'typescript' then
-    execute_in_terminal(build_cmd_with_file('ts-node'))
+    execute_in_terminal(build_cmd_with_file('bun'))
   elseif filetype == 'javascript' then
     execute_in_terminal(build_cmd_with_file('node'))
   elseif filetype == 'java' then
