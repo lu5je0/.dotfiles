@@ -163,6 +163,9 @@ vim.schedule(function()
   imap <M-k> <up>
   imap <M-h> <left>
   imap <M-l> <right>
+  
+  " fold
+  nmap zA za]zA
 
   "----------------------------------------------------------------------
   " <leader>
