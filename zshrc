@@ -126,6 +126,8 @@ alias pc="proxychains4 -q"
 # alias sftp="sftp -C"
 alias crontab="cron.sh"
 
+alias rm="trash"
+
 alias sudo='sudo env PATH=/sbin:$PATH'
 alias sudo-default-path='\sudo'
 
