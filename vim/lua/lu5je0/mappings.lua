@@ -166,6 +166,7 @@ vim.schedule(function()
   
   " fold
   nmap zA za]zA
+  nmap zI za]zI
 
   "----------------------------------------------------------------------
   " <leader>
