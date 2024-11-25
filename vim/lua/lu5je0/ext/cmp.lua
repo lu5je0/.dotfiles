@@ -113,7 +113,7 @@ local function comfirm(fallback)
     -- end
   else
     fallback()
-    keys_helper.feedkey('<space><bs>')
+    -- keys_helper.feedkey('<space><bs>')
   end
 end
 
