@@ -193,7 +193,7 @@ config.keys = {
               if is_win then
                 wezterm_path = 'wezterm.exe'
               else
-                wezterm_path = 'wezterm'
+                wezterm_path = '/opt/homebrew/bin/wezterm'
               end
               wezterm.run_child_process { wezterm_path, 'cli', 'split-pane', '--move-pane-id', id, '--horizontal' }
             end
