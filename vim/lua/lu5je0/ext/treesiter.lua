@@ -4,7 +4,7 @@ local ts_filetypes = {
   'json', 'python', 'java', 'bash', 'go', 'vim', 'lua',
   'rust', 'toml', 'yaml', 'markdown', 'http', 'typescript',
   'javascript', 'sql', 'html', 'json5', 'jsonc', 'regex',
-  'vue', 'css', 'dockerfile', 'vimdoc', 'query', 'xml'
+  'vue', 'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy'
 }
 
 local ts_indent_filetyps = {
