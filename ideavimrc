@@ -174,6 +174,8 @@ map <leader>gL <Action>(Vcs.ShowTabbedFileHistory)
 map <leader>gl <Action>(Vcs.Show.Log)
 xmap <leader>gl <Action>(Vcs.ShowHistoryForBlock)
 
+nmap ma <Action>(ToggleBookmark)
+nmap mA <Action>(ToggleBookmarkWithMnemonic)
 nmap <leader>mc <Action>(CompileFile)
 nmap <leader>mr <Action>(Debugger.ReloadFile)
 nmap <leader>me :action EvaluateExpression<CR>
