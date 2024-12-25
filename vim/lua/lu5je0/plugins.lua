@@ -458,7 +458,7 @@ require("lazy").setup({
     'saghen/blink.cmp',
     -- optional: provides snippets for the snippet source
     dependencies = {
-      'rafamadriz/friendly-snippets',
+      -- 'rafamadriz/friendly-snippets',
       'windwp/nvim-autopairs',
       {
         'L3MON4D3/LuaSnip',
@@ -487,8 +487,11 @@ require("lazy").setup({
         ['<c-p>'] = { 'show', 'show_documentation', 'hide_documentation' },
         ['<CR>'] = {
           function(cmp)
-            if cmp.snippet_active() then return cmp.accept()
-            else return cmp.select_and_accept() end
+            if cmp.snippet_active() then
+              return cmp.accept()
+            else
+              return cmp.select_and_accept()
+            end
           end,
           'snippet_forward',
           'fallback'
