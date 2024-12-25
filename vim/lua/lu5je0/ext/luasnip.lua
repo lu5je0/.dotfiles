@@ -7,16 +7,7 @@ local luasnip = require('luasnip')
 --   delete_check_events = 'InsertLeave'
 -- })
 
-local cmp = require('cmp')
 local keys = require('lu5je0.core.keys')
-
--- 修复按下<c-j>后cmp补全位置不对的问题
-local function cmp_hotfix()
-  if cmp.visible() then
-    cmp.close()
-    keys.feedkey('<esc>a')
-  end
-end
 
 function M.jump_next_able()
   local modified_line = vim.fn.line("'^")
@@ -29,11 +20,9 @@ local function keymap()
 
   vim.keymap.set({ 's', 'i' }, '<c-j>', function()
     luasnip.jump(1)
-    -- cmp_hotfix()
   end, opts)
   vim.keymap.set({ 's', 'i' }, '<c-k>', function()
     luasnip.jump(-1)
-    -- cmp_hotfix()
   end, opts)
   
   vim.keymap.set({ 'n' }, '<cr>', function()

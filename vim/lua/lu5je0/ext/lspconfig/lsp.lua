@@ -73,7 +73,8 @@ end
 
 local function config()
   -- nvim-cmp
-  local capabilities = require('cmp_nvim_lsp').default_capabilities()
+  -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
+  local capabilities = require('blink.cmp').get_lsp_capabilities()
 
   -- nvim-ufo
   capabilities.textDocument.foldingRange = {
