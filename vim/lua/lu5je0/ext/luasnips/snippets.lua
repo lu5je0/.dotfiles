@@ -18,6 +18,12 @@ local m = extras.m
 local l = extras.l
 local postfix = require "luasnip.extras.postfix".postfix
 local ts_post = require("luasnip.extras.treesitter_postfix").treesitter_postfix
+local remove_last_dot = function(s)
+  if vim.endswith(s, ".") then
+    s = string.sub(s, 1, -2)
+  end
+  return s
+end
 
 -- arg par
 local arg_par_filetypes = { 'lua', 'python', 'javascript', 'java', 'c' }
@@ -27,7 +33,7 @@ for _, filetype in ipairs(arg_par_filetypes) do
       i(1, ""),
       t("("),
       f(function(_, parent)
-        return parent.snippet.env.POSTFIX_MATCH
+        return remove_last_dot(parent.snippet.env.POSTFIX_MATCH)
       end, {}),
       t(")"),
     })
@@ -114,7 +120,7 @@ local lua_postfix_snippets = (function()
     postfix({ trig = ".var", match_pattern = "^[\t ]*(.+)$" }, {
       t("local "), i(1, ""), t(" = "),
       f(function(_, parent)
-        return parent.snippet.env.POSTFIX_MATCH
+        return remove_last_dot(parent.snippet.env.POSTFIX_MATCH)
       end, {}),
     })
   })
