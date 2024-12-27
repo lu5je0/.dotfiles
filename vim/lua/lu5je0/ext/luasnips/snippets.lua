@@ -18,18 +18,18 @@ local m = extras.m
 local l = extras.l
 local postfix = require "luasnip.extras.postfix".postfix
 local ts_post = require("luasnip.extras.treesitter_postfix").treesitter_postfix
-local remove_last_dot = function(s)
-  if vim.endswith(s, ".") then
-    s = string.sub(s, 1, -2)
+local remove_last_dot = function(str)
+  if vim.endswith(str, ".") then
+    str = string.sub(str, 1, -2)
   end
-  return s
+  return str 
 end
 
 -- arg par
 local arg_par_filetypes = { 'lua', 'python', 'javascript', 'java', 'c' }
 for _, filetype in ipairs(arg_par_filetypes) do
   ls.add_snippets(filetype, {
-    postfix({ trig = ".arg", match_pattern = "^[\t ]*(.+)$" }, {
+    postfix({ trig = "arg", match_pattern = "^[\t ]*(.+)$" }, {
       i(1, ""),
       t("("),
       f(function(_, parent)
@@ -40,91 +40,80 @@ for _, filetype in ipairs(arg_par_filetypes) do
   })
 
   ls.add_snippets(filetype, {
-    postfix({ trig = ".par", match_pattern = "^[\t ]*(.+)$" }, {
+    postfix({ trig = "par", match_pattern = "^[\t ]*(.+)$" }, {
       t('('),
       f(function(_, parent)
-        return parent.snippet.env.POSTFIX_MATCH
+        return remove_last_dot(parent.snippet.env.POSTFIX_MATCH)
       end, {}),
       t(')'), i(1, '')
     })
   })
 end
 
-local var_filetypes = { 'python', 'javascript' }
+local var_filetypes = { 'python', 'javascript', 'lua' }
 for _, filetype in ipairs(var_filetypes) do
   ls.add_snippets(filetype, {
-    postfix({ trig = ".var", match_pattern = "^[\t ]*(.+)$" }, {
+    postfix({ trig = "var", match_pattern = "^[\t ]*(.+)$" }, {
       i(1, ""), t(" = "),
-      f(function(_, parent)
-        return parent.snippet.env.POSTFIX_MATCH
-      end, {}),
-    })
-  })
-end
-
-local python_postfix_snippets = (function()
-  ls.add_snippets('python', {
-    postfix({ trig = ".print", match_pattern = "^[\t ]*(.+)$" }, {
-      t("print("),
-      f(function(_, parent)
-        return parent.snippet.env.POSTFIX_MATCH
-      end, {}),
-      t(")"), i(1, '')
-    })
-  })
-
-  ls.add_snippets('python', {
-    postfix({ trig = '.fori', match_pattern = '^[\t ]*(%d+)$' }, {
-      f(function(_, parent)
-        return ('for i in range(%s):'):format(parent.snippet.env.POSTFIX_MATCH)
-      end, {}), t({ '', '' }),
-      t('    '), i(''), t(''),
-    })
-  })
-
-  ls.add_snippets('python', {
-    postfix({ trig = '.for', match_pattern = '^[\t ]*(.+)$' }, {
-      t('for '), i(1, 'item'),
-      f(function(_, parent)
-        return (' in %s:'):format(parent.snippet.env.POSTFIX_MATCH)
-      end, {}), t({ '', '' }),
-      t('    '), i(2, ''), t(''),
-    })
-  })
-
-  ls.add_snippets('python', {
-    postfix({ trig = ".if", match_pattern = '^[\t ]*(.+)$' }, {
-      t("if "),
-      f(function(_, parent)
-        return parent.snippet.env.POSTFIX_MATCH
-      end, {}), t({ ':', '' }),
-      t('    '), i(1, ""),
-    })
-  })
-end)()
-
-local javascript_postfix_snippets = (function()
-  ls.add_snippets('javascript', {
-    postfix({ trig = ".cl", match_pattern = "^[\t ]*(.+)$" }, {
-      t("console.log("),
-      f(function(_, parent)
-        return parent.snippet.env.POSTFIX_MATCH
-      end, {}),
-      t(")"), i(1, '')
-    })
-  })
-end)()
-
-local lua_postfix_snippets = (function()
-  ls.add_snippets('lua', {
-    postfix({ trig = ".var", match_pattern = "^[\t ]*(.+)$" }, {
-      t("local "), i(1, ""), t(" = "),
       f(function(_, parent)
         return remove_last_dot(parent.snippet.env.POSTFIX_MATCH)
       end, {}),
     })
   })
-end)()
+end
+
+-- local python_postfix_snippets = (function()
+--   ls.add_snippets('python', {
+--     postfix({ trig = ".print", match_pattern = "^[\t ]*(.+)$" }, {
+--       t("print("),
+--       f(function(_, parent)
+--         return parent.snippet.env.POSTFIX_MATCH
+--       end, {}),
+--       t(")"), i(1, '')
+--     })
+--   })
+--
+--   ls.add_snippets('python', {
+--     postfix({ trig = '.fori', match_pattern = '^[\t ]*(%d+)$' }, {
+--       f(function(_, parent)
+--         return ('for i in range(%s):'):format(parent.snippet.env.POSTFIX_MATCH)
+--       end, {}), t({ '', '' }),
+--       t('    '), i(''), t(''),
+--     })
+--   })
+--
+--   ls.add_snippets('python', {
+--     postfix({ trig = '.for', match_pattern = '^[\t ]*(.+)$' }, {
+--       t('for '), i(1, 'item'),
+--       f(function(_, parent)
+--         return (' in %s:'):format(parent.snippet.env.POSTFIX_MATCH)
+--       end, {}), t({ '', '' }),
+--       t('    '), i(2, ''), t(''),
+--     })
+--   })
+--
+--   ls.add_snippets('python', {
+--     postfix({ trig = ".if", match_pattern = '^[\t ]*(.+)$' }, {
+--       t("if "),
+--       f(function(_, parent)
+--         return parent.snippet.env.POSTFIX_MATCH
+--       end, {}), t({ ':', '' }),
+--       t('    '), i(1, ""),
+--     })
+--   })
+-- end)()
+
+-- local javascript_postfix_snippets = (function()
+--   ls.add_snippets('javascript', {
+--     postfix({ trig = ".cl", match_pattern = "^[\t ]*(.+)$" }, {
+--       t("console.log("),
+--       f(function(_, parent)
+--         return parent.snippet.env.POSTFIX_MATCH
+--       end, {}),
+--       t(")"), i(1, '')
+--     })
+--   })
+-- end)()
 
 -- ls.add_snippets('lua', {
 --   postfix({ trig = '.fori', match_pattern = '^[\t ]*(%d+)$' }, {
