@@ -485,6 +485,8 @@ require("lazy").setup({
       keymap = {
         preset = 'super-tab',
         ['<c-p>'] = { 'show', 'show_documentation', 'hide_documentation' },
+        ['<c-u>'] = { 'scroll_documentation_up', 'fallback' },
+        ['<c-d>'] = { 'scroll_documentation_down', 'fallback' },
         ['<CR>'] = {
           function(cmp)
             if cmp.snippet_active() then
