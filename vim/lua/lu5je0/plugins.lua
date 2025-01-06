@@ -111,7 +111,7 @@ require("lazy").setup({
       config = function()
         require('hlargs').setup {
           -- flash.nvim 5000
-          hl_priority = 4999
+          hl_priority = 4999,
         }
       end,
       dependencies = {
