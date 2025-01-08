@@ -5,13 +5,13 @@ local function accept(cmp)
     return cmp.accept()
   else
     local result = cmp.select_and_accept()
-    require('lu5je0.misc.cmp-fix').fix_indent(cmp.get_selected_item().label)
+    local item = cmp.get_selected_item()
+    require('lu5je0.misc.cmp-fix').fix_indent(item and item.label or nil)
     return result
   end
 end
 
 M.setup = function()
-
   require('blink.cmp').setup {
     -- 'default' for mappings similar to built-in completion
     -- 'super-tab' for mappings similar to vscode (tab to accept, arrow keys to navigate)
@@ -44,20 +44,20 @@ M.setup = function()
       nerd_font_variant = 'mono'
     },
     -- completion = {
-      --   menu = {
-        --     min_width = 20,
-        --   }
-        -- },
+    --   menu = {
+    --     min_width = 20,
+    --   }
+    -- },
 
-        -- Default list of enabled providers defined so that you can extend it
-        -- elsewhere in your config, without redefining it, due to `opts_extend`
-        sources = {
-          default = { 'lsp', 'path', 'snippets', 'buffer' },
-          cmdline = {}
-        },
-        snippets = {
-          preset='luasnip'
-        }
+    -- Default list of enabled providers defined so that you can extend it
+    -- elsewhere in your config, without redefining it, due to `opts_extend`
+    sources = {
+      default = { 'lsp', 'snippets', 'path', 'buffer' },
+      cmdline = {}
+    },
+    snippets = {
+      preset = 'luasnip'
+    }
   }
 end
 

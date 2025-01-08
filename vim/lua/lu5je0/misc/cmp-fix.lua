@@ -46,6 +46,9 @@ local function fix_indent()
 end
 
 M.fix_indent = function(label)
+  if not label then
+    return
+  end
   if vim.tbl_contains(indent_change_filetypes, vim.bo.filetype) and vim.tbl_contains(indent_change_items, label) then
     fix_indent()
   end
