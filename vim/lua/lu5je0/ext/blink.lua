@@ -1,5 +1,55 @@
 local M = {}
 
+local function fix_win_col()
+  local menu = require('blink.cmp.completion.windows.menu')
+  local config = require('blink.cmp.config').completion.menu
+
+  function menu.update_position()
+    local context = menu.context
+    if context == nil then return end
+
+    local win = menu.win
+    if not win:is_open() then return end
+
+    win:update_size()
+
+    local border_size = win:get_border_size()
+    local pos = win:get_vertical_direction_and_height(config.direction_priority)
+
+    -- couldn't find anywhere to place the window
+    if not pos then
+      win:close()
+      return
+    end
+
+    local alignment_start_col = menu.renderer:get_alignment_start_col()
+
+    -- place the window at the start col of the current text we're fuzzy matching against
+    -- so the window doesnt move around as we type
+    local row = pos.direction == 's' and 1 or -pos.height - border_size.vertical
+
+    if vim.api.nvim_get_mode().mode == 'c' then
+      local cmdline_position = config.cmdline_position()
+      win:set_win_config({
+        relative = 'editor',
+        row = cmdline_position[1] + row,
+        col = math.max(cmdline_position[2] + context.bounds.start_col - alignment_start_col, 0),
+      })
+    else
+      local cursor_col = vim.fn.virtcol('.')
+
+      local col = context.bounds.start_col - alignment_start_col - cursor_col - border_size.left
+      if config.draw.align_to == 'cursor' then col = 0 end
+
+      win:set_win_config({ relative = 'cursor', row = row, col = col })
+    end
+
+    win:set_height(pos.height)
+
+    menu.position_update_emitter:emit()
+  end
+end
+
 local function accept(cmp)
   if cmp.snippet_active() then
     return cmp.accept()
@@ -59,6 +109,8 @@ M.setup = function()
       preset = 'luasnip'
     }
   }
+  
+  fix_win_col()
 end
 
 return M
