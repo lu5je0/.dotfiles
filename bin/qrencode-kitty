@@ -13,5 +13,20 @@ else
     exit 1
 fi
 
-# 生成 QR 码并显示
-echo "$input" | qrencode -s 10 -o /tmp/1.png && kitty +kitten icat /tmp/1.png 2>/dev/null
+# 生成 QR 码
+qrencode -s 10 -o /tmp/qr.png <<< "$input"
+
+# 检查终端模拟器类型
+if [ "$TERM" = "xterm-kitty" ]; then
+    # 如果是 kitty 终端
+    kitty +kitten icat /tmp/qr.png 2>/dev/null
+elif [ "$TERM_PROGRAM" = "WezTerm" ]; then
+    # 如果是 wezterm 终端
+    wezterm imgcat /tmp/qr.png 2>/dev/null
+else
+    echo "Unsupported terminal. Please use kitty or wezterm."
+    exit 1
+fi
+
+# 清理临时文件
+rm /tmp/qr.png
