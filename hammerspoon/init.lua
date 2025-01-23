@@ -43,8 +43,45 @@ local window_special_cases = {
       end
     end
   },
+  kitty = {
+    center = function(max)
+      local screen_id = hs.window.focusedWindow():screen():id()
+      if screen_id == 1 then
+        return {
+          x = max.x,
+          y = max.y,
+          w = 952,
+          h = 806
+        }
+      else
+        return {
+          x = max.x,
+          y = max.y,
+          w = 1021,
+          h = 843
+        }
+      end
+    end,
+    ["43_center"] = function(max)
+      local screen_id = hs.window.focusedWindow():screen():id()
+      if screen_id == 1 then
+        return {
+          x = max.x,
+          y = max.y,
+          w = 1105,
+          h = 863
+        }
+      else
+        return {
+          x = max.x,
+          y = max.y,
+          w = max.w * (3 / 4) - 20,
+          h = max.h - 16
+        }
+      end
+    end
+  },
 }
-window_special_cases.kitty = window_special_cases.WezTerm
 
 local function size_focused_window(mode)
   return function()
