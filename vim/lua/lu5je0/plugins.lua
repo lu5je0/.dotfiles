@@ -409,42 +409,42 @@ require("lazy").setup({
   -- },
 
   -- nvim-cmp
-  -- {
-  --   {
-  --     'hrsh7th/nvim-cmp',
-  --     config = function()
-  --       require('lu5je0.ext.cmp')
-  --     end,
-  --     dependencies = {
-  --       -- 'hrsh7th/cmp-cmdline',
-  --       'windwp/nvim-autopairs',
-  --       'saadparwaiz1/cmp_luasnip',
-  --       'hrsh7th/cmp-buffer',
-  --       'hrsh7th/cmp-path',
-  --       {
-  --         'L3MON4D3/LuaSnip',
-  --         config = function()
-  --           require('lu5je0.ext.luasnip').setup()
-  --         end
-  --       },
-  --       -- {
-  --       --   "garymjr/nvim-snippets",
-  --       --   config = function()
-  --       --     require('snippets').setup({
-  --       --       search_paths = { vim.fn.stdpath('config') .. '/snippets/vsnip' },
-  --       --       create_autocmd = true,
-  --       --       create_cmp_source = true
-  --       --     })
-  --       --   end
-  --       -- }
-  --     },
-  --     event = 'InsertEnter',
-  --   },
-  --   {
-  --     'hrsh7th/cmp-nvim-lsp',
-  --     event = 'LspAttach'
-  --   },
-  -- },
+  {
+    {
+      'hrsh7th/nvim-cmp',
+      config = function()
+        require('lu5je0.ext.cmp')
+      end,
+      dependencies = {
+        -- 'hrsh7th/cmp-cmdline',
+        'windwp/nvim-autopairs',
+        'saadparwaiz1/cmp_luasnip',
+        'hrsh7th/cmp-buffer',
+        'hrsh7th/cmp-path',
+        {
+          'L3MON4D3/LuaSnip',
+          config = function()
+            require('lu5je0.ext.luasnip').setup()
+          end
+        },
+        -- {
+        --   "garymjr/nvim-snippets",
+        --   config = function()
+        --     require('snippets').setup({
+        --       search_paths = { vim.fn.stdpath('config') .. '/snippets/vsnip' },
+        --       create_autocmd = true,
+        --       create_cmp_source = true
+        --     })
+        --   end
+        -- }
+      },
+      event = 'InsertEnter',
+    },
+    {
+      'hrsh7th/cmp-nvim-lsp',
+      event = 'LspAttach'
+    },
+  },
 
   -- {
   --   "elihunter173/dirbuf.nvim",
@@ -454,34 +454,34 @@ require("lazy").setup({
   --   cmd = 'Dirbuf'
   -- },
 
-  {
-    'saghen/blink.cmp',
-    -- optional: provides snippets for the snippet source
-    dependencies = {
-      -- 'rafamadriz/friendly-snippets',
-      'windwp/nvim-autopairs',
-      {
-        'L3MON4D3/LuaSnip',
-        config = function()
-          require('lu5je0.ext.luasnip').setup()
-        end
-      },
-    },
-
-    -- use a release tag to download pre-built binaries
-    version = '*',
-    -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
-    -- build = 'cargo build --release',
-    -- If you use nix, you can build from source using latest nightly rust with:
-    -- build = 'nix run .#build-plugin',
-    
-    config = function()
-      require('lu5je0.ext.blink').setup()
-    end,
-    
-    -- opts_extend = { "sources.default" },
-    event = 'InsertEnter',
-  },
+  -- {
+  --   'saghen/blink.cmp',
+  --   -- optional: provides snippets for the snippet source
+  --   dependencies = {
+  --     -- 'rafamadriz/friendly-snippets',
+  --     'windwp/nvim-autopairs',
+  --     {
+  --       'L3MON4D3/LuaSnip',
+  --       config = function()
+  --         require('lu5je0.ext.luasnip').setup()
+  --       end
+  --     },
+  --   },
+  --
+  --   -- use a release tag to download pre-built binaries
+  --   version = '*',
+  --   -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
+  --   -- build = 'cargo build --release',
+  --   -- If you use nix, you can build from source using latest nightly rust with:
+  --   -- build = 'nix run .#build-plugin',
+  --   
+  --   config = function()
+  --     require('lu5je0.ext.blink').setup()
+  --   end,
+  --   
+  --   -- opts_extend = { "sources.default" },
+  --   event = 'InsertEnter',
+  -- },
 
   {
     'stevearc/oil.nvim',
