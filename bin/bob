@@ -25,10 +25,15 @@ if [ ! -f "$BOB_PATH" ]; then
     # 下载bob
     curl -L -o /tmp/bob.zip "$BOB_URL"
 
-    # 解压到指定目录
-    unzip /tmp/bob.zip -d "$HOME/.local/bin"
+    # 解压缩到临时目录
+    temp_dir=$(mktemp -d)
+    unzip /tmp/bob.zip -d "$temp_dir"
 
-    # 删除下载的zip文件
+    # 查找解压出来的bob文件，并移动到最终路径
+    find "$temp_dir" -type f -name 'bob' -exec mv {} "$BOB_PATH" \;
+
+    # 删除临时目录和下载的zip文件
+    rm -rf "$temp_dir"
     rm /tmp/bob.zip
 
     # 确保bob可执行
