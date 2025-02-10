@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# 定义bob的路径
+BOB_PATH="$HOME/.local/bin/bob"
+
+# 检查bob是否存在
+if [ ! -f "$BOB_PATH" ]; then
+    echo "Bob not found. Downloading..."
+
+    # 创建目录（如果不存在）
+    mkdir -p "$HOME/.local/bin"
+
+    # 检查操作系统类型
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux系统
+        BOB_URL="https://github.com/MordechaiHadad/bob/releases/download/v4.0.3/bob-linux-x86_64.zip"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS系统
+        BOB_URL="https://github.com/MordechaiHadad/bob/releases/download/v4.0.3/bob-macos-x86_64.zip"
+    else
+        echo "Unsupported OS: $OSTYPE"
+        exit 1
+    fi
+
+    # 下载bob
+    curl -L -o /tmp/bob.zip "$BOB_URL"
+
+    # 解压到指定目录
+    unzip /tmp/bob.zip -d "$HOME/.local/bin"
+
+    # 删除下载的zip文件
+    rm /tmp/bob.zip
+
+    # 确保bob可执行
+    chmod +x "$BOB_PATH"
+fi
+
+# 执行bob命令并传递所有参数和管道
+"$BOB_PATH" "$@"
