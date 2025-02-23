@@ -50,6 +50,7 @@
   "profile.nvim": { "branch": "master", "commit": "d57df512bdade4c7a04a1bb6c89c8b54c5dce52a" },
   "promise-async": { "branch": "main", "commit": "119e8961014c9bfaf1487bf3c2a393d254f337e2" },
   "render-markdown": { "branch": "main", "commit": "901838c63d644e27ed4b591fa5c5d587cad9e102" },
+  "snacks.nvim": { "branch": "main", "commit": "b100c937177536cf2aa634ddd2aa5b8a1dd23ace" },
   "statuscol.nvim": { "branch": "main", "commit": "8822f76e105549620ef9c0d96e7b95aedf14c490" },
   "substitute.nvim": { "branch": "main", "commit": "97f49d16f8eea7967d41db4f657dd63af53eeba1" },
   "suda.vim": { "branch": "master", "commit": "9adda7d195222d4e2854efb2a88005a120296c47" },
