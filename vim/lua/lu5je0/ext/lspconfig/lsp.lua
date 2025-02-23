@@ -6,6 +6,8 @@ local lspconfig = require("lspconfig")
 
 local autostart_filetypes = {}
 
+M.capabilities = nil
+
 local function diagnostic()
   vim.diagnostic.config {
     virtual_text = false,
@@ -73,8 +75,8 @@ end
 
 local function config()
   -- nvim-cmp
-  local capabilities = require('cmp_nvim_lsp').default_capabilities()
-  -- local capabilities = require('blink.cmp').get_lsp_capabilities()
+  -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
+  local capabilities = require('blink.cmp').get_lsp_capabilities()
 
   -- nvim-ufo
   capabilities.textDocument.foldingRange = {

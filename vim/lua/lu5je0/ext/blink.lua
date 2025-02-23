@@ -103,10 +103,12 @@ M.setup = function()
     -- elsewhere in your config, without redefining it, due to `opts_extend`
     sources = {
       default = { 'lsp', 'snippets', 'path', 'buffer' },
-      -- cmdline = {}
     },
     snippets = {
       preset = 'luasnip'
+    },
+    cmdline = {
+      enabled = false
     }
   }
   
