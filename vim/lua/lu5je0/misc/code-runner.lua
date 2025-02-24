@@ -14,8 +14,10 @@ local function execute_in_terminal(cmd, append_cmd)
   end
   require("lu5je0.ext.terminal").send_to_terminal(cmd, { go_back = 0 })
   if vim.bo.buftype == 'terminal' and vim.api.nvim_win_get_config(0).relative == '' then
-    vim.cmd("wincmd p")
-    vim.cmd("stopinsert")
+    vim.defer_fn(function()
+      vim.cmd("wincmd p")
+      vim.cmd("stopinsert")
+    end, 0)
   end
 end
 

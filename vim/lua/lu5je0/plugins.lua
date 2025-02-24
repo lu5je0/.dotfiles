@@ -1094,6 +1094,24 @@ require("lazy").setup({
       }
     },
     event = 'VeryLazy',
+  },
+  
+  {
+    'TobinPalmer/pastify.nvim',
+    cmd = { 'Pastify', 'PastifyAfter' },
+    config = function()
+      require('pastify').setup {
+        opts = {
+          absolute_path = true, -- use absolute or relative path to the working directory
+          local_path = 'assets/images', -- The path to put local files in, ex <cwd>/assets/images/<filename>.png
+          filename = function() return vim.fn.expand("%:t:r") .. '_' .. os.date("%Y-%m-%d_%H-%M-%S") end,
+          save = 'local_file'
+        },
+        ft = {
+          markdown = '![]($IMG$)',
+        }
+      }
+    end
   }
 
 }, opts)
