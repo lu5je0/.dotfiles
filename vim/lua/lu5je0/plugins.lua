@@ -833,6 +833,7 @@ require("lazy").setup({
     config = function()
       local builtin = require("statuscol.builtin")
       vim.o.foldcolumn = '0'
+      vim.o.nuw = 2
       require("statuscol").setup({
         -- configuration goes here, for example:
         ft_ignore = { 'NvimTree', 'undotree', 'diff', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
@@ -859,23 +860,11 @@ require("lazy").setup({
               -- return vim.wo[args.win].signcolumn ~= 'no'
             end }
           },
+          { text = { builtin.lnumfunc }, click = "v:lua.ScLa", },
           {
-            text = { function(args)
-              if not vim.wo[args.win].number then
-                return builtin.lnumfunc(args)
-              end
-
-              local num = ''
-              if args.lnum < 10 then
-                num = ' ' .. builtin.lnumfunc(args)
-              else
-                num = builtin.lnumfunc(args)
-              end
-              return num .. ' '
-            end },
-            condition = { true, builtin.not_empty },
-            click = "v:lua.ScLa",
-          }
+            text = { function() return ' ' end },
+            condition = { function(args) return vim.wo[args.win].number end }
+          },
         },
       })
     end,
@@ -1081,6 +1070,24 @@ require("lazy").setup({
       },
     },
     event = 'VeryLazy',
+  },
+  
+  {
+    'TobinPalmer/pastify.nvim',
+    cmd = { 'Pastify', 'PastifyAfter' },
+    config = function()
+      require('pastify').setup {
+        opts = {
+          absolute_path = true, -- use absolute or relative path to the working directory
+          local_path = 'assets/images', -- The path to put local files in, ex <cwd>/assets/images/<filename>.png
+          filename = function() return vim.fn.expand("%:t:r") .. '_' .. os.date("%Y-%m-%d_%H-%M-%S") end,
+          save = 'local_file'
+        },
+        ft = {
+          markdown = '![]($IMG$)',
+        }
+      }
+    end
   }
 
 }, opts)
