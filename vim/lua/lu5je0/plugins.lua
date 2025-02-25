@@ -597,18 +597,6 @@ require("lazy").setup({
     event = 'VeryLazy'
   },
 
-  -- {
-  --   'nvimdev/indentmini.nvim',
-  --   config = function()
-  --     require("indentmini").setup {
-  --       char = '▏'
-  --     }
-  --     vim.cmd.highlight('IndentLine guifg=#373C44')
-  --     vim.cmd.highlight('IndentLineCurrent guifg=#373C44')
-  --   end,
-  --   event = 'VeryLazy'
-  -- },
-
   -- lsp
   {
     {
@@ -1085,13 +1073,12 @@ require("lazy").setup({
   
   {
     "folke/snacks.nvim",
-    ---@type snacks.Config
     opts = {
       image = {
         -- your image configuration comes here
         -- or leave it empty to use the default settings
         -- refer to the configuration section below
-      }
+      },
     },
     event = 'VeryLazy',
   }
