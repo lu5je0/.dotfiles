@@ -112,7 +112,7 @@ M.setup = function()
     }
   }
   
-  fix_win_col()
+  -- fix_win_col()
 end
 
 return M
