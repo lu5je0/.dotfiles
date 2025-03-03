@@ -100,7 +100,7 @@ vim.api.nvim_create_autocmd('WinNew', {
 
 require('ufo').setup({
   provider_selector = function(bufnr, filetype, buftype)
-    return { 'treesitter', 'indent' }
+    return { 'treesitter'--[[ , 'indent' ]] }
     -- if parsers.get_parser(bufnr) then
     --   return { 'treesitter' }
     -- end
