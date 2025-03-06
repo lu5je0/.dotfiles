@@ -14,7 +14,7 @@ local function fix_win_col()
     win:update_size()
 
     local border_size = win:get_border_size()
-    local pos = win:get_vertical_direction_and_height(config.direction_priority)
+    local pos = win:get_vertical_direction_and_height(config.direction_priority, config.max_height)
 
     -- couldn't find anywhere to place the window
     if not pos then
@@ -28,6 +28,7 @@ local function fix_win_col()
     -- so the window doesnt move around as we type
     local row = pos.direction == 's' and 1 or -pos.height - border_size.vertical
 
+    -- in cmdline mode, we get the position from a function to support UI plugins like noice
     if vim.api.nvim_get_mode().mode == 'c' then
       local cmdline_position = config.cmdline_position()
       win:set_win_config({
@@ -35,10 +36,10 @@ local function fix_win_col()
         row = cmdline_position[1] + row,
         col = math.max(cmdline_position[2] + context.bounds.start_col - alignment_start_col, 0),
       })
+      -- otherwise, we use the cursor position
     else
-      local cursor_col = vim.fn.virtcol('.')
-
-      local col = context.bounds.start_col - alignment_start_col - cursor_col - border_size.left
+      local cursor_col = vim.fn.virtcol({ context.get_cursor()[1], context.get_cursor()[2]})
+      local col = vim.fn.virtcol({context.get_cursor()[1], context.bounds.start_col - 1}) - alignment_start_col - cursor_col - border_size.left
       if config.draw.align_to == 'cursor' then col = 0 end
 
       win:set_win_config({ relative = 'cursor', row = row, col = col })
@@ -112,7 +113,7 @@ M.setup = function()
     }
   }
   
-  -- fix_win_col()
+  fix_win_col()
 end
 
 return M
