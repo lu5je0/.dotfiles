@@ -55,6 +55,12 @@ function M.setup()
     ['L'] = '$',
     ['H'] = '^',
   }
+  
+  -- blink.cmp 冲突
+  vim.g.VM_maps = {
+    ["I Down Arrow"] = "",
+    ["I Up Arrow"] = "",
+  }
 end
 
 return M
