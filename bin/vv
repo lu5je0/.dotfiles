@@ -1,32 +1,45 @@
-#!python3
-# This script encodes a PNG file using the kitty image protocol
+#!/usr/bin/env python3
 import sys
+import os
+import subprocess
 from base64 import standard_b64encode
 
+def is_kitty():
+    return os.environ.get('TERM') == 'xterm-kitty'
 
 def serialize_gr_command(**cmd):
-    payload = cmd.pop("payload", None)
-    cmd = ",".join("{}={}".format(k, v) for k, v in cmd.items())
+    payload = cmd.pop('payload', None)
+    cmd = ','.join(f'{k}={v}' for k, v in cmd.items())
     ans = []
     w = ans.append
-    w(b"\033_G"), w(cmd.encode("ascii"))
+    w(b'\033_G'), w(cmd.encode('ascii'))
     if payload:
-        w(b";")
+        w(b';')
         w(payload)
-    w(b"\033\\")
-    return b"".join(ans)
-
+    w(b'\033\\')
+    return b''.join(ans)
 
 def write_chunked(**cmd):
-    data = standard_b64encode(cmd.pop("data"))
+    data = standard_b64encode(cmd.pop('data'))
     while data:
         chunk, data = data[:4096], data[4096:]
         m = 1 if data else 0
-        sys.stdout.buffer.write(serialize_gr_command(payload=chunk, m=m, **cmd))
+        sys.stdout.buffer.write(serialize_gr_command(payload=chunk, m=m,
+                                                    **cmd))
         sys.stdout.flush()
         cmd.clear()
 
+def display_image(image_path):
+    if is_kitty():
+        subprocess.run(['kitty', '+kitten', 'icat', image_path])
+    else:
+        with open(image_path, 'rb') as f:
+            write_chunked(a='T', f=100, data=f.read())
 
-with open(sys.argv[-1], "rb") as f:
-    write_chunked(a="T", f=100, data=f.read())
-    print()
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Please provide an image file path.")
+        sys.exit(1)
+    
+    image_path = sys.argv[-1]
+    display_image(image_path)
