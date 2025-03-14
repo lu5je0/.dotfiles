@@ -302,6 +302,7 @@ lazy_load({
     { mode = { 'n' }, 'zo' },
     { mode = { 'n' }, 'zM' },
     { mode = { 'n' }, 'zR' },
+    { mode = { 'n' }, 'zl' },
     defer = 60,
   },
   event = { 'CursorHold' }

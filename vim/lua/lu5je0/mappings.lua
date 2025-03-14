@@ -193,6 +193,9 @@ vim.schedule(function()
   nnoremap <s-down> <c-w>-
   nnoremap <s-right> <c-w>>
   nnoremap <s-left> <c-w><
+  
+  " 打断undo
+  nmap zl zMzvzz
 
   " 打断undo
   inoremap . <c-g>u.
