@@ -1,7 +1,22 @@
 font-family = "JetBrainsMonoNL Nerd Font Mono"
 keybind = ctrl+b>shift+5=new_split:right
+# keybind = ctrl+b>shift+,=new_split:down
+
+keybind = ctrl+b>ctrl+b=csi:\x0
 
 keybind = ctrl+b>r=reload_config
+keybind = ctrl+b>x=close_surface
+keybind = ctrl+b>c=new_tab
+keybind = ctrl+b>n=next_tab
+keybind = ctrl+b>ctrl+o=goto_split:previous
+
+keybind = ctrl+b>n=next_tab
+
+keybind = ctrl+b>o=goto_split:previous
+keybind = ctrl+b>h=goto_split:left
+keybind = ctrl+b>l=goto_split:right
+keybind = ctrl+b>k=goto_split:up
+keybind = ctrl+b>j=goto_split:down
 
 # font-thicken-strength=255
 font-thicken

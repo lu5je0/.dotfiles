@@ -31,7 +31,7 @@ function M.locate_file()
     end
 
     local function turn_on_hidden_filter()
-      if require("nvim-tree.core").get_explorer() == nil or require("nvim-tree.core").get_explorer().filters.config.filter_dotfiles then
+      if require("nvim-tree.core").get_explorer() == nil or require("nvim-tree.core").get_explorer().filters.state.dotfiles then
         api.tree.toggle_hidden_filter()
       end
     end
@@ -547,7 +547,9 @@ function M.setup()
     " hi NvimTreeGitStagedIcon guifg=#a0c980
     hi NvimTreeGitStagedIcon guifg=#51afef
   ]]
-  M.is_loaded = true
+  vim.defer_fn(function()
+    M.is_loaded = true
+  end, 500)
 end
 
 return M
