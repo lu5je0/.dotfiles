@@ -1,8 +1,14 @@
-# font-family = "JetBrains Mono"
+font-family = "JetBrainsMonoNL Nerd Font Mono"
 keybind = ctrl+b>shift+5=new_split:right
 
 keybind = ctrl+b>r=reload_config
 
 # font-thicken-strength=255
 font-thicken
-adjust-cursor-thickness=2
+adjust-cursor-thickness = 2
+
+theme = GruvboxDark
+font-size = 14
+# macos-titlebar-style = transparent
+
+adjust-cell-height = 0%

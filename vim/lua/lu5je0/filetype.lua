@@ -25,5 +25,6 @@ vim.filetype.add {
     ['.*.zsh'] = 'bash',
     ['.*/ssh/config'] = 'sshconfig',
     ['.*/.dotfiles/services/.*'] = 'systemd',
+    ['.*/.dotfiles/ghostty/config'] = 'config',
   },
 }
