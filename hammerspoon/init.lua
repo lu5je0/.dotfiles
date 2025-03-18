@@ -58,7 +58,7 @@ local window_special_cases = {
           x = max.x,
           y = max.y,
           w = 1023,
-          h = 843
+          h = 845
         }
       end
     end,
