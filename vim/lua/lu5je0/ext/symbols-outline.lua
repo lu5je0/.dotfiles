@@ -1,11 +1,11 @@
 local M = {}
 
 local function keymap()
-  vim.keymap.set('n', '<leader>d', function()
+  vim.keymap.set('n', '<leader>i', function()
     vim.cmd('Outline!')
   end)
   
-  vim.keymap.set('n', '<leader>fd', function()
+  vim.keymap.set('n', '<leader>fi', function()
     vim.cmd('OutlineOpen')
     -- vim.cmd('norm zz')
   end)

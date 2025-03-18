@@ -678,7 +678,7 @@ require("lazy").setup({
         require('lu5je0.ext.symbols-outline').setup()
       end,
       cmd = { 'Outline' },
-      keys = { { mode = { 'n' }, '<leader>d' }, { mode = { 'n' }, '<leader>fd' } }
+      keys = { { mode = { 'n' }, '<leader>i' }, { mode = { 'n' }, '<leader>fi' } }
     },
     {
       "dnlhc/glance.nvim",
