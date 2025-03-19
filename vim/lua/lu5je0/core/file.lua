@@ -44,7 +44,11 @@ function M.save_buffer()
   local ok, err = pcall(vim.cmd, ':silent write')
   vim.cmd("redir END")
   if ok then
-    print(vim.g.output)
+    if string.sub(vim.g.output, 1, 1) == '\n' then
+      print(string.sub(vim.g.output, 2))
+    else
+      print(vim.g.output)
+    end
   else
     print_with_red(string.gsub(err, '^vim.+write%)%:', '', 1))
   end

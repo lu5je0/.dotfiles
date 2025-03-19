@@ -115,7 +115,7 @@ bl.setup {
     },
     close_button_selected = {
       fg = '#6a7487',
-      bg = 'None',
+      bg = '#2c2e34',
     },
   },
 }
