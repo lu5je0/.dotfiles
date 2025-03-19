@@ -17,13 +17,22 @@ local function diagnostic()
     },
     severity_sort = true,
     update_in_insert = true,
+    signs = {
+      text = {
+        -- [vim.diagnostic.severity.ERROR] = '',
+        -- [vim.diagnostic.severity.WARN] = '',
+      },
+      linehl = {
+        -- [vim.diagnostic.severity.ERROR] = '',
+      },
+      numhl = {
+        [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
+        [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
+        [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
+        [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+      },
+    },
   }
-  local signs = { Error = '  ', Warn = '  ', Hint = '  ', Info = '  ' }
-  for type, icon in pairs(signs) do
-    local hl = 'DiagnosticSign' .. type
-    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-  end
-  -- vim.cmd('highlight DiagnosticSignWarn guibg=NONE guifg=#9D806F')
 end
 
 function M.on_attach(client, bufnr)
