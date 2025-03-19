@@ -11,3 +11,4 @@ __pycache__
 submodule/SubtitlesDownloader/.env/
 node_modules/
 .env/
+build/neovim

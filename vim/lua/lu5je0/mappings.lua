@@ -133,7 +133,11 @@ vim.schedule(function()
     vim.cmd('silent!' .. 'undo')
     vim.cmd('redir END')
     vim.defer_fn(function()
-      print(vim.g.output)
+      if string.sub(vim.g.output, 1, 1) == '\n' then
+        print(string.sub(vim.g.output, 2))
+      else
+        print(vim.g.output)
+      end
     end, 10)
   end)
 
