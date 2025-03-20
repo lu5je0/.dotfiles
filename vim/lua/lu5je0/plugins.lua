@@ -214,18 +214,18 @@ require("lazy").setup({
     lazy = true
   },
 
-  -- {
-  --   'nvim-telescope/telescope.nvim',
-  --   -- tag = '0.1.7',
-  --   config = function()
-  --     require('lu5je0.ext.telescope').setup()
-  --   end,
-  --   dependencies = {
-  --     'nvim-lua/plenary.nvim',
-  --     { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' }
-  --   },
-  --   keys = { ',' }
-  -- },
+  {
+    'nvim-telescope/telescope.nvim',
+    -- tag = '0.1.7',
+    config = function()
+      require('lu5je0.ext.telescope').setup()
+    end,
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' }
+    },
+    keys = { ',' }
+  },
 
   {
     'akinsho/bufferline.nvim',
@@ -1073,7 +1073,7 @@ require("lazy").setup({
           cycle = true,
           --- Use the default layout or vertical if the window is too narrow
           preset = function()
-            return vim.o.columns >= 150 and "default" or "vertical"
+            return vim.o.columns >= 120 and "default" or "vertical"
           end,
         },
         win = {
@@ -1089,11 +1089,11 @@ require("lazy").setup({
     },
     keys = {
       { "<leader>ps",  function() Snacks.profiler.scratch() end,                               desc = "Profiler Scratch Bufer" },
-      { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
-      { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
+      -- { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
+      -- { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
+      -- { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },
       { "<leader>fr",  function() Snacks.picker.pick("grep", {}) end },
       { "<leader>fR",  function() Snacks.picker.pick("git_grep", {}) end },
-      { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },
       { "<leader>fg",  function() Snacks.picker.pick("git_status", {}) end },
       { "<leader>fG",  function() Snacks.picker.pick("git_diff", {}) end },
       { "<leader>fc",  function() Snacks.picker.pick("cliphist", {}) end },
