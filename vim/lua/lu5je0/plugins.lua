@@ -1072,6 +1072,7 @@ require("lazy").setup({
     keys = {
       { "<leader>ps", function() Snacks.profiler.scratch() end, desc = "Profiler Scratch Bufer" },
       { "<leader>ff", function() Snacks.picker.pick("files", {}) end},
+      { "<leader>fj", function() Snacks.picker.pick("files", { dirs = {'~/junk-file/'} }) end},
       { "<leader>fr", function() Snacks.picker.pick("grep", {}) end},
       { "<leader>fR", function() Snacks.picker.pick("git_grep", {}) end},
       { "<leader>fm", function() Snacks.picker.pick("recent", {}) end},
