@@ -1068,21 +1068,39 @@ require("lazy").setup({
         -- or leave it empty to use the default settings
         -- refer to the configuration section below
       },
+      picker = {
+        layout = {
+          cycle = true,
+          --- Use the default layout or vertical if the window is too narrow
+          preset = function()
+            return vim.o.columns >= 150 and "default" or "vertical"
+          end,
+        },
+        win = {
+          -- input window
+          input = {
+            keys = {
+              ["<c-n>"] = { "history_forward", mode = { "i", "n" } },
+              ["<c-p>"] = { "history_back", mode = { "i", "n" } },
+            }
+          }
+        }
+      }
     },
     keys = {
-      { "<leader>ps", function() Snacks.profiler.scratch() end, desc = "Profiler Scratch Bufer" },
-      { "<leader>ff", function() Snacks.picker.pick("files", {}) end},
-      { "<leader>fj", function() Snacks.picker.pick("files", { dirs = {'~/junk-file/'} }) end},
-      { "<leader>fr", function() Snacks.picker.pick("grep", {}) end},
-      { "<leader>fR", function() Snacks.picker.pick("git_grep", {}) end},
-      { "<leader>fm", function() Snacks.picker.pick("recent", {}) end},
-      { "<leader>fg", function() Snacks.picker.pick("git_status", {}) end},
-      { "<leader>fG", function() Snacks.picker.pick("git_diff", {}) end},
-      { "<leader>fc", function() Snacks.picker.pick("cliphist", {}) end},
-      { "<leader>fl", function() Snacks.picker.pick("git_log", {}) end},
-      { "<leader>fh", function() Snacks.picker.pick("help", {}) end},
-      { "<leader>fp", function() Snacks.picker.pick("projects", {}) end},
-      { "<leader>f\"", function() Snacks.picker.pick("registers", {}) end},
+      { "<leader>ps",  function() Snacks.profiler.scratch() end,                               desc = "Profiler Scratch Bufer" },
+      { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
+      { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
+      { "<leader>fr",  function() Snacks.picker.pick("grep", {}) end },
+      { "<leader>fR",  function() Snacks.picker.pick("git_grep", {}) end },
+      { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },
+      { "<leader>fg",  function() Snacks.picker.pick("git_status", {}) end },
+      { "<leader>fG",  function() Snacks.picker.pick("git_diff", {}) end },
+      { "<leader>fc",  function() Snacks.picker.pick("cliphist", {}) end },
+      { "<leader>fl",  function() Snacks.picker.pick("git_log", {}) end },
+      { "<leader>fh",  function() Snacks.picker.pick("help", {}) end },
+      { "<leader>fp",  function() Snacks.picker.pick("projects", {}) end },
+      { "<leader>f\"", function() Snacks.picker.pick("registers", {}) end },
     },
     event = 'VeryLazy',
   },
