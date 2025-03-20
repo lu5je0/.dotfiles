@@ -2,6 +2,7 @@
 local M = {}
 
 local lib = require('nvim-tree.lib')
+local explorer = require('nvim-tree.explorer')
 local keys_helper = require('lu5je0.core.keys')
 local api = require('nvim-tree.api')
 local ui = require('lu5je0.core.ui')
@@ -200,7 +201,14 @@ function M.open_node()
     end)
   end
 
+  -- 这破方法特别慢
+  local refresh_explorer_fn_backup = explorer.reload_explorer
+  explorer.reload_explorer = function() end
   api.node.open.edit()
+  vim.defer_fn(function()
+    explorer.reload_explorer = refresh_explorer_fn_backup
+  end, 500)
+  -- explorer.reload = refresh_fn_backup
 end
 
 function M.close_node()
