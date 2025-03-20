@@ -1092,14 +1092,19 @@ require("lazy").setup({
       -- { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
       -- { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
       -- { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },
+      -- { "<leader>fh",  function() Snacks.picker.pick("help", {}) end },
       { "<leader>fr",  function() Snacks.picker.pick("grep", {}) end },
       { "<leader>fR",  function() Snacks.picker.pick("git_grep", {}) end },
       { "<leader>fg",  function() Snacks.picker.pick("git_status", {}) end },
       { "<leader>fG",  function() Snacks.picker.pick("git_diff", {}) end },
       { "<leader>fc",  function() Snacks.picker.pick("cliphist", {}) end },
       { "<leader>fl",  function() Snacks.picker.pick("git_log", {}) end },
-      { "<leader>fh",  function() Snacks.picker.pick("help", {}) end },
-      { "<leader>fp",  function() Snacks.picker.pick("projects", {}) end },
+      { "<leader>fp",  function() Snacks.picker.pick("projects", {
+        confirm = function(picker, item)
+          vim.cmd('cd ' .. item.file)
+          picker:close()
+        end
+      }) end },
       { "<leader>f\"", function() Snacks.picker.pick("registers", {}) end },
     },
     event = 'VeryLazy',
