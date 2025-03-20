@@ -207,7 +207,7 @@ function M.open_node()
   api.node.open.edit()
   vim.defer_fn(function()
     explorer.reload_explorer = refresh_explorer_fn_backup
-  end, 500)
+  end, 1000)
   -- explorer.reload = refresh_fn_backup
 end
 
