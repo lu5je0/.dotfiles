@@ -14,6 +14,7 @@ local disabled_plugins = {
   "netrw",
   "netrwFileHandlers",
   "netrwPlugin",
+  "matchparen",
   "netrwSettings",
   "rplugin",
   "rrhelper",
@@ -138,10 +139,6 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.repeat').setup()
     end
-  },
-  {
-    'aklt/plantuml-syntax',
-    ft = 'plantuml'
   },
   {
     'lewis6991/gitsigns.nvim',
