@@ -29,17 +29,26 @@ def write_chunked(**cmd):
         sys.stdout.flush()
         cmd.clear()
 
-def display_image(image_path):
+def display_image(image_data):
     if is_kitty():
-        subprocess.run(['kitty', '+kitten', 'icat', image_path])
+        # 使用subprocess.Popen来创建一个管道
+        p = subprocess.Popen(['kitty', '+kitten', 'icat'], stdin=subprocess.PIPE)
+        p.communicate(input=image_data)
     else:
-        with open(image_path, 'rb') as f:
-            write_chunked(a='T', f=100, data=f.read())
+        write_chunked(a='T', f=100, data=image_data)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Please provide an image file path.")
+    # 检查是否有数据从管道输入
+    if not sys.stdin.isatty():
+        # 从标准输入读取数据
+        image_data = sys.stdin.buffer.read()
+    elif len(sys.argv) > 1:
+        # 如果提供了文件路径，则从文件读取数据
+        with open(sys.argv[1], 'rb') as f:
+            image_data = f.read()
+    else:
+        print("Please provide an image file path or pipe image data.")
         sys.exit(1)
     
-    image_path = sys.argv[-1]
-    display_image(image_path)
+    display_image(image_data)
+
