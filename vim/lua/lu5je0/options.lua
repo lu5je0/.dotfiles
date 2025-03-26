@@ -132,6 +132,7 @@ g.loaded_ruby_provider = 0
 o.termguicolors = true
 o.bg = 'dark'
 o.statusline = " "
+o.ruler = false
 
 if has('mac') then
   vim.g.python3_host_prog = '/usr/bin/python3'
