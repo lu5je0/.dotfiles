@@ -132,6 +132,9 @@ end
 local function ins_right(component)
   if component_init(component) then
     table.insert(config.sections.lualine_x, component)
+    if component.inactive == true then
+      table.insert(config.inactive_sections.lualine_x, component)
+    end
   end
 end
 
@@ -229,7 +232,7 @@ ins_left {
   cond = function()
     return conditions.hide_in_width()
   end,
-  inactive = false,
+  inactive = true,
   setup = function()
     vim.api.nvim_create_autocmd('BufWritePost', {
       group = require('lu5je0.autocmds').default_group,
@@ -359,6 +362,7 @@ ins_right {
     -- %p%% 
     return [[%l:%c ]]
   end,
+  inactive = true,
   padding = { left = 0, right = 1 },
   color = { fg = colors.grey },
 }
@@ -387,9 +391,10 @@ ins_right {
 
 ins_right {
   function()
-    return vim.o.fileencoding
+    return "%{toupper(&fileencoding != '' ? &fileencoding : &encoding)} "
   end,
-  fmt = string.upper, -- I'm not sure why it's upper case either ;)
+  inactive = true,
+  -- fmt = string.upper, -- I'm not sure why it's upper case either ;)
   cond = conditions.hide_in_width,
   color = { fg = colors.green, gui = 'bold' },
   padding = { left = 0, right = 0 },
@@ -398,9 +403,10 @@ ins_right {
 ins_right {
   'fileformat',
   fmt = string.upper,
+  inactive = true,
   icons_enabled = true, -- I think icons are cool but Eviline doesn't have them. sigh
   color = { fg = colors.green, gui = 'bold' },
-  padding = { left = 1, right = 1 },
+  padding = { left = 0, right = 1 },
   cond = conditions.hide_in_width,
   symbols = {
     unix = 'LF',

@@ -70,34 +70,45 @@ require("lazy").setup({
       -- 非当前状态栏
       vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
       
-      -- 设置高亮组
+      -- 定义高亮组
       vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
-      vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true})
-      vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true})
+      vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
+      vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
+      -- 创建状态栏生成函数
+      _G.MyStatusLine = function()
+        local parts = {}
 
-      -- 构建动态 statusline
-      vim.opt.statusline = table.concat({
-        -- 左侧的黄色高亮部分
-        " %#StatusLineYellow#NOR",
-        
-        -- 分色显示未命名文件提示
-        "%#StatusLine#%{expand('%:t') == '' ? '  ' : ''}",
-        "%#StatusLineMagenta#%{expand('%:t') == '' ? '[Untitled] ' : ''}",
-        "%*", -- 重置颜色
+        -- 左侧组件
+        table.insert(parts, "%#StatusLineYellow# NOR")
 
-        -- 右侧对齐
-        "%=",
+        -- 未命名文件检测
+        local filename = vim.fn.expand('%:t')
+        table.insert(parts, "%#StatusLine#  ")    -- 白色图标
+        if filename == '' then
+          filename = '[Untitled]'
+        end
+        table.insert(parts, "%#StatusLineMagenta#" .. filename) -- 品红文字
 
-        "%#StatusLine#",
+        -- 右侧组件
+        table.insert(parts, "%=%#StatusLine#")  -- 右对齐
+        table.insert(parts, "%l:%c  ")         -- 行列号
 
-        -- 行列号
-        "%l:%c  ",
+        -- 编码信息
+        local encoding = vim.fn.toupper(
+          vim.o.fileencoding ~= '' 
+          and vim.o.fileencoding 
+          or vim.b.encoding
+        )
+        table.insert(parts, "%#StatusLineGreen#"..encoding.." ")
 
-        -- 动态编码（大写）和换行符（绿色高亮）
-        "%#StatusLineGreen#",
-        "%{toupper(&fileencoding != '' ? &fileencoding : &encoding)} ",
-        "%{&fileformat == 'unix' ? 'LF' : 'CRLF'} ",
-      }, "")
+        -- 换行符
+        table.insert(parts, "%{&fileformat == 'unix' ? 'LF' : 'CRLF'} ")
+
+        return table.concat(parts, '')
+      end
+
+      -- 设置状态栏调用方式
+      vim.cmd[[set statusline=%!v:lua.MyStatusLine()]]
       
       -- local bg = '#2c2e34'
       -- vim.cmd(string.gsub([[
