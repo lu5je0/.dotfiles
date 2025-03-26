@@ -1,1 +1,1 @@
-swiftc paste.swift -o mac_clipboard_cli
+swiftc paste.swift -o ~/.local/bin/mac_clipboard_cli
