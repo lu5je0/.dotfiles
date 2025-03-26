@@ -60,11 +60,39 @@ require("lazy").setup({
       vim.g.edge_enable_italic = 0
       vim.g.edge_disable_italic_comment = 1
       vim.cmd.colorscheme('edge')
-      vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
       vim.api.nvim_set_hl(0, "Folded", { fg = '#282c34', bg = '#5c6370' })
       vim.api.nvim_set_hl(0, "MatchParen", { fg = '#ffef28', bg = '#414550'})
       
       vim.g.edge_loaded_file_types = { 'NvimTree' }
+      
+      -- 设置 statusline 默认色
+      vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
+      -- 非当前状态栏
+      vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
+      
+      -- 设置高亮组
+      vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bold = true })
+      vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bold = true })
+      vim.api.nvim_set_hl(0, 'StatusLineWhite', { bg = '#212328' })
+
+      -- 构建动态 statusline
+      vim.opt.statusline = table.concat({
+        -- 左侧的黄色高亮部分
+        " %#StatusLineYellow#NOR",
+
+        -- 右侧对齐
+        "%=",
+
+        "%#StatusLineWhite#",
+
+        -- 行列号
+        "%l:%c  ",
+
+        -- 动态编码（大写）和换行符（绿色高亮）
+        "%#StatusLineGreen#",
+        "%{toupper(&fileencoding != '' ? &fileencoding : &encoding)} ",
+        "%{&fileformat == 'unix' ? 'LF' : 'CRLF'} ",
+      }, "")
       
       -- local bg = '#2c2e34'
       -- vim.cmd(string.gsub([[
