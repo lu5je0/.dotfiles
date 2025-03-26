@@ -71,10 +71,9 @@ require("lazy").setup({
       vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
       
       -- 设置高亮组
-      vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bold = true })
-      vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bold = true })
-      vim.api.nvim_set_hl(0, 'StatusLineWhite', { bg = '#212328' })
-      vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bold = true})
+      vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
+      vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true})
+      vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true})
 
       -- 构建动态 statusline
       vim.opt.statusline = table.concat({
@@ -82,14 +81,14 @@ require("lazy").setup({
         " %#StatusLineYellow#NOR",
         
         -- 分色显示未命名文件提示
-        "%#StatusLineWhite#%{expand('%:t') == '' ? '  ' : ''}",
+        "%#StatusLine#%{expand('%:t') == '' ? '  ' : ''}",
         "%#StatusLineMagenta#%{expand('%:t') == '' ? '[Untitled] ' : ''}",
         "%*", -- 重置颜色
 
         -- 右侧对齐
         "%=",
 
-        "%#StatusLineWhite#",
+        "%#StatusLine#",
 
         -- 行列号
         "%l:%c  ",
