@@ -102,6 +102,7 @@ local function init_hightlight()
   vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
   vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
   vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
+  vim.api.nvim_set_hl(0, 'StatusLineViolet', { fg = '#a9a1e1', bg = '#212328', bold = true })
   vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
 end
 
@@ -119,7 +120,7 @@ M.setup = function()
   init_hightlight()
 
   ins_left {
-    function(args)
+    function()
       local mode = nil
       local is_visual_multi = vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
       if is_visual_multi then
@@ -137,6 +138,18 @@ M.setup = function()
     color = "LualineMode",
     padding = { left = 1, right = 0 },
   }
+  
+  ins_left {
+    function(args)
+      local devicons = require('nvim-web-devicons')
+      local icon, highlight = devicons.get_icon(args.filename, args.filename:match(".+%.(%w+)$"), {})
+      icon = icon or ''
+      highlight = highlight or 'StatusLineGrey'
+      return "%#" .. highlight .. "#" .. icon
+    end,
+    color = "StatusLineGrey",
+    padding = { left = 1, right = 0 },
+  }
 
   ins_left {
     function(args)
@@ -144,7 +157,7 @@ M.setup = function()
       filename = vim.fn.fnamemodify(filename, ":t")
       return filename == '' and '[Untitled]' or filename
     end,
-    color = "StatusLineGrey",
+    color = "StatusLineViolet",
     padding = { left = 1, right = 0 },
   }
 
@@ -232,21 +245,23 @@ M.setup = function()
     function(args)
       local cursor_pos = vim.api.nvim_win_get_cursor(args.win_id)
       local line = cursor_pos[1]
-      local col = cursor_pos[2] + 1
-      local position = string.format("%3d:%-2d ", line, col)
+      local position = "%l:%c "
 
       local total = vim.api.nvim_buf_line_count(args.buf_id)
 
+      local process;
+
       if line == 1 then
-        return position .. 'Top'
+        process = 'Top'
       elseif line >= total then
-        return position .. 'Bot'
+        process = 'Bot'
       else
-        return position .. string.format('%2d%%%%', math.floor(line / total * 100))
+        process = string.format('%2d%%%%', math.floor(line / total * 100))
       end
+      return process .. ' ' .. position
     end,
     color = "StatusLineGrey",
-    padding = { left = 1, right = 1 },
+    padding = { left = 1, right = 0 },
   }
 
   ins_right {
@@ -254,7 +269,7 @@ M.setup = function()
       return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() ..
       ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
     end,
-    cond = function() return conditions.hide_in_width(80) end,
+    -- cond = function() return conditions.hide_in_width(80) end,
     color = "StatusLineGreen",
     padding = { left = 1, right = 1 },
   }
@@ -265,6 +280,8 @@ M.setup = function()
 
     local win_id = vim.g.statusline_winid
     local buf_id = vim.api.nvim_win_get_buf(win_id)
+    local filename = vim.api.nvim_buf_get_name(buf_id)
+    local extension_name = filename and filename:match(".+%.(%w+)$") or ""
     local filetype = vim.bo[buf_id].filetype
 
     if vim.tbl_contains(custom_filetypes, filetype) then
@@ -277,13 +294,18 @@ M.setup = function()
         if component.cond and not component.cond() then
           goto continue
         end
-        local text = component[1]({ win_id = win_id, buf_id = buf_id })
+        local text
+        if type(component[1]) == 'string' then
+          text = component[1]
+        else
+          text = component[1]({ win_id = win_id, buf_id = buf_id, filename = filename, extension_name = extension_name })
+        end
         if text and text ~= "" then
           local highlight = get_highlight(component.color)
           local padding_left = component.padding and component.padding.left or 0
           local padding_right = component.padding and component.padding.right or 0
           table.insert(parts,
-            string.format("%s%s%s%s", highlight, string.rep(" ", padding_left), text, string.rep(" ", padding_right)))
+          string.format("%s%s%s%s", highlight, string.rep(" ", padding_left), text, string.rep(" ", padding_right)))
         end
         ::continue::
       end
