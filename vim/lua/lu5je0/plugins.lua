@@ -69,13 +69,13 @@ require("lazy").setup({
       require('lu5je0.core.statusline').setup()
     end
   },
-  -- {
-  --   'nvim-lualine/lualine.nvim',
-  --   config = function()
-  --     require('lu5je0.ext.lualine')
-  --   end,
-  --   event = 'VeryLazy',
-  -- },
+  {
+    'nvim-lualine/lualine.nvim',
+    config = function()
+      require('lu5je0.ext.lualine')
+    end,
+    event = 'VeryLazy',
+  },
 
   -- treesiter
   {
