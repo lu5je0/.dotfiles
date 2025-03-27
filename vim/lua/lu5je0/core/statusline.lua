@@ -43,6 +43,37 @@ local mode_mappings = {
   t = { text = 'TER' }                          -- Terminal 模式
 }
 
+local function_utils = require('lu5je0.lang.function-utils')
+local big_file = require('lu5je0.ext.big-file')
+local refresh_gps_text = function_utils.debounce(function(bufnr)
+  local path = require('lu5je0.misc.gps-path').path()
+  local max_len = 35
+  if #path > max_len then
+    path = vim.fn.strcharpart(path, 0, max_len)
+    if string.sub(path, #path, #path) ~= ' ' then
+      path = path .. ' …'
+    else
+      path = path .. '…'
+    end
+  end
+  vim.b[bufnr].gps_text = path
+end, 40)
+
+local expand = vim.fn.expand
+local conditions = {
+  buffer_not_empty = function()
+    return vim.fn.empty(expand('%:t')) ~= 1
+  end,
+  hide_in_width = function(max)
+    return vim.fn.winwidth(0) > (max or 80)
+  end,
+  check_git_workspace = function()
+    local filepath = expand('%:p:h')
+    local gitdir = vim.fn.finddir('.git', filepath .. ';')
+    return gitdir and #gitdir > 0 and #gitdir < #filepath
+  end,
+}
+
 local function get_highlight(color)
   if type(color) == "string" then
     if color:sub(1, 1) == "#" then
@@ -160,21 +191,30 @@ M.setup = function()
     end,
     padding = { left = 1, right = 0 },
   }
+  
+  -- ins_left {
+  --   function()
+  --     local bufnr = vim.api.nvim_get_current_buf()
+  --     refresh_gps_text(bufnr)
+  --     local text = vim.b[bufnr].gps_text
+  --     return text == nil and "" or text
+  --   end,
+  --   inactive = false,
+  --   cond = function()
+  --     return not big_file.is_big_file(0) and conditions.hide_in_width(80) and
+  --     require('lu5je0.misc.gps-path').is_available()
+  --   end,
+  --   color = { fg = colors.white },
+  --   padding = { left = 1, right = 0 },
+  -- }
 
   ins_right {
     function()
-      return vim.fn.toupper(vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding)
+      return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() .. ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
     end,
+    cond = function() return conditions.hide_in_width(80) end,
     color = "StatusLineGreen",
     padding = { left = 1, right = 1 },
-  }
-
-  ins_right {
-    function()
-      return vim.bo.fileformat == 'unix' and 'LF' or 'CRLF'
-    end,
-    color = "StatusLineGreen",
-    padding = { left = 0, right = 1 },
   }
 
   _G.MyStatusLine = function()
