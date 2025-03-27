@@ -105,9 +105,19 @@ local function init_hightlight()
   vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
 end
 
+local function create_statusline_timer(mills)
+  local timer = vim.loop.new_timer()
+  timer:start(0, mills, vim.schedule_wrap(function()
+    if vim.api.nvim_get_current_buf() == vim.fn.bufnr('%') then
+      vim.cmd('redrawstatus')
+    end
+  end))
+  return timer
+end
+
 M.setup = function()
   init_hightlight()
-  
+
   ins_left {
     function(args)
       local mode = nil
@@ -138,39 +148,18 @@ M.setup = function()
     padding = { left = 1, right = 0 },
   }
 
-  ins_right {
-    function(args)
-      local cursor_pos = vim.api.nvim_win_get_cursor(args.win_id)
-      local line = cursor_pos[1]
-      local col = cursor_pos[2] + 1
-      local position = string.format("%3d:%-2d ", line, col)
-      
-      local total = vim.api.nvim_buf_line_count(args.buf_id)
-
-      if line == 1 then
-        return position .. 'Top'
-      elseif line >= total then
-        return position .. 'Bot'
-      else
-        return position .. string.format('%2d%%%%', math.floor(line / total * 100))
-      end
-    end,
-    color = "StatusLineGrey",
-    padding = { left = 1, right = 1 },
-  }
-  
   ins_left {
     function()
       local vm_infos = vim.fn.VMInfos()
       return ('[%s/%s]'):format(vm_infos['current'], vm_infos['total'])
     end,
-    cond = function() 
-      return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0 
+    cond = function()
+      return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
     end,
     color = { fg = colors.white },
     padding = { left = 1, right = 0 },
   }
-  
+
   ins_left {
     function()
       local gitsigns = vim.b.gitsigns_status_dict
@@ -191,40 +180,95 @@ M.setup = function()
     end,
     padding = { left = 1, right = 0 },
   }
-  
-  -- ins_left {
-  --   function()
-  --     local bufnr = vim.api.nvim_get_current_buf()
-  --     refresh_gps_text(bufnr)
-  --     local text = vim.b[bufnr].gps_text
-  --     return text == nil and "" or text
-  --   end,
-  --   inactive = false,
-  --   cond = function()
-  --     return not big_file.is_big_file(0) and conditions.hide_in_width(80) and
-  --     require('lu5je0.misc.gps-path').is_available()
-  --   end,
-  --   color = { fg = colors.white },
-  --   padding = { left = 1, right = 0 },
-  -- }
+
+  ins_left {
+    function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      refresh_gps_text(bufnr)
+      local text = vim.b[bufnr].gps_text
+      return text == nil and "" or text
+    end,
+    inactive = false,
+    cond = function()
+      return not big_file.is_big_file(0) and conditions.hide_in_width(80) and
+          require('lu5je0.misc.gps-path').is_available()
+    end,
+    color = { fg = colors.white },
+    padding = { left = 1, right = 0 },
+  }
+
+  ins_right {
+    function(args)
+      local diagnostics = vim.diagnostic.get(args.buf_id)
+      local count = { error = 0, warn = 0, info = 0, hint = 0 }
+
+      for _, diagnostic in ipairs(diagnostics) do
+        local severity = diagnostic.severity
+        local severity_name = vim.diagnostic.severity[severity]
+        if severity_name then
+          count[severity_name:lower()] = (count[severity_name:lower()] or 0) + 1
+        end
+      end
+
+      local result = {}
+      local symbols = { error = ' ', warn = ' ', info = ' ', hint = ' ' }
+      local severities = { 'error' } -- 你可以添加 'warn', 'info', 'hint' 如果需要
+
+      for _, severity in ipairs(severities) do
+        if count[severity] and count[severity] > 0 then
+          table.insert(result,
+            string.format("%s%s%d", get_highlight('DiagnosticSign' .. severity:gsub("^%l", string.upper)),
+              symbols[severity], count[severity]))
+        end
+      end
+
+      return table.concat(result, " ")
+    end,
+    cond = function()
+      return #vim.diagnostic.get(0) > 0
+    end,
+    padding = { left = 0, right = 1 },
+  }
+
+  ins_right {
+    function(args)
+      local cursor_pos = vim.api.nvim_win_get_cursor(args.win_id)
+      local line = cursor_pos[1]
+      local col = cursor_pos[2] + 1
+      local position = string.format("%3d:%-2d ", line, col)
+
+      local total = vim.api.nvim_buf_line_count(args.buf_id)
+
+      if line == 1 then
+        return position .. 'Top'
+      elseif line >= total then
+        return position .. 'Bot'
+      else
+        return position .. string.format('%2d%%%%', math.floor(line / total * 100))
+      end
+    end,
+    color = "StatusLineGrey",
+    padding = { left = 1, right = 1 },
+  }
 
   ins_right {
     function()
-      return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() .. ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
+      return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() ..
+      ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
     end,
     cond = function() return conditions.hide_in_width(80) end,
     color = "StatusLineGreen",
     padding = { left = 1, right = 1 },
   }
 
-  _G.MyStatusLine = function()
+  M.statusline = function()
     -- local timer = require('lu5je0.lang.timer')
     -- timer.begin_timer()
 
     local win_id = vim.g.statusline_winid
     local buf_id = vim.api.nvim_win_get_buf(win_id)
     local filetype = vim.bo[buf_id].filetype
-    
+
     if vim.tbl_contains(custom_filetypes, filetype) then
       return '%#StatusLineGrey# ' .. filetype:upper()
     end
@@ -240,9 +284,10 @@ M.setup = function()
           local highlight = get_highlight(component.color)
           local padding_left = component.padding and component.padding.left or 0
           local padding_right = component.padding and component.padding.right or 0
-          table.insert(parts, string.format("%s%s%s%s", highlight, string.rep(" ", padding_left), text, string.rep(" ", padding_right)))
+          table.insert(parts,
+            string.format("%s%s%s%s", highlight, string.rep(" ", padding_left), text, string.rep(" ", padding_right)))
         end
-          ::continue::
+        ::continue::
       end
       return parts
     end
@@ -251,10 +296,16 @@ M.setup = function()
 
     local r = table.concat(left_parts, '') .. "%=" .. table.concat(right_parts, '')
     -- timer.end_timer()
+    -- print(vim.uv.hrtime())
     return r
   end
 
-  vim.cmd[[set statusline=%!v:lua.MyStatusLine()]]
+  _G.my_status_line = function()
+    return M.statusline()
+  end
+
+  vim.cmd [[set statusline=%!v:lua._G.my_status_line()]]
+  create_statusline_timer(300)
 end
 
 return M
