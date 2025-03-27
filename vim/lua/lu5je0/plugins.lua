@@ -75,75 +75,8 @@ require("lazy").setup({
       vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
       vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
       vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
-      -- 创建状态栏生成函数
-      _G.MyStatusLine = function()
-        local parts = {}
-
-        -- 左侧组件
-        table.insert(parts, "%#StatusLineYellow# NOR")
-
-        -- table.insert(parts, "%#StatusLine#  ")    -- 白色图标
-        
-        local filename = vim.fn.expand('%:t')
-        if filename == '' then
-          filename = '[Untitled]'
-        end
-        table.insert(parts, "%#StatusLineGrey# " .. filename) -- 品红文字
-
-        -- old
-        -- table.insert(parts, "%=%#StatusLine#")  -- 右对齐
-        -- table.insert(parts, "%l:%c  ")         -- 行列号
-        
-        -- new
-        
-        local function location()
-          local line = vim.fn.line('.')
-          local col = vim.fn.charcol('.')
-          return string.format('%3d:%-2d', line, col)
-        end
-        
-        local function progress()
-          local cur = vim.fn.line('.')
-          local total = vim.fn.line('$')
-          if cur == 1 then
-            return 'Top'
-          elseif cur == total then
-            return 'Bot'
-          else
-            return string.format('%2d%%%%', math.floor(cur / total * 100))
-          end
-        end
-        table.insert(parts, "%=%#StatusLine#")  -- 右对齐
-        table.insert(parts, location() .. " " .. progress() .. "  ")         -- 行列号
-
-        -- 编码信息
-        local encoding = vim.fn.toupper(
-          vim.o.fileencoding ~= '' 
-          and vim.o.fileencoding 
-          or vim.b.encoding
-        )
-        table.insert(parts, "%#StatusLineGreen#"..encoding.." ")
-
-        -- 换行符
-        table.insert(parts, "%{&fileformat == 'unix' ? 'LF' : 'CRLF'} ")
-
-        return table.concat(parts, '')
-      end
-
-      -- 设置状态栏调用方式
-      vim.cmd[[set statusline=%!v:lua.MyStatusLine()]]
       
-      -- local bg = '#2c2e34'
-      -- vim.cmd(string.gsub([[
-      -- " hi NvimTreeNormal guibg=%s
-      -- " hi NvimTreeNormalNC guibg=%s
-      -- " hi NvimTreeEndOfBuffer guifg=%s
-      --
-      -- hi VertSplit guifg=#27292d guibg=bg
-      -- hi NvimTreeVertSplit guifg=bg guibg=bg
-      --
-      -- hi NvimTreeWinSeparator guibg=%s guifg=%s
-      -- ]], '%%s', bg))
+      require('lu5je0.core.statusline').setup()
     end
   },
   {

@@ -53,7 +53,7 @@ local extensions_name = {
     end
     return res
   end,
-  color = { fg = colors.blue, bg = colors.bg, gui = 'bold' },
+  color = { fg = colors.grey, bg = colors.bg, gui = 'bold' },
 }
 
 local special_ft_extension = {
