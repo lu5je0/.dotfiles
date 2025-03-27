@@ -11,7 +11,37 @@ local function ins_right(component)
   table.insert(M.right_components, component)
 end
 
+local colors = {
+  bg       = '#202328',
+  white    = '#bcc6d3',
+  grey     = '#cccccc',
+  fg       = '#bbc2cf',
+  yellow   = '#ECBE7B',
+  cyan     = '#008080',
+  darkblue = '#081633',
+  green    = '#98be65',
+  orange   = '#FF8800',
+  violet   = '#a9a1e1',
+  magenta  = '#c678dd',
+  blue     = '#51afef',
+  red      = '#ec5f67',
+}
 local custom_filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
+local mode_mappings = {
+  n = { text = 'NOR', color = colors.yellow },  -- Normal 模式
+  i = { text = 'INS', color = colors.yellow },  -- Insert 模式
+  no = { text = 'NOP' },                        -- Normal 模式
+  c = { text = 'COM' },                         -- Command-line 模式
+  v = { text = 'VIS', color = colors.red },     -- Visual 模式
+  V = { text = 'VIL', color = colors.red },     -- Visual Line 模式
+  [''] = { text = 'VIB', color = colors.red }, -- Visual Block 模式
+  R = { text = 'REP' },                         -- Replace 模式
+  Rv = { text = 'VRP' },                        -- Virtual Replace 模式
+  s = { text = 'SEL' },                         -- Select 模式
+  S = { text = 'SIL' },                         -- Select Line 模式
+  [''] = { text = 'SIB' },                     -- Select Block 模式
+  t = { text = 'TER' }                          -- Terminal 模式
+}
 
 local function get_highlight(color)
   if type(color) == "string" then
@@ -49,18 +79,28 @@ M.setup = function()
   
   ins_left {
     function(args)
-      if vim.bo[args.buf_id].filetype == 'NvimTree' then
-        return 'NVIMTREE'
+      local mode = nil
+      local is_visual_multi = vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
+      if is_visual_multi then
+        mode = require('lu5je0.ext.vim-visual-multi').mode()
+      else
+        mode = vim.api.nvim_get_mode().mode
       end
-      return 'NOR'
+      local mapping = mode_mappings[mode]
+      local fg_color = mapping.color or colors.yellow
+      if fg_color then
+        vim.api.nvim_set_hl(0, "LualineMode", { bold = true, fg = fg_color, bg = colors.bg })
+      end
+      return mapping.text
     end,
-    color = "StatusLineYellow",
+    color = "LualineMode",
     padding = { left = 1, right = 0 },
   }
 
   ins_left {
-    function()
-      local filename = vim.fn.expand('%:t')
+    function(args)
+      local filename = vim.api.nvim_buf_get_name(args.buf_id)
+      filename = vim.fn.fnamemodify(filename, ":t")
       return filename == '' and '[Untitled]' or filename
     end,
     color = "StatusLineGrey",
@@ -87,6 +127,39 @@ M.setup = function()
     color = "StatusLineGrey",
     padding = { left = 1, right = 1 },
   }
+  
+  ins_left {
+    function()
+      local vm_infos = vim.fn.VMInfos()
+      return ('[%s/%s]'):format(vm_infos['current'], vm_infos['total'])
+    end,
+    cond = function() 
+      return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0 
+    end,
+    color = { fg = colors.white },
+    padding = { left = 1, right = 0 },
+  }
+  
+  ins_left {
+    function()
+      local gitsigns = vim.b.gitsigns_status_dict
+      if gitsigns then
+        local parts = {}
+        if gitsigns.added and gitsigns.added > 0 then
+          table.insert(parts, string.format("%s+%d", get_highlight("GitSignsAdd"), gitsigns.added))
+        end
+        if gitsigns.changed and gitsigns.changed > 0 then
+          table.insert(parts, string.format("%s~%d", get_highlight("GitSignsChange"), gitsigns.changed))
+        end
+        if gitsigns.removed and gitsigns.removed > 0 then
+          table.insert(parts, string.format("%s-%d", get_highlight("GitSignsDelete"), gitsigns.removed))
+        end
+        return table.concat(parts, " ")
+      end
+      return ""
+    end,
+    padding = { left = 1, right = 0 },
+  }
 
   ins_right {
     function()
@@ -105,6 +178,9 @@ M.setup = function()
   }
 
   _G.MyStatusLine = function()
+    -- local timer = require('lu5je0.lang.timer')
+    -- timer.begin_timer()
+
     local win_id = vim.g.statusline_winid
     local buf_id = vim.api.nvim_win_get_buf(win_id)
     local filetype = vim.bo[buf_id].filetype
@@ -116,6 +192,9 @@ M.setup = function()
     local function process_components(components)
       local parts = {}
       for _, component in ipairs(components) do
+        if component.cond and not component.cond() then
+          goto continue
+        end
         local text = component[1]({ win_id = win_id, buf_id = buf_id })
         if text and text ~= "" then
           local highlight = get_highlight(component.color)
@@ -123,13 +202,16 @@ M.setup = function()
           local padding_right = component.padding and component.padding.right or 0
           table.insert(parts, string.format("%s%s%s%s", highlight, string.rep(" ", padding_left), text, string.rep(" ", padding_right)))
         end
+          ::continue::
       end
       return parts
     end
     local left_parts = process_components(M.left_components)
     local right_parts = process_components(M.right_components)
 
-    return table.concat(left_parts, '') .. "%=" .. table.concat(right_parts, '')
+    local r = table.concat(left_parts, '') .. "%=" .. table.concat(right_parts, '')
+    -- timer.end_timer()
+    return r
   end
 
   vim.cmd[[set statusline=%!v:lua.MyStatusLine()]]

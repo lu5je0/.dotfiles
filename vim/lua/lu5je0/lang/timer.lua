@@ -33,11 +33,11 @@ end
 
 local now
 function M.begin_timer()
-  now = M.now()
+  now = vim.uv.hrtime()
 end
 
 function M.end_timer()
-  print(M.now() - now)
+  vim.print((vim.uv.hrtime() - now) / 1000000 .. 'ms')
 end
 
 return M
