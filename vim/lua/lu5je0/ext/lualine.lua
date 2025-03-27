@@ -217,7 +217,7 @@ ins_left {
     return string.gsub(filename, '%%', '%%%%')
   end,
   inactive = true,
-  color = { fg = colors.magenta, gui = 'bold' },
+  color = { fg = colors.grey },
   padding = { left = 1, right = 0 },
 }
 

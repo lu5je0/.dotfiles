@@ -74,6 +74,7 @@ require("lazy").setup({
       vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
       vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
       vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
+      vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
       -- 创建状态栏生成函数
       _G.MyStatusLine = function()
         local parts = {}
@@ -87,7 +88,7 @@ require("lazy").setup({
         if filename == '' then
           filename = '[Untitled]'
         end
-        table.insert(parts, "%#StatusLineMagenta# " .. filename) -- 品红文字
+        table.insert(parts, "%#StatusLineGrey# " .. filename) -- 品红文字
 
         -- old
         -- table.insert(parts, "%=%#StatusLine#")  -- 右对齐
