@@ -306,4 +306,8 @@ M.setup = function()
   create_statusline_timer(300)
 end
 
+-- M.measure_fn(require('lualine').statusline, 10000)
+-- vim.g.statusline_winid = vim.api.nvim_get_current_win()
+-- M.measure_fn(require('lu5je0.core.statusline').statusline, 10000)
+
 return M
