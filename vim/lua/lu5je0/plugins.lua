@@ -81,17 +81,39 @@ require("lazy").setup({
         -- 左侧组件
         table.insert(parts, "%#StatusLineYellow# NOR")
 
-        -- 未命名文件检测
+        -- table.insert(parts, "%#StatusLine#  ")    -- 白色图标
+        
         local filename = vim.fn.expand('%:t')
-        table.insert(parts, "%#StatusLine#  ")    -- 白色图标
         if filename == '' then
           filename = '[Untitled]'
         end
-        table.insert(parts, "%#StatusLineMagenta#" .. filename) -- 品红文字
+        table.insert(parts, "%#StatusLineMagenta# " .. filename) -- 品红文字
 
-        -- 右侧组件
+        -- old
+        -- table.insert(parts, "%=%#StatusLine#")  -- 右对齐
+        -- table.insert(parts, "%l:%c  ")         -- 行列号
+        
+        -- new
+        
+        local function location()
+          local line = vim.fn.line('.')
+          local col = vim.fn.charcol('.')
+          return string.format('%3d:%-2d', line, col)
+        end
+        
+        local function progress()
+          local cur = vim.fn.line('.')
+          local total = vim.fn.line('$')
+          if cur == 1 then
+            return 'Top'
+          elseif cur == total then
+            return 'Bot'
+          else
+            return string.format('%2d%%%%', math.floor(cur / total * 100))
+          end
+        end
         table.insert(parts, "%=%#StatusLine#")  -- 右对齐
-        table.insert(parts, "%l:%c  ")         -- 行列号
+        table.insert(parts, location() .. " " .. progress() .. "  ")         -- 行列号
 
         -- 编码信息
         local encoding = vim.fn.toupper(

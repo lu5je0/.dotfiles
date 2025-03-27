@@ -177,23 +177,23 @@ ins_left {
   padding = { left = 1, right = 0 },
 }
 
-ins_left {
-  'filetype',
-  icon_only = true,
-  inactive = true,
-  color = { fg = colors.magenta, bg = colors.bg, gui = 'bold' },
-  padding = { left = 1, right = 0 },
-}
+-- ins_left {
+--   'filetype',
+--   icon_only = true,
+--   inactive = true,
+--   color = { fg = colors.magenta, bg = colors.bg, gui = 'bold' },
+--   padding = { left = 1, right = 0 },
+-- }
 
-ins_left {
-  function()
-    return ' '
-  end,
-  cond = function() return vim.bo.filetype == '' end,
-  inactive = true,
-  color = { fg = colors.white, gui = 'bold' },
-  padding = { left = 1, right = 0 },
-}
+-- ins_left {
+--   function()
+--     return ' '
+--   end,
+--   cond = function() return vim.bo.filetype == '' end,
+--   inactive = true,
+--   color = { fg = colors.white, gui = 'bold' },
+--   padding = { left = 1, right = 0 },
+-- }
 
 ins_left {
   function()
@@ -218,33 +218,33 @@ ins_left {
   end,
   inactive = true,
   color = { fg = colors.magenta, gui = 'bold' },
-  padding = { left = 0, right = 0 },
-}
-
-ins_left {
-  -- filesize component
-  function()
-    if vim.b.filesize == nil then
-      vim.b.filesize = file_util.hunman_readable_file_size(vim.api.nvim_buf_get_name(0))
-    end
-    return vim.b.filesize
-  end,
-  cond = function()
-    return conditions.hide_in_width()
-  end,
-  inactive = true,
-  setup = function()
-    vim.api.nvim_create_autocmd('BufWritePost', {
-      group = require('lu5je0.autocmds').default_group,
-      pattern = '*',
-      callback = function()
-        vim.b.filesize = nil
-      end,
-    })
-  end,
-  color = { fg = colors.violet },
   padding = { left = 1, right = 0 },
 }
+
+-- ins_left {
+--   -- filesize component
+--   function()
+--     if vim.b.filesize == nil then
+--       vim.b.filesize = file_util.hunman_readable_file_size(vim.api.nvim_buf_get_name(0))
+--     end
+--     return vim.b.filesize
+--   end,
+--   cond = function()
+--     return conditions.hide_in_width()
+--   end,
+--   inactive = true,
+--   setup = function()
+--     vim.api.nvim_create_autocmd('BufWritePost', {
+--       group = require('lu5je0.autocmds').default_group,
+--       pattern = '*',
+--       callback = function()
+--         vim.b.filesize = nil
+--       end,
+--     })
+--   end,
+--   color = { fg = colors.violet },
+--   padding = { left = 1, right = 0 },
+-- }
 
 ins_left {
   'diff',
@@ -274,7 +274,7 @@ ins_left {
 
 local refresh_gps_text = function_utils.debounce(function(bufnr)
   local path = require('lu5je0.misc.gps-path').path()
-  local max_len = 40
+  local max_len = 35
   if #path > max_len then
     path = vim.fn.strcharpart(path, 0, max_len)
     if string.sub(path, #path, #path) ~= ' ' then
@@ -357,17 +357,6 @@ ins_left {
 -- }
 
 ins_right {
-  function()
-    -- percentage
-    -- %p%% 
-    return [[%l:%c ]]
-  end,
-  inactive = true,
-  padding = { left = 0, right = 1 },
-  color = { fg = colors.grey },
-}
-
-ins_right {
   'diagnostics',
   -- table of diagnostic sources, available sources:
   -- 'nvim_lsp', 'nvim_diagnostic', 'coc', 'ale', 'vim_lsp'
@@ -375,8 +364,8 @@ ins_right {
   --   {error=error_cnt, warn=warn_cnt, info=info_cnt, hint=hint_cnt}
   sources = { 'nvim_diagnostic' },
   -- displays diagnostics from defined severity
-  sections = { 'error', 'warn', 'info', 'hint' },
-  symbols = { error = ' ', warn = ' ', info = ' ' },
+  sections = { 'error'--[[ , 'warn', 'info', 'hint' ]] },
+  symbols = { error = ' '--[[ , warn = ' ', info = ' ' ]] },
   diagnostics_color = {
     -- Same values like general color option can be used here.
     error = { fg = colors.red },
@@ -386,7 +375,40 @@ ins_right {
   },
   colored = true, -- displays diagnostics status in color if set to true
   update_in_insert = false, -- Update diagnostics in insert mode
+  padding = { left = 0, right = 2 },
+}
+
+-- ins_right {
+--   function()
+--     return " "
+--   end,
+--   inactive = true,
+--   padding = { left = 0, right = 1 },
+--   color = { fg = colors.grey },
+-- }
+
+ins_right {
+  "location",
+  -- function()
+  --   -- percentage
+  --   -- %p%%
+  --   return [[%l:%c ]]
+  -- end,
+  inactive = true,
   padding = { left = 0, right = 1 },
+  color = { fg = colors.grey },
+}
+
+ins_right {
+  "progress",
+  -- function()
+  --   -- percentage
+  --   -- %p%% 
+  --   return [[%l:%c ]]
+  -- end,
+  inactive = true,
+  padding = { left = 0, right = 1 },
+  color = { fg = colors.grey },
 }
 
 ins_right {
@@ -397,7 +419,7 @@ ins_right {
   -- fmt = string.upper, -- I'm not sure why it's upper case either ;)
   cond = conditions.hide_in_width,
   color = { fg = colors.green, gui = 'bold' },
-  padding = { left = 0, right = 0 },
+  padding = { left = 1, right = 0 },
 }
 
 ins_right {
