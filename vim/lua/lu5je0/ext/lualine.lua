@@ -139,19 +139,19 @@ local function ins_right(component)
 end
 
 local mode_mappings = {
-  n = { text = 'NOR', color = colors.yellow }, -- Normal 模式
+  n = { text = 'NOR', color = colors.yellow },  -- Normal 模式
   i = { text = 'INS', color = colors.yellow },  -- Insert 模式
-  no = { text = 'NOP' },      -- Normal 模式
-  c = { text = 'COM' },      -- Command-line 模式
-  v = { text = 'VIS', color = colors.red },      -- Visual 模式
-  V = { text = 'VIL', color = colors.red },      -- Visual Line 模式
+  no = { text = 'NOP' },                        -- Normal 模式
+  c = { text = 'COM' },                         -- Command-line 模式
+  v = { text = 'VIS', color = colors.red },     -- Visual 模式
+  V = { text = 'VIL', color = colors.red },     -- Visual Line 模式
   [''] = { text = 'VIB', color = colors.red }, -- Visual Block 模式
-  R = { text = 'REP' },      -- Replace 模式
-  Rv = { text = 'VRP' },     -- Virtual Replace 模式
-  s = { text = 'SEL' },      -- Select 模式
-  S = { text = 'SIL' },      -- Select Line 模式
-  [''] = { text = 'SIB' }, -- Select Block 模式
-  t = { text = 'TER' }       -- Terminal 模式
+  R = { text = 'REP' },                         -- Replace 模式
+  Rv = { text = 'VRP' },                        -- Virtual Replace 模式
+  s = { text = 'SEL' },                         -- Select 模式
+  S = { text = 'SIL' },                         -- Select Line 模式
+  [''] = { text = 'SIB' },                     -- Select Block 模式
+  t = { text = 'TER' }                          -- Terminal 模式
 }
 
 ins_left {
@@ -172,7 +172,6 @@ ins_left {
   end,
   icon_only = true,
   inactive = true,
-  -- color = { fg = colors.yellow, bg = colors.bg, gui = 'bold' },
   color = 'LualineMode',
   padding = { left = 1, right = 0 },
 }
@@ -268,7 +267,7 @@ ins_left {
     return ('[%s/%s]'):format(vm_infos['current'], vm_infos['total'])
   end,
   cond = function() return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0 end,
-  color = { fg = colors.white, gui = 'bold' },
+  color = { fg = colors.white },
   padding = { left = 1, right = 0 },
 }
 
@@ -294,7 +293,8 @@ ins_left {
   end,
   inactive = false,
   cond = function()
-    return not big_file.is_big_file(0) and conditions.hide_in_width(80) and require('lu5je0.misc.gps-path').is_available()
+    return not big_file.is_big_file(0) and conditions.hide_in_width(80) and
+    require('lu5je0.misc.gps-path').is_available()
   end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },
@@ -364,8 +364,8 @@ ins_right {
   --   {error=error_cnt, warn=warn_cnt, info=info_cnt, hint=hint_cnt}
   sources = { 'nvim_diagnostic' },
   -- displays diagnostics from defined severity
-  sections = { 'error'--[[ , 'warn', 'info', 'hint' ]] },
-  symbols = { error = ' '--[[ , warn = ' ', info = ' ' ]] },
+  sections = { 'error' --[[ , 'warn', 'info', 'hint' ]] },
+  symbols = { error = ' ' --[[ , warn = ' ', info = ' ' ]] },
   diagnostics_color = {
     -- Same values like general color option can be used here.
     error = { fg = colors.red },
@@ -373,7 +373,7 @@ ins_right {
     info = { fg = colors.fg },
     hint = { fg = colors.white },
   },
-  colored = true, -- displays diagnostics status in color if set to true
+  colored = true,           -- displays diagnostics status in color if set to true
   update_in_insert = false, -- Update diagnostics in insert mode
   padding = { left = 0, right = 2 },
 }
@@ -403,7 +403,7 @@ ins_right {
   "progress",
   -- function()
   --   -- percentage
-  --   -- %p%% 
+  --   -- %p%%
   --   return [[%l:%c ]]
   -- end,
   inactive = true,
