@@ -65,16 +65,6 @@ require("lazy").setup({
       
       vim.g.edge_loaded_file_types = { 'NvimTree' }
       
-      -- 设置 statusline 默认色
-      vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
-      -- 非当前状态栏
-      vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
-      
-      -- 定义高亮组
-      vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
-      vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
-      vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
-      vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
       
       require('lu5je0.core.statusline').setup()
     end
