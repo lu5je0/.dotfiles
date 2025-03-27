@@ -200,21 +200,19 @@ M.setup = function()
   ins_right {
     function(args)
       local diagnostics = vim.diagnostic.get(args.buf_id)
-      local count = { error = 0, warn = 0, info = 0, hint = 0 }
+      local count = { ERROR = 0--[[ , WARN = 0, INFO = 0, HINT = 0 ]] }
+      local symbols = { ERROR = ' ', --[[ WARN = ' ', INFO = ' ', HINT = ' ' ]] }
 
       for _, diagnostic in ipairs(diagnostics) do
         local severity = diagnostic.severity
-        local severity_name = vim.diagnostic.severity[severity]
-        if severity_name then
-          count[severity_name:lower()] = (count[severity_name:lower()] or 0) + 1
+        if severity == 1 then
+          count["ERROR"] = (count["ERROR"] or 0) + 1
         end
       end
 
       local result = {}
-      local symbols = { error = ' ', warn = ' ', info = ' ', hint = ' ' }
-      local severities = { 'error' } -- 你可以添加 'warn', 'info', 'hint' 如果需要
 
-      for _, severity in ipairs(severities) do
+      for severity, _ in pairs(count) do
         if count[severity] and count[severity] > 0 then
           table.insert(result,
             string.format("%s%s%d", get_highlight('DiagnosticSign' .. severity:gsub("^%l", string.upper)),
@@ -227,7 +225,7 @@ M.setup = function()
     cond = function()
       return #vim.diagnostic.get(0) > 0
     end,
-    padding = { left = 0, right = 1 },
+    padding = { left = 0, right = 0 },
   }
 
   ins_right {
