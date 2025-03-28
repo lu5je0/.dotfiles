@@ -1,7 +1,7 @@
 local M = {}
 
-function M.is_big_file(buf_nr)
-  return vim.b[buf_nr].is_big_file == true
+function M.is_big_file(buf_id)
+  return vim.b[buf_id].is_big_file == true
 end
 
 function M.mark_big_file(buf_nr)

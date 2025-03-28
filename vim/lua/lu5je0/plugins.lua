@@ -1055,6 +1055,20 @@ require("lazy").setup({
         -- or leave it empty to use the default settings
         -- refer to the configuration section below
       },
+      -- indent = {
+      --   indent = {
+      --     char = "▏"
+      --   },
+      --   scope = {
+      --     char = "▏"
+      --   },
+      --   animate = {
+      --
+      --   },
+      --   filter = function(buf)
+      --     return vim.g.snacks_indent ~= false and vim.b[buf].snacks_indent ~= false and vim.bo[buf].buftype == "" and require('lu5je0.ext.big-file').is_big_file(buf) and vim.bo[buf].filetype == 'markdown'
+      --   end
+      -- },
       picker = {
         layout = {
           cycle = true,
@@ -1075,7 +1089,7 @@ require("lazy").setup({
       }
     },
     keys = {
-      { "<leader>ps",  function() Snacks.profiler.scratch() end,                               desc = "Profiler Scratch Bufer" },
+      { "<leader>ps",  function() Snacks.profiler.toggle() end,                               desc = "Profiler Scratch Bufer" },
       -- { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
       -- { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
       -- { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },

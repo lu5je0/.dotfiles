@@ -201,10 +201,11 @@ M.setup = function()
       local text = vim.b[bufnr].gps_text
       return text == nil and "" or text
     end,
+    --  TODO
     inactive = false,
-    cond = function()
-      return not big_file.is_big_file(0) and conditions.hide_in_width(80) and
-          require('lu5je0.misc.gps-path').is_available()
+    cond = function(args)
+      return conditions.hide_in_width(80) and not big_file.is_big_file(0) and
+          require('lu5je0.misc.gps-path').is_available(args.buf_id)
     end,
     color = { fg = colors.white },
     padding = { left = 1, right = 0 },
@@ -287,18 +288,19 @@ M.setup = function()
     if vim.tbl_contains(custom_filetypes, filetype) then
       return '%#StatusLineGrey# ' .. filetype:upper()
     end
+    local args = { win_id = win_id, buf_id = buf_id, filename = filename, extension_name = extension_name }
 
     local function process_components(components)
       local parts = {}
       for _, component in ipairs(components) do
-        if component.cond and not component.cond() then
+        if component.cond and not component.cond(args) then
           goto continue
         end
         local text
         if type(component[1]) == 'string' then
           text = component[1]
         else
-          text = component[1]({ win_id = win_id, buf_id = buf_id, filename = filename, extension_name = extension_name })
+          text = component[1](args)
         end
         if text and text ~= "" then
           local highlight = get_highlight(component.color)
