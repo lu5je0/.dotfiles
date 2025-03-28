@@ -3,12 +3,64 @@ local M = {}
 M.left_components = {}
 M.right_components = {}
 
+local function create_cached_component(component)
+  local cached = setmetatable({}, {
+    __index = function(t, buf_id)
+      t[buf_id] = {
+        last_update = 0,
+        value = nil
+      }
+      return t[buf_id]
+    end
+  })
+
+  local ttl = component.cache_ttl or 1000 -- 默认缓存1秒
+  local func = component[1]
+
+  return setmetatable({}, {
+    __call = function(_, args)
+      local buf_id = args.buf_id
+      local cache = cached[buf_id]
+      local current_time = vim.loop.now()
+      if current_time - cache.last_update > ttl then
+        cache.value = func(args)
+        cache.last_update = current_time
+      end
+      return cache.value
+    end,
+    __index = {
+      clear_cache_autocmd = function(self, buf_id)
+        if cached[buf_id] then
+          cached[buf_id].last_update = 0
+        end
+      end
+    }
+  })
+end
+
+-- 公共的插入组件函数
+local function insert_component(component_list, component)
+  if component.cache then
+    component[1] = create_cached_component(component)
+  end
+  table.insert(component_list, component)
+
+  if component.clear_cache_autocmd then
+    vim.api.nvim_create_autocmd(component.clear_cache_autocmd, {
+      callback = function()
+        local buf_id = vim.api.nvim_get_current_buf()
+        component[1]:clear_cache_autocmd(buf_id)
+      end
+    })
+  end
+end
+
 local function ins_left(component)
-  table.insert(M.left_components, component)
+  insert_component(M.left_components, component)
 end
 
 local function ins_right(component)
-  table.insert(M.right_components, component)
+  insert_component(M.right_components, component)
 end
 
 local colors = {
@@ -240,6 +292,9 @@ M.setup = function()
       return #vim.diagnostic.get(0) > 0
     end,
     padding = { left = 0, right = 0 },
+    cache = true,
+    cache_ttl = 5000,
+    -- clear_cache_autocmd = { "InsertEnter", "InsertLeave" },
   }
 
   ins_right {
