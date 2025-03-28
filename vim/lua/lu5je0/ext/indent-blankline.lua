@@ -7,6 +7,11 @@ local highlight = {
 }
 vim.api.nvim_set_hl(0, "IndentBlankline", { fg = "#373C44" })
 
+local highlight_scope = {
+  "IndentBlanklineScope",
+}
+vim.api.nvim_set_hl(0, "IndentBlanklineScope", { fg = "#474D56" })
+
 hooks.register(
   hooks.type.WHITESPACE,
   hooks.builtin.hide_first_space_indent_level
@@ -23,13 +28,18 @@ ibl.setup {
   -- 大于100，<<时文本会闪烁
   debounce = 50,
   indent = {
-    char = "▏",
+    char = "│",
     highlight = highlight,
   },
   whitespace = {
     remove_blankline_trail = false,
   },
-  scope = { enabled = false, },
+  scope = { 
+    enabled = true,
+    show_start = false,
+    show_end = false,
+    highlight = highlight_scope
+  },
 }
 
 -- fix 文本闪烁
