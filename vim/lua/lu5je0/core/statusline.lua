@@ -79,6 +79,7 @@ local colors = {
 }
 local custom_filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
 local mode_mappings = {
+  fallback = { text = 'UKN', color = colors.yellow },
   n = { text = 'NOR', color = colors.yellow },  -- Normal 模式
   i = { text = 'INS', color = colors.yellow },  -- Insert 模式
   no = { text = 'NOP' },                        -- Normal 模式
@@ -181,6 +182,9 @@ M.setup = function()
         mode = vim.api.nvim_get_mode().mode
       end
       local mapping = mode_mappings[mode]
+      if mapping == nil then
+        mapping = mode_mappings.fallback
+      end
       local fg_color = mapping.color or colors.yellow
       if fg_color then
         vim.api.nvim_set_hl(0, "LualineMode", { bold = true, fg = fg_color, bg = colors.bg })
