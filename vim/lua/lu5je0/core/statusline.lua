@@ -5,12 +5,12 @@ M.right_components = {}
 
 local function create_cached_component(component)
   local cached = setmetatable({}, {
-    __index = function(t, buf_id)
-      t[buf_id] = {
+    __index = function(self, buf_id)
+      self[buf_id] = {
         last_update = 0,
         value = nil
       }
-      return t[buf_id]
+      return self[buf_id]
     end
   })
 
@@ -29,9 +29,9 @@ local function create_cached_component(component)
       return cache.value
     end,
     __index = {
-      clear_cache_autocmd = function(self, buf_id)
+      cache_evict_autocmd = function(_, buf_id)
         if cached[buf_id] then
-          cached[buf_id].last_update = 0
+          cached[buf_id] = nil
         end
       end
     }
@@ -40,19 +40,18 @@ end
 
 -- 公共的插入组件函数
 local function insert_component(component_list, component)
-  if component.cache then
+  if component.cache or component.cache_ttl then
     component[1] = create_cached_component(component)
-  end
-  table.insert(component_list, component)
-
-  if component.clear_cache_autocmd then
-    vim.api.nvim_create_autocmd(component.clear_cache_autocmd, {
-      callback = function()
+    component.cache_evict_autocmd = component.cache_evict_autocmd or {}
+    table.insert(component.cache_evict_autocmd, "BufWinLeave")
+    vim.api.nvim_create_autocmd(component.cache_evict_autocmd, {
+      callback = function(_)
         local buf_id = vim.api.nvim_get_current_buf()
-        component[1]:clear_cache_autocmd(buf_id)
+        component[1]:cache_evict_autocmd(buf_id)
       end
     })
   end
+  table.insert(component_list, component)
 end
 
 local function ins_left(component)
@@ -210,6 +209,9 @@ M.setup = function()
       return filename == '' and '[Untitled]' or filename
     end,
     color = "StatusLineViolet",
+    cache = true,
+    cache_ttl = 1000,
+    cache_evict_autocmd = { 'CmdlineLeave' },
     padding = { left = 1, right = 0 },
   }
 
@@ -266,6 +268,9 @@ M.setup = function()
   ins_right {
     function(args)
       local diagnostics = vim.diagnostic.get(args.buf_id)
+      if #diagnostics == 0 then
+        return nil
+      end
       local count = { ERROR = 0--[[ , WARN = 0, INFO = 0, HINT = 0 ]] }
       local symbols = { ERROR = ' ', --[[ WARN = ' ', INFO = ' ', HINT = ' ' ]] }
 
@@ -288,20 +293,16 @@ M.setup = function()
 
       return table.concat(result, " ")
     end,
-    cond = function()
-      return #vim.diagnostic.get(0) > 0
-    end,
     padding = { left = 0, right = 0 },
     cache = true,
-    cache_ttl = 5000,
-    -- clear_cache_autocmd = { "InsertEnter", "InsertLeave" },
+    cache_ttl = 1000,
   }
 
   ins_right {
     function(args)
       local cursor_pos = vim.api.nvim_win_get_cursor(args.win_id)
       local line = cursor_pos[1]
-      local position = "%l:%c "
+      local position = ("%%l:%-2d "):format(cursor_pos[2] + 1)
 
       local total = vim.api.nvim_buf_line_count(args.buf_id)
 
@@ -325,6 +326,9 @@ M.setup = function()
       return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() ..
       ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
     end,
+    cache = true,
+    cache_ttl = 5000,
+    cache_evict_autocmd = { "CmdlineLeave" },
     -- cond = function() return conditions.hide_in_width(80) end,
     color = "StatusLineGreen",
     padding = { left = 1, right = 1 },
@@ -390,6 +394,6 @@ end
 
 -- vim.g.statusline_winid = vim.api.nvim_get_current_win()
 -- local timer = require('lu5je0.lang.timer')
--- timer.measure_fn(require('lu5je0.core.statusline').statusline, 10000)
+-- timer.measure_fn(require('lu5je0.core.statusline').statusline, 50000)
 
 return M
