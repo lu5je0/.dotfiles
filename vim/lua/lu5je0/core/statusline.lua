@@ -108,7 +108,7 @@ local refresh_gps_text = function_utils.debounce(function(bufnr)
     end
   end
   vim.b[bufnr].gps_text = path
-end, 40)
+end, 100)
 
 local expand = vim.fn.expand
 local conditions = {
@@ -377,7 +377,6 @@ M.setup = function()
 
     local r = table.concat(left_parts, '') .. "%=" .. table.concat(right_parts, '')
     -- timer.end_timer()
-    -- print(vim.uv.hrtime())
     return r
   end
 
