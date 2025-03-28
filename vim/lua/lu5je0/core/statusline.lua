@@ -91,7 +91,8 @@ local mode_mappings = {
   s = { text = 'SEL' },                         -- Select 模式
   S = { text = 'SIL' },                         -- Select Line 模式
   [''] = { text = 'SIB' },                     -- Select Block 模式
-  t = { text = 'TER' }                          -- Terminal 模式
+  t = { text = 'TER' },                          -- Terminal 模式
+  nt = { text = 'TER' }                          -- Terminal 模式
 }
 
 local function_utils = require('lu5je0.lang.function-utils')
@@ -187,6 +188,7 @@ M.setup = function()
       return mapping.text
     end,
     color = "LualineMode",
+    inactive = false,
     padding = { left = 1, right = 0 },
   }
   
@@ -340,6 +342,8 @@ M.setup = function()
 
     local win_id = vim.g.statusline_winid
     local buf_id = vim.api.nvim_win_get_buf(win_id)
+    local focus_win_id = vim.api.nvim_get_current_win()
+    local focus_win_is_floating = vim.api.nvim_win_get_config(focus_win_id).relative ~= ''
     local filename = vim.api.nvim_buf_get_name(buf_id)
     local extension_name = filename and filename:match(".+%.(%w+)$") or ""
     local filetype = vim.bo[buf_id].filetype
@@ -355,6 +359,10 @@ M.setup = function()
         if component.cond and not component.cond(args) then
           goto continue
         end
+        if not focus_win_is_floating and component.inactive == false and win_id ~= focus_win_id then
+          goto continue
+        end
+          
         local text
         if type(component[1]) == 'string' then
           text = component[1]
