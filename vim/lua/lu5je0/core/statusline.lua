@@ -177,7 +177,7 @@ M.setup = function()
     color = "StatusLineGrey",
     cache = true,
     cache_ttl = 2000,
-    cache_evict_autocmd = { 'CmdlineLeave' },
+    cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
     padding = { left = 1, right = 0 },
   }
 
@@ -190,7 +190,7 @@ M.setup = function()
     color = { fg = colors.violet, bold = true },
     cache = true,
     cache_ttl = 2000,
-    cache_evict_autocmd = { 'CmdlineLeave' },
+    cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
     padding = { left = 1, right = 0 },
   }
 
