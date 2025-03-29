@@ -196,12 +196,13 @@ M.setup = function()
   ins_left {
     function(args)
       if vim.bo[args.buf_id].modified then
-        return '●'
+        -- return '●'
+        return '*'
       end
       return nil
     end,
     color = 'Green',
-    padding = { left = 1, right = 0 },
+    padding = { left = 0, right = 0 },
   }
 
   ins_left {
@@ -213,28 +214,6 @@ M.setup = function()
       return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
     end,
     color = { fg = colors.white },
-    padding = { left = 1, right = 0 },
-  }
-
-  ins_left {
-    function()
-      local gitsigns = vim.b.gitsigns_status_dict
-      if gitsigns then
-        local parts = {}
-        if gitsigns.added and gitsigns.added > 0 then
-          table.insert(parts, string.format("%s+%d", get_highlight("GitSignsAdd"), gitsigns.added))
-        end
-        if gitsigns.changed and gitsigns.changed > 0 then
-          table.insert(parts, string.format("%s~%d", get_highlight("GitSignsChange"), gitsigns.changed))
-        end
-        if gitsigns.removed and gitsigns.removed > 0 then
-          table.insert(parts, string.format("%s-%d", get_highlight("GitSignsDelete"), gitsigns.removed))
-        end
-        return table.concat(parts, " ")
-      end
-      return ""
-    end,
-    cache_ttl = 100,
     padding = { left = 1, right = 0 },
   }
 
@@ -293,6 +272,28 @@ M.setup = function()
     padding = { left = 0, right = 1 },
     cache = true,
     cache_ttl = 1000,
+  }
+  
+  ins_right {
+    function()
+      local gitsigns = vim.b.gitsigns_status_dict
+      if gitsigns then
+        local parts = {}
+        if gitsigns.added and gitsigns.added > 0 then
+          table.insert(parts, string.format("%s+%d", get_highlight("GitSignsAdd"), gitsigns.added))
+        end
+        if gitsigns.changed and gitsigns.changed > 0 then
+          table.insert(parts, string.format("%s~%d", get_highlight("GitSignsChange"), gitsigns.changed))
+        end
+        if gitsigns.removed and gitsigns.removed > 0 then
+          table.insert(parts, string.format("%s-%d", get_highlight("GitSignsDelete"), gitsigns.removed))
+        end
+        return table.concat(parts, " ")
+      end
+      return ""
+    end,
+    cache_ttl = 100,
+    padding = { left = 0, right = 1 },
   }
 
   ins_right {
