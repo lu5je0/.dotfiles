@@ -78,69 +78,47 @@ local colors = {
   red      = '#ec5f67',
 }
 
-local function init_hightlight()
-  -- 设置 statusline 默认色
-  vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
-  -- 非当前状态栏
-  vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
-
-  -- 定义高亮组
-  vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineViolet', { fg = '#a9a1e1', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
-end
-
+local highlight_cache = {}
 local function get_highlight(color)
   if type(color) == "string" then
-    if color:sub(1, 1) == "#" then
-      return string.format("%%#StatusLine%s#", color:sub(2))
-    else
-      return string.format("%%#%s#", color)
+    return string.format("%%#%s#", color)  -- 如果是字符串，直接作为 highlight 组
+  elseif type(color) == "table" then
+    local fg = color.fg or "NONE"
+    local bg = color.bg or "NONE"
+    local bold = color.bold and "bold" or "NONE"
+    local hl_group = string.format("StatusLineCustom_%s_%s_%s", fg:sub(2), bg:sub(2), bold)
+
+    -- 检查缓存中是否已有此 highlight 组
+    if not highlight_cache[hl_group] then
+      -- 如果没有缓存，则创建新的 highlight 组
+      vim.api.nvim_set_hl(0, hl_group, { fg = fg, bg = bg, bold = color.bold })
+      -- 缓存已创建的 highlight 组
+      highlight_cache[hl_group] = true
     end
-  elseif type(color) == "table" and color.fg then
-    if color.fg:sub(1, 1) == "#" then
-      return string.format("%%#StatusLine%s#", color.fg:sub(2))
-    else
-      return string.format("%%#%s#", color.fg)
-    end
-  else
-    return "%#StatusLine#"
+
+    return string.format("%%#%s#", hl_group)  -- 返回对应的 highlight 组
   end
+  return "%#StatusLine#"  -- 默认返回普通状态栏 highlight
 end
 
 local special_filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
 
 local conditions = {
   hide_in_width = function(max)
-    return vim.fn.winwidth(0) > (max or 80)
+    return vim.api.nvim_win_get_width(0) > (max or 80)
   end,
 }
 
 local components_helper = {
-  refresh_gps_text = require('lu5je0.lang.function-utils').debounce(function(bufnr)
-    local path = require('lu5je0.misc.gps-path').path()
-    local max_len = 35
-    if #path > max_len then
-      path = vim.fn.strcharpart(path, 0, max_len)
-      if string.sub(path, #path, #path) ~= ' ' then
-        path = path .. ' …'
-      else
-        path = path .. '…'
-      end
-    end
-    vim.b[bufnr].gps_text = path
-  end, 100),
   mode_mappings = {
-    fallback = { text = 'UKN', color = colors.StatusLineYellow },
-    n = { text = 'NOR', color = colors.StatusLineYellow },  -- Normal 模式
-    i = { text = 'INS', color = colors.StatusLineYellow },  -- Insert 模式
+    fallback = { text = 'UKN', color = colors.yellow },
+    n = { text = 'NOR', color = colors.yellow },  -- Normal 模式
+    i = { text = 'INS', color = colors.yellow },  -- Insert 模式
     no = { text = 'NOP' },                        -- Normal 模式
     c = { text = 'COM' },                         -- Command-line 模式
-    v = { text = 'VIS', color = colors.StatusLineRed },     -- Visual 模式
-    V = { text = 'VIL', color = colors.StatusLineRed },     -- Visual Line 模式
-    [''] = { text = 'VIB', color = colors.StatusLineRed }, -- Visual Block 模式
+    v = { text = 'VIS', color = colors.red },     -- Visual 模式
+    V = { text = 'VIL', color = colors.red },     -- Visual Line 模式
+    [''] = { text = 'VIB', color = colors.red }, -- Visual Block 模式
     R = { text = 'REP' },                         -- Replace 模式
     Rv = { text = 'VRP' },                        -- Virtual Replace 模式
     s = { text = 'SEL' },                         -- Select 模式
@@ -154,15 +132,19 @@ local components_helper = {
 local function create_statusline_timer(mills)
   local timer = vim.loop.new_timer()
   timer:start(0, mills, vim.schedule_wrap(function()
-    if vim.api.nvim_get_current_buf() == vim.fn.bufnr('%') then
-      vim.cmd('redrawstatus')
-    end
+    vim.cmd.redrawstatus()
   end))
   return timer
 end
 
 M.setup = function()
-  init_hightlight()
+  -- 设置 statusline 默认色
+  vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
+  -- 非当前状态栏
+  vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
+
+  -- 定义高亮组
+  vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
 
   ins_left {
     function()
@@ -177,13 +159,9 @@ M.setup = function()
       if mapping == nil then
         mapping = components_helper.mode_mappings.fallback
       end
-      local fg_color = mapping.color or colors.yellow
-      if fg_color then
-        vim.api.nvim_set_hl(0, "LualineMode", { bold = true, fg = fg_color, bg = colors.bg })
-      end
-      return mapping.text
+      local fg_color = { fg = mapping.color or colors.yellow }
+      return get_highlight(fg_color) .. mapping.text
     end,
-    color = "LualineMode",
     inactive = false,
     padding = { left = 1, right = 0 },
   }
@@ -197,6 +175,9 @@ M.setup = function()
       return "%#" .. highlight .. "#" .. icon
     end,
     color = "StatusLineGrey",
+    cache = true,
+    cache_ttl = 2000,
+    cache_evict_autocmd = { 'CmdlineLeave' },
     padding = { left = 1, right = 0 },
   }
 
@@ -206,9 +187,9 @@ M.setup = function()
       filename = vim.fn.fnamemodify(filename, ":t")
       return filename == '' and '[Untitled]' or filename
     end,
-    color = "StatusLineViolet",
+    color = { fg = colors.violet, bold = true },
     cache = true,
-    cache_ttl = 1000,
+    cache_ttl = 2000,
     cache_evict_autocmd = { 'CmdlineLeave' },
     padding = { left = 1, right = 0 },
   }
@@ -243,21 +224,30 @@ M.setup = function()
       end
       return ""
     end,
+    cache_ttl = 1000,
     padding = { left = 1, right = 0 },
   }
 
   ins_left {
     function()
-      local bufnr = vim.api.nvim_get_current_buf()
-      components_helper.refresh_gps_text(bufnr)
-      local text = vim.b[bufnr].gps_text
-      return text == nil and "" or text
+      local path = require('lu5je0.misc.gps-path').path()
+      local max_len = 35
+      if #path > max_len then
+        path = vim.fn.strcharpart(path, 0, max_len)
+        if string.sub(path, #path, #path) ~= ' ' then
+          path = path .. ' …'
+        else
+          path = path .. '…'
+        end
+      end
+      return path == nil and "" or path
     end,
     inactive = false,
     cond = function(args)
       return conditions.hide_in_width(80) and not require('lu5je0.ext.big-file').is_big_file(0) and
           require('lu5je0.misc.gps-path').is_available(args.buf_id)
     end,
+    cache_ttl = 1000,
     color = { fg = colors.white },
     padding = { left = 1, right = 0 },
   }
@@ -314,7 +304,7 @@ M.setup = function()
       end
       return process .. ' ' .. position
     end,
-    color = "StatusLineGrey",
+    color = { fg = colors.grey, bold = false },
     padding = { left = 1, right = 0 },
   }
 
@@ -323,11 +313,10 @@ M.setup = function()
       return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() ..
       ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
     end,
-    cache = true,
     cache_ttl = 5000,
     cache_evict_autocmd = { "CmdlineLeave" },
     -- cond = function() return conditions.hide_in_width(80) end,
-    color = "StatusLineGreen",
+    color = { fg = colors.green, bold = true },
     padding = { left = 1, right = 1 },
   }
 
@@ -378,7 +367,7 @@ M.setup = function()
     local left_parts = process_components(M.left_components)
     local right_parts = process_components(M.right_components)
 
-    local r = table.concat(left_parts, '') .. "%=" .. table.concat(right_parts, '')
+    local r = table.concat({ table.concat(left_parts, ''), "%=", table.concat(right_parts, '') })
     -- timer.end_timer()
     return r
   end
@@ -396,6 +385,6 @@ end
 
 -- vim.g.statusline_winid = vim.api.nvim_get_current_win()
 -- local timer = require('lu5je0.lang.timer')
--- timer.measure_fn(require('lu5je0.core.statusline').statusline, 50000)
+-- timer.measure_fn(require('lu5je0.core.statusline').statusline, 80000)
 
 return M
