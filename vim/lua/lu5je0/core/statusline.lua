@@ -191,6 +191,18 @@ M.setup = function()
     cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
     padding = { left = 1, right = 0 },
   }
+  
+  -- modified status
+  ins_left {
+    function(args)
+      if vim.bo[args.buf_id].modified then
+        return '●'
+      end
+      return nil
+    end,
+    color = 'Green',
+    padding = { left = 1, right = 0 },
+  }
 
   ins_left {
     function()
@@ -222,7 +234,7 @@ M.setup = function()
       end
       return ""
     end,
-    cache_ttl = 1000,
+    cache_ttl = 100,
     padding = { left = 1, right = 0 },
   }
 
