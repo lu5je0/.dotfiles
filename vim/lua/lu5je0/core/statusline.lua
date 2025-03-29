@@ -55,10 +55,16 @@ local function insert_component(component_list, component)
 end
 
 local function ins_left(component)
+  if not component.padding then
+    component.padding = { left = 1, right = 0 }
+  end
   insert_component(M.left_components, component)
 end
 
 local function ins_right(component)
+  if not component.padding then
+    component.padding = { left = 0, right = 1 }
+  end
   insert_component(M.right_components, component)
 end
 
@@ -163,7 +169,6 @@ M.setup = function()
       return get_highlight(fg_color) .. mapping.text
     end,
     inactive = false,
-    padding = { left = 1, right = 0 },
   }
   
   ins_left {
@@ -178,7 +183,6 @@ M.setup = function()
     cache = true,
     cache_ttl = 2000,
     cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
-    padding = { left = 1, right = 0 },
   }
 
   ins_left {
@@ -189,7 +193,6 @@ M.setup = function()
     cache = true,
     cache_ttl = 2000,
     cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
-    padding = { left = 1, right = 0 },
   }
   
   -- modified status
@@ -214,7 +217,6 @@ M.setup = function()
       return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
     end,
     color = { fg = colors.white },
-    padding = { left = 1, right = 0 },
   }
 
   ins_left {
@@ -238,7 +240,6 @@ M.setup = function()
     end,
     cache_ttl = 1000,
     color = { fg = colors.white },
-    padding = { left = 1, right = 0 },
   }
 
   ins_right {
@@ -269,7 +270,6 @@ M.setup = function()
 
       return table.concat(result, " ")
     end,
-    padding = { left = 0, right = 1 },
     cache = true,
     cache_ttl = 1000,
   }
@@ -293,7 +293,6 @@ M.setup = function()
       return ""
     end,
     cache_ttl = 100,
-    padding = { left = 0, right = 1 },
   }
 
   ins_right {
@@ -316,7 +315,6 @@ M.setup = function()
       return process .. ' ' .. position
     end,
     color = { fg = colors.grey, bold = false },
-    padding = { left = 0, right = 1 },
   }
 
   ins_right {
@@ -328,7 +326,6 @@ M.setup = function()
     cache_evict_autocmd = { "CmdlineLeave" },
     cond = function(args) return conditions.hide_in_width(args.win_id, 80) end,
     color = { fg = colors.green, bold = true },
-    padding = { left = 0, right = 1 },
   }
 
   M.statusline = function()
