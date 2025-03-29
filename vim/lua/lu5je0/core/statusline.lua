@@ -104,8 +104,8 @@ end
 local special_filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
 
 local conditions = {
-  hide_in_width = function(max)
-    return vim.api.nvim_win_get_width(0) > (max or 80)
+  hide_in_width = function(win_id, max)
+    return vim.api.nvim_win_get_width(win_id) > (max or 80)
   end,
 }
 
@@ -242,7 +242,7 @@ M.setup = function()
     end,
     inactive = false,
     cond = function(args)
-      return conditions.hide_in_width(80) and not require('lu5je0.ext.big-file').is_big_file(0) and
+      return conditions.hide_in_width(args.win_id, 80) and not require('lu5je0.ext.big-file').is_big_file(0) and
           require('lu5je0.misc.gps-path').is_available(args.buf_id)
     end,
     cache_ttl = 1000,
@@ -313,7 +313,7 @@ M.setup = function()
     end,
     cache_ttl = 5000,
     cache_evict_autocmd = { "CmdlineLeave" },
-    cond = function() return conditions.hide_in_width(80) end,
+    cond = function(args) return conditions.hide_in_width(args.win_id, 80) end,
     color = { fg = colors.green, bold = true },
     padding = { left = 0, right = 1 },
   }
