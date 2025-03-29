@@ -77,55 +77,20 @@ local colors = {
   blue     = '#51afef',
   red      = '#ec5f67',
 }
-local custom_filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
-local mode_mappings = {
-  fallback = { text = 'UKN', color = colors.yellow },
-  n = { text = 'NOR', color = colors.yellow },  -- Normal 模式
-  i = { text = 'INS', color = colors.yellow },  -- Insert 模式
-  no = { text = 'NOP' },                        -- Normal 模式
-  c = { text = 'COM' },                         -- Command-line 模式
-  v = { text = 'VIS', color = colors.red },     -- Visual 模式
-  V = { text = 'VIL', color = colors.red },     -- Visual Line 模式
-  [''] = { text = 'VIB', color = colors.red }, -- Visual Block 模式
-  R = { text = 'REP' },                         -- Replace 模式
-  Rv = { text = 'VRP' },                        -- Virtual Replace 模式
-  s = { text = 'SEL' },                         -- Select 模式
-  S = { text = 'SIL' },                         -- Select Line 模式
-  [''] = { text = 'SIB' },                     -- Select Block 模式
-  t = { text = 'TER' },                          -- Terminal 模式
-  nt = { text = 'TER' }                          -- Terminal 模式
-}
 
-local function_utils = require('lu5je0.lang.function-utils')
-local big_file = require('lu5je0.ext.big-file')
-local refresh_gps_text = function_utils.debounce(function(bufnr)
-  local path = require('lu5je0.misc.gps-path').path()
-  local max_len = 35
-  if #path > max_len then
-    path = vim.fn.strcharpart(path, 0, max_len)
-    if string.sub(path, #path, #path) ~= ' ' then
-      path = path .. ' …'
-    else
-      path = path .. '…'
-    end
-  end
-  vim.b[bufnr].gps_text = path
-end, 100)
+local function init_hightlight()
+  -- 设置 statusline 默认色
+  vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
+  -- 非当前状态栏
+  vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
 
-local expand = vim.fn.expand
-local conditions = {
-  buffer_not_empty = function()
-    return vim.fn.empty(expand('%:t')) ~= 1
-  end,
-  hide_in_width = function(max)
-    return vim.fn.winwidth(0) > (max or 80)
-  end,
-  check_git_workspace = function()
-    local filepath = expand('%:p:h')
-    local gitdir = vim.fn.finddir('.git', filepath .. ';')
-    return gitdir and #gitdir > 0 and #gitdir < #filepath
-  end,
-}
+  -- 定义高亮组
+  vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
+  vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
+  vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
+  vim.api.nvim_set_hl(0, 'StatusLineViolet', { fg = '#a9a1e1', bg = '#212328', bold = true })
+  vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
+end
 
 local function get_highlight(color)
   if type(color) == "string" then
@@ -145,19 +110,46 @@ local function get_highlight(color)
   end
 end
 
-local function init_hightlight()
-  -- 设置 statusline 默认色
-  vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
-  -- 非当前状态栏
-  vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
+local special_filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
 
-  -- 定义高亮组
-  vim.api.nvim_set_hl(0, 'StatusLineYellow', { fg = '#ECBE7B', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineGreen', { fg = '#98be65', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineMagenta', { fg = '#c678dd', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineViolet', { fg = '#a9a1e1', bg = '#212328', bold = true })
-  vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
-end
+local conditions = {
+  hide_in_width = function(max)
+    return vim.fn.winwidth(0) > (max or 80)
+  end,
+}
+
+local components_helper = {
+  refresh_gps_text = require('lu5je0.lang.function-utils').debounce(function(bufnr)
+    local path = require('lu5je0.misc.gps-path').path()
+    local max_len = 35
+    if #path > max_len then
+      path = vim.fn.strcharpart(path, 0, max_len)
+      if string.sub(path, #path, #path) ~= ' ' then
+        path = path .. ' …'
+      else
+        path = path .. '…'
+      end
+    end
+    vim.b[bufnr].gps_text = path
+  end, 100),
+  mode_mappings = {
+    fallback = { text = 'UKN', color = colors.StatusLineYellow },
+    n = { text = 'NOR', color = colors.StatusLineYellow },  -- Normal 模式
+    i = { text = 'INS', color = colors.StatusLineYellow },  -- Insert 模式
+    no = { text = 'NOP' },                        -- Normal 模式
+    c = { text = 'COM' },                         -- Command-line 模式
+    v = { text = 'VIS', color = colors.StatusLineRed },     -- Visual 模式
+    V = { text = 'VIL', color = colors.StatusLineRed },     -- Visual Line 模式
+    [''] = { text = 'VIB', color = colors.StatusLineRed }, -- Visual Block 模式
+    R = { text = 'REP' },                         -- Replace 模式
+    Rv = { text = 'VRP' },                        -- Virtual Replace 模式
+    s = { text = 'SEL' },                         -- Select 模式
+    S = { text = 'SIL' },                         -- Select Line 模式
+    [''] = { text = 'SIB' },                     -- Select Block 模式
+    t = { text = 'TER' },                          -- Terminal 模式
+    nt = { text = 'TER' }                          -- Terminal 模式
+  }
+}
 
 local function create_statusline_timer(mills)
   local timer = vim.loop.new_timer()
@@ -181,9 +173,9 @@ M.setup = function()
       else
         mode = vim.api.nvim_get_mode().mode
       end
-      local mapping = mode_mappings[mode]
+      local mapping = components_helper.mode_mappings[mode]
       if mapping == nil then
-        mapping = mode_mappings.fallback
+        mapping = components_helper.mode_mappings.fallback
       end
       local fg_color = mapping.color or colors.yellow
       if fg_color then
@@ -257,14 +249,13 @@ M.setup = function()
   ins_left {
     function()
       local bufnr = vim.api.nvim_get_current_buf()
-      refresh_gps_text(bufnr)
+      components_helper.refresh_gps_text(bufnr)
       local text = vim.b[bufnr].gps_text
       return text == nil and "" or text
     end,
-    --  TODO
     inactive = false,
     cond = function(args)
-      return conditions.hide_in_width(80) and not big_file.is_big_file(0) and
+      return conditions.hide_in_width(80) and not require('lu5je0.ext.big-file').is_big_file(0) and
           require('lu5je0.misc.gps-path').is_available(args.buf_id)
     end,
     color = { fg = colors.white },
@@ -352,7 +343,7 @@ M.setup = function()
     local extension_name = filename and filename:match(".+%.(%w+)$") or ""
     local filetype = vim.bo[buf_id].filetype
 
-    if vim.tbl_contains(custom_filetypes, filetype) then
+    if vim.tbl_contains(special_filetypes, filetype) then
       return '%#StatusLineGrey# ' .. filetype:upper()
     end
     local args = { win_id = win_id, buf_id = buf_id, filename = filename, extension_name = extension_name }
