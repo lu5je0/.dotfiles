@@ -259,7 +259,7 @@ function bash-ctrl-d() {
     if [[ "$LASTWIDGET" == "bash-ctrl-d" ]]; then
       ((--__BASH_IGNORE_EOF <= 1)) && exit
     else
-      echo 'repeat ^D to exit shell'
+      echo 'Press Ctrl+D again to exit the shell.'
       ((__BASH_IGNORE_EOF = IGNOREEOF))
     fi
   else
