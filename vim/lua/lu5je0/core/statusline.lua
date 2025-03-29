@@ -278,7 +278,7 @@ M.setup = function()
 
       return table.concat(result, " ")
     end,
-    padding = { left = 0, right = 0 },
+    padding = { left = 0, right = 1 },
     cache = true,
     cache_ttl = 1000,
   }
@@ -303,7 +303,7 @@ M.setup = function()
       return process .. ' ' .. position
     end,
     color = { fg = colors.grey, bold = false },
-    padding = { left = 1, right = 0 },
+    padding = { left = 0, right = 1 },
   }
 
   ins_right {
@@ -313,9 +313,9 @@ M.setup = function()
     end,
     cache_ttl = 5000,
     cache_evict_autocmd = { "CmdlineLeave" },
-    -- cond = function() return conditions.hide_in_width(80) end,
+    cond = function() return conditions.hide_in_width(80) end,
     color = { fg = colors.green, bold = true },
-    padding = { left = 1, right = 1 },
+    padding = { left = 0, right = 1 },
   }
 
   M.statusline = function()
