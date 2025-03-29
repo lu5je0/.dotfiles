@@ -1,7 +1,4 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
-local has_mac = vim.fn.has('mac') == 1
-local has_wsl = vim.fn.has('wsl') == 1
-local has_ssh_client = vim.fn.has('ssh_client') == 1
 
 local disabled_plugins = {
   "2html_plugin",
@@ -30,10 +27,6 @@ local disabled_plugins = {
   "vimball",
   "vimballPlugin",
 }
-
-if not has_ssh_client then
-  table.insert(disabled_plugins, 'osc52')
-end
 
 local opts = {
   concurrency = 20,
@@ -65,8 +58,10 @@ require("lazy").setup({
       
       vim.g.edge_loaded_file_types = { 'NvimTree' }
       
-      
-      require('lu5je0.core.statusline').setup()
+      -- 设置 statusline 默认色
+      vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
+      -- 非当前状态栏
+      vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
     end
   },
   -- {
@@ -137,27 +132,6 @@ require("lazy").setup({
     end,
     event = 'VeryLazy'
   },
-  -- {
-  --   'ojroques/vim-oscyank',
-  --   init = function()
-  --     vim.g.oscyank_silent = 1
-  --     vim.g.oscyank_trim = 0
-  --   end,
-  --   config = function()
-  --   local has_mac = vim.fn.has('mac') == 1
-  --   local has_wsl = vim.fn.has('wsl') == 1
-  --     if has_wsl or has_mac then
-  --       return
-  --     end
-  --     vim.api.nvim_create_autocmd('TextYankPost', {
-  --       pattern = '*',
-  --       callback = function()
-  --         vim.cmd [[ OSCYankRegister " ]]
-  --       end,
-  --     })
-  --   end,
-  --   event = 'VeryLazy'
-  -- },
 
   {
     'tpope/vim-fugitive',

@@ -144,10 +144,6 @@ local function create_statusline_timer(mills)
 end
 
 M.setup = function()
-  -- 设置 statusline 默认色
-  vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
-  -- 非当前状态栏
-  vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
 
   -- 定义高亮组
   vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })

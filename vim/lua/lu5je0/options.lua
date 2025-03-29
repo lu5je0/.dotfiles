@@ -131,7 +131,6 @@ g.loaded_ruby_provider = 0
 -- colorscheme
 o.termguicolors = true
 o.bg = 'dark'
-o.statusline = " "
 o.ruler = false
 
 if has('mac') then
