@@ -242,7 +242,7 @@ M.setup = function()
     end,
     inactive = false,
     cond = function(args)
-      return conditions.hide_in_width(args.win_id, 80) and not require('lu5je0.ext.big-file').is_big_file(0) and
+      return conditions.hide_in_width(args.win_id, 80) and not require('lu5je0.ext.big-file').is_big_file(args.buf_id) and
           require('lu5je0.misc.gps-path').is_available(args.buf_id)
     end,
     cache_ttl = 1000,
