@@ -169,7 +169,7 @@ M.setup = function()
   ins_left {
     function(args)
       local devicons = require('nvim-web-devicons')
-      local icon, highlight = devicons.get_icon(args.filename, args.filename:match(".+%.(%w+)$"), {})
+      local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'
       return "%#" .. highlight .. "#" .. icon
@@ -183,9 +183,7 @@ M.setup = function()
 
   ins_left {
     function(args)
-      local filename = vim.api.nvim_buf_get_name(args.buf_id)
-      filename = vim.fn.fnamemodify(filename, ":t")
-      return filename == '' and '[Untitled]' or filename
+      return args.filename == '' and '[Untitled]' or args.filename
     end,
     color = { fg = colors.violet, bold = true },
     cache = true,
@@ -328,14 +326,13 @@ M.setup = function()
     local buf_id = vim.api.nvim_win_get_buf(win_id)
     local focus_win_id = vim.api.nvim_get_current_win()
     local focus_win_is_floating = vim.api.nvim_win_get_config(focus_win_id).relative ~= ''
-    local filename = vim.api.nvim_buf_get_name(buf_id)
-    local extension_name = filename and filename:match(".+%.(%w+)$") or ""
+    local filename = vim.fs.basename(vim.api.nvim_buf_get_name(buf_id))
     local filetype = vim.bo[buf_id].filetype
 
     if vim.tbl_contains(special_filetypes, filetype) then
       return '%#StatusLineGrey# ' .. filetype:upper()
     end
-    local args = { win_id = win_id, buf_id = buf_id, filename = filename, extension_name = extension_name }
+    local args = { win_id = win_id, buf_id = buf_id, filename = filename, filetype=filetype }
 
     local function process_components(components)
       local parts = {}
