@@ -1,0 +1,12 @@
+[core]
+	quotepath = false
+	editor = 'nvim.cmd'
+	autocrlf = false
+	eol = lf
+[user]
+	name = lu5je0
+	email = lu5je0@gmail.com
+[credential "helperselector"]
+	selected = manager
+[pull]
+	rebase = false
