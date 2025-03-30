@@ -1,11 +1,13 @@
 [user]
-	email = lu5je0@gmail.com
-	name = lu5je0
+    email = lu5je0@gmail.com
+    name = lu5je0
 [core]
     editor = nvim
-	quotepath = off
+    quotepath = off
+    autocrlf = false
+    eol = lf
 [github]
-	user = lu5je0
-	email = lu5je0@gmail.com
+    user = lu5je0
+    email = lu5je0@gmail.com
 [pull]
-	rebase = false
+    rebase = false
