@@ -81,47 +81,104 @@ end
 
 local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
 local function enable_treesitter_fold()
-  local function fold_virt_text(result, s, lnum, coloff)
-    if not coloff then
-      coloff = 0
+  local function fold_text(line_num)
+    -- String of first line of fold.
+    local line = vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)[1]
+
+    -- Get language of current buffer.
+    local lang = vim.treesitter.language.get_lang(vim.bo.filetype)
+
+    -- Create `LanguageTree`, i.e. parser object, for current buffer filetype.
+    local parser = vim.treesitter.get_parser(0, lang)
+
+    if parser == nil then
+      return {}
     end
-    local text = ""
-    local hl
-    for i = 1, #s do
-      local char = s:sub(i, i)
-      local hls = vim.treesitter.get_captures_at_pos(0, lnum, coloff + i - 1)
-      local _hl = hls[#hls]
-      if _hl then
-        local new_hl = "@" .. _hl.capture
-        if new_hl ~= hl then
-          table.insert(result, { text, hl })
-          text = ""
-          hl = nil
-        end
-        text = text .. char
-        hl = new_hl
+
+    -- Get `highlights` query for current buffer parser, as table from file,
+    -- which gives information on highlights of tree nodes produced by parser.
+    local query = vim.treesitter.query.get(parser:lang(), "highlights")
+
+    if query == nil then
+      return {}
+    end
+
+    -- Partial TSTree for buffer, including root TSNode, and TSNodes of folded line.
+    -- PERF: Only parsing needed range, as parsing whole file would be slower.
+    local tree = parser:parse({ line_num - 1, line_num })[1]
+
+    local result = {}
+    local line_pos = 0
+    local prev_range = { 0, 0 }
+
+    -- Loop through matched "captures", i.e. node-to-capture-group pairs, for each TSNode in given range.
+    -- Each TSNode could occur several times in list, i.e. map to several capture groups,
+    -- and each capture group could be used by several TSNodes.
+    for id, node, _ in query:iter_captures(tree:root(), 0, line_num - 1, line_num) do
+      -- Name of capture group from query, for current capture.
+      local name = query.captures[id]
+
+      -- Text of captured node.
+      local text = vim.treesitter.get_node_text(node, 0)
+
+      -- Range, i.e. lines in source file, captured TSNode spans, where row is first line of fold.
+      local start_row, start_col, end_row, end_col = node:range()
+
+      -- Include part of folded line between captured TSNodes, i.e. whitespace,
+      -- with arbitrary highlight group, e.g. "Folded", in final `foldtext`.
+      if start_col > line_pos then
+        table.insert(result, { line:sub(line_pos + 1, start_col), "Folded" })
+      end
+
+      -- For control flow analysis, break if TSNode does not have proper range.
+      if end_col == nil or start_col == nil then
+        break
+      end
+
+      -- Move `line_pos` to end column of current node,
+      -- thus ensuring next loop iteration includes whitespace between TSNodes.
+      line_pos = end_col
+
+      -- Save source code range current TSNode spans, so current TSNode can be ignored if
+      -- next capture is for TSNode covering same section of source code.
+      local range = { start_col, end_col }
+
+      -- Use language specific highlight, if it exists.
+      local highlight = "@" .. name
+      local highlight_lang = highlight .. "." .. lang
+      if vim.fn.hlexists(highlight_lang) then
+        highlight = highlight_lang
+      end
+
+      -- Insert TSNode text itself, with highlight group from treesitter.
+      if range[1] == prev_range[1] and range[2] == prev_range[2] then
+        -- Overwrite previous capture, as it was for same range from source code.
+        result[#result] = { text, highlight }
       else
-        text = text .. char
+        -- Insert capture for TSNode covering new range of source code.
+        table.insert(result, { text, highlight })
+        prev_range = range
       end
     end
-    table.insert(result, { text, hl })
+
+    return result
   end
   function _G.__custom_foldtext()
-    local start = vim.fn.getline(vim.v.foldstart):gsub("\t", string.rep(" ", vim.o.tabstop))
-    local end_str = vim.fn.getline(vim.v.foldend)
-    local end_ = vim.trim(end_str)
-    local result = {}
-    fold_virt_text(result, start, vim.v.foldstart - 1)
+    local result = fold_text(vim.v.foldstart)
     
     if vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
       table.insert(result, { ' … ', 'TSPunctBracket' })
-      fold_virt_text(result, end_, vim.v.foldend - 1, #(end_str:match("^(%s+)") or ""))
+      for i, v in ipairs(fold_text(vim.v.foldend)) do
+        if i == 1 then
+          v[1] = v[1]:gsub("^%s+", "")
+        end
+        table.insert(result, v)
+      end
     end
     
     local first_column = vim.fn.winsaveview().leftcol
     return truncate_foldtext(result, first_column)
   end
-  vim.opt.foldtext = "v:lua.__custom_foldtext()"
   
   treesitter.define_modules {
     fold = {
@@ -131,6 +188,7 @@ local function enable_treesitter_fold()
         vim.defer_fn(function()
           vim.wo[win_id].foldmethod = 'expr'
           vim.wo[win_id].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+          vim.opt_local.foldtext = "v:lua.__custom_foldtext()"
           if not vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
             vim.opt_local.foldtext = ""
           end

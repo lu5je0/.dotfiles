@@ -244,13 +244,15 @@ M.setup = function()
       if #diagnostics == 0 then
         return nil
       end
-      local count = { ERROR = 0--[[ , WARN = 0, INFO = 0, HINT = 0 ]] }
-      local symbols = { ERROR = ' ', --[[ WARN = ' ', INFO = ' ', HINT = ' ' ]] }
+      local count = { ERROR = 0, WARN = 0, INFO = 0, HINT = 0 }
+      local symbols = { ERROR = ' ',WARN = ' ', INFO = ' ', HINT = ' ' }
 
       for _, diagnostic in ipairs(diagnostics) do
         local severity = diagnostic.severity
         if severity == 1 then
-          count["ERROR"] = (count["ERROR"] or 0) + 1
+          count.ERROR = (count.ERROR or 0) + 1
+        elseif severity == 2 then
+          count.WARN = (count.WARN or 0) + 1
         end
       end
 
