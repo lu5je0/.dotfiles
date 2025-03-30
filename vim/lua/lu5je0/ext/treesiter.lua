@@ -79,8 +79,8 @@ local function truncate_foldtext(foldtexts, leftcol)
   return result
 end
 
+local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
 local function enable_treesitter_fold()
-  local suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
   local function fold_virt_text(result, s, lnum, coloff)
     if not coloff then
       coloff = 0
@@ -113,7 +113,7 @@ local function enable_treesitter_fold()
     local result = {}
     fold_virt_text(result, start, vim.v.foldstart - 1)
     
-    if vim.tbl_contains(suffix_ft_white_list, vim.bo.filetype) then
+    if vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
       table.insert(result, { ' … ', 'TSPunctBracket' })
       fold_virt_text(result, end_, vim.v.foldend - 1, #(end_str:match("^(%s+)") or ""))
     end
@@ -131,7 +131,9 @@ local function enable_treesitter_fold()
         vim.defer_fn(function()
           vim.wo[win_id].foldmethod = 'expr'
           vim.wo[win_id].foldexpr = "v:lua.vim.treesitter.foldexpr()"
-          -- vim.wo[win_id].foldtext = "v:lua.vim.treesitter.foldtext()"
+          if not vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
+            vim.opt_local.foldtext = ""
+          end
         end, 100)
       end,
       detach = function(buf)
