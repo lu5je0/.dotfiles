@@ -375,11 +375,11 @@ M.setup = function()
     return r
   end
 
-  _G.my_status_line = function()
+  _G.__my_status_line = function()
     return M.statusline()
   end
 
-  vim.o.statusline = '%!v:lua._G.my_status_line()'
+  vim.o.statusline = '%!v:lua._G.__my_status_line()'
   create_statusline_timer(300)
   
   -- local timer = require('lu5je0.lang.timer')

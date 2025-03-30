@@ -106,7 +106,7 @@ local function enable_treesitter_fold()
     end
     table.insert(result, { text, hl })
   end
-  function _G.custom_foldtext()
+  function _G.__custom_foldtext()
     local start = vim.fn.getline(vim.v.foldstart):gsub("\t", string.rep(" ", vim.o.tabstop))
     local end_str = vim.fn.getline(vim.v.foldend)
     local end_ = vim.trim(end_str)
@@ -121,7 +121,7 @@ local function enable_treesitter_fold()
     local first_column = vim.fn.winsaveview().leftcol
     return truncate_foldtext(result, first_column)
   end
-  vim.opt.foldtext = "v:lua.custom_foldtext()"
+  vim.opt.foldtext = "v:lua.__custom_foldtext()"
   
   treesitter.define_modules {
     fold = {
