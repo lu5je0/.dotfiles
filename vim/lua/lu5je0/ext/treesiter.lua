@@ -186,11 +186,13 @@ local function enable_treesitter_fold()
         -- set treesiter
         local win_id = vim.api.nvim_get_current_win()
         vim.defer_fn(function()
-          vim.wo[win_id].foldmethod = 'expr'
-          vim.wo[win_id].foldexpr = "v:lua.vim.treesitter.foldexpr()"
-          vim.opt_local.foldtext = "v:lua.__custom_foldtext()"
-          if not vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
-            vim.opt_local.foldtext = ""
+          if vim.api.nvim_get_current_buf() == buf then
+            vim.wo[win_id][0].foldmethod = 'expr'
+            vim.wo[win_id][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+            vim.opt_local.foldtext = "v:lua.__custom_foldtext()"
+            if not vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
+              vim.opt_local.foldtext = ""
+            end
           end
         end, 100)
       end,
