@@ -379,15 +379,17 @@ M.setup = function()
     return M.statusline()
   end
 
-  vim.cmd [[set statusline=%!v:lua._G.my_status_line()]]
+  vim.o.statusline = '%!v:lua._G.my_status_line()'
   create_statusline_timer(300)
+  
+  -- local timer = require('lu5je0.lang.timer')
+  -- timer.measure_fn(require('lualine').statusline, 10000)
+  vim.api.nvim_create_user_command("StatusLineBenchmark", function()
+    vim.g.statusline_winid = vim.api.nvim_get_current_win()
+    local timer = require('lu5je0.lang.timer')
+    timer.measure_fn(M.statusline, 80000)
+  end, {})
 end
 
--- local timer = require('lu5je0.lang.timer')
--- timer.measure_fn(require('lualine').statusline, 10000)
-
--- vim.g.statusline_winid = vim.api.nvim_get_current_win()
--- local timer = require('lu5je0.lang.timer')
--- timer.measure_fn(require('lu5je0.core.statusline').statusline, 80000)
 
 return M
