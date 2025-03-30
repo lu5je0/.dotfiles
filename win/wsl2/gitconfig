@@ -1,6 +1,6 @@
 [core]
 	quotepath = false
-	editor = 'nvim'
+	editor = 'nvim.cmd'
 	autocrlf = false
 	eol = lf
 [user]
