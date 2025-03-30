@@ -69,7 +69,7 @@ local function ins_right(component)
 end
 
 local colors = {
-  bg       = '#202328',
+  bg       = '#212328',
   white    = '#bcc6d3',
   grey     = '#cccccc',
   fg       = '#bbc2cf',
@@ -90,7 +90,7 @@ local function get_highlight(color)
     return string.format("%%#%s#", color)  -- 如果是字符串，直接作为 highlight 组
   elseif type(color) == "table" then
     local fg = color.fg or "NONE"
-    local bg = color.bg or "NONE"
+    local bg = color.bg or colors.bg
     local bold = color.bold and "bold" or "NONE"
     local hl_group = string.format("StatusLineCustom_%s_%s_%s", fg:sub(2), bg:sub(2), bold)
 
