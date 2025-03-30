@@ -1,1 +1,1 @@
-let g:markdown_folding = 1
+let g:markdown_folding = 0

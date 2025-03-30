@@ -131,6 +131,7 @@ local function enable_treesitter_fold()
         vim.defer_fn(function()
           vim.wo[win_id].foldmethod = 'expr'
           vim.wo[win_id].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+          -- vim.wo[win_id].foldtext = "v:lua.vim.treesitter.foldtext()"
         end, 100)
       end,
       detach = function(buf)
