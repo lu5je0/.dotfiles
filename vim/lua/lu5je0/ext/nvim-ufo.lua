@@ -3,6 +3,47 @@ local string_utils = require('lu5je0.lang.string-utils')
 
 local suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
 
+local function truncate_foldtext(foldtexts, leftcol)
+  if leftcol == 0 then
+    return foldtexts
+  end
+    
+  local result = {}
+  local foldtext_col = 0
+  local found = false
+  
+  for _, foldtext in ipairs(foldtexts) do
+    local text = foldtext[1]
+    local hl = foldtext[2]
+    
+    for i = 1, vim.fn.strchars(text) do
+      local c = vim.fn.strcharpart(text, i - 1, 1)
+      local width = vim.fn.strwidth(c)
+      foldtext_col = foldtext_col + width
+      if foldtext_col > leftcol then
+        -- foldtext_col - leftcol == 2的情况，双宽度字符不需要conceal
+        if width == 1 or (width > 1 and foldtext_col - leftcol == 2) then
+          table.insert(result, { vim.fn.strcharpart(text, i - 1), hl })
+        else
+          -- 双宽度字符不需要conceal
+          table.insert(result, { '>', "conceal" })
+          table.insert(result, { vim.fn.strcharpart(text, i), hl })
+        end
+        found = true
+        goto continue
+      end
+    end
+    
+    if found then
+      table.insert(result, foldtext)
+    end
+    
+    ::continue::
+  end
+  
+  return result
+end
+
 local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate, ctx)
   local newVirtText = {}
   local suffix = (' 󰁂 %d '):format(endLnum - lnum)
@@ -47,7 +88,10 @@ local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate
   
   table.insert(newVirtText, { suffix, 'MoreMsg' })
 
-  return newVirtText
+  
+  local first_column = vim.fn.winsaveview().leftcol
+  -- TODO ufo不会刷新
+  return truncate_foldtext(newVirtText, first_column)
 end
 
 -- vim.o.foldcolumn = '1'

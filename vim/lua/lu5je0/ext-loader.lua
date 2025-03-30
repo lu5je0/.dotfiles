@@ -295,19 +295,19 @@ lazy_load({
   cmd = { 'TimestampToggle' }
 })
 
-lazy_load({
-  config = function()
-    require('lu5je0.ext.plugins_helper').load_plugin('nvim-ufo')
-  end,
-  keys = {
-    { mode = { 'n' }, 'zc' },
-    { mode = { 'n' }, 'zo' },
-    { mode = { 'n' }, 'zM' },
-    { mode = { 'n' }, 'zR' },
-    { mode = { 'n' }, 'zl' },
-    defer = 60,
-  },
-  event = { 'CursorHold' }
-})
+-- lazy_load({
+--   config = function()
+--     require('lu5je0.ext.plugins_helper').load_plugin('nvim-ufo')
+--   end,
+--   keys = {
+--     { mode = { 'n' }, 'zc' },
+--     { mode = { 'n' }, 'zo' },
+--     { mode = { 'n' }, 'zM' },
+--     { mode = { 'n' }, 'zR' },
+--     { mode = { 'n' }, 'zl' },
+--     defer = 60,
+--   },
+--   event = { 'CursorHold' }
+-- })
 
 return M
