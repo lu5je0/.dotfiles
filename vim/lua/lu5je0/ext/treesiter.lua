@@ -7,10 +7,6 @@ local ts_filetypes = {
   'vue', 'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy'
 }
 
-local ts_indent_filetyps = {
-  'python', 'javascript'
-}
-
 require('nvim-treesitter.configs').setup {
   -- Modules and its options go here
   ensure_installed = ts_filetypes,
@@ -83,9 +79,8 @@ local function truncate_foldtext(foldtexts, leftcol)
   return result
 end
 
-local suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
-
-local function treesitter_fold()
+local function enable_treesitter_fold()
+  local suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
   local function fold_virt_text(result, s, lnum, coloff)
     if not coloff then
       coloff = 0
@@ -127,39 +122,60 @@ local function treesitter_fold()
     return truncate_foldtext(result, first_column)
   end
   vim.opt.foldtext = "v:lua.custom_foldtext()"
+  
+  treesitter.define_modules {
+    fold = {
+      attach = function(buf, lang)
+        -- set treesiter
+        local win_id = vim.api.nvim_get_current_win()
+        vim.defer_fn(function()
+          vim.wo[win_id].foldmethod = 'expr'
+          vim.wo[win_id].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+        end, 100)
+      end,
+      detach = function(buf)
+        -- recover settings
+        vim.wo.foldmethod = vim.go.foldmethod
+        vim.wo.foldexpr = vim.go.foldexpr
+      end,
+      is_supported = function(lang)
+        return true
+      end,
+      enable = true
+    },
+    attach_module = {
+      enable = true,
+      attach = function(buf)
+        -- highlights
+        vim.cmd([[
+        hi TSPunctBracket guifg=#ABB2BF
+        hi @constructor.lua guifg=#ABB2BF
+        ]])
+      end,
+      detach = function()
+      end
+    },
+  }
 end
 
--- treesitter_fold()
--- treesitter.define_modules {
---   fold = {
---     attach = function(buf, lang)
---       -- set treesiter
---       local win_id = vim.api.nvim_get_current_win()
---       vim.defer_fn(function()
---         vim.wo[win_id].foldmethod = 'expr'
---         vim.wo[win_id].foldexpr = "v:lua.vim.treesitter.foldexpr()"
---       end, 100)
---     end,
---     detach = function(buf)
---       -- recover settings
---       vim.wo.foldmethod = vim.go.foldmethod
---       vim.wo.foldexpr = vim.go.foldexpr
---     end,
---     is_supported = function(lang)
---       return true
---     end,
---     enable = true
---   },
---   attach_module = {
---     enable = true,
---     attach = function(buf)
---       -- highlights
---       vim.cmd([[
---       hi TSPunctBracket guifg=#ABB2BF
---       hi @constructor.lua guifg=#ABB2BF
---       ]])
---     end,
---     detach = function()
---     end
---   },
--- }
+enable_treesitter_fold()
+
+treesitter.define_modules {
+  attach_module = {
+    enable = true,
+    attach = function(bufnr)
+      -- highlights
+      vim.cmd([[
+      hi TSPunctBracket guifg=#ABB2BF
+      hi @constructor.lua guifg=#ABB2BF
+      ]])
+    end,
+    detach = function()
+      -- vim.cmd([[
+      -- silent! xunmap <buffer> v
+      -- silent! xunmap <buffer> V
+      -- ]])
+    end
+  },
+}
+
