@@ -53,7 +53,7 @@ local extensions_name = {
     end
     return res
   end,
-  color = { fg = colors.blue, bg = colors.bg, gui = 'bold' },
+  color = { fg = colors.grey, bg = colors.bg, gui = 'bold' },
 }
 
 local special_ft_extension = {
@@ -132,23 +132,26 @@ end
 local function ins_right(component)
   if component_init(component) then
     table.insert(config.sections.lualine_x, component)
+    if component.inactive == true then
+      table.insert(config.inactive_sections.lualine_x, component)
+    end
   end
 end
 
 local mode_mappings = {
-  n = { text = 'NOR', color = colors.yellow }, -- Normal 模式
+  n = { text = 'NOR', color = colors.yellow },  -- Normal 模式
   i = { text = 'INS', color = colors.yellow },  -- Insert 模式
-  no = { text = 'NOP' },      -- Normal 模式
-  c = { text = 'COM' },      -- Command-line 模式
-  v = { text = 'VIS', color = colors.red },      -- Visual 模式
-  V = { text = 'VIL', color = colors.red },      -- Visual Line 模式
+  no = { text = 'NOP' },                        -- Normal 模式
+  c = { text = 'COM' },                         -- Command-line 模式
+  v = { text = 'VIS', color = colors.red },     -- Visual 模式
+  V = { text = 'VIL', color = colors.red },     -- Visual Line 模式
   [''] = { text = 'VIB', color = colors.red }, -- Visual Block 模式
-  R = { text = 'REP' },      -- Replace 模式
-  Rv = { text = 'VRP' },     -- Virtual Replace 模式
-  s = { text = 'SEL' },      -- Select 模式
-  S = { text = 'SIL' },      -- Select Line 模式
-  [''] = { text = 'SIB' }, -- Select Block 模式
-  t = { text = 'TER' }       -- Terminal 模式
+  R = { text = 'REP' },                         -- Replace 模式
+  Rv = { text = 'VRP' },                        -- Virtual Replace 模式
+  s = { text = 'SEL' },                         -- Select 模式
+  S = { text = 'SIL' },                         -- Select Line 模式
+  [''] = { text = 'SIB' },                     -- Select Block 模式
+  t = { text = 'TER' }                          -- Terminal 模式
 }
 
 ins_left {
@@ -169,28 +172,27 @@ ins_left {
   end,
   icon_only = true,
   inactive = true,
-  -- color = { fg = colors.yellow, bg = colors.bg, gui = 'bold' },
   color = 'LualineMode',
   padding = { left = 1, right = 0 },
 }
 
-ins_left {
-  'filetype',
-  icon_only = true,
-  inactive = true,
-  color = { fg = colors.magenta, bg = colors.bg, gui = 'bold' },
-  padding = { left = 1, right = 0 },
-}
+-- ins_left {
+--   'filetype',
+--   icon_only = true,
+--   inactive = true,
+--   color = { fg = colors.magenta, bg = colors.bg, gui = 'bold' },
+--   padding = { left = 1, right = 0 },
+-- }
 
-ins_left {
-  function()
-    return ' '
-  end,
-  cond = function() return vim.bo.filetype == '' end,
-  inactive = true,
-  color = { fg = colors.white, gui = 'bold' },
-  padding = { left = 1, right = 0 },
-}
+-- ins_left {
+--   function()
+--     return ' '
+--   end,
+--   cond = function() return vim.bo.filetype == '' end,
+--   inactive = true,
+--   color = { fg = colors.white, gui = 'bold' },
+--   padding = { left = 1, right = 0 },
+-- }
 
 ins_left {
   function()
@@ -214,34 +216,34 @@ ins_left {
     return string.gsub(filename, '%%', '%%%%')
   end,
   inactive = true,
-  color = { fg = colors.magenta, gui = 'bold' },
-  padding = { left = 0, right = 0 },
-}
-
-ins_left {
-  -- filesize component
-  function()
-    if vim.b.filesize == nil then
-      vim.b.filesize = file_util.hunman_readable_file_size(vim.api.nvim_buf_get_name(0))
-    end
-    return vim.b.filesize
-  end,
-  cond = function()
-    return conditions.hide_in_width()
-  end,
-  inactive = false,
-  setup = function()
-    vim.api.nvim_create_autocmd('BufWritePost', {
-      group = require('lu5je0.autocmds').default_group,
-      pattern = '*',
-      callback = function()
-        vim.b.filesize = nil
-      end,
-    })
-  end,
-  color = { fg = colors.violet },
+  color = { fg = colors.grey },
   padding = { left = 1, right = 0 },
 }
+
+-- ins_left {
+--   -- filesize component
+--   function()
+--     if vim.b.filesize == nil then
+--       vim.b.filesize = file_util.hunman_readable_file_size(vim.api.nvim_buf_get_name(0))
+--     end
+--     return vim.b.filesize
+--   end,
+--   cond = function()
+--     return conditions.hide_in_width()
+--   end,
+--   inactive = true,
+--   setup = function()
+--     vim.api.nvim_create_autocmd('BufWritePost', {
+--       group = require('lu5je0.autocmds').default_group,
+--       pattern = '*',
+--       callback = function()
+--         vim.b.filesize = nil
+--       end,
+--     })
+--   end,
+--   color = { fg = colors.violet },
+--   padding = { left = 1, right = 0 },
+-- }
 
 ins_left {
   'diff',
@@ -265,13 +267,13 @@ ins_left {
     return ('[%s/%s]'):format(vm_infos['current'], vm_infos['total'])
   end,
   cond = function() return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0 end,
-  color = { fg = colors.white, gui = 'bold' },
+  color = { fg = colors.white },
   padding = { left = 1, right = 0 },
 }
 
 local refresh_gps_text = function_utils.debounce(function(bufnr)
   local path = require('lu5je0.misc.gps-path').path()
-  local max_len = 40
+  local max_len = 35
   if #path > max_len then
     path = vim.fn.strcharpart(path, 0, max_len)
     if string.sub(path, #path, #path) ~= ' ' then
@@ -291,7 +293,8 @@ ins_left {
   end,
   inactive = false,
   cond = function()
-    return not big_file.is_big_file(0) and conditions.hide_in_width(80) and require('lu5je0.misc.gps-path').is_available()
+    return not big_file.is_big_file(0) and conditions.hide_in_width(80) and
+    require('lu5je0.misc.gps-path').is_available()
   end,
   color = { fg = colors.white },
   padding = { left = 1, right = 0 },
@@ -354,16 +357,6 @@ ins_left {
 -- }
 
 ins_right {
-  function()
-    -- percentage
-    -- %p%% 
-    return [[%l:%c ]]
-  end,
-  padding = { left = 0, right = 1 },
-  color = { fg = colors.grey },
-}
-
-ins_right {
   'diagnostics',
   -- table of diagnostic sources, available sources:
   -- 'nvim_lsp', 'nvim_diagnostic', 'coc', 'ale', 'vim_lsp'
@@ -371,8 +364,8 @@ ins_right {
   --   {error=error_cnt, warn=warn_cnt, info=info_cnt, hint=hint_cnt}
   sources = { 'nvim_diagnostic' },
   -- displays diagnostics from defined severity
-  sections = { 'error', 'warn', 'info', 'hint' },
-  symbols = { error = ' ', warn = ' ', info = ' ' },
+  sections = { 'error' --[[ , 'warn', 'info', 'hint' ]] },
+  symbols = { error = ' ' --[[ , warn = ' ', info = ' ' ]] },
   diagnostics_color = {
     -- Same values like general color option can be used here.
     error = { fg = colors.red },
@@ -380,27 +373,62 @@ ins_right {
     info = { fg = colors.fg },
     hint = { fg = colors.white },
   },
-  colored = true, -- displays diagnostics status in color if set to true
+  colored = true,           -- displays diagnostics status in color if set to true
   update_in_insert = false, -- Update diagnostics in insert mode
+  padding = { left = 0, right = 2 },
+}
+
+-- ins_right {
+--   function()
+--     return " "
+--   end,
+--   inactive = true,
+--   padding = { left = 0, right = 1 },
+--   color = { fg = colors.grey },
+-- }
+
+ins_right {
+  "location",
+  -- function()
+  --   -- percentage
+  --   -- %p%%
+  --   return [[%l:%c ]]
+  -- end,
+  inactive = true,
   padding = { left = 0, right = 1 },
+  color = { fg = colors.grey },
+}
+
+ins_right {
+  "progress",
+  -- function()
+  --   -- percentage
+  --   -- %p%%
+  --   return [[%l:%c ]]
+  -- end,
+  inactive = true,
+  padding = { left = 0, right = 1 },
+  color = { fg = colors.grey },
 }
 
 ins_right {
   function()
-    return vim.o.fileencoding
+    return "%{toupper(&fileencoding != '' ? &fileencoding : &encoding)} "
   end,
-  fmt = string.upper, -- I'm not sure why it's upper case either ;)
+  inactive = true,
+  -- fmt = string.upper, -- I'm not sure why it's upper case either ;)
   cond = conditions.hide_in_width,
   color = { fg = colors.green, gui = 'bold' },
-  padding = { left = 0, right = 0 },
+  padding = { left = 1, right = 0 },
 }
 
 ins_right {
   'fileformat',
   fmt = string.upper,
+  inactive = true,
   icons_enabled = true, -- I think icons are cool but Eviline doesn't have them. sigh
   color = { fg = colors.green, gui = 'bold' },
-  padding = { left = 1, right = 1 },
+  padding = { left = 0, right = 1 },
   cond = conditions.hide_in_width,
   symbols = {
     unix = 'LF',

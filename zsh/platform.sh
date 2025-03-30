@@ -11,8 +11,8 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   # eval $(gdircolors -b $HOME/.dir_colors)
   alias e='open'
   alias sed='gsed'
-  alias yy='pbcopy'
-  alias p='pbpaste'
+  alias yy='mac_clipboard_cli -c'
+  alias p='mac_clipboard_cli -p'
   alias iterm='open -a iTerm .'
   
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"

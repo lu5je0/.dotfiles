@@ -12,8 +12,8 @@ function M.path()
   end
 end
 
-function M.is_available()
-  local filetype = vim.bo.filetype
+function M.is_available(buf_id)
+  local filetype = vim.bo[buf_id or 0].filetype
   if not vim.tbl_contains(gps_ft_white_list, filetype) then
     return false
   end

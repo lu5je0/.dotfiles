@@ -14,7 +14,7 @@ local scrollview = require('scrollview')
 
 local last_line_nr = nil
 function M.begin_timer(enable_cmd, disable_cmd, refresh_cmd)
-  local visible_duration = 1500
+  local visible_duration = 4000
   local timer = nil
 
   local function show(params)

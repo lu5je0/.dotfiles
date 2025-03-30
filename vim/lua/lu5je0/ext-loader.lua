@@ -259,6 +259,8 @@ lazy_load({
   }
 })
 
+require('lu5je0.core.statusline').setup()
+
 -- require('lu5je0.misc.dirbuf-hijack').setup()
 require('lu5je0.misc.oil-hijack').setup()
 

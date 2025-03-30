@@ -34,8 +34,7 @@ function M.run_file(debug)
   local filetype = vim.bo.filetype
 
   if vim.bo.modified then
-    vim.cmd('w')
-    print('save')
+    require('lu5je0.core.file').save_buffer()
   end
 
   if filetype == 'vim' then

@@ -1,7 +1,4 @@
 local nvim_colorizer_ft = { 'vim', 'lua', 'css', 'conf', 'tmux', 'bash' }
-local has_mac = vim.fn.has('mac') == 1
-local has_wsl = vim.fn.has('wsl') == 1
-local has_ssh_client = vim.fn.has('ssh_client') == 1
 
 local disabled_plugins = {
   "2html_plugin",
@@ -14,6 +11,7 @@ local disabled_plugins = {
   "netrw",
   "netrwFileHandlers",
   "netrwPlugin",
+  "matchparen",
   "netrwSettings",
   "rplugin",
   "rrhelper",
@@ -29,10 +27,6 @@ local disabled_plugins = {
   "vimball",
   "vimballPlugin",
 }
-
-if not has_ssh_client then
-  table.insert(disabled_plugins, 'osc52')
-end
 
 local opts = {
   concurrency = 20,
@@ -59,32 +53,24 @@ require("lazy").setup({
       vim.g.edge_enable_italic = 0
       vim.g.edge_disable_italic_comment = 1
       vim.cmd.colorscheme('edge')
-      vim.api.nvim_set_hl(0, "StatusLine", { fg = '#c5cdd9', bg = '#23262b' })
       vim.api.nvim_set_hl(0, "Folded", { fg = '#282c34', bg = '#5c6370' })
       vim.api.nvim_set_hl(0, "MatchParen", { fg = '#ffef28', bg = '#414550'})
       
       vim.g.edge_loaded_file_types = { 'NvimTree' }
       
-      -- local bg = '#2c2e34'
-      -- vim.cmd(string.gsub([[
-      -- " hi NvimTreeNormal guibg=%s
-      -- " hi NvimTreeNormalNC guibg=%s
-      -- " hi NvimTreeEndOfBuffer guifg=%s
-      --
-      -- hi VertSplit guifg=#27292d guibg=bg
-      -- hi NvimTreeVertSplit guifg=bg guibg=bg
-      --
-      -- hi NvimTreeWinSeparator guibg=%s guifg=%s
-      -- ]], '%%s', bg))
+      -- 设置 statusline 默认色
+      vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
+      -- 非当前状态栏
+      vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
     end
   },
-  {
-    'nvim-lualine/lualine.nvim',
-    config = function()
-      require('lu5je0.ext.lualine')
-    end,
-    event = 'VeryLazy',
-  },
+  -- {
+  --   'nvim-lualine/lualine.nvim',
+  --   config = function()
+  --     require('lu5je0.ext.lualine')
+  --   end,
+  --   event = 'VeryLazy',
+  -- },
 
   -- treesiter
   {
@@ -140,37 +126,12 @@ require("lazy").setup({
     end
   },
   {
-    'aklt/plantuml-syntax',
-    ft = 'plantuml'
-  },
-  {
     'lewis6991/gitsigns.nvim',
     config = function()
       require('lu5je0.ext.gitsigns').setup()
     end,
     event = 'VeryLazy'
   },
-  -- {
-  --   'ojroques/vim-oscyank',
-  --   init = function()
-  --     vim.g.oscyank_silent = 1
-  --     vim.g.oscyank_trim = 0
-  --   end,
-  --   config = function()
-  --   local has_mac = vim.fn.has('mac') == 1
-  --   local has_wsl = vim.fn.has('wsl') == 1
-  --     if has_wsl or has_mac then
-  --       return
-  --     end
-  --     vim.api.nvim_create_autocmd('TextYankPost', {
-  --       pattern = '*',
-  --       callback = function()
-  --         vim.cmd [[ OSCYankRegister " ]]
-  --       end,
-  --     })
-  --   end,
-  --   event = 'VeryLazy'
-  -- },
 
   {
     'tpope/vim-fugitive',
@@ -409,42 +370,42 @@ require("lazy").setup({
   -- },
 
   -- nvim-cmp
-  -- {
-  --   {
-  --     'hrsh7th/nvim-cmp',
-  --     config = function()
-  --       require('lu5je0.ext.cmp')
-  --     end,
-  --     dependencies = {
-  --       -- 'hrsh7th/cmp-cmdline',
-  --       'windwp/nvim-autopairs',
-  --       'saadparwaiz1/cmp_luasnip',
-  --       'hrsh7th/cmp-buffer',
-  --       'hrsh7th/cmp-path',
-  --       {
-  --         'L3MON4D3/LuaSnip',
-  --         config = function()
-  --           require('lu5je0.ext.luasnip').setup()
-  --         end
-  --       },
-  --       -- {
-  --       --   "garymjr/nvim-snippets",
-  --       --   config = function()
-  --       --     require('snippets').setup({
-  --       --       search_paths = { vim.fn.stdpath('config') .. '/snippets/vsnip' },
-  --       --       create_autocmd = true,
-  --       --       create_cmp_source = true
-  --       --     })
-  --       --   end
-  --       -- }
-  --     },
-  --     event = 'InsertEnter',
-  --   },
-  --   {
-  --     'hrsh7th/cmp-nvim-lsp',
-  --     event = 'LspAttach'
-  --   },
-  -- },
+  {
+    {
+      'hrsh7th/nvim-cmp',
+      config = function()
+        require('lu5je0.ext.cmp')
+      end,
+      dependencies = {
+        -- 'hrsh7th/cmp-cmdline',
+        'windwp/nvim-autopairs',
+        'saadparwaiz1/cmp_luasnip',
+        'hrsh7th/cmp-buffer',
+        'hrsh7th/cmp-path',
+        {
+          'L3MON4D3/LuaSnip',
+          config = function()
+            require('lu5je0.ext.luasnip').setup()
+          end
+        },
+        -- {
+        --   "garymjr/nvim-snippets",
+        --   config = function()
+        --     require('snippets').setup({
+        --       search_paths = { vim.fn.stdpath('config') .. '/snippets/vsnip' },
+        --       create_autocmd = true,
+        --       create_cmp_source = true
+        --     })
+        --   end
+        -- }
+      },
+      event = 'InsertEnter',
+    },
+    {
+      'hrsh7th/cmp-nvim-lsp',
+      event = 'LspAttach'
+    },
+  },
 
   -- {
   --   "elihunter173/dirbuf.nvim",
@@ -454,34 +415,34 @@ require("lazy").setup({
   --   cmd = 'Dirbuf'
   -- },
 
-  {
-    'saghen/blink.cmp',
-    -- optional: provides snippets for the snippet source
-    dependencies = {
-      -- 'rafamadriz/friendly-snippets',
-      'windwp/nvim-autopairs',
-      {
-        'L3MON4D3/LuaSnip',
-        config = function()
-          require('lu5je0.ext.luasnip').setup()
-        end
-      },
-    },
-
-    -- use a release tag to download pre-built binaries
-    version = '*',
-    -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
-    -- build = 'cargo build --release',
-    -- If you use nix, you can build from source using latest nightly rust with:
-    -- build = 'nix run .#build-plugin',
-    
-    config = function()
-      require('lu5je0.ext.blink').setup()
-    end,
-    
-    -- opts_extend = { "sources.default" },
-    event = 'InsertEnter',
-  },
+  -- {
+  --   'saghen/blink.cmp',
+  --   -- optional: provides snippets for the snippet source
+  --   dependencies = {
+  --     -- 'rafamadriz/friendly-snippets',
+  --     'windwp/nvim-autopairs',
+  --     {
+  --       'L3MON4D3/LuaSnip',
+  --       config = function()
+  --         require('lu5je0.ext.luasnip').setup()
+  --       end
+  --     },
+  --   },
+  --
+  --   -- use a release tag to download pre-built binaries
+  --   version = '*',
+  --   -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
+  --   -- build = 'cargo build --release',
+  --   -- If you use nix, you can build from source using latest nightly rust with:
+  --   -- build = 'nix run .#build-plugin',
+  --   
+  --   config = function()
+  --     require('lu5je0.ext.blink').setup()
+  --   end,
+  --   
+  --   -- opts_extend = { "sources.default" },
+  --   event = 'InsertEnter',
+  -- },
 
   {
     'stevearc/oil.nvim',
@@ -1068,6 +1029,20 @@ require("lazy").setup({
         -- or leave it empty to use the default settings
         -- refer to the configuration section below
       },
+      -- indent = {
+      --   indent = {
+      --     char = "▏"
+      --   },
+      --   scope = {
+      --     char = "▏"
+      --   },
+      --   animate = {
+      --
+      --   },
+      --   filter = function(buf)
+      --     return vim.g.snacks_indent ~= false and vim.b[buf].snacks_indent ~= false and vim.bo[buf].buftype == "" and require('lu5je0.ext.big-file').is_big_file(buf) and vim.bo[buf].filetype == 'markdown'
+      --   end
+      -- },
       picker = {
         layout = {
           cycle = true,
@@ -1088,7 +1063,7 @@ require("lazy").setup({
       }
     },
     keys = {
-      { "<leader>ps",  function() Snacks.profiler.scratch() end,                               desc = "Profiler Scratch Bufer" },
+      { "<leader>ps",  function() Snacks.profiler.toggle() end,                               desc = "Profiler Scratch Bufer" },
       -- { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
       -- { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
       -- { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },

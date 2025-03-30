@@ -29,4 +29,7 @@ for _, module in ipairs(core_modules) do
   end
 end
 
-vim.cmd('runtime functions.vim')
+vim.defer_fn(function()
+  vim.cmd('runtime functions.vim')
+  vim.cmd('runtime plugin/matchparen.vim')
+end, 100)

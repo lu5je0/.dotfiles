@@ -120,7 +120,7 @@ end
 local function truncate(label)
   local ELLIPSIS_CHAR = '…'
   local MAX_LABEL_WIDTH = 25
-  local MIN_LABEL_WIDTH = 0
+  local MIN_LABEL_WIDTH = 8
 
   local truncated_label = vim.fn.strcharpart(label, 0, MAX_LABEL_WIDTH)
 
@@ -168,6 +168,11 @@ cmp.setup {
     fields = { 'kind', 'abbr', 'menu' },
     format = format
   },
+  view = {
+    docs = {
+      auto_open = false
+    }
+  },
   snippet = {
     expand = function(args)
       require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
@@ -187,8 +192,14 @@ cmp.setup {
     -- ghost_text = true
   },
   mapping = {
-    ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs( -4), { 'i' --[[ , 'c' ]] }),
-    ['<c-d>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i' --[[ , 'c' ]] }),
+    ['<c-u>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i' --[[ , 'c' ]] }),
+    ['<c-d>'] = cmp.mapping(function()
+      if not cmp.visible_docs() then
+        cmp.open_docs()
+      else
+        cmp.mapping.scroll_docs(4)()
+      end
+    end, { 'i' --[[ , 'c' ]] }),
     ['<c-g>'] = cmp.mapping(function()
       if cmp.visible_docs() then
         cmp.close_docs()
@@ -254,13 +265,13 @@ cmp.setup {
   },
 }
 
-cmp.setup.filetype({ 'java' }, {
-  view = {
-    docs = {
-      auto_open = false
-    }
-  }
-})
+-- cmp.setup.filetype({ 'java' }, {
+--   view = {
+--     docs = {
+--       auto_open = false
+--     }
+--   }
+-- })
 
 -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
 -- cmp.setup.cmdline('/', {

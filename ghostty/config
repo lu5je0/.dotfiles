@@ -1,3 +1,6 @@
+# Copy Ghostty's terminfo to a remote machine
+# infocmp -x | ssh YOUR-SERVER -- tic -x -
+
 font-family = "JetBrainsMonoNL Nerd Font Mono"
 keybind = ctrl+b>shift+5=new_split:right
 # keybind = ctrl+b>shift+,=new_split:down
@@ -27,3 +30,4 @@ font-size = 14
 # macos-titlebar-style = transparent
 
 adjust-cell-height = 0%
+clipboard-read = allow

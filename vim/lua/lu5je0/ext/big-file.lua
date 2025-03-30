@@ -1,7 +1,7 @@
 local M = {}
 
-function M.is_big_file(buf_nr)
-  return vim.b[buf_nr].is_big_file == true
+function M.is_big_file(buf_id)
+  return vim.b[buf_id].is_big_file == true
 end
 
 function M.mark_big_file(buf_nr)
@@ -26,18 +26,19 @@ function M.setup()
           M.mark_big_file(buf)
         end,
       },
-      -- {
-      --   name = "nvim-cmp",
-      --   -- opts = {
-      --   --   defer = true, -- set to true if `disable` should be called on `BufReadPost` and not `BufReadPre`
-      --   -- },
-      --   disable = function()
-      --     vim.defer_fn(function()
-      --       require('lu5je0.ext.plugins_helper').load_plugin('nvim-cmp')
-      --       vim.cmd [[ CmpAutocompleteDisable ]]
-      --     end, 100)
-      --   end
-      -- }
+      {
+        name = "cmp",
+        -- opts = {
+        --   defer = true, -- set to true if `disable` should be called on `BufReadPost` and not `BufReadPre`
+        -- },
+        disable = function()
+          -- vim.defer_fn(function()
+          --   require('lu5je0.ext.plugins_helper').load_plugin('nvim-cmp')
+          --   vim.cmd [[ CmpAutocompleteDisable ]]
+          -- end, 100)
+          vim.b.completion = false
+        end
+      }
     },
   }
 end

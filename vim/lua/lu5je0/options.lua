@@ -17,6 +17,8 @@ vim.fn.has = function(feature)
     has = os.getenv('SSH_CLIENT') ~= nil
   elseif feature == 'kitty' then
     has = os.getenv('TERM') == 'xterm-kitty'
+  elseif feature == 'ghostty' then
+    has = os.getenv('TERM') == 'xterm-ghostty'
   end
 
   return has and 1 or 0
@@ -129,7 +131,7 @@ g.loaded_ruby_provider = 0
 -- colorscheme
 o.termguicolors = true
 o.bg = 'dark'
-o.statusline = " "
+o.ruler = false
 
 if has('mac') then
   vim.g.python3_host_prog = '/usr/bin/python3'
@@ -146,19 +148,9 @@ local defer_options = {
     -- linux中 * 是selection clipboard，+ 是system clipboard，
     -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard
     if has('ssh_client') then
-      if has('kitty') then
+      if has('kitty') or has('ghostty') then
         o.clipboard = 'unnamedplus'
-        vim.g.clipboard = {
-          name = 'OSC 52',
-          copy = {
-            ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
-            ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
-          },
-          paste = {
-            ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
-            ['*'] = require('vim.ui.clipboard.osc52').paste('*')
-          }
-        }
+        vim.g.clipboard = 'osc52'
       else
         vim.g.loaded_clipboard_provider = 1
         local copy = require("vim.ui.clipboard.osc52").copy('\"')
