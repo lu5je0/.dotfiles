@@ -341,8 +341,8 @@ M.setup = function()
     },
   }
   
-  -- enable_treesitter_fold()
-  -- enable_fold_text_cache()
+  enable_treesitter_fold()
+  enable_fold_text_cache()
   -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(_G.__custom_foldtext)
   
   treesitter.define_modules {
