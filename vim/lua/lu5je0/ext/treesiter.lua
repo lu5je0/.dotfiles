@@ -10,7 +10,7 @@ local ts_filetypes = {
 }
 
 local function enable_treesitter_fold()
-  local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
+  local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
 
   local function merge_elements(elements, origin_text)
     table.insert(elements, 1, { text = origin_text, pos = { 0, #origin_text }, highlight = 'Foled' })
