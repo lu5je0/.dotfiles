@@ -105,7 +105,7 @@ o.foldcolumn = '1'
 vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 -- 关闭message超过cmdheight时需要hit-enter
-o.messagesopt = 'wait:0,history:10000'
+-- o.messagesopt = 'wait:0,history:10000'
 
 -- encodeing
 o.fileformat = 'unix'

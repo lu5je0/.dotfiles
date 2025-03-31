@@ -257,12 +257,16 @@ require("lazy").setup({
   --     { mode = 'n', "<leader>/", "<cmd>call eregex#toggle()<cr>", desc = "EregexToggle" },
   --   },
   -- },
+  -- {
+  --   'numToStr/Comment.nvim',
+  --   config = function()
+  --     require('lu5je0.ext.comment').setup()
+  --   end,
+  --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' }, { mode = 'n', 'gC' } }
+  -- },
   {
-    'numToStr/Comment.nvim',
-    config = function()
-      require('lu5je0.ext.comment').setup()
-    end,
-    keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' }, { mode = 'n', 'gC' } }
+    'tpope/vim-commentary',
+    keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
   },
   {
     'akinsho/toggleterm.nvim',
