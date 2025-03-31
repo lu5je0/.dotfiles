@@ -276,7 +276,7 @@ local function enable_fold_text_cache()
   end
   -- 设置自动命令清理缓存
   vim.api.nvim_create_autocmd({"BufDelete", "BufWipeout", "TextChanged"}, {
-    callback = function(args)
+    callback = require('lu5je0.lang.function-utils').debounce(function(args)
       local buf_id = args.buf
       for win_id, win_data in pairs(foldtext_cache) do
         if win_data[buf_id] then
@@ -287,7 +287,7 @@ local function enable_fold_text_cache()
           end
         end
       end
-    end
+    end, 100)
   })
 
   vim.api.nvim_create_autocmd("WinClosed", {
@@ -341,8 +341,8 @@ M.setup = function()
     },
   }
   
-  enable_treesitter_fold()
-  enable_fold_text_cache()
+  -- enable_treesitter_fold()
+  -- enable_fold_text_cache()
   -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(_G.__custom_foldtext)
   
   treesitter.define_modules {
