@@ -294,6 +294,15 @@ M.setup = function()
       end
     },
   }
+  
+  -- lazyload workaround
+  -- 第一次打开文件时触发
+  if vim.tbl_contains(ts_filetypes, vim.bo.filetype) then
+    vim.cmd[[
+    TSEnable attach_module
+    TSEnable fold
+    ]]
+  end
 end
 
 return M
