@@ -10,48 +10,69 @@ local ts_filetypes = {
 }
 
 local function enable_treesitter_fold()
-  local function truncate_foldtext(foldtexts, leftcol)
-    if leftcol == 0 then
-      return foldtexts
-    end
+  local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
 
-    local result = {}
-    local foldtext_col = 0
-    local found = false
+  local function merge_elements(elements, origin_text)
+    table.insert(elements, 1, { text = origin_text, pos = { 0, #origin_text }, highlight = 'Foled' })
 
-    for _, foldtext in ipairs(foldtexts) do
-      local text = foldtext[1]
-      local hl = foldtext[2]
+    local merged = {}
 
-      for i = 1, vim.fn.strchars(text) do
-        local c = vim.fn.strcharpart(text, i - 1, 1)
-        local width = vim.fn.strwidth(c)
-        foldtext_col = foldtext_col + width
-        if foldtext_col > leftcol then
-          -- foldtext_col - leftcol == 2的情况，双宽度字符不需要conceal
-          if width == 1 or (width > 1 and foldtext_col - leftcol == 2) then
-            table.insert(result, { vim.fn.strcharpart(text, i - 1), hl })
-          else
-            -- 双宽度字符不需要conceal
-            table.insert(result, { '>', "Conceal" })
-            table.insert(result, { vim.fn.strcharpart(text, i), hl })
+    for _, e in ipairs(elements) do
+      local current_e_start = e.pos[1]
+      local current_e_end = e.pos[2]
+      local new_merged = {}
+
+      -- 处理已合并的元素，分割重叠部分
+      for _, m in ipairs(merged) do
+        local m_start = m.pos[1]
+        local m_end = m.pos[2]
+
+        if current_e_start >= m_end or current_e_end <= m_start then
+          -- 无重叠，直接保留
+          table.insert(new_merged, m)
+        else
+          -- 分割前部分
+          if m_start < current_e_start then
+            local length = current_e_start - m_start
+            local sub_text = string.sub(m.text, 1, length)
+            table.insert(new_merged, {
+              highlight = m.highlight,
+              pos = {m_start, current_e_start},
+              text = sub_text
+            })
           end
-          found = true
-          goto continue
+
+          -- 分割后部分
+          if m_end > current_e_end then
+            local start_offset = current_e_end - m_start
+            local end_offset = m_end - m_start
+            local sub_text = string.sub(m.text, start_offset + 1, end_offset)
+            table.insert(new_merged, {
+              highlight = m.highlight,
+              pos = {current_e_end, m_end},
+              text = sub_text
+            })
+          end
         end
       end
 
-      if found then
-        table.insert(result, foldtext)
-      end
+      -- 插入当前元素
+      table.insert(new_merged, {
+        highlight = e.highlight,
+        pos = {current_e_start, current_e_end},
+        text = e.text
+      })
 
-      ::continue::
+      -- 按起始位置排序
+      table.sort(new_merged, function(a, b)
+        return a.pos[1] < b.pos[1]
+      end)
+
+      merged = new_merged
     end
 
-    return result
+    return merged
   end
-  
-  local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
   
   local function fold_text(line_num)
     -- String of first line of fold.
@@ -80,12 +101,11 @@ local function enable_treesitter_fold()
     local tree = parser:parse({ line_num - 1, line_num })[1]
 
     local result = {}
-    local line_pos = 0
-    local prev_range = { 0, 0 }
-
     -- Loop through matched "captures", i.e. node-to-capture-group pairs, for each TSNode in given range.
     -- Each TSNode could occur several times in list, i.e. map to several capture groups,
     -- and each capture group could be used by several TSNodes.
+    -- print('begin')
+    local merge_result = {}
     for id, node, _ in query:iter_captures(tree:root(), 0, line_num - 1, line_num) do
       -- Name of capture group from query, for current capture.
       local name = query.captures[id]
@@ -95,25 +115,16 @@ local function enable_treesitter_fold()
 
       -- Range, i.e. lines in source file, captured TSNode spans, where row is first line of fold.
       local start_row, start_col, end_row, end_col = node:range()
-
-      -- Include part of folded line between captured TSNodes, i.e. whitespace,
-      -- with arbitrary highlight group, e.g. "Folded", in final `foldtext`.
-      if start_col > line_pos then
-        table.insert(result, { line:sub(line_pos + 1, start_col), "Folded" })
-      end
+      -- print(("%s-%s:%s line_pos:%s"):format(start_col, end_col, text, line_pos))
+      table.insert(merge_result, {
+        text = text,
+        pos = {start_col, end_col},
+      })
 
       -- For control flow analysis, break if TSNode does not have proper range.
       if end_col == nil or start_col == nil then
         break
       end
-
-      -- Move `line_pos` to end column of current node,
-      -- thus ensuring next loop iteration includes whitespace between TSNodes.
-      line_pos = end_col
-
-      -- Save source code range current TSNode spans, so current TSNode can be ignored if
-      -- next capture is for TSNode covering same section of source code.
-      local range = { start_col, end_col }
 
       -- Use language specific highlight, if it exists.
       local highlight = "@" .. name
@@ -121,16 +132,52 @@ local function enable_treesitter_fold()
       if vim.fn.hlexists(highlight_lang) then
         highlight = highlight_lang
       end
+      merge_result[#merge_result].highlight = highlight
+    end
 
-      -- Insert TSNode text itself, with highlight group from treesitter.
-      if range[1] == prev_range[1] and range[2] == prev_range[2] then
-        -- Overwrite previous capture, as it was for same range from source code.
-        result[#result] = { text, highlight }
-      else
-        -- Insert capture for TSNode covering new range of source code.
-        table.insert(result, { text, highlight })
-        prev_range = range
+    result = {}
+    for _, element in ipairs(merge_elements(merge_result, line)) do
+      table.insert(result, { element.text, element.highlight })
+    end
+    return result
+  end
+  
+  local function truncate_foldtext(foldtexts, leftcol)
+    if leftcol == 0 then
+      return foldtexts
+    end
+
+    local result = {}
+    local foldtext_col = 0
+    local found = false
+
+    for _, foldtext in ipairs(foldtexts) do
+      local text = foldtext[1]
+      local hl = foldtext[2]
+
+      for i = 1, vim.fn.strchars(text) do
+        local c = vim.fn.strcharpart(text, i - 1, 1)
+        local width = vim.fn.strwidth(c)
+        foldtext_col = foldtext_col + width
+        if foldtext_col > leftcol then
+          -- foldtext_col - leftcol == 2的情况，双宽度字符不需要conceal
+          if width == 1 or (width > 1 and foldtext_col - leftcol == 2) then
+            table.insert(result, { vim.fn.strcharpart(text, i - 1), hl })
+          else
+            -- 双宽度字符不需要conceal
+            table.insert(result, { '>', "conceal" })
+            table.insert(result, { vim.fn.strcharpart(text, i), hl })
+          end
+          found = true
+          goto continue
+        end
       end
+
+      if found then
+        table.insert(result, foldtext)
+      end
+
+      ::continue::
     end
 
     return result
@@ -148,7 +195,7 @@ local function enable_treesitter_fold()
         table.insert(result, v)
       end
     end
-    
+
     local first_column = vim.fn.winsaveview().leftcol
     return truncate_foldtext(result, first_column)
   end
