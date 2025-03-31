@@ -183,12 +183,12 @@ local function enable_treesitter_fold()
     return result
   end
   
-  function M.custom_foldtext()
-    local result = fold_text(vim.v.foldstart)
-    
+  function M.custom_foldtext(foldstart, foldend)
+    local result = fold_text(foldstart)
+
     if vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
       table.insert(result, { ' … ', 'TSPunctBracket' })
-      for i, v in ipairs(fold_text(vim.v.foldend)) do
+      for i, v in ipairs(fold_text(foldend)) do
         if i == 1 then
           v[1] = v[1]:gsub("^%s+", "")
         end
@@ -199,8 +199,9 @@ local function enable_treesitter_fold()
     local first_column = vim.fn.winsaveview().leftcol
     return truncate_foldtext(result, first_column)
   end
-  -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(M.custom_foldtext)
-  _G.__custom_foldtext = M.custom_foldtext
+  _G.__custom_foldtext = function()
+    return M.custom_foldtext(vim.v.foldstart, vim.v.foldend)
+  end
   
   treesitter.define_modules {
     fold = {
@@ -243,6 +244,72 @@ local function enable_treesitter_fold()
   }
 end
 
+local function enable_fold_text_cache()
+  local foldtext_cache = {}
+  local cached_fold_text = function()
+    local foldstart = vim.v.foldstart
+    local foldend = vim.v.foldend
+    
+    local win_id = vim.api.nvim_get_current_win()
+    local buf_id = vim.api.nvim_win_get_buf(win_id)
+
+    -- 尝试获取缓存
+    local cache = foldtext_cache
+    if cache[win_id] 
+      and cache[win_id][buf_id] 
+      and cache[win_id][buf_id][foldstart] 
+      and cache[win_id][buf_id][foldstart][foldend] then
+      return cache[win_id][buf_id][foldstart][foldend]
+    end
+
+    -- 缓存未命中时生成新内容
+    -- 你的原始折叠文本生成逻辑
+    local text = M.custom_foldtext(foldstart, foldend)
+
+    -- 写入缓存（使用惰性初始化）
+    cache[win_id] = cache[win_id] or {}
+    cache[win_id][buf_id] = cache[win_id][buf_id] or {}
+    cache[win_id][buf_id][foldstart] = cache[win_id][buf_id][foldstart] or {}
+    cache[win_id][buf_id][foldstart][foldend] = text
+
+    return text
+  end
+  -- 设置自动命令清理缓存
+  vim.api.nvim_create_autocmd({"BufDelete", "BufWipeout", "TextChanged"}, {
+    callback = function(args)
+      local buf_id = args.buf
+      for win_id, win_data in pairs(foldtext_cache) do
+        if win_data[buf_id] then
+          win_data[buf_id] = nil
+          -- 如果窗口数据变空则清理
+          if next(win_data) == nil then
+            foldtext_cache[win_id] = nil
+          end
+        end
+      end
+    end
+  })
+
+  vim.api.nvim_create_autocmd("WinClosed", {
+    callback = function(args)
+      local win_id = tonumber(args.match)
+      if win_id and foldtext_cache[win_id] then
+        foldtext_cache[win_id] = nil
+      end
+    end
+  })
+  
+  vim.api.nvim_create_autocmd("WinScrolled", {
+    callback = function(args)
+      local win_id = tonumber(args.match)
+      if win_id and foldtext_cache[win_id] then
+        foldtext_cache[win_id] = nil
+      end
+    end
+  })
+  _G.__custom_foldtext = cached_fold_text
+end
+
 M.setup = function()
   require('nvim-treesitter.configs').setup {
     ensure_installed = ts_filetypes,
@@ -275,6 +342,8 @@ M.setup = function()
   }
   
   enable_treesitter_fold()
+  enable_fold_text_cache()
+  -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(_G.__custom_foldtext)
   
   treesitter.define_modules {
     attach_module = {
