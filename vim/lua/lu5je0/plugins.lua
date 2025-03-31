@@ -264,8 +264,15 @@ require("lazy").setup({
   --   end,
   --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' }, { mode = 'n', 'gC' } }
   -- },
+  -- {
+  --   'tpope/vim-commentary',
+  --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
+  -- },
   {
-    'tpope/vim-commentary',
+    'echasnovski/mini.comment',
+    config = function()
+      require('mini.comment').setup()
+    end,
     keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
   },
   {
