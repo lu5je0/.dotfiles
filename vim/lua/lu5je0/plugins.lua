@@ -78,7 +78,7 @@ require("lazy").setup({
       'nvim-treesitter/nvim-treesitter',
       build = ':TSUpdate',
       config = function()
-        require('lu5je0.ext.treesiter')
+        require('lu5je0.ext.treesiter').setup()
       end,
       dependencies = {
         'nvim-treesitter/nvim-treesitter-textobjects'
@@ -474,6 +474,7 @@ require("lazy").setup({
     lazy = true
   },
 
+  -- c070ee849bfedb2ed778f60419a1eae8c8544be8
   -- {
   --   'kevinhwang91/nvim-ufo',
   --   dependencies = {

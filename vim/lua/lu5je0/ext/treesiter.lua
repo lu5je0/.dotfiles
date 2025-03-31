@@ -1,3 +1,5 @@
+local M = {}
+
 local treesitter = require('nvim-treesitter')
 
 local ts_filetypes = {
@@ -7,80 +9,50 @@ local ts_filetypes = {
   'vue', 'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy'
 }
 
-require('nvim-treesitter.configs').setup {
-  -- Modules and its options go here
-  ensure_installed = ts_filetypes,
-  highlight = {
-    enable = true,
-  },
-  incremental_selection = {
-    enable = false,
-  },
-  indent = {
-    enable = false
-  },
-  textobjects = {
-    select = {
-      enable = true,
-      -- Automatically jump forward to textobj, similar to targets.vim
-      lookahead = false,
-      keymaps = {
-        -- You can use the capture groups defined in textobjects.scm
-        ["af"] = "@function.outer",
-        ["if"] = "@function.inner",
-        ["ac"] = "@comment.outer",
-        ["ic"] = "@comment.outer",
-        -- You can also use captures from other query groups like `locals.scm`
-        -- ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" },
-      },
-      include_surrounding_whitespace = false,
-    },
-  },
-}
-
-local function truncate_foldtext(foldtexts, leftcol)
-  if leftcol == 0 then
-    return foldtexts
-  end
-    
-  local result = {}
-  local foldtext_col = 0
-  local found = false
-  
-  for _, foldtext in ipairs(foldtexts) do
-    local text = foldtext[1]
-    local hl = foldtext[2]
-    
-    for i = 1, vim.fn.strchars(text) do
-      local c = vim.fn.strcharpart(text, i - 1, 1)
-      local width = vim.fn.strwidth(c)
-      foldtext_col = foldtext_col + width
-      if foldtext_col > leftcol then
-        -- foldtext_col - leftcol == 2的情况，双宽度字符不需要conceal
-        if width == 1 or (width > 1 and foldtext_col - leftcol == 2) then
-          table.insert(result, { vim.fn.strcharpart(text, i - 1), hl })
-        else
-          -- 双宽度字符不需要conceal
-          table.insert(result, { '>', "Conceal" })
-          table.insert(result, { vim.fn.strcharpart(text, i), hl })
-        end
-        found = true
-        goto continue
-      end
-    end
-    
-    if found then
-      table.insert(result, foldtext)
-    end
-    
-    ::continue::
-  end
-  
-  return result
-end
-
-local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
 local function enable_treesitter_fold()
+  local function truncate_foldtext(foldtexts, leftcol)
+    if leftcol == 0 then
+      return foldtexts
+    end
+
+    local result = {}
+    local foldtext_col = 0
+    local found = false
+
+    for _, foldtext in ipairs(foldtexts) do
+      local text = foldtext[1]
+      local hl = foldtext[2]
+
+      for i = 1, vim.fn.strchars(text) do
+        local c = vim.fn.strcharpart(text, i - 1, 1)
+        local width = vim.fn.strwidth(c)
+        foldtext_col = foldtext_col + width
+        if foldtext_col > leftcol then
+          -- foldtext_col - leftcol == 2的情况，双宽度字符不需要conceal
+          if width == 1 or (width > 1 and foldtext_col - leftcol == 2) then
+            table.insert(result, { vim.fn.strcharpart(text, i - 1), hl })
+          else
+            -- 双宽度字符不需要conceal
+            table.insert(result, { '>', "Conceal" })
+            table.insert(result, { vim.fn.strcharpart(text, i), hl })
+          end
+          found = true
+          goto continue
+        end
+      end
+
+      if found then
+        table.insert(result, foldtext)
+      end
+
+      ::continue::
+    end
+
+    return result
+  end
+  
+  local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'python', 'html', 'c', 'cpp' }
+  
   local function fold_text(line_num)
     -- String of first line of fold.
     local line = vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)[1]
@@ -163,7 +135,8 @@ local function enable_treesitter_fold()
 
     return result
   end
-  function _G.__custom_foldtext()
+  
+  function M.custom_foldtext()
     local result = fold_text(vim.v.foldstart)
     
     if vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
@@ -179,6 +152,8 @@ local function enable_treesitter_fold()
     local first_column = vim.fn.winsaveview().leftcol
     return truncate_foldtext(result, first_column)
   end
+  -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(M.custom_foldtext)
+  _G.__custom_foldtext = M.custom_foldtext
   
   treesitter.define_modules {
     fold = {
@@ -221,24 +196,57 @@ local function enable_treesitter_fold()
   }
 end
 
-enable_treesitter_fold()
+M.setup = function()
+  require('nvim-treesitter.configs').setup {
+    ensure_installed = ts_filetypes,
+    highlight = {
+      enable = true,
+    },
+    incremental_selection = {
+      enable = false,
+    },
+    indent = {
+      enable = false
+    },
+    textobjects = {
+      select = {
+        enable = true,
+        -- Automatically jump forward to textobj, similar to targets.vim
+        lookahead = false,
+        keymaps = {
+          -- You can use the capture groups defined in textobjects.scm
+          ["af"] = "@function.outer",
+          ["if"] = "@function.inner",
+          ["ac"] = "@comment.outer",
+          ["ic"] = "@comment.outer",
+          -- You can also use captures from other query groups like `locals.scm`
+          -- ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" },
+        },
+        include_surrounding_whitespace = false,
+      },
+    },
+  }
+  
+  enable_treesitter_fold()
+  
+  treesitter.define_modules {
+    attach_module = {
+      enable = true,
+      attach = function(bufnr)
+        -- highlights
+        vim.cmd([[
+        hi TSPunctBracket guifg=#ABB2BF
+        hi @constructor.lua guifg=#ABB2BF
+        ]])
+      end,
+      detach = function()
+        -- vim.cmd([[
+        -- silent! xunmap <buffer> v
+        -- silent! xunmap <buffer> V
+        -- ]])
+      end
+    },
+  }
+end
 
-treesitter.define_modules {
-  attach_module = {
-    enable = true,
-    attach = function(bufnr)
-      -- highlights
-      vim.cmd([[
-      hi TSPunctBracket guifg=#ABB2BF
-      hi @constructor.lua guifg=#ABB2BF
-      ]])
-    end,
-    detach = function()
-      -- vim.cmd([[
-      -- silent! xunmap <buffer> v
-      -- silent! xunmap <buffer> V
-      -- ]])
-    end
-  },
-}
-
+return M
