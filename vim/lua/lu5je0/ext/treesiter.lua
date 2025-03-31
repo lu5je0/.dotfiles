@@ -100,12 +100,12 @@ local function enable_treesitter_fold()
     -- PERF: Only parsing needed range, as parsing whole file would be slower.
     local tree = parser:parse({ line_num - 1, line_num })[1]
 
-    local result = {}
+    local merged_highlights = {}
     -- Loop through matched "captures", i.e. node-to-capture-group pairs, for each TSNode in given range.
     -- Each TSNode could occur several times in list, i.e. map to several capture groups,
     -- and each capture group could be used by several TSNodes.
     -- print('begin')
-    local merge_result = {}
+    local raw_highlights = {}
     for id, node, _ in query:iter_captures(tree:root(), 0, line_num - 1, line_num) do
       -- Name of capture group from query, for current capture.
       local name = query.captures[id]
@@ -116,7 +116,7 @@ local function enable_treesitter_fold()
       -- Range, i.e. lines in source file, captured TSNode spans, where row is first line of fold.
       local start_row, start_col, end_row, end_col = node:range()
       -- print(("%s-%s:%s line_pos:%s"):format(start_col, end_col, text, line_pos))
-      table.insert(merge_result, {
+      table.insert(raw_highlights, {
         text = text,
         pos = {start_col, end_col},
       })
@@ -132,14 +132,14 @@ local function enable_treesitter_fold()
       if vim.fn.hlexists(highlight_lang) then
         highlight = highlight_lang
       end
-      merge_result[#merge_result].highlight = highlight
+      raw_highlights[#raw_highlights].highlight = highlight
     end
 
-    result = {}
-    for _, element in ipairs(merge_elements(merge_result, line)) do
-      table.insert(result, { element.text, element.highlight })
+    merged_highlights = {}
+    for _, element in ipairs(merge_elements(raw_highlights, line)) do
+      table.insert(merged_highlights, { element.text, element.highlight })
     end
-    return result
+    return merged_highlights
   end
   
   local function truncate_foldtext(foldtexts, leftcol)
