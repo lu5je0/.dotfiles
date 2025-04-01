@@ -268,13 +268,13 @@ require("lazy").setup({
   --   'tpope/vim-commentary',
   --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
   -- },
-  {
-    'echasnovski/mini.comment',
-    config = function()
-      require('mini.comment').setup()
-    end,
-    keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
-  },
+  -- {
+  --   'echasnovski/mini.comment',
+  --   config = function()
+  --     require('mini.comment').setup()
+  --   end,
+  --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
+  -- },
   {
     'akinsho/toggleterm.nvim',
     branch = 'main',
