@@ -295,6 +295,15 @@ lazy_load({
   cmd = { 'TimestampToggle' }
 })
 
+lazy_load({
+  config = function()
+    require('lu5je0.core.comment').setup()
+  end,
+  keys = {
+    { mode = { 'x' }, 'gc' },
+  }
+})
+
 -- lazy_load({
 --   config = function()
 --     require('lu5je0.ext.plugins_helper').load_plugin('nvim-ufo')
