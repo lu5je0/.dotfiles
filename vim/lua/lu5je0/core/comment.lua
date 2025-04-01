@@ -13,12 +13,14 @@ M.comment_inline = function()
     keys.feedkey(require('vim._comment').operator())
   end
   local pattern = inline_comment_pattern[vim.bo.filetype]
-  if not pattern then
+  if pattern == nil then
     fallback()
+    return
   end
   
   if vim.api.nvim_get_mode().mode ~= 'v' then
     fallback()
+    return
   else
     local code = visual.get_visual_selection_as_string()
     visual.visual_replace((pattern):format(code)) 
