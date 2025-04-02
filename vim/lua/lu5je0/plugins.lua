@@ -1060,6 +1060,8 @@ require("lazy").setup({
             keys = {
               ["<c-n>"] = { "history_forward", mode = { "i", "n" } },
               ["<c-p>"] = { "history_back", mode = { "i", "n" } },
+              ["<esc>"] = { "close", mode = { "n", "i" } },
+              ["<c-c>"] = { "close", mode = { "n" } },
             }
           }
         }
