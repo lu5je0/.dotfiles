@@ -4,9 +4,13 @@ local visual = require('lu5je0.core.visual')
 local keys = require('lu5je0.core.keys')
 
 local inline_comment_string_map = {
-  lua = "--[[ %s ]]",
   java = "/* %s */",
   sql = "/* %s */",
+  javascript = "/* %s */",
+  
+  lua = "--[[ %s ]]",
+  
+  markdown = "<!-- %s -->",
 }
 
 local function escape_pattern(pattern)
