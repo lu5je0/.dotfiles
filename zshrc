@@ -15,7 +15,7 @@ source ~/.local/share/zinit/zinit.git/zinit.zsh
 
 export UNAME_INFO=$(uname -a)
 
-fpath=(~/.dotfiles/zsh/completions $fpath)
+fpath=(~/.dotfiles/zsh/completions /home/linuxbrew/.linuxbrew/share/zsh/site-functions $fpath)
 autoload -Uz compinit && compinit
 
 setopt AUTO_CD
