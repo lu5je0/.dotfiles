@@ -81,7 +81,8 @@ o.shadafile = 'NONE'
 o.wrap = false
 o.mousemoveevent = true
 -- peding模式下，关闭不变为hor20
-o.guicursor = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr:hor20'
+-- TODO 代验证
+-- o.guicursor = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr:hor20'
 
 o.completeopt = 'menu,menuone,noselect'
 o.pumheight = 13
@@ -177,7 +178,3 @@ local defer_options = {
 for delay, fn in ipairs(defer_options) do
   vim.defer_fn(fn, 2 * delay)
 end
-
--- vim.g.ts_highlight_c = true
--- vim.g.ts_highlight_vim = true
--- vim.g.ts_highlight_lua = true
