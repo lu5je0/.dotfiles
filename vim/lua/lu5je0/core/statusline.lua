@@ -147,6 +147,7 @@ M.setup = function()
 
   -- 定义高亮组
   vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
+  vim.api.nvim_set_hl(0, 'StatusLineViolet', { fg = colors.violet, bg = '#212328', bold = false })
 
   ins_left {
     function()
@@ -164,33 +165,31 @@ M.setup = function()
       local fg_color = { fg = mapping.color or colors.yellow }
       return get_highlight(fg_color) .. mapping.text
     end,
+    cond = function(args)
+      return conditions.hide_in_width(args.win_id, 40)
+    end,
     inactive = false,
   }
   
+  -- fileicon + filename
   ins_left {
     function(args)
       local devicons = require('nvim-web-devicons')
+      local filename = args.filename == '' and '[Untitled]' or args.filename
       local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'
-      return "%#" .. highlight .. "#" .. icon
+      return ("%%#%s#%s %%#%s#%s"):format(highlight, icon, 'StatusLineViolet', filename)
     end,
     color = "StatusLineGrey",
     cache = true,
     cache_ttl = 2000,
     cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
+    cond = function(args)
+      return conditions.hide_in_width(args.win_id, 25)
+    end,
   }
 
-  ins_left {
-    function(args)
-      return args.filename == '' and '[Untitled]' or args.filename
-    end,
-    color = { fg = colors.violet, bold = true },
-    cache = true,
-    cache_ttl = 2000,
-    cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
-  }
-  
   -- modified status
   ins_left {
     function(args)
@@ -289,6 +288,9 @@ M.setup = function()
         return table.concat(parts, " ")
       end
       return ""
+    end,
+    cond = function(args)
+      return conditions.hide_in_width(args.win_id, 30)
     end,
     cache_ttl = 100,
   }
