@@ -427,7 +427,8 @@ require("lazy").setup({
   -- },
 
   {
-    'saghen/blink.cmp',
+    'lu5je0/blink.cmp',
+    branch = 'fix-menu-position',
     -- optional: provides snippets for the snippet source
     dependencies = {
       -- 'rafamadriz/friendly-snippets',
