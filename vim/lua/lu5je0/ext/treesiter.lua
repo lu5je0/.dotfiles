@@ -308,20 +308,20 @@ local function enable_fold_text_cache()
     end
   })
   
-  -- 定义 foldtextcachestatus 命令
-  vim.api.nvim_create_user_command('FoldTextCacheStatus', function()
-    for win_id, win_data in pairs(foldtext_cache) do
-      print("Window ID: " .. win_id)
-      for buf_id, buf_data in pairs(win_data) do
-        print("  Buffer ID: " .. buf_id)
-        for foldstart, fold_data in pairs(buf_data) do
-          for foldend, text in pairs(fold_data) do
-            print(string.format("    Fold: %d-%d -> %s", foldstart, foldend, text))
-          end
-        end
-      end
-    end
-  end, {})
+  -- vim.api.nvim_create_user_command('FoldTextCacheStatus', function()
+  --   for win_id, win_data in pairs(foldtext_cache) do
+  --     print("Window ID: " .. win_id)
+  --     for buf_id, buf_data in pairs(win_data) do
+  --       print("  Buffer ID: " .. buf_id)
+  --       for foldstart, fold_data in pairs(buf_data) do
+  --         for foldend, text in pairs(fold_data) do
+  --           print(string.format("    Fold: %d-%d -> %s", foldstart, foldend, text))
+  --         end
+  --       end
+  --     end
+  --   end
+  -- end, {})
+  
   _G.__custom_foldtext = cached_fold_text
 end
 
