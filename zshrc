@@ -15,9 +15,6 @@ source ~/.local/share/zinit/zinit.git/zinit.zsh
 
 export UNAME_INFO=$(uname -a)
 
-fpath=(~/.dotfiles/zsh/completions /home/linuxbrew/.linuxbrew/share/zsh/site-functions $fpath)
-autoload -Uz compinit && compinit
-
 setopt AUTO_CD
 
 # 设置 Zsh 在命令补全时删除后缀的字符，只设置一个空格，那么只有空格会被删除。
@@ -271,9 +268,14 @@ zle -N bash-ctrl-d
 bindkey '^D' bash-ctrl-d
 ### End of Zinit's installer chunk
 
-# linuxbrew
-[[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH="/home/linuxbrew/.linuxbrew/bin:":$PATH
+fpath=(~/.dotfiles/zsh/completions $fpath)
+autoload -Uz compinit && compinit
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+# rustup
+if [[ -d $HOMEBREW_PATH ]]; then
+  export PATH="$HOMEBREW_PATH/opt/rustup/bin:$PATH"
+fi
+
+# THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
