@@ -287,7 +287,7 @@ local function enable_fold_text_cache()
           end
         end
       end
-    end, 500)
+    end, 1000)
   })
 
   vim.api.nvim_create_autocmd("WinClosed", {
