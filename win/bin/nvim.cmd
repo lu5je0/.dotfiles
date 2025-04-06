@@ -1,2 +1,2 @@
 @echo off
-wsl nvim "$(wslpath '%1')"
+wsl /home/linuxbrew/.linuxbrew/bin/nvim "$(wslpath '%1')"

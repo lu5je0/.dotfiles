@@ -60,7 +60,7 @@ local config = {
     top = 0,
     bottom = 0,
   },
-  max_fps = 120,
+  max_fps = 240,
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
   colors = {
