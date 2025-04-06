@@ -26,10 +26,10 @@ local function diagnostic()
         -- [vim.diagnostic.severity.ERROR] = '',
       },
       numhl = {
-        [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
-        [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
-        [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
         [vim.diagnostic.severity.ERROR] = 'DiagnosticSignError',
+        [vim.diagnostic.severity.WARN] = 'DiagnosticSignWarn',
+        [vim.diagnostic.severity.INFO] = 'DiagnosticSignInfo',
+        [vim.diagnostic.severity.HINT] = 'DiagnosticSignHint',
       },
     },
   }
@@ -84,8 +84,8 @@ end
 
 local function config()
   -- nvim-cmp
-  local capabilities = require('cmp_nvim_lsp').default_capabilities()
-  -- local capabilities = require('blink.cmp').get_lsp_capabilities()
+  -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
+  local capabilities = require('blink.cmp').get_lsp_capabilities()
 
   -- nvim-ufo
   capabilities.textDocument.foldingRange = {

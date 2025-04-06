@@ -121,7 +121,7 @@ function M.get_path()
 end
 
 function M.read_undo_if_is_time_machine_file()
-  if vim.startswith(vim.fn.expand('%:p'), TIME_MACHINE_PATH) then
+  if vim.startswith(vim.api.nvim_buf_get_name(0), TIME_MACHINE_PATH) then
     M.read_undo()
   end
 end

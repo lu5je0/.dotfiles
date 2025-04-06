@@ -10,9 +10,9 @@ end
 
 function M.timer_wrap(fn)
   return function(...)
-    local t = M.now()
+    local now = vim.uv.hrtime()
     local r = fn(...)
-    local total = M.now() - t
+    local total = (vim.uv.hrtime() - now) / 1000000
     print(('total: %sms'):format(total))
     return r
   end

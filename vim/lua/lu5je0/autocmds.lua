@@ -24,10 +24,10 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   group = M.default_group,
   pattern = '*',
   callback = function()
+    if vim.bo.filetype == 'gitcommit' then
+      return
+    end
     if vim.fn.line("'\"") > 0 and vim.fn.line("'\"") <= vim.fn.line("$") then
-      if vim.bo.filetype == 'gitcommit' then
-        return
-      end
       vim.fn.setpos('.', vim.fn.getpos("'\""))
     end
     

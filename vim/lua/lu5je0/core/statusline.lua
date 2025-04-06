@@ -147,6 +147,7 @@ M.setup = function()
 
   -- 定义高亮组
   vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
+  vim.api.nvim_set_hl(0, 'StatusLineViolet', { fg = colors.violet, bg = '#212328', bold = false })
 
   ins_left {
     function()
@@ -164,33 +165,31 @@ M.setup = function()
       local fg_color = { fg = mapping.color or colors.yellow }
       return get_highlight(fg_color) .. mapping.text
     end,
+    cond = function(args)
+      return conditions.hide_in_width(args.win_id, 40)
+    end,
     inactive = false,
   }
   
+  -- fileicon + filename
   ins_left {
     function(args)
       local devicons = require('nvim-web-devicons')
+      local filename = args.filename == '' and '[Untitled]' or args.filename
       local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'
-      return "%#" .. highlight .. "#" .. icon
+      return ("%%#%s#%s %%#%s#%s"):format(highlight, icon, 'StatusLineViolet', filename)
     end,
     color = "StatusLineGrey",
     cache = true,
     cache_ttl = 2000,
     cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
+    cond = function(args)
+      return conditions.hide_in_width(args.win_id, 25)
+    end,
   }
 
-  ins_left {
-    function(args)
-      return args.filename == '' and '[Untitled]' or args.filename
-    end,
-    color = { fg = colors.violet, bold = true },
-    cache = true,
-    cache_ttl = 2000,
-    cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
-  }
-  
   -- modified status
   ins_left {
     function(args)
@@ -244,13 +243,15 @@ M.setup = function()
       if #diagnostics == 0 then
         return nil
       end
-      local count = { ERROR = 0--[[ , WARN = 0, INFO = 0, HINT = 0 ]] }
-      local symbols = { ERROR = ' ', --[[ WARN = ' ', INFO = ' ', HINT = ' ' ]] }
+      local count = { ERROR = 0, WARN = 0, INFO = 0, HINT = 0 }
+      local symbols = { ERROR = ' ',WARN = ' ', INFO = ' ', HINT = ' ' }
 
       for _, diagnostic in ipairs(diagnostics) do
         local severity = diagnostic.severity
         if severity == 1 then
-          count["ERROR"] = (count["ERROR"] or 0) + 1
+          count.ERROR = (count.ERROR or 0) + 1
+        elseif severity == 2 then
+          count.WARN = (count.WARN or 0) + 1
         end
       end
 
@@ -287,6 +288,9 @@ M.setup = function()
         return table.concat(parts, " ")
       end
       return ""
+    end,
+    cond = function(args)
+      return conditions.hide_in_width(args.win_id, 30)
     end,
     cache_ttl = 100,
   }
@@ -375,19 +379,21 @@ M.setup = function()
     return r
   end
 
-  _G.my_status_line = function()
+  _G.__my_status_line = function()
     return M.statusline()
   end
 
-  vim.cmd [[set statusline=%!v:lua._G.my_status_line()]]
+  vim.o.statusline = '%!v:lua._G.__my_status_line()'
   create_statusline_timer(300)
+  
+  -- local timer = require('lu5je0.lang.timer')
+  -- timer.measure_fn(require('lualine').statusline, 10000)
+  vim.api.nvim_create_user_command("StatusLineBenchmark", function()
+    vim.g.statusline_winid = vim.api.nvim_get_current_win()
+    local timer = require('lu5je0.lang.timer')
+    timer.measure_fn(M.statusline, 80000)
+  end, {})
 end
 
--- local timer = require('lu5je0.lang.timer')
--- timer.measure_fn(require('lualine').statusline, 10000)
-
--- vim.g.statusline_winid = vim.api.nvim_get_current_win()
--- local timer = require('lu5je0.lang.timer')
--- timer.measure_fn(require('lu5je0.core.statusline').statusline, 80000)
 
 return M

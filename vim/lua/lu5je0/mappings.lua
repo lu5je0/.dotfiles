@@ -115,15 +115,15 @@ vim.schedule(function()
   set_x_map('<C-c>', 'y')
   
   set_map('n', '<space><space>', function()
-    -- 保存当前视图状态
-    local save = vim.fn.winsaveview()
+    -- -- 保存当前视图状态
+    -- local save = vim.fn.winsaveview()
     -- 选择最后插入的文本
     vim.cmd('normal! `[v`]')
-    -- 重新缩进选定文本
-    vim.cmd('silent! normal =')
-    -- 恢复视图状态
-    vim.fn.winrestview(save)
-    keys_helper.feedkey('^')
+    -- -- 重新缩进选定文本
+    -- vim.cmd('silent! normal =')
+    -- -- 恢复视图状态
+    -- vim.fn.winrestview(save)
+    -- keys_helper.feedkey('^')
   end)
   
   -- neovim

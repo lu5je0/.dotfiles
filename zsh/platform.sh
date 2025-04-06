@@ -2,6 +2,7 @@
 if [[ $UNAME_INFO =~ "Darwin" ]]; then
   # intel
   # PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+  export HOMEBREW_PATH="/opt/homebrew"
   
   # arm
   export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
@@ -56,6 +57,11 @@ elif [[ $UNAME_INFO =~ "Android" ]]; then
 fi
 
 if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
+  export HOMEBREW_PATH="/home/linuxbrew/.linuxbrew"
+  export PATH=$HOMEBREW_PATH/bin:$PATH
+  
+  fpath=($HOMEBREW_PATH/share/zsh/site-functions $fpath)
+  
   arch=`arch`
   if [[ $arch =~ 'x86_64' ]]; then
     export PATH=/home/lu5je0/.dotfiles/bin/linux_x86_64:$PATH

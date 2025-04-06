@@ -189,6 +189,10 @@ hs.hotkey.bind({ "ctrl", "option" }, "H", size_focused_window('halfleft'))
 hs.hotkey.bind({ "ctrl", "option" }, "L", size_focused_window('halfright'))
 hs.hotkey.bind({ "ctrl", "option" }, "I", size_focused_window('43_center'))
 hs.hotkey.bind({ "ctrl", "option" }, "K", size_focused_window('maximize'))
+hs.hotkey.bind({ "ctrl", "option" }, "M", function()
+  local win = hs.window.focusedWindow()
+  win:minimize()
+end)
 hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
   local win_win = require('win_win')
   local win = hs.window.focusedWindow()
@@ -203,8 +207,6 @@ hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
     size_focused_window('maximize')()
   end
 end)
-
--- hs.hotkey.bind({ "ctrl", "option" }, "R", spoon.WinWin:redo)
 
 -- 禁止粘贴
 -- hs.hotkey.bind({ 'cmd', 'shift' }, 'v', function() hs.eventtap.keyStrokes(hs.pasteboard.getContents()) end)

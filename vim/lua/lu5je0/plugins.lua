@@ -78,7 +78,7 @@ require("lazy").setup({
       'nvim-treesitter/nvim-treesitter',
       build = ':TSUpdate',
       config = function()
-        require('lu5je0.ext.treesiter')
+        require('lu5je0.ext.treesiter').setup()
       end,
       dependencies = {
         'nvim-treesitter/nvim-treesitter-textobjects'
@@ -257,13 +257,24 @@ require("lazy").setup({
   --     { mode = 'n', "<leader>/", "<cmd>call eregex#toggle()<cr>", desc = "EregexToggle" },
   --   },
   -- },
-  {
-    'numToStr/Comment.nvim',
-    config = function()
-      require('lu5je0.ext.comment').setup()
-    end,
-    keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' }, { mode = 'n', 'gC' } }
-  },
+  -- {
+  --   'numToStr/Comment.nvim',
+  --   config = function()
+  --     require('lu5je0.ext.comment').setup()
+  --   end,
+  --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' }, { mode = 'n', 'gC' } }
+  -- },
+  -- {
+  --   'tpope/vim-commentary',
+  --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
+  -- },
+  -- {
+  --   'echasnovski/mini.comment',
+  --   config = function()
+  --     require('mini.comment').setup()
+  --   end,
+  --   keys = { { mode = 'x', 'gc' }, { mode = 'n', 'gc' }, { mode = 'n', 'gcc' } }
+  -- },
   {
     'akinsho/toggleterm.nvim',
     branch = 'main',
@@ -370,42 +381,42 @@ require("lazy").setup({
   -- },
 
   -- nvim-cmp
-  {
-    {
-      'hrsh7th/nvim-cmp',
-      config = function()
-        require('lu5je0.ext.cmp')
-      end,
-      dependencies = {
-        -- 'hrsh7th/cmp-cmdline',
-        'windwp/nvim-autopairs',
-        'saadparwaiz1/cmp_luasnip',
-        'hrsh7th/cmp-buffer',
-        'hrsh7th/cmp-path',
-        {
-          'L3MON4D3/LuaSnip',
-          config = function()
-            require('lu5je0.ext.luasnip').setup()
-          end
-        },
-        -- {
-        --   "garymjr/nvim-snippets",
-        --   config = function()
-        --     require('snippets').setup({
-        --       search_paths = { vim.fn.stdpath('config') .. '/snippets/vsnip' },
-        --       create_autocmd = true,
-        --       create_cmp_source = true
-        --     })
-        --   end
-        -- }
-      },
-      event = 'InsertEnter',
-    },
-    {
-      'hrsh7th/cmp-nvim-lsp',
-      event = 'LspAttach'
-    },
-  },
+  -- {
+  --   {
+  --     'hrsh7th/nvim-cmp',
+  --     config = function()
+  --       require('lu5je0.ext.cmp')
+  --     end,
+  --     dependencies = {
+  --       -- 'hrsh7th/cmp-cmdline',
+  --       'windwp/nvim-autopairs',
+  --       'saadparwaiz1/cmp_luasnip',
+  --       'hrsh7th/cmp-buffer',
+  --       'hrsh7th/cmp-path',
+  --       {
+  --         'L3MON4D3/LuaSnip',
+  --         config = function()
+  --           require('lu5je0.ext.luasnip').setup()
+  --         end
+  --       },
+  --       -- {
+  --       --   "garymjr/nvim-snippets",
+  --       --   config = function()
+  --       --     require('snippets').setup({
+  --       --       search_paths = { vim.fn.stdpath('config') .. '/snippets/vsnip' },
+  --       --       create_autocmd = true,
+  --       --       create_cmp_source = true
+  --       --     })
+  --       --   end
+  --       -- }
+  --     },
+  --     event = 'InsertEnter',
+  --   },
+  --   {
+  --     'hrsh7th/cmp-nvim-lsp',
+  --     event = 'LspAttach'
+  --   },
+  -- },
 
   -- {
   --   "elihunter173/dirbuf.nvim",
@@ -415,34 +426,34 @@ require("lazy").setup({
   --   cmd = 'Dirbuf'
   -- },
 
-  -- {
-  --   'saghen/blink.cmp',
-  --   -- optional: provides snippets for the snippet source
-  --   dependencies = {
-  --     -- 'rafamadriz/friendly-snippets',
-  --     'windwp/nvim-autopairs',
-  --     {
-  --       'L3MON4D3/LuaSnip',
-  --       config = function()
-  --         require('lu5je0.ext.luasnip').setup()
-  --       end
-  --     },
-  --   },
-  --
-  --   -- use a release tag to download pre-built binaries
-  --   version = '*',
-  --   -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
-  --   -- build = 'cargo build --release',
-  --   -- If you use nix, you can build from source using latest nightly rust with:
-  --   -- build = 'nix run .#build-plugin',
-  --   
-  --   config = function()
-  --     require('lu5je0.ext.blink').setup()
-  --   end,
-  --   
-  --   -- opts_extend = { "sources.default" },
-  --   event = 'InsertEnter',
-  -- },
+  {
+    'saghen/blink.cmp',
+    -- optional: provides snippets for the snippet source
+    dependencies = {
+      -- 'rafamadriz/friendly-snippets',
+      'windwp/nvim-autopairs',
+      {
+        'L3MON4D3/LuaSnip',
+        config = function()
+          require('lu5je0.ext.luasnip').setup()
+        end
+      },
+    },
+
+    -- use a release tag to download pre-built binaries
+    version = '*',
+    -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
+    -- build = 'cargo build --release',
+    -- If you use nix, you can build from source using latest nightly rust with:
+    -- build = 'nix run .#build-plugin',
+    
+    config = function()
+      require('lu5je0.ext.blink').setup()
+    end,
+    
+    -- opts_extend = { "sources.default" },
+    event = 'InsertEnter',
+  },
 
   {
     'stevearc/oil.nvim',
@@ -474,27 +485,19 @@ require("lazy").setup({
     lazy = true
   },
 
-  {
-    'kevinhwang91/nvim-ufo',
-    dependencies = {
-      'kevinhwang91/promise-async',
-    },
-    config = function()
-      require('lu5je0.ext.nvim-ufo')
-    end,
-    lazy = true
-    -- event = 'VeryLazy'
-    -- cmd = 'FoldTextToggle',
-    -- keys = { 'zf', 'zo', 'za', 'zc', 'zM', 'zR' }
-  },
+  -- c070ee849bfedb2ed778f60419a1eae8c8544be8
   -- {
-  --   'anuvyklack/pretty-fold.nvim',
+  --   'kevinhwang91/nvim-ufo',
+  --   dependencies = {
+  --     'kevinhwang91/promise-async',
+  --   },
   --   config = function()
-  --     require('pretty-fold').setup({
-  --       fill_char = ' ',
-  --     })
+  --     require('lu5je0.ext.nvim-ufo')
   --   end,
   --   lazy = true
+  --   -- event = 'VeryLazy'
+  --   -- cmd = 'FoldTextToggle',
+  --   -- keys = { 'zf', 'zo', 'za', 'zc', 'zM', 'zR' }
   -- },
 
   {
@@ -1057,6 +1060,8 @@ require("lazy").setup({
             keys = {
               ["<c-n>"] = { "history_forward", mode = { "i", "n" } },
               ["<c-p>"] = { "history_back", mode = { "i", "n" } },
+              ["<esc>"] = { "close", mode = { "n", "i" } },
+              ["<c-c>"] = { "close", mode = { "n" } },
             }
           }
         }
