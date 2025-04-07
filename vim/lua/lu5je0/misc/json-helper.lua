@@ -120,7 +120,7 @@ function M.setup()
 
   vim.api.nvim_create_user_command('Json', function()
     M.format()
-    if vim.fn.line("$") < 10000 then
+    if not require('lu5je0.ext.big-file').is_big_file(0) then
       vim.cmd('set ft=json')
     end
   end, { force = true })
