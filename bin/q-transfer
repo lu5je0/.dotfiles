@@ -6,7 +6,7 @@ script_path=~/.dotfiles/submodule/transfer
 # 定义询问函数
 ask() {
     echo -n $1
-    echo -n $' (y/n) \n# '
+    echo -n $' (y/n) \\n# '
     read choice
     case $choice in
         Y | y)

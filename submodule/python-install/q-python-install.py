@@ -6,7 +6,7 @@ import argparse
 
 # Function to generate run.sh script
 def generate_run_script(script_path, script_name, run_script_name, output_dir):
-    with open(os.path.split(os.path.realpath(__file__))[0] + "/runner.sh") as f:
+    with open(os.path.split(os.path.realpath(__file__))[0] + "/template.sh") as f:
         run_script_content = "".join(f.readlines())
         run_script_content = run_script_content.format(
                 script_path=script_path,
