@@ -1,6 +1,7 @@
 import requests
 import argparse
 import os
+import sys
 
 def push(text: str):
     headers = {
@@ -28,10 +29,15 @@ def push(text: str):
         print('push failed', resp)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('msgs', nargs='+')
-    # parser.add_argument("-i", "--img")
-    
-    args = parser.parse_args()
-    
-    push("\n".join(args.msgs))
+    text = None
+    if sys.stdin.isatty():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('msgs', nargs='+')
+        # parser.add_argument("-i", "--img")
+        args = parser.parse_args()
+        text = "\n".join(args.msgs)
+    else:
+        text = "".join(sys.stdin.readlines())
+
+    if text != None: 
+        push(text)
