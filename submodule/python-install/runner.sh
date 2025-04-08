@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 获取当前脚本所在目录
-script_path=~/.dotfiles/submodule/python-install
+script_path={script_path}
 
 # 定义询问函数
-ask() {
+ask() {{
     echo -n $1
     echo -n $' (y/n) \\n# '
     read choice
@@ -13,7 +13,7 @@ ask() {
         return 0
     esac
     return -1
-}
+}}
 
 # 从 .script 文件中读取配置
 if [ -f "$script_path/.script" ]; then
@@ -44,8 +44,8 @@ if [ -n "$VENV_DIR" ]; then
     fi
 
     # 使用 exec 替换当前进程为虚拟环境中的 Python 解释器，传递所有参数
-    exec "$venv_python" ${script_path}/q-python-install.py "$@"
+    exec "$venv_python" ${{script_path}}/{script_name} "$@"
 else
     # 如果没有定义 VENV_DIR，直接使用系统 Python 运行脚本
-    exec python3 ${script_path}/q-python-install.py "$@"
+    exec python3 ${{script_path}}/{script_name} "$@"
 fi
