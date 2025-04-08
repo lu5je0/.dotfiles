@@ -21,7 +21,7 @@ class HostType:
     @staticmethod
     def get_host(host_type):
         if host_type == HostType.PRIVATE:
-            return 'http://{}:20404/'.format(socket.gethostbyname('sh.665665.xyz'))
+            return 'http://{}:21443/'.format(socket.gethostbyname('transfer.665665.xyz'))
         elif host_type == HostType.TRANSFER:
             return 'https://transfer.sh/'
 
