@@ -182,6 +182,8 @@ function M.preview(toggle)
   end
 end
 
+
+local refresh_explorer_fn_backup = explorer.reload_explorer
 function M.open_node()
   ui.close_current_popup()
 
@@ -202,12 +204,11 @@ function M.open_node()
   end
 
   -- 这破方法特别慢
-  local refresh_explorer_fn_backup = explorer.reload_explorer
   explorer.reload_explorer = function() end
   api.node.open.edit()
   vim.defer_fn(function()
     explorer.reload_explorer = refresh_explorer_fn_backup
-  end, 1000)
+  end, 500)
   -- explorer.reload = refresh_fn_backup
 end
 
@@ -356,7 +357,10 @@ local function on_attach(bufnr)
       vim.cmd('Oil' .. path)
     end)
   end, opts('Oil'))
-  set('n', 'I', api.tree.toggle_hidden_filter, opts('Toggle Dotfiles'))
+  set('n', 'I', function()
+    explorer.reload_explorer = refresh_explorer_fn_backup
+    api.tree.toggle_hidden_filter()
+  end, opts('Toggle Dotfiles'))
   set('n', 'r', api.tree.reload, opts('Refresh'))
   set('n', 'ma', api.fs.create, opts('Create'))
   set('n', 'mv', api.fs.rename, opts('Rename'))
