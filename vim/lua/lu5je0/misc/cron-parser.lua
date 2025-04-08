@@ -20,7 +20,7 @@ function M.parse_line(count)
   end
 
   print(crontab)
-  print(vim.fn.system('cron-parser -c ' .. count, crontab))
+  print(vim.fn.system('q-cron-parser -c ' .. count, crontab))
 end
 
 return M

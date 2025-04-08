@@ -44,8 +44,8 @@ if [ -n "$VENV_DIR" ]; then
     fi
 
     # 使用 exec 替换当前进程为虚拟环境中的 Python 解释器，传递所有参数
-    exec "$venv_python" ${script_path}/transfer.py "$@"
+    exec "$venv_python" ${script_path}/q-transfer.py "$@"
 else
     # 如果没有定义 VENV_DIR，直接使用系统 Python 运行脚本
-    exec python3 ${script_path}/transfer.py "$@"
+    exec python3 ${script_path}/q-transfer.py "$@"
 fi
