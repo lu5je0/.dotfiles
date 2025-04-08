@@ -91,9 +91,9 @@ class Uploader:
                 wrapped_file = CallbackIOWrapper(t.update, f, "read")
                 resp = put(filename, data=wrapped_file)
 
-        print('Delete command: curl --request DELETE', resp.headers['X-Url-Delete'])
+        print('Delete command: curl --request DELETE', resp.headers['X-Url-Delete'].replace('http://transfer.665665.xyz', 'https://transfer.665665.xyz:21443'))
         print('Delete token:', re.findall('/([^/]*?)$', resp.headers['X-Url-Delete'])[0])
-        print('Download link:', resp.text)
+        print('Download link:', resp.text.replace('http://transfer.665665.xyz', 'https://transfer.665665.xyz:21443'))
         if qrcode:
             self.print_qr_code_ascii(resp.text)
 
