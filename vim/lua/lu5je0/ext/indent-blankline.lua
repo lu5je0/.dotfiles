@@ -26,7 +26,7 @@ require "ibl".overwrite {
 
 ibl.setup {
   -- 大于100，<<时文本会闪烁
-  debounce = 50,
+  debounce = 90,
   indent = {
     char = "│",
     highlight = highlight,
