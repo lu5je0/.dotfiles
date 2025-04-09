@@ -3,19 +3,33 @@
 import os
 import sys
 import argparse
+import textwrap
 
 # Function to generate run.sh script
-def generate_run_script(script_path, script_name, run_script_name, output_dir):
-    with open(os.path.split(os.path.realpath(__file__))[0] + "/template.sh") as f:
-        run_script_content = "".join(f.readlines())
-        run_script_content = run_script_content.format(
-                script_path=script_path,
-                script_name=script_name
-                )
+def generate_run_script(script_path, script_name, output_dir):
+    # Get base name of Python script to name the run.sh
+    script_name = os.path.basename(script_name)
+    target_name = f"{os.path.splitext(script_name)[0]}"
+    
+    run_script_content = f"""
+    #!/bin/bash
+    SCRIPT_PATH={script_path}
+    SCRIPT_NAME={script_name}
+    """
+    run_script_content = run_script_content[1:]
+    run_script_content = textwrap.dedent(run_script_content)
+
+    script_path = os.path.expanduser(script_path)
+    if os.path.exists(script_path + '/.script'):
+        with open(script_path + '/.script') as script:
+            run_script_content += "".join(script.readlines())
+
+    run_script_content += '\nsource ~/.dotfiles/submodule/python-install/runner.sh'
+        
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
-    run_script_path = os.path.join(output_dir, run_script_name)
+    run_script_path = os.path.join(output_dir, target_name)
     with open(run_script_path, "w") as run_script_file:
         run_script_file.write(run_script_content)
 
@@ -36,20 +50,16 @@ def main():
     
     args = parser.parse_args()
 
-    python_script = args.python_script
-    if not os.path.exists(python_script):
-        print(f"Error: Python script '{python_script}' does not exist.")
+    script_name = args.python_script
+    if not os.path.exists(script_name):
+        print(f"Error: Python script '{script_name}' does not exist.")
         sys.exit(1)
-
-    # Get base name of Python script to name the run.sh
-    script_name = os.path.basename(python_script)
-    run_script_name = f"{os.path.splitext(script_name)[0]}"
 
     # Determine paths
     output_dir = args.output_dir
 
     # Generate run.sh script
-    generate_run_script(replace_home_with_tilde(os.getcwd()), python_script, run_script_name, output_dir)
+    generate_run_script(replace_home_with_tilde(os.getcwd()), script_name, output_dir)
 
 if __name__ == "__main__":
     main()
