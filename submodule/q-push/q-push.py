@@ -45,7 +45,7 @@ if __name__ == "__main__":
         text = "\n".join(args.msgs)
 
     if not sys.stdin.isatty():
-        text = text + "\n" + "".join(sys.stdin.readlines())
+        text = text + "\n\n" + "".join(sys.stdin.readlines())
 
     if text != "": 
         push(text)
