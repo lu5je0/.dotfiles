@@ -29,15 +29,23 @@ def push(text: str):
         print('push failed', resp)
 
 if __name__ == "__main__":
-    text = None
-    if sys.stdin.isatty():
-        parser = argparse.ArgumentParser()
-        parser.add_argument('msgs', nargs='+')
-        # parser.add_argument("-i", "--img")
-        args = parser.parse_args()
+    text = ""
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('msgs', nargs='*')
+    # parser.add_argument("-i", "--img")
+    args = parser.parse_args()
+    
+    if args.msgs == [] and sys.stdin.isatty():
+        print("Error: At least one msg is required.")
+        parser.print_usage()
+        sys.exit(1)
+    
+    if args.msgs != []:
         text = "\n".join(args.msgs)
-    else:
-        text = "".join(sys.stdin.readlines())
 
-    if text != None: 
+    if not sys.stdin.isatty():
+        text = text + "\n" + "".join(sys.stdin.readlines())
+
+    if text != "": 
         push(text)
