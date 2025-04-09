@@ -5,6 +5,17 @@ import sys
 import argparse
 import textwrap
 
+def source_shell_file(lines):
+    target = {}
+    for line in lines:
+        # 忽略注释和空行
+        if line.startswith('#') or not line.strip():
+            continue
+        # 解析变量
+        key, _, value = line.partition('=')
+        target[key] = value.strip()
+    return target
+
 # Function to generate run.sh script
 def generate_run_script(script_path, script_name, output_dir):
     # Get base name of Python script to name the run.sh
@@ -22,7 +33,15 @@ def generate_run_script(script_path, script_name, output_dir):
     script_path = os.path.expanduser(script_path)
     if os.path.exists(script_path + '/.script'):
         with open(script_path + '/.script') as script:
-            run_script_content += "".join(script.readlines())
+            lines = script.readlines()
+            ext_script = "".join(script.readlines())
+            run_script_content += ext_script
+            
+            # set target_name
+            ext_script_map = source_shell_file(lines)
+            print(ext_script_map)
+            if 'TARGET_NAME' in ext_script_map:
+                target_name = ext_script_map['TARGET_NAME']
 
     run_script_content += '\nsource ~/.dotfiles/submodule/python-install/runner.sh'
         

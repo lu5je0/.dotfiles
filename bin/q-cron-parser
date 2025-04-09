@@ -1,6 +1,5 @@
 #!/bin/bash
 SCRIPT_PATH=~/.dotfiles/submodule/croniter
-SCRIPT_NAME=q-cron-parser.py
-VENV_DIR=.env
+SCRIPT_NAME=cron_parser.py
 
 source ~/.dotfiles/submodule/python-install/runner.sh

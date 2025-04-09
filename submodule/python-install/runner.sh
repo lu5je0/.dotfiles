@@ -22,11 +22,6 @@ ask() {
     return -1
 }
 
-# 从 .script 文件中读取配置
-if [ -f "$SCRIPT_PATH/.script" ]; then
-    source "$SCRIPT_PATH/.script"
-fi
-
 # 检查是否定义了 VENV_DIR
 if [ -n "$VENV_DIR" ]; then
     # 虚拟环境目录
