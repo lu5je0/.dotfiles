@@ -39,7 +39,6 @@ def generate_run_script(script_path, script_name, output_dir):
             
             # set target_name
             ext_script_map = source_shell_file(lines)
-            print(ext_script_map)
             if 'TARGET_NAME' in ext_script_map:
                 target_name = ext_script_map['TARGET_NAME']
 
