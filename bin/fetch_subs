@@ -1,5 +1,6 @@
 #!/bin/bash
 SCRIPT_PATH=~/.dotfiles/submodule/fetch-subs
 SCRIPT_NAME=fetch_subs.py
+VENV_DIR=.env
 
 source ~/.dotfiles/submodule/python-install/runner.sh
