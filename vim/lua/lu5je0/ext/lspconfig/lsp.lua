@@ -138,7 +138,7 @@ function M.setup()
   diagnostic()
   config()
   
-  -- vim.lsp.enable({'delance'})
+  vim.lsp.enable({'delance'})
   
   -- local function start_lsp()
   --   local bigfile = require('lu5je0.ext.big-file')
