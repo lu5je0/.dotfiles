@@ -261,6 +261,11 @@ vim.schedule(function()
   
   " remove default mapppings
   silent! vunmap crr
+  silent! unmap gri
+  silent! unmap grr
+  silent! unmap gra
+  silent! unmap gra
+  silent! unmap grn 
   ]]
 
 end)

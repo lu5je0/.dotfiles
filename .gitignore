@@ -12,3 +12,4 @@ submodule/SubtitlesDownloader/.env/
 node_modules/
 .env/
 build/neovim
+.DS_Store
