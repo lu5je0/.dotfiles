@@ -1,3 +1,4 @@
+-- npm install -g @delance/runtime
 return {
   cmd = { 'delance-langserver', '--stdio' },
   filetypes = { "python" },
@@ -38,7 +39,7 @@ return {
               then
                 if item.label:sub(-1) ~= ')' then
                   item.insertText = item.label
-                  item.label = item.label .. '()'
+                  item.label = item.label .. '(..)'
                   item.insertTextFormat = vim.lsp.protocol.InsertTextFormat.Snippet
                 end
               end
