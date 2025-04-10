@@ -1,1 +1,1 @@
-export VENV_DIR=.env
+VENV_DIR=.env

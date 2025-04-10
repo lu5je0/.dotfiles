@@ -1,5 +1,5 @@
 #!/bin/bash
-SCRIPT_PATH=~/.dotfiles/submodule/python-install
+SCRIPT_PATH=$HOME/.dotfiles/submodule/python-install
 SCRIPT_NAME=q-python-install.py
 
-source ~/.dotfiles/submodule/python-install/runner.sh
+source $HOME/.dotfiles/submodule/python-install/runner.sh

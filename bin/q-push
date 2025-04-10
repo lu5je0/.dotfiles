@@ -1,6 +1,6 @@
 #!/bin/bash
-SCRIPT_PATH=~/.dotfiles/submodule/q-push
+SCRIPT_PATH=$HOME/.dotfiles/submodule/q-push
 SCRIPT_NAME=q-push.py
-export VENV_DIR=.env
+VENV_DIR=.env
 
-source ~/.dotfiles/submodule/python-install/runner.sh
+source $HOME/.dotfiles/submodule/python-install/runner.sh
