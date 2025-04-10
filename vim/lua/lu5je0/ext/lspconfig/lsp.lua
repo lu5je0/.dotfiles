@@ -87,11 +87,11 @@ local function config()
   -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
   local capabilities = require('blink.cmp').get_lsp_capabilities()
 
-  -- nvim-ufo
-  capabilities.textDocument.foldingRange = {
-    dynamicRegistration = false,
-    lineFoldingOnly = true
-  }
+  -- -- nvim-ufo
+  -- capabilities.textDocument.foldingRange = {
+  --   dynamicRegistration = false,
+  --   lineFoldingOnly = true
+  -- }
 
   for _, server_name in pairs(installed_server_names) do
     local server = lspconfig[server_name]
@@ -99,7 +99,7 @@ local function config()
     local opts = {
       capabilities = capabilities,
       on_attach = M.on_attach,
-      autostart = false,
+      -- autostart = false,
     }
 
     if server_name == 'lua_ls' then
@@ -134,39 +134,32 @@ local function config()
   })
 end
 
-local function semantic_token_highlight()
-  vim.cmd [[
-    " hi! link @lsp.type.variable.lua RedItalic
-    " hi! link @lsp.typemod.variable.defaultLibrary.lua CyanItalic
-    " hi! link @lsp.mod.defaultLibrary.lua CyanItalic
-  ]]
-end
-
-local function start_lsp()
-  local bigfile = require('lu5je0.ext.big-file')
-  if vim.tbl_contains(autostart_filetypes, vim.bo.filetype) then
-    if not bigfile.is_big_file(vim.api.nvim_get_current_buf()) then
-      vim.cmd('LspStart')
-    end
-  end
-end
-
 function M.setup()
   diagnostic()
   config()
-  semantic_token_highlight()
   
-  vim.defer_fn(function()
-    start_lsp()
-  end, 0)
+  vim.lsp.enable({'delance'})
   
-  vim.api.nvim_create_autocmd('FileType', {
-    group = vim.api.nvim_create_augroup('lsp_autocmd_group', { clear = true }),
-    pattern = autostart_filetypes,
-    callback = function()
-      start_lsp()
-    end,
-  })
+  -- local function start_lsp()
+  --   local bigfile = require('lu5je0.ext.big-file')
+  --   if vim.tbl_contains(autostart_filetypes, vim.bo.filetype) then
+  --     if not bigfile.is_big_file(vim.api.nvim_get_current_buf()) then
+  --       vim.cmd('LspStart')
+  --     end
+  --   end
+  -- end
+  --
+  -- vim.defer_fn(function()
+  --   start_lsp()
+  -- end, 0)
+  --
+  -- vim.api.nvim_create_autocmd('FileType', {
+  --   group = vim.api.nvim_create_augroup('lsp_autocmd_group', { clear = true }),
+  --   pattern = autostart_filetypes,
+  --   callback = function()
+  --     start_lsp()
+  --   end,
+  -- })
 end
 
 return M

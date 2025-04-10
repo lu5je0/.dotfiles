@@ -794,7 +794,7 @@ require("lazy").setup({
       vim.o.nuw = 2
       require("statuscol").setup({
         -- configuration goes here, for example:
-        ft_ignore = { 'NvimTree', 'undotree', 'diff', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
+        ft_ignore = { 'NvimTree', 'undotree', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
         bt_ignore = { 'terminal' },
         segments = {
           { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
@@ -815,7 +815,6 @@ require("lazy").setup({
             click = "v:lua.ScSa",
             condition = { function(args)
               return vim.wo[args.win].number
-              -- return vim.wo[args.win].signcolumn ~= 'no'
             end }
           },
           { text = { builtin.lnumfunc }, click = "v:lua.ScLa", },
