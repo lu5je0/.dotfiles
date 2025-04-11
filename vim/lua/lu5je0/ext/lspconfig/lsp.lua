@@ -4,17 +4,12 @@ local installed_server_names = require('mason-lspconfig').get_installed_servers(
 
 local lspconfig = require("lspconfig")
 
-local autostart_filetypes = {}
-
-M.capabilities = nil
+-- local autostart_filetypes = {}
 
 local function diagnostic()
   vim.diagnostic.config {
     virtual_text = false,
     underline = true,
-    float = {
-      source = 'always',
-    },
     severity_sort = true,
     update_in_insert = true,
     signs = {
@@ -35,15 +30,14 @@ local function diagnostic()
   }
 end
 
-function M.on_attach(client, bufnr)
+local function keymap(bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
-  local keymap = vim.keymap.set
-
+  
   -- keymap('n', 'gd', vim.lsp.buf.definition, opts)
   -- keymap('n', 'gn', vim.lsp.buf.implementation, opts)
   -- keymap('n', 'gb', vim.lsp.buf.references, opts)
   
-  keymap('n', 'K', vim.lsp.buf.hover, opts)
+  vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
   -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
   -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
   
@@ -51,35 +45,36 @@ function M.on_attach(client, bufnr)
   -- keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
   -- keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
   
-  keymap("n", "<leader>ch", function()
+  vim.keymap.set("n", "<leader>ch", function()
     vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
   end, { desc = "LSP | Toggle Inlay Hints", silent = true })
   
-  keymap('n', 'gy', vim.lsp.buf.type_definition, opts)
+  vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
 
   -- keymap('n', 'gu', vim.lsp.buf.declaration, opts)
   -- keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)
-  keymap('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
-  keymap('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
-  keymap('n', '<leader>Wl', function()
+  vim.keymap.set('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
+  vim.keymap.set('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
+  vim.keymap.set('n', '<leader>Wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, opts)
   -- keymap('n', '<leader>cr', vim.lsp.buf.rename, opts)
-  keymap('n', '[e', vim.diagnostic.goto_prev, opts)
-  keymap('n', ']e', vim.diagnostic.goto_next, opts)
-  keymap('n', '<leader>ce', vim.diagnostic.setloclist, opts)
   
-  keymap('n', '<leader><space>', function()
+  vim.keymap.set('n', '[e', function()
+    vim.diagnostic.jump({ count = -1, float = true })
+  end, opts)
+  vim.keymap.set('n', ']e', function()
+    vim.diagnostic.jump({ count = 1, float = true })
+  end, opts)
+  vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, opts)
+  
+  vim.keymap.set('n', '<leader><space>', function()
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
-  
-  if client.server_capabilities.documentSymbolProvider then
-    local navic = require("nvim-navic")
-    navic.attach(client, bufnr)
-  end
-  
-  -- client.server_capabilities.semanticTokensProvider = nil
-  -- vim.lsp.buf.inlay_hint(bufnr, true)
+end
+
+function M.on_attach(client, bufnr)
+  keymap(bufnr)
 end
 
 local function config()
@@ -119,19 +114,12 @@ local function config()
       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.jdtls').on_init
     end
     
-    for _, filetype in ipairs(server.document_config.default_config.filetypes) do
-      table.insert(autostart_filetypes, filetype)
-    end
+    -- for _, filetype in ipairs(server.document_config.default_config.filetypes) do
+    --   table.insert(autostart_filetypes, filetype)
+    -- end
 
     server.setup(opts)
   end
-
-  vim.lsp.handlers['textDocument/signatureHelp'] = vim.lsp.with(
-    vim.lsp.handlers.signature_help, {
-    border = 'rounded',
-    close_events = { 'InsertLeave' },
-    focusable = false
-  })
 end
 
 function M.setup()

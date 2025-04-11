@@ -607,6 +607,16 @@ require("lazy").setup({
           -- depth_limit = 10,
           -- depth_limit_indicator = "..",
         }
+        
+        vim.api.nvim_create_autocmd('LspAttach', {
+          callback = function(ctx)
+            local client = vim.lsp.get_client_by_id(ctx.data.client_id)
+            if client and client.server_capabilities.documentSymbolProvider then
+              local navic = require("nvim-navic")
+              navic.attach(client, vim.api.nvim_get_current_buf())
+            end
+          end
+        })
       end,
       event = { 'LspAttach' }
     },

@@ -15,9 +15,9 @@ def push(text: str):
         },
     }
 
-    if 'FEISHU_TOKEN' not in os.environ:
-        print("feishu token is missing")
-        return
+    # if 'FEISHU_TOKEN' not in os.environ:
+    #     print("feishu token is missing")
+    #     return
     # token = os.environ['FEISHU_TOKEN']
     token = 'b98e0efa-32ac-473c-befb-16e63b8e1b5a'
     
