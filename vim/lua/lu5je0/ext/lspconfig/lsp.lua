@@ -1,12 +1,6 @@
 local M = {}
 
-local installed_server_names = require('mason-lspconfig').get_installed_servers()
-
-local lspconfig = require("lspconfig")
-
--- local autostart_filetypes = {}
-
-local function diagnostic()
+local function config_diagnostic()
   vim.diagnostic.config {
     virtual_text = false,
     underline = true,
@@ -32,23 +26,23 @@ end
 
 local function keymap(bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
-  
+
   -- keymap('n', 'gd', vim.lsp.buf.definition, opts)
   -- keymap('n', 'gn', vim.lsp.buf.implementation, opts)
   -- keymap('n', 'gb', vim.lsp.buf.references, opts)
-  
+
   vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
   -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
   -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
-  
+
   -- format
   -- keymap('n', '<leader>cf', vim.lsp.buf.formatting, opts)
   -- keymap('v', '<leader>cf', vim.lsp.buf.range_formatting, opts)
-  
+
   vim.keymap.set("n", "<leader>ch", function()
     vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
   end, { desc = "LSP | Toggle Inlay Hints", silent = true })
-  
+
   vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
 
   -- keymap('n', 'gu', vim.lsp.buf.declaration, opts)
@@ -59,7 +53,7 @@ local function keymap(bufnr)
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, opts)
   -- keymap('n', '<leader>cr', vim.lsp.buf.rename, opts)
-  
+
   vim.keymap.set('n', '[e', function()
     vim.diagnostic.jump({ count = -1, float = true })
   end, opts)
@@ -67,7 +61,7 @@ local function keymap(bufnr)
     vim.diagnostic.jump({ count = 1, float = true })
   end, opts)
   vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, opts)
-  
+
   vim.keymap.set('n', '<leader><space>', function()
     vim.diagnostic.open_float { scope = 'line', opts }
   end)
@@ -77,7 +71,9 @@ function M.on_attach(client, bufnr)
   keymap(bufnr)
 end
 
-local function config()
+local function config_lsp(installed_server_names)
+  local lspconfig = require("lspconfig")
+
   -- nvim-cmp
   -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
   local capabilities = require('blink.cmp').get_lsp_capabilities()
@@ -113,41 +109,18 @@ local function config()
     elseif server_name == 'jdtls' then
       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.jdtls').on_init
     end
-    
-    -- for _, filetype in ipairs(server.document_config.default_config.filetypes) do
-    --   table.insert(autostart_filetypes, filetype)
-    -- end
 
     server.setup(opts)
   end
 end
 
 function M.setup()
-  diagnostic()
-  config()
-  
-  vim.lsp.enable({'delance'})
-  
-  -- local function start_lsp()
-  --   local bigfile = require('lu5je0.ext.big-file')
-  --   if vim.tbl_contains(autostart_filetypes, vim.bo.filetype) then
-  --     if not bigfile.is_big_file(vim.api.nvim_get_current_buf()) then
-  --       vim.cmd('LspStart')
-  --     end
-  --   end
-  -- end
-  --
-  -- vim.defer_fn(function()
-  --   start_lsp()
-  -- end, 0)
-  --
-  -- vim.api.nvim_create_autocmd('FileType', {
-  --   group = vim.api.nvim_create_augroup('lsp_autocmd_group', { clear = true }),
-  --   pattern = autostart_filetypes,
-  --   callback = function()
-  --     start_lsp()
-  --   end,
-  -- })
+  local installed_server_names = require('mason-lspconfig').get_installed_servers()
+
+  config_diagnostic()
+  config_lsp(installed_server_names)
+
+  vim.lsp.enable({ 'delance' })
 end
 
 return M
