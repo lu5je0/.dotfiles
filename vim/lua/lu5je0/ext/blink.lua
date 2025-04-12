@@ -67,6 +67,7 @@ M.setup = function()
     sources = {
       default = { 'lsp', 'snippets', 'path', 'buffer' },
     },
+    -- signature = { enabled = true },
     snippets = {
       preset = 'luasnip'
     },

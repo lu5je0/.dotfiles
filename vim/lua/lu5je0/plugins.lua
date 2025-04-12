@@ -674,12 +674,13 @@ require("lazy").setup({
           floating_window = false,
           toggle_key = '<c-p>',
           max_height = 10,
-          max_width = 70,
+          -- max_width = 80,
+          doc_lines = 0,
           toggle_key_flip_floatwin_setting = true,
           -- auto_close_after = 3
           handler_opts = {
-            border = "single"
-          }
+            border = "none"
+          },
         }
 
         vim.api.nvim_create_autocmd({ 'InsertLeave' }, {
