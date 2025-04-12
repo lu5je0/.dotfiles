@@ -95,6 +95,12 @@ vim.api.nvim_create_user_command('FileEncodingReload', function(t)
   vim.cmd('e ++enc=' .. t.fargs[1])
 end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
 
+vim.api.nvim_create_user_command('FileEncodingConvertForce', function(t)
+  vim.cmd('%!' .. ('iconv -f %s//INGORE -t %s//IGNORE'):format(vim.bo.fileencoding, t.fargs[1]))
+  vim.cmd('set fileencoding=' .. t.fargs[1])
+  vim.cmd(':%s/\r$')
+end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
+
 -- require('lu5je0.misc.code-runner').create_command()
 
 encode_command_creater.create_encode_command('InlineToArray', function(lines)
