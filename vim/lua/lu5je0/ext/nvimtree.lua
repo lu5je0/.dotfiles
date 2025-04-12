@@ -24,6 +24,7 @@ function M.locate_file()
   local cwd = vim.fn.getcwd()
   
   if not M.is_loaded then
+    print('toggle')
     api.tree.toggle({ focus = false })
   end
   vim.defer_fn(function()
@@ -561,7 +562,7 @@ function M.setup()
   ]]
   vim.defer_fn(function()
     M.is_loaded = true
-  end, 500)
+  end, 30)
 end
 
 return M
