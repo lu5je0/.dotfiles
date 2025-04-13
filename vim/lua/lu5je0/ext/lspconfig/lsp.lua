@@ -71,56 +71,60 @@ function M.on_attach(client, bufnr)
   keymap(bufnr)
 end
 
-local function config_lsp(installed_server_names)
-  local lspconfig = require("lspconfig")
-
-  -- nvim-cmp
-  -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
-  local capabilities = require('blink.cmp').get_lsp_capabilities()
-
-  -- -- nvim-ufo
-  -- capabilities.textDocument.foldingRange = {
-  --   dynamicRegistration = false,
-  --   lineFoldingOnly = true
-  -- }
-
-  for _, server_name in pairs(installed_server_names) do
-    local server = lspconfig[server_name]
-
-    local opts = {
-      capabilities = capabilities,
-      on_attach = M.on_attach,
-      -- autostart = false,
-    }
-
-    if server_name == 'lua_ls' then
-      local lua_ls_config = require('lu5je0.ext.lspconfig.lspservers.lua-ls-config')
-      opts.settings = lua_ls_config.settings
-      opts.on_attach = lua_ls_config.on_attach(opts.on_attach)
-    elseif server_name == 'pyright' then
-      local pyright_config = require('lu5je0.ext.lspconfig.lspservers.pyright-config')
-      opts.on_init = pyright_config.on_init
-      opts.settings = pyright_config.settings
-    elseif server_name == 'pylsp' then
-      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pylsp').on_init
-    elseif server_name == 'tsserver' then
-      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.tsserver').on_init
-      opts.on_attach = require('lu5je0.ext.lspconfig.lspservers.tsserver').on_attach(opts.on_attach)
-    elseif server_name == 'jdtls' then
-      opts.on_init = require('lu5je0.ext.lspconfig.lspservers.jdtls').on_init
-    end
-
-    server.setup(opts)
-  end
-end
+-- local function config_lsp(installed_server_names)
+--   local lspconfig = require("lspconfig")
+--
+--   -- nvim-cmp
+--   -- local capabilities = require('cmp_nvim_lsp').default_capabilities()
+--   local capabilities = require('blink.cmp').get_lsp_capabilities()
+--
+--   -- -- nvim-ufo
+--   -- capabilities.textDocument.foldingRange = {
+--   --   dynamicRegistration = false,
+--   --   lineFoldingOnly = true
+--   -- }
+--
+--   for _, server_name in pairs(installed_server_names) do
+--     local server = lspconfig[server_name]
+--
+--     local opts = {
+--       capabilities = capabilities,
+--       on_attach = M.on_attach,
+--       -- autostart = false,
+--     }
+--
+--     if server_name == 'lua_ls' then
+--       local lua_ls_config = require('lu5je0.ext.lspconfig.lspservers.lua-ls-config')
+--       opts.settings = lua_ls_config.settings
+--       opts.on_attach = lua_ls_config.on_attach(opts.on_attach)
+--     elseif server_name == 'pyright' then
+--       local pyright_config = require('lu5je0.ext.lspconfig.lspservers.pyright-config')
+--       opts.on_init = pyright_config.on_init
+--       opts.settings = pyright_config.settings
+--     elseif server_name == 'pylsp' then
+--       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.pylsp').on_init
+--     elseif server_name == 'tsserver' then
+--       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.tsserver').on_init
+--       opts.on_attach = require('lu5je0.ext.lspconfig.lspservers.tsserver').on_attach(opts.on_attach)
+--     elseif server_name == 'jdtls' then
+--       opts.on_init = require('lu5je0.ext.lspconfig.lspservers.jdtls').on_init
+--     end
+--
+--     server.setup(opts)
+--   end
+-- end
 
 function M.setup()
-  local installed_server_names = require('mason-lspconfig').get_installed_servers()
+  local installed_server_names = { 'delance', 'lua_ls' }
+
+  for _, lsp_name in ipairs(require('mason-lspconfig').get_installed_servers()) do
+    table.insert(installed_server_names, lsp_name)
+  end
 
   config_diagnostic()
-  config_lsp(installed_server_names)
+  -- config_lsp(installed_server_names)
 
-  vim.lsp.enable({ 'delance' })
+  vim.lsp.enable(installed_server_names)
 end
 
 return M
