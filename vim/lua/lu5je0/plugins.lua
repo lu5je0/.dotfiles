@@ -583,7 +583,7 @@ require("lazy").setup({
         {
           'neovim/nvim-lspconfig',
           config = function()
-            require('lu5je0.ext.lspconfig.lsp').setup()
+            require('lu5je0.core.lsp').setup()
           end,
         },
       }
