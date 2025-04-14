@@ -137,7 +137,9 @@ local function enable_treesitter_fold()
 
     merged_highlights = {}
     for _, element in ipairs(merge_elements(raw_highlights, line)) do
-      table.insert(merged_highlights, { element.text, element.highlight })
+      if not string.match(element.text, '\n') then -- 不知道为啥xml未出现\n开头的空字符串
+        table.insert(merged_highlights, { element.text, element.highlight })
+      end
     end
     return merged_highlights
   end
@@ -197,7 +199,8 @@ local function enable_treesitter_fold()
     end
 
     local first_column = vim.fn.winsaveview().leftcol
-    return truncate_foldtext(result, first_column)
+    local truncated_foldtext = truncate_foldtext(result, first_column)
+    return truncated_foldtext
   end
   _G.__custom_foldtext = function()
     return M.custom_foldtext(vim.v.foldstart, vim.v.foldend)
