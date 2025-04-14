@@ -88,6 +88,11 @@ function M.setup()
   })
 
   vim.lsp.enable(installed_server_names)
+  
+  -- 防止因 lazyload 导致 vim xxx.lua 时，lsp未启动
+  vim.api.nvim_exec_autocmds('FileType', {
+    group = 'nvim.lsp.enable'
+  })
 end
 
 return M
