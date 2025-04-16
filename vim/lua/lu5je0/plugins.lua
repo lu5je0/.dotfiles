@@ -1118,56 +1118,62 @@ local plugins = {
 }
 
 local function patch_plugins()
-  local patched_plugins = {}
-
-  for _, plugin in ipairs(plugins) do
-    if plugin.patches ~= nil then
-      if type(plugin.patches) == 'string' then
-        plugin.patches = { plugin.patches }
-      end
-      
-      local build_script = 'git checkout -- .'
-      for _, patch in ipairs(plugin.patches) do
-        build_script = build_script .. ' && git apply ' .. std_config_path .. '/patches/' .. patch
-      end
-      
-      if plugin.build == nil then
-        plugin.build = build_script
-      else
-        plugin.build = build_script .. ' && ' .. plugin.build
-      end
-      
-      plugin.patches = nil
-      table.insert(patched_plugins, plugin[1])
-    end
+  local function get_plugin_path(plugin_name)
+    return vim.fn.stdpath('data') .. '/lazy/' .. plugin_name
   end
 
+  local function do_reset(plugin_name)
+    local path = get_plugin_path(plugin_name)
+    if vim.fn.isdirectory(path) == 0 then
+      return
+    end
+    
+    vim.system({
+      "git",
+      "reset",
+      "--hard",
+    }, { cwd = path } )
+  end
+  
+  local function do_patch(patches, plugin_name)
+    local path = get_plugin_path(plugin_name)
+    if vim.fn.isdirectory(path) == 0 then
+      return
+    end
+    
+    do_reset(plugin_name)
+    
+    for _, patch in ipairs(patches) do
+      vim.system({
+        "git",
+        "apply",
+        std_config_path .. '/patches/' .. patch,
+      }, { cwd = path })
+    end
+  end
+  
   vim.api.nvim_create_autocmd('User', {
-    pattern = { 'LazyInstallPre', 'LazyUpdatePre', 'LazyCheckPre' },
+    pattern = { 'LazyCheckPre', 'LazyUpdatePre', 'LazyInstallPre', 'LazySyncPre' },
     callback = function()
-      for _, plugin in ipairs(patched_plugins) do
-        local plugin_name = vim.split(plugin, '/')[2]
-        vim.fn.system({
-          "git",
-          "-C",
-          vim.fn.stdpath('data') .. '/lazy/' .. plugin_name,
-          "checkout",
-          "--",
-          "."
-        })
-      end
-      vim.api.nvim_create_autocmd('User', {
-        pattern = 'LazyDone',
-        once = true,
-        callback = function()
-          for _, plugin in ipairs(patched_plugins) do
-            local plugin_name = vim.split(plugin, '/')[2]
-            vim.defer_fn(function()
-              vim.cmd('Lazy build ' .. plugin_name)
-            end, 1000)
-          end
+      for _, plugin in ipairs(plugins) do
+        if plugin.patches ~= nil then
+          do_reset(vim.split(plugin[1], '/')[2])
         end
-      })
+      end
+    end
+  })
+
+  vim.api.nvim_create_autocmd('User', {
+    pattern = { 'LazyCheck', 'LazyUpdate', 'LazyInstall', 'LazySync' },
+    callback = function()
+      for _, plugin in ipairs(plugins) do
+        if plugin.patches ~= nil then
+          if type(plugin.patches) == 'string' then
+            plugin.patches = { plugin.patches }
+          end
+          do_patch(plugin.patches, vim.split(plugin[1], '/')[2])
+        end
+      end
     end
   })
 end
