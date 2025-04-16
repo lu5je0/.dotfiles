@@ -1117,6 +1117,8 @@ local plugins = {
   
 }
 
+local patched_plugins = {}
+
 for _, plugin in ipairs(plugins) do
   if plugin.patch ~= nil then
     local patch_build = 'git apply ' .. std_config_path .. '/patches/' .. plugin.patch
@@ -1126,14 +1128,37 @@ for _, plugin in ipairs(plugins) do
       plugin.build = patch_build .. ' && ' .. plugin.build
     end
     plugin.patch = nil
+    table.insert(patched_plugins, plugin[1])
   end
-  
-  -- vim.api.nvim_create_autocmd('User', {
-  --   pattern = { 'LazyInstallPre', 'LazyUpdatePre'},
-  --   callback = function(ctx)
-  --     vim.print(ctx)
-  --   end
-  -- })
 end
+
+vim.api.nvim_create_autocmd('User', {
+  pattern = { 'LazyInstallPre', 'LazyUpdatePre'},
+  callback = function()
+    for _, plugin in ipairs(patched_plugins) do
+      local plugin_name = vim.split(plugin, '/')[2]
+      vim.fn.system({
+        "git",
+        "-C",
+        vim.fn.stdpath('data') .. '/lazy/' .. plugin_name,
+        "checkout",
+        "--",
+        "."
+      })
+    end
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'LazyDone',
+      once = true,
+      callback = function()
+        for _, plugin in ipairs(patched_plugins) do
+          local plugin_name = vim.split(plugin, '/')[2]
+          vim.defer_fn(function()
+            vim.cmd('Lazy build ' .. plugin_name)
+          end, 1000)
+        end
+      end
+    })
+  end
+})
 
 require("lazy").setup(plugins, opts)
