@@ -1153,6 +1153,7 @@ vim.api.nvim_create_autocmd('User', {
         for _, plugin in ipairs(patched_plugins) do
           local plugin_name = vim.split(plugin, '/')[2]
           vim.defer_fn(function()
+            print('git patching ' .. plugin_name)
             vim.cmd('Lazy build ' .. plugin_name)
           end, 1000)
         end
