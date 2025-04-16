@@ -202,7 +202,7 @@ local plugins = {
   {
     'nvim-tree/nvim-tree.lua',
     -- just lock，in case of break changes
-    -- commit = 'd52fdeb0a300ac42b9cfa65ae0600a299f8e8677',
+    -- commit = 'c3c193594213c5e2f89ec5d7729cad805f76b256',
     dependencies = {
       'nvim-tree/nvim-web-devicons',
     },
@@ -1143,7 +1143,7 @@ local function patch_plugins()
   end
 
   vim.api.nvim_create_autocmd('User', {
-    pattern = { 'LazyInstallPre', 'LazyUpdatePre'},
+    pattern = { 'LazyInstallPre', 'LazyUpdatePre', 'LazyCheckPre' },
     callback = function()
       for _, plugin in ipairs(patched_plugins) do
         local plugin_name = vim.split(plugin, '/')[2]
