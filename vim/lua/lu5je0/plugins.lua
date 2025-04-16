@@ -1119,15 +1119,17 @@ local plugins = {
 
 local function patch_plugins()
   local function get_plugin_path(plugin_name)
-    return vim.fn.stdpath('data') .. '/lazy/' .. plugin_name
+    local path = vim.fn.stdpath('data') .. '/lazy/' .. plugin_name
+    if vim.fn.isdirectory(path) == 1 then
+      return path
+    end
   end
 
   local function do_reset(plugin_name)
     local path = get_plugin_path(plugin_name)
-    if vim.fn.isdirectory(path) == 0 then
+    if not path then
       return
     end
-    
     vim.system({
       "git",
       "reset",
@@ -1137,7 +1139,7 @@ local function patch_plugins()
   
   local function do_patch(patches, plugin_name)
     local path = get_plugin_path(plugin_name)
-    if vim.fn.isdirectory(path) == 0 then
+    if not path then
       return
     end
     
@@ -1152,30 +1154,49 @@ local function patch_plugins()
     end
   end
   
+  local function all_reset(all_plugins)
+    for _, plugin in ipairs(all_plugins) do
+      if plugin.patches ~= nil then
+        do_reset(vim.split(plugin[1], '/')[2])
+      end
+    end
+  end
+  
+  local function all_patch(all_plugins)
+    for _, plugin in ipairs(all_plugins) do
+      if plugin.patches ~= nil then
+        if type(plugin.patches) == 'string' then
+          plugin.patches = { plugin.patches }
+        end
+        do_patch(plugin.patches, vim.split(plugin[1], '/')[2])
+      end
+    end
+  end
+  
   vim.api.nvim_create_autocmd('User', {
     pattern = { 'LazyCheckPre', 'LazyUpdatePre', 'LazyInstallPre', 'LazySyncPre' },
     callback = function()
-      for _, plugin in ipairs(plugins) do
-        if plugin.patches ~= nil then
-          do_reset(vim.split(plugin[1], '/')[2])
-        end
-      end
+      all_reset(plugins)
     end
   })
-
+  
   vim.api.nvim_create_autocmd('User', {
     pattern = { 'LazyCheck', 'LazyUpdate', 'LazyInstall', 'LazySync' },
     callback = function()
-      for _, plugin in ipairs(plugins) do
-        if plugin.patches ~= nil then
-          if type(plugin.patches) == 'string' then
-            plugin.patches = { plugin.patches }
-          end
-          do_patch(plugin.patches, vim.split(plugin[1], '/')[2])
-        end
-      end
+      all_patch(plugins)
     end
   })
+  
+  vim.api.nvim_create_user_command('LazyRestore', function()
+    all_reset(plugins)
+    
+    require("lazy").restore({
+      wait = true
+    })
+    
+    all_patch(plugins)
+  end, {})
+
 end
 
 patch_plugins()
