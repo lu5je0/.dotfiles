@@ -1189,11 +1189,7 @@ local function patch_plugins()
   
   vim.api.nvim_create_user_command('LazyRestore', function()
     all_reset(plugins)
-    
-    require("lazy").restore({
-      wait = true
-    })
-    
+    vim.cmd('Lazy! restore')
     all_patch(plugins)
   end, {})
 
