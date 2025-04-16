@@ -1192,7 +1192,10 @@ local function patch_plugins()
     vim.cmd('Lazy! restore')
     all_patch(plugins)
   end, {})
-
+  
+  vim.api.nvim_create_user_command('LazyRePatch', function()
+    all_patch(plugins)
+  end, {})
 end
 
 patch_plugins()
