@@ -1,0 +1,13 @@
+diff --git a/lua/nvim-tree/renderer/builder.lua b/lua/nvim-tree/renderer/builder.lua
+index 9ada177..3ac5ea6 100644
+--- a/lua/nvim-tree/renderer/builder.lua
++++ b/lua/nvim-tree/renderer/builder.lua
+@@ -310,7 +310,7 @@ function Builder:add_hidden_count_string(node, idx, num_children)
+   local hidden_count_string = self.hidden_display(node.hidden_stats)
+   if hidden_count_string and hidden_count_string ~= "" then
+     local indent_markers = pad.get_indent_markers(self.depth, idx or 0, num_children or 0, node, self.markers, 1)
+-    local indent_width = self.explorer.opts.renderer.indent_width
++    local indent_width = self.explorer.opts.renderer.indent_width - 1
+ 
+     local indent_padding = string.rep(" ", indent_width)
+     local indent_string = indent_padding .. indent_markers.str

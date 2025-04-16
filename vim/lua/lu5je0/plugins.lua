@@ -28,6 +28,8 @@ local disabled_plugins = {
   "vimballPlugin",
 }
 
+local std_config_path = vim.fn.stdpath('config')
+
 local opts = {
   concurrency = 20,
   performance = {
@@ -44,7 +46,7 @@ local opts = {
   },
 }
 
-require("lazy").setup({
+local plugins = {
   {
     'sainnhe/edge',
     lazy = true,
@@ -207,6 +209,7 @@ require("lazy").setup({
     config = function()
       require('lu5je0.ext.nvimtree').setup()
     end,
+    patch = 'nvim-tree.patch',
     cmd = { 'NvimTreeOpen' },
     event = { 'CursorHold', 'CursorHoldI' },
     keys = { '<leader>e', '<leader>fe' },
@@ -1110,6 +1113,27 @@ require("lazy").setup({
         }
       }
     end
-  }
+  },
+  
+}
 
-}, opts)
+for _, plugin in ipairs(plugins) do
+  if plugin.patch ~= nil then
+    local patch_build = 'git apply ' .. std_config_path .. '/patches/' .. plugin.patch
+    if plugin.build == nil then
+      plugin.build = patch_build
+    else
+      plugin.build = patch_build .. ' && ' .. plugin.build
+    end
+    plugin.patch = nil
+  end
+  
+  -- vim.api.nvim_create_autocmd('User', {
+  --   pattern = { 'LazyInstallPre', 'LazyUpdatePre'},
+  --   callback = function(ctx)
+  --     vim.print(ctx)
+  --   end
+  -- })
+end
+
+require("lazy").setup(plugins, opts)
