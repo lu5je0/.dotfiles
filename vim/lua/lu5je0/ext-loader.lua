@@ -304,6 +304,8 @@ lazy_load({
   }
 })
 
+require('lu5je0.misc.time-machine').setup()
+
 -- lazy_load({
 --   config = function()
 --     require('lu5je0.ext.plugins_helper').load_plugin('nvim-ufo')

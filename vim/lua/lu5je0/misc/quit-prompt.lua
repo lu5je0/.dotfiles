@@ -3,7 +3,6 @@ local M = {}
 local devicons = require('nvim-web-devicons')
 local cursor_utils = require('lu5je0.core.cursor')
 local keys = require('lu5je0.core.keys')
-local time_machine = require('lu5je0.misc.time-machine')
 
 local function keymap(mode, lhs, rhs, opts)
   if type(lhs) == 'table' then
@@ -60,11 +59,6 @@ local function create_popup(msg, bufinfo_list)
 
   keymap('n', { 'Y', 'y' }, function()
     popup:unmount()
-    
-    -- 保存没有文件名的文件
-    for _, bufinfo in ipairs(bufinfo_list) do
-      time_machine.save_buffer(bufinfo.bufnr)
-    end
     vim.cmd('qa!')
   end, opts)
 
@@ -169,9 +163,6 @@ function M.close_buffer()
     if confirm_result ~= 2 then
       return
     end
-    
-    -- 保存不存在buffer
-    time_machine.save_buffer(0)
   end
 
   -- 一个tab页中有两个以上的buffer时，直接quit
