@@ -93,7 +93,6 @@ vim.schedule(function()
   -- dir
   -- set_n_map('<leader>fp', function() cmd_and_print('cd ~/.local/share/nvim/lazy') end)
   set_n_map('<leader>fs', function() cmd_and_print('cd ~/.dotfiles') end)
-  set_n_map('<leader>ft', function() cmd_and_print('cd ~/test') end)
   
   -- selection search
   set_map('x', { '<leader>/', '<space>/' }, '<Esc>/\\%V', {})
@@ -188,8 +187,6 @@ vim.schedule(function()
   nmap <silent> <c-h> <c-w>h
   nmap <silent> <c-l> <c-w>l
 
-  nmap <silent> <left> <cmd>bp<cr>
-  nmap <silent> <right> <cmd>bn<cr>
   nmap <silent> <c-b>o <c-w>p
   nmap <silent> <c-b><c-o> <c-w>p
   

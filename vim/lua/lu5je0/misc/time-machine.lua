@@ -2,9 +2,9 @@ local M = {}
 
 local TIME_MACHINE_PATH = vim.fn.stdpath("state") .. '/time-machine/'
 local TIME_MACHINE_UNDO_PATH = TIME_MACHINE_PATH .. 'undo/'
-local MAX_KEEP_LINES = 30000
-local MAX_KEEP_FILE_CNT = 100
-local MAX_KEEP_DAYS = 10
+local MAX_KEEP_LINES = 100000
+local MAX_KEEP_FILE_CNT = 200
+local MAX_KEEP_DAYS = 30
 
 local cnt = 0
 local function assemble_file_name(buf_nr)
@@ -140,6 +140,54 @@ function M.read_undo()
   end
 end
 
+local function create_snacks_picker()
+  local function list_files_in_dir(dir)
+    local files = {}
+    local handle, err = vim.loop.fs_scandir(dir)
+    if not handle then
+      print("Error opening directory: " .. err)
+      return files
+    end
+
+    while true do
+      local name, type = vim.loop.fs_scandir_next(handle)
+      if not name then break end
+      if type == 'file' then
+        table.insert(files, 1, name)
+      end
+    end
+
+    return files
+  end
+
+  vim.keymap.set('n', '<leader>ft', function()
+    local items = {}
+    local longest_name = 0
+
+    local time_machine_path = vim.fn.stdpath('state') .. '/time-machine'
+    for i, filename in ipairs(list_files_in_dir(time_machine_path)) do
+      table.insert(items, {
+        idx = i,
+        score = i,
+        name = filename,
+        text = filename,
+        file = time_machine_path .. '/' .. filename
+      })
+      longest_name = math.max(longest_name, #filename)
+    end
+
+    longest_name = longest_name + 2
+    return Snacks.picker({
+      items = items,
+      title = 'Time Machine',
+      confirm = function(picker, item)
+        picker:close()
+        vim.cmd(('e %s'):format(item.file))
+      end,
+    })
+  end)
+end
+
 M.setup = function()
   vim.api.nvim_create_autocmd('BufDelete', {
     callback = function(ctx)
@@ -155,6 +203,8 @@ M.setup = function()
       end
     end
   })
+  
+  create_snacks_picker()
 end
 
 return M

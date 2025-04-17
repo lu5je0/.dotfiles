@@ -141,6 +141,14 @@ vim.keymap.set('n', '<leader>th', function()
   vim.cmd('norm :<cr>')
 end)
 
+vim.keymap.set('n', '<left>', function()
+  vim.cmd [[ BufferLineCyclePrev ]]
+end)
+
+vim.keymap.set('n', '<right>', function()
+  vim.cmd [[ BufferLineCycleNext ]]
+end)
+
 vim.keymap.set('n', '<leader>tl', function()
   vim.cmd [[ BufferLineCloseRight ]]
   vim.cmd('norm :<cr>')
