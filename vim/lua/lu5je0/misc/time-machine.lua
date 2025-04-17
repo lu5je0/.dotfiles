@@ -98,11 +98,11 @@ end
 
 -- 保存buffer
 local function save_buffer(buf_nr)
-  if not vim.bo.modified or not vim.bo.buflisted then
+  if not vim.bo[buf_nr].modified then
     return
   end
   
-  if vim.bo.buftype ~= "" then
+  if vim.bo[buf_nr].buftype ~= "" then
     return
   end
 

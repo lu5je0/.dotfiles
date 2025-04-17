@@ -171,7 +171,7 @@ function M.close_buffer()
     keys.feedkey('<c-w>p')
   else
     vim.cmd("bp")
-    vim.cmd("bd! " .. cur_buf_nr)
+    vim.cmd("silent! bd! " .. cur_buf_nr)
   end
 end
 
