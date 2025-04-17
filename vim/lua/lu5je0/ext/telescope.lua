@@ -85,7 +85,7 @@ local function key_mapping()
   -- end)
   
   set_map('<leader>fm', function() telescope_builtin.oldfiles(vim.tbl_deep_extend("force", theme(), { prompt_title = 'Old Files' })) end)
-  -- set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
+  set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
   set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
   -- set_map('<leader>fr', function() telescope_builtin.live_grep(theme(true)) end, true)
   -- set_map('<leader>fR', function() fuzzy_grep() end, true)
