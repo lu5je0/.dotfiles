@@ -1079,12 +1079,7 @@ local plugins = {
       -- { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
       -- { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
       -- { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },
-      { "<leader>fh",  function() Snacks.picker.pick("help", {
-        confirm = function(picker, item)
-          picker:close()
-          vim.cmd('HelpCurwin ' .. item.text)
-        end,
-      }) end },
+      -- { "<leader>fh",  function() Snacks.picker.pick("help", {}) end },
       { "<leader>fr",  function() Snacks.picker.pick("grep", {}) end },
       { "<leader>fR",  function() Snacks.picker.pick("git_grep", {}) end },
       { "<leader>fg",  function() Snacks.picker.pick("git_status", {}) end },
