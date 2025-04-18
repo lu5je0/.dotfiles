@@ -43,24 +43,29 @@ M.setup = function()
       -- Adjusts spacing to ensure icons are aligned
       nerd_font_variant = 'mono'
     },
-    -- completion = {
-    --   menu = {
-    --     -- min_width = 20,
-    --     draw = {
-    --       components = {
-    --         source_name = {
-    --           text = function(ctx)
-    --             return string.sub(ctx.source_name, 1, 1)
-    --           end
-    --         }
-    --       },
-    --       columns = {
-    --         { "kind_icon", "label", "label_description", gap = 1 },
-    --         { "source_name", gap = 0 }
-    --       },
-    --     }
-    --   }
-    -- },
+    completion = {
+      list = {
+        selection = {
+          auto_insert = false
+        }
+      }
+      -- menu = {
+      --   -- min_width = 20,
+      --   draw = {
+      --     components = {
+      --       source_name = {
+      --         text = function(ctx)
+      --           return string.sub(ctx.source_name, 1, 1)
+      --         end
+      --       }
+      --     },
+      --     columns = {
+      --       { "kind_icon", "label", "label_description", gap = 1 },
+      --       { "source_name", gap = 0 }
+      --     },
+      --   }
+      -- }
+    },
 
     -- Default list of enabled providers defined so that you can extend it
     -- elsewhere in your config, without redefining it, due to `opts_extend`
