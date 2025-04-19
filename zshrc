@@ -50,6 +50,9 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit ice depth=1 lucid wait='0'
 zinit light hlissner/zsh-autopair
 
+zinit ice lucid wait'0'
+zinit light zsh-users/zsh-history-substring-search
+
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
 # zinit light zsh-users/zsh-autosuggestions
 # bindkey '^K' autosuggest-accept
@@ -239,6 +242,9 @@ fzf-history-widget() {
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
 
+bindkey '^P' history-substring-search-up
+bindkey '^N' history-substring-search-down
+
 # 补全
 # 0 -- vanilla completion (abc => abc)
 # 1 -- smart case completion (abc => Abc)
@@ -248,16 +254,6 @@ bindkey '^R' fzf-history-widget
 #   'm:{a-z\-}={A-Z\_}' \
 #   'r:[^[:alpha:]]||[[:alpha:]]=** r:|=* m:{a-z\-}={A-Z\_}' \
 #   'r:|?=** m:{a-z\-}={A-Z\_}'
-
-if [[ ! -f ~/.ohmyenv ]]; then
-  touch ~/.ohmyenv
-  echo "# export PATH=~/.local/share/neovim/bin:$PATH\n# export USER_HTTP_PROXY='http://127.0.0.1:1081'" >~/.ohmyenv
-fi
-source ~/.ohmyenv
-
-# if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
-#   exec tmux
-# fi
 
 setopt ignore_eof
 function bash-ctrl-d() {
@@ -289,3 +285,9 @@ fi
 # THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+if [[ ! -f ~/.ohmyenv ]]; then
+  touch ~/.ohmyenv
+  echo "# export PATH=~/.local/share/neovim/bin:$PATH\n# export USER_HTTP_PROXY='http://127.0.0.1:1081'" >~/.ohmyenv
+fi
+source ~/.ohmyenv
