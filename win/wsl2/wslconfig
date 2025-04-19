@@ -3,13 +3,15 @@
 # processors=8
 # kernel=D:\\vm\\wsl\\bzImage
 
-[experimental]
-networkingMode=mirrored # 开启镜像网络
-# autoMemoryReclaim=gradual # 开启自动回收内存，可在 gradual, dropcache, disabled 之间选择
-# dnsTunneling=true # 开启 DNS Tunneling
-# firewall=true # 开启 Windows 防火墙
-# autoProxy=true # 开启自动同步代理
-# sparseVhd=true # 开启自动释放 WSL2 虚拟硬盘空间
-
-hostAddressLoopback=true
 firewall=false
+
+[experimental]
+
+# 开启镜像网络
+networkingMode=mirrored 
+
+# When set to true, any newly created VHD will be set to sparse automatically.
+sparseVhd=true
+
+# Only applicable when wsl2.networkingMode is set to mirrored. When set to True, will allow the Container to connect to the Host, or the Host to connect to the Container, by an IP address that's assigned to the Host. The 127.0.0.1 loopback address can always be used,this option allows for all additionally assigned local IP addresses to be used as well. Only IPv4 addresses assigned to the host are supported.
+hostAddressLoopback=true
