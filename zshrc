@@ -8,7 +8,7 @@ fi
 ##########################################
 # zinit
 ##########################################
-if [[ ! -d ~/.local/share/zinit/zinit.git ]]; then
+if [[ ! -d $HOME/.local/share/zinit/zinit.git ]]; then
   git clone --depth=1 https://github.com/zdharma-continuum/zinit.git ~/.local/share/zinit/zinit.git
 fi
 source ~/.local/share/zinit/zinit.git/zinit.zsh
@@ -16,6 +16,7 @@ source ~/.local/share/zinit/zinit.git/zinit.zsh
 export UNAME_INFO=$(uname -a)
 
 setopt AUTO_CD
+setopt NO_BEEP
 
 # 设置 Zsh 在命令补全时删除后缀的字符，只设置一个空格，那么只有空格会被删除。
 # If ZLE_REMOVE_SUFFIX_CHARS is not set, the default behaviour is equivalent to: 
@@ -230,6 +231,14 @@ bindkey -M visual S add-surround
 # bindkey -a "m" autosuggest-accept
 # bindkey -a "^n" autosuggest-accept
 
+fzf-history-widget() {
+  BUFFER=$(history -n 1 | fzf --height 40% --reverse --tiebreak=index --no-sort)
+  CURSOR=$#BUFFER
+  zle reset-prompt
+}
+zle -N fzf-history-widget
+bindkey '^R' fzf-history-widget
+
 # 补全
 # 0 -- vanilla completion (abc => abc)
 # 1 -- smart case completion (abc => Abc)
@@ -270,7 +279,7 @@ bindkey '^D' bash-ctrl-d
 ### End of Zinit's installer chunk
 
 fpath=(~/.dotfiles/zsh/completions $fpath)
-autoload -Uz compinit && compinit
+autoload -Uz compinit && compinit -C
 
 # rustup
 if [[ -d $HOMEBREW_PATH ]]; then
