@@ -5,9 +5,52 @@ function gcof
   git checkout $branch
 }
 
-function q-ip
-{
-  curl -s http://ip-api.com/json/$1 | jq
+function q-ip() {
+  local show_ip_only=0
+  local show_help=0
+  local target=""
+
+  # 解析参数
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help)
+        show_help=1
+        shift
+        ;;
+      -i|--ip)
+        show_ip_only=1
+        shift
+        ;;
+      *)
+        target="$1"
+        shift
+        ;;
+    esac
+  done
+
+  if [[ $show_help -eq 1 ]]; then
+    echo "Usage: q-ip [options] [IP or domain]"
+    echo
+    echo "Options:"
+    echo "  -h, --help     Show this help message"
+    echo "  -i, --ip       Only output the IP address"
+    echo
+    echo "Examples:"
+    echo "  q-ip               # Info for your own IP"
+    echo "  q-ip 8.8.8.8       # Info for 8.8.8.8"
+    echo "  q-ip -i google.com # Just print resolved IP"
+    return
+  fi
+
+  # 获取 JSON 数据
+  local response
+  response=$(curl -s "http://ip-api.com/json/$target")
+
+  if [[ $show_ip_only -eq 1 ]]; then
+    echo "$response" | jq -r '.query'
+  else
+    echo "$response" | jq
+  fi
 }
 
 function q-ask

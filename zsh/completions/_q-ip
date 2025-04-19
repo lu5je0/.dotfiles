@@ -1,0 +1,10 @@
+#compdef q-ip
+
+# Zsh completion for q-ip
+
+_arguments -s \
+  '-h[Show help message]' \
+  '-i[Only output the IP address]' \
+  '--help[Show help message]' \
+  '--ip[Only output the IP address]' \
+  ':IP or domain: '
