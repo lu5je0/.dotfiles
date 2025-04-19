@@ -1,0 +1,33 @@
+#compdef speedtest
+
+_arguments -s \
+  '-h[Show help information]' \
+  '--help[Show help information]' \
+  '-V[Show version]' \
+  '--version[Show version]' \
+  '-L[List nearest servers]' \
+  '--servers[List nearest servers]' \
+  '-s+[Specify server ID]:server ID:' \
+  '--server-id=+:Specify server ID:server ID:' \
+  '-I+[Bind to specified interface]:interface:' \
+  '--interface=+:Bind to specified interface:interface:' \
+  '-i+[Bind to specified IP address]:IP address:' \
+  '--ip=+:Bind to specified IP address:IP address:' \
+  '-o+[Specify server host (FQDN)]:host:' \
+  '--host=+:Specify server host (FQDN):host:' \
+  '-p[Enable/disable progress bar]:yes or no:(yes no)' \
+  '--progress=[Enable/disable progress bar]:yes or no:(yes no)' \
+  '-P+[Number of decimal places (0–8)]:precision:(0 1 2 3 4 5 6 7 8)' \
+  '--precision=+:Number of decimal places (0–8):precision:(0 1 2 3 4 5 6 7 8)' \
+  '-f+[Output format]:format:(human-readable csv tsv json jsonl json-pretty)' \
+  '--format=+:Output format:(human-readable csv tsv json jsonl json-pretty)' \
+  '--progress-update-interval=+[Interval in ms]:interval (100–1000 ms):' \
+  '-u[Output unit for speed display]:unit:(bps kbps Mbps Gbps B/s kB/s MB/s GB/s kibps Mibps Gibps kiB/s MiB/s GiB/s auto-binary-bits auto-binary-bytes auto-decimal-bits auto-decimal-bytes)' \
+  '-a[Shortcut for auto-decimal-bits]' \
+  '-A[Shortcut for auto-decimal-bytes]' \
+  '-b[Shortcut for auto-binary-bits]' \
+  '-B[Shortcut for auto-binary-bytes]' \
+  '--selection-details[Show server selection details]' \
+  '--ca-certificate=+[Path to CA Certificate bundle]:file:_files' \
+  '-v[Increase logging verbosity]' \
+  '--output-header[Show output header for CSV/TSV]' \
