@@ -106,6 +106,10 @@ vim.schedule(function()
   set_map('n', '<leader>xx', ":%!", {
     nowait = true
   })
+  
+  set_map('v', '<leader>xx', ":%!", {
+    nowait = true
+  })
 
   -- lsp
   set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')
