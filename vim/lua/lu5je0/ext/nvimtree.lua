@@ -1,7 +1,6 @@
 ---@diagnostic disable: missing-parameter
 local M = {}
 
-local lib = require('nvim-tree.lib')
 local explorer = require('nvim-tree.explorer')
 local keys_helper = require('lu5je0.core.keys')
 local api = require('nvim-tree.api')
@@ -24,7 +23,6 @@ function M.locate_file()
   local cwd = vim.fn.getcwd()
   
   if not M.is_loaded then
-    print('toggle')
     api.tree.toggle({ focus = false })
   end
   vim.defer_fn(function()
