@@ -196,6 +196,7 @@ local plugins = {
       require('lu5je0.ext.bufferline')
     end,
     dependencies = { 'nvim-tree/nvim-web-devicons' },
+    patches = { 'bufferline.diff' },
     -- priority = 9999,
     -- event = 'VeryLazy'
   },
@@ -209,7 +210,7 @@ local plugins = {
     config = function()
       require('lu5je0.ext.nvimtree').setup()
     end,
-    patches = { 'nvim-tree.patch' },
+    patches = { 'nvim-tree.diff' },
     cmd = { 'NvimTreeOpen' },
     event = { 'CursorHold', 'CursorHoldI' },
     keys = { '<leader>e', '<leader>fe' },
@@ -1193,7 +1194,7 @@ local function patch_plugins()
     all_patch(plugins)
   end, {})
   
-  vim.api.nvim_create_user_command('LazyRePatch', function()
+  vim.api.nvim_create_user_command('LazyApplyPatch', function()
     all_patch(plugins)
   end, {})
 end

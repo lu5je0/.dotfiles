@@ -1,0 +1,24 @@
+diff --git a/lua/bufferline.lua b/lua/bufferline.lua
+index 60bce66..dbec0c9 100644
+--- a/lua/bufferline.lua
++++ b/lua/bufferline.lua
+@@ -9,7 +9,6 @@ local buffers = lazy.require("bufferline.buffers") ---@module "bufferline.buffer
+ local commands = lazy.require("bufferline.commands") ---@module "bufferline.commands"
+ local tabpages = lazy.require("bufferline.tabpages") ---@module "bufferline.tabpages"
+ local highlights = lazy.require("bufferline.highlights") ---@module "bufferline.highlights"
+-local hover = lazy.require("bufferline.hover") ---@module "bufferline.hover"
+ 
+ -- @v:lua@ in the tabline only supports global functions, so this is
+ -- the only way to add click handlers without autoloaded vimscript functions
+@@ -198,7 +197,10 @@ function M.setup(conf)
+   local preferences = config.apply()
+   -- on loading (and reloading) the plugin's config reset all the highlights
+   highlights.set_all(preferences)
+-  hover.setup(preferences)
++  vim.defer_fn(function()
++    local hover = lazy.require("bufferline.hover") ---@module "bufferline.hover"
++    hover.setup(preferences)
++  end, 2000)
+   setup_commands()
+   setup_autocommands(preferences)
+   setup_diagnostic_handler(preferences)
