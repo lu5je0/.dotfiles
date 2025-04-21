@@ -29,6 +29,8 @@ function M.setup()
       vim.cmd [[
       nmap <buffer> <leader>y "+y
       nmap <buffer> <silent> v :call b:VM_Selection.Global.extend_mode()<cr>
+      nmap <buffer> <c-x> <Plug>(VM-Skip-Region)
+      nmap <buffer> <c-p> <Plug>(VM-Remove-Region)
       ]]
       vim.keymap.set('n', '<esc>', function()
         if M.mode() == MODE.VISUAL then
