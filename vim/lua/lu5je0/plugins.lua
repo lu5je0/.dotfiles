@@ -1131,7 +1131,7 @@ local function patch_plugins()
     end
   end
 
-  local function do_reset(plugin_name, on_exit)
+  local function do_reset(plugin_name)
     local path = get_plugin_path(plugin_name)
     if not path then
       return
@@ -1140,24 +1140,24 @@ local function patch_plugins()
       "git",
       "reset",
       "--hard",
-    }, { cwd = path }, on_exit)
+    }, { cwd = path }):wait()
   end
   
-  local function do_patch(patches, plugin_name)
+  local function do_patch(plugin_name, patches)
     local path = get_plugin_path(plugin_name)
     if not path then
       return
     end
     
-    do_reset(plugin_name, function()
-      for _, patch in ipairs(patches) do
-        vim.system({
-          "git",
-          "apply",
-          std_config_path .. '/patches/' .. patch,
-        }, { cwd = path })
-      end
-    end)
+    do_reset(plugin_name)
+    
+    for _, patch in ipairs(patches) do
+      vim.system({
+        "git",
+        "apply",
+        std_config_path .. '/patches/' .. patch,
+      }, { cwd = path }):wait()
+    end
   end
   
   local function all_reset(all_plugins)
@@ -1174,7 +1174,7 @@ local function patch_plugins()
         if type(plugin.patches) == 'string' then
           plugin.patches = { plugin.patches }
         end
-        do_patch(plugin.patches, vim.split(plugin[1], '/')[2])
+        do_patch(vim.split(plugin[1], '/')[2], plugin.patches)
       end
     end
   end
@@ -1183,6 +1183,14 @@ local function patch_plugins()
     pattern = { 'LazyCheckPre', 'LazyUpdatePre', 'LazyInstallPre', 'LazySyncPre' },
     callback = function()
       all_reset(plugins)
+      _G.__lazy_patch = false
+      vim.api.nvim_create_autocmd('VimLeavePre', {
+        callback = function()
+          if not _G.__lazy_patch then
+            all_patch(plugins)
+          end
+        end
+      })
     end
   })
   
@@ -1190,6 +1198,7 @@ local function patch_plugins()
     pattern = { 'LazyCheck', 'LazyUpdate', 'LazyInstall', 'LazySync' },
     callback = function()
       all_patch(plugins)
+      _G.__lazy_patch = true
     end
   })
   
