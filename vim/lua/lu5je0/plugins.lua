@@ -422,14 +422,6 @@ local plugins = {
   --   },
   -- },
 
-  -- {
-  --   "elihunter173/dirbuf.nvim",
-  --   config = function()
-  --     require('lu5je0.ext.dirbuf')
-  --   end,
-  --   cmd = 'Dirbuf'
-  -- },
-
   {
     'saghen/blink.cmp',
     -- optional: provides snippets for the snippet source
@@ -443,7 +435,7 @@ local plugins = {
         end
       },
     },
-    
+
     patches = { 'blink-cmp.diff' },
 
     -- use a release tag to download pre-built binaries
@@ -452,11 +444,11 @@ local plugins = {
     -- build = 'cargo build --release',
     -- If you use nix, you can build from source using latest nightly rust with:
     -- build = 'nix run .#build-plugin',
-    
+
     config = function()
       require('lu5je0.ext.blink').setup()
     end,
-    
+
     -- opts_extend = { "sources.default" },
     event = 'InsertEnter',
   },
