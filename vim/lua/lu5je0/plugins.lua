@@ -1131,7 +1131,7 @@ local function patch_plugins()
     end
   end
 
-  local function do_reset(plugin_name)
+  local function do_reset(plugin_name, on_exit)
     local path = get_plugin_path(plugin_name)
     if not path then
       return
@@ -1140,7 +1140,7 @@ local function patch_plugins()
       "git",
       "reset",
       "--hard",
-    }, { cwd = path } )
+    }, { cwd = path }, on_exit)
   end
   
   local function do_patch(patches, plugin_name)
@@ -1149,15 +1149,15 @@ local function patch_plugins()
       return
     end
     
-    do_reset(plugin_name)
-    
-    for _, patch in ipairs(patches) do
-      vim.system({
-        "git",
-        "apply",
-        std_config_path .. '/patches/' .. patch,
-      }, { cwd = path })
-    end
+    do_reset(plugin_name, function()
+      for _, patch in ipairs(patches) do
+        vim.system({
+          "git",
+          "apply",
+          std_config_path .. '/patches/' .. patch,
+        }, { cwd = path })
+      end
+    end)
   end
   
   local function all_reset(all_plugins)
