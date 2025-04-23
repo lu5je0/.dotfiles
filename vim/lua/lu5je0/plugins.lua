@@ -443,6 +443,8 @@ local plugins = {
         end
       },
     },
+    
+    patches = { 'blink-cmp.diff' },
 
     -- use a release tag to download pre-built binaries
     version = '*',
@@ -626,10 +628,21 @@ local plugins = {
     },
     {
       "saecki/live-rename.nvim",
-      event = { 'LspAttach' },
       config = function()
+        require('live-rename').setup({
+          keys = {
+            submit = {
+              { "n", "<cr>" },
+              { "v", "<cr>" },
+              { "i", "<cr>" },
+              { "n", "<esc>" },
+            },
+            cancel = {}
+          }
+        })
         vim.keymap.set("n", "<leader>cr", require("live-rename").rename)
-      end
+      end,
+      keys = { { mode = { 'n' }, '<leader>cr' } }
     },
     {
       "aznhe21/actions-preview.nvim",

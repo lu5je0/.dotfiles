@@ -1,0 +1,14 @@
+diff --git a/lua/blink/cmp/completion/windows/menu.lua b/lua/blink/cmp/completion/windows/menu.lua
+index dd6d41f..17be3a6 100644
+--- a/lua/blink/cmp/completion/windows/menu.lua
++++ b/lua/blink/cmp/completion/windows/menu.lua
+@@ -161,7 +161,8 @@ function menu.update_position()
+     local col = vim.fn.virtcol({ cursor_row, context.bounds.start_col - 1 })
+       - alignment_start_col
+       - virt_cursor_col
+-      - border_size.left
++      -- - border_size.left
++      - border_size.left + 2
+ 
+     if config.draw.align_to == 'cursor' then col = 0 end
+ 
