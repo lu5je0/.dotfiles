@@ -1160,14 +1160,6 @@ local function patch_plugins()
     end
   end
   
-  local function all_reset(all_plugins)
-    for _, plugin in ipairs(all_plugins) do
-      if plugin.patches ~= nil then
-        do_reset(vim.split(plugin[1], '/')[2])
-      end
-    end
-  end
-  
   local function all_patch(all_plugins)
     for _, plugin in ipairs(all_plugins) do
       if plugin.patches ~= nil then
@@ -1177,20 +1169,30 @@ local function patch_plugins()
         do_patch(vim.split(plugin[1], '/')[2], plugin.patches)
       end
     end
+    _G.__lazy_patch = true
+  end
+  
+  local function all_reset(all_plugins)
+    _G.__lazy_patch = false
+    for _, plugin in ipairs(all_plugins) do
+      if plugin.patches ~= nil then
+        do_reset(vim.split(plugin[1], '/')[2])
+      end
+    end
+    
+    vim.api.nvim_create_autocmd('VimLeavePre', {
+      callback = function()
+        if not _G.__lazy_patch then
+          all_patch(plugins)
+        end
+      end
+    })
   end
   
   vim.api.nvim_create_autocmd('User', {
     pattern = { 'LazyCheckPre', 'LazyUpdatePre', 'LazyInstallPre', 'LazySyncPre' },
     callback = function()
       all_reset(plugins)
-      _G.__lazy_patch = false
-      vim.api.nvim_create_autocmd('VimLeavePre', {
-        callback = function()
-          if not _G.__lazy_patch then
-            all_patch(plugins)
-          end
-        end
-      })
     end
   })
   
@@ -1198,7 +1200,6 @@ local function patch_plugins()
     pattern = { 'LazyCheck', 'LazyUpdate', 'LazyInstall', 'LazySync' },
     callback = function()
       all_patch(plugins)
-      _G.__lazy_patch = true
     end
   })
   
