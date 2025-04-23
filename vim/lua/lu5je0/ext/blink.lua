@@ -50,14 +50,14 @@ M.setup = function()
         }
       },
       menu = {
-        --   -- min_width = 20,
+        min_width = 1,
         draw = {
           components = {
             source_name = {
               text = function(ctx)
-                return '[' .. string.sub(ctx.source_name, 1, 1) .. ']'
-              end
-            }
+                return string.format("[%s]", string.sub(ctx.source_name, 1, 1))
+              end,
+            },
           },
           columns = {
             { "kind_icon",   "label", "label_description", gap = 1 },
