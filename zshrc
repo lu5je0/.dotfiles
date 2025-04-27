@@ -1,10 +1,3 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 ##########################################
 # zinit
 ##########################################
@@ -30,12 +23,12 @@ zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 zinit snippet OMZ::lib/git.zsh
-# 注释后没有文件颜色
+# 注释后, ls没有文件颜色
+# zinit ice lucid wait='1' # ice之后也没有颜色
 zinit snippet OMZ::lib/theme-and-appearance.zsh
 
-# zinit ice lucid wait='0'
+zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
-unalias gcp
 
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
@@ -44,13 +37,13 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # plugins
 ##########################################
 
-zinit ice depth=1 lucid wait='0'
+zinit ice depth=1 lucid wait='1'
 zinit light zsh-users/zsh-syntax-highlighting
 
 zinit ice depth=1 lucid wait='0'
 zinit light hlissner/zsh-autopair
 
-zinit ice lucid wait'0'
+zinit ice lucid wait'1'
 zinit light zsh-users/zsh-history-substring-search
 
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
