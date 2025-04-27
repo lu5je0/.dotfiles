@@ -24,6 +24,8 @@ export ZLE_REMOVE_SUFFIX_CHARS=''
 zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
+
+zinit ice lucid wait='0'
 zinit snippet OMZ::lib/git.zsh
 
 zinit ice lucid wait='1'
