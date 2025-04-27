@@ -25,9 +25,6 @@ zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 zinit snippet OMZ::lib/git.zsh
-# 注释后, ls没有文件颜色
-# zinit ice lucid wait='1' # ice之后也没有颜色
-zinit snippet OMZ::lib/theme-and-appearance.zsh
 
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
@@ -120,6 +117,8 @@ export LC_ALL=en_US.UTF-8
 alias pc="proxychains4 -q"
 # alias sftp="sftp -C"
 alias crontab="cron.sh"
+
+alias ls='ls -F --show-control-chars --color=auto'
 
 # alias rm="trash"
 
