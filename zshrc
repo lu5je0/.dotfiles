@@ -1,3 +1,5 @@
+# zmodload zsh/zprof
+
 ##########################################
 # zinit
 ##########################################
@@ -307,11 +309,15 @@ if [[ -d $HOMEBREW_PATH ]]; then
 fi
 
 # THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
+  zinit ice lucid wait='1'
+  zinit snippet "$HOME/.sdkman/bin/sdkman-init.sh"
+fi
 
 if [[ ! -f ~/.ohmyenv ]]; then
   touch ~/.ohmyenv
   echo "# export PATH=~/.local/share/neovim/bin:$PATH\n# export USER_HTTP_PROXY='http://127.0.0.1:1081'" >~/.ohmyenv
 fi
 source ~/.ohmyenv
+
+# zprof
