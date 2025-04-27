@@ -38,7 +38,7 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 # plugins
 ##########################################
 
-zinit ice depth=1 lucid wait='1'
+zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-syntax-highlighting
 
 zinit ice depth=1 lucid wait='0'
