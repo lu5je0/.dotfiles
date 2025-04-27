@@ -236,6 +236,9 @@ bindkey -M visual S add-surround
 # bindkey -a "^n" autosuggest-accept
 
 fzf-history-widget() {
+  # BUFFER=$(history -n 1 | fzf --height 40% --reverse --tiebreak=index --no-sort --exact --smart-case)
+  # CURSOR=$#BUFFER
+  
   local selected
   # 获取历史记录（按时间倒序 + 去行号）
   selected=$(fc -rl 1 | sed 's/^ *[0-9]* *//' | fzf --height 40% --reverse --tiebreak=index --no-sort --exact --smart-case)
@@ -246,6 +249,7 @@ fzf-history-widget() {
     # 更新光标位置
     CURSOR=$(( CURSOR + ${#selected} ))
   fi
+  
   zle reset-prompt
 }
 zle -N fzf-history-widget
