@@ -33,5 +33,10 @@
     "prefix": "docs",
     "body": ["docs: $1"],
     "description": "docs"
+  },
+  "perf": {
+    "prefix": "perf",
+    "body": ["perf: $1"],
+    "description": "perf"
   }
 }
