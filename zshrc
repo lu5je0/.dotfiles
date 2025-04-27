@@ -236,8 +236,16 @@ bindkey -M visual S add-surround
 # bindkey -a "^n" autosuggest-accept
 
 fzf-history-widget() {
-  BUFFER=$(history -n 1 | fzf --height 40% --reverse --tiebreak=index --no-sort --exact --smart-case)
-  CURSOR=$#BUFFER
+  local selected
+  # 获取历史记录（按时间倒序 + 去行号）
+  selected=$(fc -rl 1 | sed 's/^ *[0-9]* *//' | fzf --height 40% --reverse --tiebreak=index --no-sort --exact --smart-case)
+
+  if [[ -n "$selected" ]]; then
+    # 将选中内容插入到当前光标位置
+    BUFFER="${BUFFER:0:$CURSOR}${selected}${BUFFER:$CURSOR}"
+    # 更新光标位置
+    CURSOR=$(( CURSOR + ${#selected} ))
+  fi
   zle reset-prompt
 }
 zle -N fzf-history-widget
@@ -245,15 +253,16 @@ bindkey '^R' fzf-history-widget
 
 fzf-search-widget() {
   local file
-  # 使用 fd 或 find 获取文件列表（排除隐藏文件）
   file=$(fd --type f --hidden --exclude .git 2>/dev/null | fzf --height 40% --reverse)
-  # 或者用 find：
-  # file=$(find . -type f 2>/dev/null | fzf --height 40%)
 
   if [[ -n "$file" ]]; then
-    # 将选中文件路径插入命令行，并处理特殊字符（如空格）
-    BUFFER+="$(printf '%q' "$file")"
-    CURSOR=$#BUFFER  # 光标移动到末尾
+    # 转义特殊字符并插入到当前光标位置
+    local escaped_file
+    escaped_file=$(printf '%q' "$file")
+    # 将转义后的文件名插入到光标所在位置
+    BUFFER="${BUFFER:0:$CURSOR}${escaped_file}${BUFFER:$CURSOR}"
+    # 移动光标到插入内容之后
+    CURSOR=$(( CURSOR + ${#escaped_file} ))
   fi
   zle reset-prompt
 }
