@@ -257,7 +257,7 @@ bindkey '^R' fzf-history-widget
 
 fzf-search-widget() {
   local file
-  file=$(fd --type f --hidden --exclude .git 2>/dev/null | fzf --height 40% --reverse)
+  file=$(fdfind --type f --hidden --exclude .git 2>/dev/null | fzf --height 40% --reverse)
 
   if [[ -n "$file" ]]; then
     # 转义特殊字符并插入到当前光标位置

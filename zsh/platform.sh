@@ -15,6 +15,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   alias yy='mac_clipboard_cli -c'
   alias p='mac_clipboard_cli -p'
   alias iterm='open -a iTerm .'
+  alias fdfind='fd'
   
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 
