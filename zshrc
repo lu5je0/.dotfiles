@@ -235,12 +235,29 @@ bindkey -M visual S add-surround
 # bindkey -a "^n" autosuggest-accept
 
 fzf-history-widget() {
-  BUFFER=$(history -n 1 | fzf --height 40% --reverse --tiebreak=index --no-sort)
+  BUFFER=$(history -n 1 | fzf --height 40% --reverse --tiebreak=index --no-sort --exact --smart-case)
   CURSOR=$#BUFFER
   zle reset-prompt
 }
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
+
+fzf-search-widget() {
+  local file
+  # 使用 fd 或 find 获取文件列表（排除隐藏文件）
+  file=$(fd --type f --hidden --exclude .git 2>/dev/null | fzf --height 40% --reverse)
+  # 或者用 find：
+  # file=$(find . -type f 2>/dev/null | fzf --height 40%)
+
+  if [[ -n "$file" ]]; then
+    # 将选中文件路径插入命令行，并处理特殊字符（如空格）
+    BUFFER+="$(printf '%q' "$file")"
+    CURSOR=$#BUFFER  # 光标移动到末尾
+  fi
+  zle reset-prompt
+}
+zle -N fzf-search-widget
+bindkey '^F' fzf-search-widget
 
 bindkey '^P' history-substring-search-up
 bindkey '^N' history-substring-search-down
