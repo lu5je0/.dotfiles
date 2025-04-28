@@ -13,12 +13,7 @@ end
 
 M.setup = function()
   require('blink.cmp').setup {
-    -- 'default' for mappings similar to built-in completion
-    -- 'super-tab' for mappings similar to vscode (tab to accept, arrow keys to navigate)
-    -- 'enter' for mappings similar to 'super-tab' but with 'enter' to accept
-    -- See the full "keymap" documentation for information on defining your own keymap.
     keymap = {
-      preset = 'super-tab',
       ['<c-u>'] = { 'scroll_documentation_up', 'fallback' },
       ['<c-d>'] = { 'show', 'show_documentation', 'scroll_documentation_down', 'fallback' },
       ['<c-n>'] = { 'show', 'hide' },
