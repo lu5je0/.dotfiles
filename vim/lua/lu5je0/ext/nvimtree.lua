@@ -555,6 +555,7 @@ function M.setup()
   vim.cmd [[
     hi NvimTreeSymlink gui=none
     hi NvimTreeExecFile gui=none
+    hi NvimTreeImageFile gui=none
     " hi NvimTreeGitStagedIcon guifg=#a0c980
     hi NvimTreeGitStagedIcon guifg=#51afef
   ]]
