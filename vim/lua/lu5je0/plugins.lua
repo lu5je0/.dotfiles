@@ -1007,7 +1007,7 @@ local plugins = {
   --       --     right_pad = 0,
   --       --     -- Minimum width to use for code blocks when width is 'block'
   --       --     min_width = 0,
-  --       --     -- Determins how the top / bottom of code block are rendered:
+  --       --     -- Determines how the top / bottom of code block are rendered:
   --       --     --  thick: use the same highlight as the code body
   --       --     --  thin:  when lines are empty overlay the above & below icons
   --       --     border = 'thin',
@@ -1081,7 +1081,7 @@ local plugins = {
       }
     },
     keys = {
-      { "<leader>ps",  function() Snacks.profiler.toggle() end,                               desc = "Profiler Scratch Bufer" },
+      { "<leader>ps",  function() Snacks.profiler.toggle() end,                               desc = "Profiler Scratch Buffer" },
       -- { "<leader>ff",  function() Snacks.picker.pick("files", {}) end },
       -- { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
       -- { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },
