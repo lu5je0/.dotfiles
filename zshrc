@@ -44,7 +44,7 @@ zinit light zsh-users/zsh-syntax-highlighting
 zinit ice depth=1 lucid wait='0'
 zinit light hlissner/zsh-autopair
 
-zinit ice lucid wait'1'
+zinit ice depth=1 lucid wait='1'
 zinit light zsh-users/zsh-history-substring-search
 
 # zinit ice lucid wait='0' atload='_zsh_autosuggest_start'
