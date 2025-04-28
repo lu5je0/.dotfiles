@@ -1086,7 +1086,18 @@ local plugins = {
       -- { "<leader>fj",  function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end },
       -- { "<leader>fm",  function() Snacks.picker.pick("recent", {}) end },
       -- { "<leader>fh",  function() Snacks.picker.pick("help", {}) end },
-      { "<leader>fr",  function() Snacks.picker.pick("grep", {}) end },
+      { mode = 'n', "<leader>fr",  function() Snacks.picker.pick("grep", {}) end },
+      {
+        mode = 'x',
+        "<leader>fr",
+        function()
+          local search = require('lu5je0.core.visual').get_visual_selection_as_string()
+          Snacks.picker.pick("grep", {})
+          vim.schedule(function()
+            require('lu5je0.core.keys').feedkey(search)
+          end)
+        end
+      },
       { "<leader>fR",  function() Snacks.picker.pick("git_grep", {}) end },
       { "<leader>fg",  function() Snacks.picker.pick("git_status", {}) end },
       { "<leader>fG",  function() Snacks.picker.pick("git_diff", {}) end },
