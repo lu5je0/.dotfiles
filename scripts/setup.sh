@@ -65,6 +65,10 @@ if [[ ! -d ~/.config/pip ]]; then
   ln -s ~/.dotfiles/pip ~/.config/pip
 fi
 
+if [[ ! -d ~/.config/karabiner ]]; then
+  ln -s ~/.dotfiles/karabiner ~/.config/karabiner
+fi
+
 # tmux
 # if [[ ! -d ~/.tmux/plugins/tpm ]]; then
 #     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
