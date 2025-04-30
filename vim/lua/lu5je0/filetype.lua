@@ -25,6 +25,7 @@ vim.filetype.add {
     ['.*.tmux.conf'] = 'tmux',
     ['.*.zsh'] = 'bash',
     ['.*/ssh/config'] = 'sshconfig',
+    ['.*/git/config'] = 'gitconfig',
     ['.*/.dotfiles/services/.*'] = 'systemd',
     ['.*/.dotfiles/ghostty/config'] = 'config',
   },
