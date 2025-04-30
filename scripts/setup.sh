@@ -30,7 +30,10 @@ fi
 
 ask "download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
-ask "cp ~/.dotfiles/.gitconfig ~/.gitconfig?" && cp ~/.dotfiles/.gitconfig ~/.gitconfig
+if [[ -f ~/.config ]]; then
+  mkdir -p ~/.config
+fi
+ask "ln -s ~/.dotfiles/git ~/.config/git?" && ln -s ~/.dotfiles/git ~/.config/git
 
 ask "ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon?" && ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon
 
