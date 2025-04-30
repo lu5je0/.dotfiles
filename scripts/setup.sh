@@ -65,10 +65,12 @@ mkdir -p ~/.pip
 ln -s ~/.dotfiles/pip/pip.conf ~/.pip/pip.conf
 
 # tmux
-if [[ ! -d ~/.tmux/plugins/tpm ]]; then
-    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+# if [[ ! -d ~/.tmux/plugins/tpm ]]; then
+#     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+# fi
+if [[ ! -d ~/.config/tmux ]]; then
+  ln -s ~/.dotfiles/tmux ~/.config/tmux
 fi
-ln -s ~/.dotfiles/tmux/tmux.conf ~/.tmux.conf
 
 # wezterm
 # if [[ ! -d ~/.config/wezterm ]]; then
