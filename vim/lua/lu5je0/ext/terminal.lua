@@ -53,7 +53,12 @@ local function keep_terminal_mode()
     pattern = '*',
     callback = function()
       vim.g.terminal_mode = 'i'
-      vim.cmd('startinsert')
+      
+      vim.cmd [[
+      startinsert
+      nmap <buffer> <c-a> <nop>
+      nmap <buffer> <c-x> <nop>
+      ]]
     end,
   })
 end
