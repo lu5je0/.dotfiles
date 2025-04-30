@@ -180,6 +180,7 @@ M.setup = function()
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'
       filename = require('lu5je0.lang.string-utils').get_short_filename(filename, 20)
+      filename = string.gsub(filename, '%%', '%%%%')
       return ("%%#%s#%s %%#%s#%s"):format(highlight, icon, 'StatusLineViolet', filename)
     end,
     color = "StatusLineGrey",
