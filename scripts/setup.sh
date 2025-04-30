@@ -83,8 +83,8 @@ fi
 # fi
 
 # kitty
-if [[ ! -f ~/.config/kitty/kitty.conf ]]; then
-    ln -s ~/.dotfiles/kitty/kitty.conf ~/.config/kitty/kitty.conf
+if [[ ! -d ~/.config/kitty ]]; then
+  ln -s ~/.dotfiles/kitty ~/.config/kitty
 fi
 
 # alacritty
