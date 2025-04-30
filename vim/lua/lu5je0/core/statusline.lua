@@ -179,7 +179,7 @@ M.setup = function()
       local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'
-      filename = require('lu5je0.lang.string-utils').get_short_filename(filename, 20)
+      filename = require('lu5je0.lang.string-utils').get_short_filename(filename, 25)
       filename = string.gsub(filename, '%%', '%%%%')
       return ("%%#%s#%s %%#%s#%s"):format(highlight, icon, 'StatusLineViolet', filename)
     end,

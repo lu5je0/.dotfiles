@@ -62,7 +62,12 @@ function M.get_short_filename(filename, max_len, en_max_len)
         break
       end
     end
-    filename = ('%s…%s'):format(_sN, (('.' .. suffix) or ''))
+    if suffix == nil then
+      suffix = ''
+    else
+      suffix = '.' .. suffix
+    end
+    filename = ('%s…%s'):format(_sN, suffix)
   end
   return filename
 end
