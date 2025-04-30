@@ -61,8 +61,9 @@ if [[ ! -f ~/.local/bin/solid ]]; then
     ln -s ~/.dotfiles/bin ~/.local/bin/solid
 fi
 
-mkdir -p ~/.pip
-ln -s ~/.dotfiles/pip ~/.config/pip
+if [[ ! -d ~/.config/pip ]]; then
+  ln -s ~/.dotfiles/pip ~/.config/pip
+fi
 
 # tmux
 # if [[ ! -d ~/.tmux/plugins/tpm ]]; then
