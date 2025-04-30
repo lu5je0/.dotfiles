@@ -13,6 +13,10 @@ ask() {
 
 ask "Enable http proxy(http://127.0.0.1:1080)?" && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
 
+if [[ ! -d ~/.config ]]; then
+  mkdir -p ~/.config
+fi
+
 if [ "$(uname)" = "Linux" ]; then
     if [ -f /etc/lsb-release ]; then
         # ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
@@ -30,9 +34,6 @@ fi
 
 ask "download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
-if [[ -f ~/.config ]]; then
-  mkdir -p ~/.config
-fi
 ask "ln -s ~/.dotfiles/git ~/.config/git?" && ln -s ~/.dotfiles/git ~/.config/git
 
 ask "ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon?" && ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon
