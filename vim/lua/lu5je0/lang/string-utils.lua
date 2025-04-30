@@ -14,6 +14,8 @@ end
 --@param en_max_len：显示英文字个数，中文字为2的倍数,可为空
 --@note         函数实现：截取字符串一部分，剩余用“...”替换
 function M.get_short_filename(filename, max_len, en_max_len)
+  local suffix = filename:match('.+%.(%w+)$')
+  
   local sStr = filename
   local tCode = {}
   local tName = {}
@@ -60,7 +62,7 @@ function M.get_short_filename(filename, max_len, en_max_len)
         break
       end
     end
-    filename = _sN .. "…"
+    filename = ('%s…%s'):format(_sN, (('.' .. suffix) or ''))
   end
   return filename
 end

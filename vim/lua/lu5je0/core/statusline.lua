@@ -179,12 +179,13 @@ M.setup = function()
       local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'
+      filename = require('lu5je0.lang.string-utils').get_short_filename(filename, 20)
       return ("%%#%s#%s %%#%s#%s"):format(highlight, icon, 'StatusLineViolet', filename)
     end,
     color = "StatusLineGrey",
     cache = true,
     cache_ttl = 2000,
-    cache_evict_autocmd = { 'CmdlineLeave', 'BufWinEnter' },
+    cache_evict_autocmd = { 'CmdlineLeave', 'BufReadPost' },
     cond = function(args)
       return conditions.hide_in_width(args.win_id, 25)
     end,
