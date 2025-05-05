@@ -1037,6 +1037,23 @@ local plugins = {
   --   ft = 'markdown'
   -- },
   
+  -- {
+  --   "zbirenbaum/copilot.lua",
+  --   config = function()
+  --     require("copilot").setup {
+  --       panel = {
+  --         auto_refresh = true
+  --       },
+  --       suggestion  = {
+  --         auto_trigger = true
+  --       },
+  --     }
+  --     vim.keymap.set('i', '<right>', function()
+  --       require("copilot.suggestion").accept()
+  --     end)
+  --   end
+  -- },
+  
   {
     "folke/snacks.nvim",
     config = function()
