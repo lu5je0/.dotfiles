@@ -25,10 +25,11 @@ zinit snippet OMZ::lib/completion.zsh
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 
-zinit ice lucid wait='0'
+# zinit ice lucid wait='0'
+# wsl中git定制，所以不能wait
 zinit snippet OMZ::lib/git.zsh
 
-zinit ice lucid wait='1'
+# zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/git/git.plugin.zsh
 
 zinit ice lucid wait='1'
