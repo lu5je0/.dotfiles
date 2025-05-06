@@ -54,7 +54,7 @@ M.setup = function()
   end
 
   vim.keymap.set('n', '<leader>ps', function() Snacks.profiler.toggle() end)
-  vim.keymap.set('n', '<leader>ff', function() Snacks.picker.pick("files", {}) end)
+  -- vim.keymap.set('n', '<leader>ff', function() Snacks.picker.pick("files", {}) end)
   -- vim.keymap.set('n', '<leader>fj', function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end)
   -- vim.keymap.set('n', '<leader>fm', function() Snacks.picker.pick("recent", {}) end)
   vim.keymap.set('n', '<leader>fh', function() Snacks.picker.pick("help", {}) end)
