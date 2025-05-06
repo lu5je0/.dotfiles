@@ -1,17 +1,8 @@
 #!/bin/bash
 
-ask() {
-  echo -n $1
-  echo -n $' (y/n) \n# '
-  read choice
-  case $choice in
-    Y | y)
-      return 0
-  esac
-  return -1
-}
+source ~/.dotfiles/zsh/functions.sh
 
-ask "Enable http proxy(http://127.0.0.1:1080)?" && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
+q-ask "Enable proxy(http://127.0.0.1:1080) before setup? " && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
 
 if [[ ! -d ~/.config ]]; then
   mkdir -p ~/.config
@@ -19,11 +10,11 @@ fi
 
 if [ "$(uname)" = "Linux" ]; then
   if [ -f /etc/lsb-release ]; then
-    # ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
-    ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requirements.sh
-    # ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt install -y nodejs
+    # q-ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
+    q-ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requirements.sh
+    # q-ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt install -y nodejs
   fi
-  ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
+  q-ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
 fi
 
 if [[ -f ~/.ssh/config ]]; then
@@ -32,15 +23,15 @@ else
   ln -s ~/.dotfiles/ssh/config ~/.ssh/config
 fi
 
-ask "download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
+q-ask "download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
 
-ask "ln -s ~/.dotfiles/git ~/.config/git?" && ln -s ~/.dotfiles/git ~/.config/git
+q-ask "ln -s ~/.dotfiles/git ~/.config/git?" && ln -s ~/.dotfiles/git ~/.config/git
 
-ask "ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon?" && ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon
+q-ask "ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon?" && ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon
 
-ask "ln -s ~/.dotfiles/termux/termux.properties ~/.termux/termux.properties?" && ln -s ~/.dotfiles/termux/termux.properties ~/.termux/termux.properties
+q-ask "ln -s ~/.dotfiles/termux/termux.properties ~/.termux/termux.properties?" && ln -s ~/.dotfiles/termux/termux.properties ~/.termux/termux.properties
 
-ask "copy maven config?" && if [[ ! -d ~/.m2 ]]; then mkdir ~/.m2; fi && cp -i ~/.dotfiles/m2/settings.xml ~/.m2/settings.xml
+q-ask "copy maven config?" && if [[ ! -d ~/.m2 ]]; then mkdir ~/.m2; fi && cp -i ~/.dotfiles/m2/settings.xml ~/.m2/settings.xml
 
 ln -s ~/.dotfiles/ideavimrc ~/.ideavimrc
 ln -s ~/.dotfiles/zshrc ~/.zshrc
@@ -93,14 +84,12 @@ fi
 #   ln -s ~/.dotfiles/alacritty/mac/alacritty.yml ~/.config/alacritty/alacritty.yml
 # fi
 
-mkdir -p ~/.aria2
-ln -s ~/.dotfiles/aria2/aria2.conf ~/.aria2/aria2.conf
+# mkdir -p ~/.aria2
+# ln -s ~/.dotfiles/aria2/aria2.conf ~/.aria2/aria2.conf
 
 # nvim
-mkdir -p ~/.config
-
 if [[ ! -d ~/.config/nvim ]]; then
-  ln -s ~/.dotfiles/vim ~/.config/nvim
+  q-ask "config neovim?" && ln -s ~/.dotfiles/vim ~/.config/nvim
 fi
 
-ask "Install pip3 requirements?" && sh ~/.dotfiles/scripts/pip3-requirements.sh
+# q-ask "Install pip3 requirements?" && sh ~/.dotfiles/scripts/pip3-requirements.sh
