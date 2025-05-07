@@ -12,8 +12,8 @@ local window_special_cases = {
         return {
           x = max.x,
           y = max.y,
-          w = 952,
-          h = 804
+          w = 987,
+          h = 825
         }
       else
         return {
@@ -50,8 +50,8 @@ local window_special_cases = {
         return {
           x = max.x,
           y = max.y,
-          w = 952,
-          h = 806
+          w = 990,
+          h = 827
         }
       else
         return {
