@@ -72,7 +72,7 @@ local function on_attach(bufnr)
 end
 
 function M.setup()
-  local installed_server_names = {}
+  local installed_server_names = { 'delance' }
 
   for _, lsp_name in ipairs(require('mason-lspconfig').get_installed_servers()) do
     table.insert(installed_server_names, lsp_name)
