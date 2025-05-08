@@ -562,14 +562,14 @@ local plugins = {
   -- lsp
   {
     {
-      'williamboman/mason.nvim',
+      'mason-org/mason.nvim',
       config = function()
         require("mason").setup()
       end,
       event = 'VeryLazy'
     },
     {
-      'williamboman/mason-lspconfig.nvim',
+      'mason-org/mason-lspconfig.nvim',
       config = function()
         require('mason-lspconfig').setup {
           ensure_installed = {}
@@ -577,7 +577,7 @@ local plugins = {
       end,
       event = 'VeryLazy',
       dependencies = {
-        'williamboman/mason.nvim',
+        'mason-org/mason.nvim',
         {
           'neovim/nvim-lspconfig',
           config = function()
