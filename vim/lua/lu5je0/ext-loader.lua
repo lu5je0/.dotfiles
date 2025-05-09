@@ -304,6 +304,16 @@ lazy_load({
   }
 })
 
+lazy_load({
+  config = function()
+    require('lu5je0.misc.calculator').setup()
+  end,
+  keys = {
+    { mode = { 'n' }, '<leader>a' },
+    { mode = { 'x' }, '<leader>a' },
+  }
+})
+
 require('lu5je0.misc.time-machine').setup()
 
 -- lazy_load({

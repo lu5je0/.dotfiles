@@ -215,13 +215,6 @@ local plugins = {
     event = { 'CursorHold', 'CursorHoldI' },
     keys = { '<leader>e', '<leader>fe' },
   },
-  {
-    'theniceboy/vim-calc',
-    config = function()
-      vim.keymap.set('n', '<leader>a', vim.fn.Calc)
-    end,
-    keys = { '<leader>a' }
-  },
   -- {
   --   'rootkiter/vim-hexedit',
   --   ft = 'bin',
