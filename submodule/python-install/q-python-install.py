@@ -24,6 +24,7 @@ def generate_run_script(script_path, script_name, output_dir):
     
     run_script_content = f"""
     #!/bin/bash
+    INSTALL_HOME=$(eval echo '~lu5je0' 2>/dev/null || echo "~")
     SCRIPT_PATH={script_path}
     SCRIPT_NAME={script_name}
     """
@@ -42,7 +43,7 @@ def generate_run_script(script_path, script_name, output_dir):
             if 'TARGET_NAME' in ext_script_map:
                 target_name = ext_script_map['TARGET_NAME']
 
-    run_script_content += '\nsource ~/.dotfiles/submodule/python-install/runner.sh'
+    run_script_content += '\nsource ${INSTALL_HOME}/.dotfiles/submodule/python-install/runner.sh'
         
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
@@ -57,8 +58,8 @@ def generate_run_script(script_path, script_name, output_dir):
 
 def replace_home_with_tilde(path):
     home_dir = os.path.expanduser("~")
-    if path.startswith(home_dir):
-        return path.replace(home_dir, "~", 1)
+    if path.startswith(home_dir + "/.dotfiles"):
+        return path.replace(home_dir, "${INSTALL_HOME}", 1)
     return path
 
 def main():
