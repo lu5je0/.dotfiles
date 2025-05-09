@@ -1,6 +1,6 @@
 #!/bin/bash
-INSTALL_HOME=$(eval echo '~lu5je0' 2>/dev/null || echo "~")
-SCRIPT_PATH=${INSTALL_HOME}/.dotfiles/submodule/q-push
+INSTALL_PATH=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+SCRIPT_PATH=${INSTALL_PATH}/../submodule/q-push
 SCRIPT_NAME=q-push.py
 
-source ${INSTALL_HOME}/.dotfiles/submodule/python-install/runner.sh
+source ${INSTALL_PATH}/../submodule/python-install/runner.sh
