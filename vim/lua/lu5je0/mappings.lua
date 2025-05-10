@@ -244,12 +244,6 @@ vim.schedule(function()
   xmap <leader>xZ <cmd>!opencc -c s2t<cr>
   nmap <leader>xZ <cmd>%!opencc -c s2t<cr>
 
-  "----------------------------------------------------------------------
-  " unicode escape
-  "----------------------------------------------------------------------
-  xmap <silent> <leader>xu <cmd>call visual#replace_by_fn("UnicodeEscapeString")<cr>
-  xmap <silent> <leader>xU <cmd>call visual#replace_by_fn("UnicodeUnescapeString")<cr>
-
   " ugly hack to start newline and keep indent
   nnoremap <silent> o o<space><bs>
   nnoremap <silent> O O<space><bs>

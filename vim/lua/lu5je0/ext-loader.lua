@@ -287,6 +287,14 @@ lazy_load({
   cmd = { 'Base64Decode', 'Base64Encode' }
 })
 
+-- unicode
+lazy_load({
+  config = function()
+    require('lu5je0.misc.unicode').create_command()
+  end,
+  cmd = { 'UnicodeEscape', 'UnicodeUnescape' }
+})
+
 -- timestamp
 lazy_load({
   config = function()

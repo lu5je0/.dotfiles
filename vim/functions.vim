@@ -77,19 +77,3 @@ function! <SID>ForgetUndo()
     unlet old_undolevels
 endfunction
 command -nargs=0 ClearUndo call <SID>ForgetUndo()
-
-function! UnicodeEscapeString(str)
-  let oldenc = &encoding
-  set encoding=utf-8
-  let escaped = substitute(a:str, '.', '\=printf("\\u%04x", char2nr(submatch(0)))', 'g')
-  let &encoding = oldenc
-  return escaped
-endfunction
-
-function! UnicodeUnescapeString(str)
-  let oldenc = &encoding
-  set encoding=utf-8
-  let escaped = substitute(a:str, '\\u\([0-9a-fA-F]\{4\}\)', '\=nr2char("0x" . submatch(1))', 'g')
-  let &encoding = oldenc
-  return escaped
-endfunction

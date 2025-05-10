@@ -9,7 +9,18 @@ function M.get_visual_selection_as_string()
 end
 
 function M.visual_replace(text)
-  vim.fn['visual#replace'](text)
+  -- Save the current 'a' register and its type
+  local reg_tmp = vim.fn.getreg('a')
+  local reg_type = vim.fn.getregtype('a')
+
+  -- Set the 'a' register to the provided text
+  vim.fn.setreg('a', text)
+
+  -- Replace the selected text with the contents of 'a' register
+  vim.api.nvim_command('normal! "ap')
+
+  -- Restore the original 'a' register and its type
+  vim.fn.setreg('a', reg_tmp, reg_type)
 end
 
 function M.visual_replace_by_fn(fn)
