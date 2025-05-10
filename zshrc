@@ -132,6 +132,7 @@ alias speedtest-sg='speedtest -s 367'
 alias speedtest-hk='speedtest -s 1536'
 alias speedtest-js='speedtest -s 5396'
 alias speedtest-los='speedtest -s 5905'
+alias speedtest-de='speedtest -s 18667'
 
 # ls
 # alias l='ls -lah'
