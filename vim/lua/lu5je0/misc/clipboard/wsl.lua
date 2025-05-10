@@ -22,12 +22,12 @@ local function pop_entry()
   end
 end
 
-local function sync_from()
+local function sync_from(init)
   vim.fn.jobstart({ "/mnt/d/bin/win32yank.exe", "-o", "--lf" }, {
     stdout_buffered = true,
     on_stdout = function(_, data)
       -- 避免切换窗口后regtype丢失
-      if active_entry ~= nil and #data < 100 and table.concat(data, '\n') == vim.fn.getreg('"') then
+      if not init and active_entry ~= nil and #data < 300 and (table.concat(data, '\n') == vim.fn.getreg('"')) then
         return
       end
       active_entry = { lines = data, regtype = 'v' }
@@ -103,7 +103,7 @@ function M.setup()
     group = augroup,
     callback = sync_from,
   })
-  sync_from()
+  sync_from(true)
 end
 
 return M
