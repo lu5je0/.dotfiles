@@ -8,6 +8,31 @@ function M.trim(s)
   return s:match "^%s*(.*)":match "(.-)%s*$"
 end
 
+function M.split_utf8(inputstr)
+    local list = {}
+    local len = #inputstr
+    local point = 1
+
+    while point <= len do
+        local c = inputstr:sub(point, point)
+        local byte = c:byte()
+        if byte <= 127 and byte >= 0 then -- 0x00 to 0x7f
+            table.insert(list, c)
+            point = point + 1
+        elseif byte >= 192 and byte <= 223 then -- 0xc0 to 0xdf
+            table.insert(list, string.sub(inputstr, point, point + 1))
+            point = point + 2
+        elseif byte >= 224 and byte <= 239 then -- 0xe0 to 0xef
+            table.insert(list, string.sub(inputstr, point, point + 2))
+            point = point + 3
+        elseif byte >= 240 and byte <= 247 then -- 0xf0 to 0xf7
+            table.insert(list, string.sub(inputstr, point, point + 3))
+            point = point + 4
+        end
+    end
+    return list
+end
+
 --@brief 切割字符串，并用“...”替换尾部
 --@param filename:要切割的字符串
 --@return max_len，字符串上限,中文字为2的倍数
