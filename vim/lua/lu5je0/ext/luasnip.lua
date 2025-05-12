@@ -36,26 +36,26 @@ end
 
 function M.setup()
   local types = require("luasnip.util.types")
-  vim.cmd[[hi SnippetTabstop guibg=#3b3e48]]
+  vim.cmd[[hi SnippetPassive guibg=#3b3e48 gui=underline]]
   luasnip.setup({
     delete_check_events = { 'InsertEnter' }, -- https://github.com/L3MON4D3/LuaSnip/issues/297
     region_check_events = { 'InsertEnter' },
     ext_opts = {
       [types.insertNode] = {
         -- visited = {
-        --   hl_group = 'SnippetTabstop',
+        --   hl_group = 'SnippetPassive',
         -- },
         -- unvisited = {
-        --   hl_group = 'SnippetTabstop',
-        --   -- virt_text = { { '|', 'Conceal' } },
-        --   -- virt_text_pos = 'inline',
+        --   hl_group = 'SnippetPassive',
+        --   virt_text = { { '|', 'Conceal' } },
+        --   virt_text_pos = 'inline',
         -- },
         passive = {
-          hl_group = 'SnippetTabstop',
+          hl_group = 'SnippetPassive',
         },
         -- this is the table actually passed to `nvim_buf_set_extmark`.
         active = {
-          hl_group = "None"
+          hl_group = "Underlined"
         },
       },
       -- Add this to also have a placeholder in the final tabstop. 

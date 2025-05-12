@@ -127,7 +127,7 @@ local components_helper = {
     [''] = { text = 'VIB', color = colors.red }, -- Visual Block 模式
     R = { text = 'REP' },                         -- Replace 模式
     Rv = { text = 'VRP' },                        -- Virtual Replace 模式
-    s = { text = 'SEL' },                         -- Select 模式
+    s = { text = 'SEL', color = colors.magenta },                         -- Select 模式
     S = { text = 'SIL' },                         -- Select Line 模式
     [''] = { text = 'SIB' },                     -- Select Block 模式
     t = { text = 'TER' },                          -- Terminal 模式
