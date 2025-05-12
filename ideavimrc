@@ -145,13 +145,6 @@ omap L $
 
 nmap Y ^y$
 
-omap ij i"
-omap aj a"
-omap oj o"
-xmap ij i"
-xmap aj a"
-xmap oj o"
-
 imap <m-j> <c-n>
 imap <m-k> <c-p>
 
