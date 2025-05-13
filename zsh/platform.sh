@@ -15,6 +15,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   alias p='mac_clipboard_cli -p'
   alias iterm='open -a iTerm .'
   alias fdfind='fd'
+  alias q-battery='ioreg -rn AppleSmartBattery | awk "/AppleRawMaxCapacity/{raw=\$NF} /DesignCapacity/{design=\$NF} /CycleCount/{cycle=\$NF} END{printf \"当前最大容量: %d mAh | 设计容量: %d mAh | 循环次数 %d 次 | 健康度: %.1f%%\n\", raw, design, cycle, (raw/design)*100}"'
   
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 
