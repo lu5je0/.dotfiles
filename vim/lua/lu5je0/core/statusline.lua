@@ -175,7 +175,12 @@ M.setup = function()
   ins_left {
     function(args)
       local devicons = require('nvim-web-devicons')
-      local filename = args.filename == '' and '[Untitled]' or args.filename
+      local filename
+      if args.filename ~= '' then
+        filename = args.filename
+      else
+        filename = '[Untitled-' .. require('lu5je0.ext.bufferline').buffer_name_map[args.buf_id] .. ']'
+      end
       local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'

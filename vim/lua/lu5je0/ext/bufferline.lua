@@ -2,7 +2,7 @@ local M = {}
 
 local bl = require('bufferline')
 
-local buffer_name_map = {}
+M.buffer_name_map = {}
 
 bl.setup {
   options = {
@@ -75,14 +75,14 @@ bl.setup {
         return nil
       end
       
-      if buffer_name_map[buf.bufnr] ~= nil then
-        return 'Untitled-' .. buffer_name_map[buf.bufnr]
+      if M.buffer_name_map[buf.bufnr] ~= nil then
+        return 'Untitled-' .. M.buffer_name_map[buf.bufnr]
       end
       local numbers = {}
       local valid_buffers = require("bufferline.utils").get_valid_buffers()
       for _, valid_bufnr in ipairs(valid_buffers) do
-        if buffer_name_map[valid_bufnr] ~= nil and vim.api.nvim_buf_get_name(valid_bufnr) == '' then
-          table.insert(numbers, buffer_name_map[valid_bufnr])
+        if M.buffer_name_map[valid_bufnr] ~= nil and vim.api.nvim_buf_get_name(valid_bufnr) == '' then
+          table.insert(numbers, M.buffer_name_map[valid_bufnr])
         end
       end
       table.sort(numbers)
@@ -101,7 +101,7 @@ bl.setup {
         return 1
       end
       local target_num = get_next_number()
-      buffer_name_map[buf.bufnr] = target_num
+      M.buffer_name_map[buf.bufnr] = target_num
       return 'Untitled-' .. target_num
     end
   },
