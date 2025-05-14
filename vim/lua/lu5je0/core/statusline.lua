@@ -179,7 +179,12 @@ M.setup = function()
       if args.filename ~= '' then
         filename = args.filename
       else
-        filename = '[Untitled-' .. require('lu5je0.ext.bufferline').buffer_name_map[args.buf_id] .. ']'
+        local buffer_number = require('lu5je0.ext.bufferline').buffer_name_map[args.buf_id]
+        if buffer_number then
+          filename = '[Untitled-' .. require('lu5je0.ext.bufferline').buffer_name_map[args.buf_id] .. ']'
+        else
+          filename = '[Untitled]'
+        end
       end
       local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
