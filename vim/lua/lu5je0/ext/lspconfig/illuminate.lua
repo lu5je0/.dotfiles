@@ -27,7 +27,7 @@ require('illuminate').configure({
   -- providers_regex_syntax_denylist: syntax to not illuminate, this overrides providers_regex_syntax_allowlist
   -- Only applies to the 'regex' provider
   -- Use :echom synIDattr(synIDtrans(synID(line('.'), col('.'), 1)), 'name')
-  providers_regex_syntax_denylist = {},
+  providers_regex_syntax_denylist = { 'Folded' },
   -- providers_regex_syntax_allowlist: syntax to illuminate, this is overriden by providers_regex_syntax_denylist
   -- Only applies to the 'regex' provider
   -- Use :echom synIDattr(synIDtrans(synID(line('.'), col('.'), 1)), 'name')
@@ -45,30 +45,17 @@ require('illuminate').configure({
   min_count_to_highlight = 2,
 })
 
--- vim.cmd [[
--- hi! illuminatedWord ctermbg=green guibg=#344134
--- hi! LspReferenceText guibg=none gui=none
--- hi! LspReferenceWrite guibg=#344134 gui=none
--- hi! LspReferenceRead guibg=#344134 gui=none
--- ]]
+local buf_highlight_references = require('illuminate.highlight').buf_highlight_references
+require('illuminate.highlight').buf_highlight_references = function(...)
+  local line = vim.api.nvim_win_get_cursor(0)[1]
+  local fold_close_end_line = vim.fn.foldclosedend(line)
+  -- 如果当前行不是foldedline
+  if fold_close_end_line == -1 then
+    buf_highlight_references(...)
+  end
+end
 
--- vim.g.Illuminate_delay = 500
---
--- vim.defer_fn(function()
---   vim.cmd([[
---   augroup illuminated_autocmd
---   autocmd!
---   augroup END
---   ]] )
--- end, 0)
---
--- local group = vim.api.nvim_create_augroup('illuminate', { clear = true })
---
--- vim.api.nvim_create_autocmd("LspAttach", {
---   group = group,
---   callback = function(args)
---     local client = vim.lsp.get_client_by_id(args.data.client_id)
---     -- illuminate
---     require('illuminate').on_attach(client)
---   end
--- })
+vim.keymap.set('n', 'zc', function()
+  require('lu5je0.core.keys').feedkey('zc', 'n')
+  require('illuminate.highlight').buf_clear_references(0)
+end)
