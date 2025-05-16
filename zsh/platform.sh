@@ -71,3 +71,8 @@ if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
     export PATH=/home/lu5je0/.dotfiles/bin/linux_aarch64:$PATH
   fi
 fi
+
+# termux
+if [[ $UNAME_INFO =~ "Android" ]]; then
+  export PATH=$HOME/.dotfiles/bin/linux_aarch64:$PATH
+fi
