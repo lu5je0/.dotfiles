@@ -54,8 +54,6 @@ elif [[ $UNAME_INFO =~ "WSL" ]]; then
   }
   export PATH=$WIN_HOME/scoop/shims:$PATH
   . $HOME'/.dotfiles/win/wsl2/wezterm.sh'
-elif [[ $UNAME_INFO =~ "Android" ]]; then
-  alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
 fi
 
 if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
@@ -75,4 +73,6 @@ fi
 # termux
 if [[ $UNAME_INFO =~ "Android" ]]; then
   export PATH=$HOME/.dotfiles/bin/linux_aarch64:$PATH
+  alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
+  alias speedtest='termux-chroot speedtest --ca-certificate=$PREFIX/etc/tls/cert.pem'
 fi
