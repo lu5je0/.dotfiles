@@ -37,7 +37,7 @@ end
 -- 700 - Bold
 -- 800 - Extra Bold (Ultra Bold)
 -- 900 - Black (Heavy)
--- mac: JetBrainsMonoNLNerdFontMono-SemiBold
+-- mac: JetBrainsMonoNLNerdFontMono-Regular
 -- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf
 
 -- win: JetBrainsMonoNL Nerd Font Mono
