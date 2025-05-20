@@ -1068,6 +1068,13 @@ local plugins = {
     event = 'VeryLazy',
   },
   
+  -- {
+  --   "nvim-treesitter/nvim-treesitter-context",
+  --   config = function()
+  --     require('treesitter-context').setup {}
+  --   end
+  -- },
+  
   {
     'TobinPalmer/pastify.nvim',
     cmd = { 'Pastify', 'PastifyAfter' },
