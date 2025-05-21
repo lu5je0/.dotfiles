@@ -140,6 +140,8 @@ o.termguicolors = true
 o.bg = 'dark'
 o.ruler = false
 
+vim.deprecate = function() end
+
 if has('mac') then
   vim.g.python3_host_prog = '/usr/bin/python3'
 end
@@ -193,6 +195,11 @@ local defer_options = {
     end
     -- end
     vim.cmd [[ packadd matchit ]]
+  end,
+  function()
+    if has('nvim-0.12.0') then
+      require('vim._extui').enable({}) 
+    end
   end
 }
 for delay, fn in ipairs(defer_options) do
