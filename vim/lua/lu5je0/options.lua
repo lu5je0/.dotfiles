@@ -100,6 +100,9 @@ o.foldlevel = 99 -- 打开文件默认不折叠
 o.hidden = true
 o.updatetime = 2000
 
+-- 避免这种url被截断 https://gw.alicdn.com/imgextra/i3/O1CN01rneZ1m1Nlt6cLTwVd_!!6000000001611-2-tps-97-28.png_110x10000.jpg_.webp
+o.isfname = o.isfname .. ',!'
+
 -- o.signcolumn = 'yes:1'
 o.signcolumn = 'no'
 o.foldcolumn = '1'
