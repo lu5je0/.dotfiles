@@ -31,9 +31,8 @@ def generate_run_script(script_path, script_name, output_dir):
     run_script_content = run_script_content[1:]
     run_script_content = textwrap.dedent(run_script_content)
 
-    script_path = os.path.expanduser(script_path)
-    if os.path.exists(script_path + '/.script'):
-        with open(script_path + '/.script') as script:
+    if os.path.exists('.script'):
+        with open('.script') as script:
             lines = script.readlines()
             ext_script = "".join(lines)
             run_script_content += ext_script
