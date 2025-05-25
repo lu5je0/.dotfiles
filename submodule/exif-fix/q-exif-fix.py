@@ -4,6 +4,28 @@ from datetime import datetime, timezone, timedelta
 import piexif
 import argparse
 import subprocess
+import sys
+
+# 终端颜色
+def color_filename(filename):
+    if sys.stdout.isatty():
+        # 蓝色加粗
+        return f"\033[1;34m{filename}\033[0m"
+    return filename
+
+def color_status(status):
+    if not sys.stdout.isatty():
+        return status
+    if status == "success":
+        return f"\033[1;32m{status}\033[0m"  # 绿色
+    elif status == "ignore":
+        return f"\033[1;33m{status}\033[0m"  # 黄色
+    elif status == "error":
+        return f"\033[1;31m{status}\033[0m"  # 红色
+    return status
+
+def log(filename, status, msg):
+    print(f"[{color_filename(filename)}] [{color_status(status)}] {msg}")
 
 def extract_datetime_from_filename(filename):
     # 1. 匹配时间戳（10位或13位数字）
@@ -119,9 +141,9 @@ def set_video_creation_time(file_path, dt):
     ]
     try:
         subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(f"Set video datetime for {file_path}: {dt_str}")
+        log(file_path, "success", f"set video datetime: {dt_str}")
     except Exception as e:
-        print(f"Failed to set video datetime for {file_path}: {e}")
+        log(file_path, "error", f"failed to set video datetime: {e}")
 
 def process_directory(directory, force_write_exif):
     photo_exts = {'.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG'}
@@ -133,27 +155,27 @@ def process_directory(directory, force_write_exif):
             dt = extract_datetime_from_filename(fname)
             if ext in photo_exts:
                 if not force_write_exif and has_exif_datetime(full_path):
-                    print(f"Skip {full_path}: already has EXIF datetime.")
+                    log(full_path, "ignore", "skip: already has EXIF datetime")
                     continue
                 if dt:
                     if datetime_in_valid_range(dt):
                         try:
-                            print(f"Processing {full_path}, writing time: {dt}")
                             set_exif_datetime(full_path, dt)
+                            log(full_path, "success", f"write EXIF datetime: {dt}")
                         except Exception as e:
-                            print(f"Failed to write EXIF for {full_path}: {e}")
+                            log(full_path, "error", f"failed to write EXIF: {e}")
                     else:
-                        print(f"Error: {full_path} - time {dt} is out of 2010-2030 range, skipping.")
+                        log(full_path, "error", f"time {dt} is out of 2010-2030 range, skip")
                 else:
-                    print(f"Error: {full_path} - no valid datetime found in filename.")
+                    log(full_path, "error", "no valid datetime found in filename")
             elif ext in video_exts:
                 if dt:
                     if datetime_in_valid_range(dt):
                         set_video_creation_time(full_path, dt)
                     else:
-                        print(f"Error: {full_path} - time {dt} is out of 2010-2030 range, skipping.")
+                        log(full_path, "error", f"time {dt} is out of 2010-2030 range, skip")
                 else:
-                    print(f"Error: {full_path} - no valid datetime found in filename.")
+                    log(full_path, "error", "no valid datetime found in filename")
 
 def main():
     parser = argparse.ArgumentParser(description="Write datetime to EXIF (for images) or metadata (for videos) from filename in specified directory and its subdirectories.")

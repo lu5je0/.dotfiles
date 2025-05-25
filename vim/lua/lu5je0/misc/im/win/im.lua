@@ -14,7 +14,10 @@ local ENABLE_IME = '/mnt/d/bin/toEnableIME.exe'
 
 M.disable_ime = rate_limiter:wrap(function()
   vim.uv.new_thread(function(path)
-    local handle = vim.uv.spawn(path, { args = { '2>&1', '1>/dev/null' }})
+    ---@diagnostic disable-next-line: missing-fields, missing-parameter
+    local handle = vim.uv.spawn(path, {
+      stdio = { nil, nil, nil }
+    })
     if handle and not handle:is_closing() then handle:close() end
   end, DISABLE_IME)
 end)
@@ -22,7 +25,10 @@ end)
 M.enable_ime = rate_limiter:wrap(function()
   if M.save_last_ime then
     vim.uv.new_thread(function(path)
-      local handle = vim.uv.spawn(path, { args = { '2>&1', '1>/dev/null' } })
+      ---@diagnostic disable-next-line: missing-fields, missing-parameter
+      local handle = vim.uv.spawn(path, {
+        stdio = { nil, nil, nil }
+      })
       if handle and not handle:is_closing() then handle:close() end
     end, ENABLE_IME)
   end
