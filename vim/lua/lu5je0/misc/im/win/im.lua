@@ -2,11 +2,9 @@ local M = {}
 
 local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
 local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
-local timer = require('lu5je0.lang.timer')
-
--- local STD_PATH = vim.fn.stdpath('config')
 
 -- 80ms左右
+-- local STD_PATH = vim.fn.stdpath('config')
 -- local DISABLE_IME = STD_PATH .. '/lib/toDisableIME.exe'
 -- local ENABLE_IME = STD_PATH .. '/lib/toEnableIME.exe'
 
@@ -15,19 +13,17 @@ local DISABLE_IME = '/mnt/d/bin/toDisableIME.exe'
 local ENABLE_IME = '/mnt/d/bin/toEnableIME.exe'
 
 M.disable_ime = rate_limiter:wrap(function()
-  -- local handle = vim.uv.spawn(DISABLE_IME, { args = { '2>&1', '1>/dev/null' }})
-  -- if handle and not handle:is_closing() then handle:close() end
   vim.uv.new_thread(function(path)
-    io.popen(path .. ' 2>&1 1>/dev/null'):close()
+    local handle = vim.uv.spawn(path, { args = { '2>&1', '1>/dev/null' }})
+    if handle and not handle:is_closing() then handle:close() end
   end, DISABLE_IME)
 end)
 
 M.enable_ime = rate_limiter:wrap(function()
   if M.save_last_ime then
-    -- local handle = vim.uv.spawn(ENABLE_IME, { args = { '2>&1', '1>/dev/null' } })
-    -- if handle and not handle:is_closing() then handle:close() end
     vim.uv.new_thread(function(path)
-      io.popen(path .. ' 2>&1 1>/dev/null'):close()
+      local handle = vim.uv.spawn(path, { args = { '2>&1', '1>/dev/null' } })
+      if handle and not handle:is_closing() then handle:close() end
     end, ENABLE_IME)
   end
 end)
