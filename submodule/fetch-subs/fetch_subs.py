@@ -1,4 +1,3 @@
-#!/usr/bin/env /home/lu5je0/.dotfiles/submodule/SubtitlesDownloader/.env/bin/python3
 import hashlib
 import requests
 import json
