@@ -75,23 +75,23 @@ def extract_datetime_from_filename(filename):
         except Exception:
             pass
 
-    # 4. 兜底只识别日期
-    # 匹配 20190807
-    match = re.search(r'(\d{8})', filename)
-    if match:
-        date_str = match.group(1)
-        try:
-            dt = datetime.strptime(date_str, "%Y%m%d")
-            dt = dt.replace(hour=0, minute=0, second=0, tzinfo=timezone(timedelta(hours=8)))
-            return dt
-        except Exception:
-            pass
     # 匹配 2019-08-07 或 2019_08_07（横杠或下划线分隔）
     match = re.search(r'(\d{4})[-_](\d{2})[-_](\d{2})', filename)
     if match:
         year, month, day = match.groups()
         try:
             dt = datetime(int(year), int(month), int(day), 0, 0, 0, tzinfo=timezone(timedelta(hours=8)))
+            return dt
+        except Exception:
+            pass
+        
+    # 兜底只识别日期 匹配 20190807
+    match = re.search(r'(\d{8})', filename)
+    if match:
+        date_str = match.group(1)
+        try:
+            dt = datetime.strptime(date_str, "%Y%m%d")
+            dt = dt.replace(hour=0, minute=0, second=0, tzinfo=timezone(timedelta(hours=8)))
             return dt
         except Exception:
             pass
