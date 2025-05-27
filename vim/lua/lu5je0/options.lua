@@ -109,7 +109,9 @@ o.foldcolumn = '1'
 vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 -- 关闭message超过cmdheight时需要hit-enter
--- o.messagesopt = 'wait:0,history:10000'
+if has('nvim-0.12.0') then
+  o.messagesopt = 'wait:0,history:10000'
+end
 
 -- encodeing
 o.fileformat = 'unix'

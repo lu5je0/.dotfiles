@@ -130,9 +130,11 @@ vim.api.nvim_create_user_command("Redir", redir, {
   bang = true,
 })
 
-vim.api.nvim_create_user_command("Messages", function()
-  vim.cmd("Redir messages")
-end, { bar = true })
+if vim.fn.has('nvim-0.12.0') == 0 then
+  vim.api.nvim_create_user_command("Messages", function()
+    vim.cmd("Redir messages")
+  end, { bar = true })
+end
 
 local function evaler(range)
   return function(bang)
