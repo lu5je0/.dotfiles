@@ -130,9 +130,9 @@ vim.api.nvim_create_user_command("Redir", redir, {
   bang = true,
 })
 
--- vim.api.nvim_create_user_command("Messages", function()
---   vim.cmd("Redir messages")
--- end, { bar = true })
+vim.api.nvim_create_user_command("Messages", function()
+  vim.cmd("Redir messages")
+end, { bar = true })
 
 local function evaler(range)
   return function(bang)
