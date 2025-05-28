@@ -1164,7 +1164,6 @@ local function patch_plugins()
   vim.api.nvim_create_autocmd('User', {
     pattern = { 'LazyCheckPre', 'LazyUpdatePre', 'LazyInstallPre', 'LazySyncPre' },
     callback = function()
-      print(1)
       all_reset(plugins)
     end
   })
@@ -1172,7 +1171,6 @@ local function patch_plugins()
   vim.api.nvim_create_autocmd('User', {
     pattern = { 'LazyCheck', 'LazyUpdate', 'LazyInstall', 'LazySync' },
     callback = function()
-      print(2)
       all_patch(plugins)
     end
   })

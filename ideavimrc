@@ -121,6 +121,7 @@ xmap <c-p> <A-p>
 nmap <m-n> <A-n>
 nmap <m-x> <A-x>
 nmap <m-p> <A-p>
+nmap <cr> <Action>(ShowIntentionActions)
 xmap <m-n> <A-n>
 xmap <m-x> <A-x>
 xmap <m-p> <A-p>
