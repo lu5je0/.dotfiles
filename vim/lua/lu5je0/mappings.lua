@@ -173,6 +173,13 @@ vim.schedule(function()
   " fold
   nmap zA za]zA
   nmap zI za]zI
+  
+  omap iq i"
+  omap aq a"
+  omap oq o"
+  xmap iq i"
+  xmap aq a"
+  xmap oq o"
 
   "----------------------------------------------------------------------
   " <leader>
