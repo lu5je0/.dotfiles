@@ -805,12 +805,14 @@ local plugins = {
       local builtin = require("statuscol.builtin")
       vim.o.foldcolumn = '0'
       vim.o.nuw = 2
+      -- vim.cmd[[hi GitBlame guibg=#464842 guifg=#c5cdd9]]
       require("statuscol").setup({
         -- configuration goes here, for example:
         ft_ignore = { 'NvimTree', 'undotree', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
         bt_ignore = { 'terminal' },
         segments = {
           { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
+          -- { text = { '%#GitBlame#%= 2024/08/01 lu5je0 ' }, click = "v:lua.ScFa" },
           {
             sign = { name = { "DapBreakpoint" }, maxwidth = 2, colwidth = 2, auto = true },
             click = "v:lua.ScSa"
@@ -928,10 +930,12 @@ local plugins = {
     config = function()
       require('blame').setup {
         width = 35,
+        date_format = '%r',
+        focus_blame = false,
       }
     end,
     keys = {
-      { mode = 'n', "<leader>gb", ":BlameToggle window<cr>", desc = "ToggleGitBlame" },
+      { mode = 'n', "<leader>gb", ":BlameToggle virtual<cr>", desc = "ToggleGitBlame" },
     },
   },
 
