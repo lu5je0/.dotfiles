@@ -152,8 +152,7 @@ M.setup = function()
   ins_left {
     function()
       local mode = nil
-      local is_visual_multi = vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
-      if is_visual_multi then
+      if vim.b.in_visual_multi then
         mode = require('lu5je0.ext.vim-visual-multi').mode()
       else
         mode = vim.api.nvim_get_mode().mode

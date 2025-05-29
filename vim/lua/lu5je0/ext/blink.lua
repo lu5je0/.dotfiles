@@ -19,6 +19,13 @@ M.setup = function()
       ['<c-n>'] = { 'show', 'hide' },
       ['<cr>'] = {
         accept,
+        function()
+          if not vim.b.in_visual_multi then
+            return false
+          end
+          require('lu5je0.core.keys').feedkey('<Plug>(VM-I-Return)')
+          return true
+        end,
         'snippet_forward',
         'fallback'
       },

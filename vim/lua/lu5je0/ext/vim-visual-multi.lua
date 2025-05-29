@@ -39,6 +39,7 @@ function M.setup()
           keys.feedkey('<Plug>(VM-Exit)')
         end
       end, { buffer = true })
+      vim.b.in_visual_multi = true
     end,
   })
 
@@ -50,6 +51,7 @@ function M.setup()
       silent! unmap <buffer> <leader>y
       silent! unmap <buffer> v
       ]]
+      vim.b.in_visual_multi = false
     end,
   })
 
