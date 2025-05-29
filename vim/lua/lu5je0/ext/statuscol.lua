@@ -1,6 +1,6 @@
 local M = {}
 
-local DEFAULT_MAX_BLAME_LENGTH = 19
+local DEFAULT_MAX_BLAME_LENGTH = 17
 
 local async_get_git_blame = function(refresh)
   if not vim.b.git_blame then
