@@ -889,21 +889,6 @@ local plugins = {
   -- },
 
   {
-    "FabijanZulj/blame.nvim",
-    cmd = "BlameToggle",
-    config = function()
-      require('blame').setup {
-        width = 35,
-        date_format = '%r',
-        focus_blame = false,
-      }
-    end,
-    keys = {
-      { mode = 'n', "<leader>gb", ":BlameToggle virtual<cr>", desc = "ToggleGitBlame" },
-    },
-  },
-
-  {
     'kevinhwang91/nvim-fundo',
     dependencies = 'kevinhwang91/promise-async',
     build = function() require('fundo').install() end,

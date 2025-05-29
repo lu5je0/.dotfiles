@@ -1,6 +1,6 @@
 local M = {}
 
-local MAX_BLAME_LENGTH = 15
+local DEFAULT_MAX_BLAME_LENGTH = 19
 
 local async_get_git_blame = function(refresh)
   if not vim.b.git_blame then
@@ -24,7 +24,7 @@ local async_get_git_blame = function(refresh)
     end
     _G.blame[bufnr] = {}
 
-    local max = 15
+    local max = 0
     for lnum = topline, botline do
       local info = bcache:get_blame(lnum)
       local commit
@@ -36,14 +36,15 @@ local async_get_git_blame = function(refresh)
       _G.blame[bufnr][lnum] = commit
       max = math.max(max, vim.fn.strwidth(commit))
     end
-    MAX_BLAME_LENGTH = max
-    if refresh then
-      vim.schedule(function()
-        vim.cmd('set number')
-      end)
-    end
+    vim.b.max_blame_length = max
+    vim.cmd('set number')
   end)()
 end
+local origin_async_get_git_blame = async_get_git_blame
+
+async_get_git_blame = require('lu5je0.lang.function-utils').debounce(function(...)
+  origin_async_get_git_blame(...)
+end, 200)
 
 M.setup = function()
   local builtin = require("statuscol.builtin")
@@ -53,6 +54,9 @@ M.setup = function()
 
   vim.keymap.set('n', '<leader>gb', function()
     vim.b.git_blame = not vim.b.git_blame
+    if not vim.b.max_blame_length then
+      vim.b.max_blame_length = DEFAULT_MAX_BLAME_LENGTH
+    end
     if vim.b.git_blame then
       async_get_git_blame(true)
     end
@@ -60,6 +64,14 @@ M.setup = function()
   end)
 
   vim.api.nvim_create_autocmd("WinScrolled", {
+    callback = function()
+      if vim.b.git_blame then
+        origin_async_get_git_blame()
+      end
+    end
+  })
+
+  vim.api.nvim_create_autocmd({ "TextChangedI", "TextChanged" }, {
     callback = function()
       if vim.b.git_blame then
         async_get_git_blame()
@@ -85,14 +97,14 @@ M.setup = function()
               local commit = _G.blame[buf][args.lnum]
               if commit then
                 local commit_len = vim.fn.strwidth(commit)
-                if commit_len > MAX_BLAME_LENGTH then
-                  return " " .. string.sub(commit, 1, MAX_BLAME_LENGTH) .. " "
+                if commit_len > vim.b.max_blame_length then
+                  return " " .. string.sub(commit, 1, vim.b.max_blame_length) .. " "
                 else
-                  return " " .. commit .. (" "):rep(MAX_BLAME_LENGTH - commit_len + 1)
+                  return " " .. commit .. (" "):rep(vim.b.max_blame_length - commit_len + 1)
                 end
               end
             end
-            return (" "):rep(MAX_BLAME_LENGTH)
+            return (" "):rep(vim.b.max_blame_length)
           end
         },
         fillcharhl = "GitBlame",
