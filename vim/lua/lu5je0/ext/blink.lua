@@ -48,7 +48,7 @@ M.setup = function()
     completion = {
       accept = {
         auto_brackets = {
-          enabled = false
+          -- enabled = false
         },
       },
       list = {
