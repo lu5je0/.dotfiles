@@ -109,7 +109,7 @@ M.setup = function()
         },
         fillcharhl = "GitBlame",
         condition = {
-          builtin.not_empty
+          function() return vim.b.git_blame end,
         },
       },
       {
