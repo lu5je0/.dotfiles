@@ -35,7 +35,8 @@ local get_blame_color = function(timestamp)
 end
 
 local async_get_git_blame = function(refresh)
-  if not vim.b.git_blame then
+  local buf = vim.api.nvim_win_get_buf(0)
+  if not vim.b[buf].git_blame then
     return
   end
   local async = require('gitsigns.async').async
@@ -69,7 +70,7 @@ local async_get_git_blame = function(refresh)
       _G.blame[bufnr][lnum] = result
       max = math.max(max, vim.fn.strwidth(result.text))
     end
-    vim.b.max_blame_length = max
+    vim.b[buf].max_blame_length = max
     vim.cmd('set number')
   end)()
 end
@@ -117,9 +118,6 @@ M.setup = function()
 end
 
 M.component = function(args)
-  if not vim.b.git_blame then
-    return ""
-  end
   local buf = args.buf
   local sign = nil
   local color = 'GitBlame1'
@@ -130,15 +128,15 @@ M.component = function(args)
         color = commit_info.color
       end
       local commit_len = vim.fn.strwidth(commit_info.text)
-      if commit_len > vim.b.max_blame_length then
-        sign = " " .. string.sub(commit_info.text, 1, vim.b.max_blame_length) .. " "
+      if commit_len > vim.b[buf].max_blame_length then
+        sign = " " .. string.sub(commit_info.text, 1, vim.b[buf].max_blame_length) .. " "
       else
-        sign = " " .. commit_info.text .. (" "):rep(vim.b.max_blame_length - commit_len + 1)
+        sign = " " .. commit_info.text .. (" "):rep(vim.b[buf].max_blame_length - commit_len + 1)
       end
     end
   end
   if not sign then
-    sign = (" "):rep(vim.b.max_blame_length)
+    sign = (" "):rep(vim.b[buf].max_blame_length)
   end
   return "%#".. color .. "#%=" .. sign
 end

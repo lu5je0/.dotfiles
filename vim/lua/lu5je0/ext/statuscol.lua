@@ -14,7 +14,7 @@ M.setup = function()
       {
         text = {
           function(args)
-            if not vim.b.git_blame then
+            if not vim.b[args.buf].git_blame then
               return ""
             end
             return require('lu5je0.ext.statuscol.blame').component(args)
@@ -22,7 +22,7 @@ M.setup = function()
         },
         fillcharhl = "GitBlame",
         condition = {
-          function() return vim.b.git_blame end,
+          function(args) return vim.b[args.buf].git_blame end,
         },
       },
       {
