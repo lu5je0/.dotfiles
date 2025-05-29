@@ -61,6 +61,7 @@ function M.setup()
   -- blink.cmp 冲突
   vim.g.VM_maps = {
     ["I Down Arrow"] = "",
+    ["I Return"] = "",
     ["I Up Arrow"] = "",
   }
 end
