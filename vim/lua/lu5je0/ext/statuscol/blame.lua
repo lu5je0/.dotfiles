@@ -82,7 +82,6 @@ end, 200)
 M.toggle = function()
   if not setup then
     M.setup()
-    setup = true
   end
   
   vim.b.git_blame = not vim.b.git_blame
@@ -113,6 +112,8 @@ M.setup = function()
       end
     end
   })
+  
+  setup = true
 end
 
 M.component = function(args)
