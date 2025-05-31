@@ -1,6 +1,6 @@
 local M = {}
 
-local DEFAULT_MAX_BLAME_LENGTH = 17
+local DEFAULT_MAX_BLAME_LENGTH = 19
 local setup = false
 
 local delcare_color = function()
