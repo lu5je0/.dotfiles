@@ -37,7 +37,7 @@ end
 -- 700 - Bold
 -- 800 - Extra Bold (Ultra Bold)
 -- 900 - Black (Heavy)
--- mac: JetBrainsMonoNLNerdFontMono-SemiBold
+-- mac: JetBrainsMonoNLNerdFontMono-Regular
 -- https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf
 
 -- win: JetBrainsMonoNL Nerd Font Mono
@@ -100,13 +100,18 @@ o.foldlevel = 99 -- 打开文件默认不折叠
 o.hidden = true
 o.updatetime = 2000
 
+-- 避免这种url被截断 https://gw.alicdn.com/imgextra/i3/O1CN01rneZ1m1Nlt6cLTwVd_!!6000000001611-2-tps-97-28.png_110x10000.jpg_.webp
+o.isfname = o.isfname .. ',!'
+
 -- o.signcolumn = 'yes:1'
 o.signcolumn = 'no'
 o.foldcolumn = '1'
 vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 -- 关闭message超过cmdheight时需要hit-enter
--- o.messagesopt = 'wait:0,history:10000'
+if has('nvim-0.12.0') then
+  o.messagesopt = 'wait:0,history:10000'
+end
 
 -- encodeing
 o.fileformat = 'unix'
@@ -136,6 +141,8 @@ g.loaded_ruby_provider = 0
 o.termguicolors = true
 o.bg = 'dark'
 o.ruler = false
+
+vim.deprecate = function() end
 
 if has('mac') then
   vim.g.python3_host_prog = '/usr/bin/python3'
@@ -190,6 +197,11 @@ local defer_options = {
     end
     -- end
     vim.cmd [[ packadd matchit ]]
+  end,
+  function()
+    if has('nvim-0.12.0') then
+      require('vim._extui').enable({}) 
+    end
   end
 }
 for delay, fn in ipairs(defer_options) do

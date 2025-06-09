@@ -215,7 +215,6 @@ function M.setup()
       g = 'preview hunk',
       A = { '<cmd>Git add -A<cr>', 'add all' },
       b = 'blame',
-      B = { '<cmd>Git blame<cr>', 'blame line' },
       C = { '<cmd>Gread<cr>', 'git checkout -- current file' },
       d = { '<cmd>Git diff<cr>', 'diff' },
       D = { '<cmd>Git diff --cached<cr>', 'diff --cached' },

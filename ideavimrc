@@ -52,6 +52,13 @@ nmap <leader>fe :NERDTreeFind<CR>
 xmap < <gv
 xmap > >gv
 
+omap iq i"
+omap aq a"
+omap oq o"
+xmap iq i"
+xmap aq a"
+xmap oq o"
+
 nnoremap * *<c-o>
 
 " tab页
@@ -111,19 +118,10 @@ nmap <leader>rr :action RunClass<CR>
 " other
 nmap <leader><space> <Action>(ShowErrorDescription)
 
-" windows multiple0-cursors key maps
-nmap <c-n> <A-n>
-xmap <c-n> <A-n>
-xmap <c-x> <A-x>
-xmap <c-p> <A-p>
-
-" mac multiple0-cursors key maps
-nmap <m-n> <A-n>
-nmap <m-x> <A-x>
-nmap <m-p> <A-p>
-xmap <m-n> <A-n>
-xmap <m-x> <A-x>
-xmap <m-p> <A-p>
+" multiple-cursors
+nmap <C-n> <Plug>NextWholeOccurrence
+xmap <C-n> <Plug>NextWholeOccurrence
+xmap <C-x> <Plug>SkipOccurrence
 
 " history
 sethandler <c-o> n-v:vim i:vim

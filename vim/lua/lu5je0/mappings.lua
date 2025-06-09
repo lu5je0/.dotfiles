@@ -60,7 +60,6 @@ vim.schedule(function()
   set_n_map('<leader>vl', option_toggler.new_toggle_fn({ 'set cursorline', 'set nocursorline' }))
   set_n_map('<leader>vf', option_toggler.new_toggle_fn({ 'set foldcolumn=auto:1', 'set foldcolumn=0' }))
   set_n_map('<leader>vd', option_toggler.new_toggle_fn({ 'windo difft', 'windo diffo' }))
-  set_n_map('<leader>vh', option_toggler.new_toggle_fn({ 'call hexedit#ToggleHexEdit()' }))
   set_n_map('<leader>vc', option_toggler.new_toggle_fn({ 'set noignorecase', 'set ignorecase' }))
   -- set_n_map('<leader>vi', require('lu5je0.misc.im.mac.im').toggle_save_last_ime)
   set_n_map('<leader>vw', function()
@@ -174,6 +173,13 @@ vim.schedule(function()
   " fold
   nmap zA za]zA
   nmap zI za]zI
+  
+  omap iq i"
+  omap aq a"
+  omap oq o"
+  xmap iq i"
+  xmap aq a"
+  xmap oq o"
 
   "----------------------------------------------------------------------
   " <leader>

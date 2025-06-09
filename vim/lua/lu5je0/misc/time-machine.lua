@@ -135,7 +135,7 @@ end
 
 function M.read_undo()
   local filepath = TIME_MACHINE_UNDO_PATH .. vim.fn.expand('%:t')
-  if vim.fn.filereadable(filepath) then
+  if vim.fn.filereadable(filepath) == 1 then
     vim.cmd('sil rundo ' .. filepath)
   end
 end
