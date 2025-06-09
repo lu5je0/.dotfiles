@@ -29,7 +29,7 @@ q-ask "ln -s ~/.dotfiles/git ~/.config/git?" && ln -s ~/.dotfiles/git ~/.config/
 
 q-ask "ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon?" && ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon
 
-q-ask "ln -s ~/.dotfiles/termux/termux.properties ~/.termux/termux.properties?" && ln -s ~/.dotfiles/termux/termux.properties ~/.termux/termux.properties
+q-ask "ln -s ~/.dotfiles/termux ~/.config/termux?" && ln -s ~/.dotfiles/termux ~/.config/termux
 
 q-ask "copy maven config?" && if [[ ! -d ~/.m2 ]]; then mkdir ~/.m2; fi && cp -i ~/.dotfiles/m2/settings.xml ~/.m2/settings.xml
 
