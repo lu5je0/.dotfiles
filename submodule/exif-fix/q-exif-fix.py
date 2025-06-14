@@ -121,14 +121,18 @@ def has_exif_datetime(image_path):
     return False
 
 def set_exif_datetime(image_path, dt):
-    exif_dict = piexif.load(image_path)
+    # 照片时区强制写 Asia/Shanghai (UTC+8)，EXIF 只支持本地时间，无时区字段，但我们约定全部当作+8
+    dt = dt.astimezone(timezone(timedelta(hours=8)))
     dt_str = dt.strftime("%Y:%m:%d %H:%M:%S")
+    exif_dict = piexif.load(image_path)
     exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = dt_str.encode()
     exif_dict['0th'][piexif.ImageIFD.DateTime] = dt_str.encode()
+    # 可选：设置 SubSecTimeOriginal 保留毫秒（不强制，按需添加）
     exif_bytes = piexif.dump(exif_dict)
     piexif.insert(exif_bytes, image_path)
 
 def set_video_creation_time(file_path, dt):
+    dt = dt.astimezone(timezone(timedelta(hours=8)))
     dt_str = dt.strftime('%Y:%m:%d %H:%M:%S')
     cmd = [
         'exiftool',
