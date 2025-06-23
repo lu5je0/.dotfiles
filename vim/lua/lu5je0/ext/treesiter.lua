@@ -9,8 +9,9 @@ local ts_filetypes = {
   'vue', 'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy'
 }
 
+local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
+
 local function enable_treesitter_fold()
-  local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
 
   local function merge_elements(elements, origin_text)
     table.insert(elements, 1, { text = origin_text, pos = { 0, #origin_text }, highlight = 'Foled' })
@@ -206,45 +207,51 @@ local function enable_treesitter_fold()
     return M.custom_foldtext(vim.v.foldstart, vim.v.foldend)
   end
   
-  treesitter.define_modules {
-    fold = {
-      attach = function(buf, lang)
-        -- set treesiter
-        local win_id = vim.api.nvim_get_current_win()
-        vim.defer_fn(function()
-          if vim.api.nvim_get_current_buf() == buf then
-            vim.wo[win_id][0].foldmethod = 'expr'
-            vim.wo[win_id][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
-            vim.opt_local.foldtext = "v:lua.__custom_foldtext()"
-            if not vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
-              vim.opt_local.foldtext = ""
-            end
+  vim.api.nvim_create_autocmd({ "User" }, {
+    pattern = 'TreesitterAttach',
+    callback = function(args)
+      -- set treesiter
+      local win_id = vim.api.nvim_get_current_win()
+      vim.defer_fn(function()
+        if vim.api.nvim_get_current_buf() == args.buf then
+          vim.wo[win_id][0].foldmethod = 'expr'
+          vim.wo[win_id][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+          vim.opt_local.foldtext = "v:lua.__custom_foldtext()"
+          if not vim.tbl_contains(fold_suffix_ft_white_list, vim.bo.filetype) then
+            vim.opt_local.foldtext = ""
           end
-        end, 100)
-      end,
-      detach = function(buf)
-        -- recover settings
-        vim.wo.foldmethod = vim.go.foldmethod
-        vim.wo.foldexpr = vim.go.foldexpr
-      end,
-      is_supported = function(lang)
-        return true
-      end,
-      enable = true
-    },
-    attach_module = {
-      enable = true,
-      attach = function(buf)
-        -- highlights
-        vim.cmd([[
-        hi TSPunctBracket guifg=#ABB2BF
-        hi @constructor.lua guifg=#ABB2BF
-        ]])
-      end,
-      detach = function()
-      end
-    },
-  }
+        end
+      end, 100)
+      
+      -- highlights
+      vim.cmd([[
+      hi TSPunctBracket guifg=#ABB2BF
+      hi @constructor.lua guifg=#ABB2BF
+      ]])
+    end
+  })
+  -- treesitter.define_modules {
+  --   fold = {
+  --     attach = function(buf, lang)
+  --     end,
+  --     detach = function(buf)
+  --       -- recover settings
+  --       vim.wo.foldmethod = vim.go.foldmethod
+  --       vim.wo.foldexpr = vim.go.foldexpr
+  --     end,
+  --     is_supported = function(lang)
+  --       return true
+  --     end,
+  --     enable = true
+  --   },
+  --   attach_module = {
+  --     enable = true,
+  --     attach = function(buf)
+  --     end,
+  --     detach = function()
+  --     end
+  --   },
+  -- }
 end
 
 local function enable_fold_text_cache()
@@ -329,67 +336,77 @@ local function enable_fold_text_cache()
 end
 
 M.setup = function()
-  require('nvim-treesitter.configs').setup {
-    ensure_installed = ts_filetypes,
-    highlight = {
-      enable = true,
-    },
-    incremental_selection = {
-      enable = false,
-    },
-    indent = {
-      enable = false
-    },
-    textobjects = {
-      select = {
-        enable = true,
-        -- Automatically jump forward to textobj, similar to targets.vim
-        lookahead = false,
-        keymaps = {
-          -- You can use the capture groups defined in textobjects.scm
-          ["af"] = "@function.outer",
-          ["if"] = "@function.inner",
-          ["ac"] = "@comment.outer",
-          ["ic"] = "@comment.outer",
-          -- You can also use captures from other query groups like `locals.scm`
-          -- ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" },
-        },
-        include_surrounding_whitespace = false,
-      },
-    },
-  }
+  require("nvim-treesitter").install(ts_filetypes)
   
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern = ts_filetypes,
+    callback = function()
+      vim.treesitter.start() 
+      vim.cmd('doautocmd User TreesitterAttach')
+    end,
+  })
+
+  -- require('nvim-treesitter.configs').setup {
+  --   ensure_installed = ts_filetypes,
+  --   highlight = {
+  --     enable = true,
+  --   },
+  --   incremental_selection = {
+  --     enable = false,
+  --   },
+  --   indent = {
+  --     enable = false
+  --   },
+  --   textobjects = {
+  --     select = {
+  --       enable = true,
+  --       -- Automatically jump forward to textobj, similar to targets.vim
+  --       lookahead = false,
+  --       keymaps = {
+  --         -- You can use the capture groups defined in textobjects.scm
+  --         ["af"] = "@function.outer",
+  --         ["if"] = "@function.inner",
+  --         ["ac"] = "@comment.outer",
+  --         ["ic"] = "@comment.outer",
+  --         -- You can also use captures from other query groups like `locals.scm`
+  --         -- ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" },
+  --       },
+  --       include_surrounding_whitespace = false,
+  --     },
+  --   },
+  -- }
+  --
   enable_treesitter_fold()
   enable_fold_text_cache()
-  -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(_G.__custom_foldtext)
-  
-  treesitter.define_modules {
-    attach_module = {
-      enable = true,
-      attach = function(bufnr)
-        -- highlights
-        vim.cmd([[
-        hi TSPunctBracket guifg=#ABB2BF
-        hi @constructor.lua guifg=#ABB2BF
-        ]])
-      end,
-      detach = function()
-        -- vim.cmd([[
-        -- silent! xunmap <buffer> v
-        -- silent! xunmap <buffer> V
-        -- ]])
-      end
-    },
-  }
-  
-  -- lazyload workaround
-  -- 第一次打开文件时触发
-  if vim.tbl_contains(ts_filetypes, vim.bo.filetype) then
-    vim.cmd[[
-    TSEnable attach_module
-    TSEnable fold
-    ]]
-  end
+  -- -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(_G.__custom_foldtext)
+  --
+  -- treesitter.define_modules {
+  --   attach_module = {
+  --     enable = true,
+  --     attach = function(bufnr)
+  --       -- highlights
+  --       vim.cmd([[
+  --       hi TSPunctBracket guifg=#ABB2BF
+  --       hi @constructor.lua guifg=#ABB2BF
+  --       ]])
+  --     end,
+  --     detach = function()
+  --       -- vim.cmd([[
+  --       -- silent! xunmap <buffer> v
+  --       -- silent! xunmap <buffer> V
+  --       -- ]])
+  --     end
+  --   },
+  -- }
+  --
+  -- -- lazyload workaround
+  -- -- 第一次打开文件时触发
+  -- if vim.tbl_contains(ts_filetypes, vim.bo.filetype) then
+  --   vim.cmd[[
+  --   TSEnable attach_module
+  --   TSEnable fold
+  --   ]]
+  -- end
 end
 
 return M

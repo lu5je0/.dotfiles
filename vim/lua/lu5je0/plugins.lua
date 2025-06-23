@@ -82,10 +82,8 @@ local plugins = {
       config = function()
         require('lu5je0.ext.treesiter').setup()
       end,
-      dependencies = {
-        'nvim-treesitter/nvim-treesitter-textobjects'
-      },
-      event = 'VeryLazy'
+      branch = 'main',
+      -- event = 'VeryLazy'
     },
     -- {
     --   "ThePrimeagen/refactoring.nvim",
