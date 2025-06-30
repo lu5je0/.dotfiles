@@ -297,6 +297,13 @@ function M.copy_absolute_path()
 end
 
 local function on_attach(bufnr)
+  -- vim.schedule(function()
+  --   local win = require('lu5je0.core.window').get_first_win_by_buf(bufnr)
+  --   if win then
+  --     vim.wo[win].foldcolumn = '1'
+  --   end
+  -- end)
+
   local set = vim.keymap.set
 
   local function opts(desc)
@@ -410,11 +417,6 @@ function M.setup()
   end, opts)
   
   vim.keymap.set('n', '<leader>fe', require('lu5je0.ext.nvimtree').locate_file, opts)
-
-  local view = require('nvim-tree.view')
-  view.View.winopts.signcolumn = 'no'
-  view.View.winopts.foldcolumn = '1'
-  view.View.winopts.statuscolumn = ''
 
   require('nvim-tree').setup {
     disable_netrw = true,

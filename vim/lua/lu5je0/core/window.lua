@@ -1,5 +1,24 @@
 local M = {}
 
+function M.get_first_win_by_buf(buf)
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_buf(win) == buf then
+      return win
+    end
+  end
+  return nil -- 没有找到
+end
+
+function M.get_all_win_by_buf(buf)
+  local win_ids = {}
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_buf(win) == buf then
+      table.insert(win_ids, win)
+    end
+  end
+  return win_ids
+end
+
 function M.effective_win_width()
   local win_width = vim.fn.winwidth(0)
 

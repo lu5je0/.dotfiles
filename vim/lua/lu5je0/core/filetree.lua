@@ -1,10 +1,10 @@
 local M = {}
 
-local view = require('nvim-tree.view')
+local api = require('nvim-tree.api')
 local keys_helper = require('lu5je0.core.keys')
 
 function M.open_path(path, opts)
-  if not view.is_visible() then
+  if not api.tree.is_visible() then
     vim.cmd('NvimTreeOpen')
     keys_helper.feedkey('<c-w>p')
   end
