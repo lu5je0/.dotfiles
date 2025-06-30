@@ -10,7 +10,7 @@ function M.format()
 end
 
 function M.path_copy()
-  local path = require('jsonpath').get()
+  local path = require('lu5je0.misc.jsonpath').get()
   
   print(path)
   vim.fn.setreg('*', path)
@@ -22,7 +22,7 @@ function M.jq(args)
 end
 
 function M.extract()
-  vim.cmd(string.format(':%%!jq \'%s\'', require('jsonpath').get()))
+  vim.cmd(string.format(':%%!jq \'%s\'', require('lu5je0.misc.jsonpath').get()))
 end
 
 local function process_json_keys()

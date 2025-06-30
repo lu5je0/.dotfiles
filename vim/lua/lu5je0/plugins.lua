@@ -105,10 +105,6 @@ local plugins = {
       },
       event = 'LspAttach'
     },
-    {
-      'phelipetls/jsonpath.nvim',
-      ft = { 'json', 'jsonc' }
-    },
     -- {
     --   'stevearc/aerial.nvim',
     --   config = function()

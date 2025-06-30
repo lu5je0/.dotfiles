@@ -4,7 +4,7 @@ local gps_ft_white_list = { 'json', 'lua', 'java' }
 
 function M.path()
   if vim.bo.filetype == 'json' then
-    return require('jsonpath').get()
+    return require('lu5je0.misc.jsonpath').get()
   else
     return require('nvim-navic').get_location({
       depth_limit_indicator = "…"
