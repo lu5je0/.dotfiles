@@ -707,7 +707,7 @@ local plugins = {
     config = function()
       require('nvim-autopairs').setup()
     end,
-    cmd = 'InsertEnter'
+    event = 'InsertEnter'
   },
   {
     'NvChad/nvim-colorizer.lua',
