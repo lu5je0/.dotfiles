@@ -39,7 +39,11 @@ local async_get_git_blame = function(refresh)
   if not vim.b[buf].git_blame then
     return
   end
-  local async = require('gitsigns.async').async
+  local async = function(func)
+    return function(...)
+      return require('gitsigns.async').run(func, ...)
+    end
+  end
   async(function()
     -- 1. 获取当前 buffer 的 gitsigns 缓存对象
     local cache = require('gitsigns.cache').cache
