@@ -108,7 +108,7 @@ M.modify_timestamp = function()
 
     if replacements > 0 then
       vim.api.nvim_set_current_line(new_line)
-      vim.notify(string.format("，时间戳已更新为: %s", final_ts_str), vim.log.levels.INFO)
+      vim.print(string.format("，时间戳已更新为: %s", final_ts_str))
     else
       vim.notify("替换失败！未在当前行找到原始时间戳。", vim.log.levels.ERROR)
     end
