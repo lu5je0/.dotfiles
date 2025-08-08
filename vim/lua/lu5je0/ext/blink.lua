@@ -88,7 +88,19 @@ M.setup = function()
       preset = 'luasnip'
     },
     cmdline = {
-      enabled = false
+      keymap = {
+        preset = 'inherit',
+        ['<cr>'] = { 'fallback' }
+      },
+      sources = function()
+        local type = vim.fn.getcmdtype()
+        -- Search forward and backward
+        if type == '/' or type == '?' then return { } end
+        -- Commands
+        if type == ':' or type == '@' then return { 'cmdline'} end
+        return {}
+      end,
+      completion = { menu = { auto_show = true } },
     }
   }
 end

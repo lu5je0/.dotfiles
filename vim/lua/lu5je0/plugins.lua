@@ -437,7 +437,7 @@ local plugins = {
     end,
 
     -- opts_extend = { "sources.default" },
-    event = 'InsertEnter',
+    event = { 'InsertEnter', 'CmdlineEnter' },
   },
 
   {
