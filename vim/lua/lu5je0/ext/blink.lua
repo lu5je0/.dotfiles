@@ -85,13 +85,6 @@ M.setup = function()
       providers = {
         lsp = { fallbacks = {} },
         buffer = { score_offset = -5 },
-        cmdline = {
-          min_keyword_length = function(ctx)
-            -- when typing a command, only show when the keyword is 3 characters or longer
-            if ctx.mode == 'cmdline' and string.find(ctx.line, ' ') == nil then return 3 end
-            return 0
-          end
-        }
       },
       default = { 'lsp', 'snippets', 'path', 'buffer' },
     },
@@ -103,7 +96,7 @@ M.setup = function()
       keymap = {
         preset = 'inherit',
         ['<cr>'] = { 'fallback' },
-        -- ['<tab>'] = { 'show_and_insert', 'select_next' }
+        ['<tab>'] = { 'show_and_insert', 'select_next'}
       },
       sources = function()
         local type = vim.fn.getcmdtype()
@@ -113,7 +106,7 @@ M.setup = function()
         if type == ':' or type == '@' then return { 'cmdline'} end
         return {}
       end,
-      completion = { menu = { auto_show = true } },
+      completion = { menu = { auto_show = false } },
     }
   }
 end
