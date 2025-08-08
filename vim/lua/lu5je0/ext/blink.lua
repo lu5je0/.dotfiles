@@ -66,10 +66,15 @@ M.setup = function()
               end,
             },
           },
-          columns = {
-            { "kind_icon",   "label", "label_description", gap = 1 },
-            { "source_name", gap = 1 }
-          },
+          columns = function(ctx)
+            if ctx.mode == 'cmdline' then
+              return { { "label" } }
+            end
+            return {
+              { "kind_icon",   "label", "label_description", gap = 1 },
+              { "source_name", gap = 1 }
+            }
+          end,
         }
       }
     },
@@ -80,6 +85,13 @@ M.setup = function()
       providers = {
         lsp = { fallbacks = {} },
         buffer = { score_offset = -5 },
+        cmdline = {
+          min_keyword_length = function(ctx)
+            -- when typing a command, only show when the keyword is 3 characters or longer
+            if ctx.mode == 'cmdline' and string.find(ctx.line, ' ') == nil then return 3 end
+            return 0
+          end
+        }
       },
       default = { 'lsp', 'snippets', 'path', 'buffer' },
     },
@@ -90,7 +102,8 @@ M.setup = function()
     cmdline = {
       keymap = {
         preset = 'inherit',
-        ['<cr>'] = { 'fallback' }
+        ['<cr>'] = { 'fallback' },
+        -- ['<tab>'] = { 'show_and_insert', 'select_next' }
       },
       sources = function()
         local type = vim.fn.getcmdtype()
