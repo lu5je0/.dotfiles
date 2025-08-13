@@ -2,11 +2,6 @@ local M = {}
 
 local luasnip = require('luasnip')
 
--- luasnip.config.set_config({
---   region_check_events = 'InsertEnter',
---   delete_check_events = 'InsertLeave'
--- })
-
 local keys = require('lu5je0.core.keys')
 
 function M.jump_next_able()
@@ -38,8 +33,7 @@ function M.setup()
   local types = require("luasnip.util.types")
   vim.cmd[[hi SnippetPassive guibg=#3b3e48 gui=underline]]
   luasnip.setup({
-    delete_check_events = { 'InsertEnter' }, -- https://github.com/L3MON4D3/LuaSnip/issues/297
-    region_check_events = { 'InsertEnter' },
+    region_check_events = { 'InsertEnter', 'TextChanged', 'CursorMoved' },
     ext_opts = {
       [types.insertNode] = {
         -- visited = {
