@@ -264,6 +264,24 @@ fzf-search-widget() {
 zle -N fzf-search-widget
 bindkey '^F' fzf-search-widget
 
+fzf-zoxide-widget() {
+  local file
+  file=$(zoxide query --interactive)
+
+  if [[ -n "$file" ]]; then
+    # 转义特殊字符并插入到当前光标位置
+    local escaped_file
+    escaped_file=$(printf '%q' "$file")
+    # 将转义后的文件名插入到光标所在位置
+    BUFFER="${BUFFER:0:$CURSOR}${escaped_file}${BUFFER:$CURSOR}"
+    # 移动光标到插入内容之后
+    CURSOR=$(( CURSOR + ${#escaped_file} ))
+  fi
+  zle reset-prompt
+}
+zle -N fzf-zoxide-widget
+bindkey '^G' fzf-zoxide-widget
+
 bindkey '^P' history-substring-search-up
 bindkey '^N' history-substring-search-down
 
