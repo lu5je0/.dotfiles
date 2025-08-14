@@ -368,14 +368,26 @@ end
 --   end
 -- )
 
+local ime_cmd = {
+  win = {
+    en = { "D:\\bin\\toDisableIME.exe" },
+    zh = { "D:\\bin\\toEnableIME.exe" },
+  },
+  mac = {
+    en = { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" },
+    zh = { "/Users/lu5je0/.local/bin/im-select", "com.sogou.inputmethod.sogou.pinyin" },
+  }
+}
 wezterm.on('user-var-changed', function(window, pane, name, value)
-  wezterm.log_info('var', name, value)
   if name == 'ime' then
-    if value == 'en' then
-      if is_mac then
-        wezterm.run_child_process { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" }
-      end
+    local os
+    if is_mac then
+      os = 'mac'
+    elseif is_win then
+      os = 'win'
     end
+    wezterm.log_info(ime_cmd[os][value])
+    wezterm.run_child_process(ime_cmd[os][value])
   end
 end)
 
