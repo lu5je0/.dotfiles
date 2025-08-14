@@ -101,6 +101,8 @@ lazy_load({
       --     keep = false,
       --   }
       -- })
+    else
+      require('lu5je0.misc.im.ssh.im').setup()
     end
   end,
   event = { 'InsertEnter', 'CursorHold' },

@@ -368,4 +368,15 @@ end
 --   end
 -- )
 
+wezterm.on('user-var-changed', function(window, pane, name, value)
+  wezterm.log_info('var', name, value)
+  if name == 'ime' then
+    if value == 'en' then
+      if is_mac then
+        wezterm.run_child_process { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" }
+      end
+    end
+  end
+end)
+
 return config
