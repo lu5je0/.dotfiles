@@ -91,6 +91,8 @@ lazy_load({
         require('lu5je0.misc.im.win.im').setup()
       elseif vim.fn.has('mac') == 1 then
         require('lu5je0.misc.im.mac.im').setup()
+      else
+        require('lu5je0.misc.im.ssh.im').setup()
       end
       
       -- require('lu5je0.misc.im.im_keeper').setup({
@@ -102,7 +104,6 @@ lazy_load({
       --   }
       -- })
     else
-      require('lu5je0.misc.im.ssh.im').setup()
     end
   end,
   event = { 'InsertEnter', 'CursorHold' },
