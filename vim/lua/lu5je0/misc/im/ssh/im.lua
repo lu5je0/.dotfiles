@@ -14,9 +14,7 @@ local function write(osc)
 end
 
 M.disable_ime = rate_limiter:wrap(function()
-  require('lu5je0.lang.timer').begin_timer()
   write(string.format("\27]1337;SetUserVar=%s=%s\7", "ime", require('lu5je0.misc.base64').encode("en")))
-  require('lu5je0.lang.timer').end_timer()
 end)
 
 -- M.enable_ime = rate_limiter:wrap(function()
