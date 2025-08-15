@@ -5,17 +5,11 @@ if [[ $UNAME_INFO =~ "microsoft" ]]; then
   function enable_ime_cmd {
     "/mnt/d/bin/toDisableIME.exe"
   }
-elif [[ $UNAME_INFO =~ "Darwin" ]]; then
-  # if [[ ! -f /tmp/im-fifo ]]; then
-  #     mkfifo /tmp/im-fifo
-  # fi
-  function disable_ime_cmd {
-    # echo 1 > /tmp/im-fifo
-    # nohup luajit /Users/lu5je0/1.lua > /dev/null 2>&1
-    # /usr/local/bin/im-select 'com.apple.keylayout.ABC'
-  }
+# elif [[ $UNAME_INFO =~ "Darwin" ]]; then
 else
-  return 1
+  function disable_ime_cmd {
+    printf "\033]1337;SetUserVar=ime=ZW4=\007"
+  }
 fi
 
 vi-escape-im() {
