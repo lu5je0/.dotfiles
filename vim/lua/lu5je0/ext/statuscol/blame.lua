@@ -5,11 +5,11 @@ local setup = false
 
 local delcare_color = function()
   vim.cmd [[
-  hi GitBlame1 guibg=#474c44 guifg=#c5cdd9
-  hi GitBlame2 guibg=#464842 guifg=#c5cdd9
-  hi GitBlame3 guibg=#483d3f guifg=#c5cdd9
-  hi GitBlame4 guibg=#493a3a guifg=#c5cdd9
-  hi GitBlame5 guibg=#493a3a guifg=#c5cdd9
+  hi GitBlame1 guibg=#464c43 guifg=#c5cdd9
+  hi GitBlame2 guibg=#444342 guifg=#c5cdd9
+  hi GitBlame3 guibg=#41444a guifg=#c5cdd9
+  hi GitBlame4 guibg=#484248 guifg=#c5cdd9
+  hi GitBlame5 guibg=#4c393a guifg=#c5cdd9
   ]]
 end
 
