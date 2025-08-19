@@ -386,7 +386,6 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
     elseif is_win then
       os = 'win'
     end
-    wezterm.log_info(ime_cmd[os][value])
     wezterm.run_child_process(ime_cmd[os][value])
   end
 end)

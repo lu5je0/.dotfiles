@@ -1,21 +1,8 @@
-diff --git a/lua/nvim-tree/explorer/view.lua b/lua/nvim-tree/explorer/view.lua
-index 787db03..1f5a954 100644
---- a/lua/nvim-tree/explorer/view.lua
-+++ b/lua/nvim-tree/explorer/view.lua
-@@ -66,7 +66,7 @@ function View:new(args)
-     spell          = false,
-     signcolumn     = self.explorer.opts.view.signcolumn,
-     foldmethod     = "manual",
--    foldcolumn     = "0",
-+    foldcolumn     = "1",
-     cursorcolumn   = false,
-     cursorline     = self.explorer.opts.view.cursorline,
-     cursorlineopt  = self.explorer.opts.view.cursorlineopt,
 diff --git a/lua/nvim-tree/renderer/builder.lua b/lua/nvim-tree/renderer/builder.lua
-index d2727f3..fdc3887 100644
+index 819660e..b8b9392 100644
 --- a/lua/nvim-tree/renderer/builder.lua
 +++ b/lua/nvim-tree/renderer/builder.lua
-@@ -309,7 +309,7 @@ function Builder:add_hidden_count_string(node, idx, num_children)
+@@ -310,7 +310,7 @@ function Builder:add_hidden_count_string(node, idx, num_children)
    local hidden_count_string = self.hidden_display(node.hidden_stats)
    if hidden_count_string and hidden_count_string ~= "" then
      local indent_markers = pad.get_indent_markers(self.depth, idx or 0, num_children or 0, node, self.markers, 1)
@@ -24,3 +11,16 @@ index d2727f3..fdc3887 100644
  
      local indent_padding = string.rep(" ", indent_width)
      local indent_string = indent_padding .. indent_markers.str
+diff --git a/lua/nvim-tree/view.lua b/lua/nvim-tree/view.lua
+index 90f2b03..e9679d8 100644
+--- a/lua/nvim-tree/view.lua
++++ b/lua/nvim-tree/view.lua
+@@ -33,7 +33,7 @@ M.View = {
+     spell          = false,
+     signcolumn     = "yes",
+     foldmethod     = "manual",
+-    foldcolumn     = "0",
++    foldcolumn     = "1",
+     cursorcolumn   = false,
+     cursorline     = true,
+     cursorlineopt  = "both",
