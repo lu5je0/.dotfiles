@@ -95,6 +95,8 @@ function M.setup()
     direction = env_keeper.terminal_direction,
     close_on_exit = true, -- close the terminal window when the process exits
     shell = vim.o.shell, -- change the default shell
+    -- 设置为true之后，terminal输入之后字符会有延迟
+    auto_scroll = false,
     -- winbar = {
     --   enabled = true,
     --   name_formatter = function(term) --  term: Terminal
