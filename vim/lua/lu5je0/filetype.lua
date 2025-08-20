@@ -17,7 +17,7 @@ vim.filetype.add {
     ['aria2.conf'] = 'dosini',
     ['requirements.txt'] = function(path, bufnr)
       vim.schedule(function()
-        vim.bo[bufnr].commentstring='#%s'
+        vim.bo[bufnr].commentstring = '#%s'
       end)
       return 'text'
     end
