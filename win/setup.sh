@@ -2,9 +2,9 @@ WIN_HOME=/mnt/c/Users/lu5je0
 
 # wezterm
 /mnt/c/Windows/System32/cmd.exe \
-  /c sudo mklink /d \
-  `wslpath -w $WIN_HOME/.wezterm.lua` \
-  `wslpath -w $WIN_HOME/.dotfiles/wezterm/wezterm.lua`
+  /c sudo mklink /J \
+  `wslpath -w $WIN_HOME/.config/wezterm` \
+  `wslpath -w $WIN_HOME/.dotfiles/wezterm`
 
 # gitconfig
 /mnt/c/Windows/System32/cmd.exe \
