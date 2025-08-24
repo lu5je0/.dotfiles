@@ -88,14 +88,6 @@ lazy_load({
   config = function()
     if vim.fn.has('gui') == 0 then
       require('lu5je0.misc.im.im').setup()
-      -- require('lu5je0.misc.im.im_keeper').setup({
-      --   mac = {
-      --     keep = true,
-      --   },
-      --   win = {
-      --     keep = false,
-      --   }
-      -- })
     else
     end
   end,

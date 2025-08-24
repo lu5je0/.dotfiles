@@ -8,7 +8,7 @@ local STATUS = {
   last_ime = ABC_IM_SOURCE_CODE
 }
 
-local function get_im_switcher()
+function M.get_im_switcher()
   if M.im_switcher ~= nil then
     return M.im_switcher
   end
@@ -57,8 +57,8 @@ end
 
 M.insert = function()
   if STATUS.last_ime ~= ABC_IM_SOURCE_CODE then
-    get_im_switcher().switch_to_ime(M.last_ime)
-    -- get_im_switcher().switch_to_ime_macism_executed_file(M.last_ime)
+    M.get_im_switcher().switch_to_ime(STATUS.last_ime)
+    -- M.get_im_switcher().switch_to_ime_macism_executed_file(M.last_ime)
   end
 end
 
@@ -68,7 +68,11 @@ M.normal = function()
   if active_ime == ABC_IM_SOURCE_CODE then
     return
   end
-  get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
+  M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
+end
+
+M.setup = function()
+  return M
 end
 
 return M
