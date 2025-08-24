@@ -87,14 +87,7 @@ local lazy_load = M.lazy_load
 lazy_load({
   config = function()
     if vim.fn.has('gui') == 0 then
-      if vim.fn.has('wsl') == 1 then
-        require('lu5je0.misc.im.win.im').setup()
-      elseif vim.fn.has('mac') == 1 then
-        require('lu5je0.misc.im.mac.im').setup()
-      else
-        require('lu5je0.misc.im.ssh.im').setup()
-      end
-      
+      require('lu5je0.misc.im.im').setup()
       -- require('lu5je0.misc.im.im_keeper').setup({
       --   mac = {
       --     keep = true,

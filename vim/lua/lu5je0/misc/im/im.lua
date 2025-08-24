@@ -1,20 +1,5 @@
 local M = {}
 
-local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
-local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
-
-local ime_control = require('lu5je0.misc.im.win.impl.imev2').setup()
-
-M.disable_ime = rate_limiter:wrap(function()
-  ime_control.normal()
-end)
-
-M.enable_ime = rate_limiter:wrap(function()
-  if M.save_last_ime then
-    ime_control.insert()
-  end
-end)
-
 function M.toggle_save_last_ime()
   local keeper = require('lu5je0.misc.env-keeper')
   local v = keeper.get('save_last_ime', true)
@@ -28,6 +13,7 @@ function M.toggle_save_last_ime()
 end
 
 local function create_autocmd()
+  local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
   vim.api.nvim_create_autocmd('InsertLeave', {
     group = group,
     pattern = { '*' },
@@ -54,9 +40,30 @@ local function create_autocmd()
 end
 
 function M.setup()
+  local ime_control
+  if vim.fn.has('wsl') == 1 then
+    ime_control = require('lu5je0.misc.im.win.ime-control-v2').setup()
+  elseif vim.fn.has('mac') == 1 then
+    ime_control = require('lu5je0.misc.im.mac.ime-control').setup()
+  else
+    ime_control = require('lu5je0.misc.im.ssh.ime-control').setup()
+  end
+  
+  local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
+
+  M.disable_ime = rate_limiter:wrap(function()
+    ime_control.normal()
+  end)
+
+  M.enable_ime = rate_limiter:wrap(function()
+    if M.save_last_ime then
+      ime_control.insert()
+    end
+  end)
+
   M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
-  create_autocmd()
   vim.keymap.set('n', '<leader>vi', M.toggle_save_last_ime)
+  create_autocmd()
 end
 
 return M
