@@ -101,6 +101,22 @@ vim.schedule(function()
     require('lu5je0.ext.language-detect').delect_and_set_filetype()
   end)
   
+  set_map('n', 'zA', function()
+    local line = vim.api.nvim_win_get_cursor(0)[1]
+    local end_line = vim.fn.foldclosedend(line)
+    if end_line > 0 then
+      require('lu5je0.core.keys').feedkey('zo' .. end_line .. 'ggA')
+    end
+  end)
+  
+  set_map('n', 'zI', function()
+    local line = vim.api.nvim_win_get_cursor(0)[1]
+    local end_line = vim.fn.foldclosed(line)
+    if end_line > 0 then
+      require('lu5je0.core.keys').feedkey('zo' .. end_line .. 'ggI')
+    end
+  end)
+  
   -- text
   set_map('n', '<leader>xx', ":%!", {
     nowait = true
@@ -169,10 +185,6 @@ vim.schedule(function()
   imap <M-k> <up>
   imap <M-h> <left>
   imap <M-l> <right>
-  
-  " fold
-  nmap zA za]zA
-  nmap zI za]zI
   
   omap iq i"
   omap aq a"
