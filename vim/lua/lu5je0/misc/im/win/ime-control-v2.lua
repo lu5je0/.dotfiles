@@ -1,8 +1,11 @@
 local M = {}
 
 local STD_PATH = vim.fn.stdpath('config')
+
+-- 状态管理
 local state = {
-  job_id = nil,
+  process_handle = nil, -- 进程句柄
+  stdin_pipe = nil,     -- 标准输入管道
   exe_path = STD_PATH .. '/lib/ime_control.exe',
   is_running = false,
 }
@@ -10,19 +13,26 @@ local state = {
 --- 向后台进程发送命令的内部函数
 -- @param cmd (string) 要发送的命令 (例如 "normal" 或 "insert")
 local function send_command(cmd)
-  if not state.job_id or not state.is_running then
-    -- 如果进程未运行，静默失败，避免在快速切换时弹出恼人的错误信息
+  -- 检查进程和 stdin 管道是否都准备就绪
+  if not state.is_running or not state.stdin_pipe or state.stdin_pipe:is_closing() then
+    -- 如果进程未运行或管道已关闭，静默失败
     return
   end
-  -- 通过 Neovim 的 channel 发送命令到子进程的 stdin
-  -- 注意：必须在命令后加上换行符 '\n' 来模拟回车
-  vim.fn.chansend(state.job_id, cmd .. "\n")
+
+  -- 通过 luv 的 pipe:write() 方法向子进程的 stdin 写入数据
+  -- 注意：同样需要在命令后加上换行符 '\n'
+  state.stdin_pipe:write(cmd .. "\n", function(err)
+    if err then
+      -- 写入失败时可以选择性地记录日志，但通常可以忽略
+      -- vim.notify("向 IME 进程发送命令失败: " .. err, vim.log.levels.WARN)
+    end
+  end)
 end
 
 --- 启动后台进程
-local function start_job()
+local function start_process()
   -- 如果已在运行，则无需操作
-  if state.is_running and state.job_id then
+  if state.is_running and state.process_handle then
     return
   end
 
@@ -32,30 +42,45 @@ local function start_job()
     return
   end
 
-  -- 使用 jobstart 启动 C++ 程序，并使其进入交互模式 (-i)
-  local job_id = vim.fn.jobstart({ state.exe_path, "-i" }, {
-    -- 我们不需要处理 stdout/stderr，因为程序被设计为静默运行
-    -- 只在进程退出时打印一个警告，以防意外关闭
-    on_exit = function(_, code)
-      -- 如果 job_id 仍然存在 (表示不是我们主动停止的)，说明是意外退出
-      if state.job_id then
-        vim.notify("IME 控制进程意外退出，退出码: " .. tostring(code), vim.log.levels.WARN, { title = "IME Control" })
-        state.is_running = false
-        state.job_id = nil
-      end
-    end,
-    pty = false,
-  })
+  -- 为子进程创建一个 stdin 管道
+  local stdin = vim.uv.new_pipe(false) -- `false` 表示这不是一个 IPC 管道
 
-  if job_id and job_id > 0 then
-    state.job_id = job_id
+  -- 使用 vim.uv.spawn 启动 C++ 程序
+  local handle, pid = vim.uv.spawn(state.exe_path, {
+    args = { "-i" }, -- 传递交互模式参数
+    stdio = { stdin, nil, nil }, -- 将 stdin 重定向到我们创建的管道，stdout 和 stderr 忽略
+  }, function(code, signal)
+    -- on_exit 回调函数
+    -- 清理资源
+    if not stdin:is_closing() then
+      stdin:close()
+    end
+
+    -- 如果 handle 仍然存在 (表示不是我们主动停止的)，说明是意外退出
+    if state.process_handle then
+      vim.notify("IME 控制进程意外退出，退出码: " .. tostring(code) .. ", 信号: " .. tostring(signal), vim.log.levels.WARN, { title = "IME Control" })
+    end
+
+    -- 重置状态
+    state.is_running = false
+    state.process_handle = nil
+    state.stdin_pipe = nil
+  end)
+
+  if handle and pid then
+    -- 启动成功
+    state.process_handle = handle
+    state.stdin_pipe = stdin
     state.is_running = true
   else
+    -- 启动失败
     vim.notify("启动 IME 控制进程失败", vim.log.levels.ERROR, { title = "IME Control" })
+    -- 确保清理失败时创建的管道
+    if not stdin:is_closing() then
+      stdin:close()
+    end
   end
 end
-
---- 公开的API ---
 
 -- 切换到 Normal 模式 (切换为英文并记住之前状态)
 function M.normal()
@@ -73,7 +98,7 @@ function M.setup(opts)
   opts = opts or {}
 
   -- 启动后台服务
-  start_job()
+  start_process()
   return M
 end
 
