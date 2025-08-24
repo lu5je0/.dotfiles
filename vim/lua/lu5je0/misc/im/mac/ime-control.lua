@@ -20,11 +20,6 @@ function M.get_im_switcher()
     void Xkb_Switch_setXkbLayout(const char *s);
     ]])
 
-    -- local macism = ffi.load(std_path .. '/lib/libmacism.dylib')
-    -- ffi.cdef([[
-    -- void switch_ime(const char *ime);
-    -- ]])
-
     return {
       switch_to_ime = function(im_code)
         if im_code == nil then
@@ -32,14 +27,6 @@ function M.get_im_switcher()
         end
         ---@diagnostic disable-next-line: undefined-field
         pcall(xkb_switch_lib.Xkb_Switch_setXkbLayout, im_code)
-      end,
-      -- switch_to_ime_macism_dylib = function(im_code)
-      --   macism.switch_ime(im_code)
-      -- end,
-      switch_to_ime_macism_executed_file = function(im_code)
-        vim.uv.new_thread(function(path, ime)
-          io.popen(('%s %s 3000 2>/dev/null'):format(path, ime)):close()
-        end, STD_PATH .. '/lib/macism', im_code)
       end,
       -- avg: 0.0035ms
       get_ime = function()
@@ -58,7 +45,6 @@ end
 M.insert = function()
   if STATUS.last_ime ~= ABC_IM_SOURCE_CODE then
     M.get_im_switcher().switch_to_ime(STATUS.last_ime)
-    -- M.get_im_switcher().switch_to_ime_macism_executed_file(M.last_ime)
   end
 end
 
