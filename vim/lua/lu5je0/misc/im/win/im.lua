@@ -3,34 +3,15 @@ local M = {}
 local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
 local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
 
--- 80ms左右
--- local STD_PATH = vim.fn.stdpath('config')
--- local DISABLE_IME = STD_PATH .. '/lib/toDisableIME.exe'
--- local ENABLE_IME = STD_PATH .. '/lib/toEnableIME.exe'
-
--- 这样比较快 40ms左右
-local DISABLE_IME = '/mnt/d/bin/toDisableIME.exe'
-local ENABLE_IME = '/mnt/d/bin/toEnableIME.exe'
+local ime_control = require('lu5je0.misc.im.win.impl.imev2').setup()
 
 M.disable_ime = rate_limiter:wrap(function()
-  vim.uv.new_thread(function(path)
-    ---@diagnostic disable-next-line: missing-fields, missing-parameter
-    local handle = vim.uv.spawn(path, {
-      stdio = { nil, nil, nil }
-    })
-    if handle and not handle:is_closing() then handle:close() end
-  end, DISABLE_IME)
+  ime_control.normal()
 end)
 
 M.enable_ime = rate_limiter:wrap(function()
   if M.save_last_ime then
-    vim.uv.new_thread(function(path)
-      ---@diagnostic disable-next-line: missing-fields, missing-parameter
-      local handle = vim.uv.spawn(path, {
-        stdio = { nil, nil, nil }
-      })
-      if handle and not handle:is_closing() then handle:close() end
-    end, ENABLE_IME)
+    ime_control.insert()
   end
 end)
 
