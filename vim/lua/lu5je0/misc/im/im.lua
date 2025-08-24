@@ -1,3 +1,4 @@
+---@diagnostic disable: need-check-nil
 local M = {}
 
 function M.toggle_save_last_ime()
@@ -40,7 +41,7 @@ local function create_autocmd()
 end
 
 function M.setup()
-  local ime_control
+  local ime_control = nil
   if vim.fn.has('wsl') == 1 then
     ime_control = require('lu5je0.misc.im.win.ime-control-v2').setup()
   elseif vim.fn.has('mac') == 1 then
