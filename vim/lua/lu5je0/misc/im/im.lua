@@ -56,7 +56,7 @@ function M.setup()
   
   local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
   local timer = nil
-  -- timer = require('lu5je0.lang.timer')
+  timer = require('lu5je0.lang.timer')
 
   M.disable_ime = rate_limiter:wrap(function()
     if timer ~=nil then timer.begin_timer() end
