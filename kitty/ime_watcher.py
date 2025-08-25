@@ -17,6 +17,7 @@ def on_set_user_var(boss: Boss, window: Window, data: dict[str, Any]) -> None:
         if data['value'] == 'normal':
             proc.stdin.write('normal\n')
             proc.stdin.flush()
-        elif data['value'] == 'insert':
-            proc.stdin.write('insert\n')
-            proc.stdin.flush()
+        # 有bug，待排查
+        # elif data['value'] == 'insert':
+        #     proc.stdin.write('insert\n')
+        #     proc.stdin.flush()
