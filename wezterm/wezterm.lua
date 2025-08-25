@@ -37,6 +37,7 @@ local config = {
   color_scheme = "Gruvbox Dark (Gogh)",
   -- ./wezterm.exe ls-fonts --list-system
   font = font.text_font,
+  use_ime = true,
   window_frame = {
     -- The font used in the tab bar.
     -- Roboto Bold is the default; this font is bundled
@@ -370,12 +371,12 @@ end
 
 local ime_cmd = {
   win = {
-    en = { "D:\\bin\\toDisableIME.exe" },
-    zh = { "D:\\bin\\toEnableIME.exe" },
+    normal = { "D:\\bin\\toDisableIME.exe" },
+    insert = { "D:\\bin\\toEnableIME.exe" },
   },
   mac = {
-    en = { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" },
-    zh = { "/Users/lu5je0/.local/bin/im-select", "com.sogou.inputmethod.sogou.pinyin" },
+    normal = { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" },
+    -- insert = { "/Users/lu5je0/.local/bin/im-select", "com.sogou.inputmethod.sogou.pinyin" },
   }
 }
 wezterm.on('user-var-changed', function(window, pane, name, value)
@@ -386,7 +387,10 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
     elseif is_win then
       os = 'win'
     end
-    wezterm.run_child_process(ime_cmd[os][value])
+    local cmd = ime_cmd[os][value]
+    if cmd then
+      wezterm.run_child_process(cmd)
+    end
   end
 end)
 
