@@ -1,7 +1,7 @@
 from typing import Any
 
-from kitty.boss import Boss # type: ignore
-from kitty.window import Window # type: ignore
+from kitty.boss import Boss  # type: ignore
+from kitty.window import Window  # type: ignore
 import subprocess
 
 proc = subprocess.Popen(
@@ -11,11 +11,12 @@ proc = subprocess.Popen(
     text=True,
 )
 
+
 def on_set_user_var(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-    if data['key'] == 'ime':
-        print(data['value'])
-        if data['value'] == 'normal':
-            proc.stdin.write('normal\n')
+    if data["key"] == "ime":
+        print(data["value"])
+        if data["value"] == "normal":
+            proc.stdin.write("normal\n")
             proc.stdin.flush()
         # 有bug，待排查
         # elif data['value'] == 'insert':
