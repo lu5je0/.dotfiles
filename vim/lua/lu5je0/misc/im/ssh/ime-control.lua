@@ -11,10 +11,11 @@ local function write(osc)
 end
 
 M.insert = function()
+  write(string.format("\27]1337;SetUserVar=%s=%s\7", "ime", require('lu5je0.misc.base64').encode("insert")))
 end
 
 M.normal = function()
-  write(string.format("\27]1337;SetUserVar=%s=%s\7", "ime", require('lu5je0.misc.base64').encode("en")))
+  write(string.format("\27]1337;SetUserVar=%s=%s\7", "ime", require('lu5je0.misc.base64').encode("normal")))
 end
 
 M.setup = function()
