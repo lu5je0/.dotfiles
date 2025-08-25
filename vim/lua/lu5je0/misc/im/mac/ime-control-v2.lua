@@ -6,7 +6,7 @@ local STD_PATH = vim.fn.stdpath('config')
 local state = {
   process_handle = nil, -- 进程句柄
   stdin_pipe = nil,     -- 标准输入管道
-  exe_path = STD_PATH .. '/lib/ime_control.exe',
+  exe_path = STD_PATH .. '/lib/imeswitch',
   is_running = false,
 }
 

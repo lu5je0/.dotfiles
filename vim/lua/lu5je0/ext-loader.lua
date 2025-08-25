@@ -27,11 +27,11 @@ M.lazy_load = function(opts)
       end
     end
   end
-  
+
   if opts and opts.cmd then
     for _, cmd in ipairs(opts.cmd) do
       M.lazy_load_active_cmd_opts_map[cmd] = opts
-      
+
       vim.api.nvim_create_user_command(cmd, function(event)
         local command = {
           cmd = cmd,
@@ -46,9 +46,9 @@ M.lazy_load = function(opts)
           command.range = { event.line1, event.line2 }
         end
         vim.api.nvim_del_user_command(cmd)
-        
+
         load_ext(opts)
-        
+
         local info = vim.api.nvim_get_commands({})[cmd] or vim.api.nvim_buf_get_commands(0, {})[cmd]
         command.nargs = info.nargs
         if event.args and event.args ~= "" and info.nargs and info.nargs:find("[1?]") then
@@ -67,7 +67,7 @@ M.lazy_load = function(opts)
       })
     end
   end
-  
+
   if opts and opts.event then
     for _, event in ipairs(opts.event) do
       vim.api.nvim_create_autocmd(event, {
@@ -88,7 +88,6 @@ lazy_load({
   config = function()
     if vim.fn.has('gui') == 0 then
       require('lu5je0.misc.im.im').setup()
-    else
     end
   end,
   event = { 'InsertEnter', 'CursorHold' },
@@ -265,7 +264,7 @@ if vim.fn.has('nvim-0.12.0') == 1 then
     config = function()
       require('lu5je0.misc.redir')
     end,
-    cmd = { 'Redir'},
+    cmd = { 'Redir' },
     complete = true,
   })
 else
