@@ -13,14 +13,14 @@ local window_special_cases = {
           x = max.x,
           y = max.y,
           w = 987,
-          h = 825
+          h = 823
         }
       else
         return {
           x = max.x,
           y = max.y,
           w = 1021,
-          h = 843
+          h = 841
         }
       end
     end,
@@ -31,14 +31,14 @@ local window_special_cases = {
           x = max.x,
           y = max.y,
           w = 1105,
-          h = 863
+          h = 859
         }
       else
         return {
           x = max.x,
           y = max.y,
           w = max.w * (3 / 4) - 20,
-          h = max.h - 16
+          h = max.h - 15
         }
       end
     end

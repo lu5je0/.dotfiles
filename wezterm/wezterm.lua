@@ -28,7 +28,7 @@ local font = (function()
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
       { family = "PingFang SC",                    weight = "Medium",   stretch = "Normal", style = "Normal" }
     }
-    r.tab_bar_font_size = 11.5
+    r.tab_bar_font_size = 12
   end
   return r
 end)()
@@ -84,6 +84,12 @@ local config = {
       },
     },
   },
+  line_height = (function()
+    if is_mac then
+      return 0.95
+    end
+    return nil
+  end)(),
   font_size = (function()
     if is_mac then
       return 14.5
