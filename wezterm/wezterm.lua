@@ -55,12 +55,23 @@ local config = {
     -- the window is not focused
     inactive_titlebar_bg = '#3C3C3C',
   },
-  window_padding = {
-    left = 0,
-    right = 0,
-    top = 0,
-    bottom = 0,
-  },
+  window_padding = (function()
+    if is_mac then
+      return {
+        left = "1px",
+        right = "1px",
+        top = "1px",
+        bottom = "1px",
+      }
+    else
+      return {
+        left = 0,
+        right = 0,
+        top = 0,
+        bottom = 0,
+      }
+    end
+  end)(),
   max_fps = 240,
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
