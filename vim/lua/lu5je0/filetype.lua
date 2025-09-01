@@ -14,6 +14,7 @@ vim.filetype.add {
     ['.ohmyenv'] = 'bash',
     ['crontab'] = 'crontab',
     ['kitty.conf'] = 'config',
+    ['gitconfig'] = 'gitconfig',
     ['aria2.conf'] = 'dosini',
     ['requirements.txt'] = function(path, bufnr)
       vim.schedule(function()
