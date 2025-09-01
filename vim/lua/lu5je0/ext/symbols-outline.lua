@@ -12,15 +12,19 @@ local function get_outline_width()
   return nil
 end
 
+local function remember_width()
+  vim.api.nvim_create_autocmd('WinClosed', {
+    callback = function(args)
+      if vim.bo[args.buf].filetype ~= 'Outline' then
+        return
+      end
+      require('outline.config').o.outline_window.width = get_outline_width()
+    end
+  })
+end
+
 local function keymap()
   vim.keymap.set('n', '<leader>i', function()
-    if require('outline').is_open() then
-      local width = get_outline_width()
-      if width then
-        require('outline.config').o.outline_window.width = width
-      end
-    end
-    
     vim.cmd('Outline!')
   end)
   
@@ -37,6 +41,7 @@ function M.setup()
     }
   }
   keymap()
+  remember_width()
 end
 
 return M

@@ -282,6 +282,22 @@ local function copy_absolute_path()
   print('copied absolute path')
 end
 
+local function remember_width()
+  vim.api.nvim_create_autocmd('WinClosed', {
+    callback = function(args)
+      if vim.bo[args.buf].filetype ~= 'NvimTree' then
+        return
+      end
+      local winid = api.tree.winid()
+      if not winid then
+        return
+      end
+      local cur_width = vim.api.nvim_win_get_width(winid)
+      vim.cmd('NvimTreeResize ' .. cur_width)
+    end
+  })
+end
+
 local function on_attach(bufnr)
   -- vim.schedule(function()
   --   local win = require('lu5je0.core.window').get_first_win_by_buf(bufnr)
@@ -395,10 +411,6 @@ function M.setup()
   }
   
   vim.keymap.set('n', '<leader>e', function()
-    if api.tree.is_visible() then
-      local cur_width = vim.api.nvim_win_get_width(api.tree.winid())
-      vim.cmd('NvimTreeResize ' .. cur_width)
-    end
     api.tree.toggle(false, true)
   end, opts)
   
@@ -554,6 +566,8 @@ function M.setup()
   vim.defer_fn(function()
     M.is_loaded = true
   end, 30)
+  
+  remember_width()
 end
 
 return M
