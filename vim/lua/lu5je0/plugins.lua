@@ -295,8 +295,7 @@ local plugins = {
     config = function()
       require('lu5je0.ext.vim-translator')
     end,
-    keys = { { mode = 'x', '<leader>sa' }, { mode = 'x', '<leader>ss' }, { mode = 'n', '<leader>ss' },
-      { mode = 'n', '<leader>sa' } }
+    keys = { { mode = 'x', '<space>ss' }, { mode = 'n', '<space>ss' }, { mode = 'x', '<space>sr' }, { mode = 'n', '<space>sr' } }
   },
 
   {
@@ -642,7 +641,7 @@ local plugins = {
         require('lu5je0.ext.symbols-outline').setup()
       end,
       cmd = { 'Outline' },
-      keys = { { mode = { 'n' }, '<leader>fs' }, { mode = { 'n' }, '<leader>i' } }
+      keys = { { mode = { 'n' }, '<leader>fs' }, { mode = { 'n' }, '<leader>s' } }
     },
     {
       "dnlhc/glance.nvim",

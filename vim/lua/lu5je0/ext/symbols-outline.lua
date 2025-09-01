@@ -24,7 +24,7 @@ local function remember_width()
 end
 
 local function keymap()
-  vim.keymap.set('n', '<leader>i', function()
+  vim.keymap.set('n', '<leader>s', function()
     vim.cmd('Outline!')
   end)
   
