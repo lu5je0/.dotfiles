@@ -14,7 +14,7 @@ local function get_node_at_cursor()
 end
 
 -- 修复第一次定位问题
-function M.locate_file()
+local function locate_file()
   local cur_filepath = vim.fn.expand('%:p')
   if vim.fn.filereadable(cur_filepath) == 0 then
     return
@@ -67,12 +67,12 @@ function M.locate_file()
   end, 0)
 end
 
-function M.terminal_cd()
+local function terminal_cd()
   local path = vim.fn.fnamemodify(get_node_at_cursor().absolute_path, ':p:h')
   require('lu5je0.ext.terminal').send_to_terminal(('cd "%s"'):format(path))
 end
 
-function M.delete_node()
+local function delete_node()
   local bufs = require("lu5je0.core.buffers").valid_buffers()
   -- local bufs = vim.api.nvim_list_bufs()
 
@@ -127,7 +127,7 @@ function M.pwd_stack_push()
   M.pwd_stack:push(vim.fn.getcwd())
 end
 
-function M.create_dir()
+local function create_dir()
   local origin_input = vim.ui.input
   --- @diagnostic disable-next-line: duplicate-set-field
   vim.ui.input = function(input_opts, fn)
@@ -145,25 +145,25 @@ function M.create_dir()
   vim.ui.input = origin_input
 end
 
-function M.back()
+local function back()
   if M.pwd_stack:count() >= 2 then
     M.pwd_forward_stack:push(M.pwd_stack:pop())
     vim.cmd(':cd ' .. M.pwd_stack:pop())
   end
 end
 
-function M.forward()
+local function forward()
   if M.pwd_forward_stack:count() >= 1 then
     vim.cmd(':cd ' .. M.pwd_forward_stack:pop())
   end
 end
 
-function M.cd()
+local function cd()
   api.tree.change_root_to_node()
   vim.cmd('norm gg')
 end
 
-function M.preview(toggle)
+local function preview(toggle)
   local node = get_node_at_cursor()
   if node == nil then
     return
@@ -183,7 +183,7 @@ end
 
 
 local refresh_explorer_fn_backup = explorer.reload_explorer
-function M.open_node()
+local function open_node()
   ui.close_current_popup()
 
   local node = get_node_at_cursor()
@@ -211,7 +211,7 @@ function M.open_node()
   -- explorer.reload = refresh_fn_backup
 end
 
-function M.close_node()
+local function close_node()
   local node = get_node_at_cursor()
   api.node.navigate.parent_close()
   if vim.fn.getcwd() == '/' then
@@ -221,7 +221,7 @@ function M.close_node()
   end
 end
 
-function M.toggle_width()
+local function toggle_width()
   local cur_width = vim.api.nvim_win_get_width(0)
   local after_width = math.floor(vim.api.nvim_eval('&co') * (1 / 2))
 
@@ -235,20 +235,6 @@ function M.toggle_width()
   end
 end
 
-function M.increase_width(w)
-  vim.cmd('vertical resize +' .. w)
-
-  local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
-  vim.cmd('NvimTreeResize ' .. (width + w))
-end
-
-function M.reduce_width(w)
-  vim.cmd('vertical resize -' .. w)
-
-  local width = vim.api.nvim_win_get_width(vim.api.nvim_get_current_win())
-  vim.cmd('NvimTreeResize ' .. (width - w))
-end
-
 local function set_clipboard(text)
   vim.fn.setreg('"', text)
   if vim.fn.has('clipboard') then
@@ -256,7 +242,7 @@ local function set_clipboard(text)
   end
 end
 
-function M.copy_relative_path()
+local function copy_relative_path()
   local node = get_node_at_cursor()
   if not node then
     return
@@ -269,7 +255,7 @@ function M.copy_relative_path()
   api.fs.copy.relative_path()
 end
 
-function M.copy_node_name()
+local function copy_node_name()
   local node = get_node_at_cursor()
   if not node then
     return
@@ -279,7 +265,7 @@ function M.copy_node_name()
   print('copied node name')
 end
 
-function M.copy_absolute_path()
+local function copy_absolute_path()
   local node = get_node_at_cursor()
   if not node then
     return
@@ -316,40 +302,40 @@ local function on_attach(bufnr)
     set('n', k, function()
       keys_helper.feedkey(k, 'n')
       if ui.current_popup ~= nil then
-        vim.defer_fn(function() M.preview(false) end, 0)
+        vim.defer_fn(function() preview(false) end, 0)
       end
     end, opts(v))
   end
   set('n', '<esc>', function()
     ui.close_current_popup()
   end, opts("quit"))
-  set('n', '<space>', function() M.preview(true) end, opts('Open Preview'))
+  set('n', '<space>', function() preview(true) end, opts('Open Preview'))
 
   set('n', 'C', api.tree.toggle_git_clean_filter, opts('Toggle Git Clean'))
-  set('n', 'cd', M.cd, opts('cd'))
+  set('n', 'cd', cd, opts('cd'))
   set('n', 'B', api.tree.toggle_no_buffer_filter, opts('Toggle No Buffer'))
   -- set('n', 'x', api.marks.toggle, opts('Toggle Bookmark'))
-  set('n', 'mk', M.create_dir, opts('create_dir'))
-  set('n', 't', M.terminal_cd, opts('terminal cd'))
+  set('n', 'mk', create_dir, opts('create_dir'))
+  set('n', 't', terminal_cd, opts('terminal cd'))
   
-  set('n', 'x', M.toggle_width, opts('toggle nvimtree width'))
+  set('n', 'x', toggle_width, opts('toggle nvimtree width'))
   
   set('n', 'D', function()
-    M.delete_node()
+    delete_node()
     api.tree.reload()
   end, opts('delete'))
 
-  set('n', 'l', M.open_node, opts('Open Node'))
-  set('n', '<cr>', M.open_node, opts('Open Node'))
+  set('n', 'l', open_node, opts('Open Node'))
+  set('n', '<cr>', open_node, opts('Open Node'))
 
-  set('n', 'h', M.close_node, opts('Close Node'))
+  set('n', 'h', close_node, opts('Close Node'))
   set('n', '%', api.node.open.vertical, opts('Open: Vertical Split'))
   set('n', '=', api.node.open.horizontal, opts('Open: Horizontal Split'))
   set('n', 'S', api.tree.search_node, opts('Search'))
   set('n', '[f', api.node.navigate.sibling.first, opts('First Sibling'))
   set('n', ']f', api.node.navigate.sibling.last, opts('Last Sibling'))
-  set('n', '<', api.node.navigate.sibling.prev, opts('Previous Sibling'))
-  set('n', '>', api.node.navigate.sibling.next, opts('Next Sibling'))
+  -- set('n', '<', api.node.navigate.sibling.prev, opts('Previous Sibling'))
+  -- set('n', '>', api.node.navigate.sibling.next, opts('Next Sibling'))
   set('n', 'K', api.node.show_info_popup, opts('Info'))
   set('n', 'F', api.node.show_info_popup, opts('Info'))
   set('n', 'f', api.live_filter.start, opts('Filter'))
@@ -373,9 +359,9 @@ local function on_attach(bufnr)
   set('n', 'dd', api.fs.cut, opts('Cut'))
   set('n', 'yy', api.fs.copy.node, opts('Copy'))
   set('n', 'p', api.fs.paste, opts('Paste'))
-  set('n', 'yn', M.copy_node_name, opts('Copy Name'))
-  set('n', 'yP', M.copy_relative_path, opts('Copy Relative Path'))
-  set('n', 'yp', M.copy_absolute_path, opts('Copy Absolute Path'))
+  set('n', 'yn', copy_node_name, opts('Copy Name'))
+  set('n', 'yP', copy_relative_path, opts('Copy Relative Path'))
+  set('n', 'yp', copy_absolute_path, opts('Copy Absolute Path'))
 
   set('n', '[g', api.node.navigate.git.prev_recursive, opts('prev_git_item_reveal_to_file'))
   set('n', ']g', api.node.navigate.git.next_recursive, opts('next_git_item_reveal_to_file'))
@@ -384,8 +370,8 @@ local function on_attach(bufnr)
   -- set('n', 'o', api.node.run.system, opts('Run System'))
   set('n', 'q', api.tree.close, opts('Close'))
 
-  set('n', '<c-i>', M.forward, opts('forward'))
-  set('n', '<c-o>', M.back, opts('back'))
+  set('n', '<c-i>', forward, opts('forward'))
+  set('n', '<c-o>', back, opts('back'))
 end
 
 function M.setup()
@@ -409,6 +395,10 @@ function M.setup()
   }
   
   vim.keymap.set('n', '<leader>e', function()
+    if api.tree.is_visible() then
+      local cur_width = vim.api.nvim_win_get_width(api.tree.winid())
+      vim.cmd('NvimTreeResize ' .. cur_width)
+    end
     api.tree.toggle(false, true)
   end, opts)
   
@@ -416,7 +406,7 @@ function M.setup()
     vim.cmd('NvimTreeFocus')
   end, opts)
   
-  vim.keymap.set('n', '<leader>fe', require('lu5je0.ext.nvimtree').locate_file, opts)
+  vim.keymap.set('n', '<leader>fe', locate_file, opts)
 
   require('nvim-tree').setup {
     disable_netrw = true,
