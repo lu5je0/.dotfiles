@@ -141,8 +141,8 @@ function M.setup()
 
       e = { 'locate-file' },
       W = { '<cmd>SudaWrite<cr>', 'sudo-write' },
-      s = { 'dir .dotfiles' },
-      p = { 'dir packer' },
+      s = { 'symbols' },
+      p = { 'projects' },
       w = { require('lu5je0.core.file').save_buffer, 'write' },
       J = { '<cmd>JunkFileSaveAs<cr>', 'new-junk-file' },
       x = {

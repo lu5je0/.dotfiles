@@ -28,7 +28,7 @@ local function keymap()
     vim.cmd('Outline!')
   end)
   
-  vim.keymap.set('n', '<leader>fi', function()
+  vim.keymap.set('n', '<leader>fs', function()
     vim.cmd('OutlineOpen')
     -- vim.cmd('norm zz')
   end)

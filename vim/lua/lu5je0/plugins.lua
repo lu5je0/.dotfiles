@@ -642,7 +642,7 @@ local plugins = {
         require('lu5je0.ext.symbols-outline').setup()
       end,
       cmd = { 'Outline' },
-      keys = { { mode = { 'n' }, '<leader>i' }, { mode = { 'n' }, '<leader>fi' } }
+      keys = { { mode = { 'n' }, '<leader>fs' }, { mode = { 'n' }, '<leader>i' } }
     },
     {
       "dnlhc/glance.nvim",
