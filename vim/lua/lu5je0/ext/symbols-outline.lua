@@ -38,6 +38,7 @@ function M.setup()
   require('outline').setup {
     outline_window = {
       center_on_jump = true,
+      width = 36,
     }
   }
   keymap()
