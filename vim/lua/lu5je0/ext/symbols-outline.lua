@@ -42,8 +42,15 @@ function M.setup()
     },
     symbols = {
       icons = {
-        String = { icon = '󰰢', hl = 'String' },
+        Class = { icon = '󱡠', hl = 'Type' },
+        Object = { icon = '', hl = 'Type' },
+        String = { icon = '󰉿', hl = 'String' },
         Number = { icon = '', hl = 'Number' },
+        Module = { icon = '', hl = 'Include' },
+        Variable = { icon = '󰆦', hl = 'Constant' },
+        Enum = { icon = '', hl = 'Type' },
+        Method = { icon = '󰊕', hl = 'Function' },
+        Function = { icon = '󰊕', hl = 'Function' },
       },
     },
   }
