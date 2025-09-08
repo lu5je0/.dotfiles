@@ -27,7 +27,7 @@ local function keymap()
   vim.keymap.set('n', '<leader>s', function()
     vim.cmd('Outline!')
   end)
-  
+
   vim.keymap.set('n', '<leader>fs', function()
     vim.cmd('OutlineOpen')
     -- vim.cmd('norm zz')
@@ -39,7 +39,13 @@ function M.setup()
     outline_window = {
       center_on_jump = true,
       width = 36,
-    }
+    },
+    symbols = {
+      icons = {
+        String = { icon = '󰰢', hl = 'String' },
+        Number = { icon = '', hl = 'Number' },
+      },
+    },
   }
   keymap()
   remember_width()
