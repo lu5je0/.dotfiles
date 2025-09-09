@@ -28,6 +28,7 @@ function M.setup()
     callback = function()
       vim.cmd [[
       nmap <buffer> <leader>y "+y
+      nmap <nowait> <buffer> <leader>p "+p
       nmap <buffer> <silent> v :call b:VM_Selection.Global.extend_mode()<cr>
       nmap <buffer> <c-x> <Plug>(VM-Skip-Region)
       nmap <buffer> <c-p> <Plug>(VM-Remove-Region)
@@ -49,6 +50,7 @@ function M.setup()
     callback = function()
       vim.cmd [[
       silent! unmap <buffer> <leader>y
+      silent! unmap <buffer> p
       silent! unmap <buffer> v
       ]]
       vim.b.in_visual_multi = false
