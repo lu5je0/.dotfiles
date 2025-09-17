@@ -25,6 +25,7 @@ keybind = ctrl+b>j=goto_split:down
 # font-thicken-strength=255
 font-thicken
 adjust-cursor-thickness = 2
+mouse-hide-while-typing = true
 
 theme = Gruvbox Dark
 font-size = 14
