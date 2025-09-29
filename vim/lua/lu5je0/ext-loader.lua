@@ -329,4 +329,7 @@ require('lu5je0.misc.time-machine').setup()
 --   event = { 'CursorHold' }
 -- })
 
+-- patch
+require('lu5je0.patch.fix-untitled-buffer-diagnostic')
+
 return M
