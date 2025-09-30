@@ -1,3 +1,5 @@
+-- 0.11.4
+
 -- nvim/runtime/lua/vim/lsp/diagnostic.lua
 -- method: handle_diagnostics
 -- vim.uri_to_fname获取不到fname
