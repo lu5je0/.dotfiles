@@ -69,11 +69,11 @@ local function key_mapping()
   end
 
   local telescope_builtin = require('telescope.builtin')
-  set_map('<leader>ff', function() telescope_builtin.find_files(theme()) end, true)
-  set_map('<leader>fj', function()
-    telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
-      { theme, search_dirs = { '~/junk-file' }, prompt_title = 'Junk Files' }))
-  end)
+  -- set_map('<leader>ff', function() telescope_builtin.find_files(theme()) end, true)
+  -- set_map('<leader>fj', function()
+  --   telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
+  --     { theme, search_dirs = { '~/junk-file' }, prompt_title = 'Junk Files' }))
+  -- end)
   
   -- set_map('<leader>ft', function()
   --   telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
@@ -84,9 +84,9 @@ local function key_mapping()
   --     }))
   -- end)
   
-  set_map('<leader>fm', function() telescope_builtin.oldfiles(vim.tbl_deep_extend("force", theme(), { prompt_title = 'Old Files' })) end)
-  set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
-  set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
+  -- set_map('<leader>fm', function() telescope_builtin.oldfiles(vim.tbl_deep_extend("force", theme(), { prompt_title = 'Old Files' })) end)
+  -- set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
+  -- set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
   -- vim.cmd('map <leader>fn :set filetype=')
   -- set_map('<leader>fr', function() telescope_builtin.live_grep(theme(true)) end, true)
   -- set_map('<leader>fR', function() fuzzy_grep() end, true)

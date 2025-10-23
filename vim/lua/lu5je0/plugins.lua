@@ -171,18 +171,18 @@ local plugins = {
     lazy = true
   },
 
-  {
-    'nvim-telescope/telescope.nvim',
-    -- tag = '0.1.7',
-    config = function()
-      require('lu5je0.ext.telescope').setup()
-    end,
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' }
-    },
-    keys = { ',' }
-  },
+  -- {
+  --   'nvim-telescope/telescope.nvim',
+  --   -- tag = '0.1.7',
+  --   config = function()
+  --     require('lu5je0.ext.telescope').setup()
+  --   end,
+  --   dependencies = {
+  --     'nvim-lua/plenary.nvim',
+  --     { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' }
+  --   },
+  --   keys = { ',' }
+  -- },
 
   {
     'akinsho/bufferline.nvim',
