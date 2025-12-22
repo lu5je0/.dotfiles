@@ -55,6 +55,8 @@ zinit light zsh-users/zsh-history-substring-search
 # 额外补全
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-completions
+zinit ice depth=1 lucid wait='1'
+zinit light matthieusb/zsh-sdkman
 
 ##########################################
 # 本地sh文件
