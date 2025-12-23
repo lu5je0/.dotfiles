@@ -12,7 +12,7 @@ end
 local function get_picker_type()
   local p = (Snacks.picker.get() or {})[1]
   local picker_type = p and p.opts.source
-  local res =  picker_type or M.last_picker_type
+  local res = picker_type or M.last_picker_type
   M.last_picker_type = picker_type
   if vim.tbl_contains(REMEMBER_LAST_SEARCH_PICKER_TYPES, res) then
     return res
@@ -31,7 +31,7 @@ local function remember_last_search()
       if M.disable_keep_last_search then
         return
       end
-      
+
       if vim.o.buftype == 'prompt' and vim.bo.filetype == 'snacks_picker_input' then
         if not M.last_search then
           M.last_search = {}
@@ -43,7 +43,7 @@ local function remember_last_search()
       end
     end
   })
-  
+
   local wrap_mapping = function(mode, lhs, mapping_opts)
     local close_mapping_callback = require('lu5je0.core.keys').get_rhs_callback(mode, lhs, {
       buffer = 0
@@ -63,7 +63,7 @@ local function remember_last_search()
     pattern = { 'snacks_picker_input' },
     callback = function()
       local opts = { noremap = true, silent = true, buffer = true, desc = 'snacks-custom', nowait = true }
-      
+
       vim.defer_fn(function()
         wrap_mapping('i', '<Esc>', opts)
         wrap_mapping('i', '<C-P>', opts)
@@ -71,11 +71,11 @@ local function remember_last_search()
         wrap_mapping('i', '<C-Q>', opts)
         wrap_mapping('i', '<Up>', opts)
         wrap_mapping('i', '<Down>', opts)
-        vim.keymap.set({ 's'}, "<bs>", function()
+        vim.keymap.set({ 's' }, "<bs>", function()
           require('lu5je0.core.keys').feedkey('<bs>i', 'n')
         end)
       end, 0)
-      
+
       vim.defer_fn(function()
         local last_search = M.get_last_search_keyword(get_picker_type())
         if last_search and last_search ~= "" then
@@ -148,6 +148,7 @@ M.setup = function()
   vim.cmd('map <leader>fn :set filetype=')
   -- vim.keymap.set('n', '<leader>ft', function() Snacks.picker.pick("filetype", {}) end)
   vim.keymap.set('n', '<leader>fr', function() Snacks.picker.pick("grep", {}) end)
+  -- 默认是smart-case
   vim.keymap.set('x', '<leader>fr', wrapper_fn_for_visual(function() Snacks.picker.pick("grep", {}) end))
   vim.keymap.set('n', '<leader>fR', function() Snacks.picker.pick("git_grep", {}) end)
   vim.keymap.set('n', '<leader>fg', function() Snacks.picker.pick("git_status", {}) end)
@@ -165,7 +166,7 @@ M.setup = function()
         })
     end)
   vim.keymap.set('n', '<leader>f\"', function() Snacks.picker.pick("registers", {}) end)
-  
+
   remember_last_search()
 end
 
