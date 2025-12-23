@@ -12,4 +12,26 @@ function M.feedkey(key, mode)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
 end
 
+function M.get_rhs_callback(mode, lhs, opts)
+  local keymaps
+  if opts and opts.buffer then
+    keymaps = vim.api.nvim_buf_get_keymap(opts.buffer, mode)
+  else
+    keymaps = vim.api.nvim_get_keymap(mode)
+  end
+  
+  for _, map in ipairs(keymaps) do
+    if map.lhs == lhs then
+      if map.rhs then
+        return function()
+          M.feedkey(M.rhs)
+        end
+      elseif map.callback then
+        return map.callback
+      end
+    end
+  end
+  return nil
+end
+
 return M
