@@ -90,8 +90,8 @@ nmap <leader>vc :set ic!<cr>
 nmap <leader>vw <Action>(EditorToggleUseSoftWraps)
 nmap <leader>e :NERDTreeToggle<CR>
 
-map <space>ss <Action>(Translation.EditorTranslateAction)
-map <space>sr <Action>(Translation.TranslateAndReplaceAction)
+map <leader>ww <Action>(Translation.EditorTranslateAction)
+map <leader>wr <Action>(Translation.TranslateAndReplaceAction)
 
 nmap gu :action GotoSuperMethod<CR>
 nmap gn :action GotoImplementation<CR>

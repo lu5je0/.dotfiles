@@ -66,6 +66,7 @@ function M.setup()
     w = {
       name = '+windows',
       ['n'] = { '<cmd>vnew<cr>', 'vnew' },
+      ['w'] = "translate",
       ['N'] = { '<cmd>new<cr>', 'new' },
       ['s'] = { '<cmd>vsplit<cr>', 'vspilt' },
       ['S'] = { '<cmd>split<cr>', 'spilt' },
@@ -236,6 +237,9 @@ function M.setup()
       s = { 'text escape' },
       r = { 'spectre replace' },
     },
+    w = {
+      w = "translate"
+    },
     s = {
       name = '+translate',
     },
@@ -271,11 +275,11 @@ function M.setup()
   }
   
   local space_n_mappings = {
-    s = 'translate'
+    -- s = 'translate'
   }
   
   local space_x_mappings = {
-    s = 'translate'
+    -- s = 'translate'
   }
   
   local n_space_opts = {

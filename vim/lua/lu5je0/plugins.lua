@@ -295,7 +295,7 @@ local plugins = {
     config = function()
       require('lu5je0.ext.vim-translator')
     end,
-    keys = { { mode = 'x', '<space>ss' }, { mode = 'n', '<space>ss' }, { mode = 'x', '<space>sr' }, { mode = 'n', '<space>sr' } }
+    keys = { { mode = 'x', '<leader>ww' }, { mode = 'n', '<leader>ww' }, { mode = 'x', '<leader>wr' }, { mode = 'n', '<leader>wr' } }
   },
 
   {

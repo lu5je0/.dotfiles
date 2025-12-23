@@ -10,27 +10,27 @@ local function say(word)
   end
 end
 
-vim.keymap.set('n', '<space>ss', function()
+vim.keymap.set('n', '<leader>ww', function()
   keys.feedkey('<Plug>TranslateW')
   say(vim.fn.expand('<cword>'))
 end, {
   desc = "translate cword"
 })
 
-vim.keymap.set('x', '<space>ss', function()
+vim.keymap.set('x', '<leader>ww', function()
   keys.feedkey('<Plug>TranslateWV')
   say(require('lu5je0.core.visual').get_visual_selection_as_string())
 end, {
   desc = "translate selected"
 })
 
-vim.keymap.set('n', '<space>sr', function()
+vim.keymap.set('n', '<leader>wr', function()
   keys.feedkey('<Plug>TranslateR')
 end, {
   desc = "translate cword and replace"
 })
 
-vim.keymap.set('x', '<space>sr', function()
+vim.keymap.set('x', '<leader>wr', function()
   keys.feedkey('<Plug>TranslateR')
 end, {
   desc = "translate and replace"
