@@ -12,6 +12,14 @@ function M.feedkey(key, mode)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
 end
 
+-- 注意避免重复wrap
+function M.wrap_mapping(mode, lhs, callback, opts)
+  local rhs = M.get_rhs_callback(mode, lhs, opts)
+  vim.keymap.set(mode, lhs, function()
+    callback(rhs)
+  end, opts)
+end
+
 function M.get_rhs_callback(mode, lhs, opts)
   local keymaps
   if opts and opts.buffer then
@@ -19,12 +27,15 @@ function M.get_rhs_callback(mode, lhs, opts)
   else
     keymaps = vim.api.nvim_get_keymap(mode)
   end
+  if not keymaps then
+    return
+  end
   
   for _, map in ipairs(keymaps) do
     if map.lhs == lhs then
       if map.rhs then
         return function()
-          M.feedkey(M.rhs)
+          M.feedkey(map.rhs)
         end
       elseif map.callback then
         return map.callback
