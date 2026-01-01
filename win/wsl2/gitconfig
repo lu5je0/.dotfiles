@@ -1,7 +1,7 @@
 [core]
 	quotepath = false
 	editor = 'nvim.cmd'
-	autocrlf = false
+	autocrlf = true
 	eol = lf
 [user]
 	name = lu5je0
