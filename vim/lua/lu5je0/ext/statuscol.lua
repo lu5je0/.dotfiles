@@ -2,8 +2,9 @@ local M = {}
 
 M.setup = function()
   local builtin = require("statuscol.builtin")
-  vim.o.foldcolumn = '0'
-  vim.o.nuw = 2
+  -- 防止切换到其他window（比如<leader>ff），导致默认的window没有设置上
+  vim.wo[1000].foldcolumn = '0'
+  vim.wo[1000].nuw = 2
 
   require("statuscol").setup({
     -- configuration goes here, for example:

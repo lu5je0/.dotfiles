@@ -1,17 +1,24 @@
 from typing import Any
 
-from kitty.boss import Boss # type: ignore
-from kitty.window import Window # type: ignore
+from kitty.boss import Boss  # type: ignore
+from kitty.window import Window  # type: ignore
 import subprocess
 
 proc = subprocess.Popen(
-    ["/opt/homebrew/bin/python3", "/Users/lu5je0/.dotfiles/kitty/xkb.py"],
+    ["/Users/lu5je0/.dotfiles/vim/lib/imeswitch", "-i"],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     text=True,
 )
 
+
 def on_set_user_var(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-    if data['key'] == 'ime' and data['value'] == 'en':
-        proc.stdin.write('switch_ime com.apple.keylayout.ABC\n')
-        proc.stdin.flush()
+    if data["key"] == "ime":
+        print(data["value"])
+        if data["value"] == "normal":
+            proc.stdin.write("normal\n")
+            proc.stdin.flush()
+        # 有bug，待排查
+        # elif data['value'] == 'insert':
+        #     proc.stdin.write('insert\n')
+        #     proc.stdin.flush()

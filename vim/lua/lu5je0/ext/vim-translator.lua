@@ -10,22 +10,28 @@ local function say(word)
   end
 end
 
-vim.keymap.set('n', '<leader>sa', function()
+vim.keymap.set('n', '<leader>ww', function()
   keys.feedkey('<Plug>TranslateW')
   say(vim.fn.expand('<cword>'))
-end)
+end, {
+  desc = "translate cword"
+})
 
-vim.keymap.set('x', '<leader>sa', function()
+vim.keymap.set('x', '<leader>ww', function()
   keys.feedkey('<Plug>TranslateWV')
   say(require('lu5je0.core.visual').get_visual_selection_as_string())
-end)
+end, {
+  desc = "translate selected"
+})
 
-vim.cmd [[
-" Display translation in a window
-nmap <silent> <Leader>ss <Plug>TranslateW
-xmap <silent> <Leader>ss <Plug>TranslateWV
+vim.keymap.set('n', '<leader>wr', function()
+  keys.feedkey('<Plug>TranslateR')
+end, {
+  desc = "translate cword and replace"
+})
 
-" Replace the text with translation
-nmap <silent> <Leader>sr <Plug>TranslateR
-xmap <silent> <Leader>sr <Plug>TranslateRV
-]]
+vim.keymap.set('x', '<leader>wr', function()
+  keys.feedkey('<Plug>TranslateR')
+end, {
+  desc = "translate and replace"
+})

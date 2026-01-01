@@ -28,7 +28,7 @@ local font = (function()
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
       { family = "PingFang SC",                    weight = "Medium",   stretch = "Normal", style = "Normal" }
     }
-    r.tab_bar_font_size = 11.5
+    r.tab_bar_font_size = 12
   end
   return r
 end)()
@@ -37,6 +37,7 @@ local config = {
   color_scheme = "Gruvbox Dark (Gogh)",
   -- ./wezterm.exe ls-fonts --list-system
   font = font.text_font,
+  use_ime = true,
   window_frame = {
     -- The font used in the tab bar.
     -- Roboto Bold is the default; this font is bundled
@@ -54,12 +55,23 @@ local config = {
     -- the window is not focused
     inactive_titlebar_bg = '#3C3C3C',
   },
-  window_padding = {
-    left = 0,
-    right = 0,
-    top = 0,
-    bottom = 0,
-  },
+  window_padding = (function()
+    if is_mac then
+      return {
+        left = "1px",
+        right = "1px",
+        top = "1px",
+        bottom = "1px",
+      }
+    else
+      return {
+        left = 0,
+        right = 0,
+        top = 0,
+        bottom = 0,
+      }
+    end
+  end)(),
   max_fps = 240,
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
@@ -83,6 +95,12 @@ local config = {
       },
     },
   },
+  line_height = (function()
+    if is_mac then
+      return 0.95
+    end
+    return nil
+  end)(),
   font_size = (function()
     if is_mac then
       return 14.5
@@ -319,7 +337,7 @@ wezterm.on('gui-startup', function(cmd)
     wezterm.sleep_ms(400)
     wezterm.run_child_process { "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe", "C:\\Users\\lu5je0\\.dotfiles\\win\\ahk\\wezterm\\resize.ahk" }
   elseif is_mac then
-    mux.spawn_window { width = 120, height = 42 }
+    mux.spawn_window { width = 120, height = 44 }
   end
 end)
 
@@ -370,12 +388,12 @@ end
 
 local ime_cmd = {
   win = {
-    en = { "D:\\bin\\toDisableIME.exe" },
-    zh = { "D:\\bin\\toEnableIME.exe" },
+    normal = { "D:\\bin\\toDisableIME.exe" },
+    insert = { "D:\\bin\\toEnableIME.exe" },
   },
   mac = {
-    en = { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" },
-    zh = { "/Users/lu5je0/.local/bin/im-select", "com.sogou.inputmethod.sogou.pinyin" },
+    normal = { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" },
+    -- insert = { "/Users/lu5je0/.local/bin/im-select", "com.sogou.inputmethod.sogou.pinyin" },
   }
 }
 wezterm.on('user-var-changed', function(window, pane, name, value)
@@ -386,7 +404,10 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
     elseif is_win then
       os = 'win'
     end
-    wezterm.run_child_process(ime_cmd[os][value])
+    local cmd = ime_cmd[os][value]
+    if cmd then
+      wezterm.run_child_process(cmd)
+    end
   end
 end)
 

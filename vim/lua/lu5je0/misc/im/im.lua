@@ -1,7 +1,11 @@
 ---@diagnostic disable: need-check-nil
 local M = {}
 
-function M.toggle_save_last_ime()
+local state = {
+  save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
+}
+
+local function toggle_save_last_ime()
   local keeper = require('lu5je0.misc.env-keeper')
   local v = keeper.get('save_last_ime', true)
   if v then
@@ -9,8 +13,8 @@ function M.toggle_save_last_ime()
   else
     print("keep last ime enabled")
   end
-  M.save_last_ime = not v
-  keeper.set('save_last_ime', M.save_last_ime)
+  state.save_last_ime = not v
+  keeper.set('save_last_ime', state.save_last_ime)
 end
 
 local function create_autocmd()
@@ -61,15 +65,15 @@ function M.setup()
   end)
 
   M.enable_ime = rate_limiter:wrap(function()
-    if M.save_last_ime then
-      if timer ~=nil then timer.begin_timer() end
-      ime_control.insert()
-      if timer ~=nil then timer.end_timer() end
+    if not state.save_last_ime then
+      return
     end
+    if timer ~=nil then timer.begin_timer() end
+    ime_control.insert()
+    if timer ~=nil then timer.end_timer() end
   end)
 
-  M.save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
-  vim.keymap.set('n', '<leader>vi', M.toggle_save_last_ime)
+  vim.keymap.set('n', '<leader>vi', toggle_save_last_ime)
   create_autocmd()
 end
 

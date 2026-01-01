@@ -78,7 +78,7 @@ nmap <silent> <leader>9 9gt
 nmap <silent> <left> <Action>(PreviousTab)
 nmap <silent> <right> <Action>(NextTab)
 
-nmap <leader>i <Action>(ActivateStructureToolWindow)
+nmap <leader>s <Action>(ActivateStructureToolWindow)
 nmap <leader>q :action CloseContent<CR>
 " nmap <leader>dr <Action>(Debugger.ReloadFile)
 nmap <leader>d <Action>(ActivateStructureToolWindow)
@@ -90,9 +90,8 @@ nmap <leader>vc :set ic!<cr>
 nmap <leader>vw <Action>(EditorToggleUseSoftWraps)
 nmap <leader>e :NERDTreeToggle<CR>
 
-map <leader>ss <Action>(Translation.EditorTranslateAction)
-map <leader>sa <Action>(Translation.EditorTranslateAction)
-map <leader>sr <Action>(Translation.TranslateAndReplaceAction)
+map <leader>ww <Action>(Translation.EditorTranslateAction)
+map <leader>wr <Action>(Translation.TranslateAndReplaceAction)
 
 nmap gu :action GotoSuperMethod<CR>
 nmap gn :action GotoImplementation<CR>

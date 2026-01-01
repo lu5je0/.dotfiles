@@ -2,6 +2,7 @@
 # infocmp -x | ssh YOUR-SERVER -- tic -x -
 
 font-family = "JetBrainsMonoNL Nerd Font Mono"
+font-family = "PingFang SC"
 keybind = ctrl+b>shift+5=new_split:right
 # keybind = ctrl+b>shift+,=new_split:down
 
@@ -24,8 +25,9 @@ keybind = ctrl+b>j=goto_split:down
 # font-thicken-strength=255
 font-thicken
 adjust-cursor-thickness = 2
+mouse-hide-while-typing = true
 
-theme = GruvboxDark
+theme = Gruvbox Dark
 font-size = 14
 # macos-titlebar-style = transparent
 

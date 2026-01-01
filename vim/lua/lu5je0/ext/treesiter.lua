@@ -345,68 +345,13 @@ M.setup = function()
       vim.cmd('doautocmd User TreesitterAttach')
     end,
   })
-
-  -- require('nvim-treesitter.configs').setup {
-  --   ensure_installed = ts_filetypes,
-  --   highlight = {
-  --     enable = true,
-  --   },
-  --   incremental_selection = {
-  --     enable = false,
-  --   },
-  --   indent = {
-  --     enable = false
-  --   },
-  --   textobjects = {
-  --     select = {
-  --       enable = true,
-  --       -- Automatically jump forward to textobj, similar to targets.vim
-  --       lookahead = false,
-  --       keymaps = {
-  --         -- You can use the capture groups defined in textobjects.scm
-  --         ["af"] = "@function.outer",
-  --         ["if"] = "@function.inner",
-  --         ["ac"] = "@comment.outer",
-  --         ["ic"] = "@comment.outer",
-  --         -- You can also use captures from other query groups like `locals.scm`
-  --         -- ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" },
-  --       },
-  --       include_surrounding_whitespace = false,
-  --     },
-  --   },
-  -- }
-  --
+  
+  -- if vim.tbl_contains(ts_filetypes, vim.bo.filetype) then
+  --   vim.treesitter.start() 
+  -- end
+  
   enable_treesitter_fold()
   enable_fold_text_cache()
-  -- -- _G.__custom_foldtext = require('lu5je0.lang.timer').timer_wrap(_G.__custom_foldtext)
-  --
-  -- treesitter.define_modules {
-  --   attach_module = {
-  --     enable = true,
-  --     attach = function(bufnr)
-  --       -- highlights
-  --       vim.cmd([[
-  --       hi TSPunctBracket guifg=#ABB2BF
-  --       hi @constructor.lua guifg=#ABB2BF
-  --       ]])
-  --     end,
-  --     detach = function()
-  --       -- vim.cmd([[
-  --       -- silent! xunmap <buffer> v
-  --       -- silent! xunmap <buffer> V
-  --       -- ]])
-  --     end
-  --   },
-  -- }
-  --
-  -- -- lazyload workaround
-  -- -- 第一次打开文件时触发
-  -- if vim.tbl_contains(ts_filetypes, vim.bo.filetype) then
-  --   vim.cmd[[
-  --   TSEnable attach_module
-  --   TSEnable fold
-  --   ]]
-  -- end
 end
 
 return M

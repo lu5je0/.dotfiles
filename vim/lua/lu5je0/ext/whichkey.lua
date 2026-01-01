@@ -51,6 +51,7 @@ function M.setup()
     ['9'] = 'which_key_ignore',
     ['0'] = 'pick buffer',
     ['q'] = 'close buffer',
+    ['s'] = 'symbols',
     ['I'] = 'focus symbols',
     ['Q'] = 'exit',
     ['u'] = 'undotree',
@@ -65,6 +66,7 @@ function M.setup()
     w = {
       name = '+windows',
       ['n'] = { '<cmd>vnew<cr>', 'vnew' },
+      ['w'] = "translate",
       ['N'] = { '<cmd>new<cr>', 'new' },
       ['s'] = { '<cmd>vsplit<cr>', 'vspilt' },
       ['S'] = { '<cmd>split<cr>', 'spilt' },
@@ -141,8 +143,8 @@ function M.setup()
 
       e = { 'locate-file' },
       W = { '<cmd>SudaWrite<cr>', 'sudo-write' },
-      s = { 'dir .dotfiles' },
-      p = { 'dir packer' },
+      s = { 'symbols' },
+      p = { 'projects' },
       w = { require('lu5je0.core.file').save_buffer, 'write' },
       J = { '<cmd>JunkFileSaveAs<cr>', 'new-junk-file' },
       x = {
@@ -165,13 +167,6 @@ function M.setup()
       z = '繁体转简体',
       Z = '简体转繁体',
       x = ':%!',
-    },
-    s = {
-      name = '+translate',
-      s = 'translate popup',
-      a = 'say it',
-      r = 'translate replace',
-      c = 'translate',
     },
     v = {
       name = '+vim',
@@ -242,6 +237,9 @@ function M.setup()
       s = { 'text escape' },
       r = { 'spectre replace' },
     },
+    w = {
+      w = "translate"
+    },
     s = {
       name = '+translate',
     },
@@ -275,12 +273,40 @@ function M.setup()
     noremap = true, -- use `noremap` when creating keymaps
     nowait = true,  -- use `nowait` when creating keymaps
   }
+  
+  local space_n_mappings = {
+    -- s = 'translate'
+  }
+  
+  local space_x_mappings = {
+    -- s = 'translate'
+  }
+  
+  local n_space_opts = {
+    mode = 'n',
+    prefix = '<space>',
+    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
+    silent = true,  -- use `silent` when creating keymaps
+    noremap = true, -- use `noremap` when creating keymaps
+    nowait = true,  -- use `nowait` when creating keymaps
+  }
+  
+  local x_space_opts = {
+    mode = 'x',
+    prefix = '<space>',
+    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
+    silent = true,  -- use `silent` when creating keymaps
+    noremap = true, -- use `noremap` when creating keymaps
+    nowait = true,  -- use `nowait` when creating keymaps
+  }
 
   local wk = require('which-key')
   wk.setup(setup)
 
   wk.register(n_mappings, n_opts)
   wk.register(x_mappings, x_opts)
+  wk.register(space_n_mappings, n_space_opts)
+  wk.register(space_x_mappings, x_space_opts)
 end
 
 return M

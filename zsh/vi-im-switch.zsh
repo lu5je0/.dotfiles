@@ -8,8 +8,11 @@ if [[ $UNAME_INFO =~ "microsoft" ]]; then
 # elif [[ $UNAME_INFO =~ "Darwin" ]]; then
 else
   function disable_ime_cmd {
-    printf "\033]1337;SetUserVar=ime=ZW4=\007"
+    printf "\033]1337;SetUserVar=ime=bm9ybWFs\007"
   }
+  # function enable_ime_cmd {
+  #   printf "\033]1337;SetUserVar=ime=aW5zZXJ0\007"
+  # }
 fi
 
 vi-escape-im() {
@@ -20,8 +23,8 @@ zle -N vi-escape-im
 bindkey "^[" vi-escape-im
 
 # vi-insert-im() {
-# $enable_ime_cmd
-# zle vi-insert
+#   enable_ime_cmd
+#   zle vi-insert
 # }
 # zle -N vi-insert-im
 # bindkey -a i vi-insert-im

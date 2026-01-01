@@ -28,17 +28,20 @@ function M.setup()
     callback = function()
       vim.cmd [[
       nmap <buffer> <leader>y "+y
+      nmap <nowait> <buffer> p "+<Plug>(VM-p-Paste)
       nmap <buffer> <silent> v :call b:VM_Selection.Global.extend_mode()<cr>
       nmap <buffer> <c-x> <Plug>(VM-Skip-Region)
       nmap <buffer> <c-p> <Plug>(VM-Remove-Region)
       ]]
-      vim.keymap.set('n', '<esc>', function()
+
+      keys.wrap_mapping('n', '<Esc>', function(rhs)
         if M.mode() == MODE.VISUAL then
           vim.cmd('call b:VM_Selection.Global.cursor_mode()')
         else
-          keys.feedkey('<Plug>(VM-Exit)')
+          rhs()
         end
-      end, { buffer = true })
+      end, { buffer = 0 })
+
       vim.b.in_visual_multi = true
     end,
   })
@@ -49,6 +52,7 @@ function M.setup()
     callback = function()
       vim.cmd [[
       silent! unmap <buffer> <leader>y
+      silent! unmap <buffer> p
       silent! unmap <buffer> v
       ]]
       vim.b.in_visual_multi = false
@@ -59,7 +63,7 @@ function M.setup()
     ['L'] = '$',
     ['H'] = '^',
   }
-  
+
   -- blink.cmp 冲突
   vim.g.VM_maps = {
     ["I Down Arrow"] = "",

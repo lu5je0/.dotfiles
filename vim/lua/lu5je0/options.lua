@@ -52,6 +52,8 @@ if g.neovide then
   else
     o.guifont = "JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h14"
   end
+  
+  require("lu5je0.ext.neovide-ime").setup()
 
   g.neovide_input_ime = false
   vim.cmd [[

@@ -43,14 +43,14 @@ bl.setup {
       {
         filetype = 'NvimTree',
         text = 'NvimTree',
-        highlight = 'NvimTreeNormal',
+        highlight = 'Normal',
         text_align = 'center',
         separator = '█'
       },
       {
         filetype = 'Outline',
         text = 'Symbols',
-        highlight = 'Red',
+        highlight = 'Normal',
         text_align = 'center',
         separator = '█'
       },
