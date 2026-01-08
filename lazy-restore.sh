@@ -8,7 +8,14 @@ PLUGIN_LIST=(
 for PLUGIN in "${PLUGIN_LIST[@]}"; do
     TARGET="${LAZY_DIR}/${PLUGIN}"
     if [ -d "$TARGET" ]; then
-      rm $TARGET -rf
+        # 进入目录并检测 git 状态
+        STATUS=$(cd "$TARGET" && git status --porcelain)
+        if [ -n "$STATUS" ]; then
+            echo "Deleting $TARGET because git status is not empty."
+            rm -rf "$TARGET"
+        else
+            echo "$TARGET is clean. Not deleting."
+        fi
     fi
 done
 
