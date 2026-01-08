@@ -96,16 +96,22 @@ M.setup = function()
       keymap = {
         preset = 'inherit',
         ['<cr>'] = { 'fallback' },
-        ['<tab>'] = { 'show_and_insert', 'select_next'}
+        ['<tab>'] = {
+          function()
+            local type = vim.fn.getcmdtype()
+            return type == '/' or type == '?'
+          end,
+          'show_and_insert',
+          'select_next' }
       },
-      sources = function()
-        local type = vim.fn.getcmdtype()
-        -- Search forward and backward
-        if type == '/' or type == '?' then return { } end
-        -- Commands
-        if type == ':' or type == '@' then return { 'cmdline'} end
-        return {}
-      end,
+      -- sources = function()
+      --   local type = vim.fn.getcmdtype()
+      --   -- Search forward and backward
+      --   if type == '/' or type == '?' then return {} end
+      --   -- Commands
+      --   if type == ':' or type == '@' then return { 'cmdline' } end
+      --   return {}
+      -- end,
       completion = { menu = { auto_show = false } },
     }
   }
