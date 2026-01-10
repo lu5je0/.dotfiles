@@ -1,12 +1,10 @@
 local M = {}
 
-local treesitter = require('nvim-treesitter')
-
 local ts_filetypes = {
   'json', 'python', 'java', 'bash', 'go', 'vim', 'lua', 'cpp', 'c',
   'rust', 'toml', 'yaml', 'markdown', 'http', 'typescript',
-  'javascript', 'sql', 'html', 'json5', 'jsonc', 'regex',
-  'vue', 'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy'
+  'javascript', 'sql', 'html', 'json5', 'regex', 'vue', 
+  'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy'
 }
 
 local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
