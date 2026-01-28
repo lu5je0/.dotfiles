@@ -34,6 +34,15 @@ function M.setup()
       nmap <buffer> <c-p> <Plug>(VM-Remove-Region)
       ]]
 
+      -- 修复visual mode下<c-n>之后visual-multi污染+寄存器，原因未知
+      keys.wrap_mapping('x', '<C-N>', function(_)
+        local a = vim.fn.getreg('+')
+        require('lu5je0.core.keys').feedkey("<Plug>(VM-Find-Subword-Under)")
+        vim.defer_fn(function()
+          vim.fn.setreg('+', a)
+        end, 10)
+      end, { buffer = 0 })
+
       keys.wrap_mapping('n', '<Esc>', function(rhs)
         if M.mode() == MODE.VISUAL then
           vim.cmd('call b:VM_Selection.Global.cursor_mode()')

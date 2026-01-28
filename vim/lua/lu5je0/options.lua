@@ -144,7 +144,7 @@ o.termguicolors = true
 o.bg = 'dark'
 o.ruler = false
 
-vim.deprecate = function() end
+-- vim.deprecate = function() end
 
 if has('mac') then
   vim.g.python3_host_prog = '/usr/bin/python3'
