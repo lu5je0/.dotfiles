@@ -28,20 +28,22 @@ function M.setup()
     callback = function()
       vim.cmd [[
       nmap <buffer> <leader>y "+y
-      nmap <nowait> <buffer> p "+<Plug>(VM-p-Paste)
       nmap <buffer> <silent> v :call b:VM_Selection.Global.extend_mode()<cr>
       nmap <buffer> <c-x> <Plug>(VM-Skip-Region)
       nmap <buffer> <c-p> <Plug>(VM-Remove-Region)
       ]]
-
-      -- 修复visual mode下<c-n>之后visual-multi污染+寄存器，原因未知
-      keys.wrap_mapping('x', '<C-N>', function(_)
-        local a = vim.fn.getreg('+')
-        require('lu5je0.core.keys').feedkey("<Plug>(VM-Find-Subword-Under)")
-        vim.defer_fn(function()
-          vim.fn.setreg('+', a)
-        end, 10)
-      end, { buffer = 0 })
+      
+      if vim.fn.has('clipboard') == 1 then
+        vim.cmd('nmap <nowait> <buffer> p "+<Plug>(VM-p-Paste)')
+        -- 修复visual mode下<c-n>之后visual-multi污染+寄存器，原因未知
+        keys.wrap_mapping('x', '<C-N>', function(_)
+          local a = vim.fn.getreg('+')
+          require('lu5je0.core.keys').feedkey("<Plug>(VM-Find-Subword-Under)")
+          vim.defer_fn(function()
+            vim.fn.setreg('+', a)
+          end, 10)
+        end, { buffer = 0 })
+      end
 
       keys.wrap_mapping('n', '<Esc>', function(rhs)
         if M.mode() == MODE.VISUAL then
