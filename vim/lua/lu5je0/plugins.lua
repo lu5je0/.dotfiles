@@ -194,6 +194,7 @@ local plugins = {
     -- priority = 9999,
     -- event = 'VeryLazy'
   },
+  
   {
     'nvim-tree/nvim-tree.lua',
     -- just lock，in case of break changes
@@ -209,6 +210,23 @@ local plugins = {
     event = { 'CursorHold', 'CursorHoldI' },
     keys = { '<leader>e', '<leader>fe' },
   },
+  
+  -- {
+  --   "nvim-neo-tree/neo-tree.nvim",
+  --   branch = "v3.x",
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --     "MunifTanjim/nui.nvim",
+  --     "nvim-tree/nvim-web-devicons", -- optional, but recommended
+  --   },
+  --   lazy = false, -- neo-tree will lazily load itself
+  --   ---@module 'neo-tree'
+  --   ---@type neotree.Config
+  --   config = function()
+  --     require('lu5je0.ext.neo-tree').setup()
+  --   end
+  -- },
+
   -- {
   --   'rootkiter/vim-hexedit',
   --   ft = 'bin',
