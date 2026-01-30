@@ -41,4 +41,17 @@ function Stack:count()
   return #self.dataTb
 end
 
+function Stack:peek(num)
+  num = num or 1
+  assert(num > 0, 'num必须为正整数')
+  if self.dataTb == nil then
+    return nil
+  end
+  local idx = #self.dataTb - (num - 1)
+  if idx < 1 then
+    return nil
+  end
+  return self.dataTb[idx]
+end
+
 return Stack

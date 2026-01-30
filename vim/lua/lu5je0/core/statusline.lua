@@ -107,7 +107,7 @@ local function get_highlight(color)
   return "%#StatusLine#"  -- 默认返回普通状态栏 highlight
 end
 
-local special_filetypes = { 'NvimTree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
+local special_filetypes = { 'NvimTree', 'neo-tree', 'vista', 'dbui', 'packer', 'fern', 'diff', 'undotree', 'minimap', 'toggleterm' }
 
 local conditions = {
   hide_in_width = function(win_id, max)
