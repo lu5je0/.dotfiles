@@ -191,7 +191,7 @@ function M.setup()
     vim.cmd('ScrollViewEnable')
     vim.defer_fn(function()
       vim.cmd('ScrollViewDisable')
-    end, 3000)
+    end, 5000)
   end, { nowait = true })
   -- M.begin_timer('ScrollViewEnable', 'ScrollViewDisable', 'ScrollViewRefresh')
 end
