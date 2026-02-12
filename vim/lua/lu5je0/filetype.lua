@@ -5,6 +5,7 @@ vim.filetype.add {
     zip = 'zip',
     plantuml = 'plantuml',
     sh = 'bash',
+    arthas = 'arthas',
   },
   filename = {
     ['.bashrc'] = 'bash',
