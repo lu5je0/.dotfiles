@@ -1,0 +1,138 @@
+#compdef socat
+
+_socat() {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  # 常见地址类型（不带后缀，由 compadd 添加）
+  local address_types=(
+    'TCP' 'TCP-LISTEN'
+    'UDP' 'UDP-LISTEN'
+    'UDP4' 'UDP6'
+    'UNIX-CONNECT' 'UNIX-LISTEN'
+    'EXEC' 'SYSTEM'
+    'PIPE' 'PTY'
+    'OPEN' 'OPENSSL' 'OPENSSL-LISTEN'
+    'GOPEN' 'SOCKS4' 'SOCKS4A'
+    'PROXY' 'INTERFACE'
+    'IP4-SENDTO' 'IP6-SENDTO'
+    'ICMP4-SENDTO' 'ICMP6-SENDTO'
+    'TUN' 'TAP'
+    'VSOCK-CONNECT' 'VSOCK-LISTEN'
+    'SCTP' 'SCTP-LISTEN'
+    'READLINE' 'TERMIOS'
+    'FILE' 'FD'
+    'STDIN' 'STDOUT' 'STDERR'
+  )
+
+  # 常用选项
+  local common_options=(
+    '-h[show help]'
+    '-V[show version]'
+    '-d[increase verbosity]'
+    '-D[show timestamps]'
+    '-s[be silent]'
+    '-t[timeout for shutdown]'
+    '-T[total timeout]'
+    '-u[transfer mode: unidirectional left to right]'
+    '-U[transfer mode: unidirectional right to left]'
+    '-i[ignore SIGINT]'
+    '-E[exit on first transfer error]'
+    '-f[foreground]'
+    '-l[name prefix for log messages]'
+    '-c[command to execute after fork]'
+    '-b[buffer size]'
+    '-w[wait before retry]'
+    '-W[wait before retry with max count]'
+    '-4[prefer IPv4]'
+    '-6[prefer IPv6]'
+    '-S[use SO_REUSEADDR]'
+    '-g[use SO_REUSEPORT]'
+    '-k[do not fork]'
+    '-L[listen with backlog]'
+    '-p[pidfile]'
+  )
+
+  _arguments -C \
+    $common_options \
+    '1: :->address1' \
+    '2: :->address2' \
+    '*: :->rest'
+
+  case $state in
+    address1|address2)
+      local addr_type="${${line[CURRENT]%%:*}:-}"
+      
+      # 如果当前输入已经包含冒号，则补全参数
+      if [[ $line[CURRENT] == *:* ]]; then
+        _socat_address_params "$addr_type"
+      else
+        # 否则补全地址类型，并自动添加冒号
+        compadd -S ':' -a address_types
+      fi
+      ;;
+    rest)
+      _message 'additional options or addresses'
+      ;;
+  esac
+}
+
+# 根据地址类型补全参数
+_socat_address_params() {
+  local addr_type="$1"
+  
+  case $addr_type in
+    TCP*|UDP*|OPENSSL*)
+      _message 'host:port'
+      ;;
+    UNIX*)
+      _files -g '*.sock'
+      ;;
+    EXEC*|SYSTEM*)
+      _message 'command'
+      ;;
+    OPEN*|FILE*|GOPEN*)
+      _files
+      ;;
+    PTY*)
+      _message 'pty options'
+      ;;
+    FD*)
+      _message 'file descriptor number'
+      ;;
+    *)
+      _message 'address parameters'
+      ;;
+  esac
+}
+
+# 地址选项补全（用于地址类型后的选项，如 TCP-LISTEN:8080,fork）
+_socat_address_options() {
+  local options=(
+    'bind=source address'
+    'broadcast=enable broadcast'
+    'connect-timeout=connection timeout'
+    'forever=retry forever'
+    'fork=fork after connection'
+    'interface=network interface'
+    'ip4-src=IPv4 source address'
+    'ip6-src=IPv6 source address'
+    'keepalive=enable keepalive'
+    'listen-backlog=listen backlog'
+    'max-connections=max connections'
+    'reuseaddr=reuse address'
+    'reuseport=reuse port'
+    'rcvbuf=receive buffer size'
+    'sndbuf=send buffer size'
+    'sourceport=source port'
+    'tcp-wrap=TCP wrapper'
+    'timeout=timeout'
+    'ttl=TTL value'
+    'tclass=traffic class'
+  )
+  _describe -t options 'address options' options
+}
+
+# 初始化
+_socat "$@"
+
