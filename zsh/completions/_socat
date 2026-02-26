@@ -1,75 +1,53 @@
 #compdef socat
+# Zsh completion for socat
+# - Completes address operands with TYPE:...
+# - Completes comma options after TYPE:..., e.g. TCP-LISTEN:8080,fork,reuseaddr
+# - Shows completion as: "fork  accept multiple connections" (name first, then description)
+# - Fixes "prefix duplicated" issue
+# - Works for: socat TCP-LISTEN:8080, <TAB>
 
 _socat() {
   local curcontext="$curcontext" state line
   typeset -A opt_args
 
-  # 常见地址类型（不带后缀，由 compadd 添加）
-  local address_types=(
-    'TCP' 'TCP-LISTEN'
-    'UDP' 'UDP-LISTEN'
-    'UDP4' 'UDP6'
-    'UNIX-CONNECT' 'UNIX-LISTEN'
-    'EXEC' 'SYSTEM'
-    'PIPE' 'PTY'
-    'OPEN' 'OPENSSL' 'OPENSSL-LISTEN'
-    'GOPEN' 'SOCKS4' 'SOCKS4A'
-    'PROXY' 'INTERFACE'
-    'IP4-SENDTO' 'IP6-SENDTO'
-    'ICMP4-SENDTO' 'ICMP6-SENDTO'
-    'TUN' 'TAP'
-    'VSOCK-CONNECT' 'VSOCK-LISTEN'
-    'SCTP' 'SCTP-LISTEN'
-    'READLINE' 'TERMIOS'
-    'FILE' 'FD'
-    'STDIN' 'STDOUT' 'STDERR'
-  )
-
-  # 常用选项
-  local common_options=(
+  local -a common_options
+  common_options=(
     '-h[show help]'
     '-V[show version]'
-    '-d[increase verbosity]'
+    '-d[increase verbosity]::level:'
     '-D[show timestamps]'
     '-s[be silent]'
-    '-t[timeout for shutdown]'
-    '-T[total timeout]'
-    '-u[transfer mode: unidirectional left to right]'
-    '-U[transfer mode: unidirectional right to left]'
+    '-t[timeout for shutdown]:seconds:'
+    '-T[total timeout]:seconds:'
+    '-u[unidirectional left->right]'
+    '-U[unidirectional right->left]'
     '-i[ignore SIGINT]'
     '-E[exit on first transfer error]'
     '-f[foreground]'
-    '-l[name prefix for log messages]'
-    '-c[command to execute after fork]'
-    '-b[buffer size]'
-    '-w[wait before retry]'
-    '-W[wait before retry with max count]'
+    '-l[log prefix]:prefix:'
+    '-c[command after fork]:command:'
+    '-b[buffer size]:bytes:'
+    '-w[wait before retry]:seconds:'
+    '-W[wait before retry (max count)]:count:'
     '-4[prefer IPv4]'
     '-6[prefer IPv6]'
-    '-S[use SO_REUSEADDR]'
-    '-g[use SO_REUSEPORT]'
+    '-S[SO_REUSEADDR]'
+    '-g[SO_REUSEPORT]'
     '-k[do not fork]'
-    '-L[listen with backlog]'
-    '-p[pidfile]'
+    '-L[listen backlog]:backlog:'
+    '-p[pidfile]:file:_files'
+    '-v[verbose]'
   )
 
   _arguments -C \
     $common_options \
-    '1: :->address1' \
-    '2: :->address2' \
-    '*: :->rest'
+    '1:address 1:->address1' \
+    '2:address 2:->address2' \
+    '*:more args:->rest'
 
   case $state in
     address1|address2)
-      local addr_type="${${line[CURRENT]%%:*}:-}"
-      
-      # 如果当前输入已经包含冒号，则补全参数
-      if [[ $line[CURRENT] == *:* ]]; then
-        _socat_address_params "$addr_type"
-      else
-        # 否则补全地址类型，并自动添加冒号
-        compadd -S ':' -a address_types
-      fi
+      _socat_complete_address
       ;;
     rest)
       _message 'additional options or addresses'
@@ -77,62 +55,214 @@ _socat() {
   esac
 }
 
-# 根据地址类型补全参数
-_socat_address_params() {
+_socat_complete_address() {
+  local w="${words[CURRENT]}"
+  [[ "$w" == -* ]] && return 0
+
+  # complete TYPE:
+  if [[ "$w" != *:* ]]; then
+    _socat_complete_address_type
+    return 0
+  fi
+
+  local addr_type="${w%%:*}"
+  local after_colon="${w#*:}"
+
+  # if comma exists -> complete comma options/value
+  if [[ "$after_colon" == *,* ]]; then
+    _socat_complete_address_option "$addr_type"
+    return 0
+  fi
+
+  _socat_complete_address_main_param "$addr_type" "$after_colon"
+}
+
+_socat_complete_address_type() {
+  local -a address_types
+  address_types=(
+    TCP TCP-LISTEN TCP4 TCP4-LISTEN TCP6 TCP6-LISTEN
+    UDP UDP-LISTEN UDP4 UDP4-LISTEN UDP6 UDP6-LISTEN
+    UDP-RECVFROM UDP-RECV UDP-SENDTO
+    UNIX-CONNECT UNIX-LISTEN UNIX
+    EXEC SYSTEM
+    PIPE PTY
+    OPEN FILE GOPEN
+    OPENSSL OPENSSL-LISTEN
+    SOCKS4 SOCKS4A PROXY
+    INTERFACE
+    IP4-SENDTO IP6-SENDTO
+    ICMP4-SENDTO ICMP6-SENDTO
+    TUN TAP
+    VSOCK-CONNECT VSOCK-LISTEN
+    SCTP SCTP-LISTEN
+    READLINE TERMIOS
+    FD
+    STDIN STDOUT STDERR
+  )
+  compadd -S ':' -a address_types
+}
+
+_socat_complete_address_main_param() {
   local addr_type="$1"
-  
-  case $addr_type in
-    TCP*|UDP*|OPENSSL*)
-      _message 'host:port'
+  local after_colon="$2"
+
+  case "$addr_type" in
+    TCP*|UDP*|SCTP*|OPENSSL*)
+      if [[ -z "$after_colon" ]]; then
+        _message 'host:port (or :port)'
+        return 0
+      fi
+
+      if [[ "$after_colon" == :* || "$after_colon" == *: ]]; then
+        _socat_complete_port
+        return 0
+      fi
+
+      if [[ "$after_colon" == *:* ]]; then
+        _socat_complete_port
+      else
+        _hosts
+      fi
       ;;
-    UNIX*)
+
+    UNIX* )
       _files -g '*.sock'
       ;;
-    EXEC*|SYSTEM*)
-      _message 'command'
-      ;;
-    OPEN*|FILE*|GOPEN*)
+
+    FILE|OPEN|GOPEN )
       _files
       ;;
-    PTY*)
-      _message 'pty options'
+
+    EXEC|SYSTEM )
+      _message 'command (quote it if needed)'
       ;;
-    FD*)
+
+    PIPE )
+      _message 'pipe name or - for stdin/stdout'
+      ;;
+
+    PTY )
+      _message 'pty options (usually via ,...)'
+      ;;
+
+    FD )
       _message 'file descriptor number'
       ;;
-    *)
+
+    STDIN|STDOUT|STDERR )
+      _message 'no parameters'
+      ;;
+
+    INTERFACE )
+      _net_interfaces
+      ;;
+
+    * )
       _message 'address parameters'
       ;;
   esac
 }
 
-# 地址选项补全（用于地址类型后的选项，如 TCP-LISTEN:8080,fork）
-_socat_address_options() {
-  local options=(
-    'bind=source address'
-    'broadcast=enable broadcast'
-    'connect-timeout=connection timeout'
-    'forever=retry forever'
-    'fork=fork after connection'
-    'interface=network interface'
-    'ip4-src=IPv4 source address'
-    'ip6-src=IPv6 source address'
-    'keepalive=enable keepalive'
-    'listen-backlog=listen backlog'
-    'max-connections=max connections'
-    'reuseaddr=reuse address'
-    'reuseport=reuse port'
-    'rcvbuf=receive buffer size'
-    'sndbuf=send buffer size'
-    'sourceport=source port'
-    'tcp-wrap=TCP wrapper'
-    'timeout=timeout'
-    'ttl=TTL value'
-    'tclass=traffic class'
-  )
-  _describe -t options 'address options' options
+# Comma options completion:
+# - Make matching happen ONLY on the part after last comma
+# - Keep prefix automatically (avoid duplicate prefix)
+_socat_complete_address_option() {
+  local w="${words[CURRENT]}"
+  local addr_type="$1"
+
+  local prefix="${w%,*},"
+  compset -P "$prefix"   # now completion matches only what's after last comma
+
+  local seg="${words[CURRENT]}"
+
+  # Complete value if key=value
+  if [[ "$seg" == *=* ]]; then
+    local key="${seg%%=*}"
+    case "$key" in
+      (bind|ip4-src|ip6-src)
+        _message 'ip address'
+        ;;
+      (interface)
+        _net_interfaces
+        ;;
+      (rcvbuf|sndbuf|listen-backlog|max-connections|sourceport|ttl|tclass|timeout|connect-timeout)
+        _message 'number'
+        ;;
+      (cert|key|cafile|capath)
+        _files
+        ;;
+      (*)
+        _message 'value'
+        ;;
+    esac
+    return 0
+  fi
+
+  _socat_address_options "$addr_type"
 }
 
-# 初始化
-_socat "$@"
+# Show: "fork  accept multiple connections"
+# Insert: "fork"
+_socat_address_options() {
+  local addr_type="$1"
 
+  local -a opts
+  opts=(
+    'fork:accept multiple connections'
+    'reuseaddr:allow reuse of local addresses'
+    'reuseport:allow reuseport'
+    'keepalive:enable TCP keepalive'
+    'nodelay:disable Nagle'
+    'crlf:map LF<->CRLF'
+    'ignoreeof:ignore EOF'
+    'nonblock:use non-blocking I/O'
+    'so-broadcast:enable broadcast'
+    'rcvbuf=:receive buffer size'
+    'sndbuf=:send buffer size'
+    'timeout=:I/O timeout'
+    'connect-timeout=:connect timeout'
+    'listen-backlog=:listen backlog'
+    'max-connections=:max connections'
+    'bind=:bind to local address'
+    'sourceport=:source port'
+    'interface=:bind to interface'
+    'ip4-src=:IPv4 source'
+    'ip6-src=:IPv6 source'
+    'ttl=:TTL'
+    'tclass=:traffic class'
+  )
+
+  if [[ "$addr_type" == OPENSSL* ]]; then
+    opts+=(
+      'verify=:verify peer'
+      'cert=:certificate file'
+      'key=:private key file'
+      'cafile=:CA file'
+      'capath=:CA directory'
+      'servername=:SNI servername'
+    )
+  fi
+
+  _describe -t socat-addr-opts 'address options' opts
+}
+
+_socat_complete_port() {
+  local -a ports
+  ports=(
+    '80:http'
+    '443:https'
+    '22:ssh'
+    '53:dns'
+    '123:ntp'
+    '25:smtp'
+    '110:pop3'
+    '143:imap'
+    '587:smtp-submission'
+    '993:imaps'
+    '995:pop3s'
+    '8080:http-alt'
+  )
+  _describe -t ports 'port' ports
+}
+
+_socat "$@"
