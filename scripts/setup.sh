@@ -1,95 +1,77 @@
 #!/bin/bash
 
-source ~/.dotfiles/zsh/functions.sh
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+SETUP_DIR="$DOTFILES_DIR/scripts/setup.d"
+MODULE_DIR="$SETUP_DIR/modules"
 
-q-ask "Enable proxy(http://127.0.0.1:1080) before setup? " && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
+source "$DOTFILES_DIR/zsh/functions.sh"
 
-if [[ ! -d ~/.config ]]; then
-  mkdir -p ~/.config
-fi
+export DOTFILES_DIR
 
-if [ "$(uname)" = "Linux" ]; then
-  if [ -f /etc/lsb-release ]; then
-    # q-ask "Add add-apt-repository?" && sh ~/.dotfiles/scripts/apt-ppa.sh
-    q-ask "Install requires(apt)?" && sh ~/.dotfiles/scripts/apt-requirements.sh
-    # q-ask "Update nodejs?" && curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt install -y nodejs
-  fi
-  q-ask "Config pip3 ali index-url?" && sh ~/.dotfiles/scripts/pip3-ali.sh
-fi
+# q-ask "Enable proxy(http://127.0.0.1:1080) before setup? " && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
 
-if [[ -f ~/.ssh/config ]]; then
-  mkdir -p ~/.ssh/config
-else
-  ln -s ~/.dotfiles/ssh/config ~/.ssh/config
-fi
+mkdir -p "$HOME/.config"
+mkdir -p "$HOME/.ssh"
 
-q-ask "download stardict?" && sh ~/.dotfiles/scripts/download-stardict.sh
-
-q-ask "ln -s ~/.dotfiles/git ~/.config/git?" && ln -s ~/.dotfiles/git ~/.config/git
-
-q-ask "ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon?" && ln -s ~/.dotfiles/.hammerspoon ~/.hammerspoon
-
-q-ask "ln -s ~/.dotfiles/termux ~/.config/termux?" && ln -s ~/.dotfiles/termux ~/.config/termux
-
-q-ask "copy maven config?" && if [[ ! -d ~/.m2 ]]; then mkdir ~/.m2; fi && cp -i ~/.dotfiles/m2/settings.xml ~/.m2/settings.xml
-
-ln -s ~/.dotfiles/ideavimrc ~/.ideavimrc
-ln -s ~/.dotfiles/zshrc ~/.zshrc
-
-if [[ ! -d ~/.cheat ]]; then
-  ln -s ~/.dotfiles/cheat ~/.cheat
-fi
-
+# 识别mac
 if [ "$(uname)" = "Darwin" ]; then
-  if [[ -f ~/.mac ]]; then
-    touch ~/.mac
+  if [[ ! -f "$HOME/.mac" ]]; then
+    touch "$HOME/.mac"
   fi
 fi
 
-if [[ ! -d ~/.local/bin ]]; then
-  mkdir -p ~/.local/bin
+if [ -d "$MODULE_DIR" ]; then
+  modules=("$MODULE_DIR"/*.sh)
+  if [ ! -e "${modules[0]}" ]; then
+    modules=()
+  fi
+
+  if [ "${#modules[@]}" -gt 0 ]; then
+    if command -v whiptail >/dev/null 2>&1; then
+      ui_cmd="whiptail"
+    elif command -v dialog >/dev/null 2>&1; then
+      ui_cmd="dialog"
+    else
+      echo "whiptail/dialog not found. Please install one to use TUI checklist."
+      exit 1
+    fi
+
+    options=()
+    for module_file in "${modules[@]}"; do
+      desc="$(sed -n 's/^# DESC: //p' "$module_file" | head -n1)"
+      if [[ -z "$desc" ]]; then
+        desc="$(basename "$module_file")"
+      fi
+      options+=("$(basename "$module_file")" "$desc" "OFF")
+    done
+
+    selection=$("$ui_cmd" --title "Dotfiles Setup" --checklist "Select modules to run:" 20 78 12 "${options[@]}" 3>&1 1>&2 2>&3)
+    exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+      exit 0
+    fi
+
+    selection="${selection//\"/}"
+    read -r -a selected <<< "$selection"
+
+    contains_selected() {
+      local tag="$1"
+      local s
+      for s in "${selected[@]}"; do
+        if [[ "$s" == "$tag" ]]; then
+          return 0
+        fi
+      done
+      return 1
+    }
+
+    for module_file in "${modules[@]}"; do
+      tag="$(basename "$module_file")"
+      if contains_selected "$tag"; then
+        bash "$module_file"
+      fi
+    done
+  fi
 fi
-if [[ ! -f ~/.local/bin/solid ]]; then
-  ln -s ~/.dotfiles/bin ~/.local/bin/solid
-fi
 
-if [[ ! -d ~/.config/pip ]]; then
-  ln -s ~/.dotfiles/pip ~/.config/pip
-fi
-
-if [[ ! -d ~/.config/karabiner ]]; then
-  ln -s ~/.dotfiles/karabiner ~/.config/karabiner
-fi
-
-# tmux
-# if [[ ! -d ~/.tmux/plugins/tpm ]]; then
-#     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-# fi
-if [[ ! -d ~/.config/tmux ]]; then
-  ln -s ~/.dotfiles/tmux ~/.config/tmux
-fi
-
-# wezterm
-# if [[ ! -d ~/.config/wezterm ]]; then
-#     ln -s ~/.dotfiles/wezterm ~/.config/wezterm
-# fi
-
-# kitty
-if [[ ! -d ~/.config/kitty ]]; then
-  ln -s ~/.dotfiles/kitty ~/.config/kitty
-fi
-
-# alacritty
-# if [[ ! -d ~/.config/alacritty ]]; then
-#   ln -s ~/.dotfiles/alacritty/mac/alacritty.yml ~/.config/alacritty/alacritty.yml
-# fi
-
-# mkdir -p ~/.aria2
-# ln -s ~/.dotfiles/aria2/aria2.conf ~/.aria2/aria2.conf
-
-# nvim
-if [[ ! -d ~/.config/nvim ]]; then
-  q-ask "config neovim?" && ln -s ~/.dotfiles/vim ~/.config/nvim
-fi
-
-# q-ask "Install pip3 requirements?" && sh ~/.dotfiles/scripts/pip3-requirements.sh
+# q-ask "Install pip3 requirements?" && sh "$DOTFILES_DIR/scripts/pip3-requirements.sh"
