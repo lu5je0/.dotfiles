@@ -255,3 +255,7 @@ vim.api.nvim_create_user_command(
   end,
   { nargs = 0, desc = "转换并编辑光标下的Unix时间戳" }
 )
+
+vim.keymap.set('n', '<Plug>(TimestampModify)', function()
+  require('lu5je0.misc.timestamp').modify_timestamp()
+end, { silent = true })
