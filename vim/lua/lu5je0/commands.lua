@@ -246,3 +246,11 @@ vim.api.nvim_create_user_command('Escape', function(opts)
   -- 将转义后的内容设置回当前行
   vim.api.nvim_set_current_line(escaped_line)
 end, { nargs = '*' })
+
+vim.api.nvim_create_user_command('ClearUndo', function()
+  local old_undolevels = vim.o.undolevels
+  vim.o.undolevels = -1
+  local keys = vim.api.nvim_replace_termcodes('a<BS><Esc>', true, false, true)
+  vim.api.nvim_feedkeys(keys, 'nx', false)
+  vim.o.undolevels = old_undolevels
+end, { nargs = 0 })

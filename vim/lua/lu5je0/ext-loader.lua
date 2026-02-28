@@ -312,9 +312,15 @@ lazy_load({
 lazy_load({
   config = function()
     require('lu5je0.misc.set-operation').setup()
-    print('loaded')
   end,
   cmd = { 'SetOperation' }
+})
+
+lazy_load({
+  config = function()
+    require('lu5je0.misc.line-tools').setup()
+  end,
+  cmd = { 'KeepLines', 'DelLines', 'KeepMatchs' }
 })
 
 lazy_load({

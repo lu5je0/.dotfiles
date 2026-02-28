@@ -31,6 +31,5 @@ end
 
 -- 懒加载
 vim.defer_fn(function()
-  vim.cmd('runtime functions.vim')
   vim.cmd('runtime plugin/matchparen.vim')
 end, 100)
