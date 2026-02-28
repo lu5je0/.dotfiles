@@ -97,10 +97,6 @@ vim.schedule(function()
   set_map('x', { '<leader>/', '<space>/' }, '<Esc>/\\%V', {})
   
   
-  set_map('n', '<leader>m', function()
-    require('lu5je0.ext.language-detect').delect_and_set_filetype()
-  end)
-  
   set_map('n', 'zA', function()
     local line = vim.api.nvim_win_get_cursor(0)[1]
     local end_line = vim.fn.foldclosedend(line)
