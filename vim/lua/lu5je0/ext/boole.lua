@@ -1,145 +1,132 @@
 local M = {}
 
-local ori_v_count = 0
-local replace_map = {
-  increment = {},
-  decrement = {},
+local DIRECTIONS = {
+  increment = 'increment',
+  decrement = 'decrement',
+}
+
+local DEFAULT_CYCLES = {
+  { values = { 'true', 'false' }, allow_caps = true },
+  { values = { 'yes', 'no' }, allow_caps = true },
+  { values = { 'on', 'off' }, allow_caps = true },
+  { values = { 'enable', 'disable' }, allow_caps = true },
+  { values = { 'enabled', 'disabled' }, allow_caps = true },
+  { values = { 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' }, allow_caps = true },
+  { values = { 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' }, allow_caps = true },
+  {
+    values = {
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
+    },
+    allow_caps = true,
+  },
+}
+
+local state = {
+  count = 0,
+  replace_map = {
+    increment = {},
+    decrement = {},
+  },
 }
 
 local function reset_replace_map()
-  replace_map = {
+  state.replace_map = {
     increment = {},
     decrement = {},
   }
 end
 
-function M.generate(loop_list, allow_caps)
-  for i = 1, #loop_list do
-    local current = loop_list[i]
-    local next = loop_list[i + 1] or loop_list[1]
-
-    replace_map.increment[current] = next
-    replace_map.decrement[next] = current
-
-    if allow_caps then
-      local capitalized_current = string.gsub(current, "^%l", string.upper)
-      local capitalized_next = string.gsub(next, "^%l", string.upper)
-      local all_caps_current = string.upper(current)
-      local all_caps_next = string.upper(next)
-
-      replace_map.increment[capitalized_current] = capitalized_next
-      replace_map.decrement[capitalized_next] = capitalized_current
-      replace_map.increment[all_caps_current] = all_caps_next
-      replace_map.decrement[all_caps_next] = all_caps_current
-    end
-  end
+local function capitalize_first(value)
+  return value:gsub('^%l', string.upper)
 end
 
-local function setup_default_cycles()
-  local letters = {
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-  }
-
-  for _, letter in ipairs(letters) do
-    M.generate({
-      letter .. 0,
-      letter .. 1,
-      letter .. 2,
-      letter .. 3,
-      letter .. 4,
-      letter .. 5,
-      letter .. 6,
-      letter .. 7,
-      letter .. 8,
-      letter .. 9,
-    }, true)
+local function get_map(direction)
+  if direction == DIRECTIONS.decrement then
+    return state.replace_map.decrement
   end
-
-  M.generate({ 'true', 'false' }, true)
-  M.generate({ 'yes', 'no' }, true)
-  M.generate({ 'on', 'off' }, true)
-  M.generate({ 'enable', 'disable' }, true)
-  M.generate({ 'enabled', 'disabled' }, true)
-
-  M.generate({
-    'Matins',
-    'Lauds',
-    'Prime',
-    'Terce',
-    'Sext',
-    'Nones',
-    'Vespers',
-    'Compline',
-    'Vigil',
-  })
-
-  M.generate({ 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' }, true)
-  M.generate({ 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' }, true)
-
-  M.generate({
-    'january',
-    'february',
-    'march',
-    'april',
-    'may',
-    'june',
-    'july',
-    'august',
-    'september',
-    'october',
-    'november',
-    'december',
-  }, true)
+  return state.replace_map.increment
 end
 
-local function check_postion_word(words, target_position, target_word)
-  local i, j = string.find(words, "%S+")
+local function is_line_end(line, col0)
+  return (col0 + 1) == vim.fn.strlen(line)
+end
+
+local function first_char_under_cursor(line, col0)
+  return line:sub(col0 + 1, col0 + 1)
+end
+
+local function move_next_word()
+  vim.cmd('normal! w')
+end
+
+local function move_prev_word()
+  vim.cmd('normal! b')
+end
+
+local function reset_cursor(pos)
+  vim.api.nvim_win_set_cursor(0, pos)
+end
+
+local function consume_count()
+  local count = state.count
+  state.count = 0
+  return count
+end
+
+local function word_contains_position_word(words, target_position, target_word)
+  local i, j = words:find('%S+')
   local position = 0
 
   if i == 1 then
     position = j
     if position > target_position then
-      return string.find(words:sub(i, j), target_word)
+      return words:sub(i, j):find(target_word)
     end
   end
 
-  for word in string.gmatch(words, "%s+%S+") do
-    position = position + string.len(word)
-    local s_word = word:gsub("%s", "")
-    if position - string.len(s_word) >= target_position then
+  for word in words:gmatch('%s+%S+') do
+    position = position + #word
+    local trimmed_word = word:gsub('%s', '')
+    if position - #trimmed_word >= target_position then
       return false
     end
     if position > target_position then
-      return string.find(s_word, target_word)
+      return trimmed_word:find(target_word)
     end
   end
 
   return false
 end
 
-local function number_exist_in_word(line, current_column)
-  local space_after_cursor = string.find(line:sub(current_column + 1, string.len(line)), " ")
+local function has_number_after_cursor_in_word(line, col0)
+  local segment = line:sub(col0 + 1, #line)
+  local space_after_cursor = segment:find(' ')
 
   if space_after_cursor and space_after_cursor > 1 then
-    local word_after_cursor = line:sub(current_column + 1, current_column + space_after_cursor)
-    if string.match(word_after_cursor, "%d") then
-      return true
-    end
-  elseif space_after_cursor == nil then
-    local last_string = line:sub(current_column + 1, string.len(line))
-    if string.match(last_string, "%d") then
-      return true
-    end
+    return line:sub(col0 + 1, col0 + space_after_cursor):match('%d') ~= nil
+  end
+  if space_after_cursor == nil then
+    return line:sub(col0 + 1, #line):match('%d') ~= nil
   end
 
   return false
 end
 
-local function get_hyphen_separated_numeric_segment(line, current_column)
-  local col = current_column + 1
+local function get_hyphen_separated_numeric_segment(line, col0)
+  local col = col0 + 1
   local ch = line:sub(col, col)
-  if ch == '' or not ch:match('%d') then
+  if ch == '' or ch:match('%d') == nil then
     return nil
   end
 
@@ -169,7 +156,7 @@ local function apply_increment_on_segment(line, start_col, end_col, direction, c
   end
 
   local delta = count > 0 and count or 1
-  local new_num = direction == 'decrement' and (old_num - delta) or (old_num + delta)
+  local new_num = direction == DIRECTIONS.decrement and (old_num - delta) or (old_num + delta)
 
   local new = tostring(new_num)
   if old:sub(1, 1) == '0' and old_num >= 0 and new_num >= 0 and #new < #old then
@@ -179,118 +166,175 @@ local function apply_increment_on_segment(line, start_col, end_col, direction, c
   return line:sub(1, start_col - 1) .. new .. line:sub(end_col + 1)
 end
 
-M.run = function(direction)
-  local start_position = vim.api.nvim_win_get_cursor(0)
-  local start_line = vim.api.nvim_get_current_line()
-  local start_column = start_position[2]
+local function apply_vim_default_increment(direction, count)
+  if count ~= nil and count > 0 then
+    if direction == DIRECTIONS.increment then
+      return vim.cmd('normal!' .. count .. '\001')
+    end
+    if direction == DIRECTIONS.decrement then
+      return vim.cmd('normal!' .. count .. '\024')
+    end
+    return
+  end
 
-  local function tryMatch(last_position)
+  if direction == DIRECTIONS.increment then
+    return vim.cmd('normal!' .. '\001')
+  end
+  if direction == DIRECTIONS.decrement then
+    return vim.cmd('normal!' .. '\024')
+  end
+end
+
+local function next_cycle_value(direction, current, count)
+  local map = get_map(direction)
+  local next_value = map[current]
+  if not next_value then
+    return nil
+  end
+
+  local steps = count > 0 and count or 1
+  for _ = 1, steps - 1 do
+    next_value = map[next_value]
+    if not next_value then
+      return nil
+    end
+  end
+
+  return next_value
+end
+
+local function replace_current_word(value)
+  vim.cmd('normal! "_ciw' .. value)
+  move_prev_word()
+end
+
+local function try_cycle_replace(direction, start_position)
+  local last_position = start_position
+
+  while true do
     local line = vim.api.nvim_get_current_line()
     local cword = vim.fn.expand('<cword>')
     local current_position = vim.api.nvim_win_get_cursor(0)
     local current_column = current_position[2]
 
-    if vim.v.count ~= 0 then
-      ori_v_count = vim.v.count
-    end
-
-    if tonumber(cword) ~= nil or number_exist_in_word(line, current_column) then
+    if tonumber(cword) ~= nil or has_number_after_cursor_in_word(line, current_column) then
       return false
     end
 
-    if string.find(line:sub(current_column + 1, current_column + 1), "[^][a-zA-Z0-9]") then
-      if (current_column + 1) == vim.fn.strlen(line) then
-        vim.api.nvim_win_set_cursor(0, start_position)
+    local cursor_char = first_char_under_cursor(line, current_column)
+    if cursor_char:find('[^][a-zA-Z0-9]') then
+      if is_line_end(line, current_column) then
+        reset_cursor(start_position)
         return false
       end
-      vim.cmd('normal! w')
-      return tryMatch(current_position)
-    end
-
-    if last_position[1] < current_position[1] then
-      vim.api.nvim_win_set_cursor(0, start_position)
+      move_next_word()
+      last_position = current_position
+    elseif last_position[1] < current_position[1] then
+      reset_cursor(start_position)
       return false
-    end
-
-    local match = direction == 'decrement'
-      and replace_map.decrement[cword]
-      or replace_map.increment[cword]
-
-    if match then
-      if cword:sub(1, 1) ~= line:sub(current_column + 1, current_column + 1) then
-        if check_postion_word(line, current_column, cword) then
-          vim.cmd('normal! b')
+    else
+      local match = get_map(direction)[cword]
+      if match then
+        if cword:sub(1, 1) ~= cursor_char then
+          if word_contains_position_word(line, current_column, cword) then
+            move_prev_word()
+          else
+            move_next_word()
+          end
+          last_position = current_position
+        elseif is_line_end(line, current_column) then
+          reset_cursor(start_position)
+          return false
         else
-          vim.cmd('normal! w')
+          local replacement = next_cycle_value(direction, cword, state.count)
+          if not replacement then
+            return false
+          end
+          consume_count()
+          replace_current_word(replacement)
+          return true
         end
-        return tryMatch(current_position)
-      elseif (current_column + 1) == vim.fn.strlen(line) then
-        vim.api.nvim_win_set_cursor(0, start_position)
-        return false
-      end
-
-      for _ = 0, ori_v_count - 1 do
-        match = direction == 'decrement'
-          and replace_map.decrement[cword]
-          or replace_map.increment[cword]
-        if match then
-          cword = match
-        else
+      else
+        if is_line_end(line, current_column) then
+          reset_cursor(start_position)
           return false
         end
-      end
-
-      ori_v_count = 0
-      vim.cmd('normal! "_ciw' .. match)
-      vim.cmd('normal! b')
-      return true
-    else
-      if (current_column + 1) == vim.fn.strlen(line) then
-        vim.api.nvim_win_set_cursor(0, start_position)
-        return false
-      end
-      vim.cmd('normal! w')
-      return tryMatch(current_position)
-    end
-  end
-
-  if not tryMatch(start_position) then
-    -- In values like 2026-02-24, Vim treats "-24" as a negative number for <C-a>/<C-x>.
-    -- Handle the numeric segment explicitly as a positive value.
-    local seg_start, seg_end = get_hyphen_separated_numeric_segment(start_line, start_column)
-    if seg_start ~= nil and seg_end ~= nil then
-      local target_v_count = ori_v_count
-      ori_v_count = 0
-      local new_line = apply_increment_on_segment(start_line, seg_start, seg_end, direction, target_v_count)
-      if new_line ~= nil then
-        vim.api.nvim_set_current_line(new_line)
-        local new_seg_end = seg_start
-        while new_line:sub(new_seg_end + 1, new_seg_end + 1):match('%d') do
-          new_seg_end = new_seg_end + 1
-        end
-        vim.api.nvim_win_set_cursor(0, { start_position[1], new_seg_end - 1 })
-      end
-      return
-    end
-
-    local target_v_count = ori_v_count
-    ori_v_count = 0
-    if target_v_count ~= nil and target_v_count > 0 then
-      if direction == 'increment' then
-        return vim.cmd('normal!' .. target_v_count .. '\001')
-      end
-      if direction == 'decrement' then
-        return vim.cmd('normal!' .. target_v_count .. '\024')
-      end
-    else
-      if direction == 'increment' then
-        return vim.cmd('normal!' .. '\001')
-      end
-      if direction == 'decrement' then
-        return vim.cmd('normal!' .. '\024')
+        move_next_word()
+        last_position = current_position
       end
     end
   end
+end
+
+function M.generate(loop_list, allow_caps)
+  for i = 1, #loop_list do
+    local current = loop_list[i]
+    local next_value = loop_list[i + 1] or loop_list[1]
+
+    state.replace_map.increment[current] = next_value
+    state.replace_map.decrement[next_value] = current
+
+    if allow_caps then
+      local title_current = capitalize_first(current)
+      local title_next = capitalize_first(next_value)
+      local upper_current = current:upper()
+      local upper_next = next_value:upper()
+
+      state.replace_map.increment[title_current] = title_next
+      state.replace_map.decrement[title_next] = title_current
+      state.replace_map.increment[upper_current] = upper_next
+      state.replace_map.decrement[upper_next] = upper_current
+    end
+  end
+end
+
+local function setup_default_cycles()
+  for byte = string.byte('a'), string.byte('z') do
+    local letter = string.char(byte)
+    local loop = {}
+    for n = 0, 9 do
+      loop[#loop + 1] = letter .. n
+    end
+    M.generate(loop, true)
+  end
+
+  for _, cycle in ipairs(DEFAULT_CYCLES) do
+    M.generate(cycle.values, cycle.allow_caps)
+  end
+end
+
+function M.run(direction)
+  local start_position = vim.api.nvim_win_get_cursor(0)
+  local start_line = vim.api.nvim_get_current_line()
+  local start_column = start_position[2]
+
+  if direction ~= DIRECTIONS.increment and direction ~= DIRECTIONS.decrement then
+    return
+  end
+  state.count = vim.v.count ~= 0 and vim.v.count or 0
+
+  if try_cycle_replace(direction, start_position) then
+    return
+  end
+
+  -- For values like 2026-02-24, Vim treats "-24" as negative on <C-a>/<C-x>.
+  -- Handle the numeric segment after "-" as positive.
+  local seg_start, seg_end = get_hyphen_separated_numeric_segment(start_line, start_column)
+  if seg_start ~= nil and seg_end ~= nil then
+    local target_count = consume_count()
+    local new_line = apply_increment_on_segment(start_line, seg_start, seg_end, direction, target_count)
+    if new_line ~= nil then
+      vim.api.nvim_set_current_line(new_line)
+      local new_seg_end = seg_start
+      while new_line:sub(new_seg_end + 1, new_seg_end + 1):match('%d') do
+        new_seg_end = new_seg_end + 1
+      end
+      vim.api.nvim_win_set_cursor(0, { start_position[1], new_seg_end - 1 })
+    end
+    return
+  end
+
+  apply_vim_default_increment(direction, consume_count())
 end
 
 function M.setup(opts)
@@ -308,14 +352,14 @@ function M.setup(opts)
   }, opts or {})
 
   if options.allow_caps_additions ~= nil then
-    for _, val in pairs(options.allow_caps_additions) do
-      M.generate(val, true)
+    for _, cycle in pairs(options.allow_caps_additions) do
+      M.generate(cycle, true)
     end
   end
 
   if options.additions ~= nil then
-    for _, val in pairs(options.additions) do
-      M.generate(val)
+    for _, cycle in pairs(options.additions) do
+      M.generate(cycle)
     end
   end
 
@@ -325,7 +369,7 @@ function M.setup(opts)
   end, {
     nargs = 1,
     complete = function()
-      return { 'increment', 'decrement' }
+      return { DIRECTIONS.increment, DIRECTIONS.decrement }
     end,
   })
 

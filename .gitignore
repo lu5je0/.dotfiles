@@ -13,3 +13,4 @@ node_modules/
 .env/
 build/neovim
 .DS_Store
+.nvimlog
