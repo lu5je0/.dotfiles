@@ -59,9 +59,18 @@ M.lazy_load = function(opts)
         bang = true,
         range = true,
         nargs = "*",
-        complete = opts.complete and function(_, line)
+        complete = function(_, line)
+          -- Load real command definition before completion so command-specific
+          -- completions are available even on first Tab.
+          pcall(vim.api.nvim_del_user_command, cmd)
           load_ext(M.lazy_load_active_cmd_opts_map[cmd])
-          -- NOTE: return the newly loaded command completion
+
+          local info = vim.api.nvim_get_commands({})[cmd] or vim.api.nvim_buf_get_commands(0, {})[cmd]
+          if not info then
+            return {}
+          end
+
+          -- NOTE: return completion from the newly loaded real command.
           return vim.fn.getcompletion(line, "cmdline")
         end,
       })
@@ -298,6 +307,14 @@ lazy_load({
     require('lu5je0.misc.timestamp').setup()
   end,
   cmd = { 'TimestampModify', 'TimestampShow', 'TimestampReplaceAll' }
+})
+
+lazy_load({
+  config = function()
+    require('lu5je0.misc.set-operation').setup()
+    print('loaded')
+  end,
+  cmd = { 'SetOperation' }
 })
 
 lazy_load({

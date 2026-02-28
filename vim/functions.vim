@@ -20,27 +20,6 @@ EOF
 let g:py_func_init = 1
 endfunction
 
-function! SetOperation(...)
-call PyFuncInit()
-python3 << EOF
-functions.set_operation(vim.eval("a:000"))
-EOF
-endfunction
-
-function! SetOperationCompletion(A, L, P)
-  " 定义集合操作的候选列表
-  " 交集 intersection           A ∩ B	同时属于A和B
-  " 差集 difference             A - B	属于A但不属于B
-  " 并集 union                  A ∪ B	属于A或B
-  " 补集 complement 	        A'	    属于全集，不属于A
-  " 对称差 symmetric-difference	A △ B	属于A或B，但不同时属于A和B
-  let completions = ['intersection', 'difference', 'union', 'complement', 'symmetric-difference']
-
-  " 使用 complete() 函数设置自动补全的候选项
-  return filter(completions, 'v:val =~ "^" . a:A')
-endfunction
-command! -complete=customlist,SetOperationCompletion -nargs=* SetOperation call SetOperation(<f-args>)
-
 function! KeepLines(...)
 call PyFuncInit()
 python3 << EOF
