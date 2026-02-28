@@ -245,7 +245,7 @@ vim.schedule(function()
   "----------------------------------------------------------------------
   " nnoremap * m`<cmd>keepjumps normal! *``<cr>
   nnoremap <silent> * ms:<c-u>let @/='\V\<'.escape(expand('<cword>'), '/\').'\>'<bar>call histadd('/',@/)<bar>set hlsearch<cr>
-  xnoremap * m`:keepjumps <C-u>call visual#star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
+  xnoremap * m`:keepjumps <C-u>lua require("lu5je0.core.visual").star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
   nnoremap v m'v
   nnoremap V m'V
 

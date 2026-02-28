@@ -27,4 +27,25 @@ function M.visual_replace_by_fn(fn)
   M.visual_replace(fn(M.get_visual_selection_as_string()))
 end
 
+function M.star_search_set(cmdtype, raw)
+  local temp = vim.fn.getreg('"')
+  local temp_type = vim.fn.getregtype('"')
+
+  vim.cmd('normal! gvy')
+  local selection = vim.fn.getreg('"')
+
+  if not raw then
+    selection = vim.fn.escape(selection, cmdtype .. [[\*]])
+  end
+
+  local search = selection
+  search = search:gsub('\n', [[\n]])
+  search = search:gsub('%[', [[\[]])
+  search = search:gsub('~', [[\~]])
+  search = search:gsub('%.', [[\.]])
+
+  vim.fn.setreg('/', search)
+  vim.fn.setreg('"', temp, temp_type)
+end
+
 return M
