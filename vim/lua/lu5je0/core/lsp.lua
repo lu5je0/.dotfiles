@@ -25,13 +25,13 @@ local function config_diagnostic()
 end
 
 local function keymap(bufnr)
-  local opts = { noremap = true, silent = true, buffer = bufnr, desc = 'lsp.lua' }
+  local opts = { noremap = true, silent = true, buffer = bufnr }
 
   -- keymap('n', 'gd', vim.lsp.buf.definition, opts)
   -- keymap('n', 'gn', vim.lsp.buf.implementation, opts)
   -- keymap('n', 'gb', vim.lsp.buf.references, opts)
 
-  vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+  vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', opts, { desc = 'lsp hover' }))
   -- keymap('n', '<leader>cc', vim.lsp.buf.code_action, opts)
   -- keymap('v', '<leader>cc', vim.lsp.buf.code_action, opts)
 
@@ -41,30 +41,33 @@ local function keymap(bufnr)
 
   vim.keymap.set("n", "<leader>ch", function()
     vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
-  end, { desc = "LSP | Toggle Inlay Hints", silent = true })
+  end, vim.tbl_extend('force', opts, { desc = 'toggle inlay hints' }))
 
-  vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, opts)
+  vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, vim.tbl_extend('force', opts, { desc = 'lsp type definition' }))
 
   -- keymap('n', 'gu', vim.lsp.buf.declaration, opts)
   -- keymap('i', '<c-p>', vim.lsp.buf.signature_help, opts)
-  vim.keymap.set('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, opts)
-  vim.keymap.set('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder, opts)
-  vim.keymap.set('n', '<leader>Wl', function()
-    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-  end, opts)
+  
+  -- vim.keymap.set('n', '<leader>Wa', vim.lsp.buf.add_workspace_folder, vim.tbl_extend('force', opts, { desc = 'add workspace folder' }))
+  -- vim.keymap.set('n', '<leader>Wr', vim.lsp.buf.remove_workspace_folder,
+  --   vim.tbl_extend('force', opts, { desc = 'remove workspace folder' }))
+  -- vim.keymap.set('n', '<leader>Wl', function()
+  --   print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+  -- end, vim.tbl_extend('force', opts, { desc = 'list workspace folders' }))
+  
   -- keymap('n', '<leader>cr', vim.lsp.buf.rename, opts)
 
   vim.keymap.set('n', '[e', function()
     vim.diagnostic.jump({ count = -1, float = true })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'prev diagnostic' }))
   vim.keymap.set('n', ']e', function()
     vim.diagnostic.jump({ count = 1, float = true })
-  end, opts)
-  vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'next diagnostic' }))
+  vim.keymap.set('n', '<leader>ce', vim.diagnostic.setloclist, vim.tbl_extend('force', opts, { desc = 'diagnostics to loclist' }))
 
   vim.keymap.set('n', '<leader><space>', function()
     vim.diagnostic.open_float { scope = 'line', opts }
-  end)
+  end, vim.tbl_extend('force', opts, { desc = 'line diagnostic' }))
 end
 
 local function on_attach(bufnr)

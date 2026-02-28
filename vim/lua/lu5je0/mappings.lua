@@ -4,7 +4,10 @@ vim.g.mapleader = ','
 
 -- option toggle
 local option_toggler = require('lu5je0.misc.option-toggler')
-local default_opts = { desc = 'mappings.lua', silent = true }
+local default_opts = { silent = true }
+local function desc_opts(desc)
+  return { silent = true, desc = desc }
+end
 
 local function del_map(modes, lhs, opts)
   if type(lhs) == 'table' then
@@ -53,14 +56,16 @@ vim.schedule(function()
   -- set_map({ 'c' }, '<up>', '<s-tab>')
 
   -- toggle
-  set_n_map('<leader>vn', option_toggler.new_toggle_fn({ 'set nonumber', 'set number' }))
-  set_n_map('<leader>vp', option_toggler.new_toggle_fn({ 'set nopaste', 'set paste' }))
-  set_n_map('<leader>vm', option_toggler.new_toggle_fn({ 'set mouse=c', 'set mouse=a' }))
+  set_n_map('<leader>vn', option_toggler.new_toggle_fn({ 'set nonumber', 'set number' }), desc_opts('toggle number'))
+  set_n_map('<leader>vp', option_toggler.new_toggle_fn({ 'set nopaste', 'set paste' }), desc_opts('toggle paste'))
+  set_n_map('<leader>vm', option_toggler.new_toggle_fn({ 'set mouse=c', 'set mouse=a' }), desc_opts('toggle mouse'))
   -- set_n_map('<leader>vs', option_toggler.new_toggle_fn({ 'set signcolumn=no', 'set signcolumn=yes:1' }))
-  set_n_map('<leader>vl', option_toggler.new_toggle_fn({ 'set cursorline', 'set nocursorline' }))
-  set_n_map('<leader>vf', option_toggler.new_toggle_fn({ 'set foldcolumn=auto:1', 'set foldcolumn=0' }))
-  set_n_map('<leader>vd', option_toggler.new_toggle_fn({ 'windo difft', 'windo diffo' }))
-  set_n_map('<leader>vc', option_toggler.new_toggle_fn({ 'set noignorecase', 'set ignorecase' }))
+  set_n_map('<leader>vl', option_toggler.new_toggle_fn({ 'set cursorline', 'set nocursorline' }), desc_opts('toggle cursorline'))
+  set_n_map('<leader>vf', option_toggler.new_toggle_fn({ 'set foldcolumn=auto:1', 'set foldcolumn=0' }),
+    desc_opts('toggle fold column'))
+  set_n_map('<leader>vd', option_toggler.new_toggle_fn({ 'windo difft', 'windo diffo' }), desc_opts('toggle diff'))
+  set_n_map('<leader>vc', option_toggler.new_toggle_fn({ 'set noignorecase', 'set ignorecase' }),
+    desc_opts('toggle case insensitive'))
   -- set_n_map('<leader>vi', require('lu5je0.misc.im.mac.im').toggle_save_last_ime)
   set_n_map('<leader>vw', function()
     if vim.wo.wrap then
@@ -80,7 +85,7 @@ vim.schedule(function()
       -- set_map({ 'x', 'n', 'o' }, 'L', 'g$', buffer_opts)
       -- set_map({ 'n' }, 'Y', 'gyg$', buffer_opts)
     end
-  end)
+  end, desc_opts('toggle wrap'))
   -- 
   -- set_n_map('<space><', function()
   --   keys_helper.feedkey('`[v`]')
@@ -94,7 +99,7 @@ vim.schedule(function()
   -- set_n_map('<leader>fs', function() cmd_and_print('cd ~/.dotfiles') end)
   
   -- selection search
-  set_map('x', { '<leader>/', '<space>/' }, '<Esc>/\\%V', {})
+  set_map('x', { '<leader>/', '<space>/' }, '<Esc>/\\%V', desc_opts('search in selection'))
   
   
   set_map('n', 'zA', function()
@@ -114,13 +119,9 @@ vim.schedule(function()
   end)
   
   -- text
-  set_map('n', '<leader>xx', ":%!", {
-    nowait = true
-  })
+  set_map('n', '<leader>xx', ":%!", { nowait = true, silent = true, desc = ':%!' })
   
-  set_map('v', '<leader>xx', ":%!", {
-    nowait = true
-  })
+  set_map('v', '<leader>xx', ":%!", { nowait = true, silent = true, desc = ':%!' })
 
   -- lsp
   set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')

@@ -53,20 +53,22 @@ function M.setup()
     ['q'] = 'close buffer',
     ['s'] = 'symbols',
     ['I'] = 'focus symbols',
+    ['E'] = 'focus file explorer',
     ['Q'] = 'exit',
     ['u'] = 'undotree',
     ['i'] = 'symbols',
+    ['A'] = 'calcultor and replace',
     [','] = 'last buffer',
     ['n'] = { '<cmd>noh<cr>', 'no highlight' },
     -- ['d'] = { '<c-^>', 'buffer switch' },
     ['e'] = { 'file explorer' },
     ['a'] = { 'calcultor' },
     ['/'] = { 'eregex toggle' },
-    ['<space>'] = 'diagnostic',
     w = {
       name = '+windows',
       ['n'] = { '<cmd>vnew<cr>', 'vnew' },
       ['w'] = "translate",
+      ['r'] = "translate and replace",
       ['N'] = { '<cmd>new<cr>', 'new' },
       ['s'] = { '<cmd>vsplit<cr>', 'vspilt' },
       ['S'] = { '<cmd>split<cr>', 'spilt' },
@@ -78,14 +80,12 @@ function M.setup()
     },
     W = {
       name = '+workspace',
-      a = 'add workspace folder',
-      r = 'remove workspace folder',
-      l = 'list workspace folder',
     },
     p = {
       name = '+lazy',
       c = { '<cmd>Lazy check<cr>', 'check update' },
       p = 'profile.nvim',
+      s = 'snacks profile',
     },
     m = {
       name = '+mark',
@@ -99,9 +99,7 @@ function M.setup()
       name = '+code',
       r = 'rename-variable',
       c = 'code-action',
-      e = 'setloclist',
       f = 'code-formatting',
-      h = 'toggle-inlay-hints',
       n = {
         name = '+naming case',
         s = { 'snake_case' },
@@ -120,7 +118,8 @@ function M.setup()
       h = { 'close-to-left' },
       l = { 'close-to-right' },
       n = { '<cmd>enew<cr>', 'new-buffer' },
-      t = { '<cmd>TSBufToggle highlight<cr>', 'toggle treesitter highlight' },
+      N = { '<cmd>tabnew<cr>', 'new-tab' },
+      c = { '<cmd>tabclose<cr>', 'close-tab' }
     },
     f = {
       name = '+search/files',
@@ -140,6 +139,8 @@ function M.setup()
       h = 'help',
       j = 'junk-list',
       g = 'git-changes',
+      G = 'git-diff',
+      t = 'time-machine',
 
       e = { 'locate-file' },
       W = { '<cmd>SudaWrite<cr>', 'sudo-write' },
@@ -158,6 +159,7 @@ function M.setup()
     x = {
       name = '+text',
       r = 'replace word',
+      f = 'replace in current file',
       u = 'escape unicode',
       U = 'unescape unicode',
       h = 'url encode',
@@ -175,16 +177,8 @@ function M.setup()
       '/.dotfiles/vim/init.lua | cd ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim <cr>', 'edit init.lua' },
       s = 'toggle signcolumn',
       S = { '<cmd>set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes' },
-      c = 'toggle case insensitive',
-      n = 'toggle number',
-      d = 'toggle diff',
-      p = 'toggle paste',
-      w = 'toggle wrap',
-      m = 'toggle mouse',
       i = 'toggle-save-last-ime',
       h = 'toggle hexedit',
-      l = 'toggle cursorline',
-      f = 'toggle fold column',
       F = {
         name = '+foldmethod',
         m = { '<cmd>set fdm=manual | echo "set fdm = manual"<cr>', 'manual' },
@@ -199,6 +193,7 @@ function M.setup()
       name = '+run',
       r = 'run',
       d = 'debug',
+      x = 'stop',
     },
     g = {
       name = '+git',
@@ -218,6 +213,7 @@ function M.setup()
       s = { '<cmd>Floggit<cr>', 'Floggit' },
       L = { function() require('lu5je0.ext.fugitive').current_file_logs() end, 'show changs on current file' },
       i = { '<cmd>Gist -l<cr>', 'gist' },
+      o = 'lazygit',
     },
   }
 
