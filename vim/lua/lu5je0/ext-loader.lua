@@ -312,6 +312,28 @@ lazy_load({
   }
 })
 
+lazy_load({
+  config = function()
+    require('lu5je0.ext.boole').setup({
+      mappings = {},
+      -- User defined loops
+      additions = {
+        -- { 'Foo', 'Bar' },
+      },
+      allow_caps_additions = {
+        -- enable -> disable
+        -- Enable -> Disable
+        -- ENABLE -> DISABLE
+        { 'enable', 'disable' },
+      },
+    })
+  end,
+  keys = {
+    { mode = { 'n' }, '<c-a>' },
+    { mode = { 'n' }, '<c-x>' },
+  }
+})
+
 require('lu5je0.misc.time-machine').setup()
 
 -- lazy_load({
