@@ -295,6 +295,13 @@ lazy_load({
 
 lazy_load({
   config = function()
+    require('lu5je0.misc.timestamp').setup()
+  end,
+  cmd = { 'TimestampModify', 'TimestampShow', 'TimestampReplaceAll' }
+})
+
+lazy_load({
+  config = function()
     require('lu5je0.core.comment').setup()
   end,
   keys = {

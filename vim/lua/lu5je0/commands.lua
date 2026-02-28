@@ -246,16 +246,3 @@ vim.api.nvim_create_user_command('Escape', function(opts)
   -- 将转义后的内容设置回当前行
   vim.api.nvim_set_current_line(escaped_line)
 end, { nargs = '*' })
-
--- 创建用户命令 :TimestampConvert
-vim.api.nvim_create_user_command(
-  'TimestampModify',
-  function()
-    require('lu5je0.misc.timestamp').modify_timestamp()
-  end,
-  { nargs = 0, desc = "转换并编辑光标下的Unix时间戳" }
-)
-
-vim.keymap.set('n', '<Plug>(TimestampModify)', function()
-  require('lu5je0.misc.timestamp').modify_timestamp()
-end, { silent = true })

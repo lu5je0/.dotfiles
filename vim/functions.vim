@@ -49,14 +49,6 @@ EOF
 endfunction
 command! -nargs=* KeepLines call KeepLines(<f-args>)
 
-function! ReplaceAllTimestamp(...)
-call PyFuncInit()
-python3 << EOF
-functions.replace_all_timestamp(vim.eval("a:000"))
-EOF
-endfunction
-command! -nargs=* TimestampReplaceAll call ReplaceAllTimestamp(<f-args>)
-
 function! DelLines(...)
 call PyFuncInit()
 python3 << EOF
