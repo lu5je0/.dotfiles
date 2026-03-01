@@ -1,6 +1,5 @@
 #!/bin/bash
 SCRIPT_PATH=~/.dotfiles/submodule/transfer
 SCRIPT_NAME=q-transfer.py
-VENV_DIR=.env
 
 source ~/.dotfiles/submodule/python-install/runner.sh

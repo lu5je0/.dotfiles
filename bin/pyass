@@ -1,6 +1,5 @@
 #!/bin/bash
 SCRIPT_PATH=~/.dotfiles/submodule/pyass
 SCRIPT_NAME=pyass.py
-VENV_DIR=.env
 
 source ~/.dotfiles/submodule/python-install/runner.sh
