@@ -178,16 +178,6 @@ function M.setup()
       s = 'toggle signcolumn',
       S = { '<cmd>set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes' },
       i = 'toggle-save-last-ime',
-      h = 'toggle hexedit',
-      F = {
-        name = '+foldmethod',
-        m = { '<cmd>set fdm=manual | echo "set fdm = manual"<cr>', 'manual' },
-        s = { '<cmd>set fdm=sytanx | echo "set fdm = sytanx"<cr>', 'sytanx' },
-        e = { '<cmd>set fdm=expr | echo "set fdm = expr"<cr>', 'expr' },
-        i = { '<cmd>set fdm=indent | echo "set fdm = indent"<cr>', 'indent' },
-        n = { '<cmd>set fdm=marker | echo "set fdm = marker"<cr>', 'marker' },
-        d = { '<cmd>set fdm=diff | echo "set fdm = diff"<cr>', 'diff' },
-      },
     },
     r = {
       name = '+run',
