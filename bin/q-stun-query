@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import socket
+import struct
+import secrets
+
+MAGIC_COOKIE = 0x2112A442
+
+# STUN message types
+BINDING_REQUEST = 0x0001
+
+# STUN attributes
+XOR_MAPPED_ADDRESS = 0x0020
+MAPPED_ADDRESS = 0x0001  # older, sometimes present
+
+
+def build_binding_request(txid: bytes) -> bytes:
+    # STUN header: Type(2) Length(2) MagicCookie(4) TransactionID(12)
+    msg_type = BINDING_REQUEST
+    length = 0
+    return struct.pack("!HHI12s", msg_type, length, MAGIC_COOKIE, txid)
+
+
+def parse_stun_response(data: bytes, txid: bytes):
+    if len(data) < 20:
+        raise ValueError("Response too short")
+
+    msg_type, msg_len, cookie = struct.unpack("!HHI", data[:8])
+    rx_txid = data[8:20]
+
+    if cookie != MAGIC_COOKIE:
+        raise ValueError("Bad magic cookie")
+    if rx_txid != txid:
+        raise ValueError("Transaction ID mismatch")
+
+    # Attributes start at byte 20
+    attrs = data[20:20 + msg_len]
+    i = 0
+
+    mapped_ip = None
+    mapped_port = None
+
+    while i + 4 <= len(attrs):
+        atype, alen = struct.unpack("!HH", attrs[i:i+4])
+        i += 4
+        aval = attrs[i:i+alen]
+        i += alen
+
+        # 32-bit padding
+        if alen % 4:
+            i += 4 - (alen % 4)
+
+        if atype in (XOR_MAPPED_ADDRESS, MAPPED_ADDRESS):
+            if len(aval) < 4:
+                continue
+
+            # First byte: 0, second: family (0x01=IPv4, 0x02=IPv6)
+            _, family = struct.unpack("!BB", aval[:2])
+            xport = struct.unpack("!H", aval[2:4])[0]
+
+            if atype == XOR_MAPPED_ADDRESS:
+                port = xport ^ (MAGIC_COOKIE >> 16)
+            else:
+                port = xport
+
+            if family == 0x01:  # IPv4
+                if len(aval) < 8:
+                    continue
+                xaddr = aval[4:8]
+                if atype == XOR_MAPPED_ADDRESS:
+                    addr_int = struct.unpack("!I", xaddr)[0] ^ MAGIC_COOKIE
+                    ip = socket.inet_ntoa(struct.pack("!I", addr_int))
+                else:
+                    ip = socket.inet_ntoa(xaddr)
+
+                mapped_ip, mapped_port = ip, port
+
+            elif family == 0x02:  # IPv6
+                if len(aval) < 20:
+                    continue
+                xaddr = aval[4:20]
+                if atype == XOR_MAPPED_ADDRESS:
+                    # XOR with (magic cookie + txid) for IPv6
+                    mask = struct.pack("!I12s", MAGIC_COOKIE, txid)
+                    xored = bytes(a ^ b for a, b in zip(xaddr, mask))
+                    ip = socket.inet_ntop(socket.AF_INET6, xored)
+                else:
+                    ip = socket.inet_ntop(socket.AF_INET6, xaddr)
+
+                mapped_ip, mapped_port = ip, port
+
+    return mapped_ip, mapped_port
+
+
+def stun_get_public_endpoint(stun_host="stun.l.google.com", stun_port=19302, timeout=3.0):
+    # resolve (IPv4/IPv6 both possible)
+    infos = socket.getaddrinfo(stun_host, stun_port, socket.AF_UNSPEC, socket.SOCK_DGRAM)
+
+    last_err = None
+    for family, socktype, proto, _, sockaddr in infos:
+        try:
+            s = socket.socket(family, socktype, proto)
+            s.settimeout(timeout)
+
+            txid = secrets.token_bytes(12)
+            req = build_binding_request(txid)
+
+            s.sendto(req, sockaddr)
+            data, _ = s.recvfrom(2048)
+
+            ip, port = parse_stun_response(data, txid)
+            if ip and port:
+                return ip, port
+            raise RuntimeError("No mapped address in response")
+
+        except Exception as e:
+            last_err = e
+        finally:
+            try:
+                s.close()
+            except Exception:
+                pass
+
+    raise RuntimeError(f"STUN failed: {last_err}")
+
+
+def main():
+    # 可按需换成 stun.cloudflare.com:3478 等
+    servers = [
+        ("stun.cloudflare.com", 3478),
+    ]
+
+    for host, port in servers:
+        try:
+            ip, mapped_port = stun_get_public_endpoint(host, port, timeout=3.0)
+            print(ip)               # 只输出 IP（如你需要端口也可以一起打印）
+            # print(f"{ip}:{mapped_port}")
+            return
+        except Exception:
+            continue
+
+    raise SystemExit("All STUN servers failed")
+
+
+if __name__ == "__main__":
+    main()

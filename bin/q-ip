@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+show_ip_only=0
+show_help=0
+target=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -h|--help)
+    show_help=1
+    shift
+    ;;
+  -i|--ip)
+    show_ip_only=1
+    shift
+    ;;
+  *)
+    target="$1"
+    shift
+    ;;
+  esac
+done
+
+# Read from stdin when no positional target is provided (e.g. echo google.com | q-ip)
+if [[ -z "$target" && ! -t 0 ]]; then
+  stdin_target="$(awk 'NF { print $1; exit }')"
+  if [[ -n "$stdin_target" ]]; then
+    target="$stdin_target"
+  fi
+fi
+
+if [[ $show_help -eq 1 ]]; then
+  echo "Usage: q-ip [options] [IP or domain]"
+  echo
+  echo "Options:"
+  echo "  -h, --help     Show this help message"
+  echo "  -i, --ip       Only output the IP address"
+  echo
+  echo "Examples:"
+  echo "  q-ip                   # Info for your own IP"
+  echo "  q-ip 8.8.8.8           # Info for 8.8.8.8"
+  echo "  q-ip -i google.com     # Just print resolved IP"
+  echo "  echo google.com | q-ip # Read target from stdin"
+  exit 0
+fi
+
+response="$(curl -s "http://ip-api.com/json/$target")"
+
+if [[ $show_ip_only -eq 1 ]]; then
+  echo "$response" | jq -r '.query'
+else
+  echo "$response" | jq
+fi
