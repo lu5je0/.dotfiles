@@ -58,7 +58,9 @@ local function start_process()
 
     -- 如果 handle 仍然存在 (表示不是我们主动停止的)，说明是意外退出
     if state.process_handle then
-      vim.notify("IME 控制进程意外退出，退出码: " .. tostring(code) .. ", 信号: " .. tostring(signal), vim.log.levels.WARN, { title = "IME Control" })
+      vim.schedule(function()
+        vim.notify("IME 控制进程意外退出，退出码: " .. tostring(code) .. ", 信号: " .. tostring(signal), vim.log.levels.WARN, { title = "IME Control" })
+      end)
     end
 
     -- 重置状态

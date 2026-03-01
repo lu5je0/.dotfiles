@@ -70,12 +70,6 @@ vim.api.nvim_create_user_command('TimeMachine', function()
 end, { force = true })
 
 vim.api.nvim_create_user_command('TimeMachineReadUndo', function()
-  require('lu5je0.core.filetree').open_path(require('lu5je0.misc.time-machine').get_path(), {
-    print_path = true
-  })
-end, { force = true })
-
-vim.api.nvim_create_user_command('TimeMachineReadUndo', function()
   require('lu5je0.misc.time-machine').read_undo()
 end, { force = true })
 
@@ -96,7 +90,7 @@ vim.api.nvim_create_user_command('FileEncodingReload', function(t)
 end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
 
 vim.api.nvim_create_user_command('FileEncodingConvertForce', function(t)
-  vim.cmd('%!' .. ('iconv -f %s//INGORE -t %s//IGNORE'):format(vim.bo.fileencoding, t.fargs[1]))
+  vim.cmd('%!' .. ('iconv -f %s//IGNORE -t %s//IGNORE'):format(vim.bo.fileencoding, t.fargs[1]))
   vim.cmd('set fileencoding=' .. t.fargs[1])
   vim.cmd(':%s/\r$')
 end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
