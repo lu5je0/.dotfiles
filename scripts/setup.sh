@@ -8,6 +8,48 @@ source "$DOTFILES_DIR/zsh/functions.sh"
 
 export DOTFILES_DIR
 
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+  C_RESET=$'\033[0m'
+  C_BOLD=$'\033[1m'
+  C_DIM=$'\033[2m'
+  C_CYAN=$'\033[36m'
+  C_BLUE=$'\033[34m'
+  C_GREEN=$'\033[32m'
+  C_YELLOW=$'\033[33m'
+  C_RED=$'\033[31m'
+else
+  C_RESET=""
+  C_BOLD=""
+  C_DIM=""
+  C_CYAN=""
+  C_BLUE=""
+  C_GREEN=""
+  C_YELLOW=""
+  C_RED=""
+fi
+
+line() {
+  printf "%b\n" "${C_DIM}------------------------------------------------------------${C_RESET}"
+}
+
+title() {
+  line
+  printf "%b\n" "${C_BOLD}${C_CYAN}$1${C_RESET}"
+  line
+}
+
+ok() {
+  printf "%b\n" "${C_GREEN}[ OK ]${C_RESET} $1"
+}
+
+warn() {
+  printf "%b\n" "${C_YELLOW}[WARN]${C_RESET} $1"
+}
+
+err() {
+  printf "%b\n" "${C_RED}[FAIL]${C_RESET} $1"
+}
+
 # q-ask "Enable proxy(http://127.0.0.1:1080) before setup? " && export http_proxy=http://${HTTP_PROXY:-127.0.0.1:1080} && export https_proxy=http://${HTTP_PROXY:-127.0.0.1:1080}
 
 mkdir -p "$HOME/.config"
@@ -50,20 +92,27 @@ if [ -d "$MODULE_DIR" ]; then
 
     render_menu() {
       printf "\033[2J\033[H"
-      echo "Select modules to run:"
-      echo "Use ↑/↓ or j/k to move, Space to toggle, Enter to run, q to quit."
+      title "Dotfiles Setup"
+      echo "Select modules to run"
+      printf "%b\n" "${C_DIM}Use arrow keys (or j/k), Space to toggle, Enter to run, q to quit.${C_RESET}"
       echo
       for i in "${!module_tags[@]}"; do
-        marker="[ ]"
+        marker="${C_DIM}[ ]${C_RESET}"
         if [ "${selections[$i]}" -eq 1 ]; then
-          marker="[x]"
+          marker="${C_GREEN}[x]${C_RESET}"
         fi
         pointer="  "
         if [ "$i" -eq "$cursor" ]; then
-          pointer="> "
+          pointer="${C_BOLD}${C_CYAN}>${C_RESET} "
         fi
-        printf "%s%s %s - %s\n" "$pointer" "$marker" "${module_tags[$i]}" "${module_descs[$i]}"
+        if [ "$i" -eq "$cursor" ]; then
+          printf "%b\n" "${pointer}${marker} ${C_BOLD}${module_tags[$i]}${C_RESET} ${C_DIM}- ${module_descs[$i]}${C_RESET}"
+        else
+          printf "%b\n" "${pointer}${marker} ${module_tags[$i]} ${C_DIM}- ${module_descs[$i]}${C_RESET}"
+        fi
       done
+      echo
+      line
     }
 
     read_key() {
@@ -117,7 +166,7 @@ if [ -d "$MODULE_DIR" ]; then
     done
 
     if [ "${#selected[@]}" -eq 0 ]; then
-      echo "No modules selected. Exit."
+      warn "No modules selected. Exit."
       exit 1
     fi
 
@@ -135,14 +184,15 @@ if [ -d "$MODULE_DIR" ]; then
     for module_file in "${modules[@]}"; do
       tag="$(basename "$module_file")"
       if contains_selected "$tag"; then
+        title "Running $tag"
         bash "$module_file"
         status=$?
         if [ $status -eq 0 ]; then
-          echo "done: $tag"
+          ok "done: $tag"
         else
-          echo "failed($status): $tag"
+          err "failed($status): $tag"
         fi
-        echo "Press Enter to continue..."
+        printf "%b" "${C_DIM}Press Enter to continue...${C_RESET}"
         read -r
       fi
     done
