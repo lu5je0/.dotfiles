@@ -192,8 +192,6 @@ if [ -d "$MODULE_DIR" ]; then
         else
           err "failed($status): $tag"
         fi
-        printf "%b" "${C_DIM}Press Enter to continue...${C_RESET}"
-        read -r
       fi
     done
   fi
