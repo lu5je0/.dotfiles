@@ -206,20 +206,6 @@ encode_command_creater.create_encode_command('Unescape', function(text)
   return table.concat(t, "")
 end)
 
-encode_command_creater.create_encode_command('MarkdownLink', function(url)
-  if url == nil then
-    return
-  end
-  return ('[link_name](%s)'):format(url)
-end, { range = true, buffer = false })
-
-encode_command_creater.create_encode_command('MarkdownBold', function(text)
-  if text == nil then
-    return
-  end
-  return ('**%s**'):format(text)
-end, { range = true, buffer = false })
-
 -- 定义一个函数来执行转义操作
 local function escape_characters(input, char_to_escape, escape_with)
   -- 如果没有提供第一个参数，默认为 "
