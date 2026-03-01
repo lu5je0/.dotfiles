@@ -15,11 +15,10 @@ def push(text: str):
         },
     }
 
-    # if 'FEISHU_TOKEN' not in os.environ:
-    #     print("feishu token is missing")
-    #     return
-    # token = os.environ['FEISHU_TOKEN']
-    token = 'b98e0efa-32ac-473c-befb-16e63b8e1b5a'
+    token = os.environ.get("FEISHU_TOKEN", "").strip()
+    if token == "":
+        print("feishu token is missing: FEISHU_TOKEN")
+        sys.exit(1)
     
     resp = requests.post(
         'https://open.feishu.cn/open-apis/bot/v2/hook/' + token,
