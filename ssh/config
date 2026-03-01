@@ -1,12 +1,10 @@
 Include config.d/*
 
-Host github.com
-    HostName ssh.github.com
-    Port 443
-    User git
-    # ProxyCommand nc -v -x 127.0.0.1:1080 %h %p
-    
-Host gist.github.com
+Host *
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+Host github.com gist.github.com
     HostName ssh.github.com
     Port 443
     User git
