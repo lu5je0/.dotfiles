@@ -103,11 +103,15 @@ function M.modify_timestamp()
     return
   end
 
-  local is_millisecond = #cword > 10
-  local ts_in_seconds = is_millisecond and (original_ts / 1000) or original_ts
+  local is_millisecond = #cword == 13
+  local ts_in_seconds = is_millisecond and math.floor(original_ts / 1000) or original_ts
 
   local display_format = '%Y-%m-%d %H:%M:%S'
   local default_datetime_str = os.date(display_format, ts_in_seconds)
+  if is_millisecond then
+    default_datetime_str = string.format('%s.%03d', default_datetime_str, original_ts % 1000)
+  end
+  local editor_width = is_millisecond and utils.DATETIME_MILLI_WIDTH or utils.DATETIME_WIDTH
   local origin_win = vim.api.nvim_get_current_win()
   local origin_buf = vim.api.nvim_get_current_buf()
   local origin_pos = vim.api.nvim_win_get_cursor(origin_win)
@@ -126,7 +130,7 @@ function M.modify_timestamp()
 
   local padding_extmark_id = nil
   local number_width = number_bounds.end_col0 - number_bounds.start_col0
-  local pad_width = math.max(0, utils.DATETIME_WIDTH - number_width)
+  local pad_width = math.max(0, editor_width - number_width)
   if pad_width > 0 then
     padding_extmark_id = vim.api.nvim_buf_set_extmark(origin_buf, timestamp_modify_ns, origin_pos[1] - 1, number_bounds.end_col0, {
       virt_text_pos = 'inline',
@@ -137,7 +141,7 @@ function M.modify_timestamp()
 
   open_float_editor({
     default = default_datetime_str,
-    fixed_width = utils.DATETIME_WIDTH,
+    fixed_width = editor_width,
     anchor = {
       win = origin_win,
       row = origin_pos[1] - 1,
@@ -156,14 +160,14 @@ function M.modify_timestamp()
         return
       end
 
-      local new_ts_in_seconds = utils.string_to_timestamp(input)
+      local new_ts_in_seconds, new_ts_millis = utils.string_to_timestamp(input)
       if not new_ts_in_seconds then
         return
       end
 
       local final_ts_str
       if is_millisecond then
-        final_ts_str = tostring(new_ts_in_seconds * 1000)
+        final_ts_str = tostring(new_ts_in_seconds * 1000 + new_ts_millis)
       else
         final_ts_str = tostring(new_ts_in_seconds)
       end

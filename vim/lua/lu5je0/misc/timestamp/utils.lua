@@ -2,6 +2,8 @@ local M = {}
 
 M.DATETIME_LAYOUT = '0000-00-00 00:00:00'
 M.DATETIME_WIDTH = #M.DATETIME_LAYOUT
+M.DATETIME_MILLI_LAYOUT = '0000-00-00 00:00:00.000'
+M.DATETIME_MILLI_WIDTH = #M.DATETIME_MILLI_LAYOUT
 
 function M.parse(timestamp)
   if string.len(timestamp) > 10 then
@@ -42,11 +44,22 @@ function M.format_timestamp_like(raw)
 end
 
 function M.string_to_timestamp(datetime_str)
-  local y, m, d, H, minute, S = datetime_str:match('^(%d+)-(%d+)-(%d+)%s+(%d+):(%d+):(%d+)$')
+  local y, m, d, H, minute, S, milli = datetime_str:match('^(%d+)-(%d+)-(%d+)%s+(%d+):(%d+):(%d+)%.?(%d*)$')
 
   if not y then
-    vim.notify("无效的时间格式。请输入 'YYYY-MM-DD HH:MM:SS'。", vim.log.levels.ERROR)
+    vim.notify("无效的时间格式。请输入 'YYYY-MM-DD HH:MM:SS' 或 'YYYY-MM-DD HH:MM:SS.SSS'。", vim.log.levels.ERROR)
     return nil
+  end
+
+  milli = milli or ''
+  if #milli > 3 then
+    vim.notify("毫秒值超出范围（最多 3 位）。", vim.log.levels.ERROR)
+    return nil
+  end
+
+  local milli_num = 0
+  if #milli > 0 then
+    milli_num = tonumber(milli) * math.pow(10, 3 - #milli)
   end
 
   local t = {
@@ -63,7 +76,7 @@ function M.string_to_timestamp(datetime_str)
     return nil
   end
 
-  return os.time(t)
+  return os.time(t), milli_num
 end
 
 function M.get_number_bounds_at(buf, row, col)
