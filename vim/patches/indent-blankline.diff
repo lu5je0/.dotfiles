@@ -1,0 +1,455 @@
+diff --git a/lua/ibl/autocmds.lua b/lua/ibl/autocmds.lua
+index 65696ef..fdc10b6 100644
+--- a/lua/ibl/autocmds.lua
++++ b/lua/ibl/autocmds.lua
+@@ -4,7 +4,6 @@ local M = {}
+ M.setup = function()
+     local group = vim.api.nvim_create_augroup("IndentBlankline", {})
+     local ibl = require "ibl"
+-    local buffer_leftcol = {}
+ 
+     vim.api.nvim_create_autocmd("VimEnter", {
+         group = group,
+@@ -38,15 +37,7 @@ M.setup = function()
+         group = group,
+         pattern = "*",
+         callback = function(opts)
+-            local win_view = vim.fn.winsaveview() or { leftcol = 0 }
+-
+-            if buffer_leftcol[opts.buf] ~= win_view.leftcol then
+-                buffer_leftcol[opts.buf] = win_view.leftcol
+-                -- Refresh immediately for horizontal scrolling
+-                ibl.refresh(opts.buf)
+-            else
+-                ibl.debounced_refresh(opts.buf)
+-            end
++            ibl.debounced_refresh(opts.buf)
+         end,
+     })
+     vim.api.nvim_create_autocmd("ColorScheme", {
+diff --git a/lua/ibl/init.lua b/lua/ibl/init.lua
+index 9428ce7..69126e1 100644
+--- a/lua/ibl/init.lua
++++ b/lua/ibl/init.lua
+@@ -14,9 +14,16 @@ local M = {}
+ 
+ M.initialized = false
+ 
+----@type table<number, { scope: TSNode?, left_offset: number, top_offset: number, tick: number }>
++---@type table<string, { scope: TSNode?, top_offset: number, tick: number }>
+ local global_buffer_state = {}
+ 
++---@param bufnr number
++---@param winid number
++---@return string
++local get_state_key = function(bufnr, winid)
++    return string.format("%d:%d", bufnr, winid)
++end
++
+ ---@param bufnr number
+ local clear_buffer = function(bufnr)
+     vt.clear_buffer(bufnr)
+@@ -24,15 +31,30 @@ local clear_buffer = function(bufnr)
+     for _, fn in pairs(hooks.get(bufnr, hooks.type.CLEAR)) do
+         fn(bufnr)
+     end
+-    global_buffer_state[bufnr] = nil
++    local prefix = string.format("%d:", bufnr)
++    for key, _ in pairs(global_buffer_state) do
++        if key:sub(1, #prefix) == prefix then
++            global_buffer_state[key] = nil
++        end
++    end
+ end
+ 
+ ---@param config ibl.config.full
+ local setup = function(config)
++    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
++        vt.clear_buffer(bufnr)
++        inlay_hints.clear_buffer(bufnr)
++    end
++
+     if not config.enabled then
+-        for bufnr, _ in pairs(global_buffer_state) do
+-            if not conf.get_config(bufnr).enabled then
+-                clear_buffer(bufnr)
++        local seen = {}
++        for key, _ in pairs(global_buffer_state) do
++            local bufnr = tonumber((key:match "^(%d+):"))
++            if bufnr and not seen[bufnr] then
++                seen[bufnr] = true
++                if not conf.get_config(bufnr).enabled then
++                    clear_buffer(bufnr)
++                end
+             end
+         end
+     end
+@@ -40,6 +62,15 @@ local setup = function(config)
+     inlay_hints.setup()
+     highlights.setup()
+     autocmds.setup()
++    vim.api.nvim_set_decoration_provider(namespace, {
++        on_win = function(_, winid, bufnr, topline, botline)
++            if not M.initialized then
++                return
++            end
++            M.refresh(bufnr, winid, topline, botline, true)
++            return false
++        end,
++    })
+     M.initialized = true
+     M.refresh_all()
+ end
+@@ -96,11 +127,7 @@ end
+ 
+ --- Refreshes indent-blankline in all buffers
+ M.refresh_all = function()
+-    for _, win in ipairs(vim.api.nvim_list_wins()) do
+-        vim.api.nvim_win_call(win, function()
+-            M.refresh(vim.api.nvim_win_get_buf(win) --[[@as number]])
+-        end)
+-    end
++    vim.cmd.redraw()
+ end
+ 
+ local debounced_refresh = setmetatable({
+@@ -148,14 +175,26 @@ end
+ ---
+ --- Only use this directly if you know what you are doing, consider `debounced_refresh` instead
+ ---@param bufnr number
+-M.refresh = function(bufnr)
++---@param winid number?
++---@param topline number?
++---@param botline number?
++---@param ephemeral boolean?
++M.refresh = function(bufnr, winid, topline, botline, ephemeral)
+     assert(M.initialized, "Tried to refresh without doing setup")
+     bufnr = utils.get_bufnr(bufnr)
+-    local is_current_buffer = vim.api.nvim_get_current_buf() == bufnr
++    if not ephemeral then
++        local config = conf.get_config(bufnr)
++        if not config.enabled or not vim.api.nvim_buf_is_loaded(bufnr) or not utils.is_buffer_active(bufnr, config) then
++            clear_buffer(bufnr)
++            return
++        end
++        vim.cmd.redraw()
++        return
++    end
++
+     local config = conf.get_config(bufnr)
+ 
+     if not config.enabled or not vim.api.nvim_buf_is_loaded(bufnr) or not utils.is_buffer_active(bufnr, config) then
+-        clear_buffer(bufnr)
+         return
+     end
+ 
+@@ -163,12 +202,17 @@ M.refresh = function(bufnr)
+         pairs(hooks.get(bufnr, hooks.type.ACTIVE) --[=[@as ibl.hooks.cb.active[]]=])
+     do
+         if not fn(bufnr) then
+-            clear_buffer(bufnr)
+             return
+         end
+     end
+ 
+-    local left_offset, top_offset, win_end, win_height = utils.get_offset(bufnr)
++    local left_offset, top_offset, win_end, win_height = utils.get_offset(bufnr, winid)
++    if topline then
++        top_offset = topline + 1
++    end
++    if botline then
++        win_end = botline
++    end
+     if top_offset > win_end then
+         return
+     end
+@@ -207,34 +251,27 @@ M.refresh = function(bufnr)
+         shiftwidth = vim.api.nvim_get_option_value("shiftwidth", { buf = bufnr }),
+         smart_indent_cap = config.indent.smart_indent_cap,
+     }
+-    local listchars = utils.get_listchars(bufnr)
++    local listchars = utils.get_listchars(bufnr, winid)
+     if listchars.tabstop_overwrite then
+         indent_opts.tabstop = 2
+         indent_opts.vartabstop = ""
+     end
+ 
+-    local has_empty_foldtext = utils.has_empty_foldtext(bufnr)
++    local has_empty_foldtext = utils.has_empty_foldtext(bufnr, winid)
+ 
+     local indent_state
+     local next_whitespace_tbl = {}
+     local empty_line_counter = 0
+ 
+-    local buffer_state = global_buffer_state[bufnr]
++    local state_key = get_state_key(bufnr, winid or 0)
++    local buffer_state = global_buffer_state[state_key]
+         or {
+             scope = nil,
+-            left_offset = -1,
+             top_offset = -1,
+             tick = 0,
+         }
+ 
+-    local same_scope = (scope and scope:id()) == (buffer_state.scope and buffer_state.scope:id())
+-
+-    if not same_scope then
+-        inlay_hints.clear_buffer(bufnr)
+-    end
+-
+-    global_buffer_state[bufnr] = {
+-        left_offset = left_offset,
++    global_buffer_state[state_key] = {
+         top_offset = top_offset,
+         scope = scope,
+         tick = buffer_state.tick + 1,
+@@ -308,28 +345,26 @@ M.refresh = function(bufnr)
+     end
+ 
+     -- Repeat indent virtual text on wrapped lines when 'breakindent' is set.
+-    local repeat_indent = utils.has_repeat_indent(bufnr, config)
++    local repeat_indent = utils.has_repeat_indent(bufnr, config, winid)
++    local update_inlay_hints = winid == vim.api.nvim_get_current_win()
+ 
+     for i, line in ipairs(lines) do
+         local row = i + offset
+         if line_skipped[i] then
+-            vt.clear_buffer(bufnr, row)
+             goto continue
+         end
+ 
+         local whitespace = utils.get_whitespace(line)
+-        local foldclosed = utils.get_foldclosed(bufnr, row)
+-        if is_current_buffer and foldclosed == row and not has_empty_foldtext then
+-            local foldtext = utils.get_foldtextresult(bufnr, row)
++        local foldclosed = utils.get_foldclosed(bufnr, row, winid)
++        if foldclosed == row and not has_empty_foldtext then
++            local foldtext = utils.get_foldtextresult(bufnr, row, winid)
+             local foldtext_whitespace = utils.get_whitespace(foldtext)
+             if vim.fn.strdisplaywidth(foldtext_whitespace, 0) < vim.fn.strdisplaywidth(whitespace, 0) then
+-                vt.clear_buffer(bufnr, row)
+                 goto continue
+             end
+         end
+ 
+-        if is_current_buffer and foldclosed > -1 and foldclosed + win_height < row then
+-            vt.clear_buffer(bufnr, row)
++        if foldclosed > -1 and foldclosed + win_height < row then
+             goto continue
+         end
+ 
+@@ -435,9 +470,6 @@ M.refresh = function(bufnr)
+             scope_col_start_single
+         )
+ 
+-        -- #### set virtual text ####
+-        vt.clear_buffer(bufnr, row)
+-
+         -- Show exact scope
+         local scope_col_start_draw = #whitespace
+         local scope_show_end_cond = #whitespace_tbl > scope_col_start_single
+@@ -453,9 +485,12 @@ M.refresh = function(bufnr)
+                 end_col = #line,
+                 hl_group = scope_hl.underline,
+                 priority = config.scope.priority,
++                ephemeral = true,
+                 strict = false,
+             })
+-            inlay_hints.set(bufnr, row - 1, #whitespace, scope_hl.underline, scope_hl.underline)
++            if update_inlay_hints then
++                inlay_hints.set(bufnr, row - 1, #whitespace, scope_hl.underline, scope_hl.underline)
++            end
+         end
+ 
+         -- Scope end
+@@ -464,9 +499,12 @@ M.refresh = function(bufnr)
+                 end_col = scope_col_end,
+                 hl_group = scope_hl.underline,
+                 priority = config.scope.priority,
++                ephemeral = true,
+                 strict = false,
+             })
+-            inlay_hints.set(bufnr, row - 1, #whitespace, scope_hl.underline, scope_hl.underline)
++            if update_inlay_hints then
++                inlay_hints.set(bufnr, row - 1, #whitespace, scope_hl.underline, scope_hl.underline)
++            end
+         end
+ 
+         for _, fn in
+@@ -483,6 +521,7 @@ M.refresh = function(bufnr)
+                 virt_text_repeat_linebreak = repeat_indent or nil,
+                 hl_mode = "combine",
+                 priority = config.indent.priority,
++                ephemeral = true,
+                 strict = false,
+             })
+         end
+diff --git a/lua/ibl/utils.lua b/lua/ibl/utils.lua
+index 91f035f..c700126 100644
+--- a/lua/ibl/utils.lua
++++ b/lua/ibl/utils.lua
+@@ -262,26 +262,32 @@ end
+ ---@field tab_char_end string?
+ 
+ ---@param bufnr number
++---@param winid number?
+ ---@return ibl.listchars
+-M.get_listchars = function(bufnr)
++M.get_listchars = function(bufnr, winid)
+     local listchars
+-    ---@diagnostic disable-next-line
+-    local list = vim.opt.list:get()
+-    if list then
+-        listchars = vim.opt.listchars:get()
++    local list
++    local win = winid
++    if not win then
++        if bufnr == vim.api.nvim_get_current_buf() then
++            ---@diagnostic disable-next-line
++            list = vim.opt.list:get()
++            if list then
++                listchars = vim.opt.listchars:get()
++            end
++        else
++            win = M.get_win(bufnr)
++        end
+     end
+ 
+-    if bufnr ~= vim.api.nvim_get_current_buf() then
+-        local win = M.get_win(bufnr)
+-        if win then
+-            list = vim.api.nvim_get_option_value("list", { win = win })
+-            if list then
+-                local raw_value = vim.api.nvim_get_option_value("listchars", { win = win })
+-                listchars = {}
+-                for _, key_value_str in ipairs(M.split(raw_value, ",")) do
+-                    local key, value = unpack(M.split(key_value_str, ":"))
+-                    listchars[vim.trim(key)] = value
+-                end
++    if win then
++        list = vim.api.nvim_get_option_value("list", { win = win })
++        if list then
++            local raw_value = vim.api.nvim_get_option_value("listchars", { win = win })
++            listchars = {}
++            for _, key_value_str in ipairs(M.split(raw_value, ",")) do
++                local key, value = unpack(M.split(key_value_str, ":"))
++                listchars[vim.trim(key)] = value
+             end
+         end
+     end
+@@ -348,12 +354,16 @@ M.has_end = function(line)
+ end
+ 
+ ---@param bufnr number
++---@param winid number?
+ ---@return number, number, number, number
+-M.get_offset = function(bufnr)
++M.get_offset = function(bufnr, winid)
+     local win
+     local win_view
+     local win_end
+-    if bufnr == vim.api.nvim_get_current_buf() then
++    if winid then
++        win = winid
++        win_view = vim.api.nvim_win_call(win, vim.fn.winsaveview)
++    elseif bufnr == vim.api.nvim_get_current_buf() then
+         win = 0
+         win_view = vim.fn.winsaveview()
+         win_end = vim.fn.line "w$"
+@@ -379,47 +389,52 @@ end
+ 
+ ---@param bufnr number
+ ---@param row number
++---@param winid number?
+ ---@return number
+-M.get_foldclosed = function(bufnr, row)
+-    if bufnr == vim.api.nvim_get_current_buf() then
++M.get_foldclosed = function(bufnr, row, winid)
++    local win = winid
++    if not win and bufnr == vim.api.nvim_get_current_buf() then
+         return vim.fn.foldclosed(row) or -1
+-    else
+-        local win = M.get_win(bufnr)
+-        if not win then
+-            return -1
+-        end
+-        return vim.api.nvim_win_call(win, function()
+-            ---@diagnostic disable-next-line: redundant-return-value
+-            return vim.fn.foldclosed(row) or -1
+-        end)
+     end
++
++    win = win or M.get_win(bufnr)
++    if not win then
++        return -1
++    end
++    return vim.api.nvim_win_call(win, function()
++        ---@diagnostic disable-next-line: redundant-return-value
++        return vim.fn.foldclosed(row) or -1
++    end)
+ end
+ 
+ ---@param bufnr number
+ ---@param row number
++---@param winid number?
+ ---@return string
+-M.get_foldtextresult = function(bufnr, row)
+-    if bufnr == vim.api.nvim_get_current_buf() then
++M.get_foldtextresult = function(bufnr, row, winid)
++    local win = winid
++    if not win and bufnr == vim.api.nvim_get_current_buf() then
+         return vim.fn.foldtextresult(row) or ""
+-    else
+-        local win = M.get_win(bufnr)
+-        if not win then
+-            return ""
+-        end
+-        return vim.api.nvim_win_call(win, function()
+-            ---@diagnostic disable-next-line: redundant-return-value
+-            return vim.fn.foldtextresult(row) or ""
+-        end)
+     end
++
++    win = win or M.get_win(bufnr)
++    if not win then
++        return ""
++    end
++    return vim.api.nvim_win_call(win, function()
++        ---@diagnostic disable-next-line: redundant-return-value
++        return vim.fn.foldtextresult(row) or ""
++    end)
+ end
+ 
+ ---@param bufnr number
++---@param winid number?
+ ---@return boolean
+-M.has_empty_foldtext = function(bufnr)
++M.has_empty_foldtext = function(bufnr, winid)
+     if vim.fn.has "nvim-0.10" == 0 then
+         return false
+     end
+-    local win = M.get_win(bufnr)
++    local win = winid or M.get_win(bufnr)
+     if not win then
+         return false
+     end
+@@ -482,8 +497,9 @@ end
+ 
+ ---@param bufnr number
+ ---@param config ibl.config
++---@param winid number?
+ ---@return boolean
+-M.has_repeat_indent = function(bufnr, config)
++M.has_repeat_indent = function(bufnr, config, winid)
+     if not config.indent.repeat_linebreak then
+         return false
+     end
+@@ -491,7 +507,7 @@ M.has_repeat_indent = function(bufnr, config)
+         return false
+     end
+ 
+-    local win = M.get_win(bufnr)
++    local win = winid or M.get_win(bufnr)
+     if not vim.api.nvim_get_option_value("breakindent", { win = win }) then
+         return false
+     end

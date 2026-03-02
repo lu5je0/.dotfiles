@@ -531,6 +531,7 @@ local plugins = {
 
   {
     'lukas-reineke/indent-blankline.nvim',
+    patches = { 'indent-blankline.diff' },
     config = function()
       require('lu5je0.ext.indent-blankline')
     end,
