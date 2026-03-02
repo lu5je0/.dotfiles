@@ -5,6 +5,9 @@ local timestamp_show_ns = vim.api.nvim_create_namespace('timestamp-show')
 local timestamp_show_enabled = {}
 local timestamp_show_augroup = vim.api.nvim_create_augroup('timestamp-show-refresh', { clear = false })
 local timestamp_show_autocmd_registered = {}
+local timestamp_show_hl = 'TimestampShowVirtText'
+
+vim.api.nvim_set_hl(0, timestamp_show_hl, { fg = '#4B515E' })
 
 local function render_timestamp_show_line(buf, row0)
   vim.api.nvim_buf_clear_namespace(buf, timestamp_show_ns, row0, row0 + 1)
@@ -18,7 +21,7 @@ local function render_timestamp_show_line(buf, row0)
     local formatted = utils.format_timestamp_like(num)
     if formatted then
       vim.api.nvim_buf_set_extmark(buf, timestamp_show_ns, row0, end_idx_exclusive - 1, {
-        virt_text = { { ' ' .. formatted, 'Comment' } },
+        virt_text = { { '(' .. formatted .. ')', timestamp_show_hl } },
         virt_text_pos = 'inline',
         priority = 80,
       })
