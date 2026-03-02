@@ -72,11 +72,24 @@ local function ensure_timestamp_show_autocmd(buf)
   timestamp_show_autocmd_registered[buf] = true
 end
 
+local function clear_timestamp_show_autocmd(buf)
+  if not timestamp_show_autocmd_registered[buf] then
+    return
+  end
+
+  vim.api.nvim_clear_autocmds({
+    group = timestamp_show_augroup,
+    buffer = buf,
+  })
+  timestamp_show_autocmd_registered[buf] = nil
+end
+
 function M.toggle_timestamp_show()
   local buf = vim.api.nvim_get_current_buf()
   if timestamp_show_enabled[buf] then
     vim.api.nvim_buf_clear_namespace(buf, timestamp_show_ns, 0, -1)
     timestamp_show_enabled[buf] = nil
+    clear_timestamp_show_autocmd(buf)
     vim.notify('TimestampShow: hidden')
     return
   end
