@@ -35,55 +35,9 @@ ibl.setup {
     remove_blankline_trail = false,
   },
   scope = { 
-    enabled = true,
+    enabled = false,
     show_start = false,
     show_end = false,
     highlight = highlight_scope
   },
 }
-
--- fix 文本闪烁
--- vim.keymap.set('n', '==', function()
---   vim.cmd('IBLDisable')
---   vim.cmd("norm! ==")
---   vim.cmd('IBLEnable')
--- end, { silent = true })
---
--- vim.keymap.set('x', '=', function()
---   vim.cmd('IBLDisable')
---   vim.cmd("norm! =")
---   vim.cmd('IBLEnable')
--- end, { silent = true })
---
--- local keys = require('lu5je0.core.keys')
--- vim.keymap.set('x', '>', function()
---   vim.cmd('IBLDisable')
---   keys.feedkey('>gv', 'n')
---   vim.schedule(function()
---     vim.cmd('IBLEnable')
---   end)
--- end, { silent = true })
---
--- vim.keymap.set('x', '<', function()
---   vim.cmd('IBLDisable')
---   keys.feedkey('<gv', 'n')
---   vim.schedule(function()
---     vim.cmd('IBLEnable')
---   end)
--- end, { silent = true })
---
--- vim.keymap.set('n', '<space>>', function()
---   vim.cmd('IBLDisable')
---   keys.feedkey('`[v`]>^', 'n')
---   vim.schedule(function()
---     vim.cmd('IBLEnable')
---   end)
--- end, { silent = true })
---
--- vim.keymap.set('n', '<space><', function()
---   vim.cmd('IBLDisable')
---   keys.feedkey('`[v`]<^', 'n')
---   vim.schedule(function()
---     vim.cmd('IBLEnable')
---   end)
--- end, { silent = true })
