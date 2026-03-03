@@ -6,7 +6,7 @@ local STD_PATH = vim.fn.stdpath('config')
 local state = {
   process_handle = nil, -- 进程句柄
   stdin_pipe = nil,     -- 标准输入管道
-  exe_path = STD_PATH .. '/lib/ime_control',
+  exe_path = STD_PATH .. '/lib/imeswitch',
   is_running = false,
 }
 
@@ -38,7 +38,7 @@ local function start_process()
 
   -- 检查可执行文件路径是否有效
   if not state.exe_path or vim.fn.executable(state.exe_path) == 0 then
-    vim.notify("找不到 ime_control，可执行文件路径无效", vim.log.levels.ERROR, { title = "IME Control" })
+    vim.notify("找不到 ime_control.exe，请检查配置路径", vim.log.levels.ERROR, { title = "IME Control" })
     return
   end
 
@@ -61,9 +61,7 @@ local function start_process()
 
     -- 如果 handle 仍然存在 (表示不是我们主动停止的)，说明是意外退出
     if state.process_handle then
-      vim.schedule(function()
-        vim.notify("IME 控制进程意外退出，退出码: " .. tostring(code) .. ", 信号: " .. tostring(signal), vim.log.levels.WARN, { title = "IME Control" })
-      end)
+      vim.notify("IME 控制进程意外退出，退出码: " .. tostring(code) .. ", 信号: " .. tostring(signal), vim.log.levels.WARN, { title = "IME Control" })
     end
 
     -- 重置状态
@@ -101,9 +99,6 @@ end
 -- @param opts table | nil 配置选项，例如 { exe_path = "..." }
 function M.setup(opts)
   opts = opts or {}
-  if opts.exe_path and opts.exe_path ~= '' then
-    state.exe_path = opts.exe_path
-  end
 
   -- 启动后台服务
   start_process()

@@ -5,7 +5,7 @@ from kitty.window import Window  # type: ignore
 import subprocess
 
 proc = subprocess.Popen(
-    ["/Users/lu5je0/.dotfiles/vim/lib/ime_control", "-i"],
+    ["/Users/lu5je0/.dotfiles/vim/lib/imeswitch", "-i"],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     text=True,
