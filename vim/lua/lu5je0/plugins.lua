@@ -66,13 +66,6 @@ local plugins = {
       vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
     end
   },
-  -- {
-  --   'nvim-lualine/lualine.nvim',
-  --   config = function()
-  --     require('lu5je0.ext.lualine')
-  --   end,
-  --   event = 'VeryLazy',
-  -- },
 
   -- treesiter
   {
@@ -85,13 +78,6 @@ local plugins = {
       branch = 'main',
       -- event = 'VeryLazy'
     },
-    -- {
-    --   "ThePrimeagen/refactoring.nvim",
-    --   config = function()
-    --     require('lu5je0.ext.refactoring').setup()
-    --   end,
-    --   keys = { { mode = { 'n', 'x' }, '<leader>c' } },
-    -- },
     {
       'm-demare/hlargs.nvim',
       config = function()
@@ -105,13 +91,6 @@ local plugins = {
       },
       event = 'LspAttach'
     },
-    -- {
-    --   'stevearc/aerial.nvim',
-    --   config = function()
-    --     require('lu5je0.ext.aerial')
-    --   end,
-    --   cmd = { 'AerialToggle' }
-    -- },
   },
 
   {
@@ -1006,13 +985,6 @@ local plugins = {
     end,
     event = 'VeryLazy',
   },
-  
-  -- {
-  --   "nvim-treesitter/nvim-treesitter-context",
-  --   config = function()
-  --     require('treesitter-context').setup {}
-  --   end
-  -- },
   
   {
     'TobinPalmer/pastify.nvim',
