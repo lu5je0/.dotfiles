@@ -44,6 +44,9 @@ local function start_process()
 
   -- 为子进程创建一个 stdin 管道
   local stdin = vim.uv.new_pipe(false) -- `false` 表示这不是一个 IPC 管道
+  if not stdin then
+    return
+  end
 
   -- 使用 vim.uv.spawn 启动 C++ 程序
   local handle, pid = vim.uv.spawn(state.exe_path, {
