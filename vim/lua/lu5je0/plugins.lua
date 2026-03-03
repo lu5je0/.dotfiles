@@ -28,8 +28,6 @@ local disabled_plugins = {
   "vimballPlugin",
 }
 
-local std_config_path = vim.fn.stdpath('config')
-
 local opts = {
   concurrency = 20,
   performance = {
@@ -1006,97 +1004,6 @@ local plugins = {
   
 }
 
-local function patch_plugins()
-  local function get_plugin_path(plugin_name)
-    local path = vim.fn.stdpath('data') .. '/lazy/' .. plugin_name
-    if vim.fn.isdirectory(path) == 1 then
-      return path
-    end
-  end
-
-  local function do_reset(plugin_name)
-    local path = get_plugin_path(plugin_name)
-    if not path then
-      return
-    end
-    vim.system({
-      "git",
-      "reset",
-      "--hard",
-    }, { cwd = path }):wait()
-  end
-  
-  local function do_patch(plugin_name, patches)
-    local path = get_plugin_path(plugin_name)
-    if not path then
-      return
-    end
-    
-    do_reset(plugin_name)
-    
-    for _, patch in ipairs(patches) do
-      vim.system({
-        "git",
-        "apply",
-        std_config_path .. '/patches/' .. patch,
-      }, { cwd = path }):wait()
-    end
-  end
-  
-  local function all_patch(all_plugins)
-    for _, plugin in ipairs(all_plugins) do
-      if plugin.patches ~= nil then
-        if type(plugin.patches) == 'string' then
-          plugin.patches = { plugin.patches }
-        end
-        do_patch(vim.split(plugin[1], '/')[2], plugin.patches)
-      end
-    end
-    _G.__lazy_patch = true
-  end
-  
-  local function all_reset(all_plugins)
-    _G.__lazy_patch = false
-    for _, plugin in ipairs(all_plugins) do
-      if plugin.patches ~= nil then
-        do_reset(vim.split(plugin[1], '/')[2])
-      end
-    end
-    
-    vim.api.nvim_create_autocmd('VimLeavePre', {
-      callback = function()
-        if not _G.__lazy_patch then
-          all_patch(plugins)
-        end
-      end
-    })
-  end
-  
-  vim.api.nvim_create_autocmd('User', {
-    pattern = { 'LazyCheckPre', 'LazyUpdatePre', 'LazyInstallPre', 'LazySyncPre' },
-    callback = function()
-      all_reset(plugins)
-    end
-  })
-  
-  vim.api.nvim_create_autocmd('User', {
-    pattern = { 'LazyCheck', 'LazyUpdate', 'LazyInstall', 'LazySync' },
-    callback = function()
-      all_patch(plugins)
-    end
-  })
-  
-  vim.api.nvim_create_user_command('LazyRestore', function()
-    all_reset(plugins)
-    vim.cmd('Lazy! restore')
-    all_patch(plugins)
-  end, {})
-  
-  vim.api.nvim_create_user_command('LazyApplyPatch', function()
-    all_patch(plugins)
-  end, {})
-end
-
-patch_plugins()
+require('lu5je0.ext.lazy_patch').setup(plugins)
 
 require("lazy").setup(plugins, opts)
