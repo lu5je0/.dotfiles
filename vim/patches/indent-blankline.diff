@@ -28,10 +28,10 @@ index 65696ef..fdc10b6 100644
      })
      vim.api.nvim_create_autocmd("ColorScheme", {
 diff --git a/lua/ibl/init.lua b/lua/ibl/init.lua
-index 9428ce7..69126e1 100644
+index 9428ce7..a7107b7 100644
 --- a/lua/ibl/init.lua
 +++ b/lua/ibl/init.lua
-@@ -14,9 +14,16 @@ local M = {}
+@@ -14,9 +14,31 @@ local M = {}
  
  M.initialized = false
  
@@ -42,19 +42,34 @@ index 9428ce7..69126e1 100644
 +---@param bufnr number
 +---@param winid number
 +---@return string
-+local get_state_key = function(bufnr, winid)
-+    return string.format("%d:%d", bufnr, winid)
++local get_state_key = (function()
++    local cache = {}
++    return function(bufnr, winid) local keys = cache[bufnr] or {}; cache[bufnr] = keys; keys[winid] = keys[winid] or (bufnr .. ":" .. winid); return keys[winid] end
++end)()
++
++local redraw_scheduled = false
++local request_redraw = function()
++    if redraw_scheduled then
++        return
++    end
++    redraw_scheduled = true
++    vim.schedule(function()
++        redraw_scheduled = false
++        if M.initialized then
++            vim.cmd.redraw()
++        end
++    end)
 +end
 +
  ---@param bufnr number
  local clear_buffer = function(bufnr)
      vt.clear_buffer(bufnr)
-@@ -24,15 +31,30 @@ local clear_buffer = function(bufnr)
+@@ -24,15 +46,30 @@ local clear_buffer = function(bufnr)
      for _, fn in pairs(hooks.get(bufnr, hooks.type.CLEAR)) do
          fn(bufnr)
      end
 -    global_buffer_state[bufnr] = nil
-+    local prefix = string.format("%d:", bufnr)
++    local prefix = bufnr .. ":"
 +    for key, _ in pairs(global_buffer_state) do
 +        if key:sub(1, #prefix) == prefix then
 +            global_buffer_state[key] = nil
@@ -84,7 +99,7 @@ index 9428ce7..69126e1 100644
              end
          end
      end
-@@ -40,6 +62,15 @@ local setup = function(config)
+@@ -40,6 +77,18 @@ local setup = function(config)
      inlay_hints.setup()
      highlights.setup()
      autocmds.setup()
@@ -93,6 +108,9 @@ index 9428ce7..69126e1 100644
 +            if not M.initialized then
 +                return
 +            end
++            if not vim.api.nvim_buf_is_loaded(bufnr) then
++                return false
++            end
 +            M.refresh(bufnr, winid, topline, botline, true)
 +            return false
 +        end,
@@ -100,7 +118,7 @@ index 9428ce7..69126e1 100644
      M.initialized = true
      M.refresh_all()
  end
-@@ -96,11 +127,7 @@ end
+@@ -96,11 +145,7 @@ end
  
  --- Refreshes indent-blankline in all buffers
  M.refresh_all = function()
@@ -109,11 +127,11 @@ index 9428ce7..69126e1 100644
 -            M.refresh(vim.api.nvim_win_get_buf(win) --[[@as number]])
 -        end)
 -    end
-+    vim.cmd.redraw()
++    request_redraw()
  end
  
  local debounced_refresh = setmetatable({
-@@ -148,14 +175,26 @@ end
+@@ -148,14 +193,26 @@ end
  ---
  --- Only use this directly if you know what you are doing, consider `debounced_refresh` instead
  ---@param bufnr number
@@ -132,7 +150,7 @@ index 9428ce7..69126e1 100644
 +            clear_buffer(bufnr)
 +            return
 +        end
-+        vim.cmd.redraw()
++        request_redraw()
 +        return
 +    end
 +
@@ -143,7 +161,7 @@ index 9428ce7..69126e1 100644
          return
      end
  
-@@ -163,12 +202,17 @@ M.refresh = function(bufnr)
+@@ -163,12 +220,17 @@ M.refresh = function(bufnr)
          pairs(hooks.get(bufnr, hooks.type.ACTIVE) --[=[@as ibl.hooks.cb.active[]]=])
      do
          if not fn(bufnr) then
@@ -163,7 +181,7 @@ index 9428ce7..69126e1 100644
      if top_offset > win_end then
          return
      end
-@@ -207,34 +251,27 @@ M.refresh = function(bufnr)
+@@ -207,34 +269,27 @@ M.refresh = function(bufnr)
          shiftwidth = vim.api.nvim_get_option_value("shiftwidth", { buf = bufnr }),
          smart_indent_cap = config.indent.smart_indent_cap,
      }
@@ -203,7 +221,7 @@ index 9428ce7..69126e1 100644
          top_offset = top_offset,
          scope = scope,
          tick = buffer_state.tick + 1,
-@@ -308,28 +345,26 @@ M.refresh = function(bufnr)
+@@ -308,28 +363,26 @@ M.refresh = function(bufnr)
      end
  
      -- Repeat indent virtual text on wrapped lines when 'breakindent' is set.
@@ -238,7 +256,7 @@ index 9428ce7..69126e1 100644
              goto continue
          end
  
-@@ -435,9 +470,6 @@ M.refresh = function(bufnr)
+@@ -435,9 +488,6 @@ M.refresh = function(bufnr)
              scope_col_start_single
          )
  
@@ -248,7 +266,7 @@ index 9428ce7..69126e1 100644
          -- Show exact scope
          local scope_col_start_draw = #whitespace
          local scope_show_end_cond = #whitespace_tbl > scope_col_start_single
-@@ -453,9 +485,12 @@ M.refresh = function(bufnr)
+@@ -453,9 +503,12 @@ M.refresh = function(bufnr)
                  end_col = #line,
                  hl_group = scope_hl.underline,
                  priority = config.scope.priority,
@@ -262,7 +280,7 @@ index 9428ce7..69126e1 100644
          end
  
          -- Scope end
-@@ -464,9 +499,12 @@ M.refresh = function(bufnr)
+@@ -464,9 +517,12 @@ M.refresh = function(bufnr)
                  end_col = scope_col_end,
                  hl_group = scope_hl.underline,
                  priority = config.scope.priority,
@@ -276,7 +294,7 @@ index 9428ce7..69126e1 100644
          end
  
          for _, fn in
-@@ -483,6 +521,7 @@ M.refresh = function(bufnr)
+@@ -483,6 +539,7 @@ M.refresh = function(bufnr)
                  virt_text_repeat_linebreak = repeat_indent or nil,
                  hl_mode = "combine",
                  priority = config.indent.priority,
@@ -285,10 +303,10 @@ index 9428ce7..69126e1 100644
              })
          end
 diff --git a/lua/ibl/utils.lua b/lua/ibl/utils.lua
-index 91f035f..c700126 100644
+index 91f035f..fa49468 100644
 --- a/lua/ibl/utils.lua
 +++ b/lua/ibl/utils.lua
-@@ -262,26 +262,32 @@ end
+@@ -262,26 +262,31 @@ end
  ---@field tab_char_end string?
  
  ---@param bufnr number
@@ -331,13 +349,12 @@ index 91f035f..c700126 100644
 +        if list then
 +            local raw_value = vim.api.nvim_get_option_value("listchars", { win = win })
 +            listchars = {}
-+            for _, key_value_str in ipairs(M.split(raw_value, ",")) do
-+                local key, value = unpack(M.split(key_value_str, ":"))
++            for key, value in raw_value:gmatch("([^:,]+):([^,]*)") do
 +                listchars[vim.trim(key)] = value
              end
          end
      end
-@@ -348,12 +354,16 @@ M.has_end = function(line)
+@@ -348,12 +353,21 @@ M.has_end = function(line)
  end
  
  ---@param bufnr number
@@ -351,12 +368,17 @@ index 91f035f..c700126 100644
 -    if bufnr == vim.api.nvim_get_current_buf() then
 +    if winid then
 +        win = winid
-+        win_view = vim.api.nvim_win_call(win, vim.fn.winsaveview)
++        if win == vim.api.nvim_get_current_win() then
++            win_view = vim.fn.winsaveview()
++            win_end = vim.fn.line "w$"
++        else
++            win_view = vim.api.nvim_win_call(win, vim.fn.winsaveview)
++        end
 +    elseif bufnr == vim.api.nvim_get_current_buf() then
          win = 0
          win_view = vim.fn.winsaveview()
          win_end = vim.fn.line "w$"
-@@ -379,47 +389,52 @@ end
+@@ -379,47 +393,58 @@ end
  
  ---@param bufnr number
  ---@param row number
@@ -367,6 +389,14 @@ index 91f035f..c700126 100644
 +M.get_foldclosed = function(bufnr, row, winid)
 +    local win = winid
 +    if not win and bufnr == vim.api.nvim_get_current_buf() then
++        return vim.fn.foldclosed(row) or -1
++    end
++
++    win = win or M.get_win(bufnr)
++    if not win then
++        return -1
++    end
++    if win == vim.api.nvim_get_current_win() then
          return vim.fn.foldclosed(row) or -1
 -    else
 -        local win = M.get_win(bufnr)
@@ -378,11 +408,6 @@ index 91f035f..c700126 100644
 -            return vim.fn.foldclosed(row) or -1
 -        end)
      end
-+
-+    win = win or M.get_win(bufnr)
-+    if not win then
-+        return -1
-+    end
 +    return vim.api.nvim_win_call(win, function()
 +        ---@diagnostic disable-next-line: redundant-return-value
 +        return vim.fn.foldclosed(row) or -1
@@ -414,6 +439,9 @@ index 91f035f..c700126 100644
 +    if not win then
 +        return ""
 +    end
++    if win == vim.api.nvim_get_current_win() then
++        return vim.fn.foldtextresult(row) or ""
++    end
 +    return vim.api.nvim_win_call(win, function()
 +        ---@diagnostic disable-next-line: redundant-return-value
 +        return vim.fn.foldtextresult(row) or ""
@@ -433,7 +461,7 @@ index 91f035f..c700126 100644
      if not win then
          return false
      end
-@@ -482,8 +497,9 @@ end
+@@ -482,8 +507,9 @@ end
  
  ---@param bufnr number
  ---@param config ibl.config
@@ -444,7 +472,7 @@ index 91f035f..c700126 100644
      if not config.indent.repeat_linebreak then
          return false
      end
-@@ -491,7 +507,7 @@ M.has_repeat_indent = function(bufnr, config)
+@@ -491,7 +517,7 @@ M.has_repeat_indent = function(bufnr, config)
          return false
      end
  
