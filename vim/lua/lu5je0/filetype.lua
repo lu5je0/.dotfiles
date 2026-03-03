@@ -17,12 +17,7 @@ vim.filetype.add {
     ['kitty.conf'] = 'config',
     ['gitconfig'] = 'gitconfig',
     ['aria2.conf'] = 'dosini',
-    ['requirements.txt'] = function(path, bufnr)
-      vim.schedule(function()
-        vim.bo[bufnr].commentstring = '#%s'
-      end)
-      return 'text'
-    end
+    ['requirements.txt'] = 'config',
   },
   pattern = {
     ['.*.tmux.conf'] = 'tmux',
