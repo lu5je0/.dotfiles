@@ -1,0 +1,437 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/grammar.schema.json",
+  "name": "arthas",
+  "rules": {
+    "source_file": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_line_content"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "newline"
+                  }
+                ]
+              },
+              {
+                "type": "SYMBOL",
+                "name": "newline"
+              }
+            ]
+          }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_line_content"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "_line_content": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "comment"
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "command"
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SYMBOL",
+                "name": "argument"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "comment"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "argument"
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SYMBOL",
+                "name": "argument"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "comment"
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "argument": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "option"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "class_name"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "method_name"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "ognl_expr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "wildcard"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "identifier"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "number"
+        }
+      ]
+    },
+    "command": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "dashboard"
+        },
+        {
+          "type": "STRING",
+          "value": "thread"
+        },
+        {
+          "type": "STRING",
+          "value": "jad"
+        },
+        {
+          "type": "STRING",
+          "value": "classloader"
+        },
+        {
+          "type": "STRING",
+          "value": "sc"
+        },
+        {
+          "type": "STRING",
+          "value": "sm"
+        },
+        {
+          "type": "STRING",
+          "value": "watch"
+        },
+        {
+          "type": "STRING",
+          "value": "trace"
+        },
+        {
+          "type": "STRING",
+          "value": "monitor"
+        },
+        {
+          "type": "STRING",
+          "value": "tt"
+        },
+        {
+          "type": "STRING",
+          "value": "ognl"
+        },
+        {
+          "type": "STRING",
+          "value": "getstatic"
+        },
+        {
+          "type": "STRING",
+          "value": "vmtool"
+        },
+        {
+          "type": "STRING",
+          "value": "heapdump"
+        },
+        {
+          "type": "STRING",
+          "value": "sysprop"
+        },
+        {
+          "type": "STRING",
+          "value": "sysenv"
+        },
+        {
+          "type": "STRING",
+          "value": "logger"
+        },
+        {
+          "type": "STRING",
+          "value": "stop"
+        },
+        {
+          "type": "STRING",
+          "value": "reset"
+        },
+        {
+          "type": "STRING",
+          "value": "version"
+        },
+        {
+          "type": "STRING",
+          "value": "help"
+        },
+        {
+          "type": "STRING",
+          "value": "cls"
+        },
+        {
+          "type": "STRING",
+          "value": "clear"
+        },
+        {
+          "type": "STRING",
+          "value": "cat"
+        },
+        {
+          "type": "STRING",
+          "value": "pwd"
+        },
+        {
+          "type": "STRING",
+          "value": "session"
+        },
+        {
+          "type": "STRING",
+          "value": "jobs"
+        },
+        {
+          "type": "STRING",
+          "value": "kill"
+        }
+      ]
+    },
+    "option": {
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "PATTERN",
+            "value": "--[A-Za-z][A-Za-z0-9-]*"
+          },
+          {
+            "type": "STRING",
+            "value": "--"
+          },
+          {
+            "type": "PATTERN",
+            "value": "-[A-Za-z]+"
+          }
+        ]
+      }
+    },
+    "class_name": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[A-Z][a-zA-Z0-9_]*(\\.[A-Za-z0-9_]+)*"
+      }
+    },
+    "method_name": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[a-z][a-zA-Z0-9_]*"
+      }
+    },
+    "identifier": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[A-Za-z_.$][A-Za-z0-9_.$-]*"
+      }
+    },
+    "number": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[0-9]+"
+      }
+    },
+    "string": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "\""
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "PATTERN",
+                    "value": "[^\"\\\\\\n]+"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "\\\\."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "STRING",
+              "value": "\""
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "'"
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "PATTERN",
+                    "value": "[^'\\\\\\n]+"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "\\\\."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "STRING",
+              "value": "'"
+            }
+          ]
+        }
+      ]
+    },
+    "ognl_expr": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "{"
+          },
+          {
+            "type": "PATTERN",
+            "value": "[^}\\n]*"
+          },
+          {
+            "type": "STRING",
+            "value": "}"
+          }
+        ]
+      }
+    },
+    "wildcard": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[?*]+"
+      }
+    },
+    "comment": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "//"
+          },
+          {
+            "type": "PATTERN",
+            "value": "[^\\n]*"
+          }
+        ]
+      }
+    },
+    "newline": {
+      "type": "PATTERN",
+      "value": "\\n"
+    }
+  },
+  "extras": [
+    {
+      "type": "PATTERN",
+      "value": "[ \\t\\f\\r]"
+    }
+  ],
+  "conflicts": [],
+  "precedences": [],
+  "externals": [],
+  "inline": [],
+  "supertypes": [],
+  "reserved": {}
+}

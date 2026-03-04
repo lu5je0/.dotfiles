@@ -1,0 +1,6 @@
+{
+  "name": "tree-sitter-arthas",
+  "version": "0.0.1",
+  "main": "grammar.js",
+  "license": "MIT"
+}

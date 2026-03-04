@@ -4,7 +4,7 @@ local ts_filetypes = {
   'json', 'python', 'java', 'bash', 'go', 'vim', 'lua', 'cpp', 'c',
   'rust', 'toml', 'yaml', 'markdown', 'http', 'typescript',
   'javascript', 'sql', 'html', 'json5', 'regex', 'vue', 
-  'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy'
+  'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy', 'arthas'
 }
 
 local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
@@ -333,7 +333,35 @@ local function enable_fold_text_cache()
   _G.__custom_foldtext = cached_fold_text
 end
 
+M.setup_custom_parsers = function()
+  local config_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ':p:h:h:h:h')
+  local arthas_parser_root = config_root .. '/parsers/tree-sitter-arthas'
+  local parser_group = vim.api.nvim_create_augroup('ArthasTreesitterParser', { clear = true })
+
+  local function register_arthas_parser()
+    local parser_config = require("nvim-treesitter.parsers")
+    parser_config.arthas = {
+      install_info = {
+        path = arthas_parser_root,
+        files = { 'src/parser.c' },
+        generate_requires_npm = false,
+        requires_generate_from_grammar = false,
+      },
+      filetype = 'arthas',
+    }
+  end
+
+  register_arthas_parser()
+  vim.api.nvim_create_autocmd('User', {
+    pattern = 'TSUpdate',
+    group = parser_group,
+    callback = register_arthas_parser,
+  })
+end
+
 M.setup = function()
+  M.setup_custom_parsers()
+
   require("nvim-treesitter").install(ts_filetypes)
   
   vim.api.nvim_create_autocmd('FileType', {
