@@ -334,29 +334,15 @@ local function enable_fold_text_cache()
 end
 
 M.setup_custom_parsers = function()
-  local config_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ':p:h:h:h:h')
-  local arthas_parser_root = config_root .. '/parsers/tree-sitter-arthas'
-  local parser_group = vim.api.nvim_create_augroup('ArthasTreesitterParser', { clear = true })
-
-  local function register_arthas_parser()
-    local parser_config = require("nvim-treesitter.parsers")
-    parser_config.arthas = {
+  ---@diagnostic disable: missing-fields
+  vim.api.nvim_create_autocmd('User', { pattern = 'TSUpdate', callback = function()
+    require('nvim-treesitter.parsers').arthas = {
       install_info = {
-        path = arthas_parser_root,
-        files = { 'src/parser.c' },
-        generate_requires_npm = false,
-        requires_generate_from_grammar = false,
+        path = vim.fn.stdpath('config') .. '/parsers/tree-sitter-arthas',
       },
       filetype = 'arthas',
     }
-  end
-
-  register_arthas_parser()
-  vim.api.nvim_create_autocmd('User', {
-    pattern = 'TSUpdate',
-    group = parser_group,
-    callback = register_arthas_parser,
-  })
+  end })
 end
 
 M.setup = function()
