@@ -15,8 +15,8 @@ syn keyword arthasCommand
   \ stop reset version help cls clear
   \ cat pwd session jobs kill
 
-" 选项（常见 flag）
-syn match arthasOption /-\([a-zA-Z]\+\|x\|n\|E\|v\)\>/
+" 选项（支持短选项、长选项和 `--`）
+syn match arthasOption /\(^\|\s\)\zs\(--[A-Za-z][A-Za-z0-9-]*\|--\|-[A-Za-z]\+\)\ze\(\s\|$\)/
 
 " Java 类名（简单匹配：大写字母开头的点分格式）
 syn match arthasClassName /\v<[A-Z][a-zA-Z0-9_]*(\.[A-Za-z0-9_]+)*>/
