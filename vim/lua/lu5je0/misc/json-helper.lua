@@ -12,7 +12,7 @@ end
 function M.path_copy()
   local path = require('lu5je0.misc.jsonpath').get()
   
-  print(path)
+  print('copied: ' .. path)
   vim.fn.setreg('*', path)
   vim.fn.setreg('"', path)
 end
