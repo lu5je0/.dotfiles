@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  q-qrencode -h | --help
+  q-qrencode [--kitty|--ansi] [text]
+  q-qrencode [--kitty|--ansi] -- [text starting with "-"]
+  echo "text" | q-qrencode [--kitty|--ansi]
+
+Modes:
+  kitty  default; prefer kitty/wezterm image protocol
+  ansi   terminal text mode
+USAGE
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+mode="kitty"
+case "${1:-}" in
+  --kitty)
+    mode="kitty"
+    shift
+    ;;
+  --ansi)
+    mode="ansi"
+    shift
+    ;;
+esac
+
+if [ "${1:-}" = "--" ]; then
+  shift
+fi
+
+if [ ! -t 0 ]; then
+  input="$(cat)"
+elif [ "$#" -gt 0 ]; then
+  input="$*"
+else
+  usage
+  exit 1
+fi
+
+detect_image_terminal() {
+  if [ "${TERM:-}" = "xterm-kitty" ]; then
+    echo "kitty"
+    return 0
+  fi
+
+  if [ "${TERM_PROGRAM:-}" = "WezTerm" ]; then
+    echo "wezterm"
+    return 0
+  fi
+
+  return 1
+}
+
+render_ansi() {
+  qrencode -t ansiutf8 <<< "$input"
+}
+
+render_kitty() {
+  local tmp_png
+  local image_term
+
+  image_term="$(detect_image_terminal)" || {
+    echo "q-qrencode: kitty mode requires kitty or wezterm terminal" >&2
+    return 1
+  }
+
+  tmp_png="$(mktemp /tmp/q-qrencode.XXXXXX.png)"
+  trap 'rm -f "$tmp_png"' EXIT
+
+  qrencode -s 10 -o "$tmp_png" <<< "$input"
+  if [ "$image_term" = "kitty" ]; then
+    kitty +kitten icat "$tmp_png"
+  else
+    wezterm imgcat "$tmp_png"
+  fi
+}
+
+if [ "$mode" = "ansi" ]; then
+  render_ansi
+elif detect_image_terminal >/dev/null; then
+  render_kitty
+else
+  render_ansi
+fi

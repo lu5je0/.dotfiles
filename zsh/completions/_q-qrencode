@@ -1,0 +1,12 @@
+#compdef q-qrencode
+
+_q_qrencode() {
+  _arguments -s \
+    '-h[show help]' \
+    '--help[show help]' \
+    '--kitty[force kitty mode]' \
+    '--ansi[force ansi mode]' \
+    '*:text: '
+}
+
+_q_qrencode "$@"
