@@ -67,6 +67,7 @@ render_ansi() {
 render_kitty() {
   local tmp_png
   local image_term
+  local rc
 
   image_term="$(detect_image_terminal)" || {
     echo "q-qrencode: kitty mode requires kitty or wezterm terminal" >&2
@@ -74,14 +75,18 @@ render_kitty() {
   }
 
   tmp_png="$(mktemp /tmp/q-qrencode.XXXXXX.png)"
-  trap 'rm -f "$tmp_png"' EXIT
 
   qrencode -s 10 -o "$tmp_png" <<< "$input"
   if [ "$image_term" = "kitty" ]; then
     kitty +kitten icat "$tmp_png"
+    rc=$?
   else
     wezterm imgcat "$tmp_png"
+    rc=$?
   fi
+
+  rm -f "$tmp_png"
+  return "$rc"
 }
 
 if [ "$mode" = "ansi" ]; then
