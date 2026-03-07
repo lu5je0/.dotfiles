@@ -20,7 +20,7 @@ end
 
 M.input = function_utils.debounce(function(text)
   return bridge().call('clipboard', 'input', { text = text or '' }, { wait_response = false })
-end, 500)
+end, 1000)
 
 function M.output(opts)
   local params = opts or { eol = 'lf' }
