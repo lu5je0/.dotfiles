@@ -1,5 +1,7 @@
 local M = {}
 
+local function_utils = require('lu5je0.lang.function-utils')
+
 local state = {
   bridge = nil,
 }
@@ -16,9 +18,9 @@ function M.setup(opts)
   return M
 end
 
-function M.input(text)
-  return bridge().call('clipboard', 'input', { text = text or '' }, { wait_response = true })
-end
+M.input = function_utils.debounce(function(text)
+  return bridge().call('clipboard', 'input', { text = text or '' }, { wait_response = false })
+end, 500)
 
 function M.output(opts)
   local params = opts or { eol = 'lf' }
