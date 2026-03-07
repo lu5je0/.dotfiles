@@ -8,6 +8,8 @@ local entries = {
 }
 local active_entry = {}
 
+local WIN32YANK_PATH = "/mnt/d/bin/win32yank.exe"
+
 local function add_entry(entry)
   entries[entries.last] = entry
   entries.last = entries.last + 1
@@ -23,7 +25,7 @@ local function pop_entry()
 end
 
 local function sync_from(init)
-  vim.fn.jobstart({ "/mnt/d/bin/win32yank.exe", "-o", "--lf" }, {
+  vim.fn.jobstart({ WIN32YANK_PATH, "-o", "--lf" }, {
     stdout_buffered = true,
     on_stdout = function(_, data)
       -- 避免切换窗口后regtype丢失
@@ -43,7 +45,7 @@ local sync_to
 do
   local cur_sync_job
   local function sync_next(entry)
-    local chan = vim.fn.jobstart({ "/mnt/d/bin/win32yank.exe", "-i" }, {
+    local chan = vim.fn.jobstart({ WIN32YANK_PATH, "-i" }, {
       on_exit = function(_)
         local next_entry = pop_entry()
         if next_entry then
