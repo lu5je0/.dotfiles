@@ -11,6 +11,7 @@ Default behavior:
 ```bash
 wd hello
 wd --no-say hello
+wd --json --no-say hello
 wd -e stardict -e google hello
 wd --list-engines
 wd --stats
@@ -28,6 +29,13 @@ echo "good for you" | wd
 - `--no-say`: disable text-to-speech
 - `--stats`: show query history stats
 - `--clear-stats`: clear query history stats
+- `--json`: print machine-readable JSON
+
+`--json` success example:
+
+```json
+{"ok": true, "result": {"word": "hello", "translation": "你好", "definition": "...", "phonetic": "həˈləʊ", "exchange": "", "engine": "stardict"}}
+```
 
 ## History
 

@@ -286,14 +286,6 @@ local plugins = {
   },
 
   {
-    'lu5je0/vim-translator',
-    config = function()
-      require('lu5je0.ext.vim-translator')
-    end,
-    keys = { { mode = 'x', '<leader>ww' }, { mode = 'n', '<leader>ww' }, { mode = 'x', '<leader>wr' }, { mode = 'n', '<leader>wr' } }
-  },
-
-  {
     'dstein64/vim-startuptime',
     init = function()
       vim.g.startuptime_tries = 20

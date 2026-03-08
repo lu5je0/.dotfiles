@@ -251,19 +251,35 @@ def parse_args():
     parser.add_argument('--no-say', action='store_true', help='disable text-to-speech')
     parser.add_argument('--stats', action='store_true', help='show query history stats')
     parser.add_argument('--clear-stats', action='store_true', help='clear query history stats')
+    parser.add_argument('--json', action='store_true', help='print result as JSON')
     return parser.parse_args()
+
+
+def print_json(payload):
+    print(json.dumps(payload, ensure_ascii=False))
 
 
 def main():
     args = parse_args()
 
     if args.list_engines:
+        if args.json:
+            print_json({'ok': True, 'engines': get_supported_engines()})
+            return 0
         for name in get_supported_engines():
             print(name)
         return 0
     if args.clear_stats:
+        if args.json:
+            save_history({'records': []})
+            print_json({'ok': True, 'cleared': True})
+            return 0
         return clear_stats()
     if args.stats:
+        if args.json:
+            payload = load_history()
+            print_json({'ok': True, 'records': payload.get('records', [])})
+            return 0
         return print_stats()
 
     word = args.word
@@ -271,6 +287,9 @@ def main():
         word = sys.stdin.read().strip()
 
     if not word:
+        if args.json:
+            print_json({'ok': False, 'error': 'Please input a word!', 'code': 1})
+            return 1
         print('Please input a word!')
         return 1
 
@@ -283,14 +302,24 @@ def main():
     allowed_engines = args.engine if args.engine else get_supported_engines()
     engines = build_engines(allowed_engines)
     if not engines:
+        if args.json:
+            print_json({'ok': False, 'error': '无可用引擎', 'code': 3})
+            return 3
         print('无可用引擎')
         return 3
 
     result = query_with_engines(word, engines)
 
     if result is None:
+        if args.json:
+            print_json({'ok': False, 'error': '未找到该单词', 'code': 2})
+            return 2
         print('未找到该单词')
         return 2
+
+    if args.json:
+        print_json({'ok': True, 'result': result})
+        return 0
 
     print_result(result, say_word=(not args.no_say))
     return 0

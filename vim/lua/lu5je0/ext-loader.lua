@@ -344,6 +344,16 @@ lazy_load({
 
 lazy_load({
   config = function()
+    require('lu5je0.misc.translator').setup()
+  end,
+  keys = {
+    { mode = { 'n', 'x' }, '<leader>ww' },
+    { mode = { 'n', 'x' }, '<leader>wr' },
+  }
+})
+
+lazy_load({
+  config = function()
     require('lu5je0.ext.boole').setup({
       mappings = {},
       -- User defined loops
