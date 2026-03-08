@@ -11,58 +11,53 @@
 ; ~ -> 保留系统原有按键功能
 ; 原键位::映射到的键位
 
+#Requires AutoHotkey v2.0
+
 ; alt
-<!k::Send, {Up}
-<!j::Send, {Down}
-<!h::Send, {Left}
-<!l::Send, {Right}
+<!k::Send "{Up}"
+<!j::Send "{Down}"
+<!h::Send "{Left}"
+<!l::Send "{Right}"
 
 ; reload
 #^r::Reload
 
 ; minimize windows
-!m::	
-WinMinimize,A
-return
+!m::
+{
+    WinMinimize "A"
+}
 
 ; Maximize windows
-#^k::	
-    WinMaximize,A
-return
+#^k::
+{
+    WinMaximize "A"
+}
 
 ; let window display on top
-#^t:: Winset, Alwaysontop, , A
+#^t::WinSetAlwaysOnTop -1, "A"
 
 ; Esc::Capslock
 ; Capslock::Esc
 
 GetProcessName(processID) {
-    hProcess := DllCall("OpenProcess", "UInt", 0x0410, "Int", 0, "UInt", processID, "Ptr")
-    if !hProcess
+    try return ProcessGetName(processID)
+    catch
         return ""
-    
-    VarSetCapacity(buf, 260, 0)
-    if DllCall("Psapi.dll\GetModuleBaseName", "Ptr", hProcess, "Ptr", 0, "Str", buf, "UInt", 260)
-        processName := buf
-    else
-        processName := ""
-    
-    DllCall("CloseHandle", "Ptr", hProcess)
-    return processName
 }
 
 ResizeWindow(position) {
     ; 获取活动窗口的句柄
-    WinGet, activeWindow, ID, A
-    
+    activeWindow := WinGetID("A")
+
     ; 获取活动窗口的进程 ID
-    WinGet, processID, PID, ahk_id %activeWindow%
+    processID := WinGetPID("ahk_id " activeWindow)
     ; 获取活动窗口的进程名称
     processName := GetProcessName(processID)
-    
+
     ; 获取屏幕宽度和高度
-    SysGet, screenWidth, 78
-    SysGet, screenHeight, 79
+    screenWidth := SysGet(78)
+    screenHeight := SysGet(79)
 
     ; 定义特定应用的窗口大小和位置映射
     specialAppMap := {}
@@ -76,7 +71,7 @@ ResizeWindow(position) {
     ; fancy tab bar
     
     ; 判断是否在特殊应用映射中
-    if (specialAppMap[processName].HasKey(position)) {
+    if (specialAppMap.HasOwnProp(processName) && specialAppMap[processName].HasOwnProp(position)) {
         newWidth := specialAppMap[processName][position].width
         newHeight := specialAppMap[processName][position].height
         newX := specialAppMap[processName][position].x_offset
@@ -115,38 +110,43 @@ ResizeWindow(position) {
     }
 
     ; 调整窗口大小和位置
-    WinRestore, A
-    WinMove, ahk_id %activeWindow%, , newX, newY, newWidth, newHeight
+    WinRestore "A"
+    WinMove newX, newY, newWidth, newHeight, "ahk_id " activeWindow
 }
 
 ^#h:: ; Ctrl + Win + H
+{
     ResizeWindow("left")
-return
+}
 
 ^#l:: ; Ctrl + Win + L
+{
     ResizeWindow("right")
-return
+}
 
 ^#i:: ; Ctrl + Win + I
+{
     ResizeWindow("center_i")
-return
+}
 
 ^#j:: ; Ctrl + Win + J
+{
     ResizeWindow("center_j")
-return
+}
 
 ^#w:: ; Ctrl + Win + w
+{
     ; 获取活动窗口的句柄
-    WinGet, activeWindow, ID, A
+    activeWindow := WinGetID("A")
 
     ; 获取窗口的位置和大小
-    WinGetPos, X, Y, Width, Height, ahk_id %activeWindow%
-    
+    WinGetPos &X, &Y, &Width, &Height, "ahk_id " activeWindow
+
     ; 获取活动窗口的进程 ID
-    WinGet, processID, PID, ahk_id %activeWindow%
+    processID := WinGetPID("ahk_id " activeWindow)
     ; 获取活动窗口的进程名称
     processName := GetProcessName(processID)
 
     ; 打印窗口的位置和大小
-    MsgBox, The window position and size are:`nX: %X%`nY: %Y%`nWidth: %Width%`nHeight: %Height%`nProcessName: %processName%
-return
+    MsgBox "The window position and size are:`nX: " X "`nY: " Y "`nWidth: " Width "`nHeight: " Height "`nProcessName: " processName
+}

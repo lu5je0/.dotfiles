@@ -1,6 +1,7 @@
-#IfWinActive ahk_exe chrome.exe
+#Requires AutoHotkey v2.0
+#HotIf WinActive("ahk_exe chrome.exe")
 
-<!w::Send, ^w
-<!t::Send, ^t
+<!w::Send "^w"
+<!t::Send "^t"
 
-#IfWinActive
+#HotIf
