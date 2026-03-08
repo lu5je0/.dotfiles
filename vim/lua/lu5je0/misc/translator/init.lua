@@ -152,6 +152,7 @@ local function translate_async(query, render_opts)
       window.close(state)
       return
     end
+    wd.say_async(result.word or query)
 
     local lines, hls = content.build_display_lines(result)
     window.render(state, lines, hls, {
