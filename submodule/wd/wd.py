@@ -148,8 +148,11 @@ def update_history(word):
             matched = item
             break
     if matched is None:
-        matched = {'word': word, 'query_count': 0, 'last_query_time': now}
+        matched = {'word': word, 'query_count': 1, 'last_query_time': now}
         records.append(matched)
+        payload['records'] = records
+        save_history(payload)
+        return
 
     should_increment = True
     last_query_raw = matched.get('last_query_time')
