@@ -344,7 +344,9 @@ lazy_load({
 
 lazy_load({
   config = function()
-    require('lu5je0.misc.translator').setup()
+    require('lu5je0.misc.translator').setup({
+      width = 50
+    })
   end,
   keys = {
     { mode = { 'n', 'x' }, '<leader>ww' },

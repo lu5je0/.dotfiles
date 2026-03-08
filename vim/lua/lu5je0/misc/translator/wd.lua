@@ -1,4 +1,5 @@
 local M = {}
+local uv = vim.uv or vim.loop
 
 local function trim(s)
   return (s:gsub('^%s+', ''):gsub('%s+$', ''))
@@ -58,6 +59,30 @@ function M.query_sync(query)
     return nil, err or 'wd failed'
   end
   return M.parse_payload(raw)
+end
+
+local function get_say_cmd()
+  local sysname = uv.os_uname().sysname
+  if sysname == 'Windows_NT' then
+    return { 'wsay' }
+  end
+  if sysname == 'Linux' then
+    return { 'wsay', '-v', '2' }
+  end
+  return { 'say', '-v', 'Alex' }
+end
+
+function M.say_async(word)
+  if type(word) ~= 'string' or word == '' then
+    return
+  end
+
+  local cmd = get_say_cmd()
+  if vim.fn.executable(cmd[1]) == 0 then
+    return
+  end
+  table.insert(cmd, word)
+  vim.system(cmd, { detach = true })
 end
 
 return M

@@ -15,6 +15,9 @@ function M.clear_close_group(state)
 end
 
 function M.close(state)
+  if type(state.on_close) == 'function' then
+    state.on_close()
+  end
   M.clear_close_group(state)
   if M.has_float(state) then
     vim.api.nvim_win_close(state.win, true)
@@ -39,16 +42,23 @@ function M.set_anchor(state)
   state.source_win = vim.api.nvim_get_current_win()
 end
 
-local function ensure_window(state, lines)
-  local width, height = position.calc_size(lines)
-  local config = position.make_config(width, height, {
-    border = 'rounded',
-    title = ' wd ',
-    title_pos = 'center',
-    anchor_bias = 'auto',
-    offset_x = 4,
-    offset_y = 0,
-  })
+local function ensure_window(state, lines, render_opts)
+  local width_opts = vim.tbl_extend('force', state.opts or {}, render_opts or {})
+  local width, height = position.calc_size(lines, width_opts)
+  local keep_position = (render_opts or {}).keep_position == true
+  local config
+  if keep_position and M.has_float(state) then
+    config = vim.api.nvim_win_get_config(state.win)
+    config.width = width
+    config.height = height
+  else
+    config = position.make_config(width, height, {
+      border = 'rounded',
+      anchor_bias = 'auto',
+      offset_x = 4,
+      offset_y = 0,
+    })
+  end
 
   if not M.has_float(state) or not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
     local buf = vim.api.nvim_create_buf(false, true)
@@ -66,6 +76,15 @@ local function ensure_window(state, lines)
 
     vim.keymap.set('n', 'q', function() M.close(state) end, { buffer = buf, silent = true })
     vim.keymap.set('n', '<esc>', function() M.close(state) end, { buffer = buf, silent = true })
+    if type(state.on_popup_translate_word) == 'function' then
+      vim.keymap.set('n', '<leader>ww', state.on_popup_translate_word, { buffer = buf, silent = true })
+    end
+    if type(state.on_popup_history_back) == 'function' then
+      vim.keymap.set('n', '<c-o>', state.on_popup_history_back, { buffer = buf, silent = true })
+    end
+    if type(state.on_popup_history_forward) == 'function' then
+      vim.keymap.set('n', '<c-i>', state.on_popup_history_forward, { buffer = buf, silent = true })
+    end
 
     local group = vim.api.nvim_create_augroup('lu5je0_translator_close_' .. win, { clear = true })
     state.close_group = group
@@ -96,9 +115,10 @@ local function ensure_window(state, lines)
   end
 end
 
-function M.render(state, lines, hls)
-  ensure_window(state, lines)
+function M.render(state, lines, hls, opts)
+  ensure_window(state, lines, opts)
 
+  vim.api.nvim_set_option_value('readonly', false, { buf = state.buf })
   vim.api.nvim_set_option_value('modifiable', true, { buf = state.buf })
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
   vim.api.nvim_set_option_value('readonly', true, { buf = state.buf })

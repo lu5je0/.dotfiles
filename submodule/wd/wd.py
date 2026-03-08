@@ -259,6 +259,10 @@ def print_json(payload):
     print(json.dumps(payload, ensure_ascii=False))
 
 
+def say_result(result):
+    os.popen(get_say_cmd() + ' {} 2>/dev/null'.format(result.get('word', '')))
+
+
 def main():
     args = parse_args()
 
@@ -317,11 +321,14 @@ def main():
         print('未找到该单词')
         return 2
 
+    if not args.no_say:
+        say_result(result)
+
     if args.json:
         print_json({'ok': True, 'result': result})
         return 0
 
-    print_result(result, say_word=(not args.no_say))
+    print_result(result, say_word=False)
     return 0
 
 

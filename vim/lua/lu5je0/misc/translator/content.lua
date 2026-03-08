@@ -38,7 +38,7 @@ function M.build_display_lines(result)
   add_line('英文释义：', 'Title')
   if definition ~= '' then
     for _, line in ipairs(vim.split(definition, '\n', { plain = true, trimempty = true })) do
-      add_line(trim(line), 'Type')
+      add_line(trim(line))
     end
   else
     add_line('(empty)', 'Comment')

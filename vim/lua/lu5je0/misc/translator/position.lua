@@ -79,9 +79,33 @@ local function max_window_height()
   return math.floor(max_height)
 end
 
-function M.calc_size(lines)
-  local width = math.max(1, math.min(40, vim.o.columns - 4))
-  local height = math.max(1, math.min(#lines, max_window_height()))
+function M.calc_size(lines, opts)
+  opts = opts or {}
+  local max_width = math.max(1, vim.o.columns - 4)
+  local target_width
+  if opts.auto_width then
+    local content_width = 1
+    for _, line in ipairs(lines or {}) do
+      content_width = math.max(content_width, vim.fn.strdisplaywidth(line))
+    end
+    -- Keep a little horizontal breathing room while staying content-driven.
+    target_width = content_width + 2
+  else
+    target_width = opts.width or 40
+  end
+  if type(target_width) == 'number' and target_width > 0 and target_width < 1 then
+    target_width = math.floor(target_width * vim.o.columns)
+  end
+  if type(target_width) ~= 'number' or target_width <= 0 then
+    target_width = 40
+  end
+
+  local width = math.max(1, math.min(math.floor(target_width), max_width))
+  local target_height = opts.height or #lines
+  if type(target_height) ~= 'number' or target_height <= 0 then
+    target_height = #lines
+  end
+  local height = math.max(1, math.min(math.floor(target_height), max_window_height()))
   return width, height
 end
 
