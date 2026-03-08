@@ -23,6 +23,7 @@ ANSI_BOLD = '\033[1m'
 ANSI_DIM = '\033[2m'
 ANSI_GRAY = '\033[90m'
 ANSI_CYAN = '\033[36m'
+COUNT_WINDOW_SECONDS = 5 * 60
 
 
 def color(txt, pattern):
@@ -139,7 +140,8 @@ def is_single_word(word):
 def update_history(word):
     payload = load_history()
     records = payload.get('records', [])
-    now = datetime.now().isoformat(timespec='seconds')
+    now_dt = datetime.now()
+    now = now_dt.isoformat(timespec='seconds')
     matched = None
     for item in records:
         if item.get('word') == word:
@@ -148,7 +150,19 @@ def update_history(word):
     if matched is None:
         matched = {'word': word, 'query_count': 0, 'last_query_time': now}
         records.append(matched)
-    matched['query_count'] = int(matched.get('query_count', 0)) + 1
+
+    should_increment = True
+    last_query_raw = matched.get('last_query_time')
+    if last_query_raw:
+        try:
+            last_query_dt = datetime.fromisoformat(last_query_raw)
+            if (now_dt - last_query_dt).total_seconds() < COUNT_WINDOW_SECONDS:
+                should_increment = False
+        except Exception:
+            pass
+
+    if should_increment:
+        matched['query_count'] = int(matched.get('query_count', 0)) + 1
     matched['last_query_time'] = now
     payload['records'] = records
     save_history(payload)
