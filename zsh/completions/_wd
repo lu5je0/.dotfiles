@@ -2,7 +2,10 @@
 
 _wd() {
   local -a engines
-  engines=(stardict google)
+  engines=("${(@f)$(wd --list-engines 2>/dev/null)}")
+  if (( ${#engines[@]} == 0 )); then
+    engines=(stardict google)
+  fi
 
   _arguments -s \
     '-h[show help]' \
@@ -10,6 +13,8 @@ _wd() {
     '-e+[choose engine in fallback order]:engine:(${engines})' \
     '--engine+[choose engine in fallback order]:engine:(${engines})' \
     '--list-engines[list available engines]' \
+    '--stats[show query history stats]' \
+    '--clear-stats[clear query history stats]' \
     '--no-say[disable text-to-speech]' \
     '1:word: '
 }

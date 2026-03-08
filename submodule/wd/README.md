@@ -13,6 +13,8 @@ wd hello
 wd --no-say hello
 wd -e stardict -e google hello
 wd --list-engines
+wd --stats
+wd --clear-stats
 echo "good for you" | wd
 ```
 
@@ -24,6 +26,26 @@ echo "good for you" | wd
   - `google`
 - `--list-engines`: print available engines
 - `--no-say`: disable text-to-speech
+- `--stats`: show query history stats
+- `--clear-stats`: clear query history stats
+
+## History
+
+History is persisted in JSON:
+
+- path: `~/.cache/wd/history.json`
+- tracked fields:
+  - `word`
+  - `query_count`
+  - `last_query_time`
+
+Only single-word queries are recorded. Phrases like `good for you` are ignored.
+
+`--stats` output:
+- `word` column first
+- `last_query_time` column last
+- aligned columns
+- relative time format like `2 days ago (Mar 06)`
 
 ## Engine Interface
 
