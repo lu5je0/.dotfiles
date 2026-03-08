@@ -39,12 +39,11 @@ function M.set_anchor(state)
   state.source_win = vim.api.nvim_get_current_win()
 end
 
-local function ensure_window(state, lines)
-  local width, height = position.calc_size(lines)
+local function ensure_window(state, lines, render_opts)
+  local width_opts = vim.tbl_extend('force', state.opts or {}, render_opts or {})
+  local width, height = position.calc_size(lines, width_opts)
   local config = position.make_config(width, height, {
     border = 'rounded',
-    title = ' wd ',
-    title_pos = 'center',
     anchor_bias = 'auto',
     offset_x = 4,
     offset_y = 0,
@@ -96,8 +95,8 @@ local function ensure_window(state, lines)
   end
 end
 
-function M.render(state, lines, hls)
-  ensure_window(state, lines)
+function M.render(state, lines, hls, opts)
+  ensure_window(state, lines, opts)
 
   vim.api.nvim_set_option_value('modifiable', true, { buf = state.buf })
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)

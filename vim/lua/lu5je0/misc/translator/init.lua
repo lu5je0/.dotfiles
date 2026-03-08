@@ -11,6 +11,7 @@ local state = {
   close_group = nil,
   source_win = nil,
   request_id = 0,
+  opts = {},
 }
 
 local function translate_async(query)
@@ -22,6 +23,8 @@ local function translate_async(query)
 
   window.render(state, { 'loading...' }, {
     { row = 0, col_start = 0, col_end = -1, hl = 'Comment' }
+  }, {
+    auto_width = true,
   })
 
   wd.query_async(query, function(result, err)
@@ -99,7 +102,14 @@ local function translate_replace_visual()
   end
 end
 
-function M.setup()
+--- Setup translator keymaps and popup behavior.
+--- @param opts? { width?: number } Popup width configuration.
+--- `width` accepts:
+--- - integer > 0: fixed width in columns
+--- - number between 0 and 1: percentage of current editor columns
+--- Invalid or missing values fallback to default width `40`.
+function M.setup(opts)
+  state.opts = opts or {}
   vim.keymap.set('n', '<leader>ww', translate_word, { desc = 'translate cword' })
   vim.keymap.set('x', '<leader>ww', translate_visual, { desc = 'translate selected' })
   vim.keymap.set('n', '<leader>wr', translate_replace_word, { desc = 'translate cword and replace' })
