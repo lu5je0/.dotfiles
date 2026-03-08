@@ -1,2 +1,0 @@
-## wd
-offline translator
