@@ -101,7 +101,11 @@ function M.calc_size(lines, opts)
   end
 
   local width = math.max(1, math.min(math.floor(target_width), max_width))
-  local height = math.max(1, math.min(#lines, max_window_height()))
+  local target_height = opts.height or #lines
+  if type(target_height) ~= 'number' or target_height <= 0 then
+    target_height = #lines
+  end
+  local height = math.max(1, math.min(math.floor(target_height), max_window_height()))
   return width, height
 end
 
