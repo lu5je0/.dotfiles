@@ -14,10 +14,10 @@
 #Requires AutoHotkey v2.0
 
 ; alt
-<!k::Send "{Up}"
-<!j::Send "{Down}"
-<!h::Send "{Left}"
-<!l::Send "{Right}"
+<!k::Send("{Up}")
+<!j::Send("{Down}")
+<!h::Send("{Left}")
+<!l::Send("{Right}")
 
 ; reload
 #^r::Reload
