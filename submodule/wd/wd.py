@@ -134,7 +134,7 @@ def is_single_word(word):
         return False
     if re.search(r'\s', word):
         return False
-    return True
+    return re.fullmatch(r'[A-Za-z0-9]+', word)
 
 
 def update_history(word):
