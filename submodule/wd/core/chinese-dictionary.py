@@ -43,16 +43,10 @@ class ChineseDictionaryEngine(object):
         for pronunciation in detail_record.get('pronunciations', []):
             explanation_texts = []
             for explanation in pronunciation.get('explanations', []):
-                content = (explanation.get('content') or '').strip()
-                if content:
-                    if content not in seen_parts:
-                        explanation_texts.append(content)
-                        seen_parts.add(content)
-                else:
-                    for text in self._format_explanation_fallback(explanation):
-                        if text not in seen_parts:
-                            explanation_texts.append(text)
-                            seen_parts.add(text)
+                for text in self._collect_explanation_texts(explanation):
+                    if text not in seen_parts:
+                        explanation_texts.append(text)
+                        seen_parts.add(text)
                 if len(explanation_texts) >= 3:
                     break
             if not explanation_texts:
@@ -61,6 +55,16 @@ class ChineseDictionaryEngine(object):
             if len(parts) >= 3:
                 break
         return '\n'.join(parts)
+
+    def _collect_explanation_texts(self, explanation):
+        texts = []
+
+        content = (explanation.get('content') or '').strip()
+        if content:
+            texts.append(content)
+
+        texts.extend(self._format_explanation_fallback(explanation))
+        return texts
 
     def _format_explanation_fallback(self, explanation):
         fallback_texts = []
