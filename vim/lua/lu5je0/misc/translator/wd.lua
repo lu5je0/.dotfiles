@@ -5,6 +5,21 @@ local function trim(s)
   return (s:gsub('^%s+', ''):gsub('%s+$', ''))
 end
 
+local function normalize_json_value(value)
+  if value == vim.NIL then
+    return nil
+  end
+  if type(value) ~= 'table' then
+    return value
+  end
+
+  local normalized = {}
+  for k, v in pairs(value) do
+    normalized[k] = normalize_json_value(v)
+  end
+  return normalized
+end
+
 function M.ensure_exists()
   if vim.fn.executable('wd') == 0 then
     vim.notify('`wd` command not found in PATH', vim.log.levels.ERROR)
@@ -24,7 +39,7 @@ function M.parse_payload(raw)
   if type(payload.result) ~= 'table' then
     return nil, 'wd result is empty'
   end
-  return payload.result, nil
+  return normalize_json_value(payload.result), nil
 end
 
 function M.query_async(query, on_done)

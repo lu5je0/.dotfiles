@@ -1,6 +1,12 @@
 local M = {}
 
 local function trim(s)
+  if s == nil or s == vim.NIL then
+    return ''
+  end
+  if type(s) ~= 'string' then
+    s = tostring(s)
+  end
   return (s:gsub('^%s+', ''):gsub('%s+$', ''))
 end
 

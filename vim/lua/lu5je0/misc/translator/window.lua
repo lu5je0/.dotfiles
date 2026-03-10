@@ -79,6 +79,9 @@ local function ensure_window(state, lines, render_opts)
     if type(state.on_popup_translate_word) == 'function' then
       vim.keymap.set('n', '<leader>ww', state.on_popup_translate_word, { buffer = buf, silent = true })
     end
+    if type(state.on_popup_translate_visual) == 'function' then
+      vim.keymap.set('x', '<leader>ww', state.on_popup_translate_visual, { buffer = buf, silent = true })
+    end
     if type(state.on_popup_history_back) == 'function' then
       vim.keymap.set('n', '<c-o>', state.on_popup_history_back, { buffer = buf, silent = true })
     end

@@ -182,6 +182,13 @@ local function replace_cword(text)
   visual.visual_replace(text)
 end
 
+local function leave_visual_mode()
+  local mode = vim.api.nvim_get_mode().mode
+  if mode:match('[vV\22]') then
+    vim.api.nvim_input(vim.keycode('<Esc>'))
+  end
+end
+
 local function translate_word()
   if window.has_float(state) and vim.api.nvim_get_current_win() ~= state.win then
     window.focus(state)
@@ -201,7 +208,9 @@ local function translate_visual()
   if not wd.ensure_exists() then
     return
   end
-  translate_async(visual.get_visual_selection_as_string())
+  local query = visual.get_visual_selection_as_string()
+  leave_visual_mode()
+  translate_async(query)
 end
 
 local function translate_replace_word()
@@ -238,6 +247,29 @@ local function translate_replace_visual()
   end
 end
 
+local function ensure_popup_fixed_size()
+  if window.has_float(state) and not state.popup_fixed_size then
+    state.popup_fixed_size = {
+      width = vim.api.nvim_win_get_width(state.win),
+      height = vim.api.nvim_win_get_height(state.win),
+    }
+  end
+end
+
+local function popup_translate(query)
+  if not wd.ensure_exists() then
+    return
+  end
+  ensure_popup_fixed_size()
+  translate_async(query, {
+    keep_loading_size = true,
+    keep_position = true,
+    cursor_to_start = true,
+    fixed_size = state.popup_fixed_size,
+    show_loading = true,
+  })
+end
+
 --- Setup translator keymaps and popup behavior.
 --- @param opts? { width?: number } Popup width configuration.
 --- `width` accepts:
@@ -247,22 +279,12 @@ end
 function M.setup(opts)
   state.opts = opts or {}
   state.on_popup_translate_word = function()
-    if not wd.ensure_exists() then
-      return
-    end
-    if window.has_float(state) and not state.popup_fixed_size then
-      state.popup_fixed_size = {
-        width = vim.api.nvim_win_get_width(state.win),
-        height = vim.api.nvim_win_get_height(state.win),
-      }
-    end
-    translate_async(vim.fn.expand('<cword>'), {
-      keep_loading_size = true,
-      keep_position = true,
-      cursor_to_start = true,
-      fixed_size = state.popup_fixed_size,
-      show_loading = true,
-    })
+    popup_translate(vim.fn.expand('<cword>'))
+  end
+  state.on_popup_translate_visual = function()
+    local query = visual.get_visual_selection_as_string()
+    leave_visual_mode()
+    popup_translate(query)
   end
   state.on_popup_history_back = history_back
   state.on_popup_history_forward = history_forward
