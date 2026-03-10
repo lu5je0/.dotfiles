@@ -366,7 +366,18 @@ local function on_attach(bufnr)
   end, opts('Oil'))
   set('n', 'I', function()
     explorer.reload_explorer = refresh_explorer_fn_backup
-    api.tree.toggle_hidden_filter()
+    
+    local function wrap_fix_perf(func)
+      local git_utils = require("nvim-tree.git.utils")
+      local get_toplevel = git_utils.get_toplevel
+      git_utils.get_toplevel = function(...) end
+      
+      func()
+      
+      git_utils.get_toplevel = get_toplevel
+    end
+    
+    wrap_fix_perf(function() api.filter.dotfiles.toggle() end)
   end, opts('Toggle Dotfiles'))
   set('n', 'r', api.tree.reload, opts('Refresh'))
   set('n', 'ma', api.fs.create, opts('Create'))
