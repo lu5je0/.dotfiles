@@ -3,7 +3,8 @@
 Word translator CLI.
 
 Default behavior:
-- Query `stardict` first (offline).
+- Query `hanzi` first for a single Chinese character, only after `wd --init`.
+- Query `stardict` first (offline), only after `wd --init`.
 - Fallback to `google` translator (online).
 
 ## Usage
@@ -14,6 +15,7 @@ wd --no-say hello
 wd --json --no-say hello
 wd -e stardict -e google hello
 wd --list-engines
+wd --init
 wd --stats
 wd --clear-stats
 echo "good for you" | wd
@@ -23,9 +25,11 @@ echo "good for you" | wd
 
 - `word`: word or phrase to query
 - `-e, --engine`: choose engine(s) in fallback order, supports:
+  - `hanzi`
   - `stardict`
   - `google`
 - `--list-engines`: print available engines
+- `--init`: download local dictionary dependencies for `hanzi` and `stardict`
 - `--no-say`: disable text-to-speech
 - `--stats`: show query history stats
 - `--clear-stats`: clear query history stats
@@ -36,6 +40,11 @@ echo "good for you" | wd
 ```json
 {"ok": true, "result": {"word": "hello", "translation": "你好", "definition": "...", "phonetic": "həˈləʊ", "exchange": "", "engine": "stardict"}}
 ```
+
+`wd --init` downloads the local dictionary dependencies:
+
+- `https://raw.githubusercontent.com/mapull/chinese-dictionary/refs/heads/main/character/char_detail.json`
+- `https://github.com/lu5je0/wd/releases/download/1.0/stardict.7z`
 
 ## History
 

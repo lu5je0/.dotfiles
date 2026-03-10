@@ -10,9 +10,11 @@ import sys
 from datetime import datetime
 
 import color_pattern
+from init_dependencies import init_dependencies
 
 
 ENGINE_MODULES = [
+    ('chinese_dictionary_engine', 'chinese-dictionary.py'),
     ('stardict_engine', 'stardict.py'),
     ('google_translator_engine', 'google-translator.py'),
 ]
@@ -59,7 +61,7 @@ def load_module(module_name, module_file):
 
 
 def get_supported_engines():
-    return ['stardict', 'google']
+    return ['hanzi', 'stardict', 'google']
 
 
 def build_engines(allowed_names=None):
@@ -74,6 +76,8 @@ def build_engines(allowed_names=None):
             continue
         engine_name = getattr(engine, 'name', '')
         if hasattr(engine, 'query') and engine_name:
+            if hasattr(engine, 'is_available') and not engine.is_available():
+                continue
             loaded_engines[engine_name] = engine
 
     if allowed_names is None:
@@ -103,7 +107,7 @@ def print_result(result, say_word=True):
     print('[{}]'.format(color(result.get('phonetic', ''), color_pattern.BLUE_PATTERN)))
     print('中文释义：')
     print(color(result.get('translation', ''), color_pattern.GREEN_PATTERN))
-    print('英文释义：')
+    print('补充信息：' if engine == 'hanzi' else '英文释义：')
     print(color(result.get('definition', ''), color_pattern.PEP_PATTERN))
     print('变形：')
     print(color(result.get('exchange', ''), color_pattern.BROWN_PATTERN))
@@ -248,6 +252,7 @@ def parse_args():
         help='choose engine(s) in fallback order, can be used multiple times',
     )
     parser.add_argument('--list-engines', action='store_true', help='list available engines')
+    parser.add_argument('--init', action='store_true', help='download local dictionary dependencies')
     parser.add_argument('--no-say', action='store_true', help='disable text-to-speech')
     parser.add_argument('--stats', action='store_true', help='show query history stats')
     parser.add_argument('--clear-stats', action='store_true', help='clear query history stats')
@@ -285,6 +290,22 @@ def main():
             print_json({'ok': True, 'records': payload.get('records', [])})
             return 0
         return print_stats()
+    if args.init:
+        try:
+            results = init_dependencies()
+        except Exception as exc:
+            if args.json:
+                print_json({'ok': False, 'error': str(exc), 'code': 4})
+                return 4
+            print(str(exc))
+            return 4
+        if args.json:
+            print_json({'ok': True, 'initialized': results})
+            return 0
+        for item in results:
+            status = 'downloaded' if item.get('downloaded') else 'skipped'
+            print('{} [{}] -> {}'.format(item['engine'], status, item['path']))
+        return 0
 
     word = args.word
     if not word and not sys.stdin.isatty():

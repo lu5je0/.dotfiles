@@ -102,12 +102,17 @@ class StarDictEngine(object):
 
     def __init__(self, db_path=None, verbose=False):
         if db_path is None:
-            db_path = os.path.join(os.path.expanduser('~'), '.local/share/stardict', 'stardict.db')
+            db_path = os.path.join(os.path.expanduser('~'), '.cache', 'wd', 'stardict', 'stardict.db')
         self.db_path = db_path
         self.verbose = verbose
         self.name = 'stardict'
 
+    def is_available(self):
+        return os.path.exists(self.db_path) and os.path.getsize(self.db_path) > 0
+
     def query(self, word):
+        if not self.is_available():
+            return None
         sd = StarDict(self.db_path, self.verbose)
         try:
             result = sd.query(word)

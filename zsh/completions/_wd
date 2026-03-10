@@ -13,6 +13,7 @@ _wd() {
     '-e+[choose engine in fallback order]:engine:(${engines})' \
     '--engine+[choose engine in fallback order]:engine:(${engines})' \
     '--list-engines[list available engines]' \
+    '--init[download local dictionary dependencies]' \
     '--stats[show query history stats]' \
     '--clear-stats[clear query history stats]' \
     '--no-say[disable text-to-speech]' \
