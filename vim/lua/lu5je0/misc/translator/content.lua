@@ -41,22 +41,18 @@ function M.build_display_lines(result)
     add_line('(empty)', 'Comment')
   end
 
-  add_line('英文释义：', 'Title')
   if definition ~= '' then
+    add_line(engine == 'hanzi' and '补充信息：' or '英文释义：', 'Title')
     for _, line in ipairs(vim.split(definition, '\n', { plain = true, trimempty = true })) do
       add_line(trim(line))
     end
-  else
-    add_line('(empty)', 'Comment')
   end
 
-  add_line('变形：', 'Title')
   if exchange ~= '' then
+    add_line('变形：', 'Title')
     for _, line in ipairs(vim.split(exchange, '\n', { plain = true, trimempty = true })) do
       add_line(trim(line), 'Constant')
     end
-  else
-    add_line('(empty)', 'Comment')
   end
 
   return lines, hls

@@ -97,6 +97,9 @@ def query_with_engines(word, engines):
 
 
 def print_result(result, say_word=True):
+    def has_text(value):
+        return isinstance(value, str) and value.strip() != ''
+
     if say_word:
         os.popen(get_say_cmd() + ' {} 2>/dev/null'.format(result.get('word', '')))
 
@@ -107,10 +110,16 @@ def print_result(result, say_word=True):
     print('[{}]'.format(color(result.get('phonetic', ''), color_pattern.BLUE_PATTERN)))
     print('中文释义：')
     print(color(result.get('translation', ''), color_pattern.GREEN_PATTERN))
-    print('补充信息：' if engine == 'hanzi' else '英文释义：')
-    print(color(result.get('definition', ''), color_pattern.PEP_PATTERN))
-    print('变形：')
-    print(color(result.get('exchange', ''), color_pattern.BROWN_PATTERN))
+
+    definition = result.get('definition', '')
+    if has_text(definition):
+        print('补充信息：' if engine == 'hanzi' else '英文释义：')
+        print(color(definition, color_pattern.PEP_PATTERN))
+
+    exchange = result.get('exchange', '')
+    if has_text(exchange):
+        print('变形：')
+        print(color(exchange, color_pattern.BROWN_PATTERN))
 
 
 def load_history():
