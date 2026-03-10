@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  q-compress -h | --help
+  q-compress <archive> <path>...
+
+Examples:
+  q-compress archive.tar.gz foo bar
+  q-compress bundle.zip ./dist
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -lt 2 ]]; then
+  usage >&2
+  exit 1
+fi
+
+archive="$1"
+shift
+
+run_compress() {
+  case "$archive" in
+    *.tar) tar -cf "$archive" "$@" ;;
+    *.tar.bz2) tar -cjf "$archive" "$@" ;;
+    *.tar.xz|*.txz) tar -cJf "$archive" "$@" ;;
+    *.tar.gz|*.tgz) tar -czf "$archive" "$@" ;;
+    *.zip) zip -r "$archive" "$@" ;;
+    *.7z) 7z a "$archive" "$@" ;;
+    *.rar) rar a "$archive" "$@" ;;
+    *)
+      echo "q-compress: don't know how to compress to '$archive'" >&2
+      return 1
+      ;;
+  esac
+}
+
+run_compress "$@"

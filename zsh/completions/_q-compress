@@ -1,0 +1,15 @@
+#compdef q-compress
+
+_q_compress_archives() {
+  _files -g '*.(tar|tar.gz|tgz|tar.bz2|tbz2|tar.xz|txz|zip|7z|rar)'
+}
+
+_q_compress() {
+  _arguments -C -s \
+    '-h[show help]' \
+    '--help[show help]' \
+    '1:archive file:_q_compress_archives' \
+    '*:path:_files'
+}
+
+_q_compress "$@"

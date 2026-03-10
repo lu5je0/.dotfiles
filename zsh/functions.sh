@@ -45,60 +45,6 @@ function q-color {
   }'
 }
 
-# Easy extract
-function q-extract {
-  filepath=$(realpath $1)
-  if [ -f $1 ]; then
-    if [ "$2" ]; then
-      mkdir $2
-      echo "dir $2 created"
-      cd $2
-    fi
-    case $1 in
-    *.tar.bz2) tar -xvjf $filepath ;;
-    *.tar.gz) tar -xvzf $filepath ;;
-    *.tar.xz) tar -xvJf $filepath ;;
-    *.txz) tar -xvJf $filepath ;;
-    *.bz2) bunzip2 $filepath ;;
-    *.rar) rar x $filepath ;;
-    *.gz) gunzip $filepath ;;
-    *.tar) tar -xvf $filepath ;;
-    *.tbz2) tar -xvjf $filepath ;;
-    *.tgz) tar -xvzf $filepath ;;
-    *.zip) unzip $filepath ;;
-    *.jar) unzip $filepath ;;
-    *.Z) uncompress $filepath ;;
-    *.7z) 7z x $filepath ;;
-    *) echo "don't know how to extract '$1'..." ;;
-    esac
-    if [ "$2" ]; then
-      cd ..
-    fi
-  else
-    echo "'$1' is not a valid file!"
-  fi
-}
-
-# easy compress - archive wrapper
-function q-compress {
-  if [ -n "$1" ]; then
-    FILE=$1
-    case $FILE in
-    *.tar) shift && tar -cf $FILE $* ;;
-    *.tar.bz2) shift && tar -cjf $FILE $* ;;
-    *.tar.xz) shift && tar -cJf $FILE $* ;;
-    *.txz) shift && tar -cJf $FILE $* ;;
-    *.tar.gz) shift && tar -czf $FILE $* ;;
-    *.tgz) shift && tar -czf $FILE $* ;;
-    *.zip) shift && zip -r $FILE $* ;;
-    *.7z) shift && 7za a $FILE $* ;;
-    *.rar) shift && rar $FILE $* ;;
-    esac
-  else
-    echo "usage: q-compress <foobar.tar.gz> ./foo ./bar"
-  fi
-}
-
 # 在每次目录改变后自动执行 chpwd 函数。
 function chpwd() {
   # 原函数中的逻辑放在这里，但不包含 cd 命令本身
