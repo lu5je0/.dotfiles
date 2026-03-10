@@ -39,22 +39,58 @@ class ChineseDictionaryEngine(object):
             return ''
 
         parts = []
+        seen_parts = set()
         for pronunciation in detail_record.get('pronunciations', []):
             explanation_texts = []
             for explanation in pronunciation.get('explanations', []):
                 content = (explanation.get('content') or '').strip()
                 if content:
-                    explanation_texts.append(content)
+                    if content not in seen_parts:
+                        explanation_texts.append(content)
+                        seen_parts.add(content)
+                else:
+                    for text in self._format_explanation_fallback(explanation):
+                        if text not in seen_parts:
+                            explanation_texts.append(text)
+                            seen_parts.add(text)
                 if len(explanation_texts) >= 3:
                     break
             if not explanation_texts:
                 continue
-            pinyin = pronunciation.get('pinyin', '')
-            prefix = '{}: '.format(pinyin) if pinyin else ''
-            parts.append(prefix + '；'.join(explanation_texts))
+            parts.append('；'.join(explanation_texts))
             if len(parts) >= 3:
                 break
         return '\n'.join(parts)
+
+    def _format_explanation_fallback(self, explanation):
+        fallback_texts = []
+
+        simplified = (explanation.get('simplified') or '').strip()
+        if simplified:
+            fallback_texts.append('简体: {}'.format(simplified))
+
+        variant = (explanation.get('variant') or '').strip()
+        if variant:
+            fallback_texts.append('异体: {}'.format(variant))
+
+        traditional = self._normalize_text_list(explanation.get('traditional'))
+        if traditional:
+            fallback_texts.append('繁体: {}'.format(traditional))
+
+        modern = self._normalize_text_list(explanation.get('modern'))
+        if modern:
+            fallback_texts.append('今字: {}'.format(modern))
+
+        same = (explanation.get('same') or '').strip()
+        if same:
+            fallback_texts.append('同“{}”'.format(same))
+
+        return fallback_texts
+
+    def _normalize_text_list(self, value):
+        if isinstance(value, list):
+            return '、'.join(item.strip() for item in value if isinstance(item, str) and item.strip())
+        return (value or '').strip()
 
     def _format_definition(self, detail_record):
         meta = []
