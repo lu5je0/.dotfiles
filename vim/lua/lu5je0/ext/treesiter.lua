@@ -1,13 +1,11 @@
 local M = {}
 
-local ts_filetypes = {
+M.filetypes = {
   'json', 'python', 'java', 'bash', 'go', 'vim', 'lua', 'cpp', 'c',
   'rust', 'toml', 'yaml', 'markdown', 'http', 'typescript',
   'javascript', 'sql', 'html', 'json5', 'regex', 'vue', 
   'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy', 'arthas'
 }
-
-M.filetypes = ts_filetypes
 
 local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
 
@@ -350,7 +348,7 @@ end
 M.setup = function()
   M.setup_custom_parsers()
 
-  require("nvim-treesitter").install(ts_filetypes)
+  require("nvim-treesitter").install(M.filetypes)
 
   local function attach(bufnr)
     if not vim.api.nvim_buf_is_valid(bufnr) then
@@ -361,7 +359,7 @@ M.setup = function()
       return
     end
 
-    if not vim.tbl_contains(ts_filetypes, vim.bo[bufnr].filetype) then
+    if not vim.tbl_contains(M.filetypes, vim.bo[bufnr].filetype) then
       return
     end
 
@@ -372,7 +370,7 @@ M.setup = function()
   end
   
   vim.api.nvim_create_autocmd('FileType', {
-    pattern = ts_filetypes,
+    pattern = M.filetypes,
     callback = function(args)
       attach(args.buf)
     end,
