@@ -151,6 +151,7 @@ def is_single_word(word):
 
 
 def update_history(word):
+    word = word.lower()
     payload = load_history()
     records = payload.get('records', [])
     now_dt = datetime.now()
