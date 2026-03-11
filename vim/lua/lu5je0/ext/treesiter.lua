@@ -7,6 +7,8 @@ local ts_filetypes = {
   'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy', 'arthas'
 }
 
+M.filetypes = ts_filetypes
+
 local fold_suffix_ft_white_list = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
 
 local function enable_treesitter_fold()
@@ -349,18 +351,36 @@ M.setup = function()
   M.setup_custom_parsers()
 
   require("nvim-treesitter").install(ts_filetypes)
+
+  local function attach(bufnr)
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+
+    if vim.bo[bufnr].buftype ~= '' then
+      return
+    end
+
+    if not vim.tbl_contains(ts_filetypes, vim.bo[bufnr].filetype) then
+      return
+    end
+
+    pcall(vim.treesitter.start, bufnr)
+    vim.api.nvim_buf_call(bufnr, function()
+      vim.cmd('doautocmd <nomodeline> User TreesitterAttach')
+    end)
+  end
   
   vim.api.nvim_create_autocmd('FileType', {
     pattern = ts_filetypes,
-    callback = function()
-      vim.treesitter.start() 
-      vim.cmd('doautocmd User TreesitterAttach')
+    callback = function(args)
+      attach(args.buf)
     end,
   })
-  
-  -- if vim.tbl_contains(ts_filetypes, vim.bo.filetype) then
-  --   vim.treesitter.start() 
-  -- end
+
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    attach(bufnr)
+  end
   
   enable_treesitter_fold()
   enable_fold_text_cache()
