@@ -191,6 +191,19 @@ def clear_stats():
     return 0
 
 
+def remove_stats(word):
+    payload = load_history()
+    records = payload.get('records', [])
+    target = word.lower()
+    filtered = [item for item in records if item.get('word') != target]
+    if len(filtered) == len(records):
+        print('未找到历史记录: {}'.format(word))
+        return 1
+    save_history({'records': filtered})
+    print('已删除历史记录: {}'.format(target))
+    return 0
+
+
 def format_last_query_time(last_query_raw):
     if not last_query_raw:
         return ''
@@ -209,18 +222,21 @@ def format_last_query_time(last_query_raw):
         return last_query_raw
 
 
-def print_stats():
+def get_sorted_records():
     payload = load_history()
-    records = payload.get('records', [])
+    return sorted(
+        payload.get('records', []),
+        key=lambda x: (int(x.get('query_count', 0)), x.get('last_query_time', '')),
+        reverse=True,
+    )
+
+
+def print_stats():
+    records = get_sorted_records()
     if not records:
         print('暂无历史记录')
         return 0
 
-    records = sorted(
-        records,
-        key=lambda x: (int(x.get('query_count', 0)), x.get('last_query_time', '')),
-        reverse=True,
-    )
     headers = ['word', 'count', 'last']
     rows = []
     for item in records:
@@ -251,7 +267,7 @@ def print_stats():
     return 0
 
 
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description='Word lookup: stardict first, then google.')
     parser.add_argument('word', nargs='?', help='word to query')
     parser.add_argument(
@@ -265,9 +281,10 @@ def parse_args():
     parser.add_argument('--init', action='store_true', help='download local dictionary dependencies')
     parser.add_argument('--no-say', action='store_true', help='disable text-to-speech')
     parser.add_argument('--stats', action='store_true', help='show query history stats')
-    parser.add_argument('--clear-stats', action='store_true', help='clear query history stats')
+    parser.add_argument('--delete-stat', metavar='WORD', help='delete stats for a single word')
+    parser.add_argument('--clear-stats', action='store_true', help='clear all query history stats')
     parser.add_argument('--json', action='store_true', help='print result as JSON')
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def print_json(payload):
@@ -294,10 +311,21 @@ def main():
             print_json({'ok': True, 'cleared': True})
             return 0
         return clear_stats()
-    if args.stats:
+    if args.delete_stat:
         if args.json:
             payload = load_history()
-            print_json({'ok': True, 'records': payload.get('records', [])})
+            records = payload.get('records', [])
+            target = args.delete_stat.lower()
+            filtered = [item for item in records if item.get('word') != target]
+            deleted = len(filtered) != len(records)
+            if deleted:
+                save_history({'records': filtered})
+            print_json({'ok': deleted, 'deleted': deleted, 'word': target})
+            return 0 if deleted else 1
+        return remove_stats(args.delete_stat)
+    if args.stats:
+        if args.json:
+            print_json({'ok': True, 'records': get_sorted_records()})
             return 0
         return print_stats()
     if args.init:

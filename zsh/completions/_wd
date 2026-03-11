@@ -15,8 +15,10 @@ _wd() {
     '--list-engines[list available engines]' \
     '--init[download local dictionary dependencies]' \
     '--stats[show query history stats]' \
-    '--clear-stats[clear query history stats]' \
+    '--delete-stat[delete stats for a single word]:word: ' \
+    '--clear-stats[clear all query history stats]' \
     '--no-say[disable text-to-speech]' \
+    '--json[print result as JSON]' \
     '1:word: '
 }
 

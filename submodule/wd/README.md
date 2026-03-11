@@ -17,6 +17,7 @@ wd -e stardict -e google hello
 wd --list-engines
 wd --init
 wd --stats
+wd --delete-stat hello
 wd --clear-stats
 echo "good for you" | wd
 ```
@@ -32,7 +33,8 @@ echo "good for you" | wd
 - `--init`: download local dictionary dependencies for `hanzi` and `stardict`
 - `--no-say`: disable text-to-speech
 - `--stats`: show query history stats
-- `--clear-stats`: clear query history stats
+- `--delete-stat WORD`: delete stats for a single word
+- `--clear-stats`: clear all query history stats
 - `--json`: print machine-readable JSON
 
 `--json` success example:
@@ -58,7 +60,7 @@ History is persisted in JSON:
 
 Only single-word queries are recorded. Phrases like `good for you` are ignored.
 
-`--stats` output:
+`wd --stats` output:
 - `word` column first
 - `last_query_time` column last
 - aligned columns
