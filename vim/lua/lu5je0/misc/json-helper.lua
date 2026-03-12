@@ -1,5 +1,6 @@
 local M = {}
 local cursor_utils = require('lu5je0.core.cursor')
+local clipboard = require('lu5je0.core.clipboard')
 
 function M.compress()
   vim.cmd(':%!jq -c')
@@ -13,8 +14,7 @@ function M.path_copy()
   local path = require('lu5je0.misc.jsonpath').get()
   
   print('copied: ' .. path)
-  vim.fn.setreg('*', path)
-  vim.fn.setreg('"', path)
+  clipboard.set(path)
 end
 
 function M.jq(args)

@@ -3,6 +3,7 @@ local M = {}
 
 local explorer = require('nvim-tree.explorer')
 local keys_helper = require('lu5je0.core.keys')
+local clipboard = require('lu5je0.core.clipboard')
 local api = require('nvim-tree.api')
 local ui = require('lu5je0.core.ui')
 
@@ -236,10 +237,7 @@ local function toggle_width()
 end
 
 local function set_clipboard(text)
-  vim.fn.setreg('"', text)
-  if vim.fn.has('clipboard') then
-    vim.fn.setreg('*', text)
-  end
+  clipboard.set(text)
 end
 
 local function copy_relative_path()
