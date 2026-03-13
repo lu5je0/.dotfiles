@@ -236,6 +236,16 @@ local function toggle_width()
   end
 end
 
+local function toggle_group_empty_global()
+  local explorer = require("nvim-tree.core").get_explorer()
+  if not explorer then
+    return
+  end
+
+  explorer.opts.renderer.group_empty = not explorer.opts.renderer.group_empty
+  explorer:reload_explorer()
+end
+
 local function set_clipboard(text)
   clipboard.set(text)
 end
@@ -349,6 +359,8 @@ local function on_attach(bufnr)
   set('n', 'S', api.tree.search_node, opts('Search'))
   set('n', '[f', api.node.navigate.sibling.first, opts('First Sibling'))
   set('n', ']f', api.node.navigate.sibling.last, opts('Last Sibling'))
+  set('n', 'zc', api.node.open.toggle_group_empty, opts('Toggle Group Empty Local'))
+  set('n', 'zC', toggle_group_empty_global, opts('Toggle Group Empty Global'))
   -- set('n', '<', api.node.navigate.sibling.prev, opts('Previous Sibling'))
   -- set('n', '>', api.node.navigate.sibling.next, opts('Next Sibling'))
   set('n', 'K', api.node.show_info_popup, opts('Info'))
@@ -384,12 +396,14 @@ local function on_attach(bufnr)
   set({ 'n', 'x' }, 'dd', api.fs.cut, opts('Cut'))
   set({ 'n', 'x' }, 'yy', api.fs.copy.node, opts('Copy'))
   set('n', 'p', api.fs.paste, opts('Paste'))
+  set({ 'n', 'x' }, 'M', api.marks.toggle, opts('Toggle Bookmark'))
   set('n', 'yn', copy_node_name, opts('Copy Name'))
   set('n', 'yP', copy_relative_path, opts('Copy Relative Path'))
   set('n', 'yp', copy_absolute_path, opts('Copy Absolute Path'))
 
   set('n', '[g', api.node.navigate.git.prev_recursive, opts('prev_git_item_reveal_to_file'))
   set('n', ']g', api.node.navigate.git.next_recursive, opts('next_git_item_reveal_to_file'))
+  set('n', 'gb', api.marks.navigate.select, opts('Select Bookmark'))
 
   set('n', 'u', api.tree.change_root_to_parent, opts('Up'))
   -- set('n', 'o', api.node.run.system, opts('Run System'))
@@ -493,6 +507,7 @@ function M.setup()
     },
     renderer = {
       full_name = true,
+      group_empty = false,
       hidden_display = "all",
       indent_markers = {
         enable = true,
@@ -500,6 +515,7 @@ function M.setup()
       icons = {
         webdev_colors = true,
         git_placement = "right_align",
+        bookmarks_placement = "right_align",
         padding = " ",
         symlink_arrow = " ➛ ",
         show = {
@@ -507,6 +523,7 @@ function M.setup()
           folder = true,
           folder_arrow = false,
           git = true,
+          bookmarks = true,
         },
         glyphs = {
           default = "",
@@ -540,6 +557,9 @@ function M.setup()
       -- width = 27,
       side = 'left',
       signcolumn = 'auto',
+    },
+    bookmarks = {
+      persist = true,
     },
   }
 
