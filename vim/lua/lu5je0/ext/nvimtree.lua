@@ -338,7 +338,8 @@ local function on_attach(bufnr)
     delete_node()
     api.tree.reload()
   end, opts('delete'))
-
+  set('x', 'D', api.fs.remove, opts('Delete'))
+  
   set('n', 'l', open_node, opts('Open Node'))
   set('n', '<cr>', open_node, opts('Open Node'))
 
@@ -380,8 +381,8 @@ local function on_attach(bufnr)
   set('n', 'r', api.tree.reload, opts('Refresh'))
   set('n', 'ma', api.fs.create, opts('Create'))
   set('n', 'mv', api.fs.rename, opts('Rename'))
-  set('n', 'dd', api.fs.cut, opts('Cut'))
-  set('n', 'yy', api.fs.copy.node, opts('Copy'))
+  set({ 'n', 'x' }, 'dd', api.fs.cut, opts('Cut'))
+  set({ 'n', 'x' }, 'yy', api.fs.copy.node, opts('Copy'))
   set('n', 'p', api.fs.paste, opts('Paste'))
   set('n', 'yn', copy_node_name, opts('Copy Name'))
   set('n', 'yP', copy_relative_path, opts('Copy Relative Path'))
@@ -498,7 +499,7 @@ function M.setup()
       },
       icons = {
         webdev_colors = true,
-        git_placement = "after",
+        git_placement = "right_align",
         padding = " ",
         symlink_arrow = " ➛ ",
         show = {
