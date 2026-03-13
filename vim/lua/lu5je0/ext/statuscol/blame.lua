@@ -5,78 +5,161 @@ local setup = false
 
 local delcare_color = function()
   vim.cmd [[
-  hi GitBlame1 guibg=#464c43 guifg=#c5cdd9
-  hi GitBlame2 guibg=#444342 guifg=#c5cdd9
-  hi GitBlame3 guibg=#41444a guifg=#c5cdd9
-  hi GitBlame4 guibg=#484248 guifg=#c5cdd9
-  hi GitBlame5 guibg=#4c393a guifg=#c5cdd9
+  hi GitBlame1 guibg=#33443C guifg=#C9D7CF
+  hi GitBlame2 guibg=#3A4338 guifg=#C7D1C8
+  hi GitBlame3 guibg=#45463A guifg=#CDCDBE
+  hi GitBlame4 guibg=#4A4238 guifg=#D4C8BA
+  hi GitBlame5 guibg=#503B38 guifg=#D8C4C0
   ]]
 end
 
-local get_blame_color = function(timestamp)
-  local now = vim.uv.gettimeofday()
-  if now - timestamp < 6 * 30 * 60 * 60 then
+local PALETTE_SIZE = 5
+
+local get_blame_color = function(rank, total)
+  if total <= 1 then
     return 'GitBlame1'
   end
-
-  if now - timestamp < 12 * 30 * 24 * 60 * 60 then
-    return 'GitBlame2'
-  end
-  
-  if now - timestamp < 24 * 30 * 24 * 60 * 60 then
-    return 'GitBlame3'
-  end
-  
-  if now - timestamp < 36 * 24 * 60 * 60 then
-    return 'GitBlame4'
-  end
-  
-  return 'GitBlame5'
+  local idx = math.floor(rank * (PALETTE_SIZE - 1) / (total - 1)) + 1
+  return 'GitBlame' .. idx
 end
 
-local async_get_git_blame = function(refresh)
-  local buf = vim.api.nvim_win_get_buf(0)
-  if not vim.b[buf].git_blame then
+local build_revision_colors = function(revisions)
+  table.sort(revisions, function(a, b)
+    if a.author_time == b.author_time then
+      return a.sha < b.sha
+    end
+    return a.author_time > b.author_time
+  end)
+
+  local colors = {}
+  local total = #revisions
+  for idx, revision in ipairs(revisions) do
+    colors[revision.sha] = get_blame_color(idx - 1, total)
+  end
+  return colors
+end
+
+local get_visible_range = function(winid, bufnr)
+  if not vim.api.nvim_win_is_valid(winid) then
+    return nil
+  end
+  if vim.api.nvim_win_get_buf(winid) ~= bufnr then
     return
   end
+  local range = vim.api.nvim_win_call(winid, function()
+    return { vim.fn.line('w0'), vim.fn.line('w$') }
+  end)
+  return range[1], range[2]
+end
+
+local truncate_by_width = function(text, max_width)
+  if max_width <= 0 or text == '' then
+    return ''
+  end
+
+  local width = 0
+  local parts = {}
+  local char_count = vim.fn.strchars(text)
+  for idx = 0, char_count - 1 do
+    local ch = vim.fn.strcharpart(text, idx, 1)
+    local ch_width = vim.fn.strwidth(ch)
+    if width + ch_width > max_width then
+      break
+    end
+    parts[#parts + 1] = ch
+    width = width + ch_width
+  end
+  return table.concat(parts), width
+end
+
+local format_blame_text = function(text, max_width)
+  local clipped, clipped_width = truncate_by_width(text, max_width)
+  return clipped .. (" "):rep(math.max(max_width - clipped_width, 0))
+end
+
+local redraw_statuscolumn = function(bufnr, topline, botline)
+  if vim.fn.has('nvim-0.10') == 1 then
+    vim.api.nvim__redraw({
+      buf = bufnr,
+      range = { topline, botline },
+      statuscolumn = true,
+    })
+    return
+  end
+  vim.cmd('redrawstatus')
+end
+
+local async_get_git_blame = function()
+  local winid = vim.api.nvim_get_current_win()
+  local bufnr = vim.api.nvim_win_get_buf(winid)
+  if not vim.b[bufnr].git_blame then
+    return
+  end
+
+  local topline, botline = get_visible_range(winid, bufnr)
+  if not topline or not botline then
+    return
+  end
+
   local async = function(func)
     return function(...)
       return require('gitsigns.async').run(func, ...)
     end
   end
-  async(function()
+  async(function(target_bufnr, target_topline, target_botline)
     -- 1. 获取当前 buffer 的 gitsigns 缓存对象
     local cache = require('gitsigns.cache').cache
-    local bufnr = vim.api.nvim_win_get_buf(0)
-    -- local bufnr = args.buf
-    local bcache = cache[bufnr]
-
-    -- 2. 获取当前 buffer 可见区间所有 blame 信息
-    local topline = vim.fn.line('w0')
-    local botline = vim.fn.line('w$')
+    local bcache = cache[target_bufnr]
+    if not bcache then
+      return
+    end
 
     -- 3. 只获取部分行的，可以用 get_blame
     if _G.blame == nil then
       _G.blame = {}
     end
-    _G.blame[bufnr] = {}
+    _G.blame[target_bufnr] = {}
 
     local max = 0
-    for lnum = topline, botline do
+    local revisions = {}
+    local seen_revisions = {}
+    for lnum = target_topline, target_botline do
       local info = bcache:get_blame(lnum)
       local result = {}
-      if info.commit.abbrev_sha ~= '00000000' then
-        result.color = get_blame_color(info.commit.author_time)
+      if info and info.commit and info.commit.abbrev_sha ~= '00000000' then
+        local sha = info.commit.sha or info.commit.abbrev_sha
+        result.sha = sha
+        result.author_time = info.commit.author_time
         result.text = os.date("%Y/%m/%d", info.commit.author_time) .. ' ' .. info.commit.author
+        if not seen_revisions[sha] then
+          seen_revisions[sha] = true
+          revisions[#revisions + 1] = {
+            sha = sha,
+            author_time = info.commit.author_time,
+          }
+        end
       else
         result.text = ''
       end
-      _G.blame[bufnr][lnum] = result
+      _G.blame[target_bufnr][lnum] = result
       max = math.max(max, vim.fn.strwidth(result.text))
     end
-    vim.b[buf].max_blame_length = max
-    vim.cmd('set number')
-  end)()
+    local revision_colors = build_revision_colors(revisions)
+    for lnum = target_topline, target_botline do
+      local result = _G.blame[target_bufnr][lnum]
+      if result and result.sha then
+        result.color = revision_colors[result.sha] or 'GitBlame5'
+      end
+    end
+    if vim.api.nvim_buf_is_valid(target_bufnr) and vim.b[target_bufnr].git_blame then
+      vim.b[target_bufnr].max_blame_length = max
+      vim.schedule(function()
+        if vim.api.nvim_buf_is_valid(target_bufnr) and vim.b[target_bufnr].git_blame then
+          redraw_statuscolumn(target_bufnr, target_topline, target_botline)
+        end
+      end)
+    end
+  end)(bufnr, topline, botline)
 end
 local origin_async_get_git_blame = async_get_git_blame
 
@@ -94,7 +177,7 @@ M.toggle = function()
     vim.b.max_blame_length = DEFAULT_MAX_BLAME_LENGTH
   end
   if vim.b.git_blame then
-    async_get_git_blame(true)
+    async_get_git_blame()
   end
   vim.cmd [[ set number ]]
 end
@@ -131,12 +214,7 @@ M.component = function(args)
       if commit_info.color then
         color = commit_info.color
       end
-      local commit_len = vim.fn.strwidth(commit_info.text)
-      if commit_len > vim.b[buf].max_blame_length then
-        sign = " " .. string.sub(commit_info.text, 1, vim.b[buf].max_blame_length) .. " "
-      else
-        sign = " " .. commit_info.text .. (" "):rep(vim.b[buf].max_blame_length - commit_len + 1)
-      end
+      sign = " " .. format_blame_text(commit_info.text, vim.b[buf].max_blame_length) .. " "
     end
   end
   if not sign then
