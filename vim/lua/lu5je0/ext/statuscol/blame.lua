@@ -5,6 +5,7 @@ local M = {}
 
 local DEFAULT_MAX_BLAME_LENGTH = 19
 local PALETTE_SIZE = 5
+local AUGROUP_NAME = 'Lu5je0StatuscolBlame'
 
 local is_setup = false
 local blame_by_buf = {}
@@ -251,8 +252,10 @@ end
 
 function M.setup()
   define_colors()
+  local group = api.nvim_create_augroup(AUGROUP_NAME, { clear = true })
 
   api.nvim_create_autocmd('WinScrolled', {
+    group = group,
     callback = function()
       if vim.b.git_blame then
         refresh_git_blame()
@@ -261,12 +264,14 @@ function M.setup()
   })
 
   api.nvim_create_autocmd({ 'TextChangedI', 'TextChanged' }, {
+    group = group,
     callback = function(args)
       refresh_for_buffer_change(args.buf)
     end,
   })
 
   api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
+    group = group,
     callback = function(args)
       clear_blame_result(args.buf)
     end,
