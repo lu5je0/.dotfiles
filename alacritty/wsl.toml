@@ -1,3 +1,5 @@
+import = ["~/.config/alacritty/common.toml"]
+
 [colors.bright]
 black = "0x928374"
 blue = "0x83a598"
@@ -26,24 +28,13 @@ yellow = "0xd79921"
 background = "0x282828"
 foreground = "0xebdbb2"
 
-[debug]
-log_level = "Off"
-
 [font.normal]
-family = "JetbrainsMonoNL Nerd Font Mono"
 style = "Medium"
 
 [[keyboard.bindings]]
 action = "CreateNewWindow"
 key = "T"
 mods = "Alt"
-
-[mouse]
-hide_when_typing = true
-
-[[mouse.bindings]]
-action = "Copy"
-mouse = "Right"
 
 [shell]
 program = "wsl"

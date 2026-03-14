@@ -1,0 +1,12 @@
+[debug]
+log_level = "Off"
+
+[font.normal]
+family = "JetBrainsMonoNL Nerd Font Mono"
+
+[mouse]
+hide_when_typing = true
+
+[[mouse.bindings]]
+action = "Copy"
+mouse = "Right"
