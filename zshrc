@@ -163,6 +163,7 @@ alias curl-post-json='curl -H "Content-Type:application/json" -X POST'
 alias td="tmux detach"
 alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
+alias tn="tmux new-session -s"
 function ta() {
     # 检查是否提供了会话名
     if [ -z "$1" ]; then
@@ -316,8 +317,7 @@ zle -N bash-ctrl-d
 bindkey '^D' bash-ctrl-d
 ### End of Zinit's installer chunk
 
-fpath=($HOME/.dotfiles/zsh/completions $fpath)
-autoload -Uz compinit && compinit -C
+source ~/.dotfiles/zsh/completion-init.zsh
 
 # rustup
 if [[ -d $HOMEBREW_PATH/opt/rustup/bin ]]; then
