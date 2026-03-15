@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import os
 
 from paths import stardict_db_path
 
