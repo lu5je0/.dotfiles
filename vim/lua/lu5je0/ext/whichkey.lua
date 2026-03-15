@@ -1,298 +1,216 @@
 local M = {}
 
-function M.setup()
-  local setup = {
+function M.opts()
+  return {
+    preset = 'classic',
     plugins = {
-      marks = true,     -- shows a list of your marks on ' and `
-      registers = true, -- shows your registers on " in NORMAL or <C-r> in INSERT mode
-      -- the presets plugin, adds help for a bunch of default keybindings in Neovim
-      -- No actual key bindings are created
+      marks = true,
+      registers = true,
       presets = {
-        operators = false,                             -- adds help for operators like d, y, ...
-        motions = false,                               -- adds help for motions
-        text_objects = false,                          -- help for text objects triggered after entering an operator
-        windows = true,                                -- default bindings on <c-w>
-        nav = false,                                   -- misc bindings to work with windows
-        z = true,                                      -- bindings for folds, spelling and others prefixed with z
-        g = false,                                     -- bindings for prefixed with g
+        operators = false,
+        motions = false,
+        text_objects = false,
+        windows = true,
+        nav = false,
+        z = true,
+        g = false,
       },
-      spelling = { enabled = true, suggestions = 20 }, -- use which-key for spelling hints
+      spelling = { enabled = true, suggestions = 20 },
     },
     icons = {
-      breadcrumb = '»', -- symbol used in the command line area that shows your active key combo
-      separator = '➜', -- symbol used between a key and it's label
-      group = '+', -- symbol prepended to a group
+      breadcrumb = '»',
+      separator = '➜',
+      group = '+',
+      rules = {
+        { pattern = '^lazy$', icon = '󰒲 ', color = 'yellow' },
+        { pattern = '^run$', icon = '󰜎 ', color = 'green' },
+        { pattern = '^vim$', icon = ' ', color = 'green' },
+        { pattern = '^text$', icon = '󰉿 ', color = 'blue' },
+        { pattern = 'symbol', icon = '󰘦 ', color = 'blue' },
+        { pattern = 'translate', icon = '󰗊 ', color = 'cyan' },
+        { pattern = 'project', icon = '󱂬 ', color = 'green' },
+        { pattern = 'mru', icon = '󱋡 ', color = 'yellow' },
+        { pattern = 'register', icon = '󰘓 ', color = 'orange' },
+        { pattern = 'undotree', icon = ' ', color = 'purple' },
+        { pattern = 'highlight', icon = '󱥚 ', color = 'yellow' },
+        { pattern = 'mark', icon = '󰃀 ', color = 'orange' },
+        { pattern = 'gist', icon = ' ', color = 'grey' },
+        { pattern = 'blame', icon = '󰊢 ', color = 'orange' },
+        { pattern = 'hunk', icon = '󰦓 ', color = 'green' },
+        { pattern = 'diff', icon = '󰦒 ', color = 'blue' },
+        { pattern = 'write', icon = ' ', color = 'azure' },
+        { pattern = 'encoding', icon = '󰉿 ', color = 'cyan' },
+        { pattern = 'unicode', icon = '󰌆 ', color = 'purple' },
+        { pattern = 'replace', icon = '󰛔 ', color = 'blue' },
+        { pattern = 'calculator', icon = '󰃬 ', color = 'orange' },
+        { pattern = 'calcultor', icon = '󰃬 ', color = 'orange' },
+        { pattern = 'workspace', icon = '󱂬 ', color = 'green' },
+        { pattern = 'lazygit', icon = '󰊢 ', color = 'red' },
+        { pattern = 'time%-machine', icon = '󰔚 ', color = 'cyan' },
+      },
     },
-    window = {
-      border = 'none',        -- none, single, double, shadow
-      position = 'bottom',      -- bottom, top
-      margin = { 1, 0, 1, 0 },  -- extra window margin [top, right, bottom, left]
-      padding = { 1, 2, 1, 2 }, -- extra window padding [top, right, bottom, left]
+    win = {
+      border = 'none',
+      padding = { 1, 2 },
+      title = false,
     },
     layout = {
-      height = { min = 1, max = 10 }, -- min and max height of the columns
-      width = { min = 20, max = 80 }, -- min and max width of the columns
-      spacing = 2,                    -- spacing between columns
+      width = { min = 20, max = 80 },
+      spacing = 2,
     },
-    triggers = { '<leader>', '<c-w>', 'z', '<space>' },
-    -- hidden = { "<silent>", "<cmd>", "<Cmd>", "<CR>", "call", "lua", "^:", "^ " }, -- hide mapping boilerplate
-    show_help = true, -- show help message on the command line when the popup is visible
-  }
+    triggers = {
+      { '<leader>', mode = { 'n', 'x' } },
+      { '<space>', mode = { 'n', 'x' } },
+      { '<c-w>', mode = 'n' },
+      { 'z', mode = 'n' },
+    },
+    show_help = true,
+    spec = {
+      { '<leader>0', desc = 'pick buffer' },
+      { '<leader>1', hidden = true },
+      { '<leader>2', hidden = true },
+      { '<leader>3', hidden = true },
+      { '<leader>4', hidden = true },
+      { '<leader>5', hidden = true },
+      { '<leader>6', hidden = true },
+      { '<leader>7', hidden = true },
+      { '<leader>8', hidden = true },
+      { '<leader>9', hidden = true },
+      { '<leader>/', desc = 'eregex toggle' },
+      { '<leader>,', desc = 'last buffer' },
+      { '<leader>A', desc = 'calcultor and replace' },
+      { '<leader>E', desc = 'focus file explorer' },
+      { '<leader>I', desc = 'focus symbols' },
+      { '<leader>Q', desc = 'exit' },
+      { '<leader>a', desc = 'calcultor', mode = { 'n', 'x' } },
+      { '<leader>e', desc = 'file explorer' },
+      { '<leader>i', desc = 'symbols' },
+      { '<leader>n', '<cmd>noh<cr>', desc = 'no highlight' },
+      { '<leader>q', desc = 'close buffer' },
+      { '<leader>r', group = 'run' },
+      { '<leader>rr', desc = 'run' },
+      { '<leader>rd', desc = 'debug' },
+      { '<leader>rx', desc = 'stop' },
+      { '<leader>s', desc = 'symbols' },
+      { '<leader>u', desc = 'undotree' },
+      { '<leader>v', group = 'vim' },
+      { '<leader>vs', desc = 'toggle signcolumn' },
+      { '<leader>vS', '<cmd>set signcolumn=yes | echo "set signcolumn=yes"<cr>', desc = 'set signcolumn=yes' },
+      { '<leader>vi', desc = 'toggle-save-last-ime' },
+      { '<leader>vv', function() vim.cmd('edit ' .. vim.env.HOME .. '/.dotfiles/vim/init.lua | cd ' .. vim.env.HOME .. '/.dotfiles/vim') end, desc = 'edit init.lua' },
+      { '<leader>W', group = 'workspace' },
+      { '<leader>w', group = 'windows', mode = { 'n', 'x' } },
+      { '<leader>wn', '<cmd>vnew<cr>', desc = 'vnew' },
+      { '<leader>wN', '<cmd>new<cr>', desc = 'new' },
+      { '<leader>wo', desc = 'hide other windows' },
+      { '<leader>wp', '<cmd>BufferLinePick<cr>', desc = 'buffer pick' },
+      { '<leader>wq', '<cmd>only<cr>', desc = 'break window' },
+      { '<leader>wr', desc = 'translate and replace', mode = { 'n', 'x' } },
+      { '<leader>ws', '<cmd>vsplit<cr>', desc = 'vspilt' },
+      { '<leader>wS', '<cmd>split<cr>', desc = 'spilt' },
+      { '<leader>wu', '<c-w>x', desc = 'buffer pick' },
+      { '<leader>ww', desc = 'translate', mode = { 'n', 'x' } },
+      { '<leader>wm', '<cmd>BufferLinePickSplit<cr>', desc = 'spilit with' },
 
-  local n_mappings = {
-    ['1'] = 'which_key_ignore',
-    ['2'] = 'which_key_ignore',
-    ['3'] = 'which_key_ignore',
-    ['4'] = 'which_key_ignore',
-    ['5'] = 'which_key_ignore',
-    ['6'] = 'which_key_ignore',
-    ['7'] = 'which_key_ignore',
-    ['8'] = 'which_key_ignore',
-    ['9'] = 'which_key_ignore',
-    ['0'] = 'pick buffer',
-    ['q'] = 'close buffer',
-    ['s'] = 'symbols',
-    ['I'] = 'focus symbols',
-    ['E'] = 'focus file explorer',
-    ['Q'] = 'exit',
-    ['u'] = 'undotree',
-    ['i'] = 'symbols',
-    ['A'] = 'calcultor and replace',
-    [','] = 'last buffer',
-    ['n'] = { '<cmd>noh<cr>', 'no highlight' },
-    -- ['d'] = { '<c-^>', 'buffer switch' },
-    ['e'] = { 'file explorer' },
-    ['a'] = { 'calcultor' },
-    ['/'] = { 'eregex toggle' },
-    w = {
-      name = '+windows',
-      ['n'] = { '<cmd>vnew<cr>', 'vnew' },
-      ['w'] = "translate",
-      ['r'] = "translate and replace",
-      ['N'] = { '<cmd>new<cr>', 'new' },
-      ['s'] = { '<cmd>vsplit<cr>', 'vspilt' },
-      ['S'] = { '<cmd>split<cr>', 'spilt' },
-      ['q'] = { '<cmd>only<cr>', 'break window' },
-      ['m'] = { '<cmd>BufferLinePickSplit<cr>', 'spilit with' },
-      ['p'] = { '<cmd>BufferLinePick<cr>', 'buffer pick' },
-      ['u'] = { '<c-w>x', 'buffer pick' },
-      ['o'] = 'hide other windows',
-    },
-    W = {
-      name = '+workspace',
-    },
-    p = {
-      name = '+lazy',
-      c = { '<cmd>Lazy check<cr>', 'check update' },
-      p = 'profile.nvim',
-      s = 'snacks profile',
-    },
-    m = {
-      name = '+mark',
-      c = 'clear color',
-      r = 'marked in red',
-      g = 'marked in green',
-      y = 'marked in yellow',
-      b = 'marked in brown',
-    },
-    c = {
-      name = '+code',
-      r = 'rename-variable',
-      c = 'code-action',
-      f = 'code-formatting',
-      n = {
-        name = '+naming case',
-        s = { 'snake_case' },
-        S = { 'snake_case(WORD)' },
-        k = { 'kebab-case' },
-        K = { 'kebab-case(WORD)' },
-        p = { 'PascalCase' },
-        P = { 'PascalCase(WORD)' },
-        c = { 'camelCase' },
-        C = { 'camelCase(WORD)' },
-      },
-    },
-    t = {
-      name = '+tab',
-      o = { 'close-other-buffers' },
-      h = { 'close-to-left' },
-      l = { 'close-to-right' },
-      n = { '<cmd>enew<cr>', 'new-buffer' },
-      N = { '<cmd>tabnew<cr>', 'new-tab' },
-      c = { '<cmd>tabclose<cr>', 'close-tab' }
-    },
-    f = {
-      name = '+search/files',
+      { '<leader>p', group = 'lazy' },
+      { '<leader>pc', '<cmd>Lazy check<cr>', desc = 'check update' },
+      { '<leader>pp', desc = 'profile.nvim' },
+      { '<leader>ps', desc = 'snacks profile' },
 
-      -- fuzzy search
-      C = 'colorscheme',
-      c = 'commnad',
-      f = 'file',
-      -- s = 'recall',
-      r = 'regex search',
-      ['"'] = 'register',
-      R = 'fuzzy search',
-      l = 'line',
-      n = 'filetype',
-      b = 'buffer',
-      m = 'mru',
-      h = 'help',
-      j = 'junk-list',
-      g = 'git-changes',
-      G = 'git-diff',
-      t = 'time-machine',
+      { '<leader>m', group = 'mark', mode = { 'n', 'x' } },
+      { '<leader>mb', desc = 'marked in brown', mode = 'x' },
+      { '<leader>mc', desc = 'clear color', mode = { 'n', 'x' } },
+      { '<leader>mg', desc = 'marked in green', mode = 'x' },
+      { '<leader>mr', desc = 'marked in red', mode = 'x' },
+      { '<leader>my', desc = 'marked in yellow', mode = 'x' },
 
-      e = { 'locate-file' },
-      W = { '<cmd>SudaWrite<cr>', 'sudo-write' },
-      s = { 'symbols' },
-      p = { 'projects' },
-      w = { require('lu5je0.core.file').save_buffer, 'write' },
-      J = { '<cmd>JunkFileSaveAs<cr>', 'new-junk-file' },
-      x = {
-        name = '+encoding',
-        a = { '<cmd>set ff=unix<cr>', '2unix' },
-        b = { '<cmd>set ff=dos<cr>', '2dos' },
-        u = { '<cmd>set fileencoding=utf8<cr>', 'convert to utf8' },
-        g = { '<cmd>set fileencoding=GB18030<cr>', 'convert to gb18030' },
-      },
-    },
-    x = {
-      name = '+text',
-      r = 'replace word',
-      f = 'replace in current file',
-      u = 'escape unicode',
-      U = 'unescape unicode',
-      h = 'url encode',
-      H = 'url decode',
-      c = { 'g<c-g>', 'count in the selection region' },
-      m = { [[:%s/\r$//<cr>]], 'remove ^M' },
-      z = '繁体转简体',
-      Z = '简体转繁体',
-      x = ':%!',
-    },
-    v = {
-      name = '+vim',
-      v = { '<cmd>edit ' ..
-      vim.api.nvim_eval('$HOME') ..
-      '/.dotfiles/vim/init.lua | cd ' .. vim.api.nvim_eval('$HOME') .. '/.dotfiles/vim <cr>', 'edit init.lua' },
-      s = 'toggle signcolumn',
-      S = { '<cmd>set signcolumn=yes | echo "set signcolumn=yes"<cr>', 'set signcolumn=yes' },
-      i = 'toggle-save-last-ime',
-    },
-    r = {
-      name = '+run',
-      r = 'run',
-      d = 'debug',
-      x = 'stop',
-    },
-    g = {
-      name = '+git',
-      a = 'stage buffer',
-      r = 'unstage buffer',
-      h = 'stage hunk',
-      H = 'undo stage hunk',
-      u = 'reset hunk',
-      g = 'preview hunk',
-      A = { '<cmd>Git add -A<cr>', 'add all' },
-      b = 'blame',
-      C = { '<cmd>Gread<cr>', 'git checkout -- current file' },
-      d = { '<cmd>Git diff<cr>', 'diff' },
-      D = { '<cmd>Git diff --cached<cr>', 'diff --cached' },
-      v = { '<cmd>Gvdiffsplit!<cr>', 'gvdiffsplit' },
-      l = { '<cmd>Flogsplit<cr>', 'git log in repository' },
-      s = { '<cmd>Floggit<cr>', 'Floggit' },
-      L = { function() require('lu5je0.ext.fugitive').current_file_logs() end, 'show changs on current file' },
-      i = { '<cmd>Gist -l<cr>', 'gist' },
-      o = 'lazygit',
-    },
-  }
+      { '<leader>c', group = 'code', mode = { 'n', 'x' } },
+      { '<leader>cc', desc = 'code-action' },
+      { '<leader>cf', desc = 'code-formatting', mode = { 'n', 'x' } },
+      { '<leader>cn', group = 'naming case', mode = { 'n', 'x' } },
+      { '<leader>cnc', desc = 'camelCase', mode = { 'n', 'x' } },
+      { '<leader>cnC', desc = 'camelCase(WORD)' },
+      { '<leader>cnk', desc = 'kebab-case', mode = { 'n', 'x' } },
+      { '<leader>cnK', desc = 'kebab-case(WORD)' },
+      { '<leader>cnp', desc = 'PascalCase', mode = { 'n', 'x' } },
+      { '<leader>cnP', desc = 'PascalCase(WORD)' },
+      { '<leader>cns', desc = 'snake_case', mode = { 'n', 'x' } },
+      { '<leader>cnS', desc = 'snake_case(WORD)' },
+      { '<leader>cr', desc = 'rename-variable' },
 
-  local n_opts = {
-    mode = 'n',     -- NORMAL mode
-    prefix = '<leader>',
-    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
-    silent = true,  -- use `silent` when creating keymaps
-    noremap = true, -- use `noremap` when creating keymaps
-    nowait = true,  -- use `nowait` when creating keymaps
-  }
+      { '<leader>t', group = 'tab' },
+      { '<leader>tc', '<cmd>tabclose<cr>', desc = 'close-tab' },
+      { '<leader>th', desc = 'close-to-left' },
+      { '<leader>tl', desc = 'close-to-right' },
+      { '<leader>tn', '<cmd>enew<cr>', desc = 'new-buffer' },
+      { '<leader>tN', '<cmd>tabnew<cr>', desc = 'new-tab' },
+      { '<leader>to', desc = 'close-other-buffers' },
 
-  local x_mappings = {
-    x = {
-      name = '+text',
-      c = { 'g<c-g>', 'count in the selection region' },
-      s = { 'text escape' },
-      r = { 'spectre replace' },
-    },
-    w = {
-      w = "translate"
-    },
-    s = {
-      name = '+translate',
-    },
-    f = {
-      name = '+search/files',
-      f = { 'file' },
-      r = { 'rg' },
-    },
-    c = {
-      name = '+code',
-      f = 'range formatting',
-      n = {
-        name = '+naming case',
-        s = { 'snake_case' },
-        k = { 'kebab-case' },
-        p = { 'PascalCase' },
-        c = { 'camelCase' },
-      },
-    },
-    g = {
-      name = '+git',
-      l = 'show changs on select lines',
-    },
-  }
+      { '<leader>f', group = 'search/files', mode = { 'n', 'x' } },
+      { '<leader>f"', desc = 'register' },
+      { '<leader>fC', desc = 'colorscheme' },
+      { '<leader>fG', desc = 'git-diff' },
+      { '<leader>fJ', '<cmd>JunkFileSaveAs<cr>', desc = 'new-junk-file' },
+      { '<leader>fR', desc = 'fuzzy search' },
+      { '<leader>fW', '<cmd>SudaWrite<cr>', desc = 'sudo-write' },
+      { '<leader>fb', desc = 'buffer' },
+      { '<leader>fc', desc = 'commnad' },
+      { '<leader>fe', desc = 'locate-file' },
+      { '<leader>ff', desc = 'file', mode = { 'n', 'x' } },
+      { '<leader>fg', desc = 'git-changes' },
+      { '<leader>fh', desc = 'help' },
+      { '<leader>fj', desc = 'junk-list' },
+      { '<leader>fl', desc = 'line' },
+      { '<leader>fm', desc = 'mru' },
+      { '<leader>fn', desc = 'filetype' },
+      { '<leader>fp', desc = 'projects' },
+      { '<leader>fr', desc = 'regex search', mode = { 'n', 'x' } },
+      { '<leader>fs', desc = 'symbols' },
+      { '<leader>ft', desc = 'time-machine' },
+      { '<leader>fw', require('lu5je0.core.file').save_buffer, desc = 'write' },
+      { '<leader>fx', group = 'encoding' },
+      { '<leader>fxa', '<cmd>set ff=unix<cr>', desc = '2unix' },
+      { '<leader>fxb', '<cmd>set ff=dos<cr>', desc = '2dos' },
+      { '<leader>fxg', '<cmd>set fileencoding=GB18030<cr>', desc = 'convert to gb18030' },
+      { '<leader>fxu', '<cmd>set fileencoding=utf8<cr>', desc = 'convert to utf8' },
 
-  local x_opts = {
-    mode = 'x',     -- VISUAL mode
-    prefix = '<leader>',
-    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
-    silent = true,  -- use `silent` when creating keymaps
-    noremap = true, -- use `noremap` when creating keymaps
-    nowait = true,  -- use `nowait` when creating keymaps
-  }
-  
-  local space_n_mappings = {
-    -- s = 'translate'
-  }
-  
-  local space_x_mappings = {
-    -- s = 'translate'
-  }
-  
-  local n_space_opts = {
-    mode = 'n',
-    prefix = '<space>',
-    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
-    silent = true,  -- use `silent` when creating keymaps
-    noremap = true, -- use `noremap` when creating keymaps
-    nowait = true,  -- use `nowait` when creating keymaps
-  }
-  
-  local x_space_opts = {
-    mode = 'x',
-    prefix = '<space>',
-    buffer = nil,   -- Global mappings. Specify a buffer number for buffer local mappings
-    silent = true,  -- use `silent` when creating keymaps
-    noremap = true, -- use `noremap` when creating keymaps
-    nowait = true,  -- use `nowait` when creating keymaps
-  }
+      { '<leader>x', group = 'text', mode = { 'n', 'x' } },
+      { '<leader>xc', 'g<c-g>', desc = 'count in the selection region', mode = 'x' },
+      { '<leader>xf', desc = 'replace in current file' },
+      { '<leader>xh', desc = 'url encode' },
+      { '<leader>xH', desc = 'url decode' },
+      { '<leader>xm', [[:%s/\r$//<cr>]], desc = 'remove ^M' },
+      { '<leader>xr', desc = 'replace word', mode = { 'n', 'x' } },
+      { '<leader>xs', desc = 'text escape', mode = 'x' },
+      { '<leader>xu', desc = 'escape unicode' },
+      { '<leader>xU', desc = 'unescape unicode' },
+      { '<leader>xx', desc = ':%!', mode = { 'n', 'x' } },
+      { '<leader>xz', desc = '繁体转简体' },
+      { '<leader>xZ', desc = '简体转繁体' },
 
-  local wk = require('which-key')
-  wk.setup(setup)
+      { '<leader>g', group = 'git', mode = { 'n', 'x' } },
+      { '<leader>gA', '<cmd>Git add -A<cr>', desc = 'add all' },
+      { '<leader>gC', '<cmd>Gread<cr>', desc = 'git checkout -- current file' },
+      { '<leader>gD', '<cmd>Git diff --cached<cr>', desc = 'diff --cached' },
+      { '<leader>gL', desc = 'show changs on current file', mode = { 'n', 'x' } },
+      { '<leader>go', desc = 'lazygit' },
+      { '<leader>ga', desc = 'stage buffer', mode = { 'n', 'x' } },
+      { '<leader>gb', desc = 'blame' },
+      { '<leader>gd', '<cmd>Git diff<cr>', desc = 'diff' },
+      { '<leader>gg', desc = 'preview hunk' },
+      { '<leader>gh', desc = 'stage hunk' },
+      { '<leader>gi', '<cmd>Gist -l<cr>', desc = 'gist' },
+      { '<leader>gl', '<cmd>Flogsplit<cr>', desc = 'git log in repository' },
+      { '<leader>gs', '<cmd>Floggit<cr>', desc = 'Floggit' },
+      { '<leader>gr', desc = 'unstage buffer', mode = { 'n', 'x' } },
+      { '<leader>gu', desc = 'reset hunk', mode = { 'n', 'x' } },
+      { '<leader>gv', '<cmd>Gvdiffsplit!<cr>', desc = 'gvdiffsplit' },
+    },
+  }
+end
 
-  wk.register(n_mappings, n_opts)
-  wk.register(x_mappings, x_opts)
-  wk.register(space_n_mappings, n_space_opts)
-  wk.register(space_x_mappings, x_space_opts)
+function M.setup(opts)
+  require('which-key').setup(opts or M.opts())
 end
 
 return M

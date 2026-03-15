@@ -321,11 +321,22 @@ local plugins = {
 
   {
     'folke/which-key.nvim',
-    config = function()
-      require('lu5je0.ext.whichkey').setup()
+    event = 'VeryLazy',
+    opts = function()
+      return require('lu5je0.ext.whichkey').opts()
     end,
-    commit = 'af4ded85542d40e190014c732fa051bdbf88be3d',
-    keys = { '<leader>', '<space>' },
+    config = function(_, opts)
+      require('lu5je0.ext.whichkey').setup(opts)
+    end,
+    keys = {
+      {
+        '<leader>?',
+        function()
+          require('which-key').show({ global = false })
+        end,
+        desc = 'buffer local keymaps',
+      },
+    },
   },
 
   {

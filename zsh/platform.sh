@@ -59,6 +59,7 @@ fi
 if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
   export HOMEBREW_PATH="/home/linuxbrew/.linuxbrew"
   export PATH=$HOMEBREW_PATH/bin:$PATH
+  export PATH=$HOMEBREW_PATH/sbin:$PATH
   
   fpath=($HOMEBREW_PATH/share/zsh/site-functions $fpath)
   
