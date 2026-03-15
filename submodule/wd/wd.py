@@ -11,6 +11,7 @@ from datetime import datetime
 
 import color_pattern
 from init_dependencies import init_dependencies
+from paths import history_dir, history_file
 
 
 ENGINE_MODULES = [
@@ -18,8 +19,8 @@ ENGINE_MODULES = [
     ('stardict_engine', 'stardict.py'),
     ('google_translator_engine', 'google-translator.py'),
 ]
-HISTORY_DIR = os.path.join(os.path.expanduser('~'), '.cache', 'wd')
-HISTORY_FILE = os.path.join(HISTORY_DIR, 'history.json')
+HISTORY_DIR = history_dir()
+HISTORY_FILE = history_file()
 ANSI_RESET = '\033[0m'
 ANSI_BOLD = '\033[1m'
 ANSI_DIM = '\033[2m'

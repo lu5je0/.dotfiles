@@ -5,12 +5,14 @@ import sys
 import tempfile
 import urllib.request
 
+from paths import hanzi_detail_path, stardict_db_path
+
 
 USER_AGENT = 'Mozilla/5.0 wd/1.0'
 STARDICT_URL = 'https://github.com/lu5je0/wd/releases/download/1.0/stardict.7z'
 HANZI_DETAIL_URL = 'https://raw.githubusercontent.com/mapull/chinese-dictionary/refs/heads/main/character/char_detail.json'
-STARDICT_DB_PATH = os.path.join(os.path.expanduser('~'), '.cache', 'wd', 'stardict', 'stardict.db')
-HANZI_DETAIL_PATH = os.path.join(os.path.expanduser('~'), '.cache', 'wd', 'chinese-dictionary', 'char_detail.json')
+STARDICT_DB_PATH = stardict_db_path()
+HANZI_DETAIL_PATH = hanzi_detail_path()
 
 
 def ensure_parent_dir(path):

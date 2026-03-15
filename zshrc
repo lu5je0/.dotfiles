@@ -163,8 +163,6 @@ alias curl-post-json='curl -H "Content-Type:application/json" -X POST'
 alias td="tmux detach"
 alias tl="tmux ls"
 alias tkss="tmux kill-session -t"
-# alias ta="tmux attach -t"
-alias tn="tmux new-session -s"
 function ta() {
     # 检查是否提供了会话名
     if [ -z "$1" ]; then

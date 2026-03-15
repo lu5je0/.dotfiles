@@ -1,0 +1,36 @@
+#compdef ta
+
+_ta() {
+  local -a sessions
+  local name windows attached created created_display
+
+  zmodload zsh/datetime 2>/dev/null
+
+  while IFS=$'\t' read -r name windows attached created; do
+    [[ -z "$name" ]] && continue
+    if [[ -n "$created" ]]; then
+      created_display=$(strftime '%a %b %d %H:%M:%S' "$created" 2>/dev/null)
+    fi
+    [[ -z "$created_display" ]] && created_display='unknown'
+
+    sessions+=("${name}:[${windows} windows] [${attached}] [created: ${created_display}]")
+  done < <(
+    tmux list-sessions -F $'#S\t#{session_windows}\t#{?session_attached,attached,detached}\t#{session_created}' 2>/dev/null
+  )
+
+  _arguments -s \
+    '1:session name:->session' \
+    '*:: :_files'
+
+  case $state in
+    session)
+      if (( ${#sessions[@]} > 0 )); then
+        _describe -t sessions 'tmux session' sessions
+      else
+        _message 'tmux session name'
+      fi
+      ;;
+  esac
+}
+
+_ta "$@"

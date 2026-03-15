@@ -2,6 +2,8 @@ import json
 import os
 import re
 
+from paths import hanzi_detail_path
+
 
 def is_single_hanzi(text: str) -> bool:
     return bool(text) and len(text) == 1 and re.match(r'^[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]$', text)
@@ -11,7 +13,7 @@ class ChineseDictionaryEngine(object):
 
     def __init__(self, cache_dir=None, timeout: int = 10):
         if cache_dir is None:
-            cache_dir = os.path.join(os.path.expanduser('~'), '.cache', 'wd', 'chinese-dictionary')
+            cache_dir = os.path.dirname(hanzi_detail_path())
         self.cache_dir = cache_dir
         self.name = 'hanzi'
         self.detail_path = os.path.join(self.cache_dir, 'char_detail.json')

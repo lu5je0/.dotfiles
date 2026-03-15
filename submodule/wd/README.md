@@ -43,7 +43,7 @@ echo "good for you" | wd
 {"ok": true, "result": {"word": "hello", "translation": "你好", "definition": "...", "phonetic": "həˈləʊ", "exchange": "", "engine": "stardict"}}
 ```
 
-`wd --init` downloads the local dictionary dependencies:
+`wd --init` downloads the local dictionary dependencies into `XDG_DATA_HOME/wd` (default: `~/.local/share/wd`):
 
 - `https://raw.githubusercontent.com/mapull/chinese-dictionary/refs/heads/main/character/char_detail.json`
 - `https://github.com/lu5je0/wd/releases/download/1.0/stardict.7z`
@@ -52,11 +52,16 @@ echo "good for you" | wd
 
 History is persisted in JSON:
 
-- path: `~/.cache/wd/history.json`
+- path: `XDG_STATE_HOME/wd/history.json` (default: `~/.local/state/wd/history.json`)
 - tracked fields:
   - `word`
   - `query_count`
   - `last_query_time`
+
+Dictionary data is stored separately from cache:
+
+- `~/.local/share/wd/stardict/stardict.db`
+- `~/.local/share/wd/chinese-dictionary/char_detail.json`
 
 Only single-word queries are recorded. Phrases like `good for you` are ignored.
 

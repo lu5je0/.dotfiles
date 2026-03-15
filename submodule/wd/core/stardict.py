@@ -1,6 +1,7 @@
 import json
-import os
 import sqlite3
+
+from paths import stardict_db_path
 
 
 def stripword(word: str) -> str:
@@ -102,7 +103,7 @@ class StarDictEngine(object):
 
     def __init__(self, db_path=None, verbose=False):
         if db_path is None:
-            db_path = os.path.join(os.path.expanduser('~'), '.cache', 'wd', 'stardict', 'stardict.db')
+            db_path = stardict_db_path()
         self.db_path = db_path
         self.verbose = verbose
         self.name = 'stardict'
