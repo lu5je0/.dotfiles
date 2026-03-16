@@ -3,6 +3,7 @@ local M = {}
 function M.opts()
   return {
     preset = 'classic',
+    delay = 1000,
     plugins = {
       marks = true,
       registers = true,
