@@ -317,6 +317,8 @@ zle -N bash-ctrl-d
 bindkey '^D' bash-ctrl-d
 ### End of Zinit's installer chunk
 
+# fpath=($HOME/.dotfiles/zsh/completions $fpath)
+# autoload -Uz compinit && compinit -C
 source ~/.dotfiles/zsh/completion-init.zsh
 
 # rustup
