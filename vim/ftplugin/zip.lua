@@ -1,4 +1,4 @@
-vim.cmd [[setlocal buflisted]]
+vim.bo.buflisted = true
 vim.g.zip_nomax = 1
 
 vim.defer_fn(function()
