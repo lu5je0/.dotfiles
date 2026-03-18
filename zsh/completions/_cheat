@@ -2,59 +2,67 @@
 
 _cheat() {
   local -a sheets
-  local -a options
+  local -a option_names
   local state
 
   sheets=("${(@f)$(command cheat -l 2>/dev/null | awk '{print $1}')}")
 
-  options=(
-    '-d[list directories on CHEAT_PATH]'
-    '--directories[list directories on CHEAT_PATH]'
-    '-e[edit cheatsheet]'
-    '--edit[edit cheatsheet]'
-    '-l[list cheatsheets]'
-    '--list[list cheatsheets]'
-    '-s[search cheatsheets for keyword]'
-    '--search[search cheatsheets for keyword]'
-    '-q[query online in cheat.sh]'
-    '--query[query online in cheat.sh]'
-    '-h[show help]'
-    '--help[show help]'
-    '-v[show version]'
-    '--version[show version]'
+  option_names=(
+    -d
+    --directories
+    -e
+    --edit
+    -l
+    --list
+    -s
+    --search
+    -q
+    --query
+    -h
+    --help
+    -v
+    --version
   )
 
   case "$words[2]" in
     -e|--edit)
-      _describe -t cheatsheets 'cheatsheet' sheets
+      _arguments -s \
+        '(-e --edit)'{-e,--edit}'[edit cheatsheet]' \
+        '1:cheatsheet:->sheet'
+      [[ $state == sheet ]] && _describe -l -t cheatsheets 'cheatsheet' sheets
       return
       ;;
     -s|--search)
-      _message 'keyword'
+      _arguments -s \
+        '(-s --search)'{-s,--search}'[search cheatsheets for keyword]' \
+        '1:keyword: '
       return
       ;;
     -q|--query)
-      _message 'query'
+      _arguments -s \
+        '(-q --query)'{-q,--query}'[query online in cheat.sh]' \
+        '1:query: '
       return
       ;;
   esac
 
   if (( CURRENT == 2 )); then
-    _alternative \
-      'options:option:->options' \
-      'cheatsheets:cheatsheet:->cheatsheets'
-    case $state in
-      options)
-        _describe -t options 'option' options
-        ;;
-      cheatsheets)
-        _describe -t cheatsheets 'cheatsheet' sheets
-        ;;
-    esac
+    if [[ $PREFIX == -* ]]; then
+      _describe -l -t options 'option' option_names
+    else
+      _describe -l -t cheatsheets 'cheatsheet' sheets
+    fi
     return
   fi
 
-  _arguments -s $options '*:arg: '
+  _arguments -s \
+    '(-d --directories)'{-d,--directories}'[list directories on CHEAT_PATH]' \
+    '(-l --list)'{-l,--list}'[list cheatsheets]' \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '(-v --version)'{-v,--version}'[show version]' \
+    '*:cheatsheet:->sheet'
+
+  [[ $state == sheet ]] && _describe -l -t cheatsheets 'cheatsheet' sheets
 }
 
 _cheat "$@"
