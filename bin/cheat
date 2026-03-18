@@ -12,7 +12,6 @@ from __future__ import print_function, unicode_literals
 import sys
 import os
 import subprocess
-import shutil
 
 
 #----------------------------------------------------------------------
@@ -25,11 +24,7 @@ class CheatUtils (object):
         self.isatty = sys.stdout.isatty()
 
     def colorize (self, sheet_content):
-        """ Colorizes cheatsheet content if so configured """
-
-        # only colorize if so configured
-        if 'CHEAT_COLORS' not in os.environ:
-            return sheet_content
+        """Colorizes cheatsheet content with pygments when available."""
 
         try:
             from pygments import highlight
@@ -50,6 +45,11 @@ class CheatUtils (object):
                 pass
 
         return highlight(sheet_content, lexer, TerminalFormatter())
+
+    def color_setting (self):
+        if os.environ.get('NO_COLOR', '') or os.environ.get('CHEAT_NO_COLOR', ''):
+            return '0'
+        return os.environ.get('CHEAT_COLORS', 'auto')
 
     def die (self, message):
         """ Prints a message to stderr and then terminates """
@@ -171,46 +171,37 @@ class CheatSheets (object):
         self.site_sheets = utils.search_cheat()
         self.cheats_dict = None
 
-    def user_dir (self):
-
-        """ Returns the default cheatsheet path """
-
-        # determine the default cheatsheet dir
-        default_sheets_dir = os.environ.get('CHEAT_USER_DIR') or os.path.join('~', '.cheat')
-        default_sheets_dir = os.path.expanduser(os.path.expandvars(default_sheets_dir))
-
-        # create the CHEAT_USER_DIR if it does not exist
-        if not os.path.isdir(default_sheets_dir):
-            try:
-                # @kludge: unclear on why this is necessary
-                # os.umask(0000)
-                os.mkdir(default_sheets_dir)
-
-            except OSError:
-                die('Could not create CHEAT_USER_DIR')
-
-        # assert that the CHEAT_USER_DIR is readable and writable
-        if not os.access(default_sheets_dir, os.R_OK):
-            die('The CHEAT_USER_DIR (' + default_sheets_dir + ') is not readable.')
-        if not os.access(default_sheets_dir, os.W_OK):
-            die('The CHEAT_USER_DIR (' + default_sheets_dir + ') is not writable.')
-
-        # return the default dir
-        return default_sheets_dir
+    def bundled_dir (self):
+        """Returns the bundled cheatsheet directory shipped with this script."""
+        bundled_dir = os.path.expanduser('~/.dotfiles/cheat')
+        if os.path.isdir(bundled_dir):
+            return bundled_dir
+        die('Bundled cheatsheet directory not found.')
 
     def paths (self):
         """ Assembles a list of directories containing cheatsheets """
-        sheet_paths = [ self.user_dir() ]
+        sheet_paths = []
+        seen = set()
+
+        def add_path(path):
+            if not path:
+                return
+            path = os.path.abspath(path)
+            if path in seen or (not os.path.isdir(path)):
+                return
+            sheet_paths.append(path)
+            seen.add(path)
+
+        add_path(self.bundled_dir())
         sheet_paths.extend(self.site_sheets)
 
         # merge the CHEATPATH paths into the sheet_paths
         if 'CHEAT_PATH' in os.environ and os.environ['CHEAT_PATH']:
             for path in os.environ['CHEAT_PATH'].split(os.pathsep):
-                if os.path.isdir(path):
-                    sheet_paths.append(path)
+                add_path(path)
 
         if not sheet_paths:
-            die('The CHEAT_USER_DIR dir does not exist or the CHEAT_PATH is not set.')
+            die('No cheatsheet directories available.')
 
         return sheet_paths
 
@@ -267,38 +258,17 @@ cheatsheets = CheatSheets()
 #----------------------------------------------------------------------
 class CheatSheet (object):
 
-    def copy (self, current_sheet_path, new_sheet_path):
-        """ Copies a sheet to a new path """
-
-        # attempt to copy the sheet to CHEAT_USER_DIR
-        try:
-            shutil.copy(current_sheet_path, new_sheet_path)
-
-        # fail gracefully if the cheatsheet cannot be copied. This can happen if
-        # CHEAT_USER_DIR does not exist
-        except IOError:
-            die('Could not copy cheatsheet for editing.')
-
     def create_or_edit (self, sheet):
         """ Creates or edits a cheatsheet """
 
-        # if the cheatsheet does not exist
         if not self.exists(sheet):
             self.create(sheet)
-
-        # if the cheatsheet exists but not in the user_dir, copy it to the
-        # default path before editing
-        elif self.exists(sheet) and not self.exists_in_user_dir(sheet):
-            self.copy(self.path(sheet), os.path.join(cheatsheets.user_dir(), sheet))
-            self.edit(sheet)
-
-        # if it exists and is in the default path, then just open it
         else:
             self.edit(sheet)
 
     def create (self, sheet):
         """ Creates a cheatsheet """
-        new_sheet_path = os.path.join(cheatsheets.user_dir(), sheet)
+        new_sheet_path = os.path.join(cheatsheets.bundled_dir(), sheet)
         utils.open_with_editor(new_sheet_path)
 
     def edit (self, sheet):
@@ -308,11 +278,6 @@ class CheatSheet (object):
     def exists (self, sheet):
         """ Predicate that returns true if the sheet exists """
         return sheet in cheatsheets.get() and os.access(self.path(sheet), os.R_OK)
-
-    def exists_in_user_dir (self, sheet):
-        """ Predicate that returns true if the sheet exists in user_dir"""
-        user_dir_sheet = os.path.join(cheatsheets.user_dir(), sheet)
-        return sheet in cheatsheets.get() and os.access(user_dir_sheet, os.R_OK)
 
     def is_writable (self, sheet):
         """ Predicate that returns true if the sheet is writeable """
@@ -341,17 +306,20 @@ cheatsheet = CheatSheet()
 # display text
 #----------------------------------------------------------------------
 def display(text):
-    cheat_colors = os.environ.get('CHEAT_COLORS', '')
-    if cheat_colors and sys.stdout.isatty():
+    cheat_colors = utils.color_setting().strip().lower()
+    if sys.stdout.isatty():
         if cheat_colors in ('0', 'no', 'disable', ''):
             print(text)
             return 0
-        if cheat_colors.lower() in ('yes', 'bash', '1'):
+        if cheat_colors in ('yes', 'bash', '1', 'auto'):
             if sys.platform[:3] != 'win':
-                print(utils.colorize(text))
+                colored = utils.colorize(text)
+                if colored != text:
+                    print(colored)
+                    return 0
+            if cheat_colors != 'auto':
+                print(text)
                 return 0
-            print(text)
-            return 0
         colors = []
         if ',' in cheat_colors:
             colors = cheat_colors.split(',')
@@ -636,15 +604,13 @@ def main(args = None):
 #----------------------------------------------------------------------
 if __name__ == '__main__':
 
-    # os.environ['CHEAT_USER_DIR'] = 'd:/acm/github/vim/cheat'
-
     def test1():
         print(utils.search_cheat())
         print(1,2,3)
         return 0
 
     def test2():
-        print(cheatsheets.user_dir())
+        print(cheatsheets.bundled_dir())
         import pprint
         pprint.pprint(cheatsheets.get())
         return 0
