@@ -35,10 +35,11 @@ end
 
 local set_n_map = function(...) set_map('n', ...) end
 local set_x_map = function(...) set_map('x', ...) end
-
+local remap_opts = { silent = true, remap = true }
 local cmd_and_print = function(...)
-  vim.cmd(...)
-  print(...)
+  local dir = (...)
+  vim.api.nvim_set_current_dir(vim.fn.expand(dir))
+  print(dir)
 end
 
 ---@diagnostic disable-next-line: param-type-mismatch
@@ -48,10 +49,18 @@ vim.schedule(function()
   set_map({ 'x', 'n', 'o' }, 'L', '$')
   
   --cmdline
-  vim.cmd [[
-  cnoremap <expr> <up> wildmenumode() ? "\<c-p>" : "\<up>"
-  cnoremap <expr> <down> wildmenumode() ? "\<c-n>" : "\<down>"
-  ]]
+  set_map('c', '<up>', function()
+    if vim.fn.wildmenumode() == 1 then
+      return '<C-p>'
+    end
+    return '<Up>'
+  end, { expr = true, silent = true })
+  set_map('c', '<down>', function()
+    if vim.fn.wildmenumode() == 1 then
+      return '<C-n>'
+    end
+    return '<Down>'
+  end, { expr = true, silent = true })
   -- set_map({ 'c' }, '<down>', '<c-n>')
   -- set_map({ 'c' }, '<up>', '<s-tab>')
 
@@ -133,9 +142,9 @@ vim.schedule(function()
     -- -- 保存当前视图状态
     -- local save = vim.fn.winsaveview()
     -- 选择最后插入的文本
-    vim.cmd('normal! `[v`]')
+    keys_helper.feedkey('`[v`]')
     -- -- 重新缩进选定文本
-    -- vim.cmd('silent! normal =')
+    -- keys_helper.feedkey('=')
     -- -- 恢复视图状态
     -- vim.fn.winrestview(save)
     -- keys_helper.feedkey('^')
@@ -144,138 +153,125 @@ vim.schedule(function()
   -- neovim
   -- 修复按u之后，光标闪烁问题
   set_n_map('u', function()
-    vim.cmd("redir => output")
-    vim.cmd('silent!' .. 'undo')
-    vim.cmd('redir END')
+    local output = vim.api.nvim_exec2('silent undo', { output = true }).output
     vim.defer_fn(function()
-      if string.sub(vim.g.output, 1, 1) == '\n' then
-        print(string.sub(vim.g.output, 2))
+      if string.sub(output, 1, 1) == '\n' then
+        print(string.sub(output, 2))
       else
-        print(vim.g.output)
+        print(output)
       end
     end, 10)
   end)
 
-  vim.cmd [[
-  nmap Q <cmd>execute 'normal @' .. reg_recorded()<CR>
+  set_map('n', 'Q', "<cmd>execute 'normal @' .. reg_recorded()<CR>", remap_opts)
+
+  set_map('i', '<S-Tab>', '<C-V><Tab>', default_opts)
+
+  set_map('x', '<', '<gv', remap_opts)
+  set_map('x', '>', '>gv', remap_opts)
+
+  set_map('x', '/', ':/\\%V', default_opts)
+
+  set_map('n', '<space><', '`[v`]<^', default_opts)
+  set_map('n', '<space>>', '`[v`]>^', default_opts)
+
+  set_map('n', '<space>H', 'H', default_opts)
+  set_map('n', '<space>h', 'H', default_opts)
+  set_map('n', '<space>L', 'L', default_opts)
+  set_map('n', '<space>l', 'L', default_opts)
+
+  set_map('i', '<M-j>', '<Down>', remap_opts)
+  set_map('i', '<M-k>', '<Up>', remap_opts)
+  set_map('i', '<M-h>', '<Left>', remap_opts)
+  set_map('i', '<M-l>', '<Right>', remap_opts)
+
+  set_map('o', 'iq', 'i"', remap_opts)
+  set_map('o', 'aq', 'a"', remap_opts)
+  set_map('o', 'oq', 'o"', remap_opts)
+  set_map('x', 'iq', 'i"', remap_opts)
+  set_map('x', 'aq', 'a"', remap_opts)
+  set_map('x', 'oq', 'o"', remap_opts)
+
+  set_map('n', '<leader>tN', '<cmd>tabnew<CR>', remap_opts)
+  set_map('n', '<leader>tc', '<cmd>tabclose<CR>', remap_opts)
+  set_map('n', '<leader><leader>', '<C-^>', remap_opts)
+
+  set_map('n', '<C-j>', '<C-w>j', remap_opts)
+  set_map('n', '<C-k>', '<C-w>k', remap_opts)
+  set_map('n', '<C-h>', '<C-w>h', remap_opts)
+  set_map('n', '<C-l>', '<C-w>l', remap_opts)
+  set_map('n', '<C-b>o', '<C-w>p', remap_opts)
+  set_map('n', '<C-b><C-o>', '<C-w>p', remap_opts)
+
+  set_map('n', '<S-Up>', '<C-w>+', default_opts)
+  set_map('n', '<S-Down>', '<C-w>-', default_opts)
+  set_map('n', '<S-Right>', '<C-w>>', default_opts)
+  set_map('n', '<S-Left>', '<C-w><', default_opts)
+
+  set_map('n', 'zl', 'zMzvzz', remap_opts)
+  set_map('i', '.', '<C-g>u.', default_opts)
+
+  set_map('o', 'il', '<cmd>normal! v$o^oh<CR>', default_opts)
+  set_map('x', 'il', '$o^oh', default_opts)
+  set_map('o', 'ie', '<cmd>normal! vgg0oG$<CR>', default_opts)
+  set_map('x', 'ie', 'gg0oG$', default_opts)
+  set_map('o', 'ae', '<cmd>normal! vgg0oG$<CR>', default_opts)
+  set_map('x', 'ae', 'gg0oG$', default_opts)
+
+  set_map('x', '<M-i>', function()
+    require('lu5je0.ext.terminal').run_select_in_terminal()
+  end, { silent = true, remap = true, desc = 'run selection in terminal' })
   
-  inoremap <S-Tab> <C-V><Tab>
-
-  " 缩进后重新选择
-  xmap < <gv
-  xmap > >gv
+  local function very_nomagic_word_search_pattern(word)
+    return '\\V\\<' .. vim.fn.escape(word, '/\\') .. '\\>'
+  end
+  set_map('n', '*', function()
+    local pattern = very_nomagic_word_search_pattern(vim.fn.expand('<cword>'))
+    vim.fn.setreg('/', pattern)
+    vim.fn.histadd('/', pattern)
+    vim.opt.hlsearch = true
+  end, { silent = true, nowait = true })
   
-  " visual模式搜索
-  xnoremap / :/\%V
+  local function visual_search_pattern()
+    local selection = table.concat(vim.fn.getregion(vim.fn.getpos('v'), vim.fn.getpos('.'), {
+      type = 'v',
+    }), '\n')
+
+    selection = vim.fn.escape(selection, [[/\*]])
+    selection = selection:gsub('\n', [[\n]])
+    selection = selection:gsub('%[', [[\[]])
+    selection = selection:gsub('~', [[\~]])
+    selection = selection:gsub('%.', [[\.]])
+
+    return selection
+  end
+  set_map('x', '*', function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local pattern = visual_search_pattern()
+    vim.fn.setreg('/', pattern)
+    vim.fn.histadd('/', pattern)
+    vim.opt.hlsearch = true
+    vim.fn.search(pattern)
+    vim.api.nvim_win_set_cursor(0, cursor)
+  end, default_opts)
   
-  nnoremap <space>< `[v`]<^
-  nnoremap <space>> `[v`]>^
-  
-  nnoremap <space>H H
-  nnoremap <space>h H
-  nnoremap <space>L L
-  nnoremap <space>l L
-  
-  " xmap : :<c-u>
+  set_map('n', 'v', "m'v", default_opts)
+  set_map('n', 'V', "m'V", default_opts)
 
-  imap <M-j> <down>
-  imap <M-k> <up>
-  imap <M-h> <left>
-  imap <M-l> <right>
-  
-  omap iq i"
-  omap aq a"
-  omap oq o"
-  xmap iq i"
-  xmap aq a"
-  xmap oq o"
+  set_map('n', '<leader>wo', '<C-w>o', remap_opts)
 
-  "----------------------------------------------------------------------
-  " <leader>
-  "----------------------------------------------------------------------
-  nmap <silent> <leader>tN <cmd>tabnew<cr>
-  nmap <silent> <leader>tc <cmd>tabclose<cr>
-  nmap <silent> <leader><leader> <c-^>
+  set_map('x', '<leader>xz', '<cmd>!opencc -c t2s<CR>', remap_opts)
+  set_map('n', '<leader>xz', '<cmd>%!opencc -c t2s<CR>', remap_opts)
+  set_map('x', '<leader>xZ', '<cmd>!opencc -c s2t<CR>', remap_opts)
+  set_map('n', '<leader>xZ', '<cmd>%!opencc -c s2t<CR>', remap_opts)
 
-  "----------------------------------------------------------------------
-  " window control
-  "----------------------------------------------------------------------
-  " 快速切换窗口
-  nmap <silent> <c-j> <c-w>j
-  nmap <silent> <c-k> <c-w>k
-  nmap <silent> <c-h> <c-w>h
-  nmap <silent> <c-l> <c-w>l
+  set_map('n', 'o', 'o<space><bs>', desc_opts('newline with indent'))
+  set_map('n', 'O', 'O<space><bs>', desc_opts('newline with indent'))
+  set_map('i', '<CR>', '<CR><space><bs>', default_opts)
 
-  nmap <silent> <c-b>o <c-w>p
-  nmap <silent> <c-b><c-o> <c-w>p
-  
-  nnoremap <s-up> <c-w>+
-  nnoremap <s-down> <c-w>-
-  nnoremap <s-right> <c-w>>
-  nnoremap <s-left> <c-w><
-  
-  " 打断undo
-  nmap zl zMzvzz
+  set_map('c', '<C-a>', '<C-b>', remap_opts)
 
-  " 打断undo
-  inoremap . <c-g>u.
-
-  "----------------------------------------------------------------------
-  " text-objects
-  "----------------------------------------------------------------------
-  onoremap il <cmd>normal! v$o^oh<cr>
-  xnoremap il $o^oh
-
-  onoremap ie <cmd>normal! vgg0oG$<cr>
-  xnoremap ie gg0oG$
-
-  onoremap ae <cmd>normal! vgg0oG$<cr>
-  xnoremap ae gg0oG$
-
-  "----------------------------------------------------------------------
-  " visual mode
-  "----------------------------------------------------------------------
-  xmap <silent> <m-i> <cmd>lua require("lu5je0.ext.terminal").run_select_in_terminal()<cr>
-
-  "----------------------------------------------------------------------
-  " other
-  "----------------------------------------------------------------------
-  " nnoremap * m`<cmd>keepjumps normal! *``<cr>
-  nnoremap <silent> * ms:<c-u>let @/='\V\<'.escape(expand('<cword>'), '/\').'\>'<bar>call histadd('/',@/)<bar>set hlsearch<cr>
-  xnoremap * m`:keepjumps <C-u>lua require("lu5je0.core.visual").star_search_set('/')<CR>/<C-R>=@/<CR><CR>``
-  nnoremap v m'v
-  nnoremap V m'V
-
-  "----------------------------------------------------------------------
-  " leader
-  "----------------------------------------------------------------------
-  nmap <leader>wo <c-w>o
-
-  "----------------------------------------------------------------------
-  " 繁体简体
-  "----------------------------------------------------------------------
-  xmap <leader>xz <cmd>!opencc -c t2s<cr>
-  nmap <leader>xz <cmd>%!opencc -c t2s<cr>
-  xmap <leader>xZ <cmd>!opencc -c s2t<cr>
-  nmap <leader>xZ <cmd>%!opencc -c s2t<cr>
-
-  " ugly hack to start newline and keep indent
-  nnoremap <silent> o o<space><bs>
-  nnoremap <silent> O O<space><bs>
-  inoremap <silent> <cr> <cr><space><bs>
-
-  "----------------------------------------------------------------------
-  " command line map
-  "----------------------------------------------------------------------
-  cmap <c-a> <c-b>
-  
-  " remove default mapppings
-  silent! vunmap crr
-  silent! unmap gri
-  silent! unmap grr
-  silent! unmap gra
-  silent! unmap gra
-  silent! unmap grn 
-  ]]
+  del_map('v', 'crr')
+  del_map('n', { 'gri', 'grr', 'gra', 'grn' })
 
 end)
