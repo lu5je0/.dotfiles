@@ -210,6 +210,23 @@ static int get_object_int_field(const char *obj, const char *key, int *out) {
   return 0;
 }
 
+static int get_object_bool_field(const char *obj, const char *key, bool *out) {
+  const char *value;
+  if (find_key_value(obj, key, &value) != 0) {
+    return -1;
+  }
+  value = skip_ws(value);
+  if (strncmp(value, "true", 4) == 0) {
+    *out = true;
+    return 0;
+  }
+  if (strncmp(value, "false", 5) == 0) {
+    *out = false;
+    return 0;
+  }
+  return -1;
+}
+
 static void print_json_string_escaped(const char *s) {
   putchar('"');
   while (*s) {
@@ -261,7 +278,30 @@ static void respond_empty(int id) {
   fflush(stdout);
 }
 
-static void handle_ime_method(int id, const char *method) {
+static void handle_ime_method(int id, const char *method, const char *params_obj) {
+#ifdef __APPLE__
+  if (strcmp(method, "normal") == 0) {
+    const char *state = im_normal();
+    respond_state(id, state);
+    return;
+  }
+  if (strcmp(method, "insert") == 0) {
+    const char *state = im_insert();
+    respond_state(id, state);
+    return;
+  }
+  if (strcmp(method, "keeper") == 0) {
+    bool enable = false;
+    if (!params_obj || get_object_bool_field(params_obj, "enable", &enable) != 0) {
+      respond_error(id, "INVALID_PARAMS", "missing params.enable");
+      return;
+    }
+    im_keeper(enable);
+    respond_empty(id);
+    return;
+  }
+  respond_error(id, "INVALID_METHOD", "unsupported ime method");
+#else
   char state[16] = {0};
   int status = bridge_ime_call(method, state, sizeof(state));
   if (status == BRIDGE_STATUS_OK) {
@@ -273,6 +313,7 @@ static void handle_ime_method(int id, const char *method) {
     return;
   }
   respond_error(id, "IME_FAILED", "ime operation failed");
+#endif
 }
 
 static void handle_clipboard_method(int id, const char *method,
@@ -424,7 +465,8 @@ static void process_json_line(const char *line) {
   }
 
   if (strcmp(req.module, "ime") == 0) {
-    handle_ime_method(req.id, req.method);
+    handle_ime_method(req.id, req.method,
+                      req.has_params ? req.params_obj : NULL);
     return;
   }
   if (strcmp(req.module, "clipboard") == 0) {
@@ -495,7 +537,12 @@ int main(int argc, char *argv[]) {
   }
 
   if (interactive_mode) {
+#ifdef __APPLE__
+    im_run_interactive(process_json_line);
+    return 0;
+#else
     return run_interactive_mode();
+#endif
   }
 
   print_usage(argv[0]);

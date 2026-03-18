@@ -20,6 +20,10 @@ function M.normal()
   bridge().call('ime', 'normal', {}, { wait_response = false })
 end
 
+function M.keeper(enable)
+  bridge().call('ime', 'keeper', { enable = enable }, { wait_response = false })
+end
+
 function M.insert()
   bridge().call('ime', 'insert', {}, { wait_response = false })
 end

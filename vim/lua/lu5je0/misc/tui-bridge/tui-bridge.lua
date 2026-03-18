@@ -2,11 +2,18 @@ local M = {}
 
 local STD_PATH = vim.fn.stdpath('config')
 
+local exe_path
+if vim.fn.has("mac") == 1 then
+  exe_path = STD_PATH .. '/lib/tui_bridge_mac'
+elseif vim.fn.has('wsl') == 1 then
+  exe_path = STD_PATH .. '/lib/tui_bridge_win'
+end
+
 local state = {
   process_handle = nil,
   stdin_pipe = nil,
   stdout_pipe = nil,
-  exe_path = STD_PATH .. '/lib/tui_bridge_win.exe',
+  exe_path = exe_path,
   is_running = false,
   next_id = 1,
   pending = {},

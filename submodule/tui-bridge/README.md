@@ -5,10 +5,13 @@
 - `win/im.c`: Windows IME 实现层。
 - `win/clipboard-bridge.c`: Windows 剪贴板实现层（调用 `win32yank.exe`）。
 - `win/platform.c`: Windows 平台初始化（控制台编码等）。
+- `mac/im.m`: macOS IME 实现层。
+- `mac/clipboard-bridge.c`: macOS 剪贴板实现层。
+- `mac/platform.c`: macOS 平台初始化。
 
 ## 运行方式
-- 交互模式: `tui_bridge_win.exe -i`
-- 单次调用: `tui_bridge_win.exe -j '<json>'`
+- 交互模式: `tui-bridge -i`
+- 单次调用: `tui-bridge -j '<json>'`
 
 ## 请求格式
 每行一个 JSON 对象：
@@ -40,10 +43,17 @@
 1. `ime.normal`
 - 请求：`{"id":1,"module":"ime","method":"normal","params":{}}`
 - 结果：`{"state":"eng"}`
+- 说明：切换到英文输入法，保存当前非英文输入法状态。
 
 2. `ime.insert`
 - 请求：`{"id":2,"module":"ime","method":"insert","params":{}}`
 - 结果：`{"state":"chi"}` 或 `{"state":"eng"}`
+- 说明：恢复之前保存的输入法状态。
+
+3. `ime.keeper` (仅 macOS)
+- 请求：`{"id":3,"module":"ime","method":"keeper","params":{"enable":true}}`
+- 结果：空对象 `{}`
+- 说明：启用/禁用 IME Keeper。启用后，如果检测到输入法切换为非英文，会自动切回英文。需要在交互模式 (`-i`) 下使用。
 
 ## Clipboard 接口
 1. `clipboard.output`
