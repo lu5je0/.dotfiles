@@ -3,7 +3,7 @@ if vim.b.loaded_plantuml_plugin then
 end
 vim.b.loaded_plantuml_plugin = 1
 
-if not vim.g.plantuml_executable_script then
+if vim.g.plantuml_executable_script == nil then
   vim.g.plantuml_executable_script = 'plantuml'
 end
 
