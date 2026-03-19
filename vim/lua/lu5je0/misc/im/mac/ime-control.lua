@@ -79,6 +79,7 @@ local function enable_keeper()
     callback = function()
       if vim.fn.mode() ~= 'i' then
         vim.g._ime_keeper_active = true
+        M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
       end
     end
   })
@@ -89,24 +90,24 @@ local function enable_keeper()
     end
   })
 
-  require('lu5je0.core.main-thread').new_thread(function()
-    local mt = require('lu5je0.core.main-thread')
-    local vim = mt.vim
-    local ffi = require('ffi')
+  local ffi = require('ffi')
+  local notify_lib = ffi.load(STD_PATH .. '/lib/ime_notify.dylib')
+  ffi.cdef([[
+  void ime_notify_setup(void);
+  void ime_notify_poll(double timeout_seconds);
+  const char* ime_notify_get_last(void);
+  ]])
+  notify_lib.ime_notify_setup()
 
-    local xkb_switch_lib = ffi.load(vim.fn.stdpath('config') .. '/lib/XkbSwitchLib.lib')
-    ffi.cdef([[
-    void Xkb_Switch_setXkbLayout(const char *s);
-    ]])
-
-    local ABC = 'com.apple.keylayout.ABC'
-    local uv = require("luv")
-    while true do
-      local ok, active = pcall(vim.api.nvim_get_var, '_ime_keeper_active')
-      if ok and active then
-        pcall(xkb_switch_lib.Xkb_Switch_setXkbLayout, ABC)
-      end
-      uv.sleep(100)
+  local pump_timer = vim.uv.new_timer()
+  pump_timer:start(0, 50, function()
+    notify_lib.ime_notify_poll(0)
+    if not vim.g._ime_keeper_active then
+      return
+    end
+    local ime = notify_lib.ime_notify_get_last()
+    if ime ~= nil and ffi.string(ime) ~= ABC_IM_SOURCE_CODE then
+      M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
     end
   end)
 end

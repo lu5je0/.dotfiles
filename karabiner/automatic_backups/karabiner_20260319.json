@@ -9,63 +9,31 @@
                 "parameters": { "basic.to_if_held_down_threshold_milliseconds": 0 },
                 "rules": [
                     {
-                        "description": "left_shift 单独松开切换输入法，组合键正常作为 shift",
+                        "description": "left_shift 切换中英文，长按保持shift功能",
                         "manipulators": [
                             {
                                 "from": {
                                     "key_code": "left_shift",
                                     "modifiers": { "optional": ["any"] }
                                 },
+                                "parameters": {
+                                    "basic.to_if_alone_timeout_milliseconds": 200,
+                                    "basic.to_if_held_down_threshold_milliseconds": 200
+                                },
                                 "to": [
-                                    {
-                                        "set_variable": {
-                                            "name": "shift_pressed_alone",
-                                            "value": 1
-                                        }
-                                    },
                                     {
                                         "key_code": "left_shift",
                                         "lazy": true
                                     }
                                 ],
-                                "to_after_key_up": [
+                                "to_if_alone": [
                                     {
-                                        "conditions": [
-                                            {
-                                                "name": "shift_pressed_alone",
-                                                "type": "variable_if",
-                                                "value": 1
-                                            }
-                                        ],
                                         "key_code": "spacebar",
-                                        "modifiers": ["control"]
-                                    },
-                                    {
-                                        "set_variable": {
-                                            "name": "shift_pressed_alone",
-                                            "value": 0
-                                        }
+                                        "modifiers": ["control"],
+                                        "repeat": false
                                     }
                                 ],
-                                "type": "basic"
-                            },
-                            {
-                                "conditions": [
-                                    {
-                                        "name": "shift_pressed_alone",
-                                        "type": "variable_if",
-                                        "value": 1
-                                    }
-                                ],
-                                "from": { "any": "key_code" },
-                                "to": [
-                                    {
-                                        "set_variable": {
-                                            "name": "shift_pressed_alone",
-                                            "value": 0
-                                        }
-                                    }
-                                ],
+                                "to_if_held_down": [{ "key_code": "left_shift" }],
                                 "type": "basic"
                             }
                         ]
