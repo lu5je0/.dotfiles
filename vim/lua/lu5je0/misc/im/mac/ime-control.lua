@@ -62,13 +62,13 @@ local function enable_keeper()
   vim.g._ime_keeper_active = true
   local group = vim.api.nvim_create_augroup('ime-control-focus', { clear = true })
 
-  vim.api.nvim_create_autocmd('InsertLeave', {
+  vim.api.nvim_create_autocmd({ 'InsertLeave', 'TermLeave' }, {
     group = group,
     callback = function()
       vim.g._ime_keeper_active = true
     end
   })
-  vim.api.nvim_create_autocmd('InsertEnter', {
+  vim.api.nvim_create_autocmd({ 'InsertEnter', 'TermEnter' }, {
     group = group,
     callback = function()
       vim.g._ime_keeper_active = false
@@ -77,7 +77,8 @@ local function enable_keeper()
   vim.api.nvim_create_autocmd('FocusGained', {
     group = group,
     callback = function()
-      if vim.fn.mode() ~= 'i' then
+      local mode = vim.fn.mode()
+      if mode ~= 'i' and mode ~= 't' then
         vim.g._ime_keeper_active = true
         M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
       end
