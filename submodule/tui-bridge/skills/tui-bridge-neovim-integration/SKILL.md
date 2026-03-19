@@ -7,6 +7,8 @@ description: Use when modifying tui-bridge together with its Neovim integration 
 
 Use this skill when a task touches both the `tui-bridge` submodule and the Neovim config that consumes it.
 
+If the current environment does not expose this repository skill as an installed/available skill, treat this file as a local workflow guide and follow it manually.
+
 ## When to use
 - Changing `ime.normal`, `ime.insert`, `ime.watch`, IME event payloads, or clipboard methods.
 - Updating Windows/macOS platform behavior and checking the Neovim side still matches.
@@ -54,12 +56,14 @@ Use this skill when a task touches both the `tui-bridge` submodule and the Neovi
   - `luac -p vim/lua/lu5je0/misc/im/im.lua`
   - `luac -p vim/lua/lu5je0/misc/im/mac/ime-control.lua`
   - `luac -p vim/lua/lu5je0/misc/im/win/ime-control.lua`
-- Windows bridge init:
+- Windows watch request smoke test:
   - `./tui_bridge_win -j '{"id":1,"module":"ime","method":"watch","params":{"enable":true}}'`
+  - This only verifies that the request shape is accepted and watch initialization does not fail immediately.
 - Interactive watch check when relevant:
   - `./tui_bridge_win -i`
   - send `{"id":1,"module":"ime","method":"watch","params":{"enable":true}}`
   - then toggle IME state manually on Windows and inspect emitted events
+  - Use this path, not `-j`, to validate that `ime_changed` events actually stream back to the client
 
 ## Common pitfalls
 - Do not assume Windows `source_id` is a real input-method identifier.

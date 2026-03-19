@@ -2,7 +2,8 @@
 
 ## 维护约定
 - 如果 agent 修改了 `tui-bridge` 的协议、事件格式、平台行为、构建流程，或 Neovim 侧接入位置，必须同步更新本文件。
-- 如果任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动，优先使用仓库内 skill：`skills/tui-bridge-neovim-integration/SKILL.md`。
+- 如果任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动，先阅读仓库内工作指引：`skills/tui-bridge-neovim-integration/SKILL.md`。
+- 注意：该文件是仓库内 skill/workflow 文档；只有当当前运行环境把它注册为可用 skill 时，才会按 skill 机制自动触发。否则应把它当作本地说明文档手动遵循。
 
 ## 总览
 
@@ -28,7 +29,7 @@
   - Windows/WSL: `vim/lib/tui_bridge_win`
 
 ### Skill 触发
-- 当任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动时，使用：`skills/tui-bridge-neovim-integration/SKILL.md`
+- 当任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动时，阅读并遵循：`skills/tui-bridge-neovim-integration/SKILL.md`
 - 典型场景：
   - 修改 `ime.normal` / `ime.insert` / `ime.watch`
   - 修改 IME 事件 payload
