@@ -4,8 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-TARGET="${1:-auto}"
-OUT_ARG="${2:-}"
+OUT_ARG="${1:-}"
 
 VIM_LIB_DIR="${SCRIPT_DIR}/../../vim/lib"
 WIN_CC="${WIN_CC:-/mnt/c/Users/lu5je0/scoop/apps/gcc/13.2.0/bin/gcc.exe}"
@@ -52,17 +51,17 @@ build_mac() {
   )
   local cflags=("-O3" "-flto" "-DNDEBUG" "-Wl,-dead_strip")
   local ldflags=("-framework" "Carbon" "-framework" "AppKit")
-  local vim_lib_out="${VIM_LIB_DIR}/macos/bin/tui_bridge_mac"
+  local vim_lib_out="${VIM_LIB_DIR}/macos/bin/tui_bridge"
 
   clang "${sources[@]}" -o "${out}" "${cflags[@]}" "${ldflags[@]}"
   sync_to_vim_lib "${out}" "${vim_lib_out}"
 }
 
 build_win() {
-  local out="${1:-tui_bridge_win}"
+  local out="${1:-tui_bridge}"
   local out_basename
   local out_dir
-  local vim_lib_out="${VIM_LIB_DIR}/windows/bin/tui_bridge_win"
+  local vim_lib_out="${VIM_LIB_DIR}/windows/bin/tui_bridge"
   local sources=(
     "tui-bridge.c"
     "win/im.c"
@@ -106,20 +105,18 @@ build_win() {
   sync_to_vim_lib "${out}" "${vim_lib_out}"
 }
 
-if [[ "${TARGET}" == "auto" ]]; then
-  TARGET="$(detect_target)"
-fi
+TARGET="$(detect_target)"
 
 case "${TARGET}" in
   mac)
     build_mac "${OUT_ARG:-tui_bridge}"
     ;;
   win)
-    build_win "${OUT_ARG:-tui_bridge_win}"
+    build_win "${OUT_ARG:-tui_bridge}"
     ;;
   *)
-    echo "Unsupported target: ${TARGET}" >&2
-    echo "Usage: ./build.sh [mac|win|auto] [output]" >&2
+    echo "Unsupported platform for auto build: ${TARGET}" >&2
+    echo "Usage: ./build.sh [output]" >&2
     exit 1
     ;;
 esac

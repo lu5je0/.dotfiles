@@ -21,12 +21,13 @@
 - 单次调用: `tui-bridge -j '<json>'`
 
 ### 构建说明
-- 统一入口：`./build.sh [mac|win|auto] [output]`
-- `build.sh auto` 会按当前环境自动选择：macOS 下构建 `mac`，WSL / Windows 环境下构建 `win`
-- 在 WSL 中构建 `win` 时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 Vim `lib/windows/bin/tui_bridge_win`
+- 统一入口：`./build.sh [output]`
+- 默认行为就是按当前环境自动选择：macOS 下构建 mac 版本，WSL / Windows 环境下构建 Windows 版本
+- 默认输出文件名统一为 `tui_bridge`；不再附带 `mac` 或 `win` 后缀
+- 在 WSL 中默认构建 Windows 版本时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 Vim `lib/windows/bin/tui_bridge`
 - 构建成功后，如存在 `../../vim/lib`，会自动同步到：
-  - macOS: `vim/lib/macos/bin/tui_bridge_mac`
-  - Windows/WSL: `vim/lib/windows/bin/tui_bridge_win`
+  - macOS: `vim/lib/macos/bin/tui_bridge`
+  - Windows/WSL: `vim/lib/windows/bin/tui_bridge`
 
 ### Skill 触发
 - 当任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动时，阅读并遵循：`skills/tui-bridge-neovim-integration/SKILL.md`

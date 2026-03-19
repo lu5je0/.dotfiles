@@ -12,7 +12,7 @@ If the current environment does not expose this repository skill as an installed
 ## When to use
 - Changing `ime.normal`, `ime.insert`, `ime.watch`, IME event payloads, or clipboard methods.
 - Updating Windows/macOS platform behavior and checking the Neovim side still matches.
-- Rebuilding `tui_bridge_win` / `tui_bridge_mac` and syncing them into `vim/lib/<platform>/bin/`.
+- Rebuilding `tui_bridge` and syncing it into `vim/lib/<platform>/bin/`.
 - Auditing whether `AGENTS.md` needs updates after bridge behavior changes.
 
 ## Source of truth
@@ -28,7 +28,7 @@ If the current environment does not expose this repository skill as an installed
 - Neovim option wiring: `vim/lua/lu5je0/options.lua`
 
 ## Current integration shape
-- Neovim launches `tui_bridge_mac` on macOS and `tui_bridge_win` on WSL from platform-specific paths under `stdpath('config') .. '/lib/'`.
+- Neovim launches `tui_bridge` from platform-specific paths under `stdpath('config') .. '/lib/'`.
 - IME logic is split into:
   - platform adapter: how to switch/query behavior on that OS
   - common keeper logic in `misc/im/im.lua`: autocmds, watch subscription, normalization decision flow
@@ -47,9 +47,9 @@ If the current environment does not expose this repository skill as an installed
 - If bridge protocol, event payloads, platform semantics, build flow, or Neovim integration points change, update `submodule/tui-bridge/AGENTS.md` in the same task.
 - Keep common keeper/autocmd logic in `vim/lua/lu5je0/misc/im/im.lua`; avoid duplicating it into both mac/win adapters.
 - Keep platform adapters thin. They should only own platform-specific IME operations and platform-specific normalization checks.
-- Prefer rebuilding via `submodule/tui-bridge/build.sh [mac|win|auto]`.
-- In WSL, `build.sh win` still builds in Windows temp and syncs the result to `vim/lib/windows/bin/tui_bridge_win`.
-- For macOS changes, ensure the rebuilt binary ends up in `vim/lib/macos/bin/tui_bridge_mac`.
+- Prefer rebuilding via `submodule/tui-bridge/build.sh [output]`.
+- In WSL, the default build still builds in Windows temp and syncs the result to `vim/lib/windows/bin/tui_bridge`.
+- For macOS changes, ensure the rebuilt binary ends up in `vim/lib/macos/bin/tui_bridge`.
 
 ## Minimal validation checklist
 - Lua syntax:
@@ -57,10 +57,10 @@ If the current environment does not expose this repository skill as an installed
   - `luac -p vim/lua/lu5je0/misc/im/mac/ime-control.lua`
   - `luac -p vim/lua/lu5je0/misc/im/win/ime-control.lua`
 - Windows watch request smoke test:
-  - `./tui_bridge_win -j '{"id":1,"module":"ime","method":"watch","params":{"enable":true}}'`
+  - `./tui_bridge -j '{"id":1,"module":"ime","method":"watch","params":{"enable":true}}'`
   - This only verifies that the request shape is accepted and watch initialization does not fail immediately.
 - Interactive watch check when relevant:
-  - `./tui_bridge_win -i`
+  - `./tui_bridge -i`
   - send `{"id":1,"module":"ime","method":"watch","params":{"enable":true}}`
   - then toggle IME state manually on Windows and inspect emitted events
   - Use this path, not `-j`, to validate that `ime_changed` events actually stream back to the client

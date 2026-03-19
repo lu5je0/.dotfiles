@@ -62,7 +62,7 @@
 
 ## TUI Bridge 与平台联动
 - `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/im/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
-- `vim/lib/macos/bin/tui_bridge_mac` 与 `vim/lib/windows/bin/tui_bridge_win` 来自 `submodule/tui-bridge` 构建产物，不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
+- `vim/lib/macos/bin/tui_bridge` 与 `vim/lib/windows/bin/tui_bridge` 来自 `submodule/tui-bridge` 构建产物；平台由目录区分，不再靠文件名后缀区分。不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
 - `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下的 native 资源路径；新增平台二进制或动态库时，优先复用这个入口，不要在业务模块里继续硬编码 `stdpath('config') .. '/lib/...'`。
 - 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `submodule/tui-bridge/AGENTS.md`。
 

@@ -5,13 +5,13 @@ local native = require('lu5je0.core.native')
 local exe_path
 if vim.fn.has("mac") == 1 then
   exe_path = native.resolve_path({
-    filename = 'tui_bridge_mac',
+    filename = 'tui_bridge',
     platform = 'macos',
     kind = 'bin',
   })
 elseif vim.fn.has('wsl') == 1 then
   exe_path = native.resolve_path({
-    filename = 'tui_bridge_win',
+    filename = 'tui_bridge',
     platform = 'windows',
     kind = 'bin',
   })
