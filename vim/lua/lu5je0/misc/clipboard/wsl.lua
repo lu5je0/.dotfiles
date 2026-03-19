@@ -3,7 +3,7 @@ local M = {}
 local augroup = vim.api.nvim_create_augroup('deferClip', {})
 local active_entry = {}
 
-local clipboard = require('lu5je0.misc.tui-bridge.win.clipboard').setup()
+local clipboard = require('lu5je0.misc.tui-bridge.ext.clipboard').setup()
 
 local function sync_from(init)
   local text = clipboard.output({ eol = 'lf' })

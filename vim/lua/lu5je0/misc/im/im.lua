@@ -19,19 +19,12 @@ end
 
 local function create_autocmd()
   local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
-  vim.api.nvim_create_autocmd('InsertLeave', {
+  
+  vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave', 'FocusGained' }, {
     group = group,
     pattern = { '*' },
     callback = function()
-      M.disable_ime()
-    end
-  })
-
-  vim.api.nvim_create_autocmd('CmdlineLeave', {
-    group = group,
-    pattern = { '*' },
-    callback = function()
-      M.disable_ime()
+      M.normal()
     end
   })
 
@@ -39,7 +32,7 @@ local function create_autocmd()
     group = group,
     pattern = { '*' },
     callback = function()
-      M.enable_ime()
+      M.insert()
     end
   })
 end
@@ -58,13 +51,13 @@ function M.setup()
   local timer = nil
   -- timer = require('lu5je0.lang.timer')
 
-  M.disable_ime = rate_limiter:wrap(function()
+  M.normal = rate_limiter:wrap(function()
     if timer ~=nil then timer.begin_timer() end
     ime_control.normal()
     if timer ~=nil then timer.end_timer() end
   end)
 
-  M.enable_ime = rate_limiter:wrap(function()
+  M.insert = rate_limiter:wrap(function()
     if not state.save_last_ime then
       return
     end

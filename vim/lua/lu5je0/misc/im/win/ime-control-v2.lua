@@ -9,7 +9,7 @@ local function ensure_ime()
   if state.ime then
     return state.ime
   end
-  local bridge = require('lu5je0.misc.tui-bridge.win.im').setup(state.opts)
+  local bridge = require('lu5je0.misc.tui-bridge.ext.im').setup(state.opts)
   state.ime = bridge
   return state.ime
 end

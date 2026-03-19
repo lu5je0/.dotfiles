@@ -14,23 +14,12 @@
                             {
                                 "from": {
                                     "key_code": "left_shift",
-                                    "modifiers": { "optional": ["any"] }
+                                    "modifiers": { "optional": ["left_control"] }
                                 },
-                                "parameters": {
-                                    "basic.to_if_alone_timeout_milliseconds": 200,
-                                    "basic.to_if_held_down_threshold_milliseconds": 200
-                                },
-                                "to": [
-                                    {
-                                        "key_code": "left_shift",
-                                        "lazy": true
-                                    }
-                                ],
                                 "to_if_alone": [
                                     {
                                         "key_code": "spacebar",
-                                        "modifiers": ["control"],
-                                        "repeat": false
+                                        "modifiers": ["left_control"]
                                     }
                                 ],
                                 "to_if_held_down": [{ "key_code": "left_shift" }],
