@@ -18,52 +18,14 @@
                                 },
                                 "to": [
                                     {
-                                        "set_variable": {
-                                            "name": "shift_pressed_alone",
-                                            "value": 1
-                                        }
-                                    },
-                                    {
                                         "key_code": "left_shift",
                                         "lazy": true
                                     }
                                 ],
-                                "to_after_key_up": [
+                                "to_if_alone": [
                                     {
-                                        "conditions": [
-                                            {
-                                                "name": "shift_pressed_alone",
-                                                "type": "variable_if",
-                                                "value": 1
-                                            }
-                                        ],
                                         "key_code": "spacebar",
                                         "modifiers": ["control"]
-                                    },
-                                    {
-                                        "set_variable": {
-                                            "name": "shift_pressed_alone",
-                                            "value": 0
-                                        }
-                                    }
-                                ],
-                                "type": "basic"
-                            },
-                            {
-                                "conditions": [
-                                    {
-                                        "name": "shift_pressed_alone",
-                                        "type": "variable_if",
-                                        "value": 1
-                                    }
-                                ],
-                                "from": { "any": "key_code" },
-                                "to": [
-                                    {
-                                        "set_variable": {
-                                            "name": "shift_pressed_alone",
-                                            "value": 0
-                                        }
                                     }
                                 ],
                                 "type": "basic"

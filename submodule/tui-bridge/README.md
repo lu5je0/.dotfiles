@@ -50,10 +50,18 @@
 - 结果：`{"state":"chi"}` 或 `{"state":"eng"}`
 - 说明：恢复之前保存的输入法状态。
 
-3. `ime.keeper` (仅 macOS)
-- 请求：`{"id":3,"module":"ime","method":"keeper","params":{"enable":true}}`
+3. `ime.watch` (仅 macOS)
+- 请求：`{"id":3,"module":"ime","method":"watch","params":{"enable":true}}`
 - 结果：空对象 `{}`
-- 说明：启用/禁用 IME Keeper。启用后，如果检测到输入法切换为非英文，会自动切回英文。需要在交互模式 (`-i`) 下使用。
+- 说明：启用/禁用输入法变化监听。启用后，输入法切换时会主动推送事件。需要在交互模式 (`-i`) 下使用。
+
+## 事件格式
+当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）：
+
+```json
+{"event":"ime_changed","source_id":"com.apple.keylayout.ABC"}
+{"event":"ime_changed","source_id":"com.apple.inputmethod.SCIM.ITABC"}
+```
 
 ## Clipboard 接口
 1. `clipboard.output`

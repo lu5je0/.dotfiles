@@ -89,27 +89,13 @@ local function enable_keeper()
       vim.g._ime_keeper_active = false
     end
   })
-
-  -- event-driven: subprocess listens for CF notification, stdout piped to neovim
-  local stdout = vim.uv.new_pipe(false)
-  local handle, pid = vim.uv.spawn(STD_PATH .. '/lib/ime_watcher_mac', {
-    stdio = { nil, stdout, nil },
-  }, function()
-    stdout:close()
-  end)
-
-  local buf = ''
-  stdout:read_start(function(err, data)
-    if err or not data then return end
-    buf = buf .. data
-    while true do
-      local nl = buf:find('\n')
-      if not nl then break end
-      local ime = buf:sub(1, nl - 1)
-      buf = buf:sub(nl + 1)
-      if vim.g._ime_keeper_active and ime ~= ABC_IM_SOURCE_CODE then
-        M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
-      end
+  
+  local bridge = require('lu5je0.misc.tui-bridge.ext.im').setup({})
+  bridge.watch(true)
+  bridge.on_change(function(args)
+    local ime = args.source_id
+    if vim.g._ime_keeper_active and ime ~= ABC_IM_SOURCE_CODE then
+      M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
     end
   end)
 end

@@ -9,8 +9,8 @@
 const char *im_normal(void);
 // Returns "chi" or "eng"
 const char *im_insert(void);
-// Enable/disable ime keeper (auto-switch to ASCII in normal mode)
-void im_keeper(bool enable);
+// Enable/disable ime watch (emit events on input source change)
+void im_watch(bool enable);
 // Run interactive mode with RunLoop support (for notifications)
 void im_run_interactive(void (*line_handler)(const char *line));
 #else

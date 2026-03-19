@@ -1,18 +1,15 @@
 #import <Carbon/Carbon.h>
 #import <AppKit/AppKit.h>
 #include <stdbool.h>
-#include <sys/sysctl.h>
 #include <unistd.h>
 
 #include "../im.h"
 
 static NSString *asciiSourceID = nil;
 static NSString *lastNonAsciiSourceID = nil;
-static BOOL isNormalMode = NO;
-static BOOL isFrontmost = NO;
+static NSString *lastReportedSourceID = nil;
 static BOOL initialized = NO;
-static BOOL keeperEnabled = NO;
-static pid_t terminalPID = 0;
+static BOOL watchEnabled = NO;
 
 static NSString *getInputSourceID(TISInputSourceRef source) {
     if (!source) return nil;
@@ -50,68 +47,19 @@ static BOOL selectInputSource(NSString *sourceID) {
     return status == noErr;
 }
 
-static pid_t getParentTerminalPID(void) {
-    pid_t pid = getppid();
-    while (pid > 1) {
-        NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-        if (app && app.activationPolicy == NSApplicationActivationPolicyRegular) {
-            return pid;
-        }
-        struct kinfo_proc info;
-        size_t size = sizeof(info);
-        int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
-        if (sysctl(mib, 4, &info, &size, NULL, 0) != 0) {
-            return 0;
-        }
-        pid_t ppid = info.kp_eproc.e_ppid;
-        if (ppid == pid) return 0;
-        pid = ppid;
-    }
-    return 0;
-}
-
-static BOOL isMyTerminal(NSRunningApplication *app) {
-    if (terminalPID == 0) {
-        terminalPID = getParentTerminalPID();
-    }
-    return app.processIdentifier == terminalPID;
-}
-
 static void inputSourceChanged(CFNotificationCenterRef center,
                                void *observer,
                                CFNotificationName name,
                                const void *object,
                                CFDictionaryRef userInfo) {
-    if (!keeperEnabled || !isFrontmost) return;
+    if (!watchEnabled) return;
     
     NSString *currentID = getCurrentInputSourceID();
-    if (asciiSourceID && ![currentID isEqualToString:asciiSourceID]) {
-        if (currentID) {
-            lastNonAsciiSourceID = currentID;
-        }
-        selectInputSource(asciiSourceID);
-    }
-}
-
-static void appDidActivate(CFNotificationCenterRef center,
-                          void *observer,
-                          CFNotificationName name,
-                          const void *object,
-                          CFDictionaryRef userInfo) {
-    NSRunningApplication *app = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    if (app) {
-        isFrontmost = isMyTerminal(app);
-    }
-}
-
-static void appDidDeactivate(CFNotificationCenterRef center,
-                            void *observer,
-                            CFNotificationName name,
-                            const void *object,
-                            CFDictionaryRef userInfo) {
-    NSRunningApplication *app = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    if (app && isMyTerminal(app)) {
-        isFrontmost = NO;
+    if (currentID && ![currentID isEqualToString:lastReportedSourceID]) {
+        lastReportedSourceID = currentID;
+        printf("{\"event\":\"ime_changed\",\"source_id\":\"%s\"}\n",
+               [currentID UTF8String]);
+        fflush(stdout);
     }
 }
 
@@ -130,33 +78,6 @@ static void setup(void) {
         NULL,
         CFNotificationSuspensionBehaviorDeliverImmediately
     );
-    
-    // Monitor app activation via NSWorkspace notifications
-    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserverForName:NSWorkspaceDidActivateApplicationNotification
-                                                                    object:nil
-                                                                     queue:[NSOperationQueue mainQueue]
-                                                                usingBlock:^(NSNotification *note) {
-        NSRunningApplication *app = note.userInfo[NSWorkspaceApplicationKey];
-        if (app) {
-            isFrontmost = isMyTerminal(app);
-        }
-    }];
-    
-    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserverForName:NSWorkspaceDidDeactivateApplicationNotification
-                                                                    object:nil
-                                                                     queue:[NSOperationQueue mainQueue]
-                                                                usingBlock:^(NSNotification *note) {
-        NSRunningApplication *app = note.userInfo[NSWorkspaceApplicationKey];
-        if (app && isMyTerminal(app)) {
-            isFrontmost = NO;
-        }
-    }];
-    
-    // Check if terminal is already frontmost
-    NSRunningApplication *frontApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    if (frontApp) {
-        isFrontmost = isMyTerminal(frontApp);
-    }
 }
 
 const char *im_normal(void) {
@@ -167,8 +88,6 @@ const char *im_normal(void) {
         if (currentID && asciiSourceID && ![currentID isEqualToString:asciiSourceID]) {
             lastNonAsciiSourceID = currentID;
         }
-        
-        isNormalMode = YES;
         
         if (asciiSourceID) {
             selectInputSource(asciiSourceID);
@@ -182,8 +101,6 @@ const char *im_insert(void) {
     @autoreleasepool {
         setup();
         
-        isNormalMode = NO;
-        
         if (lastNonAsciiSourceID) {
             selectInputSource(lastNonAsciiSourceID);
             return "chi";
@@ -193,11 +110,10 @@ const char *im_insert(void) {
     }
 }
 
-void im_keeper(bool enable) {
+void im_watch(bool enable) {
     @autoreleasepool {
         setup();
-        keeperEnabled = enable;
-        // keeper(false) 时不取消监听，只在 inputSourceChanged 中判断 isNormalMode
+        watchEnabled = enable;
     }
 }
 

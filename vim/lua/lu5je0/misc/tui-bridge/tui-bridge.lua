@@ -18,6 +18,7 @@ local state = {
   next_id = 1,
   pending = {},
   stdout_buffer = '',
+  event_handlers = {},
 }
 
 local function reset_state()
@@ -27,6 +28,7 @@ local function reset_state()
   state.is_running = false
   state.pending = {}
   state.stdout_buffer = ''
+  state.event_handlers = {}
 end
 
 local function process_stdout_line(line)
@@ -41,6 +43,18 @@ local function process_stdout_line(line)
 
   if type(resp.id) == 'number' then
     state.pending[resp.id] = resp
+    return
+  end
+
+  if type(resp.event) == 'string' then
+    local handlers = state.event_handlers[resp.event]
+    if handlers then
+      vim.schedule(function()
+        for _, handler in ipairs(handlers) do
+          handler(resp)
+        end
+      end)
+    end
   end
 end
 
@@ -187,6 +201,24 @@ function M.call(module, method, params, opts)
     return nil, (err.code or 'unknown_error') .. ': ' .. (err.message or '')
   end
   return resp.result
+end
+
+function M.subscribe(event, handler)
+  if not state.event_handlers[event] then
+    state.event_handlers[event] = {}
+  end
+  table.insert(state.event_handlers[event], handler)
+end
+
+function M.unsubscribe(event, handler)
+  local handlers = state.event_handlers[event]
+  if not handlers then return end
+  for i, h in ipairs(handlers) do
+    if h == handler then
+      table.remove(handlers, i)
+      return
+    end
+  end
 end
 
 return M

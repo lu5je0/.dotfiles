@@ -290,13 +290,13 @@ static void handle_ime_method(int id, const char *method, const char *params_obj
     respond_state(id, state);
     return;
   }
-  if (strcmp(method, "keeper") == 0) {
+  if (strcmp(method, "watch") == 0) {
     bool enable = false;
     if (!params_obj || get_object_bool_field(params_obj, "enable", &enable) != 0) {
       respond_error(id, "INVALID_PARAMS", "missing params.enable");
       return;
     }
-    im_keeper(enable);
+    im_watch(enable);
     respond_empty(id);
     return;
   }

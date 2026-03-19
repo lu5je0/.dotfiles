@@ -20,8 +20,12 @@ function M.normal()
   bridge().call('ime', 'normal', {}, { wait_response = false })
 end
 
-function M.keeper(enable)
-  bridge().call('ime', 'keeper', { enable = enable }, { wait_response = false })
+function M.watch(enable)
+  bridge().call('ime', 'watch', { enable = enable }, { wait_response = false })
+end
+
+function M.on_change(handler)
+  bridge().subscribe('ime_changed', handler)
 end
 
 function M.insert()

@@ -14,3 +14,4 @@ CFLAGS=("-O3" "-flto" "-DNDEBUG" "-Wl,-dead_strip")
 LDFLAGS=("-framework" "Carbon" "-framework" "AppKit")
 
 clang "${SOURCES[@]}" -o "${OUT}" "${CFLAGS[@]}" "${LDFLAGS[@]}"
+cp tui_bridge ~/.dotfiles/vim/lib/tui_bridge_mac
