@@ -90,7 +90,7 @@ local function start_process()
   local handle = vim.uv.spawn(state.exe_path, {
     args = { '-i' },
     stdio = { stdin, stdout, nil },
-  }, function(code, signal)
+  }, function()
     if stdin and not stdin:is_closing() then
       stdin:close()
     end
@@ -98,15 +98,6 @@ local function start_process()
       stdout:close()
     end
 
-    if state.process_handle then
-      vim.schedule(function()
-        vim.notify(
-          'TUI Bridge 进程退出，退出码: ' .. tostring(code) .. ', 信号: ' .. tostring(signal),
-          vim.log.levels.WARN,
-          { title = 'TUI Bridge' }
-        )
-      end)
-    end
     reset_state()
   end)
 
