@@ -90,30 +90,33 @@ local function enable_keeper()
     end
   })
 
-  local ffi = require('ffi')
-  local notify_lib = ffi.load(STD_PATH .. '/lib/ime_notify.dylib')
-  ffi.cdef([[
-  void ime_notify_setup(void);
-  void ime_notify_poll(double timeout_seconds);
-  const char* ime_notify_get_last(void);
-  ]])
-  notify_lib.ime_notify_setup()
+  -- event-driven: subprocess listens for CF notification, stdout piped to neovim
+  local stdout = vim.uv.new_pipe(false)
+  local handle, pid = vim.uv.spawn(STD_PATH .. '/lib/ime_watcher_mac', {
+    stdio = { nil, stdout, nil },
+  }, function()
+    stdout:close()
+  end)
 
-  local pump_timer = vim.uv.new_timer()
-  pump_timer:start(0, 50, function()
-    notify_lib.ime_notify_poll(0)
-    if not vim.g._ime_keeper_active then
-      return
-    end
-    local ime = notify_lib.ime_notify_get_last()
-    if ime ~= nil and ffi.string(ime) ~= ABC_IM_SOURCE_CODE then
-      M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
+  local buf = ''
+  stdout:read_start(function(err, data)
+    if err or not data then return end
+    buf = buf .. data
+    while true do
+      local nl = buf:find('\n')
+      if not nl then break end
+      local ime = buf:sub(1, nl - 1)
+      buf = buf:sub(nl + 1)
+      if vim.g._ime_keeper_active and ime ~= ABC_IM_SOURCE_CODE then
+        M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
+      end
     end
   end)
 end
 
 M.setup = function()
   enable_keeper()
+  M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
   return M
 end
 

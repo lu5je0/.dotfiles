@@ -1,8 +1,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <Carbon/Carbon.h>
-#include <string.h>
-
-static char last_ime[256] = {0};
+#include <stdio.h>
+#include <unistd.h>
 
 static void notification_callback(CFNotificationCenterRef center,
                                    void *observer,
@@ -14,12 +13,16 @@ static void notification_callback(CFNotificationCenterRef center,
 
     CFStringRef sourceID = TISGetInputSourceProperty(source, kTISPropertyInputSourceID);
     if (sourceID) {
-        CFStringGetCString(sourceID, last_ime, sizeof(last_ime), kCFStringEncodingUTF8);
+        char buf[256];
+        if (CFStringGetCString(sourceID, buf, sizeof(buf), kCFStringEncodingUTF8)) {
+            printf("%s\n", buf);
+            fflush(stdout);
+        }
     }
     CFRelease(source);
 }
 
-void ime_notify_setup(void) {
+int main(void) {
     CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
     CFNotificationCenterAddObserver(
         center,
@@ -29,15 +32,6 @@ void ime_notify_setup(void) {
         NULL,
         CFNotificationSuspensionBehaviorDeliverImmediately
     );
-}
-
-// Drive the run loop to process pending notifications (call from main thread)
-void ime_notify_poll(double timeout_seconds) {
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, timeout_seconds, true);
-}
-
-// Read the last notified IME (safe to call from any thread)
-const char* ime_notify_get_last(void) {
-    if (last_ime[0] == '\0') return NULL;
-    return last_ime;
+    CFRunLoopRun();
+    return 0;
 }
