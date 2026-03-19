@@ -57,7 +57,62 @@ M.normal = function()
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
 end
 
+local function enable_keeper()
+  -- true: focused + normal mode, keeper should enforce ABC
+  vim.g._ime_keeper_active = true
+  local group = vim.api.nvim_create_augroup('ime-control-focus', { clear = true })
+
+  vim.api.nvim_create_autocmd('InsertLeave', {
+    group = group,
+    callback = function()
+      vim.g._ime_keeper_active = true
+    end
+  })
+  vim.api.nvim_create_autocmd('InsertEnter', {
+    group = group,
+    callback = function()
+      vim.g._ime_keeper_active = false
+    end
+  })
+  vim.api.nvim_create_autocmd('FocusGained', {
+    group = group,
+    callback = function()
+      if vim.fn.mode() ~= 'i' then
+        vim.g._ime_keeper_active = true
+      end
+    end
+  })
+  vim.api.nvim_create_autocmd('FocusLost', {
+    group = group,
+    callback = function()
+      vim.g._ime_keeper_active = false
+    end
+  })
+
+  require('lu5je0.core.main-thread').new_thread(function()
+    local mt = require('lu5je0.core.main-thread')
+    local vim = mt.vim
+    local ffi = require('ffi')
+
+    local xkb_switch_lib = ffi.load(vim.fn.stdpath('config') .. '/lib/XkbSwitchLib.lib')
+    ffi.cdef([[
+    const char* Xkb_Switch_getXkbLayout();
+    void Xkb_Switch_setXkbLayout(const char *s);
+    ]])
+
+    local uv = require("luv")
+    while true do
+      local ok, active = pcall(vim.api.nvim_get_var, '_ime_keeper_active')
+      if ok and active then
+        pcall(xkb_switch_lib.Xkb_Switch_setXkbLayout, 'com.apple.keylayout.ABC')
+      end
+      uv.sleep(100)
+    end
+  end)
+end
+
 M.setup = function()
+  enable_keeper()
   return M
 end
 
