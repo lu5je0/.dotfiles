@@ -99,7 +99,7 @@ lazy_load({
       require('lu5je0.misc.im.im').setup()
     end
   end,
-  event = { 'InsertEnter', 'CursorHold' },
+  event = { 'InsertEnter', 'CursorHold', 'VimEnter' },
   keys = {
     { mode = { 'n' }, '<leader>vi' },
   }

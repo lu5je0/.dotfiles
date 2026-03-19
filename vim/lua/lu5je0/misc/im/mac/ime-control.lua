@@ -96,15 +96,15 @@ local function enable_keeper()
 
     local xkb_switch_lib = ffi.load(vim.fn.stdpath('config') .. '/lib/XkbSwitchLib.lib')
     ffi.cdef([[
-    const char* Xkb_Switch_getXkbLayout();
     void Xkb_Switch_setXkbLayout(const char *s);
     ]])
 
+    local ABC = 'com.apple.keylayout.ABC'
     local uv = require("luv")
     while true do
       local ok, active = pcall(vim.api.nvim_get_var, '_ime_keeper_active')
       if ok and active then
-        pcall(xkb_switch_lib.Xkb_Switch_setXkbLayout, 'com.apple.keylayout.ABC')
+        pcall(xkb_switch_lib.Xkb_Switch_setXkbLayout, ABC)
       end
       uv.sleep(100)
     end
