@@ -1,9 +1,13 @@
 local M = {}
 
-local STD_PATH = vim.fn.stdpath('config')
+local native = require('lu5je0.core.native')
 
 local ffi = require('ffi')
-local lib_clipboard = ffi.load(STD_PATH .. '/lib/liblibclipboard.dylib')
+local lib_clipboard = ffi.load(native.resolve_path({
+  filename = 'liblibclipboard.dylib',
+  platform = 'macos',
+  kind = 'lib',
+}))
 ffi.cdef([[
 const char* get_contents();
 void set_contents(const char *s);

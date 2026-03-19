@@ -1,12 +1,20 @@
 local M = {}
 
-local STD_PATH = vim.fn.stdpath('config')
+local native = require('lu5je0.core.native')
 
 local exe_path
 if vim.fn.has("mac") == 1 then
-  exe_path = STD_PATH .. '/lib/tui_bridge_mac'
+  exe_path = native.resolve_path({
+    filename = 'tui_bridge_mac',
+    platform = 'macos',
+    kind = 'bin',
+  })
 elseif vim.fn.has('wsl') == 1 then
-  exe_path = STD_PATH .. '/lib/tui_bridge_win'
+  exe_path = native.resolve_path({
+    filename = 'tui_bridge_win',
+    platform = 'windows',
+    kind = 'bin',
+  })
 end
 
 local state = {
@@ -77,7 +85,9 @@ local function start_process()
   end
 
   if not state.exe_path or vim.fn.executable(state.exe_path) == 0 then
-    vim.notify('找不到 tui_bridge_win.exe，请检查配置路径', vim.log.levels.ERROR, { title = 'TUI Bridge' })
+    vim.notify(('找不到 TUI Bridge 可执行文件: %s'):format(state.exe_path or 'nil'), vim.log.levels.ERROR, {
+      title = 'TUI Bridge',
+    })
     return false
   end
 

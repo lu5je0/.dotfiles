@@ -1,8 +1,7 @@
 local M = {}
 
 local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
-
-local STD_PATH = vim.fn.stdpath('config')
+local native = require('lu5je0.core.native')
 
 local STATUS = {
   last_ime = ABC_IM_SOURCE_CODE
@@ -19,7 +18,11 @@ function M.get_im_switcher()
   end
   M.im_switcher = (function()
     local ffi = require('ffi')
-    local xkb_switch_lib = ffi.load(STD_PATH .. '/lib/XkbSwitchLib.lib')
+    local xkb_switch_lib = ffi.load(native.resolve_path({
+      filename = 'XkbSwitchLib.lib',
+      platform = 'macos',
+      kind = 'lib',
+    }))
     ffi.cdef([[
     const char* Xkb_Switch_getXkbLayout();
     void Xkb_Switch_setXkbLayout(const char *s);

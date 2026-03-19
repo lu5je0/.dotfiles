@@ -37,6 +37,7 @@ sync_to_vim_lib() {
   local vim_lib_out="$2"
 
   if [[ -d "${VIM_LIB_DIR}" ]]; then
+    mkdir -p "$(dirname "${vim_lib_out}")"
     cp "${built_out}" "${vim_lib_out}"
   fi
 }
@@ -51,7 +52,7 @@ build_mac() {
   )
   local cflags=("-O3" "-flto" "-DNDEBUG" "-Wl,-dead_strip")
   local ldflags=("-framework" "Carbon" "-framework" "AppKit")
-  local vim_lib_out="${VIM_LIB_DIR}/tui_bridge_mac"
+  local vim_lib_out="${VIM_LIB_DIR}/macos/bin/tui_bridge_mac"
 
   clang "${sources[@]}" -o "${out}" "${cflags[@]}" "${ldflags[@]}"
   sync_to_vim_lib "${out}" "${vim_lib_out}"
@@ -61,7 +62,7 @@ build_win() {
   local out="${1:-tui_bridge_win}"
   local out_basename
   local out_dir
-  local vim_lib_out="${VIM_LIB_DIR}/tui_bridge_win"
+  local vim_lib_out="${VIM_LIB_DIR}/windows/bin/tui_bridge_win"
   local sources=(
     "tui-bridge.c"
     "win/im.c"

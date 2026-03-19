@@ -1,4 +1,5 @@
 import ctypes
+from pathlib import Path
 import sys
 
 try:                                                                                                                   
@@ -9,7 +10,19 @@ try:
 except ImportError:                                                                                                    
     print("隐藏macos dock栏小火箭,需要pip3 install -U PyObjC")   
 
-lib = ctypes.CDLL('/Users/lu5je0/.dotfiles/vim/lib/XkbSwitchLib.lib')
+DOTFILES_ROOT = Path(__file__).resolve().parents[1]
+LIB_CANDIDATES = [
+    DOTFILES_ROOT / 'vim/lib/macos/lib/XkbSwitchLib.lib',
+    DOTFILES_ROOT / 'vim/lib/XkbSwitchLib.lib',
+]
+
+for candidate in LIB_CANDIDATES:
+    if candidate.exists():
+        lib = ctypes.CDLL(str(candidate))
+        break
+else:
+    raise FileNotFoundError('XkbSwitchLib.lib not found in vim/lib')
+
 lib.Xkb_Switch_setXkbLayout.argtypes = [ctypes.c_char_p]
 lib.Xkb_Switch_setXkbLayout.restype = None
 

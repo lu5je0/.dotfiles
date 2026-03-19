@@ -12,7 +12,7 @@ If the current environment does not expose this repository skill as an installed
 ## When to use
 - Changing `ime.normal`, `ime.insert`, `ime.watch`, IME event payloads, or clipboard methods.
 - Updating Windows/macOS platform behavior and checking the Neovim side still matches.
-- Rebuilding `tui_bridge_win` / `tui_bridge_mac` and syncing them into `vim/lib`.
+- Rebuilding `tui_bridge_win` / `tui_bridge_mac` and syncing them into `vim/lib/<platform>/bin/`.
 - Auditing whether `AGENTS.md` needs updates after bridge behavior changes.
 
 ## Source of truth
@@ -28,7 +28,7 @@ If the current environment does not expose this repository skill as an installed
 - Neovim option wiring: `vim/lua/lu5je0/options.lua`
 
 ## Current integration shape
-- Neovim launches `tui_bridge_mac` on macOS and `tui_bridge_win` on WSL from `stdpath('config') .. '/lib/'`.
+- Neovim launches `tui_bridge_mac` on macOS and `tui_bridge_win` on WSL from platform-specific paths under `stdpath('config') .. '/lib/'`.
 - IME logic is split into:
   - platform adapter: how to switch/query behavior on that OS
   - common keeper logic in `misc/im/im.lua`: autocmds, watch subscription, normalization decision flow
@@ -48,8 +48,8 @@ If the current environment does not expose this repository skill as an installed
 - Keep common keeper/autocmd logic in `vim/lua/lu5je0/misc/im/im.lua`; avoid duplicating it into both mac/win adapters.
 - Keep platform adapters thin. They should only own platform-specific IME operations and platform-specific normalization checks.
 - Prefer rebuilding via `submodule/tui-bridge/build.sh [mac|win|auto]`.
-- In WSL, `build.sh win` still builds in Windows temp and syncs the result to `vim/lib/tui_bridge_win`.
-- For macOS changes, ensure the rebuilt binary ends up in `vim/lib/tui_bridge_mac`.
+- In WSL, `build.sh win` still builds in Windows temp and syncs the result to `vim/lib/windows/bin/tui_bridge_win`.
+- For macOS changes, ensure the rebuilt binary ends up in `vim/lib/macos/bin/tui_bridge_mac`.
 
 ## Minimal validation checklist
 - Lua syntax:

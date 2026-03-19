@@ -38,7 +38,7 @@
 - `lsp/`: 独立语言服务器配置文件。
 - `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
 - `tests/`: 当前仓库内的自动化测试。现有入口主要覆盖 `cron-parser`。
-- `lib/`: 本地二进制或动态库，例如 `tui_bridge_mac`、`tui_bridge_win`。
+- `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
 ## 改动落点规则
 - 改基础编辑行为、选项默认值，优先改 `options.lua`、`mappings.lua`、`autocmds.lua`、`commands.lua`。
@@ -62,7 +62,8 @@
 
 ## TUI Bridge 与平台联动
 - `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/im/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
-- `vim/lib/tui_bridge_mac` 与 `vim/lib/tui_bridge_win` 来自 `submodule/tui-bridge` 构建产物，不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
+- `vim/lib/macos/bin/tui_bridge_mac` 与 `vim/lib/windows/bin/tui_bridge_win` 来自 `submodule/tui-bridge` 构建产物，不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
+- `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下的 native 资源路径；新增平台二进制或动态库时，优先复用这个入口，不要在业务模块里继续硬编码 `stdpath('config') .. '/lib/...'`。
 - 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `submodule/tui-bridge/AGENTS.md`。
 
 ## 测试与验证
@@ -75,8 +76,7 @@
 - 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
 
 ## 提交流程建议
-- 改完入口或模块接线后，先跑 `nvim --headless '+qa'`，确认没有直接语法错误或 require 失败。
-- 改完纯 Lua 逻辑且适合自动化验证时，跑 `./tests/run-tests.sh`。
+- 改完入口或模块后，先跑 `nvim --headless '+qa'`，尽可能不在沙箱内运行，确认没有直接语法错误或 require 失败。
 - 改插件补丁时，确认补丁文件、插件声明、运行时行为三者一致。
 - 改平台相关能力时，在提交说明里明确受影响平台与未验证平台。
 
