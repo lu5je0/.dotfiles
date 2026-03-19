@@ -57,9 +57,7 @@ static void inputSourceChanged(CFNotificationCenterRef center,
     NSString *currentID = getCurrentInputSourceID();
     if (currentID && ![currentID isEqualToString:lastReportedSourceID]) {
         lastReportedSourceID = currentID;
-        printf("{\"event\":\"ime_changed\",\"source_id\":\"%s\"}\n",
-               [currentID UTF8String]);
-        fflush(stdout);
+        bridge_emit_ime_changed([currentID UTF8String]);
     }
 }
 

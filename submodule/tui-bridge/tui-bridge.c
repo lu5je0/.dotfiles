@@ -250,32 +250,67 @@ static void print_json_string_escaped(const char *s) {
   putchar('"');
 }
 
+static void output_begin(void) {
+#ifdef _WIN32
+  _lock_file(stdout);
+#endif
+}
+
+static void output_end(void) {
+  fflush(stdout);
+#ifdef _WIN32
+  _unlock_file(stdout);
+#endif
+}
+
+void bridge_emit_ime_changed(const char *source_id) {
+  output_begin();
+  printf("{\"event\":\"ime_changed\",\"source_id\":");
+  print_json_string_escaped(source_id ? source_id : "");
+  printf("}\n");
+  output_end();
+}
+
+void bridge_emit_ime_changed_state(const char *state) {
+  output_begin();
+  printf("{\"event\":\"ime_changed\",\"source_id\":");
+  print_json_string_escaped(state ? state : "");
+  printf(",\"state\":");
+  print_json_string_escaped(state ? state : "");
+  printf("}\n");
+  output_end();
+}
+
 static void respond_error(int id, const char *code, const char *message) {
+  output_begin();
   printf("{\"id\":%d,\"ok\":false,\"error\":{\"code\":", id);
   print_json_string_escaped(code);
   printf(",\"message\":");
   print_json_string_escaped(message);
   printf("}}\n");
-  fflush(stdout);
+  output_end();
 }
 
 static void respond_state(int id, const char *state) {
+  output_begin();
   printf("{\"id\":%d,\"ok\":true,\"result\":{\"state\":", id);
   print_json_string_escaped(state);
   printf("}}\n");
-  fflush(stdout);
+  output_end();
 }
 
 static void respond_text(int id, const char *text) {
+  output_begin();
   printf("{\"id\":%d,\"ok\":true,\"result\":{\"text\":", id);
   print_json_string_escaped(text);
   printf("}}\n");
-  fflush(stdout);
+  output_end();
 }
 
 static void respond_empty(int id) {
+  output_begin();
   printf("{\"id\":%d,\"ok\":true,\"result\":{}}\n", id);
-  fflush(stdout);
+  output_end();
 }
 
 static void handle_ime_method(int id, const char *method, const char *params_obj) {
@@ -302,6 +337,23 @@ static void handle_ime_method(int id, const char *method, const char *params_obj
   }
   respond_error(id, "INVALID_METHOD", "unsupported ime method");
 #else
+  if (strcmp(method, "watch") == 0) {
+    bool enable = false;
+    if (!params_obj || get_object_bool_field(params_obj, "enable", &enable) != 0) {
+      respond_error(id, "INVALID_PARAMS", "missing params.enable");
+      return;
+    }
+    int watch_status = bridge_ime_watch(enable);
+    if (watch_status == BRIDGE_STATUS_OK) {
+      respond_empty(id);
+      return;
+    }
+    char message[128];
+    snprintf(message, sizeof(message), "ime watch failed at %s (0x%08lx)",
+             bridge_ime_watch_error_step(), bridge_ime_watch_error());
+    respond_error(id, "IME_FAILED", message);
+    return;
+  }
   char state[16] = {0};
   int status = bridge_ime_call(method, state, sizeof(state));
   if (status == BRIDGE_STATUS_OK) {
@@ -504,6 +556,9 @@ static int run_interactive_mode(void) {
 
 int main(int argc, char *argv[]) {
   bridge_platform_init();
+#ifndef __APPLE__
+  atexit(bridge_ime_shutdown);
+#endif
 
   bool interactive_mode = false;
   bool show_help = false;

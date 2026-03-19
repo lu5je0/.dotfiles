@@ -2,7 +2,8 @@
 local M = {}
 
 local state = {
-  save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true)
+  save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true),
+  keeper_enabled = false,
 }
 
 local function toggle_save_last_ime()
@@ -37,10 +38,55 @@ local function create_autocmd()
   })
 end
 
+local function set_keeper(ime_control, enable)
+  state.keeper_enabled = enable
+  ime_control.keeper(state.keeper_enabled)
+end
+
+local function config_keeper(ime_control)
+  if not ime_control.on_change or not ime_control.should_normalize or not ime_control.keeper then
+    return
+  end
+  
+  ime_control.on_change(function(args)
+    if state.keeper_enabled and ime_control.should_normalize(args) then
+      ime_control.normal()
+    end
+  end)
+
+  local keeper_group = vim.api.nvim_create_augroup('ime-keeper-common', { clear = true })
+
+  vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave' }, {
+    group = keeper_group,
+    pattern = { '*' },
+    callback = function()
+      set_keeper(ime_control, true)
+    end
+  })
+
+  vim.api.nvim_create_autocmd({ 'InsertEnter', 'FocusLost' }, {
+    group = keeper_group,
+    pattern = { '*' },
+    callback = function()
+      set_keeper(ime_control, false)
+    end
+  })
+
+  vim.api.nvim_create_autocmd('FocusGained', {
+    group = keeper_group,
+    pattern = { '*' },
+    callback = function()
+      if vim.api.nvim_get_mode().mode == 'n' then
+        set_keeper(ime_control, true)
+      end
+    end
+  })
+end
+
 function M.setup()
   local ime_control = nil
   if vim.fn.has('wsl') == 1 then
-    ime_control = require('lu5je0.misc.im.win.ime-control-v2').setup()
+    ime_control = require('lu5je0.misc.im.win.ime-control').setup()
   elseif vim.fn.has('mac') == 1 then
     ime_control = require('lu5je0.misc.im.mac.ime-control').setup()
   else
@@ -65,9 +111,11 @@ function M.setup()
     ime_control.insert()
     if timer ~=nil then timer.end_timer() end
   end)
-
+  
   vim.keymap.set('n', '<leader>vi', toggle_save_last_ime)
   create_autocmd()
+
+  config_keeper(ime_control)
 end
 
 return M

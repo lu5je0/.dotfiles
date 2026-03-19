@@ -8,6 +8,11 @@ local STATUS = {
   last_ime = ABC_IM_SOURCE_CODE
 }
 
+local state = {
+  bridge = nil,
+  subscribed = false,
+}
+
 function M.get_im_switcher()
   if M.im_switcher ~= nil then
     return M.im_switcher
@@ -57,52 +62,32 @@ M.normal = function()
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
 end
 
-local function enable_keeper()
-  -- true: focused + normal mode, keeper should enforce ABC
-  vim.g._ime_keeper_active = true
-  local group = vim.api.nvim_create_augroup('ime-control-focus', { clear = true })
-
-  vim.api.nvim_create_autocmd({ 'InsertLeave', 'TermLeave' }, {
-    group = group,
-    callback = function()
-      vim.g._ime_keeper_active = true
-    end
-  })
-  vim.api.nvim_create_autocmd({ 'InsertEnter', 'TermEnter' }, {
-    group = group,
-    callback = function()
-      vim.g._ime_keeper_active = false
-    end
-  })
-  vim.api.nvim_create_autocmd('FocusGained', {
-    group = group,
-    callback = function()
-      local mode = vim.fn.mode()
-      if mode ~= 'i' and mode ~= 't' then
-        vim.g._ime_keeper_active = true
-        M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
-      end
-    end
-  })
-  vim.api.nvim_create_autocmd('FocusLost', {
-    group = group,
-    callback = function()
-      vim.g._ime_keeper_active = false
-    end
-  })
-  
-  local bridge = require('lu5je0.misc.tui-bridge.ext.im').setup({})
-  bridge.watch(true)
-  bridge.on_change(function(args)
-    local ime = args.source_id
-    if vim.g._ime_keeper_active and ime ~= ABC_IM_SOURCE_CODE then
-      M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
-    end
-  end)
+local function ensure_bridge(opts)
+  if state.bridge then
+    return state.bridge
+  end
+  state.bridge = require('lu5je0.misc.tui-bridge.ext.im').setup(opts or {})
+  return state.bridge
 end
 
-M.setup = function()
-  enable_keeper()
+function M.keeper(enable)
+  ensure_bridge().watch(enable == true)
+end
+
+function M.on_change(handler)
+  local bridge = ensure_bridge()
+  if not state.subscribed then
+    state.subscribed = true
+  end
+  bridge.on_change(handler)
+end
+
+function M.should_normalize(args)
+  return args.source_id ~= ABC_IM_SOURCE_CODE
+end
+
+M.setup = function(opts)
+  ensure_bridge(opts)
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
   return M
 end
