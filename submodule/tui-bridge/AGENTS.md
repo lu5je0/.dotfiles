@@ -2,6 +2,7 @@
 
 ## 维护约定
 - 如果 agent 修改了 `tui-bridge` 的协议、事件格式、平台行为、构建流程，或 Neovim 侧接入位置，必须同步更新本文件。
+- 如果任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动，优先使用仓库内 skill：`skills/tui-bridge-neovim-integration/SKILL.md`。
 
 ## 总览
 
@@ -19,25 +20,20 @@
 - 单次调用: `tui-bridge -j '<json>'`
 
 ### 构建说明
-- macOS: `./build-mac.sh`
-- Windows: `./build-win.sh`
-- 在 WSL 中执行 `build-win.sh` 时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 Vim `lib/tui_bridge_win`。
+- 统一入口：`./build.sh [mac|win|auto] [output]`
+- `build.sh auto` 会按当前环境自动选择：macOS 下构建 `mac`，WSL / Windows 环境下构建 `win`
+- 在 WSL 中构建 `win` 时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 Vim `lib/tui_bridge_win`
+- 构建成功后，如存在 `../../vim/lib`，会自动同步到：
+  - macOS: `vim/lib/tui_bridge_mac`
+  - Windows/WSL: `vim/lib/tui_bridge_win`
 
-## Neovim 集成
-
-### 使用位置
-- 进程桥接入口：`vim/lua/lu5je0/misc/tui-bridge/tui-bridge.lua`
-  - macOS 使用 `stdpath('config') .. '/lib/tui_bridge_mac'`
-  - WSL 使用 `stdpath('config') .. '/lib/tui_bridge_win'`
-- IME 扩展封装：`vim/lua/lu5je0/misc/tui-bridge/ext/im.lua`
-- Clipboard 扩展封装：`vim/lua/lu5je0/misc/tui-bridge/ext/clipboard.lua`
-- Windows IME 控制：`vim/lua/lu5je0/misc/im/win/ime-control.lua`
-- macOS IME 控制：`vim/lua/lu5je0/misc/im/mac/ime-control.lua`
-- IME 统一入口与 keeper 逻辑：`vim/lua/lu5je0/misc/im/im.lua`
-- WSL 剪贴板 provider：`vim/lua/lu5je0/misc/clipboard/wsl.lua`
-- 在 `vim/lua/lu5je0/options.lua` 中：
-  - `has('wsl')` 时启用 `require('lu5je0.misc.clipboard.wsl').setup()`
-  - IME 逻辑由 `vim/lua/lu5je0/misc/im/im.lua` 统一调度平台实现
+### Skill 触发
+- 当任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动时，使用：`skills/tui-bridge-neovim-integration/SKILL.md`
+- 典型场景：
+  - 修改 `ime.normal` / `ime.insert` / `ime.watch`
+  - 修改 IME 事件 payload
+  - 修改 WSL 剪贴板桥接行为
+  - 修改桥接二进制构建与 `vim/lib` 同步流程
 
 ## 协议
 
