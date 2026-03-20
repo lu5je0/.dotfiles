@@ -7,7 +7,7 @@ local state = {
 }
 
 function M.setup(opts)
-  state.bridge = require('lu5je0.misc.tui-bridge.tui-bridge').setup(opts)
+  state.bridge = require('lu5je0.misc.tui-bridge.tui-bridge').singleton()
   return M
 end
 

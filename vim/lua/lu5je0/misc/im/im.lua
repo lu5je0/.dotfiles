@@ -52,7 +52,7 @@ local function config_keeper()
   
   ime_control.on_change(function(args)
     if state.keeper_enabled and ime_control.should_normalize(args) then
-      ime_control.normal()
+      ime_control.switch_en()
     end
   end)
 

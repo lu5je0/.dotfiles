@@ -3,13 +3,10 @@ local M = {}
 local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
 local native = require('lu5je0.core.native')
 
-local STATUS = {
-  last_ime = ABC_IM_SOURCE_CODE
-}
-
 local state = {
-  bridge = nil,
+  ime = nil,
   subscribed = false,
+  last_ime = ABC_IM_SOURCE_CODE
 }
 
 function M.get_im_switcher()
@@ -51,46 +48,38 @@ function M.get_im_switcher()
 end
 
 M.insert = function()
-  if STATUS.last_ime ~= ABC_IM_SOURCE_CODE then
-    M.get_im_switcher().switch_to_ime(STATUS.last_ime)
+  if state.last_ime ~= ABC_IM_SOURCE_CODE then
+    M.get_im_switcher().switch_to_ime(state.last_ime)
   end
 end
 
 M.normal = function()
   local active_ime = M.get_im_switcher().get_ime()
-  STATUS.last_ime = active_ime
+  state.last_ime = active_ime
   if active_ime == ABC_IM_SOURCE_CODE then
     return
   end
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
 end
 
-local function ensure_bridge(opts)
-  if state.bridge then
-    return state.bridge
-  end
-  state.bridge = require('lu5je0.misc.tui-bridge.ext.im').setup(opts or {})
-  return state.bridge
+M.switch_en = function()
+  M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
 end
 
 function M.keeper(enable)
-  ensure_bridge().watch(enable == true)
+  state.ime.watch(enable == true)
 end
 
 function M.on_change(handler)
-  local bridge = ensure_bridge()
-  if not state.subscribed then
-    state.subscribed = true
-  end
-  bridge.on_change(handler)
+  state.ime.on_change(handler)
 end
 
 function M.should_normalize(args)
   return args.source_id ~= ABC_IM_SOURCE_CODE
 end
 
-M.setup = function(opts)
-  ensure_bridge(opts)
+M.setup = function()
+  state.ime = require('lu5je0.misc.tui-bridge.ext.im').setup()
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
   return M
 end

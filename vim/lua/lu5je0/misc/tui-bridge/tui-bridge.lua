@@ -138,11 +138,7 @@ local function start_process()
   return true
 end
 
-function M.setup(opts)
-  opts = opts or {}
-  if opts.exe_path then
-    state.exe_path = opts.exe_path
-  end
+function M.singleton()
   start_process()
   return M
 end

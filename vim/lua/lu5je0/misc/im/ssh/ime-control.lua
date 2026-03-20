@@ -18,6 +18,10 @@ M.normal = function()
   write(string.format("\27]1337;SetUserVar=%s=%s\7", "ime", require('lu5je0.misc.base64').encode("normal")))
 end
 
+M.switch_en = function()
+  M.normal()
+end
+
 M.setup = function()
   return M
 end

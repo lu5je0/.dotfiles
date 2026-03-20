@@ -5,30 +5,24 @@ local state = {
   opts = nil,
 }
 
-local function ensure_ime()
-  if state.ime then
-    return state.ime
-  end
-  local bridge = require('lu5je0.misc.tui-bridge.ext.im').setup(state.opts)
-  state.ime = bridge
-  return state.ime
-end
-
 function M.normal()
-  ensure_ime().normal()
+  state.ime.normal()
 end
 
 function M.insert()
-  ensure_ime().insert()
+  state.ime.insert()
+end
+
+M.switch_en = function()
+  M.normal()
 end
 
 function M.keeper(enable)
-  local ime = ensure_ime()
-  ime.watch(enable == true)
+  state.ime.watch(enable == true)
 end
 
 function M.on_change(handler)
-  ensure_ime().on_change(handler)
+  state.ime.on_change(handler)
 end
 
 function M.should_normalize(args)
@@ -38,7 +32,7 @@ end
 
 function M.setup(opts)
   state.opts = opts or {}
-  ensure_ime()
+  state.ime = require('lu5je0.misc.tui-bridge.ext.im').setup()
   return M
 end
 
