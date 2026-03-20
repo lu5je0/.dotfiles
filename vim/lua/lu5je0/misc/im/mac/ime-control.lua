@@ -80,7 +80,6 @@ end
 
 M.setup = function()
   state.ime = require('lu5je0.misc.tui-bridge.ext.im').setup()
-  M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
   return M
 end
 

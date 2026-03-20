@@ -83,6 +83,10 @@ local function config_keeper()
       end
     end
   })
+  
+  if vim.api.nvim_get_mode().mode == 'n' then
+    set_keeper(true)
+  end
 end
 
 function M.setup()
@@ -92,9 +96,6 @@ function M.setup()
     state.ime_control = require('lu5je0.misc.im.mac.ime-control').setup()
   else
     state.ime_control = require('lu5je0.misc.im.ssh.ime-control').setup()
-  end
-  if state.ime_control == nil then
-    return
   end
   
   local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)

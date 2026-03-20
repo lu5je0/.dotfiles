@@ -1,8 +1,7 @@
 local M = {}
 
 local state = {
-  ime = nil,
-  opts = nil,
+  ime = nil
 }
 
 function M.normal()
@@ -30,8 +29,7 @@ function M.should_normalize(args)
   return ime_state == 'chi'
 end
 
-function M.setup(opts)
-  state.opts = opts or {}
+function M.setup()
   state.ime = require('lu5je0.misc.tui-bridge.ext.im').setup()
   return M
 end
