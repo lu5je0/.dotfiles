@@ -332,8 +332,19 @@ if [[ ! -f ~/.ohmyenv ]]; then
 fi
 source ~/.ohmyenv
 
-# THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+# SDKMAN lazy loading
 if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-  zinit ice lucid wait='1'
-  zinit snippet "$HOME/.sdkman/bin/sdkman-init.sh"
+  export SDKMAN_DIR="$HOME/.sdkman"
+  
+  # 提前设置 PATH，让 java/gradle 等命令可用
+  export PATH="$SDKMAN_DIR/candidates/java/current/bin:$PATH"
+  export PATH="$SDKMAN_DIR/candidates/gradle/current/bin:$PATH"
+  export PATH="$SDKMAN_DIR/candidates/maven/current/bin:$PATH"
+  
+  # 懒加载：首次调用 sdk 时才初始化
+  sdk() {
+    unfunction sdk
+    source "$SDKMAN_DIR/bin/sdkman-init.sh"
+    sdk "$@"
+  }
 fi
