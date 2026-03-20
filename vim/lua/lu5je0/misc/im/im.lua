@@ -4,6 +4,7 @@ local M = {}
 local state = {
   save_last_ime = require('lu5je0.misc.env-keeper').get('save_last_ime', true),
   keeper_enabled = false,
+  ime_control = nil
 }
 
 local function toggle_save_last_ime()
@@ -38,12 +39,13 @@ local function create_autocmd()
   })
 end
 
-local function set_keeper(ime_control, enable)
+local function set_keeper(enable)
   state.keeper_enabled = enable
-  ime_control.keeper(state.keeper_enabled)
+  state.ime_control.keeper(state.keeper_enabled)
 end
 
-local function config_keeper(ime_control)
+local function config_keeper()
+  local ime_control = state.ime_control
   if not ime_control.on_change or not ime_control.should_normalize or not ime_control.keeper then
     return
   end
@@ -56,19 +58,19 @@ local function config_keeper(ime_control)
 
   local keeper_group = vim.api.nvim_create_augroup('ime-keeper-common', { clear = true })
 
-  vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave' }, {
+  vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave', 'TermLeave' }, {
     group = keeper_group,
     pattern = { '*' },
     callback = function()
-      set_keeper(ime_control, true)
+      set_keeper(true)
     end
   })
 
-  vim.api.nvim_create_autocmd({ 'InsertEnter', 'FocusLost' }, {
+  vim.api.nvim_create_autocmd({ 'InsertEnter', 'FocusLost', 'TermEnter' }, {
     group = keeper_group,
     pattern = { '*' },
     callback = function()
-      set_keeper(ime_control, false)
+      set_keeper(false)
     end
   })
 
@@ -77,20 +79,22 @@ local function config_keeper(ime_control)
     pattern = { '*' },
     callback = function()
       if vim.api.nvim_get_mode().mode == 'n' then
-        set_keeper(ime_control, true)
+        set_keeper(true)
       end
     end
   })
 end
 
 function M.setup()
-  local ime_control = nil
   if vim.fn.has('wsl') == 1 then
-    ime_control = require('lu5je0.misc.im.win.ime-control').setup()
+    state.ime_control = require('lu5je0.misc.im.win.ime-control').setup()
   elseif vim.fn.has('mac') == 1 then
-    ime_control = require('lu5je0.misc.im.mac.ime-control').setup()
+    state.ime_control = require('lu5je0.misc.im.mac.ime-control').setup()
   else
-    ime_control = require('lu5je0.misc.im.ssh.ime-control').setup()
+    state.ime_control = require('lu5je0.misc.im.ssh.ime-control').setup()
+  end
+  if state.ime_control == nil then
+    return
   end
   
   local rate_limiter = require('lu5je0.lang.ratelimiter'):create(7, 0.5)
@@ -99,7 +103,7 @@ function M.setup()
 
   M.normal = rate_limiter:wrap(function()
     if timer ~=nil then timer.begin_timer() end
-    ime_control.normal()
+    state.ime_control.normal()
     if timer ~=nil then timer.end_timer() end
   end)
 
@@ -108,14 +112,14 @@ function M.setup()
       return
     end
     if timer ~=nil then timer.begin_timer() end
-    ime_control.insert()
+    state.ime_control.insert()
     if timer ~=nil then timer.end_timer() end
   end)
   
   vim.keymap.set('n', '<leader>vi', toggle_save_last_ime)
   create_autocmd()
 
-  config_keeper(ime_control)
+  config_keeper()
 end
 
 return M

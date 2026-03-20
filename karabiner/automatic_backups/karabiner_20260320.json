@@ -9,7 +9,7 @@
                 "parameters": { "basic.to_if_held_down_threshold_milliseconds": 0 },
                 "rules": [
                     {
-                        "description": "left_shift 单独松开切换输入法(F16)，组合键正常作为 shift",
+                        "description": "left_shift 单独松开切换输入法，组合键正常作为 shift",
                         "manipulators": [
                             {
                                 "from": {
@@ -19,11 +19,15 @@
                                 "to": [
                                     {
                                         "key_code": "left_shift",
-                                        "lazy": true,
-                                        "modifiers": ["left_shift"]
+                                        "lazy": true
                                     }
                                 ],
-                                "to_if_alone": [{ "key_code": "f16" }],
+                                "to_if_alone": [
+                                    {
+                                        "key_code": "spacebar",
+                                        "modifiers": ["control"]
+                                    }
+                                ],
                                 "type": "basic"
                             }
                         ]

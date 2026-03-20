@@ -6,25 +6,18 @@ local state = {
   bridge = nil,
 }
 
-local function bridge()
-  if not state.bridge then
-    state.bridge = require('lu5je0.misc.tui-bridge.tui-bridge').setup()
-  end
-  return state.bridge
-end
-
 function M.setup(opts)
   state.bridge = require('lu5je0.misc.tui-bridge.tui-bridge').setup(opts)
   return M
 end
 
 M.input = function_utils.debounce(function(text)
-  return bridge().call('clipboard', 'input', { text = text or '' }, { wait_response = false })
+  return state.bridge.call('clipboard', 'input', { text = text or '' }, { wait_response = false })
 end, 1000)
 
 function M.output(opts)
   local params = opts or { eol = 'lf' }
-  local result, err = bridge().call('clipboard', 'output', params, { wait_response = true })
+  local result, err = state.bridge.call('clipboard', 'output', params, { wait_response = true })
   if not result then
     return nil, err
   end
