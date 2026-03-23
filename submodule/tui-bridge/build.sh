@@ -44,6 +44,8 @@ sync_to_vim_lib() {
 build_mac() {
   local out="${1:-tui_bridge}"
   local sources=(
+    "third_party/cjson/cJSON.c"
+    "request-dispatch.c"
     "tui-bridge.c"
     "mac/im.m"
     "mac/clipboard-bridge.c"
@@ -63,6 +65,8 @@ build_win() {
   local out_dir
   local vim_lib_out="${VIM_LIB_DIR}/windows/bin/tui_bridge"
   local sources=(
+    "third_party/cjson/cJSON.c"
+    "request-dispatch.c"
     "tui-bridge.c"
     "win/im.c"
     "win/clipboard-bridge.c"
