@@ -386,27 +386,24 @@ end
 --   end
 -- )
 
-local ime_cmd = {
-  win = {
-    normal = { "D:\\bin\\toDisableIME.exe" },
-    insert = { "D:\\bin\\toEnableIME.exe" },
-  },
-  mac = {
-    normal = { "/Users/lu5je0/.local/bin/im-select", "com.apple.keylayout.ABC" },
-    -- insert = { "/Users/lu5je0/.local/bin/im-select", "com.sogou.inputmethod.sogou.pinyin" },
-  }
+local tui_bridge_pipe = is_mac
+  and io.popen("/Users/lu5je0/.dotfiles/vim/lib/macos/bin/tui_bridge -i", "w")
+  or nil
+
+local ime_cmd_win = {
+  normal = { "D:\\bin\\toDisableIME.exe" },
+  insert = { "D:\\bin\\toEnableIME.exe" },
 }
 wezterm.on('user-var-changed', function(window, pane, name, value)
-  if name == 'ime' then
-    local os
-    if is_mac then
-      os = 'mac'
+  if name == 'tui_bridge' then
+    if is_mac and tui_bridge_pipe then
+      tui_bridge_pipe:write(value .. '\n')
+      tui_bridge_pipe:flush()
     elseif is_win then
-      os = 'win'
-    end
-    local cmd = ime_cmd[os][value]
-    if cmd then
-      wezterm.run_child_process(cmd)
+      local method = value:match('"method"%s*:%s*"(%w+)"')
+      if method and ime_cmd_win[method] then
+        wezterm.run_child_process(ime_cmd_win[method])
+      end
     end
   end
 end)
