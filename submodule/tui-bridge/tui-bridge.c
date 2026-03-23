@@ -3,6 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
+
 #include "bridge-status.h"
 #include "clipboard-bridge.h"
 #include "im.h"
@@ -10,6 +16,24 @@
 
 #define MAX_LINE 32768
 #define MAX_TEXT 32768
+
+#ifdef _WIN32
+static double get_time_ms(void) {
+  static LARGE_INTEGER freq = {0};
+  if (freq.QuadPart == 0) {
+    QueryPerformanceFrequency(&freq);
+  }
+  LARGE_INTEGER counter;
+  QueryPerformanceCounter(&counter);
+  return (double)counter.QuadPart * 1000.0 / (double)freq.QuadPart;
+}
+#else
+static double get_time_ms(void) {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (double)tv.tv_sec * 1000.0 + (double)tv.tv_usec / 1000.0;
+}
+#endif
 
 static const char *skip_ws(const char *p) {
   while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
@@ -291,38 +315,38 @@ static void respond_error(int id, const char *code, const char *message) {
   output_end();
 }
 
-static void respond_state(int id, const char *state) {
+static void respond_state(int id, const char *state, double rt_ms) {
   output_begin();
   printf("{\"id\":%d,\"ok\":true,\"result\":{\"state\":", id);
   print_json_string_escaped(state);
-  printf("}}\n");
+  printf("},\"rt\":\"%.3f\"}\n", rt_ms);
   output_end();
 }
 
-static void respond_text(int id, const char *text) {
+static void respond_text(int id, const char *text, double rt_ms) {
   output_begin();
   printf("{\"id\":%d,\"ok\":true,\"result\":{\"text\":", id);
   print_json_string_escaped(text);
-  printf("}}\n");
+  printf("},\"rt\":\"%.3f\"}\n", rt_ms);
   output_end();
 }
 
-static void respond_empty(int id) {
+static void respond_empty(int id, double rt_ms) {
   output_begin();
-  printf("{\"id\":%d,\"ok\":true,\"result\":{}}\n", id);
+  printf("{\"id\":%d,\"ok\":true,\"result\":{},\"rt\":\"%.3f\"}\n", id, rt_ms);
   output_end();
 }
 
-static void handle_ime_method(int id, const char *method, const char *params_obj) {
+static void handle_ime_method(int id, const char *method, const char *params_obj, double start_time) {
 #ifdef __APPLE__
   if (strcmp(method, "normal") == 0) {
     const char *state = im_normal();
-    respond_state(id, state);
+    respond_state(id, state, get_time_ms() - start_time);
     return;
   }
   if (strcmp(method, "insert") == 0) {
     const char *state = im_insert();
-    respond_state(id, state);
+    respond_state(id, state, get_time_ms() - start_time);
     return;
   }
   if (strcmp(method, "watch") == 0) {
@@ -332,7 +356,7 @@ static void handle_ime_method(int id, const char *method, const char *params_obj
       return;
     }
     im_watch(enable);
-    respond_empty(id);
+    respond_empty(id, get_time_ms() - start_time);
     return;
   }
   respond_error(id, "INVALID_METHOD", "unsupported ime method");
@@ -345,7 +369,7 @@ static void handle_ime_method(int id, const char *method, const char *params_obj
     }
     int watch_status = bridge_ime_watch(enable);
     if (watch_status == BRIDGE_STATUS_OK) {
-      respond_empty(id);
+      respond_empty(id, get_time_ms() - start_time);
       return;
     }
     char message[128];
@@ -357,7 +381,7 @@ static void handle_ime_method(int id, const char *method, const char *params_obj
   char state[16] = {0};
   int status = bridge_ime_call(method, state, sizeof(state));
   if (status == BRIDGE_STATUS_OK) {
-    respond_state(id, state);
+    respond_state(id, state, get_time_ms() - start_time);
     return;
   }
   if (status == BRIDGE_STATUS_INVALID_METHOD) {
@@ -369,7 +393,7 @@ static void handle_ime_method(int id, const char *method, const char *params_obj
 }
 
 static void handle_clipboard_method(int id, const char *method,
-                                    const char *params_obj) {
+                                    const char *params_obj, double start_time) {
   if (strcmp(method, "output") == 0) {
     char eol[16] = {0};
     const char *eol_ptr = NULL;
@@ -388,7 +412,7 @@ static void handle_clipboard_method(int id, const char *method,
       return;
     }
 
-    respond_text(id, text);
+    respond_text(id, text, get_time_ms() - start_time);
     free(text);
     return;
   }
@@ -411,7 +435,7 @@ static void handle_clipboard_method(int id, const char *method,
       return;
     }
 
-    respond_empty(id);
+    respond_empty(id, get_time_ms() - start_time);
     return;
   }
 
@@ -516,14 +540,16 @@ static void process_json_line(const char *line) {
     return;
   }
 
+  double start_time = get_time_ms();
+
   if (strcmp(req.module, "ime") == 0) {
     handle_ime_method(req.id, req.method,
-                      req.has_params ? req.params_obj : NULL);
+                      req.has_params ? req.params_obj : NULL, start_time);
     return;
   }
   if (strcmp(req.module, "clipboard") == 0) {
     handle_clipboard_method(req.id, req.method,
-                            req.has_params ? req.params_obj : NULL);
+                            req.has_params ? req.params_obj : NULL, start_time);
     return;
   }
   respond_error(req.id, "INVALID_MODULE", "unsupported module");
