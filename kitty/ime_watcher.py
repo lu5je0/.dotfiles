@@ -5,7 +5,7 @@ from kitty.window import Window  # type: ignore
 import subprocess
 
 proc = subprocess.Popen(
-    ["/Users/lu5je0/.dotfiles/vim/lib/imeswitch", "-i"],
+    ["/Users/lu5je0/.dotfiles/vim/lib/macos/bin/tui_bridge", "-i"],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     text=True,
@@ -13,7 +13,7 @@ proc = subprocess.Popen(
 
 
 def on_set_user_var(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-    if data["key"] == "ime":
+    if data["key"] == "tui_bridge":
         print(data["value"])
         if data["value"] == "normal":
             proc.stdin.write("normal\n")

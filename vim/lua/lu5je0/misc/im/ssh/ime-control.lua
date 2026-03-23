@@ -11,11 +11,11 @@ local function write(osc)
 end
 
 M.insert = function()
-  write(string.format("\27]1337;SetUserVar=%s=%s\7", "ime", require('lu5je0.misc.base64').encode("insert")))
+  write(string.format("\27]1337;SetUserVar=%s=%s\7", "tui_bridge", require('lu5je0.misc.base64').encode('{"id":1,"module":"ime","method":"normal","params":{}}')))
 end
 
 M.normal = function()
-  write(string.format("\27]1337;SetUserVar=%s=%s\7", "ime", require('lu5je0.misc.base64').encode("normal")))
+  write(string.format("\27]1337;SetUserVar=%s=%s\7", "tui_bridge", require('lu5je0.misc.base64').encode('{"id":1,"module":"ime","method":"insert","params":{}}')))
 end
 
 M.switch_en = function()
