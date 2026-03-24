@@ -386,9 +386,9 @@ end
 --   end
 -- )
 
-local home = os.getenv("USERPROFILE") or os.getenv("HOME")
-local tui_bridge_root = home and (home .. "/.dotfiles/vim/lib")
 local tui_bridge_path = (function()
+  local home = os.getenv("USERPROFILE") or os.getenv("HOME")
+  local tui_bridge_root = home and (home .. "/.dotfiles/vim/lib")
   if not tui_bridge_root then
     return nil
   end
@@ -400,20 +400,20 @@ local tui_bridge_path = (function()
   end
 end)()
 
-local tui_bridge_pipe = is_mac and tui_bridge_path
-  and io.popen(tui_bridge_path .. " -i", "w")
-  or nil
-
-local tui_bridge_exe = is_win and tui_bridge_path
-  or nil
+local tui_bridge_pipe = nil
 
 wezterm.on('user-var-changed', function(window, pane, name, value)
   if name == 'tui_bridge' then
-    if is_mac and tui_bridge_pipe then
-      tui_bridge_pipe:write(value .. '\n')
-      tui_bridge_pipe:flush()
-    elseif is_win and tui_bridge_exe then
-      wezterm.run_child_process { tui_bridge_exe, '-j', value }
+    if is_mac then
+      if tui_bridge_pipe == nil then
+        tui_bridge_pipe = tui_bridge_path and io.popen(tui_bridge_path .. " -i", "w") or nil
+      end
+      if tui_bridge_pipe then
+        tui_bridge_pipe:write(value .. '\n')
+        tui_bridge_pipe:flush()
+      end
+    elseif is_win and tui_bridge_path then
+      wezterm.run_child_process { tui_bridge_path, '-j', value }
     end
   end
 end)
