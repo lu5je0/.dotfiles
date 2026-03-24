@@ -1,0 +1,24 @@
+#compdef q-push
+
+_q_push_targets() {
+  local -a targets
+  targets=(
+    'feishu:push to Feishu'
+    'telegram:push to Telegram'
+    'all:push to all configured targets'
+  )
+  _describe -t targets 'push target' targets
+}
+
+_q_push() {
+  _arguments -s \
+    '-t+[push target]:target:_q_push_targets' \
+    '--target=[push target]:target:_q_push_targets' \
+    '-m[send as markdown when target supports it]' \
+    '--markdown[send as markdown when target supports it]' \
+    '-h[show help]' \
+    '--help[show help]' \
+    '*:message: '
+}
+
+_q_push "$@"
