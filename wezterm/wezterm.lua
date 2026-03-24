@@ -386,24 +386,34 @@ end
 --   end
 -- )
 
-local tui_bridge_pipe = is_mac
-  and io.popen("/Users/lu5je0/.dotfiles/vim/lib/macos/bin/tui_bridge -i", "w")
+local home = os.getenv("USERPROFILE") or os.getenv("HOME")
+local tui_bridge_root = home and (home .. "/.dotfiles/vim/lib")
+local tui_bridge_path = (function()
+  if not tui_bridge_root then
+    return nil
+  end
+
+  if is_mac then
+    return tui_bridge_root .. "/macos/bin/tui_bridge"
+  elseif is_win then
+    return tui_bridge_root .. "/windows/bin/tui_bridge"
+  end
+end)()
+
+local tui_bridge_pipe = is_mac and tui_bridge_path
+  and io.popen(tui_bridge_path .. " -i", "w")
   or nil
 
-local ime_cmd_win = {
-  normal = { "D:\\bin\\toDisableIME.exe" },
-  insert = { "D:\\bin\\toEnableIME.exe" },
-}
+local tui_bridge_exe = is_win and tui_bridge_path
+  or nil
+
 wezterm.on('user-var-changed', function(window, pane, name, value)
   if name == 'tui_bridge' then
     if is_mac and tui_bridge_pipe then
       tui_bridge_pipe:write(value .. '\n')
       tui_bridge_pipe:flush()
-    elseif is_win then
-      local method = value:match('"method"%s*:%s*"(%w+)"')
-      if method and ime_cmd_win[method] then
-        wezterm.run_child_process(ime_cmd_win[method])
-      end
+    elseif is_win and tui_bridge_exe then
+      wezterm.run_child_process { tui_bridge_exe, '-j', value }
     end
   end
 end)

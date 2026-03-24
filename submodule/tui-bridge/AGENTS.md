@@ -8,7 +8,9 @@
 ## 总览
 
 ### 架构
-- `tui-bridge.c`: 平台无关的协议层，负责 JSON 请求解析与响应。
+- `tui-bridge.c`: 平台无关的协议层，只负责 JSON 请求解析、顶层请求校验与响应输出。
+- `request-dispatch.c`: 请求分发层，负责 `module` / `method` 路由、参数语义校验，以及把请求映射到 IME/clipboard 能力。
+- `third_party/cjson/`: vendored `cJSON` 源码，统一用于请求解析、事件输出与响应 JSON 序列化。
 - `win/im.c`: Windows IME 实现层。
 - `win/clipboard-bridge.c`: Windows 剪贴板实现层（调用 `win32yank.exe`）。
 - `win/platform.c`: Windows 平台初始化（控制台编码等）。
@@ -23,6 +25,7 @@
 ### 构建说明
 - 统一入口：`./build.sh [output]`
 - 默认行为就是按当前环境自动选择：macOS 下构建 mac 版本，WSL / Windows 环境下构建 Windows 版本
+- 构建会一并编译 vendored 的 `third_party/cjson/cJSON.c`，不依赖系统安装的 `cJSON` 开发包
 - 默认输出文件名统一为 `tui_bridge`；不再附带 `mac` 或 `win` 后缀
 - 在 WSL 中默认构建 Windows 版本时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 Vim `lib/windows/bin/tui_bridge`
 - 构建成功后，如存在 `../../vim/lib`，会自动同步到：

@@ -10,13 +10,12 @@
 #endif
 
 #include "bridge-status.h"
-#include "clipboard-bridge.h"
 #include "im.h"
 #include "platform.h"
+#include "request-dispatch.h"
+#include "third_party/cjson/cJSON.h"
 
 #define MAX_LINE 32768
-#define MAX_TEXT 32768
-
 #ifdef _WIN32
 static double get_time_ms(void) {
   static LARGE_INTEGER freq = {0};
@@ -35,245 +34,6 @@ static double get_time_ms(void) {
 }
 #endif
 
-static const char *skip_ws(const char *p) {
-  while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
-    p++;
-  }
-  return p;
-}
-
-static int parse_json_string(const char **p, char *out, size_t out_sz) {
-  const char *s = *p;
-  size_t w = 0;
-
-  if (*s != '"') {
-    return -1;
-  }
-  s++;
-
-  while (*s && *s != '"') {
-    unsigned char ch = (unsigned char)*s;
-    if (ch == '\\') {
-      s++;
-      if (*s == '\0') {
-        return -1;
-      }
-      char esc = *s;
-      if (esc == 'n') {
-        ch = '\n';
-      } else if (esc == 'r') {
-        ch = '\r';
-      } else if (esc == 't') {
-        ch = '\t';
-      } else if (esc == '"' || esc == '\\' || esc == '/') {
-        ch = (unsigned char)esc;
-      } else if (esc == 'b') {
-        ch = '\b';
-      } else if (esc == 'f') {
-        ch = '\f';
-      } else if (esc == 'u') {
-        for (int i = 0; i < 4 && s[1] != '\0'; i++) {
-          s++;
-        }
-        ch = '?';
-      } else {
-        ch = (unsigned char)esc;
-      }
-    }
-
-    if (w + 1 < out_sz) {
-      out[w++] = (char)ch;
-    }
-    s++;
-  }
-
-  if (*s != '"') {
-    return -1;
-  }
-
-  if (out_sz > 0) {
-    out[w] = '\0';
-  }
-  *p = s + 1;
-  return 0;
-}
-
-static int skip_json_value(const char **p);
-
-static int skip_json_compound(const char **p, char open, char close) {
-  const char *s = *p;
-  int depth = 0;
-
-  while (*s) {
-    if (*s == '"') {
-      char tmp[2] = {0};
-      if (parse_json_string(&s, tmp, sizeof(tmp)) != 0) {
-        return -1;
-      }
-      continue;
-    }
-    if (*s == open) {
-      depth++;
-    } else if (*s == close) {
-      depth--;
-      if (depth == 0) {
-        *p = s + 1;
-        return 0;
-      }
-    }
-    s++;
-  }
-
-  return -1;
-}
-
-static int skip_json_value(const char **p) {
-  const char *s = skip_ws(*p);
-  if (*s == '"') {
-    char tmp[2] = {0};
-    if (parse_json_string(&s, tmp, sizeof(tmp)) != 0) {
-      return -1;
-    }
-    *p = s;
-    return 0;
-  }
-
-  if (*s == '{') {
-    if (skip_json_compound(&s, '{', '}') != 0) {
-      return -1;
-    }
-    *p = s;
-    return 0;
-  }
-
-  if (*s == '[') {
-    if (skip_json_compound(&s, '[', ']') != 0) {
-      return -1;
-    }
-    *p = s;
-    return 0;
-  }
-
-  while (*s && *s != ',' && *s != '}' && *s != ']') {
-    s++;
-  }
-  *p = s;
-  return 0;
-}
-
-static int find_key_value(const char *json_obj, const char *target_key,
-                          const char **value_start) {
-  const char *p = skip_ws(json_obj);
-  char key[128];
-
-  if (*p != '{') {
-    return -1;
-  }
-  p++;
-
-  while (1) {
-    p = skip_ws(p);
-    if (*p == '}') {
-      return -1;
-    }
-
-    if (parse_json_string(&p, key, sizeof(key)) != 0) {
-      return -1;
-    }
-
-    p = skip_ws(p);
-    if (*p != ':') {
-      return -1;
-    }
-    p++;
-    p = skip_ws(p);
-
-    if (strcmp(key, target_key) == 0) {
-      *value_start = p;
-      return 0;
-    }
-
-    if (skip_json_value(&p) != 0) {
-      return -1;
-    }
-
-    p = skip_ws(p);
-    if (*p == ',') {
-      p++;
-      continue;
-    }
-    if (*p == '}') {
-      return -1;
-    }
-    return -1;
-  }
-}
-
-static int get_object_string_field(const char *obj, const char *key, char *out,
-                                   size_t out_sz) {
-  const char *value;
-  if (find_key_value(obj, key, &value) != 0) {
-    return -1;
-  }
-  value = skip_ws(value);
-  return parse_json_string(&value, out, out_sz);
-}
-
-static int get_object_int_field(const char *obj, const char *key, int *out) {
-  const char *value;
-  if (find_key_value(obj, key, &value) != 0) {
-    return -1;
-  }
-  value = skip_ws(value);
-  char *end = NULL;
-  long v = strtol(value, &end, 10);
-  if (end == value) {
-    return -1;
-  }
-  *out = (int)v;
-  return 0;
-}
-
-static int get_object_bool_field(const char *obj, const char *key, bool *out) {
-  const char *value;
-  if (find_key_value(obj, key, &value) != 0) {
-    return -1;
-  }
-  value = skip_ws(value);
-  if (strncmp(value, "true", 4) == 0) {
-    *out = true;
-    return 0;
-  }
-  if (strncmp(value, "false", 5) == 0) {
-    *out = false;
-    return 0;
-  }
-  return -1;
-}
-
-static void print_json_string_escaped(const char *s) {
-  putchar('"');
-  while (*s) {
-    unsigned char ch = (unsigned char)*s;
-    if (ch == '"' || ch == '\\') {
-      putchar('\\');
-      putchar((char)ch);
-    } else if (ch == '\n') {
-      fputs("\\n", stdout);
-    } else if (ch == '\r') {
-      fputs("\\r", stdout);
-    } else if (ch == '\t') {
-      fputs("\\t", stdout);
-    } else if (ch < 0x20) {
-      fprintf(stdout, "\\u%04x", ch);
-    } else {
-      putchar((char)ch);
-    }
-    s++;
-  }
-  putchar('"');
-}
-
 static void output_begin(void) {
 #ifdef _WIN32
   _lock_file(stdout);
@@ -287,240 +47,165 @@ static void output_end(void) {
 #endif
 }
 
-void bridge_emit_ime_changed(const char *source_id) {
+static void print_json_message(cJSON *json) {
+  char *out = cJSON_PrintUnformatted(json);
+  if (!out) {
+    return;
+  }
   output_begin();
-  printf("{\"event\":\"ime_changed\",\"source_id\":");
-  print_json_string_escaped(source_id ? source_id : "");
-  printf("}\n");
+  fputs(out, stdout);
+  fputc('\n', stdout);
   output_end();
+  cJSON_free(out);
+}
+
+static void add_rt_field(cJSON *json, double rt_ms) {
+  char rt_text[32];
+  snprintf(rt_text, sizeof(rt_text), "%.3f", rt_ms);
+  cJSON_AddStringToObject(json, "rt", rt_text);
+}
+
+void bridge_emit_ime_changed(const char *source_id) {
+  cJSON *json = cJSON_CreateObject();
+  if (!json) {
+    return;
+  }
+  cJSON_AddStringToObject(json, "event", "ime_changed");
+  cJSON_AddStringToObject(json, "source_id", source_id ? source_id : "");
+  print_json_message(json);
+  cJSON_Delete(json);
 }
 
 void bridge_emit_ime_changed_state(const char *state) {
-  output_begin();
-  printf("{\"event\":\"ime_changed\",\"source_id\":");
-  print_json_string_escaped(state ? state : "");
-  printf(",\"state\":");
-  print_json_string_escaped(state ? state : "");
-  printf("}\n");
-  output_end();
+  cJSON *json = cJSON_CreateObject();
+  if (!json) {
+    return;
+  }
+  cJSON_AddStringToObject(json, "event", "ime_changed");
+  cJSON_AddStringToObject(json, "source_id", state ? state : "");
+  cJSON_AddStringToObject(json, "state", state ? state : "");
+  print_json_message(json);
+  cJSON_Delete(json);
 }
 
 static void respond_error(int id, const char *code, const char *message) {
-  output_begin();
-  printf("{\"id\":%d,\"ok\":false,\"error\":{\"code\":", id);
-  print_json_string_escaped(code);
-  printf(",\"message\":");
-  print_json_string_escaped(message);
-  printf("}}\n");
-  output_end();
+  cJSON *json = cJSON_CreateObject();
+  cJSON *error = cJSON_CreateObject();
+  if (!json || !error) {
+    cJSON_Delete(json);
+    cJSON_Delete(error);
+    return;
+  }
+  cJSON_AddNumberToObject(json, "id", id);
+  cJSON_AddBoolToObject(json, "ok", 0);
+  cJSON_AddStringToObject(error, "code", code);
+  cJSON_AddStringToObject(error, "message", message);
+  cJSON_AddItemToObject(json, "error", error);
+  print_json_message(json);
+  cJSON_Delete(json);
 }
 
 static void respond_state(int id, const char *state, double rt_ms) {
-  output_begin();
-  printf("{\"id\":%d,\"ok\":true,\"result\":{\"state\":", id);
-  print_json_string_escaped(state);
-  printf("},\"rt\":\"%.3f\"}\n", rt_ms);
-  output_end();
+  cJSON *json = cJSON_CreateObject();
+  cJSON *result = cJSON_CreateObject();
+  if (!json || !result) {
+    cJSON_Delete(json);
+    cJSON_Delete(result);
+    return;
+  }
+  cJSON_AddNumberToObject(json, "id", id);
+  cJSON_AddBoolToObject(json, "ok", 1);
+  cJSON_AddStringToObject(result, "state", state ? state : "");
+  cJSON_AddItemToObject(json, "result", result);
+  add_rt_field(json, rt_ms);
+  print_json_message(json);
+  cJSON_Delete(json);
 }
 
 static void respond_text(int id, const char *text, double rt_ms) {
-  output_begin();
-  printf("{\"id\":%d,\"ok\":true,\"result\":{\"text\":", id);
-  print_json_string_escaped(text);
-  printf("},\"rt\":\"%.3f\"}\n", rt_ms);
-  output_end();
+  cJSON *json = cJSON_CreateObject();
+  cJSON *result = cJSON_CreateObject();
+  if (!json || !result) {
+    cJSON_Delete(json);
+    cJSON_Delete(result);
+    return;
+  }
+  cJSON_AddNumberToObject(json, "id", id);
+  cJSON_AddBoolToObject(json, "ok", 1);
+  cJSON_AddStringToObject(result, "text", text ? text : "");
+  cJSON_AddItemToObject(json, "result", result);
+  add_rt_field(json, rt_ms);
+  print_json_message(json);
+  cJSON_Delete(json);
 }
 
 static void respond_empty(int id, double rt_ms) {
-  output_begin();
-  printf("{\"id\":%d,\"ok\":true,\"result\":{},\"rt\":\"%.3f\"}\n", id, rt_ms);
-  output_end();
-}
-
-static void handle_ime_method(int id, const char *method, const char *params_obj, double start_time) {
-#ifdef __APPLE__
-  if (strcmp(method, "normal") == 0) {
-    const char *state = im_normal();
-    respond_state(id, state, get_time_ms() - start_time);
+  cJSON *json = cJSON_CreateObject();
+  cJSON *result = cJSON_CreateObject();
+  if (!json || !result) {
+    cJSON_Delete(json);
+    cJSON_Delete(result);
     return;
   }
-  if (strcmp(method, "insert") == 0) {
-    const char *state = im_insert();
-    respond_state(id, state, get_time_ms() - start_time);
-    return;
-  }
-  if (strcmp(method, "watch") == 0) {
-    bool enable = false;
-    if (!params_obj || get_object_bool_field(params_obj, "enable", &enable) != 0) {
-      respond_error(id, "INVALID_PARAMS", "missing params.enable");
-      return;
-    }
-    im_watch(enable);
-    respond_empty(id, get_time_ms() - start_time);
-    return;
-  }
-  respond_error(id, "INVALID_METHOD", "unsupported ime method");
-#else
-  if (strcmp(method, "watch") == 0) {
-    bool enable = false;
-    if (!params_obj || get_object_bool_field(params_obj, "enable", &enable) != 0) {
-      respond_error(id, "INVALID_PARAMS", "missing params.enable");
-      return;
-    }
-    int watch_status = bridge_ime_watch(enable);
-    if (watch_status == BRIDGE_STATUS_OK) {
-      respond_empty(id, get_time_ms() - start_time);
-      return;
-    }
-    char message[128];
-    snprintf(message, sizeof(message), "ime watch failed at %s (0x%08lx)",
-             bridge_ime_watch_error_step(), bridge_ime_watch_error());
-    respond_error(id, "IME_FAILED", message);
-    return;
-  }
-  char state[16] = {0};
-  int status = bridge_ime_call(method, state, sizeof(state));
-  if (status == BRIDGE_STATUS_OK) {
-    respond_state(id, state, get_time_ms() - start_time);
-    return;
-  }
-  if (status == BRIDGE_STATUS_INVALID_METHOD) {
-    respond_error(id, "INVALID_METHOD", "unsupported ime method");
-    return;
-  }
-  respond_error(id, "IME_FAILED", "ime operation failed");
-#endif
-}
-
-static void handle_clipboard_method(int id, const char *method,
-                                    const char *params_obj, double start_time) {
-  if (strcmp(method, "output") == 0) {
-    char eol[16] = {0};
-    const char *eol_ptr = NULL;
-    if (params_obj && get_object_string_field(params_obj, "eol", eol, sizeof(eol)) == 0) {
-      eol_ptr = eol;
-    }
-
-    char *text = NULL;
-    int status = bridge_clipboard_output(eol_ptr, &text);
-    if (status == BRIDGE_STATUS_INVALID_PARAMS) {
-      respond_error(id, "INVALID_PARAMS", "clipboard.output only supports eol=lf");
-      return;
-    }
-    if (status != BRIDGE_STATUS_OK || !text) {
-      respond_error(id, "CLIPBOARD_FAILED", "clipboard output failed");
-      return;
-    }
-
-    respond_text(id, text, get_time_ms() - start_time);
-    free(text);
-    return;
-  }
-
-  if (strcmp(method, "input") == 0) {
-    if (!params_obj) {
-      respond_error(id, "INVALID_PARAMS", "missing params.text");
-      return;
-    }
-
-    char text[MAX_TEXT];
-    if (get_object_string_field(params_obj, "text", text, sizeof(text)) != 0) {
-      respond_error(id, "INVALID_PARAMS", "missing params.text");
-      return;
-    }
-
-    int status = bridge_clipboard_input(text);
-    if (status != BRIDGE_STATUS_OK) {
-      respond_error(id, "CLIPBOARD_FAILED", "clipboard input failed");
-      return;
-    }
-
-    respond_empty(id, get_time_ms() - start_time);
-    return;
-  }
-
-  respond_error(id, "INVALID_METHOD", "unsupported clipboard method");
+  cJSON_AddNumberToObject(json, "id", id);
+  cJSON_AddBoolToObject(json, "ok", 1);
+  cJSON_AddItemToObject(json, "result", result);
+  add_rt_field(json, rt_ms);
+  print_json_message(json);
+  cJSON_Delete(json);
 }
 
 typedef struct {
   int id;
   int has_id;
-  char module[64];
-  int has_module;
-  char method[64];
-  int has_method;
-  const char *params_obj;
+  const char *module;
+  const char *method;
+  cJSON *root;
+  cJSON *params;
   int has_params;
-  int params_is_object;
 } request_fields_t;
 
 static int parse_request_fields(const char *line, request_fields_t *req) {
-  const char *p = skip_ws(line);
-  char key[128];
-
   memset(req, 0, sizeof(*req));
-  if (*p != '{') {
+  req->root = cJSON_ParseWithOpts(line, NULL, 1);
+  if (!req->root || !cJSON_IsObject(req->root)) {
+    cJSON_Delete(req->root);
+    req->root = NULL;
     return -1;
   }
-  p++;
 
-  while (1) {
-    p = skip_ws(p);
-    if (*p == '}') {
-      return 0;
-    }
-
-    if (parse_json_string(&p, key, sizeof(key)) != 0) {
-      return -1;
-    }
-
-    p = skip_ws(p);
-    if (*p != ':') {
-      return -1;
-    }
-    p++;
-
-    const char *value = skip_ws(p);
-
-    if (strcmp(key, "id") == 0) {
-      char *end = NULL;
-      long v = strtol(value, &end, 10);
-      if (end == value) {
-        return -1;
-      }
-      req->id = (int)v;
+  cJSON *id = cJSON_GetObjectItemCaseSensitive(req->root, "id");
+  if (cJSON_IsNumber(id)) {
+    double value = id->valuedouble;
+    int int_value = id->valueint;
+    if ((double)int_value == value) {
+      req->id = int_value;
       req->has_id = 1;
-    } else if (strcmp(key, "module") == 0) {
-      const char *tmp = value;
-      if (parse_json_string(&tmp, req->module, sizeof(req->module)) != 0) {
-        return -1;
-      }
-      req->has_module = 1;
-    } else if (strcmp(key, "method") == 0) {
-      const char *tmp = value;
-      if (parse_json_string(&tmp, req->method, sizeof(req->method)) != 0) {
-        return -1;
-      }
-      req->has_method = 1;
-    } else if (strcmp(key, "params") == 0) {
-      req->params_obj = value;
-      req->has_params = 1;
-      req->params_is_object = (*value == '{');
     }
+  }
 
-    if (skip_json_value(&p) != 0) {
-      return -1;
-    }
+  cJSON *module = cJSON_GetObjectItemCaseSensitive(req->root, "module");
+  if (cJSON_IsString(module) && module->valuestring) {
+    req->module = module->valuestring;
+  }
 
-    p = skip_ws(p);
-    if (*p == ',') {
-      p++;
-      continue;
-    }
-    if (*p == '}') {
-      return 0;
-    }
-    return -1;
+  cJSON *method = cJSON_GetObjectItemCaseSensitive(req->root, "method");
+  if (cJSON_IsString(method) && method->valuestring) {
+    req->method = method->valuestring;
+  }
+
+  req->params = cJSON_GetObjectItemCaseSensitive(req->root, "params");
+  if (req->params) {
+    req->has_params = 1;
+  }
+
+  return 0;
+}
+
+static void free_request_fields(request_fields_t *req) {
+  if (req->root) {
+    cJSON_Delete(req->root);
+    req->root = NULL;
   }
 }
 
@@ -529,30 +214,38 @@ static void process_json_line(const char *line) {
 
   if (parse_request_fields(line, &req) != 0 || !req.has_id) {
     respond_error(0, "INVALID_REQUEST", "missing id");
+    free_request_fields(&req);
     return;
   }
-  if (!req.has_module || !req.has_method) {
+  if (!req.module || !req.method) {
     respond_error(req.id, "INVALID_REQUEST", "missing module/method");
+    free_request_fields(&req);
     return;
   }
-  if (req.has_params && !req.params_is_object) {
+  if (req.has_params && !cJSON_IsObject(req.params)) {
     respond_error(req.id, "INVALID_REQUEST", "params must be an object");
+    free_request_fields(&req);
     return;
   }
 
   double start_time = get_time_ms();
+  bridge_dispatch_result_t result;
 
-  if (strcmp(req.module, "ime") == 0) {
-    handle_ime_method(req.id, req.method,
-                      req.has_params ? req.params_obj : NULL, start_time);
-    return;
+  bridge_dispatch_request(req.module, req.method,
+                          req.has_params ? req.params : NULL, &result);
+
+  if (result.kind == BRIDGE_DISPATCH_STATE) {
+    respond_state(req.id, result.state, get_time_ms() - start_time);
+  } else if (result.kind == BRIDGE_DISPATCH_TEXT) {
+    respond_text(req.id, result.text, get_time_ms() - start_time);
+  } else if (result.kind == BRIDGE_DISPATCH_EMPTY) {
+    respond_empty(req.id, get_time_ms() - start_time);
+  } else {
+    respond_error(req.id, result.error_code, result.message);
   }
-  if (strcmp(req.module, "clipboard") == 0) {
-    handle_clipboard_method(req.id, req.method,
-                            req.has_params ? req.params_obj : NULL, start_time);
-    return;
-  }
-  respond_error(req.id, "INVALID_MODULE", "unsupported module");
+
+  bridge_dispatch_result_free(&result);
+  free_request_fields(&req);
 }
 
 static void print_usage(const char *prog_name) {
