@@ -413,7 +413,6 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
         tui_bridge_pipe = io.popen(tui_bridge_path .. " -i", "w") or nil
       end
       if tui_bridge_pipe then
-        print(value)
         tui_bridge_pipe:write(value .. '\n')
         tui_bridge_pipe:flush()
       end
