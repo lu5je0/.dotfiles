@@ -403,16 +403,21 @@ end)()
 local tui_bridge_pipe = nil
 
 wezterm.on('user-var-changed', function(window, pane, name, value)
+  if not tui_bridge_path then
+    return
+  end
   if name == 'tui_bridge' then
     if is_mac then
       if tui_bridge_pipe == nil then
-        tui_bridge_pipe = tui_bridge_path and io.popen(tui_bridge_path .. " -i", "w") or nil
+        print('popen tui_bridge_path')
+        tui_bridge_pipe = io.popen(tui_bridge_path .. " -i", "w") or nil
       end
       if tui_bridge_pipe then
+        print(value)
         tui_bridge_pipe:write(value .. '\n')
         tui_bridge_pipe:flush()
       end
-    elseif is_win and tui_bridge_path then
+    elseif is_win then
       wezterm.run_child_process { tui_bridge_path, '-j', value }
     end
   end
