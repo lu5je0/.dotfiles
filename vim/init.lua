@@ -6,7 +6,7 @@ if not vim.uv.fs_stat(lazypath) then
     'clone',
     '--filter=blob:none',
     'https://github.com/folke/lazy.nvim.git',
-    '--branch=stable', -- latest stable release
+    '--branch=stable',
     lazypath,
   })
 end
@@ -29,7 +29,6 @@ for _, module in ipairs(core_modules) do
   end
 end
 
--- 懒加载
 vim.defer_fn(function()
   vim.cmd('runtime plugin/matchparen.vim')
 end, 100)
