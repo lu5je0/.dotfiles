@@ -32,14 +32,6 @@
   - macOS: `vim/lib/macos/bin/tui_bridge`
   - Windows/WSL: `vim/lib/windows/bin/tui_bridge`
 
-### Skill 触发
-- 当任务同时涉及 `tui-bridge` 子模块和 Neovim 配置联动时，阅读并遵循：`skills/tui-bridge-neovim-integration/SKILL.md`
-- 典型场景：
-  - 修改 `ime.normal` / `ime.insert` / `ime.watch`
-  - 修改 IME 事件 payload
-  - 修改 WSL 剪贴板桥接行为
-  - 修改桥接二进制构建与 `vim/lib` 同步流程
-
 ## 协议
 
 ### 请求格式
