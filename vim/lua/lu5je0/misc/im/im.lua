@@ -66,7 +66,7 @@ local function config_keeper()
     end
   })
 
-  vim.api.nvim_create_autocmd({ 'InsertEnter', 'FocusLost', 'TermEnter' }, {
+  vim.api.nvim_create_autocmd({ 'InsertEnter', 'FocusLost', 'TermEnter', 'CmdlineEnter' }, {
     group = keeper_group,
     pattern = { '*' },
     callback = function()
