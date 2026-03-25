@@ -2,7 +2,8 @@
 
 LAZY_DIR="$HOME/.local/share/nvim/lazy"
 PLUGIN_LIST=(
-    "LuaSnip"
+    "LuaSnip",
+    "lsp_signature.nvim"
 )
 
 for PLUGIN in "${PLUGIN_LIST[@]}"; do
