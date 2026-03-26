@@ -11,8 +11,6 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   # eval $(gdircolors -b $HOME/.dir_colors)
   alias e='open'
   alias sed='gsed'
-  alias yy='mac_clipboard_cli -c'
-  alias p='mac_clipboard_cli -p'
   alias iterm='open -a iTerm .'
   alias fdfind='fd'
   alias q-battery='ioreg -rn AppleSmartBattery | awk "/AppleRawMaxCapacity/{raw=\$NF} /DesignCapacity/{design=\$NF} /CycleCount/{cycle=\$NF} END{printf \"当前最大容量: %d mAh | 设计容量: %d mAh | 循环次数 %d 次 | 健康度: %.1f%%\n\", raw, design, cycle, (raw/design)*100}"'
@@ -43,8 +41,6 @@ elif [[ $UNAME_INFO =~ "WSL" ]]; then
   
   alias grep='grep --color'
   alias e='/mnt/c/Windows/explorer.exe'
-  alias yy='win32yank.exe -i'
-  alias p='win32yank.exe -o'
   alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
   alias scoop="PATH=$PATH:/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/ $WIN_HOME/scoop/shims/scoop"
   alias powershell='/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe'

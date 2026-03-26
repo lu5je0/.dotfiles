@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+command_name=${0##*/}
+
+usage() {
+  printf 'Usage: %s <copy|paste>\n' "$command_name" >&2
+}
+
+tty_path=${TTY:-/dev/tty}
+
+ensure_tty() {
+  if [[ ! -r "$tty_path" || ! -w "$tty_path" ]]; then
+    printf '%s: tty unavailable: %s\n' "$command_name" "$tty_path" >&2
+    return 1
+  fi
+}
+
+osc52_sequence() {
+  local payload=$1
+  local osc
+
+  osc=$(printf '\033]52;c;%s\033\\' "$payload")
+  if [[ -n ${TMUX:-} ]]; then
+    printf '\033Ptmux;\033%s\033\\' "${osc//\033/\033\033}"
+  else
+    printf '%s' "$osc"
+  fi
+}
+
+copy_clipboard() {
+  local payload
+
+  ensure_tty
+  payload=$(base64 | tr -d '\r\n')
+  osc52_sequence "$payload" > "$tty_path"
+}
+
+paste_clipboard() {
+  ensure_tty
+
+  python3 - "$tty_path" <<'PY'
+import base64
+import os
+import select
+import sys
+import termios
+import tty
+
+tty_path = sys.argv[1]
+request = b'\x1b]52;c;?\x1b\\'
+
+if 'TMUX' in os.environ:
+    request = b'\x1bPtmux;\x1b\x1b]52;c;?\x07\x1b\\'
+
+with open(tty_path, 'r+b', buffering=0) as tty_file:
+    fd = tty_file.fileno()
+    original = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        tty_file.write(request)
+        tty_file.flush()
+
+        response = bytearray()
+        deadline = 10.0
+        while True:
+            ready, _, _ = select.select([fd], [], [], deadline)
+            if not ready:
+                raise SystemExit(1)
+
+            chunk = os.read(fd, 4096)
+            if not chunk:
+                break
+
+            response.extend(chunk)
+            if response.endswith(b'\x07') or response.endswith(b'\x1b\\'):
+                break
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, original)
+
+data = bytes(response)
+prefix = data.rfind(b']52;')
+if prefix == -1:
+    raise SystemExit(1)
+
+payload = data[prefix + 4:]
+parts = payload.split(b';', 1)
+if len(parts) < 2:
+    raise SystemExit(1)
+
+encoded = parts[1]
+if encoded.endswith(b'\x07'):
+    encoded = encoded[:-1]
+elif encoded.endswith(b'\x1b\\'):
+    encoded = encoded[:-2]
+
+sys.stdout.write(base64.b64decode(encoded).decode('utf-8', errors='replace'))
+PY
+}
+
+main() {
+  if [[ $# -ne 1 ]]; then
+    usage
+    return 1
+  fi
+
+  case $1 in
+    copy)
+      copy_clipboard
+      ;;
+    paste)
+      paste_clipboard
+      ;;
+    *)
+      usage
+      return 1
+      ;;
+  esac
+}
+
+main "$@"

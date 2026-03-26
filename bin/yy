@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v _clipboard_osc52 >/dev/null 2>&1; then
+  exec _clipboard_osc52 copy
+fi
+
+uname_info=$(uname -a)
+
+if [[ $uname_info == *Darwin* ]] && command -v mac_clipboard_cli >/dev/null 2>&1; then
+  exec mac_clipboard_cli -c
+fi
+
+if [[ $uname_info == *WSL* ]] && command -v win32yank.exe >/dev/null 2>&1; then
+  exec win32yank.exe -i
+fi
+
+printf 'yy: clipboard backend unavailable\n' >&2
+exit 1
