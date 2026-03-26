@@ -62,23 +62,19 @@ zinit light matthieusb/zsh-sdkman
 # 本地sh文件
 ##########################################
 
-zinit ice lucid wait='0'
+zinit ice lucid wait='0' link
 zinit snippet ~/.dotfiles/zsh/zoxide.sh
 
-# zinit ice lucid wait='1'
-zinit snippet ~/.dotfiles/zsh/platform.sh
-
-zinit ice lucid wait='1'
+zinit ice lucid wait='1' link nocompile
 zinit snippet ~/.dotfiles/zsh/functions.sh
 
-zinit ice lucid wait='1'
+zinit ice lucid wait='1' link nocompile
 zinit snippet ~/.dotfiles/zsh/proxy.sh
 
-zinit ice lucid wait='1'
-zinit snippet ~/.dotfiles/zsh/secret-env.zsh
-
-zinit snippet ~/.dotfiles/zsh/vi-mode.zsh
-zinit snippet ~/.dotfiles/zsh/vi-im-switch.zsh
+source ~/.dotfiles/zsh/secret-env.zsh
+source ~/.dotfiles/zsh/platform.sh
+source ~/.dotfiles/zsh/vi-mode.zsh
+source ~/.dotfiles/zsh/vi-im-switch.zsh
 
 ##########################################
 # theme
