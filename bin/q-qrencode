@@ -47,12 +47,12 @@ else
 fi
 
 detect_image_terminal() {
-  if [ "${TERM:-}" = "xterm-kitty" ]; then
+  if [ "${TERM:-}" = "xterm-kitty" ] && command -v kitty &>/dev/null; then
     echo "kitty"
     return 0
   fi
 
-  if [ "${TERM_PROGRAM:-}" = "WezTerm" ]; then
+  if [ "${TERM_PROGRAM:-}" = "WezTerm" ] && command -v wezterm &>/dev/null; then
     echo "wezterm"
     return 0
   fi
