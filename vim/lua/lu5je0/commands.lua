@@ -90,9 +90,12 @@ vim.api.nvim_create_user_command('FileEncodingReload', function(t)
 end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
 
 vim.api.nvim_create_user_command('FileEncodingConvertForce', function(t)
-  vim.cmd('%!' .. ('iconv -f %s//IGNORE -t %s//IGNORE'):format(vim.bo.fileencoding, t.fargs[1]))
+  -- 使用 iconv 进行编码转换，转换过程中使用 TRANSLIT 保留相似字符
+  vim.cmd('%!' .. ('iconv -f %s//TRANSLIT -t %s//TRANSLIT'):format(vim.bo.fileencoding, t.fargs[1]))
+  -- 设置新的文件编码
   vim.cmd('set fileencoding=' .. t.fargs[1])
-  vim.cmd(':%s/\r$')
+  -- 仅在文件中存在 \r 时才尝试删除
+  vim.cmd('silent! %s/\r$//')
 end, { force = true, nargs = 1, complete = starts_with_complete({ 'utf8', 'gbk', 'gb2312', 'gb18030', 'utf16' }) })
 
 -- require('lu5je0.misc.code-runner').create_command()
