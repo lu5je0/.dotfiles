@@ -268,23 +268,13 @@ require('lu5je0.misc.oil-hijack').setup()
 -- }
 
 
-if vim.fn.has('nvim-0.12.0') == 1 then
-  lazy_load({
-    config = function()
-      require('lu5je0.misc.redir')
-    end,
-    cmd = { 'Redir' },
-    complete = true,
-  })
-else
-  lazy_load({
-    config = function()
-      require('lu5je0.misc.redir')
-    end,
-    cmd = { 'Redir', "Messages" },
-    complete = true,
-  })
-end
+lazy_load({
+  config = function()
+    require('lu5je0.misc.redir')
+  end,
+  cmd = { 'Redir' },
+  complete = true,
+})
 
 -- base64
 lazy_load({

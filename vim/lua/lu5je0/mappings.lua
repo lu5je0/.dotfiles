@@ -128,9 +128,9 @@ vim.schedule(function()
   end)
   
   -- text
-  set_map('n', '<leader>xx', ":%!", { nowait = true, silent = true, desc = ':%!' })
+  set_map('n', '<leader>xx', ":%!", { nowait = true, silent = false, desc = ':%!' })
   
-  set_map('v', '<leader>xx', ":%!", { nowait = true, silent = true, desc = ':%!' })
+  set_map('v', '<leader>xx', ":%!", { nowait = true, silent = false, desc = ':%!' })
 
   -- lsp
   set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')

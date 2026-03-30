@@ -330,8 +330,9 @@ M.setup = function()
 
   ins_right {
     function()
-      return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() ..
-      ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
+      return ''
+      -- return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() ..
+      -- ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
     end,
     cache_ttl = 5000,
     cache_evict_autocmd = { "CmdlineLeave" },

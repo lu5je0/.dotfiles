@@ -73,6 +73,10 @@ if g.neovide then
   g.neovide_floating_shadow = false
 end
 
+require('vim._core.ui2').enable({}) 
+-- 关闭message超过cmdheight时需要hit-enter
+o.messagesopt = 'wait:0,history:10000'
+
 o.mouse = "a"
 o.hlsearch = true
 o.ignorecase = true
@@ -109,11 +113,6 @@ o.isfname = o.isfname .. ',!'
 o.signcolumn = 'no'
 o.foldcolumn = '1'
 vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
-
--- 关闭message超过cmdheight时需要hit-enter
-if has('nvim-0.12.0') then
-  o.messagesopt = 'wait:0,history:10000'
-end
 
 -- encodeing
 o.fileformat = 'unix'
@@ -199,11 +198,6 @@ local defer_options = {
     end
     -- end
     vim.cmd [[ packadd matchit ]]
-  end,
-  function()
-    if has('nvim-0.12.0') then
-      require('vim._extui').enable({}) 
-    end
   end
 }
 for delay, fn in ipairs(defer_options) do
