@@ -23,12 +23,14 @@ local font = (function()
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal" },
     }
     r.tab_bar_font_size = 10
+    r.font_size = 11.5
   elseif is_mac then
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
       { family = "PingFang SC",                    weight = "Medium",   stretch = "Normal", style = "Normal" }
     }
     r.tab_bar_font_size = 12
+    r.font_size = 15
   end
   return r
 end)()
@@ -101,13 +103,7 @@ local config = {
     end
     return nil
   end)(),
-  font_size = (function()
-    if is_mac then
-      return 14.5
-    elseif is_win then
-      return 11.5
-    end
-  end)(),
+  font_size = font.font_size
 }
 
 local function basename(s)
@@ -421,5 +417,18 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
     end
   end
 end)
+
+if is_mac then
+  wezterm.on('window-resized', function(window, pane)
+    local screens = wezterm.gui.screens()
+    local on_main = screens.active.name == screens.main.name
+    local overrides = window:get_config_overrides() or {}
+    local target = on_main and font.font_size or 14.5
+    if overrides.font_size ~= target then
+      overrides.font_size = target
+      window:set_config_overrides(overrides)
+    end
+  end)
+end
 
 return config
