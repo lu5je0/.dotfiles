@@ -30,8 +30,8 @@ local window_special_cases = {
         return {
           x = max.x,
           y = max.y,
-          w = 1098,
-          h = 859
+          w = 1126,
+          h = 862
         }
       else
         return {

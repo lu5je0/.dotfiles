@@ -22,7 +22,7 @@ end
 local function create_autocmd()
   local group = vim.api.nvim_create_augroup('ime-status', { clear = true })
   
-  vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave', 'FocusGained' }, {
+  vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave' }, {
     group = group,
     pattern = { '*' },
     callback = function()
