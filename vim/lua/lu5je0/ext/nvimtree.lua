@@ -434,7 +434,10 @@ function M.setup()
   }
   
   vim.keymap.set('n', '<leader>e', function()
-    api.tree.toggle(false, true)
+    api.tree.toggle({
+      find_file = false,
+      focus = false
+    })
   end, opts)
   
   vim.keymap.set('n', '<leader>E', function()

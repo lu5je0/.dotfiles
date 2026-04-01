@@ -30,7 +30,7 @@ local font = (function()
       { family = "PingFang SC",                    weight = "Medium",   stretch = "Normal", style = "Normal" }
     }
     r.tab_bar_font_size = 12
-    r.font_size = 15
+    r.font_size = 14.5
   end
   return r
 end)()
@@ -423,10 +423,11 @@ if is_mac then
     local screens = wezterm.gui.screens()
     local on_main = screens.active.name == screens.main.name
     local overrides = window:get_config_overrides() or {}
-    local target = on_main and font.font_size or 14.5
+    local target = on_main and 15 or font.font_size
     if overrides.font_size ~= target then
       overrides.font_size = target
       window:set_config_overrides(overrides)
+      print('window-resized ' .. target)
     end
   end)
 end
