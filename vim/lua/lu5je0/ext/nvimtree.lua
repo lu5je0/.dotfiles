@@ -33,7 +33,7 @@ local function locate_file()
 
     local function turn_on_hidden_filter()
       if require("nvim-tree.core").get_explorer() == nil or require("nvim-tree.core").get_explorer().filters.state.dotfiles then
-        api.tree.toggle_hidden_filter()
+        api.filter.dotfiles.toggle()
       end
     end
 
@@ -389,6 +389,8 @@ local function on_attach(bufnr)
     end
     
     wrap_fix_perf(function() api.filter.dotfiles.toggle() end)
+    
+    require('lu5je0.core.keys').feedkey('^')
   end, opts('Toggle Dotfiles'))
   set('n', 'r', api.tree.reload, opts('Refresh'))
   set('n', 'ma', api.fs.create, opts('Create'))
@@ -565,6 +567,7 @@ function M.setup()
       persist = true,
     },
   }
+  require('nvim-tree.view-state').Active.winopts.foldcolumn = "1"
 
   -- require('lu5je0.ext.nvimtree.hover-popup')
 
