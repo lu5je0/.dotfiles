@@ -368,6 +368,16 @@ lazy_load({
 
 require('lu5je0.misc.time-machine').setup()
 
+-- git line log
+lazy_load({
+  config = function()
+    require('lu5je0.ext.git').setup()
+  end,
+  keys = {
+    { mode = { 'x' }, '<leader>gl' },
+  }
+})
+
 -- lazy_load({
 --   config = function()
 --     require('lu5je0.ext.plugins_helper').load_plugin('nvim-ufo')

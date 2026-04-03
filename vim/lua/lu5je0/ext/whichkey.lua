@@ -61,9 +61,9 @@ function M.opts()
     },
     triggers = {
       { '<leader>', mode = { 'n', 'x' } },
-      { '<space>', mode = { 'n', 'x' } },
-      { '<c-w>', mode = 'n' },
-      { 'z', mode = 'n' },
+      { '<space>',  mode = { 'n', 'x' } },
+      { '<c-w>',    mode = 'n' },
+      { 'z',        mode = 'n' },
     },
     show_help = true,
     spec = {
@@ -98,7 +98,8 @@ function M.opts()
       { '<leader>vs', desc = 'toggle signcolumn' },
       { '<leader>vS', '<cmd>set signcolumn=yes | echo "set signcolumn=yes"<cr>', desc = 'set signcolumn=yes' },
       { '<leader>vi', desc = 'toggle-save-last-ime' },
-      { '<leader>vv', function() vim.cmd('edit ' .. vim.env.HOME .. '/.dotfiles/vim/init.lua | cd ' .. vim.env.HOME .. '/.dotfiles/vim') end, desc = 'edit init.lua' },
+      { '<leader>vv', function() vim.cmd('edit ' ..
+        vim.env.HOME .. '/.dotfiles/vim/init.lua | cd ' .. vim.env.HOME .. '/.dotfiles/vim') end, desc = 'edit init.lua' },
       { '<leader>W', group = 'workspace' },
       { '<leader>w', group = 'windows', mode = { 'n', 'x' } },
       { '<leader>wn', '<cmd>vnew<cr>', desc = 'vnew' },
@@ -200,7 +201,7 @@ function M.opts()
       { '<leader>gd', '<cmd>Git diff<cr>', desc = 'diff' },
       { '<leader>gg', desc = 'preview hunk' },
       { '<leader>gh', desc = 'stage hunk' },
-      { '<leader>gl', '<cmd>Flogsplit<cr>', desc = 'git log in repository' },
+      { '<leader>gl', '<cmd>Flogsplit<cr>', desc = 'git log in repository', mode = { 'n' } },
       { '<leader>gs', '<cmd>Floggit<cr>', desc = 'Floggit' },
       { '<leader>gr', desc = 'unstage buffer', mode = { 'n', 'x' } },
       { '<leader>gu', desc = 'reset hunk', mode = { 'n', 'x' } },

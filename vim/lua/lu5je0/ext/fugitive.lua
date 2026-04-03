@@ -23,8 +23,6 @@ end
 
 function M.setup()
   local opts = {}
-  vim.keymap.set('x', '<leader>gl', function() M.lines_changes(50) end, opts)
-  vim.keymap.set('x', '<leader>gL', function() M.lines_changes() end, opts)
   vim.keymap.set('n', '<leader>gL', M.current_file_logs, opts)
 end
 

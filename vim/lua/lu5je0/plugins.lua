@@ -117,7 +117,7 @@ local plugins = {
   {
     'rbong/vim-flog',
     cmd = { 'Flogsplit', 'Floggit', 'Flog' },
-    keys = { { mode = 'n', '<leader>gL' }, { mode = 'x', '<leader>gl' } },
+    keys = { { mode = 'n', '<leader>gL' } },
     dependencies = {
       'tpope/vim-fugitive',
     },
