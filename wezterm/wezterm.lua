@@ -418,18 +418,18 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
   end
 end)
 
-if is_mac then
-  wezterm.on('window-resized', function(window, pane)
-    local screens = wezterm.gui.screens()
-    local on_main = screens.active.name == screens.main.name
-    local overrides = window:get_config_overrides() or {}
-    local target = on_main and 15 or font.font_size
-    if overrides.font_size ~= target then
-      overrides.font_size = target
-      window:set_config_overrides(overrides)
-      print('window-resized ' .. target)
-    end
-  end)
-end
+-- if is_mac then
+--   wezterm.on('window-resized', function(window, pane)
+--     local screens = wezterm.gui.screens()
+--     local on_main = screens.active.name == screens.main.name
+--     local overrides = window:get_config_overrides() or {}
+--     local target = on_main and 15 or font.font_size
+--     if overrides.font_size ~= target then
+--       overrides.font_size = target
+--       window:set_config_overrides(overrides)
+--       print('window-resized ' .. target)
+--     end
+--   end)
+-- end
 
 return config
