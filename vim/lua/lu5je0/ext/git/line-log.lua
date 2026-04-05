@@ -454,9 +454,7 @@ local function show_commit_diff()
     end
   end
 
-  if state.diff_win and vim.api.nvim_win_is_valid(state.diff_win) then
-    vim.api.nvim_win_close(state.diff_win, true)
-  end
+  local reuse_win = state.diff_win and vim.api.nvim_win_is_valid(state.diff_win)
 
   -- Get block info for this revision and previous
   local block = state.blocks[rev_idx]
@@ -467,7 +465,7 @@ local function show_commit_diff()
     -- Show diff between this revision and previous
     cmd = {
       'git', 'show', commit,
-      '--format=%h %ad %s%n%n%b',
+      '--format=%h %ad %s',
       '--date=format:%Y-%m-%d %H:%M:%S',
       '--', state.rel_file,
     }
@@ -475,7 +473,7 @@ local function show_commit_diff()
     -- Initial commit, show the added content
     cmd = {
       'git', 'show', commit,
-      '--format=%h %ad %s%n%n%b',
+      '--format=%h %ad %s',
       '--date=format:%Y-%m-%d %H:%M:%S',
       '--', state.rel_file,
     }
@@ -503,20 +501,38 @@ local function show_commit_diff()
         end
       end
 
-      state.diff_buf = vim.api.nvim_create_buf(false, true)
-      vim.bo[state.diff_buf].buftype = 'nofile'
-      vim.bo[state.diff_buf].bufhidden = 'wipe'
-      vim.bo[state.diff_buf].swapfile = false
-      vim.bo[state.diff_buf].filetype = 'git'
+      if reuse_win then
+        -- Reuse existing diff window: replace buffer content
+        vim.bo[state.diff_buf].modifiable = true
+        vim.api.nvim_buf_set_lines(state.diff_buf, 0, -1, false, lines)
+        vim.bo[state.diff_buf].modifiable = false
+      else
+        -- Create new diff buffer and window
+        state.diff_buf = vim.api.nvim_create_buf(false, true)
+        vim.bo[state.diff_buf].buftype = 'nofile'
+        vim.bo[state.diff_buf].bufhidden = 'wipe'
+        vim.bo[state.diff_buf].swapfile = false
+        vim.bo[state.diff_buf].filetype = 'git'
 
-      vim.api.nvim_buf_set_lines(state.diff_buf, 0, -1, false, lines)
-      vim.bo[state.diff_buf].modifiable = false
+        vim.api.nvim_buf_set_lines(state.diff_buf, 0, -1, false, lines)
+        vim.bo[state.diff_buf].modifiable = false
 
-      vim.api.nvim_set_current_win(state.log_win)
-      vim.cmd('vsplit')
-      state.diff_win = vim.api.nvim_get_current_win()
-      vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
-      vim.api.nvim_win_set_cursor(state.diff_win, { diff_start, 0 })
+        vim.api.nvim_set_current_win(state.log_win)
+        vim.cmd('vsplit')
+        state.diff_win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
+        vim.api.nvim_set_current_win(state.log_win)
+
+        vim.keymap.set('n', 'q', function()
+          if vim.api.nvim_win_is_valid(state.diff_win) then
+            vim.api.nvim_win_close(state.diff_win, true)
+          end
+        end, { buffer = state.diff_buf, nowait = true })
+      end
+
+      vim.api.nvim_win_call(state.diff_win, function()
+        vim.fn.winrestview({ topline = diff_start, lnum = diff_start, col = 0 })
+      end)
 
       local rev = state.revisions[rev_idx]
       local short_msg = rev and rev.message:sub(1, 50) or ''
@@ -527,12 +543,6 @@ local function show_commit_diff()
         ' %%#Function#Diff%%* %%#Number#%s%%* %%#Comment#%s%%*',
         commit, short_msg
       )
-
-      vim.keymap.set('n', 'q', function()
-        if vim.api.nvim_win_is_valid(state.diff_win) then
-          vim.api.nvim_win_close(state.diff_win, true)
-        end
-      end, { buffer = state.diff_buf, nowait = true })
     end)
   end)
 end
@@ -541,6 +551,23 @@ local function setup_log_buffer_keymaps(buf)
   local opts = { buffer = buf, nowait = true }
 
   vim.keymap.set('n', '<CR>', show_commit_diff, opts)
+
+  vim.keymap.set('n', 'J', function()
+    local line_count = vim.api.nvim_buf_line_count(state.log_buf)
+    local cursor_line = vim.api.nvim_win_get_cursor(state.log_win)[1]
+    if cursor_line < line_count then
+      vim.api.nvim_win_set_cursor(state.log_win, { cursor_line + 1, 0 })
+      show_commit_diff()
+    end
+  end, opts)
+
+  vim.keymap.set('n', 'K', function()
+    local cursor_line = vim.api.nvim_win_get_cursor(state.log_win)[1]
+    if cursor_line > 1 then
+      vim.api.nvim_win_set_cursor(state.log_win, { cursor_line - 1, 0 })
+      show_commit_diff()
+    end
+  end, opts)
 
   vim.keymap.set('n', 'q', function()
     kill_job()
