@@ -56,7 +56,8 @@ function Block:create_previous_block(prev_lines, debug)
   local ok, hunks = pcall(vim.diff, prev_text, curr_text, {
     result_type = 'indices',
     ignore_whitespace = true,
-    algorithm = 'histogram',
+    algorithm = 'patience',
+    indent_heuristic = true,
   })
   if not ok or not hunks then
     return Block.new(prev_lines, self.start_line, self.end_line)
