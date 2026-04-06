@@ -434,6 +434,43 @@ local function load_revisions()
   end)
 end
 
+-- Generate unified diff between two block contents (IntelliJ's approach:
+-- directly diff block.getBlockContent() from each revision, with line number offset)
+local function generate_block_diff(old_block, new_block, rev)
+  local old_lines = (old_block and not old_block:is_empty()) and old_block:get_content() or {}
+  local new_lines = (new_block and not new_block:is_empty()) and new_block:get_content() or {}
+
+  local old_text = #old_lines > 0 and (table.concat(old_lines, '\n') .. '\n') or ''
+  local new_text = #new_lines > 0 and (table.concat(new_lines, '\n') .. '\n') or ''
+
+  local diff_str = vim.diff(old_text, new_text, { algorithm = 'histogram', ctxlen = 3 })
+  if not diff_str or diff_str == '' then
+    return { '-- No changes in selection --' }
+  end
+
+  local diff_lines = vim.split(diff_str, '\n', { plain = true })
+  if #diff_lines > 0 and diff_lines[#diff_lines] == '' then
+    table.remove(diff_lines)
+  end
+
+  -- Offset @@ line numbers to reflect actual file positions (like IDEA's LINE_NUMBER_CONVERTOR)
+  local old_offset = (old_block and not old_block:is_empty()) and (old_block.start_line - 1) or 0
+  local new_offset = (new_block and not new_block:is_empty()) and (new_block.start_line - 1) or 0
+
+  if old_offset > 0 or new_offset > 0 then
+    for i, line in ipairs(diff_lines) do
+      local prefix, os, oc, mid, ns, nc, rest =
+        line:match('^(@@ %-)(%d+)(,?%d*) (%+)(%d+)(,?%d*) (@@.*)$')
+      if prefix then
+        diff_lines[i] = prefix .. (tonumber(os) + old_offset) .. oc
+          .. ' ' .. mid .. (tonumber(ns) + new_offset) .. nc .. ' ' .. rest
+      end
+    end
+  end
+
+  return diff_lines
+end
+
 local function show_commit_diff()
   local cursor_line = vim.api.nvim_win_get_cursor(state.log_win)[1]
   local line = vim.api.nvim_buf_get_lines(state.log_buf, cursor_line - 1, cursor_line, false)[1]
@@ -453,98 +490,53 @@ local function show_commit_diff()
       break
     end
   end
+  if not rev_idx then return end
 
   local reuse_win = state.diff_win and vim.api.nvim_win_is_valid(state.diff_win)
 
-  -- Get block info for this revision and previous
-  local block = state.blocks[rev_idx]
-  local prev_block = state.blocks[rev_idx + 1]
+  -- IntelliJ approach: diff block contents directly
+  -- new_block = block at this revision (+ side), old_block = block at older revision (- side)
+  local new_block = state.blocks[rev_idx]
+  local old_block = state.blocks[rev_idx + 1]
 
-  local cmd
-  if prev_block and not prev_block:is_empty() then
-    -- Show diff between this revision and previous
-    cmd = {
-      'git', 'show', commit,
-      '--format=%h %ad %s',
-      '--date=format:%Y-%m-%d %H:%M:%S',
-      '--', state.rel_file,
-    }
+  local rev = state.revisions[rev_idx]
+  local lines = generate_block_diff(old_block, new_block, rev)
+
+  if reuse_win then
+    vim.bo[state.diff_buf].modifiable = true
+    vim.api.nvim_buf_set_lines(state.diff_buf, 0, -1, false, lines)
+    vim.bo[state.diff_buf].modifiable = false
   else
-    -- Initial commit, show the added content
-    cmd = {
-      'git', 'show', commit,
-      '--format=%h %ad %s',
-      '--date=format:%Y-%m-%d %H:%M:%S',
-      '--', state.rel_file,
-    }
+    state.diff_buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[state.diff_buf].buftype = 'nofile'
+    vim.bo[state.diff_buf].bufhidden = 'wipe'
+    vim.bo[state.diff_buf].swapfile = false
+    vim.bo[state.diff_buf].filetype = 'git'
+
+    vim.api.nvim_buf_set_lines(state.diff_buf, 0, -1, false, lines)
+    vim.bo[state.diff_buf].modifiable = false
+
+    vim.api.nvim_set_current_win(state.log_win)
+    vim.cmd('vsplit')
+    state.diff_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
+    vim.api.nvim_set_current_win(state.log_win)
+
+    vim.keymap.set('n', 'q', function()
+      if vim.api.nvim_win_is_valid(state.diff_win) then
+        vim.api.nvim_win_close(state.diff_win, true)
+      end
+    end, { buffer = state.diff_buf, nowait = true })
   end
 
-  state.diff_job = vim.system(cmd, { text = true, cwd = state.repo_root }, function(result)
-    vim.schedule(function()
-      state.diff_job = nil
-      if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
-        return
-      end
-      if result.code ~= 0 then
-        vim.notify('Failed to get diff: ' .. (result.stderr or ''), vim.log.levels.ERROR)
-        return
-      end
-
-      local lines = vim.split(result.stdout or '', '\n')
-
-      -- Find diff content start
-      local diff_start = 1
-      for i, l in ipairs(lines) do
-        if l:match('^diff ') or l:match('^@@') then
-          diff_start = i
-          break
-        end
-      end
-
-      if reuse_win then
-        -- Reuse existing diff window: replace buffer content
-        vim.bo[state.diff_buf].modifiable = true
-        vim.api.nvim_buf_set_lines(state.diff_buf, 0, -1, false, lines)
-        vim.bo[state.diff_buf].modifiable = false
-      else
-        -- Create new diff buffer and window
-        state.diff_buf = vim.api.nvim_create_buf(false, true)
-        vim.bo[state.diff_buf].buftype = 'nofile'
-        vim.bo[state.diff_buf].bufhidden = 'wipe'
-        vim.bo[state.diff_buf].swapfile = false
-        vim.bo[state.diff_buf].filetype = 'git'
-
-        vim.api.nvim_buf_set_lines(state.diff_buf, 0, -1, false, lines)
-        vim.bo[state.diff_buf].modifiable = false
-
-        vim.api.nvim_set_current_win(state.log_win)
-        vim.cmd('vsplit')
-        state.diff_win = vim.api.nvim_get_current_win()
-        vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
-        vim.api.nvim_set_current_win(state.log_win)
-
-        vim.keymap.set('n', 'q', function()
-          if vim.api.nvim_win_is_valid(state.diff_win) then
-            vim.api.nvim_win_close(state.diff_win, true)
-          end
-        end, { buffer = state.diff_buf, nowait = true })
-      end
-
-      vim.api.nvim_win_call(state.diff_win, function()
-        vim.fn.winrestview({ topline = diff_start, lnum = diff_start, col = 0 })
-      end)
-
-      local rev = state.revisions[rev_idx]
-      local short_msg = rev and rev.message:sub(1, 50) or ''
-      if rev and #rev.message > 50 then
-        short_msg = short_msg .. '...'
-      end
-      vim.wo[state.diff_win].statusline = string.format(
-        ' %%#Function#Diff%%* %%#Number#%s%%* %%#Comment#%s%%*',
-        commit, short_msg
-      )
-    end)
-  end)
+  local short_msg = rev and rev.message:sub(1, 50) or ''
+  if rev and #rev.message > 50 then
+    short_msg = short_msg .. '...'
+  end
+  vim.wo[state.diff_win].statusline = string.format(
+    ' %%#Function#Diff%%* %%#Number#%s%%* %%#Comment#%s%%*',
+    commit, short_msg
+  )
 end
 
 local function setup_log_buffer_keymaps(buf)
