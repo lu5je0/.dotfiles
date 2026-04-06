@@ -7,7 +7,10 @@
 ## 目录结构
 
 - `init.lua`: 模块入口，注册按键映射
-- `line-log.lua`: 行级 git log 查看功能
+- `line-log/`: 行级 git log 子模块
+  - `init.lua`: 主入口，state 管理与 revision 处理流程
+  - `block.lua`: Block 类与 diff 生成（纯算法，不依赖 state）
+  - `ui.lua`: 窗口、buffer、spinner、statusline、高亮、keymaps
 
 ## 功能说明
 
