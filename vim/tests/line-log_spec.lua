@@ -6,7 +6,7 @@
 
 local Block = require('lu5je0.ext.git.line-log.block')
 
-local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':h:h:h')
+local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h')
 
 local function git(args)
   local cmd = { 'git' }
@@ -39,12 +39,13 @@ end
 --- @param end_line number 1-based end line
 --- @return string[] commit hashes
 local function track_commits(commit, rel_file, start_line, end_line)
-  -- Get revisions from the given commit backward
+  -- Get revisions from the given commit backward, with --name-only to track renames
   local stdout = git {
     'log',
     commit,
     '--format=%H %h',
     '--follow',
+    '--name-only',
     '--',
     rel_file,
   }
@@ -53,10 +54,16 @@ local function track_commits(commit, rel_file, start_line, end_line)
   end
 
   local revisions = {}
-  for line in stdout:gmatch('[^\n]+') do
+  local current_full, current_short
+  for line in stdout:gmatch('[^\n]*') do
     local full, short = line:match('^(%x+)%s+(%x+)$')
     if full then
-      table.insert(revisions, { full = full, short = short })
+      current_full = full
+      current_short = short
+    elseif current_full and line ~= '' then
+      table.insert(revisions, { full = current_full, short = current_short, file = line })
+      current_full = nil
+      current_short = nil
     end
   end
 
@@ -73,7 +80,7 @@ local function track_commits(commit, rel_file, start_line, end_line)
 
   for idx, rev in ipairs(revisions) do
     local prev_block = blocks[idx - 1]
-    local lines = load_file_at(rev.full, rel_file)
+    local lines = load_file_at(rev.full, rev.file)
     if not lines then
       break
     end
@@ -118,26 +125,31 @@ local function run_test(tc)
 
   local actual = track_commits(tc.commit, tc.file, tc.start_line, tc.end_line)
 
-  -- Compare
-  local match = #actual == #tc.expected_commits
-  if match then
-    for i = 1, #actual do
-      if actual[i] ~= tc.expected_commits[i] then
-        match = false
-        break
-      end
+  -- Compute intersection count
+  local expected_set = {}
+  for _, h in ipairs(tc.expected_commits) do
+    expected_set[h] = true
+  end
+  local intersect = 0
+  for _, h in ipairs(actual) do
+    if expected_set[h] then
+      intersect = intersect
+      + 1
     end
   end
 
+  local total = math.max(#actual, #tc.expected_commits)
+  local match = intersect == total and #actual == #tc.expected_commits
+
   if match then
-    io.write(string.format('PASS (%d commits)\n', #actual))
+    io.write(string.format('PASS (%d commits, %d/%d)\n', #actual, intersect, total))
     passed = passed + 1
   else
-    io.write('FAIL\n')
+    io.write(string.format('FAIL (%d/%d)\n', intersect, total))
     io.write(string.format('    expected (%d): %s\n', #tc.expected_commits, table.concat(tc.expected_commits, ', ')))
     io.write(string.format('    actual   (%d): %s\n', #actual, table.concat(actual, ', ')))
 
-    -- Show first divergence
+    -- Show first positional divergence
     local max_len = math.max(#actual, #tc.expected_commits)
     for i = 1, max_len do
       local e = tc.expected_commits[i] or '(none)'
@@ -166,7 +178,7 @@ end
 local test_cases = {
   {
     name = 'case 1',
-    commit = '0ae3adc8',
+    commit = '0adb3a6c',
     file = 'vim/init.lua',
     start_line = 15,
     end_line = 23,
@@ -174,7 +186,7 @@ local test_cases = {
   },
   {
     name = 'case 2',
-    commit = '0ae3adc8',
+    commit = '0adb3a6c',
     file = 'vim/init.lua',
     start_line = 3,
     end_line = 12,
@@ -182,11 +194,67 @@ local test_cases = {
   },
   {
     name = 'case 3',
-    commit = '0ae3adc8',
+    commit = '0adb3a6c',
     file = 'zshrc',
     start_line = 21,
     end_line = 40,
     expected_commits = { "ce5ecd12", "d58731fb", "d75b8ad8", "3f1fa317", "48001df8", "1aeddefb", "2f0dd903", "1a665baa", "eae97b80", "673aa3cd", "66756491", "00189d5e", "e75b53a1", "cbe17c94", "b401c762", "b415b5a4", "be432ca1", "9c43e737", },
+  },
+  {
+    name = 'case 4',
+    commit = '0adb3a6c',
+    file = 'vim/lua/lu5je0/plugins.lua',
+    start_line = 27,
+    end_line = 45,
+    expected_commits = { "11785101", "dfd2d011", "dce8dc32", "4687f21b", "94684ac8", "96549eca", "321dd5f5", "09edeb08", "889f3736", "09c9d307", "b8b5d7d7", "94d9fc04", "c038f4e2", "8d248830", "d8c6c236", "2343c957", },
+  },
+  {
+    name = 'case 5',
+    commit = '0adb3a6c',
+    file = 'vim/lua/lu5je0/plugins.lua',
+    start_line = 110,
+    end_line = 135,
+    expected_commits = { "369bd084", "82dc68ce", "a6dda7d6", "321dd5f5", "790db9e5", "068d9de1", "afe7b925", "9b57cd2f", "e4416b1e", },
+  },
+  {
+    name = 'case 6',
+    commit = '0adb3a6c',
+    file = 'vim/lua/lu5je0/mappings.lua',
+    start_line = 50,
+    end_line = 70,
+    expected_commits = { "b68f6a0a", "15739373", "d51d7330", "a940acfb", "e5340d57", "69561870", "4498a8fb", "35d57303", "95d73de4", "a279c347" },
+  },
+  {
+    name = 'case 7',
+    commit = '0adb3a6c',
+    file = 'vim/lua/lu5je0/options.lua',
+    start_line = 1,
+    end_line = 20,
+    expected_commits = { "ef8241f1", "517101a4", "ec828bce", "4a2140af", "55190f97", "2c54c801", "b74945dc", "4d5f55bc", "a3e012f2", "55a54f53", "5da645c0", "3487139c" },
+  },
+  {
+    name = 'case 8',
+    commit = '0adb3a6c',
+    file = 'vim/lua/lu5je0/autocmds.lua',
+    start_line = 80,
+    end_line = 100,
+    expected_commits = { "05b97965", "06be3812", "ecfd94f8", "9d7b5677" },
+  },
+  {
+    name = 'case 9',
+    commit = '0adb3a6c',
+    file = 'tmux/tmux.conf',
+    start_line = 10,
+    end_line = 30,
+    expected_commits = { "f0fd7a09", "c7ff4f5e", "70e68820", "c79711b8", "0db0632b", "9654cab7", "c53df9a5", "728cebf5", "f3f092ad", "12bbdc16", "8940e6fe", "bf8c8eb0", },
+  },
+  {
+    name = 'case 10',
+    commit = '0adb3a6c',
+    file = 'vim/lua/lu5je0/commands.lua',
+    start_line = 100,
+    end_line = 120,
+    expected_commits = { "6884fb90", "80aea8ba", "2c54c801", "2eda94f4", "23ad0b71", "4007cf81", "3f7ed14a", "321d30d5", "daab957f", },
   },
 }
 

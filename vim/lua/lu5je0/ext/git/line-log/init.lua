@@ -54,8 +54,8 @@ local function cleanup_state()
 end
 
 -- Load file content at a specific revision
-local function load_file_content(rev_hash, callback)
-  local cmd = { 'git', 'show', rev_hash .. ':' .. state.rel_file }
+local function load_file_content(rev_hash, rel_file, callback)
+  local cmd = { 'git', 'show', rev_hash .. ':' .. rel_file }
   state.job = vim.system(cmd, { text = true, cwd = state.repo_root }, function(result)
     vim.schedule(function()
       state.job = nil
@@ -102,7 +102,7 @@ local function process_next_revision()
   local rev = state.revisions[idx]
   local prev_block = state.blocks[idx - 1]
 
-  load_file_content(rev.hash, function(lines)
+  load_file_content(rev.hash, rev.file, function(lines)
     if state.cancelled then
       return
     end
@@ -155,6 +155,7 @@ local function load_revisions()
     '--date=format:%Y-%m-%d %H:%M:%S',
     '--abbrev=8',
     '--follow',
+    '--name-only',
     '--',
     state.rel_file,
   }
@@ -172,19 +173,25 @@ local function load_revisions()
         return
       end
 
-      local lines = vim.split(result.stdout, '\n', { trimempty = true })
       state.revisions = {}
-      for _, line in ipairs(lines) do
+      local current_hash, current_date, current_message
+      for line in result.stdout:gmatch('[^\n]*') do
         local hash, rest = line:match('^(%x+)%s+(.*)$')
         if hash and rest then
           local date, message = rest:match('^([%d%-]+%s+[%d:]+)%s+(.*)$')
           if date then
-            table.insert(state.revisions, {
-              hash = hash,
-              date = date,
-              message = message or '',
-            })
+            current_hash = hash
+            current_date = date
+            current_message = message or ''
           end
+        elseif current_hash and line ~= '' then
+          table.insert(state.revisions, {
+            hash = current_hash,
+            date = current_date,
+            message = current_message,
+            file = line,
+          })
+          current_hash = nil
         end
       end
 
