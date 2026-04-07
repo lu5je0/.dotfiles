@@ -41,7 +41,7 @@ function M.start_spinner(state)
   end, { ['repeat'] = -1 })
 end
 
-function M.highlight_commit_lines(buf, start_idx, lines)
+function M.highlight_commit_lines(buf, start_idx, lines, revs)
   for i, line in ipairs(lines) do
     local hash_end = line:find(' ')
     if hash_end then
@@ -50,6 +50,11 @@ function M.highlight_commit_lines(buf, start_idx, lines)
       local date_end = hash_end + 19
       if #line >= date_end then
         vim.api.nvim_buf_add_highlight(buf, ns_id, 'Comment', start_idx + i - 1, date_start, date_end)
+      end
+      local rev = revs and revs[i]
+      if rev and rev.author and #rev.author > 0 then
+        local author_start = date_end + 1
+        vim.api.nvim_buf_add_highlight(buf, ns_id, 'Special', start_idx + i - 1, author_start, author_start + #rev.author)
       end
     end
   end
@@ -68,7 +73,7 @@ function M.append_commit_line(state, rev)
   if not vim.api.nvim_buf_is_valid(state.log_buf) then
     return
   end
-  local line = string.format('%s %s %s', rev.hash, rev.date, rev.message)
+  local line = string.format('%s %s %s %s', rev.hash, rev.date, rev.author, rev.message)
   vim.bo[state.log_buf].modifiable = true
   if state.commit_count == 0 then
     vim.api.nvim_buf_set_lines(state.log_buf, 0, -1, false, { line })
@@ -76,7 +81,7 @@ function M.append_commit_line(state, rev)
     vim.api.nvim_buf_set_lines(state.log_buf, -1, -1, false, { line })
   end
   state.commit_count = state.commit_count + 1
-  M.highlight_commit_lines(state.log_buf, state.commit_count - 1, { line })
+  M.highlight_commit_lines(state.log_buf, state.commit_count - 1, { line }, { rev })
   vim.bo[state.log_buf].modifiable = false
   M.update_log_statusline(state, true)
 end

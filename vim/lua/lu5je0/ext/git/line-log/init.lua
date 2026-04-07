@@ -151,7 +151,7 @@ local function load_revisions()
   local cmd = {
     'git',
     'log',
-    '--format=%h %ad %s',
+    '--format=%h %ad %s%x00%an',
     '--date=format:%Y-%m-%d %H:%M:%S',
     '--abbrev=8',
     '--follow',
@@ -174,21 +174,24 @@ local function load_revisions()
       end
 
       state.revisions = {}
-      local current_hash, current_date, current_message
+      local current_hash, current_date, current_message, current_author
       for line in result.stdout:gmatch('[^\n]*') do
         local hash, rest = line:match('^(%x+)%s+(.*)$')
         if hash and rest then
           local date, message = rest:match('^([%d%-]+%s+[%d:]+)%s+(.*)$')
           if date then
+            local msg, author = message:match('^(.-)%z(.*)$')
             current_hash = hash
             current_date = date
-            current_message = message or ''
+            current_message = msg or message or ''
+            current_author = author or ''
           end
         elseif current_hash and line ~= '' then
           table.insert(state.revisions, {
             hash = current_hash,
             date = current_date,
             message = current_message,
+            author = current_author,
             file = line,
           })
           current_hash = nil
