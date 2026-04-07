@@ -3,6 +3,8 @@ local ui = require('lu5je0.ext.git.line-log.ui')
 
 local M = {}
 
+local hl_ns = vim.api.nvim_create_namespace('git_line_log_selected')
+
 local state = {
   job = nil,
   diff_job = nil,
@@ -42,8 +44,37 @@ local function kill_job()
   end
 end
 
+local function clear_source_highlight()
+  if state.source_buf and vim.api.nvim_buf_is_valid(state.source_buf) then
+    vim.api.nvim_buf_clear_namespace(state.source_buf, hl_ns, 0, -1)
+  end
+end
+
+local function apply_source_highlight()
+  if not state.source_buf or not vim.api.nvim_buf_is_valid(state.source_buf) then
+    return
+  end
+  if not state.start_line or not state.end_line then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(state.source_buf, hl_ns, 0, -1)
+  for i = state.start_line, state.end_line do
+    vim.api.nvim_buf_set_extmark(state.source_buf, hl_ns, i - 1, 0, {
+      end_row = i,
+      hl_group = 'Visual',
+      hl_eol = true,
+    })
+  end
+end
+
 local function cleanup_state()
   kill_job()
+  clear_source_highlight()
+  if state.hl_augroup then
+    pcall(vim.api.nvim_del_augroup_by_id, state.hl_augroup)
+    state.hl_augroup = nil
+  end
+  state.source_buf = nil
   state.log_buf = nil
   state.log_win = nil
   state.diff_buf = nil
@@ -254,6 +285,9 @@ function M.show()
   state.blocks = {}
   state.current_idx = 0
   state.cancelled = false
+  state.source_buf = vim.api.nvim_get_current_buf()
+
+  apply_source_highlight()
 
   state.log_buf = vim.api.nvim_create_buf(false, true)
   vim.bo[state.log_buf].buftype = 'nofile'
@@ -278,6 +312,19 @@ function M.show()
     once = true,
     callback = function()
       cleanup_state()
+    end,
+  })
+
+  state.hl_augroup = vim.api.nvim_create_augroup('git_line_log_hl', { clear = true })
+  vim.api.nvim_create_autocmd('WinEnter', {
+    group = state.hl_augroup,
+    callback = function()
+      local win = vim.api.nvim_get_current_win()
+      if win == state.log_win or win == state.diff_win then
+        apply_source_highlight()
+      else
+        clear_source_highlight()
+      end
     end,
   })
 
