@@ -354,18 +354,7 @@ function M.show()
     end,
   })
 
-  state.hl_augroup = vim.api.nvim_create_augroup('git_line_log_hl', { clear = true })
-  vim.api.nvim_create_autocmd('WinEnter', {
-    group = state.hl_augroup,
-    callback = function()
-      local win = vim.api.nvim_get_current_win()
-      if win == state.log_win or win == state.diff_win then
-        apply_source_highlight()
-      else
-        clear_source_highlight()
-      end
-    end,
-  })
+
 
   load_revisions()
 end

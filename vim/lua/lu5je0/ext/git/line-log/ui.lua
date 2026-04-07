@@ -86,39 +86,50 @@ function M.append_commit_line(state, rev)
   M.update_log_statusline(state, true)
 end
 
-function M.show_commit_diff(state)
-  local cursor_line = vim.api.nvim_win_get_cursor(state.log_win)[1]
-  local line = vim.api.nvim_buf_get_lines(state.log_buf, cursor_line - 1, cursor_line, false)[1]
-  if not line then
-    return
+function M.show_commit_diff(state, from_line, to_line)
+  if not from_line then
+    from_line = vim.api.nvim_win_get_cursor(state.log_win)[1]
+  end
+  if not to_line then
+    to_line = from_line
+  end
+  if from_line > to_line then
+    from_line, to_line = to_line, from_line
   end
 
-  local commit = line:match('^(%x+)')
-  if not commit then
-    vim.notify('No commit hash found on this line', vim.log.levels.WARN)
-    return
-  end
-
-  -- Find the revision index for this commit
-  local rev_idx = nil
-  for i, rev in ipairs(state.revisions) do
-    if rev.hash == commit then
-      rev_idx = i
-      break
+  -- Collect rev_idx for all selected lines
+  local min_rev_idx, max_rev_idx = nil, nil
+  for line_nr = from_line, to_line do
+    local line = vim.api.nvim_buf_get_lines(state.log_buf, line_nr - 1, line_nr, false)[1]
+    if line then
+      local commit = line:match('^(%x+)')
+      if commit then
+        for i, rev in ipairs(state.revisions) do
+          if rev.hash == commit then
+            if not min_rev_idx or i < min_rev_idx then
+              min_rev_idx = i
+            end
+            if not max_rev_idx or i > max_rev_idx then
+              max_rev_idx = i
+            end
+            break
+          end
+        end
+      end
     end
   end
-  if not rev_idx then
+
+  if not min_rev_idx then
     return
   end
 
   local reuse_win = state.diff_win and vim.api.nvim_win_is_valid(state.diff_win)
 
-  -- IntelliJ approach: diff block contents directly
-  -- new_block = block at this revision (+ side), old_block = block at older revision (- side)
-  local new_block = state.blocks[rev_idx]
-  local old_block = state.blocks[rev_idx + 1]
+  -- new_block = block at newest selected commit (+ side)
+  -- old_block = block before oldest selected commit (- side)
+  local new_block = state.blocks[min_rev_idx]
+  local old_block = state.blocks[max_rev_idx + 1]
 
-  local rev = state.revisions[rev_idx]
   local lines = Block.generate_diff(old_block, new_block)
 
   if reuse_win then
@@ -148,11 +159,25 @@ function M.show_commit_diff(state)
     end, { buffer = state.diff_buf, nowait = true })
   end
 
-  local short_msg = rev and rev.message:sub(1, 50) or ''
-  if rev and #rev.message > 50 then
-    short_msg = short_msg .. '...'
+  -- Statusline: single commit or range
+  if from_line == to_line then
+    local rev = state.revisions[min_rev_idx]
+    local short_msg = rev and rev.message:sub(1, 50) or ''
+    if rev and #rev.message > 50 then
+      short_msg = short_msg .. '...'
+    end
+    vim.wo[state.diff_win].statusline = string.format(' %%#Function#Diff%%* %%#Number#%s%%* %%#Comment#%s%%*', rev.hash, short_msg)
+  else
+    local newest_hash = state.revisions[min_rev_idx].hash
+    local oldest_hash = state.revisions[max_rev_idx].hash
+    local count = to_line - from_line + 1
+    vim.wo[state.diff_win].statusline = string.format(
+      ' %%#Function#Diff%%* %%#Number#%s..%s%%* %%#Comment#(%d commits)%%*',
+      newest_hash,
+      oldest_hash,
+      count
+    )
   end
-  vim.wo[state.diff_win].statusline = string.format(' %%#Function#Diff%%* %%#Number#%s%%* %%#Comment#%s%%*', commit, short_msg)
 end
 
 function M.setup_log_buffer_keymaps(state, on_quit)
@@ -161,6 +186,13 @@ function M.setup_log_buffer_keymaps(state, on_quit)
 
   vim.keymap.set('n', '<CR>', function()
     M.show_commit_diff(state)
+  end, opts)
+
+  vim.keymap.set('x', '<CR>', function()
+    local vstart = vim.fn.getpos('v')[2]
+    local vend = vim.api.nvim_win_get_cursor(state.log_win)[1]
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
+    M.show_commit_diff(state, vstart, vend)
   end, opts)
 
   vim.keymap.set('n', 'J', function()

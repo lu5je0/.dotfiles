@@ -19,7 +19,7 @@
 1. Visual 模式选中代码行后按 `<leader>gl`
 2. 底部 split 窗口显示影响选中行的 commit 列表
 3. 异步逐版本加载，窗口名称显示加载进度
-4. 在 commit 行按 `<CR>` 右侧 vsplit 显示该 commit 对选中行的 diff
+4. 在 commit 行按 `<CR>` 右侧 vsplit 显示该 commit 对选中行的 diff；Visual 选中多个 commit 后按 `<CR>` 显示聚合 diff
 5. 按 `q` 关闭窗口
 
 ### 技术要点
@@ -56,6 +56,7 @@
 |------|------|------|
 | x | `<leader>gl` | 显示选中行的 commit 历史 |
 | n (log buf) | `<CR>` | 显示当前 commit 的 diff |
+| x (log buf) | `<CR>` | 显示选中多个 commit 的聚合 diff |
 | n (log/diff buf) | `q` | 关闭窗口 |
 
 ## 依赖
