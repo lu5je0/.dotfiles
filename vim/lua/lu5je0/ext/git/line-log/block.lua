@@ -49,10 +49,10 @@ function Block:create_previous_block(prev_lines, debug)
   local curr_text = table.concat(self.lines, '\n')
   local prev_text = table.concat(prev_lines, '\n')
 
-  -- vim.diff with result_type='indices' returns list of {prev_start, prev_count, curr_start, curr_count}
+  -- vim.text.diff with result_type='indices' returns list of {prev_start, prev_count, curr_start, curr_count}
   -- Use ignore_whitespace to match IDEA's ComparisonPolicy.IGNORE_WHITESPACES
   -- Use histogram algorithm: produces more stable hunks for block tracking than default myers
-  local ok, hunks = pcall(vim.diff, prev_text, curr_text, {
+  local ok, hunks = pcall(vim.text.diff, prev_text, curr_text, {
     result_type = 'indices',
     ignore_whitespace = true,
     algorithm = 'patience',
@@ -81,7 +81,7 @@ function Block:create_previous_block(prev_lines, debug)
 
     -- Convert to IDEA's 0-based exclusive Range format
     -- When count > 0: start = position - 1 (normal 1-based to 0-based)
-    -- When count = 0: start = position (vim.diff points to context line before gap)
+    -- When count = 0: start = position (vim.text.diff points to context line before gap)
     local range_start1 = pc > 0 and (ps - 1) or ps
     local range_end1 = pc > 0 and (ps - 1 + pc) or ps
     local range_start2 = cc > 0 and (cs - 1) or cs
@@ -186,7 +186,7 @@ function Block.generate_diff(old_block, new_block)
   local old_text = #old_lines > 0 and (table.concat(old_lines, '\n') .. '\n') or ''
   local new_text = #new_lines > 0 and (table.concat(new_lines, '\n') .. '\n') or ''
 
-  local diff_str = vim.diff(old_text, new_text, { algorithm = 'histogram', ctxlen = 3 })
+  local diff_str = vim.text.diff(old_text, new_text, { algorithm = 'histogram', ctxlen = 3 })
   if not diff_str or diff_str == '' then
     return { '-- No changes in selection --' }
   end
