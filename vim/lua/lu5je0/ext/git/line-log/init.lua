@@ -23,6 +23,7 @@ local state = {
   -- block tracking data
   revisions = {}, -- list of {hash, date, message}
   blocks = {}, -- list of {start, end, lines}
+  block_hashes = {}, -- tracks which commit's file content each block is based on
   current_idx = 0,
   cancelled = false,
 }
@@ -81,6 +82,7 @@ local function cleanup_state()
   state.diff_win = nil
   state.revisions = {}
   state.blocks = {}
+  state.block_hashes = {}
   state.current_idx = 0
 end
 
@@ -147,20 +149,56 @@ local function process_next_revision()
     local new_block = prev_block:create_previous_block(lines)
 
     state.blocks[idx] = new_block
+    state.block_hashes[idx] = rev.hash
 
-    -- Check if block content changed from previous version
-    -- Compare even when new_block is empty: non-empty -> empty is a content change
-    -- (matches IDEA's filteredRevisions: checks getLines().equals() before EMPTY_BLOCK break)
-    if not prev_block:content_equals(new_block) then
-      -- Content changed, the previous revision (newer) introduced this change
-      -- For idx=1, prev is current buffer (skip showing local changes)
-      -- For idx>1, prev is revisions[idx-1]
-      if idx > 1 then
-        ui.append_commit_line(state, state.revisions[idx - 1])
-      end
+    local content_changed = not prev_block:content_equals(new_block)
+
+    -- In non-linear git history (parallel branches), the diff between consecutive
+    -- git-log revisions can include changes from multiple commits, causing false
+    -- attribution. Verify ALL content changes by checking the blamed commit's parent.
+    if content_changed and idx > 1 then
+      local blame_hash = state.block_hashes[idx - 1] or state.revisions[idx - 1].hash
+      local blame_file = state.revisions[idx - 1].file
+      load_file_content(blame_hash .. '^', blame_file, function(parent_lines)
+        if state.cancelled then
+          return
+        end
+        local actually_changed = true
+        if parent_lines then
+          local parent_block = prev_block:create_previous_block(parent_lines)
+          if prev_block:content_equals(parent_block) then
+            -- Parent has same content: this commit didn't introduce the change.
+            actually_changed = false
+            -- For empty block: continue tracking from the parent block
+            if new_block:is_empty() and not parent_block:is_empty() then
+              state.blocks[idx] = parent_block
+              state.block_hashes[idx] = blame_hash .. '^'
+            end
+          end
+        end
+
+        if actually_changed then
+          ui.append_commit_line(state, state.revisions[idx - 1])
+        end
+
+        -- Check effective block after potential parent replacement
+        local effective_block = state.blocks[idx]
+        if effective_block:is_empty() then
+          ui.stop_spinner(state)
+          ui.update_log_statusline(state, false)
+          return
+        end
+
+        if idx == #state.revisions then
+          ui.append_commit_line(state, rev)
+        end
+
+        process_next_revision()
+      end)
+      return
     end
 
-    -- If block became empty, stop processing (matches IDEA's EMPTY_BLOCK break)
+    -- If block became empty, stop processing
     if new_block:is_empty() then
       ui.stop_spinner(state)
       ui.update_log_statusline(state, false)
@@ -283,6 +321,7 @@ function M.show()
   state.commit_count = 0
   state.revisions = {}
   state.blocks = {}
+  state.block_hashes = {}
   state.current_idx = 0
   state.cancelled = false
   state.source_buf = vim.api.nvim_get_current_buf()

@@ -27,7 +27,6 @@ end
 function Block:content_equals(other)
   local a = self:get_content()
   local b = other:get_content()
-  -- Strict comparison like IDEA's block1.getLines().equals(block2.getLines())
   if #a ~= #b then
     return false
   end
