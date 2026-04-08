@@ -140,21 +140,20 @@ M.setup = function()
     end
   end
 
-  vim.keymap.set('n', '<leader>ps', function() Snacks.profiler.toggle() end)
-  vim.keymap.set('n', '<leader>ff', function() Snacks.picker.pick("files", {}) end)
-  vim.keymap.set('n', '<leader>fj', function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end)
-  vim.keymap.set('n', '<leader>fm', function() Snacks.picker.pick("recent", {}) end)
-  vim.keymap.set('n', '<leader>fh', function() Snacks.picker.pick("help", {}) end)
-  vim.cmd('map <leader>fn :set filetype=')
-  -- vim.keymap.set('n', '<leader>ft', function() Snacks.picker.pick("filetype", {}) end)
-  vim.keymap.set('n', '<leader>fr', function() Snacks.picker.pick("grep", {}) end)
-  -- 默认是smart-case
-  vim.keymap.set('x', '<leader>fr', wrapper_fn_for_visual(function() Snacks.picker.pick("grep", {}) end))
-  vim.keymap.set('n', '<leader>fR', function() Snacks.picker.pick("git_grep", {}) end)
+  -- vim.keymap.set('n', '<leader>ps', function() Snacks.profiler.toggle() end)
+  -- vim.keymap.set('n', '<leader>ff', function() Snacks.picker.pick("files", {}) end)
+  -- vim.keymap.set('n', '<leader>fj', function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end)
+  -- vim.keymap.set('n', '<leader>fm', function() Snacks.picker.pick("recent", {}) end)
+  -- vim.keymap.set('n', '<leader>fh', function() Snacks.picker.pick("help", {}) end)
+  -- vim.cmd('map <leader>fn :set filetype=')
+  -- -- vim.keymap.set('n', '<leader>ft', function() Snacks.picker.pick("filetype", {}) end)
+  -- vim.keymap.set('n', '<leader>fr', function() Snacks.picker.pick("grep", {}) end)
+  -- -- 默认是smart-case
+  -- vim.keymap.set('x', '<leader>fr', wrapper_fn_for_visual(function() Snacks.picker.pick("grep", {}) end))
+  -- vim.keymap.set('n', '<leader>fR', function() Snacks.picker.pick("git_grep", {}) end)
   vim.keymap.set('n', '<leader>fg', function() Snacks.picker.pick("git_status", {}) end)
   vim.keymap.set('n', '<leader>fG', function() Snacks.picker.pick("git_diff", {}) end)
-  vim.keymap.set('n', '<leader>fc', function() Snacks.picker.pick("cliphist", {}) end)
-  vim.keymap.set('n', '<leader>fl', function() Snacks.picker.pick("git_log", {}) end)
+  -- vim.keymap.set('n', '<leader>fl', function() Snacks.picker.pick("git_log", {}) end)
   vim.keymap.set('n', '<leader>fp',
     function()
       Snacks.picker.pick("projects",
