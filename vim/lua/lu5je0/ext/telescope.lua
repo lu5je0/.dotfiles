@@ -17,7 +17,7 @@ local function theme(preview)
     width = 0.8,
     height = 50,
     results_height = 50,
-    -- prompt_title = false,
+    prompt_title = false,
     results_title = false,
     preview_title = false
   }
@@ -27,9 +27,35 @@ local function theme(preview)
 
   local dropdown = require('telescope.themes').get_dropdown(t)
   ---@diagnostic disable-next-line: assign-type-mismatch
-  dropdown.layout_config.height = 23
+  dropdown.layout_config.height = function(_, _, max_lines)
+    return math.floor(max_lines * 0.70)
+  end
 
   return dropdown
+end
+
+local function horizontal_theme()
+  return {
+    layout_strategy = 'horizontal_merged',
+    prompt_title = false,
+    layout_config = {
+      horizontal = {
+        preview_width = 0.55,
+      },
+      prompt_position = 'top',
+      width = 0.9,
+      height = 0.85,
+    },
+    sorting_strategy = 'ascending',
+    borderchars = {
+      { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
+      prompt = { "─", "│", "─", "│", '┌', '┐', '┤', '├' },
+      results = { "─", "│", "─", "│", "├", "┤", "┘", "└" },
+      preview = { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
+    },
+    results_title = false,
+    preview_title = false,
+  }
 end
 
 local function fuzzy_grep()
@@ -69,33 +95,36 @@ local function key_mapping()
   end
 
   local telescope_builtin = require('telescope.builtin')
-  -- set_map('<leader>ff', function() telescope_builtin.find_files(theme()) end, true)
-  -- set_map('<leader>fj', function()
-  --   telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
-  --     { theme, search_dirs = { '~/junk-file' }, prompt_title = 'Junk Files' }))
-  -- end)
+  set_map('<leader>ff', function() telescope_builtin.find_files(theme()) end, true)
+  set_map('<leader>fj', function()
+    telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
+      { theme, search_dirs = { '~/junk-file' }, prompt_title = 'Junk Files' }))
+  end)
   
-  -- set_map('<leader>ft', function()
-  --   telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
-  --     {
-  --       theme,
-  --       search_dirs = { vim.fn.stdpath('state') .. '/time-machine' },
-  --       prompt_title = 'Time Machine'
-  --     }))
-  -- end)
+  set_map('<leader>ft', function()
+    telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
+      {
+        theme,
+        search_dirs = { vim.fn.stdpath('state') .. '/time-machine' },
+        prompt_title = 'Time Machine'
+      }))
+  end)
   
-  -- set_map('<leader>fm', function() telescope_builtin.oldfiles(vim.tbl_deep_extend("force", theme(), { prompt_title = 'Old Files' })) end)
-  -- set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
-  -- set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
+  set_map('<leader>fm', function() telescope_builtin.oldfiles(vim.tbl_deep_extend("force", theme(), { prompt_title = 'Old Files' })) end)
+  set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
+  set_map('<leader>fn', function() telescope_builtin.filetypes(theme()) end)
   -- vim.cmd('map <leader>fn :set filetype=')
-  -- set_map('<leader>fr', function() telescope_builtin.live_grep(theme(true)) end, true)
-  -- set_map('<leader>fR', function() fuzzy_grep() end, true)
-  -- set_map('<leader>fC', function() telescope_builtin.colorscheme(theme()) end)
-  -- set_map('<leader>fc', function() telescope_builtin.commands(theme()) end)
+  set_map('<leader>fr', function() telescope_builtin.live_grep(horizontal_theme()) end, true)
+  set_map('<leader>fR', function()
+    telescope_builtin.grep_string(vim.tbl_deep_extend('force', horizontal_theme(),
+      { shorten_path = true, word_match = "-w", only_sort_text = true, search = '', prompt_title = 'Fuzzy Grep' }))
+  end, true)
+  set_map('<leader>fC', function() telescope_builtin.colorscheme(theme()) end)
+  set_map('<leader>fc', function() telescope_builtin.commands(theme()) end)
   -- set_map('<leader>fg', function() telescope_builtin.git_status(theme()) end)
-  -- set_map('<leader>fb', function() telescope_builtin.buffers(theme()) end)
-  -- set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end, true)
-  -- set_map('<leader>f"', function() telescope_builtin.registers(theme()) end)
+  set_map('<leader>fb', function() telescope_builtin.buffers(theme()) end)
+  set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end, true)
+  set_map('<leader>f"', function() telescope_builtin.registers(theme()) end)
 end
 
 local function remember_last_search()
@@ -165,6 +194,21 @@ local function remember_last_search()
 end
 
 function M.setup()
+  local layout_strategies = require('telescope.pickers.layout_strategies')
+  local _horizontal = layout_strategies.horizontal
+  layout_strategies.horizontal_merged = function(self, max_columns, max_lines, layout_config)
+    local result = _horizontal(self, max_columns, max_lines, layout_config)
+    if result.results and result.prompt then
+      if result.prompt.line < result.results.line then
+        result.results.line = result.results.line - 1
+        result.results.height = result.results.height + 1
+      else
+        result.prompt.line = result.prompt.line - 1
+      end
+    end
+    return result
+  end
+
   telescope.setup {
     defaults = vim.tbl_extend(
       "keep",

@@ -288,13 +288,13 @@ M.setup = function()
       if gitsigns then
         local parts = {}
         if gitsigns.added and gitsigns.added > 0 then
-          table.insert(parts, string.format("%s+%d", get_highlight("GitSignsAdd"), gitsigns.added))
+          table.insert(parts, string.format("%s+%d", get_highlight("GreenSign"), gitsigns.added))
         end
         if gitsigns.changed and gitsigns.changed > 0 then
-          table.insert(parts, string.format("%s~%d", get_highlight("GitSignsChange"), gitsigns.changed))
+          table.insert(parts, string.format("%s~%d", get_highlight("BlueSign"), gitsigns.changed))
         end
         if gitsigns.removed and gitsigns.removed > 0 then
-          table.insert(parts, string.format("%s-%d", get_highlight("GitSignsDelete"), gitsigns.removed))
+          table.insert(parts, string.format("%s-%d", get_highlight("RedSign"), gitsigns.removed))
         end
         return table.concat(parts, " ")
       end
