@@ -502,10 +502,6 @@ function M.setup()
       ignore = false,
       timeout = 500,
     },
-    system_open = {
-      cmd = nil,
-      args = {},
-    },
     filters = {
       dotfiles = true,
       custom = {},

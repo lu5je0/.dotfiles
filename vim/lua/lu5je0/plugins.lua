@@ -62,6 +62,11 @@ local plugins = {
       vim.api.nvim_set_hl(0, 'StatusLine', { fg = '#c5cdd9', bg = '#212328' })
       -- 非当前状态栏
       vim.api.nvim_set_hl(0, 'StatusLineNC', { fg = '#c5cdd9', bg = '#212328' })
+
+      -- gitsigns unstaged 颜色调淡
+      vim.api.nvim_set_hl(0, 'GitSignsAdd', { fg = '#6d8a5c' })
+      vim.api.nvim_set_hl(0, 'GitSignsChange', { fg = '#4f7f96' })
+      vim.api.nvim_set_hl(0, 'GitSignsDelete', { fg = '#9c5459' })
     end
   },
 
