@@ -14,6 +14,7 @@ q-transfer - 文件上传客户端
 
 import argparse
 import os
+import platform
 import sys
 import time
 import requests
@@ -125,7 +126,10 @@ class AuthManager:
         print(f"正在注册设备到 {self.host}...")
 
         try:
-            resp = requests.post(f"{self.host}/api/auth/register")
+            resp = requests.post(
+                f"{self.host}/api/auth/register",
+                json={"hostname": platform.node()}
+            )
             resp.raise_for_status()
         except requests.RequestException as e:
             print(f"注册失败: {e}")
