@@ -16,7 +16,6 @@ import argparse
 import os
 import sys
 import time
-import webbrowser
 import requests
 from tqdm import tqdm
 from tqdm.utils import CallbackIOWrapper
@@ -344,10 +343,9 @@ def main():
     # 确认上传
     if not args.yes:
         try:
-            is_upload = input(f'\n确认上传到 {host}? (y/n): ')
-            if is_upload.lower() not in ('y', 'yes', ''):
-                return
+            input(f'\n按 Enter 确认上传到 {host}: ')
         except KeyboardInterrupt:
+            print()
             return
 
     # 上传文件
