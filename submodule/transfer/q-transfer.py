@@ -347,7 +347,7 @@ def main():
     # 确认上传
     if not args.yes:
         try:
-            input(f'\n按 Enter 确认上传到 {host}: ')
+            input(f'\n按 Enter 确认上传到 {host}')
         except KeyboardInterrupt:
             print()
             return
