@@ -13,10 +13,13 @@ q-transfer - 文件上传客户端
 """
 
 import argparse
+import gzip
+import io
 import os
 import platform
 import sys
 import time
+import zlib
 import requests
 from tqdm import tqdm
 from tqdm.utils import CallbackIOWrapper
@@ -225,7 +228,7 @@ class Uploader:
         qr.make(fit=True)
         qr.print_ascii()
 
-    def upload(self, file_path, qrcode=True):
+    def upload(self, file_path, qrcode=True, use_gzip=True):
         """上传单个文件"""
         # 确保已授权
         if not self.auth.ensure_authorized():
@@ -238,19 +241,93 @@ class Uploader:
             'Authorization': f'Bearer {self.auth.token_holder.token}'
         }
 
-        with open(file_path, "rb") as f:
-            with tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as t:
-                wrapped_file = CallbackIOWrapper(t.update, f, "read")
+        if use_gzip:
+            headers['Content-Encoding'] = 'gzip'
+
+            def gzip_stream_generator(path, chunk_size=1024 * 1024):
+                """流式 gzip 压缩生成器，逐块读取文件并压缩"""
+                total_compressed = 0
+                buf = io.BytesIO()
+                gz = gzip.GzipFile(fileobj=buf, mode='wb')
+                with open(path, 'rb') as f:
+                    while True:
+                        chunk = f.read(chunk_size)
+                        if not chunk:
+                            break
+                        gz.write(chunk)
+                        # flush 让压缩数据写入 buf
+                        gz.flush(zlib.Z_SYNC_FLUSH)
+                        compressed_chunk = buf.getvalue()
+                        if compressed_chunk:
+                            total_compressed += len(compressed_chunk)
+                            yield compressed_chunk
+                            buf.seek(0)
+                            buf.truncate()
+                gz.close()
+                # 写入 gzip 尾部
+                tail = buf.getvalue()
+                if tail:
+                    total_compressed += len(tail)
+                    yield tail
+                # 把总压缩大小存到生成器的属性上没法做，用闭包变量
+                gzip_stream_generator._total_compressed = total_compressed
+
+            class GzipStreamWithProgress:
+                """包装流式 gzip，统计压缩大小并驱动 tqdm 进度条"""
+                def __init__(self, path, progress_bar):
+                    self.gen = gzip_stream_generator(path)
+                    self.progress_bar = progress_bar
+                    self.total_compressed = 0
+
+                def read(self, size=-1):
+                    try:
+                        chunk = next(self.gen)
+                        self.total_compressed += len(chunk)
+                        self.progress_bar.update(len(chunk))
+                        return chunk
+                    except StopIteration:
+                        return b''
+
+                def __iter__(self):
+                    return self
+
+                def __next__(self):
+                    chunk = self.read()
+                    if not chunk:
+                        raise StopIteration
+                    return chunk
+
+            with tqdm(unit="B", unit_scale=True, unit_divisor=1024, desc="uploading") as t:
+                stream = GzipStreamWithProgress(file_path, t)
                 try:
                     resp = requests.put(
                         f"{self.host}/{filename}",
-                        data=wrapped_file,
+                        data=stream,
                         headers=headers
                     )
                     resp.raise_for_status()
                 except requests.RequestException as e:
                     print(f"\n上传失败: {e}")
                     return False
+                compressed_size = stream.total_compressed
+
+            if file_size > 0:
+                ratio = (1 - compressed_size / file_size) * 100
+                print(f"gzip: {FileHelper.convert_bytes(file_size)} -> {FileHelper.convert_bytes(compressed_size)} ({ratio:.1f}% saved)")
+        else:
+            with open(file_path, "rb") as f:
+                with tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024) as t:
+                    wrapped_file = CallbackIOWrapper(t.update, f, "read")
+                    try:
+                        resp = requests.put(
+                            f"{self.host}/{filename}",
+                            data=wrapped_file,
+                            headers=headers
+                        )
+                        resp.raise_for_status()
+                    except requests.RequestException as e:
+                        print(f"\n上传失败: {e}")
+                        return False
 
         # 输出结果
         download_url = resp.text.strip()
@@ -315,6 +392,8 @@ def main():
                         help='要上传的文件')
     parser.add_argument('-y', '--yes', action='store_true',
                         help='跳过确认')
+    parser.add_argument('--gzip', action='store_true',
+                        help='启用 gzip 压缩上传')
 
     args = parser.parse_args()
 
@@ -354,8 +433,9 @@ def main():
 
     # 上传文件
     uploader = Uploader(host)
+    use_gzip = args.gzip
     for f in args.files:
-        uploader.upload(f, qrcode=True)
+        uploader.upload(f, qrcode=True, use_gzip=use_gzip)
 
 
 if __name__ == "__main__":
