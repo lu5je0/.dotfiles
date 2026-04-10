@@ -29,15 +29,15 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
 elif [[ $UNAME_INFO =~ "WSL" ]]; then
   export WIN_HOME=/mnt/c/Users/lu5je0
   
-  # windows 目录使用windows的git
-  function __git_prompt_git() {
+  # windows 目录使用 windows 的 git
+  # 直接定义 git 函数而非 alias + 独立函数，避免非交互式 shell 中 alias 加载但函数未定义的问题
+  function git() {
     if [[ "$PWD" =~ '^/mnt/[cdefgh]' ]]; then
       command git.exe "$@"
     else
       command git "$@"
     fi
   }
-  alias git='__git_prompt_git'
   
   alias grep='grep --color'
   alias e='/mnt/c/Windows/explorer.exe'
