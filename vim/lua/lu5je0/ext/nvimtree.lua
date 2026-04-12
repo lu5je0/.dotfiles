@@ -9,6 +9,69 @@ local ui = require('lu5je0.core.ui')
 
 M.pwd_stack = require('lu5je0.lang.stack'):create()
 M.pwd_forward_stack = require('lu5je0.lang.stack'):create()
+local function setup_nvim_tree_guicursor_autocmd()
+  local guicursor_backup = nil
+
+  local function set_replace_cursor_block(guicursor)
+    local parts = vim.split(guicursor, ',', { trimempty = true })
+    local replaced = false
+
+    for i, part in ipairs(parts) do
+      local mode_list = vim.split(vim.split(part, ':', { plain = true })[1] or '', '-', { trimempty = true })
+      for _, mode in ipairs(mode_list) do
+        if mode == 'r' or mode == 'cr' or mode == 'o' then
+          parts[i] = 'r-cr-o:block'
+          replaced = true
+          break
+        end
+      end
+    end
+
+    if not replaced then
+      table.insert(parts, 'r-cr-o:block')
+    end
+
+    return table.concat(parts, ',')
+  end
+
+  local function disable_obscured_cursor_for_nvim_tree()
+    if guicursor_backup ~= nil then
+      return
+    end
+
+    guicursor_backup = vim.o.guicursor
+    vim.o.guicursor = set_replace_cursor_block(vim.o.guicursor)
+  end
+
+  local function restore_guicursor_after_nvim_tree()
+    if guicursor_backup == nil then
+      return
+    end
+
+    vim.o.guicursor = guicursor_backup
+    guicursor_backup = nil
+  end
+
+  local group = vim.api.nvim_create_augroup('nvim-tree-disable-obscured-cursor', { clear = true })
+
+  vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinEnter' }, {
+    group = group,
+    callback = function(args)
+      if vim.bo[args.buf].filetype == 'NvimTree' then
+        disable_obscured_cursor_for_nvim_tree()
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'BufWinLeave', 'WinLeave' }, {
+    group = group,
+    callback = function(args)
+      if vim.bo[args.buf].filetype == 'NvimTree' then
+        restore_guicursor_after_nvim_tree()
+      end
+    end,
+  })
+end
 
 local function get_node_at_cursor()
   return api.tree.get_node_under_cursor()
@@ -599,6 +662,7 @@ function M.setup()
   end, 30)
   
   remember_width()
+  setup_nvim_tree_guicursor_autocmd()
 end
 
 return M
