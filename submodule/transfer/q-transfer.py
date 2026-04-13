@@ -250,10 +250,12 @@ class Uploader:
                         chunk = f.read(chunk_size)
                         if not chunk:
                             break
+                        gzip_stream_generator._last_input_size = len(chunk)
                         compressed_chunk = compressor.compress(chunk)
                         if compressed_chunk:
                             yield compressed_chunk
                 tail = compressor.flush()
+                gzip_stream_generator._last_input_size = 0
                 if tail:
                     yield tail
 
@@ -262,13 +264,22 @@ class Uploader:
                 def __init__(self, path, progress_bar):
                     self.gen = gzip_stream_generator(path)
                     self.progress_bar = progress_bar
+                    self.total_input = 0
                     self.total_compressed = 0
 
                 def read(self, size=-1):
                     try:
                         chunk = next(self.gen)
+                        self.total_input += getattr(gzip_stream_generator, '_last_input_size', 0)
                         self.total_compressed += len(chunk)
                         self.progress_bar.update(len(chunk))
+                        if self.total_input > 0:
+                            ratio = (1 - self.total_compressed / self.total_input) * 100
+                            self.progress_bar.set_postfix_str(
+                                f"src={FileHelper.convert_bytes(self.total_input)} "
+                                f"gzip={FileHelper.convert_bytes(self.total_compressed)} "
+                                f"saved={ratio:.1f}%"
+                            )
                         return chunk
                     except StopIteration:
                         return b''
