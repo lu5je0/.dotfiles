@@ -250,14 +250,14 @@ class Uploader:
                         chunk = f.read(chunk_size)
                         if not chunk:
                             break
-                        gzip_stream_generator._last_input_size = len(chunk)
                         compressed_chunk = compressor.compress(chunk)
                         if compressed_chunk:
-                            yield compressed_chunk
+                            yield len(chunk), compressed_chunk
+                            continue
+                        yield len(chunk), b''
                 tail = compressor.flush()
-                gzip_stream_generator._last_input_size = 0
                 if tail:
-                    yield tail
+                    yield 0, tail
 
             class GzipStreamWithProgress:
                 """包装流式 gzip，统计压缩大小并驱动 tqdm 进度条"""
@@ -269,10 +269,11 @@ class Uploader:
 
                 def read(self, size=-1):
                     try:
-                        chunk = next(self.gen)
-                        self.total_input += getattr(gzip_stream_generator, '_last_input_size', 0)
+                        input_size, chunk = next(self.gen)
+                        self.total_input += input_size
                         self.total_compressed += len(chunk)
-                        self.progress_bar.update(len(chunk))
+                        if input_size:
+                            self.progress_bar.update(input_size)
                         if self.total_input > 0:
                             ratio = (1 - self.total_compressed / self.total_input) * 100
                             self.progress_bar.set_postfix_str(
@@ -293,7 +294,7 @@ class Uploader:
                         raise StopIteration
                     return chunk
 
-            with tqdm(unit="B", unit_scale=True, unit_divisor=1024, desc="uploading") as t:
+            with tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024, desc="uploading") as t:
                 stream = GzipStreamWithProgress(file_path, t)
                 try:
                     resp = requests.put(
