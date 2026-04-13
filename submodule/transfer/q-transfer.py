@@ -276,11 +276,7 @@ class Uploader:
                             self.progress_bar.update(input_size)
                         if self.total_input > 0:
                             ratio = (1 - self.total_compressed / self.total_input) * 100
-                            self.progress_bar.set_postfix_str(
-                                f"src={FileHelper.convert_bytes(self.total_input)} "
-                                f"gzip={FileHelper.convert_bytes(self.total_compressed)} "
-                                f"saved={ratio:.1f}%"
-                            )
+                            self.progress_bar.set_postfix_str(f"saved={ratio:.1f}%")
                         return chunk
                     except StopIteration:
                         return b''
