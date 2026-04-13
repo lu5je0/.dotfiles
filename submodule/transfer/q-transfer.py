@@ -13,8 +13,6 @@ q-transfer - 文件上传客户端
 """
 
 import argparse
-import gzip
-import io
 import os
 import platform
 import sys
@@ -246,31 +244,18 @@ class Uploader:
 
             def gzip_stream_generator(path, chunk_size=1024 * 1024):
                 """流式 gzip 压缩生成器，逐块读取文件并压缩"""
-                total_compressed = 0
-                buf = io.BytesIO()
-                gz = gzip.GzipFile(fileobj=buf, mode='wb')
+                compressor = zlib.compressobj(wbits=16 + zlib.MAX_WBITS)
                 with open(path, 'rb') as f:
                     while True:
                         chunk = f.read(chunk_size)
                         if not chunk:
                             break
-                        gz.write(chunk)
-                        # flush 让压缩数据写入 buf
-                        gz.flush(zlib.Z_SYNC_FLUSH)
-                        compressed_chunk = buf.getvalue()
+                        compressed_chunk = compressor.compress(chunk)
                         if compressed_chunk:
-                            total_compressed += len(compressed_chunk)
                             yield compressed_chunk
-                            buf.seek(0)
-                            buf.truncate()
-                gz.close()
-                # 写入 gzip 尾部
-                tail = buf.getvalue()
+                tail = compressor.flush()
                 if tail:
-                    total_compressed += len(tail)
                     yield tail
-                # 把总压缩大小存到生成器的属性上没法做，用闭包变量
-                gzip_stream_generator._total_compressed = total_compressed
 
             class GzipStreamWithProgress:
                 """包装流式 gzip，统计压缩大小并驱动 tqdm 进度条"""
