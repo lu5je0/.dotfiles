@@ -6,11 +6,6 @@ q-transfer - 文件上传客户端
 1. 运行 q-transfer -r <host> 注册设备
 2. 按提示打开浏览器授权
 3. 授权后即可上传文件
-
-示例:
-    q-transfer -r http://transfer.com:8000    # 注册授权
-    q-transfer file.txt                        # 上传文件（默认启用 gzip）
-    q-transfer --no-gzip image.png            # 禁用 gzip 上传
 """
 
 import argparse
@@ -413,8 +408,8 @@ def main():
         epilog='''
 示例:
   q-transfer -r http://192.168.1.3:8000    # 注册授权
-  q-transfer file.txt                        # 上传文件（默认启用 gzip）
-  q-transfer --no-gzip image.png            # 禁用 gzip 上传
+  q-transfer file.txt                      # 上传文件（默认启用 gzip）
+  q-transfer --no-gzip image.png           # 禁用 gzip 上传
         '''
     )
     parser.add_argument('-r', '--register', metavar='HOST',
