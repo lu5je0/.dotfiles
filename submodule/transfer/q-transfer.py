@@ -9,7 +9,8 @@ q-transfer - 文件上传客户端
 
 示例:
     q-transfer -r http://transfer.com:8000    # 注册授权
-    q-transfer file.txt                        # 上传文件
+    q-transfer file.txt                        # 上传文件（默认启用 gzip）
+    q-transfer --no-gzip image.png            # 禁用 gzip 上传
 """
 
 import argparse
@@ -213,6 +214,83 @@ class FileHelper:
             return FileHelper.convert_bytes(file_info.st_size)
 
 
+class TransferConfig:
+    GZIP_CHUNK_SIZE = 1024 * 1024
+    GZIP_PROGRESS_UPDATE_INTERVAL = 0.2
+    GZIP_SKIP_EXTENSIONS = {
+        '.exe', '.7z', '.avi', '.br', '.bz2', '.cab', '.gz', '.heic', '.jpeg', '.jpg',
+        '.m4a', '.m4v', '.mkv', '.mov', '.mp3', '.mp4', '.ogg', '.ogv', '.opus',
+        '.pdf', '.png', '.rar', '.tar', '.tgz', '.webm', '.webp', '.xz', '.zip',
+    }
+
+
+class GzipStream:
+    """Stream gzip-compressed bytes while tracking upload progress."""
+
+    def __init__(self, path, progress_bar, level=1, chunk_size=TransferConfig.GZIP_CHUNK_SIZE):
+        self.path = path
+        self.progress_bar = progress_bar
+        self.chunk_size = chunk_size
+        self.compressor = zlib.compressobj(level=level, wbits=16 + zlib.MAX_WBITS)
+        self.file = open(path, 'rb')
+        self.total_input = 0
+        self.total_compressed = 0
+        self._pending = b''
+        self._eof = False
+        self._last_postfix_update = 0.0
+
+    def _update_progress(self, input_size, compressed_size):
+        if input_size:
+            self.total_input += input_size
+            self.progress_bar.update(input_size)
+        self.total_compressed += compressed_size
+
+        now = time.monotonic()
+        if (
+            self.total_input > 0 and
+            now - self._last_postfix_update >= TransferConfig.GZIP_PROGRESS_UPDATE_INTERVAL
+        ):
+            ratio = (1 - self.total_compressed / self.total_input) * 100
+            self.progress_bar.set_postfix_str(f"saved={ratio:.1f}%")
+            self._last_postfix_update = now
+
+    def read(self, size=-1):
+        if self._pending:
+            chunk = self._pending
+            self._pending = b''
+            return chunk
+
+        while not self._eof:
+            raw = self.file.read(self.chunk_size)
+            if raw:
+                compressed = self.compressor.compress(raw)
+                self._update_progress(len(raw), len(compressed))
+                if compressed:
+                    return compressed
+                continue
+
+            tail = self.compressor.flush()
+            self._eof = True
+            self.file.close()
+            if self.total_input > 0:
+                ratio = (1 - (self.total_compressed + len(tail)) / self.total_input) * 100
+                self.progress_bar.set_postfix_str(f"saved={ratio:.1f}%")
+            if tail:
+                self.total_compressed += len(tail)
+                return tail
+
+        return b''
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        chunk = self.read()
+        if not chunk:
+            raise StopIteration
+        return chunk
+
+
 class Uploader:
     def __init__(self, host):
         self.host = host.rstrip('/')
@@ -226,7 +304,11 @@ class Uploader:
         qr.make(fit=True)
         qr.print_ascii()
 
-    def upload(self, file_path, qrcode=True, use_gzip=True):
+    @staticmethod
+    def should_skip_gzip(file_path):
+        return os.path.splitext(file_path)[1].lower() in TransferConfig.GZIP_SKIP_EXTENSIONS
+
+    def upload(self, file_path, qrcode=True, use_gzip=True, gzip_level=1):
         """上传单个文件"""
         # 确保已授权
         if not self.auth.ensure_authorized():
@@ -239,59 +321,16 @@ class Uploader:
             'Authorization': f'Bearer {self.auth.token_holder.token}'
         }
 
-        if use_gzip:
+        effective_gzip = use_gzip
+        if effective_gzip and self.should_skip_gzip(file_path):
+            print("gzip: skipped for already-compressed file type")
+            effective_gzip = False
+
+        if effective_gzip:
             headers['Content-Encoding'] = 'gzip'
 
-            def gzip_stream_generator(path, chunk_size=1024 * 1024):
-                """流式 gzip 压缩生成器，逐块读取文件并压缩"""
-                compressor = zlib.compressobj(wbits=16 + zlib.MAX_WBITS)
-                with open(path, 'rb') as f:
-                    while True:
-                        chunk = f.read(chunk_size)
-                        if not chunk:
-                            break
-                        compressed_chunk = compressor.compress(chunk)
-                        if compressed_chunk:
-                            yield len(chunk), compressed_chunk
-                            continue
-                        yield len(chunk), b''
-                tail = compressor.flush()
-                if tail:
-                    yield 0, tail
-
-            class GzipStreamWithProgress:
-                """包装流式 gzip，统计压缩大小并驱动 tqdm 进度条"""
-                def __init__(self, path, progress_bar):
-                    self.gen = gzip_stream_generator(path)
-                    self.progress_bar = progress_bar
-                    self.total_input = 0
-                    self.total_compressed = 0
-
-                def read(self, size=-1):
-                    try:
-                        input_size, chunk = next(self.gen)
-                        self.total_input += input_size
-                        self.total_compressed += len(chunk)
-                        if input_size:
-                            self.progress_bar.update(input_size)
-                        if self.total_input > 0:
-                            ratio = (1 - self.total_compressed / self.total_input) * 100
-                            self.progress_bar.set_postfix_str(f"saved={ratio:.1f}%")
-                        return chunk
-                    except StopIteration:
-                        return b''
-
-                def __iter__(self):
-                    return self
-
-                def __next__(self):
-                    chunk = self.read()
-                    if not chunk:
-                        raise StopIteration
-                    return chunk
-
             with tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024, desc="uploading") as t:
-                stream = GzipStreamWithProgress(file_path, t)
+                stream = GzipStream(file_path, t, level=gzip_level)
                 try:
                     resp = requests.put(
                         f"{self.host}/{filename}",
@@ -374,7 +413,8 @@ def main():
         epilog='''
 示例:
   q-transfer -r http://192.168.1.3:8000    # 注册授权
-  q-transfer file.txt                        # 上传文件
+  q-transfer file.txt                        # 上传文件（默认启用 gzip）
+  q-transfer --no-gzip image.png            # 禁用 gzip 上传
         '''
     )
     parser.add_argument('-r', '--register', metavar='HOST',
@@ -385,8 +425,10 @@ def main():
                         help='要上传的文件')
     parser.add_argument('-y', '--yes', action='store_true',
                         help='跳过确认')
-    parser.add_argument('--gzip', action='store_true',
-                        help='启用 gzip 压缩上传')
+    parser.add_argument('--no-gzip', action='store_true',
+                        help='禁用 gzip 压缩上传')
+    parser.add_argument('--gzip-level', type=int, default=1, choices=range(1, 10),
+                        help='gzip 压缩级别，1-9，默认 1')
 
     args = parser.parse_args()
 
@@ -426,9 +468,9 @@ def main():
 
     # 上传文件
     uploader = Uploader(host)
-    use_gzip = args.gzip
+    use_gzip = not args.no_gzip
     for f in args.files:
-        uploader.upload(f, qrcode=True, use_gzip=use_gzip)
+        uploader.upload(f, qrcode=True, use_gzip=use_gzip, gzip_level=args.gzip_level)
 
 
 if __name__ == "__main__":

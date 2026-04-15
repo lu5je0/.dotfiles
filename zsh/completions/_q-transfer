@@ -5,7 +5,8 @@ _q_transfer() {
     '(-r --register)'{-r,--register}'[register and authorize with server]:host: ' \
     '(-l --logout)'{-l,--logout}'[logout from server]:host: ' \
     '(-y --yes)'{-y,--yes}'[skip confirmation]' \
-    '--gzip[enable gzip compression]' \
+    '--no-gzip[disable gzip compression]' \
+    '--gzip-level[gzip compression level (1-9)]:level:(1 2 3 4 5 6 7 8 9)' \
     '(-h --help)'{-h,--help}'[show help]' \
     '*:file:_files'
 }
