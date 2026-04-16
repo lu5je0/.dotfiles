@@ -1,5 +1,6 @@
 local Block = require('lu5je0.ext.git.line-log.block')
 local ui = require('lu5je0.ext.git.line-log.ui')
+local env_keeper = require('lu5je0.misc.env-keeper')
 
 local M = {}
 
@@ -10,26 +11,27 @@ local state = {
   diff_job = nil,
   log_buf = nil,
   diff_buf = nil,
+  diff_buf2 = nil,
   log_win = nil,
   diff_win = nil,
+  diff_win2 = nil,
   file = nil,
   rel_file = nil,
   repo_root = nil,
   start_line = nil,
   end_line = nil,
   commit_count = 0,
-  spinner_idx = 1,
-  spinner_timer = nil,
   -- block tracking data
   revisions = {}, -- list of {hash, full, date, message, author, file}
   blocks = {}, -- list of Block objects indexed by revision idx
   current_idx = 0,
   cancelled = false,
+  -- diff mode: 'single' or 'dual' (vimdiff style)
+  diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
 }
 
 local function kill_job()
   state.cancelled = true
-  ui.stop_spinner(state)
   if state.job then
     pcall(function()
       state.job:kill()
@@ -79,6 +81,8 @@ local function cleanup_state()
   state.log_win = nil
   state.diff_buf = nil
   state.diff_win = nil
+  state.diff_buf2 = nil
+  state.diff_win2 = nil
   state.revisions = {}
   state.blocks = {}
   state.current_idx = 0
@@ -248,9 +252,9 @@ local function process_next_revision()
 
   state.current_idx = state.current_idx + 1
   local idx = state.current_idx
+  ui.update_log_statusline(state, true)
 
   if idx > #state.revisions then
-    ui.stop_spinner(state)
     ui.update_log_statusline(state, false)
     if state.commit_count == 0 then
       ui.set_buffer_lines(state.log_buf, { '-- No commits found --' })
@@ -265,7 +269,6 @@ local function process_next_revision()
       return
     end
     if not lines then
-      ui.stop_spinner(state)
       ui.update_log_statusline(state, false)
       return
     end
@@ -280,7 +283,6 @@ local function process_next_revision()
     end
 
     if prev_block:is_empty() then
-      ui.stop_spinner(state)
       ui.update_log_statusline(state, false)
       return
     end
@@ -302,7 +304,6 @@ local function load_revisions()
         return
       end
       if result.code ~= 0 then
-        ui.stop_spinner(state)
         ui.update_log_statusline(state, false)
         ui.set_buffer_lines(state.log_buf, { '-- Not in a git repository --' })
         return
@@ -310,7 +311,6 @@ local function load_revisions()
 
       local head = (result.stdout or ''):match('%x+')
       if not head then
-        ui.stop_spinner(state)
         ui.update_log_statusline(state, false)
         ui.set_buffer_lines(state.log_buf, { '-- No commits found --' })
         return
@@ -323,7 +323,6 @@ local function load_revisions()
         state.revisions = revisions
 
         if #revisions == 0 then
-          ui.stop_spinner(state)
           ui.update_log_statusline(state, false)
           ui.set_buffer_lines(state.log_buf, { '-- No commits found --' })
           return
@@ -363,11 +362,10 @@ function M.show()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
 
   kill_job()
-  if state.log_win and vim.api.nvim_win_is_valid(state.log_win) then
-    vim.api.nvim_win_close(state.log_win, true)
-  end
-  if state.diff_win and vim.api.nvim_win_is_valid(state.diff_win) then
-    vim.api.nvim_win_close(state.diff_win, true)
+  for _, win in ipairs({ state.diff_win2, state.diff_win, state.log_win }) do
+    if win and vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
   end
 
   state.file = file
@@ -384,6 +382,12 @@ function M.show()
 
   apply_source_highlight()
 
+  local function toggle_diff_mode()
+    state.diff_mode = state.diff_mode == 'single' and 'dual' or 'single'
+    env_keeper.set('line_log_diff_mode', state.diff_mode)
+    vim.notify('Diff mode: ' .. state.diff_mode, vim.log.levels.INFO)
+  end
+
   state.log_buf = vim.api.nvim_create_buf(false, true)
   vim.bo[state.log_buf].buftype = 'nofile'
   vim.bo[state.log_buf].bufhidden = 'wipe'
@@ -399,8 +403,8 @@ function M.show()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)
   vim.api.nvim_win_set_height(state.log_win, height)
 
-  ui.start_spinner(state)
-  ui.setup_log_buffer_keymaps(state, kill_job)
+  ui.update_log_statusline(state, true)
+  ui.setup_log_buffer_keymaps(state, kill_job, toggle_diff_mode)
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = state.log_buf,
