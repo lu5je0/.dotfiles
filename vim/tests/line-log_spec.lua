@@ -307,6 +307,7 @@ local test_cases = {
 
 print('line-log block tracking tests')
 print(string.rep('-', 60))
+print()
 
 for _, tc in ipairs(test_cases) do
   run_test(tc)

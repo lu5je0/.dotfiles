@@ -180,12 +180,17 @@ local function build_pairs(lines1, lines2)
     mark_equal_range(expanded_end1, next1, expanded_end2, next2)
   end
 
-  for _, pair in ipairs(lcs_pairs(big1, big2, map1, map2)) do
-    local anchor1, anchor2 = pair[1], pair[2]
-    refine(anchor1, anchor2)
-    pairs[#pairs + 1] = { anchor1, anchor2 }
-    last1 = anchor1 + 1
-    last2 = anchor2 + 1
+  -- Use Myers diff (like IDEA's DiffIterableUtil.diff) for big-line matching
+  local big_changes = diff_changes(big1, big2)
+  local big_unchanged = unchanged_ranges_from_changes(big_changes, #big1, #big2)
+  for _, u in ipairs(big_unchanged) do
+    for i = 0, (u.end1 - u.start1) - 1 do
+      local anchor1, anchor2 = map1[u.start1 + i + 1], map2[u.start2 + i + 1]
+      refine(anchor1, anchor2)
+      pairs[#pairs + 1] = { anchor1, anchor2 }
+      last1 = anchor1 + 1
+      last2 = anchor2 + 1
+    end
   end
   refine(#lines1, #lines2)
 
@@ -407,7 +412,35 @@ local function create_changes(lines1, lines2)
     end
   end
 
-  return changes
+  -- Merge adjacent changes separated by a single empty line when one change
+  -- is a pure insert or delete. This matches IDEA's ByLineRt which doesn't
+  -- produce isolated empty-line matches that split such changes.
+  local merged = {}
+  local i = 1
+  while i <= #changes do
+    local c = changes[i]
+    if i < #changes then
+      local nc = changes[i + 1]
+      local gap1 = nc.start1 - c.end1
+      local gap2 = nc.start2 - c.end2
+      if gap1 >= 0 and gap1 <= 1 and gap2 >= 0 and gap2 <= 1
+        and (gap1 == 0 or non_space_chars(lines1[c.end1 + 1]) == 0)
+        and (gap2 == 0 or non_space_chars(lines2[c.end2 + 1]) == 0)
+        and (c.start1 == c.end1 or nc.start1 == nc.end1
+          or c.start2 == c.end2 or nc.start2 == nc.end2) then
+        merged[#merged + 1] = { start1 = c.start1, end1 = nc.end1, start2 = c.start2, end2 = nc.end2 }
+        i = i + 2
+      else
+        merged[#merged + 1] = c
+        i = i + 1
+      end
+    else
+      merged[#merged + 1] = c
+      i = i + 1
+    end
+  end
+
+  return merged
 end
 
 local function shrink_to_best_match(prev_lines, current_content, start_line, end_line)
