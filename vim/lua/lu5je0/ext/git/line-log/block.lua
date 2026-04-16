@@ -693,7 +693,7 @@ end
 
 -- Generate unified diff between two block contents (IntelliJ's approach:
 -- directly diff block.getBlockContent() from each revision, with line number offset)
-function Block.generate_diff(old_block, new_block)
+function Block.generate_diff(old_block, new_block, old_file, new_file)
   local old_lines = (old_block and not old_block:is_empty()) and old_block:get_content() or {}
   local new_lines = (new_block and not new_block:is_empty()) and new_block:get_content() or {}
 
@@ -722,6 +722,23 @@ function Block.generate_diff(old_block, new_block)
       end
     end
   end
+
+  -- Prepend --- / +++ header with block line ranges
+  local old_header, new_header
+  if old_block and not old_block:is_empty() then
+    local f = old_file or ''
+    old_header = string.format('--- a/%s  [L%d-L%d]', f, old_block.start_line, old_block.end_line)
+  else
+    old_header = '--- /dev/null'
+  end
+  if new_block and not new_block:is_empty() then
+    local f = new_file or ''
+    new_header = string.format('+++ b/%s  [L%d-L%d]', f, new_block.start_line, new_block.end_line)
+  else
+    new_header = '+++ /dev/null'
+  end
+  table.insert(diff_lines, 1, new_header)
+  table.insert(diff_lines, 1, old_header)
 
   return diff_lines
 end

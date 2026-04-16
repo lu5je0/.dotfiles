@@ -130,7 +130,11 @@ function M.show_commit_diff(state, from_line, to_line)
   local new_block = state.blocks[min_rev_idx]
   local old_block = state.blocks[max_rev_idx + 1]
 
-  local lines = Block.generate_diff(old_block, new_block)
+  local new_file = state.revisions[min_rev_idx].file
+  local old_rev_idx = max_rev_idx + 1
+  local old_file = (old_rev_idx <= #state.revisions) and state.revisions[old_rev_idx].file or new_file
+
+  local lines = Block.generate_diff(old_block, new_block, old_file, new_file)
 
   if reuse_win then
     vim.bo[state.diff_buf].modifiable = true
