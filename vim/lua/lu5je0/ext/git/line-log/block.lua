@@ -700,7 +700,7 @@ function Block.generate_diff(old_block, new_block, old_file, new_file)
   local old_text = #old_lines > 0 and (table.concat(old_lines, '\n') .. '\n') or ''
   local new_text = #new_lines > 0 and (table.concat(new_lines, '\n') .. '\n') or ''
 
-  local diff_str = vim.text.diff(old_text, new_text, { algorithm = 'histogram', ctxlen = 3 })
+  local diff_str = vim.text.diff(old_text, new_text, { algorithm = 'histogram', ctxlen = math.max(#old_lines, #new_lines) })
   if not diff_str or diff_str == '' then
     return { '-- No changes in selection --' }
   end
