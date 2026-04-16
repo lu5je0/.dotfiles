@@ -21,9 +21,8 @@ local state = {
   spinner_idx = 1,
   spinner_timer = nil,
   -- block tracking data
-  revisions = {}, -- list of {hash, date, message}
-  blocks = {}, -- list of {start, end, lines}
-  block_hashes = {}, -- tracks which commit's file content each block is based on
+  revisions = {}, -- list of {hash, full, date, message, author, file}
+  blocks = {}, -- list of Block objects indexed by revision idx
   current_idx = 0,
   cancelled = false,
 }
@@ -82,7 +81,6 @@ local function cleanup_state()
   state.diff_win = nil
   state.revisions = {}
   state.blocks = {}
-  state.block_hashes = {}
   state.current_idx = 0
 end
 
@@ -99,17 +97,146 @@ local function load_file_content(rev_hash, rel_file, callback)
         callback(nil)
         return
       end
+      -- IDEA's Block.tokenize keeps trailing empty line (skipLastEmptyLine=false)
       local lines = vim.split(result.stdout or '', '\n', { plain = true })
-      -- Remove trailing empty line if present
-      if #lines > 0 and lines[#lines] == '' then
-        lines[#lines] = nil
-      end
       callback(lines)
     end)
   end)
 end
 
--- Process next revision
+-- Parse git log output with --name-status into structured revision entries.
+-- Merge commits without name-status lines get a default 'M\t<path>' status.
+local function parse_revisions_with_status(stdout, default_path)
+  local result = {}
+  local current = nil
+  for line in stdout:gmatch('[^\n]*') do
+    if line:find('%z') then
+      -- Commit line (contains NUL separator): flush previous if it had no status line
+      if current then
+        current.file = default_path
+        current.status = 'M'
+        result[#result + 1] = current
+      end
+      local hash_part, date, message, author = line:match('^(.-)%z(.-)%z(.-)%z(.*)$')
+      if hash_part then
+        local full, short = hash_part:match('^(%x+) (%x+)')
+        if full then
+          current = { full = full, hash = short, date = date, message = message, author = author }
+        end
+      end
+    elseif current and line ~= '' then
+      current.status = line:sub(1, 1)
+      current.file = line:match('\t(.+)$') or default_path
+      result[#result + 1] = current
+      current = nil
+    end
+  end
+  if current then
+    current.file = default_path
+    current.status = 'M'
+    result[#result + 1] = current
+  end
+  return result
+end
+
+-- Collect revisions using IDEA's algorithm:
+-- 1. git log --full-history --simplify-merges -- <file> (includes merge commits)
+-- 2. When hitting an 'A' (add) commit, check rename via git show -M --follow
+-- 3. If rename found, queue old path for further history
+-- 4. Deduplicate via visited set
+local function collect_revisions_async(head_commit, callback)
+  local visited = {}
+  local all_revisions = {}
+  local queue = { { commit = head_commit, path = state.rel_file } }
+
+  local function process_queue()
+    if state.cancelled then
+      return
+    end
+    if #queue == 0 then
+      callback(all_revisions)
+      return
+    end
+
+    local item = table.remove(queue, 1)
+    local cmd = {
+      'git', 'log', item.commit,
+      '--format=%H %h%x00%ad%x00%s%x00%an',
+      '--date=format:%Y-%m-%d %H:%M:%S',
+      '--abbrev=8',
+      '--name-status',
+      '--full-history', '--simplify-merges',
+      '--', item.path,
+    }
+
+    state.job = vim.system(cmd, { text = true, cwd = state.repo_root }, function(result)
+      vim.schedule(function()
+        state.job = nil
+        if state.cancelled then
+          return
+        end
+        if result.code ~= 0 or not result.stdout then
+          process_queue()
+          return
+        end
+
+        local entries = parse_revisions_with_status(result.stdout, item.path)
+        local last_add_commit = nil
+
+        for _, entry in ipairs(entries) do
+          if not visited[entry.full] then
+            visited[entry.full] = true
+            all_revisions[#all_revisions + 1] = {
+              hash = entry.hash,
+              full = entry.full,
+              date = entry.date,
+              message = entry.message,
+              author = entry.author,
+              file = entry.file,
+            }
+            if entry.status == 'A' then
+              last_add_commit = entry.full
+              break
+            end
+          end
+        end
+
+        if last_add_commit then
+          local show_cmd = {
+            'git', 'show', '-M', '--follow', '--name-status',
+            '--format=%H %h', last_add_commit, '--', item.path,
+          }
+          state.job = vim.system(show_cmd, { text = true, cwd = state.repo_root }, function(show_result)
+            vim.schedule(function()
+              state.job = nil
+              if state.cancelled then
+                return
+              end
+              if show_result.code == 0 and show_result.stdout then
+                for line in show_result.stdout:gmatch('[^\n]+') do
+                  if line:match('^R') and line:find('\t') then
+                    local parts = vim.split(line, '\t', { plain = true })
+                    if #parts >= 3 then
+                      queue[#queue + 1] = { commit = last_add_commit, path = parts[2] }
+                    end
+                    break
+                  end
+                end
+              end
+              process_queue()
+            end)
+          end)
+        else
+          process_queue()
+        end
+      end)
+    end)
+  end
+
+  process_queue()
+end
+
+-- Process next revision in the tracking loop
 local function process_next_revision()
   if state.cancelled then
     return
@@ -123,7 +250,6 @@ local function process_next_revision()
   local idx = state.current_idx
 
   if idx > #state.revisions then
-    -- Done
     ui.stop_spinner(state)
     ui.update_log_statusline(state, false)
     if state.commit_count == 0 then
@@ -133,153 +259,84 @@ local function process_next_revision()
   end
 
   local rev = state.revisions[idx]
-  local prev_block = state.blocks[idx - 1]
 
-  load_file_content(rev.hash, rev.file, function(lines)
+  load_file_content(rev.full, rev.file, function(lines)
     if state.cancelled then
       return
     end
     if not lines then
-      -- File doesn't exist in this revision, stop here
       ui.stop_spinner(state)
       ui.update_log_statusline(state, false)
       return
     end
 
-    local new_block = prev_block:create_previous_block(lines)
+    local prev_block = state.blocks[idx - 1]:create_previous_block(lines)
+    state.blocks[idx] = prev_block
 
-    state.blocks[idx] = new_block
-    state.block_hashes[idx] = rev.hash
+    local changed = not state.blocks[idx - 1]:content_equals(prev_block)
 
-    local content_changed = not prev_block:content_equals(new_block)
-
-    -- In non-linear git history (parallel branches), the diff between consecutive
-    -- git-log revisions can include changes from multiple commits, causing false
-    -- attribution. Verify ALL content changes by checking the blamed commit's parent.
-    if content_changed and idx > 1 then
-      local blame_hash = state.block_hashes[idx - 1] or state.revisions[idx - 1].hash
-      local blame_file = state.revisions[idx - 1].file
-      load_file_content(blame_hash .. '^', blame_file, function(parent_lines)
-        if state.cancelled then
-          return
-        end
-        local actually_changed = true
-        if parent_lines then
-          local parent_block = prev_block:create_previous_block(parent_lines)
-          if prev_block:content_equals(parent_block) then
-            -- Parent has same content: this commit didn't introduce the change.
-            actually_changed = false
-            -- For empty block: continue tracking from the parent block
-            if new_block:is_empty() and not parent_block:is_empty() then
-              state.blocks[idx] = parent_block
-              state.block_hashes[idx] = blame_hash .. '^'
-            end
-          end
-        end
-
-        if actually_changed then
-          ui.append_commit_line(state, state.revisions[idx - 1])
-        end
-
-        -- Check effective block after potential parent replacement
-        local effective_block = state.blocks[idx]
-        if effective_block:is_empty() then
-          ui.stop_spinner(state)
-          ui.update_log_statusline(state, false)
-          return
-        end
-
-        if idx == #state.revisions then
-          ui.append_commit_line(state, rev)
-        end
-
-        process_next_revision()
-      end)
-      return
+    if changed and idx > 1 then
+      ui.append_commit_line(state, state.revisions[idx - 1])
     end
 
-    -- If block became empty, stop processing
-    if new_block:is_empty() then
+    if prev_block:is_empty() then
       ui.stop_spinner(state)
       ui.update_log_statusline(state, false)
       return
     end
 
-    -- If this is the last revision and block exists, show it (initial creation)
     if idx == #state.revisions then
       ui.append_commit_line(state, rev)
     end
 
-    -- Continue to next revision
     process_next_revision()
   end)
 end
 
--- Get list of revisions for the file
+-- Start revision collection and block tracking
 local function load_revisions()
-  local cmd = {
-    'git',
-    'log',
-    '--format=%h %ad %s%x00%an',
-    '--date=format:%Y-%m-%d %H:%M:%S',
-    '--abbrev=8',
-    '--follow',
-    '--name-only',
-    '--',
-    state.rel_file,
-  }
-
-  state.job = vim.system(cmd, { text = true, cwd = state.repo_root }, function(result)
+  state.job = vim.system({ 'git', 'rev-parse', 'HEAD' }, { text = true, cwd = state.repo_root }, function(result)
     vim.schedule(function()
       state.job = nil
       if state.cancelled then
         return
       end
-      if result.code ~= 0 or not result.stdout or result.stdout == '' then
+      if result.code ~= 0 then
+        ui.stop_spinner(state)
+        ui.update_log_statusline(state, false)
+        ui.set_buffer_lines(state.log_buf, { '-- Not in a git repository --' })
+        return
+      end
+
+      local head = (result.stdout or ''):match('%x+')
+      if not head then
         ui.stop_spinner(state)
         ui.update_log_statusline(state, false)
         ui.set_buffer_lines(state.log_buf, { '-- No commits found --' })
         return
       end
 
-      state.revisions = {}
-      local current_hash, current_date, current_message, current_author
-      for line in result.stdout:gmatch('[^\n]*') do
-        local hash, rest = line:match('^(%x+)%s+(.*)$')
-        if hash and rest then
-          local date, message = rest:match('^([%d%-]+%s+[%d:]+)%s+(.*)$')
-          if date then
-            local msg, author = message:match('^(.-)%z(.*)$')
-            current_hash = hash
-            current_date = date
-            current_message = msg or message or ''
-            current_author = author or ''
-          end
-        elseif current_hash and line ~= '' then
-          table.insert(state.revisions, {
-            hash = current_hash,
-            date = current_date,
-            message = current_message,
-            author = current_author,
-            file = line,
-          })
-          current_hash = nil
+      collect_revisions_async(head, function(revisions)
+        if state.cancelled then
+          return
         end
-      end
+        state.revisions = revisions
 
-      if #state.revisions == 0 then
-        ui.stop_spinner(state)
-        ui.update_log_statusline(state, false)
-        ui.set_buffer_lines(state.log_buf, { '-- No commits found --' })
-        return
-      end
+        if #revisions == 0 then
+          ui.stop_spinner(state)
+          ui.update_log_statusline(state, false)
+          ui.set_buffer_lines(state.log_buf, { '-- No commits found --' })
+          return
+        end
 
-      -- Load current file content as base
-      local current_lines = vim.api.nvim_buf_get_lines(vim.fn.bufnr(state.file), 0, -1, false)
-      state.blocks[0] = Block.new(current_lines, state.start_line, state.end_line)
+        -- Initial block from buffer content
+        local current_lines = vim.api.nvim_buf_get_lines(vim.fn.bufnr(state.file), 0, -1, false)
+        -- IDEA's Block.tokenize keeps trailing empty line for files ending with \n
+        current_lines[#current_lines + 1] = ''
+        state.blocks[0] = Block.new(current_lines, state.start_line, state.end_line)
 
-      -- Start processing revisions
-      process_next_revision()
+        process_next_revision()
+      end)
     end)
   end)
 end
@@ -321,7 +378,6 @@ function M.show()
   state.commit_count = 0
   state.revisions = {}
   state.blocks = {}
-  state.block_hashes = {}
   state.current_idx = 0
   state.cancelled = false
   state.source_buf = vim.api.nvim_get_current_buf()

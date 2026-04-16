@@ -25,11 +25,85 @@ local function load_file_at(rev, rel_file)
   if not out then
     return nil
   end
-  local lines = vim.split(out, '\n', { plain = true })
-  if #lines > 0 and lines[#lines] == '' then
-    lines[#lines] = nil
+  -- IDEA's Block.tokenize uses skipLastEmptyLine=false, keep trailing empty element
+  return vim.split(out, '\n', { plain = true })
+end
+
+local function parse_revisions_with_status(stdout, default_path)
+  local result = {}
+  local current_full, current_short
+  for line in stdout:gmatch('[^\n]*') do
+    local full, short = line:match('^(%x+) (%x+)$')
+    if full then
+      -- New commit hash line; flush previous if it had no status line (merge commit)
+      if current_full then
+        table.insert(result, { current_full, current_short, 'M\t' .. default_path })
+      end
+      current_full = full
+      current_short = short
+    elseif current_full and line ~= '' then
+      table.insert(result, { current_full, current_short, line })
+      current_full = nil
+      current_short = nil
+    end
   end
-  return lines
+  if current_full then
+    table.insert(result, { current_full, current_short, 'M\t' .. default_path })
+  end
+  return result
+end
+
+local function collect_revisions_idea(commit, rel_file)
+  local visited = {}
+  local result = {}
+  local queue = { { commit = commit, path = rel_file } }
+
+  while #queue > 0 do
+    local item = table.remove(queue, 1)
+    local log_out = git {
+      'log', item.commit,
+      '--format=%H %h',
+      '--name-status',
+      '--full-history', '--simplify-merges',
+      '--', item.path,
+    }
+    if log_out then
+      local last_add_commit = nil
+      local entries = parse_revisions_with_status(log_out, item.path)
+      for _, entry in ipairs(entries) do
+        local full, short, status_line = entry[1], entry[2], entry[3]
+        if not visited[full] then
+          visited[full] = true
+          local status = status_line:sub(1, 1)
+          local file_name = status_line:match('\t(.+)$') or item.path
+          table.insert(result, { full = full, short = short, file = file_name })
+          if status == 'A' then
+            last_add_commit = full
+            break
+          end
+        end
+      end
+      if last_add_commit then
+        local show_out = git {
+          'show', '-M', '--follow', '--name-status',
+          '--format=%H %h', last_add_commit, '--', item.path,
+        }
+        if show_out then
+          for line in show_out:gmatch('[^\n]+') do
+            if line:match('^R') and line:find('\t') then
+              local parts = vim.split(line, '\t', { plain = true })
+              if #parts >= 3 then
+                table.insert(queue, { commit = last_add_commit, path = parts[2] })
+              end
+              break
+            end
+          end
+        end
+      end
+    end
+  end
+
+  return result
 end
 
 --- Run block tracking and return the list of shown commit hashes (8-char).
@@ -39,86 +113,31 @@ end
 --- @param end_line number 1-based end line
 --- @return string[] commit hashes
 local function track_commits(commit, rel_file, start_line, end_line)
-  -- Get revisions from the given commit backward, with --name-only to track renames
-  local stdout = git {
-    'log',
-    commit,
-    '--format=%H %h',
-    '--follow',
-    '--name-only',
-    '--',
-    rel_file,
-  }
-  if not stdout then
-    return {}
-  end
+  local revisions = collect_revisions_idea(commit, rel_file)
 
-  local revisions = {}
-  local current_full, current_short
-  for line in stdout:gmatch('[^\n]*') do
-    local full, short = line:match('^(%x+)%s+(%x+)$')
-    if full then
-      current_full = full
-      current_short = short
-    elseif current_full and line ~= '' then
-      table.insert(revisions, { full = current_full, short = current_short, file = line })
-      current_full = nil
-      current_short = nil
-    end
-  end
-
-  -- Load file at starting commit
   local current_lines = load_file_at(commit, rel_file)
   if not current_lines then
     return {}
   end
 
-  local blocks = {}
-  blocks[0] = Block.new(current_lines, start_line, end_line)
-  local block_hashes = {}
-
+  local block = Block.new(current_lines, start_line, end_line)
   local shown = {}
 
   for idx, rev in ipairs(revisions) do
-    local prev_block = blocks[idx - 1]
-    local lines = load_file_at(rev.full, rev.file)
-    if not lines then
+    local prev_lines = load_file_at(rev.full, rev.file)
+    if not prev_lines then
       break
     end
 
-    local new_block = prev_block:create_previous_block(lines)
-    blocks[idx] = new_block
-    block_hashes[idx] = rev.full
+    local prev_block = block:create_previous_block(prev_lines)
+    local changed = not block:content_equals(prev_block)
 
-    local content_changed = not prev_block:content_equals(new_block)
+    if changed and idx > 1 then
+      table.insert(shown, revisions[idx - 1].short)
+    end
 
-    -- Match runtime behavior in line-log.show(): verify content changes against
-    -- the blamed commit's parent to avoid false attribution on non-linear history.
-    if content_changed and idx > 1 then
-      local blame_hash = block_hashes[idx - 1] or revisions[idx - 1].full
-      local blame_file = revisions[idx - 1].file
-      local parent_lines = load_file_at(blame_hash .. '^', blame_file)
-      local actually_changed = true
-      if parent_lines then
-        local parent_block = prev_block:create_previous_block(parent_lines)
-        if prev_block:content_equals(parent_block) then
-          actually_changed = false
-          if new_block:is_empty() and not parent_block:is_empty() then
-            blocks[idx] = parent_block
-            block_hashes[idx] = blame_hash .. '^'
-          end
-        end
-      end
-
-      if actually_changed then
-        table.insert(shown, revisions[idx - 1].short)
-      end
-
-      local effective_block = blocks[idx]
-      if effective_block:is_empty() then
-        break
-      end
-    elseif new_block:is_empty() then
+    block = prev_block
+    if block:is_empty() then
       break
     end
 
