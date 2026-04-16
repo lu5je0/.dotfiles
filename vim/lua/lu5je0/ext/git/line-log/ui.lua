@@ -339,6 +339,31 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_r
     vim.wo[state.diff_win2].wrap = false
     vim.wo[state.diff_win2].statuscolumn = '%=%{v:virtnum==0?v:lnum+b:line_offset:""} '
 
+    -- Auto-close the other diff window when one is closed
+    local closing = false
+    for _, buf_pair in ipairs({ { state.diff_buf, state.diff_win2 }, { state.diff_buf2, state.diff_win } }) do
+      vim.api.nvim_create_autocmd('BufWipeout', {
+        buffer = buf_pair[1],
+        once = true,
+        callback = function()
+          if closing then
+            return
+          end
+          closing = true
+          vim.schedule(function()
+            local other_win = buf_pair[2]
+            if other_win and vim.api.nvim_win_is_valid(other_win) then
+              vim.api.nvim_win_close(other_win, true)
+            end
+            state.diff_win = nil
+            state.diff_buf = nil
+            state.diff_win2 = nil
+            state.diff_buf2 = nil
+          end)
+        end,
+      })
+    end
+
     vim.api.nvim_set_current_win(state.log_win)
   end
 
