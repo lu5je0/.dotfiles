@@ -75,6 +75,7 @@ local function track_commits(commit, rel_file, start_line, end_line)
 
   local blocks = {}
   blocks[0] = Block.new(current_lines, start_line, end_line)
+  local block_hashes = {}
 
   local shown = {}
 
@@ -87,14 +88,37 @@ local function track_commits(commit, rel_file, start_line, end_line)
 
     local new_block = prev_block:create_previous_block(lines)
     blocks[idx] = new_block
+    block_hashes[idx] = rev.full
 
-    if not prev_block:content_equals(new_block) then
-      if idx > 1 then
+    local content_changed = not prev_block:content_equals(new_block)
+
+    -- Match runtime behavior in line-log.show(): verify content changes against
+    -- the blamed commit's parent to avoid false attribution on non-linear history.
+    if content_changed and idx > 1 then
+      local blame_hash = block_hashes[idx - 1] or revisions[idx - 1].full
+      local blame_file = revisions[idx - 1].file
+      local parent_lines = load_file_at(blame_hash .. '^', blame_file)
+      local actually_changed = true
+      if parent_lines then
+        local parent_block = prev_block:create_previous_block(parent_lines)
+        if prev_block:content_equals(parent_block) then
+          actually_changed = false
+          if new_block:is_empty() and not parent_block:is_empty() then
+            blocks[idx] = parent_block
+            block_hashes[idx] = blame_hash .. '^'
+          end
+        end
+      end
+
+      if actually_changed then
         table.insert(shown, revisions[idx - 1].short)
       end
-    end
 
-    if new_block:is_empty() then
+      local effective_block = blocks[idx]
+      if effective_block:is_empty() then
+        break
+      end
+    elseif new_block:is_empty() then
       break
     end
 
@@ -134,7 +158,7 @@ local function run_test(tc)
   for _, h in ipairs(actual) do
     if expected_set[h] then
       intersect = intersect
-      + 1
+          + 1
     end
   end
 
@@ -182,7 +206,7 @@ local test_cases = {
     file = 'vim/init.lua',
     start_line = 15,
     end_line = 23,
-    expected_commits = { "8494efcf", "55190f97", "321dd5f5", "ea498a60", "89d25c75", "d0e1f9e5", "d776da43", "2f196585", "3487139c", "5b6574ee", "27cc9eeb", "5974104c", "f749bf2c", "f8724863", "9ed21b28", "0f52f146", "76c6aae6", "a3018a9d", "b07784bc", "cf3604f1", "2e564cd4", "46e51993", "1794bf92", "773dbc57", "c87e3c1c", "b43d7871", "76bbd90a", "6156f904", "9a1591f1", "234798c7", "db386ed3", "d4b48667", "365636eb", "efc5eeb4", "0e97f282", "fc7bb485", "da2ddd27", "b69ed4a7", "c9c968ad", "8aea061c", "5f43320b", "c0918895", "bab98e53", "447aa585", "c8e8b9e3", "006a3b1d", "faca7993", "c9441e92", "d5dc7ffb", "f002ee5d", "46351007", "48f93eee", "422069dc", "5f492a39", "9ad44a4a", "517455d4", "a5d06dfe", "a3a05766", "2709fb66", "e4c60e67", "c33b133f", "0bfbeeb4", "b70dd8b6", "6a3196f1", "b12c03c2", "36b34cfb", "95c97d94", "3cf5569f", "46174f4a", "371e0b7c", "3b5657ea", "51c4a135", "d32b6850", "07cd89d2", "057699b8", "b919df3c", "2f802ac7", "51317819", "c79711b8", "1b5ae473", "3ca7ce0d", "6dc6ce37", "edb28ef2", "f8251cee", "a72bc7e5", "da26df88", "fa1fbe65", "e52c7638", "481b8669", "b72aa670", "3ee3a7fb", "eec1205d", "31984e87", "6642d409", "a99c8c87", "34a6cecd", "9d98f27a", "c75a353a", "93550558", "767e172f", "9b91d949", "4a78f29e", "805f769e", "6d44fdc5", "745e8fb7", "4682e4a2", "a1a2d482", "db254ad1", "81aad924", "7ecf7ac6", "656db73d", "a6ac8597", "3e1f4c30", "4f7cd145", "cd0f2969", "add907a6", "c21c9c9e", "079ac9fa", "4d782eb2", "a8962e5f", "71b40cf6", "dd2345f5", "f3cb72f1", "0f100770", "ca9d8275", "73eae625", "962bb058", "9c71c186", "f720d2c1", "e9ba323d", "d111a8d1", "4f256a79", "d2183621", "45e8a643", "e15b32ef", "d744ee25", "bc500458", "a2d0374b", "25ff4d67", "c12d6cbe", "500f1e56", "126d5214", "1b29610b", "e917227f", "1cdf623f", "4aadeb83", "0795711d", "c1191048", "c70922b1", "4a0c7fcd", "b30c51ae", "1aa40ba8", "4d96a719", "e309179e", "77fc5b85", "93b4dad3", "3f7477c6", "80effe7b", "8d4e9d2b", "6cf56af8", "c2bd56dd", "b71f42d4", "b3e224d2", "f31f47b0", "9e5a88e6", "56f4102c", "785e6f68", "c38e33cd", "efe1a66e", "b86edafe", "c1f14110", "2d96c4ad", "543e7a77", "827c057b", "c4ecd2b7", "6c031606", "90e7ec5f", "f81d827d", "40f66746", "52d57f0e", "31d7414e", "0814a452", "7e7599f5", "0993164b", "21e8f2c1", "81e9ab47", "50ae7af4", "88d49a4e", "743517ec", "f7bdbec5", "fc6ca226", "07e798f8", "a41efcc0", "67535fc2", "a650ec1b", "dd3e4c06", "982f550b", "c3347363", "c27a5a59", "13139286", "1a23c714", "ec1c62f1", "34c97cf8", "66644aae", "52ff88f7" },
+    expected_commits = { "8494efcf", "55190f97", "321dd5f5", "ea498a60", "89d25c75", "d0e1f9e5", "d776da43", "2f196585", "3487139c", "5b6574ee", "27cc9eeb", "5974104c", "f749bf2c", "f8724863", "9ed21b28", "0f52f146", "76c6aae6", "a3018a9d", "b07784bc", "cf3604f1", "2e564cd4", "46e51993", "1794bf92", "773dbc57", "c87e3c1c", "b43d7871", "76bbd90a", "6156f904", "9a1591f1", "234798c7", "db386ed3", "d4b48667", "365636eb", "efc5eeb4", "0e97f282", "fc7bb485", "da2ddd27", "b69ed4a7", "c9c968ad", "8aea061c", "5f43320b", "c0918895", "bab98e53", "447aa585", "c8e8b9e3", "006a3b1d", "faca7993", "c9441e92", "d5dc7ffb", "f002ee5d", "46351007", "48f93eee", "422069dc", "5f492a39", "9ad44a4a", "517455d4", "a5d06dfe", "a3a05766", "2709fb66", "e4c60e67", "c33b133f", "0bfbeeb4", "b70dd8b6", "6a3196f1", "b12c03c2", "36b34cfb", "95c97d94", "3cf5569f", "46174f4a", "371e0b7c", "3b5657ea", "51c4a135", "d32b6850", "07cd89d2", "057699b8", "b919df3c", "2f802ac7", "51317819", "c79711b8", "1b5ae473", "3ca7ce0d", "6dc6ce37", "edb28ef2", "f8251cee", "a72bc7e5", "da26df88", "fa1fbe65", "e52c7638", "481b8669", "b72aa670", "3ee3a7fb", "eec1205d", "31984e87", "6642d409", "a99c8c87", "34a6cecd", "9d98f27a", "c75a353a", "93550558", "767e172f", "9b91d949", "4a78f29e", "805f769e", "6d44fdc5", "745e8fb7", "4682e4a2", "a1a2d482", "db254ad1", "81aad924", "7ecf7ac6", "656db73d", "a6ac8597", "3e1f4c30", "4f7cd145", "cd0f2969", "add907a6", "c21c9c9e", "079ac9fa", "4d782eb2", "a8962e5f", "71b40cf6", "dd2345f5", "f3cb72f1", "0f100770", "ca9d8275", "73eae625", "962bb058", "9c71c186", "f720d2c1", "e9ba323d", "d111a8d1", "4f256a79", "d2183621", "45e8a643", "e15b32ef", "d744ee25", "bc500458", "a2d0374b", "25ff4d67", "c12d6cbe", "500f1e56", "126d5214", "1b29610b", "e917227f", "1cdf623f", "4aadeb83", "0795711d", "c1191048", "c70922b1", "4a0c7fcd", "b30c51ae", "1aa40ba8", "4d96a719", "e309179e", "77fc5b85", "93b4dad3", "3f7477c6", "80effe7b", "8d4e9d2b", "6cf56af8", "c2bd56dd", "b71f42d4", "b3e224d2", "f31f47b0", "9e5a88e6", "56f4102c", "785e6f68", "c38e33cd", "efe1a66e", "b86edafe", "c1f14110", "2d96c4ad", "543e7a77", "827c057b", "c4ecd2b7", "6c031606", "90e7ec5f", "f81d827d", "40f66746", "52d57f0e", "31d7414e", "0814a452", "7e7599f5", "0993164b", "21e8f2c1", "81e9ab47", "50ae7af4", "88d49a4e", "743517ec", "f7bdbec5", "fc6ca226", "07e798f8", "a41efcc0", "67535fc2", "a650ec1b", "dd3e4c06", "982f550b", "c3347363", "c27a5a59", "13139286", "1a23c714", "ec1c62f1", "34c97cf8", "66644aae", "52ff88f7", },
   },
   {
     name = 'case 2',
@@ -246,7 +270,7 @@ local test_cases = {
     file = 'tmux/tmux.conf',
     start_line = 10,
     end_line = 30,
-    expected_commits = { "f0fd7a09", "c7ff4f5e", "70e68820", "c79711b8", "0db0632b", "9654cab7", "c53df9a5", "728cebf5", "f3f092ad", "12bbdc16", "8940e6fe", "bf8c8eb0", },
+    expected_commits = { "f0fd7a09", "c7ff4f5e", "70e68820", "c79711b8", "0db0632b", "9654cab7", "c53df9a5", "f3f092ad", "12bbdc16", "8940e6fe", "bf8c8eb0", },
   },
   {
     name = 'case 10',
