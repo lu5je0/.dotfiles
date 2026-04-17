@@ -5,8 +5,10 @@
 -- and verifies the block tracking algorithm produces the expected commit list.
 
 local Block = require('lu5je0.ext.git.line-log.block')
+local blob_store = require('lu5je0.ext.git.line-log.blob-store')
 
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h')
+local store = blob_store.for_repo(repo_root)
 
 local function git(args)
   local cmd = { 'git' }
@@ -18,15 +20,6 @@ local function git(args)
     return nil
   end
   return result.stdout
-end
-
-local function load_file_at(rev, rel_file)
-  local out = git { 'show', rev .. ':' .. rel_file }
-  if not out then
-    return nil
-  end
-  -- IDEA's Block.tokenize uses skipLastEmptyLine=false, keep trailing empty element
-  return vim.split(out, '\n', { plain = true })
 end
 
 local function parse_revisions_with_status(stdout, default_path)
@@ -114,8 +107,18 @@ end
 --- @return string[] commit hashes
 local function track_commits(commit, rel_file, start_line, end_line)
   local revisions = collect_revisions_idea(commit, rel_file)
+  local specs = {
+    { rev = commit, file = rel_file },
+  }
+  for _, rev in ipairs(revisions) do
+    specs[#specs + 1] = { rev = rev.full, file = rev.file }
+  end
+  local ok, err = store:prefetch_sync(specs)
+  if not ok then
+    error(err)
+  end
 
-  local current_lines = load_file_at(commit, rel_file)
+  local current_lines = store:get_lines(commit, rel_file)
   if not current_lines then
     return {}
   end
@@ -124,7 +127,7 @@ local function track_commits(commit, rel_file, start_line, end_line)
   local shown = {}
 
   for idx, rev in ipairs(revisions) do
-    local prev_lines = load_file_at(rev.full, rev.file)
+    local prev_lines = store:get_lines(rev.full, rev.file)
     if not prev_lines then
       break
     end

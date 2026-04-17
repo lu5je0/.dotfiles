@@ -9,6 +9,7 @@
 - `init.lua`: 模块入口，注册按键映射
 - `line-log/`: 行级 git log 子模块
   - `init.lua`: 主入口，state 管理与 revision 处理流程
+  - `blob-store.lua`: 批量加载并缓存 `rev:file` 内容，供测试与运行时共用
   - `block.lua`: Block 类与 diff 生成（纯算法，不依赖 state）
   - `ui.lua`: 窗口、buffer、spinner、statusline、高亮、keymaps
 
@@ -27,7 +28,7 @@
 - **不使用 `git log -L`**，采用 IntelliJ IDEA 的内容追踪算法
 - 算法流程：
   1. `git log --follow -- <file>` 获取文件所有 revision
-  2. 对每个 revision 用 `git show <rev>:<file>` 加载完整内容
+  2. 对每个 revision 用 `git cat-file --batch` 批量加载完整内容，并按 `rev:file` 缓存
   3. `vim.diff()` 对比相邻版本，通过 diff hunk 反向推导选中块在上一版本的位置
   4. 只显示内容实际变化的 commit（包括 block 从非空变为空的转换）
 - `Block` 类：封装行内容和范围，`create_previous_block()` 实现位置追踪

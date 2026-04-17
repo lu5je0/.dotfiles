@@ -1,4 +1,5 @@
 local Block = require('lu5je0.ext.git.line-log.block')
+local blob_store = require('lu5je0.ext.git.line-log.blob-store')
 local ui = require('lu5je0.ext.git.line-log.ui')
 local env_keeper = require('lu5je0.misc.env-keeper')
 
@@ -31,6 +32,7 @@ local state = {
   local_change_block = nil,
   -- diff mode: 'single' or 'dual' (vimdiff style)
   diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
+  blob_store = nil,
 }
 
 local function kill_job()
@@ -97,6 +99,7 @@ local function cleanup_state()
   state.display_items = {}
   state.current_idx = 0
   state.local_change_block = nil
+  state.blob_store = nil
 end
 
 local function close_windows()
@@ -122,27 +125,7 @@ local function reset_session(file, repo_root, start_line, end_line)
   state.cancelled = false
   state.local_change_block = nil
   state.source_buf = vim.api.nvim_get_current_buf()
-end
-
--- Load file content at a specific revision
-local function load_file_content(rev_hash, rel_file, callback)
-  local session = state.session
-  local cmd = { 'git', 'show', rev_hash .. ':' .. rel_file }
-  state.job = vim.system(cmd, { text = true, cwd = state.repo_root }, function(result)
-    vim.schedule(function()
-      if not is_active_session(session) then
-        return
-      end
-      state.job = nil
-      if result.code ~= 0 then
-        callback(nil)
-        return
-      end
-      -- IDEA's Block.tokenize keeps trailing empty line (skipLastEmptyLine=false)
-      local lines = vim.split(result.stdout or '', '\n', { plain = true })
-      callback(lines)
-    end)
-  end)
+  state.blob_store = blob_store.for_repo(repo_root)
 end
 
 -- Parse git log output with --name-status into structured revision entries.
@@ -302,41 +285,36 @@ local function process_next_revision()
   end
 
   local rev = state.revisions[idx]
+  local lines = state.blob_store and state.blob_store:get_lines(rev.full, rev.file) or nil
+  if not lines then
+    ui.update_log_statusline(state, false)
+    return
+  end
 
-  load_file_content(rev.full, rev.file, function(lines)
-    if not is_active_session(session) then
-      return
-    end
-    if not lines then
-      ui.update_log_statusline(state, false)
-      return
-    end
+  local prev_block = state.blocks[idx - 1]:create_previous_block(lines)
+  state.blocks[idx] = prev_block
 
-    local prev_block = state.blocks[idx - 1]:create_previous_block(lines)
-    state.blocks[idx] = prev_block
+  local changed = not state.blocks[idx - 1]:content_equals(prev_block)
 
-    local changed = not state.blocks[idx - 1]:content_equals(prev_block)
+  if changed and idx == 1 then
+    state.local_change_block = prev_block
+    ui.append_local_change_line(state)
+  end
 
-    if changed and idx == 1 then
-      state.local_change_block = prev_block
-      ui.append_local_change_line(state)
-    end
+  if changed and idx > 1 then
+    ui.append_commit_line(state, state.revisions[idx - 1], idx - 1)
+  end
 
-    if changed and idx > 1 then
-      ui.append_commit_line(state, state.revisions[idx - 1], idx - 1)
-    end
+  if prev_block:is_empty() then
+    ui.update_log_statusline(state, false)
+    return
+  end
 
-    if prev_block:is_empty() then
-      ui.update_log_statusline(state, false)
-      return
-    end
+  if idx == #state.revisions then
+    ui.append_commit_line(state, rev, idx)
+  end
 
-    if idx == #state.revisions then
-      ui.append_commit_line(state, rev, idx)
-    end
-
-    process_next_revision()
-  end)
+  process_next_revision()
 end
 
 -- Start revision collection and block tracking
@@ -378,8 +356,23 @@ local function load_revisions()
         -- IDEA's Block.tokenize keeps trailing empty line for files ending with \n
         current_lines[#current_lines + 1] = ''
         state.blocks[0] = Block.new(current_lines, state.start_line, state.end_line)
+        local specs = {}
+        for _, rev in ipairs(revisions) do
+          specs[#specs + 1] = { rev = rev.full, file = rev.file }
+        end
 
-        process_next_revision()
+        state.job = state.blob_store:prefetch_async(specs, function(ok)
+          if not is_active_session(session) then
+            return
+          end
+          state.job = nil
+          if not ok then
+            ui.update_log_statusline(state, false)
+            ui.set_buffer_lines(state.log_buf, { '-- Failed to load file history --' })
+            return
+          end
+          process_next_revision()
+        end)
       end)
     end)
   end)
