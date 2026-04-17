@@ -7,6 +7,7 @@ local M = {}
 local hl_ns = vim.api.nvim_create_namespace('git_line_log_selected')
 
 local state = {
+  session = 0,
   job = nil,
   diff_job = nil,
   log_buf = nil,
@@ -48,6 +49,10 @@ local function kill_job()
   end
 end
 
+local function is_active_session(session)
+  return state.session == session and not state.cancelled
+end
+
 local function clear_source_highlight()
   if state.source_buf and vim.api.nvim_buf_is_valid(state.source_buf) then
     vim.api.nvim_buf_clear_namespace(state.source_buf, hl_ns, 0, -1)
@@ -73,6 +78,8 @@ end
 
 local function cleanup_state()
   kill_job()
+  state.session = state.session + 1
+  ui.close_help()
   clear_source_highlight()
   if state.hl_augroup then
     pcall(vim.api.nvim_del_augroup_by_id, state.hl_augroup)
@@ -101,6 +108,7 @@ local function close_windows()
 end
 
 local function reset_session(file, repo_root, start_line, end_line)
+  state.session = state.session + 1
   state.file = file
   state.rel_file = file:sub(#repo_root + 2)
   state.repo_root = repo_root
@@ -118,13 +126,14 @@ end
 
 -- Load file content at a specific revision
 local function load_file_content(rev_hash, rel_file, callback)
+  local session = state.session
   local cmd = { 'git', 'show', rev_hash .. ':' .. rel_file }
   state.job = vim.system(cmd, { text = true, cwd = state.repo_root }, function(result)
     vim.schedule(function()
-      state.job = nil
-      if state.cancelled then
+      if not is_active_session(session) then
         return
       end
+      state.job = nil
       if result.code ~= 0 then
         callback(nil)
         return
@@ -177,12 +186,13 @@ end
 -- 3. If rename found, queue old path for further history
 -- 4. Deduplicate via visited set
 local function collect_revisions_async(head_commit, callback)
+  local session = state.session
   local visited = {}
   local all_revisions = {}
   local queue = { { commit = head_commit, path = state.rel_file } }
 
   local function process_queue()
-    if state.cancelled then
+    if not is_active_session(session) then
       return
     end
     if #queue == 0 then
@@ -203,10 +213,10 @@ local function collect_revisions_async(head_commit, callback)
 
     state.job = vim.system(cmd, { text = true, cwd = state.repo_root }, function(result)
       vim.schedule(function()
-        state.job = nil
-        if state.cancelled then
+        if not is_active_session(session) then
           return
         end
+        state.job = nil
         if result.code ~= 0 or not result.stdout then
           process_queue()
           return
@@ -240,10 +250,10 @@ local function collect_revisions_async(head_commit, callback)
           }
           state.job = vim.system(show_cmd, { text = true, cwd = state.repo_root }, function(show_result)
             vim.schedule(function()
-              state.job = nil
-              if state.cancelled then
+              if not is_active_session(session) then
                 return
               end
+              state.job = nil
               if show_result.code == 0 and show_result.stdout then
                 for line in show_result.stdout:gmatch('[^\n]+') do
                   if line:match('^R') and line:find('\t') then
@@ -270,7 +280,8 @@ end
 
 -- Process next revision in the tracking loop
 local function process_next_revision()
-  if state.cancelled then
+  local session = state.session
+  if not is_active_session(session) then
     return
   end
   if not vim.api.nvim_buf_is_valid(state.log_buf) then
@@ -293,7 +304,7 @@ local function process_next_revision()
   local rev = state.revisions[idx]
 
   load_file_content(rev.full, rev.file, function(lines)
-    if state.cancelled then
+    if not is_active_session(session) then
       return
     end
     if not lines then
@@ -330,12 +341,13 @@ end
 
 -- Start revision collection and block tracking
 local function load_revisions()
+  local session = state.session
   state.job = vim.system({ 'git', 'rev-parse', 'HEAD' }, { text = true, cwd = state.repo_root }, function(result)
     vim.schedule(function()
-      state.job = nil
-      if state.cancelled then
+      if not is_active_session(session) then
         return
       end
+      state.job = nil
       if result.code ~= 0 then
         ui.update_log_statusline(state, false)
         ui.set_buffer_lines(state.log_buf, { '-- Not in a git repository --' })
@@ -350,7 +362,7 @@ local function load_revisions()
       end
 
       collect_revisions_async(head, function(revisions)
-        if state.cancelled then
+        if not is_active_session(session) then
           return
         end
         state.revisions = revisions

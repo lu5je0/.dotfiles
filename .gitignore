@@ -15,3 +15,4 @@ build/neovim
 .DS_Store
 .nvimlog
 vim/after/syntax/
+vim/nvim.log

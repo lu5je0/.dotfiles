@@ -15,9 +15,13 @@ local function close_help()
   end
 end
 
+M.close_help = close_help
+
 local function show_help()
-  -- Close existing help if open
-  close_help()
+  if help_win and vim.api.nvim_win_is_valid(help_win) then
+    close_help()
+    return
+  end
 
   local help_lines = {
     'Line Log Keymaps',
@@ -450,9 +454,7 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, selec
             return
           end
           closing = true
-          vim.schedule(function()
-            close_diff_windows(state)
-          end)
+          close_diff_windows(state)
         end,
       })
     end
