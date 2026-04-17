@@ -21,11 +21,13 @@ local state = {
   start_line = nil,
   end_line = nil,
   commit_count = 0,
+  display_items = {},
   -- block tracking data
   revisions = {}, -- list of {hash, full, date, message, author, file}
   blocks = {}, -- list of Block objects indexed by revision idx
   current_idx = 0,
   cancelled = false,
+  local_change_block = nil,
   -- diff mode: 'single' or 'dual' (vimdiff style)
   diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
 }
@@ -85,7 +87,33 @@ local function cleanup_state()
   state.diff_win2 = nil
   state.revisions = {}
   state.blocks = {}
+  state.display_items = {}
   state.current_idx = 0
+  state.local_change_block = nil
+end
+
+local function close_windows()
+  for _, win in ipairs({ state.diff_win2, state.diff_win, state.log_win }) do
+    if win and vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+  end
+end
+
+local function reset_session(file, repo_root, start_line, end_line)
+  state.file = file
+  state.rel_file = file:sub(#repo_root + 2)
+  state.repo_root = repo_root
+  state.start_line = start_line
+  state.end_line = end_line
+  state.commit_count = 0
+  state.display_items = {}
+  state.revisions = {}
+  state.blocks = {}
+  state.current_idx = 0
+  state.cancelled = false
+  state.local_change_block = nil
+  state.source_buf = vim.api.nvim_get_current_buf()
 end
 
 -- Load file content at a specific revision
@@ -278,8 +306,13 @@ local function process_next_revision()
 
     local changed = not state.blocks[idx - 1]:content_equals(prev_block)
 
+    if changed and idx == 1 then
+      state.local_change_block = prev_block
+      ui.append_local_change_line(state)
+    end
+
     if changed and idx > 1 then
-      ui.append_commit_line(state, state.revisions[idx - 1])
+      ui.append_commit_line(state, state.revisions[idx - 1], idx - 1)
     end
 
     if prev_block:is_empty() then
@@ -288,7 +321,7 @@ local function process_next_revision()
     end
 
     if idx == #state.revisions then
-      ui.append_commit_line(state, rev)
+      ui.append_commit_line(state, rev, idx)
     end
 
     process_next_revision()
@@ -362,23 +395,8 @@ function M.show()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
 
   kill_job()
-  for _, win in ipairs({ state.diff_win2, state.diff_win, state.log_win }) do
-    if win and vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, true)
-    end
-  end
-
-  state.file = file
-  state.rel_file = file:sub(#repo_root + 2)
-  state.repo_root = repo_root
-  state.start_line = start_line
-  state.end_line = end_line
-  state.commit_count = 0
-  state.revisions = {}
-  state.blocks = {}
-  state.current_idx = 0
-  state.cancelled = false
-  state.source_buf = vim.api.nvim_get_current_buf()
+  close_windows()
+  reset_session(file, repo_root, start_line, end_line)
 
   apply_source_highlight()
 
@@ -404,7 +422,11 @@ function M.show()
   vim.api.nvim_win_set_height(state.log_win, height)
 
   ui.update_log_statusline(state, true)
-  ui.setup_log_buffer_keymaps(state, kill_job, toggle_diff_mode)
+  ui.setup_log_buffer_keymaps(state, {
+    on_quit = kill_job,
+    close_windows = close_windows,
+    toggle_diff_mode = toggle_diff_mode,
+  })
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = state.log_buf,

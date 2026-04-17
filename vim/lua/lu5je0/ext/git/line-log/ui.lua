@@ -123,21 +123,147 @@ function M.set_buffer_lines(buf, lines)
   vim.bo[buf].modifiable = false
 end
 
-function M.append_commit_line(state, rev)
+local function append_display_line(state, line, item)
   if not vim.api.nvim_buf_is_valid(state.log_buf) then
     return
   end
-  local line = string.format('%s %s %s %s', rev.hash, rev.date, rev.author, rev.message)
   vim.bo[state.log_buf].modifiable = true
   if state.commit_count == 0 then
     vim.api.nvim_buf_set_lines(state.log_buf, 0, -1, false, { line })
   else
     vim.api.nvim_buf_set_lines(state.log_buf, -1, -1, false, { line })
   end
-  state.commit_count = state.commit_count + 1
-  M.highlight_commit_lines(state.log_buf, state.commit_count - 1, { line }, { rev })
+  state.display_items[#state.display_items + 1] = item
+  state.commit_count = #state.display_items
   vim.bo[state.log_buf].modifiable = false
   M.update_log_statusline(state, true)
+end
+
+function M.append_commit_line(state, rev, rev_idx)
+  local line = string.format('%s %s %s %s', rev.hash, rev.date, rev.author, rev.message)
+  append_display_line(state, line, {
+    type = 'revision',
+    rev_idx = rev_idx,
+  })
+  M.highlight_commit_lines(state.log_buf, state.commit_count - 1, { line }, { rev })
+end
+
+function M.append_local_change_line(state)
+  local line = 'local change'
+  append_display_line(state, line, {
+    type = 'local_change',
+  })
+  vim.api.nvim_buf_add_highlight(state.log_buf, ns_id, 'Special', state.commit_count - 1, 0, -1)
+end
+
+local function get_item_at_line(state, line_nr)
+  return state.display_items[line_nr]
+end
+
+local function get_display_selection(state, from_line, to_line)
+  local min_idx, max_idx = nil, nil
+  for line_nr = from_line, to_line do
+    if get_item_at_line(state, line_nr) then
+      if not min_idx or line_nr < min_idx then
+        min_idx = line_nr
+      end
+      if not max_idx or line_nr > max_idx then
+        max_idx = line_nr
+      end
+    end
+  end
+  if not min_idx then
+    return nil
+  end
+  return {
+    from_display_idx = min_idx,
+    to_display_idx = max_idx,
+    newest_item = state.display_items[min_idx],
+    oldest_item = state.display_items[max_idx],
+  }
+end
+
+local function get_new_side(state, item)
+  if item.type == 'local_change' then
+    return state.blocks[0], state.rel_file
+  end
+
+  local rev = state.revisions[item.rev_idx]
+  return state.blocks[item.rev_idx], rev.file
+end
+
+local function get_old_side(state, item)
+  if item.type == 'local_change' then
+    return state.local_change_block, state.rel_file, state.revisions[1]
+  end
+
+  local parent_idx = item.rev_idx + 1
+  local rev = state.revisions[item.rev_idx]
+  local parent_rev = parent_idx <= #state.revisions and state.revisions[parent_idx] or nil
+  local old_file = parent_rev and parent_rev.file or rev.file
+  return state.blocks[parent_idx], old_file, parent_rev
+end
+
+local function get_item_summary(state, item)
+  if item.type == 'local_change' then
+    return {
+      short = 'local change',
+      detail = 'working tree',
+    }
+  end
+
+  local rev = state.revisions[item.rev_idx]
+  local short_msg = rev.message:sub(1, 50)
+  if #rev.message > 50 then
+    short_msg = short_msg .. '...'
+  end
+  return {
+    short = rev.hash,
+    detail = short_msg,
+  }
+end
+
+local function get_range_summary(state, newest_item, oldest_item)
+  local newest = get_item_summary(state, newest_item)
+  local oldest = get_item_summary(state, oldest_item)
+  return newest.short, oldest.short
+end
+
+local function is_tracked_diff_window(win)
+  if not win or not vim.api.nvim_win_is_valid(win) then
+    return false
+  end
+  return vim.w[win].git_line_log_diff == true
+end
+
+local function mark_diff_window(win)
+  if win and vim.api.nvim_win_is_valid(win) then
+    vim.w[win].git_line_log_diff = true
+  end
+end
+
+local function reset_diff_state(state)
+  state.diff_win = nil
+  state.diff_buf = nil
+  state.diff_win2 = nil
+  state.diff_buf2 = nil
+end
+
+local function close_diff_windows(state)
+  state.closing_diff_windows = true
+  local wins = vim.api.nvim_tabpage_list_wins(0)
+  for _, win in ipairs(wins) do
+    if is_tracked_diff_window(win) then
+      pcall(vim.api.nvim_win_close, win, true)
+    end
+  end
+  for _, win in ipairs({ state.diff_win2, state.diff_win }) do
+    if win and vim.api.nvim_win_is_valid(win) then
+      pcall(vim.api.nvim_win_close, win, true)
+    end
+  end
+  reset_diff_state(state)
+  state.closing_diff_windows = false
 end
 
 function M.show_commit_diff(state, from_line, to_line)
@@ -151,59 +277,33 @@ function M.show_commit_diff(state, from_line, to_line)
     from_line, to_line = to_line, from_line
   end
 
-  -- Collect rev_idx for all selected lines
-  local min_rev_idx, max_rev_idx = nil, nil
-  for line_nr = from_line, to_line do
-    local line = vim.api.nvim_buf_get_lines(state.log_buf, line_nr - 1, line_nr, false)[1]
-    if line then
-      local commit = line:match('^(%x+)')
-      if commit then
-        for i, rev in ipairs(state.revisions) do
-          if rev.hash == commit then
-            if not min_rev_idx or i < min_rev_idx then
-              min_rev_idx = i
-            end
-            if not max_rev_idx or i > max_rev_idx then
-              max_rev_idx = i
-            end
-            break
-          end
-        end
-      end
-    end
-  end
-
-  if not min_rev_idx then
+  local selection = get_display_selection(state, from_line, to_line)
+  if not selection then
     return
   end
 
-  -- new_block = block at newest selected commit (+ side)
-  -- old_block = block before oldest selected commit (- side)
-  local new_block = state.blocks[min_rev_idx]
-  local old_block = state.blocks[max_rev_idx + 1]
-
-  local new_file = state.revisions[min_rev_idx].file
-  local old_rev_idx = max_rev_idx + 1
-  local old_file = (old_rev_idx <= #state.revisions) and state.revisions[old_rev_idx].file or new_file
+  local new_block, new_file = get_new_side(state, selection.newest_item)
+  local old_block, old_file, old_rev = get_old_side(state, selection.oldest_item)
 
   if state.diff_mode == 'dual' then
-    M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_rev_idx, max_rev_idx, from_line, to_line)
+    M.show_dual_diff(state, old_block, new_block, old_file, new_file, selection, old_rev)
   else
-    M.show_single_diff(state, old_block, new_block, old_file, new_file, min_rev_idx, max_rev_idx, from_line, to_line)
+    M.show_single_diff(state, old_block, new_block, old_file, new_file, selection)
   end
 end
 
-function M.show_single_diff(state, old_block, new_block, old_file, new_file, min_rev_idx, max_rev_idx, from_line, to_line)
+function M.show_single_diff(state, old_block, new_block, old_file, new_file, selection)
   local lines = Block.generate_diff(old_block, new_block, old_file, new_file)
 
-  -- Close diff_win2 if exists
-  if state.diff_win2 and vim.api.nvim_win_is_valid(state.diff_win2) then
-    vim.api.nvim_win_close(state.diff_win2, true)
-    state.diff_win2 = nil
-    state.diff_buf2 = nil
+  local was_dual = state.diff_win2 and vim.api.nvim_win_is_valid(state.diff_win2)
+
+  -- Switching from dual mode back to single mode is simpler if we rebuild the
+  -- diff window from scratch instead of trying to reuse the left diff pane.
+  if was_dual then
+    close_diff_windows(state)
   end
 
-  local reuse_win = state.diff_win and vim.api.nvim_win_is_valid(state.diff_win)
+  local reuse_win = state.diff_win and vim.api.nvim_win_is_valid(state.diff_win) and not state.diff_win2
 
   if reuse_win then
     vim.bo[state.diff_buf].modifiable = true
@@ -223,6 +323,7 @@ function M.show_single_diff(state, old_block, new_block, old_file, new_file, min
     vim.cmd('vsplit')
     state.diff_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
+    mark_diff_window(state.diff_win)
     vim.api.nvim_set_current_win(state.log_win)
 
     vim.keymap.set('n', 'q', function()
@@ -233,27 +334,26 @@ function M.show_single_diff(state, old_block, new_block, old_file, new_file, min
   end
 
   -- Statusline: single commit or range
-  if from_line == to_line then
-    local rev = state.revisions[min_rev_idx]
-    local short_msg = rev and rev.message:sub(1, 50) or ''
-    if rev and #rev.message > 50 then
-      short_msg = short_msg .. '...'
-    end
-    vim.wo[state.diff_win].statusline = string.format(' %%#Function#Diff%%* %%#Number#%s%%* %%#Comment#%s%%*', rev.hash, short_msg)
+  if selection.from_display_idx == selection.to_display_idx then
+    local summary = get_item_summary(state, selection.newest_item)
+    vim.wo[state.diff_win].statusline = string.format(
+      ' %%#Function#Diff%%* %%#Number#%s%%* %%#Comment#%s%%*',
+      summary.short,
+      summary.detail
+    )
   else
-    local newest_hash = state.revisions[min_rev_idx].hash
-    local oldest_hash = state.revisions[max_rev_idx].hash
-    local count = to_line - from_line + 1
+    local newest_label, oldest_label = get_range_summary(state, selection.newest_item, selection.oldest_item)
+    local count = selection.to_display_idx - selection.from_display_idx + 1
     vim.wo[state.diff_win].statusline = string.format(
       ' %%#Function#Diff%%* %%#Number#%s..%s%%* %%#Comment#(%d commits)%%*',
-      newest_hash,
-      oldest_hash,
+      newest_label,
+      oldest_label,
       count
     )
   end
 end
 
-function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_rev_idx, max_rev_idx, from_line, to_line)
+function M.show_dual_diff(state, old_block, new_block, old_file, new_file, selection, old_rev)
   local old_lines = (old_block and not old_block:is_empty()) and old_block:get_content() or {}
   local new_lines = (new_block and not new_block:is_empty()) and new_block:get_content() or {}
 
@@ -291,12 +391,7 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_r
       vim.cmd('diffupdate')
     end)
   else
-    -- Close existing single diff win
-    if state.diff_win and vim.api.nvim_win_is_valid(state.diff_win) then
-      vim.api.nvim_win_close(state.diff_win, true)
-      state.diff_win = nil
-      state.diff_buf = nil
-    end
+    close_diff_windows(state)
 
     -- Create old diff buffer and window
     state.diff_buf = vim.api.nvim_create_buf(false, true)
@@ -314,6 +409,7 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_r
     vim.cmd('vsplit')
     state.diff_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
+    mark_diff_window(state.diff_win)
     vim.wo[state.diff_win].diff = true
     vim.wo[state.diff_win].scrollbind = true
     vim.wo[state.diff_win].wrap = false
@@ -334,6 +430,7 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_r
     vim.cmd('vsplit')
     state.diff_win2 = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(state.diff_win2, state.diff_buf2)
+    mark_diff_window(state.diff_win2)
     vim.wo[state.diff_win2].diff = true
     vim.wo[state.diff_win2].scrollbind = true
     vim.wo[state.diff_win2].wrap = false
@@ -346,19 +443,15 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_r
         buffer = buf_pair[1],
         once = true,
         callback = function()
+          if state.closing_diff_windows then
+            return
+          end
           if closing then
             return
           end
           closing = true
           vim.schedule(function()
-            local other_win = buf_pair[2]
-            if other_win and vim.api.nvim_win_is_valid(other_win) then
-              vim.api.nvim_win_close(other_win, true)
-            end
-            state.diff_win = nil
-            state.diff_buf = nil
-            state.diff_win2 = nil
-            state.diff_buf2 = nil
+            close_diff_windows(state)
           end)
         end,
       })
@@ -368,15 +461,8 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_r
   end
 
   -- Update statuslines
-  if from_line == to_line then
-    local new_rev = state.revisions[min_rev_idx]
-    local new_msg = new_rev.message:sub(1, 30)
-    if #new_rev.message > 30 then
-      new_msg = new_msg .. '...'
-    end
-
-    local parent_idx = max_rev_idx + 1
-    local old_rev = parent_idx <= #state.revisions and state.revisions[parent_idx] or nil
+  if selection.from_display_idx == selection.to_display_idx then
+    local new_summary = get_item_summary(state, selection.newest_item)
     if old_rev then
       local old_msg = old_rev.message:sub(1, 30)
       if #old_rev.message > 30 then
@@ -386,19 +472,24 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, min_r
     else
       vim.wo[state.diff_win].statusline = '%#Comment#(initial)%*'
     end
-    vim.wo[state.diff_win2].statusline = string.format('%%#Number#%s%%* %%#Comment#%s%%*', new_rev.hash, new_msg)
+    vim.wo[state.diff_win2].statusline = string.format('%%#Number#%s%%* %%#Comment#%s%%*', new_summary.short, new_summary.detail)
   else
-    local newest_hash = state.revisions[min_rev_idx].hash
-    local oldest_hash = state.revisions[max_rev_idx].hash
-    local count = to_line - from_line + 1
-    vim.wo[state.diff_win].statusline = string.format('%%#Comment#before %s%%*', oldest_hash)
-    vim.wo[state.diff_win2].statusline = string.format('%%#Number#%s..%s%%* %%#Comment#(%d commits)%%*', newest_hash, oldest_hash, count)
+    local newest_label, oldest_label = get_range_summary(state, selection.newest_item, selection.oldest_item)
+    local count = selection.to_display_idx - selection.from_display_idx + 1
+    vim.wo[state.diff_win].statusline = string.format('%%#Comment#before %s%%*', oldest_label)
+    vim.wo[state.diff_win2].statusline = string.format('%%#Number#%s..%s%%* %%#Comment#(%d commits)%%*', newest_label, oldest_label, count)
   end
 end
 
-function M.setup_log_buffer_keymaps(state, on_quit, toggle_diff_mode)
+function M.setup_log_buffer_keymaps(state, actions)
   local buf = state.log_buf
   local opts = { buffer = buf, nowait = true }
+
+  local function quit()
+    actions.on_quit()
+    close_help()
+    actions.close_windows()
+  end
 
   -- Auto-update diff on cursor move
   vim.api.nvim_create_autocmd('CursorMoved', {
@@ -419,31 +510,14 @@ function M.setup_log_buffer_keymaps(state, on_quit, toggle_diff_mode)
   })
 
   vim.keymap.set('n', 'd', function()
-    toggle_diff_mode()
+    actions.toggle_diff_mode()
     M.show_commit_diff(state)
   end, opts)
 
   vim.keymap.set('n', '?', show_help, opts)
 
-  vim.keymap.set('n', 'q', function()
-    on_quit()
-    close_help()
-    for _, win in ipairs({ state.diff_win2, state.diff_win, state.log_win }) do
-      if win and vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_close(win, true)
-      end
-    end
-  end, opts)
-
-  vim.keymap.set('n', '<Esc>', function()
-    on_quit()
-    close_help()
-    for _, win in ipairs({ state.diff_win2, state.diff_win, state.log_win }) do
-      if win and vim.api.nvim_win_is_valid(win) then
-        vim.api.nvim_win_close(win, true)
-      end
-    end
-  end, opts)
+  vim.keymap.set('n', 'q', quit, opts)
+  vim.keymap.set('n', '<Esc>', quit, opts)
 end
 
 return M
