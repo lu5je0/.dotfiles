@@ -2,6 +2,7 @@ local M = {}
 
 local MISSING = {}
 local stores = {}
+local BATCH_SIZE = 100
 
 local function make_key(rev, file)
   return rev .. ':' .. file
@@ -29,6 +30,14 @@ local function normalize_specs(specs)
   end
 
   return requests
+end
+
+local function slice_requests(requests, size)
+  local chunks = {}
+  for i = 1, #requests, size do
+    chunks[#chunks + 1] = vim.list_slice(requests, i, math.min(i + size - 1, #requests))
+  end
+  return chunks
 end
 
 local function parse_batch_output(stdout, requests)
@@ -129,25 +138,27 @@ function M.for_repo(repo_root)
       return true
     end
 
-    local result = vim.system({ 'git', 'cat-file', '--batch' }, {
-      cwd = self.repo_root,
-      stdin = table.concat(vim.tbl_map(function(request)
-        return request.object
-      end, requests), '\n') .. '\n',
-      text = false,
-    }):wait()
+    for _, chunk in ipairs(slice_requests(requests, BATCH_SIZE)) do
+      local result = vim.system({ 'git', 'cat-file', '--batch' }, {
+        cwd = self.repo_root,
+        stdin = table.concat(vim.tbl_map(function(request)
+          return request.object
+        end, chunk), '\n') .. '\n',
+        text = false,
+      }):wait()
 
-    if result.code ~= 0 then
-      return false, result.stderr or ('git cat-file exited with code ' .. result.code)
-    end
+      if result.code ~= 0 then
+        return false, result.stderr or ('git cat-file exited with code ' .. result.code)
+      end
 
-    local parsed, err = parse_batch_output(result.stdout or '', requests)
-    if not parsed then
-      return false, err
-    end
+      local parsed, err = parse_batch_output(result.stdout or '', chunk)
+      if not parsed then
+        return false, err
+      end
 
-    for key, value in pairs(parsed) do
-      self:store_lines(key, value)
+      for key, value in pairs(parsed) do
+        self:store_lines(key, value)
+      end
     end
     return true
   end
@@ -165,16 +176,45 @@ function M.for_repo(repo_root)
       return nil
     end
 
-    return batch_load(self.repo_root, requests, function(ok, payload)
-      if ok then
+    local jobs = {}
+    local chunks = slice_requests(requests, BATCH_SIZE)
+    local idx = 0
+
+    local function run_next()
+      idx = idx + 1
+      local chunk = chunks[idx]
+      if not chunk then
+        callback(true)
+        return
+      end
+
+      jobs[idx] = batch_load(self.repo_root, chunk, function(ok, payload)
+        jobs[idx] = nil
+        if not ok then
+          callback(false, payload)
+          return
+        end
+
         for key, value in pairs(payload) do
           self:store_lines(key, value)
         end
-        callback(true)
-      else
-        callback(false, payload)
-      end
-    end)
+        run_next()
+      end)
+    end
+
+    run_next()
+
+    return {
+      kill = function()
+        for _, job in pairs(jobs) do
+          if job then
+            pcall(function()
+              job:kill()
+            end)
+          end
+        end
+      end,
+    }
   end
 
   stores[repo_root] = store
