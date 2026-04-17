@@ -6,10 +6,13 @@ local env_keeper = require('lu5je0.misc.env-keeper')
 local M = {}
 
 local hl_ns = vim.api.nvim_create_namespace('git_line_log_selected')
+local PREFETCH_BATCH_SIZE = 100
+local process_next_revision
 
 local state = {
   session = 0,
   job = nil,
+  prefetch_job = nil,
   diff_job = nil,
   log_buf = nil,
   diff_buf = nil,
@@ -30,6 +33,9 @@ local state = {
   current_idx = 0,
   cancelled = false,
   local_change_block = nil,
+  prefetch_specs = {},
+  next_prefetch_idx = 1,
+  waiting_for_prefetch = false,
   -- diff mode: 'single' or 'dual' (vimdiff style)
   diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
   blob_store = nil,
@@ -42,6 +48,12 @@ local function kill_job()
       state.job:kill()
     end)
     state.job = nil
+  end
+  if state.prefetch_job then
+    pcall(function()
+      state.prefetch_job:kill()
+    end)
+    state.prefetch_job = nil
   end
   if state.diff_job then
     pcall(function()
@@ -99,6 +111,9 @@ local function cleanup_state()
   state.display_items = {}
   state.current_idx = 0
   state.local_change_block = nil
+  state.prefetch_specs = {}
+  state.next_prefetch_idx = 1
+  state.waiting_for_prefetch = false
   state.blob_store = nil
 end
 
@@ -124,8 +139,55 @@ local function reset_session(file, repo_root, start_line, end_line)
   state.current_idx = 0
   state.cancelled = false
   state.local_change_block = nil
+  state.prefetch_specs = {}
+  state.next_prefetch_idx = 1
+  state.waiting_for_prefetch = false
   state.source_buf = vim.api.nvim_get_current_buf()
   state.blob_store = blob_store.for_repo(repo_root)
+end
+
+local function slice_specs(specs, start_idx, size)
+  local chunk = {}
+  local stop_idx = math.min(start_idx + size - 1, #specs)
+  for i = start_idx, stop_idx do
+    chunk[#chunk + 1] = specs[i]
+  end
+  return chunk, stop_idx + 1
+end
+
+local function prefetch_next_chunk(on_done)
+  local session = state.session
+  if not is_active_session(session) then
+    return
+  end
+  if state.prefetch_job or state.next_prefetch_idx > #state.prefetch_specs then
+    return
+  end
+
+  local chunk, next_idx = slice_specs(state.prefetch_specs, state.next_prefetch_idx, PREFETCH_BATCH_SIZE)
+  state.next_prefetch_idx = next_idx
+  state.prefetch_job = state.blob_store:prefetch_async(chunk, function(ok)
+    if not is_active_session(session) then
+      return
+    end
+    state.prefetch_job = nil
+    if not ok then
+      ui.update_log_statusline(state, false)
+      if state.log_buf and vim.api.nvim_buf_is_valid(state.log_buf) then
+        ui.set_buffer_lines(state.log_buf, { '-- Failed to load file history --' })
+      end
+      return
+    end
+    if on_done then
+      on_done()
+      on_done = nil
+    end
+    if state.waiting_for_prefetch then
+      state.waiting_for_prefetch = false
+      process_next_revision()
+    end
+    prefetch_next_chunk()
+  end)
 end
 
 -- Parse git log output with --name-status into structured revision entries.
@@ -262,7 +324,7 @@ local function collect_revisions_async(head_commit, callback)
 end
 
 -- Process next revision in the tracking loop
-local function process_next_revision()
+process_next_revision = function()
   local session = state.session
   if not is_active_session(session) then
     return
@@ -287,7 +349,9 @@ local function process_next_revision()
   local rev = state.revisions[idx]
   local lines = state.blob_store and state.blob_store:get_lines(rev.full, rev.file) or nil
   if not lines then
-    ui.update_log_statusline(state, false)
+    state.current_idx = state.current_idx - 1
+    state.waiting_for_prefetch = true
+    prefetch_next_chunk()
     return
   end
 
@@ -360,15 +424,10 @@ local function load_revisions()
         for _, rev in ipairs(revisions) do
           specs[#specs + 1] = { rev = rev.full, file = rev.file }
         end
-
-        state.job = state.blob_store:prefetch_async(specs, function(ok)
+        state.prefetch_specs = specs
+        state.next_prefetch_idx = 1
+        prefetch_next_chunk(function()
           if not is_active_session(session) then
-            return
-          end
-          state.job = nil
-          if not ok then
-            ui.update_log_statusline(state, false)
-            ui.set_buffer_lines(state.log_buf, { '-- Failed to load file history --' })
             return
           end
           process_next_revision()
