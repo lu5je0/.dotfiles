@@ -30,7 +30,6 @@ local function show_help()
     '  v/V     Visual select (auto show aggregated diff)',
     '  d       Toggle diff mode: single / dual',
     '  ?       Show this help',
-    '  q/<Esc> Close',
     '',
     'Diff modes:',
     '  single: Unified diff format',
@@ -330,11 +329,6 @@ function M.show_single_diff(state, old_block, new_block, old_file, new_file, sel
     mark_diff_window(state.diff_win)
     vim.api.nvim_set_current_win(state.log_win)
 
-    vim.keymap.set('n', 'q', function()
-      if vim.api.nvim_win_is_valid(state.diff_win) then
-        vim.api.nvim_win_close(state.diff_win, true)
-      end
-    end, { buffer = state.diff_buf, nowait = true })
   end
 
   -- Statusline: single commit or range
@@ -483,23 +477,42 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, selec
   end
 end
 
-function M.setup_log_buffer_keymaps(state, actions)
+function M.setup_log_buffer_keymaps(state, toggle_diff_mode)
   local buf = state.log_buf
   local opts = { buffer = buf, nowait = true }
+  local diff_preview_timer = vim.uv.new_timer()
 
-  local function quit()
-    actions.on_quit()
-    close_help()
-    actions.close_windows()
+  local function stop_diff_preview_timer()
+    if diff_preview_timer then
+      diff_preview_timer:stop()
+      diff_preview_timer:close()
+      diff_preview_timer = nil
+    end
   end
 
-  -- Auto-update diff on cursor move
-  vim.api.nvim_create_autocmd('CursorMoved', {
-    buffer = buf,
-    callback = function()
+  local function show_commit_diff_debounced()
+    local session_log_buf = state.log_buf
+    if not diff_preview_timer then
+      return
+    end
+    if not state.log_buf or not vim.api.nvim_buf_is_valid(state.log_buf) then
+      return
+    end
+    diff_preview_timer:stop()
+    diff_preview_timer:start(80, 0, vim.schedule_wrap(function()
+      if not diff_preview_timer then
+        return
+      end
+      if not state.log_buf or state.log_buf ~= session_log_buf or not vim.api.nvim_buf_is_valid(state.log_buf) then
+        return
+      end
+      if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
+        return
+      end
       if state.commit_count == 0 then
         return
       end
+
       local mode = vim.fn.mode()
       if mode == 'n' then
         M.show_commit_diff(state)
@@ -508,18 +521,29 @@ function M.setup_log_buffer_keymaps(state, actions)
         local vend = vim.api.nvim_win_get_cursor(state.log_win)[1]
         M.show_commit_diff(state, vstart, vend)
       end
+    end))
+  end
+
+  -- Auto-update diff on cursor move
+  vim.api.nvim_create_autocmd('CursorMoved', {
+    buffer = buf,
+    callback = function()
+      show_commit_diff_debounced()
     end,
   })
 
+  vim.api.nvim_create_autocmd('BufWipeout', {
+    buffer = buf,
+    once = true,
+    callback = stop_diff_preview_timer,
+  })
+
   vim.keymap.set('n', 'd', function()
-    actions.toggle_diff_mode()
+    toggle_diff_mode()
     M.show_commit_diff(state)
   end, opts)
 
   vim.keymap.set('n', '?', show_help, opts)
-
-  vim.keymap.set('n', 'q', quit, opts)
-  vim.keymap.set('n', '<Esc>', quit, opts)
 end
 
 return M

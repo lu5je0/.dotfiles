@@ -244,8 +244,13 @@ local function parse_revisions_with_status(stdout, default_path)
         end
       end
     elseif current and line ~= '' then
-      current.status = line:sub(1, 1)
-      current.file = line:match('\t(.+)$') or default_path
+      local parts = vim.split(line, '\t', { plain = true })
+      current.status = parts[1] and parts[1]:sub(1, 1) or 'M'
+      if current.status == 'R' or current.status == 'C' then
+        current.file = parts[3] or default_path
+      else
+        current.file = parts[2] or default_path
+      end
       result[#result + 1] = current
       current = nil
     end
@@ -523,11 +528,7 @@ function M.show()
   vim.api.nvim_win_set_height(state.log_win, height)
 
   ui.update_log_statusline(state, true)
-  ui.setup_log_buffer_keymaps(state, {
-    on_quit = kill_job,
-    close_windows = close_windows,
-    toggle_diff_mode = toggle_diff_mode,
-  })
+  ui.setup_log_buffer_keymaps(state, toggle_diff_mode)
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = state.log_buf,
