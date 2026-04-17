@@ -8,6 +8,7 @@ local M = {}
 local hl_ns = vim.api.nvim_create_namespace('git_line_log_selected')
 local PREFETCH_BATCH_SIZE = 100
 local process_next_revision
+local schedule_next_revision
 
 local state = {
   session = 0,
@@ -36,6 +37,7 @@ local state = {
   prefetch_specs = {},
   next_prefetch_idx = 1,
   waiting_for_prefetch = false,
+  last_evicted_idx = 0,
   -- diff mode: 'single' or 'dual' (vimdiff style)
   diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
   blob_store = nil,
@@ -114,6 +116,7 @@ local function cleanup_state()
   state.prefetch_specs = {}
   state.next_prefetch_idx = 1
   state.waiting_for_prefetch = false
+  state.last_evicted_idx = 0
   state.blob_store = nil
 end
 
@@ -142,8 +145,10 @@ local function reset_session(file, repo_root, start_line, end_line)
   state.prefetch_specs = {}
   state.next_prefetch_idx = 1
   state.waiting_for_prefetch = false
+  state.last_evicted_idx = 0
   state.source_buf = vim.api.nvim_get_current_buf()
   state.blob_store = blob_store.for_repo(repo_root)
+  state.blob_store:clear()
 end
 
 local function slice_specs(specs, start_idx, size)
@@ -184,9 +189,37 @@ local function prefetch_next_chunk(on_done)
     end
     if state.waiting_for_prefetch then
       state.waiting_for_prefetch = false
-      process_next_revision()
+      schedule_next_revision()
     end
     prefetch_next_chunk()
+  end)
+end
+
+local function evict_processed_specs(end_idx)
+  if not state.blob_store then
+    return
+  end
+  if end_idx <= state.last_evicted_idx then
+    return
+  end
+
+  local specs = {}
+  for i = state.last_evicted_idx + 1, end_idx do
+    local spec = state.prefetch_specs[i]
+    if spec then
+      specs[#specs + 1] = spec
+    end
+  end
+  state.blob_store:evict_specs(specs)
+  state.last_evicted_idx = end_idx
+end
+
+schedule_next_revision = function()
+  local session = state.session
+  vim.schedule(function()
+    if is_active_session(session) then
+      process_next_revision()
+    end
   end)
 end
 
@@ -370,15 +403,19 @@ process_next_revision = function()
   end
 
   if prev_block:is_empty() then
+    evict_processed_specs(idx)
     ui.update_log_statusline(state, false)
     return
   end
 
   if idx == #state.revisions then
     ui.append_commit_line(state, rev, idx)
+    evict_processed_specs(idx)
+  elseif idx - state.last_evicted_idx >= PREFETCH_BATCH_SIZE then
+    evict_processed_specs(idx)
   end
 
-  process_next_revision()
+  schedule_next_revision()
 end
 
 -- Start revision collection and block tracking
@@ -430,7 +467,7 @@ local function load_revisions()
           if not is_active_session(session) then
             return
           end
-          process_next_revision()
+          schedule_next_revision()
         end)
       end)
     end)

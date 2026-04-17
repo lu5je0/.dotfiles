@@ -126,6 +126,20 @@ function M.for_repo(repo_root)
     self.cache[key] = value or MISSING
   end
 
+  function store:evict(rev, file)
+    self.cache[make_key(rev, file)] = nil
+  end
+
+  function store:evict_specs(specs)
+    for _, spec in ipairs(specs or {}) do
+      self:evict(spec.rev, spec.file)
+    end
+  end
+
+  function store:clear()
+    self.cache = {}
+  end
+
   function store:prefetch_sync(specs)
     local requests = {}
     for _, request in ipairs(normalize_specs(specs)) do
