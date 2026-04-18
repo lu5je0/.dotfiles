@@ -1,5 +1,5 @@
 -- Line-log algorithm tests
--- Usage: cd vim && nvim --headless -u NONE -l tests/line-log_spec.lua
+-- Usage: cd vim && nvim --headless -u NONE -l tests/line-log/spec.lua
 --
 -- Existing dotfiles cases pin commit + file + line range and verify shown commits.
 -- Temporary git fixtures exercise the same algorithm against stable synthetic history.
@@ -7,8 +7,8 @@
 local blob_store = require('lu5je0.ext.git.line-log.blob-store')
 local core = require('lu5je0.ext.git.line-log.core')
 
-local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h')
-local fixture_cases = dofile(repo_root .. '/vim/tests/line-log-fixtures.lua')
+local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
+local fixture_cases = dofile(repo_root .. '/vim/tests/line-log/fixtures.lua')
 local store = blob_store.for_repo(repo_root)
 
 local function track_commits(commit, rel_file, start_line, end_line)
@@ -30,6 +30,13 @@ end
 local passed = 0
 local failed = 0
 local skipped = 0
+local color = {
+  reset = '\27[0m',
+  cyan = '\27[36m',
+  green = '\27[32m',
+  red = '\27[31m',
+  yellow = '\27[33m',
+}
 
 local function format_test_name(tc)
   local line_range = tc.start_line == tc.end_line
@@ -117,12 +124,12 @@ local function run_fixture_case(tc)
     local same_shown = vim.deep_equal(actual_shown, expected_shown)
 
     if same_revisions and same_shown then
-      io.write(string.format('PASS (%d revisions, %d commits)\n', #actual_revisions, #actual_shown))
+      io.write(string.format('%sPASS%s (%d revisions, %d commits)\n', color.green, color.reset, #actual_revisions, #actual_shown))
       passed = passed + 1
       return
     end
 
-    io.write('FAIL\n')
+    io.write(string.format('%sFAIL%s\n', color.red, color.reset))
     io.write(string.format('    expected revisions: %s\n', vim.inspect(expected_revisions)))
     io.write(string.format('    actual revisions:   %s\n', vim.inspect(actual_revisions)))
     io.write(string.format('    expected commits:   %s\n', table.concat(expected_shown, ', ')))
@@ -132,7 +139,7 @@ local function run_fixture_case(tc)
 
   vim.fn.delete(tmp_root, 'rf')
   if not ok then
-    io.write('ERROR\n')
+    io.write(string.format('%sERROR%s\n', color.red, color.reset))
     io.write(string.format('    %s\n', err))
     failed = failed + 1
   end
@@ -142,7 +149,7 @@ local function run_test(tc)
   io.write(string.format('  %s ... ', format_test_name(tc)))
 
   if not tc.expected_commits then
-    io.write('SKIP (no expected_commits)\n')
+    io.write(string.format('%sSKIP%s (no expected_commits)\n', color.yellow, color.reset))
     skipped = skipped + 1
     return
   end
@@ -166,10 +173,10 @@ local function run_test(tc)
   local match = intersect == total and #actual == #tc.expected_commits
 
   if match then
-    io.write(string.format('PASS (%d commits, %d/%d)\n', #actual, intersect, total))
+    io.write(string.format('%sPASS%s (%d commits, %d/%d)\n', color.green, color.reset, #actual, intersect, total))
     passed = passed + 1
   else
-    io.write(string.format('FAIL (%d/%d)\n', intersect, total))
+    io.write(string.format('%sFAIL%s (%d/%d)\n', color.red, color.reset, intersect, total))
     io.write(string.format('    expected (%d): %s\n', #tc.expected_commits, table.concat(tc.expected_commits, ', ')))
     io.write(string.format('    actual   (%d): %s\n', #actual, table.concat(actual, ', ')))
 

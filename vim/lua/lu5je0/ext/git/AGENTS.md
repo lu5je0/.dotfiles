@@ -49,10 +49,10 @@
 
 ### 测试约定
 
-- `vim/tests/line-log_spec.lua` 负责 line-log 算法测试，当前同时覆盖：
+- `vim/tests/line-log/spec.lua` 负责 line-log 算法测试，当前同时覆盖：
   - 现有 dotfiles 仓库里的固定 commit/文件/行段 case
   - 运行时动态创建的临时 git 仓库 fixture
-- 临时 fixture 定义位于 `vim/tests/line-log-fixtures.lua`，仓库本体在测试运行时创建到系统临时目录，不把 `.git` fixture 提交进仓库
+- 临时 fixture 定义位于 `vim/tests/line-log/fixtures.lua`，仓库本体在测试运行时创建到系统临时目录，不把 `.git` fixture 提交进仓库
 - 如果修改 revision/path 链、rename 处理、tracker 推进或 `Block` 交互，必须至少跑：
   - `cd vim && ./tests/run-tests.sh`
   - `cd vim && nvim --headless '+qa'`

@@ -37,7 +37,7 @@
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
 - `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
-- `tests/`: 当前仓库内的自动化测试。现有入口主要覆盖 `cron-parser`。
+- `tests/`: 当前仓库内的自动化测试。现有入口主要覆盖 `cron-parser` 与 `line-log`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
 ## 改动落点规则
@@ -71,7 +71,7 @@
   - `cd vim && nvim --headless '+qa'`
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 目前通过 `luajit` 运行 `tests/cron-parser_spec.lua`，并要求设置 `DOTFILES_ROOT`。
+- `tests/run-tests.sh` 目前通过 `luajit` 运行 `tests/cron/spec.lua`，并要求设置 `DOTFILES_ROOT`；`line-log` 测试入口为 `tests/line-log/spec.lua`。
 - 如果你新增了独立 Lua 功能且具备稳定输入输出，优先补到 `tests/`，不要只依赖手动打开 Neovim 验证。
 - 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
 

@@ -51,6 +51,12 @@ end
 
 local cron = require('lu5je0.misc.cron-parser')
 local t = cron._test
+local color = {
+  reset = '\27[0m',
+  cyan = '\27[36m',
+  green = '\27[32m',
+  red = '\27[31m',
+}
 
 local function assert_eq(actual, expected, msg)
   if actual ~= expected then
@@ -97,14 +103,22 @@ local function test_invalid_expression()
 end
 
 local tests = {
-  test_extract_embedded_expression,
-  test_parse_weekday_names,
-  test_next_runs_deterministic,
-  test_invalid_expression,
+  { name = 'extract_embedded_expression', fn = test_extract_embedded_expression },
+  { name = 'parse_weekday_names', fn = test_parse_weekday_names },
+  { name = 'next_runs_deterministic', fn = test_next_runs_deterministic },
+  { name = 'invalid_expression', fn = test_invalid_expression },
 }
 
-for _, fn in ipairs(tests) do
-  fn()
+print('cron parser tests')
+
+for _, test in ipairs(tests) do
+  io.write(string.format('  %s ... ', test.name))
+  local ok, err = pcall(test.fn)
+  if not ok then
+    io.write(string.format('%sFAIL%s\n', color.red, color.reset))
+    error(err)
+  end
+  io.write(string.format('%sPASS%s\n', color.green, color.reset))
 end
 
-print(('PASS: %d tests'):format(#tests))
+print(string.format('%sPASS%s: %d tests', color.green, color.reset, #tests))
