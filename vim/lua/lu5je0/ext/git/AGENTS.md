@@ -8,10 +8,11 @@
 
 - `init.lua`: 模块入口，注册按键映射
 - `line-log/`: 行级 git log 子模块
-  - `init.lua`: 主入口，state 管理与 revision 处理流程
+  - `init.lua`: Neovim 入口，负责 session、窗口、buffer、prefetch 调度与 UI 驱动
+  - `core.lua`: 纯算法与 git 历史收集核心，负责 revision/path 链、tracker 初始化与 block 推进；测试与运行时共用
   - `blob-store.lua`: 批量加载并缓存 `rev:file` 内容，供测试与运行时共用
   - `block.lua`: Block 类与 diff 生成（纯算法，不依赖 state）
-  - `ui.lua`: 窗口、buffer、spinner、statusline、高亮、keymaps
+  - `ui.lua`: 窗口、buffer、statusline、高亮、keymaps；直接消费 `state.tracker`
 
 ## 功能说明
 
@@ -26,10 +27,14 @@
 
 - **不使用 `git log -L`**，采用 IntelliJ IDEA 的内容追踪算法
 - 算法流程：
-  1. `git log --follow -- <file>` 获取文件所有 revision
-  2. 对每个 revision 用 `git cat-file --batch` 按 100 个 revision 一批异步预取完整内容，并按 `rev:file` 缓存；首批就绪后立即开始显示，剩余批次后台继续补
-  3. `vim.diff()` 对比相邻版本，通过 diff hunk 反向推导选中块在上一版本的位置
-  4. 只显示内容实际变化的 commit（包括 block 从非空变为空的转换）
+  1. 先从当前路径开始，用 `git log --name-status --full-history --simplify-merges -- <path>` 收集当前路径的 revision 链
+  2. 遇到 `A` commit 时，再用 `git show -M --name-status <commit> -- <path>` 探测 rename；若命中则把旧路径继续入队，构造完整 revision/path 链
+  3. 对每个 `rev:file` 用 `git cat-file --batch` 按 100 个 revision 一批异步预取完整内容，并缓存；首批就绪后立即开始显示，剩余批次后台继续补
+  4. `Block.create_previous_block()` 对比相邻版本内容，反向推导选中块在上一版本的位置
+  5. 只显示内容实际变化的 commit，包括 block 从非空变为空前的最后一个 revision
+- `core.lua` 同时提供同步与异步两套入口：
+  - 同步入口给测试使用，避免在 spec 内复制一套算法实现
+  - 异步入口给运行时使用，避免阻塞 Neovim UI
 - `Block` 类：封装行内容和范围，`create_previous_block()` 实现位置追踪
   - 内部使用 0-based exclusive range `[start, end)` 对齐 IDEA 的 `Block.java`
   - vim.diff 返回的 1-based 索引需特殊转换：当 count=0（纯插入/纯删除）时，start 直接使用（不减 1）
@@ -41,6 +46,16 @@
 - 窗口关闭时 `BufWipeout` autocmd 触发 `job:kill()` 停止进程
 - commit 列表格式：`%h %ad %s`，日期精确到秒
 - 高亮：commit hash 用 `Number`，日期用 `Comment`
+
+### 测试约定
+
+- `vim/tests/line-log_spec.lua` 负责 line-log 算法测试，当前同时覆盖：
+  - 现有 dotfiles 仓库里的固定 commit/文件/行段 case
+  - 运行时动态创建的临时 git 仓库 fixture
+- 临时 fixture 定义位于 `vim/tests/line-log-fixtures.lua`，仓库本体在测试运行时创建到系统临时目录，不把 `.git` fixture 提交进仓库
+- 如果修改 revision/path 链、rename 处理、tracker 推进或 `Block` 交互，必须至少跑：
+  - `cd vim && ./tests/run-tests.sh`
+  - `cd vim && nvim --headless '+qa'`
 
 ### 与 `git log -L` 的区别
 

@@ -90,8 +90,9 @@ function M.update_log_statusline(state, loading)
     or string.format('%d-%d', state.start_line, state.end_line)
 
   if loading then
-    local total = #state.revisions
-    local status = total > 0 and string.format('%d/%d', state.current_idx, total) or '...'
+    local total = state.tracker and #state.tracker.revisions or 0
+    local current = state.tracker and state.tracker.current_idx or 0
+    local status = total > 0 and string.format('%d/%d', current, total) or '...'
     vim.wo[state.log_win].statusline = string.format(' %%#Function#Log%%* L%%#Number#%s%%* [%%#Special#%s%%*] %%#Comment#%s%%*', line_range, status, filename)
   else
     vim.wo[state.log_win].statusline = string.format(' %%#Function#Log%%* L%%#Number#%s%%* %%#Comment#%s%%*', line_range, filename)
@@ -187,24 +188,26 @@ local function get_display_selection(state, from_line, to_line)
 end
 
 local function get_new_side(state, item)
+  local tracker = state.tracker
   if item.type == 'local_change' then
-    return state.blocks[0], state.rel_file
+    return tracker and tracker.blocks[0] or nil, state.rel_file
   end
 
-  local rev = state.revisions[item.rev_idx]
-  return state.blocks[item.rev_idx], rev.file
+  local rev = tracker and tracker.revisions[item.rev_idx] or nil
+  return tracker and tracker.blocks[item.rev_idx] or nil, rev and rev.file or state.rel_file
 end
 
 local function get_old_side(state, item)
+  local tracker = state.tracker
   if item.type == 'local_change' then
-    return state.local_change_block, state.rel_file, state.revisions[1]
+    return tracker and tracker.local_change_block or nil, state.rel_file, tracker and tracker.revisions[1] or nil
   end
 
   local parent_idx = item.rev_idx + 1
-  local rev = state.revisions[item.rev_idx]
-  local parent_rev = parent_idx <= #state.revisions and state.revisions[parent_idx] or nil
+  local rev = tracker and tracker.revisions[item.rev_idx] or nil
+  local parent_rev = tracker and parent_idx <= #tracker.revisions and tracker.revisions[parent_idx] or nil
   local old_file = parent_rev and parent_rev.file or rev.file
-  return state.blocks[parent_idx], old_file, parent_rev
+  return tracker and tracker.blocks[parent_idx] or nil, old_file, parent_rev
 end
 
 local function get_item_summary(state, item)
@@ -215,7 +218,14 @@ local function get_item_summary(state, item)
     }
   end
 
-  local rev = state.revisions[item.rev_idx]
+  local tracker = state.tracker
+  local rev = tracker and tracker.revisions[item.rev_idx] or nil
+  if not rev then
+    return {
+      short = '?',
+      detail = 'missing revision',
+    }
+  end
   local short_msg = rev.message:sub(1, 50)
   if #rev.message > 50 then
     short_msg = short_msg .. '...'

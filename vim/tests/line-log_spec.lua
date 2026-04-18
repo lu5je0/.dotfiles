@@ -1,155 +1,26 @@
--- Line-log block tracking tests
+-- Line-log algorithm tests
 -- Usage: cd vim && nvim --headless -u NONE -l tests/line-log_spec.lua
 --
--- Each test case pins a specific commit + file + line range,
--- and verifies the block tracking algorithm produces the expected commit list.
+-- Existing dotfiles cases pin commit + file + line range and verify shown commits.
+-- Temporary git fixtures exercise the same algorithm against stable synthetic history.
 
-local Block = require('lu5je0.ext.git.line-log.block')
 local blob_store = require('lu5je0.ext.git.line-log.blob-store')
+local core = require('lu5je0.ext.git.line-log.core')
 
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h')
+local fixture_cases = dofile(repo_root .. '/vim/tests/line-log-fixtures.lua')
 local store = blob_store.for_repo(repo_root)
 
-local function git(args)
-  local cmd = { 'git' }
-  for _, a in ipairs(args) do
-    cmd[#cmd + 1] = a
-  end
-  local result = vim.system(cmd, { text = true, cwd = repo_root }):wait()
-  if result.code ~= 0 then
-    return nil
-  end
-  return result.stdout
-end
-
-local function parse_revisions_with_status(stdout, default_path)
-  local result = {}
-  local current_full, current_short
-  for line in stdout:gmatch('[^\n]*') do
-    local full, short = line:match('^(%x+) (%x+)$')
-    if full then
-      -- New commit hash line; flush previous if it had no status line (merge commit)
-      if current_full then
-        table.insert(result, { current_full, current_short, 'M\t' .. default_path })
-      end
-      current_full = full
-      current_short = short
-    elseif current_full and line ~= '' then
-      table.insert(result, { current_full, current_short, line })
-      current_full = nil
-      current_short = nil
-    end
-  end
-  if current_full then
-    table.insert(result, { current_full, current_short, 'M\t' .. default_path })
-  end
-  return result
-end
-
-local function collect_revisions_idea(commit, rel_file)
-  local visited = {}
-  local result = {}
-  local queue = { { commit = commit, path = rel_file } }
-
-  while #queue > 0 do
-    local item = table.remove(queue, 1)
-    local log_out = git {
-      'log', item.commit,
-      '--format=%H %h',
-      '--name-status',
-      '--full-history', '--simplify-merges',
-      '--', item.path,
-    }
-    if log_out then
-      local last_add_commit = nil
-      local entries = parse_revisions_with_status(log_out, item.path)
-      for _, entry in ipairs(entries) do
-        local full, short, status_line = entry[1], entry[2], entry[3]
-        if not visited[full] then
-          visited[full] = true
-          local status = status_line:sub(1, 1)
-          local file_name = status_line:match('\t(.+)$') or item.path
-          table.insert(result, { full = full, short = short, file = file_name })
-          if status == 'A' then
-            last_add_commit = full
-            break
-          end
-        end
-      end
-      if last_add_commit then
-        local show_out = git {
-          'show', '-M', '--follow', '--name-status',
-          '--format=%H %h', last_add_commit, '--', item.path,
-        }
-        if show_out then
-          for line in show_out:gmatch('[^\n]+') do
-            if line:match('^R') and line:find('\t') then
-              local parts = vim.split(line, '\t', { plain = true })
-              if #parts >= 3 then
-                table.insert(queue, { commit = last_add_commit, path = parts[2] })
-              end
-              break
-            end
-          end
-        end
-      end
-    end
-  end
-
-  return result
-end
-
---- Run block tracking and return the list of shown commit hashes (8-char).
---- @param commit string starting commit
---- @param rel_file string file path relative to repo root
---- @param start_line number 1-based start line
---- @param end_line number 1-based end line
---- @return string[] commit hashes
 local function track_commits(commit, rel_file, start_line, end_line)
-  local revisions = collect_revisions_idea(commit, rel_file)
-  local specs = {
-    { rev = commit, file = rel_file },
-  }
-  for _, rev in ipairs(revisions) do
-    specs[#specs + 1] = { rev = rev.full, file = rev.file }
-  end
-  local ok, err = store:prefetch_sync(specs)
-  if not ok then
-    error(err)
-  end
-
-  local current_lines = store:get_lines(commit, rel_file)
-  if not current_lines then
-    return {}
-  end
-
-  local block = Block.new(current_lines, start_line, end_line)
-  local shown = {}
-
-  for idx, rev in ipairs(revisions) do
-    local prev_lines = store:get_lines(rev.full, rev.file)
-    if not prev_lines then
-      break
-    end
-
-    local prev_block = block:create_previous_block(prev_lines)
-    local changed = not block:content_equals(prev_block)
-
-    if changed and idx > 1 then
-      table.insert(shown, revisions[idx - 1].short)
-    end
-
-    block = prev_block
-    if block:is_empty() then
-      break
-    end
-
-    if idx == #revisions then
-      table.insert(shown, rev.short)
-    end
-  end
-
-  return shown
+  local result = core.track_commits_sync({
+    repo_root = repo_root,
+    commit = commit,
+    file = rel_file,
+    start_line = start_line,
+    end_line = end_line,
+    store = store,
+  })
+  return result.shown_commits
 end
 
 -- ============================================================================
@@ -165,6 +36,106 @@ local function format_test_name(tc)
       and tostring(tc.start_line)
     or string.format('%d-%d', tc.start_line, tc.end_line)
   return string.format('%s:%s:%s', tc.commit, tc.file, line_range)
+end
+
+local function run_fixture_case(tc)
+  io.write(string.format('  fixture:%s ... ', tc.name))
+
+  local tmp_root = vim.fn.tempname() .. '-line-log'
+  assert(vim.fn.mkdir(tmp_root, 'p') == 1, 'failed to create temp dir: ' .. tmp_root)
+  local repo = tmp_root .. '/repo'
+  assert(vim.fn.mkdir(repo, 'p') == 1, 'failed to create repo dir: ' .. repo)
+
+  local function run_git(args)
+    local cmd = { 'git', '-C', repo }
+    vim.list_extend(cmd, args)
+    local result = vim.system(cmd, { text = true }):wait()
+    if result.code ~= 0 then
+      error((result.stderr or 'git command failed') .. '\ncmd: ' .. table.concat(cmd, ' '))
+    end
+    return result.stdout
+  end
+
+  local function write_file(rel_path, content)
+    local path = repo .. '/' .. rel_path
+    vim.fn.mkdir(vim.fn.fnamemodify(path, ':h'), 'p')
+    local fd = assert(io.open(path, 'w'))
+    fd:write(content)
+    fd:close()
+  end
+
+  local commit_ids = {}
+  local ok, err = pcall(function()
+    run_git({ 'init', '-q' })
+    run_git({ 'config', 'user.name', 'test' })
+    run_git({ 'config', 'user.email', 'test@example.com' })
+
+    for _, commit in ipairs(tc.commits) do
+      if commit.rename then
+        os.rename(repo .. '/' .. commit.rename.from, repo .. '/' .. commit.rename.to)
+      end
+      for rel_path, content in pairs(commit.writes or {}) do
+        write_file(rel_path, content)
+      end
+      run_git({ 'add', '-A' })
+      run_git({ 'commit', '-qm', commit.message })
+      commit_ids[commit.id] = (run_git({ 'rev-parse', '--short=8', 'HEAD' }):gsub('%s+$', ''))
+    end
+
+    local head = (run_git({ 'rev-parse', 'HEAD' }):match('%x+'))
+    local fixture_store = blob_store.for_repo(repo)
+    local result = core.track_commits_sync({
+      repo_root = repo,
+      commit = head,
+      file = tc.file,
+      start_line = tc.start_line,
+      end_line = tc.end_line,
+      store = fixture_store,
+    })
+
+    local actual_revisions = {}
+    for _, rev in ipairs(result.revisions) do
+      actual_revisions[#actual_revisions + 1] = {
+        hash = rev.hash,
+        file = rev.file,
+      }
+    end
+    local expected_revisions = {}
+    for _, rev in ipairs(tc.expected_revisions) do
+      expected_revisions[#expected_revisions + 1] = {
+        hash = commit_ids[rev.id],
+        file = rev.file,
+      }
+    end
+
+    local actual_shown = result.shown_commits
+    local expected_shown = vim.tbl_map(function(id)
+      return commit_ids[id]
+    end, tc.expected_commits)
+
+    local same_revisions = vim.deep_equal(actual_revisions, expected_revisions)
+    local same_shown = vim.deep_equal(actual_shown, expected_shown)
+
+    if same_revisions and same_shown then
+      io.write(string.format('PASS (%d revisions, %d commits)\n', #actual_revisions, #actual_shown))
+      passed = passed + 1
+      return
+    end
+
+    io.write('FAIL\n')
+    io.write(string.format('    expected revisions: %s\n', vim.inspect(expected_revisions)))
+    io.write(string.format('    actual revisions:   %s\n', vim.inspect(actual_revisions)))
+    io.write(string.format('    expected commits:   %s\n', table.concat(expected_shown, ', ')))
+    io.write(string.format('    actual commits:     %s\n', table.concat(actual_shown, ', ')))
+    failed = failed + 1
+  end)
+
+  vim.fn.delete(tmp_root, 'rf')
+  if not ok then
+    io.write('ERROR\n')
+    io.write(string.format('    %s\n', err))
+    failed = failed + 1
+  end
 end
 
 local function run_test(tc)
@@ -368,12 +339,16 @@ local test_cases = {
 -- Run
 -- ============================================================================
 
-print('line-log block tracking tests')
+print('line-log algorithm tests')
 print(string.rep('-', 60))
 print()
 
 for _, tc in ipairs(test_cases) do
   run_test(tc)
+end
+
+for _, tc in ipairs(fixture_cases) do
+  run_fixture_case(tc)
 end
 
 print(string.rep('-', 60))
