@@ -60,6 +60,11 @@ function M.setup()
     callback = sync_from,
   })
   sync_from(true)
+  
+  vim.keymap.set('i', '<c-v>', function()
+    sync_from(true)
+    require('lu5je0.core.keys').feedkey('<c-r>+')
+  end)
 end
 
 return M
