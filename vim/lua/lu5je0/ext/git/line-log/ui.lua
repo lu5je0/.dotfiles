@@ -554,6 +554,7 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode)
   end, opts)
 
   vim.keymap.set('n', '?', show_help, opts)
+  vim.keymap.set('n', '<cr>', '<nop>', opts)
 end
 
 return M
