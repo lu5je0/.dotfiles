@@ -350,10 +350,10 @@ if is_win then
   config.default_domain = "WSL:Debian"
 end
 
--- -- This function returns the suggested title for a tab.
--- -- It prefers the title that was set via `tab:set_title()`
--- -- or `wezterm cli set-tab-title`, but falls back to the
--- -- title of the active pane in that tab.
+-- This function returns the suggested title for a tab.
+-- It prefers the title that was set via `tab:set_title()`
+-- or `wezterm cli set-tab-title`, but falls back to the
+-- title of the active pane in that tab.
 -- local function tab_title(tab_info)
 --   local title = tab_info.tab_title
 --   -- if the tab title is explicitly set, take that
@@ -381,6 +381,21 @@ end
 --     return (tab.tab_index + 1) .. ": " .. title .. "(" .. basename(tab.active_pane.foreground_process_name) .. ")"
 --   end
 -- )
+
+local TAB_TITLE_MAX_LENGTH = 10
+
+wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
+  local title = tab.tab_title
+  if not title or #title == 0 then
+    title = tab.active_pane.title
+  end
+
+  if #title > TAB_TITLE_MAX_LENGTH then
+    title = title:sub(1, TAB_TITLE_MAX_LENGTH - 1) .. '\u{2026}'
+  end
+
+  return ' ' .. title .. ' '
+end)
 
 local tui_bridge_path = (function()
   local home = os.getenv("USERPROFILE") or os.getenv("HOME")

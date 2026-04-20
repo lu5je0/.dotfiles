@@ -4,9 +4,6 @@ from kitty.utils import color_as_int
 
 opts = get_options()
 
-# tab_title_min_length: kitty doesn't have this natively, sync with kitty.conf manually
-TAB_TITLE_MIN_LENGTH = 8
-
 
 def _get_powerline_symbols(draw_data: DrawData):
     try:
@@ -70,19 +67,29 @@ def _draw_tab_powerline(
 
     screen.cursor.bg = tab_bg
 
-    # Get title and apply min length centering
+    # Get title and apply min length centering (use max_tab_title_length as fixed width)
     title = tab.title
     tab_title = f'{title}'
-    if TAB_TITLE_MIN_LENGTH > 0:
-        inner_min = TAB_TITLE_MIN_LENGTH - 2
-        if len(tab_title) < inner_min:
-            tab_title = _center_title(tab_title, inner_min)
+    inner_min = draw_data.max_tab_title_length
+    if inner_min > 0 and len(tab_title) < inner_min:
+        tab_title = _center_title(tab_title, inner_min)
 
-    # Draw manually: space + title + space
-    cell = f' {tab_title} '
-    if len(cell) > max_tab_length:
-        cell = cell[:max_tab_length - 1] + '\u2026'
-    screen.draw(cell)
+    # Draw manually: space + title + space, then truncate based on actual cursor position
+    screen.draw(' ')
+    title_start = screen.cursor.x
+    screen.draw(tab_title)
+    # Enforce tab_title_max_length from kitty.conf
+    if draw_data.max_tab_title_length > 0:
+        title_limit = title_start + draw_data.max_tab_title_length
+        if screen.cursor.x > title_limit:
+            screen.cursor.x = title_limit - 1
+            screen.draw('\u2026')
+    screen.draw(' ')
+    # Enforce max_tab_length (available space per tab from layout)
+    extra = screen.cursor.x + start_draw - before - max_tab_length
+    if extra > 0 and extra + 1 < screen.cursor.x:
+        screen.cursor.x -= extra + 1
+        screen.draw('\u2026')
 
     if not needs_soft_separator:
         screen.cursor.fg = tab_bg
