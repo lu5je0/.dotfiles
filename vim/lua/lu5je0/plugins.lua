@@ -75,7 +75,7 @@ local plugins = {
     {
       'nvim-treesitter/nvim-treesitter',
       build = ':TSUpdate',
-      ft = require('lu5je0.ext.treesiter').filetypes,
+      -- ft = require('lu5je0.ext.treesiter').filetypes,
       config = function()
         require('lu5je0.ext.treesiter').setup()
       end,
