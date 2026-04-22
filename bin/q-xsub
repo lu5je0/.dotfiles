@@ -1,0 +1,6 @@
+#!/bin/bash
+INSTALL_PATH=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+SCRIPT_PATH=${INSTALL_PATH}/../submodule/q-xsub
+SCRIPT_NAME=q_xsub.py
+
+source ${INSTALL_PATH}/../submodule/python-install/runner.sh

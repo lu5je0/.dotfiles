@@ -1,0 +1,21 @@
+[Script Info]
+
+Original Script: ShinY
+Original Translation: 
+Original Timing: 
+Original Editing: 
+Script Updated By: 
+Update Details: 
+ScriptType: v4.00+
+Collisions: Reverse
+PlayResX: 1920
+PlayResY: 960
+Timer: 100.0000
+Synch Point: 0
+WrapStyle: 0
+ScaledBorderAndShadow: no
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,方正黑体简体,65,&H00EDEDED,&H0000FFFF,&H46000000,&H7D000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,18,134
+Style: Eng,Microsoft YaHei,35,&H00C2E0EC,&H0000FFFF,&H46000000,&H7D000000,0,0,0,0,100,100,0,0,1,1,1,2,10,10,18,1

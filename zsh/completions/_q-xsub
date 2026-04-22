@@ -1,0 +1,114 @@
+#compdef q-xsub
+
+_q_xsub_templates() {
+  local root template_dir
+  local -a templates
+
+  root="${HOME}/.dotfiles/submodule/q-xsub"
+  template_dir="${root}/template"
+
+  if [[ -d "${template_dir}" ]]; then
+    templates=(${${(@f)"$(command ls -1 "${template_dir}"/*.ass 2>/dev/null)"}:t:r})
+  else
+    templates=()
+  fi
+
+  if (( ${#templates[@]} )); then
+    _describe -t templates 'template' templates
+  else
+    _message 'template name or .ass template path'
+  fi
+}
+
+_q_xsub_template_arg() {
+  _alternative \
+    'templates:builtin template:_q_xsub_templates' \
+    'template-files:template file:_files -g "*.(ass|ASS)"'
+}
+
+_q_xsub_subtitle_files() {
+  _alternative \
+    'directories:directory:_files -/' \
+    'subtitle-files:subtitle file:_files -g "*.(srt|SRT|ass|ASS)"'
+}
+
+_q_xsub_video_files() {
+  _alternative \
+    'directories:directory:_files -/' \
+    'video-files:mkv file:_files -g "*.(mkv|MKV)"'
+}
+
+_q_xsub_commands() {
+  local -a commands
+  commands=(
+    'list-templates:list available templates'
+    'list-streams:list subtitle streams in an MKV file'
+    'convert:convert .srt/.ass to templated ASS'
+    'extract:extract subtitles from MKV and generate templated ASS'
+  )
+  _describe -t commands 'command' commands
+}
+
+_q_xsub_convert() {
+  _arguments -s \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '(-o --output)'{-o,--output}'[output ASS file path]:output ass file:_files' \
+    '(-t --template)'{-t,--template}'[template name or ASS file path]:template:_q_xsub_template_arg' \
+    '(-s --split-zh-and-en-lines)'{-s,--split-zh-and-en-lines}'[split mixed zh/en lines into two lines]' \
+    '--no-english-standalone-font[disable Eng style for standalone English lines]' \
+    '*:subtitle file:_q_xsub_subtitle_files'
+}
+
+_q_xsub_extract() {
+  _arguments -s \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '(-o --output)'{-o,--output}'[output ASS file path]:output ass file:_files' \
+    '(-t --template)'{-t,--template}'[template name or ASS file path]:template:_q_xsub_template_arg' \
+    '--stream[manual subtitle stream index]:stream index:' \
+    '(-s --split-zh-and-en-lines)'{-s,--split-zh-and-en-lines}'[split mixed zh/en lines for single-track extraction]' \
+    '--no-english-standalone-font[disable Eng style for standalone English lines]' \
+    '*:video file:_q_xsub_video_files'
+}
+
+_q_xsub_list_streams() {
+  if (( CURRENT == 2 )); then
+    _alternative \
+      'options:option:(( -h\:"show help" --help\:"show help" ))' \
+      'video-files:input mkv:_q_xsub_video_files'
+    return 0
+  fi
+
+  _message 'input mkv'
+}
+
+_q_xsub() {
+  local context state
+  typeset -A opt_args
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '1:command:->command' \
+    '*::args:->args'
+
+  if [[ "${state}" == command ]]; then
+    _q_xsub_commands
+    return 0
+  fi
+
+  case "${words[1]}" in
+    list-templates)
+      _arguments '(-h --help)'{-h,--help}'[show help]'
+      ;;
+    list-streams)
+      _q_xsub_list_streams
+      ;;
+    convert)
+      _q_xsub_convert
+      ;;
+    extract)
+      _q_xsub_extract
+      ;;
+  esac
+}
+
+_q_xsub "$@"
