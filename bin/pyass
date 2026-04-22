@@ -1,5 +1,0 @@
-#!/bin/bash
-SCRIPT_PATH=~/.dotfiles/submodule/pyass
-SCRIPT_NAME=pyass.py
-
-source ~/.dotfiles/submodule/python-install/runner.sh

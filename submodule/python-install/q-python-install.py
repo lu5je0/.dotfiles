@@ -17,7 +17,7 @@ def source_shell_file(lines):
     return target
 
 # Function to generate run.sh script
-def generate_run_script(script_path, script_name, output_dir):
+def generate_run_script(script_path, script_name, output_dir, output_name=None):
     # Get base name of Python script to name the run.sh
     script_name = os.path.basename(script_name)
     target_name = f"{os.path.splitext(script_name)[0]}"
@@ -42,6 +42,9 @@ def generate_run_script(script_path, script_name, output_dir):
             if 'TARGET_NAME' in ext_script_map:
                 target_name = ext_script_map['TARGET_NAME']
 
+    if output_name:
+        target_name = output_name
+
     run_script_content += '\nsource ${INSTALL_PATH}/../submodule/python-install/runner.sh'
         
     # Ensure output directory exists
@@ -65,6 +68,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate run.sh script for a Python project.")
     parser.add_argument("python_script", help="The Python script that will be run by the generated run.sh.")
     parser.add_argument("-o", "--output-dir", default=os.path.expanduser("~/.dotfiles/bin"), help="Directory to place the generated run.sh script (default: '~/.dotfiles/bin').")
+    parser.add_argument("--output-name", help="Name of the generated launcher script.")
     
     args = parser.parse_args()
 
@@ -77,7 +81,12 @@ def main():
     output_dir = args.output_dir
 
     # Generate run.sh script
-    generate_run_script(replace_home_with_tilde(os.getcwd()), script_name, output_dir)
+    generate_run_script(
+        replace_home_with_tilde(os.getcwd()),
+        script_name,
+        output_dir,
+        output_name=args.output_name,
+    )
 
 if __name__ == "__main__":
     main()
