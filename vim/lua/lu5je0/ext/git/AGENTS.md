@@ -21,7 +21,8 @@
 1. Visual 模式选中代码行后按 `<leader>gl`
 2. 底部 split 窗口显示影响选中行的 commit 列表
 3. 异步逐版本加载，窗口名称显示加载进度
-4. 在 commit 行按 `<CR>` 右侧 vsplit 显示该 commit 对选中行的 diff；Visual 选中多个 commit 后按 `<CR>` 显示聚合 diff
+4. 在 log 窗口移动光标会自动在右侧 vsplit 预览当前 commit 对选中行的 diff
+5. 在 log 窗口 Visual 选中多个 commit 会自动显示聚合 diff
 
 ### 技术要点
 
@@ -70,8 +71,14 @@
 | 模式 | 按键 | 功能 |
 |------|------|------|
 | x | `<leader>gl` | 显示选中行的 commit 历史 |
-| n (log buf) | `<CR>` | 显示当前 commit 的 diff |
-| x (log buf) | `<CR>` | 显示选中多个 commit 的聚合 diff |
+| n (source buf) | `<leader>gL` | 显示当前文件的 commit 历史 |
+| n (log buf) | `j` / `k` 等移动 | 自动预览当前 commit 的 diff |
+| x (log buf) | Visual 选择 | 自动预览选中 commit 范围的聚合 diff |
+| n (log buf) | `d` | 切换 single / dual diff 模式 |
+| n (log buf) | `D` | 切换 changes-only；single 模式压缩 diff 上下文，dual 模式折叠未变区域 |
+| n (log buf) | `?` | 打开帮助浮窗并进入 help 窗口 |
+| n (help buf) | `q` / `<Esc>` | 关闭帮助浮窗并返回 log 窗口 |
+| n (log buf) | `<CR>` | 禁用；diff 由光标移动和 Visual 选择自动刷新 |
 
 ## 依赖
 
@@ -80,4 +87,4 @@
 
 ## 懒加载
 
-通过 `ext-loader.lua` 注册，首次按 `<leader>gl` 时加载。
+通过 `ext-loader.lua` 注册，首次按 `<leader>gl` 或 `<leader>gL` 时加载。
