@@ -77,33 +77,8 @@ local config = {
   max_fps = 240,
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
+  color_scheme = "Gruvbox Dark (Gogh)",
   colors = {
-    foreground = "#ecdbb2",
-    background = "#252525",
-    cursor_bg = "#ecdbb2",
-    cursor_fg = "#191919",
-    selection_fg = "#c1c1c1",
-    selection_bg = "#413e3d",
-    ansi = {
-      "#353535", -- black
-      "#d73925", -- red
-      "#a8a521", -- green
-      "#dfa82a", -- yellow
-      "#549699", -- blue
-      "#bf7897", -- magenta
-      "#79aa7d", -- cyan
-      "#b7a996", -- white
-    },
-    brights = {
-      "#a39586", -- bright black
-      "#fe6142", -- bright red
-      "#c4c431", -- bright green
-      "#fcc73c", -- bright yellow
-      "#94b3a8", -- bright blue
-      "#dc9aab", -- bright magenta
-      "#9dd08e", -- bright cyan
-      "#efe1bf", -- bright white
-    },
     tab_bar = {
       active_tab = {
         bg_color = "#3C3C3C",

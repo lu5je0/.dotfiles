@@ -375,6 +375,7 @@ lazy_load({
   end,
   keys = {
     { mode = { 'x' }, '<leader>gl' },
+    { mode = { 'n' }, '<leader>gL' },
   }
 })
 

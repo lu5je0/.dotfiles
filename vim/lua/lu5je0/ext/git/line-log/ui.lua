@@ -29,6 +29,7 @@ local function show_help()
     '  j/k     Move commit (auto show diff)',
     '  v/V     Visual select (auto show aggregated diff)',
     '  d       Toggle diff mode: single / dual',
+    '  D       Toggle changes-only (single mode)',
     '  ?       Show this help',
     '',
     'Diff modes:',
@@ -306,7 +307,8 @@ function M.show_commit_diff(state, from_line, to_line)
 end
 
 function M.show_single_diff(state, old_block, new_block, old_file, new_file, selection)
-  local lines = Block.generate_diff(old_block, new_block, old_file, new_file)
+  local diff_opts = state.diff_changes_only and { ctxlen = 3 } or nil
+  local lines = Block.generate_diff(old_block, new_block, old_file, new_file, diff_opts)
 
   local was_dual = state.diff_win2 and vim.api.nvim_win_is_valid(state.diff_win2)
 
@@ -466,6 +468,15 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, selec
     vim.api.nvim_set_current_win(state.log_win)
   end
 
+  -- Fold unchanged regions when changes-only mode is active
+  for _, win in ipairs({ state.diff_win, state.diff_win2 }) do
+    if win and vim.api.nvim_win_is_valid(win) then
+      vim.wo[win].foldmethod = 'diff'
+      vim.wo[win].foldlevel = 0
+      vim.wo[win].foldenable = state.diff_changes_only
+    end
+  end
+
   -- Update statuslines
   if selection.from_display_idx == selection.to_display_idx then
     local new_summary = get_item_summary(state, selection.newest_item)
@@ -487,7 +498,7 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, selec
   end
 end
 
-function M.setup_log_buffer_keymaps(state, toggle_diff_mode)
+function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes_only)
   local buf = state.log_buf
   local opts = { buffer = buf, nowait = true }
   local diff_preview_timer = vim.uv.new_timer()
@@ -550,6 +561,11 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode)
 
   vim.keymap.set('n', 'd', function()
     toggle_diff_mode()
+    M.show_commit_diff(state)
+  end, opts)
+
+  vim.keymap.set('n', 'D', function()
+    toggle_diff_changes_only()
     M.show_commit_diff(state)
   end, opts)
 

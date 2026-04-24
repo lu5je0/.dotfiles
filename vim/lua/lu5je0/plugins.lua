@@ -114,15 +114,12 @@ local plugins = {
 
   {
     'tpope/vim-fugitive',
-    cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' },
-    config = function()
-      require('lu5je0.ext.fugitive').setup()
-    end
+    cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' }
   },
   {
     'rbong/vim-flog',
     cmd = { 'Flogsplit', 'Floggit', 'Flog' },
-    keys = { { mode = 'n', '<leader>gL' } },
+    keys = { { mode = 'n', '<leader>gs' }, { mode = 'n', '<leader>gl' } },
     dependencies = {
       'tpope/vim-fugitive',
     },
@@ -135,6 +132,8 @@ local plugins = {
       autocmd FileType floggraph nmap <buffer> <leader>q ZZ
       augroup END
       ]]
+      vim.keymap.set('n', '<leader>gl', function() vim.cmd('Flogsplit') end, { desc = 'git log in repository' })
+      vim.keymap.set('n', '<leader>gs', function() vim.cmd('Floggit') end, { desc = 'git status' })
     end
   },
   {

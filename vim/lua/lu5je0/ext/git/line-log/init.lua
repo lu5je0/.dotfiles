@@ -35,6 +35,8 @@ local state = {
   waiting_for_prefetch = false,
   -- diff mode: 'single' or 'dual' (vimdiff style)
   diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
+  -- changes-only diff (single mode only)
+  diff_changes_only = env_keeper.get('line_log_diff_changes_only', false),
   blob_store = nil,
 }
 
@@ -326,11 +328,17 @@ local function load_revisions()
   end)
 end
 
-function M.show()
-  local start_line = vim.fn.getpos('v')[2]
-  local end_line = vim.api.nvim_win_get_cursor(0)[1]
-  if start_line > end_line then
-    start_line, end_line = end_line, start_line
+function M.show(opts)
+  local start_line, end_line
+  if opts and opts.start_line and opts.end_line then
+    start_line = opts.start_line
+    end_line = opts.end_line
+  else
+    start_line = vim.fn.getpos('v')[2]
+    end_line = vim.api.nvim_win_get_cursor(0)[1]
+    if start_line > end_line then
+      start_line, end_line = end_line, start_line
+    end
   end
 
   local file = vim.fn.expand('%:p')
@@ -345,7 +353,9 @@ function M.show()
     return
   end
 
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
+  if not opts then
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
+  end
 
   kill_job()
   close_windows()
@@ -357,6 +367,12 @@ function M.show()
     state.diff_mode = state.diff_mode == 'single' and 'dual' or 'single'
     env_keeper.set('line_log_diff_mode', state.diff_mode)
     vim.notify('Diff mode: ' .. state.diff_mode, vim.log.levels.INFO)
+  end
+
+  local function toggle_diff_changes_only()
+    state.diff_changes_only = not state.diff_changes_only
+    env_keeper.set('line_log_diff_changes_only', state.diff_changes_only)
+    vim.notify('Changes only: ' .. (state.diff_changes_only and 'on' or 'off'), vim.log.levels.INFO)
   end
 
   state.log_buf = vim.api.nvim_create_buf(false, true)
@@ -375,7 +391,7 @@ function M.show()
   vim.api.nvim_win_set_height(state.log_win, height)
 
   ui.update_log_statusline(state, true)
-  ui.setup_log_buffer_keymaps(state, toggle_diff_mode)
+  ui.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes_only)
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = state.log_buf,

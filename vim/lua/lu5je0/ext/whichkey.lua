@@ -201,8 +201,6 @@ function M.opts()
       { '<leader>gd', '<cmd>Git diff<cr>', desc = 'diff' },
       { '<leader>gg', desc = 'preview hunk' },
       { '<leader>gh', desc = 'stage hunk' },
-      { '<leader>gl', '<cmd>Flogsplit<cr>', desc = 'git log in repository', mode = { 'n' } },
-      { '<leader>gs', '<cmd>Floggit<cr>', desc = 'Floggit' },
       { '<leader>gr', desc = 'unstage buffer', mode = { 'n', 'x' } },
       { '<leader>gu', desc = 'reset hunk', mode = { 'n', 'x' } },
       { '<leader>gv', '<cmd>Gvdiffsplit!<cr>', desc = 'gvdiffsplit' },
