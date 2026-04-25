@@ -116,26 +116,7 @@ local plugins = {
     'tpope/vim-fugitive',
     cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' }
   },
-  {
-    'rbong/vim-flog',
-    cmd = { 'Flogsplit', 'Floggit', 'Flog' },
-    keys = { { mode = 'n', '<leader>gs' }, { mode = 'n', '<leader>gl' } },
-    dependencies = {
-      'tpope/vim-fugitive',
-    },
-    config = function()
-      if vim.fn.has('kitty') == 1 then
-        vim.g.flog_enable_extended_chars = true
-      end
-      vim.cmd [[
-      augroup flog
-      autocmd FileType floggraph nmap <buffer> <leader>q ZZ
-      augroup END
-      ]]
-      vim.keymap.set('n', '<leader>gl', function() vim.cmd('Flogsplit') end, { desc = 'git log in repository' })
-      vim.keymap.set('n', '<leader>gs', function() vim.cmd('Floggit') end, { desc = 'git status' })
-    end
-  },
+
   {
     'nvim-tree/nvim-web-devicons',
     -- config = function()

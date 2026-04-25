@@ -570,7 +570,6 @@ function Block:create_previous_block(prev_lines, debug)
 
   local shift = 0
   local top_damaged = false
-  local should_shrink_match = false
 
   -- Process hunks in forward order (matching IntelliJ's approach)
   for _, range in ipairs(changes) do
@@ -665,7 +664,6 @@ function Block:create_previous_block(prev_lines, debug)
     local expanded_a_lot = result_length > math.max(original_length * 3, 20)
     local moved_far_up = result_start < self.start_line - 5
     if expanded_a_lot and moved_far_up then
-      should_shrink_match = true
       for i = result_start, result_end - 1 do
         if non_space_chars(prev_lines[i] or '') == 0 and non_space_chars(prev_lines[i + 1] or '') > 0 then
           local trimmed_start = i + 1

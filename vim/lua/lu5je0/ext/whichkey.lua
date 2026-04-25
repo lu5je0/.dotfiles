@@ -193,17 +193,20 @@ function M.opts()
       { '<leader>g', group = 'git', mode = { 'n', 'x' } },
       { '<leader>gA', '<cmd>Git add -A<cr>', desc = 'add all' },
       { '<leader>gC', '<cmd>Gread<cr>', desc = 'git checkout -- current file' },
-      { '<leader>gD', '<cmd>Git diff --cached<cr>', desc = 'diff --cached' },
+
+      { '<leader>gl', desc = 'project commit log', mode = 'n' },
+      { '<leader>gl', desc = 'line commit log', mode = 'x' },
       { '<leader>gL', desc = 'show changes on current file', mode = { 'n', 'x' } },
+      { '<leader>gs', desc = 'git status' },
       { '<leader>go', desc = 'lazygit' },
       { '<leader>ga', desc = 'stage buffer', mode = { 'n', 'x' } },
       { '<leader>gb', desc = 'blame' },
-      { '<leader>gd', '<cmd>Git diff<cr>', desc = 'diff' },
+
       { '<leader>gg', desc = 'preview hunk' },
       { '<leader>gh', desc = 'stage hunk' },
       { '<leader>gr', desc = 'unstage buffer', mode = { 'n', 'x' } },
       { '<leader>gu', desc = 'reset hunk', mode = { 'n', 'x' } },
-      { '<leader>gv', '<cmd>Gvdiffsplit!<cr>', desc = 'gvdiffsplit' },
+
     },
   }
 end

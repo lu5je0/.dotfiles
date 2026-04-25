@@ -1,87 +1,28 @@
 local Block = require('lu5je0.ext.git.line-log.block')
+local help = require('lu5je0.ext.git.common.help')
+local scheduler = require('lu5je0.ext.git.common.scheduler')
 
 local M = {}
 
 local ns_id = vim.api.nvim_create_namespace('git_line_log')
 
-local help_win = nil
-local help_buf = nil
-local help_return_win = nil
-
-local function close_help()
-  local return_win = help_return_win
-  if help_win and vim.api.nvim_win_is_valid(help_win) then
-    vim.api.nvim_win_close(help_win, true)
-  end
-  help_win = nil
-  help_buf = nil
-  help_return_win = nil
-  if return_win and vim.api.nvim_win_is_valid(return_win) then
-    vim.api.nvim_set_current_win(return_win)
-  end
-end
-
-M.close_help = close_help
+M.close_help = help.close_help
 
 local function show_help()
-  if help_win and vim.api.nvim_win_is_valid(help_win) then
-    close_help()
-    return
-  end
-
-  local help_lines = {
+  help.show_help('Help', {
     'Line Log Keymaps',
     '',
     '  j/k     Move commit (auto show diff)',
     '  v/V     Visual select (auto show aggregated diff)',
-    '  d       Toggle diff mode: single / dual',
-    '  D       Toggle changes-only (single mode)',
+    '  d       Toggle changes-only (single mode)',
+    '  D       Toggle diff mode: single / dual',
     '  ?       Show this help',
     '  q/<Esc> Close this help',
     '',
     'Diff modes:',
     '  single: Unified diff format',
     '  dual:   Side-by-side vimdiff style',
-  }
-
-  help_buf = vim.api.nvim_create_buf(false, true)
-  vim.bo[help_buf].buftype = 'nofile'
-  vim.bo[help_buf].bufhidden = 'wipe'
-  vim.bo[help_buf].swapfile = false
-  vim.bo[help_buf].filetype = 'help'
-
-  vim.api.nvim_buf_set_lines(help_buf, 0, -1, false, help_lines)
-  vim.bo[help_buf].modifiable = false
-
-  -- Calculate position relative to log_win
-  local log_win = vim.api.nvim_get_current_win()
-  help_return_win = log_win
-  local log_pos = vim.api.nvim_win_get_position(log_win)
-  local log_height = vim.api.nvim_win_get_height(log_win)
-  local log_width = vim.api.nvim_win_get_width(log_win)
-
-  local win_width = 40
-  local win_height = #help_lines + 2
-  local col = log_pos[2] + math.floor((log_width - win_width) / 2)
-  local row = log_pos[1] + math.floor((log_height - win_height) / 2)
-
-  help_win = vim.api.nvim_open_win(help_buf, true, {
-    relative = 'editor',
-    row = row,
-    col = col,
-    width = win_width,
-    height = win_height,
-    style = 'minimal',
-    border = 'rounded',
-    title = ' Help ',
-    title_pos = 'center',
-    zindex = 100,
   })
-  vim.wo[help_win].winhighlight = 'Normal:Normal,FloatBorder:Special'
-
-  local help_opts = { buffer = help_buf, nowait = true }
-  vim.keymap.set('n', 'q', close_help, help_opts)
-  vim.keymap.set('n', '<esc>', close_help, help_opts)
 end
 
 function M.update_log_statusline(state, loading)
@@ -503,71 +444,51 @@ end
 function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes_only)
   local buf = state.log_buf
   local opts = { buffer = buf, nowait = true }
-  local diff_preview_timer = vim.uv.new_timer()
 
-  local function stop_diff_preview_timer()
-    if diff_preview_timer then
-      diff_preview_timer:stop()
-      diff_preview_timer:close()
-      diff_preview_timer = nil
-    end
-  end
-
-  local function show_commit_diff_debounced()
-    local session_log_buf = state.log_buf
-    if not diff_preview_timer then
-      return
-    end
+  local function show_commit_diff_now()
     if not state.log_buf or not vim.api.nvim_buf_is_valid(state.log_buf) then
       return
     end
-    diff_preview_timer:stop()
-    diff_preview_timer:start(80, 0, vim.schedule_wrap(function()
-      if not diff_preview_timer then
-        return
-      end
-      if not state.log_buf or state.log_buf ~= session_log_buf or not vim.api.nvim_buf_is_valid(state.log_buf) then
-        return
-      end
-      if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
-        return
-      end
-      if state.commit_count == 0 then
-        return
-      end
+    if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
+      return
+    end
+    if state.commit_count == 0 then
+      return
+    end
 
-      local mode = vim.fn.mode()
-      if mode == 'n' then
-        M.show_commit_diff(state)
-      elseif mode == 'v' or mode == 'V' or mode == '\22' then -- v, V, Ctrl-V
-        local vstart = vim.fn.getpos('v')[2]
-        local vend = vim.api.nvim_win_get_cursor(state.log_win)[1]
-        M.show_commit_diff(state, vstart, vend)
-      end
-    end))
+    local mode = vim.fn.mode()
+    if mode == 'n' then
+      M.show_commit_diff(state)
+    elseif mode == 'v' or mode == 'V' or mode == '\22' then -- v, V, Ctrl-V
+      local vstart = vim.fn.getpos('v')[2]
+      local vend = vim.api.nvim_win_get_cursor(state.log_win)[1]
+      M.show_commit_diff(state, vstart, vend)
+    end
   end
+
+  local diff_preview_scheduler = scheduler.create(show_commit_diff_now)
 
   -- Auto-update diff on cursor move
   vim.api.nvim_create_autocmd('CursorMoved', {
     buffer = buf,
     callback = function()
-      show_commit_diff_debounced()
+      diff_preview_scheduler.request()
     end,
   })
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = buf,
     once = true,
-    callback = stop_diff_preview_timer,
+    callback = diff_preview_scheduler.close,
   })
 
   vim.keymap.set('n', 'd', function()
-    toggle_diff_mode()
+    toggle_diff_changes_only()
     M.show_commit_diff(state)
   end, opts)
 
   vim.keymap.set('n', 'D', function()
-    toggle_diff_changes_only()
+    toggle_diff_mode()
     M.show_commit_diff(state)
   end, opts)
 

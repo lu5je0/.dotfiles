@@ -13,3 +13,7 @@ DOTFILES_ROOT="${DOTFILES_ROOT}" TZ=UTC luajit "${SCRIPT_DIR}/cron/spec.lua"
 
 printf '%s[line-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/line-log/spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/line-log/spec.lua"
+
+printf '\n'
+printf '%s[project-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/project-log/spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/project-log/spec.lua"
