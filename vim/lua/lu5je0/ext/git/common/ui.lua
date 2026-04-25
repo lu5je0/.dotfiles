@@ -127,7 +127,7 @@ local function add_file_tree_entries(entries, node, prefix, expanded_dirs)
       local display_node, display_name, parent_dir = compressed_dir_node(child.node, expanded_dirs)
       local has_children = node_has_children(display_node)
       local expanded = expanded_dirs[display_node.path] == true
-      local icon = expanded and '' or ''
+      local icon = expanded and '' or ''
       entries[#entries + 1] = {
         type = 'dir',
         dir_path = display_node.path,
