@@ -84,6 +84,8 @@ function M.update_statusline(state, loading)
   local mode = string.format('%s%s', state.diff_mode, state.diff_changes_only and ' changes-only' or '')
   if loading then
     vim.wo[state.log_win].statusline = string.format(' %%#Function#Project Log%%* [%%#Special#loading%%*] %%#Comment#%s%%*', mode)
+  elseif state.limited then
+    vim.wo[state.log_win].statusline = string.format(' %%#Function#Project Log%%* %%#Number#%d commits%%* %%#WarningMsg#(limited)%%* %%#Comment#%s%%*', #state.commits, mode)
   else
     vim.wo[state.log_win].statusline = string.format(' %%#Function#Project Log%%* %%#Number#%d commits%%* %%#Comment#%s%%*', #state.commits, mode)
   end

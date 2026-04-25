@@ -8,6 +8,8 @@ local env_keeper = require('lu5je0.misc.env-keeper')
 
 local M = {}
 
+local DEFAULT_COMMIT_LIMIT = 1000
+
 local state = {
   session = 0,
   job = nil,
@@ -28,6 +30,8 @@ local state = {
   diff_changes_only = env_keeper.get('line_log_diff_changes_only', false),
   closing_diff_windows = false,
   render = function(s) ui.render_log(s) end,
+  commit_limit = DEFAULT_COMMIT_LIMIT,
+  limited = false,
 }
 
 local function kill_job(job_name)
@@ -52,12 +56,19 @@ end
 local function cleanup()
   kill_jobs()
   diff.close_windows(state)
+  if state.render_timer then
+    state.render_timer:stop()
+    state.render_timer:close()
+    state.render_timer = nil
+  end
   state.session = state.session + 1
   state.log_buf = nil
   state.log_win = nil
   state.commits = {}
   state.display_items = {}
   state.preview_key = nil
+  state.limited = false
+  state.commit_limit = DEFAULT_COMMIT_LIMIT
 end
 
 local function get_commit_and_file(item)
@@ -127,6 +138,27 @@ local function close_all()
   cleanup()
 end
 
+local load_commits
+
+local function reload_all()
+  kill_jobs()
+  diff.close_windows(state)
+  if state.render_timer then
+    state.render_timer:stop()
+    state.render_timer:close()
+    state.render_timer = nil
+  end
+  state.session = state.session + 1
+  state.commits = {}
+  state.display_items = {}
+  state.preview_key = nil
+  state.commit_limit = nil
+  state.limited = false
+  ui.set_buffer_lines(state.log_buf, { '-- Loading all commits... --' })
+  vim.cmd('messages clear')
+  load_commits()
+end
+
 local function setup_keymaps()
   local opts = { buffer = state.log_buf, nowait = true }
   local preview_scheduler = scheduler.create(function()
@@ -170,6 +202,11 @@ local function setup_keymaps()
     state.preview_key = nil
     show_file_diff(true)
   end, opts)
+  vim.keymap.set('n', 'a', function()
+    if state.limited then
+      reload_all()
+    end
+  end, opts)
   vim.keymap.set('n', '?', function()
     help.show_help('Help', {
       'Project Log Keymaps',
@@ -179,71 +216,157 @@ local function setup_keymaps()
       '  H       Fold commit',
       '  d       Toggle changes-only',
       '  D       Toggle diff mode: single / dual',
+      '  a       Load all commits (when limited)',
       '  ?       Show this help',
       '  q       Close',
     })
   end, opts)
 end
 
-local function load_commits()
+load_commits = function()
   local session = state.session
   ui.update_statusline(state, true)
-  state.job = vim.system({
-    'git',
-    'log',
-    '--graph',
+
+  local log_args = {
+    'git', 'log', '--graph',
     '--date=format:%Y-%m-%d %H:%M:%S',
     '--pretty=format:%x1e%H%x00%h%x00%ad%x00%an%x00%s%x00%P',
-    '--name-status',
-    '--find-renames',
-    '--find-copies',
-    '--',
-    '.',
-  }, { text = true, cwd = state.repo_root }, function(result)
+    '--name-status', '--find-renames', '--find-copies',
+  }
+
+  local streaming = state.commit_limit == nil
+
+  if state.commit_limit then
+    log_args[#log_args + 1] = '--max-count=' .. (state.commit_limit + 1)
+  end
+
+  log_args[#log_args + 1] = '--'
+  log_args[#log_args + 1] = '.'
+
+  -- git status in parallel
+  state.status_job = vim.system({
+    'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all',
+  }, { text = true, cwd = state.repo_root }, function(status_result)
     vim.schedule(function()
       if not is_active_session(session) then
         return
       end
-      state.job = nil
-      if result.code ~= 0 then
-        ui.set_buffer_lines(state.log_buf, { '-- Failed to load project log --', result.stderr or '' })
-        ui.update_statusline(state, false)
-        return
-      end
-      local commits = core.parse_log(result.stdout or '')
-      state.status_job = vim.system({
-        'git',
-        'status',
-        '--porcelain=v1',
-        '-z',
-        '--untracked-files=all',
-      }, { text = true, cwd = state.repo_root }, function(status_result)
-        vim.schedule(function()
-          if not is_active_session(session) then
-            return
-          end
-          state.status_job = nil
-          local local_files = status_result.code == 0 and core.parse_status(status_result.stdout or '') or {}
-          if #local_files > 0 then
-            table.insert(commits, 1, {
-              hash = 'local-change',
-              short_hash = 'local',
-              date = 'uncommitted',
-              author = '',
-              message = 'local change',
-              files = local_files,
-              expanded = false,
-              expanded_dirs = {},
-              local_change = true,
-            })
-          end
-          state.commits = commits
+      state.status_job = nil
+      local local_files = status_result.code == 0 and core.parse_status(status_result.stdout or '') or {}
+      if #local_files > 0 then
+        table.insert(state.commits, 1, {
+          hash = 'local-change',
+          short_hash = 'local',
+          date = 'uncommitted',
+          author = '',
+          message = 'local change',
+          files = local_files,
+          expanded = false,
+          expanded_dirs = {},
+          local_change = true,
+        })
+        if streaming then
           ui.render_log(state)
-          ui.update_statusline(state, false)
-        end)
-      end)
+          ui.update_statusline(state, true)
+        end
+      end
     end)
   end)
+
+  if streaming then
+    -- streaming mode for load-all
+    local parser = core.create_log_parser()
+    local dirty = false
+    state.render_timer = vim.uv.new_timer()
+
+    local function flush_render()
+      if not is_active_session(session) then
+        return
+      end
+      if dirty then
+        dirty = false
+        ui.render_log(state)
+        ui.update_statusline(state, true)
+      end
+    end
+
+    state.render_timer:start(50, 50, vim.schedule_wrap(flush_render))
+
+    state.job = vim.system(log_args, {
+      cwd = state.repo_root,
+      stdout = function(_, chunk)
+        if not chunk or not is_active_session(session) then
+          return
+        end
+        local new_commits = parser:feed(chunk)
+        if #new_commits > 0 then
+          for _, c in ipairs(new_commits) do
+            state.commits[#state.commits + 1] = c
+          end
+          dirty = true
+        end
+      end,
+    }, function(result)
+      vim.schedule(function()
+        if state.render_timer then
+          state.render_timer:stop()
+          state.render_timer:close()
+          state.render_timer = nil
+        end
+        if not is_active_session(session) then
+          return
+        end
+        state.job = nil
+        if result.code ~= 0 then
+          if #state.commits == 0 then
+            ui.set_buffer_lines(state.log_buf, { '-- Failed to load project log --', result.stderr or '' })
+          end
+          ui.update_statusline(state, false)
+          return
+        end
+        local tail = parser:finish()
+        for _, c in ipairs(tail) do
+          state.commits[#state.commits + 1] = c
+        end
+        ui.render_log(state)
+        ui.update_statusline(state, false)
+      end)
+    end)
+  else
+    -- non-streaming mode for limited load
+    state.job = vim.system(log_args, { text = true, cwd = state.repo_root }, function(result)
+      vim.schedule(function()
+        if not is_active_session(session) then
+          return
+        end
+        state.job = nil
+        if result.code ~= 0 then
+          if #state.commits == 0 then
+            ui.set_buffer_lines(state.log_buf, { '-- Failed to load project log --', result.stderr or '' })
+          end
+          ui.update_statusline(state, false)
+          return
+        end
+        local commits = core.parse_log(result.stdout)
+        if #commits > state.commit_limit then
+          state.limited = true
+          for i = 1, state.commit_limit do
+            state.commits[#state.commits + 1] = commits[i]
+          end
+          vim.notify(
+            string.format("Loaded %d commits (more available, press 'a' to load all)", state.commit_limit),
+            vim.log.levels.INFO
+          )
+        else
+          for _, c in ipairs(commits) do
+            state.commits[#state.commits + 1] = c
+          end
+        end
+        ui.render_log(state)
+        ui.update_statusline(state, false)
+      end)
+    end)
+  end
 end
 
 function M.show()

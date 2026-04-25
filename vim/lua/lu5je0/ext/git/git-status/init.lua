@@ -613,8 +613,12 @@ local function setup_keymaps()
   })
 
   vim.keymap.set('n', 'l', activate_item, opts)
+  vim.keymap.set('n', '>', activate_item, opts)
   vim.keymap.set('n', '<cr>', activate_item, opts)
   vim.keymap.set('n', 'h', function()
+    tree.close_parent_node(state)
+  end, opts)
+  vim.keymap.set('n', '<', function()
     tree.close_parent_node(state)
   end, opts)
   vim.keymap.set('n', 'H', function()
@@ -645,8 +649,8 @@ local function setup_keymaps()
     help.show_help('Help', {
       'Git Status Keymaps',
       '',
-      '  l/<CR>  Open node / show diff',
-      '  h       Fold parent node',
+      '  l/>/<CR> Open node / show diff',
+      '  h/<      Fold parent node',
       '  H       Fold section',
       '  d       Toggle changes-only',
       '  D       Toggle diff mode: single / dual',

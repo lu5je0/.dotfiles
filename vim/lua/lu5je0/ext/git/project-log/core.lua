@@ -37,18 +37,22 @@ local function strip_graph_prefix(line)
 end
 
 function M.parse_log(stdout)
-  local commits = {}
-  local commit = nil
-  local graph_state = graph.create_state()
-
-  local function append_commit()
-    if commit then
-      commits[#commits + 1] = commit
-      commit = nil
-    end
+  local parser = M.create_log_parser()
+  local commits = parser:feed(stdout or '')
+  local tail = parser:finish()
+  for _, c in ipairs(tail) do
+    commits[#commits + 1] = c
   end
+  return commits
+end
 
-  for _, raw_line in ipairs(vim.split(stdout or '', '\n', { plain = true })) do
+function M.create_log_parser()
+  local graph_state = graph.create_state()
+  local commit = nil
+  local remainder = ''
+
+  local function process_line(raw_line)
+    local new_commit = nil
     local graph_prefix, line = strip_graph_prefix(raw_line)
     if line:find('%z') then
       local hash, short_hash, date, author, message, parents = line:match('^(.-)%z(.-)%z(.-)%z(.-)%z(.-)%z(.*)$')
@@ -58,7 +62,9 @@ function M.parse_log(stdout)
       end
       local parent_count = graph.count_parents(parents)
       graph_state:before_commit(graph_prefix, parent_count)
-      append_commit()
+      if commit then
+        new_commit = commit
+      end
       if hash then
         commit = {
           hash = hash,
@@ -72,6 +78,8 @@ function M.parse_log(stdout)
           expanded = false,
           expanded_dirs = {},
         }
+      else
+        commit = nil
       end
     elseif line ~= '' and not line:find('\t', 1, true) then
       graph_state:graph_line(raw_line, commit)
@@ -93,10 +101,48 @@ function M.parse_log(stdout)
         }
       end
     end
+    return new_commit
   end
 
-  append_commit()
-  return commits
+  local parser = {}
+
+  function parser:feed(chunk)
+    local new_commits = {}
+    local data = remainder .. chunk
+    local start = 1
+    while true do
+      local nl = data:find('\n', start, true)
+      if not nl then
+        remainder = data:sub(start)
+        break
+      end
+      local line = data:sub(start, nl - 1)
+      local c = process_line(line)
+      if c then
+        new_commits[#new_commits + 1] = c
+      end
+      start = nl + 1
+    end
+    return new_commits
+  end
+
+  function parser:finish()
+    local new_commits = {}
+    if remainder ~= '' then
+      local c = process_line(remainder)
+      if c then
+        new_commits[#new_commits + 1] = c
+      end
+      remainder = ''
+    end
+    if commit then
+      new_commits[#new_commits + 1] = commit
+      commit = nil
+    end
+    return new_commits
+  end
+
+  return parser
 end
 
 function M.parse_status(stdout)
