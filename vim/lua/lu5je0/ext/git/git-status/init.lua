@@ -58,7 +58,6 @@ end
 local function cleanup()
   kill_jobs()
   diff.close_windows(state)
-  common_ui.clear_active_file(state)
   state.session = state.session + 1
   state.log_buf = nil
   state.log_win = nil
@@ -113,12 +112,9 @@ local function show_file_diff(auto_preview)
   end
   local preview_key = diff.make_preview_key(state, section, file)
   if state.preview_key == preview_key then
-    common_ui.update_active_file_highlight(state)
     return true
   end
   state.preview_key = preview_key
-  state.active_file = { commit_idx = item.commit_idx, file_idx = item.file_idx }
-  common_ui.update_active_file_highlight(state)
   if state.diff_mode == 'dual' then
     diff.show_dual(state, section, file)
   else
@@ -129,9 +125,45 @@ end
 
 -- ── actions ──────────────────────────────────────────────
 
+local function discard_log(msg)
+  local log_line = string.format('%s %s', os.date('%Y-%m-%d %H:%M:%S'), msg)
+  vim.fn.writefile({ log_line }, vim.fn.stdpath('log') .. '/git-status.log', 'a')
+end
+
 local function discard_change()
   local item = item_under_cursor()
-  if not item or item.type ~= 'file' then
+  if not item then
+    return
+  end
+
+  -- stash commit line: drop the stash entry
+  if item.type == 'commit' and item.stash then
+    local commit = state.commits[item.commit_idx]
+    if not commit or not commit.stash_ref then
+      return
+    end
+    local sha_result = vim.system({ 'git', 'rev-parse', commit.stash_ref }, { text = true, cwd = state.repo_root }):wait()
+    local sha = (sha_result.stdout or ''):gsub('%s+$', '')
+    if sha_result.code ~= 0 or sha == '' then
+      vim.notify('Failed to resolve ' .. commit.stash_ref, vim.log.levels.ERROR)
+      return
+    end
+    local drop_result = vim.system({ 'git', 'stash', 'drop', commit.stash_ref }, { text = true, cwd = state.repo_root }):wait()
+    if drop_result.code ~= 0 then
+      vim.notify('Failed to drop ' .. commit.stash_ref .. ': ' .. (drop_result.stderr or ''), vim.log.levels.ERROR)
+      return
+    end
+    local stash_msg = commit.stash_label:sub(#commit.stash_ref + 3)
+    local restore_cmd = string.format('git stash store -m %s %s', vim.fn.shellescape(stash_msg), sha)
+    local notify_msg = string.format('Dropped %s. Restore: %s', commit.stash_ref, restore_cmd)
+    discard_log(notify_msg)
+    vim.notify(notify_msg, vim.log.levels.INFO)
+    state.preview_key = nil
+    load_status()
+    return
+  end
+
+  if item.type ~= 'file' then
     return
   end
   local section, file = get_section_and_file(item)
@@ -145,15 +177,18 @@ local function discard_change()
     local hash_result = vim.system({ 'git', 'hash-object', '-w', abs_path }, { text = true, cwd = state.repo_root }):wait()
     local blob = (hash_result.stdout or ''):gsub('%s+$', '')
     os.remove(abs_path)
-    vim.notify(string.format('Deleted %s. To restore: git show %s > %s', file.path, blob, file.path), vim.log.levels.INFO)
+    discard_log(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
+    vim.notify(string.format('Deleted %s. Restore: git show %s > %s', file.path, blob, file.path), vim.log.levels.INFO)
   elseif section.section == 'unstaged' then
     local hash_result = vim.system({ 'git', 'hash-object', '-w', abs_path }, { text = true, cwd = state.repo_root }):wait()
     local blob = (hash_result.stdout or ''):gsub('%s+$', '')
     vim.system({ 'git', 'checkout', '--', file.path }, { cwd = state.repo_root }):wait()
-    vim.notify(string.format('Restored %s from index. To undo: git show %s > %s', file.path, blob, file.path), vim.log.levels.INFO)
+    discard_log(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
+    vim.notify(string.format('Restored %s from index. Undo: git show %s > %s', file.path, blob, file.path), vim.log.levels.INFO)
   elseif section.section == 'staged' then
     vim.system({ 'git', 'reset', 'HEAD', '--', file.path }, { cwd = state.repo_root }):wait()
-    vim.notify(string.format('Unstaged %s. To restore: git add %s', file.path, file.path), vim.log.levels.INFO)
+    discard_log(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
+    vim.notify(string.format('Unstaged %s. Restore: git add %s', file.path, file.path), vim.log.levels.INFO)
   end
 
   state.preview_key = nil
@@ -288,7 +323,6 @@ local function setup_keymaps()
   vim.api.nvim_create_autocmd('CursorMoved', {
     buffer = state.log_buf,
     callback = function()
-      common_ui.sync_active_file_highlight(state)
       preview_scheduler.request()
     end,
   })
@@ -396,7 +430,7 @@ local function setup_keymaps()
       '  H       Fold section',
       '  d       Toggle changes-only',
       '  D       Toggle diff mode: single / dual',
-      '  X       Discard change',
+      '  X       Discard change / Drop stash',
       '  a       Stage file',
       '  gf      Open file',
       '  x       Toggle window height',

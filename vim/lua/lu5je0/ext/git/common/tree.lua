@@ -151,8 +151,6 @@ local function refresh_commit_tree(state, commit_line)
       common_ui.highlight_tree_entry(state.log_buf, commit_line + i - 1, new_items[i].tree_entry, new_items[i].indent)
     end
   end
-
-  common_ui.update_active_file_highlight(state)
 end
 
 function M.open_node(state)

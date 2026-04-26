@@ -1,12 +1,10 @@
 local M = {}
 
 local ns_id = vim.api.nvim_create_namespace('git_common')
-local active_ns = vim.api.nvim_create_namespace('git_active_file')
 
 vim.api.nvim_set_hl(0, 'GitTreeLine', { link = 'Directory', default = true })
 vim.api.nvim_set_hl(0, 'GitFolderIcon', { link = 'Directory', default = true })
 vim.api.nvim_set_hl(0, 'GitFolderName', { fg = '#e5c07b', default = true })
-vim.api.nvim_set_hl(0, 'GitActiveFile', { link = 'CursorLine', default = true })
 
 function M.set_buffer_lines(buf, lines)
   if not buf or not vim.api.nvim_buf_is_valid(buf) then
@@ -219,56 +217,6 @@ function M.append_tree_entries(lines, items, commit, commit_idx, opts)
     else
       items[#items + 1] = { type = 'dir', commit_idx = commit_idx, dir_path = entry.dir_path, tree_entry = entry, indent = indent }
     end
-  end
-end
-
-function M.update_active_file_highlight(state)
-  local buf = state.log_buf
-  if not buf or not vim.api.nvim_buf_is_valid(buf) then
-    return
-  end
-  vim.api.nvim_buf_clear_namespace(buf, active_ns, 0, -1)
-  local af = state.active_file
-  if not af then
-    return
-  end
-  for i, item in ipairs(state.display_items) do
-    if item.type == 'file' and item.commit_idx == af.commit_idx and item.file_idx == af.file_idx then
-      vim.api.nvim_buf_set_extmark(buf, active_ns, i - 1, 0, { line_hl_group = 'GitActiveFile' })
-      return
-    end
-  end
-end
-
--- Sync highlight on cursor move: immediately update active_file from cursor position.
--- Returns the current file item if cursor is on a file, nil otherwise.
-function M.sync_active_file_highlight(state)
-  if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
-    return nil
-  end
-  local line = vim.api.nvim_win_get_cursor(state.log_win)[1]
-  local item = state.display_items[line]
-  if not item or item.type ~= 'file' then
-    return nil
-  end
-  local af = state.active_file
-  if af and af.commit_idx == item.commit_idx and af.file_idx == item.file_idx then
-    return item
-  end
-  state.active_file = { commit_idx = item.commit_idx, file_idx = item.file_idx }
-  local buf = state.log_buf
-  if buf and vim.api.nvim_buf_is_valid(buf) then
-    vim.api.nvim_buf_clear_namespace(buf, active_ns, 0, -1)
-    vim.api.nvim_buf_set_extmark(buf, active_ns, line - 1, 0, { line_hl_group = 'GitActiveFile' })
-  end
-  return item
-end
-
-function M.clear_active_file(state)
-  state.active_file = nil
-  local buf = state.log_buf
-  if buf and vim.api.nvim_buf_is_valid(buf) then
-    vim.api.nvim_buf_clear_namespace(buf, active_ns, 0, -1)
   end
 end
 

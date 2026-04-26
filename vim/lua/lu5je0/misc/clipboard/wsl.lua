@@ -59,6 +59,16 @@ function M.setup()
     group = augroup,
     callback = sync_from,
   })
+
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    group = augroup,
+    callback = function()
+      if active_entry and active_entry.lines then
+        local bridge = require('lu5je0.misc.tui-bridge.tui-bridge').singleton()
+        bridge.call('clipboard', 'input', { text = table.concat(active_entry.lines, '\n') }, { wait_response = true })
+      end
+    end,
+  })
   sync_from(true)
   
   vim.keymap.set('i', '<c-v>', function()
