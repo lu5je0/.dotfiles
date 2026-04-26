@@ -698,6 +698,19 @@ local function setup_keymaps()
     end
     vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
   end, opts)
+  vim.keymap.set('n', 'x', function()
+    if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
+      return
+    end
+    local total = vim.o.lines
+    local threshold = math.floor(total * 0.7)
+    local current = vim.api.nvim_win_get_height(state.log_win)
+    if current >= threshold then
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.5))
+    else
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.9))
+    end
+  end, opts)
   vim.keymap.set('n', '?', function()
     help.show_help('Help', {
       'Git Status Keymaps',
@@ -710,6 +723,7 @@ local function setup_keymaps()
       '  X       Discard change',
       '  a       Stage file',
       '  gf      Open file',
+      '  x       Toggle window height',
       '  ?       Show this help',
     })
   end, opts)

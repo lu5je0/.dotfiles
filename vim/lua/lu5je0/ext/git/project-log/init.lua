@@ -234,6 +234,19 @@ local function setup_keymaps()
     end
     vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
   end, opts)
+  vim.keymap.set('n', 'x', function()
+    if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
+      return
+    end
+    local total = vim.o.lines
+    local threshold = math.floor(total * 0.7)
+    local current = vim.api.nvim_win_get_height(state.log_win)
+    if current >= threshold then
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.5))
+    else
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.9))
+    end
+  end, opts)
   vim.keymap.set('n', '?', function()
     help.show_help('Help', {
       'Project Log Keymaps',
@@ -245,6 +258,7 @@ local function setup_keymaps()
       '  D       Toggle diff mode: single / dual',
       '  a       Load all commits (when limited)',
       '  gf      Open file',
+      '  x       Toggle window height',
       '  ?       Show this help',
       '  q       Close',
     })
@@ -420,7 +434,7 @@ function M.show()
   vim.bo[state.log_buf].filetype = 'git'
   ui.set_buffer_lines(state.log_buf, { '-- Loading project log... --' })
 
-  local height = math.floor(vim.api.nvim_win_get_height(0) * 0.8)
+  local height = math.floor(vim.api.nvim_win_get_height(0) * 0.5)
   vim.cmd('botright split')
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)

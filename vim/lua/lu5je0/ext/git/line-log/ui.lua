@@ -16,6 +16,7 @@ local function show_help()
     '  v/V     Visual select (auto show aggregated diff)',
     '  d       Toggle changes-only (single mode)',
     '  D       Toggle diff mode: single / dual',
+    '  x       Toggle window height',
     '  ?       Show this help',
     '  q/<Esc> Close this help',
     '',
@@ -490,6 +491,20 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
   vim.keymap.set('n', 'D', function()
     toggle_diff_mode()
     M.show_commit_diff(state)
+  end, opts)
+
+  vim.keymap.set('n', 'x', function()
+    if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
+      return
+    end
+    local total = vim.o.lines
+    local threshold = math.floor(total * 0.7)
+    local current = vim.api.nvim_win_get_height(state.log_win)
+    if current >= threshold then
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.5))
+    else
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.9))
+    end
   end, opts)
 
   vim.keymap.set('n', '?', show_help, opts)

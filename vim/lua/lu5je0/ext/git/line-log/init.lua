@@ -397,11 +397,10 @@ function M.show(opts)
     buffer = state.log_buf,
     once = true,
     callback = function()
+      close_windows()
       cleanup_state()
     end,
   })
-
-
 
   load_revisions()
 end
