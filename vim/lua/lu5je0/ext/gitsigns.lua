@@ -43,7 +43,7 @@ function M.setup()
       map('n', '<leader>gR', gs.reset_buffer_index)
 
       map('n', '<leader>gu', gs.reset_hunk)
-      map('n', '<leader>gU', gs.reset_buffer)
+      map('n', '<leader>gC', gs.reset_buffer)
       map('v', '<leader>gu', function() gs.reset_hunk { vim.fn.line("."), vim.fn.line("v") } end)
 
       map('n', '<leader>gg', gs.preview_hunk)

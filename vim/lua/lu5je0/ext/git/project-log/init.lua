@@ -207,6 +207,33 @@ local function setup_keymaps()
       reload_all()
     end
   end, opts)
+  vim.keymap.set('n', 'gf', function()
+    local item = tree.item_under_cursor(state)
+    if not item or item.type ~= 'file' then
+      return
+    end
+    local _, file = get_commit_and_file(item)
+    if not file then
+      return
+    end
+    local target_win
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if win ~= state.log_win and win ~= state.diff_win and win ~= state.diff_win2 then
+        local buf = vim.api.nvim_win_get_buf(win)
+        local bt = vim.bo[buf].buftype
+        if bt == '' then
+          target_win = win
+          break
+        end
+      end
+    end
+    if target_win then
+      vim.api.nvim_set_current_win(target_win)
+    else
+      vim.cmd('wincmd p')
+    end
+    vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
+  end, opts)
   vim.keymap.set('n', '?', function()
     help.show_help('Help', {
       'Project Log Keymaps',
@@ -217,6 +244,7 @@ local function setup_keymaps()
       '  d       Toggle changes-only',
       '  D       Toggle diff mode: single / dual',
       '  a       Load all commits (when limited)',
+      '  gf      Open file',
       '  ?       Show this help',
       '  q       Close',
     })

@@ -191,8 +191,6 @@ function M.opts()
       { '<leader>xZ', desc = '简体转繁体' },
 
       { '<leader>g', group = 'git', mode = { 'n', 'x' } },
-      { '<leader>gA', '<cmd>Git add -A<cr>', desc = 'add all' },
-      { '<leader>gC', '<cmd>Gread<cr>', desc = 'git checkout -- current file' },
 
       { '<leader>gl', desc = 'project commit log', mode = 'n' },
       { '<leader>gl', desc = 'line commit log', mode = 'x' },

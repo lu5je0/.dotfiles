@@ -113,11 +113,6 @@ local plugins = {
   },
 
   {
-    'tpope/vim-fugitive',
-    cmd = { 'Git', 'Gvdiffsplit', 'Gstatus', 'Gclog', 'Gread' }
-  },
-
-  {
     'nvim-tree/nvim-web-devicons',
     -- config = function()
     --   require('nvim-web-devicons').setup {

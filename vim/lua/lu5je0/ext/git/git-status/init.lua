@@ -173,14 +173,25 @@ render = function(state_)
       local line = lines[idx]
       local colon = line:find(':', 1, true)
       if colon then
-        vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Function', li, 0, colon - 1)
+        vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Label', li, 0, colon - 1)
         local value_start = line:find('%S', colon + 1)
         if value_start then
-          vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Number', li, value_start - 1, -1)
+          vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Function', li, value_start - 1, -1)
         end
       end
     elseif item.type == 'commit' then
-      vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Title', li, 0, -1)
+      local cline = lines[idx]
+      local paren_start = cline:find('%(')
+      if paren_start then
+        vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Label', li, 0, paren_start - 2)
+        local num_start = paren_start
+        local num_end = cline:find('%)', paren_start)
+        if num_end then
+          vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Number', li, num_start, num_end - 1)
+        end
+      else
+        vim.api.nvim_buf_add_highlight(state_.log_buf, ns_id, 'Label', li, 0, -1)
+      end
     elseif item.tree_entry then
       -- offset = 2 for the "  " prefix we added
       ui.highlight_tree_entry(state_.log_buf, li, item.tree_entry)
@@ -625,6 +636,21 @@ local function setup_keymaps()
     tree.close_commit_node(state)
   end, opts)
   vim.keymap.set('n', 'X', discard_change, opts)
+  vim.keymap.set('n', 'a', function()
+    local item = item_under_cursor()
+    if not item or item.type ~= 'file' then
+      return
+    end
+    local section, file = get_section_and_file(item)
+    if not section or not file then
+      return
+    end
+    if section.section == 'untracked' or section.section == 'unstaged' then
+      vim.system({ 'git', 'add', '--', file.path }, { cwd = state.repo_root }):wait()
+      state.preview_key = nil
+      load_status()
+    end
+  end, opts)
   vim.keymap.set('n', 'r', function()
     state.preview_key = nil
     load_status()
@@ -645,6 +671,33 @@ local function setup_keymaps()
     state.preview_key = nil
     show_file_diff(true)
   end, opts)
+  vim.keymap.set('n', 'gf', function()
+    local item = item_under_cursor()
+    if not item or item.type ~= 'file' then
+      return
+    end
+    local _, file = get_section_and_file(item)
+    if not file then
+      return
+    end
+    local target_win
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if win ~= state.log_win and not is_tracked_diff_window(win) then
+        local buf = vim.api.nvim_win_get_buf(win)
+        local bt = vim.bo[buf].buftype
+        if bt == '' then
+          target_win = win
+          break
+        end
+      end
+    end
+    if target_win then
+      vim.api.nvim_set_current_win(target_win)
+    else
+      vim.cmd('wincmd p')
+    end
+    vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
+  end, opts)
   vim.keymap.set('n', '?', function()
     help.show_help('Help', {
       'Git Status Keymaps',
@@ -655,6 +708,8 @@ local function setup_keymaps()
       '  d       Toggle changes-only',
       '  D       Toggle diff mode: single / dual',
       '  X       Discard change',
+      '  a       Stage file',
+      '  gf      Open file',
       '  ?       Show this help',
     })
   end, opts)
