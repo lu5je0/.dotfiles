@@ -46,14 +46,9 @@ function M.render_log(state)
     lines[#lines + 1] = format_commit_line(commit)
     items[#items + 1] = { type = 'commit', commit_idx = commit_idx }
     if commit.expanded then
-      for _, entry in ipairs(common_ui.build_file_tree_entries(commit)) do
-        lines[#lines + 1] = entry.line
-        if entry.type == 'file' then
-          items[#items + 1] = { type = 'file', commit_idx = commit_idx, file_idx = entry.file_idx, tree_entry = entry }
-        else
-          items[#items + 1] = { type = 'dir', commit_idx = commit_idx, dir_path = entry.dir_path, tree_entry = entry }
-        end
-      end
+      common_ui.append_tree_entries(lines, items, commit, commit_idx, {
+        tree_opts = { status_hl_fn = function() return 'Type' end },
+      })
     end
   end
 

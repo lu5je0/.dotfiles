@@ -1,10 +1,12 @@
 local M = {}
 
 local ns_id = vim.api.nvim_create_namespace('git_common')
+local active_ns = vim.api.nvim_create_namespace('git_active_file')
 
 vim.api.nvim_set_hl(0, 'GitTreeLine', { link = 'Directory', default = true })
 vim.api.nvim_set_hl(0, 'GitFolderIcon', { link = 'Directory', default = true })
 vim.api.nvim_set_hl(0, 'GitFolderName', { fg = '#e5c07b', default = true })
+vim.api.nvim_set_hl(0, 'GitActiveFile', { link = 'CursorLine', default = true })
 
 function M.set_buffer_lines(buf, lines)
   if not buf or not vim.api.nvim_buf_is_valid(buf) then
@@ -108,7 +110,7 @@ local function compressed_dir_node(node, expanded_dirs)
   return current, table.concat(names, '/'), parent_dir
 end
 
-local function add_file_tree_entries(entries, node, prefix, expanded_dirs)
+local function add_file_tree_entries(entries, node, prefix, expanded_dirs, show_status, status_hl_fn)
   local children = {}
   for _, dir in ipairs(sorted_values(node.dirs)) do
     children[#children + 1] = { type = 'dir', node = dir }
@@ -139,11 +141,11 @@ local function add_file_tree_entries(entries, node, prefix, expanded_dirs)
       }
       if expanded then
         local child_prefix = prefix .. (is_last and '  ' or '│ ')
-        add_file_tree_entries(entries, display_node, child_prefix, expanded_dirs)
+        add_file_tree_entries(entries, display_node, child_prefix, expanded_dirs, show_status, status_hl_fn)
       end
     else
       local file = child.node.file
-      local status = file.status:sub(1, 1)
+      local status = show_status and file.status:sub(1, 1) or nil
       local icon, icon_hl = get_file_icon(file.path)
       local name = child.node.name
       if file.old_path then
@@ -154,28 +156,34 @@ local function add_file_tree_entries(entries, node, prefix, expanded_dirs)
         file_idx = child.node.file_idx,
         parent_dir = vim.fn.fnamemodify(file.path, ':h'),
         status = status,
-        status_hl = status_hl(file.status),
+        status_hl = status and (status_hl_fn or status_hl)(file.status) or nil,
         icon = icon,
         icon_hl = icon_hl,
-        line = prefix .. branch .. icon .. ' ' .. name .. ' ' .. status,
+        line = status and (prefix .. branch .. icon .. ' ' .. name .. ' ' .. status)
+          or (prefix .. branch .. icon .. ' ' .. name),
       }
     end
   end
 end
 
-function M.build_file_tree_entries(commit)
+function M.build_file_tree_entries(commit, opts)
   local root = { dirs = {}, files = {} }
   for file_idx, file in ipairs(commit.files) do
     insert_file_node(root, file_idx, file)
   end
 
+  local show_status = not opts or opts.show_status ~= false
+  local status_hl_fn = opts and opts.status_hl_fn or nil
   local entries = {}
-  add_file_tree_entries(entries, root, '', commit.expanded_dirs or {})
+  add_file_tree_entries(entries, root, '', commit.expanded_dirs or {}, show_status, status_hl_fn)
   return entries
 end
 
 function M.highlight_tree_entry(buf, line_idx, entry, offset)
   offset = offset or 0
+  if offset > 0 then
+    vim.api.nvim_buf_add_highlight(buf, ns_id, 'GitTreeLine', line_idx, 0, offset)
+  end
   local icon_start = entry.line:find(entry.icon, 1, true)
   if icon_start and icon_start > 1 then
     vim.api.nvim_buf_add_highlight(buf, ns_id, 'GitTreeLine', line_idx, offset, offset + icon_start - 1)
@@ -192,9 +200,75 @@ function M.highlight_tree_entry(buf, line_idx, entry, offset)
   if icon_start then
     vim.api.nvim_buf_add_highlight(buf, ns_id, entry.icon_hl, line_idx, offset + icon_start - 1, offset + icon_start - 1 + #entry.icon)
   end
-  local status_start = #entry.line - #entry.status + 1
-  if status_start > 0 then
-    vim.api.nvim_buf_add_highlight(buf, ns_id, entry.status_hl, line_idx, offset + status_start - 1, -1)
+  if entry.status then
+    local status_start = #entry.line - #entry.status + 1
+    if status_start > 0 then
+      vim.api.nvim_buf_add_highlight(buf, ns_id, entry.status_hl, line_idx, offset + status_start - 1, -1)
+    end
+  end
+end
+
+function M.append_tree_entries(lines, items, commit, commit_idx, opts)
+  local prefix = opts and opts.prefix or ''
+  local indent = #prefix
+  local tree_opts = opts and opts.tree_opts or nil
+  for _, entry in ipairs(M.build_file_tree_entries(commit, tree_opts)) do
+    lines[#lines + 1] = indent > 0 and (prefix .. entry.line) or entry.line
+    if entry.type == 'file' then
+      items[#items + 1] = { type = 'file', commit_idx = commit_idx, file_idx = entry.file_idx, tree_entry = entry, indent = indent }
+    else
+      items[#items + 1] = { type = 'dir', commit_idx = commit_idx, dir_path = entry.dir_path, tree_entry = entry, indent = indent }
+    end
+  end
+end
+
+function M.update_active_file_highlight(state)
+  local buf = state.log_buf
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(buf, active_ns, 0, -1)
+  local af = state.active_file
+  if not af then
+    return
+  end
+  for i, item in ipairs(state.display_items) do
+    if item.type == 'file' and item.commit_idx == af.commit_idx and item.file_idx == af.file_idx then
+      vim.api.nvim_buf_set_extmark(buf, active_ns, i - 1, 0, { line_hl_group = 'GitActiveFile' })
+      return
+    end
+  end
+end
+
+-- Sync highlight on cursor move: immediately update active_file from cursor position.
+-- Returns the current file item if cursor is on a file, nil otherwise.
+function M.sync_active_file_highlight(state)
+  if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
+    return nil
+  end
+  local line = vim.api.nvim_win_get_cursor(state.log_win)[1]
+  local item = state.display_items[line]
+  if not item or item.type ~= 'file' then
+    return nil
+  end
+  local af = state.active_file
+  if af and af.commit_idx == item.commit_idx and af.file_idx == item.file_idx then
+    return item
+  end
+  state.active_file = { commit_idx = item.commit_idx, file_idx = item.file_idx }
+  local buf = state.log_buf
+  if buf and vim.api.nvim_buf_is_valid(buf) then
+    vim.api.nvim_buf_clear_namespace(buf, active_ns, 0, -1)
+    vim.api.nvim_buf_set_extmark(buf, active_ns, line - 1, 0, { line_hl_group = 'GitActiveFile' })
+  end
+  return item
+end
+
+function M.clear_active_file(state)
+  state.active_file = nil
+  local buf = state.log_buf
+  if buf and vim.api.nvim_buf_is_valid(buf) then
+    vim.api.nvim_buf_clear_namespace(buf, active_ns, 0, -1)
   end
 end
 

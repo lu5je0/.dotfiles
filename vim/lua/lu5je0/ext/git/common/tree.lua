@@ -118,14 +118,12 @@ local function refresh_commit_tree(state, commit_line)
   local new_lines = {}
   local new_items = {}
   if commit.expanded then
-    for _, entry in ipairs(common_ui.build_file_tree_entries(commit)) do
-      new_lines[#new_lines + 1] = entry.line
-      if entry.type == 'file' then
-        new_items[#new_items + 1] = { type = 'file', commit_idx = commit_idx, file_idx = entry.file_idx, tree_entry = entry }
-      else
-        new_items[#new_items + 1] = { type = 'dir', commit_idx = commit_idx, dir_path = entry.dir_path, tree_entry = entry }
-      end
-    end
+    local prefix = commit.child_prefix or ''
+    local tree_opts = commit.tree_opts or state.tree_opts
+    common_ui.append_tree_entries(new_lines, new_items, commit, commit_idx, {
+      prefix = prefix,
+      tree_opts = tree_opts,
+    })
   end
 
   -- Replace buffer lines: tree occupies 0-based [commit_line, commit_line + old_count)
@@ -150,9 +148,11 @@ local function refresh_commit_tree(state, commit_line)
   -- Highlight only the new tree lines
   for i = 1, #new_items do
     if new_items[i].tree_entry then
-      common_ui.highlight_tree_entry(state.log_buf, commit_line + i - 1, new_items[i].tree_entry)
+      common_ui.highlight_tree_entry(state.log_buf, commit_line + i - 1, new_items[i].tree_entry, new_items[i].indent)
     end
   end
+
+  common_ui.update_active_file_highlight(state)
 end
 
 function M.open_node(state)

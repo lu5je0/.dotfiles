@@ -210,4 +210,23 @@ function M.parse_status_grouped(stdout)
   return { staged = staged, unstaged = unstaged, untracked = untracked }
 end
 
+function M.parse_name_status(stdout)
+  local files = {}
+  for line in (stdout or ''):gmatch('[^\n]+') do
+    local parts = vim.split(line, '\t', { plain = true })
+    local status = parts[1] or 'M'
+    local old_path, path
+    if status:sub(1, 1) == 'R' or status:sub(1, 1) == 'C' then
+      old_path = parts[2]
+      path = parts[3]
+    else
+      path = parts[2]
+    end
+    if path then
+      files[#files + 1] = { status = status, old_path = old_path, path = path }
+    end
+  end
+  return files
+end
+
 return M

@@ -1,6 +1,7 @@
 local core = require('lu5je0.ext.git.project-log.core')
 local diff = require('lu5je0.ext.git.project-log.diff')
 local help = require('lu5je0.ext.git.common.help')
+local common_ui = require('lu5je0.ext.git.common.ui')
 local scheduler = require('lu5je0.ext.git.common.scheduler')
 local tree = require('lu5je0.ext.git.common.tree')
 local ui = require('lu5je0.ext.git.project-log.ui')
@@ -30,6 +31,7 @@ local state = {
   diff_changes_only = env_keeper.get('line_log_diff_changes_only', false),
   closing_diff_windows = false,
   render = function(s) ui.render_log(s) end,
+  tree_opts = { status_hl_fn = function() return 'Type' end },
   commit_limit = DEFAULT_COMMIT_LIMIT,
   limited = false,
 }
@@ -56,6 +58,7 @@ end
 local function cleanup()
   kill_jobs()
   diff.close_windows(state)
+  common_ui.clear_active_file(state)
   if state.render_timer then
     state.render_timer:stop()
     state.render_timer:close()
@@ -112,9 +115,12 @@ local function show_file_diff(auto_preview)
   end
   local preview_key = make_preview_key(commit, file)
   if state.preview_key == preview_key then
+    common_ui.update_active_file_highlight(state)
     return true
   end
   state.preview_key = preview_key
+  state.active_file = { commit_idx = item.commit_idx, file_idx = item.file_idx }
+  common_ui.update_active_file_highlight(state)
   if state.diff_mode == 'dual' then
     diff.show_dual(state, commit, file)
   else
@@ -168,6 +174,7 @@ local function setup_keymaps()
   vim.api.nvim_create_autocmd('CursorMoved', {
     buffer = state.log_buf,
     callback = function()
+      common_ui.sync_active_file_highlight(state)
       preview_scheduler.request()
     end,
   })
