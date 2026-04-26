@@ -3,7 +3,7 @@ name = "q-xsub"
 version = "0.1.0"
 description = "Extract MKV embedded subtitles with ffmpeg and rewrite them using pyass-style ASS templates."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 dependencies = [
     "asstosrt",
     "chardet",

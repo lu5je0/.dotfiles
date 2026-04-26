@@ -1,0 +1,11 @@
+#compdef q-python-install
+
+_q_python_install() {
+  _arguments -C -s \
+    '(-o --output-dir)'{-o,--output-dir}'[directory to place the generated launcher script]:dir:_directories' \
+    '--output-name[name of the generated launcher script]:name: ' \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '1:python script:_files -g "*.py"'
+}
+
+_q_python_install "$@"
