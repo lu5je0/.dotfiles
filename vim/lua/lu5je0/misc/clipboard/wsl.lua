@@ -5,6 +5,10 @@ local active_entry = {}
 
 local clipboard = require('lu5je0.misc.tui-bridge.ext.clipboard').setup()
 
+local delay_input = require('lu5je0.lang.function-utils').debounce(function(text)
+  return clipboard.input(text)
+end, 1000)
+
 local function sync_from(init)
   local text = clipboard.output({ eol = 'lf' })
   if not text then
@@ -24,7 +28,7 @@ local function sync_from(init)
 end
 
 function M.copy(lines, regtype)
-  clipboard.input(table.concat(lines, '\n'))
+  delay_input(table.concat(lines, '\n'))
   active_entry = { lines = lines, regtype = regtype }
 end
 
@@ -60,17 +64,16 @@ function M.setup()
     callback = sync_from,
   })
 
-  vim.api.nvim_create_autocmd('VimLeavePre', {
+  vim.api.nvim_create_autocmd({ 'VimLeavePre', 'FocusLost' }, {
     group = augroup,
     callback = function()
       if active_entry and active_entry.lines then
-        local bridge = require('lu5je0.misc.tui-bridge.tui-bridge').singleton()
-        bridge.call('clipboard', 'input', { text = table.concat(active_entry.lines, '\n') }, { wait_response = true })
+        clipboard.input(table.concat(active_entry.lines, '\n'))
       end
     end,
   })
   sync_from(true)
-  
+
   vim.keymap.set('i', '<c-v>', function()
     sync_from(true)
     require('lu5je0.core.keys').feedkey('<c-r>+')
