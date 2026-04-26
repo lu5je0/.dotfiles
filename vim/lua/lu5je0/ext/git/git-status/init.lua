@@ -365,6 +365,10 @@ local function setup_keymaps()
     state.preview_key = nil
     load_status()
   end, opts)
+  vim.keymap.set('n', '<leader>gs', function()
+    state.preview_key = nil
+    load_status()
+  end, opts)
   vim.keymap.set('n', 'd', function()
     state.diff_changes_only = not state.diff_changes_only
     env_keeper.set('git_status_diff_changes_only', state.diff_changes_only)

@@ -209,6 +209,7 @@ local function setup_keymaps()
       reload_all()
     end
   end, opts)
+  vim.keymap.set('n', '<leader>gl', '<nop>', opts)
   vim.keymap.set('n', 'gf', function()
     local item = tree.item_under_cursor(state)
     if not item or item.type ~= 'file' then
