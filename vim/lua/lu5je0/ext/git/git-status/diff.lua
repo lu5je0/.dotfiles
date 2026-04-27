@@ -154,7 +154,7 @@ function M.show_single(state, section, file)
   if section.section == 'staged' then
     args = { 'git', 'diff', '--cached', unified, '--no-ext-diff', '--no-color', '--', file.path }
   elseif section.section == 'stash' then
-    args = { 'git', 'stash', 'show', '-p', unified, '--no-ext-diff', '--no-color', section.stash_ref, '--', file.path }
+    args = { 'git', 'diff', section.stash_ref .. '^', section.stash_ref, unified, '--no-ext-diff', '--no-color', '--', file.path }
   else
     args = { 'git', 'diff', unified, '--no-ext-diff', '--no-color', '--', file.path }
   end

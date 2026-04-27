@@ -17,3 +17,4 @@ build/neovim
 nvim.log
 vim/after/syntax/
 vim/nvim.log
+.qoder/
