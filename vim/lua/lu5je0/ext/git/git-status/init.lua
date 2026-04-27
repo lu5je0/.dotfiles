@@ -128,6 +128,7 @@ end
 local function discard_log(msg)
   local log_line = string.format('%s %s', os.date('%Y-%m-%d %H:%M:%S'), msg)
   vim.fn.writefile({ log_line }, vim.fn.stdpath('log') .. '/git-status.log', 'a')
+  vim.api.nvim_echo({ { msg } }, true, { kind = 'emsg' })
 end
 
 local function discard_change()
@@ -154,10 +155,9 @@ local function discard_change()
       return
     end
     local stash_msg = commit.stash_label:sub(#commit.stash_ref + 3)
-    local restore_cmd = string.format('git stash store -m %s %s', vim.fn.shellescape(stash_msg), sha)
+    local restore_cmd = string.format('cd %s && git stash store -m %s %s', vim.fn.shellescape(state.repo_root), vim.fn.shellescape(stash_msg), sha)
     local notify_msg = string.format('Dropped %s. Restore: %s', commit.stash_ref, restore_cmd)
     discard_log(notify_msg)
-    vim.notify(notify_msg, vim.log.levels.INFO)
     state.preview_key = nil
     load_status()
     return
@@ -178,17 +178,14 @@ local function discard_change()
     local blob = (hash_result.stdout or ''):gsub('%s+$', '')
     os.remove(abs_path)
     discard_log(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
-    vim.notify(string.format('Deleted %s. Restore: git show %s > %s', file.path, blob, file.path), vim.log.levels.INFO)
   elseif section.section == 'unstaged' then
     local hash_result = vim.system({ 'git', 'hash-object', '-w', abs_path }, { text = true, cwd = state.repo_root }):wait()
     local blob = (hash_result.stdout or ''):gsub('%s+$', '')
     vim.system({ 'git', 'checkout', '--', file.path }, { cwd = state.repo_root }):wait()
     discard_log(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
-    vim.notify(string.format('Restored %s from index. Undo: git show %s > %s', file.path, blob, file.path), vim.log.levels.INFO)
   elseif section.section == 'staged' then
     vim.system({ 'git', 'reset', 'HEAD', '--', file.path }, { cwd = state.repo_root }):wait()
     discard_log(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
-    vim.notify(string.format('Unstaged %s. Restore: git add %s', file.path, file.path), vim.log.levels.INFO)
   end
 
   state.preview_key = nil

@@ -188,7 +188,7 @@ imap <c-n> <Action>(CodeCompletion)
 
 let g:NERDTreeMapActivateNode='l'
 let g:NERDTreeMapCloseDir='h'
-let g:NERDTreeMapToggleZoom='z'
+let g:NERDTreeMapToggleZoom='x'
 let g:NERDTreeMapNewFile='ma'
 let g:NERDTreeMapNewDir='mk'
 let g:NERDTreeMapMenu='e'
