@@ -224,7 +224,7 @@ local function close_diff_windows(state)
   state.closing_diff_windows = false
 end
 
-function M.show_commit_diff(state, from_line, to_line)
+function M.show_commit_diff(state, from_line, to_line, force)
   if not from_line then
     from_line = vim.api.nvim_win_get_cursor(state.log_win)[1]
   end
@@ -234,6 +234,12 @@ function M.show_commit_diff(state, from_line, to_line)
   if from_line > to_line then
     from_line, to_line = to_line, from_line
   end
+
+  local preview_key = string.format('%d:%d:%s:%s', from_line, to_line, state.diff_mode, tostring(state.diff_changes_only))
+  if not force and preview_key == state.preview_key then
+    return
+  end
+  state.preview_key = preview_key
 
   local selection = get_display_selection(state, from_line, to_line)
   if not selection then
@@ -283,6 +289,7 @@ function M.show_single_diff(state, old_block, new_block, old_file, new_file, sel
     state.diff_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
     mark_diff_window(state.diff_win)
+    vim.api.nvim_win_set_width(state.log_win, math.floor(vim.o.columns / 5))
     vim.api.nvim_set_current_win(state.log_win)
 
   end
@@ -390,6 +397,11 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, selec
     vim.wo[state.diff_win2].wrap = false
     vim.wo[state.diff_win2].statuscolumn = '%=%{v:virtnum==0?v:lnum+b:line_offset:""} '
 
+    local fifth = math.floor(vim.o.columns / 5)
+    vim.api.nvim_win_set_width(state.log_win, fifth)
+    vim.api.nvim_win_set_width(state.diff_win, fifth * 2)
+    vim.api.nvim_win_set_width(state.diff_win2, fifth * 2)
+
     -- Auto-close the other diff window when one is closed
     local closing = false
     for _, buf_pair in ipairs({ { state.diff_buf, state.diff_win2 }, { state.diff_buf2, state.diff_win } }) do
@@ -485,12 +497,12 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
 
   vim.keymap.set('n', 'd', function()
     toggle_diff_changes_only()
-    M.show_commit_diff(state)
+    M.show_commit_diff(state, nil, nil, true)
   end, opts)
 
   vim.keymap.set('n', 'D', function()
     toggle_diff_mode()
-    M.show_commit_diff(state)
+    M.show_commit_diff(state, nil, nil, true)
   end, opts)
 
   vim.keymap.set('n', 'x', function()

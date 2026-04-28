@@ -111,6 +111,7 @@ local function cleanup_state()
   state.next_prefetch_idx = 1
   state.waiting_for_prefetch = false
   state.blob_store = nil
+  state.preview_key = nil
 end
 
 local function close_windows()

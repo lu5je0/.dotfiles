@@ -192,52 +192,48 @@ local function discard_change()
   load_status()
 end
 
+-- ── load stash files (lazy, per-commit) ──────────────────
+
+local function load_stash_files_for(commit_idx, callback)
+  local session = state.session
+  local commit = state.commits[commit_idx]
+  if not commit or not commit.stash_ref then
+    return
+  end
+  vim.system(
+    { 'git', 'stash', 'show', '--name-status', '--find-renames', commit.stash_ref },
+    { text = true, cwd = state.repo_root },
+    function(result)
+      vim.schedule(function()
+        if not is_active_session(session) then
+          return
+        end
+        commit.files = core.parse_name_status(result.stdout)
+        commit.files_loaded = true
+        if callback then
+          callback()
+        end
+      end)
+    end
+  )
+end
+
 local function activate_item()
+  local item = tree.item_under_cursor(state)
+  if item and item.type == 'commit' and item.stash then
+    local commit = state.commits[item.commit_idx]
+    if commit and not commit.files_loaded then
+      load_stash_files_for(item.commit_idx, function()
+        tree.open_node(state)
+      end)
+      return
+    end
+  end
   if tree.open_node(state) then
     return
   end
   state.preview_key = nil
   show_file_diff()
-end
-
--- ── load stash files ─────────────────────────────────────
-
-local function load_stash_files(session)
-  local stashes = state.stashes
-  if not stashes or #stashes == 0 then
-    return
-  end
-  local pending = #stashes
-  for i, stash in ipairs(stashes) do
-    vim.system(
-      { 'git', 'stash', 'show', '--name-status', '--find-renames', stash.ref },
-      { text = true, cwd = state.repo_root },
-      function(result)
-        vim.schedule(function()
-          if not is_active_session(session) then
-            return
-          end
-          local files = core.parse_name_status(result.stdout)
-          stashes[i].files = files
-          pending = pending - 1
-          if pending == 0 then
-            for _, s in ipairs(stashes) do
-              state.commits[#state.commits + 1] = {
-                section = 'stash',
-                stash_label = s.ref .. ': ' .. s.message,
-                stash_ref = s.ref,
-                files = s.files or {},
-                expanded = false,
-                expanded_dirs = {},
-                tree_opts = status_ui.make_tree_opts('stash'),
-              }
-            end
-            status_ui.render(state)
-          end
-        end)
-      end
-    )
-  end
 end
 
 -- ── load status ──────────────────────────────────────────
@@ -297,14 +293,23 @@ load_status = function()
         end
       end
 
+      for _, s in ipairs(stashes) do
+        commits[#commits + 1] = {
+          section = 'stash',
+          stash_label = s.ref .. ': ' .. s.message,
+          stash_ref = s.ref,
+          files = {},
+          files_loaded = false,
+          expanded = false,
+          expanded_dirs = {},
+          tree_opts = status_ui.make_tree_opts('stash'),
+        }
+      end
+
       state.commits = commits
       state.stashes = stashes
       status_ui.render(state)
       status_ui.update_statusline(state, false)
-
-      if #stashes > 0 then
-        load_stash_files(session)
-      end
     end)
   end)
 end

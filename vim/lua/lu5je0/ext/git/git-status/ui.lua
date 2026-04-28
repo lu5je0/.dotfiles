@@ -103,7 +103,8 @@ function M.render(state)
 
       commit.child_prefix = child_prefix
 
-      lines[#lines + 1] = string.format('%s%s%s (%d)', branch, stash_icon, commit.stash_label, #commit.files)
+      local count_str = commit.files_loaded and string.format(' (%d)', #commit.files) or ''
+      lines[#lines + 1] = string.format('%s%s%s%s', branch, stash_icon, commit.stash_label, count_str)
       items[#items + 1] = { type = 'commit', commit_idx = commit_idx, stash = true }
 
       if commit.expanded then

@@ -112,6 +112,7 @@ local function set_single_diff_lines(state, section, file, lines)
     state.diff_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
     mark_diff_window(state.diff_win)
+    vim.api.nvim_win_set_width(state.log_win, math.floor(vim.o.columns / 5))
     vim.api.nvim_set_current_win(state.log_win)
   end
 
@@ -226,6 +227,11 @@ function M.show_dual(state, section, file)
     vim.wo[state.diff_win2].diff = true
     vim.wo[state.diff_win2].scrollbind = true
     vim.wo[state.diff_win2].wrap = false
+
+    local fifth = math.floor(vim.o.columns / 5)
+    vim.api.nvim_win_set_width(state.log_win, fifth)
+    vim.api.nvim_win_set_width(state.diff_win, fifth * 2)
+    vim.api.nvim_win_set_width(state.diff_win2, fifth * 2)
 
     local closing = false
     for _, buf in ipairs({ state.diff_buf, state.diff_buf2 }) do
