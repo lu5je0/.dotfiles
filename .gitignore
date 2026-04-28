@@ -1,14 +1,8 @@
-vim/.netrwhist
 vim/pack/
-vim/quicknote.md
-vim/parser/
-vim/parser-info/
-vim/plugin/packer_compiled.lua
 tmux/plugins
 __pycache__
 .idea/
 *.swp
-submodule/SubtitlesDownloader/.env/
 node_modules/
 .env/
 build/neovim
@@ -18,3 +12,4 @@ nvim.log
 vim/after/syntax/
 vim/nvim.log
 .qoder/
+git/ignore
