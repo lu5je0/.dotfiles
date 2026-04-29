@@ -78,9 +78,9 @@ local function config_keeper()
     group = keeper_group,
     pattern = { '*' },
     callback = function()
-      set_keeper(true)
       if vim.api.nvim_get_mode().mode == 'n' then
         M.normal()
+        set_keeper(true)
       end
     end
   })
