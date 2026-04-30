@@ -371,7 +371,16 @@ require('lu5je0.misc.time-machine').setup()
 -- git line log
 lazy_load({
   config = function()
-    require('lu5je0.ext.git').setup()
+    require('lu5je0.ext.git').setup({
+      log_width = 30,
+      win_height = 0.5,
+      win_height_expanded = 0.9,
+      project_log = {
+        max_commits = 1000,
+      },
+      line_log = {},
+      git_status = {}
+    })
   end,
   keys = {
     { mode = { 'x' }, '<leader>gl' },

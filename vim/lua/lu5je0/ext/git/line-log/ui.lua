@@ -1,6 +1,7 @@
 local Block = require('lu5je0.ext.git.line-log.block')
 local help = require('lu5je0.ext.git.common.help')
 local scheduler = require('lu5je0.ext.git.common.scheduler')
+local config = require('lu5je0.ext.git.config')
 
 local M = {}
 
@@ -289,7 +290,7 @@ function M.show_single_diff(state, old_block, new_block, old_file, new_file, sel
     state.diff_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
     mark_diff_window(state.diff_win)
-    vim.api.nvim_win_set_width(state.log_win, math.floor(vim.o.columns / 5))
+    vim.api.nvim_win_set_width(state.log_win, config.log_width)
     vim.api.nvim_set_current_win(state.log_win)
 
   end
@@ -397,10 +398,10 @@ function M.show_dual_diff(state, old_block, new_block, old_file, new_file, selec
     vim.wo[state.diff_win2].wrap = false
     vim.wo[state.diff_win2].statuscolumn = '%=%{v:virtnum==0?v:lnum+b:line_offset:""} '
 
-    local fifth = math.floor(vim.o.columns / 5)
-    vim.api.nvim_win_set_width(state.log_win, fifth)
-    vim.api.nvim_win_set_width(state.diff_win, fifth * 2)
-    vim.api.nvim_win_set_width(state.diff_win2, fifth * 2)
+    local remaining = vim.o.columns - config.log_width
+    vim.api.nvim_win_set_width(state.log_win, config.log_width)
+    vim.api.nvim_win_set_width(state.diff_win, math.floor(remaining / 2))
+    vim.api.nvim_win_set_width(state.diff_win2, math.floor(remaining / 2))
 
     -- Auto-close the other diff window when one is closed
     local closing = false
@@ -510,12 +511,14 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
       return
     end
     local total = vim.o.lines
-    local threshold = math.floor(total * 0.7)
+    local win_height = config.get('line_log', 'win_height')
+    local win_height_expanded = config.get('line_log', 'win_height_expanded')
+    local threshold = math.floor(total * (win_height + win_height_expanded) / 2)
     local current = vim.api.nvim_win_get_height(state.log_win)
     if current >= threshold then
-      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.5))
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * win_height))
     else
-      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.9))
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * win_height_expanded))
     end
   end, opts)
 

@@ -1,5 +1,6 @@
 local Block = require('lu5je0.ext.git.line-log.block')
 local ui = require('lu5je0.ext.git.common.ui')
+local config = require('lu5je0.ext.git.config')
 
 local M = {}
 
@@ -106,7 +107,7 @@ local function set_single_diff_lines(state, commit, file, lines)
     state.diff_win = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(state.diff_win, state.diff_buf)
     mark_diff_window(state.diff_win)
-    vim.api.nvim_win_set_width(state.log_win, math.floor(vim.o.columns / 5))
+    vim.api.nvim_win_set_width(state.log_win, config.log_width)
     vim.api.nvim_set_current_win(state.log_win)
   end
 
@@ -274,10 +275,10 @@ function M.show_dual_file(state, commit, file, old_lines, new_lines)
   vim.wo[state.diff_win2].scrollbind = true
   vim.wo[state.diff_win2].wrap = false
 
-  local fifth = math.floor(vim.o.columns / 5)
-  vim.api.nvim_win_set_width(state.log_win, fifth)
-  vim.api.nvim_win_set_width(state.diff_win, fifth * 2)
-  vim.api.nvim_win_set_width(state.diff_win2, fifth * 2)
+  local remaining = vim.o.columns - config.log_width
+  vim.api.nvim_win_set_width(state.log_win, config.log_width)
+  vim.api.nvim_win_set_width(state.diff_win, math.floor(remaining / 2))
+  vim.api.nvim_win_set_width(state.diff_win2, math.floor(remaining / 2))
 
   local closing = false
   for _, buf in ipairs({ state.diff_buf, state.diff_buf2 }) do

@@ -2,6 +2,7 @@ local blob_store = require('lu5je0.ext.git.line-log.blob-store')
 local core = require('lu5je0.ext.git.line-log.core')
 local ui = require('lu5je0.ext.git.line-log.ui')
 local env_keeper = require('lu5je0.misc.env-keeper')
+local config = require('lu5je0.ext.git.config')
 
 local M = {}
 
@@ -385,7 +386,7 @@ function M.show(opts)
   vim.api.nvim_buf_set_lines(state.log_buf, 0, -1, false, { '-- Loading... --' })
   vim.bo[state.log_buf].modifiable = false
 
-  local height = math.floor(vim.api.nvim_win_get_height(0) / 2)
+  local height = math.floor(vim.api.nvim_win_get_height(0) * config.get('line_log', 'win_height'))
   vim.cmd('botright split')
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)

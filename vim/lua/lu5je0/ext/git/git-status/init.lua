@@ -6,6 +6,7 @@ local status_ui = require('lu5je0.ext.git.git-status.ui')
 local tree = require('lu5je0.ext.git.common.tree')
 local common_ui = require('lu5je0.ext.git.common.ui')
 local env_keeper = require('lu5je0.misc.env-keeper')
+local config = require('lu5je0.ext.git.config')
 
 local M = {}
 
@@ -419,12 +420,14 @@ local function setup_keymaps()
       return
     end
     local total = vim.o.lines
-    local threshold = math.floor(total * 0.7)
+    local win_height = config.get('git_status', 'win_height')
+    local win_height_expanded = config.get('git_status', 'win_height_expanded')
+    local threshold = math.floor(total * (win_height + win_height_expanded) / 2)
     local current = vim.api.nvim_win_get_height(state.log_win)
     if current >= threshold then
-      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.5))
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * win_height))
     else
-      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.9))
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * win_height_expanded))
     end
   end, opts)
   vim.keymap.set('n', '?', function()
@@ -470,7 +473,7 @@ function M.show()
   vim.bo[state.log_buf].filetype = 'git'
   common_ui.set_buffer_lines(state.log_buf, { '-- Loading git status... --' })
 
-  local height = math.floor(vim.api.nvim_win_get_height(0) * 0.5)
+  local height = math.floor(vim.api.nvim_win_get_height(0) * config.get('git_status', 'win_height'))
   vim.cmd('botright split')
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)

@@ -6,10 +6,9 @@ local scheduler = require('lu5je0.ext.git.common.scheduler')
 local tree = require('lu5je0.ext.git.common.tree')
 local ui = require('lu5je0.ext.git.project-log.ui')
 local env_keeper = require('lu5je0.misc.env-keeper')
+local config = require('lu5je0.ext.git.config')
 
 local M = {}
-
-local DEFAULT_COMMIT_LIMIT = 1000
 
 local state = {
   session = 0,
@@ -32,7 +31,7 @@ local state = {
   closing_diff_windows = false,
   render = function(s) ui.render_log(s) end,
   tree_opts = { status_hl_fn = function() return 'Type' end },
-  commit_limit = DEFAULT_COMMIT_LIMIT,
+  commit_limit = config.get('project_log', 'max_commits'),
   limited = false,
 }
 
@@ -70,7 +69,7 @@ local function cleanup()
   state.display_items = {}
   state.preview_key = nil
   state.limited = false
-  state.commit_limit = DEFAULT_COMMIT_LIMIT
+  state.commit_limit = config.get('project_log', 'max_commits')
 end
 
 local function get_commit_and_file(item)
@@ -242,12 +241,14 @@ local function setup_keymaps()
       return
     end
     local total = vim.o.lines
-    local threshold = math.floor(total * 0.7)
+    local win_height = config.get('project_log', 'win_height')
+    local win_height_expanded = config.get('project_log', 'win_height_expanded')
+    local threshold = math.floor(total * (win_height + win_height_expanded) / 2)
     local current = vim.api.nvim_win_get_height(state.log_win)
     if current >= threshold then
-      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.5))
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * win_height))
     else
-      vim.api.nvim_win_set_height(state.log_win, math.floor(total * 0.9))
+      vim.api.nvim_win_set_height(state.log_win, math.floor(total * win_height_expanded))
     end
   end, opts)
   vim.keymap.set('n', '?', function()
@@ -437,7 +438,7 @@ function M.show()
   vim.bo[state.log_buf].filetype = 'git'
   ui.set_buffer_lines(state.log_buf, { '-- Loading project log... --' })
 
-  local height = math.floor(vim.api.nvim_win_get_height(0) * 0.5)
+  local height = math.floor(vim.api.nvim_win_get_height(0) * config.get('project_log', 'win_height'))
   vim.cmd('botright split')
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)

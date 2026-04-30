@@ -100,7 +100,7 @@ nmap gb :action ShowUsages<CR>
 
 " code
 map <leader>cf :action ReformatCode<CR>
-map <leader>cr <Action>(RenameElement)
+map <leader>cr <Action>(RenameElement)<ESC>
 map <leader>cm <Action>(ChangeSignature)
 map <leader>cg <Action>(Generate)
 map <leader>ci :action Inline<CR>
