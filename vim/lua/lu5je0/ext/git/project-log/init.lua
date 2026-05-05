@@ -236,7 +236,7 @@ local function setup_keymaps()
     end
     vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
   end, opts)
-  vim.keymap.set('n', 'x', function()
+  vim.keymap.set('n', 'Z', function()
     if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
       return
     end
@@ -262,7 +262,7 @@ local function setup_keymaps()
       '  D       Toggle diff mode: single / dual',
       '  a       Load all commits (when limited)',
       '  gf      Open file',
-      '  x       Toggle window height',
+      '  Z       Toggle window height',
       '  ?       Show this help',
       '  q       Close',
     })

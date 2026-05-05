@@ -31,11 +31,14 @@ local state = {
   header_count = 0,
   preview_key = nil,
   stashes = {},
+  stash_expanded = true,
+  undo_stack = {},
   diff_mode = env_keeper.get('git_status_diff_mode', 'single'),
   diff_changes_only = env_keeper.get('git_status_diff_changes_only', false),
   closing_diff_windows = false,
   tree_opts = {},
   render = function(s) status_ui.render(s) end,
+  refresh_commit_line = function(s, line) status_ui.refresh_commit_line(s, line) end,
 }
 
 -- ── helpers ──────────────────────────────────────────────
@@ -67,6 +70,8 @@ local function cleanup()
   state.header_count = 0
   state.preview_key = nil
   state.stashes = {}
+  state.stash_expanded = true
+  state.undo_stack = {}
   state.head = nil
   state.merge = nil
 end
@@ -95,6 +100,17 @@ local function get_section_and_file(item)
   local section = state.commits[item.commit_idx]
   local file = section and section.files[item.file_idx] or nil
   return section, file
+end
+
+local function get_non_stash_section(item)
+  if not item or item.stash then
+    return nil
+  end
+  local section = state.commits[item.commit_idx]
+  if not section or section.section == 'stash' then
+    return nil
+  end
+  return section
 end
 
 -- ── diff preview ─────────────────────────────────────────
@@ -132,6 +148,259 @@ local function discard_log(msg)
   vim.api.nvim_echo({ { msg } }, true, { kind = 'emsg' })
 end
 
+local function git_path_args(...)
+  local args = { ... }
+  args[#args + 1] = '--'
+  return args
+end
+
+local function append_path_list(args, paths)
+  for _, path in ipairs(paths or {}) do
+    if path and path ~= '' then
+      args[#args + 1] = path
+    end
+  end
+  return args
+end
+
+local function append_paths(args, files)
+  for _, file in ipairs(files or {}) do
+    if file.path and file.path ~= '' then
+      args[#args + 1] = file.path
+    end
+  end
+  return args
+end
+
+local function path_count(args)
+  local count = 0
+  local after_separator = false
+  for _, arg in ipairs(args) do
+    if after_separator then
+      count = count + 1
+    elseif arg == '--' then
+      after_separator = true
+    end
+  end
+  return count
+end
+
+local function file_paths(files)
+  local paths = {}
+  for _, file in ipairs(files or {}) do
+    if file.path and file.path ~= '' then
+      paths[#paths + 1] = file.path
+    end
+  end
+  return paths
+end
+
+local function run_git(args, error_prefix)
+  local result = vim.system(args, { text = true, cwd = state.repo_root }):wait()
+  if result.code ~= 0 then
+    local stderr = (result.stderr or ''):gsub('%s+$', '')
+    vim.notify(string.format('%s%s', error_prefix or 'Git command failed: ', stderr), vim.log.levels.ERROR)
+    return false, result
+  end
+  return true, result
+end
+
+local function hash_file(abs_path, write)
+  local args = { 'git', 'hash-object' }
+  if write then
+    args[#args + 1] = '-w'
+  end
+  args[#args + 1] = abs_path
+  local ok, result = run_git(args, 'Failed to hash file: ')
+  if not ok then
+    return nil
+  end
+  local blob = (result.stdout or ''):gsub('%s+$', '')
+  return blob ~= '' and blob or nil
+end
+
+local function write_blob(blob, abs_path)
+  vim.fn.mkdir(vim.fn.fnamemodify(abs_path, ':h'), 'p')
+  local result = vim.system({ 'git', 'cat-file', 'blob', blob }, { cwd = state.repo_root }):wait()
+  if result.code ~= 0 then
+    vim.notify('Failed to read blob ' .. blob, vim.log.levels.ERROR)
+    return false
+  end
+  local fd = vim.uv.fs_open(abs_path, 'w', 420)
+  if not fd then
+    vim.notify('Failed to open ' .. abs_path, vim.log.levels.ERROR)
+    return false
+  end
+  vim.uv.fs_write(fd, result.stdout or '', 0)
+  vim.uv.fs_close(fd)
+  return true
+end
+
+local function reload_status()
+  state.preview_key = nil
+  load_status()
+end
+
+local function push_undo(label, ops)
+  if ops and #ops > 0 then
+    state.undo_stack[#state.undo_stack + 1] = { label = label, ops = ops }
+  end
+end
+
+local function undo_restore_blobs(op)
+  for _, file in ipairs(op.files or {}) do
+    local abs_path = state.repo_root .. '/' .. file.path
+    if file.expected_absent then
+      if vim.uv.fs_stat(abs_path) then
+        vim.notify('Undo skipped: ' .. abs_path .. ' already exists', vim.log.levels.WARN)
+        return false
+      end
+    elseif file.expected_blob then
+      if not vim.uv.fs_stat(abs_path) then
+        vim.notify('Undo skipped: ' .. abs_path .. ' no longer exists', vim.log.levels.WARN)
+        return false
+      end
+      local current_blob = hash_file(abs_path, false)
+      if current_blob ~= file.expected_blob then
+        vim.notify('Undo skipped: ' .. abs_path .. ' changed after discard', vim.log.levels.WARN)
+        return false
+      end
+    else
+      vim.notify('Undo skipped: cannot verify ' .. abs_path, vim.log.levels.WARN)
+      return false
+    end
+  end
+
+  for _, file in ipairs(op.files or {}) do
+    local abs_path = state.repo_root .. '/' .. file.path
+    if file.delete then
+      os.remove(abs_path)
+    elseif not write_blob(file.blob, abs_path) then
+      return false
+    end
+  end
+  return true
+end
+
+local function run_undo_op(op)
+  if op.type == 'reset_paths' then
+    local ok = run_git(append_path_list(git_path_args('git', 'reset', 'HEAD'), op.paths), 'Undo failed: ')
+    return ok
+  elseif op.type == 'add_paths' then
+    local ok = run_git(append_path_list(git_path_args('git', 'add'), op.paths), 'Undo failed: ')
+    return ok
+  elseif op.type == 'restore_blobs' then
+    return undo_restore_blobs(op)
+  elseif op.type == 'store_stash' then
+    local ok = run_git({ 'git', 'stash', 'store', '-m', op.message, op.sha }, 'Undo failed: ')
+    return ok
+  end
+  return false
+end
+
+local function undo_last_action()
+  local entry = state.undo_stack[#state.undo_stack]
+  if not entry then
+    vim.notify('Nothing to undo', vim.log.levels.INFO)
+    return
+  end
+
+  for i = #entry.ops, 1, -1 do
+    if not run_undo_op(entry.ops[i]) then
+      return
+    end
+  end
+  table.remove(state.undo_stack)
+  vim.notify('Undid ' .. entry.label, vim.log.levels.INFO)
+  reload_status()
+end
+
+local function stage_section()
+  local section = get_non_stash_section(item_under_cursor())
+  if not section then
+    return
+  end
+  if section.section ~= 'untracked' and section.section ~= 'unstaged' then
+    vim.notify('Already staged', vim.log.levels.INFO)
+    return
+  end
+
+  local args = append_paths(git_path_args('git', 'add'), section.files)
+  local count = path_count(args)
+  if count == 0 then
+    return
+  end
+  if not run_git(args, 'Failed to stage section: ') then
+    return
+  end
+  push_undo('stage section', { { type = 'reset_paths', paths = file_paths(section.files) } })
+  vim.notify(string.format('Staged %d files', count), vim.log.levels.INFO)
+  reload_status()
+end
+
+local function discard_section()
+  local section = get_non_stash_section(item_under_cursor())
+  if not section then
+    return false
+  end
+
+  local files = section.files or {}
+  if #files == 0 then
+    return true
+  end
+
+  if section.section == 'untracked' then
+    local restore_files = {}
+    for _, file in ipairs(files) do
+      local abs_path = state.repo_root .. '/' .. file.path
+      local blob = hash_file(abs_path, true)
+      if not blob then
+        return true
+      end
+      restore_files[#restore_files + 1] = { path = file.path, blob = blob, expected_absent = true }
+      os.remove(abs_path)
+      discard_log(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
+    end
+    push_undo('discard section', { { type = 'restore_blobs', files = restore_files } })
+  elseif section.section == 'unstaged' then
+    local restore_files = {}
+    for _, file in ipairs(files) do
+      local abs_path = state.repo_root .. '/' .. file.path
+      local blob = vim.uv.fs_stat(abs_path) and hash_file(abs_path, true) or nil
+      if not run_git({ 'git', 'checkout', '--', file.path }, 'Failed to restore file: ') then
+        return true
+      end
+      local expected_blob = hash_file(abs_path, false)
+      if not expected_blob then
+        return true
+      end
+      if blob then
+        restore_files[#restore_files + 1] = { path = file.path, blob = blob, expected_blob = expected_blob }
+        discard_log(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
+      else
+        restore_files[#restore_files + 1] = { path = file.path, delete = true, expected_blob = expected_blob }
+        discard_log(string.format('Restored %s from index. Undo: delete %s', abs_path, abs_path))
+      end
+    end
+    push_undo('discard section', { { type = 'restore_blobs', files = restore_files } })
+  elseif section.section == 'staged' then
+    local args = append_paths(git_path_args('git', 'reset', 'HEAD'), files)
+    if not run_git(args, 'Failed to unstage section: ') then
+      return true
+    end
+    push_undo('discard section', { { type = 'add_paths', paths = file_paths(files) } })
+    for _, file in ipairs(files) do
+      local abs_path = state.repo_root .. '/' .. file.path
+      discard_log(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
+    end
+  else
+    return false
+  end
+
+  reload_status()
+  return true
+end
+
 local function discard_change()
   local item = item_under_cursor()
   if not item then
@@ -159,8 +428,8 @@ local function discard_change()
     local restore_cmd = string.format('cd %s && git stash store -m %s %s', vim.fn.shellescape(state.repo_root), vim.fn.shellescape(stash_msg), sha)
     local notify_msg = string.format('Dropped %s. Restore: %s', commit.stash_ref, restore_cmd)
     discard_log(notify_msg)
-    state.preview_key = nil
-    load_status()
+    push_undo('drop stash', { { type = 'store_stash', sha = sha, message = stash_msg } })
+    reload_status()
     return
   end
 
@@ -175,22 +444,44 @@ local function discard_change()
   local abs_path = state.repo_root .. '/' .. file.path
 
   if section.section == 'untracked' then
-    local hash_result = vim.system({ 'git', 'hash-object', '-w', abs_path }, { text = true, cwd = state.repo_root }):wait()
-    local blob = (hash_result.stdout or ''):gsub('%s+$', '')
+    local blob = hash_file(abs_path, true)
+    if not blob then
+      return
+    end
     os.remove(abs_path)
     discard_log(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
+    push_undo('discard file', {
+      { type = 'restore_blobs', files = { { path = file.path, blob = blob, expected_absent = true } } },
+    })
   elseif section.section == 'unstaged' then
-    local hash_result = vim.system({ 'git', 'hash-object', '-w', abs_path }, { text = true, cwd = state.repo_root }):wait()
-    local blob = (hash_result.stdout or ''):gsub('%s+$', '')
-    vim.system({ 'git', 'checkout', '--', file.path }, { cwd = state.repo_root }):wait()
-    discard_log(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
+    local blob = vim.uv.fs_stat(abs_path) and hash_file(abs_path, true) or nil
+    if not run_git({ 'git', 'checkout', '--', file.path }, 'Failed to restore file: ') then
+      return
+    end
+    local expected_blob = hash_file(abs_path, false)
+    if not expected_blob then
+      return
+    end
+    if blob then
+      discard_log(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
+      push_undo('discard file', {
+        { type = 'restore_blobs', files = { { path = file.path, blob = blob, expected_blob = expected_blob } } },
+      })
+    else
+      discard_log(string.format('Restored %s from index. Undo: delete %s', abs_path, abs_path))
+      push_undo('discard file', {
+        { type = 'restore_blobs', files = { { path = file.path, delete = true, expected_blob = expected_blob } } },
+      })
+    end
   elseif section.section == 'staged' then
-    vim.system({ 'git', 'reset', 'HEAD', '--', file.path }, { cwd = state.repo_root }):wait()
+    if not run_git({ 'git', 'reset', 'HEAD', '--', file.path }, 'Failed to unstage file: ') then
+      return
+    end
     discard_log(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
+    push_undo('discard file', { { type = 'add_paths', paths = { file.path } } })
   end
 
-  state.preview_key = nil
-  load_status()
+  reload_status()
 end
 
 -- ── load stash files (lazy, per-commit) ──────────────────
@@ -221,6 +512,19 @@ end
 
 local function activate_item()
   local item = tree.item_under_cursor(state)
+  if item and item.type == 'stash_header' then
+    if state.stash_expanded == false then
+      state.stash_expanded = true
+      status_ui.render(state)
+    else
+      local line = vim.api.nvim_win_get_cursor(state.log_win)[1]
+      local next_item = state.display_items[line + 1]
+      if next_item and next_item.stash then
+        vim.api.nvim_win_set_cursor(state.log_win, { line + 1, 0 })
+      end
+    end
+    return
+  end
   if item and item.type == 'commit' and item.stash then
     local commit = state.commits[item.commit_idx]
     if commit and not commit.files_loaded then
@@ -340,15 +644,44 @@ local function setup_keymaps()
   vim.keymap.set('n', '>', activate_item, opts)
   vim.keymap.set('n', '<cr>', activate_item, opts)
   vim.keymap.set('n', 'h', function()
+    local item = tree.item_under_cursor(state)
+    if item and item.type == 'stash_header' and state.stash_expanded ~= false then
+      state.stash_expanded = false
+      status_ui.render(state)
+      return
+    end
     tree.close_parent_node(state)
   end, opts)
   vim.keymap.set('n', '<', function()
+    local item = tree.item_under_cursor(state)
+    if item and item.type == 'stash_header' and state.stash_expanded ~= false then
+      state.stash_expanded = false
+      status_ui.render(state)
+      return
+    end
     tree.close_parent_node(state)
   end, opts)
   vim.keymap.set('n', 'H', function()
     tree.close_commit_node(state)
   end, opts)
-  vim.keymap.set('n', 'X', discard_change, opts)
+  vim.keymap.set('n', 'X', function()
+    local item = tree.item_under_cursor(state)
+    if item and (item.stash or item.type == 'stash_header') then
+      return
+    end
+    if discard_section() then
+      return
+    end
+    discard_change()
+  end, opts)
+  vim.keymap.set('n', 'x', function()
+    local item = tree.item_under_cursor(state)
+    if item and item.type == 'stash_header' then
+      return
+    end
+    discard_change()
+  end, opts)
+  vim.keymap.set('n', 'A', stage_section, opts)
   vim.keymap.set('n', 'a', function()
     local item = item_under_cursor()
     if not item or item.type ~= 'file' then
@@ -359,11 +692,14 @@ local function setup_keymaps()
       return
     end
     if section.section == 'untracked' or section.section == 'unstaged' then
-      vim.system({ 'git', 'add', '--', file.path }, { cwd = state.repo_root }):wait()
-      state.preview_key = nil
-      load_status()
+      if not run_git({ 'git', 'add', '--', file.path }, 'Failed to stage file: ') then
+        return
+      end
+      push_undo('stage file', { { type = 'reset_paths', paths = { file.path } } })
+      reload_status()
     end
   end, opts)
+  vim.keymap.set('n', 'u', undo_last_action, opts)
   vim.keymap.set('n', 'r', function()
     state.preview_key = nil
     load_status()
@@ -415,7 +751,7 @@ local function setup_keymaps()
     end
     vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
   end, opts)
-  vim.keymap.set('n', 'x', function()
+  vim.keymap.set('n', 'Z', function()
     if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
       return
     end
@@ -439,10 +775,13 @@ local function setup_keymaps()
       '  H       Fold section',
       '  d       Toggle changes-only',
       '  D       Toggle diff mode: single / dual',
-      '  X       Discard change / Drop stash',
+      '  x       Discard file / Drop stash',
+      '  X       Discard section',
+      '  u       Undo last git-status action',
       '  a       Stage file',
+      '  A       Stage section',
       '  gf      Open file',
-      '  x       Toggle window height',
+      '  Z       Toggle window height',
       '  ?       Show this help',
     })
   end, opts)

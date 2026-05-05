@@ -405,7 +405,7 @@ local function on_attach(bufnr)
   set('n', 'mk', create_dir, opts('create_dir'))
   set('n', 't', terminal_cd, opts('terminal cd'))
   
-  set('n', 'x', toggle_width, opts('toggle nvimtree width'))
+  set('n', 'Z', toggle_width, opts('toggle nvimtree width'))
   
   set('n', 'D', function()
     delete_node()

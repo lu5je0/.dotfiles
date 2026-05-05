@@ -114,6 +114,9 @@ local function refresh_commit_tree(state, commit_line)
   local commit = state.commits[commit_idx]
 
   local old_count = count_tree_items(state, commit_line)
+  if state.refresh_commit_line then
+    state.refresh_commit_line(state, commit_line)
+  end
 
   local new_lines = {}
   local new_items = {}
