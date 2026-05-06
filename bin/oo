@@ -1,0 +1,6 @@
+#!/bin/bash
+INSTALL_PATH=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+SCRIPT_PATH=${INSTALL_PATH}/../submodule/oo
+SCRIPT_NAME=oo.py
+
+source ${INSTALL_PATH}/../submodule/python-install/runner.sh

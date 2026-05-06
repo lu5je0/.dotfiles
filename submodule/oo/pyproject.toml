@@ -1,0 +1,17 @@
+[project]
+name = "oo"
+version = "0.1.0"
+description = "Read image from clipboard, OCR via macOS Vision, and open result in nvim."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyobjc-framework-vision",
+    "pyobjc-framework-quartz",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+oo = "oo:main"
