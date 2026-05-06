@@ -1,6 +1,7 @@
 local Block = require('lu5je0.ext.git.line-log.block')
 local ui = require('lu5je0.ext.git.common.ui')
 local config = require('lu5je0.ext.git.config')
+local statusline = require('lu5je0.ext.git.common.statusline')
 
 local M = {}
 
@@ -85,6 +86,14 @@ end
 local function filetype_for_path(path)
   local ft = path and vim.filetype.match({ filename = path }) or nil
   return ft ~= '' and ft or nil
+end
+
+local function first_parent_short_hash(commit)
+  local parent = commit.parents and commit.parents:match('%x+')
+  if not parent then
+    return 'empty'
+  end
+  return parent:sub(1, #commit.short_hash)
 end
 
 local function set_single_diff_lines(state, commit, file, lines)
@@ -306,11 +315,11 @@ function M.show_dual_file(state, commit, file, old_lines, new_lines)
   vim.wo[state.diff_win2].foldenable = state.diff_changes_only
 
   if commit.local_change then
-    vim.wo[state.diff_win].statusline = string.format('%%#Comment#HEAD %s%%*', old_file)
-    vim.wo[state.diff_win2].statusline = string.format('%%#Number#local%%* %%#Comment#%s%%*', new_file)
+    vim.wo[state.diff_win].statusline = statusline.dual('OLD', 'HEAD', old_file)
+    vim.wo[state.diff_win2].statusline = statusline.dual('NEW', 'WORK', new_file)
   else
-    vim.wo[state.diff_win].statusline = string.format('%%#Comment#%s^ %s%%*', commit.short_hash, old_file)
-    vim.wo[state.diff_win2].statusline = string.format('%%#Number#%s%%* %%#Comment#%s%%*', commit.short_hash, new_file)
+    vim.wo[state.diff_win].statusline = statusline.dual('OLD', first_parent_short_hash(commit), old_file)
+    vim.wo[state.diff_win2].statusline = statusline.dual('NEW', commit.short_hash, new_file)
   end
   vim.api.nvim_set_current_win(state.log_win)
 end

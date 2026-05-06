@@ -1,4 +1,5 @@
 local common_ui = require('lu5je0.ext.git.common.ui')
+local statusline = require('lu5je0.ext.git.common.statusline')
 
 local M = {}
 
@@ -274,9 +275,8 @@ function M.update_statusline(state, loading)
   if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
     return
   end
-  local mode = string.format('%s%s', state.diff_mode, state.diff_changes_only and ' changes-only' or '')
   if loading then
-    vim.wo[state.log_win].statusline = string.format(' %%#Function#Git Status%%* [%%#Special#loading%%*] %%#Comment#%s%%*', mode)
+    vim.wo[state.log_win].statusline = statusline.log_count('Git Status', 0, 'changes', { loading = true })
   else
     local total = 0
     for _, c in ipairs(state.commits) do
@@ -284,7 +284,7 @@ function M.update_statusline(state, loading)
         total = total + #c.files
       end
     end
-    vim.wo[state.log_win].statusline = string.format(' %%#Function#Git Status%%* %%#Number#%d changes%%* %%#Comment#%s%%*', total, mode)
+    vim.wo[state.log_win].statusline = statusline.log_count('Git Status', total, 'changes')
   end
 end
 

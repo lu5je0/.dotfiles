@@ -1,4 +1,5 @@
 local common_ui = require('lu5je0.ext.git.common.ui')
+local statusline = require('lu5je0.ext.git.common.statusline')
 
 local M = {}
 
@@ -76,13 +77,18 @@ function M.update_statusline(state, loading)
   if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
     return
   end
-  local mode = string.format('%s%s', state.diff_mode, state.diff_changes_only and ' changes-only' or '')
   if loading then
-    vim.wo[state.log_win].statusline = string.format(' %%#Function#Project Log%%* [%%#Special#loading%%*] %%#Comment#%s%%*', mode)
-  elseif state.limited then
-    vim.wo[state.log_win].statusline = string.format(' %%#Function#Project Log%%* %%#Number#%d commits%%* %%#WarningMsg#(limited)%%* %%#Comment#%s%%*', #state.commits, mode)
+    vim.wo[state.log_win].statusline = statusline.log_count('Project Log', 0, 'commits', { loading = true })
   else
-    vim.wo[state.log_win].statusline = string.format(' %%#Function#Project Log%%* %%#Number#%d commits%%* %%#Comment#%s%%*', #state.commits, mode)
+    local commit_count = 0
+    for _, commit in ipairs(state.commits) do
+      if not commit.local_change then
+        commit_count = commit_count + 1
+      end
+    end
+    vim.wo[state.log_win].statusline = statusline.log_count('Project Log', commit_count, 'commits', {
+      limited = state.limited,
+    })
   end
 end
 

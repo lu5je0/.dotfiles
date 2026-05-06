@@ -6,7 +6,7 @@
 
 ## 目录结构
 
-- `init.lua`: 模块入口，注册按键映射
+- `init.lua`: 模块入口，注册按键映射与 git 相关用户命令
 - `line-log/`: 行级 git log 子模块
   - `init.lua`: Neovim 入口，负责 session、窗口、buffer、prefetch 调度与 UI 驱动
   - `core.lua`: 纯算法与 git 历史收集核心，负责 revision/path 链、tracker 初始化与 block 推进；测试与运行时共用
@@ -114,4 +114,4 @@
 
 ## 懒加载
 
-通过 `ext-loader.lua` 注册，首次按 `<leader>gl` 或 `<leader>gL` 时加载。
+通过 `ext-loader.lua` 注册，首次按 `<leader>gl` / `<leader>gL` / `<leader>gs`，或执行 `:GitStatusLog` 时加载。

@@ -1,6 +1,7 @@
 local Block = require('lu5je0.ext.git.line-log.block')
 local common_ui = require('lu5je0.ext.git.common.ui')
 local config = require('lu5je0.ext.git.config')
+local statusline = require('lu5je0.ext.git.common.statusline')
 
 local M = {}
 
@@ -91,6 +92,18 @@ local function load_worktree_lines(state, path, callback)
     callback(ok and lines or {})
   end)
   return nil
+end
+
+local function dual_revs(section)
+  if section.section == 'untracked' then
+    return 'empty', 'work'
+  elseif section.section == 'staged' then
+    return 'HEAD', 'index'
+  elseif section.section == 'stash' then
+    return section.stash_ref .. '^', section.stash_ref
+  else
+    return 'index', 'work'
+  end
 end
 
 local function set_single_diff_lines(state, section, file, lines)
@@ -254,9 +267,9 @@ function M.show_dual(state, section, file)
     vim.wo[state.diff_win2].foldlevel = 0
     vim.wo[state.diff_win2].foldenable = state.diff_changes_only
 
-    local dual_label = section.stash_label or section_labels[section.section] or section.section
-    vim.wo[state.diff_win].statusline = string.format('%%#Comment#%s (old) %s%%*', dual_label, file.path)
-    vim.wo[state.diff_win2].statusline = string.format('%%#Number#%s%%* %%#Comment#%s%%*', dual_label, file.path)
+    local old_rev, new_rev = dual_revs(section)
+    vim.wo[state.diff_win].statusline = statusline.dual('OLD', old_rev, file.old_path or file.path)
+    vim.wo[state.diff_win2].statusline = statusline.dual('NEW', new_rev, file.path)
     vim.api.nvim_set_current_win(state.log_win)
   end
 

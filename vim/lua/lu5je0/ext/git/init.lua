@@ -25,6 +25,9 @@ function M.setup(opts)
     line_log.show({ start_line = 1, end_line = vim.api.nvim_buf_line_count(0) })
   end, { desc = 'Git file log' })
   vim.keymap.set('n', '<leader>gs', git_status.show, { desc = 'Git status' })
+  vim.api.nvim_create_user_command('GitStatusLog', function()
+    vim.cmd.edit(vim.fn.fnameescape(vim.fn.stdpath('log') .. '/git-status.log'))
+  end, { force = true })
 end
 
 return M

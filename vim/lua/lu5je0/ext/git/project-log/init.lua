@@ -141,9 +141,13 @@ end
 
 local load_commits
 
+local function clear_messages()
+  pcall(vim.cmd, 'messages clear')
+  vim.api.nvim_echo({ { '' } }, false, {})
+end
+
 local function reload_all()
   kill_jobs()
-  diff.close_windows(state)
   if state.render_timer then
     state.render_timer:stop()
     state.render_timer:close()
@@ -156,7 +160,7 @@ local function reload_all()
   state.commit_limit = nil
   state.limited = false
   ui.set_buffer_lines(state.log_buf, { '-- Loading all commits... --' })
-  vim.cmd('messages clear')
+  clear_messages()
   load_commits()
 end
 
