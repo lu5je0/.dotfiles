@@ -1,6 +1,6 @@
 #!/bin/bash
 INSTALL_PATH=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
-SCRIPT_PATH=${INSTALL_PATH}/../submodule/oo
-SCRIPT_NAME=oo.py
+SCRIPT_PATH=${INSTALL_PATH}/../submodule/iocr
+SCRIPT_NAME=iocr.py
 
 source ${INSTALL_PATH}/../submodule/python-install/runner.sh

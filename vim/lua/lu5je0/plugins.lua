@@ -965,6 +965,7 @@ local plugins = {
     config = function()
       require('lu5je0.ext.snacks').setup()
     end,
+    ft = { 'markdown' },
     event = 'VeryLazy',
   },
   
