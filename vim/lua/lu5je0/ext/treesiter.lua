@@ -28,10 +28,6 @@ M.setup = function()
 
   require("nvim-treesitter").install(M.filetypes)
   require('lu5je0.ext.fold').setup()
-  set_treesitter_highlights()
-  vim.api.nvim_create_autocmd('ColorScheme', {
-    callback = set_treesitter_highlights,
-  })
 
   local function attach(bufnr)
     if not vim.api.nvim_buf_is_valid(bufnr) then
@@ -54,6 +50,8 @@ M.setup = function()
     vim.api.nvim_buf_call(bufnr, function()
       vim.cmd('doautocmd <nomodeline> User TreesitterAttach')
     end)
+    
+    set_treesitter_highlights()
   end
 
   vim.api.nvim_create_autocmd('FileType', {

@@ -145,7 +145,6 @@ end
 local function discard_log(msg)
   local log_line = string.format('%s %s', os.date('%Y-%m-%d %H:%M:%S'), msg)
   vim.fn.writefile({ log_line }, vim.fn.stdpath('log') .. '/git-status.log', 'a')
-  vim.api.nvim_echo({ { msg } }, true, { kind = 'emsg' })
 end
 
 local function git_path_args(...)
@@ -248,7 +247,10 @@ local function push_undo(label, ops)
 end
 
 local function undo_restore_blobs(op)
-  for _, file in ipairs(op.files or {}) do
+  -- batch verification: collect files that need hash checking
+  local verify_paths = {}
+  local verify_indices = {}
+  for i, file in ipairs(op.files or {}) do
     local abs_path = state.repo_root .. '/' .. file.path
     if file.expected_absent then
       if vim.uv.fs_stat(abs_path) then
@@ -260,23 +262,76 @@ local function undo_restore_blobs(op)
         vim.notify('Undo skipped: ' .. abs_path .. ' no longer exists', vim.log.levels.WARN)
         return false
       end
-      local current_blob = hash_file(abs_path, false)
-      if current_blob ~= file.expected_blob then
-        vim.notify('Undo skipped: ' .. abs_path .. ' changed after discard', vim.log.levels.WARN)
-        return false
-      end
+      verify_paths[#verify_paths + 1] = abs_path
+      verify_indices[#verify_indices + 1] = i
     else
       vim.notify('Undo skipped: cannot verify ' .. abs_path, vim.log.levels.WARN)
       return false
     end
   end
+  if #verify_paths > 0 then
+    local result = vim.system({ 'git', 'hash-object', '--stdin-paths' }, { text = true, cwd = state.repo_root, stdin = table.concat(verify_paths, '\n') }):wait()
+    if result.code ~= 0 then
+      vim.notify('Undo failed: cannot hash files', vim.log.levels.ERROR)
+      return false
+    end
+    local idx = 1
+    for line in (result.stdout or ''):gmatch('[^\n]+') do
+      local file = op.files[verify_indices[idx]]
+      if line ~= file.expected_blob then
+        local abs_path = state.repo_root .. '/' .. file.path
+        vim.notify('Undo skipped: ' .. abs_path .. ' changed after discard', vim.log.levels.WARN)
+        return false
+      end
+      idx = idx + 1
+    end
+  end
 
+  -- batch restore: use git cat-file --batch to read all blobs at once
+  local restore_files = {}
   for _, file in ipairs(op.files or {}) do
     local abs_path = state.repo_root .. '/' .. file.path
     if file.delete then
       os.remove(abs_path)
-    elseif not write_blob(file.blob, abs_path) then
+    else
+      restore_files[#restore_files + 1] = { blob = file.blob, abs_path = abs_path }
+    end
+  end
+  if #restore_files > 0 then
+    local stdin = ''
+    for _, rf in ipairs(restore_files) do
+      stdin = stdin .. rf.blob .. '\n'
+    end
+    local result = vim.system({ 'git', 'cat-file', '--batch' }, { cwd = state.repo_root, stdin = stdin }):wait()
+    if result.code ~= 0 then
+      vim.notify('Undo failed: cannot read blobs', vim.log.levels.ERROR)
       return false
+    end
+    -- parse batch output: each entry is "<hash> blob <size>\n<content>\n"
+    local stdout = result.stdout or ''
+    local pos = 1
+    for _, rf in ipairs(restore_files) do
+      local header_end = stdout:find('\n', pos)
+      if not header_end then
+        vim.notify('Failed to restore ' .. rf.abs_path, vim.log.levels.ERROR)
+        return false
+      end
+      local header = stdout:sub(pos, header_end - 1)
+      local size = tonumber(header:match('%d+$'))
+      if not size then
+        vim.notify('Failed to restore ' .. rf.abs_path, vim.log.levels.ERROR)
+        return false
+      end
+      local content = stdout:sub(header_end + 1, header_end + size)
+      pos = header_end + size + 2 -- skip content + trailing newline
+      vim.fn.mkdir(vim.fn.fnamemodify(rf.abs_path, ':h'), 'p')
+      local fd = vim.uv.fs_open(rf.abs_path, 'w', 420)
+      if not fd then
+        vim.notify('Failed to open ' .. rf.abs_path, vim.log.levels.ERROR)
+        return false
+      end
+      vim.uv.fs_write(fd, content, 0)
+      vim.uv.fs_close(fd)
     end
   end
   return true
@@ -350,28 +405,89 @@ local function discard_section()
   end
 
   if section.section == 'untracked' then
-    local restore_files = {}
+    -- batch hash-object -w for all untracked files
+    local abs_paths = {}
     for _, file in ipairs(files) do
-      local abs_path = state.repo_root .. '/' .. file.path
-      local blob = hash_file(abs_path, true)
-      if not blob then
-        return true
-      end
+      abs_paths[#abs_paths + 1] = state.repo_root .. '/' .. file.path
+    end
+    local stdin = table.concat(abs_paths, '\n')
+    local result = vim.system({ 'git', 'hash-object', '-w', '--stdin-paths' }, { text = true, cwd = state.repo_root, stdin = stdin }):wait()
+    if result.code ~= 0 then
+      vim.notify('Failed to hash files: ' .. (result.stderr or ''), vim.log.levels.ERROR)
+      return true
+    end
+    local blobs = {}
+    for line in (result.stdout or ''):gmatch('[^\n]+') do
+      blobs[#blobs + 1] = line
+    end
+    if #blobs ~= #files then
+      vim.notify('Hash mismatch: expected ' .. #files .. ' blobs, got ' .. #blobs, vim.log.levels.ERROR)
+      return true
+    end
+    local restore_files = {}
+    for i, file in ipairs(files) do
+      local abs_path = abs_paths[i]
+      local blob = blobs[i]
       restore_files[#restore_files + 1] = { path = file.path, blob = blob, expected_absent = true }
       os.remove(abs_path)
       discard_log(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
     end
     push_undo('discard section', { { type = 'restore_blobs', files = restore_files } })
   elseif section.section == 'unstaged' then
-    local restore_files = {}
-    for _, file in ipairs(files) do
+    -- batch hash-object -w for all existing files (save blobs for undo)
+    local existing_files = {}
+    local existing_indices = {}
+    for i, file in ipairs(files) do
       local abs_path = state.repo_root .. '/' .. file.path
-      local blob = vim.uv.fs_stat(abs_path) and hash_file(abs_path, true) or nil
-      if not run_git({ 'git', 'checkout', '--', file.path }, 'Failed to restore file: ') then
+      if vim.uv.fs_stat(abs_path) then
+        existing_files[#existing_files + 1] = abs_path
+        existing_indices[#existing_indices + 1] = i
+      end
+    end
+    local pre_blobs = {}
+    if #existing_files > 0 then
+      local stdin = table.concat(existing_files, '\n')
+      local result = vim.system({ 'git', 'hash-object', '-w', '--stdin-paths' }, { text = true, cwd = state.repo_root, stdin = stdin }):wait()
+      if result.code ~= 0 then
+        vim.notify('Failed to hash files: ' .. (result.stderr or ''), vim.log.levels.ERROR)
         return true
       end
-      local expected_blob = hash_file(abs_path, false)
-      if not expected_blob then
+      local idx = 1
+      for line in (result.stdout or ''):gmatch('[^\n]+') do
+        pre_blobs[existing_indices[idx]] = line
+        idx = idx + 1
+      end
+    end
+
+    -- batch git checkout for all files
+    local checkout_args = append_paths(git_path_args('git', 'checkout'), files)
+    if not run_git(checkout_args, 'Failed to restore files: ') then
+      return true
+    end
+
+    -- batch hash-object for post-checkout state (expected blobs)
+    local post_paths = {}
+    for _, file in ipairs(files) do
+      post_paths[#post_paths + 1] = state.repo_root .. '/' .. file.path
+    end
+    local post_result = vim.system({ 'git', 'hash-object', '--stdin-paths' }, { text = true, cwd = state.repo_root, stdin = table.concat(post_paths, '\n') }):wait()
+    if post_result.code ~= 0 then
+      vim.notify('Failed to hash files: ' .. (post_result.stderr or ''), vim.log.levels.ERROR)
+      return true
+    end
+    local expected_blobs = {}
+    local idx = 1
+    for line in (post_result.stdout or ''):gmatch('[^\n]+') do
+      expected_blobs[idx] = line
+      idx = idx + 1
+    end
+
+    local restore_files = {}
+    for i, file in ipairs(files) do
+      local abs_path = state.repo_root .. '/' .. file.path
+      local blob = pre_blobs[i]
+      local expected_blob = expected_blobs[i]
+      if not expected_blob or expected_blob == '' then
         return true
       end
       if blob then
@@ -397,6 +513,7 @@ local function discard_section()
     return false
   end
 
+  vim.notify(string.format('Discarded %d %s files', #files, section.section), vim.log.levels.INFO)
   reload_status()
   return true
 end
@@ -429,6 +546,7 @@ local function discard_change()
     local notify_msg = string.format('Dropped %s. Restore: %s', commit.stash_ref, restore_cmd)
     discard_log(notify_msg)
     push_undo('drop stash', { { type = 'store_stash', sha = sha, message = stash_msg } })
+    vim.notify('Dropped ' .. commit.stash_ref, vim.log.levels.INFO)
     reload_status()
     return
   end
@@ -481,6 +599,7 @@ local function discard_change()
     push_undo('discard file', { { type = 'add_paths', paths = { file.path } } })
   end
 
+  vim.notify('Discarded ' .. file.path, vim.log.levels.INFO)
   reload_status()
 end
 
