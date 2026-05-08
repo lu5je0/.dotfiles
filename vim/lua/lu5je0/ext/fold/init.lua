@@ -186,7 +186,7 @@ function M.apply_treesitter_fold(bufnr, win_id)
   end, 100)
 end
 
-local function setup_fold_text_cache()
+local function setup_fold_text_cache(group)
   local foldtext_cache = {}
 
   local cached_fold_text = function()
@@ -215,7 +215,8 @@ local function setup_fold_text_cache()
     return text
   end
 
-  vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout', 'TextChanged', 'TextChangedI' }, {
+  vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout', 'BufWinLeave', 'TextChanged', 'TextChangedI' }, {
+    group = group,
     callback = require('lu5je0.lang.function-utils').throttle(function(args)
       local buf_id = args.buf
       for win_id, win_data in pairs(foldtext_cache) do
@@ -230,6 +231,7 @@ local function setup_fold_text_cache()
   })
 
   vim.api.nvim_create_autocmd('WinClosed', {
+    group = group,
     callback = function(args)
       local win_id = tonumber(args.match)
       if win_id then
@@ -239,6 +241,7 @@ local function setup_fold_text_cache()
   })
 
   vim.api.nvim_create_autocmd('WinScrolled', {
+    group = group,
     callback = function(args)
       local win_id = tonumber(args.match)
       if win_id then
@@ -251,23 +254,27 @@ local function setup_fold_text_cache()
 end
 
 function M.setup()
+  local group = vim.api.nvim_create_augroup('Lu5je0Fold', { clear = true })
+
   _G.__custom_foldtext = function()
     return M.custom_foldtext(vim.v.foldstart, vim.v.foldend)
   end
 
   set_foldtext_highlights()
   vim.api.nvim_create_autocmd('ColorScheme', {
+    group = group,
     callback = set_foldtext_highlights,
   })
 
   vim.api.nvim_create_autocmd('User', {
+    group = group,
     pattern = 'TreesitterAttach',
     callback = function(args)
       M.apply_treesitter_fold(args.buf, vim.api.nvim_get_current_win())
     end,
   })
 
-  setup_fold_text_cache()
+  setup_fold_text_cache(group)
 end
 
 return M
