@@ -1,13 +1,15 @@
 [project]
 name = "iocr"
 version = "0.1.0"
-description = "Read image from clipboard, OCR via macOS Vision, and open result in nvim."
+description = "OCR tool for macOS and WSL: read image from clipboard/file/stdin, recognize text, and open result in nvim."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "pyobjc-framework-vision",
-    "pyobjc-framework-quartz",
+    "pillow",
 ]
+
+[project.optional-dependencies]
+macos = ["pyobjc-framework-vision", "pyobjc-framework-quartz"]
 
 [build-system]
 requires = ["hatchling"]

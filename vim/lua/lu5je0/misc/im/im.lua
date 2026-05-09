@@ -91,6 +91,10 @@ local function config_keeper()
 end
 
 function M.setup()
+  if #vim.api.nvim_list_uis() == 0 then
+    return
+  end
+
   if vim.fn.has('wsl') == 1 then
     state.ime_control = require('lu5je0.misc.im.win.ime-control').setup()
   elseif vim.fn.has('mac') == 1 then
