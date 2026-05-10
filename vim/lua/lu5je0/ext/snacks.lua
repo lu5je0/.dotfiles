@@ -87,7 +87,194 @@ local function remember_last_search()
   })
 end
 
+local function patch_snacks_image()
+  if vim.fn.has('wsl') ~= 1 or vim.env.TERM_PROGRAM ~= 'WezTerm' then
+    return
+  end
+  
+  local function setup_wsl_wezterm_image()
+    -- Windows WezTerm cannot read Linux paths like /tmp/iocr/source.png when
+    -- snacks sends images by filename. Mark it remote so snacks streams bytes.
+    vim.env.SNACKS_WEZTERM = vim.env.SNACKS_WEZTERM or 'true'
+    vim.env.SNACKS_SSH = vim.env.SNACKS_SSH or 'true'
+  end
+
+  local function wezterm_exe()
+    local exe = vim.fn.exepath('wezterm.exe')
+    if exe ~= '' then
+      return exe
+    end
+    if vim.env.WIN_HOME then
+      local shim = vim.env.WIN_HOME .. '/scoop/shims/wezterm.exe'
+      if vim.fn.executable(shim) == 1 then
+        return shim
+      end
+    end
+  end
+
+  local wezterm_pane_size_cache = nil
+
+  local function wezterm_pane_size(columns, rows)
+    if wezterm_pane_size_cache
+        and wezterm_pane_size_cache.request_columns == columns
+        and wezterm_pane_size_cache.request_rows == rows then
+      return wezterm_pane_size_cache
+    end
+
+    local exe = wezterm_exe()
+    if not exe then
+      return
+    end
+
+    local ok, result = pcall(function()
+      if vim.system then
+        return vim.system({ exe, 'cli', 'list', '--format', 'json' }, { text = true }):wait(1000)
+      end
+      local stdout = vim.fn.system({ exe, 'cli', 'list', '--format', 'json' })
+      return { code = vim.v.shell_error, stdout = stdout }
+    end)
+    if not ok or result.code ~= 0 then
+      return
+    end
+
+    local decoded_ok, panes = pcall(vim.json.decode, result.stdout)
+    if not decoded_ok or type(panes) ~= 'table' then
+      return
+    end
+
+    local best = nil
+    local best_score = -1
+    for _, pane in ipairs(panes) do
+      local size = type(pane) == 'table' and pane.size or nil
+      local pixel_width = size and tonumber(size.pixel_width)
+      local pixel_height = size and tonumber(size.pixel_height)
+      local pane_columns = size and tonumber(size.cols)
+      local pane_rows = size and tonumber(size.rows)
+      if pixel_width and pixel_height and pane_columns and pane_rows
+          and pixel_width > 0 and pixel_height > 0 and pane_columns > 0 and pane_rows > 0 then
+        local score = 0
+        if pane_columns == columns then
+          score = score + 2
+        end
+        if pane_rows == rows then
+          score = score + 2
+        end
+        if pane.is_active then
+          score = score + 1
+        end
+        if score > best_score then
+          best = {
+            request_columns = columns,
+            request_rows = rows,
+            columns = pane_columns,
+            rows = pane_rows,
+            width = pixel_width,
+            height = pixel_height,
+          }
+          best_score = score
+        end
+      end
+    end
+
+    wezterm_pane_size_cache = best
+    return best
+  end
+
+  local function patch_wsl_wezterm_image_size()
+    if vim.fn.has('wsl') ~= 1 or vim.env.TERM_PROGRAM ~= 'WezTerm' then
+      return
+    end
+
+    local terminal = require('snacks.image.terminal')
+    if terminal._lu5je0_wsl_wezterm_size_patch then
+      return
+    end
+    terminal._lu5je0_wsl_wezterm_size_patch = true
+
+    local size = terminal.size
+    terminal.size = function()
+      local ret = vim.deepcopy(size())
+      if ret.cell_width > 0 and ret.cell_height > 0 and ret.width > 0 and ret.height > 0 then
+        return ret
+      end
+
+      ret.columns = ret.columns > 0 and ret.columns or vim.o.columns
+      ret.rows = ret.rows > 0 and ret.rows or vim.o.lines
+      local pane_size = wezterm_pane_size(ret.columns, ret.rows)
+      if pane_size then
+        ret.columns = pane_size.columns
+        ret.rows = pane_size.rows
+        ret.width = pane_size.width
+        ret.height = pane_size.height
+        ret.cell_width = pane_size.width / pane_size.columns
+        ret.cell_height = pane_size.height / pane_size.rows
+        ret.scale = math.max(1, ret.cell_width / 8)
+        return ret
+      end
+
+      local pixel_width = tonumber(vim.env.SNACKS_WEZTERM_PIXEL_WIDTH)
+      local pixel_height = tonumber(vim.env.SNACKS_WEZTERM_PIXEL_HEIGHT)
+      if pixel_width and pixel_height and pixel_width > 0 and pixel_height > 0 then
+        ret.width = pixel_width
+        ret.height = pixel_height
+        ret.cell_width = pixel_width / ret.columns
+        ret.cell_height = pixel_height / ret.rows
+        ret.scale = math.max(1, ret.cell_width / 8)
+        return ret
+      end
+
+      ret.cell_width = tonumber(vim.env.SNACKS_WEZTERM_CELL_WIDTH) or 9
+      ret.cell_height = tonumber(vim.env.SNACKS_WEZTERM_CELL_HEIGHT) or 15
+      ret.width = ret.columns * ret.cell_width
+      ret.height = ret.rows * ret.cell_height
+      ret.scale = math.max(1, ret.cell_width / 8)
+      return ret
+    end
+  end
+
+  local function patch_image_convert_cache()
+    if vim.fn.has('wsl') ~= 1 or vim.env.TERM_PROGRAM ~= 'WezTerm' then
+      return
+    end
+
+    local convert_mod = require('snacks.image.convert')
+    if convert_mod._lu5je0_cache_patch then
+      return
+    end
+    convert_mod._lu5je0_cache_patch = true
+
+    local orig_convert = convert_mod.convert
+    convert_mod.convert = function(opts)
+      local instance = orig_convert(opts)
+      if instance and instance.steps and instance.src then
+        local uv = vim.uv or vim.loop
+        local src_stat = uv.fs_stat(instance.src)
+        if src_stat then
+          for _, step in ipairs(instance.steps) do
+            if step.done and step.file then
+              local cache_stat = uv.fs_stat(step.file)
+              if cache_stat and src_stat.mtime.sec > cache_stat.mtime.sec then
+                os.remove(step.file)
+                step.done = false
+              end
+            end
+          end
+        end
+      end
+      return instance
+    end
+  end
+
+  setup_wsl_wezterm_image()
+  return function()
+    patch_wsl_wezterm_image_size()
+    patch_image_convert_cache()
+  end
+end
+
 M.setup = function()
+  local post_setup_patches = patch_snacks_image()
+
   require('snacks').setup({
     image = {
       -- your image configuration comes here
@@ -129,17 +316,17 @@ M.setup = function()
       }
     }
   })
+  if post_setup_patches then post_setup_patches() end
 
-  local wrapper_fn_for_visual = function(fun)
-    return function()
-      local search = require('lu5je0.core.visual').get_visual_selection_as_string()
-      fun()
-      vim.schedule(function()
-        require('lu5je0.core.keys').feedkey(search)
-      end)
-    end
-  end
-
+  -- local wrapper_fn_for_visual = function(fun)
+  --   return function()
+  --     local search = require('lu5je0.core.visual').get_visual_selection_as_string()
+  --     fun()
+  --     vim.schedule(function()
+  --       require('lu5je0.core.keys').feedkey(search)
+  --     end)
+  --   end
+  -- end
   -- vim.keymap.set('n', '<leader>ps', function() Snacks.profiler.toggle() end)
   -- vim.keymap.set('n', '<leader>ff', function() Snacks.picker.pick("files", {}) end)
   -- vim.keymap.set('n', '<leader>fj', function() Snacks.picker.pick("files", { dirs = { '~/junk-file/' } }) end)
