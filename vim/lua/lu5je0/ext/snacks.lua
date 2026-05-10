@@ -87,17 +87,16 @@ local function remember_last_search()
   })
 end
 
-local function patch_snacks_image()
+-- WSL+WezTerm: force remote data transfer mode and fix terminal pixel size.
+-- WezTerm on Windows cannot read Linux paths (snacks uses t=f by default),
+-- and WSL pty ioctl often returns xpixel/ypixel=0, causing broken image scaling.
+local function patch_snacks_wsl_wezterm_image()
   if vim.fn.has('wsl') ~= 1 or vim.env.TERM_PROGRAM ~= 'WezTerm' then
     return
   end
-  
-  local function setup_wsl_wezterm_image()
-    -- Windows WezTerm cannot read Linux paths like /tmp/iocr/source.png when
-    -- snacks sends images by filename. Mark it remote so snacks streams bytes.
-    vim.env.SNACKS_WEZTERM = vim.env.SNACKS_WEZTERM or 'true'
-    vim.env.SNACKS_SSH = vim.env.SNACKS_SSH or 'true'
-  end
+
+  vim.env.SNACKS_WEZTERM = vim.env.SNACKS_WEZTERM or 'true'
+  vim.env.SNACKS_SSH = vim.env.SNACKS_SSH or 'true'
 
   local function wezterm_exe()
     local exe = vim.fn.exepath('wezterm.exe')
@@ -180,20 +179,16 @@ local function patch_snacks_image()
     return best
   end
 
-  local function patch_wsl_wezterm_image_size()
-    if vim.fn.has('wsl') ~= 1 or vim.env.TERM_PROGRAM ~= 'WezTerm' then
-      return
-    end
-
+  return function()
     local terminal = require('snacks.image.terminal')
     if terminal._lu5je0_wsl_wezterm_size_patch then
       return
     end
     terminal._lu5je0_wsl_wezterm_size_patch = true
 
-    local size = terminal.size
+    local orig_size = terminal.size
     terminal.size = function()
-      local ret = vim.deepcopy(size())
+      local ret = vim.deepcopy(orig_size())
       if ret.cell_width > 0 and ret.cell_height > 0 and ret.width > 0 and ret.height > 0 then
         return ret
       end
@@ -231,49 +226,46 @@ local function patch_snacks_image()
       return ret
     end
   end
+end
 
-  local function patch_image_convert_cache()
-    if vim.fn.has('wsl') ~= 1 or vim.env.TERM_PROGRAM ~= 'WezTerm' then
-      return
-    end
+-- WezTerm: invalidate snacks image convert cache when source file is newer.
+-- snacks caches identify results by file path sha256 but never checks mtime,
+-- so replacing a file (e.g. /tmp/iocr/source.png) causes stale dimensions.
+local function patch_snacks_image_convert_cache()
+  if vim.env.TERM_PROGRAM ~= 'WezTerm' then
+    return
+  end
 
-    local convert_mod = require('snacks.image.convert')
-    if convert_mod._lu5je0_cache_patch then
-      return
-    end
-    convert_mod._lu5je0_cache_patch = true
+  local convert_mod = require('snacks.image.convert')
+  if convert_mod._lu5je0_cache_patch then
+    return
+  end
+  convert_mod._lu5je0_cache_patch = true
 
-    local orig_convert = convert_mod.convert
-    convert_mod.convert = function(opts)
-      local instance = orig_convert(opts)
-      if instance and instance.steps and instance.src then
-        local uv = vim.uv or vim.loop
-        local src_stat = uv.fs_stat(instance.src)
-        if src_stat then
-          for _, step in ipairs(instance.steps) do
-            if step.done and step.file then
-              local cache_stat = uv.fs_stat(step.file)
-              if cache_stat and src_stat.mtime.sec > cache_stat.mtime.sec then
-                os.remove(step.file)
-                step.done = false
-              end
+  local orig_convert = convert_mod.convert
+  convert_mod.convert = function(opts)
+    local instance = orig_convert(opts)
+    if instance and instance.steps and instance.src then
+      local uv = vim.uv or vim.loop
+      local src_stat = uv.fs_stat(instance.src)
+      if src_stat then
+        for _, step in ipairs(instance.steps) do
+          if step.done and step.file then
+            local cache_stat = uv.fs_stat(step.file)
+            if cache_stat and src_stat.mtime.sec > cache_stat.mtime.sec then
+              os.remove(step.file)
+              step.done = false
             end
           end
         end
       end
-      return instance
     end
-  end
-
-  setup_wsl_wezterm_image()
-  return function()
-    patch_wsl_wezterm_image_size()
-    patch_image_convert_cache()
+    return instance
   end
 end
 
 M.setup = function()
-  local post_setup_patches = patch_snacks_image()
+  local post_setup_wsl_wezterm = patch_snacks_wsl_wezterm_image()
 
   require('snacks').setup({
     image = {
@@ -316,7 +308,8 @@ M.setup = function()
       }
     }
   })
-  if post_setup_patches then post_setup_patches() end
+  if post_setup_wsl_wezterm then post_setup_wsl_wezterm() end
+  patch_snacks_image_convert_cache()
 
   -- local wrapper_fn_for_visual = function(fun)
   --   return function()
