@@ -1,71 +1,18 @@
-import io
 import os
 import subprocess
 import tempfile
 
-from _platform import find_powershell, is_wsl, to_win_path
-
-
-class WslImageBackend:
-    def __init__(self):
-        from PIL import Image
-
-        self.Image = Image
-
-    def get_clipboard_image(self) -> bytes | None:
-        if not is_wsl():
-            return None
-
-        tmp_path = os.path.join(tempfile.gettempdir(), "iocr_clipboard.png")
-        try:
-            win_tmp = subprocess.run(
-                ["wslpath", "-w", tmp_path], capture_output=True, text=True
-            ).stdout.strip()
-        except Exception:
-            win_tmp = tmp_path
-
-        ps_cmd = (
-            f'Add-Type -Assembly System.Windows.Forms; '
-            f'$img = [System.Windows.Forms.Clipboard]::GetImage(); '
-            f"if ($img) {{ $img.Save('{win_tmp}'); Write-Host 'OK' }} "
-            f"else {{ Write-Host 'NO_IMAGE' }}"
-        )
-
-        ps_exe = find_powershell()
-        if not ps_exe:
-            return None
-
-        try:
-            result = subprocess.run([ps_exe, "-Command", ps_cmd], capture_output=True, text=True)
-            if "OK" not in result.stdout:
-                return None
-            with open(tmp_path, "rb") as f:
-                data = f.read()
-            return self._to_png_bytes(data)
-        except Exception:
-            return None
-        finally:
-            try:
-                os.remove(tmp_path)
-            except Exception:
-                pass
-
-    def image_from_bytes(self, data: bytes) -> bytes | None:
-        return self._to_png_bytes(data)
-
-    def _to_png_bytes(self, data: bytes) -> bytes | None:
-        try:
-            img = self.Image.open(io.BytesIO(data))
-            img.load()
-            out = io.BytesIO()
-            img.save(out, format="PNG")
-            return out.getvalue()
-        except Exception:
-            return None
+from iocr_core.errors import OcrUnavailableError
+from iocr_core.platform import find_powershell, is_wsl, to_win_path
 
 
 class WindowsOcrBackend:
+    name = "native"
+
     def ocr(self, png_bytes: bytes) -> str:
+        if not is_wsl():
+            raise OcrUnavailableError("Windows OCR is only available under WSL.")
+
         tmp_path = os.path.join(tempfile.gettempdir(), "iocr_ocr_input.png")
         with open(tmp_path, "wb") as f:
             f.write(png_bytes)
@@ -145,12 +92,13 @@ if ($allText.Count -gt 0) {
 '''.replace('__IMG_PATH__', win_path)
         ps_exe = find_powershell()
         if not ps_exe:
-            raise RuntimeError("PowerShell not found")
+            raise OcrUnavailableError("PowerShell not found")
 
         try:
             result = subprocess.run(
                 [ps_exe, "-Command", ps_script],
-                capture_output=True, timeout=30,
+                capture_output=True,
+                timeout=30,
             )
             if result.returncode != 0:
                 stderr = result.stderr.decode("utf-8", errors="replace")

@@ -1,9 +1,0 @@
-#compdef iocr
-
-_iocr() {
-  _arguments -s \
-    '(-h --help)'{-h,--help}'[show help]' \
-    '::file:_files -g "*.{png,jpg,jpeg,gif,bmp,tiff,webp}"'
-}
-
-_iocr "$@"

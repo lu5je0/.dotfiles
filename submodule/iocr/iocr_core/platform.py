@@ -13,6 +13,10 @@ def is_wsl() -> bool:
         return False
 
 
+def is_macos() -> bool:
+    return sys.platform == "darwin"
+
+
 def find_powershell() -> str | None:
     for name in ["powershell.exe", "powershell"]:
         try:
@@ -34,7 +38,8 @@ def to_win_path(linux_path: str) -> str:
     try:
         result = subprocess.run(
             ["wslpath", "-w", linux_path],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         if result.returncode == 0:
             return result.stdout.strip()
