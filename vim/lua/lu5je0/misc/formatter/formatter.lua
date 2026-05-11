@@ -78,7 +78,7 @@ local function lsp_format(format_type)
       return true
     end
   elseif format_type == M.FORMAT_TYPE.RANGE_FORMAT then
-    if server_capabilities.format then
+    if server_capabilities.range_format then
       vim.lsp.buf.format { async = true }
       return true
     end

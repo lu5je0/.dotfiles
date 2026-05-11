@@ -30,16 +30,14 @@ local function process_json_keys()
   if not vim.b.__jq_result or vim.bo.modified then
     local json_string = table.concat(vim.api.nvim_buf_get_text(0, 0, 0, -1, -1, {}), '\n')
     
-    local jq = io.popen(string.format([[echo '%s' |
-    jq '.. |
+    local jq_filter = [[.. |
     if type == "object" then
       to_entries[] | [.key, if .value | type == "array" then "[]" else "" end] | join("")
     else
       empty
-    end'  2>/dev/null |
-    sort --uniq ]], json_string))
-    jq_result = jq:read('*a')
-    jq:close()
+    end]]
+    local result = vim.system({ 'sh', '-c', 'jq \'' .. jq_filter .. '\' 2>/dev/null | sort --uniq' }, { stdin = json_string }):wait()
+    jq_result = result.stdout or ''
     
     vim.b.__jq_result = jq_result
   else

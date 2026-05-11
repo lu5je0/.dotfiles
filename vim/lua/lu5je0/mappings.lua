@@ -132,9 +132,6 @@ vim.schedule(function()
   
   set_map('v', '<leader>xx', ":%!", { nowait = true, silent = false, desc = ':%!' })
 
-  -- lsp
-  set_map({ 'n', 'i' }, { '<m-cr>', '<d-cr>' }, '<leader>cc')
-
   -- ctrl-c 复制
   set_x_map('<C-c>', 'y')
   

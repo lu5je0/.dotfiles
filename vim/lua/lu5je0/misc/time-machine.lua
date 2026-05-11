@@ -118,7 +118,7 @@ local function save_buffer(buf_nr)
   
   local spent_mills = now() - timestamp
   if spent_mills > 100 then
-    print('time-machine save buffer spent more than 300 mills')
+    print('time-machine save buffer spent more than 100 mills')
   end
 end
 

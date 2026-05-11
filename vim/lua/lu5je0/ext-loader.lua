@@ -18,7 +18,10 @@ M.lazy_load = function(opts)
       for _, mode in ipairs(key.mode) do
         local lhs = key[1]
         vim.keymap.set(mode, lhs, function()
-          vim.keymap.del(mode, lhs)
+          -- Delete proxy keymaps for all modes of this key
+          for _, m in ipairs(key.mode) do
+            pcall(vim.keymap.del, m, lhs)
+          end
           load_ext(opts)
           vim.defer_fn(function()
             require('lu5je0.core.keys').feedkey(lhs)

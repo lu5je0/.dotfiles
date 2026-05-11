@@ -16,7 +16,7 @@ def open_in_editor(png_bytes: bytes, text: str, editor: str = "nvim") -> None:
     with open(img_path, "wb") as f:
         f.write(png_bytes)
 
-    content = f"![ocr]({img_path})\n\n---\n\n{text}\n"
+    content = f"![ocr]({img_path})\n\n---\n\n```\n{text}\n```\n"
     with open(md_path, "w") as f:
         f.write(content)
 
