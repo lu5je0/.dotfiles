@@ -443,10 +443,6 @@ local plugins = {
     cmd = 'Oil'
   },
 
-  {
-    'MunifTanjim/nui.nvim',
-    lazy = true
-  },
 
   -- c070ee849bfedb2ed778f60419a1eae8c8544be8
   -- {
@@ -783,22 +779,7 @@ local plugins = {
     'stevearc/profile.nvim',
     -- https://ui.perfetto.dev/
     config = function()
-      local function toggle_profile()
-        local prof = require("profile")
-        if prof.is_recording() then
-          prof.stop()
-          vim.ui.input({ prompt = "Save profile to:", completion = "file", default = "profile.json" }, function(filename)
-            if filename then
-              prof.export(filename)
-              vim.notify(string.format("Wrote %s", filename))
-            end
-          end)
-        else
-          print('profile started')
-          prof.start("*")
-        end
-      end
-      vim.keymap.set("", "<leader>pp", toggle_profile)
+      require('lu5je0.ext.profile')
     end,
     keys = { { mode = { 'n' }, '<leader>pp' } }
   },

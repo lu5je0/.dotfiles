@@ -14,130 +14,112 @@ local function keymap(mode, lhs, rhs, opts)
   end
 end
 
-local function create_popup(msg, bufinfo_list)
-  local Popup = require('nui.popup')
-  local event = require('nui.utils.autocmd').event
+local function get_extension(filename)
+  return filename:match('.+%.(%w+)$')
+end
 
+local function text_align_center(text, width)
+  return string.rep(' ', math.floor((width - #text) / 2)) .. text
+end
+
+local function build_unsaved_info()
+  local filenames = {}
+  for _, buf in ipairs(vim.fn.getbufinfo({ bufloaded = 1, buflisted = 1 })) do
+    if buf.changed == 1 then
+      local name = vim.fn.fnamemodify(buf.name, ':t')
+      table.insert(filenames, name ~= '' and name or '[Untitled]')
+    end
+  end
+  return filenames
+end
+
+local function create_popup(title, filenames, choice)
+  local file_lines = {}
+  local icon_highlights = {}
   local width = 55
-  local popup_options = {
-    enter = true,
-    border = {
-      style = 'single',
-      text = {
-        -- top = 'Exiting',
-        -- top_align = 'center',
-      },
-    },
-    win_options = {
-      winhighlight = "Normal:Normal,FloatBorder:Normal",
-    },
-    position = {
-      row = '45%',
-      col = '48%',
-    },
+  for _, filename in ipairs(filenames) do
+    local icon, hl = devicons.get_icon(filename, get_extension(filename), {})
+    local line = ' ' .. (icon or '') .. ' ' .. filename
+    table.insert(file_lines, line)
+    table.insert(icon_highlights, hl or 'Normal')
+  end
+
+  local height = 2 + #filenames
+
+  cursor_utils.cursor_visible(false)
+  vim.cmd('redraw')
+
+  local buf = vim.api.nvim_create_buf(false, true)
+
+  local row = math.floor((vim.o.lines - height) / 2) - 3
+  local col = math.floor((vim.o.columns - width) / 2)
+  local win = vim.api.nvim_open_win(buf, true, {
     relative = 'editor',
-    size = {
-      width = width,
-      height = 2 + #msg.text,
-    },
-    opacity = 1,
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = 'minimal',
+    border = 'single',
     zindex = 100,
-  }
+  })
+  vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal,FloatBorder:Normal', { win = win })
+  vim.fn.win_execute(win, 'set ft=confirm')
 
-  local popup = Popup(popup_options)
+  -- content
+  local lines = { text_align_center(title, width) }
+  for _, line in ipairs(file_lines) do
+    table.insert(lines, line)
+  end
+  table.insert(lines, text_align_center(choice, width))
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
-  local opts = { noremap = true, nowait = true, buffer = popup.bufnr }
-  vim.keymap.set('n', '<esc>', function()
-    popup:unmount()
-  end, opts)
+  -- highlights
+  local ns = vim.api.nvim_create_namespace('quit_prompt')
+  vim.hl.range(buf, ns, #filenames == 0 and 'Green' or 'Red', { 0, 0 }, { 0, -1 })
+  for i, hl in ipairs(icon_highlights) do
+    vim.hl.range(buf, ns, hl, { i, 1 }, { i, 5 })
+  end
 
+  vim.api.nvim_set_option_value('modifiable', false, { buf = buf })
+
+  -- close logic
+  local function close()
+    cursor_utils.cursor_visible(true)
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+  end
+
+  local opts = { noremap = true, nowait = true, buffer = buf }
+  keymap('n', { '<esc>', 'q', '<c-c>', '<cr>', 'n' }, close, opts)
   keymap('n', { 'i', 'o', 'v', 'V', '<leader>Q' }, '<nop>', opts)
-
-  keymap('n', { 'q', '<c-c>', '<cr>', 'n' }, function()
-    popup:unmount()
-  end, opts)
-
   keymap('n', { 'Y', 'y' }, function()
-    popup:unmount()
+    close()
     vim.cmd('qa!')
   end, opts)
-
   keymap('n', 's', function()
-    popup:unmount()
+    close()
     vim.cmd('wqa!')
   end, opts)
 
-  vim.fn.win_execute(popup.winid, 'set ft=confirm')
-
-  local function text_align_center(text)
-    text = string.rep(' ', math.floor((width - #text) / 2)) .. text
-    return text
-  end
-
-  local function get_extension(filename)
-    return filename:match(".+%.(%w+)$")
-  end
-
-  vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, { text_align_center(msg.title) })
-
-  local title_group
-  if #msg.text == 0 then
-    title_group = 'Green'
-  else
-    title_group = 'Red'
-  end
-
-  vim.api.nvim_buf_add_highlight(popup.bufnr, -1, title_group, 0, 0, -1)
-  for i, filename in ipairs(msg.text) do
-    local icon, hi_group = devicons.get_icon(filename, get_extension(filename), {})
-    icon = icon or ''
-    hi_group = hi_group or 'Normal'
-    vim.api.nvim_buf_set_lines(popup.bufnr, i, i + 1, false, { ' ' .. icon .. ' ' .. filename })
-    vim.api.nvim_buf_add_highlight(popup.bufnr, -1, hi_group, i, 1, 5)
-  end
-  vim.api.nvim_buf_set_lines(popup.bufnr, #msg.text + 1, #msg.text + 2, false, { text_align_center(msg.choice) })
-
-  vim.api.nvim_buf_set_option(popup.bufnr, 'modifiable', false)
-  vim.api.nvim_buf_set_option(popup.bufnr, 'readonly', true)
-
-  -- unmount component when cursor leaves buffer
-  popup:on(event.BufLeave, function()
-    cursor_utils.cursor_visible(true)
-    popup:unmount()
-  end)
-
-  cursor_utils.cursor_visible(false)
-  popup:mount()
+  vim.api.nvim_create_autocmd('BufLeave', {
+    buffer = buf,
+    once = true,
+    callback = close,
+  })
 end
 
-local function exit_vim_with_dialog()
-  local unsave_bufinfo_list = {}
-
-  for _, buffer in ipairs(vim.fn.getbufinfo { bufloaded = 1, buflisted = 1 }) do
-    if buffer.changed == 1 then
-      table.insert(unsave_bufinfo_list, buffer)
-    end
-  end
-
-  local content = { title = '', choice = '', text = {} }
-  if #unsave_bufinfo_list ~= 0 then
-    content.title = 'The change of the following buffers will be discarded.'
-
-    for _, buffer in ipairs(unsave_bufinfo_list) do
-      local filename = vim.fn.fnamemodify(buffer.name, ':t')
-      if filename == '' then
-        filename = '[Untitled] '
-      end
-      table.insert(content.text, filename)
-    end
-
-    content.choice = '[N]o, (Y)es, (S)ave ALl'
+function M.exit_vim_with_dialog()
+  local filenames = build_unsaved_info()
+  if #filenames > 0 then
+    create_popup('The change of the following buffers will be discarded.', filenames, '[N]o, (Y)es, (S)ave ALl')
   else
-    content.title = 'Exit vim?'
-    content.choice = '[N]o, (Y)es'
+    create_popup('Exit vim?', {}, '[N]o, (Y)es')
   end
-
-  create_popup(content, unsave_bufinfo_list)
 end
 
 function M.close_buffer()
@@ -151,36 +133,30 @@ function M.close_buffer()
     end
   end
 
-  -- 如果在非text window下，直接quit
   if txt_window_cnt ~= 0 and not vim.tbl_contains(valid_buffers, cur_buf_nr) then
-    vim.cmd("q")
+    vim.cmd('q')
     return
   end
 
-  -- 如果编辑过buffer，则需要确认
   if vim.bo.modified and txt_window_cnt == 1 then
-    local confirm_result = vim.fn.confirm("Close without saving?", "&No\n&Yes")
+    local confirm_result = vim.fn.confirm('Close without saving?', '&No\n&Yes')
     if confirm_result ~= 2 then
       return
     end
   end
 
-  -- 一个tab页中有两个以上的buffer时，直接quit
   if txt_window_cnt > 1 then
-    vim.cmd("q")
+    vim.cmd('q')
     keys.feedkey('<c-w>p')
   else
-    vim.cmd("bp")
-    vim.cmd("silent! bd! " .. cur_buf_nr)
+    vim.cmd('bp')
+    vim.cmd('silent! bd! ' .. cur_buf_nr)
   end
 end
 
-M.exit = exit_vim_with_dialog
-
-function M.setup ()
-  local opts = { silent = true }
-  vim.keymap.set('n', '<leader>q', M.close_buffer, opts)
-  vim.keymap.set('n', '<leader>Q', M.exit, opts)
+function M.setup()
+  vim.keymap.set('n', '<leader>q', M.close_buffer, { silent = true })
+  vim.keymap.set('n', '<leader>Q', M.exit_vim_with_dialog, { silent = true })
 end
 
 return M
