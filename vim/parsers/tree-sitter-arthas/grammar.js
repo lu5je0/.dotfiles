@@ -22,8 +22,8 @@ module.exports = grammar({
       $.string,
       $.ognl_expr,
       $.wildcard,
-      $.identifier,
-      $.number
+      $.number,
+      $.identifier
     ),
 
     command: _ => choice(
@@ -45,7 +45,7 @@ module.exports = grammar({
 
     method_name: _ => token(/[a-z][a-zA-Z0-9_]*/),
 
-    identifier: _ => token(/[A-Za-z_.$][A-Za-z0-9_.$-]*/),
+    identifier: _ => token(/[0-9]*[A-Za-z_.$][A-Za-z0-9_.$-]*/),
 
     number: _ => token(/[0-9]+/),
 

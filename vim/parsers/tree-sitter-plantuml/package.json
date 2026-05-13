@@ -1,0 +1,6 @@
+{
+  "name": "tree-sitter-plantuml",
+  "version": "0.0.1",
+  "main": "grammar.js",
+  "license": "MIT"
+}

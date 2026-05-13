@@ -1,0 +1,19 @@
+{
+  "grammars": [
+    {
+      "name": "plantuml",
+      "scope": "source.plantuml",
+      "path": ".",
+      "file-types": [
+        "plantuml",
+        "puml",
+        "pu",
+        "iuml"
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "0.0.1",
+    "license": "MIT"
+  }
+}

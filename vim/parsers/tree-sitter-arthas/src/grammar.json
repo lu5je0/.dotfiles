@@ -138,11 +138,11 @@
         },
         {
           "type": "SYMBOL",
-          "name": "identifier"
+          "name": "number"
         },
         {
           "type": "SYMBOL",
-          "name": "number"
+          "name": "identifier"
         }
       ]
     },
@@ -301,7 +301,7 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "[A-Za-z_.$][A-Za-z0-9_.$-]*"
+        "value": "[0-9]*[A-Za-z_.$][A-Za-z0-9_.$-]*"
       }
     },
     "number": {

@@ -1,0 +1,16 @@
+{
+  "grammars": [
+    {
+      "name": "arthas",
+      "scope": "source.arthas",
+      "path": ".",
+      "file-types": [
+        "arthas"
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "0.0.1",
+    "license": "MIT"
+  }
+}

@@ -4,7 +4,7 @@ M.filetypes = {
   'json', 'python', 'java', 'bash', 'go', 'vim', 'lua', 'cpp', 'c',
   'rust', 'toml', 'yaml', 'markdown', 'http', 'typescript',
   'javascript', 'sql', 'html', 'json5', 'regex', 'vue',
-  'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy', 'arthas'
+  'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy', 'arthas', 'plantuml'
 }
 
 local function set_treesitter_highlights()
@@ -19,6 +19,12 @@ M.setup_custom_parsers = function()
         path = vim.fn.stdpath('config') .. '/parsers/tree-sitter-arthas',
       },
       filetype = 'arthas',
+    }
+    require('nvim-treesitter.parsers').plantuml = {
+      install_info = {
+        path = vim.fn.stdpath('config') .. '/parsers/tree-sitter-plantuml',
+      },
+      filetype = 'plantuml',
     }
   end })
 end
