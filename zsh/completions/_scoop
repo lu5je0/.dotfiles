@@ -1,0 +1,381 @@
+#compdef scoop
+
+_scoop_root() {
+  if [[ -n ${WIN_HOME-} && -d $WIN_HOME/scoop ]]; then
+    print -r -- "$WIN_HOME/scoop"
+    return
+  fi
+
+  if [[ -d /mnt/c/Users/lu5je0/scoop ]]; then
+    print -r -- /mnt/c/Users/lu5je0/scoop
+    return
+  fi
+
+  if [[ -d $HOME/scoop ]]; then
+    print -r -- "$HOME/scoop"
+  fi
+}
+
+_scoop_installed_apps() {
+  local root=$(_scoop_root)
+  local -a apps
+
+  [[ -z $root || ! -d $root/apps ]] && return
+  apps=($root/apps/*(/N:t))
+  apps=(${apps:#scoop})
+  print -rl -- ${(@u)apps}
+}
+
+_scoop_local_buckets() {
+  local root=$(_scoop_root)
+  local -a buckets
+
+  [[ -z $root || ! -d $root/buckets ]] && return
+  buckets=($root/buckets/*(/N:t))
+  print -rl -- ${(@u)buckets}
+}
+
+_scoop_known_buckets() {
+  local root=$(_scoop_root)
+  local buckets_json=$root/apps/scoop/current/buckets.json
+
+  if [[ -f $buckets_json ]]; then
+    sed -n 's/^[[:space:]]*"\([^"]\+\)".*/\1/p' "$buckets_json"
+  fi
+}
+
+_scoop_available_apps() {
+  local root=$(_scoop_root)
+  local -a apps
+
+  [[ -z $root || ! -d $root/buckets ]] && return
+  apps=($root/buckets/*/bucket/*.json(N:t:r))
+  print -rl -- ${(@u)apps}
+}
+
+_scoop_shims() {
+  local root=$(_scoop_root)
+  local -a shims
+
+  [[ -z $root || ! -d $root/shims ]] && return
+  shims=(
+    $root/shims/*.shim(N:t:r)
+    $root/shims/*.cmd(N:t:r)
+    $root/shims/*.ps1(N:t:r)
+    $root/shims/*.exe(N:t:r)
+  )
+  print -rl -- ${(@u)shims}
+}
+
+_scoop_config_keys() {
+  local -a keys
+  keys=(
+    use_external_7zip
+    use_lessmsi
+    use_sqlite_cache
+    no_junction
+    scoop_repo
+    scoop_branch
+    proxy
+    autostash_on_conflict
+    default_architecture
+    debug
+    force_update
+    show_update_log
+    show_manifest
+    shim
+    root_path
+    global_path
+    cache_path
+    gh_token
+    virustotal_api_key
+    cat_style
+    ignore_running_processes
+    private_hosts
+    hold_update_until
+    update_nightly
+    use_isolated_path
+    aria2-enabled
+    aria2-warning-enabled
+    aria2-retry-wait
+    aria2-split
+    aria2-max-connection-per-server
+    aria2-min-split-size
+    aria2-options
+  )
+
+  print -rl -- $keys
+}
+
+_scoop_complete_available_apps() {
+  local -a apps
+
+  if [[ $PREFIX == http://* || $PREFIX == https://* ]]; then
+    _urls
+    return
+  fi
+
+  if [[ $PREFIX == *'/'* || $PREFIX == *.json* ]]; then
+    _files -g '*.json'
+    return
+  fi
+
+  apps=("${(@f)$(_scoop_available_apps)}")
+  _describe -t apps 'available app' apps
+}
+
+_scoop_complete_installed_apps() {
+  local -a apps
+  apps=("${(@f)$(_scoop_installed_apps)}")
+  _describe -t apps 'installed app' apps
+}
+
+_scoop_complete_bucket_name() {
+  local -a buckets
+  buckets=("${(@f)$(_scoop_local_buckets)}")
+  _describe -t buckets 'bucket' buckets
+}
+
+_scoop_complete_known_bucket() {
+  local -a buckets
+  buckets=("${(@f)$(_scoop_known_buckets)}")
+  _describe -t buckets 'known bucket' buckets
+}
+
+_scoop_complete_shims() {
+  local -a shims
+  shims=("${(@f)$(_scoop_shims)}")
+  _describe -t commands 'scoop shim' shims
+}
+
+_scoop_complete_config_value() {
+  local key=$1
+
+  case $key in
+    use_external_7zip|use_lessmsi|use_sqlite_cache|no_junction|autostash_on_conflict|debug|force_update|show_update_log|show_manifest|ignore_running_processes|update_nightly)
+      _values 'boolean' true false
+      ;;
+    default_architecture)
+      _values 'architecture' 64bit 32bit arm64
+      ;;
+    scoop_branch)
+      _values 'branch' master develop
+      ;;
+    shim)
+      _values 'shim implementation' kiennq scoopcs 71
+      ;;
+    proxy)
+      _values 'proxy' default none currentuser
+      ;;
+    *)
+      _message 'value'
+      ;;
+  esac
+}
+
+_scoop() {
+  local curcontext="$curcontext" state line
+  local -a commands bucket_commands cache_commands
+
+  commands=(
+    'alias:manage Scoop command aliases'
+    'bucket:manage buckets'
+    'cache:show or clear the download cache'
+    'cat:show an app manifest'
+    'checkup:check for potential problems'
+    'cleanup:remove old app versions'
+    'config:get or set configuration values'
+    'create:create a new app manifest'
+    'depends:list dependencies for an app'
+    'download:download without installing'
+    'export:export installed apps'
+    'help:show help for a command'
+    'hold:hold an app to disable updates'
+    'home:open the app homepage'
+    'import:import apps from a file'
+    'info:display information about an app'
+    'install:install apps'
+    'list:list installed apps'
+    'prefix:show the path to an app'
+    'reset:reset an app to resolve conflicts'
+    'search:search available apps'
+    'shim:manage shims'
+    'status:show status and check for updates'
+    'unhold:unhold an app'
+    'uninstall:uninstall an app'
+    'update:update apps or Scoop itself'
+    'virustotal:query VirusTotal for app hashes or URLs'
+    'which:locate a Scoop shim'
+  )
+
+  bucket_commands=(
+    'add:add a bucket'
+    'list:list local buckets'
+    'known:list known buckets'
+    'rm:remove a bucket'
+  )
+
+  cache_commands=(
+    'show:show cached downloads'
+    'rm:remove cached downloads'
+  )
+
+  if (( CURRENT == 2 )); then
+    _describe -t commands 'scoop command' commands
+    return
+  fi
+
+  case $words[2] in
+    help)
+      (( CURRENT == 3 )) && _describe -t commands 'scoop command' commands
+      ;;
+    bucket)
+      if (( CURRENT == 3 )); then
+        _describe -t commands 'bucket command' bucket_commands
+        return
+      fi
+      case $words[3] in
+        add)
+          if (( CURRENT == 4 )); then
+            _scoop_complete_known_bucket
+          elif (( CURRENT == 5 )); then
+            _urls
+          fi
+          ;;
+        rm)
+          (( CURRENT == 4 )) && _scoop_complete_bucket_name
+          ;;
+      esac
+      ;;
+    cache)
+      if (( CURRENT == 3 )); then
+        _describe -t commands 'cache command' cache_commands
+        return
+      fi
+      case $words[3] in
+        show|rm)
+          if (( CURRENT == 4 )); then
+            _arguments -s '(-a --all)'{-a,--all}'[match all cached apps]' '*:app:->installed_app'
+            [[ $state == installed_app ]] && _scoop_complete_installed_apps
+          fi
+          ;;
+      esac
+      ;;
+    cleanup)
+      _arguments -C -s \
+        '(-a --all)'{-a,--all}'[clean up all apps]' \
+        '(-g --global)'{-g,--global}'[clean up a globally installed app]' \
+        '(-k --cache)'{-k,--cache}'[remove outdated download cache]' \
+        '*:app:->installed_app'
+      [[ $state == installed_app ]] && _scoop_complete_installed_apps
+      ;;
+    config)
+      if (( CURRENT == 3 )); then
+        local -a config_items
+        config_items=('rm:remove a configuration key')
+        config_items+=(${(@f)$(_scoop_config_keys)})
+        _describe -t config 'config key' config_items
+        return
+      fi
+      if [[ $words[3] == rm ]]; then
+        (( CURRENT == 4 )) && _describe -t config 'config key' "${(@f)$(_scoop_config_keys)}"
+      elif (( CURRENT == 4 )); then
+        _describe -t config 'config key' "${(@f)$(_scoop_config_keys)}"
+      elif (( CURRENT == 5 )); then
+        _scoop_complete_config_value "$words[3]"
+      fi
+      ;;
+    depends)
+      _arguments -C -s \
+        '(-a --arch)'{-a,--arch}'[use a specific architecture]:architecture:(32bit 64bit arm64)' \
+        '1:app:->available_app'
+      [[ $state == available_app ]] && _scoop_complete_available_apps
+      ;;
+    export)
+      _arguments -s \
+        '(-c --config)'{-c,--config}'[export Scoop configuration too]' \
+        '(-o --output)'{-o,--output}'[write to a specific file]:file:_files'
+      ;;
+    hold|unhold)
+      _arguments -C -s \
+        '(-g --global)'{-g,--global}'[target globally installed apps]' \
+        '*:app:->installed_app'
+      [[ $state == installed_app ]] && _scoop_complete_installed_apps
+      ;;
+    home|info|prefix|reset|cat)
+      _arguments -C -s \
+        '(-v --verbose)'{-v,--verbose}'[show verbose output]' \
+        '(-a --all)'{-a,--all}'[target all installed apps]' \
+        '*:app:->installed_app'
+      [[ $state == installed_app ]] && _scoop_complete_installed_apps
+      ;;
+    import)
+      _files
+      ;;
+    install)
+      _arguments -C -s \
+        '(-g --global)'{-g,--global}'[install the app globally]' \
+        '(-i --independent)'{-i,--independent}'[do not install dependencies automatically]' \
+        '(-k --no-cache)'{-k,--no-cache}'[do not use the download cache]' \
+        '(-s --skip-hash-check)'{-s,--skip-hash-check}'[skip hash validation]' \
+        '(-u --no-update-scoop)'{-u,--no-update-scoop}'[do not update Scoop first]' \
+        '(-a --arch)'{-a,--arch}'[use a specific architecture]:architecture:(32bit 64bit arm64)' \
+        '*:app or manifest:->available_app'
+      [[ $state == available_app ]] && _scoop_complete_available_apps
+      ;;
+    list)
+      _message 'installed app query'
+      ;;
+    search)
+      _scoop_complete_available_apps
+      ;;
+    shim)
+      _arguments -C -s \
+        '1:shim command:(add rm info)' \
+        '*:shim:->shim'
+      [[ $state == shim ]] && _scoop_complete_shims
+      ;;
+    status)
+      _arguments -s '(-l --local)'{-l,--local}'[check only local installed apps]'
+      ;;
+    uninstall)
+      _arguments -C -s \
+        '(-g --global)'{-g,--global}'[uninstall a globally installed app]' \
+        '(-p --purge)'{-p,--purge}'[remove all persistent data]' \
+        '*:app:->installed_app'
+      [[ $state == installed_app ]] && _scoop_complete_installed_apps
+      ;;
+    update)
+      _arguments -C -s \
+        '(-f --force)'{-f,--force}'[force update even if no newer version exists]' \
+        '(-g --global)'{-g,--global}'[update a globally installed app]' \
+        '(-i --independent)'{-i,--independent}'[do not install dependencies automatically]' \
+        '(-k --no-cache)'{-k,--no-cache}'[do not use the download cache]' \
+        '(-s --skip-hash-check)'{-s,--skip-hash-check}'[skip hash validation]' \
+        '(-q --quiet)'{-q,--quiet}'[hide extraneous messages]' \
+        '(-a --all)'{-a,--all}'[update all apps]' \
+        '*:app:->update_app'
+      if [[ $state == update_app ]]; then
+        local -a apps
+        apps=('*')
+        apps+=("${(@f)$(_scoop_installed_apps)}")
+        _describe -t apps 'installed app' apps
+      fi
+      ;;
+    virustotal)
+      _arguments -C -s \
+        '(-a --all)'{-a,--all}'[check all installed apps]' \
+        '(-s --scan)'{-s,--scan}'[submit unknown URLs for analysis]' \
+        '(-n --no-depends)'{-n,--no-depends}'[do not check dependencies]' \
+        '(-u --no-update-scoop)'{-u,--no-update-scoop}'[do not update Scoop first]' \
+        '(-p --passthru)'{-p,--passthru}'[return reports as objects]' \
+        '*:app:->installed_app'
+      [[ $state == installed_app ]] && _scoop_complete_installed_apps
+      ;;
+    which)
+      _scoop_complete_shims
+      ;;
+  esac
+}
+
+_scoop "$@"
