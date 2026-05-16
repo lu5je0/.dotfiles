@@ -2,7 +2,7 @@ local M = {}
 
 local fold_suffix_filetypes = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
 
-local function should_show_fold_suffix(bufnr)
+local function should_append_end_line(bufnr)
   return vim.tbl_contains(fold_suffix_filetypes, vim.bo[bufnr].filetype)
 end
 
@@ -161,7 +161,7 @@ function M.custom_foldtext(foldstart, foldend)
   local bufnr = vim.api.nvim_get_current_buf()
   local chunks = get_line_fold_chunks(bufnr, foldstart)
 
-  if should_show_fold_suffix(bufnr) then
+  if should_append_end_line(bufnr) then
     table.insert(chunks, { ' … ', 'TSPunctBracket' })
     for i, chunk in ipairs(get_line_fold_chunks(bufnr, foldend)) do
       if i == 1 then
@@ -171,7 +171,71 @@ function M.custom_foldtext(foldstart, foldend)
     end
   end
 
-  return truncate_foldtext(chunks, vim.fn.winsaveview().leftcol)
+  local leftcol = vim.fn.winsaveview().leftcol
+  chunks = truncate_foldtext(chunks, leftcol)
+
+  return chunks
+end
+
+local function append_fold_count(chunks, foldstart, foldend)
+  local suffix = (' 󰁂 %d '):format(foldend - foldstart)
+  local ellipsis = '…'
+
+  local text_width = 0
+  for _, chunk in ipairs(chunks) do
+    text_width = text_width + vim.fn.strwidth(chunk[1])
+  end
+
+  local wininfo = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1]
+  local win_width = wininfo.width - wininfo.textoff
+  local suffix_width = vim.fn.strwidth(suffix)
+  local padding = win_width - text_width - suffix_width
+
+  if padding > 0 then
+    table.insert(chunks, { string.rep(' ', padding), 'Folded' })
+  elseif padding < 0 then
+    local ellipsis_width = vim.fn.strwidth(ellipsis)
+    local max_text_width = win_width - suffix_width - ellipsis_width
+    if max_text_width < 0 then
+      max_text_width = 0
+    end
+
+    local truncated = {}
+    local w = 0
+    for _, chunk in ipairs(chunks) do
+      if w >= max_text_width then
+        break
+      end
+      local text = chunk[1]
+      local chunk_width = vim.fn.strwidth(text)
+      if w + chunk_width <= max_text_width then
+        table.insert(truncated, chunk)
+        w = w + chunk_width
+      else
+        local partial = ''
+        for ci = 1, vim.fn.strchars(text) do
+          local c = vim.fn.strcharpart(text, ci - 1, 1)
+          local cw = vim.fn.strwidth(c)
+          if w + cw > max_text_width then
+            break
+          end
+          partial = partial .. c
+          w = w + cw
+        end
+        if #partial > 0 then
+          table.insert(truncated, { partial, chunk[2] })
+        end
+        break
+      end
+    end
+
+    table.insert(truncated, { ellipsis, 'Comment' })
+    chunks = truncated
+  end
+
+  table.insert(chunks, { suffix, 'Comment' })
+
+  return chunks
 end
 
 function M.apply_treesitter_fold(bufnr, win_id)
@@ -182,7 +246,7 @@ function M.apply_treesitter_fold(bufnr, win_id)
 
     vim.wo[win_id].foldmethod = 'expr'
     vim.wo[win_id].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    vim.wo[win_id].foldtext = should_show_fold_suffix(bufnr) and 'v:lua.__custom_foldtext()' or ''
+    vim.wo[win_id].foldtext = 'v:lua.__custom_foldtext()'
   end, 100)
 end
 
@@ -196,23 +260,24 @@ local function setup_fold_text_cache(group)
     local buf_id = vim.api.nvim_win_get_buf(win_id)
     local cache = foldtext_cache
 
+    local chunks
     if
       cache[win_id]
       and cache[win_id][buf_id]
       and cache[win_id][buf_id][foldstart]
       and cache[win_id][buf_id][foldstart][foldend]
     then
-      return cache[win_id][buf_id][foldstart][foldend]
+      chunks = cache[win_id][buf_id][foldstart][foldend]
+    else
+      chunks = M.custom_foldtext(foldstart, foldend)
+
+      cache[win_id] = cache[win_id] or {}
+      cache[win_id][buf_id] = cache[win_id][buf_id] or {}
+      cache[win_id][buf_id][foldstart] = cache[win_id][buf_id][foldstart] or {}
+      cache[win_id][buf_id][foldstart][foldend] = chunks
     end
 
-    local text = M.custom_foldtext(foldstart, foldend)
-
-    cache[win_id] = cache[win_id] or {}
-    cache[win_id][buf_id] = cache[win_id][buf_id] or {}
-    cache[win_id][buf_id][foldstart] = cache[win_id][buf_id][foldstart] or {}
-    cache[win_id][buf_id][foldstart][foldend] = text
-
-    return text
+    return append_fold_count(vim.deepcopy(chunks), foldstart, foldend)
   end
 
   vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout', 'BufWinLeave', 'TextChanged', 'TextChangedI' }, {
@@ -257,7 +322,9 @@ function M.setup()
   local group = vim.api.nvim_create_augroup('Lu5je0Fold', { clear = true })
 
   _G.__custom_foldtext = function()
-    return M.custom_foldtext(vim.v.foldstart, vim.v.foldend)
+    local foldstart = vim.v.foldstart
+    local foldend = vim.v.foldend
+    return append_fold_count(M.custom_foldtext(foldstart, foldend), foldstart, foldend)
   end
 
   set_foldtext_highlights()
