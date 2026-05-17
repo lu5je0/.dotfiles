@@ -1,15 +1,11 @@
 [wsl2]
 virtiofs=true
-
 firewall=false
 
 [experimental]
-
 # 开启镜像网络
 networkingMode=mirrored 
-
 # When set to true, any newly created VHD will be set to sparse automatically.
 sparseVhd=true
-
 # Only applicable when wsl2.networkingMode is set to mirrored. When set to True, will allow the Container to connect to the Host, or the Host to connect to the Container, by an IP address that's assigned to the Host. The 127.0.0.1 loopback address can always be used,this option allows for all additionally assigned local IP addresses to be used as well. Only IPv4 addresses assigned to the host are supported.
 hostAddressLoopback=true
