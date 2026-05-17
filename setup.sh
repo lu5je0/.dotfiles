@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "$0")" && pwd)}"
 SETUP_DIR="$DOTFILES_DIR/scripts/setup.d"
 
 if [[ "$(uname -a)" == *WSL* ]] && [[ "$DOTFILES_DIR" == /mnt/c/* ]]; then
