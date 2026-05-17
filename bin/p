@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-POWERSHELL='/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+WCLIP="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../win/bin/wclip.exe"
 
 usage() {
   cat <<'EOF'
@@ -43,47 +43,25 @@ if [[ $uname_info == *Darwin* ]] && command -v mac_clipboard_cli >/dev/null 2>&1
 fi
 
 if [[ $uname_info == *WSL* ]]; then
-  # When stdout is a terminal and not forced, only detect type (don't output binary)
-  if [[ -t 1 ]] && (( !force )); then
-    detect_only='true'
-  else
-    detect_only='false'
+  # If stdout is not a terminal or force is set, skip detect and paste directly
+  if [[ ! -t 1 ]] || (( force )); then
+    exec "$WCLIP" paste
   fi
 
-  # Single PowerShell call: detect type + output data
-  # Exit codes: 0=success, 10=binary_blocked(image), 11=binary_blocked(file), 12=empty
-  "$POWERSHELL" -NoProfile -Command "
-    Add-Type -AssemblyName System.Windows.Forms
-    \$cb = [System.Windows.Forms.Clipboard]
-    \$detectOnly = [bool]::Parse('$detect_only')
-    if (\$cb::ContainsImage()) {
-      if (\$detectOnly) { exit 10 }
-      Add-Type -AssemblyName System.Drawing
-      \$img = \$cb::GetImage()
-      \$ms = New-Object System.IO.MemoryStream
-      \$img.Save(\$ms, [System.Drawing.Imaging.ImageFormat]::Png)
-      \$bytes = \$ms.ToArray()
-      \$ms.Close()
-      [Console]::OpenStandardOutput().Write(\$bytes, 0, \$bytes.Length)
-    } elseif (\$cb::ContainsFileDropList()) {
-      if (\$detectOnly) { exit 11 }
-      \$files = \$cb::GetFileDropList()
-      foreach (\$f in \$files) {
-        \$bytes = [System.IO.File]::ReadAllBytes(\$f)
-        [Console]::OpenStandardOutput().Write(\$bytes, 0, \$bytes.Length)
-      }
-    } elseif (\$cb::ContainsText()) {
-      [Console]::Write(\$cb::GetText())
-    } else {
-      exit 12
-    }
-  " && rc=0 || rc=$?
-  case $rc in
-    0)  exit 0 ;;
-    10) printf 'p: clipboard contains image data, use -f to force output or redirect to a file\n' >&2; exit 1 ;;
-    11) printf 'p: clipboard contains file, use -f to force output or redirect to a file\n' >&2; exit 1 ;;
-    12) printf 'p: clipboard is empty\n' >&2; exit 1 ;;
-    *)  exit "$rc" ;;
+  # stdout is a terminal without -f, detect type to block binary
+  cb_type=$("$WCLIP" paste --detect | tr -d '\r\n')
+  case $cb_type in
+    image|file)
+      printf 'p: clipboard contains %s data, use -f to force output or redirect to a file\n' "$cb_type" >&2
+      exit 1
+      ;;
+    text)
+      exec "$WCLIP" paste
+      ;;
+    *)
+      printf 'p: clipboard is empty\n' >&2
+      exit 1
+      ;;
   esac
 fi
 
