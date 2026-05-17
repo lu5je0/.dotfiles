@@ -16,7 +16,7 @@ vim.filetype.add {
     ['crontab'] = 'crontab',
     ['kitty.conf'] = 'config',
     ['gitconfig'] = 'gitconfig',
-    ['aria2.conf'] = 'dosini',
+    ['.wslconfig'] = 'dosini',
     ['requirements.txt'] = 'config',
   },
   pattern = {
