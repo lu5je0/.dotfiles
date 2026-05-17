@@ -1,7 +1,5 @@
 [wsl2]
-# localhostForwarding=true
-# processors=8
-# kernel=D:\\vm\\wsl\\bzImage
+virtiofs=true
 
 firewall=false
 
