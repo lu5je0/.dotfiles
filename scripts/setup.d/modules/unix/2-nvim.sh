@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link Karabiner config (~/.config/karabiner)?
+# DESC: link nvim config (~/.config/nvim -> ~/.dotfiles/vim)?
+# CHECK: ~/.config/nvim
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/karabiner"
+TARGET="$HOME/.config/nvim"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/karabiner" "$TARGET"
+ln -s "$DOTFILES_DIR/vim" "$TARGET"

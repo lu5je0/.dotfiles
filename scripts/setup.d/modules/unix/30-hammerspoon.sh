@@ -1,5 +1,6 @@
 #!/bin/bash
 # DESC: link Hammerspoon config (~/.hammerspoon)?
+# CHECK: ~/.hammerspoon
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET="$HOME/.hammerspoon"

@@ -1,5 +1,6 @@
 #!/bin/bash
 # DESC: copy maven config (~/.m2/settings.xml)?
+# CHECK_EXISTS: ~/.m2/settings.xml
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET_DIR="$HOME/.m2"

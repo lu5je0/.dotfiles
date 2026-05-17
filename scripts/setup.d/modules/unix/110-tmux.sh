@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link kitty config (~/.config/kitty)?
+# DESC: link tmux config (~/.config/tmux)?
+# CHECK: ~/.config/tmux
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/kitty"
+TARGET="$HOME/.config/tmux"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/kitty" "$TARGET"
+ln -s "$DOTFILES_DIR/tmux" "$TARGET"

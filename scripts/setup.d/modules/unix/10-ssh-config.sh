@@ -1,5 +1,6 @@
 #!/bin/bash
 # DESC: link ssh config (~/.ssh/config)?
+# CHECK: ~/.ssh/config
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET="$HOME/.ssh/config"

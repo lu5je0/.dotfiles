@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link WezTerm config (~/.config/wezterm)?
+# DESC: link kitty config (~/.config/kitty)?
+# CHECK: ~/.config/kitty
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/wezterm"
+TARGET="$HOME/.config/kitty"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/wezterm" "$TARGET"
+ln -s "$DOTFILES_DIR/kitty" "$TARGET"

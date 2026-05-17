@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link pip config (~/.config/pip)?
+# DESC: link git config (~/.config/git)?
+# CHECK: ~/.config/git
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/pip"
+TARGET="$HOME/.config/git"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/pip" "$TARGET"
+ln -s "$DOTFILES_DIR/git" "$TARGET"

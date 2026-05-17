@@ -1,5 +1,6 @@
 #!/bin/bash
 # DESC: link IdeaVim config (~/.ideavimrc)?
+# CHECK: ~/.ideavimrc
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET="$HOME/.ideavimrc"

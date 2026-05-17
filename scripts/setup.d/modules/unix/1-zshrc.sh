@@ -1,12 +1,13 @@
 #!/bin/bash
-# DESC: link cheat dir (~/.cheat)?
+# DESC: link zshrc (~/.zshrc)?
+# CHECK: ~/.zshrc
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.cheat"
+TARGET="$HOME/.zshrc"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
   exit 0
 fi
 
-ln -s "$DOTFILES_DIR/cheat" "$TARGET"
+ln -s "$DOTFILES_DIR/zshrc" "$TARGET"

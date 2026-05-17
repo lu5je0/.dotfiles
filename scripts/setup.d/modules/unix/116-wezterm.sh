@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link Ghostty config (~/.config/ghostty)?
+# DESC: link WezTerm config (~/.config/wezterm)?
+# CHECK: ~/.config/wezterm
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/ghostty"
+TARGET="$HOME/.config/wezterm"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/ghostty" "$TARGET"
+ln -s "$DOTFILES_DIR/wezterm" "$TARGET"

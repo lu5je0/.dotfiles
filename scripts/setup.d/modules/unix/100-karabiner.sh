@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link git config (~/.config/git)?
+# DESC: link Karabiner config (~/.config/karabiner)?
+# CHECK: ~/.config/karabiner
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/git"
+TARGET="$HOME/.config/karabiner"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/git" "$TARGET"
+ln -s "$DOTFILES_DIR/karabiner" "$TARGET"

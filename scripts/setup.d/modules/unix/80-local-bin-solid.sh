@@ -1,5 +1,6 @@
 #!/bin/bash
 # DESC: link bin to ~/.local/bin/solid?
+# CHECK: ~/.local/bin/solid
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET="$HOME/.local/bin/solid"

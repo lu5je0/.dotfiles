@@ -2,7 +2,12 @@
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 SETUP_DIR="$DOTFILES_DIR/scripts/setup.d"
-MODULE_DIR="$SETUP_DIR/modules"
+
+if [[ "$(uname -a)" == *WSL* ]] && [[ "$DOTFILES_DIR" == /mnt/c/* ]]; then
+  MODULE_DIR="$SETUP_DIR/modules/win"
+else
+  MODULE_DIR="$SETUP_DIR/modules/unix"
+fi
 
 source "$DOTFILES_DIR/zsh/functions.sh"
 
@@ -75,6 +80,36 @@ if [ -d "$MODULE_DIR" ]; then
     selections=()
     module_tags=()
     module_descs=()
+    module_status=()
+
+    check_module_status() {
+      local check_path="$1"
+      local check_type="$2"  # "symlink" or "exists"
+      # Expand ~ to $HOME
+      check_path="${check_path/#\~/$HOME}"
+      if [[ ! -e "$check_path" ]]; then
+        echo ""
+        return
+      fi
+      if [[ "$check_type" == "exists" ]]; then
+        echo "installed"
+        return
+      fi
+      # symlink check: must be a symlink pointing into DOTFILES_DIR
+      if [[ -L "$check_path" ]]; then
+        local target
+        target="$(readlink -f "$check_path")"
+        local dotfiles_real
+        dotfiles_real="$(readlink -f "$DOTFILES_DIR")"
+        if [[ "$target" == "$dotfiles_real"* ]]; then
+          echo "installed"
+        else
+          echo "conflict"
+        fi
+      else
+        echo "conflict"
+      fi
+    }
 
     for module_file in "${modules[@]}"; do
       tag="$(basename "$module_file")"
@@ -82,8 +117,22 @@ if [ -d "$MODULE_DIR" ]; then
       if [[ -z "$desc" ]]; then
         desc="$tag"
       fi
+
+      # Parse CHECK or CHECK_EXISTS
+      local_status=""
+      check_line="$(sed -n 's/^# CHECK: //p' "$module_file" | head -n1)"
+      if [[ -n "$check_line" ]]; then
+        local_status="$(check_module_status "$check_line" "symlink")"
+      else
+        check_line="$(sed -n 's/^# CHECK_EXISTS: //p' "$module_file" | head -n1)"
+        if [[ -n "$check_line" ]]; then
+          local_status="$(check_module_status "$check_line" "exists")"
+        fi
+      fi
+
       module_tags+=("$tag")
       module_descs+=("$desc")
+      module_status+=("$local_status")
       selections+=(0)
     done
 
@@ -105,10 +154,16 @@ if [ -d "$MODULE_DIR" ]; then
         if [ "$i" -eq "$cursor" ]; then
           pointer="${C_BOLD}${C_CYAN}>${C_RESET} "
         fi
+        status_badge=""
+        if [[ "${module_status[$i]}" == "installed" ]]; then
+          status_badge=" ${C_GREEN}(installed)${C_RESET}"
+        elif [[ "${module_status[$i]}" == "conflict" ]]; then
+          status_badge=" ${C_YELLOW}(conflict)${C_RESET}"
+        fi
         if [ "$i" -eq "$cursor" ]; then
-          printf "%b\n" "${pointer}${marker} ${C_BOLD}${module_tags[$i]}${C_RESET} ${C_DIM}- ${module_descs[$i]}${C_RESET}"
+          printf "%b\n" "${pointer}${marker} ${C_BOLD}${module_tags[$i]}${C_RESET} ${C_DIM}- ${module_descs[$i]}${C_RESET}${status_badge}"
         else
-          printf "%b\n" "${pointer}${marker} ${module_tags[$i]} ${C_DIM}- ${module_descs[$i]}${C_RESET}"
+          printf "%b\n" "${pointer}${marker} ${module_tags[$i]} ${C_DIM}- ${module_descs[$i]}${C_RESET}${status_badge}"
         fi
       done
       echo

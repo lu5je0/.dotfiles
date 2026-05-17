@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link tmux config (~/.config/tmux)?
+# DESC: link Ghostty config (~/.config/ghostty)?
+# CHECK: ~/.config/ghostty
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/tmux"
+TARGET="$HOME/.config/ghostty"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/tmux" "$TARGET"
+ln -s "$DOTFILES_DIR/ghostty" "$TARGET"

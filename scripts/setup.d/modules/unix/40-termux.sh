@@ -1,5 +1,6 @@
 #!/bin/bash
 # DESC: termux config (~/.config/termux)?
+# CHECK: ~/.config/termux
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET="$HOME/.config/termux"

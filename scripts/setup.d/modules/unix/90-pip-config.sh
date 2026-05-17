@@ -1,8 +1,9 @@
 #!/bin/bash
-# DESC: link nvim config (~/.config/nvim -> ~/.dotfiles/vim)?
+# DESC: link pip config (~/.config/pip)?
+# CHECK: ~/.config/pip
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/nvim"
+TARGET="$HOME/.config/pip"
 
 if [[ -e "$TARGET" ]]; then
   echo "skip: $TARGET exists"
@@ -10,4 +11,4 @@ if [[ -e "$TARGET" ]]; then
 fi
 
 mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/vim" "$TARGET"
+ln -s "$DOTFILES_DIR/pip" "$TARGET"

@@ -1,5 +1,6 @@
 #!/bin/bash
 # DESC: link yazi config (~/.config/yazi)?
+# CHECK: ~/.config/yazi
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET_DIR="$HOME/.config/yazi"
