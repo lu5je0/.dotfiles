@@ -6,118 +6,34 @@ end)
 
 local window_special_cases = {
   WezTerm = {
-    center = function(max)
-      local screen_id = hs.window.focusedWindow():screen():id()
-      if screen_id == 1 then
-        return {
-          x = max.x,
-          y = max.y,
-          w = 1000,
-          h = 825
-        }
-      else
-        return {
-          x = max.x,
-          y = max.y,
-          w = 1013,
-          h = 840
-        }
-      end
-    end,
-    ["43_center"] = function(max)
-      local screen_id = hs.window.focusedWindow():screen():id()
-      if screen_id == 1 then
-        return {
-          x = max.x,
-          y = max.y,
-          w = 1126,
-          h = 862
-        }
-      else
-        return {
-          x = max.x,
-          y = max.y,
-          w = max.w * (3 / 4) - 27,
-          h = max.h - 24
-        }
-      end
-    end
+    center_j = {
+      main = { w = 1000, h = 825 },
+      external = { w = 1013, h = 840 },
+    },
+    center_i = {
+      main = { w = 1126, h = 862 },
+      external = function(max) return { w = max.w * (3 / 4) - 27, h = max.h - 24 } end,
+    },
   },
   kitty = {
-    center = function(max)
-      local screen_id = hs.window.focusedWindow():screen():id()
-      if screen_id == 1 then
-        return {
-          x = max.x,
-          y = max.y,
-          w = 990,
-          h = 815
-        }
-      else
-        return {
-          x = max.x,
-          y = max.y,
-          w = 1023,
-          h = 835
-        }
-      end
-    end,
-    ["43_center"] = function(max)
-      local screen_id = hs.window.focusedWindow():screen():id()
-      if screen_id == 1 then
-        return {
-          x = max.x,
-          y = max.y,
-          w = 1105,
-          h = 863
-        }
-      else
-        return {
-          x = max.x,
-          y = max.y,
-          w = max.w * (3 / 4) - 20,
-          h = max.h - 58
-        }
-      end
-    end
+    center_j = {
+      main = { w = 990, h = 815 },
+      external = { w = 1023, h = 835 },
+    },
+    center_i = {
+      main = { w = 1105, h = 863 },
+      external = function(max) return { w = max.w * (3 / 4) - 20, h = max.h - 58 } end,
+    },
   },
   Ghostty = {
-    center = function(max)
-      local screen_id = hs.window.focusedWindow():screen():id()
-      if screen_id == 1 then
-        return {
-          x = max.x,
-          y = max.y,
-          w = 952,
-          h = 806
-        }
-      else
-        return {
-          x = max.x,
-          y = max.y,
-          w = 1016,
-          h = 846
-        }
-      end
-    end,
-    ["43_center"] = function(max)
-      local screen_id = hs.window.focusedWindow():screen():id()
-      if screen_id == 1 then
-        return {
-          x = max.x,
-          y = max.y,
-          w = 1105,
-          h = 863
-        }
-      else
-        return {
-          x = max.x,
-          y = max.y,
-          w = max.w * (3 / 4) - 20,
-          h = max.h - 16
-        }
-      end
-    end
+    center_j = {
+      main = { w = 952, h = 806 },
+      external = { w = 1016, h = 846 },
+    },
+    center_i = {
+      main = { w = 1105, h = 863 },
+      external = function(max) return { w = max.w * (3 / 4) - 20, h = max.h - 16 } end,
+    },
   },
 }
 
@@ -133,12 +49,13 @@ local function size_focused_window(mode)
     local appCases = window_special_cases[app_name]
 
     if appCases and appCases[mode] then
-      local case = appCases[mode]
-      if type(case) == "function" then
-        f = case(max)
-      else
-        f = case
+      local screen_type = screen:id() == 1 and "main" or "external"
+      local entry = appCases[mode][screen_type]
+      if type(entry) == "function" then
+        entry = entry(max)
       end
+      f.w = entry.w
+      f.h = entry.h
       f.x = max.x + (screen:frame().w - f.w) / 2
       f.y = max.y + (screen:frame().h - f.h) / 2
       win:setFrame(f, 0)
@@ -150,14 +67,14 @@ local function size_focused_window(mode)
       f.y = max.y
       f.w = max.w
       f.h = max.h
-    elseif mode == "center" then
+    elseif mode == "center_j" then
       f.w = max.w / 1.4
       f.h = max.h / 1.1
       f.x = max.x + (screen:frame().w - f.w) / 2
       f.y = max.y + (screen:frame().h - f.h) / 2
       win:setFrame(f, 0)
       return
-    elseif mode == "43_center" then
+    elseif mode == "center_i" then
       f.x = max.x
       f.y = max.y
       f.w = max.w * (3 / 4)
@@ -183,11 +100,11 @@ local function size_focused_window(mode)
 end
 
 -- bind hotkey
-hs.hotkey.bind({ "ctrl", "option" }, "J", size_focused_window('center'))
+hs.hotkey.bind({ "ctrl", "option" }, "J", size_focused_window('center_j'))
 
 hs.hotkey.bind({ "ctrl", "option" }, "H", size_focused_window('halfleft'))
 hs.hotkey.bind({ "ctrl", "option" }, "L", size_focused_window('halfright'))
-hs.hotkey.bind({ "ctrl", "option" }, "I", size_focused_window('43_center'))
+hs.hotkey.bind({ "ctrl", "option" }, "I", size_focused_window('center_i'))
 hs.hotkey.bind({ "ctrl", "option" }, "K", size_focused_window('maximize'))
 hs.hotkey.bind({ "ctrl", "option" }, "M", function()
   local win = hs.window.focusedWindow()

@@ -60,24 +60,20 @@ ResizeWindow(position) {
     screenHeight := SysGet(79)
 
     ; 定义特定应用的窗口大小和位置映射
-    specialAppMap := Map()
-
-    specialAppMap["alacritty.exe"] := Map()
-    specialAppMap["alacritty.exe"]["center_i"] := { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 }
-    specialAppMap["alacritty.exe"]["center_j"] := { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
-
-    specialAppMap["WindowsTerminal.exe"] := Map()
-    specialAppMap["WindowsTerminal.exe"]["center_i"] := { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 }
-    specialAppMap["WindowsTerminal.exe"]["center_j"] := { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
-
-    specialAppMap["wezterm-gui.exe"] := Map()
-    specialAppMap["wezterm-gui.exe"]["center_i"] := { width: 2457, height: 2004, x_offset: (screenWidth - 2457) / 2, y_offset: 43 }
-    specialAppMap["wezterm-gui.exe"]["center_j"] := { width: 1977, height: 1645, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
-    ; font size 11
-    ; specialAppMap["wezterm-gui.exe"] := { "center_i": { "width": 2457, "height": 2038, "x_offset": (screenWidth - 2457) / 2, "y_offset": 23 }, "center_j": { "width": 1931, "height": 1596, "x_offset": (screenWidth - 1931) / 2, "y_offset": (screenHeight - 1596) / 2 } }
-    ; font size 11.5
-    ; specialAppMap["wezterm-gui.exe"] := { "center_i": { "width": 2457, "height": 2008, "x_offset": (screenWidth - 2457) / 2, "y_offset": 43 }, "center_j": { "width": 1928, "height": 1612, "x_offset": (screenWidth - 1931) / 2, "y_offset": ((screenHeight - 1596) / 2 - 60) } }
-    ; fancy tab bar
+    specialAppMap := Map(
+        "alacritty.exe", Map(
+            "center_i", { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 },
+            "center_j", { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
+        ),
+        "WindowsTerminal.exe", Map(
+            "center_i", { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 },
+            "center_j", { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
+        ),
+        "wezterm-gui.exe", Map(
+            "center_i", { width: 2713, height: 2004, x_offset: (screenWidth - 2713) / 2, y_offset: 43 },
+            "center_j", { width: 1977, height: 1645, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
+        )
+    )
     
     ; 判断是否在特殊应用映射中
     if (specialAppMap.Has(processName) && specialAppMap[processName].Has(position)) {
