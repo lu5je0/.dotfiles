@@ -2,10 +2,80 @@
 import sys
 import os
 import subprocess
+import struct
+import json
+import shutil
 from base64 import standard_b64encode
 
 def is_kitty():
     return os.environ.get('TERM') == 'xterm-kitty'
+
+def is_wsl_wezterm():
+    return (os.path.exists('/proc/sys/fs/binfmt_misc/WSLInterop') and
+            os.environ.get('TERM_PROGRAM') == 'WezTerm')
+
+def find_wezterm_exe():
+    exe = shutil.which('wezterm.exe')
+    if exe:
+        return exe
+    win_home = os.environ.get('WIN_HOME')
+    if win_home:
+        path = os.path.join(win_home, 'scoop', 'shims', 'wezterm.exe')
+        if os.path.isfile(path):
+            return path
+    return None
+
+def get_wezterm_pane_size():
+    exe = find_wezterm_exe()
+    if not exe:
+        return None
+    try:
+        result = subprocess.run([exe, 'cli', 'list', '--format', 'json'],
+                                capture_output=True, text=True, timeout=2)
+        if result.returncode != 0:
+            return None
+        panes = json.loads(result.stdout)
+    except Exception:
+        return None
+
+    try:
+        term = os.get_terminal_size()
+    except OSError:
+        return None
+
+    best, best_score = None, -1
+    for pane in panes:
+        size = pane.get('size') or {}
+        pw, ph = size.get('pixel_width', 0), size.get('pixel_height', 0)
+        pc, pr = size.get('cols', 0), size.get('rows', 0)
+        if pw > 0 and ph > 0 and pc > 0 and pr > 0:
+            score = ((2 if pc == term.columns else 0) +
+                     (2 if pr == term.lines else 0) +
+                     (1 if pane.get('is_active') else 0))
+            if score > best_score:
+                best = {'cols': pc, 'rows': pr, 'pw': pw, 'ph': ph}
+                best_score = score
+    return best
+
+def get_image_dimensions(data):
+    # PNG
+    if len(data) > 24 and data[:8] == b'\x89PNG\r\n\x1a\n':
+        return struct.unpack('>II', data[16:24])
+    # JPEG
+    if len(data) > 2 and data[:2] == b'\xff\xd8':
+        i = 2
+        while i < len(data) - 9:
+            if data[i] != 0xff:
+                break
+            marker = data[i + 1]
+            if marker in (0xc0, 0xc1, 0xc2):
+                h, w = struct.unpack('>HH', data[i + 5:i + 9])
+                return w, h
+            if i + 4 > len(data):
+                break
+            length = struct.unpack('>H', data[i + 2:i + 4])[0]
+            i += 2 + length
+    return None, None
 
 def serialize_gr_command(**cmd):
     payload = cmd.pop('payload', None)
@@ -35,7 +105,19 @@ def display_image(image_data):
         p = subprocess.Popen(['kitty', '+kitten', 'icat'], stdin=subprocess.PIPE)
         p.communicate(input=image_data)
     else:
-        write_chunked(a='T', f=100, data=image_data)
+        extra = {}
+        if is_wsl_wezterm():
+            pane = get_wezterm_pane_size()
+            if pane:
+                img_w, img_h = get_image_dimensions(image_data)
+                if img_w and img_h:
+                    cell_w = pane['pw'] / pane['cols']
+                    cell_h = pane['ph'] / pane['rows']
+                    max_cols = pane['cols']
+                    scale = min(max_cols * cell_w / img_w, 1.0)
+                    extra['c'] = max(1, int(img_w * scale / cell_w))
+                    extra['r'] = max(1, int(img_h * scale / cell_h))
+        write_chunked(a='T', f=100, data=image_data, **extra)
 
 if __name__ == "__main__":
     # 检查是否有数据从管道输入

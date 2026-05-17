@@ -7,6 +7,7 @@ _q_transfer() {
     '(-y --yes)'{-y,--yes}'[skip confirmation]' \
     '--no-gzip[disable gzip compression]' \
     '--gzip-level[gzip compression level (1-9)]:level:(1 2 3 4 5 6 7 8 9)' \
+    '(-n --name)'{-n,--name}'[specify filename for pipe input]:name: ' \
     '(-h --help)'{-h,--help}'[show help]' \
     '*:file:_files'
 }

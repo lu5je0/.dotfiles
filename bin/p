@@ -2,6 +2,36 @@
 
 set -euo pipefail
 
+POWERSHELL='/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+
+usage() {
+  cat <<'EOF'
+Usage: p [options]
+
+Paste clipboard content to stdout.
+
+Options:
+  -f    Force output even if stdout is a terminal (for binary data)
+  -h    Show this help message
+
+Examples:
+  p              Paste text
+  p > 1.png      Save clipboard image to file
+  p | vv         Display clipboard image in terminal
+  p -f           Force binary output to terminal
+EOF
+  exit 0
+}
+
+force=0
+while getopts "fh" opt; do
+  case $opt in
+    f) force=1 ;;
+    h) usage ;;
+    *) usage ;;
+  esac
+done
+
 if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v _clipboard_osc52 >/dev/null 2>&1; then
   exec _clipboard_osc52 paste
 fi
@@ -12,8 +42,49 @@ if [[ $uname_info == *Darwin* ]] && command -v mac_clipboard_cli >/dev/null 2>&1
   exec mac_clipboard_cli -p
 fi
 
-if [[ $uname_info == *WSL* ]] && command -v win32yank.exe >/dev/null 2>&1; then
-  exec win32yank.exe -o
+if [[ $uname_info == *WSL* ]]; then
+  # When stdout is a terminal and not forced, only detect type (don't output binary)
+  if [[ -t 1 ]] && (( !force )); then
+    detect_only='true'
+  else
+    detect_only='false'
+  fi
+
+  # Single PowerShell call: detect type + output data
+  # Exit codes: 0=success, 10=binary_blocked(image), 11=binary_blocked(file), 12=empty
+  "$POWERSHELL" -NoProfile -Command "
+    Add-Type -AssemblyName System.Windows.Forms
+    \$cb = [System.Windows.Forms.Clipboard]
+    \$detectOnly = [bool]::Parse('$detect_only')
+    if (\$cb::ContainsImage()) {
+      if (\$detectOnly) { exit 10 }
+      Add-Type -AssemblyName System.Drawing
+      \$img = \$cb::GetImage()
+      \$ms = New-Object System.IO.MemoryStream
+      \$img.Save(\$ms, [System.Drawing.Imaging.ImageFormat]::Png)
+      \$bytes = \$ms.ToArray()
+      \$ms.Close()
+      [Console]::OpenStandardOutput().Write(\$bytes, 0, \$bytes.Length)
+    } elseif (\$cb::ContainsFileDropList()) {
+      if (\$detectOnly) { exit 11 }
+      \$files = \$cb::GetFileDropList()
+      foreach (\$f in \$files) {
+        \$bytes = [System.IO.File]::ReadAllBytes(\$f)
+        [Console]::OpenStandardOutput().Write(\$bytes, 0, \$bytes.Length)
+      }
+    } elseif (\$cb::ContainsText()) {
+      [Console]::Write(\$cb::GetText())
+    } else {
+      exit 12
+    }
+  " && rc=0 || rc=$?
+  case $rc in
+    0)  exit 0 ;;
+    10) printf 'p: clipboard contains image data, use -f to force output or redirect to a file\n' >&2; exit 1 ;;
+    11) printf 'p: clipboard contains file, use -f to force output or redirect to a file\n' >&2; exit 1 ;;
+    12) printf 'p: clipboard is empty\n' >&2; exit 1 ;;
+    *)  exit "$rc" ;;
+  esac
 fi
 
 printf 'p: clipboard backend unavailable\n' >&2

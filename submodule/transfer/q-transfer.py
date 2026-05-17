@@ -9,10 +9,14 @@ q-transfer - 文件上传客户端
 """
 
 import argparse
+import mimetypes
 import os
 import platform
+import subprocess
 import sys
+import tempfile
 import time
+import uuid
 import zlib
 import requests
 from tqdm import tqdm
@@ -303,13 +307,13 @@ class Uploader:
     def should_skip_gzip(file_path):
         return os.path.splitext(file_path)[1].lower() in TransferConfig.GZIP_SKIP_EXTENSIONS
 
-    def upload(self, file_path, qrcode=True, use_gzip=True, gzip_level=1):
+    def upload(self, file_path, qrcode=True, use_gzip=True, gzip_level=1, filename=None):
         """上传单个文件"""
         # 确保已授权
         if not self.auth.ensure_authorized():
             return False
 
-        filename = os.path.basename(file_path)
+        filename = filename or os.path.basename(file_path)
         file_size = os.stat(file_path).st_size
 
         headers = {
@@ -410,6 +414,8 @@ def main():
   q-transfer -r http://192.168.1.3:8000    # 注册授权
   q-transfer file.txt                      # 上传文件（默认启用 gzip）
   q-transfer --no-gzip image.png           # 禁用 gzip 上传
+  cat data | q-transfer -n file.txt         # 管道输入并指定文件名
+  p -f | q-transfer -n screenshot.png       # 剪切板图片上传
         '''
     )
     parser.add_argument('-r', '--register', metavar='HOST',
@@ -418,6 +424,8 @@ def main():
                         help='注销指定服务器的设备')
     parser.add_argument('files', metavar='file', type=str, nargs='*',
                         help='要上传的文件')
+    parser.add_argument('-n', '--name', metavar='NAME',
+                        help='管道输入时指定上传文件名')
     parser.add_argument('-y', '--yes', action='store_true',
                         help='跳过确认')
     parser.add_argument('--no-gzip', action='store_true',
@@ -445,6 +453,32 @@ def main():
     # 优先使用环境变量，其次是默认值
     host = get_default_host()
 
+    # 处理管道输入
+    tmp_file = None
+    if not sys.stdin.isatty():
+        if args.name:
+            filename = os.path.basename(args.name)
+            tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='_' + filename)
+            tmp_file.write(sys.stdin.buffer.read())
+            tmp_file.close()
+        else:
+            # 先写入临时文件，再用 file 命令猜测类型
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            tmp_file.write(sys.stdin.buffer.read())
+            tmp_file.close()
+            mime = subprocess.run(['file', '--mime-type', '-b', tmp_file.name],
+                           capture_output=True, text=True).stdout.strip()
+            ext = mimetypes.guess_extension(mime) or ''
+            if ext == '.jpeg':
+                ext = '.jpg'
+            filename = uuid.uuid4().hex[:8] + ext
+            # 重命名临时文件，使路径和上传文件名一致
+            new_path = os.path.join(os.path.dirname(tmp_file.name), filename)
+            os.rename(tmp_file.name, new_path)
+            tmp_file.name = new_path
+        args.files = [tmp_file.name]
+        args._pipe_filename = filename
+
     # 检查文件
     if not args.files:
         parser.print_help()
@@ -453,8 +487,8 @@ def main():
     if not Uploader.check_and_print_files_size(args.files):
         return
 
-    # 确认上传
-    if not args.yes:
+    # 确认上传（管道模式跳过确认）
+    if not args.yes and tmp_file is None:
         try:
             input(f'\n按 Enter 确认上传到 {host}')
         except KeyboardInterrupt:
@@ -464,8 +498,14 @@ def main():
     # 上传文件
     uploader = Uploader(host)
     use_gzip = not args.no_gzip
-    for f in args.files:
-        uploader.upload(f, qrcode=True, use_gzip=use_gzip, gzip_level=args.gzip_level)
+    pipe_filename = getattr(args, '_pipe_filename', None)
+    try:
+        for f in args.files:
+            uploader.upload(f, qrcode=True, use_gzip=use_gzip, gzip_level=args.gzip_level,
+                            filename=pipe_filename)
+    finally:
+        if tmp_file is not None:
+            os.unlink(tmp_file.name)
 
 
 if __name__ == "__main__":
