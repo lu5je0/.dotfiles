@@ -1,8 +1,5 @@
 #!/bin/bash
-# DESC: link gitconfig (Windows side symlink)
-# CHECK: /mnt/c/Users/lu5je0/.gitconfig
 
-WIN_HOME="${WIN_HOME:-/mnt/c/Users/lu5je0}"
 TARGET="$WIN_HOME/.gitconfig"
 
 if [ -e "$TARGET" ]; then
@@ -13,4 +10,4 @@ fi
 /mnt/c/Windows/System32/cmd.exe \
   /c sudo mklink \
   "$(wslpath -w "$TARGET")" \
-  "$(wslpath -w "$WIN_HOME/.dotfiles/win/wsl2/gitconfig")"
+  "$(wslpath -w "$DOTFILES_DIR/win/wsl2/gitconfig")"

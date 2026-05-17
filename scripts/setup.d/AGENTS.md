@@ -2,71 +2,68 @@
 
 ## 概览
 
-`scripts/setup.sh` 是 dotfiles 安装入口，提供 TUI 多选菜单，按模块执行安装。模块按平台分目录存放：
+`setup.sh`（仓库根目录）是 dotfiles 安装入口，提供 TUI 多选菜单，按模块执行安装。
 
-- `modules/unix/` — macOS / Linux / WSL（从 WSL 内部视角）
-- `modules/win/` — WSL 环境且 dotfiles 位于 `/mnt/c/` 时，操作 Windows 侧文件
+模块按平台分目录存放在 `scripts/setup.d/modules/` 下：
+
+- `unix/` — macOS / Linux / WSL（从 WSL 内部视角）
+- `win/` — WSL 环境且 dotfiles 位于 `/mnt/c/` 时，操作 Windows 侧文件
 
 平台自动识别：WSL + `DOTFILES_DIR` 在 `/mnt/c/*` 时加载 `win/`，否则加载 `unix/`。
 
-## 模块文件约定
+## modules.conf
 
-每个模块是独立的 bash 脚本，文件名格式 `<数字>-<名称>.sh`，数字决定排序。
+每个平台目录下有一个 `modules.conf`，INI 风格，声明所有模块。每个 `[section]` 是一个模块。
 
-### 必须包含的注释头
+### LINK 模块
 
-```bash
-#!/bin/bash
-# DESC: <一句话描述，显示在 TUI 菜单中>
-# CHECK: <检测路径>
+纯 symlink，无需 .sh 脚本：
+
+```ini
+[kitty]
+link = kitty -> ~/.config/kitty
 ```
 
-- `# DESC:` — 必填。TUI 菜单中显示的模块描述。
-- `# CHECK: <path>` — 用于 symlink 检测。路径存在且是指向 `$DOTFILES_DIR` 的 symlink → 显示 `(installed)`；路径存在但不是 dotfiles symlink → 显示 `(conflict)`；路径不存在 → 无标记。支持 `~` 展开。
-- `# CHECK_EXISTS: <path>` — 仅检测路径是否存在（用于 `cp` 等非 symlink 安装方式）。存在 → `(installed)`，不存在 → 无标记。
+- `desc` 可选，省略时自动生成 `link ./<source> -> <target>`
+- check 自动从 target 推导（symlink 指向 dotfiles → installed）
+- setup.sh 自动处理 mkdir、ln -s、skip
 
-`# CHECK:` 和 `# CHECK_EXISTS:` 二选一，没有则 TUI 不显示状态。
+### SCRIPT 模块
 
-### 模块编写规则
+复杂逻辑（多文件、cp、下载等），指向同目录下的 .sh 脚本：
 
-- 模块由 `bash "$module_file"` 执行，运行在子 shell 中。
-- `$DOTFILES_DIR` 由父脚本 export，模块内可直接使用，也应提供 fallback：`DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"`。
-- 退出码 `0` 表示成功，非零表示失败，父脚本会据此打印 OK/FAIL。
-- 如果目标已存在，通常 `echo "skip: ..."` 并 `exit 0`。
-- unix 模块一般用 `ln -s` 创建 symlink，win 模块通过 `cmd.exe /c sudo mklink` 创建 Windows 侧 symlink。
+```ini
+[termux]
+desc = link termux config (~/.config/termux) + download Nerd Font
+script = termux.sh
+check = ~/.config/termux
+```
+
+- `desc` 必填
+- `check = <path>` — symlink 检测（指向 dotfiles → installed，否则 → conflict）
+- `check_exists = <path>` — 仅存在性检测（用于 cp 模式）
+- `check` 和 `check_exists` 二选一，不写则无状态显示
+- 路径支持 `~` 和 `$WIN_HOME` 等变量展开
+
+## 脚本编写规则
+
+- 由 `bash "$script"` 执行，运行在子 shell
+- `$DOTFILES_DIR` 和 `$WIN_HOME`（win 模式）由 setup.sh export
+- 退出码 `0` 成功，非零失败
+- 目标已存在时 `echo "skip: ..."` 并 `exit 0`
+- 脚本内不需要 `# DESC:` 或 `# CHECK:` 注释，这些信息在 conf 中声明
 
 ## 添加新模块
 
-1. 在对应平台目录下创建 `<序号>-<名称>.sh`。
-2. 写入 `#!/bin/bash`、`# DESC:` 和 `# CHECK:`（或 `# CHECK_EXISTS:`）。
-3. 实现安装逻辑，处理目标已存在的情况。
+**纯 symlink**：在 `modules.conf` 加一个 section，写 `link = ...` 即可。
 
-示例（symlink 模式）：
+**复杂逻辑**：
+1. 在 `modules.conf` 加 section，写 `desc`、`script`、`check`/`check_exists`
+2. 创建对应 .sh 脚本，实现安装逻辑
 
-```bash
-#!/bin/bash
-# DESC: link foo config (~/.config/foo)?
-# CHECK: ~/.config/foo
+## TUI 功能
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-TARGET="$HOME/.config/foo"
-
-if [[ -e "$TARGET" ]]; then
-  echo "skip: $TARGET exists"
-  exit 0
-fi
-
-mkdir -p "$HOME/.config"
-ln -s "$DOTFILES_DIR/foo" "$TARGET"
-```
-
-示例（copy 模式）：
-
-```bash
-#!/bin/bash
-# DESC: copy bar config (~/.bar)?
-# CHECK_EXISTS: ~/.bar
-
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
-cp -i "$DOTFILES_DIR/bar" "$HOME/.bar"
-```
+- 状态徽标：`(installed)` 绿色、`(conflict)` 黄色
+- `/` 搜索，`n` 跳转下一个匹配（大小写不敏感）
+- 执行完成后自动刷新状态，显示 Final Status 汇总
+- 底部显示选中计数 `(N/M selected)`

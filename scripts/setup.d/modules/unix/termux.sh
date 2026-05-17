@@ -1,6 +1,4 @@
 #!/bin/bash
-# DESC: termux config (~/.config/termux)?
-# CHECK: ~/.config/termux
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET="$HOME/.config/termux"
@@ -15,7 +13,7 @@ fi
 TERMUX_FONT_URL="https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf"
 TERMUX_FONT_PATH="$HOME/.termux/font.ttf"
 
-mkdir -p "$TERMUX_HOME"
+mkdir -p "$HOME/.termux"
 if [[ -e "$TERMUX_FONT_PATH" ]]; then
   echo "skip: $TERMUX_FONT_PATH exists"
 else

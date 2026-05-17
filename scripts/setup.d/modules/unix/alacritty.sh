@@ -1,6 +1,4 @@
 #!/bin/bash
-# DESC: link Alacritty config (~/.config/alacritty)?
-# CHECK: ~/.config/alacritty/alacritty.toml
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 TARGET_DIR="$HOME/.config/alacritty"
