@@ -190,23 +190,28 @@ update_filter() {
       filtered_indices+=("$i")
     done
   else
+    shopt -s nocasematch
     for i in "${!module_descs[@]}"; do
-      if [[ "${module_descs[$i],,}" == *"${search_query,,}"* ]]; then
+      if [[ "${module_descs[$i]}" == *"${search_query}"* ]]; then
         filtered_indices+=("$i")
       fi
     done
+    shopt -u nocasematch
   fi
 }
 
 render_menu() {
-  printf "\033[2J\033[H"
-  title "Dotfiles Setup"
-  printf "%b\n" "Select modules to run  ${C_DIM}($(count_selected)/$total selected)${C_RESET}"
-  printf "%b\n" "${C_DIM}j/k move, Space toggle, / search, Enter run, q quit${C_RESET}"
-  echo
+  local buf=""
+  buf+="\033[H"
+  buf+="${C_DIM}------------------------------------------------------------${C_RESET}\n"
+  buf+="${C_BOLD}${C_CYAN}Dotfiles Setup${C_RESET}\n"
+  buf+="${C_DIM}------------------------------------------------------------${C_RESET}\n"
+  buf+="Select modules to run  ${C_DIM}($(count_selected)/$total selected)${C_RESET}\n"
+  buf+="${C_DIM}j/k move, Space toggle, / search, Enter run, q quit${C_RESET}\n"
+  buf+="\n"
   local fi_total="${#filtered_indices[@]}"
   if [ "$fi_total" -eq 0 ]; then
-    printf "%b\n" "  ${C_DIM}(no matches)${C_RESET}"
+    buf+="  ${C_DIM}(no matches)${C_RESET}\n"
   else
     for fi_idx in "${!filtered_indices[@]}"; do
       local i="${filtered_indices[$fi_idx]}"
@@ -226,36 +231,35 @@ render_menu() {
       fi
 
       if [ "$fi_idx" -eq "$cursor" ]; then
-        printf "%b\n" "${pointer}${marker} ${C_BOLD}${module_descs[$i]}${C_RESET}${status_badge}"
+        buf+="${pointer}${marker} ${C_BOLD}${module_descs[$i]}${C_RESET}${status_badge}\n"
       else
-        printf "%b\n" "${pointer}${marker} ${module_descs[$i]}${status_badge}"
+        buf+="${pointer}${marker} ${module_descs[$i]}${status_badge}\n"
       fi
     done
   fi
-  echo
+  buf+="\n"
   if (( search_mode )); then
-    printf "%b" "${C_CYAN}> ${C_RESET}${search_query}"
+    buf+="${C_CYAN}> ${C_RESET}${search_query}"
   else
-    line
+    buf+="${C_DIM}------------------------------------------------------------${C_RESET}\n"
   fi
+  buf="${buf//\\n/\\033[K\\n}"
+  buf+="\033[J"
+  printf "%b" "$buf"
 }
 
 read_key() {
   local k
   IFS= read -rsn1 k
-  if [[ "$k" == $'\x1b' ]]; then
-    IFS= read -rsn1 -t 0.01 k2
-    if [[ "$k2" == "[" ]]; then
-      IFS= read -rsn1 -t 0.01 k3
-      echo "ESC[$k3"
-      return
-    fi
-    echo "ESC"
-    return
-  fi
   echo "$k"
 }
 
+cleanup_tui() {
+  printf "\033[?25h\033[?1049l"
+}
+trap cleanup_tui EXIT
+
+printf "\033[?1049h\033[?25l"
 update_filter
 render_menu
 while :; do
@@ -292,16 +296,6 @@ while :; do
           fi
         fi
         ;;
-      "ESC[B")
-        if (( fi_total > 0 )); then
-          cursor=$(( (cursor + 1) % fi_total ))
-        fi
-        ;;
-      "ESC[A")
-        if (( fi_total > 0 )); then
-          cursor=$(( (cursor - 1 + fi_total) % fi_total ))
-        fi
-        ;;
       *)
         if [[ ${#key} -eq 1 ]] && [[ "$key" =~ [[:print:]] ]]; then
           search_query+="$key"
@@ -313,8 +307,8 @@ while :; do
     esac
   else
     case "$key" in
-      "q") exit 0 ;;
-      "") break ;;
+      "q") cleanup_tui; trap - EXIT; exit 0 ;;
+      "") cleanup_tui; trap - EXIT; break ;;
       " ")
         if (( fi_total > 0 )); then
           real_idx="${filtered_indices[$cursor]}"
@@ -330,12 +324,12 @@ while :; do
         search_query=""
         cursor=0
         ;;
-      "j"|"ESC[B")
+      "j")
         if (( fi_total > 0 )); then
           cursor=$(( (cursor + 1) % fi_total ))
         fi
         ;;
-      "k"|"ESC[A")
+      "k")
         if (( fi_total > 0 )); then
           cursor=$(( (cursor - 1 + fi_total) % fi_total ))
         fi
