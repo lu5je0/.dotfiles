@@ -45,6 +45,10 @@ local function set_keeper(enable)
 end
 
 local function config_keeper()
+  if vim.env.TERM_PROGRAM == 'Apple_Terminal' or vim.env.TERMINAL_EMULATOR == 'JetBrains-JediTerm' then
+    return
+  end
+
   local ime_control = state.ime_control
   if not ime_control.on_change or not ime_control.should_normalize or not ime_control.keeper then
     return
