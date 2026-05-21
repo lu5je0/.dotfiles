@@ -357,12 +357,6 @@ def main():
         print('Please input a word!')
         return 1
 
-    if is_single_word(word):
-        try:
-            update_history(word)
-        except Exception:
-            pass
-
     allowed_engines = args.engine if args.engine else get_supported_engines()
     engines = build_engines(allowed_engines)
     if not engines:
@@ -380,6 +374,12 @@ def main():
             return 2
         print('未找到该单词')
         return 2
+
+    if is_single_word(word) and result.get('engine') == 'stardict':
+        try:
+            update_history(word)
+        except Exception:
+            pass
 
     if not args.no_say:
         say_result(result)
