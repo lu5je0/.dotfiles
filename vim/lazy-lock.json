@@ -1,6 +1,6 @@
 {
   "HighStr.nvim": { "branch": "main", "commit": "1cb5e030bb16df52c8428b53dc235466a4eb1d01" },
-  "LuaSnip": { "branch": "master", "commit": "a62e1083a3cfe8b6b206e7d3d33a51091df25357" },
+  "LuaSnip": { "branch": "master", "commit": "0abc8f390b278c3b4aabc4c004ac8a088b65cf24" },
   "actions-preview.nvim": { "branch": "master", "commit": "0ac9c2aa3cfc8c885321c0862b50b6b1c3392405" },
   "bigfile.nvim": { "branch": "main", "commit": "33eb067e3d7029ac77e081cfe7c45361887a311a" },
   "blink.cmp": { "branch": "main", "commit": "78336bc89ee5365633bcf754d93df01678b5c08f" },
@@ -15,7 +15,7 @@
   "lazy.nvim": { "branch": "main", "commit": "306a05526ada86a7b30af95c5cc81ffba93fef97" },
   "lazydev.nvim": { "branch": "main", "commit": "ff2cbcba459b637ec3fd165a2be59b7bbaeedf0d" },
   "live-rename.nvim": { "branch": "main", "commit": "3a3cddf23b89a17992f9ca67afc5858077769462" },
-  "lsp_signature.nvim": { "branch": "master", "commit": "f40bcf203812beaf26766ec0bc169a7f429fd730" },
+  "lsp_signature.nvim": { "branch": "master", "commit": "b7ace9ddb1640ce266012a45a672dfdaedfa5ec6" },
   "markdown-preview.nvim": { "branch": "master", "commit": "a923f5fc5ba36a3b17e289dc35dc17f66d0548ee" },
   "mason-lspconfig.nvim": { "branch": "main", "commit": "7b01e2974a47d489bb92f47a41e4c0088ea8f86e" },
   "mason.nvim": { "branch": "main", "commit": "8e921c2b68571e978db5d4d3fef9c9a7f8755473" },

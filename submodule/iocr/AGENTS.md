@@ -27,6 +27,11 @@
 - **系统依赖**: 无额外安装，依赖 Windows 自带 OCR 引擎
 - **PaddleOCR**: 使用最新版 PaddleOCR，并显式选择 `PP-OCRv5_server_det` 与 `PP-OCRv5_server_rec`；依赖较重，模型/缓存目录为 `${XDG_CACHE_HOME:-~/.cache}/paddlex`，CPU 下默认关闭 Paddle 的 MKLDNN 路径以避开当前 oneDNN/PIR 回归
 
+### wxocr
+- **后端**: HTTP 服务，POST `{"image": "<base64 PNG>"}`，期望响应 `{"errcode": 0, "ocr_response": [{"text": ...}, ...]}`
+- **默认 URL**: `http://192.168.1.3:17653/ocr`，可用 `IOCR_WXOCR_URL` 环境变量或 `--wxocr-url` 覆盖
+- **auto 优先级**: 非 macOS 环境下 auto 先尝试 wxocr，失败再回落到 native（Windows OCR）和 paddle
+
 ## 依赖安装
 
 ### macOS
@@ -55,9 +60,10 @@ uv run oo
 ```
 
 常用参数：
-- `--engine auto|native|paddle`
+- `--engine auto|native|paddle|wxocr`
 - `--stdout` 只输出 OCR 文本，不打开 nvim
 - `--paddle-device` 指定 PaddleOCR 设备，例如 `cpu` 或 `gpu:0`
+- `--wxocr-url` 指定 wxocr 服务地址（默认 `http://192.168.1.3:17653/ocr`，也可用 `IOCR_WXOCR_URL` 环境变量）
 
 ## 补全
 zsh 补全文件位于 `../../zsh/completions/_oo`，修改 CLI 参数时需同步更新。

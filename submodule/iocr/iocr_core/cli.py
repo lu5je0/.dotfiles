@@ -25,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help=(
             "OCR engine: auto, native (macOS Vision or Windows OCR), paddle "
-            "(PP-OCRv5 server)"
+            "(PP-OCRv5 server), wxocr (HTTP service)"
         ),
     )
     parser.add_argument(
@@ -42,6 +42,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--paddle-device",
         help="PaddleOCR device, e.g. cpu, gpu, or gpu:0",
     )
+    parser.add_argument(
+        "--wxocr-url",
+        help="wxocr endpoint URL (overrides IOCR_WXOCR_URL env var)",
+    )
     return parser
 
 
@@ -54,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         backend = create_ocr_backend(
             args.engine,
             paddle_device=args.paddle_device,
+            wxocr_url=args.wxocr_url,
         )
         text = backend.ocr(image.png_bytes).strip()
         if not text:
