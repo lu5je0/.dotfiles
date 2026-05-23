@@ -533,7 +533,7 @@ function M.show(opts)
     ):wait()
     local default_limit = config.get('project_log', 'max_commits') or 1000
     if count_result.code == 0 then
-      local count = tonumber((count_result.stdout or ''):gsub('%s+$', '')) or 0
+      local count = tonumber(((count_result.stdout or ''):gsub('%s+$', ''))) or 0
       if count + 1 <= default_limit then
         state.commit_limit = default_limit
       else
