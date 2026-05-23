@@ -9,8 +9,7 @@ local selection = require('lu5je0.ext.git.blame.selection')
 
 local M = {}
 
-local AUGROUP_NAME = 'Lu5je0GitBlame'
-local DEFAULT_MAX_BLAME_LENGTH = 19
+local AUGROUP_NAME = 'git_blame'
 
 local is_setup = false
 local attached = {}
@@ -179,7 +178,7 @@ function M.toggle()
       if resolved then return end
       resolved = true
       if not is_enabled(bufnr) then return end
-      vim.b[bufnr].max_blame_length = vim.b[bufnr].max_blame_length or DEFAULT_MAX_BLAME_LENGTH
+      vim.b[bufnr].max_blame_length = vim.b[bufnr].max_blame_length or cache.max_width(bufnr)
       local view = current_view()
       if view and view.bufnr == bufnr then
         render.redraw(bufnr, view.topline, view.botline)
