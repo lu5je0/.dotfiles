@@ -5,6 +5,31 @@ local M = {}
 
 local ns_id = vim.api.nvim_create_namespace('git_status')
 
+-- XY letter colors: lazygit semantics, kept visually independent from the
+-- filename color so the two layers read separately. Pick groups that lean
+-- yellow/red/green in most themes.
+vim.api.nvim_set_hl(0, 'GitChangesAdd',       { link = '@diff.plus',  default = true })
+vim.api.nvim_set_hl(0, 'GitChangesModify',    { link = 'WarningMsg',  default = true })
+vim.api.nvim_set_hl(0, 'GitChangesRename',    { link = 'WarningMsg',  default = true })
+vim.api.nvim_set_hl(0, 'GitChangesDelete',    { link = '@diff.minus', default = true })
+vim.api.nvim_set_hl(0, 'GitChangesCopy',      { link = 'Special',     default = true })
+vim.api.nvim_set_hl(0, 'GitChangesType',      { link = 'Type',        default = true })
+vim.api.nvim_set_hl(0, 'GitChangesUntracked', { link = '@diff.minus', default = true })
+vim.api.nvim_set_hl(0, 'GitChangesUnmerged',  { link = 'ErrorMsg',    default = true })
+vim.api.nvim_set_hl(0, 'GitChangesIgnored',   { link = 'Comment',     default = true })
+vim.api.nvim_set_hl(0, 'GitChangesEmpty',     { link = 'Comment',     default = true })
+
+-- File-name colors mirror IntelliJ Darcula's FILESTATUS_* semantics, but link
+-- to the active colorscheme so they adapt to user themes.
+vim.api.nvim_set_hl(0, 'GitFileStatusAdded',     { link = '@diff.plus',  default = true })
+vim.api.nvim_set_hl(0, 'GitFileStatusModified',  { link = '@diff.delta', default = true })
+vim.api.nvim_set_hl(0, 'GitFileStatusRenamed',   { link = 'Special',     default = true })
+vim.api.nvim_set_hl(0, 'GitFileStatusCopied',    { link = '@diff.plus',  default = true })
+vim.api.nvim_set_hl(0, 'GitFileStatusDeleted',   { link = 'Comment',     default = true })
+vim.api.nvim_set_hl(0, 'GitFileStatusMerged',    { link = 'Constant',    default = true })
+vim.api.nvim_set_hl(0, 'GitFileStatusUntracked', { link = '@diff.minus', default = true })
+vim.api.nvim_set_hl(0, 'GitFileStatusConflict',  { link = 'ErrorMsg',    default = true })
+
 local fold_icon_hl = 'Number'
 
 local function fold_icon(expanded)
@@ -12,16 +37,18 @@ local function fold_icon(expanded)
 end
 
 M.section_labels = {
+  changes = 'Changes',
   untracked = 'Untracked',
   unstaged = 'Unstaged',
   staged = 'Staged',
 }
 
-M.section_order = { 'untracked', 'unstaged', 'staged' }
+M.section_order = { 'changes', 'untracked', 'unstaged', 'staged' }
 
 -- Fugitive-style per-section status highlights:
 --   Untracked -> StorageClass, Unstaged -> Structure, Staged -> Typedef, Stash -> Type
 local section_status_hl = {
+  changes = 'Identifier',
   untracked = 'StorageClass',
   unstaged = 'Structure',
   staged = 'Typedef',
@@ -35,8 +62,73 @@ local function make_status_hl_fn(section)
   end
 end
 
+M.changes_status_width = 4
+
+local function changes_status_text(file)
+  local xy = file.xy
+  if xy and #xy >= 2 then
+    return '[' .. xy .. ']'
+  end
+  return '[' .. (file.status or ' '):sub(1, 1) .. ' ]'
+end
+
+local LETTER_HL = {
+  A = 'GitChangesAdd',
+  M = 'GitChangesModify',
+  D = 'GitChangesDelete',
+  R = 'GitChangesRename',
+  C = 'GitChangesCopy',
+  T = 'GitChangesType',
+  U = 'GitChangesUnmerged',
+  ['?'] = 'GitChangesUntracked',
+  ['!'] = 'GitChangesIgnored',
+}
+
+local function changes_per_char_hl(file, idx, ch)
+  if ch == '[' or ch == ']' then
+    return 'GitChangesEmpty'
+  end
+  if ch == ' ' then
+    return 'GitChangesEmpty'
+  end
+  local xy = file.xy or ''
+  local x = xy:sub(1, 1)
+  local y = xy:sub(2, 2)
+  if x == 'U' or y == 'U' or (x == y and (x == 'A' or x == 'D')) then
+    return 'GitChangesUnmerged'
+  end
+  return LETTER_HL[ch] or 'GitChangesModify'
+end
+
+local function changes_name_hl(file)
+  local xy = file.xy or ''
+  local x = xy:sub(1, 1)
+  local y = xy:sub(2, 2)
+  if x == '?' then
+    return 'GitFileStatusUntracked'
+  end
+  if x == 'U' or y == 'U' or (x == y and (x == 'A' or x == 'D')) then
+    return 'GitFileStatusConflict'
+  end
+  -- Pick the more meaningful side for the filename color: prefer the staged
+  -- letter when present, otherwise the unstaged letter. This matches IDEA's
+  -- "what is the dominant change" intuition.
+  local letter = (x ~= ' ' and x) or (y ~= ' ' and y) or ''
+  if letter == 'A' then return 'GitFileStatusAdded' end
+  if letter == 'D' then return 'GitFileStatusDeleted' end
+  if letter == 'R' then return 'GitFileStatusRenamed' end
+  if letter == 'C' then return 'GitFileStatusCopied' end
+  return 'GitFileStatusModified'
+end
+
 function M.make_tree_opts(section)
-  return { status_hl_fn = make_status_hl_fn(section) }
+  local opts = { status_hl_fn = make_status_hl_fn(section) }
+  if section == 'changes' then
+    opts.status_text_fn = changes_status_text
+    opts.status_per_char_hl_fn = changes_per_char_hl
+    opts.name_hl_fn = changes_name_hl
+  end
+  return opts
 end
 
 function M.render(state)
@@ -78,7 +170,7 @@ function M.render(state)
 
     if commit.expanded then
       common_ui.append_tree_entries(lines, items, commit, commit_idx, {
-        tree_opts = { status_hl_fn = make_status_hl_fn(commit.section) },
+        tree_opts = M.make_tree_opts(commit.section),
       })
     end
 
@@ -116,7 +208,7 @@ function M.render(state)
         if commit.expanded then
           common_ui.append_tree_entries(lines, items, commit, commit_idx, {
             prefix = child_prefix,
-            tree_opts = { status_hl_fn = make_status_hl_fn('stash') },
+            tree_opts = M.make_tree_opts('stash'),
           })
         end
       end
@@ -279,9 +371,20 @@ function M.update_statusline(state, loading)
     vim.wo[state.log_win].statusline = statusline.log_count('Git Status', 0, 'changes', { loading = true })
   else
     local total = 0
+    local changes_section
     for _, c in ipairs(state.commits) do
-      if c.section ~= 'stash' then
-        total = total + #c.files
+      if c.section == 'changes' then
+        changes_section = c
+        break
+      end
+    end
+    if changes_section then
+      total = #changes_section.files
+    else
+      for _, c in ipairs(state.commits) do
+        if c.section ~= 'stash' then
+          total = total + #c.files
+        end
       end
     end
     vim.wo[state.log_win].statusline = statusline.log_count('Git Status', total, 'changes')

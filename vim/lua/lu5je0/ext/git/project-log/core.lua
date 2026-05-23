@@ -177,6 +177,7 @@ function M.parse_status_grouped(stdout)
   local staged = {}
   local unstaged = {}
   local untracked = {}
+  local changes = {}
   local entries = vim.split(stdout or '', '\0', { plain = true })
   local idx = 1
   while idx <= #entries do
@@ -196,6 +197,14 @@ function M.parse_status_grouped(stdout)
       if path and path ~= '' then
         if x == '?' then
           untracked[#untracked + 1] = { status = '??', old_path = old_path, path = path }
+          changes[#changes + 1] = {
+            status = '??',
+            xy = '??',
+            old_path = old_path,
+            path = path,
+            x = '?',
+            y = '?',
+          }
         else
           if x ~= ' ' then
             staged[#staged + 1] = { status = x, old_path = old_path, path = path }
@@ -203,11 +212,20 @@ function M.parse_status_grouped(stdout)
           if y ~= ' ' then
             unstaged[#unstaged + 1] = { status = y, old_path = old_path, path = path }
           end
+          local primary = x ~= ' ' and x or y
+          changes[#changes + 1] = {
+            status = primary,
+            xy = xy,
+            old_path = old_path,
+            path = path,
+            x = x,
+            y = y,
+          }
         end
       end
     end
   end
-  return { staged = staged, unstaged = unstaged, untracked = untracked }
+  return { staged = staged, unstaged = unstaged, untracked = untracked, changes = changes }
 end
 
 function M.parse_name_status(stdout)

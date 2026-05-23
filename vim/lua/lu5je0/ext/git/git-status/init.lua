@@ -102,6 +102,38 @@ local function get_section_and_file(item)
   return section, file
 end
 
+-- The synthetic `changes` section bundles staged/unstaged/untracked rows
+-- together. For diff preview we still want the right backend per file,
+-- so derive an effective section view based on the file's xy.
+--   purpose == 'diff' : in Changes the diff should always show HEAD↔worktree
+--                       (or untracked → empty↔worktree); ignore staged/unstaged
+--                       split so MM rows aren't reduced to "post-stage delta"
+--   purpose == 'op'   : per-file backend for stage/discard (untracked /
+--                       unstaged / staged)
+local function effective_section_for_file(section, file, purpose)
+  if not section or section.section ~= 'changes' or not file then
+    return section
+  end
+  purpose = purpose or 'op'
+  local backend
+  if file.x == '?' then
+    backend = 'untracked'
+  elseif purpose == 'diff' then
+    backend = 'worktree'
+  elseif file.y and file.y ~= ' ' then
+    backend = 'unstaged'
+  else
+    backend = 'staged'
+  end
+  return {
+    section = backend,
+    files = section.files,
+    expanded = section.expanded,
+    expanded_dirs = section.expanded_dirs,
+    tree_opts = section.tree_opts,
+  }
+end
+
 local function get_non_stash_section(item)
   if not item or item.stash then
     return nil
@@ -127,24 +159,75 @@ local function show_file_diff(auto_preview)
   if not section or not file then
     return false
   end
-  local preview_key = diff.make_preview_key(state, section, file)
+  local effective = effective_section_for_file(section, file, 'diff')
+  local preview_key = diff.make_preview_key(state, effective, file)
   if state.preview_key == preview_key then
     return true
   end
   state.preview_key = preview_key
   if state.diff_mode == 'dual' then
-    diff.show_dual(state, section, file)
+    diff.show_dual(state, effective, file)
   else
-    diff.show_single(state, section, file)
+    diff.show_single(state, effective, file)
   end
   return true
 end
 
 -- ── actions ──────────────────────────────────────────────
 
-local function discard_log(msg)
-  local log_line = string.format('%s %s', os.date('%Y-%m-%d %H:%M:%S'), msg)
-  vim.fn.writefile({ log_line }, vim.fn.stdpath('log') .. '/git-status.log', 'a')
+local log_path = vim.fn.stdpath('log') .. '/git-status.log'
+local batch_counter = 0
+
+local function log_write(line)
+  vim.fn.writefile({ line }, log_path, 'a')
+end
+
+local function log_timestamp()
+  return os.date('%Y-%m-%d %H:%M:%S')
+end
+
+local function log_new_batch_id()
+  batch_counter = batch_counter + 1
+  return string.format('%08x', (os.time() * 256 + batch_counter) % 0xffffffff)
+end
+
+local function _log_batch_begin(id, action, kind, count)
+  local files_word = count == 1 and 'file' or 'files'
+  log_write(string.format(
+    '%s [%s] BEGIN %s %s (%d %s)',
+    log_timestamp(), id, action, kind, count, files_word
+  ))
+end
+
+local function _log_batch_line(id, msg)
+  log_write(string.format('%s [%s]   %s', log_timestamp(), id, msg))
+end
+
+local function _log_batch_end(id, action, ok_count, total)
+  local status
+  if ok_count == total then
+    status = 'ok'
+  elseif ok_count == 0 then
+    status = 'fail'
+  else
+    status = 'partial'
+  end
+  log_write(string.format(
+    '%s [%s] END %s %s %d/%d',
+    log_timestamp(), id, action, status, ok_count, total
+  ))
+end
+
+-- One-call batch: log_batch('reverted', 'unstaged', n, function(write) ... end)
+-- The callback receives a `write(msg)` to emit body lines and may return an
+-- ok_count to mark a partial / fail status; nil means full success.
+local function log_batch(action, kind, count, body_fn)
+  local id = log_new_batch_id()
+  _log_batch_begin(id, action, kind, count)
+  local ok_count = body_fn(function(msg)
+    _log_batch_line(id, msg)
+  end)
+  _log_batch_end(id, action, ok_count or count, count)
 end
 
 local function git_path_args(...)
@@ -375,12 +458,30 @@ local function stage_section()
   if not section then
     return
   end
-  if section.section ~= 'untracked' and section.section ~= 'unstaged' then
+
+  local stage_files
+  if section.section == 'changes' then
+    stage_files = {}
+    for _, f in ipairs(section.files or {}) do
+      local x = f.x
+      local y = f.y
+      -- Untracked or any unstaged side change wants `git add`.
+      if x == '?' or (y and y ~= ' ' and y ~= '?') then
+        stage_files[#stage_files + 1] = f
+      end
+    end
+    if #stage_files == 0 then
+      vim.notify('Already staged', vim.log.levels.INFO)
+      return
+    end
+  elseif section.section == 'untracked' or section.section == 'unstaged' then
+    stage_files = section.files
+  else
     vim.notify('Already staged', vim.log.levels.INFO)
     return
   end
 
-  local args = append_paths(git_path_args('git', 'add'), section.files)
+  local args = append_paths(git_path_args('git', 'add'), stage_files)
   local count = path_count(args)
   if count == 0 then
     return
@@ -388,8 +489,22 @@ local function stage_section()
   if not run_git(args, 'Failed to stage section: ') then
     return
   end
-  push_undo('stage section', { { type = 'reset_paths', paths = file_paths(section.files) } })
-  vim.notify(string.format('Staged %d files', count), vim.log.levels.INFO)
+  push_undo('staged', { { type = 'reset_paths', paths = file_paths(stage_files) } })
+  log_batch('staged', section.section, count, function(write)
+    for _, file in ipairs(stage_files) do
+      local abs_path = state.repo_root .. '/' .. file.path
+      write(string.format('Staged %s. Restore: git reset HEAD -- %s', abs_path, abs_path))
+    end
+  end)
+  local msg
+  if section.section == 'untracked' then
+    msg = string.format('Tracked %d files', count)
+  elseif section.section == 'changes' then
+    msg = string.format('Staged %d changes', count)
+  else
+    msg = string.format('Staged %d files', count)
+  end
+  vim.notify(msg, vim.log.levels.INFO)
   reload_status()
 end
 
@@ -425,14 +540,17 @@ local function discard_section()
       return true
     end
     local restore_files = {}
-    for i, file in ipairs(files) do
-      local abs_path = abs_paths[i]
-      local blob = blobs[i]
-      restore_files[#restore_files + 1] = { path = file.path, blob = blob, expected_absent = true }
-      os.remove(abs_path)
-      discard_log(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
-    end
-    push_undo('discard section', { { type = 'restore_blobs', files = restore_files } })
+    log_batch('removed_untracked', 'untracked', #files, function(write)
+      for i, file in ipairs(files) do
+        local abs_path = abs_paths[i]
+        local blob = blobs[i]
+        restore_files[#restore_files + 1] = { path = file.path, blob = blob, expected_absent = true }
+        os.remove(abs_path)
+        write(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
+      end
+    end)
+    push_undo('removed untracked', { { type = 'restore_blobs', files = restore_files } })
+    vim.notify(string.format('Removed %d untracked files', #files), vim.log.levels.INFO)
   elseif section.section == 'unstaged' then
     -- batch hash-object -w for all existing files (save blobs for undo)
     local existing_files = {}
@@ -482,38 +600,47 @@ local function discard_section()
       idx = idx + 1
     end
 
-    local restore_files = {}
-    for i, file in ipairs(files) do
-      local abs_path = state.repo_root .. '/' .. file.path
-      local blob = pre_blobs[i]
-      local expected_blob = expected_blobs[i]
-      if not expected_blob or expected_blob == '' then
+    for i = 1, #files do
+      local b = expected_blobs[i]
+      if not b or b == '' then
         return true
       end
-      if blob then
-        restore_files[#restore_files + 1] = { path = file.path, blob = blob, expected_blob = expected_blob }
-        discard_log(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
-      else
-        restore_files[#restore_files + 1] = { path = file.path, delete = true, expected_blob = expected_blob }
-        discard_log(string.format('Restored %s from index. Undo: delete %s', abs_path, abs_path))
-      end
     end
-    push_undo('discard section', { { type = 'restore_blobs', files = restore_files } })
+
+    local restore_files = {}
+    log_batch('reverted', 'unstaged', #files, function(write)
+      for i, file in ipairs(files) do
+        local abs_path = state.repo_root .. '/' .. file.path
+        local blob = pre_blobs[i]
+        local expected_blob = expected_blobs[i]
+        if blob then
+          restore_files[#restore_files + 1] = { path = file.path, blob = blob, expected_blob = expected_blob }
+          write(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
+        else
+          restore_files[#restore_files + 1] = { path = file.path, delete = true, expected_blob = expected_blob }
+          write(string.format('Restored %s from index. Undo: delete %s', abs_path, abs_path))
+        end
+      end
+    end)
+    push_undo('reverted', { { type = 'restore_blobs', files = restore_files } })
+    vim.notify(string.format('Reverted %d files', #files), vim.log.levels.INFO)
   elseif section.section == 'staged' then
     local args = append_paths(git_path_args('git', 'reset', 'HEAD'), files)
     if not run_git(args, 'Failed to unstage section: ') then
       return true
     end
-    push_undo('discard section', { { type = 'add_paths', paths = file_paths(files) } })
-    for _, file in ipairs(files) do
-      local abs_path = state.repo_root .. '/' .. file.path
-      discard_log(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
-    end
+    push_undo('unstaged', { { type = 'add_paths', paths = file_paths(files) } })
+    log_batch('unstaged', 'staged', #files, function(write)
+      for _, file in ipairs(files) do
+        local abs_path = state.repo_root .. '/' .. file.path
+        write(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
+      end
+    end)
+    vim.notify(string.format('Unstaged %d files', #files), vim.log.levels.INFO)
   else
     return false
   end
 
-  vim.notify(string.format('Discarded %d %s files', #files, section.section), vim.log.levels.INFO)
   reload_status()
   return true
 end
@@ -543,9 +670,10 @@ local function discard_change()
     end
     local stash_msg = commit.stash_label:sub(#commit.stash_ref + 3)
     local restore_cmd = string.format('cd %s && git stash store -m %s %s', vim.fn.shellescape(state.repo_root), vim.fn.shellescape(stash_msg), sha)
-    local notify_msg = string.format('Dropped %s. Restore: %s', commit.stash_ref, restore_cmd)
-    discard_log(notify_msg)
-    push_undo('drop stash', { { type = 'store_stash', sha = sha, message = stash_msg } })
+    log_batch('dropped', 'stash', 1, function(write)
+      write(string.format('Dropped %s. Restore: %s', commit.stash_ref, restore_cmd))
+    end)
+    push_undo('dropped', { { type = 'store_stash', sha = sha, message = stash_msg } })
     vim.notify('Dropped ' .. commit.stash_ref, vim.log.levels.INFO)
     reload_status()
     return
@@ -558,6 +686,7 @@ local function discard_change()
   if not section or not file then
     return
   end
+  section = effective_section_for_file(section, file)
 
   local abs_path = state.repo_root .. '/' .. file.path
 
@@ -567,12 +696,16 @@ local function discard_change()
       return
     end
     os.remove(abs_path)
-    discard_log(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
-    push_undo('discard file', {
+    log_batch('removed_untracked', 'untracked', 1, function(write)
+      write(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
+    end)
+    push_undo('removed untracked', {
       { type = 'restore_blobs', files = { { path = file.path, blob = blob, expected_absent = true } } },
     })
+    vim.notify('Removed untracked ' .. file.path, vim.log.levels.INFO)
   elseif section.section == 'unstaged' then
-    local blob = vim.uv.fs_stat(abs_path) and hash_file(abs_path, true) or nil
+    local existed = vim.uv.fs_stat(abs_path) ~= nil
+    local blob = existed and hash_file(abs_path, true) or nil
     if not run_git({ 'git', 'checkout', '--', file.path }, 'Failed to restore file: ') then
       return
     end
@@ -581,25 +714,33 @@ local function discard_change()
       return
     end
     if blob then
-      discard_log(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
-      push_undo('discard file', {
+      log_batch('reverted', 'unstaged', 1, function(write)
+        write(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
+      end)
+      push_undo('reverted', {
         { type = 'restore_blobs', files = { { path = file.path, blob = blob, expected_blob = expected_blob } } },
       })
+      vim.notify('Reverted ' .. file.path, vim.log.levels.INFO)
     else
-      discard_log(string.format('Restored %s from index. Undo: delete %s', abs_path, abs_path))
-      push_undo('discard file', {
+      log_batch('restored', 'unstaged', 1, function(write)
+        write(string.format('Restored %s from index. Undo: delete %s', abs_path, abs_path))
+      end)
+      push_undo('restored', {
         { type = 'restore_blobs', files = { { path = file.path, delete = true, expected_blob = expected_blob } } },
       })
+      vim.notify('Restored ' .. file.path, vim.log.levels.INFO)
     end
   elseif section.section == 'staged' then
     if not run_git({ 'git', 'reset', 'HEAD', '--', file.path }, 'Failed to unstage file: ') then
       return
     end
-    discard_log(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
-    push_undo('discard file', { { type = 'add_paths', paths = { file.path } } })
+    log_batch('unstaged', 'staged', 1, function(write)
+      write(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
+    end)
+    push_undo('unstaged', { { type = 'add_paths', paths = { file.path } } })
+    vim.notify('Unstaged ' .. file.path, vim.log.levels.INFO)
   end
 
-  vim.notify('Discarded ' .. file.path, vim.log.levels.INFO)
   reload_status()
 end
 
@@ -692,17 +833,21 @@ load_status = function()
 
       local grouped = core.parse_status_grouped(result.stdout or '')
       local commits = {}
+      local has_changes = grouped.changes and #grouped.changes > 0
       for _, key in ipairs(status_ui.section_order) do
         local files = grouped[key]
         if #files > 0 then
+          local default_expanded = key == 'changes' or not has_changes
           local section = {
             section = key,
             files = files,
-            expanded = true,
+            expanded = default_expanded,
             expanded_dirs = {},
             tree_opts = status_ui.make_tree_opts(key),
           }
-          tree.expand_all_dirs(section)
+          if default_expanded then
+            tree.expand_all_dirs(section)
+          end
           commits[#commits + 1] = section
         end
       end
@@ -810,11 +955,18 @@ local function setup_keymaps()
     if not section or not file then
       return
     end
+    section = effective_section_for_file(section, file)
     if section.section == 'untracked' or section.section == 'unstaged' then
       if not run_git({ 'git', 'add', '--', file.path }, 'Failed to stage file: ') then
         return
       end
-      push_undo('stage file', { { type = 'reset_paths', paths = { file.path } } })
+      push_undo('staged', { { type = 'reset_paths', paths = { file.path } } })
+      local abs_path = state.repo_root .. '/' .. file.path
+      log_batch('staged', section.section, 1, function(write)
+        write(string.format('Staged %s. Restore: git reset HEAD -- %s', abs_path, abs_path))
+      end)
+      local verb = section.section == 'untracked' and 'Tracked' or 'Staged'
+      vim.notify(verb .. ' ' .. file.path, vim.log.levels.INFO)
       reload_status()
     end
   end, opts)
@@ -843,7 +995,7 @@ local function setup_keymaps()
     state.preview_key = nil
     show_file_diff(true)
   end, opts)
-  vim.keymap.set('n', 'gf', function()
+  local function open_file_under_cursor()
     local item = item_under_cursor()
     if not item or item.type ~= 'file' then
       return
@@ -869,7 +1021,9 @@ local function setup_keymaps()
       vim.cmd('wincmd p')
     end
     vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
-  end, opts)
+  end
+  vim.keymap.set('n', 'gf', open_file_under_cursor, opts)
+  vim.keymap.set('n', 'e', open_file_under_cursor, opts)
   vim.keymap.set('n', 'Z', function()
     if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
       return
@@ -936,6 +1090,8 @@ function M.show()
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)
   vim.api.nvim_win_set_height(state.log_win, height)
+  vim.wo[state.log_win].cursorline = true
+  vim.wo[state.log_win].cursorlineopt = 'both'
 
   setup_keymaps()
   vim.api.nvim_create_autocmd('BufWipeout', {

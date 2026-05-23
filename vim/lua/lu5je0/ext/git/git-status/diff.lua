@@ -9,6 +9,7 @@ local section_labels = {
   untracked = 'Untracked',
   unstaged = 'Unstaged',
   staged = 'Staged',
+  worktree = 'Diff',
 }
 
 -- ── diff window management ───────────────────────────────
@@ -26,6 +27,7 @@ end
 local function mark_diff_window(win)
   if win and vim.api.nvim_win_is_valid(win) then
     vim.w[win].git_status_diff = true
+    vim.wo[win].cursorline = false
   end
 end
 
@@ -99,6 +101,8 @@ local function dual_revs(section)
     return 'empty', 'work'
   elseif section.section == 'staged' then
     return 'HEAD', 'index'
+  elseif section.section == 'worktree' then
+    return 'HEAD', 'work'
   elseif section.section == 'stash' then
     return section.stash_ref .. '^', section.stash_ref
   else
@@ -168,6 +172,8 @@ function M.show_single(state, section, file)
   local unified = state.diff_changes_only and '--unified=3' or '--unified=999999'
   if section.section == 'staged' then
     args = { 'git', 'diff', '--cached', unified, '--no-ext-diff', '--no-color', '--', file.path }
+  elseif section.section == 'worktree' then
+    args = { 'git', 'diff', 'HEAD', unified, '--no-ext-diff', '--no-color', '--', file.path }
   elseif section.section == 'stash' then
     args = { 'git', 'diff', section.stash_ref .. '^', section.stash_ref, unified, '--no-ext-diff', '--no-color', '--', file.path }
   else
@@ -311,6 +317,15 @@ function M.show_dual(state, section, file)
         end
         maybe_show()
       end)
+    end)
+  elseif section.section == 'worktree' then
+    state.diff_job = load_lines_async(state, 'HEAD', file.path, function(lines)
+      old_lines = lines
+      maybe_show()
+    end)
+    load_worktree_lines(state, file.path, function(lines)
+      new_lines = lines
+      maybe_show()
     end)
   else
     state.diff_job = vim.system({ 'git', 'show', ':' .. file.path }, { text = true, cwd = state.repo_root }, function(result)

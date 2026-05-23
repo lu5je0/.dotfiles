@@ -198,6 +198,7 @@ end
 local function mark_diff_window(win)
   if win and vim.api.nvim_win_is_valid(win) then
     vim.w[win].git_line_log_diff = true
+    vim.wo[win].cursorline = false
   end
 end
 
@@ -524,6 +525,30 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
 
   vim.keymap.set('n', '?', show_help, opts)
   vim.keymap.set('n', '<cr>', '<nop>', opts)
+
+  local function open_source_file()
+    if not state.rel_file or state.rel_file == '' then
+      return
+    end
+    local target_win
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if win ~= state.log_win and not is_tracked_diff_window(win) then
+        local b = vim.api.nvim_win_get_buf(win)
+        if vim.bo[b].buftype == '' then
+          target_win = win
+          break
+        end
+      end
+    end
+    if target_win then
+      vim.api.nvim_set_current_win(target_win)
+    else
+      vim.cmd('wincmd p')
+    end
+    vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. state.rel_file))
+  end
+  vim.keymap.set('n', 'gf', open_source_file, opts)
+  vim.keymap.set('n', 'e', open_source_file, opts)
 end
 
 return M

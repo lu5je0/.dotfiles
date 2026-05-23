@@ -390,6 +390,7 @@ lazy_load({
     { mode = { 'n' }, '<leader>gl' },
     { mode = { 'n' }, '<leader>gL' },
     { mode = { 'n' }, '<leader>gs' },
+    { mode = { 'n' }, '<leader>gb' },
   },
   cmd = { 'GitStatusLog' }
 })

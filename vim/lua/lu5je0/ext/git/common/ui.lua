@@ -108,7 +108,15 @@ local function compressed_dir_node(node, expanded_dirs)
   return current, table.concat(names, '/'), parent_dir
 end
 
-local function add_file_tree_entries(entries, node, prefix, expanded_dirs, show_status, status_hl_fn)
+local function add_file_tree_entries(entries, node, opts)
+  local prefix = opts.prefix or ''
+  local expanded_dirs = opts.expanded_dirs
+  local show_status = opts.show_status
+  local status_hl_fn = opts.status_hl_fn
+  local status_text_fn = opts.status_text_fn
+  local status_per_char_hl_fn = opts.status_per_char_hl_fn
+  local name_hl_fn = opts.name_hl_fn
+
   local children = {}
   for _, dir in ipairs(sorted_values(node.dirs)) do
     children[#children + 1] = { type = 'dir', node = dir }
@@ -139,11 +147,21 @@ local function add_file_tree_entries(entries, node, prefix, expanded_dirs, show_
       }
       if expanded then
         local child_prefix = prefix .. (is_last and '  ' or '│ ')
-        add_file_tree_entries(entries, display_node, child_prefix, expanded_dirs, show_status, status_hl_fn)
+        add_file_tree_entries(entries, display_node, vim.tbl_extend('force', opts, { prefix = child_prefix }))
       end
     else
       local file = child.node.file
-      local status = show_status and file.status:sub(1, 1) or nil
+      local status
+      if show_status then
+        status = status_text_fn and status_text_fn(file) or file.status:sub(1, 1)
+      end
+      local status_per_char_hl
+      if status and status_per_char_hl_fn then
+        status_per_char_hl = {}
+        for i = 1, #status do
+          status_per_char_hl[i] = status_per_char_hl_fn(file, i, status:sub(i, i))
+        end
+      end
       local icon, icon_hl = get_file_icon(file.path)
       local name = child.node.name
       if file.old_path then
@@ -155,6 +173,8 @@ local function add_file_tree_entries(entries, node, prefix, expanded_dirs, show_
         parent_dir = vim.fn.fnamemodify(file.path, ':h'),
         status = status,
         status_hl = status and (status_hl_fn or status_hl)(file.status) or nil,
+        status_per_char_hl = status_per_char_hl,
+        name_hl = name_hl_fn and name_hl_fn(file) or nil,
         icon = icon,
         icon_hl = icon_hl,
         line = status and (prefix .. branch .. icon .. ' ' .. name .. ' ' .. status)
@@ -170,10 +190,16 @@ function M.build_file_tree_entries(commit, opts)
     insert_file_node(root, file_idx, file)
   end
 
-  local show_status = not opts or opts.show_status ~= false
-  local status_hl_fn = opts and opts.status_hl_fn or nil
   local entries = {}
-  add_file_tree_entries(entries, root, '', commit.expanded_dirs or {}, show_status, status_hl_fn)
+  add_file_tree_entries(entries, root, {
+    prefix = '',
+    expanded_dirs = commit.expanded_dirs or {},
+    show_status = not opts or opts.show_status ~= false,
+    status_hl_fn = opts and opts.status_hl_fn or nil,
+    status_text_fn = opts and opts.status_text_fn or nil,
+    status_per_char_hl_fn = opts and opts.status_per_char_hl_fn or nil,
+    name_hl_fn = opts and opts.name_hl_fn or nil,
+  })
   return entries
 end
 
@@ -198,10 +224,33 @@ function M.highlight_tree_entry(buf, line_idx, entry, offset)
   if icon_start then
     vim.api.nvim_buf_add_highlight(buf, ns_id, entry.icon_hl, line_idx, offset + icon_start - 1, offset + icon_start - 1 + #entry.icon)
   end
+  if entry.name_hl and icon_start then
+    local name_start = offset + icon_start - 1 + #entry.icon + 1
+    local name_end
+    if entry.status then
+      -- " <status>" trailing region, leading space included
+      name_end = #entry.line - #entry.status - 1
+    else
+      name_end = #entry.line
+    end
+    if name_end > name_start - offset then
+      vim.api.nvim_buf_add_highlight(buf, ns_id, entry.name_hl, line_idx, name_start, offset + name_end)
+    end
+  end
   if entry.status then
     local status_start = #entry.line - #entry.status + 1
     if status_start > 0 then
-      vim.api.nvim_buf_add_highlight(buf, ns_id, entry.status_hl, line_idx, offset + status_start - 1, -1)
+      if entry.status_per_char_hl then
+        for i = 1, #entry.status do
+          local hl = entry.status_per_char_hl[i]
+          if hl then
+            local col = offset + status_start - 1 + (i - 1)
+            vim.api.nvim_buf_add_highlight(buf, ns_id, hl, line_idx, col, col + 1)
+          end
+        end
+      else
+        vim.api.nvim_buf_add_highlight(buf, ns_id, entry.status_hl, line_idx, offset + status_start - 1, -1)
+      end
     end
   end
 end

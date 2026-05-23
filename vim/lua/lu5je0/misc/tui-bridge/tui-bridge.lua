@@ -93,19 +93,23 @@ local function start_process()
 
   local stdin = vim.uv.new_pipe(false)
   local stdout = vim.uv.new_pipe(false)
-  if not stdin or not stdout then
+  local stderr = vim.uv.new_pipe(false)
+  if not stdin or not stdout or not stderr then
     return false
   end
 
   local handle = vim.uv.spawn(state.exe_path, {
     args = { '-i' },
-    stdio = { stdin, stdout, nil },
+    stdio = { stdin, stdout, stderr },
   }, function()
     if stdin and not stdin:is_closing() then
       stdin:close()
     end
     if stdout and not stdout:is_closing() then
       stdout:close()
+    end
+    if stderr and not stderr:is_closing() then
+      stderr:close()
     end
 
     reset_state()
@@ -118,9 +122,14 @@ local function start_process()
     if not stdout:is_closing() then
       stdout:close()
     end
+    if not stderr:is_closing() then
+      stderr:close()
+    end
     vim.notify('启动 TUI Bridge 进程失败', vim.log.levels.ERROR, { title = 'TUI Bridge' })
     return false
   end
+
+  stderr:read_start(function(_, _) end)
 
   stdout:read_start(function(err, data)
     if err then
