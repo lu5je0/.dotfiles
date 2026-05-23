@@ -52,9 +52,13 @@ end
 -- statuscol.nvim segment text callback. Hot path: must stay allocation-light.
 function M.component(args)
   local bufnr = args.buf
+  local max_width = vim.b[bufnr].max_blame_length
+  if not max_width then
+    return ''
+  end
+
   local commit = cache.commit_for_line(bufnr, args.lnum)
   local selected = selection.get(bufnr) == args.lnum
-  local max_width = vim.b[bufnr].max_blame_length or cache.max_width(bufnr) or DEFAULT_MAX_BLAME_LENGTH
 
   local color
   local sign
@@ -63,7 +67,7 @@ function M.component(args)
     sign = ' ' .. format_blame_text(commit.formatted or '', max_width) .. ' '
   else
     color = selected and 'GitBlameSelected' or 'GitBlame1'
-    sign = (' '):rep(max_width)
+    sign = ' ' .. (' '):rep(max_width) .. ' '
   end
 
   return '%#' .. color .. '#%=' .. sign

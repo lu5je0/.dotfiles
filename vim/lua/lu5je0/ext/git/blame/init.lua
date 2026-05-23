@@ -151,11 +151,40 @@ end
 function M.toggle()
   local bufnr = api.nvim_get_current_buf()
   vim.b.git_blame = not vim.b.git_blame
-  vim.b.max_blame_length = vim.b.max_blame_length or DEFAULT_MAX_BLAME_LENGTH
 
   if vim.b.git_blame then
     ensure_attached(bufnr)
-    refresh(bufnr)
+    if cache.has_fresh(bufnr) then
+      vim.b[bufnr].max_blame_length = cache.max_width(bufnr)
+      local view = current_view()
+      if view and view.bufnr == bufnr then
+        render.redraw(bufnr, view.topline, view.botline)
+      end
+      return
+    end
+
+    local resolved = false
+    load_blame(bufnr, function(ok)
+      if resolved then
+        on_blame_loaded(bufnr, ok)
+        return
+      end
+      resolved = true
+      on_blame_loaded(bufnr, ok)
+    end)
+
+    local timer = vim.uv.new_timer()
+    timer:start(100, 0, vim.schedule_wrap(function()
+      timer:close()
+      if resolved then return end
+      resolved = true
+      if not is_enabled(bufnr) then return end
+      vim.b[bufnr].max_blame_length = vim.b[bufnr].max_blame_length or DEFAULT_MAX_BLAME_LENGTH
+      local view = current_view()
+      if view and view.bufnr == bufnr then
+        render.redraw(bufnr, view.topline, view.botline)
+      end
+    end))
     return
   end
 
