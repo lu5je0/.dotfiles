@@ -15,7 +15,7 @@ local M = {}
 --   }
 local data = {}
 
-local DEFAULT_MAX_BLAME_LENGTH = 19
+local DEFAULT_MAX_BLAME_LENGTH = 17
 
 local function format_for(commit)
   if not commit or porcelain.is_zero_sha(commit.sha) then

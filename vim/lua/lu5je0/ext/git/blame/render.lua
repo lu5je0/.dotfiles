@@ -6,8 +6,6 @@ local selection = require('lu5je0.ext.git.blame.selection')
 
 local M = {}
 
-local DEFAULT_MAX_BLAME_LENGTH = 19
-
 local function truncate_by_width(text, max_width)
   if max_width <= 0 or not text or text == '' then
     return '', 0
