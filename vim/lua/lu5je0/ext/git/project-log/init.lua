@@ -33,6 +33,8 @@ local state = {
   tree_opts = { status_hl_fn = function() return 'Type' end },
   commit_limit = config.get('project_log', 'max_commits'),
   limited = false,
+  pending_jump_sha = nil,
+  pending_jump_file = nil,
 }
 
 local function kill_job(job_name)
@@ -70,6 +72,8 @@ local function cleanup()
   state.preview_key = nil
   state.limited = false
   state.commit_limit = config.get('project_log', 'max_commits')
+  state.pending_jump_sha = nil
+  state.pending_jump_file = nil
 end
 
 local function get_commit_and_file(item)
@@ -140,6 +144,75 @@ local function close_all()
 end
 
 local load_commits
+
+local function relative_to_repo(path)
+  if not path or path == '' then
+    return nil
+  end
+  if not state.repo_root or state.repo_root == '' then
+    return path
+  end
+  local abs = vim.fs.normalize(path)
+  local root = vim.fs.normalize(state.repo_root)
+  local prefix = root:sub(-1) == '/' and root or (root .. '/')
+  if abs:sub(1, #prefix) == prefix then
+    return abs:sub(#prefix + 1)
+  end
+  return path
+end
+
+local function find_file_row(commit_idx, rel_path)
+  if not rel_path then
+    return nil
+  end
+  for idx, item in ipairs(state.display_items or {}) do
+    if item.type == 'file' and item.commit_idx == commit_idx then
+      local commit = state.commits[item.commit_idx]
+      local file = commit and commit.files[item.file_idx]
+      if file and (file.path == rel_path or file.old_path == rel_path) then
+        return idx
+      end
+    end
+  end
+  return nil
+end
+
+local function try_jump_to_sha()
+  local sha = state.pending_jump_sha
+  if not sha then
+    return
+  end
+  if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
+    return
+  end
+  if not state.display_items or #state.display_items == 0 then
+    return
+  end
+  for idx, item in ipairs(state.display_items) do
+    if item.type == 'commit' then
+      local commit = state.commits[item.commit_idx]
+      if commit and commit.hash and (commit.hash == sha or commit.hash:sub(1, #sha) == sha) then
+        local target_row = idx
+        local rel_path = relative_to_repo(state.pending_jump_file)
+        if rel_path and not commit.local_change then
+          if not commit.expanded then
+            commit.expanded = true
+            tree.expand_all_dirs(commit)
+            ui.render_log(state)
+          end
+          local file_row = find_file_row(item.commit_idx, rel_path)
+          if file_row then
+            target_row = file_row
+          end
+        end
+        pcall(vim.api.nvim_win_set_cursor, state.log_win, { target_row, 0 })
+        state.pending_jump_sha = nil
+        state.pending_jump_file = nil
+        return
+      end
+    end
+  end
+end
 
 local function clear_messages()
   pcall(vim.cmd, 'messages clear')
@@ -337,6 +410,7 @@ load_commits = function()
         dirty = false
         ui.render_log(state)
         ui.update_statusline(state, true)
+        try_jump_to_sha()
       end
     end
 
@@ -380,6 +454,12 @@ load_commits = function()
         end
         ui.render_log(state)
         ui.update_statusline(state, false)
+        try_jump_to_sha()
+        if state.pending_jump_sha then
+          vim.notify('Commit ' .. state.pending_jump_sha:sub(1, 8) .. ' not found in project log', vim.log.levels.WARN)
+          state.pending_jump_sha = nil
+          state.pending_jump_file = nil
+        end
       end)
     end)
   else
@@ -414,12 +494,19 @@ load_commits = function()
         end
         ui.render_log(state)
         ui.update_statusline(state, false)
+        try_jump_to_sha()
+        if state.pending_jump_sha then
+          vim.notify('Commit ' .. state.pending_jump_sha:sub(1, 8) .. ' not found in project log', vim.log.levels.WARN)
+          state.pending_jump_sha = nil
+          state.pending_jump_file = nil
+        end
       end)
     end)
   end
 end
 
-function M.show()
+function M.show(opts)
+  opts = opts or {}
   local start_path = vim.fn.expand('%:p')
   if start_path == '' then
     start_path = vim.fn.getcwd()
@@ -434,6 +521,28 @@ function M.show()
   cleanup()
   state.session = state.session + 1
   state.repo_root = repo_root
+  state.pending_jump_sha = opts.jump_to_sha
+  state.pending_jump_file = opts.jump_to_file
+  if opts.jump_to_sha then
+    -- Use rev-list to find how far the target sits from HEAD, then load just
+    -- enough commits to cover it. Avoids streaming entire history for repos
+    -- with tens of thousands of commits.
+    local count_result = vim.system(
+      { 'git', 'rev-list', '--count', opts.jump_to_sha .. '..HEAD' },
+      { text = true, cwd = repo_root }
+    ):wait()
+    local default_limit = config.get('project_log', 'max_commits') or 1000
+    if count_result.code == 0 then
+      local count = tonumber((count_result.stdout or ''):gsub('%s+$', '')) or 0
+      if count + 1 <= default_limit then
+        state.commit_limit = default_limit
+      else
+        state.commit_limit = count + math.max(200, math.floor(default_limit / 5))
+      end
+    else
+      state.commit_limit = nil
+    end
+  end
 
   state.log_buf = vim.api.nvim_create_buf(false, true)
   vim.bo[state.log_buf].buftype = 'nofile'
@@ -447,6 +556,8 @@ function M.show()
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)
   vim.api.nvim_win_set_height(state.log_win, height)
+  vim.wo[state.log_win].cursorline = true
+  vim.wo[state.log_win].cursorlineopt = 'both'
 
   setup_keymaps()
   vim.api.nvim_create_autocmd('BufWipeout', {

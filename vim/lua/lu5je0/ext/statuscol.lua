@@ -18,9 +18,10 @@ M.setup = function()
             if not vim.b[args.buf].git_blame then
               return ""
             end
-            return require('lu5je0.ext.statuscol.blame').component(args)
+            return require('lu5je0.ext.git.blame').component(args)
           end
         },
+        click = "v:lua.require'lu5je0.ext.git.blame'.on_click",
         fillcharhl = "GitBlame",
         condition = {
           function(args) return vim.b[args.buf].git_blame end,
@@ -52,10 +53,6 @@ M.setup = function()
       },
     },
   })
-  
-  vim.keymap.set('n', '<leader>gb', function()
-    require('lu5je0.ext.statuscol.blame').toggle()
-  end)
 end
 
 return M

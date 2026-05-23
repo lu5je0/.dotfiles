@@ -26,6 +26,7 @@ end
 local function mark_diff_window(win)
   if win and vim.api.nvim_win_is_valid(win) then
     vim.w[win].git_status_diff = true
+    vim.wo[win].cursorline = false
   end
 end
 

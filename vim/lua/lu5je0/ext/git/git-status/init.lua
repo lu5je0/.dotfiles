@@ -102,6 +102,30 @@ local function get_section_and_file(item)
   return section, file
 end
 
+-- The synthetic `changes` section bundles staged/unstaged/untracked rows
+-- together. For diff preview we still want the right backend per file,
+-- so derive an effective section view based on the file's xy.
+local function effective_section_for_file(section, file)
+  if not section or section.section ~= 'changes' or not file then
+    return section
+  end
+  local backend
+  if file.x == '?' then
+    backend = 'untracked'
+  elseif file.y and file.y ~= ' ' then
+    backend = 'unstaged'
+  else
+    backend = 'staged'
+  end
+  return {
+    section = backend,
+    files = section.files,
+    expanded = section.expanded,
+    expanded_dirs = section.expanded_dirs,
+    tree_opts = section.tree_opts,
+  }
+end
+
 local function get_non_stash_section(item)
   if not item or item.stash then
     return nil
@@ -127,15 +151,16 @@ local function show_file_diff(auto_preview)
   if not section or not file then
     return false
   end
-  local preview_key = diff.make_preview_key(state, section, file)
+  local effective = effective_section_for_file(section, file)
+  local preview_key = diff.make_preview_key(state, effective, file)
   if state.preview_key == preview_key then
     return true
   end
   state.preview_key = preview_key
   if state.diff_mode == 'dual' then
-    diff.show_dual(state, section, file)
+    diff.show_dual(state, effective, file)
   else
-    diff.show_single(state, section, file)
+    diff.show_single(state, effective, file)
   end
   return true
 end
@@ -375,12 +400,30 @@ local function stage_section()
   if not section then
     return
   end
-  if section.section ~= 'untracked' and section.section ~= 'unstaged' then
+
+  local stage_files
+  if section.section == 'changes' then
+    stage_files = {}
+    for _, f in ipairs(section.files or {}) do
+      local x = f.x
+      local y = f.y
+      -- Untracked or any unstaged side change wants `git add`.
+      if x == '?' or (y and y ~= ' ' and y ~= '?') then
+        stage_files[#stage_files + 1] = f
+      end
+    end
+    if #stage_files == 0 then
+      vim.notify('Already staged', vim.log.levels.INFO)
+      return
+    end
+  elseif section.section == 'untracked' or section.section == 'unstaged' then
+    stage_files = section.files
+  else
     vim.notify('Already staged', vim.log.levels.INFO)
     return
   end
 
-  local args = append_paths(git_path_args('git', 'add'), section.files)
+  local args = append_paths(git_path_args('git', 'add'), stage_files)
   local count = path_count(args)
   if count == 0 then
     return
@@ -388,7 +431,7 @@ local function stage_section()
   if not run_git(args, 'Failed to stage section: ') then
     return
   end
-  push_undo('stage section', { { type = 'reset_paths', paths = file_paths(section.files) } })
+  push_undo('stage section', { { type = 'reset_paths', paths = file_paths(stage_files) } })
   vim.notify(string.format('Staged %d files', count), vim.log.levels.INFO)
   reload_status()
 end
@@ -558,6 +601,7 @@ local function discard_change()
   if not section or not file then
     return
   end
+  section = effective_section_for_file(section, file)
 
   local abs_path = state.repo_root .. '/' .. file.path
 
@@ -692,17 +736,21 @@ load_status = function()
 
       local grouped = core.parse_status_grouped(result.stdout or '')
       local commits = {}
+      local has_changes = grouped.changes and #grouped.changes > 0
       for _, key in ipairs(status_ui.section_order) do
         local files = grouped[key]
         if #files > 0 then
+          local default_expanded = key == 'changes' or not has_changes
           local section = {
             section = key,
             files = files,
-            expanded = true,
+            expanded = default_expanded,
             expanded_dirs = {},
             tree_opts = status_ui.make_tree_opts(key),
           }
-          tree.expand_all_dirs(section)
+          if default_expanded then
+            tree.expand_all_dirs(section)
+          end
           commits[#commits + 1] = section
         end
       end
@@ -810,6 +858,7 @@ local function setup_keymaps()
     if not section or not file then
       return
     end
+    section = effective_section_for_file(section, file)
     if section.section == 'untracked' or section.section == 'unstaged' then
       if not run_git({ 'git', 'add', '--', file.path }, 'Failed to stage file: ') then
         return
@@ -843,7 +892,7 @@ local function setup_keymaps()
     state.preview_key = nil
     show_file_diff(true)
   end, opts)
-  vim.keymap.set('n', 'gf', function()
+  local function open_file_under_cursor()
     local item = item_under_cursor()
     if not item or item.type ~= 'file' then
       return
@@ -869,7 +918,9 @@ local function setup_keymaps()
       vim.cmd('wincmd p')
     end
     vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
-  end, opts)
+  end
+  vim.keymap.set('n', 'gf', open_file_under_cursor, opts)
+  vim.keymap.set('n', 'e', open_file_under_cursor, opts)
   vim.keymap.set('n', 'Z', function()
     if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
       return
@@ -936,6 +987,8 @@ function M.show()
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)
   vim.api.nvim_win_set_height(state.log_win, height)
+  vim.wo[state.log_win].cursorline = true
+  vim.wo[state.log_win].cursorlineopt = 'both'
 
   setup_keymaps()
   vim.api.nvim_create_autocmd('BufWipeout', {

@@ -391,6 +391,8 @@ function M.show(opts)
   state.log_win = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_buf(state.log_win, state.log_buf)
   vim.api.nvim_win_set_height(state.log_win, height)
+  vim.wo[state.log_win].cursorline = true
+  vim.wo[state.log_win].cursorlineopt = 'both'
 
   ui.update_log_statusline(state, true)
   ui.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes_only)
