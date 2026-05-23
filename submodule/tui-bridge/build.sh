@@ -48,7 +48,7 @@ build_mac() {
     "request-dispatch.c"
     "tui-bridge.c"
     "mac/im.m"
-    "mac/clipboard-bridge.c"
+    "mac/clipboard-bridge.m"
     "mac/platform.c"
   )
   local cflags=("-O3" "-flto" "-DNDEBUG" "-Wl,-dead_strip")
