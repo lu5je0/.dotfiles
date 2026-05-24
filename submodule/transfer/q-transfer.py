@@ -411,7 +411,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 示例:
-  q-transfer -r http://192.168.1.3:8000    # 注册授权
+  q-transfer -r http://192.168.1.10:8000    # 注册授权
   q-transfer file.txt                      # 上传文件（默认启用 gzip）
   q-transfer --no-gzip image.png           # 禁用 gzip 上传
   cat data | q-transfer -n file.txt         # 管道输入并指定文件名

@@ -10,10 +10,6 @@ dependencies = [
 
 [project.optional-dependencies]
 macos = ["pyobjc-framework-vision", "pyobjc-framework-quartz"]
-paddle = [
-    "paddleocr>=3.0.0",
-    "paddlepaddle>=3.0.0",
-]
 
 [build-system]
 requires = ["hatchling"]

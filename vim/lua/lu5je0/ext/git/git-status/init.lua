@@ -832,20 +832,27 @@ load_status = function()
       end
 
       local grouped = core.parse_status_grouped(result.stdout or '')
+      local prev_expanded = {}
+      for _, s in ipairs(state.commits) do
+        if s.section and s.section ~= 'stash' then
+          prev_expanded[s.section] = s.expanded
+        end
+      end
       local commits = {}
       local has_changes = grouped.changes and #grouped.changes > 0
       for _, key in ipairs(status_ui.section_order) do
         local files = grouped[key]
         if #files > 0 then
           local default_expanded = key == 'changes' or not has_changes
+          local expanded = prev_expanded[key] ~= nil and prev_expanded[key] or default_expanded
           local section = {
             section = key,
             files = files,
-            expanded = default_expanded,
+            expanded = expanded,
             expanded_dirs = {},
             tree_opts = status_ui.make_tree_opts(key),
           }
-          if default_expanded then
+          if expanded then
             tree.expand_all_dirs(section)
           end
           commits[#commits + 1] = section

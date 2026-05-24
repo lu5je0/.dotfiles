@@ -25,6 +25,7 @@ class AutoOcrBackend:
                 errors.append(f"{backend.name}: {exc}")
                 continue
             if text:
+                self.name = backend.name
                 return text
 
         if errors:

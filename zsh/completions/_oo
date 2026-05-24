@@ -3,10 +3,9 @@
 _oo() {
   _arguments -s \
     '(-h --help)'{-h,--help}'[show help]' \
-    '(-e --engine)'{-e,--engine}'[select OCR engine]:engine:(auto native paddle wxocr)' \
+    '(-e --engine)'{-e,--engine}'[select OCR engine]:engine:(auto native wxocr)' \
     '--stdout[print recognized text to stdout instead of opening nvim]' \
     '--editor[editor command used for markdown preview]:editor command:' \
-    '--paddle-device[PaddleOCR device, e.g. cpu or gpu\:0]:device:(cpu gpu gpu\:0)' \
     '--wxocr-url[wxocr endpoint URL]:url:' \
     '::file:_files -g "*.{png,jpg,jpeg,gif,bmp,tiff,tif,webp}"'
 }

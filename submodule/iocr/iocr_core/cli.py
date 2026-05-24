@@ -23,10 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--engine",
         choices=ENGINE_CHOICES,
         default="auto",
-        help=(
-            "OCR engine: auto, native (macOS Vision or Windows OCR), paddle "
-            "(PP-OCRv5 server), wxocr (HTTP service)"
-        ),
+        help="OCR engine: auto, native (macOS Vision or Windows OCR), wxocr (HTTP service)",
     )
     parser.add_argument(
         "--stdout",
@@ -37,10 +34,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--editor",
         default=os.environ.get("EDITOR", "nvim"),
         help="editor command used for markdown preview output (default: nvim or EDITOR)",
-    )
-    parser.add_argument(
-        "--paddle-device",
-        help="PaddleOCR device, e.g. cpu, gpu, or gpu:0",
     )
     parser.add_argument(
         "--wxocr-url",
@@ -57,7 +50,6 @@ def main(argv: list[str] | None = None) -> int:
         image = ImageReader().read(args.file)
         backend = create_ocr_backend(
             args.engine,
-            paddle_device=args.paddle_device,
             wxocr_url=args.wxocr_url,
         )
         text = backend.ocr(image.png_bytes).strip()
@@ -67,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.stdout:
             print_text(text)
         else:
-            open_in_editor(image.png_bytes, text, editor=args.editor)
+            open_in_editor(image.png_bytes, text, engine_name=backend.name, editor=args.editor)
         return 0
     except KeyboardInterrupt:
         return 130

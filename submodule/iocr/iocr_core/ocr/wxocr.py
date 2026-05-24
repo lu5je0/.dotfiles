@@ -7,7 +7,7 @@ from typing import Any
 
 from iocr_core.errors import IocrError, OcrUnavailableError
 
-DEFAULT_WXOCR_URL = "http://192.168.1.3:17653/ocr"
+DEFAULT_WXOCR_URL = "http://192.168.1.10:17653/ocr"
 WXOCR_URL_ENV = "IOCR_WXOCR_URL"
 
 
