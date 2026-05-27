@@ -3,15 +3,15 @@ autoload -Uz compinit
 
 _ZSH_COMPDUMP_FILE="$HOME/.zcompdump-${ZSH_VERSION}"
 
-# (#qN.mh+24) means: treat the path as a glob in [[ ]], allow no-match,
-# and match files whose mtime is older than 24 hours.
-if [[ ! -s $_ZSH_COMPDUMP_FILE || -n "$_ZSH_COMPDUMP_FILE"(#qN.mh+24) ]]; then
-  # -d specifies the dump file path.
-  compinit
+# Use array glob to check if dump file is older than 24 hours.
+# Glob qualifiers don't work inside [[ ]], so we expand into an array.
+_zcompdump_stale=( "$_ZSH_COMPDUMP_FILE"(Nmh+24) )
+if [[ ! -s $_ZSH_COMPDUMP_FILE ]] || (( ${#_zcompdump_stale} )); then
+  compinit -d "$_ZSH_COMPDUMP_FILE"
 else
-  # -C skips the new-completion check and reuses the existing dump for faster startup.
-  compinit -C
+  compinit -C -d "$_ZSH_COMPDUMP_FILE"
 fi
+unset _zcompdump_stale
 
 # Replay compdefs captured by zinit before compinit, mainly from delayed plugins.
 zinit cdreplay -q
