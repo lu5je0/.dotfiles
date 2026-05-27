@@ -286,7 +286,7 @@ local function setup_keymaps()
     end
   end, opts)
   vim.keymap.set('n', '<leader>gl', '<nop>', opts)
-  vim.keymap.set('n', 'gf', function()
+  local function open_file_under_cursor()
     local item = tree.item_under_cursor(state)
     if not item or item.type ~= 'file' then
       return
@@ -312,7 +312,9 @@ local function setup_keymaps()
       vim.cmd('wincmd p')
     end
     vim.cmd('edit ' .. vim.fn.fnameescape(state.repo_root .. '/' .. file.path))
-  end, opts)
+  end
+  vim.keymap.set('n', 'gf', open_file_under_cursor, opts)
+  vim.keymap.set('n', 'e', open_file_under_cursor, opts)
   vim.keymap.set('n', 'Z', function()
     if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
       return
