@@ -30,7 +30,7 @@ zinit snippet OMZ::lib/key-bindings.zsh
 zinit snippet OMZ::lib/git.zsh
 
 # zinit ice lucid wait='1'
-zinit snippet OMZ::plugins/git/git.plugin.zsh
+# zinit snippet OMZ::plugins/git/git.plugin.zsh
 
 zinit ice lucid wait='1'
 zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
@@ -42,7 +42,7 @@ zinit snippet OMZ::plugins/colored-man-pages/colored-man-pages.plugin.zsh
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-syntax-highlighting
 
-zinit ice depth=1 lucid wait='0'
+zinit ice depth=1 lucid wait='1'
 zinit light hlissner/zsh-autopair
 
 zinit ice depth=1 lucid wait='1'
@@ -134,6 +134,15 @@ alias speedtest-hk='speedtest -s 1536'
 alias speedtest-js='speedtest -s 5396'
 alias speedtest-los='speedtest -s 5905'
 alias speedtest-de='speedtest -s 44081'
+
+# git aliases (from OMZ git plugin, only the ones actually used)
+alias ga='git add'
+alias gaa='git add --all'
+alias gc='git commit --verbose'
+alias gcf='git config --list'
+alias gco='git checkout'
+alias gd='git diff'
+alias gst='git status'
 
 # ls
 # alias l='ls -lah'
