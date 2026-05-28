@@ -13,7 +13,7 @@ local function assemble_file_name(buf_nr)
     filetype = 'txt'
   end
 
-  local cur_buf_name = vim.fn.expand('%:t')
+  local cur_buf_name = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf_nr), ':t')
   if cur_buf_name ~= "" then
     cur_buf_name = "-" .. cur_buf_name
   end
@@ -26,7 +26,7 @@ end
 
 local function create_dir_if_absent(dir)
   if vim.fn.isdirectory(dir) == 0 then
-    vim.fn.system('mkdir -p ' .. dir)
+    vim.fn.mkdir(dir, 'p')
   end
 end
 
@@ -44,17 +44,18 @@ local function do_save(buf_nr)
 
   create_dir_if_absent(TIME_MACHINE_PATH)
   local file = io.open(TIME_MACHINE_PATH .. filename, "w+")
-  if file then
-    for _, line in ipairs(lines) do
-      file:write(line)
-      file:write('\n')
-    end
-    file:flush()
-    file:close()
+  if not file then
+    return
   end
+  for _, line in ipairs(lines) do
+    file:write(line)
+    file:write('\n')
+  end
+  file:flush()
+  file:close()
   -- save undo
   create_dir_if_absent(TIME_MACHINE_UNDO_PATH)
-  vim.cmd('wundo ' .. TIME_MACHINE_UNDO_PATH .. filename)
+  vim.cmd('wundo ' .. vim.fn.fnameescape(TIME_MACHINE_UNDO_PATH .. filename))
 end
 
 local function clear_old_file()
@@ -65,35 +66,38 @@ local function clear_old_file()
     end
   end
 
+  table.sort(files)
+
   -- 最大文件数清理
   if #files > MAX_KEEP_FILE_CNT then
-    table.sort(files)
     local need_del_cnt = #files - MAX_KEEP_FILE_CNT
-    for i, filename in ipairs(files) do
-      if i > need_del_cnt then
-        break
-      end
-      vim.fn.delete(TIME_MACHINE_PATH .. filename)
-      vim.fn.delete(TIME_MACHINE_UNDO_PATH .. filename)
+    for i = 1, need_del_cnt do
+      vim.fn.delete(TIME_MACHINE_PATH .. files[i])
+      vim.fn.delete(TIME_MACHINE_UNDO_PATH .. files[i])
     end
+    local remaining = {}
+    for i = need_del_cnt + 1, #files do
+      table.insert(remaining, files[i])
+    end
+    files = remaining
   end
 
   -- 最长日期清理，每次最多清理max_process_cnt个
   local max_process_cnt = 10
+  local now_sec = vim.uv.gettimeofday()
   for i, filename in ipairs(files) do
-    if i <= max_process_cnt then
-      local stat = vim.uv.fs_stat(TIME_MACHINE_PATH .. filename)
-      if stat and stat.birthtime and vim.uv.gettimeofday() - stat.birthtime.sec > MAX_KEEP_DAYS * 24 * 60 * 60 then
-        -- print('clear 过期文件' .. filename)
-        vim.fn.delete(TIME_MACHINE_PATH .. filename)
-      end
+    if i > max_process_cnt then break end
+    local stat = vim.uv.fs_stat(TIME_MACHINE_PATH .. filename)
+    if stat and stat.birthtime and now_sec - stat.birthtime.sec > MAX_KEEP_DAYS * 24 * 60 * 60 then
+      vim.fn.delete(TIME_MACHINE_PATH .. filename)
+      vim.fn.delete(TIME_MACHINE_UNDO_PATH .. filename)
     end
   end
 end
 
 local function now()
-  local timestamp, s = vim.uv.gettimeofday()
-  return timestamp * 1000 + math.floor(s / 1000)
+  local sec, usec = vim.uv.gettimeofday()
+  return sec * 1000 + math.floor(usec / 1000)
 end
 
 -- 保存buffer
@@ -107,7 +111,8 @@ local function save_buffer(buf_nr)
   end
 
   -- 只有buffer没有文件名并且文件编辑过 或者 文件不存在 才保存
-  if vim.api.nvim_buf_get_name(buf_nr) ~= "" and vim.fn.filereadable(vim.fn.expand('%:p')) == 1 then
+  local buf_path = vim.api.nvim_buf_get_name(buf_nr)
+  if buf_path ~= "" and vim.fn.filereadable(buf_path) == 1 then
     return
   end
 
@@ -153,16 +158,22 @@ local function create_snacks_picker()
       local name, type = vim.loop.fs_scandir_next(handle)
       if not name then break end
       if type == 'file' then
-        table.insert(files, 1, name)
+        local stat = vim.loop.fs_stat(dir .. '/' .. name)
+        table.insert(files, { name = name, mtime = stat and stat.mtime.sec or 0 })
       end
     end
 
-    return files
+    table.sort(files, function(a, b) return a.mtime > b.mtime end)
+
+    local result = {}
+    for _, f in ipairs(files) do
+      table.insert(result, f.name)
+    end
+    return result
   end
 
   vim.keymap.set('n', '<leader>ft', function()
     local items = {}
-    local longest_name = 0
 
     local time_machine_path = vim.fn.stdpath('state') .. '/time-machine'
     for i, filename in ipairs(list_files_in_dir(time_machine_path)) do
@@ -173,10 +184,8 @@ local function create_snacks_picker()
         text = filename,
         file = time_machine_path .. '/' .. filename
       })
-      longest_name = math.max(longest_name, #filename)
     end
 
-    longest_name = longest_name + 2
     return Snacks.picker({
       items = items,
       title = 'Time Machine',

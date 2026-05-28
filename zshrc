@@ -150,6 +150,7 @@ alias gc='git commit --verbose'
 alias gcf='git config --list'
 alias gco='git checkout'
 alias gd='git diff'
+alias gf='git fetch'
 alias gp='git push'
 alias gst='git status'
 
