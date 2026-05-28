@@ -19,19 +19,12 @@ export ZLE_REMOVE_SUFFIX_CHARS=''
 ##########################################
 # OMZ
 ##########################################
-zinit ice lucid wait='0'
 zinit snippet OMZ::lib/completion.zsh
-zinit ice lucid wait='0'
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 
-# wsl中git定制，所以不能wait
-if [[ -n $WSL_DISTRO_NAME ]]; then
-  zinit snippet OMZ::lib/git.zsh
-else
-  zinit ice lucid wait='0'
-  zinit snippet OMZ::lib/git.zsh
-fi
+zinit ice lucid wait='0'
+zinit snippet OMZ::lib/git.zsh
 
 # zinit ice lucid wait='1'
 # zinit snippet OMZ::plugins/git/git.plugin.zsh
