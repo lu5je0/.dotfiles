@@ -101,14 +101,14 @@ local function key_mapping()
       { theme, search_dirs = { '~/junk-file' }, prompt_title = 'Junk Files' }))
   end)
   
-  set_map('<leader>ft', function()
-    telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
-      {
-        theme,
-        search_dirs = { vim.fn.stdpath('state') .. '/time-machine' },
-        prompt_title = 'Time Machine'
-      }))
-  end)
+  -- set_map('<leader>ft', function()
+  --   telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
+  --     {
+  --       theme,
+  --       search_dirs = { vim.fn.stdpath('state') .. '/time-machine' },
+  --       prompt_title = 'Time Machine'
+  --     }))
+  -- end)
   
   set_map('<leader>fm', function() telescope_builtin.oldfiles(vim.tbl_deep_extend("force", theme(), { prompt_title = 'Old Files' })) end)
   set_map('<leader>fh', function() telescope_builtin.help_tags(theme()) end)
