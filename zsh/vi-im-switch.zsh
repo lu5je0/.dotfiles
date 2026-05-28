@@ -1,4 +1,4 @@
-if [[ $UNAME_INFO =~ "microsoft" ]]; then
+if [[ -n $WSL_DISTRO_NAME ]]; then
   function disable_ime_cmd {
     "/mnt/d/bin/toDisableIME.exe"
   }

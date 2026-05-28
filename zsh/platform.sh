@@ -1,5 +1,5 @@
 # mac
-if [[ $UNAME_INFO =~ "Darwin" ]]; then
+if [[ $OSTYPE == darwin* ]]; then
   # intel
   # PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
   export HOMEBREW_PATH="/opt/homebrew"
@@ -26,7 +26,7 @@ if [[ $UNAME_INFO =~ "Darwin" ]]; then
   # echo -en "\033]6;1;bg;blue;brightness;51\a"
   
   export PATH=$HOME/.dotfiles/bin/macos_arm64:$PATH
-elif [[ $UNAME_INFO =~ "WSL" ]]; then
+elif [[ -n $WSL_DISTRO_NAME ]]; then
   export WIN_HOME=/mnt/c/Users/lu5je0
   
   # windows 目录使用 windows 的 git
@@ -52,7 +52,7 @@ elif [[ $UNAME_INFO =~ "WSL" ]]; then
   . $HOME'/.dotfiles/win/wsl2/wezterm.sh'
 fi
 
-if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
+if [[ $OSTYPE == linux-gnu* ]]; then
   export HOMEBREW_PATH="/home/linuxbrew/.linuxbrew"
   export PATH=$HOMEBREW_PATH/bin:$PATH
   export PATH=$HOMEBREW_PATH/sbin:$PATH
@@ -68,7 +68,7 @@ if [[ $UNAME_INFO =~ "GNU/Linux" ]]; then
 fi
 
 # termux
-if [[ $UNAME_INFO =~ "Android" ]]; then
+if [[ -n $TERMUX_VERSION ]]; then
   export PATH=$HOME/.dotfiles/bin/linux_aarch64:$PATH
   alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
   alias speedtest='termux-chroot speedtest --ca-certificate=$PREFIX/etc/tls/cert.pem'

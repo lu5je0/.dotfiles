@@ -8,8 +8,6 @@ if [[ ! -d $HOME/.local/share/zinit/zinit.git ]]; then
 fi
 source ~/.local/share/zinit/zinit.git/zinit.zsh
 
-export UNAME_INFO=$(uname -a)
-
 setopt AUTO_CD
 setopt NO_BEEP
 
@@ -21,13 +19,19 @@ export ZLE_REMOVE_SUFFIX_CHARS=''
 ##########################################
 # OMZ
 ##########################################
+zinit ice lucid wait='0'
 zinit snippet OMZ::lib/completion.zsh
+zinit ice lucid wait='0'
 zinit snippet OMZ::lib/history.zsh
 zinit snippet OMZ::lib/key-bindings.zsh
 
-# zinit ice lucid wait='0'
 # wsl中git定制，所以不能wait
-zinit snippet OMZ::lib/git.zsh
+if [[ -n $WSL_DISTRO_NAME ]]; then
+  zinit snippet OMZ::lib/git.zsh
+else
+  zinit ice lucid wait='0'
+  zinit snippet OMZ::lib/git.zsh
+fi
 
 # zinit ice lucid wait='1'
 # zinit snippet OMZ::plugins/git/git.plugin.zsh
@@ -83,6 +87,10 @@ source ~/.dotfiles/zsh/vi-im-switch.zsh
 # zinit snippet ~/.dotfiles/zsh/lu5je0.zsh-theme # lu5je0 
 
 # p10k
+if [[ -z $SSH_CLIENT && -z $SSH_TTY && -z $SSH_CONNECTION ]]; then
+  typeset -gix P9K_SSH=0
+  typeset -gx _P9K_SSH_TTY=$TTY
+fi
 zinit ice depth=1
 zinit light romkatv/powerlevel10k
 source ~/.dotfiles/zsh/p10k.zsh
@@ -323,9 +331,9 @@ zle -N bash-ctrl-d
 bindkey '^D' bash-ctrl-d
 ### End of Zinit's installer chunk
 
-# fpath=($HOME/.dotfiles/zsh/completions $fpath)
-# autoload -Uz compinit && compinit -C
-source ~/.dotfiles/zsh/completion-init.zsh
+# compinit deferred to turbo for faster startup
+zinit ice lucid wait='0' link nocompile
+zinit snippet ~/.dotfiles/zsh/completion-init.zsh
 
 # rustup
 if [[ -d $HOMEBREW_PATH/opt/rustup/bin ]]; then
