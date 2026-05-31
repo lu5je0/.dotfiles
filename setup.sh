@@ -249,8 +249,22 @@ render_menu() {
 }
 
 read_key() {
-  local k
+  local k rest1 rest2
   IFS= read -rsn1 k
+  if [[ "$k" == $'\x1b' ]]; then
+    IFS= read -rsn1 -t 0.01 rest1 || { echo "$k"; return; }
+    if [[ "$rest1" == "[" ]]; then
+      IFS= read -rsn1 -t 0.01 rest2 || { echo "$k"; return; }
+      case "$rest2" in
+        A) echo "UP"; return ;;
+        B) echo "DOWN"; return ;;
+        C) echo "RIGHT"; return ;;
+        D) echo "LEFT"; return ;;
+      esac
+    fi
+    echo "$k"
+    return
+  fi
   echo "$k"
 }
 
@@ -268,7 +282,7 @@ while :; do
 
   if (( search_mode )); then
     case "$key" in
-      ""|"ESC")
+      ""|"ESC"|$'\x1b')
         # Exit search mode
         search_mode=0
         search_query=""
@@ -294,6 +308,16 @@ while :; do
           else
             selections[$real_idx]=1
           fi
+        fi
+        ;;
+      "DOWN")
+        if (( fi_total > 0 )); then
+          cursor=$(( (cursor + 1) % fi_total ))
+        fi
+        ;;
+      "UP")
+        if (( fi_total > 0 )); then
+          cursor=$(( (cursor - 1 + fi_total) % fi_total ))
         fi
         ;;
       *)
@@ -324,12 +348,12 @@ while :; do
         search_query=""
         cursor=0
         ;;
-      "j")
+      "j"|"DOWN")
         if (( fi_total > 0 )); then
           cursor=$(( (cursor + 1) % fi_total ))
         fi
         ;;
-      "k")
+      "k"|"UP")
         if (( fi_total > 0 )); then
           cursor=$(( (cursor - 1 + fi_total) % fi_total ))
         fi
