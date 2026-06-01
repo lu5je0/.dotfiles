@@ -14,7 +14,7 @@ vim.api.nvim_set_hl(0, 'GitChangesType',      { link = 'Type',        default = 
 vim.api.nvim_set_hl(0, 'GitChangesUntracked', { link = '@diff.minus', default = true })
 vim.api.nvim_set_hl(0, 'GitChangesUnmerged',  { link = 'ErrorMsg',    default = true })
 vim.api.nvim_set_hl(0, 'GitChangesIgnored',   { link = 'Comment',     default = true })
-vim.api.nvim_set_hl(0, 'GitChangesEmpty',     { link = 'Comment',     default = true })
+vim.api.nvim_set_hl(0, 'GitChangesEmpty',     { fg = '#5c6370',       default = true })
 vim.api.nvim_set_hl(0, 'GitFileStatusAdded',     { link = '@diff.plus',  default = true })
 vim.api.nvim_set_hl(0, 'GitFileStatusModified',  { link = '@diff.delta', default = true })
 vim.api.nvim_set_hl(0, 'GitFileStatusRenamed',   { link = 'Special',     default = true })
@@ -229,7 +229,7 @@ end
 function M.render()
   local sections = state.git_changes.sections
   if not sections.staged and not sections.unstaged and not sections.untracked and not sections.changes then
-    render.flush({ '  Loading...' }, {})
+    render.flush({ '  Loading...' }, { { line = 0, hl = 'TreeSidebarSectionName', col_start = 0, col_end = -1 } })
     M.refresh()
     return
   end
@@ -297,7 +297,7 @@ function M.render()
       local line_text = lines[item.line_idx + 1]
       if line_text then
         -- Per-char highlight for [XY] suffix
-        local bracket_start = line_text:find('%[', 1, true)
+        local bracket_start = line_text:find('[', 1, true)
         if bracket_start then
           for ci = bracket_start, #line_text do
             local ch = line_text:sub(ci, ci)
@@ -484,10 +484,9 @@ function M.keymaps()
     { 'h', M.close_node, desc = 'Close node' },
     { 'a', git_ops_actions.stage_file, desc = 'Stage file' },
     { 'A', git_ops_actions.stage_section, desc = 'Stage section' },
-    { 'u', git_ops_actions.unstage_file, desc = 'Unstage file' },
+    { 'u', git_ops_actions.undo_last_action, desc = 'Undo' },
     { 'x', git_ops_actions.discard_file, desc = 'Discard file' },
     { 'X', git_ops_actions.discard_section, desc = 'Discard section' },
-    { 'U', git_ops_actions.undo_last_action, desc = 'Undo' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
   }

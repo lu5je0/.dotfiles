@@ -38,6 +38,7 @@ function M.open()
   vim.wo[win].wrap = false
   vim.wo[win].list = false
   vim.wo[win].winfixwidth = true
+  vim.wo[win].winfixbuf = true
 
   state.win = win
 end

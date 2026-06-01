@@ -33,6 +33,7 @@ function M.apply_shared()
   buf_set('n', '3', function() tabs.switch_to(3) end)
   buf_set('n', 'q', window.close)
   buf_set('n', 'Z', window.toggle_width)
+  buf_set('n', '<leader>tn', function() end)
 
   local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
   buf_set('n', '<esc>', function()
