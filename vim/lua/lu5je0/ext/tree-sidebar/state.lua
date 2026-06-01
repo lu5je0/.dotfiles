@@ -4,7 +4,7 @@ local M = {}
 
 M.win = nil
 M.buf = nil
-M.width = 32
+M.width = 33
 M.last_width = nil
 M.active_tab_idx = 1
 

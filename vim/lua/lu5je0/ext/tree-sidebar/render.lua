@@ -96,6 +96,23 @@ function M.render_tree(root_children, opts)
     end
   end
 
+  local win_width = state.width
+  if state:is_open() then
+    local info = vim.fn.getwininfo(state.win)
+    local textoff = (info[1] and info[1].textoff) or 0
+    win_width = vim.api.nvim_win_get_width(state.win) - textoff
+  end
+
+  local function append_suffix(line, suffix_text)
+    local line_width = vim.fn.strdisplaywidth(line)
+    local suffix_width = vim.fn.strdisplaywidth(suffix_text)
+    local pad = win_width - line_width - suffix_width - 1
+    if pad < 1 then
+      pad = 1
+    end
+    return line .. string.rep(' ', pad) .. suffix_text
+  end
+
   local function walk(children, prefix, depth)
     local visible = {}
     for _, child in ipairs(children) do
@@ -140,7 +157,7 @@ function M.render_tree(root_children, opts)
           suffix_text, suffix_hl = dir_suffix(child)
         end
         if suffix_text then
-          line = line .. ' ' .. suffix_text
+          line = append_suffix(line, suffix_text)
         end
 
         lines[#lines + 1] = line
@@ -188,7 +205,7 @@ function M.render_tree(root_children, opts)
           suffix_text, suffix_hl = file_suffix(child)
         end
         if suffix_text then
-          line = line .. '  ' .. suffix_text
+          line = append_suffix(line, suffix_text)
         end
 
         lines[#lines + 1] = line

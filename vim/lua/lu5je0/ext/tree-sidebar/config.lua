@@ -2,7 +2,7 @@ local M = {}
 
 M.filetype = 'TreeSidebar'
 
-M.default_width = 32
+M.default_width = 33
 
 M.tabs = {
   { id = 'files', label = '󰙅 Files' },

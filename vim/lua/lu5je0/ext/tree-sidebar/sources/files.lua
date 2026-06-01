@@ -307,8 +307,24 @@ function M.close_node()
 end
 
 function M.toggle_dotfiles()
+  local old_line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local old_item = state.files.display_items[old_line]
+  local old_path = old_item and old_item.node and old_item.node.abs_path
+
   state.files.hide_dotfiles = not state.files.hide_dotfiles
   M.render()
+
+  if old_path then
+    for line, item in ipairs(state.files.display_items) do
+      if item.node and item.node.abs_path == old_path then
+        pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+        return
+      end
+    end
+  end
+  local line_count = vim.api.nvim_buf_line_count(state.buf)
+  local target = math.min(old_line, line_count)
+  pcall(vim.api.nvim_win_set_cursor, state.win, { math.max(1, target), 0 })
 end
 
 function M.cd_to_node()
