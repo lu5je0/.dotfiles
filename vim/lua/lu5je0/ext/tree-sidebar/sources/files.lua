@@ -200,6 +200,7 @@ local function build_git_status_map(stdout)
       end
       local glyph, hl = M._git_status_to_glyph(xy)
       map[path] = { xy = xy, glyph = glyph, hl = hl }
+      if xy == '!!' then goto next end
       local parts = vim.split(path, '/', { trimempty = true })
       local dir = ''
       for pi = 1, #parts - 1 do
@@ -210,6 +211,7 @@ local function build_git_status_map(stdout)
         end
       end
     end
+    ::next::
     i = i + 1
   end
   for dir, info in pairs(dir_status) do
@@ -477,7 +479,7 @@ end
 
 function M.refresh_git_status(callback)
   local tab_files = state.files
-  vim.system({ 'git', 'status', '--porcelain=v1', '-z' }, { text = true }, function(result)
+  vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--ignored' }, { text = true }, function(result)
     vim.schedule(function()
       tab_files.git_status_map = build_git_status_map(result.code == 0 and result.stdout or '')
       if callback then
@@ -493,7 +495,9 @@ end
 
 function M._git_status_to_glyph(xy)
   local x, y = xy:sub(1, 1), xy:sub(2, 2)
-  if xy == '??' then
+  if xy == '!!' then
+    return config.git_glyphs.ignored, 'TreeSidebarGitIgnored'
+  elseif xy == '??' then
     return config.git_glyphs.untracked, 'TreeSidebarGitNew'
   elseif x == 'D' or y == 'D' then
     return config.git_glyphs.deleted, 'TreeSidebarGitDirty'

@@ -130,7 +130,7 @@ function M.setup()
       local tab_files = state.files
       local tab_git_changes = state.git_changes
       local tab_idx = state.active_tab_idx
-      vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
+      vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all', '--ignored' }, { text = true }, function(result)
         vim.schedule(function()
           if result.code ~= 0 then
             return
