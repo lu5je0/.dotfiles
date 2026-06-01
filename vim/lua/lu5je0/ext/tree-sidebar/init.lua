@@ -34,6 +34,23 @@ function M.focus()
   keymaps.apply_for_tab(state.active_tab_idx)
 end
 
+function M.open_tab(idx)
+  if not state:is_open() then
+    window.open()
+    state.active_tab_idx = idx
+    tabs.render_winbar()
+    keymaps.apply_shared()
+    keymaps.apply_for_tab(idx)
+    local source = tabs.get_active_source()
+    if source and source.render then
+      source.render()
+    end
+  else
+    tabs.switch_to(idx)
+  end
+  vim.api.nvim_set_current_win(state.win)
+end
+
 function M.locate_file()
   local filepath = vim.fn.expand('%:p')
   if vim.fn.filereadable(filepath) == 0 then
@@ -114,6 +131,10 @@ function M.setup()
 
   vim.keymap.set('n', '<leader>fe', function()
     M.locate_file()
+  end, opts)
+
+  vim.keymap.set('n', '<leader>gs', function()
+    M.open_tab(2)
   end, opts)
 end
 

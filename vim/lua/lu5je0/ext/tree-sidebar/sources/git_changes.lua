@@ -214,12 +214,6 @@ local function files_to_tree_nodes(files, expanded_dirs)
   return finalize(root_dirs, root_files)
 end
 
-local section_icons = {
-  changes = '',
-  staged = '',
-  unstaged = '',
-  untracked = '',
-}
 
 local function build_section_tree(section_key, label, files, expanded, expanded_dirs)
   return {
@@ -229,13 +223,13 @@ local function build_section_tree(section_key, label, files, expanded, expanded_
     children = files_to_tree_nodes(files, expanded_dirs),
     section = section_key,
     _is_section = true,
-    _icon = section_icons[section_key] or '',
   }
 end
 
 function M.render()
   local sections = state.git_changes.sections
   if not sections.staged and not sections.unstaged and not sections.untracked and not sections.changes then
+    render.flush({ '  Loading...' }, {})
     M.refresh()
     return
   end
@@ -265,10 +259,11 @@ function M.render()
 
   local lines, items, highlights = render.render_tree(root_nodes, {
     compress_dirs = true,
+    flat_depth = 1,
     get_dir_icon = function(node)
       if node._is_section then
-        local arrow = node.expanded and '▾' or '▸'
-        return arrow .. ' ' .. (node._icon or '')
+        local arrow = node.expanded and '' or ''
+        return arrow
       end
       return nil
     end,
@@ -290,12 +285,6 @@ function M.render()
   for _, item in ipairs(items) do
     if item._is_section then
       -- Replace all highlights for section line with per-section hl
-      local section_hl_map = {
-        changes = 'TreeSidebarFolderName',
-        untracked = 'TreeSidebarFolderName',
-        unstaged = 'TreeSidebarFolderName',
-        staged = 'TreeSidebarFolderName',
-      }
       local new_hl = {}
       for _, h in ipairs(highlights) do
         if h.line ~= item.line_idx then
@@ -303,7 +292,7 @@ function M.render()
         end
       end
       highlights = new_hl
-      highlights[#highlights + 1] = { line = item.line_idx, hl = section_hl_map[item.section] or 'Title', col_start = 0, col_end = -1 }
+      highlights[#highlights + 1] = { line = item.line_idx, hl = 'TreeSidebarSectionName', col_start = 0, col_end = -1 }
     elseif item.type == 'file' and item.node and item.node.xy then
       local line_text = lines[item.line_idx + 1]
       if line_text then
@@ -358,7 +347,7 @@ function M.refresh(callback)
   end)
 end
 
-local function find_section_for_line(line)
+function M.find_section_for_line(line)
   for i = line, 1, -1 do
     local it = state.git_changes.display_items[i]
     if it and it._is_section then
@@ -372,7 +361,7 @@ local function save_dir_state(line, abs_path, value)
   if not abs_path then
     return
   end
-  local section_key = find_section_for_line(line)
+  local section_key = M.find_section_for_line(line)
   if not section_key then
     return
   end
@@ -424,123 +413,7 @@ function M.close_node()
   })
 end
 
-function M.stage_file()
-  if not state:is_open() then
-    return
-  end
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = state.git_changes.display_items[line]
-  if not item or item._is_section or not item.node or item.type ~= 'file' then
-    return
-  end
-  local node = item.node
-  local xy = node.xy or ''
-  local x, y = xy:sub(1, 1), xy:sub(2, 2)
-  -- Only stage if untracked or has unstaged changes
-  if x == '?' or (y ~= ' ' and y ~= '?') then
-    local path = node.rel_path or node.name
-    vim.system({ 'git', 'add', '--', path }, { text = true }, function()
-      vim.schedule(function()
-        M.refresh()
-      end)
-    end)
-  end
-end
-
-function M.stage_section()
-  if not state:is_open() then
-    return
-  end
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = state.git_changes.display_items[line]
-
-  -- Find the section this item belongs to
-  local section_key = nil
-  if item and item._is_section then
-    section_key = item.section
-  else
-    for i = line - 1, 1, -1 do
-      local parent = state.git_changes.display_items[i]
-      if parent and parent._is_section then
-        section_key = parent.section
-        break
-      end
-    end
-  end
-  if not section_key then
-    return
-  end
-
-  -- Get files from the section data
-  local sections = state.git_changes.sections
-  local files = sections[section_key] or {}
-  local paths = {}
-  for _, file in ipairs(files) do
-    local x, y = (file.xy or ''):sub(1, 1), (file.xy or ''):sub(2, 2)
-    if x == '?' or (y ~= ' ' and y ~= '?') then
-      paths[#paths + 1] = file.path
-    end
-  end
-
-  if #paths == 0 then
-    return
-  end
-
-  local args = { 'git', 'add', '--' }
-  for _, p in ipairs(paths) do
-    args[#args + 1] = p
-  end
-  vim.system(args, { text = true }, function()
-    vim.schedule(function()
-      M.refresh()
-    end)
-  end)
-end
-
-function M.unstage_file()
-  if not state:is_open() then
-    return
-  end
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = state.git_changes.display_items[line]
-  if not item or item._is_section or not item.node then
-    return
-  end
-  local path = item.node.rel_path or item.node.name
-  vim.system({ 'git', 'reset', 'HEAD', '--', path }, { text = true }, function()
-    vim.schedule(function()
-      M.refresh()
-    end)
-  end)
-end
-
-function M.discard_file()
-  if not state:is_open() then
-    return
-  end
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = state.git_changes.display_items[line]
-  if not item or item._is_section or not item.node then
-    return
-  end
-
-  local path = item.node.rel_path or item.node.name
-  local choice = vim.fn.confirm('Discard changes to ' .. path .. '?', '&Yes\n&No', 2)
-  if choice ~= 1 then
-    return
-  end
-
-  if item.node.xy == '??' then
-    vim.fn.delete(item.node.abs_path, 'rf')
-    M.refresh()
-  else
-    vim.system({ 'git', 'checkout', '--', path }, { text = true }, function()
-      vim.schedule(function()
-        M.refresh()
-      end)
-    end)
-  end
-end
+-- ── git operations (delegated to actions/git_ops.lua) ───
 
 function M.locate_file(filepath)
   if not filepath or filepath == '' then
@@ -604,18 +477,19 @@ end
 
 function M.keymaps()
   local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
+  local git_ops_actions = require('lu5je0.ext.tree-sidebar.actions.git_ops')
   return {
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
     { 'h', M.close_node, desc = 'Close node' },
-    { 'a', M.stage_file, desc = 'Stage file' },
-    { 'A', M.stage_section, desc = 'Stage section' },
-    { 'u', M.unstage_file, desc = 'Unstage file' },
-    { 'x', M.discard_file, desc = 'Discard changes' },
+    { 'a', git_ops_actions.stage_file, desc = 'Stage file' },
+    { 'A', git_ops_actions.stage_section, desc = 'Stage section' },
+    { 'u', git_ops_actions.unstage_file, desc = 'Unstage file' },
+    { 'x', git_ops_actions.discard_file, desc = 'Discard file' },
+    { 'X', git_ops_actions.discard_section, desc = 'Discard section' },
+    { 'U', git_ops_actions.undo_last_action, desc = 'Undo' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
-    { '<c-d>', preview_mod.scroll_down, desc = 'Scroll preview down' },
-    { '<c-u>', preview_mod.scroll_up, desc = 'Scroll preview up' },
   }
 end
 

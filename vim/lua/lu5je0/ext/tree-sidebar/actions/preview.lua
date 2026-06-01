@@ -1,17 +1,13 @@
 local state = require('lu5je0.ext.tree-sidebar.state')
 local ui = require('lu5je0.core.ui')
+local diff_preview = require('lu5je0.ext.tree-sidebar.actions.diff_preview')
 
 local M = {}
 
 local _preview_active = false
 local _preview_autocmd = nil
+local _preview_bufleave_autocmd = nil
 local _preview_type = nil -- 'diff' or 'file'
-
--- Diff preview state
-local _diff_win_left = nil
-local _diff_win_right = nil
-local _diff_buf_left = nil
-local _diff_buf_right = nil
 
 local function get_current_item()
   local line = vim.api.nvim_win_get_cursor(state.win)[1]
@@ -33,109 +29,23 @@ local function get_current_item()
   return item
 end
 
-local function close_diff_preview()
-  if _diff_win_left and vim.api.nvim_win_is_valid(_diff_win_left) then
-    vim.api.nvim_win_close(_diff_win_left, true)
+local function clear_autocmds()
+  if _preview_autocmd then
+    pcall(vim.api.nvim_del_autocmd, _preview_autocmd)
+    _preview_autocmd = nil
   end
-  if _diff_win_right and vim.api.nvim_win_is_valid(_diff_win_right) then
-    vim.api.nvim_win_close(_diff_win_right, true)
+  if _preview_bufleave_autocmd then
+    pcall(vim.api.nvim_del_autocmd, _preview_bufleave_autocmd)
+    _preview_bufleave_autocmd = nil
   end
-  _diff_win_left = nil
-  _diff_win_right = nil
-  _diff_buf_left = nil
-  _diff_buf_right = nil
 end
 
-local function show_diff_preview(item)
-  local node = item.node
-  local cwd = vim.fn.getcwd()
-  local rel_path = node.abs_path:sub(#cwd + 2)
-  local xy = node.xy or '  '
-
-  local new_lines = {}
-  if vim.fn.filereadable(node.abs_path) == 1 then
-    new_lines = vim.fn.readfile(node.abs_path)
-  end
-
-  local function render_diff(old_lines)
-    close_diff_preview()
-
-    local total_width = math.floor(vim.o.columns * 0.85)
-    local half_width = math.floor(total_width / 2)
-    local height = math.floor(vim.o.lines * 0.8)
-    local row = math.floor((vim.o.lines - height) / 2)
-    local col_left = math.floor((vim.o.columns - total_width) / 2)
-    local col_right = col_left + half_width
-
-    local ft = vim.filetype.match({ filename = node.abs_path }) or ''
-
-    _diff_buf_left = vim.api.nvim_create_buf(false, true)
-    vim.bo[_diff_buf_left].buftype = 'nofile'
-    vim.bo[_diff_buf_left].bufhidden = 'wipe'
-    if ft ~= '' then vim.bo[_diff_buf_left].filetype = ft end
-    vim.api.nvim_buf_set_lines(_diff_buf_left, 0, -1, false, old_lines)
-    vim.bo[_diff_buf_left].modifiable = false
-
-    _diff_buf_right = vim.api.nvim_create_buf(false, true)
-    vim.bo[_diff_buf_right].buftype = 'nofile'
-    vim.bo[_diff_buf_right].bufhidden = 'wipe'
-    if ft ~= '' then vim.bo[_diff_buf_right].filetype = ft end
-    vim.api.nvim_buf_set_lines(_diff_buf_right, 0, -1, false, new_lines)
-    vim.bo[_diff_buf_right].modifiable = false
-
-    _diff_win_left = vim.api.nvim_open_win(_diff_buf_left, false, {
-      relative = 'editor',
-      row = row,
-      col = col_left,
-      width = half_width,
-      height = height,
-      style = 'minimal',
-      border = 'rounded',
-      title = ' HEAD ',
-      title_pos = 'center',
-    })
-    vim.wo[_diff_win_left].diff = true
-    vim.wo[_diff_win_left].scrollbind = true
-    vim.wo[_diff_win_left].wrap = false
-    vim.wo[_diff_win_left].foldmethod = 'diff'
-    vim.wo[_diff_win_left].foldlevel = 99
-    vim.wo[_diff_win_left].cursorline = true
-
-    _diff_win_right = vim.api.nvim_open_win(_diff_buf_right, false, {
-      relative = 'editor',
-      row = row,
-      col = col_right,
-      width = half_width,
-      height = height,
-      style = 'minimal',
-      border = 'rounded',
-      title = ' Working Tree ',
-      title_pos = 'center',
-    })
-    vim.wo[_diff_win_right].diff = true
-    vim.wo[_diff_win_right].scrollbind = true
-    vim.wo[_diff_win_right].wrap = false
-    vim.wo[_diff_win_right].foldmethod = 'diff'
-    vim.wo[_diff_win_right].foldlevel = 99
-    vim.wo[_diff_win_right].cursorline = true
-  end
-
-  if xy == '??' then
-    render_diff({})
-  else
-    vim.system({ 'git', 'show', 'HEAD:' .. rel_path }, { text = true, cwd = cwd }, function(result)
-      vim.schedule(function()
-        local old_lines = {}
-        if result.code == 0 and result.stdout then
-          old_lines = vim.split(result.stdout, '\n', { plain = true })
-          if #old_lines > 0 and old_lines[#old_lines] == '' then
-            table.remove(old_lines)
-          end
-        end
-        render_diff(old_lines)
-      end)
-    end)
-  end
+local function stop_preview()
+  _preview_active = false
+  clear_autocmds()
+  diff_preview.close()
+  ui.close_current_popup()
+  _preview_type = nil
 end
 
 local function update_preview()
@@ -147,24 +57,47 @@ local function update_preview()
     return
   end
   if state.active_tab_idx == 2 then
-    show_diff_preview(item)
+    diff_preview.show(item, function(new_type)
+      _preview_type = new_type
+      if new_type == nil then
+        _preview_active = false
+        clear_autocmds()
+      end
+    end)
   else
     ui.preview(item.node.abs_path)
   end
 end
 
-local function stop_preview()
-  _preview_active = false
-  if _preview_autocmd then
-    pcall(vim.api.nvim_del_autocmd, _preview_autocmd)
-    _preview_autocmd = nil
-  end
-  if _preview_type == 'diff' then
-    close_diff_preview()
-  else
-    ui.close_current_popup()
-  end
-  _preview_type = nil
+local function setup_autocmds()
+  _preview_autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
+    buffer = state.buf,
+    callback = function()
+      if not _preview_active or not state:is_open() then
+        stop_preview()
+        return
+      end
+      update_preview()
+    end,
+  })
+
+  _preview_bufleave_autocmd = vim.api.nvim_create_autocmd('BufLeave', {
+    buffer = state.buf,
+    once = true,
+    callback = function()
+      vim.schedule(function()
+        local cur_win = vim.api.nvim_get_current_win()
+        if cur_win == diff_preview.win_left or cur_win == diff_preview.win_right then
+          return
+        end
+        local popup = ui.current_popup
+        if popup and popup.winid and cur_win == popup.winid then
+          return
+        end
+        stop_preview()
+      end)
+    end,
+  })
 end
 
 local function start_preview()
@@ -176,22 +109,65 @@ local function start_preview()
 
   if state.active_tab_idx == 2 then
     _preview_type = 'diff'
-    show_diff_preview(item)
+    diff_preview.show(item, function(new_type)
+      _preview_type = new_type
+      if new_type == nil then
+        _preview_active = false
+        clear_autocmds()
+      end
+    end)
   else
     _preview_type = 'file'
     ui.preview(item.node.abs_path)
   end
 
-  _preview_autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
-    buffer = state.buf,
-    callback = function()
-      if not _preview_active or not state:is_open() then
-        stop_preview()
-        return
-      end
-      update_preview()
-    end,
-  })
+  setup_autocmds()
+end
+
+local function enter_file_preview_window()
+  local popup = ui.current_popup
+  local buf = ui.get_preview_buf()
+  if not popup or not popup.winid or not vim.api.nvim_win_is_valid(popup.winid) or not buf then
+    return
+  end
+
+  _preview_active = false
+  clear_autocmds()
+
+  vim.keymap.set('n', 'q', function()
+    ui.close_current_popup()
+    _preview_type = nil
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+      vim.api.nvim_set_current_win(state.win)
+    end
+  end, { buffer = buf, nowait = true, silent = true })
+
+  if ui.current_popup_autocmd then
+    pcall(vim.api.nvim_del_autocmd, ui.current_popup_autocmd)
+    ui.current_popup_autocmd = nil
+  end
+
+  vim.api.nvim_win_set_config(popup.winid, { focusable = true })
+  vim.api.nvim_set_current_win(popup.winid)
+end
+
+local function enter_diff_window()
+  _preview_active = false
+  clear_autocmds()
+
+  if diff_preview.win_left and vim.api.nvim_win_is_valid(diff_preview.win_left) then
+    vim.api.nvim_set_current_win(diff_preview.win_left)
+  elseif diff_preview.win_right and vim.api.nvim_win_is_valid(diff_preview.win_right) then
+    vim.api.nvim_set_current_win(diff_preview.win_right)
+  end
+end
+
+function M.is_active()
+  return _preview_active
+end
+
+function M.stop()
+  stop_preview()
 end
 
 function M.toggle()
@@ -199,7 +175,11 @@ function M.toggle()
     return
   end
   if _preview_active then
-    stop_preview()
+    if _preview_type == 'diff' then
+      enter_diff_window()
+    else
+      enter_file_preview_window()
+    end
   else
     start_preview()
   end
@@ -210,8 +190,8 @@ function M.scroll_down()
     return
   end
   if _preview_type == 'diff' then
-    if _diff_win_left and vim.api.nvim_win_is_valid(_diff_win_left) then
-      vim.api.nvim_win_call(_diff_win_left, function()
+    if diff_preview.win_left and vim.api.nvim_win_is_valid(diff_preview.win_left) then
+      vim.api.nvim_win_call(diff_preview.win_left, function()
         vim.cmd('normal! \\<C-d>')
       end)
     end
@@ -230,8 +210,8 @@ function M.scroll_up()
     return
   end
   if _preview_type == 'diff' then
-    if _diff_win_left and vim.api.nvim_win_is_valid(_diff_win_left) then
-      vim.api.nvim_win_call(_diff_win_left, function()
+    if diff_preview.win_left and vim.api.nvim_win_is_valid(diff_preview.win_left) then
+      vim.api.nvim_win_call(diff_preview.win_left, function()
         vim.cmd('normal! \\<C-u>')
       end)
     end

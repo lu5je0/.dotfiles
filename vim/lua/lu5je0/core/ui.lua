@@ -90,41 +90,26 @@ local function ensure_preview_window(bufnr)
   return winid
 end
 
-local function get_preview_buf(file_path)
-  local buf = vim.fn.bufadd(file_path)
-  vim.fn.bufload(buf)
-  return buf
+local _preview_buf = nil
+
+local function get_or_create_preview_buf()
+  if _preview_buf and vim.api.nvim_buf_is_valid(_preview_buf) then
+    return _preview_buf
+  end
+  _preview_buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[_preview_buf].buftype = 'nofile'
+  vim.bo[_preview_buf].bufhidden = 'hide'
+  vim.bo[_preview_buf].swapfile = false
+  return _preview_buf
 end
 
-local function configure_preview_window(winid, bufnr)
-  if not vim.api.nvim_win_is_valid(winid) then
-    return
-  end
-
-  set_winopt(winid, 'number', true)
-  set_winopt(winid, 'relativenumber', false)
-  set_winopt(winid, 'signcolumn', 'no')
-  set_winopt(winid, 'foldcolumn', '0')
-  set_winopt(winid, 'cursorline', false)
-  set_winopt(winid, 'wrap', false)
-  set_winopt(winid, 'winhighlight', 'Normal:Normal,FloatBorder:Fg')
-
-  local ok = pcall(vim.api.nvim_win_set_cursor, winid, { 1, 0 })
-  if not ok then
-    return
-  end
-
-  local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local ft = nil
-  if bufname ~= '' then
-    ft = vim.filetype.match({ filename = bufname })
-  end
-  if (ft == nil or ft == '') and vim.api.nvim_buf_is_valid(bufnr) then
-    ft = vim.filetype.match({ buf = bufnr })
-  end
-  if ft ~= nil and ft ~= '' and vim.bo[bufnr].filetype ~= ft then
-    vim.bo[bufnr].filetype = ft
-  end
+local function is_binary_file(file_path)
+  local fd = vim.uv.fs_open(file_path, 'r', 438)
+  if not fd then return false end
+  local data = vim.uv.fs_read(fd, 512, 0)
+  vim.uv.fs_close(fd)
+  if not data then return false end
+  return data:find('\0') ~= nil
 end
 
 function M.close_current_popup()
@@ -143,7 +128,7 @@ function M.close_current_popup()
 end
 
 function M.preview(file_path)
-  local bufnr = get_preview_buf(file_path)
+  local bufnr = get_or_create_preview_buf()
   local winid = ensure_preview_window(bufnr)
 
   if not vim.api.nvim_win_is_valid(winid) then
@@ -155,8 +140,38 @@ function M.preview(file_path)
     vim.api.nvim_win_set_buf(winid, bufnr)
   end
 
-  configure_preview_window(winid, bufnr)
+  vim.bo[bufnr].modifiable = true
+  local binary = is_binary_file(file_path)
+  if binary then
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { '', '  [Binary file]' })
+    vim.bo[bufnr].filetype = ''
+  else
+    local lines = vim.fn.readfile(file_path)
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+    local ft = vim.filetype.match({ filename = file_path }) or ''
+    vim.bo[bufnr].filetype = ft
+    if ft ~= '' then
+      pcall(vim.treesitter.start, bufnr, ft)
+    end
+  end
+  vim.bo[bufnr].modifiable = false
+
+  if vim.api.nvim_win_is_valid(winid) then
+    set_winopt(winid, 'number', not binary)
+    set_winopt(winid, 'relativenumber', false)
+    set_winopt(winid, 'signcolumn', 'no')
+    set_winopt(winid, 'foldcolumn', '0')
+    set_winopt(winid, 'cursorline', false)
+    set_winopt(winid, 'wrap', false)
+    set_winopt(winid, 'winhighlight', 'Normal:Normal,FloatBorder:Fg')
+    pcall(vim.api.nvim_win_set_cursor, winid, { 1, 0 })
+  end
+
   return M.current_popup
+end
+
+function M.get_preview_buf()
+  return _preview_buf
 end
 
 return M

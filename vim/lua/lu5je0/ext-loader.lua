@@ -104,6 +104,7 @@ lazy_load({
     { mode = { 'n' }, '<leader>e' },
     { mode = { 'n' }, '<leader>E' },
     { mode = { 'n' }, '<leader>fe' },
+    { mode = { 'n' }, '<leader>gs' },
   },
 })
 
@@ -383,7 +384,7 @@ lazy_load({
 
 require('lu5je0.misc.time-machine').setup()
 
--- git line log
+-- git
 lazy_load({
   config = function()
     require('lu5je0.ext.git').setup({
@@ -401,7 +402,7 @@ lazy_load({
     { mode = { 'x' }, '<leader>gl' },
     { mode = { 'n' }, '<leader>gl' },
     { mode = { 'n' }, '<leader>gL' },
-    { mode = { 'n' }, '<leader>gs' },
+    -- { mode = { 'n' }, '<leader>gs' },
     { mode = { 'n' }, '<leader>gb' },
   },
   cmd = { 'GitStatusLog' }

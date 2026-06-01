@@ -37,9 +37,9 @@ function M.setup_highlights()
   vim.api.nvim_set_hl(0, 'TreeSidebarIndent', { link = 'NonText', default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarSymlink', { link = 'Normal', default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarModified', { fg = '#98c379', default = true })
-  vim.api.nvim_set_hl(0, 'TreeSidebarTabActive', { link = 'TabLineSel', default = true })
-  vim.api.nvim_set_hl(0, 'TreeSidebarTabInactive', { link = 'TabLine', default = true })
-  vim.api.nvim_set_hl(0, 'TreeSidebarTabFill', { link = 'TabLineFill', default = true })
+  vim.api.nvim_set_hl(0, 'TreeSidebarSectionName', { fg = '#5c6370', bold = true, default = true })
+  vim.api.nvim_set_hl(0, 'TreeSidebarTabActive', { fg = '#abb2bf', bg = '#3e4452', bold = true, default = true })
+  vim.api.nvim_set_hl(0, 'TreeSidebarTabInactive', { fg = '#5c6370', bg = '#2c313a', default = true })
 end
 
 return M

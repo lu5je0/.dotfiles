@@ -75,6 +75,7 @@ function M.render_tree(root_children, opts)
   local item_data = opts.item_data
   local get_dir_icon = opts.get_dir_icon
   local compress_dirs = opts.compress_dirs or false
+  local flat_depth = opts.flat_depth or 0
 
   local function default_dir_icon(node)
     local has_children = node.children and #node.children > 0
@@ -121,7 +122,7 @@ function M.render_tree(root_children, opts)
       end
     end
 
-    local is_root_level = (depth == 0)
+    local is_root_level = (depth <= flat_depth)
 
     for i, child in ipairs(visible) do
       local child_is_last = (i == #visible)

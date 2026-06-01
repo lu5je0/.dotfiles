@@ -41,7 +41,8 @@ function M.render_winbar()
     end
 
     local right_pad = content_width - label_width
-    parts[#parts + 1] = hl .. ' ' .. label .. string.rep(' ', right_pad)
+    local click = string.format('%%@v:lua.require\'lu5je0.ext.tree-sidebar.tabs\'._click_%d@', i)
+    parts[#parts + 1] = click .. hl .. ' ' .. label .. string.rep(' ', right_pad) .. '%X'
   end
   vim.wo[state.win].winbar = table.concat(parts)
 end
@@ -99,6 +100,12 @@ function M.get_active_source()
   end
   vim.notify('tree-sidebar: failed to load source ' .. tab.id .. ': ' .. tostring(source), vim.log.levels.WARN)
   return nil
+end
+
+for i = 1, #config.tabs do
+  M['_click_' .. i] = function()
+    M.switch_to(i)
+  end
 end
 
 return M

@@ -111,11 +111,15 @@ function M.close_buffer()
 end
 
 function M.keymaps()
+  local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
   return {
     { 'l', M.open_buffer, desc = 'Open buffer' },
     { '<cr>', M.open_buffer, desc = 'Open buffer' },
     { 'D', M.close_buffer, desc = 'Close buffer' },
     { 'r', M.render, desc = 'Refresh' },
+    { '<space>', preview_mod.toggle, desc = 'Preview' },
+    { '<c-d>', preview_mod.scroll_down, desc = 'Scroll preview down' },
+    { '<c-u>', preview_mod.scroll_up, desc = 'Scroll preview up' },
   }
 end
 

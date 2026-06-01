@@ -34,6 +34,39 @@ function M.apply_shared()
   buf_set('n', 'q', window.close)
   buf_set('n', 'Z', window.toggle_width)
 
+  local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
+  buf_set('n', '<esc>', function()
+    if preview_mod.is_active() then
+      preview_mod.stop()
+    end
+  end)
+
+  local help = require('lu5je0.ext.git.common.help')
+  buf_set('n', '?', function()
+    local tab = config.tabs[state.active_tab_idx]
+    local ok, source = pcall(require, 'lu5je0.ext.tree-sidebar.sources.' .. (tab and tab.id or ''))
+    local lines = {
+      'Shared',
+      '',
+      '  <left>/<right>  Switch tab',
+      '  1/2/3           Jump to tab',
+      '  q               Close sidebar',
+      '  Z               Toggle width',
+      '  <esc>           Close preview',
+    }
+    if ok and source.keymaps then
+      lines[#lines + 1] = ''
+      lines[#lines + 1] = tab.label
+      lines[#lines + 1] = ''
+      for _, km in ipairs(source.keymaps()) do
+        local lhs = km[1]
+        local desc = km.desc or ''
+        lines[#lines + 1] = string.format('  %-14s  %s', lhs, desc)
+      end
+    end
+    help.show_help('Help', lines)
+  end)
+
   buf_set('n', 'j', function()
     local keys = require('lu5je0.core.keys')
     keys.feedkey('j', 'n')
