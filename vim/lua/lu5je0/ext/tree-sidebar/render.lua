@@ -36,12 +36,19 @@ end
 
 -- Devicons helper
 
+local _devicons = nil
+local _devicons_loaded = false
+
 function M.get_file_icon(name)
-  local ok, devicons = pcall(require, 'nvim-web-devicons')
-  if not ok then
+  if not _devicons_loaded then
+    _devicons_loaded = true
+    local ok, mod = pcall(require, 'nvim-web-devicons')
+    if ok then _devicons = mod end
+  end
+  if not _devicons then
     return '', 'Normal'
   end
-  local icon, hl = devicons.get_icon(name, vim.fn.fnamemodify(name, ':e'), { default = true })
+  local icon, hl = _devicons.get_icon(name, vim.fn.fnamemodify(name, ':e'), { default = true })
   return icon or '', hl or 'Normal'
 end
 
@@ -62,7 +69,7 @@ end
 ---   - get_dir_icon(node) -> icon_str: custom folder icon (default uses config.folder_icons)
 ---   - item_data(node) -> table: extra fields merged into the item entry
 ---
---- Returns: lines, items, highlights
+--- Returns: lines, items, highlights, virt_texts
 function M.render_tree(root_children, opts)
   opts = opts or {}
   local lines = {}

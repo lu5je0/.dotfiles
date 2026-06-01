@@ -36,9 +36,14 @@ function M.apply_shared()
   buf_set('n', '<leader>tn', function() end)
 
   local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
+  local file_ops = require('lu5je0.ext.tree-sidebar.actions.file_ops')
   buf_set('n', '<esc>', function()
     if preview_mod.is_active() then
       preview_mod.stop()
+    end
+    if file_ops._clipboard then
+      file_ops._clipboard = nil
+      file_ops.apply_clipboard_mark()
     end
   end)
 

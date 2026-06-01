@@ -13,10 +13,10 @@ M.tabs = {
 M.git_glyphs = {
   unstaged = '✗',
   staged = '✓',
-  unmerged = '',
+  unmerged = '?',
   renamed = '➜',
-  untracked = '',
-  deleted = '',
+  untracked = '',
+  deleted = '?',
   ignored = '◌',
 }
 
@@ -38,6 +38,8 @@ function M.setup_highlights()
   vim.api.nvim_set_hl(0, 'TreeSidebarSymlink', { link = 'Normal', default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarModified', { fg = '#98c379', default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarSectionName', { fg = '#5c6370', bold = true, default = true })
+  vim.api.nvim_set_hl(0, 'TreeSidebarCut', { underline = true, sp = '#e06c75', default = true })
+  vim.api.nvim_set_hl(0, 'TreeSidebarCopy', { underline = true, sp = '#61afef', default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarTabActive', { fg = '#abb2bf', bg = '#3e4452', bold = true, default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarTabInactive', { fg = '#5c6370', bg = '#2c313a', default = true })
 end

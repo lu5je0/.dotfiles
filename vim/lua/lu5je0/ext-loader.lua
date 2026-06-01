@@ -105,6 +105,7 @@ lazy_load({
     { mode = { 'n' }, '<leader>E' },
     { mode = { 'n' }, '<leader>fe' },
     { mode = { 'n' }, '<leader>gs' },
+    { mode = { 'n' }, '<leader>fb' },
   },
 })
 

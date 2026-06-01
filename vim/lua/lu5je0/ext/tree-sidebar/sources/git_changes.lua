@@ -286,19 +286,27 @@ function M.render()
     end,
   })
 
-  -- Apply section-level and per-char highlights
+  -- Collect section lines, then filter highlights once + apply file name highlights
+  local section_lines = {}
   for _, item in ipairs(items) do
     if item._is_section then
-      -- Replace all highlights for section line with per-section hl
-      local new_hl = {}
-      for _, h in ipairs(highlights) do
-        if h.line ~= item.line_idx then
-          new_hl[#new_hl + 1] = h
-        end
+      section_lines[item.line_idx] = true
+    end
+  end
+  if next(section_lines) then
+    local new_hl = {}
+    for _, h in ipairs(highlights) do
+      if not section_lines[h.line] then
+        new_hl[#new_hl + 1] = h
       end
-      highlights = new_hl
-      highlights[#highlights + 1] = { line = item.line_idx, hl = 'TreeSidebarSectionName', col_start = 0, col_end = -1 }
-    elseif item.type == 'file' and item.node and item.node.xy then
+    end
+    highlights = new_hl
+    for line_idx in pairs(section_lines) do
+      highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarSectionName', col_start = 0, col_end = -1 }
+    end
+  end
+  for _, item in ipairs(items) do
+    if item.type == 'file' and item.node and item.node.xy then
       local line_text = lines[item.line_idx + 1]
       if line_text then
         local name_hl = file_name_hl(item.node.xy)
@@ -339,6 +347,10 @@ function M.refresh(callback)
       end
     end)
   end)
+end
+
+function M.update_sections_from_stdout(tab_git_changes, stdout)
+  tab_git_changes.sections = parse_git_status(stdout)
 end
 
 function M.find_section_for_line(line)
@@ -481,6 +493,17 @@ function M.keymaps()
     { 'u', git_ops_actions.undo_last_action, desc = 'Undo' },
     { 'x', git_ops_actions.discard_file, desc = 'Discard file' },
     { 'X', git_ops_actions.discard_section, desc = 'Discard section' },
+    { '<leader>fe', function()
+      local line = vim.api.nvim_win_get_cursor(state.win)[1]
+      local item = state.git_changes.display_items[line]
+      if not item or not item.node or item._is_section then
+        return
+      end
+      local tabs = require('lu5je0.ext.tree-sidebar.tabs')
+      tabs.switch_to(1)
+      local files = require('lu5je0.ext.tree-sidebar.sources.files')
+      files.find_file(item.node.abs_path)
+    end, desc = 'Locate in files' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
   }

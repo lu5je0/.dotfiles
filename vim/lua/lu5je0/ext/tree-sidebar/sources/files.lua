@@ -155,7 +155,8 @@ local function file_suffix(node)
 end
 
 local function dir_suffix(node)
-  local git_status = state.files.git_status_map[node.abs_path .. '/']
+  local rel_path = node.abs_path:sub(#vim.fn.getcwd() + 2) .. '/'
+  local git_status = state.files.git_status_map[rel_path]
   if git_status then
     return git_status.glyph, git_status.hl
   end
@@ -172,6 +173,49 @@ local function prepare_tree(node)
       prepare_tree(child)
     end
   end
+end
+
+local DIR_STATUS_PRIORITY = {
+  TreeSidebarGitDirty = 1,
+  TreeSidebarGitNew = 2,
+  TreeSidebarGitStaged = 3,
+}
+
+local function build_git_status_map(stdout)
+  local map = {}
+  if not stdout or stdout == '' then
+    return map
+  end
+  local dir_status = {}
+  local entries = vim.split(stdout, '\0', { trimempty = true })
+  local i = 1
+  while i <= #entries do
+    local entry = entries[i]
+    if #entry >= 4 then
+      local xy = entry:sub(1, 2)
+      local path = entry:sub(4)
+      local x = xy:sub(1, 1)
+      if x == 'R' or x == 'C' then
+        i = i + 1
+      end
+      local glyph, hl = M._git_status_to_glyph(xy)
+      map[path] = { xy = xy, glyph = glyph, hl = hl }
+      local parts = vim.split(path, '/', { trimempty = true })
+      local dir = ''
+      for pi = 1, #parts - 1 do
+        dir = dir .. (pi > 1 and '/' or '') .. parts[pi]
+        local existing = dir_status[dir]
+        if not existing or (DIR_STATUS_PRIORITY[hl] or 99) < (DIR_STATUS_PRIORITY[existing.hl] or 99) then
+          dir_status[dir] = { xy = xy, glyph = glyph, hl = hl }
+        end
+      end
+    end
+    i = i + 1
+  end
+  for dir, info in pairs(dir_status) do
+    map[dir .. '/'] = info
+  end
+  return map
 end
 
 function M.render()
@@ -201,6 +245,7 @@ function M.render()
     filter = node_filter,
     file_suffix = file_suffix,
     dir_suffix = dir_suffix,
+    compress_dirs = state.files.compress_dirs or false,
   })
 
   -- Merge results (offset line indices)
@@ -225,6 +270,9 @@ function M.render()
   state.files.display_items = items
   render.flush(lines, highlights, virt_texts)
   sync_watchers()
+
+  local file_ops = require('lu5je0.ext.tree-sidebar.actions.file_ops')
+  file_ops.apply_clipboard_mark()
 end
 
 local function rescan_node(node)
@@ -284,6 +332,24 @@ function M.open_node()
     expand = function(it)
       ensure_children(it.node)
       it.node.expanded = true
+      if state.files.compress_dirs then
+        local node = it.node
+        while node.children do
+          local dirs = {}
+          for _, c in ipairs(node.children) do
+            if c.type == 'directory' and node_filter(c) then
+              dirs[#dirs + 1] = c
+            end
+          end
+          if #dirs == 1 then
+            ensure_children(dirs[1])
+            dirs[1].expanded = true
+            node = dirs[1]
+          else
+            break
+          end
+        end
+      end
     end,
     on_already_expanded = function()
       vim.cmd('wincmd p')
@@ -332,6 +398,22 @@ function M.toggle_dotfiles()
   pcall(vim.api.nvim_win_set_cursor, state.win, { math.max(1, target), 0 })
 end
 
+local function save_cursor_for_cwd()
+  if state:is_open() then
+    state.files._cursor_cache = state.files._cursor_cache or {}
+    state.files._cursor_cache[vim.fn.getcwd()] = vim.api.nvim_win_get_cursor(state.win)
+  end
+end
+
+local function restore_cursor_for_cwd()
+  local cache = state.files._cursor_cache
+  if cache and cache[vim.fn.getcwd()] then
+    pcall(vim.api.nvim_win_set_cursor, state.win, cache[vim.fn.getcwd()])
+  else
+    pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+  end
+end
+
 function M.cd_to_node()
   if not state:is_open() then
     return
@@ -350,11 +432,10 @@ function M.cd_to_node()
   end
 
   if path then
-    -- Save current tree before cd
+    save_cursor_for_cwd()
     state.files._root_cache = state.files._root_cache or {}
     state.files._root_cache[vim.fn.getcwd()] = state.files.root
     vim.cmd('cd ' .. vim.fn.fnameescape(path))
-    -- Restore cached tree for new cwd if available
     local cache = state.files._root_cache
     if cache and cache[path] then
       state.files.root = cache[path]
@@ -362,6 +443,7 @@ function M.cd_to_node()
       state.files.root = nil
     end
     M.render()
+    pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
   end
 end
 
@@ -369,17 +451,20 @@ function M.cd_parent()
   local cwd = vim.fn.getcwd()
   local parent = vim.fs.dirname(cwd)
   if parent and parent ~= cwd then
+    save_cursor_for_cwd()
     state.files._root_cache = state.files._root_cache or {}
     state.files._root_cache[cwd] = state.files.root
     vim.cmd('cd ' .. vim.fn.fnameescape(parent))
     local cache = state.files._root_cache
     state.files.root = cache and cache[parent] or nil
     M.render()
+    pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
   end
 end
 
 function M.cd_home()
   local cwd = vim.fn.getcwd()
+  save_cursor_for_cwd()
   state.files._root_cache = state.files._root_cache or {}
   state.files._root_cache[cwd] = state.files.root
   vim.cmd('cd ~')
@@ -387,30 +472,23 @@ function M.cd_home()
   local cache = state.files._root_cache
   state.files.root = cache and cache[home] or nil
   M.render()
+  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
 end
 
 function M.refresh_git_status(callback)
   local tab_files = state.files
   vim.system({ 'git', 'status', '--porcelain=v1', '-z' }, { text = true }, function(result)
     vim.schedule(function()
-      local map = {}
-      if result.code == 0 and result.stdout and result.stdout ~= '' then
-        local entries = vim.split(result.stdout, '\0', { trimempty = true })
-        for _, entry in ipairs(entries) do
-          if #entry >= 4 then
-            local xy = entry:sub(1, 2)
-            local path = entry:sub(4)
-            local glyph, hl = M._git_status_to_glyph(xy)
-            map[path] = { xy = xy, glyph = glyph, hl = hl }
-          end
-        end
-      end
-      tab_files.git_status_map = map
+      tab_files.git_status_map = build_git_status_map(result.code == 0 and result.stdout or '')
       if callback then
         callback()
       end
     end)
   end)
+end
+
+function M.update_git_status_from_stdout(tab_files, stdout)
+  tab_files.git_status_map = build_git_status_map(stdout or '')
 end
 
 function M._git_status_to_glyph(xy)
@@ -523,6 +601,12 @@ function M.show_file_info()
   })
 end
 
+function M.toggle_compress_dirs()
+  state.files.compress_dirs = not state.files.compress_dirs
+  vim.notify('Group empty: ' .. (state.files.compress_dirs and 'on' or 'off'), vim.log.levels.INFO)
+  M.render()
+end
+
 function M.keymaps()
   local nav = require('lu5je0.ext.tree-sidebar.actions.navigation')
   local file_ops = require('lu5je0.ext.tree-sidebar.actions.file_ops')
@@ -538,6 +622,7 @@ function M.keymaps()
     { '<c-o>', nav.back, desc = 'Back' },
     { '<c-i>', nav.forward, desc = 'Forward' },
     { '.', M.toggle_dotfiles, desc = 'Toggle dotfiles' },
+    { 'zc', M.toggle_compress_dirs, desc = 'Toggle group empty' },
     { 'r', M.refresh, desc = 'Refresh' },
     { 'ma', file_ops.create_file, desc = 'Create file' },
     { 'mk', file_ops.create_dir, desc = 'Create directory' },
@@ -551,8 +636,6 @@ function M.keymaps()
     { 'yP', file_ops.copy_relative_path, desc = 'Copy relative path' },
     { 'K', M.show_file_info, desc = 'File info' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
-    { '<c-d>', preview_mod.scroll_down, desc = 'Scroll preview down' },
-    { '<c-u>', preview_mod.scroll_up, desc = 'Scroll preview up' },
   }
 end
 

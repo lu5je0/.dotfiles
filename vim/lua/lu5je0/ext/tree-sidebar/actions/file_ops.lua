@@ -5,6 +5,27 @@ local M = {}
 
 M._clipboard = nil
 
+local _mark_ns = vim.api.nvim_create_namespace('tree_sidebar_clipboard')
+
+function M.apply_clipboard_mark()
+  if not state:is_buf_valid() then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(state.buf, _mark_ns, 0, -1)
+  if not M._clipboard then
+    return
+  end
+  local items = state.files.display_items or {}
+  for line, item in ipairs(items) do
+    if item.node and item.node.abs_path == M._clipboard.path then
+      vim.api.nvim_buf_set_extmark(state.buf, _mark_ns, line - 1, 0, {
+        line_hl_group = M._clipboard.action == 'move' and 'TreeSidebarCut' or 'TreeSidebarCopy',
+      })
+      break
+    end
+  end
+end
+
 local function get_current_node()
   if not state:is_open() then
     return nil
@@ -113,6 +134,7 @@ function M.cut()
     return
   end
   M._clipboard = { action = 'move', path = node.abs_path }
+  M.apply_clipboard_mark()
   print('Cut: ' .. node.name)
 end
 
@@ -122,6 +144,7 @@ function M.copy()
     return
   end
   M._clipboard = { action = 'copy', path = node.abs_path }
+  M.apply_clipboard_mark()
   print('Copy: ' .. node.name)
 end
 
@@ -138,10 +161,10 @@ function M.paste()
 
   if M._clipboard.action == 'move' then
     vim.uv.fs_rename(src, dest)
-    M._clipboard = nil
   elseif M._clipboard.action == 'copy' then
     vim.fn.system({ 'cp', '-r', src, dest })
   end
+  M._clipboard = nil
   refresh()
 end
 

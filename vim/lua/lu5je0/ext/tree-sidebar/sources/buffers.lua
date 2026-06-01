@@ -118,8 +118,6 @@ function M.keymaps()
     { 'D', M.close_buffer, desc = 'Close buffer' },
     { 'r', M.render, desc = 'Refresh' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
-    { '<c-d>', preview_mod.scroll_down, desc = 'Scroll preview down' },
-    { '<c-u>', preview_mod.scroll_up, desc = 'Scroll preview up' },
   }
 end
 

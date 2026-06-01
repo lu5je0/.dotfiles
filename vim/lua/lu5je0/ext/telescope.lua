@@ -122,7 +122,7 @@ local function key_mapping()
   set_map('<leader>fC', function() telescope_builtin.colorscheme(theme()) end)
   set_map('<leader>fc', function() telescope_builtin.commands(theme()) end)
   -- set_map('<leader>fg', function() telescope_builtin.git_status(theme()) end)
-  set_map('<leader>fb', function() telescope_builtin.buffers(theme()) end)
+  -- set_map('<leader>fb', function() telescope_builtin.buffers(theme()) end)
   set_map('<leader>fl', function() telescope_builtin.current_buffer_fuzzy_find(theme()) end, true)
   set_map('<leader>f"', function() telescope_builtin.registers(theme()) end)
 end
