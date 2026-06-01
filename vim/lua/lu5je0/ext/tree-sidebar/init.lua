@@ -94,6 +94,9 @@ function M.locate_file()
         return
       end
     end
+  elseif state.active_tab_idx == 4 then
+    local symbols_source = require('lu5je0.ext.tree-sidebar.sources.symbols')
+    symbols_source.request_symbols({ locate = true })
   end
 end
 
@@ -170,6 +173,34 @@ function M.setup()
   vim.keymap.set('n', '<leader>fb', function()
     M.open_tab(3)
   end, opts)
+
+  vim.keymap.set('n', '<leader>fs', function()
+    M.open_tab(4)
+    local symbols_source = require('lu5je0.ext.tree-sidebar.sources.symbols')
+    symbols_source.request_symbols({ locate = true })
+  end, opts)
+
+  vim.api.nvim_create_autocmd({ 'BufEnter', 'LspAttach' }, {
+    callback = function(args)
+      if not state:is_open() then
+        return
+      end
+      if state.active_tab_idx ~= 4 then
+        return
+      end
+      if args.buf == state.buf then
+        return
+      end
+      local cur_buf = vim.api.nvim_get_current_buf()
+      if cur_buf == state.symbols.target_buf then
+        return
+      end
+      vim.schedule(function()
+        local symbols_source = require('lu5je0.ext.tree-sidebar.sources.symbols')
+        symbols_source.request_symbols()
+      end)
+    end,
+  })
 end
 
 return M

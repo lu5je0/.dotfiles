@@ -1,8 +1,22 @@
 local state = require('lu5je0.ext.tree-sidebar.state')
 local render = require('lu5je0.ext.tree-sidebar.render')
-local config = require('lu5je0.ext.tree-sidebar.config')
 
 local M = {}
+
+local _git_root_cache = {}
+local function get_git_root()
+  local cwd = vim.fn.getcwd()
+  if _git_root_cache[cwd] then
+    return _git_root_cache[cwd]
+  end
+  local result = vim.system({ 'git', 'rev-parse', '--show-toplevel' }, { text = true }):wait()
+  if result.code == 0 and result.stdout then
+    local root = result.stdout:gsub('%s+$', '')
+    _git_root_cache[cwd] = root
+    return root
+  end
+  return cwd
+end
 
 -- Mirror git-status highlight groups (default=true, won't override if already loaded)
 vim.api.nvim_set_hl(0, 'GitChangesAdd',       { link = '@diff.plus',  default = true })
@@ -92,6 +106,11 @@ local function parse_git_status(stdout)
       old_path = entries[i]
     end
 
+    if xy == '!!' then
+      i = i + 1
+      goto continue
+    end
+
     if xy == '??' then
       untracked[#untracked + 1] = { path = path, xy = xy, old_path = old_path, x = x, y = y }
     else
@@ -138,7 +157,7 @@ local function files_to_tree_nodes(files, expanded_dirs)
     return dir
   end
 
-  local cwd = vim.fn.getcwd()
+  local cwd = get_git_root()
   for _, file in ipairs(files) do
     local parts = vim.split(file.path, '/', { trimempty = true })
     if #parts == 1 then
@@ -426,7 +445,7 @@ function M.locate_file(filepath)
     return
   end
 
-  local cwd = vim.fn.getcwd()
+  local cwd = get_git_root()
   if not vim.startswith(filepath, cwd .. '/') then
     return
   end

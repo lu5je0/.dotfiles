@@ -98,6 +98,21 @@ function M.setup_remember_width()
       end
     end,
   })
+
+  local last_known_width = nil
+  vim.api.nvim_create_autocmd('WinResized', {
+    callback = function()
+      if not state:is_open() then
+        return
+      end
+      local cur = vim.api.nvim_win_get_width(state.win)
+      if cur ~= last_known_width then
+        last_known_width = cur
+        local tabs = require('lu5je0.ext.tree-sidebar.tabs')
+        tabs.render_winbar()
+      end
+    end,
+  })
 end
 
 function M.setup_guicursor()

@@ -8,6 +8,7 @@ M.tabs = {
   { id = 'files', label = '󰙅 Files' },
   { id = 'git_changes', label = '󰊢 Changes' },
   { id = 'buffers', label = '󰈙 Buffers' },
+  { id = 'symbols', label = '󰊕 Symbols' },
 }
 
 M.git_glyphs = {

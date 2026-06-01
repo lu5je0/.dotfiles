@@ -81,6 +81,7 @@ function M.render_tree(root_children, opts)
   local dir_suffix = opts.dir_suffix
   local item_data = opts.item_data
   local get_dir_icon = opts.get_dir_icon
+  local get_file_icon_fn = opts.get_file_icon
   local compress_dirs = opts.compress_dirs or false
   local flat_depth = opts.flat_depth or 0
 
@@ -188,7 +189,12 @@ function M.render_tree(root_children, opts)
           walk(display_node.children, child_prefix, depth + 1)
         end
       else
-        local icon, icon_hl = M.get_file_icon(child.name)
+        local icon, icon_hl
+        if get_file_icon_fn then
+          icon, icon_hl = get_file_icon_fn(child)
+        else
+          icon, icon_hl = M.get_file_icon(child.name)
+        end
         local line = line_prefix .. icon .. ' ' .. child.name
 
         local suffix_text, suffix_hl
@@ -240,7 +246,7 @@ function M.flush(lines, highlights, virt_texts)
   for _, vt in ipairs(virt_texts or {}) do
     vim.api.nvim_buf_set_extmark(state.buf, ns_id, vt.line, 0, {
       virt_text = vt.virt_text,
-      virt_text_pos = 'right_align',
+      virt_text_pos = vt.pos or 'right_align',
       hl_mode = 'combine',
     })
   end
