@@ -96,6 +96,12 @@ function M.setup()
     end,
   })
 
+  vim.api.nvim_create_autocmd('TabClosed', {
+    callback = function()
+      state.cleanup_closed_tabs()
+    end,
+  })
+
   local files_source = require('lu5je0.ext.tree-sidebar.sources.files')
   files_source.refresh_git_status()
 

@@ -197,7 +197,7 @@ function M.render()
   end
 
   -- Render tree
-  local tree_lines, tree_items, tree_highlights = render.render_tree(root.children or {}, {
+  local tree_lines, tree_items, tree_highlights, tree_virt_texts = render.render_tree(root.children or {}, {
     filter = node_filter,
     file_suffix = file_suffix,
     dir_suffix = dir_suffix,
@@ -216,9 +216,14 @@ function M.render()
     h.line = h.line + offset
     highlights[#highlights + 1] = h
   end
+  local virt_texts = {}
+  for _, vt in ipairs(tree_virt_texts) do
+    vt.line = vt.line + offset
+    virt_texts[#virt_texts + 1] = vt
+  end
 
   state.files.display_items = items
-  render.flush(lines, highlights)
+  render.flush(lines, highlights, virt_texts)
   sync_watchers()
 end
 
@@ -385,6 +390,7 @@ function M.cd_home()
 end
 
 function M.refresh_git_status(callback)
+  local tab_files = state.files
   vim.system({ 'git', 'status', '--porcelain=v1', '-z' }, { text = true }, function(result)
     vim.schedule(function()
       local map = {}
@@ -399,7 +405,7 @@ function M.refresh_git_status(callback)
           end
         end
       end
-      state.files.git_status_map = map
+      tab_files.git_status_map = map
       if callback then
         callback()
       end
@@ -423,6 +429,98 @@ function M._git_status_to_glyph(xy)
     return config.git_glyphs.unstaged, 'TreeSidebarGitDirty'
   end
   return config.git_glyphs.unstaged, 'TreeSidebarGitDirty'
+end
+
+local function format_size(size)
+  if size < 1024 then
+    return size .. ' B'
+  elseif size < 1024 * 1024 then
+    return string.format('%.1f KB', size / 1024)
+  elseif size < 1024 * 1024 * 1024 then
+    return string.format('%.1f MB', size / (1024 * 1024))
+  else
+    return string.format('%.1f GB', size / (1024 * 1024 * 1024))
+  end
+end
+
+function M.show_file_info()
+  if not state:is_open() then
+    return
+  end
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local item = state.files.display_items[line]
+  if not item or not item.node then
+    return
+  end
+
+  local node = item.node
+  local stat = vim.uv.fs_stat(node.abs_path)
+  if not stat then
+    vim.notify('Cannot stat: ' .. node.abs_path, vim.log.levels.WARN)
+    return
+  end
+
+  local file_type = stat.type or 'unknown'
+  local permissions = string.format('%o', stat.mode % 4096)
+  local lines = {
+    '  Name:         ' .. node.name,
+    '  Path:         ' .. node.abs_path,
+    '  Type:         ' .. file_type,
+    '  Size:         ' .. format_size(stat.size),
+    '  Permissions:  ' .. permissions,
+    '  Created:      ' .. os.date('%Y-%m-%d %H:%M:%S', stat.birthtime.sec),
+    '  Modified:     ' .. os.date('%Y-%m-%d %H:%M:%S', stat.mtime.sec),
+    '  Accessed:     ' .. os.date('%Y-%m-%d %H:%M:%S', stat.atime.sec),
+  }
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].buftype = 'nofile'
+  vim.bo[buf].bufhidden = 'wipe'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+
+  local win_width = 0
+  for _, l in ipairs(lines) do
+    win_width = math.max(win_width, vim.fn.strdisplaywidth(l))
+  end
+  win_width = win_width + 2
+  local win_height = #lines
+
+  local cursor_row = vim.fn.screenpos(state.win, line, 1).row
+  local anchor, popup_row
+  if cursor_row - 1 - win_height - 2 >= 0 then
+    anchor = 'SW'
+    popup_row = cursor_row - 1
+  else
+    anchor = 'NW'
+    popup_row = cursor_row
+  end
+
+  local sidebar_col = vim.api.nvim_win_get_position(state.win)[2]
+  local winid = vim.api.nvim_open_win(buf, false, {
+    relative = 'editor',
+    anchor = anchor,
+    row = popup_row,
+    col = sidebar_col,
+    width = win_width,
+    height = win_height,
+    style = 'minimal',
+    border = 'rounded',
+    title = ' File Info ',
+    title_pos = 'center',
+    focusable = false,
+    zindex = 100,
+  })
+
+  vim.api.nvim_create_autocmd({ 'CursorMoved', 'BufLeave', 'InsertEnter' }, {
+    buffer = state.buf,
+    once = true,
+    callback = function()
+      if vim.api.nvim_win_is_valid(winid) then
+        vim.api.nvim_win_close(winid, true)
+      end
+    end,
+  })
 end
 
 function M.keymaps()
@@ -451,6 +549,7 @@ function M.keymaps()
     { 'yn', file_ops.copy_name, desc = 'Copy name' },
     { 'yp', file_ops.copy_absolute_path, desc = 'Copy absolute path' },
     { 'yP', file_ops.copy_relative_path, desc = 'Copy relative path' },
+    { 'K', M.show_file_info, desc = 'File info' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
     { '<c-d>', preview_mod.scroll_down, desc = 'Scroll preview down' },
     { '<c-u>', preview_mod.scroll_up, desc = 'Scroll preview up' },

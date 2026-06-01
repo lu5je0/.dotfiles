@@ -97,22 +97,7 @@ function M.render_tree(root_children, opts)
     end
   end
 
-  local win_width = state.width
-  if state:is_open() then
-    local info = vim.fn.getwininfo(state.win)
-    local textoff = (info[1] and info[1].textoff) or 0
-    win_width = vim.api.nvim_win_get_width(state.win) - textoff
-  end
-
-  local function append_suffix(line, suffix_text)
-    local line_width = vim.fn.strdisplaywidth(line)
-    local suffix_width = vim.fn.strdisplaywidth(suffix_text)
-    local pad = win_width - line_width - suffix_width - 1
-    if pad < 1 then
-      pad = 1
-    end
-    return line .. string.rep(' ', pad) .. suffix_text
-  end
+  local virt_texts = {}
 
   local function walk(children, prefix, depth)
     local visible = {}
@@ -157,12 +142,14 @@ function M.render_tree(root_children, opts)
         if dir_suffix then
           suffix_text, suffix_hl = dir_suffix(child)
         end
-        if suffix_text then
-          line = append_suffix(line, suffix_text)
-        end
 
         lines[#lines + 1] = line
         local line_idx = #lines - 1
+
+        if suffix_text then
+          local vt = type(suffix_hl) == 'table' and suffix_hl or { { suffix_text, suffix_hl } }
+          virt_texts[#virt_texts + 1] = { line = line_idx, virt_text = vt }
+        end
         local item = { type = 'dir', node = child, line_idx = line_idx }
         if item_data then
           local extra = item_data(child)
@@ -183,10 +170,6 @@ function M.render_tree(root_children, opts)
         highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = indent_end, col_end = branch_end }
         highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarFolderIcon', col_start = branch_end, col_end = branch_end + #icon }
         highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarFolderName', col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #display_name }
-        if suffix_text and suffix_hl then
-          local suffix_start = #line - #suffix_text
-          highlights[#highlights + 1] = { line = line_idx, hl = suffix_hl, col_start = suffix_start, col_end = -1 }
-        end
 
         if display_node.expanded and display_node.children then
           local child_prefix
@@ -205,12 +188,14 @@ function M.render_tree(root_children, opts)
         if file_suffix then
           suffix_text, suffix_hl = file_suffix(child)
         end
-        if suffix_text then
-          line = append_suffix(line, suffix_text)
-        end
 
         lines[#lines + 1] = line
         local line_idx = #lines - 1
+
+        if suffix_text then
+          local vt = type(suffix_hl) == 'table' and suffix_hl or { { suffix_text, suffix_hl } }
+          virt_texts[#virt_texts + 1] = { line = line_idx, virt_text = vt }
+        end
         local item = { type = 'file', node = child, line_idx = line_idx }
         if item_data then
           local extra = item_data(child)
@@ -230,24 +215,27 @@ function M.render_tree(root_children, opts)
         local branch_end = indent_end + #branch
         highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = indent_end, col_end = branch_end }
         highlights[#highlights + 1] = { line = line_idx, hl = icon_hl, col_start = branch_end, col_end = branch_end + #icon }
-        if suffix_text and suffix_hl then
-          local suffix_start = #line - #suffix_text
-          highlights[#highlights + 1] = { line = line_idx, hl = suffix_hl, col_start = suffix_start, col_end = -1 }
-        end
       end
     end
   end
 
   walk(root_children, '', 0)
-  return lines, items, highlights
+  return lines, items, highlights, virt_texts
 end
 
---- Flush lines/items/highlights to the sidebar buffer
-function M.flush(lines, highlights)
+--- Flush lines/items/highlights/virt_texts to the sidebar buffer
+function M.flush(lines, highlights, virt_texts)
   M.set_lines(lines)
   M.clear_highlights()
   for _, h in ipairs(highlights) do
     M.add_highlight(h.line, h.hl, h.col_start, h.col_end)
+  end
+  for _, vt in ipairs(virt_texts or {}) do
+    vim.api.nvim_buf_set_extmark(state.buf, ns_id, vt.line, 0, {
+      virt_text = vt.virt_text,
+      virt_text_pos = 'right_align',
+      hl_mode = 'combine',
+    })
   end
 end
 

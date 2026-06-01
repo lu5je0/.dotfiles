@@ -2,42 +2,12 @@ local Stack = require('lu5je0.lang.stack')
 
 local M = {}
 
-M.win = nil
-M.buf = nil
-M.width = 33
-M.last_width = nil
-M.active_tab_idx = 1
-
-M.tab_cursors = { {1, 0}, {1, 0}, {1, 0} }
+-- ── global fields (shared across tabs) ──────────────────
 
 M.pwd_stack = Stack:create()
 M.pwd_forward_stack = Stack:create()
 M._is_jumping = false
 M._last_pushed_cwd = nil
-
-M.files = {
-  root = nil,
-  display_items = {},
-  hide_dotfiles = true,
-  git_status_map = {},
-}
-
-M.git_changes = {
-  sections = {},
-  display_items = {},
-}
-
-M.buffers = {
-  display_items = {},
-}
-
-function M.is_open()
-  return M.win ~= nil and vim.api.nvim_win_is_valid(M.win)
-end
-
-function M.is_buf_valid()
-  return M.buf ~= nil and vim.api.nvim_buf_is_valid(M.buf)
-end
 
 function M.pwd_stack_push()
   if M._is_jumping then
@@ -54,6 +24,99 @@ function M.init_pwd_stack()
   local cwd = vim.fn.getcwd()
   M.pwd_stack:push(cwd)
   M._last_pushed_cwd = cwd
+end
+
+-- ── per-tab state ───────────────────────────────────────
+
+local _tabs = {}
+
+local function new_tab_state()
+  return {
+    win = nil,
+    buf = nil,
+    width = 33,
+    last_width = nil,
+    active_tab_idx = 1,
+    tab_cursors = { { 1, 0 }, { 1, 0 }, { 1, 0 } },
+    files = {
+      root = nil,
+      display_items = {},
+      hide_dotfiles = true,
+      git_status_map = {},
+    },
+    git_changes = {
+      sections = {},
+      display_items = {},
+    },
+    buffers = {
+      display_items = {},
+    },
+  }
+end
+
+local function get_tab_state()
+  local tab = vim.api.nvim_get_current_tabpage()
+  if not _tabs[tab] then
+    _tabs[tab] = new_tab_state()
+  end
+  return _tabs[tab]
+end
+
+function M.cleanup_closed_tabs()
+  local valid = {}
+  for _, tp in ipairs(vim.api.nvim_list_tabpages()) do
+    valid[tp] = true
+  end
+  for tp, _ in pairs(_tabs) do
+    if not valid[tp] then
+      _tabs[tp] = nil
+    end
+  end
+end
+
+-- ── proxy: state.xxx routes to per-tab state ────────────
+
+local _global_keys = {
+  pwd_stack = true,
+  pwd_forward_stack = true,
+  _is_jumping = true,
+  _last_pushed_cwd = true,
+}
+
+local _methods = {
+  is_open = true,
+  is_buf_valid = true,
+  pwd_stack_push = true,
+  init_pwd_stack = true,
+  cleanup_closed_tabs = true,
+}
+
+setmetatable(M, {
+  __index = function(self, key)
+    if _global_keys[key] or _methods[key] then
+      return rawget(self, key)
+    end
+    local tab_state = get_tab_state()
+    return tab_state[key]
+  end,
+  __newindex = function(self, key, value)
+    if _global_keys[key] or _methods[key] then
+      rawset(self, key, value)
+      return
+    end
+    local tab_state = get_tab_state()
+    tab_state[key] = value
+  end,
+})
+
+function M.is_open()
+  local ts = get_tab_state()
+  return ts.win ~= nil and vim.api.nvim_win_is_valid(ts.win)
+end
+
+function M.is_buf_valid()
+  local ts = get_tab_state()
+  return ts.buf ~= nil and vim.api.nvim_buf_is_valid(ts.buf)
 end
 
 return M

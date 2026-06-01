@@ -53,7 +53,7 @@ function M.render()
   local buffer_list = get_buffer_list()
   local nodes = buffers_to_tree_nodes(buffer_list)
 
-  local lines, items, highlights = render.render_tree(nodes, {
+  local lines, items, highlights, virt_texts = render.render_tree(nodes, {
     file_suffix = function(node)
       if node.modified then
         return '●', 'TreeSidebarModified'
@@ -72,7 +72,7 @@ function M.render()
   end
 
   state.buffers.display_items = items
-  render.flush(lines, highlights)
+  render.flush(lines, highlights, virt_texts)
 end
 
 function M.open_buffer()

@@ -257,7 +257,7 @@ function M.render()
     root_nodes[#root_nodes + 1] = build_section_tree('untracked', 'Untracked', sections.untracked, expanded.untracked, dir_states.untracked)
   end
 
-  local lines, items, highlights = render.render_tree(root_nodes, {
+  local lines, items, highlights, virt_texts = render.render_tree(root_nodes, {
     compress_dirs = true,
     flat_depth = 1,
     get_dir_icon = function(node)
@@ -269,7 +269,12 @@ function M.render()
     end,
     file_suffix = function(node)
       if node.xy then
-        return '[' .. node.xy .. ']', nil
+        local vt = {}
+        for ci = 1, #('[' .. node.xy .. ']') do
+          local ch = ('[' .. node.xy .. ']'):sub(ci, ci)
+          vt[#vt + 1] = { ch, status_hl_per_char(node.xy, ch) }
+        end
+        return '[' .. node.xy .. ']', vt
       end
       return nil, nil
     end,
@@ -296,16 +301,6 @@ function M.render()
     elseif item.type == 'file' and item.node and item.node.xy then
       local line_text = lines[item.line_idx + 1]
       if line_text then
-        -- Per-char highlight for [XY] suffix
-        local bracket_start = line_text:find('[', 1, true)
-        if bracket_start then
-          for ci = bracket_start, #line_text do
-            local ch = line_text:sub(ci, ci)
-            local hl = status_hl_per_char(item.node.xy, ch)
-            highlights[#highlights + 1] = { line = item.line_idx, hl = hl, col_start = ci - 1, col_end = ci }
-          end
-        end
-        -- File name highlight
         local name_hl = file_name_hl(item.node.xy)
         if name_hl then
           local icon = render.get_file_icon(item.node.name)
@@ -313,10 +308,7 @@ function M.render()
           local icon_pos = line_text:find(icon_end_pattern, 1, true)
           if icon_pos then
             local name_start = icon_pos + #icon_end_pattern - 1
-            local name_end = bracket_start and (bracket_start - 3) or #line_text
-            if name_end > name_start then
-              highlights[#highlights + 1] = { line = item.line_idx, hl = name_hl, col_start = name_start, col_end = name_end }
-            end
+            highlights[#highlights + 1] = { line = item.line_idx, hl = name_hl, col_start = name_start, col_end = #line_text }
           end
         end
       end
@@ -330,14 +322,16 @@ function M.render()
   end
 
   state.git_changes.display_items = items
-  render.flush(lines, highlights)
+  render.flush(lines, highlights, virt_texts)
 end
 
 function M.refresh(callback)
+  local tab_git_changes = state.git_changes
+  local tab_active_tab_idx = state.active_tab_idx
   vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
     vim.schedule(function()
-      state.git_changes.sections = parse_git_status(result.stdout)
-      if state:is_open() and state.active_tab_idx == 2 then
+      tab_git_changes.sections = parse_git_status(result.stdout)
+      if state:is_open() and tab_active_tab_idx == state.active_tab_idx and state.active_tab_idx == 2 then
         M.render()
       end
       if callback then
