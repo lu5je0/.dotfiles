@@ -153,21 +153,20 @@ local plugins = {
     -- event = 'VeryLazy'
   },
   
-  {
-    'nvim-tree/nvim-tree.lua',
-    -- just lock，in case of break changes
-    -- commit = 'c3c193594213c5e2f89ec5d7729cad805f76b256',
-    dependencies = {
-      'nvim-tree/nvim-web-devicons',
-    },
-    config = function()
-      require('lu5je0.ext.nvimtree').setup()
-    end,
-    patches = { 'nvim-tree.diff' },
-    cmd = { 'NvimTreeOpen' },
-    event = { 'CursorHold', 'CursorHoldI' },
-    keys = { '<leader>e', '<leader>fe' },
-  },
+  -- replaced by custom tree-sidebar
+  -- {
+  --   'nvim-tree/nvim-tree.lua',
+  --   dependencies = {
+  --     'nvim-tree/nvim-web-devicons',
+  --   },
+  --   config = function()
+  --     require('lu5je0.ext.nvimtree').setup()
+  --   end,
+  --   patches = { 'nvim-tree.diff' },
+  --   cmd = { 'NvimTreeOpen' },
+  --   event = { 'CursorHold', 'CursorHoldI' },
+  --   keys = { '<leader>e', '<leader>fe' },
+  -- },
   
   -- {
   --   "nvim-neo-tree/neo-tree.nvim",

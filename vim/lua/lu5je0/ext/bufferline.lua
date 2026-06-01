@@ -48,6 +48,13 @@ bl.setup {
         separator = '█'
       },
       {
+        filetype = 'TreeSidebar',
+        text = 'Explorer',
+        highlight = 'Normal',
+        text_align = 'center',
+        separator = '█'
+      },
+      {
         filetype = 'Outline',
         text = 'Symbols',
         highlight = 'Normal',

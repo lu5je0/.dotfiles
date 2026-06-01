@@ -95,6 +95,18 @@ M.lazy_load = function(opts)
 end
 local lazy_load = M.lazy_load
 
+-- tree-sidebar
+lazy_load({
+  config = function()
+    require('lu5je0.ext.tree-sidebar').setup()
+  end,
+  keys = {
+    { mode = { 'n' }, '<leader>e' },
+    { mode = { 'n' }, '<leader>E' },
+    { mode = { 'n' }, '<leader>fe' },
+  },
+})
+
 -- im
 lazy_load({
   config = function()
