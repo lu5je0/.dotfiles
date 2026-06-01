@@ -452,6 +452,8 @@ function M.keymaps()
     { 'yp', file_ops.copy_absolute_path, desc = 'Copy absolute path' },
     { 'yP', file_ops.copy_relative_path, desc = 'Copy relative path' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
+    { '<c-d>', preview_mod.scroll_down, desc = 'Scroll preview down' },
+    { '<c-u>', preview_mod.scroll_up, desc = 'Scroll preview up' },
   }
 end
 
@@ -479,7 +481,9 @@ function M.find_file(filepath)
     end
   end
 
-  build_root()
+  if not state.files.root then
+    build_root()
+  end
 
   local rel_parts = vim.split(filepath:sub(#vim.fn.getcwd() + 2), '/', { trimempty = true })
   local node = state.files.root

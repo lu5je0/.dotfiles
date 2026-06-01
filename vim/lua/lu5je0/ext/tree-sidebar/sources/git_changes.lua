@@ -603,6 +603,7 @@ function M.locate_file(filepath)
 end
 
 function M.keymaps()
+  local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
   return {
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
@@ -612,6 +613,9 @@ function M.keymaps()
     { 'u', M.unstage_file, desc = 'Unstage file' },
     { 'x', M.discard_file, desc = 'Discard changes' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
+    { '<space>', preview_mod.toggle, desc = 'Preview' },
+    { '<c-d>', preview_mod.scroll_down, desc = 'Scroll preview down' },
+    { '<c-u>', preview_mod.scroll_up, desc = 'Scroll preview up' },
   }
 end
 
