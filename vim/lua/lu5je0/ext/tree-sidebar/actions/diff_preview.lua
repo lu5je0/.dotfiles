@@ -34,8 +34,7 @@ end
 
 function M.show(item, on_state_change)
   local node = item.node
-  local cwd = vim.fn.getcwd()
-  local rel_path = node.abs_path:sub(#cwd + 2)
+  local rel_path = node.rel_path or node.abs_path:sub(#vim.fn.getcwd() + 2)
   local xy = node.xy or '  '
 
   if vim.fn.filereadable(node.abs_path) == 1 and is_binary_file(node.abs_path) then
@@ -147,18 +146,32 @@ function M.show(item, on_state_change)
       vim.keymap.set('n', 'd', toggle_changes_only, bopts)
     end
 
+    vim.keymap.set('n', '<c-l>', function()
+      if M.win_right and vim.api.nvim_win_is_valid(M.win_right) then
+        vim.api.nvim_set_current_win(M.win_right)
+      end
+    end, { buffer = _buf_left, nowait = true, silent = true })
+    vim.keymap.set('n', '<c-h>', function()
+      if M.win_left and vim.api.nvim_win_is_valid(M.win_left) then
+        vim.api.nvim_set_current_win(M.win_left)
+      end
+    end, { buffer = _buf_right, nowait = true, silent = true })
+
     local cur_left, cur_right = M.win_left, M.win_right
     for _, win_id in ipairs({ cur_left, cur_right }) do
       vim.api.nvim_create_autocmd('WinClosed', {
         pattern = tostring(win_id),
         once = true,
         callback = function()
+          if on_state_change then on_state_change(nil) end
           vim.schedule(function()
             if M.win_left ~= cur_left and M.win_right ~= cur_right then
               return
             end
             M.close()
-            if on_state_change then on_state_change(nil) end
+            if state.win and vim.api.nvim_win_is_valid(state.win) then
+              vim.api.nvim_set_current_win(state.win)
+            end
           end)
         end,
       })
@@ -168,7 +181,7 @@ function M.show(item, on_state_change)
   if xy == '??' then
     render_diff({})
   else
-    vim.system({ 'git', 'show', 'HEAD:' .. rel_path }, { text = true, cwd = cwd }, function(result)
+    vim.system({ 'git', 'show', 'HEAD:' .. rel_path }, { text = true }, function(result)
       vim.schedule(function()
         local old_lines = {}
         if result.code == 0 and result.stdout then

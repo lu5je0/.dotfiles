@@ -197,4 +197,20 @@ function M.copy_relative_path()
   print('Copied: ' .. rel)
 end
 
+function M.system_open()
+  local node = get_current_node()
+  if not node then
+    return
+  end
+  local cmd
+  if vim.fn.has('mac') == 1 then
+    cmd = { 'open', node.abs_path }
+  elseif vim.fn.has('wsl') == 1 then
+    cmd = { 'wslview', node.abs_path }
+  else
+    cmd = { 'xdg-open', node.abs_path }
+  end
+  vim.system(cmd, { detach = true })
+end
+
 return M

@@ -52,6 +52,33 @@ function M.close()
   state.win = nil
 end
 
+function M.get_target_win()
+  local tabpage = vim.api.nvim_get_current_tabpage()
+  local wins = vim.api.nvim_tabpage_list_wins(tabpage)
+  for _, win in ipairs(wins) do
+    if win ~= state.win then
+      local win_config = vim.api.nvim_win_get_config(win)
+      if win_config.relative == '' then
+        local buf = vim.api.nvim_win_get_buf(win)
+        if vim.bo[buf].buftype == '' or vim.bo[buf].buflisted then
+          return win
+        end
+      end
+    end
+  end
+  return nil
+end
+
+function M.open_file(filepath)
+  local target = M.get_target_win()
+  if target then
+    vim.api.nvim_set_current_win(target)
+  else
+    vim.cmd('belowright vsplit')
+  end
+  vim.cmd('edit ' .. vim.fn.fnameescape(filepath))
+end
+
 function M.toggle(opts)
   opts = opts or {}
   if state:is_open() then

@@ -85,7 +85,13 @@ function M.open_buffer()
     return
   end
 
-  vim.cmd('wincmd p')
+  local win = require('lu5je0.ext.tree-sidebar.window')
+  local target = win.get_target_win()
+  if target then
+    vim.api.nvim_set_current_win(target)
+  else
+    vim.cmd('belowright vsplit')
+  end
   vim.api.nvim_set_current_buf(item.node.buf)
 end
 

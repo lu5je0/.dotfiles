@@ -69,6 +69,7 @@ function M.locate_in_tab(idx)
   if idx == 1 then
     local files = require('lu5je0.ext.tree-sidebar.sources.files')
     files.find_file(filepath)
+    vim.cmd('normal! zz')
   elseif idx == 2 then
     local git_changes = require('lu5je0.ext.tree-sidebar.sources.git_changes')
     git_changes.locate_file(filepath)

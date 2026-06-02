@@ -1,39 +1,11 @@
 local state = require('lu5je0.ext.tree-sidebar.state')
 local render = require('lu5je0.ext.tree-sidebar.render')
+local config = require('lu5je0.ext.tree-sidebar.config')
 
 local M = {}
 
-local symbol_icons = {
-  [1] = { icon = '󰈔', hl = 'Type' }, -- File
-  [2] = { icon = '󰆧', hl = 'Include' }, -- Module
-  [3] = { icon = '󰅩', hl = 'Include' }, -- Namespace
-  [4] = { icon = '󰏗', hl = 'Type' }, -- Package
-  [5] = { icon = '󱡠', hl = 'Type' }, -- Class
-  [6] = { icon = '󰊕', hl = 'Function' }, -- Method
-  [7] = { icon = '󰆧', hl = 'Constant' }, -- Property
-  [8] = { icon = '󰆨', hl = 'Constant' }, -- Field
-  [9] = { icon = '󰊕', hl = 'Function' }, -- Constructor
-  [10] = { icon = '󰕘', hl = 'Type' }, -- Enum
-  [11] = { icon = '󰜰', hl = 'Type' }, -- Interface
-  [12] = { icon = '󰊕', hl = 'Function' }, -- Function
-  [13] = { icon = '󰆦', hl = 'Constant' }, -- Variable
-  [14] = { icon = '󰏿', hl = 'Constant' }, -- Constant
-  [15] = { icon = '󰉿', hl = 'String' }, -- String
-  [16] = { icon = '󰎠', hl = 'Number' }, -- Number
-  [17] = { icon = '󰨙', hl = 'Boolean' }, -- Boolean
-  [18] = { icon = '󰅪', hl = 'Type' }, -- Array
-  [19] = { icon = '󰅩', hl = 'Type' }, -- Object
-  [20] = { icon = '󰌋', hl = 'Identifier' }, -- Key
-  [21] = { icon = '󰟢', hl = 'Comment' }, -- Null
-  [22] = { icon = '󰕘', hl = 'Type' }, -- EnumMember
-  [23] = { icon = '󰙅', hl = 'Type' }, -- Struct
-  [24] = { icon = '󱐋', hl = 'Special' }, -- Event
-  [25] = { icon = '󰃬', hl = 'Operator' }, -- Operator
-  [26] = { icon = '󰊄', hl = 'Type' }, -- TypeParameter
-}
-
 local function get_icon(kind)
-  local entry = symbol_icons[kind]
+  local entry = config.symbol_icons[kind]
   if entry then
     return entry.icon, entry.hl
   end
@@ -83,14 +55,35 @@ function M.render()
     return
   end
 
+  local function mark_leaf_indent(children)
+    if not children then return end
+    local has_dir = false
+    for _, n in ipairs(children) do
+      if n.type == 'directory' then
+        has_dir = true
+        break
+      end
+    end
+    for _, n in ipairs(children) do
+      n._indent_leaf = has_dir
+      if n.children then
+        mark_leaf_indent(n.children)
+      end
+    end
+  end
+  mark_leaf_indent(nodes)
+
   local lines, items, highlights, virt_texts = render.render_tree(nodes, {
     get_dir_icon = function(node)
       local icon, _ = get_icon(node.kind)
-      local arrow = node.expanded and '' or ''
+      local arrow = node.expanded and config.section_icons.expanded or config.section_icons.collapsed
       return arrow .. ' ' .. icon
     end,
     get_file_icon = function(node)
       local icon, hl = get_icon(node.kind)
+      if node._indent_leaf then
+        return '  ' .. icon, hl
+      end
       return icon, hl
     end,
     file_suffix = function(node)
@@ -257,6 +250,7 @@ function M.locate_by_line(cursor_line)
   end
   if best_line then
     pcall(vim.api.nvim_win_set_cursor, state.win, { best_line, 0 })
+    vim.cmd('normal! zz')
   end
 end
 
@@ -290,7 +284,13 @@ function M.open_symbol()
   if target_win then
     vim.api.nvim_set_current_win(target_win)
   else
-    vim.cmd('wincmd p')
+    local win = require('lu5je0.ext.tree-sidebar.window')
+    local target = win.get_target_win()
+    if target then
+      vim.api.nvim_set_current_win(target)
+    else
+      vim.cmd('belowright vsplit')
+    end
   end
 
   local row = range.start.line

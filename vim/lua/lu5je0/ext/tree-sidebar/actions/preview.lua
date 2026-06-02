@@ -72,12 +72,9 @@ end
 local function setup_autocmds()
   _preview_autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
     buffer = state.buf,
+    once = true,
     callback = function()
-      if not _preview_active or not state:is_open() then
-        stop_preview()
-        return
-      end
-      update_preview()
+      stop_preview()
     end,
   })
 

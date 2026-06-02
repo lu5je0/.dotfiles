@@ -12,20 +12,55 @@ M.tabs = {
 }
 
 M.git_glyphs = {
-  unstaged = '✗',
-  staged = '✓',
-  unmerged = '?',
-  renamed = '➜',
+  unstaged  = '✗',
+  staged    = '✓',
+  unmerged  = '',
+  renamed   = '➜',
   untracked = '',
-  deleted = '?',
-  ignored = '◌',
+  deleted   = '',
+  ignored   = '◌',
 }
 
 M.folder_icons = {
-  closed = "",
-  open = "",
-  empty = "",
+  closed     = "",
+  open       = "",
+  empty      = "",
   empty_open = "",
+}
+
+-- '' or ''
+M.section_icons = {
+  expanded  = '',
+  collapsed = '',
+}
+
+M.symbol_icons = {
+  [1] = { icon = '󰈔', hl = 'Type' }, -- File
+  [2] = { icon = '󰆧', hl = 'Include' }, -- Module
+  [3] = { icon = '󰅩', hl = 'Include' }, -- Namespace
+  [4] = { icon = '󰏗', hl = 'Type' }, -- Package
+  [5] = { icon = '󱡠', hl = 'Type' }, -- Class
+  [6] = { icon = '󰊕', hl = 'Function' }, -- Method
+  [7] = { icon = '󰆧', hl = 'Constant' }, -- Property
+  [8] = { icon = '󰆨', hl = 'Constant' }, -- Field
+  [9] = { icon = '󰊕', hl = 'Function' }, -- Constructor
+  [10] = { icon = '󰕘', hl = 'Type' }, -- Enum
+  [11] = { icon = '󰜰', hl = 'Type' }, -- Interface
+  [12] = { icon = '󰊕', hl = 'Function' }, -- Function
+  [13] = { icon = '󰆦', hl = 'Constant' }, -- Variable
+  [14] = { icon = '󰏿', hl = 'Constant' }, -- Constant
+  [15] = { icon = '󰉿', hl = 'String' }, -- String
+  [16] = { icon = '󰎠', hl = 'Number' }, -- Number
+  [17] = { icon = '󰨙', hl = 'Boolean' }, -- Boolean
+  [18] = { icon = '󰅪', hl = 'Type' }, -- Array
+  [19] = { icon = '󰅩', hl = 'Type' }, -- Object
+  [20] = { icon = '󰌋', hl = 'Identifier' }, -- Key
+  [21] = { icon = '󰟢', hl = 'Comment' }, -- Null
+  [22] = { icon = '󰕘', hl = 'Type' }, -- EnumMember
+  [23] = { icon = '󰙅', hl = 'Type' }, -- Struct
+  [24] = { icon = '󱐋', hl = 'Special' }, -- Event
+  [25] = { icon = '󰃬', hl = 'Operator' }, -- Operator
+  [26] = { icon = '󰊄', hl = 'Type' }, -- TypeParameter
 }
 
 function M.setup_highlights()

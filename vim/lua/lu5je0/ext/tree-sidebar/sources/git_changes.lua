@@ -1,5 +1,6 @@
 local state = require('lu5je0.ext.tree-sidebar.state')
 local render = require('lu5je0.ext.tree-sidebar.render')
+local config = require('lu5je0.ext.tree-sidebar.config')
 
 local M = {}
 
@@ -281,7 +282,7 @@ function M.render()
     flat_depth = 1,
     get_dir_icon = function(node)
       if node._is_section then
-        local arrow = node.expanded and '' or ''
+        local arrow = node.expanded and config.section_icons.expanded or config.section_icons.collapsed
         return arrow
       end
       return nil
@@ -413,8 +414,7 @@ function M.open_node()
       end
     end,
     on_file = function(item)
-      vim.cmd('wincmd p')
-      vim.cmd('edit ' .. vim.fn.fnameescape(item.node.abs_path))
+      require('lu5je0.ext.tree-sidebar.window').open_file(item.node.abs_path)
     end,
   })
 end
@@ -488,6 +488,7 @@ local function do_locate(filepath)
   for line, item in ipairs(items) do
     if item.node and item.node.abs_path == filepath then
       pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+      vim.cmd('normal! zz')
       return
     end
   end

@@ -354,11 +354,12 @@ function M.open_node()
       end
     end,
     on_already_expanded = function()
-      vim.cmd('wincmd p')
+      local win = require('lu5je0.ext.tree-sidebar.window')
+      local target = win.get_target_win()
+      if target then vim.api.nvim_set_current_win(target) end
     end,
     on_file = function(it)
-      vim.cmd('wincmd p')
-      vim.cmd('edit ' .. vim.fn.fnameescape(it.node.abs_path))
+      require('lu5je0.ext.tree-sidebar.window').open_file(it.node.abs_path)
     end,
   })
 end
@@ -639,6 +640,7 @@ function M.keymaps()
     { 'yp', file_ops.copy_absolute_path, desc = 'Copy absolute path' },
     { 'yP', file_ops.copy_relative_path, desc = 'Copy relative path' },
     { 'K', M.show_file_info, desc = 'File info' },
+    { 'gx', file_ops.system_open, desc = 'System open' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
   }
 end
