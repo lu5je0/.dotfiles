@@ -52,29 +52,82 @@ function M.close()
   state.win = nil
 end
 
-function M.get_target_win()
+local PICK_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+local function usable_wins()
   local tabpage = vim.api.nvim_get_current_tabpage()
   local wins = vim.api.nvim_tabpage_list_wins(tabpage)
+  local result = {}
   for _, win in ipairs(wins) do
     if win ~= state.win then
       local win_config = vim.api.nvim_win_get_config(win)
       if win_config.relative == '' then
         local buf = vim.api.nvim_win_get_buf(win)
         if vim.bo[buf].buftype == '' or vim.bo[buf].buflisted then
-          return win
+          result[#result + 1] = win
         end
       end
+    end
+  end
+  return result
+end
+
+local function pick_win(wins)
+  local saved = {}
+  for i, win in ipairs(wins) do
+    local char = PICK_CHARS:sub(i, i)
+    local ok_sl, sl = pcall(vim.api.nvim_get_option_value, 'statusline', { win = win })
+    local ok_wh, wh = pcall(vim.api.nvim_get_option_value, 'winhl', { win = win })
+    saved[win] = { statusline = ok_sl and sl or '', winhl = ok_wh and wh or '' }
+    vim.api.nvim_set_option_value('statusline', '%=' .. char .. '%=', { win = win })
+    vim.api.nvim_set_option_value('winhl', 'StatusLine:WildMenu,StatusLineNC:WildMenu', { win = win })
+  end
+
+  vim.cmd('redraw')
+  local ok, ch = pcall(vim.fn.getcharstr)
+  local resp = ok and ch:upper() or ''
+
+  for win, opts in pairs(saved) do
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_set_option_value('statusline', opts.statusline, { win = win })
+      vim.api.nvim_set_option_value('winhl', opts.winhl, { win = win })
+    end
+  end
+  vim.cmd('redraw')
+
+  for i, win in ipairs(wins) do
+    if PICK_CHARS:sub(i, i) == resp then
+      return win
     end
   end
   return nil
 end
 
-function M.open_file(filepath)
-  local target = M.get_target_win()
-  if target then
-    vim.api.nvim_set_current_win(target)
+function M.get_target_win()
+  local wins = usable_wins()
+  if #wins == 0 then
+    return nil
+  elseif #wins == 1 then
+    return wins[1]
   else
+    return pick_win(wins)
+  end
+end
+
+function M.open_file(filepath)
+  local tabpage = vim.api.nvim_get_current_tabpage()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage)) do
+    if vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(win)) == filepath then
+      vim.api.nvim_set_current_win(win)
+      return
+    end
+  end
+
+  local target = M.get_target_win()
+  if not target then
     vim.cmd('belowright vsplit')
+  else
+    vim.api.nvim_set_current_win(target)
   end
   vim.cmd('edit ' .. vim.fn.fnameescape(filepath))
 end
