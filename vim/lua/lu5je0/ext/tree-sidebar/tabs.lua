@@ -65,33 +65,52 @@ function M.render_winbar()
   vim.wo[state.win].winbar = table.concat(parts)
 end
 
+function M.save_view()
+  if state:is_open() then
+    vim.api.nvim_win_call(state.win, function()
+      state.tab_cursors[state.active_tab_idx] = vim.fn.winsaveview()
+    end)
+  end
+end
+
+function M.restore_view(idx)
+  if not state:is_open() then return end
+  local saved = state.tab_cursors[idx]
+  if saved and saved.lnum then
+    local line_count = vim.api.nvim_buf_line_count(state.buf)
+    local view = vim.tbl_extend('force', {}, saved)
+    view.lnum = math.min(view.lnum, line_count)
+    view.topline = math.min(view.topline or 1, line_count)
+    vim.api.nvim_win_call(state.win, function()
+      vim.fn.winrestview(view)
+    end)
+  end
+end
+
+function M.set_active_tab(idx)
+  if idx == state.active_tab_idx then
+    return false
+  end
+  M.save_view()
+  state.active_tab_idx = idx
+  M.render_winbar()
+  return true
+end
+
 function M.switch_to(idx)
   if idx < 1 or idx > #config.tabs then
     return
   end
-  if idx == state.active_tab_idx then
+  if not M.set_active_tab(idx) then
     return
   end
-
-  if state:is_open() then
-    local cursor = vim.api.nvim_win_get_cursor(state.win)
-    state.tab_cursors[state.active_tab_idx] = cursor
-  end
-
-  state.active_tab_idx = idx
-  M.render_winbar()
 
   local source = M.get_active_source()
   if source and source.render then
     source.render()
   end
 
-  if state:is_open() then
-    local saved = state.tab_cursors[idx]
-    local line_count = vim.api.nvim_buf_line_count(state.buf)
-    local line = math.min(saved[1], line_count)
-    pcall(vim.api.nvim_win_set_cursor, state.win, { math.max(1, line), saved[2] })
-  end
+  M.restore_view(idx)
 
   local keymaps = require('lu5je0.ext.tree-sidebar.keymaps')
   keymaps.apply_for_tab(idx)

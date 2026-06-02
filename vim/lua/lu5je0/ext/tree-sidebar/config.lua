@@ -7,8 +7,8 @@ M.default_width = 33
 M.tabs = {
   { id = 'files', label = '󰙅 Files' },
   { id = 'git_changes', label = '󰊢 Changes' },
-  { id = 'buffers', label = '󰈙 Buffers' },
   { id = 'symbols', label = '󰊕 Symbols' },
+  { id = 'buffers', label = '󰈙 Buffers' },
 }
 
 M.git_glyphs = {
@@ -32,6 +32,11 @@ M.folder_icons = {
 M.section_icons = {
   expanded  = '',
   collapsed = '',
+}
+
+M.symbols_arrow_icons = {
+  expanded  = '',
+  collapsed = '',
 }
 
 M.symbol_icons = {
@@ -79,6 +84,15 @@ function M.setup_highlights()
   vim.api.nvim_set_hl(0, 'TreeSidebarCopy', { underline = true, sp = '#61afef', default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarTabActive', { fg = '#abb2bf', bg = '#3e4452', bold = true, default = true })
   vim.api.nvim_set_hl(0, 'TreeSidebarTabInactive', { fg = '#5c6370', bg = '#2c313a', default = true })
+end
+
+function M.tab_idx(id)
+  for i, tab in ipairs(M.tabs) do
+    if tab.id == id then
+      return i
+    end
+  end
+  return nil
 end
 
 return M

@@ -1,4 +1,5 @@
 local state = require('lu5je0.ext.tree-sidebar.state')
+local config = require('lu5je0.ext.tree-sidebar.config')
 local ui = require('lu5je0.core.ui')
 local diff_preview = require('lu5je0.ext.tree-sidebar.actions.diff_preview')
 
@@ -12,11 +13,11 @@ local _preview_type = nil -- 'diff' or 'file'
 local function get_current_item()
   local line = vim.api.nvim_win_get_cursor(state.win)[1]
   local items
-  if state.active_tab_idx == 1 then
+  if state.active_tab_idx == config.tab_idx('files') then
     items = state.files.display_items
-  elseif state.active_tab_idx == 2 then
+  elseif state.active_tab_idx == config.tab_idx('git_changes') then
     items = state.git_changes.display_items
-  elseif state.active_tab_idx == 3 then
+  elseif state.active_tab_idx == config.tab_idx('buffers') then
     items = state.buffers.display_items
   end
   local item = items and items[line]
@@ -56,7 +57,7 @@ local function update_preview()
   if not item then
     return
   end
-  if state.active_tab_idx == 2 then
+  if state.active_tab_idx == config.tab_idx('git_changes') then
     diff_preview.show(item, function(new_type)
       _preview_type = new_type
       if new_type == nil then
@@ -104,7 +105,7 @@ local function start_preview()
   end
   _preview_active = true
 
-  if state.active_tab_idx == 2 then
+  if state.active_tab_idx == config.tab_idx('git_changes') then
     _preview_type = 'diff'
     diff_preview.show(item, function(new_type)
       _preview_type = new_type

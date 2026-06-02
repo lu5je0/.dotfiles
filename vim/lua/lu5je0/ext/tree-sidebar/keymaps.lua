@@ -36,6 +36,13 @@ function M.apply_shared()
   buf_set('n', 'Z', window.toggle_width)
   buf_set('n', '<leader>tn', function() end)
 
+  buf_set('n', 'zM', function()
+    local source = tabs.get_active_source()
+    if source and source.collapse_all then
+      source.collapse_all()
+    end
+  end)
+
   local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
   local file_ops = require('lu5je0.ext.tree-sidebar.actions.file_ops')
   buf_set('n', '<esc>', function()
@@ -49,26 +56,33 @@ function M.apply_shared()
   end)
 
   local help = require('lu5je0.ext.git.common.help')
+  local shared_keymaps = {
+    { '<left>/<right>', 'Switch tab' },
+    { '1/2/3/4', 'Jump to tab' },
+    { 'q', 'Close sidebar' },
+    { 'Z', 'Toggle width' },
+    { 'zM', 'Collapse all' },
+    { '<esc>', 'Close preview / Clear clipboard' },
+    { '?', 'Show help' },
+  }
   buf_set('n', '?', function()
     local tab = config.tabs[state.active_tab_idx]
     local ok, source = pcall(require, 'lu5je0.ext.tree-sidebar.sources.' .. (tab and tab.id or ''))
-    local lines = {
-      'Shared',
-      '',
-      '  <left>/<right>  Switch tab',
-      '  1/2/3           Jump to tab',
-      '  q               Close sidebar',
-      '  Z               Toggle width',
-      '  <esc>           Close preview',
-    }
+    local lines = { 'Shared', '' }
+    for _, km in ipairs(shared_keymaps) do
+      lines[#lines + 1] = string.format('  %-14s  %s', km[1], km[2])
+    end
     if ok and source.keymaps then
       lines[#lines + 1] = ''
       lines[#lines + 1] = tab.label
       lines[#lines + 1] = ''
+      local seen = {}
       for _, km in ipairs(source.keymaps()) do
-        local lhs = km[1]
         local desc = km.desc or ''
-        lines[#lines + 1] = string.format('  %-14s  %s', lhs, desc)
+        if not seen[desc] then
+          seen[desc] = true
+          lines[#lines + 1] = string.format('  %-14s  %s', km[1], desc)
+        end
       end
     end
     help.show_help('Help', lines)

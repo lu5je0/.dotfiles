@@ -76,7 +76,7 @@ function M.render()
   local lines, items, highlights, virt_texts = render.render_tree(nodes, {
     get_dir_icon = function(node)
       local icon, _ = get_icon(node.kind)
-      local arrow = node.expanded and config.section_icons.expanded or config.section_icons.collapsed
+      local arrow = node.expanded and config.symbols_arrow_icons.expanded or config.symbols_arrow_icons.collapsed
       return arrow .. ' ' .. icon
     end,
     get_file_icon = function(node)
@@ -180,7 +180,7 @@ function M.request_symbols(opts)
     if err or not result then
       state.symbols.nodes = {}
       vim.schedule(function()
-        if state.active_tab_idx == 4 then
+        if state.active_tab_idx == config.tab_idx('symbols') then
           M.render()
         end
       end)
@@ -188,7 +188,7 @@ function M.request_symbols(opts)
     end
     state.symbols.nodes = lsp_symbols_to_tree(result, state.symbols.nodes)
     vim.schedule(function()
-      if state.active_tab_idx ~= 4 then
+      if state.active_tab_idx ~= config.tab_idx('symbols') then
         return
       end
       M.render()
@@ -329,10 +329,27 @@ function M.close_node()
   })
 end
 
+function M.collapse_all()
+  local function collapse(nodes)
+    if not nodes then return end
+    for _, node in ipairs(nodes) do
+      node.expanded = false
+      if node.children then
+        collapse(node.children)
+      end
+    end
+  end
+  collapse(state.symbols.nodes)
+  M.render()
+  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+end
+
 function M.keymaps()
   return {
     { 'l', M.toggle_node, desc = 'Expand node' },
+    { 'zo', M.toggle_node, desc = 'Expand node' },
     { 'h', M.close_node, desc = 'Collapse node' },
+    { 'zc', M.close_node, desc = 'Collapse node' },
     { '<cr>', M.open_symbol, desc = 'Go to symbol' },
     { 'r', M.request_symbols, desc = 'Refresh' },
   }

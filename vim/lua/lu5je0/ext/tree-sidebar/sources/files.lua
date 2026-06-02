@@ -17,7 +17,7 @@ local function debounced_refresh()
     _refresh_timer:close()
     _refresh_timer = nil
     vim.schedule(function()
-      if state:is_open() and state.active_tab_idx == 1 then
+      if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
         M.refresh()
       end
     end)
@@ -221,7 +221,7 @@ local function build_git_status_map(stdout)
 end
 
 function M.render()
-  if not state.files.root then
+  if not state.files.root or state.files.root.abs_path ~= vim.fn.getcwd() then
     build_root()
   end
 
@@ -606,6 +606,84 @@ function M.show_file_info()
   })
 end
 
+local function is_git_item(item, cwd)
+  if not item or not item.node then return false end
+  if item.type == 'file' then
+    local rel = item.node.abs_path:sub(#cwd + 2)
+    return state.files.git_status_map[rel] ~= nil
+  elseif item.type == 'dir' then
+    local rel = item.node.abs_path:sub(#cwd + 2) .. '/'
+    return state.files.git_status_map[rel] ~= nil
+  end
+  return false
+end
+
+function M.next_git_file()
+  if not state:is_open() then return end
+  local cwd = vim.fn.getcwd()
+  local cur = vim.api.nvim_win_get_cursor(state.win)[1]
+  local start = cur + 1
+  local cur_item = state.files.display_items[cur]
+  if cur_item and cur_item.type == 'dir' and is_git_item(cur_item, cwd) and not cur_item.node.expanded then
+    start = cur
+  end
+  for _ = 1, 50 do
+    local items = state.files.display_items
+    local found_dir = false
+    for i = start, #items do
+      local item = items[i]
+      if is_git_item(item, cwd) then
+        if item.type == 'file' then
+          pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+          return
+        else
+          ensure_children(item.node)
+          item.node.expanded = true
+          M.render()
+          start = i + 1
+          found_dir = true
+          break
+        end
+      end
+    end
+    if not found_dir then return end
+  end
+end
+
+function M.prev_git_file()
+  if not state:is_open() then return end
+  local cwd = vim.fn.getcwd()
+  local cur = vim.api.nvim_win_get_cursor(state.win)[1]
+  local items = state.files.display_items
+  for i = cur - 1, 1, -1 do
+    local item = items[i]
+    if is_git_item(item, cwd) then
+      pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+      return
+    end
+  end
+end
+
+function M.collapse_all()
+  local function collapse(node)
+    if node.type == 'directory' and node.expanded then
+      node.expanded = false
+    end
+    if node.children then
+      for _, child in ipairs(node.children) do
+        collapse(child)
+      end
+    end
+  end
+  if state.files.root then
+    for _, child in ipairs(state.files.root.children or {}) do
+      collapse(child)
+    end
+  end
+  M.render()
+  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+end
+
 function M.toggle_compress_dirs()
   state.files.compress_dirs = not state.files.compress_dirs
   vim.notify('Group empty: ' .. (state.files.compress_dirs and 'on' or 'off'), vim.log.levels.INFO)
@@ -620,14 +698,16 @@ function M.keymaps()
   return {
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
+    { 'zo', M.open_node, desc = 'Open node' },
     { 'h', M.close_node, desc = 'Close node' },
+    { 'zc', M.close_node, desc = 'Close node' },
     { 'u', M.cd_parent, desc = 'Navigate up' },
     { 'cd', M.cd_to_node, desc = 'CD to node' },
     { 'H', M.cd_home, desc = 'CD home' },
     { '<c-o>', nav.back, desc = 'Back' },
     { '<c-i>', nav.forward, desc = 'Forward' },
     { '.', M.toggle_dotfiles, desc = 'Toggle dotfiles' },
-    { 'zc', M.toggle_compress_dirs, desc = 'Toggle group empty' },
+    { 'gC', M.toggle_compress_dirs, desc = 'Toggle group empty' },
     { 'r', M.refresh, desc = 'Refresh' },
     { 'ma', file_ops.create_file, desc = 'Create file' },
     { 'mk', file_ops.create_dir, desc = 'Create directory' },
@@ -641,6 +721,8 @@ function M.keymaps()
     { 'yP', file_ops.copy_relative_path, desc = 'Copy relative path' },
     { 'K', M.show_file_info, desc = 'File info' },
     { 'gx', file_ops.system_open, desc = 'System open' },
+    { ']g', M.next_git_file, desc = 'Next git change' },
+    { '[g', M.prev_git_file, desc = 'Prev git change' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },
   }
 end
@@ -669,7 +751,7 @@ function M.find_file(filepath)
     end
   end
 
-  if not state.files.root then
+  if not state.files.root or state.files.root.abs_path ~= vim.fn.getcwd() then
     build_root()
   end
 
@@ -694,11 +776,19 @@ function M.find_file(filepath)
 
   M.render()
 
+  local found = false
   for line, item in ipairs(state.files.display_items) do
     if item.node and item.node.abs_path == filepath then
       pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+      found = true
       break
     end
+  end
+  if not found then
+    vim.notify(
+      string.format('[tree-sidebar] find_file failed\n  filepath: %s\n  cwd: %s\n  items: %d', filepath, vim.fn.getcwd(), #state.files.display_items),
+      vim.log.levels.DEBUG
+    )
   end
 end
 

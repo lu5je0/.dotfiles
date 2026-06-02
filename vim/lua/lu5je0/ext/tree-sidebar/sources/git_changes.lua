@@ -359,7 +359,7 @@ function M.refresh(callback)
   vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
     vim.schedule(function()
       tab_git_changes.sections = parse_git_status(result.stdout)
-      if state:is_open() and tab_active_tab_idx == state.active_tab_idx and state.active_tab_idx == 2 then
+      if state:is_open() and tab_active_tab_idx == state.active_tab_idx and state.active_tab_idx == config.tab_idx('git_changes') then
         M.render()
       end
       if callback then
@@ -436,6 +436,18 @@ function M.close_node()
       end
     end,
   })
+end
+
+function M.collapse_all()
+  local expanded = state.git_changes._expanded
+  if expanded then
+    for k, _ in pairs(expanded) do
+      expanded[k] = false
+    end
+  end
+  state.git_changes._dir_states = {}
+  M.render()
+  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
 end
 
 -- ── git operations (delegated to actions/git_ops.lua) ───
@@ -515,7 +527,9 @@ function M.keymaps()
   return {
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
+    { 'zo', M.open_node, desc = 'Open node' },
     { 'h', M.close_node, desc = 'Close node' },
+    { 'zc', M.close_node, desc = 'Close node' },
     { 'a', git_ops_actions.stage_file, desc = 'Stage file' },
     { 'A', git_ops_actions.stage_section, desc = 'Stage section' },
     { 'u', git_ops_actions.undo_last_action, desc = 'Undo' },
@@ -528,9 +542,10 @@ function M.keymaps()
         return
       end
       local tabs = require('lu5je0.ext.tree-sidebar.tabs')
-      tabs.switch_to(1)
+      tabs.switch_to(config.tab_idx('files'))
       local files = require('lu5je0.ext.tree-sidebar.sources.files')
       files.find_file(item.node.abs_path)
+      vim.cmd('normal! zz')
     end, desc = 'Locate in files' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
     { '<space>', preview_mod.toggle, desc = 'Preview' },

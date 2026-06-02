@@ -33,7 +33,7 @@ tree-sidebar/
 ## Nerd Font 图标
 
 - `config.lua` 中包含 Nerd Font 图标字符（tab label、folder icon、git glyph、section arrow、symbol kind icon）。
-- **不要用 Edit 工具直接替换图标字符**，多字节 UTF-8 匹配容易失败，请用合适的命令修改。
+- **不要用 Edit 工具直接编辑config.lua**，多字节 UTF-8 匹配容易失败，请用合适的命令修改。
 
 ## 改动规则
 

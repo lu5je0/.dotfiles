@@ -37,7 +37,7 @@ local function new_tab_state()
     width = 33,
     last_width = nil,
     active_tab_idx = 1,
-    tab_cursors = { { 1, 0 }, { 1, 0 }, { 1, 0 }, { 1, 0 } },
+    tab_cursors = {},
     files = {
       root = nil,
       display_items = {},

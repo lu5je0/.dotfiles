@@ -16,10 +16,10 @@ local function init_sidebar(render)
       source.render()
     end
   end
-  if state.active_tab_idx == 1 then
+  if state.active_tab_idx == config.tab_idx('files') then
     local files_source = require('lu5je0.ext.tree-sidebar.sources.files')
     files_source.refresh_git_status(function()
-      if state:is_open() and state.active_tab_idx == 1 then
+      if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
         files_source.render()
       end
     end)
@@ -62,18 +62,18 @@ function M.locate_in_tab(idx)
   if not state:is_open() then
     window.open()
   end
-  state.active_tab_idx = idx
+  tabs.set_active_tab(idx)
   init_sidebar(false)
   vim.api.nvim_set_current_win(state.win)
 
-  if idx == 1 then
+  if idx == config.tab_idx('files') then
     local files = require('lu5je0.ext.tree-sidebar.sources.files')
     files.find_file(filepath)
     vim.cmd('normal! zz')
-  elseif idx == 2 then
+  elseif idx == config.tab_idx('git_changes') then
     local git_changes = require('lu5je0.ext.tree-sidebar.sources.git_changes')
     git_changes.locate_file(filepath)
-  elseif idx == 4 then
+  elseif idx == config.tab_idx('symbols') then
     local symbols_source = require('lu5je0.ext.tree-sidebar.sources.symbols')
     symbols_source.request_symbols({ locate = true })
   end
@@ -120,9 +120,9 @@ function M.setup()
           files_source.update_git_status_from_stdout(tab_files, result.stdout)
           git_changes_source.update_sections_from_stdout(tab_git_changes, result.stdout)
           if state:is_open() and tab_idx == state.active_tab_idx then
-            if state.active_tab_idx == 1 then
+            if state.active_tab_idx == config.tab_idx('files') then
               files_source.render()
-            elseif state.active_tab_idx == 2 then
+            elseif state.active_tab_idx == config.tab_idx('git_changes') then
               git_changes_source.render()
             end
           end
@@ -142,23 +142,23 @@ function M.setup()
   end, opts)
 
   vim.keymap.set('n', '<leader>fe', function()
-    M.locate_in_tab(1)
+    M.locate_in_tab(config.tab_idx('files'))
   end, opts)
 
   vim.keymap.set('n', '<leader>fg', function()
-    M.locate_in_tab(2)
+    M.locate_in_tab(config.tab_idx('git_changes'))
   end, opts)
 
   vim.keymap.set('n', '<leader>gs', function()
-    M.open_tab(2)
+    M.open_tab(config.tab_idx('git_changes'))
   end, opts)
 
   vim.keymap.set('n', '<leader>fb', function()
-    M.open_tab(3)
+    M.open_tab(config.tab_idx('buffers'))
   end, opts)
 
   vim.keymap.set('n', '<leader>fs', function()
-    M.open_tab(4)
+    M.open_tab(config.tab_idx('symbols'))
     local symbols_source = require('lu5je0.ext.tree-sidebar.sources.symbols')
     symbols_source.request_symbols({ locate = true })
   end, opts)
@@ -168,7 +168,7 @@ function M.setup()
       if not state:is_open() then
         return
       end
-      if state.active_tab_idx ~= 4 then
+      if state.active_tab_idx ~= config.tab_idx('symbols') then
         return
       end
       if args.buf == state.buf then

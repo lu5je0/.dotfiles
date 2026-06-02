@@ -1,4 +1,5 @@
 local state = require('lu5je0.ext.tree-sidebar.state')
+local config = require('lu5je0.ext.tree-sidebar.config')
 local render = require('lu5je0.ext.tree-sidebar.render')
 
 local M = {}
@@ -132,7 +133,7 @@ function M.setup_auto_refresh()
   vim.api.nvim_create_autocmd({ 'BufAdd', 'BufDelete', 'BufWipeout', 'BufModifiedSet' }, {
     group = group,
     callback = function()
-      if state:is_open() and state.active_tab_idx == 3 then
+      if state:is_open() and state.active_tab_idx == config.tab_idx('buffers') then
         vim.schedule(M.render)
       end
     end,
