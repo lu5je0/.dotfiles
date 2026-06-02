@@ -440,11 +440,7 @@ end
 
 -- ── git operations (delegated to actions/git_ops.lua) ───
 
-function M.locate_file(filepath)
-  if not filepath or filepath == '' then
-    return
-  end
-
+local function do_locate(filepath)
   local cwd = get_git_root()
   if not vim.startswith(filepath, cwd .. '/') then
     return
@@ -455,22 +451,19 @@ function M.locate_file(filepath)
   if not sections.changes then
     sections.changes = {}
   end
-
-  local found_in_changes = false
+  local found = false
   for _, f in ipairs(sections.changes) do
     if f.path == rel_path then
-      found_in_changes = true
+      found = true
       break
     end
   end
-
-  if not found_in_changes then
+  if not found then
     table.insert(sections.changes, {
       path = rel_path,
       xy = '  ',
       x = ' ',
       y = ' ',
-      old_path = nil,
       _temporary = true,
     })
   end
@@ -493,10 +486,25 @@ function M.locate_file(filepath)
 
   local items = state.git_changes.display_items or {}
   for line, item in ipairs(items) do
-    if item.type == 'file' and item.node and item.node.abs_path == filepath then
+    if item.node and item.node.abs_path == filepath then
       pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
       return
     end
+  end
+end
+
+function M.locate_file(filepath)
+  if not filepath or filepath == '' then
+    return
+  end
+
+  local sections = state.git_changes.sections
+  if sections.staged or sections.unstaged or sections.untracked or sections.changes then
+    do_locate(filepath)
+  else
+    M.refresh(function()
+      do_locate(filepath)
+    end)
   end
 end
 

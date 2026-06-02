@@ -6,7 +6,16 @@ local window = require('lu5je0.ext.tree-sidebar.window')
 local tabs = require('lu5je0.ext.tree-sidebar.tabs')
 local keymaps = require('lu5je0.ext.tree-sidebar.keymaps')
 
-local function refresh_git_for_files_tab()
+local function init_sidebar(render)
+  tabs.render_winbar()
+  keymaps.apply_shared()
+  keymaps.apply_for_tab(state.active_tab_idx)
+  if render then
+    local source = tabs.get_active_source()
+    if source and source.render then
+      source.render()
+    end
+  end
   if state.active_tab_idx == 1 then
     local files_source = require('lu5je0.ext.tree-sidebar.sources.files')
     files_source.refresh_git_status(function()
@@ -21,14 +30,7 @@ function M.toggle(opts)
   opts = opts or {}
   window.toggle(opts)
   if state:is_open() then
-    tabs.render_winbar()
-    local source = tabs.get_active_source()
-    if source and source.render then
-      source.render()
-    end
-    keymaps.apply_shared()
-    keymaps.apply_for_tab(state.active_tab_idx)
-    refresh_git_for_files_tab()
+    init_sidebar(true)
   else
     local files_source = require('lu5je0.ext.tree-sidebar.sources.files')
     files_source.stop_watchers()
@@ -37,35 +39,21 @@ end
 
 function M.focus()
   window.focus()
-  tabs.render_winbar()
-  local source = tabs.get_active_source()
-  if source and source.render then
-    source.render()
-  end
-  keymaps.apply_shared()
-  keymaps.apply_for_tab(state.active_tab_idx)
-  refresh_git_for_files_tab()
+  init_sidebar(true)
 end
 
 function M.open_tab(idx)
   if not state:is_open() then
     window.open()
     state.active_tab_idx = idx
-    tabs.render_winbar()
-    keymaps.apply_shared()
-    keymaps.apply_for_tab(idx)
-    local source = tabs.get_active_source()
-    if source and source.render then
-      source.render()
-    end
-    refresh_git_for_files_tab()
+    init_sidebar(true)
   else
     tabs.switch_to(idx)
   end
   vim.api.nvim_set_current_win(state.win)
 end
 
-function M.locate_file()
+function M.locate_in_tab(idx)
   local filepath = vim.fn.expand('%:p')
   if vim.fn.filereadable(filepath) == 0 then
     return
@@ -73,28 +61,18 @@ function M.locate_file()
 
   if not state:is_open() then
     window.open()
-    tabs.render_winbar()
-    keymaps.apply_shared()
-    keymaps.apply_for_tab(state.active_tab_idx)
   end
-
+  state.active_tab_idx = idx
+  init_sidebar(false)
   vim.api.nvim_set_current_win(state.win)
 
-  if state.active_tab_idx == 1 then
+  if idx == 1 then
     local files = require('lu5je0.ext.tree-sidebar.sources.files')
     files.find_file(filepath)
-  elseif state.active_tab_idx == 2 then
+  elseif idx == 2 then
     local git_changes = require('lu5je0.ext.tree-sidebar.sources.git_changes')
     git_changes.locate_file(filepath)
-  elseif state.active_tab_idx == 3 then
-    local items = state.buffers.display_items or {}
-    for line, item in ipairs(items) do
-      if item.node and item.node.abs_path == filepath then
-        pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
-        return
-      end
-    end
-  elseif state.active_tab_idx == 4 then
+  elseif idx == 4 then
     local symbols_source = require('lu5je0.ext.tree-sidebar.sources.symbols')
     symbols_source.request_symbols({ locate = true })
   end
@@ -163,7 +141,11 @@ function M.setup()
   end, opts)
 
   vim.keymap.set('n', '<leader>fe', function()
-    M.locate_file()
+    M.locate_in_tab(1)
+  end, opts)
+
+  vim.keymap.set('n', '<leader>fg', function()
+    M.locate_in_tab(2)
   end, opts)
 
   vim.keymap.set('n', '<leader>gs', function()

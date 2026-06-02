@@ -331,7 +331,7 @@ M.setup = function()
   -- -- 默认是smart-case
   -- vim.keymap.set('x', '<leader>fr', wrapper_fn_for_visual(function() Snacks.picker.pick("grep", {}) end))
   -- vim.keymap.set('n', '<leader>fR', function() Snacks.picker.pick("git_grep", {}) end)
-  vim.keymap.set('n', '<leader>fg', function() Snacks.picker.pick("git_status", {}) end)
+  -- vim.keymap.set('n', '<leader>fg', function() Snacks.picker.pick("git_status", {}) end)
   vim.keymap.set('n', '<leader>fG', function() Snacks.picker.pick("git_diff", {}) end)
   -- vim.keymap.set('n', '<leader>fl', function() Snacks.picker.pick("git_log", {}) end)
   vim.keymap.set('n', '<leader>fp',

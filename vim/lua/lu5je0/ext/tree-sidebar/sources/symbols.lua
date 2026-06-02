@@ -206,7 +206,35 @@ function M.request_symbols(opts)
   end)
 end
 
+local function expand_to_line(nodes, cursor_line)
+  if not nodes then return false end
+  for _, node in ipairs(nodes) do
+    local range = node.range
+    if range then
+      local start_line = range.start.line
+      local end_line = range['end'].line
+      if cursor_line >= start_line and cursor_line <= end_line then
+        if node.type == 'directory' and node.children then
+          node.expanded = true
+          expand_to_line(node.children, cursor_line)
+        end
+        return true
+      end
+    end
+  end
+  return false
+end
+
 function M.locate_by_line(cursor_line)
+  local nodes = state.symbols.nodes
+  if not nodes or #nodes == 0 then
+    return
+  end
+
+  if expand_to_line(nodes, cursor_line) then
+    M.render()
+  end
+
   local items = state.symbols.display_items
   if not items or #items == 0 then
     return
