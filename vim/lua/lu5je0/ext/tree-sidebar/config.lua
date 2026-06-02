@@ -4,6 +4,10 @@ M.filetype = 'TreeSidebar'
 
 M.default_width = 33
 
+-- diff_preview shows a placeholder instead of loading file content larger
+-- than this many bytes (per side), to keep the UI responsive on huge files.
+M.diff_max_bytes = 1024 * 1024
+
 M.tabs = {
   { id = 'files', label = '󰙅 Files' },
   { id = 'git_changes', label = '󰊢 Changes' },

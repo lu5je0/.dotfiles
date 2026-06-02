@@ -79,6 +79,39 @@ function M.locate_in_tab(idx)
   end
 end
 
+function M._on_dir_changed(args)
+  if args.match == 'window' then
+    return
+  end
+  state.pwd_stack_push()
+
+  local new_cwd = vim.fn.getcwd()
+  local old_cwd = state.files.root and state.files.root.abs_path or nil
+  if old_cwd == new_cwd then
+    return
+  end
+
+  state.files._root_cache = state.files._root_cache or {}
+  if old_cwd and state.files.root then
+    state.files._root_cache[old_cwd] = state.files.root
+  end
+  state.files.root = state.files._root_cache[new_cwd] or nil
+  state.files.git_status_map = {}
+  pcall(function()
+    require('lu5je0.ext.tree-sidebar.actions.diff_preview').invalidate_short_head_cache()
+  end)
+
+  if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
+    local files_source = require('lu5je0.ext.tree-sidebar.sources.files')
+    files_source.render()
+    files_source.refresh_git_status(function()
+      if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
+        files_source.render()
+      end
+    end)
+  end
+end
+
 function M.setup()
   config.setup_highlights()
   state.init_pwd_stack()
@@ -87,9 +120,7 @@ function M.setup()
   window.setup_full_name()
 
   vim.api.nvim_create_autocmd('DirChanged', {
-    callback = function()
-      state.pwd_stack_push()
-    end,
+    callback = M._on_dir_changed,
   })
 
   vim.api.nvim_create_autocmd('TabClosed', {

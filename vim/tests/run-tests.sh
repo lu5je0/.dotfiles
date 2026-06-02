@@ -17,3 +17,15 @@ nvim --headless -u NONE -l "${SCRIPT_DIR}/line-log/spec.lua"
 printf '\n'
 printf '%s[project-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/project-log/spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/project-log/spec.lua"
+
+printf '\n'
+printf '%s[tree-sidebar]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/spec.lua"
+
+printf '\n'
+printf '%s[tree-sidebar:interactive]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/interactive_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/interactive_spec.lua"
+
+printf '\n'
+printf '%s[tree-sidebar:diff-preview]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/diff_preview_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/diff_preview_spec.lua"

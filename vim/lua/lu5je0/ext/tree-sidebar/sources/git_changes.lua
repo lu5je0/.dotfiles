@@ -134,7 +134,7 @@ local function parse_git_status(stdout)
   return { staged = staged, unstaged = unstaged, untracked = untracked, changes = changes }
 end
 
-local function files_to_tree_nodes(files, expanded_dirs)
+local function files_to_tree_nodes(files, expanded_dirs, section_key)
   expanded_dirs = expanded_dirs or {}
   local root_dirs = {}
   local root_files = {}
@@ -171,6 +171,7 @@ local function files_to_tree_nodes(files, expanded_dirs)
         x = file.x,
         y = file.y,
         old_path = file.old_path,
+        section = section_key,
       }
     else
       local current_dirs = root_dirs
@@ -205,6 +206,7 @@ local function files_to_tree_nodes(files, expanded_dirs)
           x = file.x,
           y = file.y,
           old_path = file.old_path,
+          section = section_key,
         }
       end
     end
@@ -240,7 +242,7 @@ local function build_section_tree(section_key, label, files, expanded, expanded_
     name = label .. ' (' .. #files .. ')',
     type = 'directory',
     expanded = expanded,
-    children = files_to_tree_nodes(files, expanded_dirs),
+    children = files_to_tree_nodes(files, expanded_dirs, section_key),
     section = section_key,
     _is_section = true,
   }
@@ -288,21 +290,32 @@ function M.render()
       return nil
     end,
     file_suffix = function(node)
-      if node.xy then
-        local vt = {}
-        for ci = 1, #('[' .. node.xy .. ']') do
-          local ch = ('[' .. node.xy .. ']'):sub(ci, ci)
-          vt[#vt + 1] = { ch, status_hl_per_char(node.xy, ch) }
-        end
-        return '[' .. node.xy .. ']', vt
+      if not node.xy then
+        return nil, nil
       end
-      return nil, nil
+      local label
+      if node.section == 'staged' then
+        label = node.xy:sub(1, 1)
+      elseif node.section == 'unstaged' then
+        label = node.xy:sub(2, 2)
+      elseif node.section == 'untracked' then
+        label = '?'
+      else
+        label = node.xy
+      end
+      local text = '[' .. label .. ']'
+      local vt = {}
+      for ci = 1, #text do
+        local ch = text:sub(ci, ci)
+        vt[#vt + 1] = { ch, status_hl_per_char(node.xy, ch) }
+      end
+      return text, vt
     end,
     item_data = function(node)
       if node._is_section then
         return { section = node.section, _is_section = true }
       end
-      return { xy = node.xy, path = node.rel_path or node.name, section = nil }
+      return { xy = node.xy, path = node.rel_path or node.name, section = node.section }
     end,
   })
 
@@ -356,6 +369,9 @@ end
 function M.refresh(callback)
   local tab_git_changes = state.git_changes
   local tab_active_tab_idx = state.active_tab_idx
+  pcall(function()
+    require('lu5je0.ext.tree-sidebar.actions.diff_preview').invalidate_short_head_cache()
+  end)
   vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
     vim.schedule(function()
       tab_git_changes.sections = parse_git_status(result.stdout)

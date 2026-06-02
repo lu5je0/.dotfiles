@@ -220,6 +220,8 @@ local function build_git_status_map(stdout)
   return map
 end
 
+M._build_git_status_map = build_git_status_map
+
 function M.render()
   if not state.files.root or state.files.root.abs_path ~= vim.fn.getcwd() then
     build_root()
@@ -401,14 +403,14 @@ function M.toggle_dotfiles()
   pcall(vim.api.nvim_win_set_cursor, state.win, { math.max(1, target), 0 })
 end
 
-local function save_cursor_for_cwd()
+function M.save_cursor_for_cwd()
   if state:is_open() then
     state.files._cursor_cache = state.files._cursor_cache or {}
     state.files._cursor_cache[vim.fn.getcwd()] = vim.api.nvim_win_get_cursor(state.win)
   end
 end
 
-local function restore_cursor_for_cwd()
+function M.restore_cursor_for_cwd()
   local cache = state.files._cursor_cache
   if cache and cache[vim.fn.getcwd()] then
     pcall(vim.api.nvim_win_set_cursor, state.win, cache[vim.fn.getcwd()])
@@ -416,6 +418,8 @@ local function restore_cursor_for_cwd()
     pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
   end
 end
+
+local save_cursor_for_cwd = M.save_cursor_for_cwd
 
 function M.cd_to_node()
   if not state:is_open() then
@@ -436,16 +440,7 @@ function M.cd_to_node()
 
   if path then
     save_cursor_for_cwd()
-    state.files._root_cache = state.files._root_cache or {}
-    state.files._root_cache[vim.fn.getcwd()] = state.files.root
     vim.cmd('cd ' .. vim.fn.fnameescape(path))
-    local cache = state.files._root_cache
-    if cache and cache[path] then
-      state.files.root = cache[path]
-    else
-      state.files.root = nil
-    end
-    M.render()
     pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
   end
 end
@@ -455,26 +450,14 @@ function M.cd_parent()
   local parent = vim.fs.dirname(cwd)
   if parent and parent ~= cwd then
     save_cursor_for_cwd()
-    state.files._root_cache = state.files._root_cache or {}
-    state.files._root_cache[cwd] = state.files.root
     vim.cmd('cd ' .. vim.fn.fnameescape(parent))
-    local cache = state.files._root_cache
-    state.files.root = cache and cache[parent] or nil
-    M.render()
     pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
   end
 end
 
 function M.cd_home()
-  local cwd = vim.fn.getcwd()
   save_cursor_for_cwd()
-  state.files._root_cache = state.files._root_cache or {}
-  state.files._root_cache[cwd] = state.files.root
   vim.cmd('cd ~')
-  local home = vim.fn.expand('~')
-  local cache = state.files._root_cache
-  state.files.root = cache and cache[home] or nil
-  M.render()
   pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
 end
 
