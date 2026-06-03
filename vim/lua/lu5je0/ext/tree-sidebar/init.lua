@@ -55,9 +55,7 @@ end
 
 function M.locate_in_tab(idx)
   local filepath = vim.fn.expand('%:p')
-  if vim.fn.filereadable(filepath) == 0 then
-    return
-  end
+  local cur_buf = vim.api.nvim_get_current_buf()
 
   if not state:is_open() then
     window.open()
@@ -66,7 +64,13 @@ function M.locate_in_tab(idx)
   init_sidebar(false)
   vim.api.nvim_set_current_win(state.win)
 
-  if idx == config.tab_idx('files') then
+  if idx == config.tab_idx('buffers') then
+    local buffers = require('lu5je0.ext.tree-sidebar.sources.buffers')
+    buffers.render()
+    buffers.locate_buffer(cur_buf)
+  elseif vim.fn.filereadable(filepath) == 0 then
+    return
+  elseif idx == config.tab_idx('files') then
     local files = require('lu5je0.ext.tree-sidebar.sources.files')
     files.find_file(filepath)
     vim.cmd('normal! zz')
@@ -187,7 +191,7 @@ function M.setup()
   end, opts)
 
   vim.keymap.set('n', '<leader>fb', function()
-    M.open_tab(config.tab_idx('buffers'))
+    M.locate_in_tab(config.tab_idx('buffers'))
   end, opts)
 
   vim.keymap.set('n', '<leader>fs', function()

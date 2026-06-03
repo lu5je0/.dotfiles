@@ -5,28 +5,36 @@ local render = require('lu5je0.ext.tree-sidebar.render')
 local M = {}
 
 local function get_buffer_list()
-  local bufs = vim.api.nvim_list_bufs()
+  local bufs = require('lu5je0.core.buffers').valid_buffers()
   local items = {}
   local basenames = {}
 
   for _, buf in ipairs(bufs) do
-    if vim.fn.buflisted(buf) == 1 and vim.bo[buf].buftype == '' then
-      local name = vim.api.nvim_buf_get_name(buf)
-      if name ~= '' then
-        local basename = vim.fs.basename(name)
-        basenames[basename] = (basenames[basename] or 0) + 1
-        items[#items + 1] = {
-          buf = buf,
-          path = name,
-          basename = basename,
-          modified = vim.bo[buf].modified,
-        }
-      end
+    local name = vim.api.nvim_buf_get_name(buf)
+    if name ~= '' then
+      local basename = vim.fs.basename(name)
+      basenames[basename] = (basenames[basename] or 0) + 1
+      items[#items + 1] = {
+        buf = buf,
+        path = name,
+        basename = basename,
+        modified = vim.bo[buf].modified,
+      }
+    else
+      local buffer_name_map = require('lu5je0.ext.bufferline').buffer_name_map
+      local num = buffer_name_map[buf]
+      local display = num and ('Untitled-' .. num) or '[No Name]'
+      items[#items + 1] = {
+        buf = buf,
+        path = '',
+        basename = display,
+        modified = vim.bo[buf].modified,
+      }
     end
   end
 
   for _, item in ipairs(items) do
-    if basenames[item.basename] > 1 then
+    if item.path ~= '' and (basenames[item.basename] or 0) > 1 then
       item.display_name = vim.fn.fnamemodify(item.path, ':~:.')
     else
       item.display_name = item.basename
@@ -115,6 +123,19 @@ function M.close_buffer()
 
   vim.api.nvim_buf_delete(item.node.buf, { force = true })
   M.render()
+end
+
+function M.locate_buffer(bufnr)
+  local items = state.buffers.display_items
+  if not items then
+    return
+  end
+  for line, item in ipairs(items) do
+    if item.node and item.node.buf == bufnr then
+      vim.api.nvim_win_set_cursor(state.win, { line, 0 })
+      return
+    end
+  end
 end
 
 function M.keymaps()
