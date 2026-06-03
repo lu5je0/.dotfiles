@@ -138,7 +138,6 @@ alias speedtest-de='speedtest -s 44081'
 
 # git aliases (from OMZ git plugin, only the ones actually used)
 alias ga='git add'
-alias gaa='git add --all'
 alias gc='git commit --verbose'
 alias gcf='git config --list'
 alias gco='git checkout'

@@ -1,0 +1,5 @@
+#!/bin/sh
+git_dir=$(git rev-parse --git-dir 2>/dev/null) || exit 1
+git write-tree > "$git_dir/GAA_UNDO_TREE"
+git add --all
+git write-tree > "$git_dir/GAA_POST_TREE"

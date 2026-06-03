@@ -113,7 +113,9 @@ function M._on_dir_changed(args)
 end
 
 function M.setup()
-  config.setup_highlights()
+  for _, hl in ipairs(config.highlights) do
+    vim.api.nvim_set_hl(0, hl[1], hl[2])
+  end
   state.init_pwd_stack()
   window.setup_remember_width()
   window.setup_guicursor()

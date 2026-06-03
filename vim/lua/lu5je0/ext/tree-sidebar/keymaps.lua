@@ -96,6 +96,16 @@ function M.apply_shared()
     help.show_help('Help', lines)
   end)
 
+  for _, lhs in ipairs(config.passthrough_mappings or {}) do
+    buf_set('n', lhs, function()
+      local target = window.get_target_win()
+      if target then
+        vim.api.nvim_set_current_win(target)
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(lhs, true, false, true), 'm', false)
+      end
+    end)
+  end
+
   buf_set('n', 'j', function()
     local keys = require('lu5je0.core.keys')
     keys.feedkey('j', 'n')

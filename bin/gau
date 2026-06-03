@@ -1,0 +1,21 @@
+#!/bin/sh
+git_dir=$(git rev-parse --git-dir 2>/dev/null) || exit 1
+tree_file="$git_dir/GAA_UNDO_TREE"
+post_file="$git_dir/GAA_POST_TREE"
+
+if [ ! -f "$tree_file" ]; then
+  echo "No gaa to undo"
+  exit 1
+fi
+
+if [ "$1" != "-f" ]; then
+  current_tree=$(git write-tree)
+  post_tree=$(cat "$post_file" 2>/dev/null)
+  if [ "$current_tree" != "$post_tree" ]; then
+    echo "Index has changed since gaa. Use 'gau -f' to force."
+    exit 1
+  fi
+fi
+
+git read-tree "$(cat "$tree_file")"
+rm -f "$tree_file" "$post_file"

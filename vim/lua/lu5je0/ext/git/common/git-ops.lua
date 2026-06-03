@@ -154,13 +154,30 @@ local function undo_restore_blobs(op, cwd)
   return true
 end
 
+function M.index_snapshot(paths, cwd)
+  local args = { 'git', 'ls-files', '-s', '--' }
+  for _, p in ipairs(paths) do args[#args + 1] = p end
+  local result = vim.system(args, { text = true, cwd = cwd }):wait()
+  if result.code ~= 0 then return nil end
+  return result.stdout or ''
+end
+
 function M.run_undo_op(op, cwd)
-  if op.type == 'reset_paths' then
-    local args = { 'git', 'reset', 'HEAD', '--' }
-    for _, p in ipairs(op.paths or {}) do args[#args + 1] = p end
-    return M.run_git(args, 'Undo failed: ', cwd)
-  elseif op.type == 'add_paths' then
-    local args = { 'git', 'add', '--' }
+  if op.type == 'reset_paths' or op.type == 'add_paths' then
+    if op.expected_index then
+      local current = M.index_snapshot(op.paths, cwd)
+      if current ~= op.expected_index then
+        vim.notify('Undo skipped: index has changed since operation', vim.log.levels.WARN)
+        return false
+      end
+    end
+    local cmd = op.type == 'reset_paths' and 'reset' or 'add'
+    local args
+    if cmd == 'reset' then
+      args = { 'git', 'reset', 'HEAD', '--' }
+    else
+      args = { 'git', 'add', '--' }
+    end
     for _, p in ipairs(op.paths or {}) do args[#args + 1] = p end
     return M.run_git(args, 'Undo failed: ', cwd)
   elseif op.type == 'restore_blobs' then
