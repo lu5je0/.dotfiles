@@ -330,6 +330,8 @@ function M.close_node()
 end
 
 function M.collapse_all()
+  local old_items = state.symbols.display_items or {}
+
   local function collapse(nodes)
     if not nodes then return end
     for _, node in ipairs(nodes) do
@@ -341,7 +343,24 @@ function M.collapse_all()
   end
   collapse(state.symbols.nodes)
   M.render()
-  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+  render.restore_cursor(old_items, state.symbols.display_items)
+end
+
+function M.expand_all()
+  local old_items = state.symbols.display_items or {}
+
+  local function expand(nodes)
+    if not nodes then return end
+    for _, node in ipairs(nodes) do
+      if node.children and #node.children > 0 then
+        node.expanded = true
+        expand(node.children)
+      end
+    end
+  end
+  expand(state.symbols.nodes)
+  M.render()
+  render.restore_cursor(old_items, state.symbols.display_items)
 end
 
 function M.keymaps()

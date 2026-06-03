@@ -648,6 +648,8 @@ function M.prev_git_file()
 end
 
 function M.collapse_all()
+  local old_items = state.files.display_items or {}
+
   local function collapse(node)
     if node.type == 'directory' and node.expanded then
       node.expanded = false
@@ -664,7 +666,7 @@ function M.collapse_all()
     end
   end
   M.render()
-  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+  render.restore_cursor(old_items, state.files.display_items)
 end
 
 function M.toggle_compress_dirs()

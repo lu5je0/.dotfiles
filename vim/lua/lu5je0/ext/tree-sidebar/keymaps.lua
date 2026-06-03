@@ -43,6 +43,13 @@ function M.apply_shared()
     end
   end)
 
+  buf_set('n', 'zR', function()
+    local source = tabs.get_active_source()
+    if source and source.expand_all then
+      source.expand_all()
+    end
+  end)
+
   local preview_mod = require('lu5je0.ext.tree-sidebar.actions.preview')
   local file_ops = require('lu5je0.ext.tree-sidebar.actions.file_ops')
   buf_set('n', '<esc>', function()
@@ -62,6 +69,7 @@ function M.apply_shared()
     { 'q', 'Close sidebar' },
     { 'Z', 'Toggle width' },
     { 'zM', 'Collapse all' },
+    { 'zR', 'Expand all' },
     { '<esc>', 'Close preview / Clear clipboard' },
     { '?', 'Show help' },
   }

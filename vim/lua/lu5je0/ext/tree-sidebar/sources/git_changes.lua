@@ -261,6 +261,12 @@ function M.render()
   local dir_states = state.git_changes._dir_states or {}
   state.git_changes._dir_states = dir_states
 
+  for _, key in ipairs({ 'staged', 'unstaged', 'untracked' }) do
+    if not sections[key] or #sections[key] == 0 then
+      expanded[key] = false
+    end
+  end
+
   local root_nodes = {}
   if sections.changes and #sections.changes > 0 then
     dir_states.changes = dir_states.changes or {}
@@ -455,6 +461,9 @@ function M.close_node()
 end
 
 function M.collapse_all()
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local old_section = M.find_section_for_line(line)
+
   local expanded = state.git_changes._expanded
   if expanded then
     for k, _ in pairs(expanded) do
@@ -463,6 +472,45 @@ function M.collapse_all()
   end
   state.git_changes._dir_states = {}
   M.render()
+
+  if old_section then
+    for i, item in ipairs(state.git_changes.display_items) do
+      if item._is_section and item.section == old_section then
+        pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+        return
+      end
+    end
+  end
+  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+end
+
+function M.expand_all()
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local section_key = M.find_section_for_line(line)
+  if not section_key then
+    return
+  end
+
+  local old_item = (state.git_changes.display_items or {})[line]
+  state.git_changes._expanded[section_key] = true
+  local dir_states = state.git_changes._dir_states
+  if dir_states then
+    dir_states[section_key] = {}
+  end
+  M.render()
+
+  local old_abs = old_item and old_item.node and old_item.node.abs_path
+  if old_item then
+    for i, item in ipairs(state.git_changes.display_items) do
+      if old_item._is_section and item._is_section and item.section == old_item.section then
+        pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+        return
+      elseif old_abs and item.node and item.node.abs_path == old_abs then
+        pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+        return
+      end
+    end
+  end
   pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
 end
 

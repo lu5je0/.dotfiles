@@ -313,4 +313,38 @@ function M.close_node(opts)
   end
 end
 
+function M.restore_cursor(old_items, new_items)
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local old_node = old_items[line] and old_items[line].node
+  if not old_node then
+    pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+    return
+  end
+
+  local function contains(node, target)
+    if node == target then return true end
+    if node.children then
+      for _, child in ipairs(node.children) do
+        if contains(child, target) then return true end
+      end
+    end
+    return false
+  end
+
+  for i, item in ipairs(new_items) do
+    if item.node == old_node then
+      pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+      return
+    end
+  end
+
+  local best_line = 1
+  for i, item in ipairs(new_items) do
+    if item.node and contains(item.node, old_node) then
+      best_line = i
+    end
+  end
+  pcall(vim.api.nvim_win_set_cursor, state.win, { best_line, 0 })
+end
+
 return M
