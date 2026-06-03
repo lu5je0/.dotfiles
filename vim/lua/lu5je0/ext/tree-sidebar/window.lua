@@ -307,10 +307,11 @@ function M.setup_full_name()
       end
     end
 
+    local topline = vim.fn.line('w0', win)
     local win_config = {
       relative = 'win',
       win = win,
-      row = line_nr - 1,
+      row = line_nr - topline,
       col = 0,
       width = math.min(text_width + 1, vim.o.columns - 2),
       height = 1,
@@ -337,6 +338,16 @@ function M.setup_full_name()
     callback = function()
       if not state:is_open() or vim.api.nvim_get_current_win() ~= state.win then
         hide_popup()
+        return
+      end
+      show_popup()
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('WinScrolled', {
+    group = group,
+    callback = function()
+      if not state:is_open() or vim.api.nvim_get_current_win() ~= state.win then
         return
       end
       show_popup()

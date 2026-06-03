@@ -95,9 +95,17 @@ local function scan_dir(path)
     if not name then
       break
     end
+    local prefix = path == '/' and '' or path
+    local abs_path = prefix .. '/' .. name
+    if type == 'link' then
+      local stat = vim.uv.fs_stat(abs_path)
+      if stat and stat.type == 'directory' then
+        type = 'directory'
+      end
+    end
     entries[#entries + 1] = {
       name = name,
-      abs_path = path .. '/' .. name,
+      abs_path = abs_path,
       type = type or 'file',
       children = nil,
       expanded = false,
@@ -138,15 +146,31 @@ local function build_root()
   return root
 end
 
-local function node_filter(node)
-  if state.files.hide_dotfiles and is_dotfile(node.name) then
-    return false
+local function make_filter(reveal_path)
+  return function(node)
+    if state.files.hide_dotfiles and is_dotfile(node.name) then
+      if reveal_path then
+        if node.abs_path == reveal_path
+          or vim.startswith(reveal_path, node.abs_path .. '/') then
+          return true
+        end
+      end
+      return false
+    end
+    return true
   end
-  return true
+end
+
+local function rel_to_cwd(abs_path, cwd)
+  cwd = cwd or vim.fn.getcwd()
+  if cwd == '/' then
+    return abs_path:sub(2)
+  end
+  return abs_path:sub(#cwd + 2)
 end
 
 local function file_suffix(node)
-  local rel_path = node.abs_path:sub(#vim.fn.getcwd() + 2)
+  local rel_path = rel_to_cwd(node.abs_path)
   local git_info = state.files.git_status_map[rel_path]
   if git_info then
     return git_info.glyph, git_info.hl
@@ -155,7 +179,7 @@ local function file_suffix(node)
 end
 
 local function dir_suffix(node)
-  local rel_path = node.abs_path:sub(#vim.fn.getcwd() + 2) .. '/'
+  local rel_path = rel_to_cwd(node.abs_path) .. '/'
   local git_status = state.files.git_status_map[rel_path]
   if git_status then
     return git_status.glyph, git_status.hl
@@ -222,7 +246,8 @@ end
 
 M._build_git_status_map = build_git_status_map
 
-function M.render()
+function M.render(opts)
+  opts = opts or {}
   if not state.files.root or state.files.root.abs_path ~= vim.fn.getcwd() then
     build_root()
   end
@@ -244,11 +269,21 @@ function M.render()
     highlights[#highlights + 1] = { line = 0, hl = 'TreeSidebarRootFolder', col_start = 0, col_end = -1 }
   end
 
+  local reveal_path = opts.reveal_path or state.files.reveal_path
+  local filter = make_filter(reveal_path)
+  local function node_hl(node)
+    if is_dotfile(node.name) then
+      return 'TreeSidebarDotfile'
+    end
+    return nil
+  end
+
   -- Render tree
   local tree_lines, tree_items, tree_highlights, tree_virt_texts = render.render_tree(root.children or {}, {
-    filter = node_filter,
+    filter = filter,
     file_suffix = file_suffix,
     dir_suffix = dir_suffix,
+    node_hl = node_hl,
     compress_dirs = state.files.compress_dirs or false,
   })
 
@@ -305,6 +340,7 @@ local function rescan_node(node)
 end
 
 function M.refresh()
+  state.files.reveal_path = nil
   if state.files.root then
     rescan_node(state.files.root)
   else
@@ -388,6 +424,7 @@ function M.toggle_dotfiles()
   local old_path = old_item and old_item.node and old_item.node.abs_path
 
   state.files.hide_dotfiles = not state.files.hide_dotfiles
+  state.files.reveal_path = nil
   M.render()
 
   if old_path then
@@ -440,6 +477,7 @@ function M.cd_to_node()
 
   if path then
     save_cursor_for_cwd()
+    state.files.reveal_path = nil
     vim.cmd('cd ' .. vim.fn.fnameescape(path))
     pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
   end
@@ -450,6 +488,7 @@ function M.cd_parent()
   local parent = vim.fs.dirname(cwd)
   if parent and parent ~= cwd then
     save_cursor_for_cwd()
+    state.files.reveal_path = nil
     vim.cmd('cd ' .. vim.fn.fnameescape(parent))
     pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
   end
@@ -457,6 +496,7 @@ end
 
 function M.cd_home()
   save_cursor_for_cwd()
+  state.files.reveal_path = nil
   vim.cmd('cd ~')
   pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
 end
@@ -592,10 +632,10 @@ end
 local function is_git_item(item, cwd)
   if not item or not item.node then return false end
   if item.type == 'file' then
-    local rel = item.node.abs_path:sub(#cwd + 2)
+    local rel = rel_to_cwd(item.node.abs_path, cwd)
     return state.files.git_status_map[rel] ~= nil
   elseif item.type == 'dir' then
-    local rel = item.node.abs_path:sub(#cwd + 2) .. '/'
+    local rel = rel_to_cwd(item.node.abs_path, cwd) .. '/'
     return state.files.git_status_map[rel] ~= nil
   end
   return false
@@ -725,22 +765,11 @@ function M.find_file(filepath)
     state.files.root = nil
   end
 
-  if state.files.hide_dotfiles then
-    local rel = filepath:sub(#cwd + 2)
-    local parts = vim.split(rel, '/', { trimempty = true })
-    for _, p in ipairs(parts) do
-      if is_dotfile(p) then
-        state.files.hide_dotfiles = false
-        break
-      end
-    end
-  end
-
   if not state.files.root or state.files.root.abs_path ~= vim.fn.getcwd() then
     build_root()
   end
 
-  local rel_parts = vim.split(filepath:sub(#vim.fn.getcwd() + 2), '/', { trimempty = true })
+  local rel_parts = vim.split(rel_to_cwd(filepath), '/', { trimempty = true })
   local node = state.files.root
   for i = 1, #rel_parts - 1 do
     ensure_children(node)
@@ -759,7 +788,8 @@ function M.find_file(filepath)
     node.expanded = true
   end
 
-  M.render()
+  state.files.reveal_path = filepath
+  M.render({ reveal_path = filepath })
 
   local found = false
   for line, item in ipairs(state.files.display_items) do

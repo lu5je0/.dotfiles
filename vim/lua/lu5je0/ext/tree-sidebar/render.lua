@@ -82,6 +82,7 @@ function M.render_tree(root_children, opts)
   local item_data = opts.item_data
   local get_dir_icon = opts.get_dir_icon
   local get_file_icon_fn = opts.get_file_icon
+  local node_hl = opts.node_hl
   local compress_dirs = opts.compress_dirs or false
   local flat_depth = opts.flat_depth or 0
 
@@ -107,7 +108,7 @@ function M.render_tree(root_children, opts)
 
   local virt_texts = {}
 
-  local function walk(children, prefix, depth)
+  local function walk(children, prefix, depth, inherited_hl)
     local visible = {}
     for _, child in ipairs(children) do
       if filter(child) then
@@ -176,8 +177,11 @@ function M.render_tree(root_children, opts)
         end
         local branch_end = indent_end + #branch
         highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = indent_end, col_end = branch_end }
-        highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarFolderIcon', col_start = branch_end, col_end = branch_end + #icon }
-        highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarFolderName', col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #display_name }
+        local dir_hl_override = (node_hl and node_hl(child)) or inherited_hl
+        local folder_icon_hl = dir_hl_override or 'TreeSidebarFolderIcon'
+        local folder_name_hl = dir_hl_override or 'TreeSidebarFolderName'
+        highlights[#highlights + 1] = { line = line_idx, hl = folder_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
+        highlights[#highlights + 1] = { line = line_idx, hl = folder_name_hl, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #display_name }
 
         if display_node.expanded and display_node.children then
           local child_prefix
@@ -186,7 +190,7 @@ function M.render_tree(root_children, opts)
           else
             child_prefix = prefix .. (child_is_last and '  ' or '│ ')
           end
-          walk(display_node.children, child_prefix, depth + 1)
+          walk(display_node.children, child_prefix, depth + 1, dir_hl_override)
         end
       else
         local icon, icon_hl
@@ -227,7 +231,12 @@ function M.render_tree(root_children, opts)
         end
         local branch_end = indent_end + #branch
         highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = indent_end, col_end = branch_end }
-        highlights[#highlights + 1] = { line = line_idx, hl = icon_hl, col_start = branch_end, col_end = branch_end + #icon }
+        local file_hl_override = (node_hl and node_hl(child)) or inherited_hl
+        local effective_icon_hl = file_hl_override or icon_hl
+        highlights[#highlights + 1] = { line = line_idx, hl = effective_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
+        if file_hl_override then
+          highlights[#highlights + 1] = { line = line_idx, hl = file_hl_override, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #child.name }
+        end
       end
     end
   end

@@ -14,7 +14,9 @@ local state = require('lu5je0.ext.tree-sidebar.state')
 local config = require('lu5je0.ext.tree-sidebar.config')
 local navigation = require('lu5je0.ext.tree-sidebar.actions.navigation')
 
-config.setup_highlights()
+for _, hl in ipairs(config.highlights) do
+  vim.api.nvim_set_hl(0, hl[1], hl[2])
+end
 
 local _aug = vim.api.nvim_create_augroup('TreeSidebarTest', { clear = true })
 vim.api.nvim_create_autocmd('DirChanged', {

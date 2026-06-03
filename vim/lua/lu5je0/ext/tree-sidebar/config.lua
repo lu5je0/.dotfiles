@@ -87,6 +87,7 @@ M.highlights = {
   { 'TreeSidebarGitNew', { fg = '#c678dd', default = true } },
   { 'TreeSidebarGitStaged', { fg = '#51afef', default = true } },
   { 'TreeSidebarGitIgnored', { fg = '#5c6370', default = true } },
+  { 'TreeSidebarDotfile', { fg = '#626262', default = true } },
   { 'TreeSidebarIndent', { link = 'NonText', default = true } },
   { 'TreeSidebarSymlink', { link = 'Normal', default = true } },
   { 'TreeSidebarModified', { fg = '#98c379', default = true } },

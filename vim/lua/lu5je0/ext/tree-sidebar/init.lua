@@ -101,6 +101,7 @@ function M._on_dir_changed(args)
   end
   state.files.root = state.files._root_cache[new_cwd] or nil
   state.files.git_status_map = {}
+  state.files.reveal_path = nil
   pcall(function()
     require('lu5je0.ext.tree-sidebar.actions.diff_preview').invalidate_short_head_cache()
   end)
