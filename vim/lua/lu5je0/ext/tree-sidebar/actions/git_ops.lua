@@ -257,14 +257,33 @@ function M.discard_section()
     vim.notify(string.format('Removed %d untracked files', #files), vim.log.levels.INFO)
   elseif section_key == 'unstaged' or section_key == 'changes' then
     local target_files = {}
+    local staged_only_paths = {}
     for _, file in ipairs(files) do
       local x = (file.xy or ''):sub(1, 1)
       local y = (file.xy or ''):sub(2, 2)
       if x == '?' or (y ~= ' ' and y ~= '?') then
         target_files[#target_files + 1] = file
+      elseif section_key == 'changes' and x ~= ' ' and x ~= '?' and y == ' ' then
+        staged_only_paths[#staged_only_paths + 1] = file.path
       end
     end
-    if #target_files == 0 then return end
+    if #target_files == 0 and #staged_only_paths == 0 then return end
+
+    local staged_undo_op = nil
+    if #staged_only_paths > 0 then
+      local args = { 'git', 'reset', 'HEAD', '--' }
+      for _, p in ipairs(staged_only_paths) do args[#args + 1] = p end
+      if not run_git(args, 'Failed to unstage: ') then return end
+      local snapshot = git_ops.index_snapshot(staged_only_paths)
+      staged_undo_op = { type = 'add_paths', paths = staged_only_paths, expected_index = snapshot }
+    end
+
+    if #target_files == 0 then
+      push_undo('unstaged', { staged_undo_op })
+      vim.notify(string.format('Unstaged %d files', #staged_only_paths), vim.log.levels.INFO)
+      refresh()
+      return
+    end
 
     local existing_files = {}
     local existing_indices = {}
@@ -349,8 +368,13 @@ function M.discard_section()
         end
       end
     end)
-    push_undo('reverted', { { type = 'restore_blobs', files = restore_files } })
-    vim.notify(string.format('Reverted %d files', #target_files), vim.log.levels.INFO)
+    local ops = {}
+    if staged_undo_op then
+      ops[#ops + 1] = staged_undo_op
+    end
+    ops[#ops + 1] = { type = 'restore_blobs', files = restore_files }
+    push_undo('reverted', ops)
+    vim.notify(string.format('Reverted %d files', #target_files + #staged_only_paths), vim.log.levels.INFO)
   elseif section_key == 'staged' then
     local args = { 'git', 'reset', 'HEAD', '--' }
     local paths = {}
