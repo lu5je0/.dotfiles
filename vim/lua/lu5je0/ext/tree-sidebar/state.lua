@@ -1,8 +1,14 @@
+-- Per-tabpage sidebar state.
+--
+-- Exposes a metatable proxy so callers can write `state.files.x` and
+-- have it routed to the current tab's table. For async callbacks that
+-- might fire on a different tabpage, capture `state.tab()` first and
+-- access the snapshot directly.
 local Stack = require('lu5je0.lang.stack')
 
 local M = {}
 
--- ── global fields (shared across tabs) ──────────────────
+-- ── globals (shared across tabpages) ───────────────────
 
 M.pwd_stack = Stack:create()
 M.pwd_forward_stack = Stack:create()
@@ -10,9 +16,7 @@ M._is_jumping = false
 M._last_pushed_cwd = nil
 
 function M.pwd_stack_push()
-  if M._is_jumping then
-    return
-  end
+  if M._is_jumping then return end
   local cwd = vim.fn.getcwd()
   if M._last_pushed_cwd ~= cwd then
     M.pwd_stack:push(cwd)
@@ -26,7 +30,7 @@ function M.init_pwd_stack()
   M._last_pushed_cwd = cwd
 end
 
--- ── per-tab state ───────────────────────────────────────
+-- ── per-tabpage state ──────────────────────────────────
 
 local _tabs = {}
 
@@ -68,19 +72,23 @@ local function get_tab_state()
   return _tabs[tab]
 end
 
+--- Return the current tabpage's state table directly. Use this in
+--- async callbacks to avoid the metatable proxy crossing tabpages.
+function M.tab()
+  return get_tab_state()
+end
+
 function M.cleanup_closed_tabs()
   local valid = {}
   for _, tp in ipairs(vim.api.nvim_list_tabpages()) do
     valid[tp] = true
   end
   for tp, _ in pairs(_tabs) do
-    if not valid[tp] then
-      _tabs[tp] = nil
-    end
+    if not valid[tp] then _tabs[tp] = nil end
   end
 end
 
--- ── proxy: state.xxx routes to per-tab state ────────────
+-- ── proxy: M.<x> routes to per-tab state ───────────────
 
 local _global_keys = {
   pwd_stack = true,
@@ -95,6 +103,7 @@ local _methods = {
   pwd_stack_push = true,
   init_pwd_stack = true,
   cleanup_closed_tabs = true,
+  tab = true,
 }
 
 setmetatable(M, {
@@ -102,16 +111,13 @@ setmetatable(M, {
     if _global_keys[key] or _methods[key] then
       return rawget(self, key)
     end
-    local tab_state = get_tab_state()
-    return tab_state[key]
+    return get_tab_state()[key]
   end,
   __newindex = function(self, key, value)
     if _global_keys[key] or _methods[key] then
-      rawset(self, key, value)
-      return
+      rawset(self, key, value); return
     end
-    local tab_state = get_tab_state()
-    tab_state[key] = value
+    get_tab_state()[key] = value
   end,
 })
 

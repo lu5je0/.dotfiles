@@ -96,6 +96,25 @@ M.highlights = {
   { 'TreeSidebarCopy', { underline = true, sp = '#61afef', default = true } },
   { 'TreeSidebarTabActive', { fg = '#abb2bf', bg = '#3e4452', bold = true, default = true } },
   { 'TreeSidebarTabInactive', { fg = '#5c6370', bg = '#2c313a', default = true } },
+
+  { 'GitChangesAdd', { link = '@diff.plus', default = true } },
+  { 'GitChangesModify', { link = 'WarningMsg', default = true } },
+  { 'GitChangesRename', { link = 'WarningMsg', default = true } },
+  { 'GitChangesDelete', { link = '@diff.minus', default = true } },
+  { 'GitChangesCopy', { link = 'Special', default = true } },
+  { 'GitChangesType', { link = 'Type', default = true } },
+  { 'GitChangesUntracked', { link = '@diff.minus', default = true } },
+  { 'GitChangesUnmerged', { link = 'ErrorMsg', default = true } },
+  { 'GitChangesIgnored', { link = 'Comment', default = true } },
+  { 'GitChangesEmpty', { fg = '#5c6370', default = true } },
+
+  { 'GitFileStatusAdded', { link = '@diff.plus', default = true } },
+  { 'GitFileStatusModified', { link = '@diff.delta', default = true } },
+  { 'GitFileStatusRenamed', { link = 'Special', default = true } },
+  { 'GitFileStatusCopied', { link = '@diff.plus', default = true } },
+  { 'GitFileStatusDeleted', { link = 'Comment', default = true } },
+  { 'GitFileStatusUntracked', { link = '@diff.minus', default = true } },
+  { 'GitFileStatusConflict', { link = 'ErrorMsg', default = true } },
 }
 
 function M.tab_idx(id)
@@ -105,6 +124,12 @@ function M.tab_idx(id)
     end
   end
   return nil
+end
+
+function M.apply_highlights()
+  for _, hl in ipairs(M.highlights) do
+    vim.api.nvim_set_hl(0, hl[1], hl[2])
+  end
 end
 
 return M

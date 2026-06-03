@@ -1,43 +1,31 @@
-local state = require('lu5je0.ext.tree-sidebar.state')
+-- Tree rendering engine: converts a tree of nodes into
+-- lines / items / highlights / virt_texts.
+--
+-- This module is pure: it does not touch state, buffers or windows.
+-- For buffer flushing and cursor-aware open/close/restore glue see view.lua.
+-- For backward compatibility this module re-exports view.flush /
+-- open_node / close_node / restore_cursor / ns_id / set_lines /
+-- clear_highlights / add_highlight, since several call sites still go
+-- through `render.X`.
 local config = require('lu5je0.ext.tree-sidebar.config')
+local view = require('lu5je0.ext.tree-sidebar.view')
 
 local M = {}
 
-local ns_id = vim.api.nvim_create_namespace('tree_sidebar')
+-- ── view re-exports (backward-compat) ───────────────────
 
--- Buffer operations
+M.ns_id = view.ns_id
+M.set_lines = view.set_lines
+M.clear_highlights = view.clear_highlights
+M.add_highlight = view.add_highlight
+M.flush = view.flush
+M.open_node = view.open_node
+M.close_node = view.close_node
+M.restore_cursor = view.restore_cursor
 
-function M.set_lines(lines)
-  if not state:is_buf_valid() then
-    return
-  end
-  vim.bo[state.buf].modifiable = true
-  vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
-  vim.bo[state.buf].modifiable = false
-end
+-- ── devicons ────────────────────────────────────────────
 
-function M.clear_highlights()
-  if not state:is_buf_valid() then
-    return
-  end
-  vim.api.nvim_buf_clear_namespace(state.buf, ns_id, 0, -1)
-end
-
-function M.add_highlight(line, hl_group, col_start, col_end)
-  if not state:is_buf_valid() then
-    return
-  end
-  vim.api.nvim_buf_add_highlight(state.buf, ns_id, hl_group, line, col_start, col_end)
-end
-
-function M.ns_id()
-  return ns_id
-end
-
--- Devicons helper
-
-local _devicons = nil
-local _devicons_loaded = false
+local _devicons, _devicons_loaded = nil, false
 
 function M.get_file_icon(name)
   if not _devicons_loaded then
@@ -45,36 +33,34 @@ function M.get_file_icon(name)
     local ok, mod = pcall(require, 'nvim-web-devicons')
     if ok then _devicons = mod end
   end
-  if not _devicons then
-    return '', 'Normal'
-  end
+  if not _devicons then return '', 'Normal' end
   local icon, hl = _devicons.get_icon(name, vim.fn.fnamemodify(name, ':e'), { default = true })
   return icon or '', hl or 'Normal'
 end
 
---- Tree rendering engine
----
---- Renders a generic tree structure into lines/items/highlights arrays.
----
---- Each node in the tree must have:
----   - name: string (display name)
----   - type: 'directory' | 'file' (or any non-directory type)
----   - children: list of child nodes (for directories; nil means unloaded)
----   - expanded: boolean (for directories)
----
---- opts:
----   - filter(node) -> bool: whether to show this node (default: show all)
----   - file_suffix(node) -> string|nil, hl_group|nil: extra suffix text & highlight for file nodes
----   - dir_suffix(node) -> string|nil, hl_group|nil: extra suffix text & highlight for dir nodes
----   - get_dir_icon(node) -> icon_str: custom folder icon (default uses config.folder_icons)
----   - item_data(node) -> table: extra fields merged into the item entry
----
---- Returns: lines, items, highlights, virt_texts
+-- ── tree render engine ──────────────────────────────────
+--
+-- Each node must have:
+--   - name: string
+--   - type: 'directory' | 'file' (or any non-directory)
+--   - children: list (for directories; nil = unloaded)
+--   - expanded: boolean (for directories)
+--
+-- opts:
+--   filter(node)        -> bool
+--   file_suffix(node)   -> text, hl
+--   dir_suffix(node)    -> text, hl
+--   get_dir_icon(node)  -> icon
+--   get_file_icon(node) -> icon, hl
+--   node_hl(node)       -> hl-group | nil  (overrides icon+name hl, inherited downward)
+--   item_data(node)     -> table (merged into the produced item entry)
+--   compress_dirs       -> bool
+--   flat_depth          -> int, depth at which children skip the branch prefix
+--
+-- Returns: lines, items, highlights, virt_texts
 function M.render_tree(root_children, opts)
   opts = opts or {}
-  local lines = {}
-  local items = {}
-  local highlights = {}
+  local lines, items, highlights, virt_texts = {}, {}, {}, {}
 
   local filter = opts.filter or function() return true end
   local file_suffix = opts.file_suffix
@@ -89,12 +75,8 @@ function M.render_tree(root_children, opts)
   local function default_dir_icon(node)
     local has_children = node.children and #node.children > 0
     if not has_children and node.children then
-      -- check if any visible children
       for _, c in ipairs(node.children) do
-        if filter(c) then
-          has_children = true
-          break
-        end
+        if filter(c) then has_children = true; break end
       end
     else
       has_children = (node.children == nil) or #node.children > 0
@@ -106,14 +88,62 @@ function M.render_tree(root_children, opts)
     end
   end
 
-  local virt_texts = {}
+  local function add_item(node, line_idx, kind)
+    local item = { type = kind, node = node, line_idx = line_idx }
+    if item_data then
+      local extra = item_data(node)
+      if extra then
+        for k, v in pairs(extra) do item[k] = v end
+      end
+    end
+    items[#items + 1] = item
+  end
+
+  local function add_indent_hls(line_idx, indent_end, branch_end)
+    if indent_end > 0 then
+      highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = 0, col_end = indent_end }
+    end
+    highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = indent_end, col_end = branch_end }
+  end
+
+  local function add_suffix(line_idx, text, hl)
+    if not text then return end
+    local vt = type(hl) == 'table' and hl or { { text, hl } }
+    virt_texts[#virt_texts + 1] = { line = line_idx, virt_text = vt }
+  end
+
+  local function compress_chain(child)
+    -- Returns final display_node and joined display_name.
+    local display_name, display_node = child.name, child
+    if not (compress_dirs and child.expanded and child.children and not child._is_section) then
+      return display_name, display_node
+    end
+    while true do
+      local visible_dir = nil
+      local found_one = false
+      local multiple = false
+      for _, c in ipairs(display_node.children or {}) do
+        if filter(c) then
+          if found_one then multiple = true; break end
+          found_one = true
+          if c.type == 'directory' and c.expanded then
+            visible_dir = c
+          else
+            visible_dir = nil
+          end
+        end
+      end
+      if multiple or not visible_dir then break end
+      display_node = visible_dir
+      display_name = display_name .. '/' .. visible_dir.name
+    end
+    return display_name, display_node
+  end
 
   local function walk(children, prefix, depth, inherited_hl)
     local visible = {}
     for _, child in ipairs(children) do
-      if filter(child) then
-        visible[#visible + 1] = child
-      end
+      if filter(child) then visible[#visible + 1] = child end
     end
 
     local is_root_level = (depth <= flat_depth)
@@ -122,75 +152,33 @@ function M.render_tree(root_children, opts)
       local child_is_last = (i == #visible)
       local branch = is_root_level and '' or (child_is_last and '└ ' or '│ ')
       local line_prefix = prefix .. branch
+      local indent_end = #prefix
+      local branch_end = indent_end + #branch
 
       if child.type == 'directory' then
-        -- Compress single-child directory chains
-        local display_name = child.name
-        local display_node = child
-        if compress_dirs and child.expanded and child.children and not (child._is_section) then
-          while true do
-            local visible_children = {}
-            for _, c in ipairs(display_node.children or {}) do
-              if filter(c) then
-                visible_children[#visible_children + 1] = c
-              end
-            end
-            if #visible_children == 1 and visible_children[1].type == 'directory' and visible_children[1].expanded then
-              display_node = visible_children[1]
-              display_name = display_name .. '/' .. display_node.name
-            else
-              break
-            end
-          end
-        end
-
+        local display_name, display_node = compress_chain(child)
         local icon = get_dir_icon and get_dir_icon(child) or default_dir_icon(display_node)
         local line = line_prefix .. icon .. ' ' .. display_name
 
-        local suffix_text, suffix_hl
-        if dir_suffix then
-          suffix_text, suffix_hl = dir_suffix(child)
-        end
-
         lines[#lines + 1] = line
         local line_idx = #lines - 1
+        add_item(child, line_idx, 'dir')
 
-        if suffix_text then
-          local vt = type(suffix_hl) == 'table' and suffix_hl or { { suffix_text, suffix_hl } }
-          virt_texts[#virt_texts + 1] = { line = line_idx, virt_text = vt }
+        if dir_suffix then
+          add_suffix(line_idx, dir_suffix(child))
         end
-        local item = { type = 'dir', node = child, line_idx = line_idx }
-        if item_data then
-          local extra = item_data(child)
-          if extra then
-            for k, v in pairs(extra) do
-              item[k] = v
-            end
-          end
-        end
-        items[#items + 1] = item
 
-        -- highlights
-        local indent_end = #prefix
-        if indent_end > 0 then
-          highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = 0, col_end = indent_end }
-        end
-        local branch_end = indent_end + #branch
-        highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = indent_end, col_end = branch_end }
-        local dir_hl_override = (node_hl and node_hl(child)) or inherited_hl
-        local folder_icon_hl = dir_hl_override or 'TreeSidebarFolderIcon'
-        local folder_name_hl = dir_hl_override or 'TreeSidebarFolderName'
+        add_indent_hls(line_idx, indent_end, branch_end)
+        local effective_hl = (node_hl and node_hl(child)) or inherited_hl
+        local folder_icon_hl = effective_hl or 'TreeSidebarFolderIcon'
+        local folder_name_hl = effective_hl or 'TreeSidebarFolderName'
         highlights[#highlights + 1] = { line = line_idx, hl = folder_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
         highlights[#highlights + 1] = { line = line_idx, hl = folder_name_hl, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #display_name }
 
         if display_node.expanded and display_node.children then
-          local child_prefix
-          if is_root_level then
-            child_prefix = ''
-          else
-            child_prefix = prefix .. (child_is_last and '  ' or '│ ')
-          end
-          walk(display_node.children, child_prefix, depth + 1, dir_hl_override)
+          local child_prefix = is_root_level and ''
+            or (prefix .. (child_is_last and '  ' or '│ '))
+          walk(display_node.children, child_prefix, depth + 1, effective_hl)
         end
       else
         local icon, icon_hl
@@ -201,159 +189,27 @@ function M.render_tree(root_children, opts)
         end
         local line = line_prefix .. icon .. ' ' .. child.name
 
-        local suffix_text, suffix_hl
-        if file_suffix then
-          suffix_text, suffix_hl = file_suffix(child)
-        end
-
         lines[#lines + 1] = line
         local line_idx = #lines - 1
+        add_item(child, line_idx, 'file')
 
-        if suffix_text then
-          local vt = type(suffix_hl) == 'table' and suffix_hl or { { suffix_text, suffix_hl } }
-          virt_texts[#virt_texts + 1] = { line = line_idx, virt_text = vt }
+        if file_suffix then
+          add_suffix(line_idx, file_suffix(child))
         end
-        local item = { type = 'file', node = child, line_idx = line_idx }
-        if item_data then
-          local extra = item_data(child)
-          if extra then
-            for k, v in pairs(extra) do
-              item[k] = v
-            end
-          end
-        end
-        items[#items + 1] = item
 
-        -- highlights
-        local indent_end = #prefix
-        if indent_end > 0 then
-          highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = 0, col_end = indent_end }
-        end
-        local branch_end = indent_end + #branch
-        highlights[#highlights + 1] = { line = line_idx, hl = 'TreeSidebarIndent', col_start = indent_end, col_end = branch_end }
-        local file_hl_override = (node_hl and node_hl(child)) or inherited_hl
-        local effective_icon_hl = file_hl_override or icon_hl
-        highlights[#highlights + 1] = { line = line_idx, hl = effective_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
-        if file_hl_override then
-          highlights[#highlights + 1] = { line = line_idx, hl = file_hl_override, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #child.name }
+        add_indent_hls(line_idx, indent_end, branch_end)
+        local effective_hl = (node_hl and node_hl(child)) or inherited_hl
+        local final_icon_hl = effective_hl or icon_hl
+        highlights[#highlights + 1] = { line = line_idx, hl = final_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
+        if effective_hl then
+          highlights[#highlights + 1] = { line = line_idx, hl = effective_hl, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #child.name }
         end
       end
     end
   end
 
-  walk(root_children, '', 0)
+  walk(root_children, '', 0, nil)
   return lines, items, highlights, virt_texts
-end
-
---- Flush lines/items/highlights/virt_texts to the sidebar buffer
-function M.flush(lines, highlights, virt_texts)
-  M.set_lines(lines)
-  M.clear_highlights()
-  for _, h in ipairs(highlights) do
-    M.add_highlight(h.line, h.hl, h.col_start, h.col_end)
-  end
-  for _, vt in ipairs(virt_texts or {}) do
-    vim.api.nvim_buf_set_extmark(state.buf, ns_id, vt.line, 0, {
-      virt_text = vt.virt_text,
-      virt_text_pos = vt.pos or 'right_align',
-      hl_mode = 'combine',
-    })
-  end
-end
-
-function M.open_node(opts)
-  if not state:is_open() then
-    return
-  end
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = opts.get_items()[line]
-  if not item then
-    return
-  end
-
-  if opts.is_expandable(item) then
-    if not opts.is_expanded(item) then
-      opts.expand(item, line)
-      opts.render_fn()
-      pcall(vim.api.nvim_win_set_cursor, state.win, { line + 1, 0 })
-    elseif opts.on_already_expanded then
-      opts.on_already_expanded(item, line)
-    end
-    return
-  end
-
-  if item.type == 'file' and opts.on_file then
-    opts.on_file(item, line)
-  end
-end
-
-function M.close_node(opts)
-  if not state:is_open() then
-    return
-  end
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local items = opts.get_items()
-  local item = items[line]
-  if not item then
-    return
-  end
-
-  if opts.is_closeable(item) then
-    opts.close(item, line)
-    opts.render_fn()
-    pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
-    return
-  end
-
-  for i = line - 1, 1, -1 do
-    local parent = items[i]
-    if parent then
-      if opts.is_boundary and opts.is_boundary(parent) then
-        pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
-        return
-      end
-      if opts.is_closeable(parent) then
-        opts.close(parent, i)
-        opts.render_fn()
-        pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
-        return
-      end
-    end
-  end
-end
-
-function M.restore_cursor(old_items, new_items)
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local old_node = old_items[line] and old_items[line].node
-  if not old_node then
-    pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
-    return
-  end
-
-  local function contains(node, target)
-    if node == target then return true end
-    if node.children then
-      for _, child in ipairs(node.children) do
-        if contains(child, target) then return true end
-      end
-    end
-    return false
-  end
-
-  for i, item in ipairs(new_items) do
-    if item.node == old_node then
-      pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
-      return
-    end
-  end
-
-  local best_line = 1
-  for i, item in ipairs(new_items) do
-    if item.node and contains(item.node, old_node) then
-      best_line = i
-    end
-  end
-  pcall(vim.api.nvim_win_set_cursor, state.win, { best_line, 0 })
 end
 
 return M
