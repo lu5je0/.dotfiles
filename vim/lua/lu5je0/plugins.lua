@@ -585,14 +585,6 @@ local plugins = {
       },
     },
     {
-      'hedyhli/outline.nvim',
-      config = function()
-        require('lu5je0.ext.symbols-outline').setup()
-      end,
-      cmd = { 'Outline' },
-      keys = { { mode = { 'n' }, '<leader>s' } }
-    },
-    {
       "dnlhc/glance.nvim",
       config = function()
         require('lu5je0.ext.glance').setup()
