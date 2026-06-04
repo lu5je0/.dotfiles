@@ -1,6 +1,5 @@
 local line_log = require('lu5je0.ext.git.line-log')
 local project_log = require('lu5je0.ext.git.project-log')
-local git_status = require('lu5je0.ext.git.git-status')
 local blame = require('lu5je0.ext.git.blame')
 local config = require('lu5je0.ext.git.config')
 
@@ -9,7 +8,7 @@ local M = {}
 function M.setup(opts)
   opts = opts or {}
 
-  local scopes = { 'git_status', 'project_log', 'line_log' }
+  local scopes = { 'project_log', 'line_log' }
   for k, v in pairs(opts) do
     if not vim.tbl_contains(scopes, k) then
       config[k] = v
@@ -28,7 +27,6 @@ function M.setup(opts)
   vim.keymap.set('n', '<leader>gL', function()
     line_log.show({ start_line = 1, end_line = vim.api.nvim_buf_line_count(0) })
   end, { desc = 'Git file log' })
-  -- vim.keymap.set('n', '<leader>gs', git_status.show, { desc = 'Git status' })
   vim.keymap.set('n', '<leader>gb', blame.toggle, { desc = 'Git blame' })
   vim.api.nvim_create_user_command('GitStatusLog', function()
     vim.cmd.edit(vim.fn.fnameescape(vim.fn.stdpath('log') .. '/git-status.log'))

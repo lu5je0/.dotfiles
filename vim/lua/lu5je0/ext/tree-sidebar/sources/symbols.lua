@@ -3,6 +3,7 @@ local state = require('lu5je0.ext.tree-sidebar.state')
 local config = require('lu5je0.ext.tree-sidebar.config')
 local source_base = require('lu5je0.ext.tree-sidebar.source_base')
 local view = require('lu5je0.ext.tree-sidebar.view')
+local env_keeper = require('lu5je0.misc.env-keeper')
 
 local M = {}
 
@@ -188,23 +189,53 @@ local function expand_to_line(nodes, cursor_line)
   return false
 end
 
+local function collapse_all_nodes(nodes)
+  if not nodes then return end
+  for _, node in ipairs(nodes) do
+    node.expanded = false
+    if node.children then collapse_all_nodes(node.children) end
+  end
+end
+
+local _last_located_node = nil
+
 function M.locate_by_line(cursor_line)
   if not state.symbols.nodes or #state.symbols.nodes == 0 then return end
-  if expand_to_line(state.symbols.nodes, cursor_line) then M.render() end
+
+  -- Find target node first (cheap traversal, no mutation).
+  local function find_best_node(nodes)
+    if not nodes then return nil end
+    for _, node in ipairs(nodes) do
+      local r = node.range
+      if r and cursor_line >= r.start.line and cursor_line <= r['end'].line then
+        if node.children and #node.children > 0 then
+          local deeper = find_best_node(node.children)
+          if deeper then return deeper end
+        end
+        return node
+      end
+    end
+  end
+  local target = find_best_node(state.symbols.nodes)
+  if not target or target == _last_located_node then return end
+  _last_located_node = target
+
+  if M.is_auto_follow() then
+    collapse_all_nodes(state.symbols.nodes)
+  end
+  expand_to_line(state.symbols.nodes, cursor_line)
+  M.render()
 
   local items = state.symbols.display_items
   if not items or #items == 0 then return end
-  local best_line, best_size = nil, math.huge
   for i, item in ipairs(items) do
-    local r = item.range
-    if r and cursor_line >= r.start.line and cursor_line <= r['end'].line then
-      local size = r['end'].line - r.start.line
-      if size < best_size then best_size = size; best_line = i end
+    if item.node == target then
+      pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+      vim.api.nvim_win_call(state.win, function()
+        vim.cmd('normal! zz')
+      end)
+      return
     end
-  end
-  if best_line then
-    pcall(vim.api.nvim_win_set_cursor, state.win, { best_line, 0 })
-    vim.cmd('normal! zz')
   end
 end
 
@@ -295,6 +326,19 @@ function M.expand_all()
   view.restore_cursor(old_items, state.symbols.display_items)
 end
 
+function M.is_auto_follow()
+  if state.symbols.auto_follow == nil then
+    state.symbols.auto_follow = env_keeper.get('symbols_auto_follow', true)
+  end
+  return state.symbols.auto_follow
+end
+
+function M.toggle_auto_follow()
+  state.symbols.auto_follow = not M.is_auto_follow()
+  env_keeper.set('symbols_auto_follow', state.symbols.auto_follow)
+  vim.notify('Symbols auto-follow: ' .. (state.symbols.auto_follow and 'on' or 'off'), vim.log.levels.INFO)
+end
+
 function M.keymaps()
   return {
     { 'l', M.toggle_node, desc = 'Expand node' },
@@ -303,6 +347,7 @@ function M.keymaps()
     { 'zc', M.close_node, desc = 'Collapse node' },
     { '<cr>', M.open_symbol, desc = 'Go to symbol' },
     { 'r', M.request_symbols, desc = 'Refresh' },
+    { 'gf', M.toggle_auto_follow, desc = 'Toggle auto-follow' },
   }
 end
 

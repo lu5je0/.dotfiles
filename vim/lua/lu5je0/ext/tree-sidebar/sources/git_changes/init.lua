@@ -63,8 +63,44 @@ local function build_section_tree(section_key, label, files, expanded, expanded_
 end
 
 local function ensure_default_state(ts)
-  ts._expanded = ts._expanded or { changes = true, staged = false, unstaged = false, untracked = false }
+  ts._expanded = ts._expanded or { changes = true, staged = false, unstaged = false, untracked = false, stashes = false }
   ts._dir_states = ts._dir_states or {}
+end
+
+local function stash_count_from_reflog()
+  local root = parser.git_root()
+  local path = root .. '/.git/logs/refs/stash'
+  local ok, lines = pcall(vim.fn.readfile, path)
+  if ok then return #lines end
+  return 0
+end
+
+local function build_stash_section(ts)
+  local stashes = ts._stash_entries or {}
+  local children = {}
+  for _, s in ipairs(stashes) do
+    children[#children + 1] = {
+      name = s.ref .. ': ' .. s.message,
+      type = 'directory',
+      expanded = s.expanded or false,
+      children = s.children or {},
+      _is_stash = true,
+      stash_ref = s.ref,
+      stash_message = s.message,
+      _files_loaded = s._files_loaded or false,
+    }
+  end
+  local count = #stashes > 0 and #stashes or stash_count_from_reflog()
+  if count == 0 then return nil end
+  local label = 'Stashes (' .. count .. ')'
+  return {
+    name = label,
+    type = 'directory',
+    expanded = ts._expanded.stashes or false,
+    children = children,
+    section = 'stashes',
+    _is_section = true,
+  }
 end
 
 function spec.build(ts, _ctx)
@@ -98,6 +134,8 @@ function spec.build(ts, _ctx)
       roots[#roots + 1] = build_section_tree(key, label, sections[key], ts._expanded[key], ts._dir_states[key])
     end
   end
+  local stash_sec = build_stash_section(ts)
+  if stash_sec then roots[#roots + 1] = stash_sec end
   return roots, { lines = {}, items = {}, highlights = {} }
 end
 
@@ -106,14 +144,14 @@ function spec.render_opts(_ts, _ctx)
     compress_dirs = true,
     flat_depth = 1,
     get_dir_icon = function(node)
-      if node._is_section then
+      if node._is_section or node._is_stash then
         return node.expanded and config.section_icons.expanded or config.section_icons.collapsed
       end
     end,
     file_suffix = function(node)
       if not node.xy then return end
       local label
-      if node.section == 'staged' then
+      if node.section == 'staged' or node.section == 'stash' then
         label = node.xy:sub(1, 1)
       elseif node.section == 'unstaged' then
         label = node.xy:sub(2, 2)
@@ -134,7 +172,12 @@ function spec.render_opts(_ts, _ctx)
       if node._is_section then
         return { section = node.section, _is_section = true }
       end
-      return { xy = node.xy, path = node.rel_path or node.name, section = node.section }
+      if node._is_stash then
+        return { _is_stash = true, stash_ref = node.stash_ref }
+      end
+      local data = { xy = node.xy, path = node.rel_path or node.name, section = node.section }
+      if node.stash_ref then data.stash_ref = node.stash_ref end
+      return data
     end,
   }
 end
@@ -245,32 +288,97 @@ end
 
 -- ── open / close glue ───────────────────────────────────
 
+local function load_stash_list(callback)
+  vim.system({ 'git', 'stash', 'list', '--format=%gd%x00%gs' }, { text = true }, function(result)
+    vim.schedule(function()
+      local ts = state.git_changes
+      local stashes = parser.parse_stash_list(result.code == 0 and result.stdout or '')
+      local old = {}
+      for _, s in ipairs(ts._stash_entries or {}) do old[s.ref] = s end
+      for _, s in ipairs(stashes) do
+        local prev = old[s.ref]
+        if prev then
+          s.expanded = prev.expanded
+          s.children = prev.children
+          s._files_loaded = prev._files_loaded
+        end
+      end
+      ts._stash_entries = stashes
+      if callback then callback() end
+    end)
+  end)
+end
+
+function M.reload_stash_list(after)
+  if state:is_open() and state.active_tab_idx == config.tab_idx('git_changes') then
+    load_stash_list(function()
+      M.render()
+      if after then after() end
+    end)
+  end
+end
+
+local function load_stash_files(stash_entry, callback)
+  vim.system(
+    { 'git', 'stash', 'show', '--name-status', '--find-renames', stash_entry.ref },
+    { text = true },
+    function(result)
+      vim.schedule(function()
+        local raw = parser.parse_stash_files(result.code == 0 and result.stdout or '')
+        local files = {}
+        for _, f in ipairs(raw) do
+          local s = f.status:sub(1, 1)
+          files[#files + 1] = { path = f.path, xy = s .. ' ', x = s, y = ' ', stash_ref = stash_entry.ref }
+        end
+        stash_entry.children = parser.files_to_tree_nodes(files, {}, 'stash')
+        stash_entry._files_loaded = true
+        if callback then callback() end
+      end)
+    end
+  )
+end
+
 spec.open = {
   is_expandable = function(item)
-    return item._is_section or (item.type == 'dir' and item.node ~= nil)
+    return item._is_section or item.node._is_stash or (item.type == 'dir' and item.node ~= nil)
   end,
   is_expanded = function(item) return item.node.expanded end,
   expand = function(item, line)
     if item._is_section then
       state.git_changes._expanded[item.section] = true
+    elseif item.node._is_stash then
+      item.node.expanded = true
+      local ref = item.node.stash_ref
+      for _, s in ipairs(state.git_changes._stash_entries or {}) do
+        if s.ref == ref then s.expanded = true; break end
+      end
     else
       item.node.expanded = true
       save_dir_state(line, item.node.abs_path, true)
     end
   end,
   on_file = function(item)
-    require('lu5je0.ext.tree-sidebar.window').open_file(item.node.abs_path)
+    if item.node.abs_path then
+      require('lu5je0.ext.tree-sidebar.window').open_file(item.node.abs_path)
+    end
   end,
 }
 
 spec.close = {
   is_closeable = function(item)
     if item._is_section then return true end
+    if item.node and item.node._is_stash and item.node.expanded then return true end
     return item.type == 'dir' and item.node and item.node.expanded
   end,
   close = function(item, line)
     if item._is_section then
       state.git_changes._expanded[item.section] = false
+    elseif item.node and item.node._is_stash then
+      item.node.expanded = false
+      local ref = item.node.stash_ref
+      for _, s in ipairs(state.git_changes._stash_entries or {}) do
+        if s.ref == ref then s.expanded = false; break end
+      end
     else
       item.node.expanded = false
       save_dir_state(line, item.node.abs_path, false)
@@ -279,6 +387,30 @@ spec.close = {
 }
 
 function M.open_node()
+  if not state:is_open() then return end
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local item = state.git_changes.display_items[line]
+  if not item then return end
+
+  if item._is_section and item.section == 'stashes' and not item.node.expanded then
+    state.git_changes._expanded.stashes = true
+    load_stash_list(function() M.render() end)
+    return
+  end
+
+  if item.node and item.node._is_stash and not item.node.expanded then
+    local stash_ref = item.node.stash_ref
+    local entry
+    for _, s in ipairs(state.git_changes._stash_entries or {}) do
+      if s.ref == stash_ref then entry = s; break end
+    end
+    if entry and not entry._files_loaded then
+      entry.expanded = true
+      load_stash_files(entry, function() M.render() end)
+      return
+    end
+  end
+
   source_base.open_node(spec, M.render)
 end
 
@@ -296,6 +428,9 @@ function M.collapse_all()
     end
   end
   state.git_changes._dir_states = {}
+  for _, s in ipairs(state.git_changes._stash_entries or {}) do
+    s.expanded = false
+  end
   M.render()
 
   if old_section then
@@ -356,12 +491,24 @@ function M.keymaps()
     { 'a', git_ops.stage_file, desc = 'Stage file' },
     { 'A', git_ops.stage_section, desc = 'Stage section' },
     { 'u', git_ops.undo_last_action, desc = 'Undo' },
-    { 'x', git_ops.discard_file, desc = 'Discard file' },
+    { 'x', function()
+      local line = vim.api.nvim_win_get_cursor(state.win)[1]
+      local item = state.git_changes.display_items[line]
+      if item and item.node and item.node._is_stash then
+        git_ops.drop_stash()
+      else
+        git_ops.discard_file()
+      end
+    end, desc = 'Discard / Drop stash' },
     { 'X', git_ops.discard_section, desc = 'Discard section' },
     { '<leader>fe', function()
       local line = vim.api.nvim_win_get_cursor(state.win)[1]
       local item = state.git_changes.display_items[line]
       if not item or not item.node or item._is_section then return end
+      if not vim.uv.fs_stat(item.node.abs_path) then
+        vim.notify('File deleted', vim.log.levels.WARN)
+        return
+      end
       local tabs = require('lu5je0.ext.tree-sidebar.tabs')
       tabs.switch_to(config.tab_idx('files'))
       local files = require('lu5je0.ext.tree-sidebar.sources.files')

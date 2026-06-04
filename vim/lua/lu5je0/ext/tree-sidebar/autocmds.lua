@@ -31,6 +31,7 @@ function M.setup(group)
     group = group,
     callback = function()
       if not state:is_open() then return end
+      if not vim.fs.root(vim.fn.getcwd(), '.git') then return end
       local tab_files = state.files
       local tab_gc = state.git_changes
       local tab_idx = state.active_tab_idx
@@ -53,18 +54,49 @@ function M.setup(group)
     end,
   })
 
+  -- Symbols auto-follow state.
+  local follow_timer = nil
+  local last_follow_line = nil
+
   -- Re-query LSP symbols when the foreground buffer changes.
   vim.api.nvim_create_autocmd({ 'BufEnter', 'LspAttach' }, {
     group = group,
     callback = function(args)
       if not state:is_open() then return end
       if state.active_tab_idx ~= config.tab_idx('symbols') then return end
+      if not require('lu5je0.ext.tree-sidebar.sources.symbols').is_auto_follow() then return end
       if args.buf == state.buf then return end
       local cur_buf = vim.api.nvim_get_current_buf()
       if cur_buf == state.symbols.target_buf then return end
+      last_follow_line = nil
       vim.schedule(function()
         require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols()
       end)
+    end,
+  })
+
+  -- Auto-follow symbol under cursor (debounced).
+  vim.api.nvim_create_autocmd('CursorMoved', {
+    group = group,
+    callback = function(args)
+      if not state:is_open() then return end
+      if state.active_tab_idx ~= config.tab_idx('symbols') then return end
+      if args.buf == state.buf then return end
+      if args.buf ~= state.symbols.target_buf then return end
+      local symbols_mod = require('lu5je0.ext.tree-sidebar.sources.symbols')
+      if not symbols_mod.is_auto_follow() then return end
+      local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+      if cursor_line == last_follow_line then return end
+      if follow_timer then follow_timer:stop() end
+      follow_timer = vim.uv.new_timer()
+      follow_timer:start(100, 0, vim.schedule_wrap(function()
+        follow_timer:close()
+        follow_timer = nil
+        if not state:is_open() then return end
+        if state.active_tab_idx ~= config.tab_idx('symbols') then return end
+        last_follow_line = cursor_line
+        symbols_mod.locate_by_line(cursor_line)
+      end))
     end,
   })
 

@@ -76,7 +76,7 @@ tree-sidebar/
 
 ## 集成点
 
-- `ext-loader.lua`：`<leader>e/E/fe/fg/gs/fb/fs` 懒加载
+- `ext-loader.lua`：懒加载触发键。**新增或修改全局快捷键时，必须同步更新 `ext-loader.lua` 的 `keys` 列表，否则按键不会触发模块加载，快捷键不生效。**
 - `ext/bufferline.lua`、`core/statusline.lua`、`ext/statuscol.lua`：TreeSidebar filetype 注册
 
 ## 测试

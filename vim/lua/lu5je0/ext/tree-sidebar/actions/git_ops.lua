@@ -3,9 +3,19 @@ local git_ops = require('lu5je0.ext.git.common.git-ops')
 
 local M = {}
 
-local run_git = git_ops.run_git
-local hash_file = git_ops.hash_file
 local log_batch = git_ops.log_batch
+
+local function git_root()
+  return require('lu5je0.ext.tree-sidebar.sources.git_changes.parser').git_root()
+end
+
+local function run_git(args, error_prefix)
+  return git_ops.run_git(args, error_prefix, git_root())
+end
+
+local function hash_file(abs_path, write)
+  return git_ops.hash_file(abs_path, write, git_root())
+end
 
 local function get_undo_stack()
   state.git_changes._undo_stack = state.git_changes._undo_stack or {}
@@ -395,10 +405,59 @@ function M.discard_section()
   refresh()
 end
 
+-- ── drop stash (x on stash entry) ──────────────────────
+
+function M.drop_stash()
+  if not state:is_open() then return end
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local item = state.git_changes.display_items[line]
+  if not item or not item.node or not item.node._is_stash then return end
+
+  local stash_ref = item.node.stash_ref
+  local sha_result = vim.system({ 'git', 'rev-parse', stash_ref }, { text = true }):wait()
+  local sha = (sha_result.stdout or ''):gsub('%s+$', '')
+  if sha_result.code ~= 0 or sha == '' then
+    vim.notify('Failed to resolve ' .. stash_ref, vim.log.levels.ERROR)
+    return
+  end
+
+  local drop_result = vim.system({ 'git', 'stash', 'drop', stash_ref }, { text = true }):wait()
+  if drop_result.code ~= 0 then
+    vim.notify('Failed to drop ' .. stash_ref .. ': ' .. (drop_result.stderr or ''), vim.log.levels.ERROR)
+    return
+  end
+
+  local stash_msg = item.node.stash_message or ''
+  push_undo('dropped', { { type = 'store_stash', sha = sha, message = stash_msg } })
+  log_batch('dropped', 'stash', 1, function(write)
+    write(string.format('Dropped %s. Restore: git stash store -m %s %s',
+      stash_ref, vim.fn.shellescape(stash_msg), sha))
+  end)
+  vim.notify('Dropped ' .. stash_ref, vim.log.levels.INFO)
+
+  local entries = state.git_changes._stash_entries or {}
+  for i, s in ipairs(entries) do
+    if s.ref == stash_ref then table.remove(entries, i); break end
+  end
+  git_changes_mod().render()
+  pcall(vim.api.nvim_win_set_cursor, state.win, { math.min(line, vim.api.nvim_buf_line_count(state.buf)), 0 })
+  git_changes_mod().reload_stash_list()
+end
+
 -- ── undo (U) ────────────────────────────────────────────
 
 function M.undo_last_action()
-  git_ops.undo_last_action(get_undo_stack(), vim.fn.getcwd(), refresh)
+  git_ops.undo_last_action(get_undo_stack(), vim.fn.getcwd(), function()
+    refresh()
+    git_changes_mod().reload_stash_list(function()
+      for i, item in ipairs(state.git_changes.display_items or {}) do
+        if item.node and item.node._is_stash and item.node.stash_ref == 'stash@{0}' then
+          pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+          return
+        end
+      end
+    end)
+  end)
 end
 
 return M

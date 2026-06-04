@@ -122,6 +122,15 @@ function M.resolve_diff_targets(item)
       right_title = ' Working Tree ',
     }
   end
+  if section == 'stash' and node.stash_ref then
+    return {
+      left  = { kind = 'git_show', spec = node.stash_ref .. '^:' .. rel_path },
+      right = { kind = 'git_show', spec = node.stash_ref .. ':' .. rel_path },
+      left_title = ' Parent ',
+      right_title = ' ' .. node.stash_ref .. ' ',
+    }
+  end
+
   -- 'changes' (combined view) and any unknown section fall back to HEAD↔WT
   return {
     left  = { kind = 'git_show', spec = 'HEAD:' .. rel_path },

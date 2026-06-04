@@ -43,7 +43,7 @@ local function get_parent_dir()
   if not node then
     return vim.fn.getcwd()
   end
-  if node.type == 'directory' then
+  if node.type == 'directory' and node.expanded then
     return node.abs_path
   end
   return vim.fs.dirname(node.abs_path)
@@ -83,49 +83,91 @@ end
 
 function M.rename()
   local node = get_current_node()
-  if not node then
-    return
-  end
-  vim.ui.input({ prompt = 'Rename: ', default = node.abs_path }, function(new_path)
-    if not new_path or new_path == '' or new_path == node.abs_path then
+  if not node then return end
+  local dir = vim.fs.dirname(node.abs_path)
+
+  vim.ui.input({ prompt = 'Rename: ', default = node.name, completion = 'file' }, function(new_name)
+    if not new_name or new_name == '' or new_name == node.name then return end
+    local new_path = dir .. '/' .. new_name
+    if vim.uv.fs_stat(new_path) then
+      vim.notify('Already exists: ' .. new_path, vim.log.levels.WARN)
       return
     end
-    local parent = vim.fs.dirname(new_path)
-    vim.fn.mkdir(parent, 'p')
+    local new_parent = vim.fs.dirname(new_path)
+    if not vim.uv.fs_stat(new_parent) then
+      vim.fn.mkdir(new_parent, 'p')
+    end
     vim.uv.fs_rename(node.abs_path, new_path)
-
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_get_name(buf) == node.abs_path then
-        vim.api.nvim_buf_set_name(buf, new_path)
-        vim.api.nvim_buf_call(buf, function()
-          vim.cmd('silent! write!')
-        end)
-        break
+      local buf_path = vim.api.nvim_buf_get_name(buf)
+      if buf_path == node.abs_path or vim.startswith(buf_path, node.abs_path .. '/') then
+        local new_buf_path = new_path .. buf_path:sub(#node.abs_path + 1)
+        vim.api.nvim_buf_set_name(buf, new_buf_path)
       end
     end
     refresh()
   end)
 end
 
-function M.delete()
-  local node = get_current_node()
-  if not node then
-    return
-  end
-  local choice = vim.fn.confirm('Delete ' .. node.name .. '?', '&Yes\n&No', 2)
-  if choice ~= 1 then
-    return
-  end
+local function has_trash()
+  if vim.fn.has('mac') == 1 then return true end
+  return vim.fn.executable('gio') == 1 or vim.fn.executable('trash-put') == 1
+end
 
+local function trash(abs_path)
+  local cmd
+  if vim.fn.has('mac') == 1 then
+    if vim.fn.executable('trash') == 1 then
+      cmd = { 'trash', abs_path }
+    else
+      cmd = {
+        'osascript', '-e',
+        ('tell application "Finder" to delete POSIX file "%s"'):format(
+          abs_path:gsub('\\', '\\\\'):gsub('"', '\\"')
+        ),
+      }
+    end
+  else
+    if vim.fn.executable('gio') == 1 then
+      cmd = { 'gio', 'trash', abs_path }
+    elseif vim.fn.executable('trash-put') == 1 then
+      cmd = { 'trash-put', abs_path }
+    end
+  end
+  if not cmd then return false end
+  local result = vim.system(cmd):wait()
+  return result.code == 0
+end
+
+local function close_bufs_under(abs_path)
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     local buf_path = vim.api.nvim_buf_get_name(buf)
-    if buf_path == node.abs_path or vim.startswith(buf_path, node.abs_path .. '/') then
+    if buf_path == abs_path or vim.startswith(buf_path, abs_path .. '/') then
       vim.api.nvim_buf_delete(buf, { force = true })
     end
   end
+end
 
-  vim.fn.delete(node.abs_path, 'rf')
-  refresh()
+function M.delete()
+  local node = get_current_node()
+  if not node then return end
+
+  if has_trash() then
+    local choice = vim.fn.confirm('Trash ' .. node.name .. '?', '&Yes\n&No', 2)
+    if choice ~= 1 then return end
+    if trash(node.abs_path) then
+      close_bufs_under(node.abs_path)
+      refresh()
+    else
+      vim.notify('Trash failed', vim.log.levels.ERROR)
+    end
+  else
+    local choice = vim.fn.confirm('Delete ' .. node.name .. '? (permanent)', '&Yes\n&No', 2)
+    if choice ~= 1 then return end
+    close_bufs_under(node.abs_path)
+    vim.fn.delete(node.abs_path, 'rf')
+    refresh()
+  end
 end
 
 function M.cut()
@@ -154,18 +196,43 @@ function M.paste()
     return
   end
 
-  local dest_dir = get_parent_dir()
+  local node = get_current_node()
+  local dest_dir
+  if not node then
+    dest_dir = vim.fn.getcwd()
+  elseif node.type == 'directory' then
+    dest_dir = node.abs_path
+  else
+    dest_dir = vim.fs.dirname(node.abs_path)
+  end
+
   local src = M._clipboard.path
   local name = vim.fs.basename(src)
   local dest = dest_dir .. '/' .. name
 
-  if M._clipboard.action == 'move' then
-    vim.uv.fs_rename(src, dest)
-  elseif M._clipboard.action == 'copy' then
-    vim.fn.system({ 'cp', '-r', src, dest })
+  local function do_paste(final_dest)
+    if M._clipboard.action == 'move' then
+      vim.uv.fs_rename(src, final_dest)
+    elseif M._clipboard.action == 'copy' then
+      vim.fn.system({ 'cp', '-r', src, final_dest })
+    end
+    M._clipboard = nil
+    refresh()
   end
-  M._clipboard = nil
-  refresh()
+
+  if vim.uv.fs_stat(dest) then
+    vim.ui.input({ prompt = 'Rename to: ', default = dest }, function(new_dest)
+      if not new_dest or new_dest == '' then return end
+      if vim.uv.fs_stat(new_dest) then
+        vim.notify('Target already exists: ' .. new_dest, vim.log.levels.WARN)
+        return
+      end
+      do_paste(new_dest)
+    end)
+    return
+  end
+
+  do_paste(dest)
 end
 
 function M.copy_name()

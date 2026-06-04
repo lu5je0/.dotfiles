@@ -96,18 +96,19 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key)
 
   for _, file in ipairs(files) do
     local parts = vim.split(file.path, '/', { trimempty = true })
+    local node_base = {
+      type = 'file',
+      abs_path = cwd .. '/' .. file.path,
+      rel_path = file.path,
+      xy = file.xy, x = file.x, y = file.y,
+      old_path = file.old_path,
+      section = section_key,
+      stash_ref = file.stash_ref,
+    }
     if #parts == 1 then
-      root_files[#root_files + 1] = {
-        name = parts[1],
-        type = 'file',
-        abs_path = cwd .. '/' .. file.path,
-        rel_path = file.path,
-        xy = file.xy, x = file.x, y = file.y,
-        old_path = file.old_path,
-        section = section_key,
-      }
+      node_base.name = parts[1]
+      root_files[#root_files + 1] = node_base
     else
-      -- Walk down, creating dirs as needed, then drop the file in the deepest one.
       local current_dirs = root_dirs
       local abs_prefix = cwd
       local target_dir
@@ -117,15 +118,8 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key)
         target_dir.abs_path = abs_prefix
         current_dirs = target_dir._subdirs
       end
-      target_dir._files[#target_dir._files + 1] = {
-        name = parts[#parts],
-        type = 'file',
-        abs_path = cwd .. '/' .. file.path,
-        rel_path = file.path,
-        xy = file.xy, x = file.x, y = file.y,
-        old_path = file.old_path,
-        section = section_key,
-      }
+      node_base.name = parts[#parts]
+      target_dir._files[#target_dir._files + 1] = node_base
     end
   end
 
@@ -150,6 +144,30 @@ end
 
 function M.update_sections_from_stdout(tab_state, stdout)
   tab_state.sections = M.parse(stdout)
+end
+
+function M.parse_stash_list(stdout)
+  local stashes = {}
+  if not stdout or stdout == '' then return stashes end
+  for line in stdout:gmatch('[^\n]+') do
+    local ref, msg = line:match('^(.-)%z(.*)$')
+    if ref then
+      stashes[#stashes + 1] = { ref = ref, message = msg }
+    end
+  end
+  return stashes
+end
+
+function M.parse_stash_files(stdout)
+  local files = {}
+  if not stdout or stdout == '' then return files end
+  for line in stdout:gmatch('[^\n]+') do
+    local status, path = line:match('^(%S+)%s+(.+)$')
+    if status and path then
+      files[#files + 1] = { name = vim.fs.basename(path), path = path, status = status }
+    end
+  end
+  return files
 end
 
 return M

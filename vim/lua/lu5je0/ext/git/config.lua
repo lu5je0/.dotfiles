@@ -3,7 +3,6 @@ local M = {
   win_height = 0.5,
   win_height_expanded = 0.9,
 
-  git_status = {},
   project_log = {
     max_commits = 1000,
   },

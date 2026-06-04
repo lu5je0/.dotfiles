@@ -32,7 +32,6 @@ M.folder_icons = {
   empty_open = "",
 }
 
--- '' or ''
 M.section_icons = {
   expanded  = '',
   collapsed = '',
