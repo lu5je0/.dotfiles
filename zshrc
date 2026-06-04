@@ -119,7 +119,12 @@ alias crontab="cron.sh"
 
 alias ls='ls -F --show-control-chars --color=auto'
 
-# alias rm="trash"
+rm() {
+  if (( $+commands[trash] )); then
+    echo "rm is disabled. Use trash or \\\\rm"; return 1
+  fi
+  command rm "$@"
+}
 
 alias sudo='sudo env PATH=/sbin:$PATH'
 alias sudo-default-path='\sudo'
