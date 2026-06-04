@@ -247,7 +247,7 @@ end
 function M.setup_full_name()
   local popup_win = nil
   local popup_buf = nil
-  local ns_id = require('lu5je0.ext.tree-sidebar.render').ns_id()
+  local ns_id = require('lu5je0.ext.tree-sidebar.view').ns_id()
   local popup_ns = vim.api.nvim_create_namespace('tree_sidebar_fullname')
 
   local function hide_popup()

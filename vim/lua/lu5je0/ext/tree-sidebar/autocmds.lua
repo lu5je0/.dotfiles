@@ -4,14 +4,12 @@ local config = require('lu5je0.ext.tree-sidebar.config')
 
 local M = {}
 
--- Set by init.lua to avoid an import cycle.
-local _on_dir_changed = function() end
-function M.set_on_dir_changed(cb) _on_dir_changed = cb end
-
 function M.setup(group)
   vim.api.nvim_create_autocmd('DirChanged', {
     group = group,
-    callback = function(args) _on_dir_changed(args) end,
+    callback = function(args)
+      require('lu5je0.ext.tree-sidebar')._on_dir_changed(args)
+    end,
   })
 
   vim.api.nvim_create_autocmd('TabClosed', {

@@ -97,11 +97,12 @@ function M.rescan_node(node)
 end
 
 --- Build a node-visibility filter that hides dotfiles unless either
---- `state.files.hide_dotfiles` is false, or the node lies on the path
---- to `reveal_path`.
+--- hide_dotfiles is false (snapshots current state.files.hide_dotfiles)
+--- or the node lies on the path to `reveal_path`.
 function M.make_filter(reveal_path)
+  local hide = state.files.hide_dotfiles
   return function(node)
-    if not (state.files.hide_dotfiles and is_dotfile(node.name)) then
+    if not (hide and is_dotfile(node.name)) then
       return true
     end
     if reveal_path then

@@ -136,7 +136,6 @@ function M.setup()
   window.setup_full_name()
 
   local group = vim.api.nvim_create_augroup('tree-sidebar', { clear = true })
-  autocmds.set_on_dir_changed(M._on_dir_changed)
   autocmds.setup(group)
 
   register_keymaps()

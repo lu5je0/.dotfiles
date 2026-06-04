@@ -85,12 +85,13 @@ end
 -- ── open / close glue ───────────────────────────────────
 
 local function compress_descend(node)
+  local filter = tree.make_filter(state.files.reveal_path)
   while node.children do
     local visible = nil
     local found = false
     local many = false
     for _, c in ipairs(node.children) do
-      if c.type == 'directory' then
+      if c.type == 'directory' and filter(c) then
         if found then many = true; break end
         found = true
         visible = c
