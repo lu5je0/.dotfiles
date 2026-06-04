@@ -372,6 +372,7 @@ function M.keymaps()
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
     { 'zo', M.open_node, desc = 'Open node' },
+    { 'u', M.cd_parent, desc = 'Navigate up' },
     { 'h', M.close_node, desc = 'Close node' },
     { 'zc', M.close_node, desc = 'Close node' },
     { '-', M.cd_parent, desc = 'Navigate up' },
@@ -397,7 +398,26 @@ function M.keymaps()
     { 'gx', file_ops.system_open, desc = 'System open' },
     { ']g', M.next_git_file, desc = 'Next git change' },
     { '[g', M.prev_git_file, desc = 'Prev git change' },
+    { 'o', function()
+      local item = state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
+      if not item or not item.node then return end
+      local dir = item.node.type == 'directory' and item.node.abs_path or vim.fs.dirname(item.node.abs_path)
+      local win = require('lu5je0.ext.tree-sidebar.window')
+      local target = win.get_target_win()
+      if not target then
+        vim.cmd('belowright vsplit')
+      else
+        vim.api.nvim_set_current_win(target)
+      end
+      vim.cmd('Oil ' .. vim.fn.fnameescape(dir))
+    end, desc = 'Oil' },
     { '<space>', preview.toggle, desc = 'Preview' },
+    { 't', function()
+      local item = state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
+      if not item or not item.node then return end
+      local dir = item.node.type == 'directory' and item.node.abs_path or vim.fs.dirname(item.node.abs_path)
+      require('lu5je0.ext.terminal').send_to_terminal('cd "' .. dir .. '"', { go_back = 0 })
+    end, desc = 'Open terminal' },
   }
 end
 

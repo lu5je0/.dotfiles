@@ -424,10 +424,9 @@ local plugins = {
         buf_options = {
           buflisted = true
         },
-        columns = {
-          -- "icon",
-          -- "size",
-          -- "mtime",
+        columns = {},
+        float = {
+          border = "rounded",
         },
         use_default_keymaps = false,
         keymaps = {
@@ -441,7 +440,6 @@ local plugins = {
     end,
     cmd = 'Oil'
   },
-
 
   -- c070ee849bfedb2ed778f60419a1eae8c8544be8
   -- {

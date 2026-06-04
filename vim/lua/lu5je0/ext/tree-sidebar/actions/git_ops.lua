@@ -65,6 +65,20 @@ local function get_file_item()
   return item, find_section_for_line(line)
 end
 
+local function collect_files_under(node)
+  local files = {}
+  local function walk(n)
+    if not n then return end
+    if n.type == 'file' then
+      files[#files + 1] = n
+    elseif n.children then
+      for _, child in ipairs(n.children) do walk(child) end
+    end
+  end
+  walk(node)
+  return files
+end
+
 local function get_section_key()
   if not state:is_open() then return nil end
   local line = vim.api.nvim_win_get_cursor(state.win)[1]
@@ -168,56 +182,67 @@ end
 
 -- ── discard file (x) ────────────────────────────────────
 
-function M.discard_file()
-  local item, section_key = get_file_item()
-  if not item then return end
-  local node = item.node
+--- Discard a single file. Returns undo op on success, nil on failure.
+local function discard_single_file(node, section_key)
   local eff = effective_section_for_file(section_key, node)
   local path = node.rel_path or node.name
-  local cwd = vim.fn.getcwd()
-  local abs_path = cwd .. '/' .. path
+  local root = git_root()
+  local abs_path = root .. '/' .. path
 
   if eff == 'untracked' then
     local blob = hash_file(abs_path, true)
-    if not blob then return end
+    if not blob then return nil end
     os.remove(abs_path)
-    log_batch('removed_untracked', 'untracked', 1, function(write)
-      write(string.format('Deleted %s. Restore: git show %s > %s', abs_path, blob, abs_path))
-    end)
-    push_undo('removed untracked', {
-      { type = 'restore_blobs', files = { { path = path, blob = blob, expected_absent = true } } },
-    })
-    vim.notify('Removed untracked ' .. path, vim.log.levels.INFO)
+    return { type = 'restore_blobs', files = { { path = path, blob = blob, expected_absent = true } } }
   elseif eff == 'unstaged' then
     local existed = vim.uv.fs_stat(abs_path) ~= nil
     local blob = existed and hash_file(abs_path, true) or nil
-    if not run_git({ 'git', 'checkout', '--', path }, 'Failed to restore: ') then return end
+    if not run_git({ 'git', 'checkout', '--', path }, 'Failed to restore: ') then return nil end
     local expected_blob = hash_file(abs_path, false)
-    if not expected_blob then return end
+    if not expected_blob then return nil end
     if blob then
-      log_batch('reverted', 'unstaged', 1, function(write)
-        write(string.format('Restored %s from index. Undo: git show %s > %s', abs_path, blob, abs_path))
-      end)
-      push_undo('reverted', {
-        { type = 'restore_blobs', files = { { path = path, blob = blob, expected_blob = expected_blob } } },
-      })
+      return { type = 'restore_blobs', files = { { path = path, blob = blob, expected_blob = expected_blob } } }
     else
-      log_batch('restored', 'unstaged', 1, function(write)
-        write(string.format('Restored %s from index. Undo: delete %s', abs_path, abs_path))
-      end)
-      push_undo('restored', {
-        { type = 'restore_blobs', files = { { path = path, delete = true, expected_blob = expected_blob } } },
-      })
+      return { type = 'restore_blobs', files = { { path = path, delete = true, expected_blob = expected_blob } } }
     end
-    vim.notify('Reverted ' .. path, vim.log.levels.INFO)
   elseif eff == 'staged' then
-    if not run_git({ 'git', 'reset', 'HEAD', '--', path }, 'Failed to unstage: ') then return end
+    if not run_git({ 'git', 'reset', 'HEAD', '--', path }, 'Failed to unstage: ') then return nil end
     local snapshot = git_ops.index_snapshot({ path })
-    log_batch('unstaged', 'staged', 1, function(write)
-      write(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
-    end)
-    push_undo('unstaged', { { type = 'add_paths', paths = { path }, expected_index = snapshot } })
-    vim.notify('Unstaged ' .. path, vim.log.levels.INFO)
+    return { type = 'add_paths', paths = { path }, expected_index = snapshot }
+  end
+end
+
+function M.discard_file()
+  if not state:is_open() then return end
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local item = state.git_changes.display_items[line]
+  if not item or item._is_section or not item.node then return end
+  local section_key = find_section_for_line(line)
+
+  if item.type == 'dir' then
+    local files = collect_files_under(item.node)
+    if #files == 0 then return end
+    local choice = vim.fn.confirm('Discard ' .. #files .. ' files in ' .. item.node.name .. '/?', '&Yes\n&No', 2)
+    if choice ~= 1 then return end
+    local ops = {}
+    for _, node in ipairs(files) do
+      local op = discard_single_file(node, section_key)
+      if op then ops[#ops + 1] = op end
+    end
+    if #ops > 0 then
+      push_undo('discarded dir', ops)
+    end
+    vim.notify(string.format('Discarded %d files', #ops), vim.log.levels.INFO)
+    refresh()
+    return
+  end
+
+  if item.type ~= 'file' then return end
+  local op = discard_single_file(item.node, section_key)
+  if op then
+    push_undo('discarded', { op })
+    local path = item.node.rel_path or item.node.name
+    vim.notify('Discarded ' .. path, vim.log.levels.INFO)
   end
   refresh()
 end
