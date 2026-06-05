@@ -140,9 +140,52 @@ local function trash(abs_path)
 end
 
 local function close_bufs_under(abs_path)
+  local bufs_to_delete = {}
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     local buf_path = vim.api.nvim_buf_get_name(buf)
     if buf_path == abs_path or vim.startswith(buf_path, abs_path .. '/') then
+      bufs_to_delete[buf] = true
+    end
+  end
+
+  if not next(bufs_to_delete) then
+    return
+  end
+
+  local affected = {}
+  local has_safe = false
+  local tabpage = vim.api.nvim_get_current_tabpage()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage)) do
+    if win ~= state.win then
+      local wc = vim.api.nvim_win_get_config(win)
+      if wc.relative == '' then
+        local buf = vim.api.nvim_win_get_buf(win)
+        if vim.bo[buf].buftype == '' or vim.bo[buf].buflisted then
+          if bufs_to_delete[buf] then
+            affected[#affected + 1] = win
+          else
+            has_safe = true
+          end
+        end
+      end
+    end
+  end
+
+  if has_safe then
+    -- other usable windows exist, just close the affected ones
+    for _, win in ipairs(affected) do
+      vim.api.nvim_win_close(win, true)
+    end
+  elseif #affected > 0 then
+    -- all usable windows show the deleted file; keep one with an empty buffer to avoid sidebar becoming the sole window
+    vim.api.nvim_win_set_buf(affected[1], vim.api.nvim_create_buf(true, false))
+    for i = 2, #affected do
+      vim.api.nvim_win_close(affected[i], true)
+    end
+  end
+
+  for buf, _ in pairs(bufs_to_delete) do
+    if vim.api.nvim_buf_is_valid(buf) then
       vim.api.nvim_buf_delete(buf, { force = true })
     end
   end
