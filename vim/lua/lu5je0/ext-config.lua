@@ -51,9 +51,6 @@ lazy_load({
   cmd = { 'JunkFileNew', 'JunkFileSaveAs' }
 })
 
--- snippets
--- require('lu5je0.core.snippets').setup()
-
 -- formatter
 lazy_load({
   name = 'formatter',
@@ -179,19 +176,6 @@ lazy_load({
   }
 })
 
-require('lu5je0.core.statusline').setup()
-
--- require('lu5je0.misc.dirbuf-hijack').setup()
-require('lu5je0.misc.oil-hijack').setup()
-
--- require('lu5je0.misc.file-scope-highlight').file_handlers = {
---   json = function(ns_id)
---     vim.api.nvim_set_hl(ns_id, '@boolean', { fg = '#deb974' })
---     vim.api.nvim_set_hl(ns_id, '@number', { fg = '#6cb6eb' })
---   end,
--- }
-
-
 lazy_load({
   name = 'redir',
   config = function()
@@ -201,7 +185,6 @@ lazy_load({
   complete = true,
 })
 
--- base64
 lazy_load({
   name = 'base64',
   config = function()
@@ -210,7 +193,6 @@ lazy_load({
   cmd = { 'Base64Decode', 'Base64Encode' }
 })
 
--- timestamp
 lazy_load({
   name = 'gmt',
   config = function()
@@ -300,9 +282,6 @@ lazy_load({
   }
 })
 
-require('lu5je0.misc.time-machine').setup()
-
--- git
 lazy_load({
   name = 'git',
   config = function()
@@ -341,6 +320,16 @@ lazy_load({
 --   },
 --   event = { 'CursorHold' }
 -- })
+
+-- snippets
+-- require('lu5je0.core.snippets').setup()
+
+require('lu5je0.core.statusline').setup()
+
+-- require('lu5je0.misc.dirbuf-hijack').setup()
+require('lu5je0.misc.oil-hijack').setup()
+
+require('lu5je0.misc.time-machine').setup()
 
 -- patch
 require('lu5je0.patch.fix-untitled-buffer-diagnostic')
