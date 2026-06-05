@@ -3,16 +3,21 @@ local ext_loader_group = vim.api.nvim_create_augroup('ext_loader_group', { clear
 local M = {}
 M.lazy_load_active_cmd_opts_map = {}
 
+local _all_opts = {}
+
 local function load_ext(opts)
   if not opts.loaded then
     if type(opts.config) == 'function' then
+      local t0 = vim.uv.hrtime()
       opts.config()
+      opts._load_time_ms = (vim.uv.hrtime() - t0) / 1e6
     end
     opts.loaded = true
   end
 end
 
 M.lazy_load = function(opts)
+  _all_opts[#_all_opts + 1] = opts
   if opts and opts.keys then
     for _, key in ipairs(opts.keys) do
       for _, mode in ipairs(key.mode) do
@@ -97,6 +102,7 @@ local lazy_load = M.lazy_load
 
 -- tree-sidebar
 lazy_load({
+  name = 'tree-sidebar',
   config = function()
     require('lu5je0.ext.tree-sidebar').setup()
   end,
@@ -114,6 +120,7 @@ lazy_load({
 
 -- im
 lazy_load({
+  name = 'im',
   config = function()
     if vim.fn.has('gui') == 0 then
       require('lu5je0.misc.im.im').setup()
@@ -127,6 +134,7 @@ lazy_load({
 
 -- json-helper
 lazy_load({
+  name = 'json-helper',
   config = function()
     require('lu5je0.misc.json-helper').setup()
   end,
@@ -135,6 +143,7 @@ lazy_load({
 
 -- junkfile
 lazy_load({
+  name = 'junkfile',
   config = function()
     require('lu5je0.misc.junkfile').setup()
   end,
@@ -146,6 +155,7 @@ lazy_load({
 
 -- formatter
 lazy_load({
+  name = 'formatter',
   config = function()
     local formatter = require('lu5je0.misc.formatter.formatter')
     formatter.setup {
@@ -233,26 +243,18 @@ lazy_load({
 
 -- var-naming-converter
 lazy_load({
+  name = 'var-naming-converter',
   config = function()
     require('lu5je0.misc.var-naming-converter').key_mapping()
   end,
   keys = {
-    { mode = { 'x', 'n' }, '<leader>cnc' },
-    { mode = { 'n' },      '<leader>cnC' },
-
-    { mode = { 'x', 'n' }, '<leader>cns' },
-    { mode = { 'n' },      '<leader>cnS' },
-
-    { mode = { 'x', 'n' }, '<leader>cnk' },
-    { mode = { 'n' },      '<leader>cnK' },
-
-    { mode = { 'x', 'n' }, '<leader>cnp' },
-    { mode = { 'n' },      '<leader>cnP' },
+    { mode = { 'x', 'n' }, '<leader>cn' },
   },
 })
 
 -- code-runner
 lazy_load({
+  name = 'code-runner',
   config = function()
     require('lu5je0.misc.code-runner').key_mapping()
     require('lu5je0.misc.code-runner').create_command()
@@ -266,6 +268,7 @@ lazy_load({
 
 -- quit-prompt
 lazy_load({
+  name = 'quit-prompt',
   config = function()
     require('lu5je0.misc.quit-prompt').setup()
   end,
@@ -289,6 +292,7 @@ require('lu5je0.misc.oil-hijack').setup()
 
 
 lazy_load({
+  name = 'redir',
   config = function()
     require('lu5je0.misc.redir')
   end,
@@ -298,6 +302,7 @@ lazy_load({
 
 -- base64
 lazy_load({
+  name = 'base64',
   config = function()
     require('lu5je0.misc.base64').create_command()
   end,
@@ -306,6 +311,7 @@ lazy_load({
 
 -- timestamp
 lazy_load({
+  name = 'gmt',
   config = function()
     require('lu5je0.misc.gmt').create_command()
   end,
@@ -313,6 +319,7 @@ lazy_load({
 })
 
 lazy_load({
+  name = 'timestamp',
   config = function()
     require('lu5je0.misc.timestamp').setup()
   end,
@@ -320,6 +327,7 @@ lazy_load({
 })
 
 lazy_load({
+  name = 'set-operation',
   config = function()
     require('lu5je0.misc.set-operation').setup()
   end,
@@ -327,6 +335,7 @@ lazy_load({
 })
 
 lazy_load({
+  name = 'line-tools',
   config = function()
     require('lu5je0.misc.line-tools').setup()
   end,
@@ -334,6 +343,7 @@ lazy_load({
 })
 
 lazy_load({
+  name = 'comment',
   config = function()
     require('lu5je0.core.comment').setup()
   end,
@@ -343,6 +353,7 @@ lazy_load({
 })
 
 lazy_load({
+  name = 'calculator',
   config = function()
     require('lu5je0.misc.calculator').setup()
   end,
@@ -353,6 +364,7 @@ lazy_load({
 })
 
 lazy_load({
+  name = 'translator',
   config = function()
     require('lu5je0.misc.translator').setup({
       width = 50
@@ -365,6 +377,7 @@ lazy_load({
 })
 
 lazy_load({
+  name = 'boole',
   config = function()
     require('lu5je0.ext.boole').setup({
       mappings = {},
@@ -390,6 +403,7 @@ require('lu5je0.misc.time-machine').setup()
 
 -- git
 lazy_load({
+  name = 'git',
   config = function()
     require('lu5je0.ext.git').setup({
       log_width = 30,
@@ -429,5 +443,26 @@ lazy_load({
 
 -- patch
 require('lu5je0.patch.fix-untitled-buffer-diagnostic')
+
+vim.api.nvim_create_user_command('ExtLoader', function()
+  local loaded, pending = {}, {}
+  for _, opts in ipairs(_all_opts) do
+    local name = opts.name or '(unnamed)'
+    if opts.loaded then
+      loaded[#loaded + 1] = { name = name, ms = opts._load_time_ms or 0 }
+    else
+      pending[#pending + 1] = name
+    end
+  end
+  table.sort(loaded, function(a, b) return a.ms > b.ms end)
+  local lines = {}
+  for _, e in ipairs(loaded) do
+    lines[#lines + 1] = string.format('  %6.2fms  %s', e.ms, e.name)
+  end
+  for _, name in ipairs(pending) do
+    lines[#lines + 1] = string.format('  %8s  %s', '--', name)
+  end
+  vim.notify('ExtLoader (' .. #loaded .. '/' .. (#loaded + #pending) .. ' loaded)\n' .. table.concat(lines, '\n'), vim.log.levels.INFO)
+end, {})
 
 return M
