@@ -358,9 +358,18 @@ spec.open = {
     end
   end,
   on_file = function(item)
-    if item.node.abs_path then
-      require('lu5je0.ext.tree-sidebar.window').open_file(item.node.abs_path)
+    if not item.node.abs_path then return end
+    local xy = item.node.xy or ''
+    local dominated_by_delete = false
+    if item.section == 'staged' or item.section == 'stash' then
+      dominated_by_delete = xy:sub(1, 1) == 'D'
+    elseif item.section == 'unstaged' then
+      dominated_by_delete = xy:sub(2, 2) == 'D'
+    elseif item.section == 'changes' then
+      dominated_by_delete = xy:sub(1, 1) == 'D' or xy:sub(2, 2) == 'D'
     end
+    if dominated_by_delete then return end
+    require('lu5je0.ext.tree-sidebar.window').open_file(item.node.abs_path)
   end,
 }
 
