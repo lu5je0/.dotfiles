@@ -4,6 +4,10 @@
 -- have it routed to the current tab's table. For async callbacks that
 -- might fire on a different tabpage, capture `state.tab()` first and
 -- access the snapshot directly.
+--
+-- The full per-tab schema lives in `new_tab_state()` below. New per-tab
+-- fields MUST be declared there so the shape is discoverable in one
+-- place and `release_tab_resources` can free any libuv handles they own.
 local Stack = require('lu5je0.lang.stack')
 
 local M = {}
@@ -36,59 +40,122 @@ local _tabs = {}
 
 local function new_tab_state()
   return {
+    -- window / buffer
     win = nil,
     buf = nil,
     width = 33,
     last_width = nil,
+
+    -- winbar tabs
     active_tab_idx = 1,
     tab_cursors = {},
+    _visible_start = 1,
+
     files = {
       root = nil,
       display_items = {},
       hide_dotfiles = true,
+      compress_dirs = false,
       git_status_map = {},
       reveal_path = nil,
       live_filter = nil,
+
+      -- caches
+      _root_cache = {},
+      _cursor_cache = {},
+
+      -- libuv handles owned by this tab
       fs_watchers = {},
       fs_refresh_timer = nil,
+
+      -- live_filter overlay
+      _live_filter = {
+        buf = nil,
+        win = nil,
+        closing = false,
+      },
+
+      -- clipboard mark for cut/copy/paste in files source
+      _clipboard = nil,
     },
+
     git_changes = {
       sections = {},
       display_items = {},
+      _expanded = nil,        -- { changes, staged, unstaged, untracked, stashes } — lazily populated
+      _dir_states = nil,      -- per-section { [abs_path] = bool }
+      _stash_entries = nil,   -- { { ref, message, expanded, children, _files_loaded } }
+      _undo_stack = nil,      -- list of undo entries pushed by git_ops
+      _last_git_root = nil,
+      _is_loading = false,
     },
+
     buffers = {
       display_items = {},
     },
+
     symbols = {
       nodes = {},
       display_items = {},
       target_buf = nil,
       last_located_node = nil,
     },
+
     preview = {
       active = false,
       autocmd = nil,
       bufleave_autocmd = nil,
       type = nil,
     },
+
+    -- diff_preview floating windows
+    diff_preview = {
+      win_left = nil,
+      win_right = nil,
+      buf_left = nil,
+      buf_right = nil,
+    },
   }
 end
 
--- Close libuv handles owned by a per-tab state before the tab is dropped,
--- so closing a tabpage doesn't leak fs_event watchers or timers.
+-- Close libuv handles and floating windows owned by a per-tab state
+-- before the tab is dropped, so closing a tabpage doesn't leak fs_event
+-- watchers, timers, or orphan windows.
 local function release_tab_resources(ts)
-  if not ts or not ts.files then return end
-  if ts.files.fs_watchers then
-    for _, w in pairs(ts.files.fs_watchers) do
-      pcall(function() w:stop() end)
-      pcall(function() w:close() end)
+  if not ts then return end
+  if ts.files then
+    if ts.files.fs_watchers then
+      for _, w in pairs(ts.files.fs_watchers) do
+        pcall(function() w:stop() end)
+        pcall(function() w:close() end)
+      end
+      ts.files.fs_watchers = {}
     end
-    ts.files.fs_watchers = {}
+    if ts.files.fs_refresh_timer then
+      pcall(function() ts.files.fs_refresh_timer:stop() end)
+      pcall(function() ts.files.fs_refresh_timer:close() end)
+      ts.files.fs_refresh_timer = nil
+    end
+    local lf = ts.files._live_filter
+    if lf then
+      if lf.win and vim.api.nvim_win_is_valid(lf.win) then
+        pcall(vim.api.nvim_win_close, lf.win, true)
+      end
+      if lf.buf and vim.api.nvim_buf_is_valid(lf.buf) then
+        pcall(vim.api.nvim_buf_delete, lf.buf, { force = true })
+      end
+      lf.win, lf.buf, lf.closing = nil, nil, false
+    end
   end
-  if ts.files.fs_refresh_timer then
-    pcall(function() ts.files.fs_refresh_timer:stop() end)
-    pcall(function() ts.files.fs_refresh_timer:close() end)
-    ts.files.fs_refresh_timer = nil
+  if ts.diff_preview then
+    local dp = ts.diff_preview
+    if dp.win_left and vim.api.nvim_win_is_valid(dp.win_left) then
+      pcall(vim.api.nvim_win_close, dp.win_left, true)
+    end
+    if dp.win_right and vim.api.nvim_win_is_valid(dp.win_right) then
+      pcall(vim.api.nvim_win_close, dp.win_right, true)
+    end
+    dp.win_left, dp.win_right, dp.buf_left, dp.buf_right = nil, nil, nil, nil
   end
 end
 

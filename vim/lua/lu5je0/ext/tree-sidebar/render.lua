@@ -58,6 +58,14 @@ end
 --   flat_depth          -> int, depth at which children skip the branch prefix
 --
 -- Returns: lines, items, highlights, virt_texts
+--
+-- Indexing convention (important):
+--   * `lines`, `items`, `highlights`, `virt_texts` are all 1-based Lua arrays.
+--   * Inside each item / highlight / virt_text entry, the `line_idx` /
+--     `line` field is 0-based to match Neovim's buffer + extmark API.
+--   * To get the text of an item: `lines[item.line_idx + 1]`.
+--   * The 1-based array index of an item also happens to be its target
+--     row for `nvim_win_set_cursor({ i, 0 })` (cursor rows are 1-based).
 function M.render_tree(root_children, opts)
   opts = opts or {}
   local lines, items, highlights, virt_texts = {}, {}, {}, {}

@@ -5,11 +5,9 @@ local env_keeper = require('lu5je0.misc.env-keeper')
 
 local M = {}
 
-M.win_left = nil
-M.win_right = nil
-
-local _buf_left = nil
-local _buf_right = nil
+-- Diff windows/buffers live in per-tab state.diff_preview so two tabs
+-- can each have their own diff visible without one overwriting the
+-- other's window handles.
 
 -- ── helpers ────────────────────────────────────────────────────────────
 
@@ -152,17 +150,26 @@ end
 
 -- ── window management ──────────────────────────────────────────────────
 
+local function dp(ts)
+  return (ts or state.tab()).diff_preview
+end
+
+local function close_for(ts)
+  local d = dp(ts)
+  if d.win_left and vim.api.nvim_win_is_valid(d.win_left) then
+    vim.api.nvim_win_close(d.win_left, true)
+  end
+  if d.win_right and vim.api.nvim_win_is_valid(d.win_right) then
+    vim.api.nvim_win_close(d.win_right, true)
+  end
+  d.win_left = nil
+  d.win_right = nil
+  d.buf_left = nil
+  d.buf_right = nil
+end
+
 function M.close()
-  if M.win_left and vim.api.nvim_win_is_valid(M.win_left) then
-    vim.api.nvim_win_close(M.win_left, true)
-  end
-  if M.win_right and vim.api.nvim_win_is_valid(M.win_right) then
-    vim.api.nvim_win_close(M.win_right, true)
-  end
-  M.win_left = nil
-  M.win_right = nil
-  _buf_left = nil
-  _buf_right = nil
+  close_for(state.tab())
 end
 
 function M.show(item, on_state_change)
@@ -170,13 +177,25 @@ function M.show(item, on_state_change)
   local targets = M.resolve_diff_targets(item)
   local max_bytes = config.diff_max_bytes
   local cwd = vim.fn.getcwd()
+  -- Capture this tab's state so the async callbacks always write back
+  -- into the originating tab even if the user switches tabs mid-fetch.
+  local ts = state.tab()
 
   local pending = 2
   local left_data, right_data, head_short
+  local rendered = false
+  local timeout_timer
 
   local function maybe_render()
-    if pending > 0 then return end
-    M.close()
+    if pending > 0 or rendered then return end
+    if timeout_timer then
+      pcall(function() timeout_timer:stop() end)
+      pcall(function() timeout_timer:close() end)
+      timeout_timer = nil
+    end
+    rendered = true
+    local d = dp(ts)
+    close_for(ts)
     ui.close_current_popup()
     if on_state_change then on_state_change('diff') end
 
@@ -202,8 +221,12 @@ function M.show(item, on_state_change)
       return buf
     end
 
-    _buf_left = make_buf(left_data)
-    _buf_right = make_buf(right_data)
+    -- If a fetch never delivered (e.g. timeout fired), substitute a
+    -- placeholder so the diff still opens instead of hanging.
+    left_data = left_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
+    right_data = right_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
+    d.buf_left = make_buf(left_data)
+    d.buf_right = make_buf(right_data)
 
     local changes_only = env_keeper.get('sidebar_diff_changes_only', false)
 
@@ -213,42 +236,42 @@ function M.show(item, on_state_change)
       left_title = left_title:gsub('HEAD', 'HEAD (' .. head_short .. ')')
     end
 
-    M.win_left = vim.api.nvim_open_win(_buf_left, false, {
+    d.win_left = vim.api.nvim_open_win(d.buf_left, false, {
       relative = 'editor',
       row = row, col = col_left,
       width = half_width, height = height,
       style = 'minimal', border = 'rounded',
       title = left_title, title_pos = 'center',
     })
-    vim.wo[M.win_left].diff = true
-    vim.wo[M.win_left].scrollbind = true
-    vim.wo[M.win_left].wrap = false
-    vim.wo[M.win_left].foldmethod = 'diff'
-    vim.wo[M.win_left].foldlevel = changes_only and 0 or 99
-    vim.wo[M.win_left].foldenable = changes_only
-    vim.wo[M.win_left].cursorline = false
+    vim.wo[d.win_left].diff = true
+    vim.wo[d.win_left].scrollbind = true
+    vim.wo[d.win_left].wrap = false
+    vim.wo[d.win_left].foldmethod = 'diff'
+    vim.wo[d.win_left].foldlevel = changes_only and 0 or 99
+    vim.wo[d.win_left].foldenable = changes_only
+    vim.wo[d.win_left].cursorline = false
 
-    M.win_right = vim.api.nvim_open_win(_buf_right, false, {
+    d.win_right = vim.api.nvim_open_win(d.buf_right, false, {
       relative = 'editor',
       row = row, col = col_right,
       width = half_width, height = height,
       style = 'minimal', border = 'rounded',
       title = targets.right_title, title_pos = 'center',
     })
-    vim.wo[M.win_right].diff = true
-    vim.wo[M.win_right].scrollbind = true
-    vim.wo[M.win_right].wrap = false
-    vim.wo[M.win_right].foldmethod = 'diff'
-    vim.wo[M.win_right].foldlevel = changes_only and 0 or 99
-    vim.wo[M.win_right].foldenable = changes_only
-    vim.wo[M.win_right].cursorline = false
+    vim.wo[d.win_right].diff = true
+    vim.wo[d.win_right].scrollbind = true
+    vim.wo[d.win_right].wrap = false
+    vim.wo[d.win_right].foldmethod = 'diff'
+    vim.wo[d.win_right].foldlevel = changes_only and 0 or 99
+    vim.wo[d.win_right].foldenable = changes_only
+    vim.wo[d.win_right].cursorline = false
 
     local function close_and_return()
       vim.schedule(function()
-        M.close()
+        close_for(ts)
         if on_state_change then on_state_change(nil) end
-        if state.win and vim.api.nvim_win_is_valid(state.win) then
-          vim.api.nvim_set_current_win(state.win)
+        if ts.win and vim.api.nvim_win_is_valid(ts.win) then
+          vim.api.nvim_set_current_win(ts.win)
         end
       end)
     end
@@ -256,7 +279,7 @@ function M.show(item, on_state_change)
     local function toggle_changes_only()
       changes_only = not changes_only
       env_keeper.set('sidebar_diff_changes_only', changes_only)
-      for _, w in ipairs({ M.win_left, M.win_right }) do
+      for _, w in ipairs({ d.win_left, d.win_right }) do
         if w and vim.api.nvim_win_is_valid(w) then
           vim.wo[w].foldenable = changes_only
           vim.wo[w].foldlevel = changes_only and 0 or 99
@@ -265,24 +288,24 @@ function M.show(item, on_state_change)
       vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
     end
 
-    for _, buf in ipairs({ _buf_left, _buf_right }) do
+    for _, buf in ipairs({ d.buf_left, d.buf_right }) do
       local bopts = { buffer = buf, nowait = true, silent = true }
       vim.keymap.set('n', 'q', close_and_return, bopts)
       vim.keymap.set('n', 'd', toggle_changes_only, bopts)
     end
 
     vim.keymap.set('n', '<c-l>', function()
-      if M.win_right and vim.api.nvim_win_is_valid(M.win_right) then
-        vim.api.nvim_set_current_win(M.win_right)
+      if d.win_right and vim.api.nvim_win_is_valid(d.win_right) then
+        vim.api.nvim_set_current_win(d.win_right)
       end
-    end, { buffer = _buf_left, nowait = true, silent = true })
+    end, { buffer = d.buf_left, nowait = true, silent = true })
     vim.keymap.set('n', '<c-h>', function()
-      if M.win_left and vim.api.nvim_win_is_valid(M.win_left) then
-        vim.api.nvim_set_current_win(M.win_left)
+      if d.win_left and vim.api.nvim_win_is_valid(d.win_left) then
+        vim.api.nvim_set_current_win(d.win_left)
       end
-    end, { buffer = _buf_right, nowait = true, silent = true })
+    end, { buffer = d.buf_right, nowait = true, silent = true })
 
-    local cur_left, cur_right = M.win_left, M.win_right
+    local cur_left, cur_right = d.win_left, d.win_right
     for _, win_id in ipairs({ cur_left, cur_right }) do
       vim.api.nvim_create_autocmd('WinClosed', {
         pattern = tostring(win_id),
@@ -290,12 +313,16 @@ function M.show(item, on_state_change)
         callback = function()
           if on_state_change then on_state_change(nil) end
           vim.schedule(function()
-            if M.win_left ~= cur_left and M.win_right ~= cur_right then
+            local cur = dp(ts)
+            -- Only collapse if the closing pair still matches the
+            -- currently-tracked windows; otherwise a newer diff session
+            -- has taken over and we shouldn't tear it down.
+            if cur.win_left ~= cur_left or cur.win_right ~= cur_right then
               return
             end
-            M.close()
-            if state.win and vim.api.nvim_win_is_valid(state.win) then
-              vim.api.nvim_set_current_win(state.win)
+            close_for(ts)
+            if ts.win and vim.api.nvim_win_is_valid(ts.win) then
+              vim.api.nvim_set_current_win(ts.win)
             end
           end)
         end,
@@ -311,12 +338,25 @@ function M.show(item, on_state_change)
       local probe = vim.uv.fs_read(fd, 8192, 0)
       vim.uv.fs_close(fd)
       if bytes_look_binary(probe) then
-        M.close()
+        close_for(ts)
         if on_state_change then on_state_change('file') end
         ui.preview(node.abs_path)
         return
       end
     end
+  end
+
+  -- Fallback: if any vim.system callback is lost, render after 5s with
+  -- the data we have so the diff floats never hang.
+  timeout_timer = vim.uv.new_timer()
+  if timeout_timer then
+    timeout_timer:start(5000, 0, vim.schedule_wrap(function()
+      pcall(function() timeout_timer:close() end)
+      timeout_timer = nil
+      if rendered then return end
+      pending = 0
+      maybe_render()
+    end))
   end
 
   fetch_source(targets.left, max_bytes, function(data)

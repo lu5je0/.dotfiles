@@ -24,22 +24,10 @@ vim.api.nvim_create_autocmd('DirChanged', {
   callback = sidebar._on_dir_changed,
 })
 
-local color = {
-  reset = '\27[0m', green = '\27[32m', red = '\27[31m', cyan = '\27[36m',
-}
+local h = dofile(vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h') .. '/helpers.lua')
+local color = h.color
+local dump = h.dump
 local passed, failed = 0, 0
-
-local function dump(v, depth)
-  depth = depth or 0
-  if depth > 4 then return '...' end
-  if type(v) ~= 'table' then return tostring(v) end
-  local parts = {}
-  for k, val in pairs(v) do
-    parts[#parts + 1] = string.format('%s=%s', tostring(k), dump(val, depth + 1))
-  end
-  table.sort(parts)
-  return '{' .. table.concat(parts, ', ') .. '}'
-end
 
 local function assert_eq(actual, expected, msg)
   if actual ~= expected then

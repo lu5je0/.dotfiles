@@ -2,11 +2,11 @@ local state = require('lu5je0.ext.tree-sidebar.state')
 
 local M = {}
 
-local overlay_buf = nil
-local overlay_win = nil
-local closing = false
-
 local PREFIX = '[FILTER]: '
+
+local function lf()
+  return state.files._live_filter
+end
 
 local function render_files()
   local files = require('lu5je0.ext.tree-sidebar.sources.files')
@@ -14,28 +14,32 @@ local function render_files()
 end
 
 local function remove_overlay()
-  if closing then return end
-  closing = true
+  local s = lf()
+  if s.closing then return end
+  s.closing = true
 
-  if overlay_win and vim.api.nvim_win_is_valid(overlay_win) then
-    vim.api.nvim_win_close(overlay_win, true)
-  end
-  if overlay_buf and vim.api.nvim_buf_is_valid(overlay_buf) then
-    vim.api.nvim_buf_delete(overlay_buf, { force = true })
-  end
-  overlay_win = nil
-  overlay_buf = nil
+  local ok, err = pcall(function()
+    if s.win and vim.api.nvim_win_is_valid(s.win) then
+      vim.api.nvim_win_close(s.win, true)
+    end
+    if s.buf and vim.api.nvim_buf_is_valid(s.buf) then
+      vim.api.nvim_buf_delete(s.buf, { force = true })
+    end
+    s.win = nil
+    s.buf = nil
 
-  if not state.files.live_filter or state.files.live_filter == '' then
-    state.files.live_filter = nil
-    render_files()
-  end
+    if not state.files.live_filter or state.files.live_filter == '' then
+      state.files.live_filter = nil
+      render_files()
+    end
 
-  if state:is_open() then
-    vim.api.nvim_set_current_win(state.win)
-  end
+    if state:is_open() then
+      vim.api.nvim_set_current_win(state.win)
+    end
+  end)
 
-  closing = false
+  s.closing = false
+  if not ok then error(err) end
 end
 
 local function get_filter_line_nr()
@@ -67,16 +71,17 @@ function M.start()
   end
   vim.api.nvim_win_set_cursor(state.win, { filter_line, #PREFIX - 1 })
 
-  overlay_buf = vim.api.nvim_create_buf(false, true)
-  vim.bo[overlay_buf].buftype = 'nofile'
-  vim.bo[overlay_buf].bufhidden = 'hide'
+  local s = lf()
+  s.buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[s.buf].buftype = 'nofile'
+  vim.bo[s.buf].bufhidden = 'hide'
 
-  local attached_buf = overlay_buf
-  vim.api.nvim_buf_attach(overlay_buf, true, {
+  local attached_buf = s.buf
+  vim.api.nvim_buf_attach(s.buf, true, {
     on_lines = function()
       vim.schedule(function()
         if not attached_buf or not vim.api.nvim_buf_is_valid(attached_buf) then return end
-        if overlay_buf ~= attached_buf then return end
+        if lf().buf ~= attached_buf then return end
         local lines = vim.api.nvim_buf_get_lines(attached_buf, 0, 1, false)
         local text = lines[1] or ''
         state.files.live_filter = text
@@ -85,10 +90,10 @@ function M.start()
     end,
   })
 
-  vim.api.nvim_buf_set_keymap(overlay_buf, 'i', '<CR>', '<cmd>stopinsert<CR>', { nowait = true })
+  vim.api.nvim_buf_set_keymap(s.buf, 'i', '<CR>', '<cmd>stopinsert<CR>', { nowait = true })
 
   vim.api.nvim_create_autocmd('InsertLeave', {
-    buffer = overlay_buf,
+    buffer = s.buf,
     once = true,
     callback = function()
       remove_overlay()
@@ -100,9 +105,10 @@ function M.start()
 
   vim.schedule(function()
     if not state:is_open() then return end
-    if not overlay_buf or not vim.api.nvim_buf_is_valid(overlay_buf) then return end
+    local cs = lf()
+    if not cs.buf or not vim.api.nvim_buf_is_valid(cs.buf) then return end
 
-    overlay_win = vim.api.nvim_open_win(overlay_buf, true, {
+    cs.win = vim.api.nvim_open_win(cs.buf, true, {
       relative = 'cursor',
       row = 0,
       col = 1,
@@ -114,9 +120,9 @@ function M.start()
     })
 
     local prev = state.files.live_filter or ''
-    vim.api.nvim_buf_set_lines(overlay_buf, 0, -1, false, { prev })
+    vim.api.nvim_buf_set_lines(cs.buf, 0, -1, false, { prev })
     vim.cmd('startinsert')
-    vim.api.nvim_win_set_cursor(overlay_win, { 1, #prev + 1 })
+    vim.api.nvim_win_set_cursor(cs.win, { 1, #prev + 1 })
   end)
 end
 

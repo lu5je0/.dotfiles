@@ -181,7 +181,7 @@ function M.setup()
   state.init_pwd_stack()
   window.setup_remember_width()
   window.setup_guicursor()
-  window.setup_full_name()
+  require('lu5je0.ext.tree-sidebar.full_name').setup()
 
   local group = vim.api.nvim_create_augroup('tree-sidebar', { clear = true })
   autocmds.setup(group)

@@ -10,11 +10,22 @@ local function get_git_root_sync()
 end
 
 local _git_root_cache = {}
+
+local function cached_root_is_valid(cwd, root)
+  if not root or root == '' then return false end
+  if not vim.startswith(cwd, root) then return false end
+  return vim.uv.fs_stat(root .. '/.git') ~= nil
+end
+
 function M.git_root()
   local cwd = vim.fn.getcwd()
-  if _git_root_cache[cwd] then return _git_root_cache[cwd] end
-  _git_root_cache[cwd] = get_git_root_sync()
-  return _git_root_cache[cwd]
+  local cached = _git_root_cache[cwd]
+  if cached and cached_root_is_valid(cwd, cached) then
+    return cached
+  end
+  local root = get_git_root_sync()
+  _git_root_cache[cwd] = root
+  return root
 end
 
 function M.invalidate_root_cache()

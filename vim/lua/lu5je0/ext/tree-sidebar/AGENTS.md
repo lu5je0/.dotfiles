@@ -10,8 +10,9 @@
 tree-sidebar/
 ├── init.lua           -- 入口：setup / toggle / focus / open_tab / locate_in_tab / _on_dir_changed
 ├── config.lua         -- 配置：图标、highlight、tabs、宽度；M.apply_highlights() 集中应用
-├── state.lua          -- per-tab 状态（metatable 按 tabpage 隔离），M.tab() 显式取当前 tab table
-├── window.lua         -- 窗口生命周期、guicursor、fullname 浮窗
+├── state.lua          -- per-tab 状态（metatable 按 tabpage 隔离），new_tab_state() 是 schema 单一来源
+├── window.lua         -- 窗口生命周期、guicursor
+├── full_name.lua      -- 长文件名浮窗（CursorMoved/WinScrolled 触发）
 ├── tabs.lua           -- winbar 渲染、tab 切换
 ├── keymaps.lua        -- 共享 + per-tab 快捷键管理
 ├── autocmds.lua       -- 集中注册到 `tree-sidebar` augroup（DirChanged / TabClosed /
@@ -27,20 +28,21 @@ tree-sidebar/
 │   │   ├── tree.lua          -- 节点 / scan_dir / ensure_children / rescan / rel_to_cwd / make_filter
 │   │   ├── watcher.lua       -- fs_event 增量挂载
 │   │   ├── git.lua           -- build_status_map / status_to_glyph / refresh / is_git_item
+│   │   ├── live_filter.lua   -- 过滤 overlay（per-tab buf/win/closing 在 state.files._live_filter）
 │   │   └── info.lua          -- show_file_info 浮窗
 │   ├── git_changes.lua       -- 兼容 shim → sources.git_changes.init
 │   ├── git_changes/
 │   │   ├── init.lua          -- git_changes source 门面
-│   │   ├── parser.lua        -- parse_git_status / files_to_tree_nodes / git_root 缓存
+│   │   ├── parser.lua        -- parse_git_status / files_to_tree_nodes / git_root 缓存（自失效）
 │   │   └── locate.lua        -- do_locate 实现
 │   ├── buffers.lua           -- Buffers source（含 setup_auto_refresh）
 │   └── symbols.lua           -- LSP Symbols source
 └── actions/
-    ├── file_ops.lua          -- 文件操作（含剪贴板标记）
+    ├── file_ops.lua          -- 文件操作（剪贴板挂在 state.files._clipboard）
     ├── git_ops.lua           -- Git 操作（调用 git/common/git-ops.lua）
     ├── navigation.lua        -- cwd 历史 back/forward
     ├── preview.lua           -- 预览控制器
-    └── diff_preview.lua      -- diff 预览
+    └── diff_preview.lua      -- diff 预览（per-tab 浮窗，5s pending 超时兜底）
 ```
 
 外部共享：`ext/git/common/git-ops.lua`（sidebar 和 git-status 共用的日志/undo/git 工具）
@@ -60,6 +62,7 @@ tree-sidebar/
 - git 工具统一用 `actions/git_ops.lua` → `ext/git/common/git-ops.lua`。
 - 异步回调里先捕获 `local ts = state.tab()` 或 `state.tab_for(tabpage)`，不要直接读写 `state.xxx`。render 还要捕获 tabpage，schedule 里 `nvim_get_current_tabpage() ~= captured` 就跳过。
 - 跨 tab 的资源（fs_event、timer、preview 等）放进 per-tab state，不要写成模块级 singleton；持 libuv handle 的字段在 `state.cleanup_closed_tabs` 里释放。
+- per-tab schema 单一来源：所有 per-tab 字段必须在 `state.lua` 的 `new_tab_state()` 中显式声明，便于一处看清完整 shape；持 libuv handle 或浮窗的字段同时在 `release_tab_resources` 中释放。
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
 - 所有 sidebar autocmd 都进 `tree-sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
 
@@ -82,14 +85,20 @@ tree-sidebar/
 
 ## 测试
 
-- `cd vim && ./tests/run-tests.sh` 跑 `spec.lua`、`interactive_spec.lua`、`diff_preview_spec.lua`。
-- `git_changes_spec.lua` 与 `git_ops_spec.lua` 当前未在 run-tests.sh 中，但在改动 git_changes / git_ops 时应手动跑：
-  - `nvim --headless -u NONE -l tests/tree-sidebar/git_changes_spec.lua`
-  - `nvim --headless -u NONE -l tests/tree-sidebar/git_ops_spec.lua`
+- `cd vim && ./tests/run-tests.sh` 跑全部 tree-sidebar 测试：
+  - `state_spec.lua` — per-tab schema / 隔离 / cleanup
+  - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
+  - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
+  - `diff_preview_spec.lua` — `resolve_diff_targets` 映射
+  - `parser_spec.lua` — `files_to_tree_nodes`、`git_root` 缓存自失效
+  - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为
+  - `git_ops_spec.lua` — 真实 git 仓库下的 stage/discard/undo
+- 新增 spec 时把测试基础设施统一从 `tests/tree-sidebar/helpers.lua` 拿（`make_runner` / `eq` / `dump` / `color`），不要再各自重复定义。
 - 测试公开依赖的稳定 API：
   - `sources.files._build_git_status_map`、`sources.files._git_status_to_glyph`、`sources.files.find_file`、`sources.files.render`、`sources.files.cd_to_node`、`sources.files.cd_parent`、`sources.files.stop_watchers`
   - `sources.git_changes.update_sections_from_stdout`
+  - `sources.git_changes.parser.git_root` / `parser.invalidate_root_cache` / `parser.files_to_tree_nodes`
   - `actions.diff_preview.resolve_diff_targets`
   - `init._on_dir_changed`
   - `actions.navigation.back / forward`
-  - `state.files.*`、`state.pwd_stack`、`state.pwd_forward_stack`
+  - `state.tab` / `state.tab_for` / `state.cleanup_closed_tabs`、`state.files.*`、`state.pwd_stack`、`state.pwd_forward_stack`

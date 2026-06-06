@@ -63,6 +63,8 @@ local function build_section_tree(section_key, label, files, expanded, expanded_
   }
 end
 
+-- `ts._expanded` and `ts._dir_states` are declared as nil in
+-- state.new_tab_state(); fill them lazily here on first build.
 local function ensure_default_state(ts)
   ts._expanded = ts._expanded or { changes = true, staged = false, unstaged = false, untracked = false, stashes = false }
   ts._dir_states = ts._dir_states or {}

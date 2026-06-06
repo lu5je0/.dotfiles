@@ -1,9 +1,8 @@
 local state = require('lu5je0.ext.tree-sidebar.state')
 local clipboard = require('lu5je0.core.clipboard')
+local tree = require('lu5je0.ext.tree-sidebar.sources.files.tree')
 
 local M = {}
-
-M._clipboard = nil
 
 local _mark_ns = vim.api.nvim_create_namespace('tree_sidebar_clipboard')
 
@@ -12,14 +11,15 @@ function M.apply_clipboard_mark()
     return
   end
   vim.api.nvim_buf_clear_namespace(state.buf, _mark_ns, 0, -1)
-  if not M._clipboard then
+  local cb = state.files._clipboard
+  if not cb then
     return
   end
   local items = state.files.display_items or {}
   for line, item in ipairs(items) do
-    if item.node and item.node.abs_path == M._clipboard.path then
+    if item.node and item.node.abs_path == cb.path then
       vim.api.nvim_buf_set_extmark(state.buf, _mark_ns, line - 1, 0, {
-        line_hl_group = M._clipboard.action == 'move' and 'TreeSidebarCut' or 'TreeSidebarCopy',
+        line_hl_group = cb.action == 'move' and 'TreeSidebarCut' or 'TreeSidebarCopy',
       })
       break
     end
@@ -216,7 +216,7 @@ function M.cut()
   if not node then
     return
   end
-  M._clipboard = { action = 'move', path = node.abs_path }
+  state.files._clipboard = { action = 'move', path = node.abs_path }
   M.apply_clipboard_mark()
   print('Cut: ' .. node.name)
 end
@@ -226,13 +226,14 @@ function M.copy()
   if not node then
     return
   end
-  M._clipboard = { action = 'copy', path = node.abs_path }
+  state.files._clipboard = { action = 'copy', path = node.abs_path }
   M.apply_clipboard_mark()
   print('Copy: ' .. node.name)
 end
 
 function M.paste()
-  if not M._clipboard then
+  local cb = state.files._clipboard
+  if not cb then
     print('Nothing in clipboard')
     return
   end
@@ -247,17 +248,17 @@ function M.paste()
     dest_dir = vim.fs.dirname(node.abs_path)
   end
 
-  local src = M._clipboard.path
+  local src = cb.path
   local name = vim.fs.basename(src)
   local dest = dest_dir .. '/' .. name
 
   local function do_paste(final_dest)
-    if M._clipboard.action == 'move' then
+    if cb.action == 'move' then
       vim.uv.fs_rename(src, final_dest)
-    elseif M._clipboard.action == 'copy' then
+    elseif cb.action == 'copy' then
       vim.fn.system({ 'cp', '-r', src, final_dest })
     end
-    M._clipboard = nil
+    state.files._clipboard = nil
     refresh()
   end
 
@@ -299,8 +300,7 @@ function M.copy_relative_path()
   if not node then
     return
   end
-  local cwd = vim.fn.getcwd()
-  local rel = node.abs_path:sub(#cwd + 2)
+  local rel = tree.rel_to_cwd(node.abs_path)
   clipboard.set(rel)
   print('Copied: ' .. rel)
 end

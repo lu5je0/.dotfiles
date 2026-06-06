@@ -71,7 +71,7 @@
   - `cd vim && nvim --headless '+qa'`
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/tree-sidebar/spec.lua`、`tests/tree-sidebar/interactive_spec.lua`、`tests/tree-sidebar/diff_preview_spec.lua`。
+- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/tree-sidebar/state_spec.lua`、`tests/tree-sidebar/spec.lua`、`tests/tree-sidebar/interactive_spec.lua`、`tests/tree-sidebar/diff_preview_spec.lua`、`tests/tree-sidebar/parser_spec.lua`、`tests/tree-sidebar/git_changes_spec.lua`、`tests/tree-sidebar/git_ops_spec.lua`。
 - 如果你新增了独立 Lua 功能且具备稳定输入输出，优先补到 `tests/`，不要只依赖手动打开 Neovim 验证。
 - 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
 

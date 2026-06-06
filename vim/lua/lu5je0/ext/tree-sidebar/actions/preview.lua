@@ -90,7 +90,8 @@ local function setup_autocmds()
     callback = function()
       vim.schedule(function()
         local cur_win = vim.api.nvim_get_current_win()
-        if cur_win == diff_preview.win_left or cur_win == diff_preview.win_right then
+        local dp_state = state.diff_preview
+        if cur_win == dp_state.win_left or cur_win == dp_state.win_right then
           return
         end
         local popup = ui.current_popup
@@ -160,10 +161,11 @@ local function enter_diff_window()
   pv().active = false
   clear_autocmds()
 
-  if diff_preview.win_left and vim.api.nvim_win_is_valid(diff_preview.win_left) then
-    vim.api.nvim_set_current_win(diff_preview.win_left)
-  elseif diff_preview.win_right and vim.api.nvim_win_is_valid(diff_preview.win_right) then
-    vim.api.nvim_set_current_win(diff_preview.win_right)
+  local dp_state = state.diff_preview
+  if dp_state.win_left and vim.api.nvim_win_is_valid(dp_state.win_left) then
+    vim.api.nvim_set_current_win(dp_state.win_left)
+  elseif dp_state.win_right and vim.api.nvim_win_is_valid(dp_state.win_right) then
+    vim.api.nvim_set_current_win(dp_state.win_right)
   end
 end
 
@@ -197,8 +199,9 @@ function M.scroll_down()
     return
   end
   if p.type == 'diff' then
-    if diff_preview.win_left and vim.api.nvim_win_is_valid(diff_preview.win_left) then
-      vim.api.nvim_win_call(diff_preview.win_left, function()
+    local dwin = state.diff_preview.win_left
+    if dwin and vim.api.nvim_win_is_valid(dwin) then
+      vim.api.nvim_win_call(dwin, function()
         vim.cmd('normal! \\<C-d>')
       end)
     end
@@ -218,8 +221,9 @@ function M.scroll_up()
     return
   end
   if p.type == 'diff' then
-    if diff_preview.win_left and vim.api.nvim_win_is_valid(diff_preview.win_left) then
-      vim.api.nvim_win_call(diff_preview.win_left, function()
+    local dwin = state.diff_preview.win_left
+    if dwin and vim.api.nvim_win_is_valid(dwin) then
+      vim.api.nvim_win_call(dwin, function()
         vim.cmd('normal! \\<C-u>')
       end)
     end

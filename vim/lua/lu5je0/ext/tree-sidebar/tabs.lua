@@ -4,13 +4,13 @@ local config = require('lu5je0.ext.tree-sidebar.config')
 local M = {}
 
 M.max_visible = 3
-M._visible_start = 1
 
 local function ensure_visible(idx)
-  if idx < M._visible_start then
-    M._visible_start = idx
-  elseif idx > M._visible_start + M.max_visible - 1 then
-    M._visible_start = idx - M.max_visible + 1
+  local start = state._visible_start or 1
+  if idx < start then
+    state._visible_start = idx
+  elseif idx > start + M.max_visible - 1 then
+    state._visible_start = idx - M.max_visible + 1
   end
 end
 
@@ -23,7 +23,8 @@ function M.render_winbar()
 
   local tab_count = #config.tabs
   local visible_count = math.min(M.max_visible, tab_count)
-  local visible_end = math.min(M._visible_start + visible_count - 1, tab_count)
+  local visible_start = state._visible_start or 1
+  local visible_end = math.min(visible_start + visible_count - 1, tab_count)
 
   local win_width = vim.api.nvim_win_get_width(state.win)
   local base_width = math.floor(win_width / visible_count)
@@ -31,7 +32,7 @@ function M.render_winbar()
 
   local parts = {}
   local vi = 0
-  for i = M._visible_start, visible_end do
+  for i = visible_start, visible_end do
     vi = vi + 1
     local tab = config.tabs[i]
     local hl = (i == state.active_tab_idx) and '%#TreeSidebarTabActive#' or '%#TreeSidebarTabInactive#'

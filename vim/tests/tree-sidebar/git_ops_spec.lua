@@ -5,11 +5,11 @@
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
 vim.opt.runtimepath:prepend(repo_root .. '/vim')
 
+local h = dofile(vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h') .. '/helpers.lua')
+local color = h.color
+
 local git_ops = require('lu5je0.ext.git.common.git-ops')
 
-local color = {
-  reset = '\27[0m', green = '\27[32m', red = '\27[31m', cyan = '\27[36m',
-}
 local passed, failed = 0, 0
 
 local function assert_eq(actual, expected, msg)
@@ -26,9 +26,9 @@ end
 local function git(args, cwd)
   local cmd = { 'git' }
   for _, a in ipairs(args) do cmd[#cmd + 1] = a end
-  local r = vim.system(cmd, { text = true, cwd = cwd }):wait()
-  assert(r.code == 0, 'git failed: ' .. table.concat(cmd, ' ') .. '\n' .. (r.stderr or ''))
-  return (r.stdout or ''):gsub('%s+$', '')
+  local result = vim.system(cmd, { text = true, cwd = cwd }):wait()
+  assert(result.code == 0, 'git failed: ' .. table.concat(cmd, ' ') .. '\n' .. (result.stderr or ''))
+  return (result.stdout or ''):gsub('%s+$', '')
 end
 
 local function write_file(path, content)

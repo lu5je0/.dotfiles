@@ -32,6 +32,7 @@ function M.apply_shared()
   buf_set('n', 'q', window.close)
   buf_set('n', 'Z', window.toggle_width)
   buf_set('n', '<leader>tn', function() end)
+  buf_set('n', '<leader>ws', function() end)
 
   buf_set('n', 'zM', function()
     local source = tabs.get_active_source()
@@ -53,8 +54,8 @@ function M.apply_shared()
     if preview_mod.is_active() then
       preview_mod.stop()
     end
-    if file_ops._clipboard then
-      file_ops._clipboard = nil
+    if state.files._clipboard then
+      state.files._clipboard = nil
       file_ops.apply_clipboard_mark()
     end
   end)
@@ -132,12 +133,10 @@ local function build_dispatch()
   end
 end
 
-local _bound_bufs = {}
-
 function M.apply_for_tab(_idx)
   if not state:is_buf_valid() then return end
-  if _bound_bufs[state.buf] then return end
-  _bound_bufs[state.buf] = true
+  if vim.b[state.buf]._tree_sidebar_keymaps_bound then return end
+  vim.b[state.buf]._tree_sidebar_keymaps_bound = true
 
   build_dispatch()
 
