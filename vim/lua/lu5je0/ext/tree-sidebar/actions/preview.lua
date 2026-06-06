@@ -78,9 +78,12 @@ local function setup_autocmds()
   local p = pv()
   p.autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
     buffer = state.buf,
-    once = true,
     callback = function()
-      stop_preview()
+      if state.active_tab_idx == config.tab_idx('git_changes') then
+        stop_preview()
+      else
+        update_preview()
+      end
     end,
   })
 

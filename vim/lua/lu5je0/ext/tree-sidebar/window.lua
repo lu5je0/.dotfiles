@@ -45,6 +45,20 @@ function M.open()
 
   state.win = win
   vim.api.nvim_win_set_hl_ns(win, win_hl_ns)
+  vim.wo[win].statusline = '%!v:lua.require("lu5je0.ext.tree-sidebar.window").statusline()'
+end
+
+function M.statusline()
+  local parts = { '%#StatusLineGrey# ', config.filetype:upper() }
+  local cb = state.files and state.files._clipboard
+  if cb then
+    local label = cb.action == 'move' and ' cutting' or ' copying'
+    parts[#parts + 1] = '%='
+    parts[#parts + 1] = '%#StatusLineGrey#'
+    parts[#parts + 1] = label
+    parts[#parts + 1] = ' '
+  end
+  return table.concat(parts)
 end
 
 function M.close()

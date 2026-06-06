@@ -13,8 +13,10 @@ function M.apply_clipboard_mark()
   vim.api.nvim_buf_clear_namespace(state.buf, _mark_ns, 0, -1)
   local cb = state.files._clipboard
   if not cb then
+    vim.cmd('redrawstatus')
     return
   end
+  vim.cmd('redrawstatus')
   local items = state.files.display_items or {}
   for line, item in ipairs(items) do
     if item.node and item.node.abs_path == cb.path then

@@ -146,7 +146,7 @@ function M.preview(file_path)
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { '', '  [Binary file]' })
     vim.bo[bufnr].filetype = ''
   else
-    local lines = vim.fn.readfile(file_path)
+    local lines = vim.fn.readfile(file_path, 'b')
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
     local ft = vim.filetype.match({ filename = file_path }) or ''
     vim.bo[bufnr].filetype = ft
