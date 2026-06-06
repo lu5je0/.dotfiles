@@ -48,6 +48,7 @@ local function new_tab_state()
       hide_dotfiles = true,
       git_status_map = {},
       reveal_path = nil,
+      live_filter = nil,
     },
     git_changes = {
       sections = {},

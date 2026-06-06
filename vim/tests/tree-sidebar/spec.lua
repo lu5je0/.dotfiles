@@ -289,6 +289,87 @@ run('item_data fields are merged into items', function()
 end)
 
 -- ============================================================================
+-- group: live_filter (make_filter with state.files.live_filter)
+-- ============================================================================
+
+io.write(color.cyan .. 'live_filter' .. color.reset .. '\n')
+
+local state = require('lu5je0.ext.tree-sidebar.state')
+local tree_mod = require('lu5je0.ext.tree-sidebar.sources.files.tree')
+
+run('live_filter hides non-matching files', function()
+  state.files.live_filter = 'lua'
+  state.files.hide_dotfiles = false
+  local filter = tree_mod.make_filter(nil)
+  assert_eq(filter(file_node('init.lua')), true)
+  assert_eq(filter(file_node('readme.md')), false)
+  state.files.live_filter = nil
+end)
+
+run('live_filter directories are never filtered', function()
+  state.files.live_filter = 'lua'
+  state.files.hide_dotfiles = false
+  local filter = tree_mod.make_filter(nil)
+  local dir = dir_node('src', { file_node('readme.md') }, true)
+  assert_eq(filter(dir), true)
+  state.files.live_filter = nil
+end)
+
+run('live_filter is case-insensitive', function()
+  state.files.live_filter = 'LUA'
+  state.files.hide_dotfiles = false
+  local filter = tree_mod.make_filter(nil)
+  assert_eq(filter(file_node('init.lua')), true)
+  assert_eq(filter(file_node('Init.LUA')), true)
+  state.files.live_filter = nil
+end)
+
+run('live_filter supports regex patterns', function()
+  state.files.live_filter = '\\.lua$'
+  state.files.hide_dotfiles = false
+  local filter = tree_mod.make_filter(nil)
+  assert_eq(filter(file_node('init.lua')), true)
+  assert_eq(filter(file_node('lua_stuff.txt')), false)
+  state.files.live_filter = nil
+end)
+
+run('live_filter supports Perl-style lazy quantifiers', function()
+  state.files.live_filter = 'i.*?t'
+  state.files.hide_dotfiles = false
+  local filter = tree_mod.make_filter(nil)
+  assert_eq(filter(file_node('init.lua')), true)
+  assert_eq(filter(file_node('test.txt')), false)
+  state.files.live_filter = nil
+end)
+
+run('live_filter invalid regex does not crash', function()
+  state.files.live_filter = '[invalid'
+  state.files.hide_dotfiles = false
+  local filter = tree_mod.make_filter(nil)
+  -- invalid regex means regex is nil, nothing is filtered
+  assert_eq(filter(file_node('anything.txt')), true)
+  state.files.live_filter = nil
+end)
+
+run('live_filter empty string does not filter', function()
+  state.files.live_filter = ''
+  state.files.hide_dotfiles = false
+  local filter = tree_mod.make_filter(nil)
+  assert_eq(filter(file_node('anything.txt')), true)
+  state.files.live_filter = nil
+end)
+
+run('live_filter combined with dotfile hiding', function()
+  state.files.live_filter = 'rc'
+  state.files.hide_dotfiles = true
+  local filter = tree_mod.make_filter(nil)
+  assert_eq(filter({ name = '.bashrc', type = 'file', abs_path = '/home/.bashrc' }), false)
+  assert_eq(filter({ name = 'vimrc', type = 'file', abs_path = '/home/vimrc' }), true)
+  assert_eq(filter({ name = 'readme.md', type = 'file', abs_path = '/home/readme.md' }), false)
+  state.files.live_filter = nil
+end)
+
+-- ============================================================================
 -- summary
 -- ============================================================================
 

@@ -51,6 +51,16 @@ function spec.build(ts, _ctx)
     header.items[1] = { type = 'root', node = ts.root, line_idx = 0 }
     header.highlights[1] = { line = 0, hl = 'TreeSidebarRootFolder', col_start = 0, col_end = -1 }
   end
+  if ts.live_filter then
+    local prefix = '[FILTER]: '
+    local filter_line = prefix .. '/' .. ts.live_filter .. '/'
+    local idx = #header.lines + 1
+    local line_idx = idx - 1
+    header.lines[idx] = filter_line
+    header.items[idx] = { type = 'filter', line_idx = line_idx }
+    header.highlights[#header.highlights + 1] = { line = line_idx, hl = 'TreeSidebarLiveFilterPrefix', col_start = 0, col_end = #prefix }
+    header.highlights[#header.highlights + 1] = { line = line_idx, hl = 'TreeSidebarLiveFilterValue', col_start = #prefix, col_end = #filter_line }
+  end
   return ts.root.children or {}, header
 end
 
@@ -114,7 +124,15 @@ spec.open = {
       compress_descend(it.node)
     end
   end,
-  on_already_expanded = function()
+  on_already_expanded = function(item)
+    local items = state.files.display_items
+    local cur_line = vim.api.nvim_win_get_cursor(state.win)[1]
+    local next_item = items[cur_line + 1]
+    if not next_item or next_item.type == 'root' or next_item.type == 'filter'
+      or (next_item.node and next_item.node.abs_path
+        and not vim.startswith(next_item.node.abs_path, item.node.abs_path .. '/')) then
+      return
+    end
     local target = require('lu5je0.ext.tree-sidebar.window').get_target_win()
     if target then vim.api.nvim_set_current_win(target) end
   end,
@@ -367,6 +385,7 @@ function M.keymaps()
   local nav = require('lu5je0.ext.tree-sidebar.actions.navigation')
   local file_ops = require('lu5je0.ext.tree-sidebar.actions.file_ops')
   local preview = require('lu5je0.ext.tree-sidebar.actions.preview')
+  local live_filter = require('lu5je0.ext.tree-sidebar.sources.files.live_filter')
 
   return {
     { 'l', M.open_node, desc = 'Open node' },
@@ -398,6 +417,8 @@ function M.keymaps()
     { 'gx', file_ops.system_open, desc = 'System open' },
     { ']g', M.next_git_file, desc = 'Next git change' },
     { '[g', M.prev_git_file, desc = 'Prev git change' },
+    { 'f', live_filter.start, desc = 'Filter' },
+    { 'F', live_filter.clear, desc = 'Clear filter' },
     { 'o', function()
       local item = state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
       if not item or not item.node then return end

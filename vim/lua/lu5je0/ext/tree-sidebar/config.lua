@@ -93,6 +93,8 @@ M.highlights = {
   { 'TreeSidebarSectionName', { fg = '#5c6370', bold = true, default = true } },
   { 'TreeSidebarCut', { underline = true, sp = '#e06c75', default = true } },
   { 'TreeSidebarCopy', { underline = true, sp = '#61afef', default = true } },
+  { 'TreeSidebarLiveFilterPrefix', { fg = '#61afef', bold = true, default = true } },
+  { 'TreeSidebarLiveFilterValue', { fg = '#e5c07b', default = true } },
   { 'TreeSidebarTabActive', { fg = '#abb2bf', bg = '#3e4452', bold = true, default = true } },
   { 'TreeSidebarTabInactive', { fg = '#5c6370', bg = '#2c313a', default = true } },
 

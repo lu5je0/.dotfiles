@@ -96,12 +96,34 @@ function M.rescan_node(node)
   end
 end
 
---- Build a node-visibility filter that hides dotfiles unless either
---- hide_dotfiles is false (snapshots current state.files.hide_dotfiles)
---- or the node lies on the path to `reveal_path`.
 function M.make_filter(reveal_path)
   local hide = state.files.hide_dotfiles
+  local live_pat = state.files.live_filter
+  local memo = {}
+
+  local regex = nil
+  if live_pat and live_pat ~= '' then
+    regex = require('lu5je0.lang.regex').compile(live_pat)
+  end
+
+  local function match_name(name)
+    if not regex then return false end
+    return regex:match_str(name) ~= nil
+  end
+
+  local function check_live(node)
+    if node.type == 'directory' then
+      return true
+    end
+    if memo[node] ~= nil then return memo[node] end
+    memo[node] = match_name(node.name)
+    return memo[node]
+  end
+
   return function(node)
+    if regex and not check_live(node) then
+      return false
+    end
     if not (hide and is_dotfile(node.name)) then
       return true
     end
