@@ -73,9 +73,17 @@ function M.build_status_map(stdout)
 end
 
 function M.refresh(callback)
-  local tab_files = state.files
+  M.refresh_for(vim.api.nvim_get_current_tabpage(), callback)
+end
+
+-- Per-tab variant: writes git status into the captured tabpage's state,
+-- so async refreshes triggered on tab A still update tab A even if the
+-- user switched tabs while git status was running.
+function M.refresh_for(tabpage, callback)
+  local tab_files = state.tab_for(tabpage).files
   vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--ignored' }, { text = true }, function(result)
     vim.schedule(function()
+      if not vim.api.nvim_tabpage_is_valid(tabpage) then return end
       tab_files.git_status_map = M.build_status_map(result.code == 0 and result.stdout or '')
       if callback then callback() end
     end)

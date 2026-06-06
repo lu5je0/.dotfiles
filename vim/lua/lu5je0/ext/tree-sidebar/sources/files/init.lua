@@ -76,7 +76,7 @@ function spec.render_opts(ts, ctx)
 end
 
 function spec.post_flush(_ts, _ctx)
-  watcher.sync()
+  watcher.sync(vim.api.nvim_get_current_tabpage())
   require('lu5je0.ext.tree-sidebar.actions.file_ops').apply_clipboard_mark()
 end
 
@@ -86,10 +86,24 @@ function M.render(opts)
   source_base.render(spec, opts or {})
 end
 
-watcher.refresh = function()
-  if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
-    M.refresh()
+-- Invoked by watcher.lua after a fs_event debounce. The timer may fire
+-- after the user switched tabs, so we explicitly target the originating
+-- tabpage's state and only repaint when still on that tab.
+watcher.refresh = function(tabpage)
+  tabpage = tabpage or vim.api.nvim_get_current_tabpage()
+  if not vim.api.nvim_tabpage_is_valid(tabpage) then return end
+  local ts = state.tab_for(tabpage).files
+  if ts.root then
+    tree.rescan_node(ts.root)
   end
+  ts.reveal_path = nil
+  git.refresh_for(tabpage, function()
+    if vim.api.nvim_get_current_tabpage() == tabpage
+        and state:is_open()
+        and state.active_tab_idx == config.tab_idx('files') then
+      M.render()
+    end
+  end)
 end
 
 -- ── open / close glue ───────────────────────────────────
@@ -97,20 +111,21 @@ end
 local function compress_descend(node)
   local filter = tree.make_filter(state.files.reveal_path)
   while node.children do
-    local visible = nil
-    local found = false
-    local many = false
+    local visible_dir = nil
+    local visible_count = 0
     for _, c in ipairs(node.children) do
-      if c.type == 'directory' and filter(c) then
-        if found then many = true; break end
-        found = true
-        visible = c
+      if filter(c) then
+        visible_count = visible_count + 1
+        if visible_count > 1 then break end
+        if c.type == 'directory' then
+          visible_dir = c
+        end
       end
     end
-    if many or not visible then break end
-    tree.ensure_children(visible)
-    visible.expanded = true
-    node = visible
+    if visible_count ~= 1 or not visible_dir then break end
+    tree.ensure_children(visible_dir)
+    visible_dir.expanded = true
+    node = visible_dir
   end
 end
 
@@ -376,7 +391,7 @@ end
 -- ── watcher control ─────────────────────────────────────
 
 function M.stop_watchers()
-  watcher.stop()
+  watcher.stop(vim.api.nvim_get_current_tabpage())
 end
 
 -- ── keymaps ─────────────────────────────────────────────

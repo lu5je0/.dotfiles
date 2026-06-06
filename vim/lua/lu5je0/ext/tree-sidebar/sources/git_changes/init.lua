@@ -34,6 +34,7 @@ end
 
 local function file_name_hl(xy)
   local x, y = xy:sub(1, 1), xy:sub(2, 2)
+  if x == ' ' and y == ' ' then return 'GitChangesEmpty' end
   if x == '?' then return 'GitFileStatusUntracked' end
   if x == 'U' or y == 'U' or (x == y and (x == 'A' or x == 'D')) then
     return 'GitFileStatusConflict'
@@ -246,7 +247,9 @@ end
 -- ── refresh ─────────────────────────────────────────────
 
 function M.refresh(callback)
+  -- Capture originating tab: ts holds its state ref, tabpage gates render.
   local ts = state.git_changes
+  local tabpage = vim.api.nvim_get_current_tabpage()
   local tab_active_idx = state.active_tab_idx
   pcall(function()
     require('lu5je0.ext.tree-sidebar.actions.diff_preview').invalidate_short_head_cache()
@@ -254,7 +257,8 @@ function M.refresh(callback)
   vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
     vim.schedule(function()
       ts.sections = parser.parse(result.stdout)
-      if state:is_open() and tab_active_idx == state.active_tab_idx
+      if vim.api.nvim_get_current_tabpage() == tabpage
+          and state:is_open() and tab_active_idx == state.active_tab_idx
           and state.active_tab_idx == config.tab_idx('git_changes') then
         M.render()
       end

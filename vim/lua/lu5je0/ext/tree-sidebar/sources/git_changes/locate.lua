@@ -17,6 +17,8 @@ local function do_locate(filepath, render_fn, find_section_for_line)
     if f.path == rel_path then found = true; break end
   end
   if not found then
+    -- Intentional: inject a placeholder so the file appears in the Changes
+    -- section for cursor positioning. Cleared on next refresh().
     sections.changes[#sections.changes + 1] = {
       path = rel_path,
       xy = '  ', x = ' ', y = ' ',

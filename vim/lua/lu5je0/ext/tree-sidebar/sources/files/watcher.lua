@@ -1,34 +1,49 @@
 -- fs_event watchers for the file tree.
 --
--- Watches every expanded directory in the current root. On change,
--- triggers a debounced refresh through the supplied callback.
+-- Watchers and the debounced refresh timer live in per-tab state
+-- (state.files.fs_watchers / state.files.fs_refresh_timer) so each
+-- tabpage owns its own resources. Switching tabs no longer tears down
+-- and rebuilds another tab's watchers, and a fs_event firing on tab A
+-- while the user is on tab B will refresh tab A's data, not B's.
 local state = require('lu5je0.ext.tree-sidebar.state')
 
 local M = {}
 
-local _watchers = {}
-local _refresh_timer = nil
 local DEBOUNCE_MS = 300
 
 --- Configured by files/init.lua at module load time.
-M.refresh = function() end
+--- Receives the tabpage handle whose tree should refresh.
+M.refresh = function(_tabpage) end
 
-local function debounced_refresh()
-  if _refresh_timer then _refresh_timer:stop() end
-  _refresh_timer = vim.uv.new_timer()
-  _refresh_timer:start(DEBOUNCE_MS, 0, function()
-    _refresh_timer:close()
-    _refresh_timer = nil
-    vim.schedule(M.refresh)
+local function debounced_refresh(tabpage, ts)
+  if ts.fs_refresh_timer then
+    pcall(function() ts.fs_refresh_timer:stop() end)
+    pcall(function() ts.fs_refresh_timer:close() end)
+  end
+  local timer = vim.uv.new_timer()
+  ts.fs_refresh_timer = timer
+  timer:start(DEBOUNCE_MS, 0, function()
+    pcall(function() timer:close() end)
+    if ts.fs_refresh_timer == timer then
+      ts.fs_refresh_timer = nil
+    end
+    vim.schedule(function()
+      if not vim.api.nvim_tabpage_is_valid(tabpage) then return end
+      M.refresh(tabpage)
+    end)
   end)
 end
 
-local function stop_all()
-  for _, w in pairs(_watchers) do
+local function stop_all(ts)
+  if not ts.fs_watchers then
+    ts.fs_watchers = {}
+    return
+  end
+  for _, w in pairs(ts.fs_watchers) do
     pcall(function() w:stop() end)
     pcall(function() w:close() end)
   end
-  _watchers = {}
+  ts.fs_watchers = {}
 end
 
 local function collect_expanded(node, dirs)
@@ -43,34 +58,41 @@ local function collect_expanded(node, dirs)
   end
 end
 
-function M.sync()
-  if not state.files.root then
-    stop_all()
+--- Re-sync the watcher set for the given tabpage's file tree.
+--- Defaults to the current tabpage when called without an argument.
+function M.sync(tabpage)
+  tabpage = tabpage or vim.api.nvim_get_current_tabpage()
+  local ts = state.tab_for(tabpage).files
+
+  if not ts.root then
+    stop_all(ts)
     return
   end
 
   local wanted = {}
-  collect_expanded(state.files.root, wanted)
+  collect_expanded(ts.root, wanted)
 
-  for path, w in pairs(_watchers) do
+  ts.fs_watchers = ts.fs_watchers or {}
+  for path, w in pairs(ts.fs_watchers) do
     if not wanted[path] then
       pcall(function() w:stop() end)
       pcall(function() w:close() end)
-      _watchers[path] = nil
+      ts.fs_watchers[path] = nil
     end
   end
 
   for path, _ in pairs(wanted) do
-    if not _watchers[path] then
+    if not ts.fs_watchers[path] then
       local handle = vim.uv.new_fs_event()
       if handle then
         local ok = pcall(function()
           handle:start(path, {}, function(err)
-            if not err then debounced_refresh() end
+            if err then return end
+            debounced_refresh(tabpage, ts)
           end)
         end)
         if ok then
-          _watchers[path] = handle
+          ts.fs_watchers[path] = handle
         else
           pcall(function() handle:close() end)
         end
@@ -79,8 +101,16 @@ function M.sync()
   end
 end
 
-function M.stop()
-  stop_all()
+--- Stop watchers for the given tabpage (defaults to current).
+function M.stop(tabpage)
+  tabpage = tabpage or vim.api.nvim_get_current_tabpage()
+  local ts = state.tab_for(tabpage).files
+  stop_all(ts)
+  if ts.fs_refresh_timer then
+    pcall(function() ts.fs_refresh_timer:stop() end)
+    pcall(function() ts.fs_refresh_timer:close() end)
+    ts.fs_refresh_timer = nil
+  end
 end
 
 return M

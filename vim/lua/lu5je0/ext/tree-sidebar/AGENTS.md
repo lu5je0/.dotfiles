@@ -58,7 +58,8 @@ tree-sidebar/
 - 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册即可。
 - 快捷键区分共享（`keymaps.apply_shared`）和 per-tab（source `keymaps()`）。
 - git 工具统一用 `actions/git_ops.lua` → `ext/git/common/git-ops.lua`。
-- 异步回调中访问 `state.xxx` 前先捕获 table 引用（如 `local ts = state.tab()` 或 `local tab_files = state.files`），避免 per-tab 代理在错误 tabpage 写入。
+- 异步回调里先捕获 `local ts = state.tab()` 或 `state.tab_for(tabpage)`，不要直接读写 `state.xxx`。render 还要捕获 tabpage，schedule 里 `nvim_get_current_tabpage() ~= captured` 就跳过。
+- 跨 tab 的资源（fs_event、timer、preview 等）放进 per-tab state，不要写成模块级 singleton；持 libuv handle 的字段在 `state.cleanup_closed_tabs` 里释放。
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
 - 所有 sidebar autocmd 都进 `tree-sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
 

@@ -49,6 +49,8 @@ local function new_tab_state()
       git_status_map = {},
       reveal_path = nil,
       live_filter = nil,
+      fs_watchers = {},
+      fs_refresh_timer = nil,
     },
     git_changes = {
       sections = {},
@@ -61,8 +63,33 @@ local function new_tab_state()
       nodes = {},
       display_items = {},
       target_buf = nil,
+      last_located_node = nil,
+    },
+    preview = {
+      active = false,
+      autocmd = nil,
+      bufleave_autocmd = nil,
+      type = nil,
     },
   }
+end
+
+-- Close libuv handles owned by a per-tab state before the tab is dropped,
+-- so closing a tabpage doesn't leak fs_event watchers or timers.
+local function release_tab_resources(ts)
+  if not ts or not ts.files then return end
+  if ts.files.fs_watchers then
+    for _, w in pairs(ts.files.fs_watchers) do
+      pcall(function() w:stop() end)
+      pcall(function() w:close() end)
+    end
+    ts.files.fs_watchers = {}
+  end
+  if ts.files.fs_refresh_timer then
+    pcall(function() ts.files.fs_refresh_timer:stop() end)
+    pcall(function() ts.files.fs_refresh_timer:close() end)
+    ts.files.fs_refresh_timer = nil
+  end
 end
 
 local function get_tab_state()
@@ -84,9 +111,22 @@ function M.cleanup_closed_tabs()
   for _, tp in ipairs(vim.api.nvim_list_tabpages()) do
     valid[tp] = true
   end
-  for tp, _ in pairs(_tabs) do
-    if not valid[tp] then _tabs[tp] = nil end
+  for tp, ts in pairs(_tabs) do
+    if not valid[tp] then
+      release_tab_resources(ts)
+      _tabs[tp] = nil
+    end
   end
+end
+
+--- Return the state table for an arbitrary tabpage handle (creating it if
+--- necessary). Used by async callbacks that captured a tabpage handle and
+--- need to write into that specific tab without going through the proxy.
+function M.tab_for(tabpage)
+  if not _tabs[tabpage] then
+    _tabs[tabpage] = new_tab_state()
+  end
+  return _tabs[tabpage]
 end
 
 -- ── proxy: M.<x> routes to per-tab state ───────────────
@@ -105,6 +145,7 @@ local _methods = {
   init_pwd_stack = true,
   cleanup_closed_tabs = true,
   tab = true,
+  tab_for = true,
 }
 
 setmetatable(M, {

@@ -16,14 +16,20 @@ end
 local function lsp_symbols_to_tree(symbols, old_nodes)
   local old_map = {}
   if old_nodes then
+    local old_count = {}
     for _, n in ipairs(old_nodes) do
-      old_map[n.name .. ':' .. (n.kind or 0)] = n
+      local base = n.name .. ':' .. (n.kind or 0)
+      old_count[base] = (old_count[base] or 0) + 1
+      old_map[base .. ':' .. old_count[base]] = n
     end
   end
 
   local nodes = {}
+  local new_count = {}
   for _, sym in ipairs(symbols) do
-    local key = sym.name .. ':' .. (sym.kind or 0)
+    local base = sym.name .. ':' .. (sym.kind or 0)
+    new_count[base] = (new_count[base] or 0) + 1
+    local key = base .. ':' .. new_count[base]
     local old = old_map[key]
     local node = {
       name = sym.name,
@@ -118,9 +124,14 @@ end
 
 function M.request_symbols(opts)
   opts = opts or {}
+  -- LSP response may arrive after the user switched tabs. Capture the
+  -- originating tab so writes always target it; gate render on tabpage.
+  local tabpage = vim.api.nvim_get_current_tabpage()
+  local ts = state.tab_for(tabpage)
+
   local target_buf, target_win = nil, nil
-  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(vim.api.nvim_get_current_tabpage())) do
-    if win ~= state.win then
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage)) do
+    if win ~= ts.win then
       local buf = vim.api.nvim_win_get_buf(win)
       if vim.bo[buf].buftype == '' and vim.bo[buf].buflisted then
         target_buf = buf; target_win = win; break
@@ -128,9 +139,9 @@ function M.request_symbols(opts)
     end
   end
   if not target_buf then
-    state.symbols.nodes = {}
-    state.symbols.target_buf = nil
-    M.render()
+    ts.symbols.nodes = {}
+    ts.symbols.target_buf = nil
+    if vim.api.nvim_get_current_tabpage() == tabpage then M.render() end
     return
   end
 
@@ -142,9 +153,9 @@ function M.request_symbols(opts)
     end
   end
   if not has_provider then
-    state.symbols.nodes = {}
-    state.symbols.target_buf = nil
-    M.render()
+    ts.symbols.nodes = {}
+    ts.symbols.target_buf = nil
+    if vim.api.nvim_get_current_tabpage() == tabpage then M.render() end
     return
   end
 
@@ -153,19 +164,21 @@ function M.request_symbols(opts)
     cursor_line = vim.api.nvim_win_get_cursor(target_win)[1] - 1
   end
 
-  state.symbols.target_buf = target_buf
+  ts.symbols.target_buf = target_buf
   local params = { textDocument = vim.lsp.util.make_text_document_params(target_buf) }
   vim.lsp.buf_request(target_buf, 'textDocument/documentSymbol', params, function(err, result)
     if err or not result then
-      state.symbols.nodes = {}
+      ts.symbols.nodes = {}
       vim.schedule(function()
-        if state.active_tab_idx == config.tab_idx('symbols') then M.render() end
+        if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
+        if ts.active_tab_idx == config.tab_idx('symbols') then M.render() end
       end)
       return
     end
-    state.symbols.nodes = lsp_symbols_to_tree(result, state.symbols.nodes)
+    ts.symbols.nodes = lsp_symbols_to_tree(result, ts.symbols.nodes)
     vim.schedule(function()
-      if state.active_tab_idx ~= config.tab_idx('symbols') then return end
+      if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
+      if ts.active_tab_idx ~= config.tab_idx('symbols') then return end
       M.render()
       if cursor_line and state:is_open() then
         M.locate_by_line(cursor_line)
@@ -197,7 +210,13 @@ local function collapse_all_nodes(nodes)
   end
 end
 
-local _last_located_node = nil
+local function same_node(a, b)
+  if a == b then return true end
+  if not a or not b then return false end
+  if a.name ~= b.name or a.kind ~= b.kind then return false end
+  if not a.range or not b.range then return false end
+  return a.range.start.line == b.range.start.line
+end
 
 function M.locate_by_line(cursor_line)
   if not state.symbols.nodes or #state.symbols.nodes == 0 then return end
@@ -217,8 +236,8 @@ function M.locate_by_line(cursor_line)
     end
   end
   local target = find_best_node(state.symbols.nodes)
-  if not target or target == _last_located_node then return end
-  _last_located_node = target
+  if not target or same_node(target, state.symbols.last_located_node) then return end
+  state.symbols.last_located_node = target
 
   if M.is_auto_follow() then
     collapse_all_nodes(state.symbols.nodes)

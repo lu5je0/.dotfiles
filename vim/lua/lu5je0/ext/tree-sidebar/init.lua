@@ -115,6 +115,9 @@ function M._on_dir_changed(args)
   local old_cwd = state.files.root and state.files.root.abs_path or nil
   if old_cwd == new_cwd then return end
 
+  -- Capture tab so the async git status callback won't render foreign tabs.
+  local tabpage = vim.api.nvim_get_current_tabpage()
+
   state.files._root_cache = state.files._root_cache or {}
   if old_cwd and state.files.root then
     state.files._root_cache[old_cwd] = state.files.root
@@ -146,6 +149,7 @@ function M._on_dir_changed(args)
     local files_source = require('lu5je0.ext.tree-sidebar.sources.files')
     files_source.render()
     files_source.refresh_git_status(function()
+      if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
       if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
         files_source.render()
       end

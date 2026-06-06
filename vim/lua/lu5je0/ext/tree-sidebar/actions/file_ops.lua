@@ -111,7 +111,7 @@ end
 
 local function has_trash()
   if vim.fn.has('mac') == 1 then return true end
-  return vim.fn.executable('gio') == 1 or vim.fn.executable('trash-put') == 1
+  return vim.fn.executable('trash-put') == 1
 end
 
 local function trash(abs_path)
@@ -128,9 +128,7 @@ local function trash(abs_path)
       }
     end
   else
-    if vim.fn.executable('gio') == 1 then
-      cmd = { 'gio', 'trash', abs_path }
-    elseif vim.fn.executable('trash-put') == 1 then
+    if vim.fn.executable('trash-put') == 1 then
       cmd = { 'trash-put', abs_path }
     end
   end

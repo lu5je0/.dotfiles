@@ -32,6 +32,9 @@ function M.setup(group)
     callback = function()
       if not state:is_open() then return end
       if not vim.fs.root(vim.fn.getcwd(), '.git') then return end
+      -- Capture the originating tab so async writes land on this tab's
+      -- state and we only render when the user is still on this tab.
+      local tabpage = vim.api.nvim_get_current_tabpage()
       local tab_files = state.files
       local tab_gc = state.git_changes
       local tab_idx = state.active_tab_idx
@@ -42,6 +45,7 @@ function M.setup(group)
             if result.code ~= 0 then return end
             files_source.update_git_status_from_stdout(tab_files, result.stdout)
             git_changes_source.update_sections_from_stdout(tab_gc, result.stdout)
+            if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
             if state:is_open() and tab_idx == state.active_tab_idx then
               if state.active_tab_idx == config.tab_idx('files') then
                 files_source.render()
