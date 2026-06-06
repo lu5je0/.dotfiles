@@ -96,13 +96,13 @@ function M.setup(group)
         follow_timer:close()
       end
       follow_timer = vim.uv.new_timer()
-      follow_timer:start(100, 0, vim.schedule_wrap(function()
+      follow_timer:start(30, 0, vim.schedule_wrap(function()
         follow_timer:close()
         follow_timer = nil
         if not state:is_open() then return end
         if state.active_tab_idx ~= config.tab_idx('symbols') then return end
         last_follow_line = cursor_line
-        symbols_mod.locate_by_line(cursor_line)
+        symbols_mod.locate_by_line(cursor_line, { no_center = true })
       end))
     end,
   })

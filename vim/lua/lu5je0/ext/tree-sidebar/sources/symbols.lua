@@ -218,7 +218,8 @@ local function same_node(a, b)
   return a.range.start.line == b.range.start.line
 end
 
-function M.locate_by_line(cursor_line)
+function M.locate_by_line(cursor_line, opts)
+  opts = opts or {}
   if not state.symbols.nodes or #state.symbols.nodes == 0 then return end
 
   -- Find target node first (cheap traversal, no mutation).
@@ -250,9 +251,11 @@ function M.locate_by_line(cursor_line)
   for i, item in ipairs(items) do
     if item.node == target then
       pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
-      vim.api.nvim_win_call(state.win, function()
-        vim.cmd('normal! zz')
-      end)
+      if not opts.no_center then
+        vim.api.nvim_win_call(state.win, function()
+          vim.cmd('normal! zz')
+        end)
+      end
       return
     end
   end

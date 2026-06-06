@@ -45,7 +45,7 @@ end
 function M.open_tab(idx, opts)
   opts = opts or {}
   local prev_win = vim.api.nvim_get_current_win()
-  if state:is_open() and state.active_tab_idx == idx then
+  if state:is_open() and state.active_tab_idx == idx and not opts.no_toggle then
     window.close()
     require('lu5je0.ext.tree-sidebar.sources.files').stop_watchers()
     return
@@ -167,7 +167,7 @@ local function register_keymaps()
   vim.keymap.set('n', '<leader>gs', function() M.open_tab(config.tab_idx('git_changes'), { focus = false }) end, opts)
   vim.keymap.set('n', '<leader>fb', function() M.locate_in_tab(config.tab_idx('buffers')) end, opts)
   vim.keymap.set('n', '<leader>fs', function()
-    M.open_tab(config.tab_idx('symbols'))
+    M.open_tab(config.tab_idx('symbols'), { no_toggle = true })
     require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols({ locate = true })
   end, opts)
   vim.keymap.set('n', '<leader>s', function()
