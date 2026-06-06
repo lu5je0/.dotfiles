@@ -87,7 +87,10 @@ function M.setup(group)
       if not symbols_mod.is_auto_follow() then return end
       local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
       if cursor_line == last_follow_line then return end
-      if follow_timer then follow_timer:stop() end
+      if follow_timer then
+        follow_timer:stop()
+        follow_timer:close()
+      end
       follow_timer = vim.uv.new_timer()
       follow_timer:start(100, 0, vim.schedule_wrap(function()
         follow_timer:close()

@@ -3,8 +3,6 @@ local config = require('lu5je0.ext.tree-sidebar.config')
 
 local M = {}
 
-M._current_tab_keymaps = {}
-
 local function buf_set(mode, lhs, rhs, opts)
   opts = opts or {}
   opts.buffer = state.buf
@@ -117,10 +115,14 @@ function M.apply_shared()
 end
 
 function M.apply_for_tab(idx)
-  for _, km in ipairs(M._current_tab_keymaps) do
-    buf_del(km.mode, km.lhs)
+  for _, tab in ipairs(config.tabs) do
+    local ok, source = pcall(require, 'lu5je0.ext.tree-sidebar.sources.' .. tab.id)
+    if ok and source.keymaps then
+      for _, km in ipairs(source.keymaps()) do
+        buf_del(km.mode or 'n', km[1])
+      end
+    end
   end
-  M._current_tab_keymaps = {}
 
   local tab = config.tabs[idx]
   if not tab then
@@ -134,7 +136,6 @@ function M.apply_for_tab(idx)
 
   for _, km in ipairs(source.keymaps()) do
     buf_set(km.mode or 'n', km[1], km[2], { desc = km.desc })
-    M._current_tab_keymaps[#M._current_tab_keymaps + 1] = { mode = km.mode or 'n', lhs = km[1] }
   end
 end
 
