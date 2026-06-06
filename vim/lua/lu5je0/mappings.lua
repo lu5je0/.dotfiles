@@ -167,7 +167,58 @@ vim.schedule(function()
   set_map('x', '<', '<gv', remap_opts)
   set_map('x', '>', '>gv', remap_opts)
 
-  set_map('x', '/', ':/\\%V', default_opts)
+  set_map('x', '/', function()
+    local mode = vim.fn.mode()
+    local sl, sc = vim.fn.line('v'), vim.fn.col('v')
+    local el, ec = vim.fn.line('.'), vim.fn.col('.')
+    if sl > el or (sl == el and sc > ec) then
+      sl, sc, el, ec = el, ec, sl, sc
+    end
+
+    if mode == 'V' then
+      sc = 1
+      ec = #(vim.fn.getline(el))
+    end
+
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'nx', false)
+
+    local ns = vim.api.nvim_create_namespace('visual_search_hl')
+    local buf = vim.api.nvim_get_current_buf()
+    vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+    for line = sl, el do
+      local line_len = #(vim.fn.getline(line))
+      local cs, ce
+      if mode == '\22' then
+        cs = math.min(sc - 1, line_len)
+        ce = math.min(ec, line_len)
+      else
+        cs = (line == sl) and math.min(sc - 1, line_len) or 0
+        ce = (line == el) and math.min(ec, line_len) or line_len
+      end
+      vim.api.nvim_buf_set_extmark(buf, ns, line - 1, cs, {
+        end_col = ce,
+        hl_group = 'Visual',
+      })
+    end
+
+    vim.api.nvim_create_autocmd('CmdlineLeave', {
+      once = true,
+      callback = function(ev)
+        if ev.abort then
+          vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+          return
+        end
+        local function clear_visual_hl()
+          vim.cmd('noh')
+          vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+          vim.keymap.set('n', '<leader>n', '<cmd>noh<cr>', { silent = true })
+        end
+        vim.keymap.set('n', '<leader>n', clear_visual_hl, { silent = true })
+      end,
+    })
+
+    vim.api.nvim_feedkeys('/\\%V', 'n', false)
+  end, default_opts)
 
   set_map('n', '<space><', '`[v`]<^', default_opts)
   set_map('n', '<space>>', '`[v`]>^', default_opts)

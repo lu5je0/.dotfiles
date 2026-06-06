@@ -3,6 +3,9 @@ local config = require('lu5je0.ext.tree-sidebar.config')
 
 local M = {}
 
+local win_hl_ns = vim.api.nvim_create_namespace('tree_sidebar_win_hl')
+vim.api.nvim_set_hl(win_hl_ns, 'WinBarNC', { link = 'WinBar' })
+
 function M.create_buf()
   if state:is_buf_valid() then
     return state.buf
@@ -41,6 +44,7 @@ function M.open()
   vim.wo[win].winfixbuf = true
 
   state.win = win
+  vim.api.nvim_win_set_hl_ns(win, win_hl_ns)
 end
 
 function M.close()
