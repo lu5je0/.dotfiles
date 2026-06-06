@@ -3,6 +3,9 @@ local config = require('lu5je0.ext.tree-sidebar.config')
 
 local M = {}
 
+local _dispatch = {}
+local _dispatch_initialized = false
+
 local function buf_set(mode, lhs, rhs, opts)
   opts = opts or {}
   opts.buffer = state.buf
@@ -10,10 +13,6 @@ local function buf_set(mode, lhs, rhs, opts)
   opts.silent = true
   opts.nowait = true
   vim.keymap.set(mode, lhs, rhs, opts)
-end
-
-local function buf_del(mode, lhs)
-  pcall(vim.keymap.del, mode, lhs, { buffer = state.buf })
 end
 
 function M.apply_shared()
@@ -114,28 +113,39 @@ function M.apply_shared()
   end)
 end
 
-function M.apply_for_tab(idx)
-  for _, tab in ipairs(config.tabs) do
+local function build_dispatch()
+  if _dispatch_initialized then return end
+  _dispatch_initialized = true
+
+  for i, tab in ipairs(config.tabs) do
     local ok, source = pcall(require, 'lu5je0.ext.tree-sidebar.sources.' .. tab.id)
     if ok and source.keymaps then
       for _, km in ipairs(source.keymaps()) do
-        buf_del(km.mode or 'n', km[1])
+        local mode = km.mode or 'n'
+        local key = mode .. ':' .. km[1]
+        if not _dispatch[key] then
+          _dispatch[key] = { mode = mode, lhs = km[1], handlers = {} }
+        end
+        _dispatch[key].handlers[i] = km[2]
       end
     end
   end
+end
 
-  local tab = config.tabs[idx]
-  if not tab then
-    return
-  end
+local _bound_bufs = {}
 
-  local ok, source = pcall(require, 'lu5je0.ext.tree-sidebar.sources.' .. tab.id)
-  if not ok or not source.keymaps then
-    return
-  end
+function M.apply_for_tab(_idx)
+  if not state:is_buf_valid() then return end
+  if _bound_bufs[state.buf] then return end
+  _bound_bufs[state.buf] = true
 
-  for _, km in ipairs(source.keymaps()) do
-    buf_set(km.mode or 'n', km[1], km[2], { desc = km.desc })
+  build_dispatch()
+
+  for _, entry in pairs(_dispatch) do
+    buf_set(entry.mode, entry.lhs, function()
+      local h = entry.handlers[state.active_tab_idx]
+      if h then h() end
+    end)
   end
 end
 
