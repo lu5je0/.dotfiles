@@ -136,6 +136,7 @@ if is_win then
 end
 
 config.cursor_thickness = '0.06cell'
+config.enable_kitty_keyboard = true
 
 config.leader = { key = "b", mods = "CTRL", timeout_milliseconds = 10000 }
 config.keys = {
