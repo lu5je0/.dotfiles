@@ -60,10 +60,16 @@ function M.setup()
     vim.api.nvim_buf_clear_namespace(buf, popup_ns, 0, -1)
     local extmarks = vim.api.nvim_buf_get_extmarks(state.buf, ns_id, { line_nr - 1, 0 }, { line_nr - 1, -1 }, { details = true })
     for _, extmark in ipairs(extmarks) do
+      local row = extmark[2]
       local col = extmark[3]
       local details = extmark[4]
       if type(details) == 'table' and details.hl_group then
-        local end_col = details.end_col and (details.end_col + 1) or -1
+        local end_col
+        if not details.end_col or (details.end_row and details.end_row ~= row) then
+          end_col = -1
+        else
+          end_col = details.end_col + 1
+        end
         vim.api.nvim_buf_add_highlight(buf, popup_ns, details.hl_group, 0, col + 1, end_col)
       end
     end

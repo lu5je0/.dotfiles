@@ -234,6 +234,7 @@ function M.refresh()
   else
     tree.build_root()
   end
+  M.render()
   M.refresh_git_status(M.render)
 end
 

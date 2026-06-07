@@ -206,8 +206,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-t",
         "--target",
-        choices=["feishu", "telegram", "all"],
-        default="feishu",
+        choices=["telegram", "feishu", "all"],
+        default="telegram",
         help="push target, default: feishu",
     )
     parser.add_argument(
