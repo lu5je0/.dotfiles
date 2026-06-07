@@ -1,6 +1,6 @@
 local M = {}
 
-local config_file = vim.fn.stdpath('data') .. '/nvim.env.json'
+local config_file = vim.fn.stdpath('state') .. '/nvim.env.json'
 
 local cache = {}
 
