@@ -225,6 +225,51 @@ config.keys = {
       )
     end)
   },
+  {
+    key = 'w',
+    mods = 'LEADER',
+    action = wezterm.action_callback(function(win, pane)
+      local choices = {}
+      local tabs_with_info = win:mux_window():tabs_with_info()
+      for _, tab_info in ipairs(tabs_with_info) do
+        local tab = tab_info.tab
+        local panes_with_info = tab:panes_with_info()
+        for _, pane_info in ipairs(panes_with_info) do
+          local p = pane_info.pane
+          local title = p:get_title()
+          local proc = p:get_foreground_process_info()
+          local name = proc and basename(proc.executable) or title
+          local prefix = tab_info.is_active and '*' or ' '
+          local label = string.format('%s %d:%d %s', prefix, tab_info.index + 1, pane_info.index + 1, name)
+          table.insert(choices, { label = label, id = tostring(tab_info.index) .. ':' .. tostring(pane_info.index) })
+        end
+      end
+
+      win:perform_action(
+        wezterm.action.InputSelector {
+          action = wezterm.action_callback(function(window, cur_pane, id, label)
+            if not id and not label then
+              return
+            end
+            local tab_idx, pane_idx = id:match('(%d+):(%d+)')
+            tab_idx = tonumber(tab_idx)
+            pane_idx = tonumber(pane_idx)
+            window:perform_action(wezterm.action.ActivateTab(tab_idx), cur_pane)
+            local target_tab = window:mux_window():tabs_with_info()[tab_idx + 1]
+            if target_tab then
+              local target_panes = target_tab.tab:panes_with_info()
+              if target_panes[pane_idx + 1] then
+                target_panes[pane_idx + 1].pane:activate()
+              end
+            end
+          end),
+          title = 'Select Tab/Pane',
+          choices = choices,
+        },
+        pane
+      )
+    end)
+  },
   { key = 'Q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
   { key = 'r',      mods = 'LEADER',       action = wezterm.action.ReloadConfiguration },
   { key = '0',      mods = 'LEADER',       action = wezterm.action.ShowDebugOverlay },
