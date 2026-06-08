@@ -20,21 +20,21 @@ local DIR_STATUS_PRIORITY = {
 function M.status_to_glyph(xy)
   local x, y = xy:sub(1, 1), xy:sub(2, 2)
   if xy == '!!' then
-    return config.git_glyphs.ignored, 'TreeSidebarGitIgnored'
+    return config.files.git_glyphs.ignored, 'TreeSidebarGitIgnored'
   elseif xy == '??' then
-    return config.git_glyphs.untracked, 'TreeSidebarGitNew'
+    return config.files.git_glyphs.untracked, 'TreeSidebarGitNew'
   elseif x == 'D' or y == 'D' then
-    return config.git_glyphs.deleted, 'TreeSidebarGitDirty'
+    return config.files.git_glyphs.deleted, 'TreeSidebarGitDirty'
   elseif x == 'R' then
-    return config.git_glyphs.renamed, 'TreeSidebarGitDirty'
+    return config.files.git_glyphs.renamed, 'TreeSidebarGitDirty'
   elseif x == 'A' then
-    return config.git_glyphs.staged, 'TreeSidebarGitStaged'
+    return config.files.git_glyphs.staged, 'TreeSidebarGitStaged'
   elseif x ~= ' ' and x ~= '?' then
-    return config.git_glyphs.staged, 'TreeSidebarGitStaged'
+    return config.files.git_glyphs.staged, 'TreeSidebarGitStaged'
   elseif y == 'M' then
-    return config.git_glyphs.unstaged, 'TreeSidebarGitDirty'
+    return config.files.git_glyphs.unstaged, 'TreeSidebarGitDirty'
   end
-  return config.git_glyphs.unstaged, 'TreeSidebarGitDirty'
+  return config.files.git_glyphs.unstaged, 'TreeSidebarGitDirty'
 end
 
 function M.build_status_map(stdout)

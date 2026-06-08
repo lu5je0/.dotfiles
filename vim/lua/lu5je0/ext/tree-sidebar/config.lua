@@ -15,62 +15,6 @@ M.tabs = {
   { id = 'buffers', label = '󰈙 Buffers' },
 }
 
-M.git_glyphs = {
-  unstaged  = '✗',
-  staged    = '✓',
-  unmerged  = '',
-  renamed   = '➜',
-  untracked = '',
-  deleted   = '',
-  ignored   = '◌',
-}
-
-M.folder_icons = {
-  closed     = "",
-  open       = "",
-  empty      = "",
-  empty_open = "",
-}
-
-M.section_icons = {
-  expanded  = '',
-  collapsed = '',
-}
-
-M.symbols_arrow_icons = {
-  expanded  = '',
-  collapsed = '',
-}
-
-M.symbol_icons = {
-  [1] = { icon = '󰈔', hl = 'Type' }, -- File
-  [2] = { icon = '󰆧', hl = 'Include' }, -- Module
-  [3] = { icon = '󰅩', hl = 'Include' }, -- Namespace
-  [4] = { icon = '󰏗', hl = 'Type' }, -- Package
-  [5] = { icon = '󱡠', hl = 'Type' }, -- Class
-  [6] = { icon = '󰊕', hl = 'Function' }, -- Method
-  [7] = { icon = '󰆧', hl = 'Constant' }, -- Property
-  [8] = { icon = '󰆨', hl = 'Constant' }, -- Field
-  [9] = { icon = '󰊕', hl = 'Function' }, -- Constructor
-  [10] = { icon = '󰕘', hl = 'Type' }, -- Enum
-  [11] = { icon = '󰜰', hl = 'Type' }, -- Interface
-  [12] = { icon = '󰊕', hl = 'Function' }, -- Function
-  [13] = { icon = '󰆦', hl = 'Constant' }, -- Variable
-  [14] = { icon = '󰏿', hl = 'Constant' }, -- Constant
-  [15] = { icon = '󰉿', hl = 'String' }, -- String
-  [16] = { icon = '󰎠', hl = 'Number' }, -- Number
-  [17] = { icon = '󰨙', hl = 'Boolean' }, -- Boolean
-  [18] = { icon = '󰅪', hl = 'Type' }, -- Array
-  [19] = { icon = '󰅩', hl = 'Type' }, -- Object
-  [20] = { icon = '󰌋', hl = 'Identifier' }, -- Key
-  [21] = { icon = '󰟢', hl = 'Comment' }, -- Null
-  [22] = { icon = '󰕘', hl = 'Type' }, -- EnumMember
-  [23] = { icon = '󰙅', hl = 'Type' }, -- Struct
-  [24] = { icon = '󱐋', hl = 'Special' }, -- Event
-  [25] = { icon = '󰃬', hl = 'Operator' }, -- Operator
-  [26] = { icon = '󰊄', hl = 'Type' }, -- TypeParameter
-}
-
 M.passthrough_mappings = {
   '<leader>ff',
   '<leader>fr',
@@ -116,6 +60,67 @@ M.highlights = {
   { 'GitFileStatusDeleted', { link = 'Comment', default = true } },
   { 'GitFileStatusUntracked', { link = '@diff.minus', default = true } },
   { 'GitFileStatusConflict', { link = 'ErrorMsg', default = true } },
+}
+
+M.files = {
+  git_glyphs = {
+    unstaged  = '✗',
+    staged    = '✓',
+    unmerged  = '',
+    renamed   = '➜',
+    untracked = '',
+    deleted   = '',
+    ignored   = '◌',
+  },
+  folder_icons = {
+    closed     = "",
+    open       = "",
+    empty      = "",
+    empty_open = "",
+  },
+}
+
+M.git_changes = {
+  section_icons = {
+    expanded  = '',
+    collapsed = '',
+  },
+}
+
+M.symbols = {
+  arrow_icons = {
+    expanded  = '',
+    collapsed = '',
+  },
+  icons = {
+    [1] = { icon = '󰈔', hl = 'Type' }, -- File
+    [2] = { icon = '󰆧', hl = 'Include' }, -- Module
+    [3] = { icon = '󰅩', hl = 'Include' }, -- Namespace
+    [4] = { icon = '󰏗', hl = 'Type' }, -- Package
+    [5] = { icon = '󱡠', hl = 'Type' }, -- Class
+    [6] = { icon = '󰊕', hl = 'Function' }, -- Method
+    [7] = { icon = '󰆧', hl = 'Constant' }, -- Property
+    [8] = { icon = '󰆨', hl = 'Constant' }, -- Field
+    [9] = { icon = '󰊕', hl = 'Function' }, -- Constructor
+    [10] = { icon = '󰕘', hl = 'Type' }, -- Enum
+    [11] = { icon = '󰜰', hl = 'Type' }, -- Interface
+    [12] = { icon = '󰊕', hl = 'Function' }, -- Function
+    [13] = { icon = '󰆦', hl = 'Constant' }, -- Variable
+    [14] = { icon = '󰏿', hl = 'Constant' }, -- Constant
+    [15] = { icon = '󰉿', hl = 'String' }, -- String
+    [16] = { icon = '󰎠', hl = 'Number' }, -- Number
+    [17] = { icon = '󰨙', hl = 'Boolean' }, -- Boolean
+    [18] = { icon = '󰅪', hl = 'Type' }, -- Array
+    [19] = { icon = '󰅩', hl = 'Type' }, -- Object
+    [20] = { icon = '󰌋', hl = 'Identifier' }, -- Key
+    [21] = { icon = '󰟢', hl = 'Comment' }, -- Null
+    [22] = { icon = '󰕘', hl = 'Type' }, -- EnumMember
+    [23] = { icon = '󰙅', hl = 'Type' }, -- Struct
+    [24] = { icon = '󱐋', hl = 'Special' }, -- Event
+    [25] = { icon = '󰃬', hl = 'Operator' }, -- Operator
+    [26] = { icon = '󰊄', hl = 'Type' }, -- TypeParameter
+  },
+  treesitter_filetypes = { 'markdown' },
 }
 
 function M.tab_idx(id)

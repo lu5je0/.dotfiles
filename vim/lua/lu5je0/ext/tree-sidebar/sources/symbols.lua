@@ -1,4 +1,4 @@
--- Symbols source: LSP documentSymbol tree.
+-- Symbols source: LSP documentSymbol tree with treesitter fallback.
 local state = require('lu5je0.ext.tree-sidebar.state')
 local config = require('lu5je0.ext.tree-sidebar.config')
 local source_base = require('lu5je0.ext.tree-sidebar.source_base')
@@ -8,7 +8,7 @@ local env_keeper = require('lu5je0.misc.env-keeper')
 local M = {}
 
 local function get_icon(kind)
-  local entry = config.symbol_icons[kind]
+  local entry = config.symbols.icons[kind]
   if entry then return entry.icon, entry.hl end
   return '', 'Normal'
 end
@@ -48,6 +48,141 @@ local function lsp_symbols_to_tree(symbols, old_nodes)
   return nodes
 end
 
+-- ── treesitter backend ─────────────────────────────────
+
+local ts_query_defs = {
+  markdown = {
+    { query = '(section (atx_heading (_) (inline) @name)) @symbol', kind = 15 },
+  },
+}
+
+local ts_query_cache = {}
+local function get_ts_queries(filetype)
+  if ts_query_cache[filetype] then return ts_query_cache[filetype] end
+  local defs = ts_query_defs[filetype]
+  if not defs then return nil end
+  local compiled = {}
+  for _, def in ipairs(defs) do
+    local ok, query = pcall(vim.treesitter.query.parse, filetype, def.query)
+    if ok then
+      compiled[#compiled + 1] = { query = query, kind = def.kind }
+    end
+  end
+  ts_query_cache[filetype] = compiled
+  return compiled
+end
+
+local function build_old_map(old_nodes)
+  local map = {}
+  if not old_nodes then return map end
+  local count = {}
+  for _, n in ipairs(old_nodes) do
+    local base = n.name .. ':' .. (n.kind or 0)
+    count[base] = (count[base] or 0) + 1
+    map[base .. ':' .. count[base]] = n
+  end
+  return map
+end
+
+local function range_contains(outer, inner)
+  if outer.start.line == inner.start.line and outer.start.character == inner.start.character
+    and outer['end'].line == inner['end'].line and outer['end'].character == inner['end'].character then
+    return false
+  end
+  if outer.start.line > inner.start.line then return false end
+  if outer['end'].line < inner['end'].line then return false end
+  if outer.start.line == inner.start.line and outer.start.character > inner.start.character then return false end
+  if outer['end'].line == inner['end'].line and outer['end'].character < inner['end'].character then return false end
+  return true
+end
+
+local function insert_into_tree(roots, sym)
+  for i = #roots, 1, -1 do
+    local r = roots[i]
+    if r.range and sym.range and range_contains(r.range, sym.range) then
+      if not r.children then r.children = {} end
+      r.type = 'directory'
+      insert_into_tree(r.children, sym)
+      return
+    end
+  end
+  roots[#roots + 1] = sym
+end
+
+local function restore_expanded(nodes, old_map)
+  local count = {}
+  for _, node in ipairs(nodes) do
+    local base = node.name .. ':' .. (node.kind or 0)
+    count[base] = (count[base] or 0) + 1
+    local old = old_map[base .. ':' .. count[base]]
+    if old then
+      node.expanded = old.expanded
+    end
+    if node.children then
+      local child_old_map = old and build_old_map(old.children) or {}
+      restore_expanded(node.children, child_old_map)
+    end
+  end
+end
+
+local function treesitter_symbols_to_tree(bufnr, filetype, old_nodes)
+  local rules = get_ts_queries(filetype)
+  if not rules or #rules == 0 then return {} end
+
+  local ok, parser = pcall(vim.treesitter.get_parser, bufnr, filetype)
+  if not ok or not parser then return {} end
+
+  local trees = parser:parse()
+  if not trees or #trees == 0 then return {} end
+  local root = trees[1]:root()
+
+  local flat = {}
+  for _, rule in ipairs(rules) do
+    local query = rule.query
+    for _, match in query:iter_matches(root, bufnr) do
+      local sym_node, name_node
+      for id, nodes in pairs(match) do
+        local cap = query.captures[id]
+        local node = type(nodes) == 'table' and nodes[1] or nodes
+        if cap == 'symbol' then sym_node = node
+        elseif cap == 'name' then name_node = node
+        end
+      end
+      if sym_node and name_node then
+        local sr1, sc1, sr2, sc2 = sym_node:range()
+        local nr1, nc1, nr2, nc2 = name_node:range()
+        flat[#flat + 1] = {
+          name = vim.treesitter.get_node_text(name_node, bufnr):gsub('\n.*', ''),
+          kind = rule.kind,
+          range = { start = { line = sr1, character = sc1 }, ['end'] = { line = sr2, character = sc2 } },
+          selection_range = { start = { line = nr1, character = nc1 }, ['end'] = { line = nr2, character = nc2 } },
+        }
+      end
+    end
+  end
+
+  table.sort(flat, function(a, b)
+    if a.range.start.line ~= b.range.start.line then
+      return a.range.start.line < b.range.start.line
+    end
+    return a.range.start.character < b.range.start.character
+  end)
+
+  local roots = {}
+  for _, sym in ipairs(flat) do
+    sym.type = 'file'
+    sym.expanded = false
+    insert_into_tree(roots, sym)
+  end
+
+  local old_map = build_old_map(old_nodes)
+  restore_expanded(roots, old_map)
+
+  return roots
+end
+
+-- ── source spec ─────────────────────────────────────────
+
 local function mark_leaf_indent(children)
   if not children then return end
   local has_dir = false
@@ -59,8 +194,6 @@ local function mark_leaf_indent(children)
     if n.children then mark_leaf_indent(n.children) end
   end
 end
-
--- ── source spec ─────────────────────────────────────────
 
 local spec = { id = 'symbols', state_key = 'symbols' }
 M._spec = spec
@@ -77,7 +210,7 @@ function spec.render_opts(_ts, _ctx)
   return {
     get_dir_icon = function(node)
       local icon = (get_icon(node.kind))
-      local arrow = node.expanded and config.symbols_arrow_icons.expanded or config.symbols_arrow_icons.collapsed
+      local arrow = node.expanded and config.symbols.arrow_icons.expanded or config.symbols.arrow_icons.collapsed
       return arrow .. ' ' .. icon
     end,
     get_file_icon = function(node)
@@ -120,12 +253,10 @@ function M.render()
   source_base.render(spec)
 end
 
--- ── LSP query ───────────────────────────────────────────
+-- ── symbol query ───────────────────────────────────────
 
 function M.request_symbols(opts)
   opts = opts or {}
-  -- LSP response may arrive after the user switched tabs. Capture the
-  -- originating tab so writes always target it; gate render on tabpage.
   local tabpage = vim.api.nvim_get_current_tabpage()
   local ts = state.tab_for(tabpage)
 
@@ -156,6 +287,12 @@ function M.request_symbols(opts)
     return
   end
 
+  local cursor_line = nil
+  if opts.locate and target_win then
+    cursor_line = vim.api.nvim_win_get_cursor(target_win)[1] - 1
+  end
+
+  -- Try LSP first.
   local clients = vim.lsp.get_clients({ bufnr = target_buf })
   local has_provider = false
   for _, client in ipairs(clients) do
@@ -163,39 +300,52 @@ function M.request_symbols(opts)
       has_provider = true; break
     end
   end
-  if not has_provider then
-    ts.symbols.nodes = {}
-    ts.symbols.target_buf = nil
-    if vim.api.nvim_get_current_tabpage() == tabpage then M.render() end
+
+  if has_provider then
+    ts.symbols.target_buf = target_buf
+    local params = { textDocument = vim.lsp.util.make_text_document_params(target_buf) }
+    vim.lsp.buf_request(target_buf, 'textDocument/documentSymbol', params, function(err, result)
+      if err or not result then
+        ts.symbols.nodes = {}
+        vim.schedule(function()
+          if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
+          if ts.active_tab_idx == config.tab_idx('symbols') then M.render() end
+        end)
+        return
+      end
+      ts.symbols.nodes = lsp_symbols_to_tree(result, ts.symbols.nodes)
+      vim.schedule(function()
+        if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
+        if ts.active_tab_idx ~= config.tab_idx('symbols') then return end
+        M.render()
+        if cursor_line and state:is_open() then
+          M.locate_by_line(cursor_line, { force = true })
+        end
+      end)
+    end)
     return
   end
 
-  local cursor_line = nil
-  if opts.locate and target_win then
-    cursor_line = vim.api.nvim_win_get_cursor(target_win)[1] - 1
+  -- Treesitter fallback.
+  local ft = vim.bo[target_buf].filetype
+  if vim.tbl_contains(config.symbols.treesitter_filetypes, ft) then
+    ts.symbols.nodes = treesitter_symbols_to_tree(target_buf, ft, ts.symbols.nodes)
+    ts.symbols.target_buf = target_buf
+    if vim.api.nvim_get_current_tabpage() == tabpage then
+      if ts.active_tab_idx == config.tab_idx('symbols') then
+        M.render()
+        if cursor_line and state:is_open() then
+          M.locate_by_line(cursor_line, { force = true })
+        end
+      end
+    end
+    return
   end
 
-  ts.symbols.target_buf = target_buf
-  local params = { textDocument = vim.lsp.util.make_text_document_params(target_buf) }
-  vim.lsp.buf_request(target_buf, 'textDocument/documentSymbol', params, function(err, result)
-    if err or not result then
-      ts.symbols.nodes = {}
-      vim.schedule(function()
-        if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
-        if ts.active_tab_idx == config.tab_idx('symbols') then M.render() end
-      end)
-      return
-    end
-    ts.symbols.nodes = lsp_symbols_to_tree(result, ts.symbols.nodes)
-    vim.schedule(function()
-      if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
-      if ts.active_tab_idx ~= config.tab_idx('symbols') then return end
-      M.render()
-      if cursor_line and state:is_open() then
-        M.locate_by_line(cursor_line, { force = true })
-      end
-    end)
-  end)
+  -- No provider available.
+  ts.symbols.nodes = {}
+  ts.symbols.target_buf = nil
+  if vim.api.nvim_get_current_tabpage() == tabpage then M.render() end
 end
 
 local function expand_to_line(nodes, cursor_line, target_node)

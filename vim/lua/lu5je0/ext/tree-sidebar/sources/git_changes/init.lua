@@ -148,7 +148,7 @@ function spec.render_opts(_ts, _ctx)
     flat_depth = 1,
     get_dir_icon = function(node)
       if node._is_section or node._is_stash then
-        return node.expanded and config.section_icons.expanded or config.section_icons.collapsed
+        return node.expanded and config.git_changes.section_icons.expanded or config.git_changes.section_icons.collapsed
       end
     end,
     file_suffix = function(node)

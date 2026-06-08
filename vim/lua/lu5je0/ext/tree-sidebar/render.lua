@@ -90,9 +90,9 @@ function M.render_tree(root_children, opts)
       has_children = (node.children == nil) or #node.children > 0
     end
     if node.expanded then
-      return has_children and config.folder_icons.open or config.folder_icons.empty_open
+      return has_children and config.files.folder_icons.open or config.files.folder_icons.empty_open
     else
-      return has_children and config.folder_icons.closed or config.folder_icons.empty
+      return has_children and config.files.folder_icons.closed or config.files.folder_icons.empty
     end
   end
 
