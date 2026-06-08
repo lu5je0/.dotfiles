@@ -1,6 +1,15 @@
 local loader = require('lu5je0.ext.loader')
 local lazy_load = loader.lazy_load
 
+-- bufferline (custom, replaces akinsho/bufferline.nvim)
+lazy_load({
+  name = 'bufferline',
+  config = function()
+    require('lu5je0.ext.bufferline')
+  end,
+  event = { 'UIEnter' },
+})
+
 -- tree-sidebar
 lazy_load({
   name = 'tree-sidebar',

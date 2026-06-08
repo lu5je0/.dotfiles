@@ -525,6 +525,32 @@ function M.keymaps()
     { '<cr>', M.open_symbol, desc = 'Go to symbol' },
     { 'r', M.request_symbols, desc = 'Refresh' },
     { 'gf', M.toggle_auto_follow, desc = 'Toggle auto-follow' },
+    { 'yn', function()
+      local line = vim.api.nvim_win_get_cursor(state.win)[1]
+      local item = state.symbols.display_items[line]
+      if not item or not item.node or not item.node.name then return end
+      require('lu5je0.core.clipboard').set(item.node.name)
+      print('Copied: ' .. item.node.name)
+    end, desc = 'Copy name' },
+    { 'yp', function()
+      local line = vim.api.nvim_win_get_cursor(state.win)[1]
+      local item = state.symbols.display_items[line]
+      if not item or not item.node or not item.node.name then return end
+      local function find_path(nodes, target, path)
+        for _, n in ipairs(nodes) do
+          local cur = path == '' and n.name or (path .. '.' .. n.name)
+          if n == target then return cur end
+          if n.children then
+            local result = find_path(n.children, target, cur)
+            if result then return result end
+          end
+        end
+        return nil
+      end
+      local full_path = find_path(state.symbols.nodes, item.node, '') or item.node.name
+      require('lu5je0.core.clipboard').set(full_path)
+      print('Copied: ' .. full_path)
+    end, desc = 'Copy symbol path' },
   }
 end
 

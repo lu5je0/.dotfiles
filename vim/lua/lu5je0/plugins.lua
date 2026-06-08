@@ -142,16 +142,6 @@ local plugins = {
     keys = { ',' }
   },
 
-  {
-    'akinsho/bufferline.nvim',
-    config = function()
-      require('lu5je0.ext.bufferline')
-    end,
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
-    patches = { 'bufferline.diff' },
-    -- priority = 9999,
-    -- event = 'VeryLazy'
-  },
   
   -- replaced by custom tree-sidebar
   -- {

@@ -206,7 +206,7 @@ M.setup = function()
   })
   vim.api.nvim_create_autocmd('ExitPre', {
     callback = function()
-      local buffer_ids = require("bufferline.utils").get_valid_buffers()
+      local buffer_ids = require('lu5je0.core.buffers').valid_buffers()
       for _, buf_id in ipairs(buffer_ids) do
         save_buffer(buf_id)
       end

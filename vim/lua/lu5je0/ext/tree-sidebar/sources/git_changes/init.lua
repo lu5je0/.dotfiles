@@ -532,6 +532,28 @@ function M.keymaps()
     end, desc = 'Locate in files' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
     { '<space>', preview.toggle, desc = 'Preview' },
+    { 'yn', function()
+      local line = vim.api.nvim_win_get_cursor(state.win)[1]
+      local item = state.git_changes.display_items[line]
+      if not item or not item.node or not item.node.name then return end
+      require('lu5je0.core.clipboard').set(item.node.name)
+      print('Copied: ' .. item.node.name)
+    end, desc = 'Copy name' },
+    { 'yp', function()
+      local line = vim.api.nvim_win_get_cursor(state.win)[1]
+      local item = state.git_changes.display_items[line]
+      if not item or not item.node or not item.node.abs_path then return end
+      require('lu5je0.core.clipboard').set(item.node.abs_path)
+      print('Copied: ' .. item.node.abs_path)
+    end, desc = 'Copy absolute path' },
+    { 'yP', function()
+      local line = vim.api.nvim_win_get_cursor(state.win)[1]
+      local item = state.git_changes.display_items[line]
+      if not item or not item.node or not item.node.abs_path then return end
+      local rel = vim.fn.fnamemodify(item.node.abs_path, ':~:.')
+      require('lu5je0.core.clipboard').set(rel)
+      print('Copied: ' .. rel)
+    end, desc = 'Copy relative path' },
   }
 end
 

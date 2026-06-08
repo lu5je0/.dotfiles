@@ -134,7 +134,19 @@ vim.schedule(function()
 
   -- ctrl-c 复制
   set_x_map('<C-c>', 'y')
-  
+
+  set_n_map('yp', function()
+    local ref = vim.fn.fnamemodify(vim.fn.expand('%'), ':.')  .. ':' .. vim.fn.line('.')
+    require('lu5je0.core.clipboard').set(ref)
+    vim.notify("copied " .. ref)
+  end, desc_opts('yank file reference'))
+
+  set_n_map('yP', function()
+    local ref = vim.fn.expand('%:p') .. ':' .. vim.fn.line('.')
+    require('lu5je0.core.clipboard').set(ref)
+    vim.notify("copied " .. ref)
+  end, desc_opts('yank absolute file reference'))
+
   set_map('n', '<space><space>', function()
     -- -- 保存当前视图状态
     -- local save = vim.fn.winsaveview()

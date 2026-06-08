@@ -1,9 +1,13 @@
 local M = {}
 
 function M.valid_buffers()
-  local bufs = require("bufferline.utils").get_valid_buffers()
-  -- local bufs = vim.api.nvim_list_bufs()
-  return bufs
+  local result = {}
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted then
+      result[#result + 1] = buf
+    end
+  end
+  return result
 end
 
 -- location {x, y}

@@ -21,7 +21,7 @@ r.run('untracked file produces TreeSidebarGitNew', function()
   local map = files._build_git_status_map('?? new.txt\0')
   r.assert_eq(map['new.txt'].xy, '??')
   r.assert_eq(map['new.txt'].hl, 'TreeSidebarGitNew')
-  r.assert_eq(map['new.txt'].glyph, config.git_glyphs.untracked)
+  r.assert_eq(map['new.txt'].glyph, config.files.git_glyphs.untracked)
 end)
 
 r.run('staged add produces TreeSidebarGitStaged', function()
