@@ -108,7 +108,7 @@ local function pad_to(s, target)
   return s .. string.rep(' ', target - w)
 end
 
-local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name)
+local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first)
   local opts = config.options
   local devicons = config.options.show_devicons and get_devicons() or nil
 
@@ -207,7 +207,14 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
     right_pad_str = string.format('%%#%s#%s', hl_buf, string.rep(' ', right_pad))
   end
 
-  local hl_sep = is_selected and 'BufferLineIndicatorSelected' or 'BufferLineSeparator'
+  local hl_sep
+  if is_selected then
+    hl_sep = 'BufferLineIndicatorSelected'
+  elseif is_first then
+    hl_sep = 'BufferLineSeparatorHidden'
+  else
+    hl_sep = 'BufferLineSeparator'
+  end
   local sep = string.format('%%#%s#▎', hl_sep)
 
   local segment = string.format('%s%s%%#%s#%s%s%s', sep, left_pad_str, hl_buf, body, right_pad_str, tail)
@@ -258,7 +265,7 @@ function M.build()
   local seg_width = config.options.tab_size + 1
   for i, buf in ipairs(bufs) do
     local is_selected = (buf == current)
-    local seg = buffer_segment(buf, i, is_selected, all_basenames, buf_names[buf])
+    local seg = buffer_segment(buf, i, is_selected, all_basenames, buf_names[buf], i == 1)
     segments[i] = seg
     widths[i] = seg_width
   end
