@@ -21,15 +21,8 @@ M.offsets = {
   { filetype = 'vista',         text = 'Vista',    highlight = 'Directory',      text_align = 'center' },
 }
 
--- Color utilities
-local function get_hl_fg(name)
-  local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
-  return hl.fg
-end
-
-local function get_hl_bg(name)
-  local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
-  return hl.bg
+local function get_hl(name)
+  return vim.api.nvim_get_hl(0, { name = name, link = false })
 end
 
 local function hex(color)
@@ -50,22 +43,28 @@ local function shade(color, percent)
 end
 
 local function derive_colors()
-  local normal_fg = get_hl_fg('Normal') or 0xabb2bf
-  local normal_bg = get_hl_bg('Normal') or 0x282c34
-  local comment_fg = get_hl_fg('Comment') or 0x5c6370
-  local string_fg = get_hl_fg('String') or 0x98c379
-  local error_fg = get_hl_fg('DiagnosticError') or get_hl_fg('Error') or 0xe06c75
-  local win_sep_fg = get_hl_fg('WinSeparator') or get_hl_fg('VertSplit') or 0x3e4452
+  local normal = get_hl('Normal')
+  local normal_fg = normal.fg or 0xabb2bf
+  local normal_bg = normal.bg or 0x282c34
 
-  local tabline_sel_bg = get_hl_bg('TabLineSel')
+  local comment_fg = (get_hl('Comment')).fg or 0x5c6370
+  local string_fg = (get_hl('String')).fg or 0x98c379
+
+  local diag_err = get_hl('DiagnosticError')
+  local error_fg = diag_err.fg or (get_hl('Error')).fg or 0xe06c75
+
+  local win_sep = get_hl('WinSeparator')
+  local win_sep_fg = win_sep.fg or (get_hl('VertSplit')).fg or 0x3e4452
+
+  local tabline_sel = get_hl('TabLineSel')
+  local tabline_sel_bg = tabline_sel.bg
   if tabline_sel_bg == normal_bg then
-    tabline_sel_bg = get_hl_fg('TabLineSel')
+    tabline_sel_bg = tabline_sel.fg
   end
   tabline_sel_bg = tabline_sel_bg or 0x61afef
 
   local fill_bg = shade(normal_bg, -45)
   local tab_bg = shade(normal_bg, -25)
-  local sel_bg = normal_bg
 
   return {
     normal_fg = normal_fg,
@@ -77,7 +76,7 @@ local function derive_colors()
     tabline_sel_bg = tabline_sel_bg,
     fill_bg = fill_bg,
     tab_bg = tab_bg,
-    sel_bg = sel_bg,
+    sel_bg = normal_bg,
   }
 end
 

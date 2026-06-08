@@ -1,7 +1,7 @@
 local M = {}
 
-local state = require('lu5je0.ext.bufferline.state')
-local naming = require('lu5je0.ext.bufferline.naming')
+local state = require('lu5je0.ext.tabline.state')
+local naming = require('lu5je0.ext.tabline.naming')
 
 local POOL = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 

@@ -40,14 +40,14 @@
 - `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log` 与 `tree-sidebar`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
-## Bufferline (自定义实现)
+## Tabline (自定义实现)
 
-`lua/lu5je0/ext/bufferline/` 是替代 `akinsho/bufferline.nvim` 的纯 Lua bufferline 实现，通过 `vim.o.tabline` 渲染。
+`lua/lu5je0/ext/tabline/` 是替代 `akinsho/bufferline.nvim` 的纯 Lua tabline 实现，通过 `vim.o.tabline` 渲染。
 
 ### 目录结构
 
 ```
-ext/bufferline/
+ext/tabline/
 ├── init.lua        -- 入口：setup()，导出 buffer_name_map
 ├── config.lua      -- 选项、offsets、动态高亮（从 colorscheme 推导颜色）
 ├── state.lua       -- 模块级缓存：buffer_name_map、ordinal_to_buf、pick 状态
@@ -58,10 +58,10 @@ ext/bufferline/
 ├── pick.lua        -- 字母分配 + getcharstr 选择
 ├── keymaps.lua     -- 全局 keymap 注册
 ├── commands.lua    -- 用户命令注册
-└── autocmds.lua    -- 单 augroup 'bufferline'，事件触发 refresh
+└── autocmds.lua    -- 单 augroup 'tabline'，事件触发 refresh
 ```
 
-`ext/bufferline.lua` 是兼容 shim，返回 `require('lu5je0.ext.bufferline.init')` 并调用 `setup()`。
+`ext/bufferline.lua` 是兼容 shim，返回 `require('lu5je0.ext.tabline.init')` 并调用 `setup()`。
 
 ### 架构设计
 
@@ -74,7 +74,7 @@ ext/bufferline/
 
 ### 兼容接口
 
-- `require('lu5je0.ext.bufferline').buffer_name_map`：被 `tree-sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。
+- `require('lu5je0.ext.tabline').buffer_name_map`：被 `tree-sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。
 - `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表函数（`buflisted` + `is_valid`），被 bufferline、tree-sidebar、time-machine 共用。
 
 ### 按键映射

@@ -1,9 +1,9 @@
 local M = {}
 
-local config = require('lu5je0.ext.bufferline.config')
-local state = require('lu5je0.ext.bufferline.state')
-local naming = require('lu5je0.ext.bufferline.naming')
-local offsets = require('lu5je0.ext.bufferline.offsets')
+local config = require('lu5je0.ext.tabline.config')
+local state = require('lu5je0.ext.tabline.state')
+local naming = require('lu5je0.ext.tabline.naming')
+local offsets = require('lu5je0.ext.tabline.offsets')
 
 local superscripts = { '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹' }
 
@@ -39,24 +39,15 @@ local function clear_icon_hl_cache()
   icon_hl_cache = {}
 end
 
-local function get_devicons()
-  local ok, devicons = pcall(require, 'nvim-web-devicons')
-  if ok then return devicons end
-  return nil
-end
+local _devicons_cache
+local _devicons_loaded = false
 
-local function display_name(buf, all_basenames, modified_count)
-  local name = vim.api.nvim_buf_get_name(buf)
-  if name == '' then
-    local n = state.buffer_name_map[buf]
-    return n and ('Untitled-' .. n) or '[No Name]'
-  end
-  local base = vim.fs.basename(name)
-  if (all_basenames[base] or 0) > 1 then
-    local rel = vim.fn.fnamemodify(name, ':~:.')
-    return rel
-  end
-  return base
+local function get_devicons()
+  if _devicons_loaded then return _devicons_cache end
+  _devicons_loaded = true
+  local ok, devicons = pcall(require, 'nvim-web-devicons')
+  _devicons_cache = ok and devicons or nil
+  return _devicons_cache
 end
 
 local function truncate(s, max, marker)
@@ -64,6 +55,14 @@ local function truncate(s, max, marker)
   if w <= max then return s end
   local mw = vim.fn.strdisplaywidth(marker)
   local target = max - mw
+  if target <= 0 then return marker end
+
+  -- fast path: pure ASCII
+  if #s == w then
+    return s:sub(1, target) .. marker
+  end
+
+  -- slow path: multi-byte
   local acc_w = 0
   local byte_end = 0
   local len = #s
@@ -76,8 +75,7 @@ local function truncate(s, max, marker)
     elseif b < 0xF0 then char_len = 3
     else char_len = 4
     end
-    local ch = s:sub(i, i + char_len - 1)
-    local ch_w = vim.fn.strdisplaywidth(ch)
+    local ch_w = (char_len == 1) and 1 or vim.fn.strdisplaywidth(s:sub(i, i + char_len - 1))
     if acc_w + ch_w > target then break end
     acc_w = acc_w + ch_w
     byte_end = i + char_len - 1
@@ -92,11 +90,22 @@ local function pad_to(s, target)
   return s .. string.rep(' ', target - w)
 end
 
-local function buffer_segment(buf, ordinal, is_selected, all_basenames)
+local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name)
   local opts = config.options
   local devicons = config.options.show_devicons and get_devicons() or nil
 
-  local name = display_name(buf, all_basenames)
+  local name
+  if buf_name == '' then
+    local n = state.buffer_name_map[buf]
+    name = n and ('Untitled-' .. n) or '[No Name]'
+  else
+    local base = vim.fs.basename(buf_name)
+    if (all_basenames[base] or 0) > 1 then
+      name = vim.fn.fnamemodify(buf_name, ':~:.')
+    else
+      name = base
+    end
+  end
   name = truncate(name, opts.max_name_length, opts.truncate_marker)
 
   local hl_buf = is_selected and 'BufferLineBufferSelected' or 'BufferLineBuffer'
@@ -115,9 +124,8 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames)
 
   local icon_part = ''
   if devicons then
-    local fname = vim.api.nvim_buf_get_name(buf)
-    local ext = vim.fn.fnamemodify(fname, ':e')
-    local icon, icon_hl = devicons.get_icon(vim.fs.basename(fname), ext, { default = true })
+    local ext = vim.fn.fnamemodify(buf_name, ':e')
+    local icon, icon_hl = devicons.get_icon(vim.fs.basename(buf_name), ext, { default = true })
     if icon then
       local combined_hl = get_icon_hl(icon_hl or hl_buf, hl_buf)
       icon_part = string.format('%%#%s#%s%%#%s# ', combined_hl, icon, hl_buf)
@@ -128,14 +136,22 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames)
 
   local function build_body_tail(disp_name)
     local b = string.format('%s %%#%s#%s%s ', prefix, hl_buf, icon_part, disp_name)
-    b = string.format('%%%d@v:lua.require\'lu5je0.ext.bufferline.render\'._click@%s%%X', buf, b)
+    b = string.format('%%%d@v:lua.require\'lu5je0.ext.tabline.render\'._click@%s%%X', buf, b)
     local t
-    if modified then
-      t = string.format('%%#%s#%s', hl_modified, opts.modified_icon)
+    if is_selected then
+      if modified then
+        t = string.format('%%#%s#%s', hl_modified, opts.modified_icon)
+      else
+        t = string.format('%%#%s#%s', hl_close, opts.close_icon)
+      end
+      t = string.format('%%%d@v:lua.require\'lu5je0.ext.tabline.render\'._close_click@%s %%X', buf, t)
     else
-      t = string.format('%%#%s#%s', hl_close, opts.close_icon)
+      if modified then
+        t = string.format('%%#%s#%s ', hl_modified, opts.modified_icon)
+      else
+        t = string.format('%%#%s#  ', hl_buf)
+      end
     end
-    t = string.format('%%%d@v:lua.require\'lu5je0.ext.bufferline.render\'._close_click@%s %%X', buf, t)
     return b, t
   end
 
@@ -155,15 +171,20 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames)
     content_w = vim.fn.strdisplaywidth(content_plain)
   end
 
+  local left_pad_str = ''
+  local right_pad_str = ''
   if content_w < opts.tab_size then
-    local pad = string.rep(' ', opts.tab_size - content_w)
-    body = body .. string.format('%%#%s#%s', hl_buf, pad)
+    local total_pad = opts.tab_size - content_w
+    local left_pad = math.floor(total_pad / 2)
+    local right_pad = total_pad - left_pad
+    left_pad_str = string.format('%%#%s#%s', hl_buf, string.rep(' ', left_pad))
+    right_pad_str = string.format('%%#%s#%s', hl_buf, string.rep(' ', right_pad))
   end
 
   local hl_sep = is_selected and 'BufferLineIndicatorSelected' or 'BufferLineSeparator'
   local sep = string.format('%%#%s#▎', hl_sep)
 
-  local segment = string.format('%s%%#%s#%s%s', sep, hl_buf, body, tail)
+  local segment = string.format('%s%s%%#%s#%s%s%s', sep, left_pad_str, hl_buf, body, right_pad_str, tail)
   return segment
 end
 
@@ -186,9 +207,11 @@ function M.build()
   local bufs = require('lu5je0.core.buffers').valid_buffers()
   naming.assign(bufs)
 
+  local buf_names = {}
   local all_basenames = {}
   for _, b in ipairs(bufs) do
     local n = vim.api.nvim_buf_get_name(b)
+    buf_names[b] = n
     if n ~= '' then
       local base = vim.fs.basename(n)
       all_basenames[base] = (all_basenames[base] or 0) + 1
@@ -209,7 +232,7 @@ function M.build()
   local seg_width = config.options.tab_size + 1
   for i, buf in ipairs(bufs) do
     local is_selected = (buf == current)
-    local seg = buffer_segment(buf, i, is_selected, all_basenames)
+    local seg = buffer_segment(buf, i, is_selected, all_basenames, buf_names[buf])
     segments[i] = seg
     widths[i] = seg_width
   end
@@ -228,14 +251,19 @@ function M.build()
   local left_start, right_end = 1, #bufs
   local left_hidden, right_hidden = 0, 0
 
+  local left_icon_w = vim.fn.strdisplaywidth(LEFT_TRUNC)
+  local right_icon_w = vim.fn.strdisplaywidth(RIGHT_TRUNC)
+
+  local function marker_width(count, icon_w)
+    if count <= 0 then return 0 end
+    -- format: ' %d %s ' -> space + digits + space + icon + space
+    local digits = count < 10 and 1 or (count < 100 and 2 or 3)
+    return digits + icon_w + 3
+  end
+
   local function total_width()
-    local w = 0
-    for i = left_start, right_end do
-      w = w + widths[i]
-    end
-    local lm_w = left_hidden > 0 and (vim.fn.strdisplaywidth(string.format(' %d %s ', left_hidden, LEFT_TRUNC))) or 0
-    local rm_w = right_hidden > 0 and (vim.fn.strdisplaywidth(string.format(' %d %s ', right_hidden, RIGHT_TRUNC))) or 0
-    return w + lm_w + rm_w
+    local w = (right_end - left_start + 1) * seg_width
+    return w + marker_width(left_hidden, left_icon_w) + marker_width(right_hidden, right_icon_w)
   end
 
   while total_width() > available and (left_start < current_idx or right_end > current_idx) do

@@ -1,11 +1,11 @@
 local loader = require('lu5je0.ext.loader')
 local lazy_load = loader.lazy_load
 
--- bufferline (custom, replaces akinsho/bufferline.nvim)
+-- tabline (custom, replaces akinsho/bufferline.nvim)
 lazy_load({
-  name = 'bufferline',
+  name = 'tabline',
   config = function()
-    require('lu5je0.ext.bufferline')
+    require('lu5je0.ext.tabline')
   end,
   event = { 'UIEnter' },
 })

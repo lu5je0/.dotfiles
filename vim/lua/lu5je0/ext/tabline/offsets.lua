@@ -1,6 +1,6 @@
 local M = {}
 
-local config = require('lu5je0.ext.bufferline.config')
+local config = require('lu5je0.ext.tabline.config')
 
 local function offset_for_win(win)
   local buf = vim.api.nvim_win_get_buf(win)

@@ -1,8 +1,8 @@
 local M = {}
 
 function M.setup()
-  local actions = require('lu5je0.ext.bufferline.actions')
-  local pick = require('lu5je0.ext.bufferline.pick')
+  local actions = require('lu5je0.ext.tabline.actions')
+  local pick = require('lu5je0.ext.tabline.pick')
 
   vim.keymap.set('n', '<leader>0', function() pick.start() end, { silent = true })
 

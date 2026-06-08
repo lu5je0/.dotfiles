@@ -1,6 +1,6 @@
 local M = {}
 
-local state = require('lu5je0.ext.bufferline.state')
+local state = require('lu5je0.ext.tabline.state')
 
 local function refresh()
   if state.refresh_scheduled then return end
@@ -28,8 +28,8 @@ function M.setup(group)
   vim.api.nvim_create_autocmd('ColorScheme', {
     group = group,
     callback = function()
-      require('lu5je0.ext.bufferline.config').apply_highlights()
-      require('lu5je0.ext.bufferline.render').clear_icon_hl_cache()
+      require('lu5je0.ext.tabline.config').apply_highlights()
+      require('lu5je0.ext.tabline.render').clear_icon_hl_cache()
       refresh()
     end,
   })

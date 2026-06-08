@@ -1,6 +1,6 @@
 local M = {}
 
-local state = require('lu5je0.ext.bufferline.state')
+local state = require('lu5je0.ext.tabline.state')
 
 local function current_ordinal()
   local cur = vim.api.nvim_get_current_buf()

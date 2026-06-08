@@ -1,13 +1,13 @@
-# Bufferline 工作指引
+# Tabline 工作指引
 
 ## 适用范围
-- `vim/lua/lu5je0/ext/bufferline/` 下的自定义 bufferline 实现，替代 akinsho/bufferline.nvim。
+- `vim/lua/lu5je0/ext/tabline/` 下的自定义 bufferline 实现，替代 akinsho/bufferline.nvim。
 - 通过 `vim.o.tabline` + `%!v:lua...` 纯 Lua 渲染。
 
 ## 目录结构
 
 ```
-ext/bufferline/
+ext/tabline/
 ├── init.lua        -- 入口：setup()，导出 buffer_name_map
 ├── config.lua      -- 选项、offsets 表、动态高亮推导（derive_colors → apply_highlights）
 ├── state.lua       -- 模块级缓存：buffer_name_map、ordinal_to_buf、pick 状态
@@ -18,7 +18,7 @@ ext/bufferline/
 ├── pick.lua        -- 字母分配 + getcharstr 选择模式
 ├── keymaps.lua     -- 全局 keymap 注册（延迟到 vim.schedule）
 ├── commands.lua    -- 用户命令注册（延迟到 vim.schedule）
-└── autocmds.lua    -- 单 augroup 'bufferline'，事件触发 debounced refresh
+└── autocmds.lua    -- 单 augroup 'tabline'，事件触发 debounced refresh
 ```
 
 `ext/bufferline.lua` 是兼容 shim：`require + setup()` + 返回模块。
@@ -39,8 +39,8 @@ ext/bufferline/
 
 ## 兼容接口
 
-- `require('lu5je0.ext.bufferline').buffer_name_map`：被 `tree-sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。修改 state.buffer_name_map 的结构时必须确认 sidebar 兼容。
-- `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表（buflisted + is_valid），被 bufferline、tree-sidebar、time-machine 共用。
+- `require('lu5je0.ext.tabline').buffer_name_map`：被 `tree-sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。修改 state.buffer_name_map 的结构时必须确认 sidebar 兼容。
+- `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表（buflisted + is_valid），被 tabline、tree-sidebar、time-machine 共用。
 
 ## 按键映射
 
