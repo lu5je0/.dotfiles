@@ -14,8 +14,17 @@ function M.setup()
   local group = vim.api.nvim_create_augroup('tabline', { clear = true })
   require('lu5je0.ext.tabline.autocmds').setup(group)
 
-  vim.o.showtabline = 2
-  vim.o.tabline = '%!v:lua.require\'lu5je0.ext.tabline.render\'.tabline()'
+  vim.o.showtabline = 0
+
+  local win = vim.api.nvim_get_current_win()
+  local buf = vim.api.nvim_get_current_buf()
+  if vim.bo[buf].buflisted then
+    state.win_bufs[win] = { buf }
+  end
+
+  vim.wo[win].winbar = string.format(
+    "%%{%%v:lua.require'lu5je0.ext.tabline.render'.winbar(%d)%%}", win
+  )
 
   vim.schedule(function()
     require('lu5je0.ext.tabline.keymaps').setup()

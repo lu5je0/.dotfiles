@@ -96,6 +96,7 @@ function M.apply_highlights()
     BufferLineSeparator      = { fg = hex(c.fill_bg),    bg = hex(c.tab_bg) },
     BufferLineSeparatorSelected = { fg = hex(c.fill_bg), bg = hex(c.sel_bg) },
     BufferLineSeparatorHidden = { fg = hex(c.tab_bg),   bg = hex(c.tab_bg) },
+    BufferLineSeparatorSelectedHidden = { fg = hex(c.sel_bg), bg = hex(c.sel_bg) },
     BufferLineIndicatorSelected = { fg = hex(c.tabline_sel_bg), bg = hex(c.sel_bg) },
     BufferLineTab            = { fg = hex(c.comment_fg), bg = hex(c.tab_bg) },
     BufferLineTabSelected    = { fg = hex(c.tabline_sel_bg), bg = hex(c.sel_bg), bold = true },

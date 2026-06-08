@@ -105,7 +105,7 @@ function M.opts()
       { '<leader>wn', '<cmd>vnew<cr>', desc = 'vnew' },
       { '<leader>wN', '<cmd>new<cr>', desc = 'new' },
       { '<leader>wo', desc = 'hide other windows' },
-      { '<leader>wp', '<cmd>BufferLinePick<cr>', desc = 'buffer pick' },
+      { '<leader>wp', '<cmd>BufferLinePickFromWin<cr>', desc = 'pick buffer from other win' },
       { '<leader>wq', '<cmd>only<cr>', desc = 'break window' },
       { '<leader>wr', desc = 'translate and replace', mode = { 'n', 'x' } },
       { '<leader>ws', '<cmd>vsplit<cr>', desc = 'vspilt' },

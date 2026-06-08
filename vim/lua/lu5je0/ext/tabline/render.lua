@@ -3,7 +3,6 @@ local M = {}
 local config = require('lu5je0.ext.tabline.config')
 local state = require('lu5je0.ext.tabline.state')
 local naming = require('lu5je0.ext.tabline.naming')
-local offsets = require('lu5je0.ext.tabline.offsets')
 
 local strwidth = vim.api.nvim_strwidth
 
@@ -102,13 +101,7 @@ local function truncate(s, max, marker)
   return s:sub(1, byte_end) .. marker
 end
 
-local function pad_to(s, target)
-  local w = strwidth(s)
-  if w >= target then return s end
-  return s .. string.rep(' ', target - w)
-end
-
-local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first)
+local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first, is_focused)
   local opts = config.options
   local devicons = config.options.show_devicons and get_devicons() or nil
 
@@ -132,8 +125,8 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
   local hl_modified = is_selected and 'BufferLineModifiedSelected' or 'BufferLineModified'
 
   local prefix
-  if state.pick_active then
-    local letter = state.pick_map[buf] or '?'
+  if state.pick_active and state.pick_map[buf] then
+    local letter = state.pick_map[buf]
     local hl_pick = is_selected and 'BufferLinePickSelected' or 'BufferLinePick'
     prefix = string.format('%%#%s#%s', hl_pick, letter)
   else
@@ -157,7 +150,7 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
     local b = string.format('%s %%#%s#%s%s ', prefix, hl_buf, icon_part, disp_name)
     b = string.format('%%%d@v:lua.require\'lu5je0.ext.tabline.render\'._click@%s%%X', buf, b)
     local t
-    if is_selected then
+    if is_selected and is_focused then
       if modified then
         t = string.format('%%#%s#%s', hl_modified, opts.modified_icon)
       else
@@ -236,9 +229,52 @@ local function make_trunc_marker(icon, count)
   return s, strwidth(text)
 end
 
-function M.build()
-  local bufs = require('lu5je0.core.buffers').valid_buffers()
-  naming.assign(bufs)
+function M.build_winbar(win_id)
+  local all_valid = require('lu5je0.core.buffers').valid_buffers()
+  if #all_valid == 0 then return '%#BufferLineFill#' end
+
+  local bufs
+  local single_win = true
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if win ~= win_id then
+      local cfg = vim.api.nvim_win_get_config(win)
+      if not cfg.relative or cfg.relative == '' then
+        local bt = vim.bo[vim.api.nvim_win_get_buf(win)].buftype
+        if bt == '' then
+          single_win = false
+          break
+        end
+      end
+    end
+  end
+
+  if single_win then
+    bufs = all_valid
+    state.win_bufs[win_id] = bufs
+  else
+    local win_bufs = state.win_bufs[win_id]
+    if not win_bufs or #win_bufs == 0 then
+      local buf = vim.api.nvim_win_get_buf(win_id)
+      if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted then
+        win_bufs = { buf }
+        state.win_bufs[win_id] = win_bufs
+      else
+        return '%#BufferLineFill#'
+      end
+    end
+
+    local valid_set = {}
+    for _, b in ipairs(all_valid) do valid_set[b] = true end
+
+    bufs = {}
+    for _, b in ipairs(win_bufs) do
+      if valid_set[b] then bufs[#bufs + 1] = b end
+    end
+    state.win_bufs[win_id] = bufs
+    if #bufs == 0 then return '%#BufferLineFill#' end
+  end
+
+  naming.assign(all_valid)
 
   local buf_names = {}
   local all_basenames = {}
@@ -251,35 +287,21 @@ function M.build()
     end
   end
 
-  state.ordinal_to_buf = {}
-  for i, b in ipairs(bufs) do state.ordinal_to_buf[i] = b end
-
-  local current = vim.api.nvim_get_current_buf()
+  local current = vim.api.nvim_win_get_buf(win_id)
+  local is_focused = (win_id == state.focused_win)
   local current_idx = 1
   for i, b in ipairs(bufs) do
     if b == current then current_idx = i; break end
   end
 
-  local segments = {}
-  local widths = {}
   local seg_width = config.options.tab_size + 1
+  local segments = {}
   for i, buf in ipairs(bufs) do
     local is_selected = (buf == current)
-    local seg = buffer_segment(buf, i, is_selected, all_basenames, buf_names[buf], i == 1)
-    segments[i] = seg
-    widths[i] = seg_width
+    segments[i] = buffer_segment(buf, i, is_selected, all_basenames, buf_names[buf], i == 1, is_focused)
   end
 
-  local offset_str = offsets.compute()
-  local offset_w = measure_segment_width(offset_str)
-
-  local tabpages = vim.api.nvim_list_tabpages()
-  local tab_section_w = 0
-  if #tabpages > 1 then
-    tab_section_w = #tabpages * 4
-  end
-
-  local available = vim.o.columns - offset_w - tab_section_w
+  local available = vim.api.nvim_win_get_width(win_id)
 
   local left_start, right_end = 1, #bufs
   local left_hidden, right_hidden = 0, 0
@@ -287,7 +309,7 @@ function M.build()
   local function marker_width(count)
     if count <= 0 then return 0 end
     local digits = count < 10 and 1 or (count < 100 and 2 or 3)
-    return digits + 4  -- space + digits + space + icon(1) + space
+    return digits + 4
   end
 
   local function total_width()
@@ -304,15 +326,12 @@ function M.build()
     elseif right_end > current_idx then
       right_end = right_end - 1
       right_hidden = right_hidden + 1
-    elseif left_start < current_idx then
-      left_start = left_start + 1
-      left_hidden = left_hidden + 1
     else
       break
     end
   end
 
-  local parts = { offset_str }
+  local parts = {}
   local left_marker, _ = make_trunc_marker(LEFT_TRUNC, left_hidden)
   if left_marker ~= '' then parts[#parts + 1] = left_marker end
 
@@ -323,45 +342,70 @@ function M.build()
   local right_marker, _ = make_trunc_marker(RIGHT_TRUNC, right_hidden)
   if right_marker ~= '' then parts[#parts + 1] = right_marker end
 
-  local tab_section = ''
-  if #tabpages > 1 then
-    local cur_tab = vim.api.nvim_get_current_tabpage()
-    local tab_parts = {}
-    for i, tp in ipairs(tabpages) do
-      local is_cur = (tp == cur_tab)
-      local sep_hl = is_cur and 'BufferLineTabSeparatorSelected' or 'BufferLineTabSeparator'
-      local tab_hl = is_cur and 'BufferLineTabSelected' or 'BufferLineTab'
-      tab_parts[#tab_parts + 1] = string.format('%%#%s#▎%%#%s#%%%dT %d ', sep_hl, tab_hl, i, i)
-    end
-    tab_section = table.concat(tab_parts)
-  end
-
   parts[#parts + 1] = '%#BufferLineFill#'
-  if tab_section ~= '' then
-    parts[#parts + 1] = '%='
-    parts[#parts + 1] = tab_section
-  end
   return table.concat(parts)
 end
 
-function M.tabline()
-  local ok, str = pcall(M.build)
+function M.winbar(win_id)
+  local ok, str = pcall(M.build_winbar, win_id)
   if not ok then return '' end
   return str
 end
 
 M.clear_icon_hl_cache = clear_icon_hl_cache
 
+local function close_buf_in_win(bufnr)
+  local win = vim.api.nvim_get_current_win()
+  local win_bufs = state.win_bufs[win]
+  if win_bufs and vim.api.nvim_win_get_buf(win) == bufnr then
+    -- build valid list and find target
+    local filtered = {}
+    local cur_idx
+    for _, b in ipairs(win_bufs) do
+      if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
+        filtered[#filtered + 1] = b
+        if b == bufnr then cur_idx = #filtered end
+      end
+    end
+    if cur_idx and #filtered > 1 then
+      local target
+      if cur_idx < #filtered then
+        target = filtered[cur_idx + 1]
+      else
+        target = filtered[cur_idx - 1]
+      end
+      vim.api.nvim_set_current_buf(target)
+    end
+  end
+
+  -- remove from list
+  if win_bufs then
+    local new_list = {}
+    for _, b in ipairs(win_bufs) do
+      if b ~= bufnr then new_list[#new_list + 1] = b end
+    end
+    state.win_bufs[win] = new_list
+  end
+
+  -- only bdelete if no window owns this buffer
+  for _, bufs in pairs(state.win_bufs) do
+    for _, b in ipairs(bufs) do
+      if b == bufnr then return end
+    end
+  end
+  vim.cmd('silent! bdelete ' .. bufnr)
+end
+
 function M._click(bufnr, _clicks, button, _mods)
   if button == 'l' then
     pcall(vim.api.nvim_set_current_buf, bufnr)
   elseif button == 'm' then
-    pcall(vim.cmd, 'bdelete ' .. bufnr)
+    pcall(close_buf_in_win, bufnr)
   end
 end
 
 function M._close_click(bufnr, _clicks, _button, _mods)
-  pcall(vim.cmd, 'bdelete ' .. bufnr)
+  pcall(close_buf_in_win, bufnr)
 end
 
 return M

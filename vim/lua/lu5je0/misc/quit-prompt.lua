@@ -125,6 +125,7 @@ end
 function M.close_buffer()
   local valid_buffers = require('lu5je0.core.buffers').valid_buffers()
   local cur_buf_nr = vim.api.nvim_get_current_buf()
+  local cur_win = vim.api.nvim_get_current_win()
 
   local txt_window_cnt = 0
   for _, v in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -138,9 +139,63 @@ function M.close_buffer()
     return
   end
 
-  if vim.bo.modified and txt_window_cnt == 1 then
+  if vim.bo.modified then
     local confirm_result = vim.fn.confirm('Close without saving?', '&No\n&Yes')
     if confirm_result ~= 2 then
+      return
+    end
+  end
+
+  local tabline_state = require('lu5je0.ext.tabline.state')
+  local win_bufs = tabline_state.win_bufs[cur_win]
+
+  if win_bufs then
+    local filtered = {}
+    local cur_idx
+    for _, b in ipairs(win_bufs) do
+      if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
+        filtered[#filtered + 1] = b
+        if b == cur_buf_nr then
+          cur_idx = #filtered
+        end
+      end
+    end
+
+    if cur_idx and #filtered > 1 then
+      local prev_buf
+      if cur_idx < #filtered then
+        prev_buf = filtered[cur_idx + 1]
+      else
+        prev_buf = filtered[cur_idx - 1]
+      end
+
+      -- remove from current window's list
+      local new_list = {}
+      for _, b in ipairs(win_bufs) do
+        if b ~= cur_buf_nr then
+          new_list[#new_list + 1] = b
+        end
+      end
+      tabline_state.win_bufs[cur_win] = new_list
+
+      vim.api.nvim_set_current_buf(prev_buf)
+
+      -- only bdelete if no other window owns this buffer
+      local buf_in_other_win = false
+      for w, bufs in pairs(tabline_state.win_bufs) do
+        if w ~= cur_win then
+          for _, b in ipairs(bufs) do
+            if b == cur_buf_nr then
+              buf_in_other_win = true
+              break
+            end
+          end
+          if buf_in_other_win then break end
+        end
+      end
+      if not buf_in_other_win then
+        vim.cmd('silent! bd! ' .. cur_buf_nr)
+      end
       return
     end
   end

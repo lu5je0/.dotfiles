@@ -9,8 +9,8 @@ function M.setup()
     })
   end, { force = true })
 
-  vim.api.nvim_create_user_command('BufferLinePick', function()
-    require('lu5je0.ext.tabline.pick').start()
+  vim.api.nvim_create_user_command('BufferLinePickFromWin', function()
+    require('lu5je0.ext.tabline.pick').pick_from_other_wins()
   end, { force = true })
 
   vim.api.nvim_create_user_command('BufferLineCloseLeft', function()
