@@ -120,7 +120,7 @@ M.symbols = {
     [25] = { icon = '󰃬', hl = 'Operator' }, -- Operator
     [26] = { icon = '󰊄', hl = 'Type' }, -- TypeParameter
   },
-  treesitter_filetypes = { 'markdown' },
+  treesitter_filetypes = { 'markdown', 'xml', 'yaml' },
 }
 
 function M.tab_idx(id)

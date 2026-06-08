@@ -79,6 +79,7 @@ function M.render_tree(root_children, opts)
   local node_hl = opts.node_hl
   local compress_dirs = opts.compress_dirs or false
   local flat_depth = opts.flat_depth or 0
+  local simple_indent = opts.simple_indent or false
 
   local function default_dir_icon(node)
     local has_children = node.children and #node.children > 0
@@ -158,7 +159,20 @@ function M.render_tree(root_children, opts)
 
     for i, child in ipairs(visible) do
       local child_is_last = (i == #visible)
-      local branch = is_root_level and '' or (child_is_last and '└ ' or '│ ')
+      local branch
+      if simple_indent then
+        if is_root_level then
+          branch = child.type == 'directory' and '' or '  '
+        elseif child.type == 'directory' then
+          branch = ''
+        elseif #visible == 1 then
+          branch = '  '
+        else
+          branch = child_is_last and '└ ' or '├ '
+        end
+      else
+        branch = is_root_level and '' or (child_is_last and '└ ' or '│ ')
+      end
       local line_prefix = prefix .. branch
       local indent_end = #prefix
       local branch_end = indent_end + #branch
@@ -184,8 +198,14 @@ function M.render_tree(root_children, opts)
         highlights[#highlights + 1] = { line = line_idx, hl = folder_name_hl, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #display_name }
 
         if display_node.expanded and display_node.children then
-          local child_prefix = is_root_level and ''
-            or (prefix .. (child_is_last and '  ' or '│ '))
+          local child_prefix
+          if simple_indent then
+            child_prefix = prefix .. '  '
+          elseif is_root_level then
+            child_prefix = ''
+          else
+            child_prefix = prefix .. (child_is_last and '  ' or '│ ')
+          end
           walk(display_node.children, child_prefix, depth + 1, effective_hl)
         end
       else

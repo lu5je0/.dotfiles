@@ -68,7 +68,6 @@ function M.setup(group)
     callback = function(args)
       if not state:is_open() then return end
       if state.active_tab_idx ~= config.tab_idx('symbols') then return end
-      if not require('lu5je0.ext.tree-sidebar.sources.symbols').is_auto_follow() then return end
       if args.buf == state.buf then return end
       local cur_buf = vim.api.nvim_get_current_buf()
       if cur_buf == state.symbols.target_buf then return end

@@ -54,6 +54,12 @@ local ts_query_defs = {
   markdown = {
     { query = '(section (atx_heading (_) (inline) @name)) @symbol', kind = 15 },
   },
+  xml = {
+    { query = '(element (STag (Name) @name)) @symbol', kind = 20 },
+  },
+  yaml = {
+    { query = '(block_mapping_pair key: (_) @name) @symbol', kind = 20 },
+  },
 }
 
 local ts_query_cache = {}
@@ -183,18 +189,6 @@ end
 
 -- ── source spec ─────────────────────────────────────────
 
-local function mark_leaf_indent(children)
-  if not children then return end
-  local has_dir = false
-  for _, n in ipairs(children) do
-    if n.type == 'directory' then has_dir = true; break end
-  end
-  for _, n in ipairs(children) do
-    n._indent_leaf = has_dir
-    if n.children then mark_leaf_indent(n.children) end
-  end
-end
-
 local spec = { id = 'symbols', state_key = 'symbols' }
 M._spec = spec
 
@@ -202,21 +196,19 @@ function spec.build(ts, _ctx)
   local nodes = ts.nodes or {}
   if #nodes == 0 then ts._is_empty = true; return {} end
   ts._is_empty = false
-  mark_leaf_indent(nodes)
   return nodes
 end
 
 function spec.render_opts(_ts, _ctx)
   return {
+    simple_indent = true,
     get_dir_icon = function(node)
       local icon = (get_icon(node.kind))
       local arrow = node.expanded and config.symbols.arrow_icons.expanded or config.symbols.arrow_icons.collapsed
       return arrow .. ' ' .. icon
     end,
     get_file_icon = function(node)
-      local icon, hl = get_icon(node.kind)
-      if node._indent_leaf then return '  ' .. icon, hl end
-      return icon, hl
+      return get_icon(node.kind)
     end,
     file_suffix = function(node)
       if node.detail and node.detail ~= '' then return node.detail, 'Comment' end
