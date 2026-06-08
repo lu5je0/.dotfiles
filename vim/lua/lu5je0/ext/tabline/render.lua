@@ -5,16 +5,34 @@ local state = require('lu5je0.ext.tabline.state')
 local naming = require('lu5je0.ext.tabline.naming')
 local offsets = require('lu5je0.ext.tabline.offsets')
 
+local strwidth = vim.api.nvim_strwidth
+
+local _home = (vim.env.HOME or '') .. '/'
+
+local function rel_path(abs)
+  local cwd = vim.fn.getcwd() .. '/'
+  if abs:sub(1, #cwd) == cwd then
+    return abs:sub(#cwd + 1)
+  end
+  if abs:sub(1, #_home) == _home then
+    return '~/' .. abs:sub(#_home + 1)
+  end
+  return abs
+end
+
 local superscripts = { '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹' }
+local superscript_cache = {}
+for i = 0, 99 do
+  local s = tostring(i)
+  local result = {}
+  for j = 1, #s do
+    result[j] = superscripts[tonumber(s:sub(j, j)) + 1]
+  end
+  superscript_cache[i] = table.concat(result)
+end
 
 local function to_superscript(n)
-  local s = tostring(n)
-  local result = {}
-  for i = 1, #s do
-    local digit = tonumber(s:sub(i, i))
-    result[#result + 1] = superscripts[digit + 1]
-  end
-  return table.concat(result)
+  return superscript_cache[n] or superscript_cache[0]
 end
 
 local icon_hl_cache = {}
@@ -51,9 +69,9 @@ local function get_devicons()
 end
 
 local function truncate(s, max, marker)
-  local w = vim.fn.strdisplaywidth(s)
+  local w = strwidth(s)
   if w <= max then return s end
-  local mw = vim.fn.strdisplaywidth(marker)
+  local mw = strwidth(marker)
   local target = max - mw
   if target <= 0 then return marker end
 
@@ -75,7 +93,7 @@ local function truncate(s, max, marker)
     elseif b < 0xF0 then char_len = 3
     else char_len = 4
     end
-    local ch_w = (char_len == 1) and 1 or vim.fn.strdisplaywidth(s:sub(i, i + char_len - 1))
+    local ch_w = (char_len == 1) and 1 or strwidth(s:sub(i, i + char_len - 1))
     if acc_w + ch_w > target then break end
     acc_w = acc_w + ch_w
     byte_end = i + char_len - 1
@@ -85,7 +103,7 @@ local function truncate(s, max, marker)
 end
 
 local function pad_to(s, target)
-  local w = vim.fn.strdisplaywidth(s)
+  local w = strwidth(s)
   if w >= target then return s end
   return s .. string.rep(' ', target - w)
 end
@@ -101,7 +119,7 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
   else
     local base = vim.fs.basename(buf_name)
     if (all_basenames[base] or 0) > 1 then
-      name = vim.fn.fnamemodify(buf_name, ':~:.')
+      name = rel_path(buf_name)
     else
       name = base
     end
@@ -123,9 +141,10 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
   end
 
   local icon_part = ''
-  if devicons then
-    local ext = vim.fn.fnamemodify(buf_name, ':e')
-    local icon, icon_hl = devicons.get_icon(vim.fs.basename(buf_name), ext, { default = true })
+  if devicons and buf_name ~= '' then
+    local base_for_icon = vim.fs.basename(buf_name)
+    local ext = base_for_icon:match('%.([^%.]+)$') or ''
+    local icon, icon_hl = devicons.get_icon(base_for_icon, ext, { default = true })
     if icon then
       local combined_hl = get_icon_hl(icon_hl or hl_buf, hl_buf)
       icon_part = string.format('%%#%s#%s%%#%s# ', combined_hl, icon, hl_buf)
@@ -155,21 +174,28 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
     return b, t
   end
 
-  local body, tail = build_body_tail(name)
-  local content = body .. tail
-  local content_plain = content:gsub('%%#[^#]*#', ''):gsub('%%[0-9]*@[^@]*@', ''):gsub('%%X', '')
-  local content_w = vim.fn.strdisplaywidth(content_plain)
+  -- Pre-compute the visible width of parts excluding name
+  -- Structure: prefix_text + ' ' + icon_visible + name + ' ' + tail_visible
+  local prefix_plain = state.pick_active and 1 or (ordinal < 10 and 1 or 2)
+  local icon_visible_w = 0
+  if icon_part ~= '' then
+    icon_visible_w = 2  -- icon char (1) + space (1)
+  end
+  -- tail: selected = icon(1) + space(1) = 2; non-selected = 2 (spaces or modified+space)
+  local tail_w = 2
+  local overhead = prefix_plain + 1 + icon_visible_w + 1 + tail_w  -- prefix + sp + icon + name_placeholder + sp + tail
+
+  local name_w = strwidth(name)
+  local content_w = overhead + name_w
 
   if content_w > opts.tab_size then
-    local overflow = content_w - opts.tab_size
-    local name_w = vim.fn.strdisplaywidth(name)
-    local new_max = math.max(1, name_w - overflow)
+    local new_max = math.max(1, name_w - (content_w - opts.tab_size))
     name = truncate(name, new_max, opts.truncate_marker)
-    body, tail = build_body_tail(name)
-    content = body .. tail
-    content_plain = content:gsub('%%#[^#]*#', ''):gsub('%%[0-9]*@[^@]*@', ''):gsub('%%X', '')
-    content_w = vim.fn.strdisplaywidth(content_plain)
+    name_w = strwidth(name)
+    content_w = overhead + name_w
   end
+
+  local body, tail = build_body_tail(name)
 
   local left_pad_str = ''
   local right_pad_str = ''
@@ -190,7 +216,7 @@ end
 
 local function measure_segment_width(segment)
   local plain = segment:gsub('%%#[^#]*#', ''):gsub('%%[0-9]*@[^@]*@', ''):gsub('%%X', ''):gsub('%%T', '')
-  return vim.fn.strdisplaywidth(plain)
+  return strwidth(plain)
 end
 
 local LEFT_TRUNC = ''
@@ -200,7 +226,7 @@ local function make_trunc_marker(icon, count)
   if count <= 0 then return '', 0 end
   local text = string.format(' %d %s ', count, icon)
   local s = string.format('%%#BufferLineTruncMarker#%s', text)
-  return s, vim.fn.strdisplaywidth(text)
+  return s, strwidth(text)
 end
 
 function M.build()
@@ -251,19 +277,15 @@ function M.build()
   local left_start, right_end = 1, #bufs
   local left_hidden, right_hidden = 0, 0
 
-  local left_icon_w = vim.fn.strdisplaywidth(LEFT_TRUNC)
-  local right_icon_w = vim.fn.strdisplaywidth(RIGHT_TRUNC)
-
-  local function marker_width(count, icon_w)
+  local function marker_width(count)
     if count <= 0 then return 0 end
-    -- format: ' %d %s ' -> space + digits + space + icon + space
     local digits = count < 10 and 1 or (count < 100 and 2 or 3)
-    return digits + icon_w + 3
+    return digits + 4  -- space + digits + space + icon(1) + space
   end
 
   local function total_width()
     local w = (right_end - left_start + 1) * seg_width
-    return w + marker_width(left_hidden, left_icon_w) + marker_width(right_hidden, right_icon_w)
+    return w + marker_width(left_hidden) + marker_width(right_hidden)
   end
 
   while total_width() > available and (left_start < current_idx or right_end > current_idx) do
