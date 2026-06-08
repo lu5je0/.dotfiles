@@ -130,11 +130,22 @@ function M.request_symbols(opts)
   local ts = state.tab_for(tabpage)
 
   local target_buf, target_win = nil, nil
-  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage)) do
-    if win ~= ts.win then
-      local buf = vim.api.nvim_win_get_buf(win)
-      if vim.bo[buf].buftype == '' and vim.bo[buf].buflisted then
-        target_buf = buf; target_win = win; break
+
+  local source_win = opts.source_win
+  if source_win and vim.api.nvim_win_is_valid(source_win) and source_win ~= ts.win then
+    local buf = vim.api.nvim_win_get_buf(source_win)
+    if vim.bo[buf].buftype == '' and vim.bo[buf].buflisted then
+      target_buf = buf; target_win = source_win
+    end
+  end
+
+  if not target_buf then
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage)) do
+      if win ~= ts.win then
+        local buf = vim.api.nvim_win_get_buf(win)
+        if vim.bo[buf].buftype == '' and vim.bo[buf].buflisted then
+          target_buf = buf; target_win = win; break
+        end
       end
     end
   end
@@ -181,20 +192,22 @@ function M.request_symbols(opts)
       if ts.active_tab_idx ~= config.tab_idx('symbols') then return end
       M.render()
       if cursor_line and state:is_open() then
-        M.locate_by_line(cursor_line)
+        M.locate_by_line(cursor_line, { force = true })
       end
     end)
   end)
 end
 
-local function expand_to_line(nodes, cursor_line)
+local function expand_to_line(nodes, cursor_line, target_node)
   if not nodes then return false end
   for _, node in ipairs(nodes) do
     local r = node.range
     if r and cursor_line >= r.start.line and cursor_line <= r['end'].line then
       if node.type == 'directory' and node.children then
-        node.expanded = true
-        expand_to_line(node.children, cursor_line)
+        if node ~= target_node then
+          node.expanded = true
+        end
+        expand_to_line(node.children, cursor_line, target_node)
       end
       return true
     end
@@ -237,13 +250,13 @@ function M.locate_by_line(cursor_line, opts)
     end
   end
   local target = find_best_node(state.symbols.nodes)
-  if not target or same_node(target, state.symbols.last_located_node) then return end
+  if not target or (same_node(target, state.symbols.last_located_node) and not opts.force) then return end
   state.symbols.last_located_node = target
 
   if M.is_auto_follow() then
     collapse_all_nodes(state.symbols.nodes)
   end
-  expand_to_line(state.symbols.nodes, cursor_line)
+  expand_to_line(state.symbols.nodes, cursor_line, target)
   M.render()
 
   local items = state.symbols.display_items

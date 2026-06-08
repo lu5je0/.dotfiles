@@ -67,6 +67,7 @@ end
 function M.locate_in_tab(idx)
   local filepath = vim.fn.expand('%:p')
   local cur_buf = vim.api.nvim_get_current_buf()
+  local source_win = vim.api.nvim_get_current_win()
 
   local file_readable = vim.fn.filereadable(filepath) == 1
 
@@ -103,7 +104,7 @@ function M.locate_in_tab(idx)
       git_changes.render()
     end
   elseif idx == config.tab_idx('symbols') then
-    require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols({ locate = true })
+    require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols({ locate = true, source_win = source_win })
   end
 end
 
@@ -167,12 +168,14 @@ local function register_keymaps()
   vim.keymap.set('n', '<leader>gs', function() M.open_tab(config.tab_idx('git_changes'), { focus = false }) end, opts)
   vim.keymap.set('n', '<leader>fb', function() M.locate_in_tab(config.tab_idx('buffers')) end, opts)
   vim.keymap.set('n', '<leader>fs', function()
+    local source_win = vim.api.nvim_get_current_win()
     M.open_tab(config.tab_idx('symbols'), { no_toggle = true })
-    require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols({ locate = true })
+    require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols({ locate = true, source_win = source_win })
   end, opts)
   vim.keymap.set('n', '<leader>s', function()
+    local source_win = vim.api.nvim_get_current_win()
     M.open_tab(config.tab_idx('symbols'), { focus = false })
-    require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols()
+    require('lu5je0.ext.tree-sidebar.sources.symbols').request_symbols({ source_win = source_win })
   end, opts)
 end
 
