@@ -63,7 +63,27 @@ local function truncate(s, max, marker)
   local w = vim.fn.strdisplaywidth(s)
   if w <= max then return s end
   local mw = vim.fn.strdisplaywidth(marker)
-  return vim.fn.strcharpart(s, 0, math.max(max - mw, 1)) .. marker
+  local target = max - mw
+  local acc_w = 0
+  local byte_end = 0
+  local len = #s
+  local i = 1
+  while i <= len do
+    local b = s:byte(i)
+    local char_len
+    if b < 0x80 then char_len = 1
+    elseif b < 0xE0 then char_len = 2
+    elseif b < 0xF0 then char_len = 3
+    else char_len = 4
+    end
+    local ch = s:sub(i, i + char_len - 1)
+    local ch_w = vim.fn.strdisplaywidth(ch)
+    if acc_w + ch_w > target then break end
+    acc_w = acc_w + ch_w
+    byte_end = i + char_len - 1
+    i = i + char_len
+  end
+  return s:sub(1, byte_end) .. marker
 end
 
 local function pad_to(s, target)
@@ -105,25 +125,45 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames)
   end
 
   local modified = vim.bo[buf].modified
-  local tail
-  if modified then
-    tail = string.format('%%#%s#%s', hl_modified, opts.modified_icon)
-  else
-    tail = string.format('%%#%s#%s', hl_close, opts.close_icon)
+
+  local function build_body_tail(disp_name)
+    local b = string.format('%s %%#%s#%s%s ', prefix, hl_buf, icon_part, disp_name)
+    b = string.format('%%%d@v:lua.require\'lu5je0.ext.bufferline.render\'._click@%s%%X', buf, b)
+    local t
+    if modified then
+      t = string.format('%%#%s#%s', hl_modified, opts.modified_icon)
+    else
+      t = string.format('%%#%s#%s', hl_close, opts.close_icon)
+    end
+    t = string.format('%%%d@v:lua.require\'lu5je0.ext.bufferline.render\'._close_click@%s %%X', buf, t)
+    return b, t
   end
 
-  local body = string.format(' %s %%#%s#%s%s ', prefix, hl_buf, icon_part, name)
+  local body, tail = build_body_tail(name)
+  local content = body .. tail
+  local content_plain = content:gsub('%%#[^#]*#', ''):gsub('%%[0-9]*@[^@]*@', ''):gsub('%%X', '')
+  local content_w = vim.fn.strdisplaywidth(content_plain)
 
-  body = string.format('%%%d@v:lua.require\'lu5je0.ext.bufferline.render\'._click@%s%%X', buf, body)
-  tail = string.format('%%%d@v:lua.require\'lu5je0.ext.bufferline.render\'._close_click@%s %%X', buf, tail)
+  if content_w > opts.tab_size then
+    local overflow = content_w - opts.tab_size
+    local name_w = vim.fn.strdisplaywidth(name)
+    local new_max = math.max(1, name_w - overflow)
+    name = truncate(name, new_max, opts.truncate_marker)
+    body, tail = build_body_tail(name)
+    content = body .. tail
+    content_plain = content:gsub('%%#[^#]*#', ''):gsub('%%[0-9]*@[^@]*@', ''):gsub('%%X', '')
+    content_w = vim.fn.strdisplaywidth(content_plain)
+  end
 
-  local inner = string.format('%%#%s#%s%s', hl_buf, body, tail)
-  local fixed = string.format('%%-%d.%d(%s%%)', opts.tab_size, opts.tab_size, inner)
+  if content_w < opts.tab_size then
+    local pad = string.rep(' ', opts.tab_size - content_w)
+    body = body .. string.format('%%#%s#%s', hl_buf, pad)
+  end
 
   local hl_sep = is_selected and 'BufferLineIndicatorSelected' or 'BufferLineSeparator'
   local sep = string.format('%%#%s#▎', hl_sep)
 
-  local segment = string.format('%s%s', sep, fixed)
+  local segment = string.format('%s%%#%s#%s%s', sep, hl_buf, body, tail)
   return segment
 end
 

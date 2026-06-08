@@ -1,8 +1,8 @@
 local M = {}
 
 M.options = {
-  max_name_length = 12,
-  tab_size = 15,
+  max_name_length = 13,
+  tab_size = 19,
   show_devicons = true,
   modified_icon = '●',
   close_icon = '󰅖',
