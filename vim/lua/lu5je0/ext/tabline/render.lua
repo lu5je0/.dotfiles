@@ -5,11 +5,16 @@ local state = require('lu5je0.ext.tabline.state')
 local naming = require('lu5je0.ext.tabline.naming')
 
 local strwidth = vim.api.nvim_strwidth
+local rep = string.rep
 
 local _home = (vim.env.HOME or '') .. '/'
 
+local _cwd_cache = ''
+local _modified_cache = {}
+local _valid_bufs_cache = {}
+
 local function rel_path(abs)
-  local cwd = vim.fn.getcwd() .. '/'
+  local cwd = _cwd_cache
   if abs:sub(1, #cwd) == cwd then
     return abs:sub(#cwd + 1)
   end
@@ -17,6 +22,10 @@ local function rel_path(abs)
     return '~/' .. abs:sub(#_home + 1)
   end
   return abs
+end
+
+local function basename(path)
+  return path:match('[^/]+$') or path
 end
 
 local superscripts = { '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹' }
@@ -74,12 +83,10 @@ local function truncate(s, max, marker)
   local target = max - mw
   if target <= 0 then return marker end
 
-  -- fast path: pure ASCII
   if #s == w then
     return s:sub(1, target) .. marker
   end
 
-  -- slow path: multi-byte
   local acc_w = 0
   local byte_end = 0
   local len = #s
@@ -101,17 +108,36 @@ local function truncate(s, max, marker)
   return s:sub(1, byte_end) .. marker
 end
 
+local _click_prefix_cache = {}
+local _close_click_prefix_cache = {}
+
+local function click_prefix(buf)
+  local c = _click_prefix_cache[buf]
+  if c then return c end
+  c = '%' .. buf .. "@v:lua.require'lu5je0.ext.tabline.render'._click@"
+  _click_prefix_cache[buf] = c
+  return c
+end
+
+local function close_click_prefix(buf)
+  local c = _close_click_prefix_cache[buf]
+  if c then return c end
+  c = '%' .. buf .. "@v:lua.require'lu5je0.ext.tabline.render'._close_click@"
+  _close_click_prefix_cache[buf] = c
+  return c
+end
+
 local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first, is_focused, target_size)
   local opts = config.options
   target_size = target_size or opts.tab_size
-  local devicons = config.options.show_devicons and get_devicons() or nil
+  local devicons = opts.show_devicons and get_devicons() or nil
 
   local name
   if buf_name == '' then
     local n = state.buffer_name_map[buf]
     name = n and ('Untitled-' .. n) or '[No Name]'
   else
-    local base = vim.fs.basename(buf_name)
+    local base = basename(buf_name)
     if (all_basenames[base] or 0) > 1 then
       name = rel_path(buf_name)
     else
@@ -121,63 +147,34 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
   name = truncate(name, opts.max_name_length, opts.truncate_marker)
 
   local hl_buf = is_selected and 'BufferLineBufferSelected' or 'BufferLineBuffer'
-  local hl_num = is_selected and 'BufferLineNumbersSelected' or 'BufferLineNumbers'
-  local hl_close = is_selected and 'BufferLineCloseSelected' or 'BufferLineClose'
-  local hl_modified = is_selected and 'BufferLineModifiedSelected' or 'BufferLineModified'
 
   local prefix
   if state.pick_active and state.pick_map[buf] then
-    local letter = state.pick_map[buf]
     local hl_pick = is_selected and 'BufferLinePickSelected' or 'BufferLinePick'
-    prefix = string.format('%%#%s#%s', hl_pick, letter)
+    prefix = '%#' .. hl_pick .. '#' .. state.pick_map[buf]
   else
-    prefix = string.format('%%#%s#%s', hl_num, to_superscript(ordinal))
+    local hl_num = is_selected and 'BufferLineNumbersSelected' or 'BufferLineNumbers'
+    prefix = '%#' .. hl_num .. '#' .. to_superscript(ordinal)
   end
 
   local icon_part = ''
+  local icon_visible_w = 0
   if devicons and buf_name ~= '' then
-    local base_for_icon = vim.fs.basename(buf_name)
+    local base_for_icon = basename(buf_name)
     local ext = base_for_icon:match('%.([^%.]+)$') or ''
     local icon, icon_hl = devicons.get_icon(base_for_icon, ext, { default = true })
     if icon then
       local combined_hl = get_icon_hl(icon_hl or hl_buf, hl_buf)
-      icon_part = string.format('%%#%s#%s%%#%s# ', combined_hl, icon, hl_buf)
+      icon_part = '%#' .. combined_hl .. '#' .. icon .. '%#' .. hl_buf .. '# '
+      icon_visible_w = 2
     end
   end
 
-  local modified = vim.bo[buf].modified
+  local modified = _modified_cache[buf]
 
-  local function build_body_tail(disp_name)
-    local b = string.format('%s %%#%s#%s%s ', prefix, hl_buf, icon_part, disp_name)
-    b = string.format('%%%d@v:lua.require\'lu5je0.ext.tabline.render\'._click@%s%%X', buf, b)
-    local t
-    if is_selected and is_focused then
-      if modified then
-        t = string.format('%%#%s#%s', hl_modified, opts.modified_icon)
-      else
-        t = string.format('%%#%s#%s', hl_close, opts.close_icon)
-      end
-      t = string.format('%%%d@v:lua.require\'lu5je0.ext.tabline.render\'._close_click@%s %%X', buf, t)
-    else
-      if modified then
-        t = string.format('%%#%s#%s ', hl_modified, opts.modified_icon)
-      else
-        t = string.format('%%#%s#  ', hl_buf)
-      end
-    end
-    return b, t
-  end
-
-  -- Pre-compute the visible width of parts excluding name
-  -- Structure: prefix_text + ' ' + icon_visible + name + ' ' + tail_visible
   local prefix_plain = state.pick_active and 1 or (ordinal < 10 and 1 or 2)
-  local icon_visible_w = 0
-  if icon_part ~= '' then
-    icon_visible_w = 2  -- icon char (1) + space (1)
-  end
-  -- tail: selected = icon(1) + space(1) = 2; non-selected = 2 (spaces or modified+space)
   local tail_w = 2
-  local overhead = prefix_plain + 1 + icon_visible_w + 1 + tail_w  -- prefix + sp + icon + name_placeholder + sp + tail
+  local overhead = prefix_plain + 1 + icon_visible_w + 1 + tail_w
 
   local name_w = strwidth(name)
   local content_w = overhead + name_w
@@ -189,18 +186,41 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
     content_w = overhead + name_w
   end
 
-  local body, tail = build_body_tail(name)
+  -- build body inline
+  local hl_buf_tag = '%#' .. hl_buf .. '#'
+  local body = click_prefix(buf) .. prefix .. ' ' .. hl_buf_tag .. icon_part .. name .. ' %X'
 
+  -- build tail inline
+  local tail
+  if is_selected and is_focused then
+    if modified then
+      local hl_modified = is_selected and 'BufferLineModifiedSelected' or 'BufferLineModified'
+      tail = close_click_prefix(buf) .. '%#' .. hl_modified .. '#' .. opts.modified_icon .. ' %X'
+    else
+      local hl_close = is_selected and 'BufferLineCloseSelected' or 'BufferLineClose'
+      tail = close_click_prefix(buf) .. '%#' .. hl_close .. '#' .. opts.close_icon .. ' %X'
+    end
+  else
+    if modified then
+      local hl_modified = is_selected and 'BufferLineModifiedSelected' or 'BufferLineModified'
+      tail = '%#' .. hl_modified .. '#' .. opts.modified_icon .. ' '
+    else
+      tail = hl_buf_tag .. '  '
+    end
+  end
+
+  -- padding
   local left_pad_str = ''
   local right_pad_str = ''
   if content_w < target_size then
     local total_pad = target_size - content_w
     local left_pad = math.floor(total_pad / 2)
     local right_pad = total_pad - left_pad
-    left_pad_str = string.format('%%#%s#%s', hl_buf, string.rep(' ', left_pad))
-    right_pad_str = string.format('%%#%s#%s', hl_buf, string.rep(' ', right_pad))
+    left_pad_str = hl_buf_tag .. rep(' ', left_pad)
+    right_pad_str = hl_buf_tag .. rep(' ', right_pad)
   end
 
+  -- separator
   local hl_sep
   if is_selected then
     hl_sep = 'BufferLineIndicatorSelected'
@@ -209,10 +229,8 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
   else
     hl_sep = 'BufferLineSeparator'
   end
-  local sep = string.format('%%#%s#▎', hl_sep)
 
-  local segment = string.format('%s%s%%#%s#%s%s%s', sep, left_pad_str, hl_buf, body, right_pad_str, tail)
-  return segment
+  return '%#' .. hl_sep .. '#▎' .. left_pad_str .. hl_buf_tag .. body .. right_pad_str .. tail
 end
 
 local function measure_segment_width(segment)
@@ -230,8 +248,22 @@ local function make_trunc_marker(icon, count)
   return s, strwidth(text)
 end
 
+local function refresh_buf_cache()
+  local valid = {}
+  local modified = {}
+  for _, info in ipairs(vim.fn.getbufinfo({ buflisted = 1 })) do
+    local buf = info.bufnr
+    valid[#valid + 1] = buf
+    modified[buf] = info.changed == 1
+  end
+  _valid_bufs_cache = valid
+  _modified_cache = modified
+end
+
 function M.build_winbar(win_id)
-  local all_valid = require('lu5je0.core.buffers').valid_buffers()
+  _cwd_cache = vim.fn.getcwd() .. '/'
+  refresh_buf_cache()
+  local all_valid = _valid_bufs_cache
   if #all_valid == 0 then return '%#BufferLineFill#' end
 
   local bufs
@@ -240,7 +272,7 @@ function M.build_winbar(win_id)
     if win ~= win_id then
       local cfg = vim.api.nvim_win_get_config(win)
       if not cfg.relative or cfg.relative == '' then
-        local bt = vim.bo[vim.api.nvim_win_get_buf(win)].buftype
+        local bt = vim.api.nvim_get_option_value('buftype', { buf = vim.api.nvim_win_get_buf(win) })
         if bt == '' then
           single_win = false
           break
@@ -256,7 +288,7 @@ function M.build_winbar(win_id)
     local win_bufs = state.win_bufs[win_id]
     if not win_bufs or #win_bufs == 0 then
       local buf = vim.api.nvim_win_get_buf(win_id)
-      if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted then
+      if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_get_option_value('buflisted', { buf = buf }) then
         win_bufs = { buf }
         state.win_bufs[win_id] = win_bufs
       else
@@ -283,7 +315,7 @@ function M.build_winbar(win_id)
     local n = vim.api.nvim_buf_get_name(b)
     buf_names[b] = n
     if n ~= '' then
-      local base = vim.fs.basename(n)
+      local base = basename(n)
       all_basenames[base] = (all_basenames[base] or 0) + 1
     end
   end
