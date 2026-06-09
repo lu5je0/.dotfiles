@@ -96,7 +96,7 @@ o.pumheight = 13
 o.number = true
 o.numberwidth = 3
 
-o.laststatus = 2
+o.laststatus = 3
 o.showmode = false
 o.cursorline = true
 o.cursorlineopt = 'number'
