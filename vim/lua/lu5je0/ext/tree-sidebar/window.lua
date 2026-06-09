@@ -91,6 +91,11 @@ local function usable_wins()
 end
 
 local function pick_win(wins)
+  local saved_laststatus = vim.o.laststatus
+  if saved_laststatus ~= 2 then
+    vim.o.laststatus = 2
+  end
+
   local saved = {}
   for i, win in ipairs(wins) do
     local char = PICK_CHARS:sub(i, i)
@@ -110,6 +115,10 @@ local function pick_win(wins)
       vim.api.nvim_set_option_value('statusline', opts.statusline, { win = win })
       vim.api.nvim_set_option_value('winhl', opts.winhl, { win = win })
     end
+  end
+
+  if vim.o.laststatus ~= saved_laststatus then
+    vim.o.laststatus = saved_laststatus
   end
   vim.cmd('redraw')
 

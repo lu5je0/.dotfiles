@@ -101,8 +101,9 @@ local function truncate(s, max, marker)
   return s:sub(1, byte_end) .. marker
 end
 
-local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first, is_focused)
+local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first, is_focused, target_size)
   local opts = config.options
+  target_size = target_size or opts.tab_size
   local devicons = config.options.show_devicons and get_devicons() or nil
 
   local name
@@ -181,8 +182,8 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
   local name_w = strwidth(name)
   local content_w = overhead + name_w
 
-  if content_w > opts.tab_size then
-    local new_max = math.max(1, name_w - (content_w - opts.tab_size))
+  if content_w > target_size then
+    local new_max = math.max(1, name_w - (content_w - target_size))
     name = truncate(name, new_max, opts.truncate_marker)
     name_w = strwidth(name)
     content_w = overhead + name_w
@@ -192,8 +193,8 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
 
   local left_pad_str = ''
   local right_pad_str = ''
-  if content_w < opts.tab_size then
-    local total_pad = opts.tab_size - content_w
+  if content_w < target_size then
+    local total_pad = target_size - content_w
     local left_pad = math.floor(total_pad / 2)
     local right_pad = total_pad - left_pad
     left_pad_str = string.format('%%#%s#%s', hl_buf, string.rep(' ', left_pad))
@@ -331,15 +332,55 @@ function M.build_winbar(win_id)
     end
   end
 
+  local used_extra = 0
+  local left_partial, right_partial
+
+  local function leftover()
+    return available - total_width() - used_extra
+  end
+
+  local function min_partial_for(ordinal)
+    local prefix_w = ordinal < 10 and 1 or (ordinal < 100 and 2 or 3)
+    return 1 + prefix_w + 1 + 2 + 1 + 1 + 2  -- sep + prefix + sp + icon + sp + name(1) + tail
+  end
+
+  if right_hidden > 0 then
+    local idx = right_end + 1
+    local buf = bufs[idx]
+    local new_hidden = right_hidden - 1
+    local gained = marker_width(right_hidden) - marker_width(new_hidden)
+    local partial_size = leftover() + gained
+    if partial_size >= min_partial_for(idx) then
+      right_partial = buffer_segment(buf, idx, false, all_basenames, buf_names[buf], false, is_focused, partial_size - 1)
+      right_hidden = new_hidden
+      used_extra = used_extra + partial_size
+    end
+  end
+
+  if left_hidden > 0 then
+    local idx = left_start - 1
+    local buf = bufs[idx]
+    local new_hidden = left_hidden - 1
+    local gained = marker_width(left_hidden) - marker_width(new_hidden)
+    local partial_size = leftover() + gained
+    if partial_size >= min_partial_for(idx) then
+      left_partial = buffer_segment(buf, idx, false, all_basenames, buf_names[buf], idx == 1, is_focused, partial_size - 1)
+      left_hidden = new_hidden
+      used_extra = used_extra + partial_size
+    end
+  end
+
   local parts = {}
-  local left_marker, _ = make_trunc_marker(LEFT_TRUNC, left_hidden)
+  local left_marker = make_trunc_marker(LEFT_TRUNC, left_hidden)
   if left_marker ~= '' then parts[#parts + 1] = left_marker end
+  if left_partial then parts[#parts + 1] = left_partial end
 
   for i = left_start, right_end do
     parts[#parts + 1] = segments[i]
   end
 
-  local right_marker, _ = make_trunc_marker(RIGHT_TRUNC, right_hidden)
+  if right_partial then parts[#parts + 1] = right_partial end
+  local right_marker = make_trunc_marker(RIGHT_TRUNC, right_hidden)
   if right_marker ~= '' then parts[#parts + 1] = right_marker end
 
   parts[#parts + 1] = '%#BufferLineFill#'

@@ -139,11 +139,9 @@ function M.close_buffer()
     return
   end
 
-  if vim.bo.modified then
-    local confirm_result = vim.fn.confirm('Close without saving?', '&No\n&Yes')
-    if confirm_result ~= 2 then
-      return
-    end
+  local function confirm_discard(bufnr)
+    if not vim.bo[bufnr].modified then return true end
+    return vim.fn.confirm('Close without saving?', '&No\n&Yes') == 2
   end
 
   local tabline_state = require('lu5je0.ext.tabline.state')
@@ -169,18 +167,7 @@ function M.close_buffer()
         prev_buf = filtered[cur_idx - 1]
       end
 
-      -- remove from current window's list
-      local new_list = {}
-      for _, b in ipairs(win_bufs) do
-        if b ~= cur_buf_nr then
-          new_list[#new_list + 1] = b
-        end
-      end
-      tabline_state.win_bufs[cur_win] = new_list
-
-      vim.api.nvim_set_current_buf(prev_buf)
-
-      -- only bdelete if no other window owns this buffer
+      -- check if this buffer is owned by other windows before deciding to confirm
       local buf_in_other_win = false
       for w, bufs in pairs(tabline_state.win_bufs) do
         if w ~= cur_win then
@@ -193,6 +180,22 @@ function M.close_buffer()
           if buf_in_other_win then break end
         end
       end
+
+      if not buf_in_other_win and not confirm_discard(cur_buf_nr) then
+        return
+      end
+
+      -- remove from current window's list
+      local new_list = {}
+      for _, b in ipairs(win_bufs) do
+        if b ~= cur_buf_nr then
+          new_list[#new_list + 1] = b
+        end
+      end
+      tabline_state.win_bufs[cur_win] = new_list
+
+      vim.api.nvim_set_current_buf(prev_buf)
+
       if not buf_in_other_win then
         vim.cmd('silent! bd! ' .. cur_buf_nr)
       end
@@ -204,6 +207,7 @@ function M.close_buffer()
     vim.cmd('q')
     keys.feedkey('<c-w>p')
   else
+    if not confirm_discard(cur_buf_nr) then return end
     vim.cmd('bp')
     vim.cmd('silent! bd! ' .. cur_buf_nr)
   end
