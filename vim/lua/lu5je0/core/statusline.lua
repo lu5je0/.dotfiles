@@ -330,6 +330,23 @@ M.setup = function()
 
   ins_right {
     function()
+      local pages = vim.api.nvim_list_tabpages()
+      if #pages <= 1 then return nil end
+      local cur = vim.api.nvim_get_current_tabpage()
+      local parts = {}
+      for i, tp in ipairs(pages) do
+        local hl = tp == cur and get_highlight({ fg = colors.blue, bold = true }) or get_highlight({ fg = '#666666' })
+        parts[#parts + 1] = ('%%%d@v:lua.__tabpage_click@%s%d%%X'):format(i, hl, i)
+      end
+      return table.concat(parts, ' ')
+    end,
+    cond = function()
+      return #vim.api.nvim_list_tabpages() > 1
+    end,
+  }
+
+  ins_right {
+    function()
       return (vim.o.fileencoding ~= '' and vim.o.fileencoding or vim.b.encoding):upper() .. ' ' .. (vim.bo.fileformat == 'unix' and 'LF' or 'CRLF')
     end,
     cache_ttl = 5000,
@@ -394,6 +411,13 @@ M.setup = function()
   end
 
   vim.o.statusline = '%!v:lua._G.__my_status_line()'
+
+  _G.__tabpage_click = function(tabnr, _clicks, button, _mods)
+    if button == 'l' then
+      vim.cmd('tabnext ' .. tabnr)
+    end
+  end
+
   create_statusline_timer(300)
   
   -- local timer = require('lu5je0.lang.timer')

@@ -97,8 +97,53 @@ local function key_mapping()
   local telescope_builtin = require('telescope.builtin')
   set_map('<leader>ff', function() telescope_builtin.find_files(theme()) end, true)
   set_map('<leader>fj', function()
-    telescope_builtin.find_files(vim.tbl_deep_extend("force", theme(),
-      { theme, search_dirs = { '~/junk-file' }, prompt_title = 'Junk Files' }))
+    local dir = vim.fn.expand('~/junk-file')
+    local results = {}
+    local function scan(path, rel)
+      local handle = vim.uv.fs_scandir(path)
+      if not handle then return end
+      while true do
+        local name, ftype = vim.uv.fs_scandir_next(handle)
+        if not name then break end
+        local full = path .. '/' .. name
+        local relative = rel and (rel .. '/' .. name) or name
+        if ftype == 'directory' then
+          scan(full, relative)
+        elseif not name:match('^%.') then
+          local s = vim.uv.fs_stat(full)
+          results[#results + 1] = { name = relative, mtime = s and s.mtime.sec or 0 }
+        end
+      end
+    end
+    scan(dir, nil)
+    table.sort(results, function(a, b) return a.mtime > b.mtime end)
+
+    local paths = {}
+    for _, e in ipairs(results) do paths[#paths + 1] = e.name end
+
+    local pickers = require('telescope.pickers')
+    local finders = require('telescope.finders')
+    local conf = require('telescope.config').values
+    local make_entry = require('telescope.make_entry')
+
+    local sorter = conf.file_sorter({})
+    local orig_scoring = sorter.scoring_function
+    sorter.scoring_function = function(self, prompt, line, ...)
+      if prompt == '' then return 0 end
+      return orig_scoring(self, prompt, line, ...)
+    end
+
+    pickers.new(vim.tbl_deep_extend("force", theme(), {
+      cwd = dir,
+      tiebreak = function(a, b) return a.index < b.index end,
+    }), {
+      prompt_title = 'Junk Files',
+      finder = finders.new_table({
+        results = paths,
+        entry_maker = make_entry.gen_from_file({ cwd = dir }),
+      }),
+      sorter = sorter,
+    }):find()
   end)
   
   -- set_map('<leader>ft', function()

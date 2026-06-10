@@ -24,10 +24,15 @@ end
 
 local function build_unsaved_info()
   local filenames = {}
+  local name_map = require('lu5je0.ext.tabline.state').buffer_name_map
   for _, buf in ipairs(vim.fn.getbufinfo({ bufloaded = 1, buflisted = 1 })) do
     if buf.changed == 1 then
       local name = vim.fn.fnamemodify(buf.name, ':t')
-      table.insert(filenames, name ~= '' and name or '[Untitled]')
+      if name == '' then
+        local n = name_map[buf.bufnr]
+        name = n and ('[Untitled-' .. n .. ']') or '[Untitled]'
+      end
+      table.insert(filenames, name)
     end
   end
   return filenames
@@ -38,7 +43,7 @@ local function create_popup(title, filenames, choice)
   local icon_highlights = {}
   local width = 55
   for _, filename in ipairs(filenames) do
-    local icon, hl = devicons.get_icon(filename, get_extension(filename), {})
+    local icon, hl = devicons.get_icon(filename, get_extension(filename), { default = true })
     local line = ' ' .. (icon or '') .. ' ' .. filename
     table.insert(file_lines, line)
     table.insert(icon_highlights, hl or 'Normal')
@@ -170,7 +175,7 @@ function M.close_buffer()
       -- check if this buffer is owned by other windows before deciding to confirm
       local buf_in_other_win = false
       for w, bufs in pairs(tabline_state.win_bufs) do
-        if w ~= cur_win then
+        if w ~= cur_win and vim.api.nvim_win_is_valid(w) then
           for _, b in ipairs(bufs) do
             if b == cur_buf_nr then
               buf_in_other_win = true
@@ -200,6 +205,60 @@ function M.close_buffer()
         vim.cmd('silent! bd! ' .. cur_buf_nr)
       end
       return
+    elseif cur_idx and #filtered == 1 then
+      if txt_window_cnt > 1 then
+        local buf_in_other_win = false
+        for w, bufs in pairs(tabline_state.win_bufs) do
+          if w ~= cur_win and vim.api.nvim_win_is_valid(w) then
+            for _, b in ipairs(bufs) do
+              if b == cur_buf_nr then
+                buf_in_other_win = true
+                break
+              end
+            end
+            if buf_in_other_win then break end
+          end
+        end
+
+        if not buf_in_other_win and not confirm_discard(cur_buf_nr) then
+          return
+        end
+
+        tabline_state.win_bufs[cur_win] = nil
+        vim.cmd('q')
+        keys.feedkey('<c-w>p')
+
+        if not buf_in_other_win then
+          vim.cmd('silent! bd! ' .. cur_buf_nr)
+        end
+        return
+      end
+
+      if #vim.api.nvim_list_tabpages() > 1 then
+        if not confirm_discard(cur_buf_nr) then return end
+        tabline_state.win_bufs[cur_win] = nil
+        vim.cmd('q')
+        return
+      end
+
+      -- single window, single tab: find another valid buf to switch to
+      local alt_buf
+      for _, b in ipairs(valid_buffers) do
+        if b ~= cur_buf_nr then
+          alt_buf = b
+          break
+        end
+      end
+      if alt_buf then
+        if not confirm_discard(cur_buf_nr) then
+          return
+        end
+
+        tabline_state.win_bufs[cur_win] = { alt_buf }
+        vim.api.nvim_set_current_buf(alt_buf)
+        vim.cmd('silent! bd! ' .. cur_buf_nr)
+        return
+      end
     end
   end
 
@@ -208,8 +267,12 @@ function M.close_buffer()
     keys.feedkey('<c-w>p')
   else
     if not confirm_discard(cur_buf_nr) then return end
-    vim.cmd('bp')
-    vim.cmd('silent! bd! ' .. cur_buf_nr)
+    if #vim.api.nvim_list_tabpages() > 1 then
+      vim.cmd('q')
+    else
+      vim.cmd('bp')
+      vim.cmd('silent! bd! ' .. cur_buf_nr)
+    end
   end
 end
 

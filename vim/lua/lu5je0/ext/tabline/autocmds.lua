@@ -79,10 +79,17 @@ function M.setup(group)
       if not closed_win then return end
       local closed_bufs = state.win_bufs[closed_win]
       if closed_bufs then
+        -- find target win in the same tabpage
+        local cur_tabpage = vim.api.nvim_get_current_tabpage()
+        local tabpage_wins = {}
+        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(cur_tabpage)) do
+          if w ~= closed_win then tabpage_wins[w] = true end
+        end
+
         local other_set = {}
         local target_win
         for w, bufs in pairs(state.win_bufs) do
-          if w ~= closed_win then
+          if w ~= closed_win and tabpage_wins[w] then
             if not target_win then target_win = w end
             for _, b in ipairs(bufs) do
               other_set[b] = true

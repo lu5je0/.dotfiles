@@ -281,7 +281,9 @@ function M.build_winbar(win_id)
     end
   end
 
-  if single_win then
+  local multi_tabpage = #vim.api.nvim_list_tabpages() > 1
+
+  if single_win and not multi_tabpage then
     bufs = all_valid
     state.win_bufs[win_id] = bufs
   else
