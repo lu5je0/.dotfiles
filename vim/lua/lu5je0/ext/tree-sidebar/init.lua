@@ -8,6 +8,7 @@ local window = require('lu5je0.ext.tree-sidebar.window')
 local tabs = require('lu5je0.ext.tree-sidebar.tabs')
 local keymaps = require('lu5je0.ext.tree-sidebar.keymaps')
 local autocmds = require('lu5je0.ext.tree-sidebar.autocmds')
+local watcher = require('lu5je0.ext.tree-sidebar.watcher')
 
 local function init_sidebar(do_render)
   tabs.render_winbar()
@@ -25,6 +26,7 @@ local function init_sidebar(do_render)
       end
     end)
   end
+  watcher.start()
 end
 
 function M.toggle(opts)
@@ -33,7 +35,7 @@ function M.toggle(opts)
   if state:is_open() then
     init_sidebar(true)
   else
-    require('lu5je0.ext.tree-sidebar.sources.files').stop_watchers()
+    watcher.stop()
   end
 end
 
@@ -47,7 +49,7 @@ function M.open_tab(idx, opts)
   local prev_win = vim.api.nvim_get_current_win()
   if state:is_open() and state.active_tab_idx == idx and not opts.no_toggle then
     window.close()
-    require('lu5je0.ext.tree-sidebar.sources.files').stop_watchers()
+    watcher.stop()
     return
   end
   if not state:is_open() then

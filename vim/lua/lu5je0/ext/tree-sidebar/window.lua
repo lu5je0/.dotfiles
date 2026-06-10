@@ -133,11 +133,12 @@ end
 function M.get_target_win()
   local wins = usable_wins()
   if #wins == 0 then
-    return nil
+    return nil, false
   elseif #wins == 1 then
-    return wins[1]
+    return wins[1], false
   else
-    return pick_win(wins)
+    local win = pick_win(wins)
+    return win, win == nil
   end
 end
 
@@ -150,7 +151,8 @@ function M.open_file(filepath)
     end
   end
 
-  local target = M.get_target_win()
+  local target, cancelled = M.get_target_win()
+  if cancelled then return end
   if not target then
     vim.cmd('belowright vsplit')
   else

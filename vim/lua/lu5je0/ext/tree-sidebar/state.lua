@@ -90,6 +90,10 @@ local function new_tab_state()
       _is_loading = false,
     },
 
+    -- libuv handles for .git/index watcher (managed by tree-sidebar/watcher.lua)
+    _index_watcher = nil,
+    _index_refresh_timer = nil,
+
     buffers = {
       display_items = {},
     },
@@ -123,19 +127,8 @@ end
 -- watchers, timers, or orphan windows.
 local function release_tab_resources(ts)
   if not ts then return end
+  require('lu5je0.ext.tree-sidebar.watcher').release(ts)
   if ts.files then
-    if ts.files.fs_watchers then
-      for _, w in pairs(ts.files.fs_watchers) do
-        pcall(function() w:stop() end)
-        pcall(function() w:close() end)
-      end
-      ts.files.fs_watchers = {}
-    end
-    if ts.files.fs_refresh_timer then
-      pcall(function() ts.files.fs_refresh_timer:stop() end)
-      pcall(function() ts.files.fs_refresh_timer:close() end)
-      ts.files.fs_refresh_timer = nil
-    end
     local lf = ts.files._live_filter
     if lf then
       if lf.win and vim.api.nvim_win_is_valid(lf.win) then

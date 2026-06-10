@@ -5,7 +5,7 @@ local source_base = require('lu5je0.ext.tree-sidebar.source_base')
 local view = require('lu5je0.ext.tree-sidebar.view')
 
 local tree = require('lu5je0.ext.tree-sidebar.sources.files.tree')
-local watcher = require('lu5je0.ext.tree-sidebar.sources.files.watcher')
+local watcher = require('lu5je0.ext.tree-sidebar.watcher')
 local git = require('lu5je0.ext.tree-sidebar.sources.files.git')
 local info = require('lu5je0.ext.tree-sidebar.sources.files.info')
 
@@ -76,7 +76,7 @@ function spec.render_opts(ts, ctx)
 end
 
 function spec.post_flush(_ts, _ctx)
-  watcher.sync(vim.api.nvim_get_current_tabpage())
+  watcher.sync_files(vim.api.nvim_get_current_tabpage())
   require('lu5je0.ext.tree-sidebar.actions.file_ops').apply_clipboard_mark()
 end
 
@@ -89,7 +89,7 @@ end
 -- Invoked by watcher.lua after a fs_event debounce. The timer may fire
 -- after the user switched tabs, so we explicitly target the originating
 -- tabpage's state and only repaint when still on that tab.
-watcher.refresh = function(tabpage)
+watcher.on_files_changed = function(tabpage)
   tabpage = tabpage or vim.api.nvim_get_current_tabpage()
   if not vim.api.nvim_tabpage_is_valid(tabpage) then return end
   local ts = state.tab_for(tabpage).files
@@ -98,10 +98,12 @@ watcher.refresh = function(tabpage)
   end
   ts.reveal_path = nil
   git.refresh_for(tabpage, function()
-    if vim.api.nvim_get_current_tabpage() == tabpage
-        and state:is_open()
-        and state.active_tab_idx == config.tab_idx('files') then
-      M.render()
+    if vim.api.nvim_get_current_tabpage() == tabpage and state:is_open() then
+      if state.active_tab_idx == config.tab_idx('files') then
+        M.render()
+      elseif state.active_tab_idx == config.tab_idx('git_changes') then
+        require('lu5je0.ext.tree-sidebar.sources.git_changes').refresh()
+      end
     end
   end)
 end
@@ -387,12 +389,6 @@ function M.find_file(filepath)
     string.format('[tree-sidebar] find_file failed\n  filepath: %s\n  cwd: %s\n  items: %d',
       filepath, vim.fn.getcwd(), #state.files.display_items),
     vim.log.levels.DEBUG)
-end
-
--- ── watcher control ─────────────────────────────────────
-
-function M.stop_watchers()
-  watcher.stop(vim.api.nvim_get_current_tabpage())
 end
 
 -- ── keymaps ─────────────────────────────────────────────

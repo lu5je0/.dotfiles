@@ -9,6 +9,11 @@ local locate_mod = require('lu5je0.ext.tree-sidebar.sources.git_changes.locate')
 
 local M = {}
 
+local watcher = require('lu5je0.ext.tree-sidebar.watcher')
+watcher.on_index_changed = function(_tabpage)
+  if state:is_open() then M.refresh() end
+end
+
 -- ── status → highlight tables ───────────────────────────
 
 local LETTER_HL = {
