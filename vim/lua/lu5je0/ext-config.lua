@@ -10,6 +10,15 @@ lazy_load({
   event = { 'UIEnter' },
 })
 
+-- diff_base
+lazy_load({
+  name = 'diff_base',
+  config = function()
+    require('lu5je0.ext.git.snapshot').setup()
+  end,
+  cmd = { 'DiffBase', 'DiffBaseReset' },
+})
+
 -- tree-sidebar
 lazy_load({
   name = 'tree-sidebar',

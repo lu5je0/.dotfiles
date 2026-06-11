@@ -40,7 +40,7 @@ M.setup = function()
       --   end }
       -- },
       {
-        sign = { namespace = { "gitsigns" }, maxwidth = 1, colwidth = 1, auto = false, wrap = true },
+        sign = { namespace = { "gitsigns", "diff_base_signs" }, maxwidth = 1, colwidth = 1, auto = false, wrap = true },
         click = "v:lua.ScSa",
         condition = { function(args)
           return vim.wo[args.win].number
