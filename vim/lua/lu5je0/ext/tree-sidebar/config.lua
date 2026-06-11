@@ -119,8 +119,14 @@ M.symbols = {
     [24] = { icon = '󱐋', hl = 'Special' }, -- Event
     [25] = { icon = '󰃬', hl = 'Operator' }, -- Operator
     [26] = { icon = '󰊄', hl = 'Type' }, -- TypeParameter
+    [101] = { icon = '󰉫', hl = 'Type' }, -- H1
+    [102] = { icon = '󰉬', hl = 'Function' }, -- H2
+    [103] = { icon = '󰉭', hl = 'String' }, -- H3
+    [104] = { icon = '󰉮', hl = 'Constant' }, -- H4
+    [105] = { icon = '󰉯', hl = 'Comment' }, -- H5
+    [106] = { icon = '󰉰', hl = 'Comment' }, -- H6
   },
-  treesitter_filetypes = { 'markdown', 'xml', 'yaml' },
+  treesitter_filetypes = { 'markdown', 'xml', 'yaml', 'bash' },
 }
 
 function M.tab_idx(id)

@@ -25,10 +25,10 @@ function M.apply_shared()
 
   buf_set('n', '<right>', tabs.next_tab)
   buf_set('n', '<left>', tabs.prev_tab)
-  buf_set('n', '1', function() tabs.switch_to(1) end)
-  buf_set('n', '2', function() tabs.switch_to(2) end)
-  buf_set('n', '3', function() tabs.switch_to(3) end)
-  buf_set('n', '4', function() tabs.switch_to(4) end)
+  buf_set('n', '<leader>1', function() tabs.switch_to(1) end)
+  buf_set('n', '<leader>2', function() tabs.switch_to(2) end)
+  buf_set('n', '<leader>3', function() tabs.switch_to(3) end)
+  buf_set('n', '<leader>4', function() tabs.switch_to(4) end)
   buf_set('n', 'q', window.close)
   buf_set('n', 'Z', window.toggle_width)
   buf_set('n', '<leader>tn', function() end)
@@ -63,7 +63,7 @@ function M.apply_shared()
   local help = require('lu5je0.ext.git.common.help')
   local shared_keymaps = {
     { '<left>/<right>', 'Switch tab' },
-    { '1/2/3/4', 'Jump to tab' },
+    { '<leader>1/2/3/4', 'Jump to tab' },
     { 'q', 'Close sidebar' },
     { 'Z', 'Toggle width' },
     { 'zM', 'Collapse all' },

@@ -50,15 +50,36 @@ end
 
 -- ── treesitter backend ─────────────────────────────────
 
+local function yaml_kind_fn(sym_node)
+  local value_node = sym_node:field('value')[1]
+  if value_node then
+    for child in value_node:iter_children() do
+      local t = child:type()
+      if t == 'block_mapping' or t == 'flow_mapping' then return 19 end
+      if t == 'block_sequence' or t == 'flow_sequence' then return 18 end
+    end
+  end
+  return 20
+end
+
 local ts_query_defs = {
   markdown = {
-    { query = '(section (atx_heading (_) (inline) @name)) @symbol', kind = 15 },
+    { query = '(section (atx_heading (atx_h1_marker) (inline) @name)) @symbol', kind = 101 },
+    { query = '(section (atx_heading (atx_h2_marker) (inline) @name)) @symbol', kind = 102 },
+    { query = '(section (atx_heading (atx_h3_marker) (inline) @name)) @symbol', kind = 103 },
+    { query = '(section (atx_heading (atx_h4_marker) (inline) @name)) @symbol', kind = 104 },
+    { query = '(section (atx_heading (atx_h5_marker) (inline) @name)) @symbol', kind = 105 },
+    { query = '(section (atx_heading (atx_h6_marker) (inline) @name)) @symbol', kind = 106 },
   },
   xml = {
     { query = '(element (STag (Name) @name)) @symbol', kind = 20 },
   },
   yaml = {
-    { query = '(block_mapping_pair key: (_) @name) @symbol', kind = 20 },
+    { query = '(block_mapping_pair key: (_) @name) @symbol', kind = 20, kind_fn = yaml_kind_fn },
+  },
+  bash = {
+    { query = '(function_definition name: (_) @name) @symbol', kind = 12 },
+    { query = '(variable_assignment name: (_) @name) @symbol', kind = 13 },
   },
 }
 
@@ -71,7 +92,7 @@ local function get_ts_queries(filetype)
   for _, def in ipairs(defs) do
     local ok, query = pcall(vim.treesitter.query.parse, filetype, def.query)
     if ok then
-      compiled[#compiled + 1] = { query = query, kind = def.kind }
+      compiled[#compiled + 1] = { query = query, kind = def.kind, kind_fn = def.kind_fn }
     end
   end
   ts_query_cache[filetype] = compiled
@@ -159,7 +180,7 @@ local function treesitter_symbols_to_tree(bufnr, filetype, old_nodes)
         local nr1, nc1, nr2, nc2 = name_node:range()
         flat[#flat + 1] = {
           name = vim.treesitter.get_node_text(name_node, bufnr):gsub('\n.*', ''),
-          kind = rule.kind,
+          kind = rule.kind_fn and rule.kind_fn(sym_node, bufnr) or rule.kind,
           range = { start = { line = sr1, character = sc1 }, ['end'] = { line = sr2, character = sc2 } },
           selection_range = { start = { line = nr1, character = nc1 }, ['end'] = { line = nr2, character = nc2 } },
         }
