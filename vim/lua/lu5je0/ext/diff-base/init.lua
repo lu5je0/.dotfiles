@@ -1,7 +1,7 @@
 local M = {}
 
-local core = require('lu5je0.ext.git.snapshot.core')
-local store = require('lu5je0.ext.git.snapshot.store')
+local core = require('lu5je0.ext.diff-base.core')
+local store = require('lu5je0.ext.diff-base.store')
 
 local function abspath_of(bufnr)
   local name = vim.api.nvim_buf_get_name(bufnr)

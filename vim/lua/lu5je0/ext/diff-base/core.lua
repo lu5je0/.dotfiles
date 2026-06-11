@@ -1,9 +1,9 @@
 local M = {}
 
-local store = require('lu5je0.ext.git.snapshot.store')
-local diff = require('lu5je0.ext.git.snapshot.diff')
-local signs = require('lu5je0.ext.git.snapshot.signs')
-local keymaps = require('lu5je0.ext.git.snapshot.keymaps')
+local store = require('lu5je0.ext.diff-base.store')
+local diff = require('lu5je0.ext.diff-base.diff')
+local signs = require('lu5je0.ext.diff-base.signs')
+local keymaps = require('lu5je0.ext.diff-base.keymaps')
 
 M.state = {}
 

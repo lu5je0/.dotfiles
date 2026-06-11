@@ -1,7 +1,7 @@
 local M = {}
 
 function M.apply(bufnr)
-  local actions = require('lu5je0.ext.git.snapshot.actions')
+  local actions = require('lu5je0.ext.diff-base.actions')
   local opts = { buffer = bufnr, silent = true }
   vim.keymap.set('n', '<leader>gg', actions.preview_hunk, opts)
   vim.keymap.set('n', ']g', actions.next_hunk, opts)

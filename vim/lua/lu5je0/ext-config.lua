@@ -14,7 +14,7 @@ lazy_load({
 lazy_load({
   name = 'diff_base',
   config = function()
-    require('lu5je0.ext.git.snapshot').setup()
+    require('lu5je0.ext.diff-base').setup()
   end,
   cmd = { 'DiffBase', 'DiffBaseReset' },
 })

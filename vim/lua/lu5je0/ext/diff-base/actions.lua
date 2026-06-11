@@ -1,7 +1,7 @@
 local M = {}
 
 local function get_state(bufnr)
-  local core = require('lu5je0.ext.git.snapshot.core')
+  local core = require('lu5je0.ext.diff-base.core')
   return core.state[bufnr]
 end
 
@@ -167,14 +167,14 @@ function M.stage_hunk()
   vim.list_extend(merged, new_lines)
   vim.list_extend(merged, after)
 
-  local core = require('lu5je0.ext.git.snapshot.core')
+  local core = require('lu5je0.ext.diff-base.core')
   core.update_base(bufnr, merged)
 end
 
 function M.stage_buffer()
   local bufnr = vim.api.nvim_get_current_buf()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local core = require('lu5je0.ext.git.snapshot.core')
+  local core = require('lu5je0.ext.diff-base.core')
   core.update_base(bufnr, lines)
 end
 
