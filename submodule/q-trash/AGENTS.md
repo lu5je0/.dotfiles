@@ -1,7 +1,7 @@
 # q-rm 工作指引
 
 ## 适用范围
-- 本文件适用于 `submodule/q-rm/` 目录。
+- 本文件适用于 `submodule/q-trash/` 目录。
 
 ## 组件职责
 - `q-rm.py` 是该目录的主入口，提供 rm 兼容的命令行参数，把文件移动到 freedesktop.org Trash Spec 1.0 回收站。
@@ -16,4 +16,5 @@
 ## 验证原则
 - 修改后至少执行语法检查：`python3 -m py_compile q-rm.py`。
 - 如果改动涉及 trashinfo 格式或回收站定位，需用 `trash-list` 验证互通。
-- 测试位于 `tests/`，使用 pytest：`python3 -m pytest tests/`。
+- 改动 CLI 行为后跑 `python3 tests/run_compare.py`（与系统 `rm` 行为对照，无需 pytest）。
+- pytest 测试位于 `tests/test_qrm.py`：`python3 -m pytest tests/`（环境内若无 pytest 可跳过，以对比测试为准）。

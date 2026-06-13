@@ -106,6 +106,7 @@ def parse_argv(argv: List[str]) -> Args:
                 sys.exit(0)
             elif name == "force":
                 a.force = True
+                a.interactive = "never"
             elif name == "recursive":
                 a.recursive = True
             elif name == "dir":
@@ -123,8 +124,10 @@ def parse_argv(argv: List[str]) -> Args:
             elif name == "interactive":
                 if not has_val or val in ("always", "yes"):
                     a.interactive = "always"
+                    a.force = False
                 elif val == "once":
                     a.interactive = "once"
+                    a.force = False
                 elif val in ("never", "no", "none"):
                     a.interactive = "never"
                 else:
@@ -157,23 +160,29 @@ def parse_argv(argv: List[str]) -> Args:
 # ---------- volume/mount detection ----------
 
 def volume_of(path: str) -> str:
-    """Return the mount point containing path. path must exist."""
-    path = os.path.realpath(path)
+    """Return the mount point of the volume the path lives on.
+
+    Looks at the parent directory (so a symlink's own volume is reported,
+    not its target's). Path must exist (or its parent must).
+    """
+    abs_path = os.path.abspath(path)
+    parent = os.path.dirname(abs_path) or "/"
+    parent = os.path.realpath(parent)
     try:
-        dev = os.lstat(path).st_dev
-    except OSError as e:
-        raise
-    cur = path
+        dev = os.stat(parent).st_dev
+    except OSError:
+        return parent
+    cur = parent
     while True:
-        parent = os.path.dirname(cur)
-        if parent == cur:
+        up = os.path.dirname(cur)
+        if up == cur:
             return cur
         try:
-            if os.stat(parent).st_dev != dev:
+            if os.stat(up).st_dev != dev:
                 return cur
         except OSError:
             return cur
-        cur = parent
+        cur = up
 
 
 # ---------- platform-specific recycle bin ----------
@@ -202,6 +211,12 @@ _FSTYPE_CACHE: dict[str, str] = {}
 
 def _read_mount_fstype_map() -> dict[str, str]:
     """Parse /proc/self/mounts → {mountpoint: fstype}."""
+    import re
+    _octal_re = re.compile(r"\\([0-7]{3})")
+
+    def _decode_octal(s: str) -> str:
+        return _octal_re.sub(lambda m: chr(int(m.group(1), 8)), s)
+
     out: dict[str, str] = {}
     try:
         with open("/proc/self/mounts", "r", encoding="utf-8",
@@ -209,8 +224,7 @@ def _read_mount_fstype_map() -> dict[str, str]:
             for line in f:
                 parts = line.split()
                 if len(parts) >= 3:
-                    # mounts uses octal-escapes for spaces etc.; good enough.
-                    mp = parts[1].encode().decode("unicode_escape")
+                    mp = _decode_octal(parts[1])
                     out[mp] = parts[2]
     except OSError:
         pass
@@ -276,7 +290,7 @@ def delete_via_windows_recycle(paths: List[str]) -> None:
 
     # Build a PowerShell script that recycles each path, picking File vs Dir.
     ps_lines = [
-        "$ErrorActionPreference='Stop'",
+        "$failed=@()",
         "Add-Type -AssemblyName Microsoft.VisualBasic",
         "$paths=@(",
     ]
@@ -288,14 +302,19 @@ def delete_via_windows_recycle(paths: List[str]) -> None:
     ps_lines.append(")")
     ps_lines.append(
         "foreach ($p in $paths) {"
-        " if (Test-Path -LiteralPath $p -PathType Container) {"
+        " try {"
+        "  if (Test-Path -LiteralPath $p -PathType Container) {"
         "   [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory("
         "$p,'OnlyErrorDialogs','SendToRecycleBin')"
-        " } else {"
+        "  } else {"
         "   [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile("
         "$p,'OnlyErrorDialogs','SendToRecycleBin')"
-        " }"
+        "  }"
+        " } catch { $failed += \"${p}: $($_.Exception.Message)\" }"
         "}"
+        " if ($failed.Count -gt 0) {"
+        " $failed | ForEach-Object { [Console]::Error.WriteLine($_) };"
+        " exit 1 }"
     )
     script = "\n".join(ps_lines)
     r = subprocess.run(
@@ -334,13 +353,13 @@ def home_trash_dir() -> str:
 
 def is_safe_top_trash(top_trash: str) -> bool:
     """$top/.Trash must be a real dir (not symlink) with sticky bit."""
+    if os.path.islink(top_trash):
+        return False
     try:
-        st = os.lstat(top_trash)
+        st = os.stat(top_trash)
     except OSError:
         return False
     if not stat.S_ISDIR(st.st_mode):
-        return False
-    if stat.S_ISLNK(st.st_mode):
         return False
     if not (st.st_mode & stat.S_ISVTX):
         return False
@@ -477,12 +496,25 @@ def trash_one(path: str) -> None:
 # ---------- rm semantics ----------
 
 def is_dot_or_dotdot(path: str) -> bool:
-    base = os.path.basename(os.path.normpath(path))
+    """Return True if path's final component (textually) is '.' or '..'.
+
+    Matches GNU rm: rejects 'foo/.', 'foo/..', './', '../', '.', '..'.
+    Does not resolve symlinks.
+    """
+    p = path
+    while len(p) > 1 and p.endswith("/"):
+        p = p[:-1]
+    base = p.rsplit("/", 1)[-1]
     return base in (".", "..")
 
 
 def is_root_path(path: str) -> bool:
-    return os.path.realpath(path) == "/"
+    """Match GNU rm: refuse '/' or '//' as a literal absolute path.
+
+    Does not follow symlinks; a symlink whose target is '/' is fine to delete.
+    """
+    p = os.path.normpath(os.path.abspath(path))
+    return p == "/" or p == "//"
 
 
 def prompt(msg: str) -> bool:
@@ -497,17 +529,6 @@ def prompt(msg: str) -> bool:
     return line.strip().lower().startswith("y")
 
 
-def count_recursive(path: str, limit: int = 4) -> int:
-    """Count entries up to limit (used for -I)."""
-    n = 1
-    if os.path.isdir(path) and not os.path.islink(path):
-        for root, dirs, files in os.walk(path):
-            n += len(dirs) + len(files)
-            if n >= limit:
-                return n
-    return n
-
-
 def purge_one(path: str, verbose: bool, one_fs: bool) -> None:
     if os.path.islink(path) or not os.path.isdir(path):
         os.unlink(path)
@@ -516,11 +537,11 @@ def purge_one(path: str, verbose: bool, one_fs: bool) -> None:
         return
     if one_fs:
         top_dev = os.lstat(path).st_dev
-
-        def onerror(_e):
-            pass
-
-        for root, dirs, files in os.walk(path, topdown=False):
+        for root, dirs, files in os.walk(path, topdown=True):
+            dirs[:] = [
+                d for d in dirs
+                if os.lstat(os.path.join(root, d)).st_dev == top_dev
+            ]
             for name in files:
                 p = os.path.join(root, name)
                 try:
@@ -529,11 +550,11 @@ def purge_one(path: str, verbose: bool, one_fs: bool) -> None:
                         print(f"removed '{p}'")
                 except OSError:
                     pass
-            for name in list(dirs):
+        for root, dirs, _files in os.walk(path, topdown=False):
+            for name in dirs:
                 p = os.path.join(root, name)
                 try:
                     if os.lstat(p).st_dev != top_dev:
-                        dirs.remove(name)
                         continue
                     os.rmdir(p)
                     if verbose:
@@ -594,6 +615,16 @@ def validate_one(path: str, args: Args) -> Tuple[bool, bool]:
         print(f"{PROG}: cannot remove '{path}': Is a directory",
               file=sys.stderr)
         return False, False
+    if is_dir and args.dir_only and not args.recursive:
+        try:
+            if any(True for _ in os.scandir(path)):
+                print(f"{PROG}: cannot remove '{path}': Directory not empty",
+                      file=sys.stderr)
+                return False, False
+        except OSError as e:
+            print(f"{PROG}: cannot remove '{path}': {e.strerror}",
+                  file=sys.stderr)
+            return False, False
 
     if args.interactive == "always":
         kind = "directory" if is_dir else "regular file"
@@ -665,8 +696,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         for p in buckets["purge"]:
             try:
                 purge_one(p, args.verbose, args.one_file_system)
-                if args.verbose:
-                    pass  # purge_one already prints
             except OSError as e:
                 print(f"{PROG}: cannot remove '{p}': {e.strerror}",
                       file=sys.stderr)

@@ -1,0 +1,86 @@
+#compdef q-trash
+
+_q_trash_commands() {
+  local -a cmds
+  cmds=(
+    'list:list trashed files'
+    'ls:list trashed files (alias)'
+    'restore:interactively restore trashed files'
+    'empty:permanently delete trashed files'
+    'size:show trash disk usage'
+    'rm:move files to trash (same as q-rm)'
+  )
+  _describe -t commands 'q-trash command' cmds
+}
+
+_q_trash_list() {
+  _arguments -s \
+    '--trash-dir=[operate on specific trash dir]:dir:_directories' \
+    '*:filter path:_files'
+}
+
+_q_trash_restore() {
+  _arguments -s \
+    '--trash-dir=[operate on specific trash dir]:dir:_directories' \
+    '--all[restore all matching files]' \
+    '--overwrite[overwrite existing files]' \
+    '*:path:_files'
+}
+
+_q_trash_empty() {
+  _arguments -s \
+    '--trash-dir=[operate on specific trash dir]:dir:_directories' \
+    '--days=[only delete items older than N days]:days: ' \
+    '-f[skip confirmation]' \
+    '--force[skip confirmation]'
+}
+
+_q_trash_size() {
+  _arguments -s \
+    '--trash-dir=[operate on specific trash dir]:dir:_directories'
+}
+
+_q_trash_rm() {
+  _arguments -s \
+    '-f[ignore nonexistent files, never prompt]' \
+    '--force[ignore nonexistent files, never prompt]' \
+    '-i[prompt before every removal]' \
+    '-I[prompt once before removing more than three files]' \
+    '-r[remove directories recursively]' \
+    '-R[remove directories recursively]' \
+    '--recursive[remove directories recursively]' \
+    '-d[remove empty directories]' \
+    '--dir[remove empty directories]' \
+    '-v[explain what is being done]' \
+    '--verbose[explain what is being done]' \
+    '--preserve-root[do not remove / (default)]' \
+    '--no-preserve-root[do not treat / specially]' \
+    '--one-file-system[skip directories on different filesystems]' \
+    '--purge[bypass trash, delete permanently]' \
+    '*:file:_files'
+}
+
+_q_trash() {
+  local curcontext="$curcontext" state line
+
+  _arguments -C -s \
+    '--help[show help]' \
+    '--version[show version]' \
+    '--trash-dir=[operate on specific trash dir]:dir:_directories' \
+    '1:command:_q_trash_commands' \
+    '*::arg:->args'
+
+  case $state in
+    args)
+      case ${line[1]} in
+        list|ls) _q_trash_list ;;
+        restore) _q_trash_restore ;;
+        empty)   _q_trash_empty ;;
+        size)    _q_trash_size ;;
+        rm)      _q_trash_rm ;;
+      esac
+      ;;
+  esac
+}
+
+_q_trash "$@"
