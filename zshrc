@@ -120,13 +120,7 @@ alias crontab="cron.sh"
 alias ls='ls -F --show-control-chars --color=auto'
 
 if [[ -o interactive ]]; then
-  _safe_rm() {
-    if (( $+commands[trash] )); then
-      echo "rm is disabled. Use trash or \\\\rm"; return 1
-    fi
-    command rm "$@"
-  }
-  alias rm='_safe_rm'
+  alias rm='q-rm'
 fi
 
 alias sudo='sudo env PATH=/sbin:$PATH'
