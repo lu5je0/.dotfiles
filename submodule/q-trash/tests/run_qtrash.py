@@ -53,6 +53,10 @@ def make_env(home: Path) -> dict:
     return {"HOME": str(home)}
 
 
+def trash_dir(home: Path) -> str:
+    return str(home / ".local" / "share" / "Trash")
+
+
 # ---------- list ----------
 
 def test_list_empty():
@@ -60,7 +64,8 @@ def test_list_empty():
     print("[case] list empty trash")
     home = Path(tempfile.mkdtemp(prefix="qth_"))
     try:
-        r = run_qtrash("list", env_extra=make_env(home))
+        r = run_qtrash("--trash-dir", trash_dir(home), "list",
+                       env_extra=make_env(home))
         check("list empty: exit 0", r.returncode == 0)
         check("list empty: says no files",
               "No trashed files" in r.stderr or "No trashed files" in r.stdout,
@@ -78,7 +83,7 @@ def test_list_shows_trashed_file():
         (work / "hello.txt").write_text("x")
         env = make_env(home)
         run_qrm(str(work / "hello.txt"), env_extra=env)
-        r = run_qtrash("list", env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "list", env_extra=env)
         check("list shows file: exit 0", r.returncode == 0)
         check("list shows file: path in output",
               "hello.txt" in r.stdout, f"stdout={r.stdout!r}")
@@ -99,7 +104,8 @@ def test_list_filter_path():
         run_qrm(str(work / "a.txt"), env_extra=env)
         run_qrm(str(other / "b.txt"), env_extra=env)
 
-        r = run_qtrash("list", str(work), env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "list", str(work),
+                       env_extra=env)
         check("list filter: a.txt shown", "a.txt" in r.stdout)
         check("list filter: b.txt hidden", "b.txt" not in r.stdout)
     finally:
@@ -120,7 +126,8 @@ def test_restore_exact():
         run_qrm(str(f), env_extra=env)
         check("restore exact: file gone after rm", not f.exists())
 
-        r = run_qtrash("restore", str(f), env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore", str(f),
+                       env_extra=env)
         check("restore exact: exit 0", r.returncode == 0, f"stderr={r.stderr}")
         check("restore exact: file restored", f.exists())
         check("restore exact: content intact", f.read_text() == "content")
@@ -143,7 +150,8 @@ def test_restore_latest_of_duplicates():
         f.write_text("v3")
         run_qrm(str(f), env_extra=env)
 
-        r = run_qtrash("restore", str(f), env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore", str(f),
+                       env_extra=env)
         check("restore latest: exit 0", r.returncode == 0,
               f"stderr={r.stderr} stdout={r.stdout}")
         check("restore latest: file exists", f.exists(),
@@ -167,7 +175,8 @@ def test_restore_refuses_existing():
         run_qrm(str(f), env_extra=env)
         f.write_text("new")
 
-        r = run_qtrash("restore", str(f), env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore", str(f),
+                       env_extra=env)
         check("restore refuses: exit 1", r.returncode == 1)
         check("restore refuses: already exists in stderr",
               "already exists" in r.stderr, f"stderr={r.stderr!r}")
@@ -189,7 +198,8 @@ def test_restore_overwrite():
         run_qrm(str(f), env_extra=env)
         f.write_text("blocker")
 
-        r = run_qtrash("restore", "--overwrite", str(f), env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore",
+                       "--overwrite", str(f), env_extra=env)
         check("restore overwrite: exit 0", r.returncode == 0,
               f"stderr={r.stderr}")
         check("restore overwrite: content is trashed one",
@@ -209,7 +219,8 @@ def test_restore_all():
             (work / name).write_text(name)
             run_qrm(str(work / name), env_extra=env)
 
-        r = run_qtrash("restore", "--all", str(work), env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore", "--all",
+                       str(work), env_extra=env)
         check("restore all: exit 0", r.returncode == 0, f"stderr={r.stderr}")
         for name in ("x.txt", "y.txt", "z.txt"):
             check(f"restore all: {name} restored", (work / name).exists())
@@ -233,7 +244,8 @@ def test_restore_creates_parent():
         shutil.rmtree(work / "deep")
         check("restore parent: parent gone", not subdir.exists())
 
-        r = run_qtrash("restore", str(f), env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore", str(f),
+                       env_extra=env)
         check("restore parent: exit 0", r.returncode == 0, f"stderr={r.stderr}")
         check("restore parent: file exists", f.exists())
         check("restore parent: content ok", f.read_text() == "deep")
@@ -253,7 +265,8 @@ def test_restore_interactive_quit():
         run_qrm(str(work / "a"), env_extra=env)
         run_qrm(str(work / "b"), env_extra=env)
 
-        r = run_qtrash("restore", str(work), env_extra=env, stdin="q\n")
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore", str(work),
+                       env_extra=env, stdin="q\n")
         check("restore quit: exit 0", r.returncode == 0)
         check("restore quit: a not restored", not (work / "a").exists())
         check("restore quit: b not restored", not (work / "b").exists())
@@ -274,7 +287,8 @@ def test_restore_interactive_select():
         run_qrm(str(work / "second"), env_extra=env)
 
         # Select index 0 only
-        r = run_qtrash("restore", str(work), env_extra=env, stdin="0\n")
+        r = run_qtrash("--trash-dir", trash_dir(home), "restore", str(work),
+                       env_extra=env, stdin="0\n")
         check("restore select: exit 0", r.returncode == 0, f"stderr={r.stderr}")
         check("restore select: first restored", (work / "first").exists())
         check("restore select: second NOT restored",
@@ -292,17 +306,18 @@ def test_empty_all():
     work = Path(tempfile.mkdtemp(prefix="qtw_"))
     try:
         env = make_env(home)
+        td = trash_dir(home)
         for name in ("a", "b", "c"):
             (work / name).write_text(name)
             run_qrm(str(work / name), env_extra=env)
 
-        r = run_qtrash("empty", "--force", env_extra=env)
+        r = run_qtrash("--trash-dir", td, "empty", "--force", env_extra=env)
         check("empty all: exit 0", r.returncode == 0, f"stderr={r.stderr}")
         check("empty all: reports deleted",
               "Deleted 3 item" in r.stdout, f"stdout={r.stdout!r}")
 
         # Verify trash is empty
-        r2 = run_qtrash("list", env_extra=env)
+        r2 = run_qtrash("--trash-dir", td, "list", env_extra=env)
         check("empty all: list empty after",
               "No trashed files" in r2.stderr)
     finally:
@@ -316,11 +331,13 @@ def test_empty_days_filter():
     work = Path(tempfile.mkdtemp(prefix="qtw_"))
     try:
         env = make_env(home)
+        td = trash_dir(home)
         (work / "recent").write_text("x")
         run_qrm(str(work / "recent"), env_extra=env)
 
         # File was just trashed (0 days old), --days 1 should NOT delete it
-        r = run_qtrash("empty", "--force", "--days", "1", env_extra=env)
+        r = run_qtrash("--trash-dir", td, "empty", "--force", "--days", "1",
+                       env_extra=env)
         check("empty days: exit 0", r.returncode == 0)
         check("empty days: nothing deleted (too recent)",
               "empty" in r.stdout.lower() or "Deleted 0" in r.stdout
@@ -328,7 +345,7 @@ def test_empty_days_filter():
               f"stdout={r.stdout!r}")
 
         # Verify still in trash
-        r2 = run_qtrash("list", env_extra=env)
+        r2 = run_qtrash("--trash-dir", td, "list", env_extra=env)
         check("empty days: file still in trash",
               "recent" in r2.stdout, f"stdout={r2.stdout!r}")
     finally:
@@ -342,15 +359,16 @@ def test_empty_confirm_no():
     work = Path(tempfile.mkdtemp(prefix="qtw_"))
     try:
         env = make_env(home)
+        td = trash_dir(home)
         (work / "keep").write_text("x")
         run_qrm(str(work / "keep"), env_extra=env)
 
-        r = run_qtrash("empty", env_extra=env, stdin="n\n")
+        r = run_qtrash("--trash-dir", td, "empty", env_extra=env, stdin="n\n")
         check("empty confirm no: exit 0", r.returncode == 0)
         check("empty confirm no: cancelled",
               "Cancelled" in r.stdout, f"stdout={r.stdout!r}")
 
-        r2 = run_qtrash("list", env_extra=env)
+        r2 = run_qtrash("--trash-dir", td, "list", env_extra=env)
         check("empty confirm no: file still in trash",
               "keep" in r2.stdout)
     finally:
@@ -364,7 +382,8 @@ def test_size_empty():
     print("[case] size empty")
     home = Path(tempfile.mkdtemp(prefix="qth_"))
     try:
-        r = run_qtrash("size", env_extra=make_env(home))
+        r = run_qtrash("--trash-dir", trash_dir(home), "size",
+                       env_extra=make_env(home))
         check("size empty: exit 0", r.returncode == 0)
         check("size empty: says empty",
               "empty" in r.stdout.lower(), f"stdout={r.stdout!r}")
@@ -382,7 +401,7 @@ def test_size_nonempty():
         (work / "big").write_text("x" * 10000)
         run_qrm(str(work / "big"), env_extra=env)
 
-        r = run_qtrash("size", env_extra=env)
+        r = run_qtrash("--trash-dir", trash_dir(home), "size", env_extra=env)
         check("size nonempty: exit 0", r.returncode == 0)
         check("size nonempty: shows item count",
               "1 item" in r.stdout, f"stdout={r.stdout!r}")
@@ -407,7 +426,7 @@ def test_rm_subcommand():
         check("rm sub: file removed", not (work / "via_rm.txt").exists())
         check("rm sub: verbose output", "removed" in r.stdout)
 
-        r2 = run_qtrash("list", env_extra=env)
+        r2 = run_qtrash("--trash-dir", trash_dir(home), "list", env_extra=env)
         check("rm sub: appears in list",
               "via_rm.txt" in r2.stdout, f"stdout={r2.stdout!r}")
     finally:

@@ -7,6 +7,7 @@ Compatible with trash-cli (`trash-list`, `trash-restore --trash-dir=...`).
 from __future__ import annotations
 
 import errno
+import functools
 import os
 import shutil
 import stat
@@ -37,9 +38,6 @@ Move FILEs to the freedesktop.org trash (rm-compatible).
       --purge           bypass trash, delete permanently (q-rm extension)
       --help            display this help and exit
       --version         output version information and exit
-
-Environment:
-  Q_RM_BYPASS=1         same as --purge
 
 Trash location:
   Linux           freedesktop.org Trash Spec 1.0 (same volume only)
@@ -81,8 +79,6 @@ def die(msg: str, code: int = 1) -> None:
 
 def parse_argv(argv: List[str]) -> Args:
     a = Args()
-    if os.environ.get("Q_RM_BYPASS") == "1":
-        a.purge = True
 
     i = 0
     end_of_opts = False
@@ -206,9 +202,7 @@ def is_wsl() -> bool:
     return _IS_WSL
 
 
-_FSTYPE_CACHE: dict[str, str] = {}
-
-
+@functools.cache
 def _read_mount_fstype_map() -> dict[str, str]:
     """Parse /proc/self/mounts → {mountpoint: fstype}."""
     import re
@@ -232,9 +226,7 @@ def _read_mount_fstype_map() -> dict[str, str]:
 
 
 def fstype_of(mount_point: str) -> str:
-    if not _FSTYPE_CACHE:
-        _FSTYPE_CACHE.update(_read_mount_fstype_map())
-    return _FSTYPE_CACHE.get(mount_point, "")
+    return _read_mount_fstype_map().get(mount_point, "")
 
 
 def is_windows_native_path(abs_path: str) -> bool:

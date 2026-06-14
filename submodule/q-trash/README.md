@@ -25,7 +25,6 @@
 q-rm file
 q-rm -rf dir
 q-rm --purge file        # 真删，绕过回收站
-Q_RM_BYPASS=1 q-rm file  # 同上
 ```
 
 恢复：
