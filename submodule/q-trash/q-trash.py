@@ -480,45 +480,31 @@ def cmd_empty(args: List[str], trash_dir_opt: Optional[str]) -> int:
 
 
 def cmd_size(args: List[str], trash_dir_opt: Optional[str]) -> int:
-    trash_dirs = discover_trash_dirs(trash_dir_opt)
-    if not trash_dirs:
-        print("No trash directories found.")
+    items = scan_trash(trash_dir_opt)
+    if not items:
+        print("All trash directories are empty.")
         return 0
 
+    sized = []
     total_size = 0
-    total_items = 0
-    nonempty_dirs = 0
-
-    for trash_dir, _vol in trash_dirs:
-        files_dir = os.path.join(trash_dir, "files")
-        if not os.path.isdir(files_dir):
-            continue
-        size = 0
-        count = 0
+    for t in items:
         try:
-            with os.scandir(files_dir) as it:
-                for entry in it:
-                    count += 1
-                    if entry.is_dir(follow_symlinks=False):
-                        size += _dir_size(entry.path)
-                    else:
-                        try:
-                            size += entry.stat(follow_symlinks=False).st_size
-                        except OSError:
-                            pass
+            st = os.lstat(t.files_path)
         except OSError:
             continue
-        if count > 0:
-            total_size += size
-            total_items += count
-            nonempty_dirs += 1
-            print(f"{trash_dir:<45} {_human_size(size):>10}  ({count} item{'s' if count != 1 else ''})")
+        if os.path.isdir(t.files_path) and not os.path.islink(t.files_path):
+            size = _dir_size(t.files_path)
+        else:
+            size = st.st_size
+        sized.append((size, t))
+        total_size += size
 
-    if nonempty_dirs > 1:
-        print(f"{'Total':<45} {_human_size(total_size):>10}  ({total_items} items)")
+    sized.sort(key=lambda x: x[0], reverse=True)
 
-    if total_items == 0:
-        print("All trash directories are empty.")
+    for size, t in sized:
+        print(f"{_human_size(size):>10}  {t.deletion_date}  {t.original_path}")
+
+    print(f"{_human_size(total_size):>10}  Total ({len(sized)} item{'s' if len(sized) != 1 else ''})")
     return 0
 
 

@@ -135,13 +135,13 @@ vim.schedule(function()
   -- ctrl-c 复制
   set_x_map('<C-c>', 'y')
 
-  set_n_map('yl', function()
+  set_n_map('yr', function()
     local ref = vim.fn.fnamemodify(vim.fn.expand('%'), ':.')  .. ':' .. vim.fn.line('.')
     require('lu5je0.core.clipboard').set(ref)
     vim.notify("copied " .. ref)
   end, desc_opts('yank file reference'))
 
-  set_n_map('yL', function()
+  set_n_map('yR', function()
     local ref = vim.fn.expand('%:p') .. ':' .. vim.fn.line('.')
     require('lu5je0.core.clipboard').set(ref)
     vim.notify("copied " .. ref)

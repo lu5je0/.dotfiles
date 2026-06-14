@@ -40,7 +40,6 @@ local function refresh()
   state.refresh_scheduled = true
   vim.schedule(function()
     state.refresh_scheduled = false
-    state.focused_win = vim.api.nvim_get_current_win()
     for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
       set_winbar(win)
     end
@@ -66,7 +65,6 @@ function M.setup(group)
     callback = function()
       local win = vim.api.nvim_get_current_win()
       local buf = vim.api.nvim_get_current_buf()
-      state.focused_win = win
       track_buf(win, buf)
       set_winbar(win)
     end,
