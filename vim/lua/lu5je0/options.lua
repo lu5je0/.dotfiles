@@ -143,6 +143,9 @@ o.termguicolors = true
 o.bg = 'dark'
 o.ruler = false
 
+o.title = true
+o.titlestring = vim.fn.hostname()
+
 -- vim.deprecate = function() end
 
 if has('mac') then
