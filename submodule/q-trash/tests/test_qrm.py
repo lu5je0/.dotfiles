@@ -1,4 +1,4 @@
-"""Tests for q-trash rm (Rust binary). Run with: python3 -m pytest tests/ -v"""
+"""Tests for q-rm. Run with: python3 -m pytest tests/ -v"""
 import os
 import subprocess
 import sys
@@ -8,7 +8,7 @@ from urllib.parse import unquote
 import pytest
 
 HERE = Path(__file__).resolve().parent
-QTRASH = HERE.parent / "target" / "release" / "q-trash"
+QTRASH = HERE.parent / "q-trash.py"
 
 
 def run_qrm(*args, env=None, cwd=None, input_text=None):
@@ -16,19 +16,18 @@ def run_qrm(*args, env=None, cwd=None, input_text=None):
     if env:
         e.update(env)
     return subprocess.run(
-        [str(QTRASH), "rm", *args],
+        [sys.executable, str(QTRASH), "rm", *args],
         capture_output=True, text=True, env=e, cwd=cwd, input=input_text,
     )
 
 
-@pytest.fixture(autouse=True)
-def check_binary():
-    if not QTRASH.exists():
-        pytest.skip("Rust binary not built; run `cargo build --release` first")
-
-
 @pytest.fixture
 def fake_home(tmp_path, monkeypatch):
+    """Use tmp_path as HOME so trash goes to tmp_path/.local/share/Trash.
+
+    All test files live under tmp_path so they share volume with HOME →
+    they go to the home trash.
+    """
     home = tmp_path / "home"
     home.mkdir()
     work = tmp_path / "work"
@@ -142,6 +141,7 @@ def test_trashinfo_format(fake_home):
     date_line = next(l for l in lines if l.startswith("DeletionDate="))
     decoded = unquote(path_line[len("Path="):])
     assert decoded == str(f.resolve())
+    # ISO 8601 local time, no offset
     import re
     assert re.match(
         r"^DeletionDate=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$", date_line
@@ -169,6 +169,7 @@ def test_purge_bypasses_trash(fake_home):
     r = run_qrm("--purge", str(f), env={"HOME": str(home)})
     assert r.returncode == 0, r.stderr
     assert not f.exists()
+    # No trash dir should be created when purging files outside trash flow
     trash = home_trash(home)
     if trash.exists():
         assert list((trash / "files").iterdir()) == []
@@ -228,7 +229,7 @@ def test_interactive_accept(fake_home):
 
 
 def test_trash_list_compat(fake_home):
-    """Verify trash-cli's trash-list can read q-trash's trashinfo files."""
+    """Verify trash-cli's trash-list can read q-rm's trashinfo files."""
     import shutil as _sh
     if not _sh.which("trash-list"):
         pytest.skip("trash-list not installed")
@@ -243,82 +244,3 @@ def test_trash_list_compat(fake_home):
     )
     assert out.returncode == 0, out.stderr
     assert str(f.resolve()) in out.stdout
-
-
-# ---------- q-trash list/restore/size/empty tests ----------
-
-def run_qtrash(*args, env=None, input_text=None):
-    e = os.environ.copy()
-    if env:
-        e.update(env)
-    return subprocess.run(
-        [str(QTRASH), *args],
-        capture_output=True, text=True, env=e, input=input_text,
-    )
-
-
-def test_list_empty(fake_home):
-    home, _ = fake_home
-    r = run_qtrash("list", env={"HOME": str(home)})
-    assert r.returncode == 0
-    assert "No trashed files" in r.stderr
-
-
-@needs_freedesktop
-def test_list_shows_trashed(fake_home):
-    home, work = fake_home
-    f = work / "listed.txt"
-    f.write_text("x")
-    run_qrm(str(f), env={"HOME": str(home)})
-    r = run_qtrash("list", env={"HOME": str(home)})
-    assert r.returncode == 0
-    assert str(f.resolve()) in r.stdout
-
-
-@needs_freedesktop
-def test_restore_by_path(fake_home):
-    home, work = fake_home
-    f = work / "restore_me.txt"
-    f.write_text("hello")
-    run_qrm(str(f), env={"HOME": str(home)})
-    assert not f.exists()
-    r = run_qtrash("restore", str(f.resolve()), env={"HOME": str(home)})
-    assert r.returncode == 0
-    assert f.exists()
-    assert f.read_text() == "hello"
-
-
-@needs_freedesktop
-def test_size_shows_usage(fake_home):
-    home, work = fake_home
-    f = work / "sized.txt"
-    f.write_text("x" * 1000)
-    run_qrm(str(f), env={"HOME": str(home)})
-    r = run_qtrash("size", env={"HOME": str(home)})
-    assert r.returncode == 0
-    assert "Total" in r.stdout
-
-
-@needs_freedesktop
-def test_empty_with_force(fake_home):
-    home, work = fake_home
-    f = work / "to_empty.txt"
-    f.write_text("x")
-    run_qrm(str(f), env={"HOME": str(home)})
-    r = run_qtrash("empty", "-f", env={"HOME": str(home)})
-    assert r.returncode == 0
-    assert "Deleted 1 item" in r.stdout
-    r2 = run_qtrash("list", env={"HOME": str(home)})
-    assert "No trashed files" in r2.stderr
-
-
-def test_version():
-    r = run_qtrash("--version")
-    assert r.returncode == 0
-    assert "q-trash" in r.stdout
-
-
-def test_unknown_command():
-    r = run_qtrash("bogus")
-    assert r.returncode == 1
-    assert "unknown command" in r.stderr
