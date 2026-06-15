@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""q-trash — manage freedesktop.org trash (list / restore / empty / size).
+"""q-trash — manage trash (list / restore / empty / size).
 
-Companion to q-rm. Scans all trash directories by reading /proc/self/mounts
-directly (no psutil dependency), so it works on WSL2 virtiofs where trash-cli
-fails. Shared mount/sticky-bit helpers are imported from q-rm.py via importlib
-to avoid duplication.
+Platform-aware companion to q-rm. Trash discovery and scanning logic
+lives in trash_backend.py; this file is the CLI front-end.
 """
 from __future__ import annotations
 
@@ -13,8 +11,7 @@ import os
 import shutil
 import sys
 from datetime import datetime
-from typing import List, Optional, Tuple
-from urllib.parse import unquote
+from typing import List, Optional
 
 VERSION = "0.1.0"
 PROG = "q-trash"
@@ -37,7 +34,7 @@ Options:
 Examples:
   {PROG} list                   # list all trashed files
   {PROG} list .                 # list files trashed from current directory
-  {PROG} restore                # interactive restore (current dir)
+  {PROG} restore                # interactive restore (all files)
   {PROG} restore /path/to/file  # restore specific file (latest match)
   {PROG} restore --all .        # restore all files from current dir
   {PROG} empty                  # empty all trash (with confirmation)
@@ -46,201 +43,20 @@ Examples:
 """
 
 
-# ---------- shared helpers from q-rm ----------
+# ---------- imports ----------
 
-def _load_qrm():
+def _load_module(filename: str, mod_name: str):
     self_real = os.path.realpath(__file__)
-    qrm_path = os.path.join(os.path.dirname(self_real), "q-rm.py")
-    spec = importlib.util.spec_from_file_location("qrm", qrm_path)
+    path = os.path.join(os.path.dirname(self_real), filename)
+    spec = importlib.util.spec_from_file_location(mod_name, path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
-_qrm = _load_qrm()
-
-
-# ---------- mount/trash discovery ----------
-
-def read_mount_points() -> dict[str, str]:
-    """Return {mountpoint: fstype} for all relevant mount points."""
-    if sys.platform == "darwin":
-        return _read_mount_points_macos()
-    return _qrm._read_mount_fstype_map()
-
-
-def _read_mount_points_macos() -> dict[str, str]:
-    """Discover mount points on macOS via /Volumes and /."""
-    out: dict[str, str] = {"/": "apfs"}
-    volumes = "/Volumes"
-    if os.path.isdir(volumes):
-        try:
-            for entry in os.scandir(volumes):
-                if entry.is_dir(follow_symlinks=True):
-                    out[entry.path] = "apfs"
-        except OSError:
-            pass
-    return out
-
-
-def discover_trash_dirs(specific_dir: Optional[str] = None) -> List[Tuple[str, str]]:
-    """Return list of (trash_dir, volume_root).
-
-    If specific_dir is given, only return that one (caller opt-in, no
-    sticky-bit check). Otherwise apply Trash Spec 1.0 reader checks:
-    $top/.Trash must be a sticky non-symlink dir; $top/.Trash-$UID must
-    not itself be a symlink.
-    """
-    if specific_dir:
-        vol = _guess_volume_of_trash(specific_dir)
-        return [(specific_dir, vol)]
-
-    uid = os.getuid()
-    results: List[Tuple[str, str]] = []
-
-    # Home trash
-    ht = _qrm.home_trash_dir()
-    if os.path.isdir(os.path.join(ht, "info")):
-        home = os.path.expanduser("~")
-        home_vol = _volume_of_dir(home)
-        results.append((ht, home_vol))
-
-    # Volume-level trash dirs
-    mounts = read_mount_points()
-    for mp in mounts:
-        # $top/.Trash/$UID — only when $top/.Trash is sticky, non-symlink
-        top_trash = os.path.join(mp, ".Trash")
-        if _qrm.is_safe_top_trash(top_trash):
-            d = os.path.join(top_trash, str(uid))
-            if os.path.isdir(os.path.join(d, "info")):
-                results.append((d, mp))
-        # $top/.Trash-$UID — must not be a symlink itself
-        d = os.path.join(mp, f".Trash-{uid}")
-        if (not os.path.islink(d)
-                and os.path.isdir(os.path.join(d, "info"))
-                and not any(x[0] == d for x in results)):
-            results.append((d, mp))
-
-    return results
-
-
-def _volume_of_dir(path: str) -> str:
-    """Walk up to find mount point by st_dev change."""
-    path = os.path.realpath(path)
-    try:
-        dev = os.stat(path).st_dev
-    except OSError:
-        return "/"
-    cur = path
-    while True:
-        up = os.path.dirname(cur)
-        if up == cur:
-            return cur
-        try:
-            if os.stat(up).st_dev != dev:
-                return cur
-        except OSError:
-            return cur
-        cur = up
-
-
-def _guess_volume_of_trash(trash_dir: str) -> str:
-    """Guess volume root from trash dir path.
-
-    e.g. /mnt/c/.Trash-1000 → /mnt/c
-         ~/.local/share/Trash → volume_of(~)
-    """
-    td = os.path.realpath(trash_dir)
-    base = os.path.basename(td)
-    if base.startswith(".Trash"):
-        return os.path.dirname(td)
-    parent = os.path.dirname(td)
-    base_parent = os.path.basename(parent)
-    if base_parent == ".Trash":
-        return os.path.dirname(parent)
-    return _volume_of_dir(td)
-
-
-# ---------- trashinfo parsing ----------
-
-class TrashedFile:
-    __slots__ = ("original_path", "deletion_date", "trash_dir",
-                 "info_path", "files_path", "name")
-
-    def __init__(self, original_path: str, deletion_date: str,
-                 trash_dir: str, info_path: str, files_path: str,
-                 name: str) -> None:
-        self.original_path = original_path
-        self.deletion_date = deletion_date
-        self.trash_dir = trash_dir
-        self.info_path = info_path
-        self.files_path = files_path
-        self.name = name
-
-
-def parse_trashinfo(info_path: str, volume_root: str) -> Optional[TrashedFile]:
-    """Parse a .trashinfo file and return a TrashedFile, or None on error."""
-    try:
-        with open(info_path, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
-    except OSError:
-        return None
-
-    path_val = None
-    date_val = ""
-    for line in content.splitlines():
-        if line.startswith("Path="):
-            path_val = unquote(line[5:])
-        elif line.startswith("DeletionDate="):
-            date_val = line[13:]
-
-    if path_val is None:
-        return None
-
-    # Absolute or relative path?
-    if os.path.isabs(path_val):
-        original = path_val
-    else:
-        original = os.path.join(volume_root, path_val)
-
-    # Derive files path from info path
-    info_dir = os.path.dirname(info_path)
-    trash_dir = os.path.dirname(info_dir)
-    name = os.path.basename(info_path)
-    if name.endswith(".trashinfo"):
-        name = name[:-10]
-    files_path = os.path.join(trash_dir, "files", name)
-
-    return TrashedFile(
-        original_path=original,
-        deletion_date=date_val,
-        trash_dir=trash_dir,
-        info_path=info_path,
-        files_path=files_path,
-        name=name,
-    )
-
-
-def scan_trash(specific_dir: Optional[str] = None) -> List[TrashedFile]:
-    """Scan all discoverable trash dirs and return TrashedFiles."""
-    results: List[TrashedFile] = []
-    for trash_dir, volume_root in discover_trash_dirs(specific_dir):
-        info_dir = os.path.join(trash_dir, "info")
-        if not os.path.isdir(info_dir):
-            continue
-        try:
-            entries = os.listdir(info_dir)
-        except OSError:
-            continue
-        for entry in entries:
-            if not entry.endswith(".trashinfo"):
-                continue
-            info_path = os.path.join(info_dir, entry)
-            tf = parse_trashinfo(info_path, volume_root)
-            if tf:
-                results.append(tf)
-    results.sort(key=lambda t: (t.deletion_date, t.info_path))
-    return results
+_backend = _load_module("trash_backend.py", "trash_backend")
+TrashedFile = _backend.TrashedFile
+scan_trash = _backend.scan_trash
 
 
 # ---------- commands ----------
@@ -285,37 +101,35 @@ def cmd_restore(args: List[str], trash_dir_opt: Optional[str]) -> int:
     if explicit_path:
         filter_path = os.path.abspath(remaining[0])
     else:
-        filter_path = os.path.abspath(".")
+        filter_path = None
 
     items = scan_trash(trash_dir_opt)
 
-    # Auto-pick latest exact match only when an explicit path was given;
-    # otherwise (no arg => cwd) fall through to the interactive picker so
-    # we never silently restore the cwd itself.
-    exact = [t for t in items if t.original_path == filter_path]
+    exact = [t for t in items if t.original_path == filter_path] if filter_path else []
     if explicit_path and exact and not restore_all:
         to_restore = [exact[-1]]
     elif restore_all:
-        items = [t for t in items
-                 if t.original_path == filter_path
-                 or t.original_path.startswith(filter_path.rstrip("/") + "/")]
+        if filter_path:
+            items = [t for t in items
+                     if t.original_path == filter_path
+                     or t.original_path.startswith(filter_path.rstrip("/") + "/")]
         if not items:
-            print(f"No files trashed from '{filter_path}'", file=sys.stderr)
+            msg = f"No files trashed from '{filter_path}'" if filter_path else "No trashed files."
+            print(msg, file=sys.stderr)
             return 1
-        # Deduplicate: for each original_path, only restore the latest version
-        # to avoid overwriting during batch restore.
         seen: dict[str, TrashedFile] = {}
         for t in items:
-            seen[t.original_path] = t  # last one wins (list is sorted by date)
+            seen[t.original_path] = t
         to_restore = list(seen.values())
     else:
-        items = [t for t in items
-                 if t.original_path == filter_path
-                 or t.original_path.startswith(filter_path.rstrip("/") + "/")]
+        if filter_path:
+            items = [t for t in items
+                     if t.original_path == filter_path
+                     or t.original_path.startswith(filter_path.rstrip("/") + "/")]
         if not items:
-            print(f"No files trashed from '{filter_path}'", file=sys.stderr)
+            msg = f"No files trashed from '{filter_path}'" if filter_path else "No trashed files."
+            print(msg, file=sys.stderr)
             return 1
-        # Interactive picker writes to stderr so stdout stays parseable.
         for idx, t in enumerate(items):
             sys.stderr.write(
                 f"  {idx:3d}  {t.deletion_date}  {t.original_path}\n"
@@ -354,9 +168,6 @@ def cmd_restore(args: List[str], trash_dir_opt: Optional[str]) -> int:
 def _do_restore(t: TrashedFile, overwrite: bool) -> bool:
     dest = t.original_path
 
-    # Verify backup exists BEFORE touching the destination — otherwise an
-    # --overwrite on a trashinfo with a missing files/ entry would destroy
-    # the user's current file with nothing to restore from.
     if not os.path.exists(t.files_path) and not os.path.islink(t.files_path):
         print(f"{PROG}: backup file missing: '{t.files_path}'", file=sys.stderr)
         return False
@@ -381,10 +192,11 @@ def _do_restore(t: TrashedFile, overwrite: bool) -> bool:
         print(f"{PROG}: cannot restore '{dest}': {e.strerror}", file=sys.stderr)
         return False
 
-    try:
-        os.unlink(t.info_path)
-    except OSError:
-        pass
+    if t.info_path:
+        try:
+            os.unlink(t.info_path)
+        except OSError:
+            pass
 
     print(f"Restored: {dest}")
     return True
@@ -433,8 +245,6 @@ def cmd_empty(args: List[str], trash_dir_opt: Optional[str]) -> int:
             try:
                 dt = datetime.strptime(t.deletion_date, "%Y-%m-%dT%H:%M:%S")
             except ValueError:
-                # Unparseable date: keep it (conservative — don't delete
-                # something we can't age-check).
                 continue
             if (cutoff - dt).days >= days:
                 filtered.append(t)
@@ -469,10 +279,11 @@ def cmd_empty(args: List[str], trash_dir_opt: Optional[str]) -> int:
             print(f"{PROG}: cannot delete '{t.files_path}': {e.strerror}",
                   file=sys.stderr)
             continue
-        try:
-            os.unlink(t.info_path)
-        except OSError:
-            pass
+        if t.info_path:
+            try:
+                os.unlink(t.info_path)
+            except OSError:
+                pass
         deleted += 1
 
     print(f"Deleted {deleted} item{'s' if deleted != 1 else ''}.")
@@ -537,8 +348,7 @@ def _human_size(n: int) -> str:
 
 
 def cmd_rm(args: List[str]) -> int:
-    """Delegate to q-rm's main()."""
-    return _qrm.main(args)
+    return _load_module("rm_action.py", "rm_action").main(args)
 
 
 # ---------- main ----------
@@ -554,7 +364,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"{PROG} {VERSION}")
         return 0
 
-    # Extract global --trash-dir option
     trash_dir_opt: Optional[str] = None
     filtered_argv: List[str] = []
     i = 0

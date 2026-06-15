@@ -8,7 +8,7 @@ from urllib.parse import unquote
 import pytest
 
 HERE = Path(__file__).resolve().parent
-QRM = HERE.parent / "q-rm.py"
+QTRASH = HERE.parent / "q-trash.py"
 
 
 def run_qrm(*args, env=None, cwd=None, input_text=None):
@@ -16,7 +16,7 @@ def run_qrm(*args, env=None, cwd=None, input_text=None):
     if env:
         e.update(env)
     return subprocess.run(
-        [sys.executable, str(QRM), *args],
+        [sys.executable, str(QTRASH), "rm", *args],
         capture_output=True, text=True, env=e, cwd=cwd, input=input_text,
     )
 
@@ -41,6 +41,12 @@ def home_trash(home: Path) -> Path:
     return home / ".local" / "share" / "Trash"
 
 
+needs_freedesktop = pytest.mark.skipif(
+    sys.platform == "darwin", reason="macOS uses system trash, not freedesktop"
+)
+
+
+@needs_freedesktop
 def test_remove_single_file(fake_home):
     home, work = fake_home
     f = work / "a.txt"
@@ -64,6 +70,7 @@ def test_remove_directory_requires_r(fake_home):
     assert d.exists()
 
 
+@needs_freedesktop
 def test_remove_directory_with_r(fake_home):
     home, work = fake_home
     d = work / "d"
@@ -100,6 +107,7 @@ def test_missing_without_force_errors(fake_home):
     assert "No such file" in r.stderr
 
 
+@needs_freedesktop
 def test_collision_renaming(fake_home):
     home, work = fake_home
     for i in range(3):
@@ -116,6 +124,7 @@ def test_collision_renaming(fake_home):
                           "same_3.trashinfo"]
 
 
+@needs_freedesktop
 def test_trashinfo_format(fake_home):
     home, work = fake_home
     f = work / "weird name with space.txt"
@@ -184,13 +193,10 @@ def test_verbose_reports(fake_home):
     assert "removed" in r.stdout
 
 
-def test_help_and_version():
+def test_help():
     r = run_qrm("--help")
     assert r.returncode == 0
     assert "Usage:" in r.stdout
-    r = run_qrm("--version")
-    assert r.returncode == 0
-    assert "q-rm" in r.stdout
 
 
 def test_missing_operand():

@@ -120,7 +120,7 @@ alias crontab="cron.sh"
 alias ls='ls -F --show-control-chars --color=auto'
 
 if [[ -o interactive ]]; then
-  alias rm='q-rm'
+  alias rm='q-trash rm'
 fi
 
 alias sudo='sudo env PATH=/sbin:$PATH'
