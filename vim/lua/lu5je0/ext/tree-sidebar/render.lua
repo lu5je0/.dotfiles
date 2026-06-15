@@ -165,8 +165,6 @@ function M.render_tree(root_children, opts)
           branch = child.type == 'directory' and '' or '  '
         elseif child.type == 'directory' then
           branch = ''
-        elseif #visible == 1 then
-          branch = '  '
         else
           branch = child_is_last and '└ ' or '├ '
         end
