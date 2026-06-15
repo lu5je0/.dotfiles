@@ -56,6 +56,8 @@ local function get_icon_hl(base_icon_hl, tab_bg_hl)
   vim.api.nvim_set_hl(0, group_name, {
     fg = icon_def.fg,
     bg = tab_def.bg,
+    bold = false,
+    italic = false,
   })
   icon_hl_cache[key] = group_name
   return group_name
@@ -127,7 +129,7 @@ local function close_click_prefix(buf)
   return c
 end
 
-local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first, is_focused, target_size)
+local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name, is_first, target_size)
   local opts = config.options
   target_size = target_size or opts.tab_size
   local devicons = opts.show_devicons and get_devicons() or nil
@@ -159,13 +161,13 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
 
   local icon_part = ''
   local icon_visible_w = 0
-  if devicons and buf_name ~= '' then
+  if devicons then
     local base_for_icon = basename(buf_name)
     local ext = base_for_icon:match('%.([^%.]+)$') or ''
     local icon, icon_hl = devicons.get_icon(base_for_icon, ext, { default = true })
     if icon then
       local combined_hl = get_icon_hl(icon_hl or hl_buf, hl_buf)
-      icon_part = '%#' .. combined_hl .. '#' .. icon .. '%#' .. hl_buf .. '# '
+      icon_part = '%#' .. combined_hl .. '#' .. icon .. ' %#' .. hl_buf .. '#'
       icon_visible_w = 2
     end
   end
@@ -192,21 +194,12 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
 
   -- build tail inline
   local tail
-  if is_selected and is_focused then
-    if modified then
-      local hl_modified = is_selected and 'BufferLineModifiedSelected' or 'BufferLineModified'
-      tail = close_click_prefix(buf) .. '%#' .. hl_modified .. '#' .. opts.modified_icon .. ' %X'
-    else
-      local hl_close = is_selected and 'BufferLineCloseSelected' or 'BufferLineClose'
-      tail = close_click_prefix(buf) .. '%#' .. hl_close .. '#' .. opts.close_icon .. ' %X'
-    end
+  if modified then
+    local hl_modified = is_selected and 'BufferLineModifiedSelected' or 'BufferLineModified'
+    tail = close_click_prefix(buf) .. '%#' .. hl_modified .. '#' .. opts.modified_icon .. ' %X'
   else
-    if modified then
-      local hl_modified = is_selected and 'BufferLineModifiedSelected' or 'BufferLineModified'
-      tail = '%#' .. hl_modified .. '#' .. opts.modified_icon .. ' '
-    else
-      tail = hl_buf_tag .. '  '
-    end
+    local hl_close = is_selected and 'BufferLineCloseSelected' or 'BufferLineClose'
+    tail = close_click_prefix(buf) .. '%#' .. hl_close .. '#' .. opts.close_icon .. ' %X'
   end
 
   -- padding
@@ -323,7 +316,6 @@ function M.build_winbar(win_id)
   end
 
   local current = vim.api.nvim_win_get_buf(win_id)
-  local is_focused = (win_id == state.focused_win)
   local current_idx = 1
   for i, b in ipairs(bufs) do
     if b == current then current_idx = i; break end
@@ -333,7 +325,7 @@ function M.build_winbar(win_id)
   local segments = {}
   for i, buf in ipairs(bufs) do
     local is_selected = (buf == current)
-    segments[i] = buffer_segment(buf, i, is_selected, all_basenames, buf_names[buf], i == 1, is_focused)
+    segments[i] = buffer_segment(buf, i, is_selected, all_basenames, buf_names[buf], i == 1)
   end
 
   local available = vim.api.nvim_win_get_width(win_id)
@@ -385,7 +377,7 @@ function M.build_winbar(win_id)
     local gained = marker_width(right_hidden) - marker_width(new_hidden)
     local partial_size = leftover() + gained
     if partial_size >= min_partial_for(idx) then
-      right_partial = buffer_segment(buf, idx, false, all_basenames, buf_names[buf], false, is_focused, partial_size - 1)
+      right_partial = buffer_segment(buf, idx, false, all_basenames, buf_names[buf], false, partial_size - 1)
       right_hidden = new_hidden
       used_extra = used_extra + partial_size
     end
@@ -398,7 +390,7 @@ function M.build_winbar(win_id)
     local gained = marker_width(left_hidden) - marker_width(new_hidden)
     local partial_size = leftover() + gained
     if partial_size >= min_partial_for(idx) then
-      left_partial = buffer_segment(buf, idx, false, all_basenames, buf_names[buf], idx == 1, is_focused, partial_size - 1)
+      left_partial = buffer_segment(buf, idx, false, all_basenames, buf_names[buf], idx == 1, partial_size - 1)
       left_hidden = new_hidden
       used_extra = used_extra + partial_size
     end

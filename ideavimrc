@@ -33,8 +33,8 @@ let mapleader=","
 let g:WhichKeyDesc_windows="<leader>w Windows"
 
 nmap yp <Action>(CopyReference)
-nmap yl <Action>(CopyPathWithLineNumber)
-nmap yL <Action>(CopyAbsolutePath)
+nmap yr <Action>(CopyPathWithLineNumber)
+nmap yR <Action>(CopyAbsolutePath)
 
 " ReplaceWithRegister
 nmap gr  <Plug>ReplaceWithRegisterOperator

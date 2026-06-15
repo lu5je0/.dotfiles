@@ -536,18 +536,34 @@
   typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE_VISUAL_IDENTIFIER_EXPANSION='err'
 
   ###################[ command_execution_time: duration of the last command ]###################
-  # Show duration of the last command if takes at least this many seconds.
-  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_THRESHOLD=1
-  # Show this many fractional digits. Zero means round to seconds.
-  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_PRECISION=0
-  # Execution time color.
+  function my_exec_time_formatter() {
+    if (( P9K_COMMAND_DURATION_SECONDS >= 10 )); then
+      printf -v my_exec_time_format "%.1fs" $P9K_COMMAND_DURATION_SECONDS
+    else
+      printf -v my_exec_time_format "%.1fms" $((P9K_COMMAND_DURATION_SECONDS * 1000))
+    fi
+  }
+  functions -M my_exec_time_formatter 2>/dev/null
+
+  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_THRESHOLD=0.001
+  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_PRECISION=4
   typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=101
-  # Duration format: 1d 2h 3m 4s.
   typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FORMAT='d h m s'
-  # Custom icon.
   typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_VISUAL_IDENTIFIER_EXPANSION=
-  # Custom prefix.
-  # typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_PREFIX='%ftook '
+  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_CONTENT_EXPANSION='${$((my_exec_time_formatter()))+${my_exec_time_format}}'
+  
+  # # Show duration of the last command if takes at least this many seconds.
+  # typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_THRESHOLD=1
+  # # Show this many fractional digits. Zero means round to seconds.
+  # typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_PRECISION=0
+  # # Execution time color.
+  # typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=101
+  # # Duration format: 1d 2h 3m 4s.
+  # typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FORMAT='d h m s'
+  # # Custom icon.
+  # typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_VISUAL_IDENTIFIER_EXPANSION=
+  # # Custom prefix.
+  # # typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_PREFIX='%ftook '
 
   #######################[ background_jobs: presence of background jobs ]#######################
   # Don't show the number of background jobs.

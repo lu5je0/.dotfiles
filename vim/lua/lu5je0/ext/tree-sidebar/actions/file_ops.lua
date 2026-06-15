@@ -112,30 +112,11 @@ function M.rename()
 end
 
 local function has_trash()
-  if vim.fn.has('mac') == 1 then return true end
-  return vim.fn.executable('trash-put') == 1
+  return vim.fn.executable('q-trash') == 1
 end
 
 local function trash(abs_path)
-  local cmd
-  if vim.fn.has('mac') == 1 then
-    if vim.fn.executable('trash') == 1 then
-      cmd = { 'trash', abs_path }
-    else
-      cmd = {
-        'osascript', '-e',
-        ('tell application "Finder" to delete POSIX file "%s"'):format(
-          abs_path:gsub('\\', '\\\\'):gsub('"', '\\"')
-        ),
-      }
-    end
-  else
-    if vim.fn.executable('trash-put') == 1 then
-      cmd = { 'trash-put', abs_path }
-    end
-  end
-  if not cmd then return false end
-  local result = vim.system(cmd):wait()
+  local result = vim.system({ 'q-trash', 'rm', abs_path }):wait()
   return result.code == 0
 end
 

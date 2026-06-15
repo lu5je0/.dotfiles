@@ -2,7 +2,7 @@ local M = {}
 
 M.options = {
   max_name_length = 13,
-  tab_size = 19,
+  tab_size = 18,
   show_devicons = true,
   modified_icon = '●',
   close_icon = '󰅖',
@@ -88,18 +88,18 @@ function M.apply_highlights()
     BufferLineBuffer         = { fg = hex(c.comment_fg), bg = hex(c.tab_bg) },
     BufferLineBufferSelected = { fg = hex(c.normal_fg),  bg = hex(c.sel_bg), bold = true },
     BufferLineModified       = { fg = hex(c.string_fg),  bg = hex(c.tab_bg) },
-    BufferLineModifiedSelected = { fg = hex(c.string_fg), bg = hex(c.sel_bg), bold = true },
+    BufferLineModifiedSelected = { fg = hex(c.string_fg), bg = hex(c.sel_bg) },
     BufferLineClose          = { fg = hex(c.comment_fg), bg = hex(c.tab_bg) },
     BufferLineCloseSelected  = { fg = hex(c.comment_fg), bg = hex(c.sel_bg) },
     BufferLineNumbers        = { fg = hex(c.comment_fg), bg = hex(c.tab_bg) },
-    BufferLineNumbersSelected = { fg = hex(c.normal_fg), bg = hex(c.sel_bg), bold = true },
+    BufferLineNumbersSelected = { fg = hex(c.normal_fg), bg = hex(c.sel_bg) },
     BufferLineSeparator      = { fg = hex(c.fill_bg),    bg = hex(c.tab_bg) },
     BufferLineSeparatorSelected = { fg = hex(c.fill_bg), bg = hex(c.sel_bg) },
     BufferLineSeparatorHidden = { fg = hex(c.tab_bg),   bg = hex(c.tab_bg) },
     BufferLineSeparatorSelectedHidden = { fg = hex(c.sel_bg), bg = hex(c.sel_bg) },
     BufferLineIndicatorSelected = { fg = hex(c.tabline_sel_bg), bg = hex(c.sel_bg) },
     BufferLineTab            = { fg = hex(c.comment_fg), bg = hex(c.tab_bg) },
-    BufferLineTabSelected    = { fg = hex(c.tabline_sel_bg), bg = hex(c.sel_bg), bold = true },
+    BufferLineTabSelected    = { fg = hex(c.tabline_sel_bg), bg = hex(c.sel_bg) },
     BufferLineTabSeparator   = { fg = hex(c.fill_bg), bg = hex(c.tab_bg) },
     BufferLineTabSeparatorSelected = { fg = hex(c.fill_bg), bg = hex(c.sel_bg) },
     BufferLineTabClose       = { fg = hex(c.comment_fg), bg = hex(c.tab_bg) },
@@ -107,6 +107,8 @@ function M.apply_highlights()
     BufferLineTruncMarker   = { fg = hex(c.comment_fg), bg = hex(c.fill_bg) },
     BufferLinePick           = { fg = hex(c.error_fg),   bg = hex(c.tab_bg), bold = true, italic = true },
     BufferLinePickSelected   = { fg = hex(c.error_fg),   bg = hex(c.sel_bg), bold = true, italic = true },
+    WinBar                   = { fg = hex(c.normal_fg), bg = hex(c.fill_bg) },
+    WinBarNC                 = { fg = hex(c.comment_fg), bg = hex(c.fill_bg) },
   }
 
   for name, opts in pairs(groups) do

@@ -34,6 +34,15 @@ local function refresh()
   git_changes_mod().refresh()
 end
 
+local function reload_buf(abs_path)
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf) and vim.api.nvim_buf_get_name(buf) == abs_path then
+      vim.api.nvim_buf_call(buf, function() vim.cmd('checktime') end)
+      break
+    end
+  end
+end
+
 -- ── helpers ─────────────────────────────────────────────
 
 local function find_section_for_line(line)
@@ -218,6 +227,7 @@ function M.discard_file()
   local item = state.git_changes.display_items[line]
   if not item or item._is_section or not item.node then return end
   local section_key = find_section_for_line(line)
+  local root = git_root()
 
   if item.type == 'dir' then
     local files = collect_files_under(item.node)
@@ -232,6 +242,9 @@ function M.discard_file()
     if #ops > 0 then
       push_undo('discarded dir', ops)
     end
+    for _, node in ipairs(files) do
+      reload_buf(root .. '/' .. (node.rel_path or node.name))
+    end
     vim.notify(string.format('Discarded %d files', #ops), vim.log.levels.INFO)
     refresh()
     return
@@ -242,6 +255,7 @@ function M.discard_file()
   if op then
     push_undo('discarded', { op })
     local path = item.node.rel_path or item.node.name
+    reload_buf(root .. '/' .. path)
     vim.notify('Discarded ' .. path, vim.log.levels.INFO)
   end
   refresh()
@@ -409,6 +423,9 @@ function M.discard_section()
     end
     ops[#ops + 1] = { type = 'restore_blobs', files = restore_files }
     push_undo('reverted', ops)
+    for _, file in ipairs(target_files) do
+      reload_buf(cwd .. '/' .. file.path)
+    end
     vim.notify(string.format('Reverted %d files', #target_files + #staged_only_paths), vim.log.levels.INFO)
   elseif section_key == 'staged' then
     local args = { 'git', 'reset', 'HEAD', '--' }
@@ -472,7 +489,19 @@ end
 -- ── undo (U) ────────────────────────────────────────────
 
 function M.undo_last_action()
-  git_ops.undo_last_action(get_undo_stack(), vim.fn.getcwd(), function()
+  local stack = get_undo_stack()
+  local entry = stack[#stack]
+  git_ops.undo_last_action(stack, vim.fn.getcwd(), function()
+    if entry then
+      local cwd = vim.fn.getcwd()
+      for _, op in ipairs(entry.ops) do
+        if op.type == 'restore_blobs' then
+          for _, file in ipairs(op.files or {}) do
+            reload_buf(cwd .. '/' .. file.path)
+          end
+        end
+      end
+    end
     refresh()
     git_changes_mod().reload_stash_list(function()
       for i, item in ipairs(state.git_changes.display_items or {}) do

@@ -1,0 +1,6 @@
+wsl = true
+neovim-bin = "/usr/bin/nvim"
+
+[font]
+normal = ["JetBrainsMonoNL NFM"]
+size = 11.0

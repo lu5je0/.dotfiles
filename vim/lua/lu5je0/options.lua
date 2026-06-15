@@ -48,9 +48,9 @@ if g.neovide then
   -- wsl config path: config.toml
   -- $HOME\AppData\Roaming\neovide
   if has('wsl') then
-    o.guifont = "JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h11"
+    o.guifont = "JetBrainsMonoNL NFM:h11"
   else
-    o.guifont = "JetBrainsMonoNL\\ Nerd\\ Font\\ Mono:h14"
+    o.guifont = "JetBrainsMonoNL Nerd Font Mono:h14"
   end
   
   require("lu5je0.ext.neovide-ime").setup()
@@ -142,6 +142,9 @@ g.loaded_ruby_provider = 0
 o.termguicolors = true
 o.bg = 'dark'
 o.ruler = false
+
+o.title = true
+o.titlestring = vim.fn.hostname()
 
 -- vim.deprecate = function() end
 
