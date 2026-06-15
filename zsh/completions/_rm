@@ -1,0 +1,19 @@
+#compdef rm
+
+if (( $+commands[q-trash] )); then
+  _arguments -s -S -A '-*' \
+    '(-f --force)'{-f,--force}'[ignore nonexistent files, never prompt]' \
+    '(-I --interactive)-i[prompt before every removal]' \
+    '(-i --interactive)-I[prompt when removing many files]' \
+    '(-i -I)--interactive=-[prompt according to WHEN]::when:((once always never))' \
+    '(-r -R --recursive)'{-r,-R,--recursive}'[remove directories recursively]' \
+    '(-d --dir)'{-d,--dir}'[remove empty directories]' \
+    '(-v --verbose)'{-v,--verbose}'[explain what is being done]' \
+    '--preserve-root[do not remove / (default)]' \
+    '--no-preserve-root[do not treat / specially]' \
+    '--one-file-system[skip directories on different filesystems]' \
+    '--purge[bypass trash, delete permanently]' \
+    '*:file:_files'
+else
+  _gnu_generic
+fi

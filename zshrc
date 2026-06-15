@@ -119,8 +119,14 @@ alias crontab="cron.sh"
 
 alias ls='ls -F --show-control-chars --color=auto'
 
-if [[ -o interactive ]] && [[ -x ~/.local/bin/q-trash ]]; then
-  alias rm='q-trash rm'
+if [[ -o interactive ]]; then
+  rm() {
+    if (( $+commands[q-trash] )); then
+      command q-trash rm "$@"
+    else
+      command rm "$@"
+    fi
+  }
 fi
 
 alias sudo='sudo env PATH=/sbin:$PATH'
