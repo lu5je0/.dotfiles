@@ -1,0 +1,39 @@
+name: q-trash Release
+on:
+  push:
+    tags: ["q-trash-latest"]
+
+defaults:
+  run:
+    working-directory: submodule/q-trash-rs
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Install cross-compiler
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: sudo apt-get install -y gcc-aarch64-linux-gnu
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+      - name: Rename binary
+        run: mv target/${{ matrix.target }}/release/q-trash q-trash-${{ matrix.target }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: q-trash-latest
+          files: submodule/q-trash-rs/q-trash-${{ matrix.target }}
