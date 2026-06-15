@@ -1,15 +1,18 @@
 """Windows Recycle Bin backend (WSL only).
 
 Sends files on Windows-native drives (drvfs/9p/virtiofs) to the
-Windows Recycle Bin via PowerShell.
+Windows Recycle Bin via PowerShell, and reads the bin by parsing
+$I metadata files directly under each volume's $Recycle.Bin/<SID>/.
 """
 from __future__ import annotations
 
 import importlib.util
 import os
 import shutil
+import struct
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 
@@ -103,11 +106,105 @@ def _find_powershell() -> Optional[str]:
     return None
 
 
+# ---------- scan helpers ----------
+
+_FILETIME_EPOCH = datetime(1601, 1, 1, tzinfo=timezone.utc)
+
+
+def _windows_mounts() -> List[str]:
+    out: List[str] = []
+    try:
+        with open("/proc/self/mounts", "r", encoding="utf-8",
+                  errors="replace") as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 3 and parts[2] in _WIN_FSTYPES:
+                    mp = parts[1].replace(r"\040", " ")
+                    if mp.startswith("/mnt/"):
+                        out.append(mp)
+    except OSError:
+        pass
+    return out
+
+
+def _filetime_to_local_iso(ft: int) -> str:
+    if ft <= 0:
+        return ""
+    try:
+        dt = (_FILETIME_EPOCH + timedelta(microseconds=ft // 10)).astimezone()
+    except (OverflowError, OSError, ValueError):
+        return ""
+    return dt.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def _windows_to_wsl(p: str) -> str:
+    if len(p) >= 2 and p[1] == ":":
+        return f"/mnt/{p[0].lower()}{p[2:].replace(chr(92), '/')}"
+    return p
+
+
+def _parse_i_file(path: str) -> Optional[tuple]:
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except OSError:
+        return None
+    if len(data) < 24:
+        return None
+    version, _size = struct.unpack("<qq", data[:16])
+    ts, = struct.unpack("<q", data[16:24])
+    if version == 2:
+        if len(data) < 28:
+            return None
+        nchars, = struct.unpack("<I", data[24:28])
+        raw = data[28:28 + nchars * 2]
+    else:
+        raw = data[24:24 + 520]
+    name = raw.decode("utf-16-le", errors="replace").rstrip("\x00")
+    if not name:
+        return None
+    return _filetime_to_local_iso(ts), _windows_to_wsl(name)
+
+
 # ---------- public: scan ----------
 
 def scan() -> List[TrashedFile]:
-    # TODO: implement via PowerShell COM Shell.Application
-    return []
+    if not is_wsl():
+        return []
+
+    out: List[TrashedFile] = []
+    for mp in _windows_mounts():
+        rb = os.path.join(mp, "$Recycle.Bin")
+        try:
+            sids = os.listdir(rb)
+        except OSError:
+            continue
+        for sid in sids:
+            sid_dir = os.path.join(rb, sid)
+            try:
+                entries = os.listdir(sid_dir)
+            except OSError:
+                continue
+            for e in entries:
+                if not e.startswith("$I") or len(e) < 3:
+                    continue
+                i_path = os.path.join(sid_dir, e)
+                parsed = _parse_i_file(i_path)
+                if parsed is None:
+                    continue
+                r_path = os.path.join(sid_dir, "$R" + e[2:])
+                if not os.path.lexists(r_path):
+                    continue
+                date, original = parsed
+                out.append(TrashedFile(
+                    original_path=original,
+                    deletion_date=date,
+                    trash_dir=sid_dir,
+                    info_path=i_path,
+                    files_path=r_path,
+                    name=e[2:],
+                ))
+    return out
 
 
 # ---------- public: trash ----------

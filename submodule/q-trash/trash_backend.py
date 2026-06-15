@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 
 
@@ -66,11 +67,20 @@ def scan_trash(specific_dir: Optional[str] = None) -> List[TrashedFile]:
     if specific_dir:
         return _load_backend("freedesktop").scan(specific_dir)
 
+    backends = _get_backends()
+    if not backends:
+        return []
+
+    if len(backends) == 1:
+        all_results = [backends[0].scan()]
+    else:
+        with ThreadPoolExecutor(max_workers=len(backends)) as pool:
+            all_results = list(pool.map(lambda b: b.scan(), backends))
+
     results: List[TrashedFile] = []
     seen: set[str] = set()
-
-    for backend in _get_backends():
-        for tf in backend.scan():
+    for chunk in all_results:
+        for tf in chunk:
             if tf.files_path not in seen:
                 seen.add(tf.files_path)
                 results.append(tf)
