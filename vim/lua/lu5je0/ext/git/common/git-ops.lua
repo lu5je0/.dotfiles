@@ -154,7 +154,7 @@ local function undo_restore_blobs(op, cwd)
   return true
 end
 
-function M.index_snapshot(paths, cwd)
+function M.index_snapshot(cwd, paths)
   local args = { 'git', 'ls-files', '-s', '--' }
   for _, p in ipairs(paths) do args[#args + 1] = p end
   local result = vim.system(args, { text = true, cwd = cwd }):wait()
@@ -165,7 +165,7 @@ end
 function M.run_undo_op(op, cwd)
   if op.type == 'reset_paths' or op.type == 'add_paths' then
     if op.expected_index then
-      local current = M.index_snapshot(op.paths, cwd)
+      local current = M.index_snapshot(cwd, op.paths)
       if current ~= op.expected_index then
         vim.notify('Undo skipped: index has changed since operation', vim.log.levels.WARN)
         return false

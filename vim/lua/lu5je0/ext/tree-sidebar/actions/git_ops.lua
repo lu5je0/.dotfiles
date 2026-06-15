@@ -116,7 +116,7 @@ function M.stage_file()
   local abs_path = cwd .. '/' .. path
   if not run_git({ 'git', 'add', '--', path }, 'Failed to stage: ') then return end
 
-  local snapshot = git_ops.index_snapshot({ path })
+  local snapshot = git_ops.index_snapshot(git_root(),{ path })
   push_undo('staged', { { type = 'reset_paths', paths = { path }, expected_index = snapshot } })
   log_batch('staged', eff, 1, function(write)
     write(string.format('Staged %s. Restore: git reset HEAD -- %s', abs_path, abs_path))
@@ -150,7 +150,7 @@ function M.stage_section()
   for _, p in ipairs(stage_paths) do args[#args + 1] = p end
   if not run_git(args, 'Failed to stage section: ') then return end
 
-  local snapshot = git_ops.index_snapshot(stage_paths)
+  local snapshot = git_ops.index_snapshot(git_root(),stage_paths)
   push_undo('staged', { { type = 'reset_paths', paths = stage_paths, expected_index = snapshot } })
   local cwd = vim.fn.getcwd()
   log_batch('staged', section_key, #stage_paths, function(write)
@@ -180,7 +180,7 @@ function M.unstage_file()
   local abs_path = cwd .. '/' .. path
   if not run_git({ 'git', 'reset', 'HEAD', '--', path }, 'Failed to unstage: ') then return end
 
-  local snapshot = git_ops.index_snapshot({ path })
+  local snapshot = git_ops.index_snapshot(git_root(),{ path })
   push_undo('unstaged', { { type = 'add_paths', paths = { path }, expected_index = snapshot } })
   log_batch('unstaged', 'staged', 1, function(write)
     write(string.format('Unstaged %s. Restore: git add %s', abs_path, abs_path))
@@ -216,7 +216,7 @@ local function discard_single_file(node, section_key)
     end
   elseif eff == 'staged' then
     if not run_git({ 'git', 'reset', 'HEAD', '--', path }, 'Failed to unstage: ') then return nil end
-    local snapshot = git_ops.index_snapshot({ path })
+    local snapshot = git_ops.index_snapshot(git_root(),{ path })
     return { type = 'add_paths', paths = { path }, expected_index = snapshot }
   end
 end
@@ -323,7 +323,7 @@ function M.discard_section()
       local args = { 'git', 'reset', 'HEAD', '--' }
       for _, p in ipairs(staged_only_paths) do args[#args + 1] = p end
       if not run_git(args, 'Failed to unstage: ') then return end
-      local snapshot = git_ops.index_snapshot(staged_only_paths)
+      local snapshot = git_ops.index_snapshot(git_root(),staged_only_paths)
       staged_undo_op = { type = 'add_paths', paths = staged_only_paths, expected_index = snapshot }
     end
 
@@ -435,7 +435,7 @@ function M.discard_section()
       paths[#paths + 1] = file.path
     end
     if not run_git(args, 'Failed to unstage section: ') then return end
-    local snapshot = git_ops.index_snapshot(paths)
+    local snapshot = git_ops.index_snapshot(git_root(),paths)
     push_undo('unstaged', { { type = 'add_paths', paths = paths, expected_index = snapshot } })
     log_batch('unstaged', 'staged', #files, function(write)
       for _, file in ipairs(files) do
@@ -491,13 +491,13 @@ end
 function M.undo_last_action()
   local stack = get_undo_stack()
   local entry = stack[#stack]
-  git_ops.undo_last_action(stack, vim.fn.getcwd(), function()
+  local root = git_root()
+  git_ops.undo_last_action(stack, root, function()
     if entry then
-      local cwd = vim.fn.getcwd()
       for _, op in ipairs(entry.ops) do
         if op.type == 'restore_blobs' then
           for _, file in ipairs(op.files or {}) do
-            reload_buf(cwd .. '/' .. file.path)
+            reload_buf(root .. '/' .. file.path)
           end
         end
       end

@@ -106,7 +106,7 @@ run('undo reset_paths succeeds when index unchanged', function(root)
   git({ 'add', 'new.lua' }, root)
 
   -- Simulate: user staged new.lua, undo = reset it
-  local snapshot = git_ops.index_snapshot({ 'new.lua' }, root)
+  local snapshot = git_ops.index_snapshot(root, { 'new.lua' })
   local stack = {}
   git_ops.push_undo(stack, 'staged', { { type = 'reset_paths', paths = { 'new.lua' }, expected_index = snapshot } })
 
@@ -122,7 +122,7 @@ run('undo reset_paths fails when index changed', function(root)
   write_file(root .. '/new.lua', 'hello\n')
   git({ 'add', 'new.lua' }, root)
 
-  local snapshot = git_ops.index_snapshot({ 'new.lua' }, root)
+  local snapshot = git_ops.index_snapshot(root, { 'new.lua' })
   local stack = {}
   git_ops.push_undo(stack, 'staged', { { type = 'reset_paths', paths = { 'new.lua' }, expected_index = snapshot } })
 
@@ -148,7 +148,7 @@ run('undo add_paths succeeds when index unchanged', function(root)
 
   -- Unstage it
   git({ 'reset', 'HEAD', '--', 'base.txt' }, root)
-  local snapshot = git_ops.index_snapshot({ 'base.txt' }, root)
+  local snapshot = git_ops.index_snapshot(root, { 'base.txt' })
   local stack = {}
   git_ops.push_undo(stack, 'unstaged', { { type = 'add_paths', paths = { 'base.txt' }, expected_index = snapshot } })
 
@@ -168,7 +168,7 @@ run('undo add_paths fails when index changed', function(root)
   git({ 'add', 'base.txt' }, root)
   git({ 'reset', 'HEAD', '--', 'base.txt' }, root)
 
-  local snapshot = git_ops.index_snapshot({ 'base.txt' }, root)
+  local snapshot = git_ops.index_snapshot(root, { 'base.txt' })
   local stack = {}
   git_ops.push_undo(stack, 'unstaged', { { type = 'add_paths', paths = { 'base.txt' }, expected_index = snapshot } })
 
@@ -280,21 +280,43 @@ run('index_snapshot returns consistent output for same state', function(root)
   write_file(root .. '/base.txt', 'modified\n')
   git({ 'add', 'base.txt' }, root)
 
-  local s1 = git_ops.index_snapshot({ 'base.txt' }, root)
-  local s2 = git_ops.index_snapshot({ 'base.txt' }, root)
+  local s1 = git_ops.index_snapshot(root, { 'base.txt' })
+  local s2 = git_ops.index_snapshot(root, { 'base.txt' })
   assert_eq(s1, s2, 'same state should produce same snapshot')
 end)
 
 run('index_snapshot changes after modifying staged content', function(root)
   write_file(root .. '/base.txt', 'v1\n')
   git({ 'add', 'base.txt' }, root)
-  local s1 = git_ops.index_snapshot({ 'base.txt' }, root)
+  local s1 = git_ops.index_snapshot(root, { 'base.txt' })
 
   write_file(root .. '/base.txt', 'v2\n')
   git({ 'add', 'base.txt' }, root)
-  local s2 = git_ops.index_snapshot({ 'base.txt' }, root)
+  local s2 = git_ops.index_snapshot(root, { 'base.txt' })
 
   assert_truthy(s1 ~= s2, 'different staged content should produce different snapshot')
+end)
+
+-- ============================================================================
+-- group: undo works when cwd differs from git root
+-- ============================================================================
+
+io.write(color.cyan .. 'undo with different cwd' .. color.reset .. '\n')
+
+run('undo reset_paths works from subdirectory', function(root)
+  vim.fn.mkdir(root .. '/sub', 'p')
+  write_file(root .. '/sub/file.lua', 'content\n')
+  git({ 'add', 'sub/file.lua' }, root)
+
+  local snapshot = git_ops.index_snapshot(root, { 'sub/file.lua' })
+  local stack = {}
+  git_ops.push_undo(stack, 'staged', { { type = 'reset_paths', paths = { 'sub/file.lua' }, expected_index = snapshot } })
+
+  -- Undo from git root (not from sub/) — should still work
+  git_ops.undo_last_action(stack, root, function() end)
+
+  local s = status_short(root)
+  assert_truthy(s:find('%?%? sub/'), 'expected sub/ untracked after undo from root')
 end)
 
 -- ============================================================================

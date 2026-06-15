@@ -537,7 +537,7 @@
 
   ###################[ command_execution_time: duration of the last command ]###################
   function my_exec_time_formatter() {
-    if (( P9K_COMMAND_DURATION_SECONDS >= 10 )); then
+    if (( P9K_COMMAND_DURATION_SECONDS >= 1 )); then
       printf -v my_exec_time_format "%.1fs" $P9K_COMMAND_DURATION_SECONDS
     else
       printf -v my_exec_time_format "%.1fms" $((P9K_COMMAND_DURATION_SECONDS * 1000))
