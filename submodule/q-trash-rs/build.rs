@@ -2,6 +2,7 @@ use std::process::Command;
 
 fn main() {
     let output = Command::new("date")
+        .env("TZ", "Asia/Shanghai")
         .args(["+%Y-%m-%d %H:%M:%S"])
         .output()
         .expect("failed to run date");
