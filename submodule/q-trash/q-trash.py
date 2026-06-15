@@ -526,13 +526,14 @@ def _dir_size(path: str) -> int:
 
 
 def _human_size(n: int) -> str:
+    size = float(n)
     for unit in ("B", "KB", "MB", "GB", "TB"):
-        if abs(n) < 1024:
+        if abs(size) < 1024:
             if unit == "B":
                 return f"{n} {unit}"
-            return f"{n:.1f} {unit}"
-        n /= 1024
-    return f"{n:.1f} PB"
+            return f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} PB"
 
 
 def cmd_rm(args: List[str]) -> int:

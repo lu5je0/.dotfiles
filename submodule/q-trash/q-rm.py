@@ -327,7 +327,7 @@ def delete_via_macos_trash(paths: List[str]) -> None:
             "or use --purge"
         )
     r = subprocess.run(
-        ["trash", "--", *paths],
+        ["trash", *paths],
         capture_output=True, text=True,
     )
     if r.returncode != 0:
