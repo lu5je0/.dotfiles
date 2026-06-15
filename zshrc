@@ -119,7 +119,7 @@ alias crontab="cron.sh"
 
 alias ls='ls -F --show-control-chars --color=auto'
 
-if [[ -o interactive ]]; then
+if [[ -o interactive ]] && (( $+commands[q-trash] )); then
   alias rm='q-trash rm'
 fi
 
