@@ -96,7 +96,7 @@ def scan() -> List[TrashedFile]:
 
     results: List[TrashedFile] = []
     for entry in entries:
-        if entry.startswith("."):
+        if entry in (".DS_Store", ".Trashes"):
             continue
         files_path = os.path.join(trash_dir, entry)
         try:
