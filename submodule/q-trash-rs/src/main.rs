@@ -6,7 +6,7 @@ mod rm;
 use std::env;
 use std::process;
 
-const VERSION: &str = "0.1.0";
+const VERSION: &str = concat!("0.1.0 (", env!("BUILD_TIME"), ")");
 
 fn print_help() {
     println!(
