@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REPO="lu5je0/.dotfiles"
-BIN_DIR="$HOME/.local/bin/solid"
+BIN_DIR="$HOME/.local/bin"
 TARGET_BIN="$BIN_DIR/q-trash"
 
 if [[ -x "$TARGET_BIN" ]]; then
