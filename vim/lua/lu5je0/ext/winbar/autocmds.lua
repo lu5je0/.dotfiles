@@ -133,7 +133,7 @@ function M.setup(group)
   vim.api.nvim_create_autocmd('ColorScheme', {
     group = group,
     callback = function()
-      require('lu5je0.ext.winbar.config').apply_highlights()
+      require('lu5je0.ext.winbar.highlights').apply()
       require('lu5je0.ext.winbar.render').clear_icon_hl_cache()
       refresh()
     end,

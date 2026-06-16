@@ -49,14 +49,14 @@
 ```
 ext/tabline/
 ├── init.lua        -- 入口：setup()，导出 buffer_name_map
-├── config.lua      -- 选项、offsets、动态高亮（从 colorscheme 推导颜色）
+├── config.lua      -- 选项、offsets、keymap 注册（setup_keymaps）
+├── highlights.lua  -- 动态高亮（从 colorscheme 推导颜色）
 ├── state.lua       -- 模块级缓存：buffer_name_map、ordinal_to_buf、pick 状态
 ├── naming.lua      -- Untitled-N gap-fill 命名分配
 ├── render.lua      -- 纯 tabline 字符串构建 + truncation + 鼠标点击 + tab 页指示器
 ├── offsets.lua     -- 检测左侧 sidebar 窗口生成 offset 填充块
 ├── actions.lua     -- cycle / go_to_ordinal / close_left / close_right / close_others
 ├── pick.lua        -- 字母分配 + getcharstr 选择
-├── keymaps.lua     -- 全局 keymap 注册
 ├── commands.lua    -- 用户命令注册
 └── autocmds.lua    -- 单 augroup 'tabline'，事件触发 refresh
 ```
@@ -65,12 +65,12 @@ ext/tabline/
 
 ### 架构设计
 
-- **颜色动态推导**：`config.apply_highlights()` 从 `Normal`、`Comment`、`String`、`TabLineSel`、`DiagnosticError`、`WinSeparator` 等 hl group 读取颜色，经 shade/tint 计算后设置所有 `BufferLine*` 高亮组。`ColorScheme` 事件时自动重新应用。
+- **颜色动态推导**：`highlights.apply()` 从 `Normal`、`Comment`、`String`、`TabLineSel`、`DiagnosticError`、`WinSeparator` 等 hl group 读取颜色，经 shade/tint 计算后设置所有 `BufferLine*` 高亮组。`ColorScheme` 事件时自动重新应用。
 - **Devicon 组合高亮**：`render.lua` 为每个 file icon 创建 `BufferLineIcon_<iconHl>_<tabHl>` 组合组（icon fg + tab bg），`ColorScheme` 时清除缓存。
 - **Truncation**：buffer tab 放不下时，从两侧平衡裁剪，当前 buffer 始终保留。显示 ` N  ` / ` N  ` 标记。
 - **Tab 页指示器**：多 tabpage 时右对齐显示 tab 编号 + 关闭按钮。
 - **Offset**：扫描当前 tabpage 左侧窗口，按 filetype 匹配 `config.offsets` 表，手动空格填充实现居中/左/右对齐，末尾追加 `█` separator。宽度包含 window separator 的 1 列。
-- **懒加载**：通过 `ext-config.lua` 的 `lazy_load` 注册，`UIEnter` 事件触发。setup 中 `commands` 和 `keymaps` 延迟到 `vim.schedule`。
+- **懒加载**：通过 `ext-config.lua` 的 `lazy_load` 注册，`UIEnter` 事件触发。setup 中 `commands` 和 `config.setup_keymaps` 延迟到 `vim.schedule`。
 
 ### 兼容接口
 
@@ -96,7 +96,7 @@ ext/tabline/
 
 ### 维护注意
 
-- 新增/修改高亮组时，在 `config.apply_highlights()` 的 `groups` 表内操作，不要散落到其他文件。
+- 新增/修改高亮组时，在 `highlights.apply()` 的 `groups` 表内操作，不要散落到其他文件。
 - 改动 buffer 列表逻辑时，确认 `core/buffers.lua` 的消费方（tree-sidebar、time-machine）不受影响。
 - 改动 offset 逻辑时，确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
 

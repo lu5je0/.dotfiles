@@ -1,5 +1,5 @@
 -- Isolated benchmark: only getbufinfo optimization vs original
--- Usage: cd vim && nvim --headless -u NONE -l tests/tabline/bench_getbufinfo.lua
+-- Usage: cd vim && nvim --headless -u NONE -l tests/winbar/bench_getbufinfo.lua
 
 local root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h') .. '/../../'
 vim.opt.rtp:prepend(root)
@@ -10,19 +10,19 @@ package.loaded['nvim-web-devicons'] = {
   end,
 }
 
-local config = require('lu5je0.ext.tabline.config')
-local state = require('lu5je0.ext.tabline.state')
-local render = require('lu5je0.ext.tabline.render')
+local highlights = require('lu5je0.ext.winbar.highlights')
+local state = require('lu5je0.ext.winbar.state')
+local render = require('lu5je0.ext.winbar.render')
 
-config.apply_highlights()
+highlights.apply()
 
 local filenames = {
-  'lua/lu5je0/ext/tabline/render.lua',
+  'lua/lu5je0/ext/winbar/render.lua',
   'lua/lu5je0/ext/tree-sidebar/window.lua',
   'lua/lu5je0/misc/quit-prompt.lua',
-  'lua/lu5je0/ext/tabline/config.lua',
-  'lua/lu5je0/ext/tabline/state.lua',
-  'lua/lu5je0/ext/tabline/init.lua',
+  'lua/lu5je0/ext/winbar/config.lua',
+  'lua/lu5je0/ext/winbar/state.lua',
+  'lua/lu5je0/ext/winbar/init.lua',
   'lua/lu5je0/core/buffers.lua',
   'package.json',
   'README.md',

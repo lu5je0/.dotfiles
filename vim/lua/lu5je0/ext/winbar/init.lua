@@ -9,7 +9,7 @@ function M.refresh()
 end
 
 function M.setup()
-  require('lu5je0.ext.winbar.config').apply_highlights()
+  require('lu5je0.ext.winbar.highlights').apply()
 
   local group = vim.api.nvim_create_augroup('winbar', { clear = true })
   require('lu5je0.ext.winbar.autocmds').setup(group)
@@ -27,7 +27,7 @@ function M.setup()
   )
 
   vim.schedule(function()
-    require('lu5je0.ext.winbar.keymaps').setup()
+    require('lu5je0.ext.winbar.config').setup_keymaps()
     require('lu5je0.ext.winbar.commands').setup()
   end)
 end
