@@ -2,7 +2,7 @@ local M = {}
 
 function M.setup()
   vim.api.nvim_create_user_command('BufferLinePickSplit', function()
-    require('lu5je0.ext.tabline.pick').start({
+    require('lu5je0.ext.winbar.pick').start({
       on_choose = function(bufnr)
         vim.cmd('vert sbuffer ' .. bufnr)
       end,
@@ -10,27 +10,27 @@ function M.setup()
   end, { force = true })
 
   vim.api.nvim_create_user_command('BufferLinePickFromWin', function()
-    require('lu5je0.ext.tabline.pick').pick_from_other_wins()
+    require('lu5je0.ext.winbar.pick').pick_from_other_wins()
   end, { force = true })
 
   vim.api.nvim_create_user_command('BufferLineCloseLeft', function()
-    require('lu5je0.ext.tabline.actions').close_left()
+    require('lu5je0.ext.winbar.actions').close_left()
   end, { force = true })
 
   vim.api.nvim_create_user_command('BufferLineCloseRight', function()
-    require('lu5je0.ext.tabline.actions').close_right()
+    require('lu5je0.ext.winbar.actions').close_right()
   end, { force = true })
 
   vim.api.nvim_create_user_command('BufferLineCloseOthers', function()
-    require('lu5je0.ext.tabline.actions').close_others()
+    require('lu5je0.ext.winbar.actions').close_others()
   end, { force = true })
 
   vim.api.nvim_create_user_command('BufferLineCycleNext', function()
-    require('lu5je0.ext.tabline.actions').cycle(1)
+    require('lu5je0.ext.winbar.actions').cycle(1)
   end, { force = true })
 
   vim.api.nvim_create_user_command('BufferLineCyclePrev', function()
-    require('lu5je0.ext.tabline.actions').cycle(-1)
+    require('lu5je0.ext.winbar.actions').cycle(-1)
   end, { force = true })
 end
 

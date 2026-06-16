@@ -1,3 +1,4 @@
+# for windows
 [core]
 	quotepath = false
 	editor = 'nvim.cmd'

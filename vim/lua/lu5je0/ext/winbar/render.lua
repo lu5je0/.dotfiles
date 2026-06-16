@@ -1,8 +1,8 @@
 local M = {}
 
-local config = require('lu5je0.ext.tabline.config')
-local state = require('lu5je0.ext.tabline.state')
-local naming = require('lu5je0.ext.tabline.naming')
+local config = require('lu5je0.ext.winbar.config')
+local state = require('lu5je0.ext.winbar.state')
+local naming = require('lu5je0.ext.winbar.naming')
 
 local strwidth = vim.api.nvim_strwidth
 local rep = string.rep
@@ -116,7 +116,7 @@ local _close_click_prefix_cache = {}
 local function click_prefix(buf)
   local c = _click_prefix_cache[buf]
   if c then return c end
-  c = '%' .. buf .. "@v:lua.require'lu5je0.ext.tabline.render'._click@"
+  c = '%' .. buf .. "@v:lua.require'lu5je0.ext.winbar.render'._click@"
   _click_prefix_cache[buf] = c
   return c
 end
@@ -124,7 +124,7 @@ end
 local function close_click_prefix(buf)
   local c = _close_click_prefix_cache[buf]
   if c then return c end
-  c = '%' .. buf .. "@v:lua.require'lu5je0.ext.tabline.render'._close_click@"
+  c = '%' .. buf .. "@v:lua.require'lu5je0.ext.winbar.render'._close_click@"
   _close_click_prefix_cache[buf] = c
   return c
 end

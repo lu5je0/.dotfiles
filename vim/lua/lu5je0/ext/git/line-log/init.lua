@@ -381,6 +381,7 @@ function M.show(opts)
   vim.bo[state.log_buf].buftype = 'nofile'
   vim.bo[state.log_buf].bufhidden = 'wipe'
   vim.bo[state.log_buf].swapfile = false
+  vim.bo[state.log_buf].undolevels = -1
   vim.bo[state.log_buf].filetype = 'git'
 
   vim.api.nvim_buf_set_lines(state.log_buf, 0, -1, false, { '-- Loading... --' })

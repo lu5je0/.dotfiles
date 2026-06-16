@@ -1,6 +1,7 @@
 local M = {}
 
-local state = require('lu5je0.ext.tabline.state')
+local state = require('lu5je0.ext.winbar.state')
+local config = require('lu5je0.ext.winbar.config')
 
 local function is_normal_win(win)
   local cfg = vim.api.nvim_win_get_config(win)
@@ -26,9 +27,31 @@ local function track_buf(win, buf)
 end
 
 local function set_winbar(win)
-  if not is_normal_win(win) then return end
+  if not is_normal_win(win) then
+    local buf = vim.api.nvim_win_get_buf(win)
+    local ft = vim.bo[buf].filetype
+    local bt = vim.bo[buf].buftype
+    local props = { filetype = ft, buftype = bt }
+    for _, rule in ipairs(config.winbar_overrides) do
+      local matched = true
+      for k, v in pairs(rule.match) do
+        if props[k] ~= v then
+          matched = false
+          break
+        end
+      end
+      if matched then
+        local val = rule.show == false and '' or (rule.text or '')
+        if vim.wo[win].winbar ~= val then
+          vim.wo[win].winbar = val
+        end
+        return
+      end
+    end
+    return
+  end
   local expected = string.format(
-    "%%{%%v:lua.require'lu5je0.ext.tabline.render'.winbar(%d)%%}", win
+    "%%{%%v:lua.require'lu5je0.ext.winbar.render'.winbar(%d)%%}", win
   )
   if vim.wo[win].winbar ~= expected then
     vim.wo[win].winbar = expected
@@ -110,8 +133,8 @@ function M.setup(group)
   vim.api.nvim_create_autocmd('ColorScheme', {
     group = group,
     callback = function()
-      require('lu5je0.ext.tabline.config').apply_highlights()
-      require('lu5je0.ext.tabline.render').clear_icon_hl_cache()
+      require('lu5je0.ext.winbar.config').apply_highlights()
+      require('lu5je0.ext.winbar.render').clear_icon_hl_cache()
       refresh()
     end,
   })

@@ -91,7 +91,8 @@ function M.rename()
   vim.ui.input({ prompt = 'Rename: ', default = node.name, completion = 'file' }, function(new_name)
     if not new_name or new_name == '' or new_name == node.name then return end
     local new_path = dir .. '/' .. new_name
-    if vim.uv.fs_stat(new_path) then
+    local is_case_rename = new_path:lower() == node.abs_path:lower()
+    if not is_case_rename and vim.uv.fs_stat(new_path) then
       vim.notify('Already exists: ' .. new_path, vim.log.levels.WARN)
       return
     end
@@ -116,7 +117,7 @@ local function has_trash()
 end
 
 local function trash(abs_path)
-  local result = vim.system({ 'q-trash', 'rm', abs_path }):wait()
+  local result = vim.system({ 'q-trash', 'rm', '-rf', abs_path }):wait()
   return result.code == 0
 end
 

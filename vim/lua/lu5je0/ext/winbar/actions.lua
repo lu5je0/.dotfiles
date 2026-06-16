@@ -1,6 +1,6 @@
 local M = {}
 
-local state = require('lu5je0.ext.tabline.state')
+local state = require('lu5je0.ext.winbar.state')
 
 local function get_buf_list()
   local win = vim.api.nvim_get_current_win()

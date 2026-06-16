@@ -10,6 +10,12 @@ M.options = {
   show_close_icon = 'selected',
 }
 
+M.winbar_overrides = {
+  { match = { buftype = 'terminal' }, show = false },
+  { match = { filetype = 'diff', buftype = 'nofile' }, show = false },
+  { match = { filetype = 'undotree' }, text = '%=Undotree%=' },
+}
+
 M.offsets = {
   { filetype = 'dbui',          text = 'DBUI',     highlight = 'Directory',      text_align = 'center' },
   { filetype = 'dapui_scopes',  text = 'DEBUG',    highlight = 'Directory',      text_align = 'center' },

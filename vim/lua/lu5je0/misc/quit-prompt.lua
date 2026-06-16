@@ -24,7 +24,7 @@ end
 
 local function build_unsaved_info()
   local filenames = {}
-  local name_map = require('lu5je0.ext.tabline.state').buffer_name_map
+  local name_map = require('lu5je0.ext.winbar.state').buffer_name_map
   for _, buf in ipairs(vim.fn.getbufinfo({ bufloaded = 1, buflisted = 1 })) do
     if buf.changed == 1 then
       local name = vim.fn.fnamemodify(buf.name, ':t')
@@ -149,8 +149,8 @@ function M.close_buffer()
     return vim.fn.confirm('Close without saving?', '&No\n&Yes') == 2
   end
 
-  local tabline_state = require('lu5je0.ext.tabline.state')
-  local win_bufs = tabline_state.win_bufs[cur_win]
+  local winbar_state = require('lu5je0.ext.winbar.state')
+  local win_bufs = winbar_state.win_bufs[cur_win]
 
   if win_bufs then
     local filtered = {}
@@ -174,7 +174,7 @@ function M.close_buffer()
 
       -- check if this buffer is owned by other windows before deciding to confirm
       local buf_in_other_win = false
-      for w, bufs in pairs(tabline_state.win_bufs) do
+      for w, bufs in pairs(winbar_state.win_bufs) do
         if w ~= cur_win and vim.api.nvim_win_is_valid(w) then
           for _, b in ipairs(bufs) do
             if b == cur_buf_nr then
@@ -197,7 +197,7 @@ function M.close_buffer()
           new_list[#new_list + 1] = b
         end
       end
-      tabline_state.win_bufs[cur_win] = new_list
+      winbar_state.win_bufs[cur_win] = new_list
 
       vim.api.nvim_set_current_buf(prev_buf)
 
@@ -208,7 +208,7 @@ function M.close_buffer()
     elseif cur_idx and #filtered == 1 then
       if txt_window_cnt > 1 then
         local buf_in_other_win = false
-        for w, bufs in pairs(tabline_state.win_bufs) do
+        for w, bufs in pairs(winbar_state.win_bufs) do
           if w ~= cur_win and vim.api.nvim_win_is_valid(w) then
             for _, b in ipairs(bufs) do
               if b == cur_buf_nr then
@@ -224,7 +224,7 @@ function M.close_buffer()
           return
         end
 
-        tabline_state.win_bufs[cur_win] = nil
+        winbar_state.win_bufs[cur_win] = nil
         vim.cmd('q')
         keys.feedkey('<c-w>p')
 
@@ -236,7 +236,7 @@ function M.close_buffer()
 
       if #vim.api.nvim_list_tabpages() > 1 then
         if not confirm_discard(cur_buf_nr) then return end
-        tabline_state.win_bufs[cur_win] = nil
+        winbar_state.win_bufs[cur_win] = nil
         vim.cmd('q')
         return
       end
@@ -254,7 +254,7 @@ function M.close_buffer()
           return
         end
 
-        tabline_state.win_bufs[cur_win] = { alt_buf }
+        winbar_state.win_bufs[cur_win] = { alt_buf }
         vim.api.nvim_set_current_buf(alt_buf)
         vim.cmd('silent! bd! ' .. cur_buf_nr)
         return

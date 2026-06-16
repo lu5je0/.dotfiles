@@ -1,5 +1,3 @@
-local graph = require('lu5je0.ext.git.project-log.graph')
-
 local M = {}
 
 local function status_from_xy(xy)
@@ -17,25 +15,6 @@ local function status_from_xy(xy)
   return 'M'
 end
 
-local function strip_graph_prefix(line)
-  local pos = line:find('\30', 1, true)
-  if pos then
-    return line:sub(1, pos - 1), line:sub(pos + 1)
-  end
-
-  local tab = line:find('\t', 1, true)
-  if not tab then
-    return nil, line
-  end
-
-  local prefix = line:sub(1, tab - 1)
-  local status = prefix:match('([ACDMRTUXB]%d*)$') or prefix:match('(%?%?)$')
-  if not status then
-    return nil, line
-  end
-  return nil, status .. line:sub(tab)
-end
-
 function M.parse_log(stdout)
   local parser = M.create_log_parser()
   local commits = parser:feed(stdout or '')
@@ -47,21 +26,20 @@ function M.parse_log(stdout)
 end
 
 function M.create_log_parser()
-  local graph_state = graph.create_state()
   local commit = nil
   local remainder = ''
 
   local function process_line(raw_line)
     local new_commit = nil
-    local graph_prefix, line = strip_graph_prefix(raw_line)
-    if line:find('%z') then
+
+    local sep_pos = raw_line:find('\30', 1, true)
+    if sep_pos then
+      local line = raw_line:sub(sep_pos + 1)
       local hash, short_hash, date, author, message, parents = line:match('^(.-)%z(.-)%z(.-)%z(.-)%z(.-)%z(.*)$')
       if not hash then
         hash, short_hash, date, author, message = line:match('^(.-)%z(.-)%z(.-)%z(.-)%z(.*)$')
         parents = ''
       end
-      local parent_count = graph.count_parents(parents)
-      graph_state:before_commit(graph_prefix, parent_count)
       if commit then
         new_commit = commit
       end
@@ -73,7 +51,6 @@ function M.create_log_parser()
           author = author,
           message = message,
           parents = parents,
-          graph = graph_state:commit_graph(graph_prefix, parent_count),
           files = {},
           expanded = false,
           expanded_dirs = {},
@@ -81,24 +58,30 @@ function M.create_log_parser()
       else
         commit = nil
       end
-    elseif line ~= '' and not line:find('\t', 1, true) then
-      graph_state:graph_line(raw_line, commit)
-    elseif commit and line ~= '' then
-      local parts = vim.split(line, '\t', { plain = true })
-      local status = parts[1] or 'M'
-      local old_path, path
-      if status:sub(1, 1) == 'R' or status:sub(1, 1) == 'C' then
-        old_path = parts[2]
-        path = parts[3]
-      else
-        path = parts[2]
-      end
-      if path then
-        commit.files[#commit.files + 1] = {
-          status = status,
-          old_path = old_path,
-          path = path,
-        }
+    elseif commit and raw_line ~= '' then
+      local tab = raw_line:find('\t', 1, true)
+      if tab then
+        local prefix = raw_line:sub(1, tab - 1)
+        local status = prefix:match('([ACDMRTUXB]%d*)$') or prefix:match('(%?%?)$')
+        if status then
+          local line = status .. raw_line:sub(tab)
+          local parts = vim.split(line, '\t', { plain = true })
+          local st = parts[1] or 'M'
+          local old_path, path
+          if st:sub(1, 1) == 'R' or st:sub(1, 1) == 'C' then
+            old_path = parts[2]
+            path = parts[3]
+          else
+            path = parts[2]
+          end
+          if path then
+            commit.files[#commit.files + 1] = {
+              status = st,
+              old_path = old_path,
+              path = path,
+            }
+          end
+        end
       end
     end
     return new_commit

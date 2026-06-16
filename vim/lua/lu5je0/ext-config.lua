@@ -1,11 +1,11 @@
 local loader = require('lu5je0.ext.loader')
 local lazy_load = loader.lazy_load
 
--- tabline (custom, replaces akinsho/bufferline.nvim)
+-- winbar (custom buffer tabs per window)
 lazy_load({
-  name = 'tabline',
+  name = 'winbar',
   config = function()
-    require('lu5je0.ext.tabline')
+    require('lu5je0.ext.winbar')
   end,
   event = { 'UIEnter' },
 })

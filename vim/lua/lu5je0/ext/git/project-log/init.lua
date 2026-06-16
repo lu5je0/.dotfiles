@@ -1,5 +1,6 @@
 local core = require('lu5je0.ext.git.project-log.core')
 local diff = require('lu5je0.ext.git.project-log.diff')
+local kitty = require('lu5je0.ext.git.project-log.kitty')
 local help = require('lu5je0.ext.git.common.help')
 local common_ui = require('lu5je0.ext.git.common.ui')
 local scheduler = require('lu5je0.ext.git.common.scheduler')
@@ -24,6 +25,7 @@ local state = {
   diff_win2 = nil,
   repo_root = nil,
   commits = {},
+  graph_rows = {},
   display_items = {},
   preview_key = nil,
   diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
@@ -68,6 +70,7 @@ local function cleanup()
   state.log_buf = nil
   state.log_win = nil
   state.commits = {}
+  state.graph_rows = {}
   state.display_items = {}
   state.preview_key = nil
   state.limited = false
@@ -228,6 +231,7 @@ local function reload_all()
   end
   state.session = state.session + 1
   state.commits = {}
+  state.graph_rows = {}
   state.display_items = {}
   state.preview_key = nil
   state.commit_limit = nil
@@ -348,12 +352,69 @@ local function setup_keymaps()
   end, opts)
 end
 
+local GRAPH_COLOR_MAP = {
+  Red = 'GitGraphRed',
+  Yellow = 'GitGraphYellow',
+  Blue = 'GitGraphBlue',
+  Purple = 'GitGraphPurple',
+  Cyan = 'GitGraphCyan',
+  BoldRed = 'GitGraphBoldRed',
+  BoldYellow = 'GitGraphBoldYellow',
+  BoldBlue = 'GitGraphBoldBlue',
+  BoldPurple = 'GitGraphBoldPurple',
+  BoldCyan = 'GitGraphBoldCyan',
+}
+
+local function build_graph()
+  local git_commits = {}
+  local hash_to_idx = {}
+  for i, commit in ipairs(state.commits) do
+    if not commit.local_change then
+      git_commits[#git_commits + 1] = commit
+      hash_to_idx[commit.hash] = i
+    end
+  end
+  if #git_commits == 0 or #git_commits > 5000 then
+    state.graph_rows = {}
+    return
+  end
+  local ok, graph_result = pcall(kitty.build, git_commits, true)
+  if not ok then
+    state.graph_rows = {}
+    return
+  end
+  state.graph_rows = {}
+  for _, row in ipairs(graph_result) do
+    local oid = row[1] and row[1].oid
+    local commit_idx = oid and hash_to_idx[oid] or nil
+    local parts = {}
+    local hl = {}
+    local byte_pos = 0
+    for _, cell in ipairs(row) do
+      local text = cell.text
+      parts[#parts + 1] = text
+      local text_len = #text
+      local hl_group = cell.color and GRAPH_COLOR_MAP[cell.color]
+      if hl_group then
+        hl[#hl + 1] = { byte_pos, byte_pos + text_len, hl_group }
+      end
+      byte_pos = byte_pos + text_len
+    end
+    state.graph_rows[#state.graph_rows + 1] = {
+      text = table.concat(parts),
+      hl = hl,
+      commit_idx = commit_idx,
+    }
+  end
+  graph_result = nil
+end
+
 load_commits = function()
   local session = state.session
   ui.update_statusline(state, true)
 
   local log_args = {
-    'git', 'log', '--graph',
+    'git', 'log', '--topo-order',
     '--date=format:%Y-%m-%d %H:%M:%S',
     '--pretty=format:%x1e%H%x00%h%x00%ad%x00%an%x00%s%x00%P',
     '--name-status', '--find-renames', '--find-copies',
@@ -364,9 +425,6 @@ load_commits = function()
   if state.commit_limit then
     log_args[#log_args + 1] = '--max-count=' .. (state.commit_limit + 1)
   end
-
-  log_args[#log_args + 1] = '--'
-  log_args[#log_args + 1] = '.'
 
   -- git status in parallel
   state.status_job = vim.system({
@@ -454,6 +512,7 @@ load_commits = function()
         for _, c in ipairs(tail) do
           state.commits[#state.commits + 1] = c
         end
+        build_graph()
         ui.render_log(state)
         ui.update_statusline(state, false)
         try_jump_to_sha()
@@ -494,6 +553,7 @@ load_commits = function()
             state.commits[#state.commits + 1] = c
           end
         end
+        build_graph()
         ui.render_log(state)
         ui.update_statusline(state, false)
         try_jump_to_sha()
@@ -550,6 +610,7 @@ function M.show(opts)
   vim.bo[state.log_buf].buftype = 'nofile'
   vim.bo[state.log_buf].bufhidden = 'wipe'
   vim.bo[state.log_buf].swapfile = false
+  vim.bo[state.log_buf].undolevels = -1
   vim.bo[state.log_buf].filetype = 'git'
   ui.set_buffer_lines(state.log_buf, { '-- Loading project log... --' })
 
