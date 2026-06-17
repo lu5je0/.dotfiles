@@ -77,9 +77,45 @@ do
     end,
   })
 
+  statusline.register_component('tree_sidebar_gps', {
+    function(args)
+      if state.active_tab_idx ~= config.tab_idx('symbols') then
+        return nil
+      end
+      local items = state.symbols.display_items
+      if not items or #items == 0 then return nil end
+      local ok, cursor = pcall(vim.api.nvim_win_get_cursor, args.win_id)
+      if not ok then return nil end
+      local item = items[cursor[1]]
+      if not item or not item.node then return nil end
+
+      local nodes = state.symbols.nodes
+      if not nodes then return nil end
+
+      local function find_path(list, t)
+        for _, node in ipairs(list) do
+          if node == t then return node.name end
+          if node.children then
+            local sub = find_path(node.children, t)
+            if sub then return node.name .. ' > ' .. sub end
+          end
+        end
+      end
+
+      local path = find_path(nodes, item.node)
+      if not path then return nil end
+      local max_len = 80
+      if #path > max_len then
+        path = vim.fn.strcharpart(path, #path - max_len, max_len)
+        path = '…' .. path
+      end
+      return '%#StatusLineGrey#' .. path
+    end,
+  })
+
   statusline.append_config({
     match = { filetype = config.filetype },
-    left = { { name = 'tree_sidebar_label' } },
+    left = { { name = 'tree_sidebar_label' }, { name = 'tree_sidebar_gps' } },
     right = { { name = 'tree_sidebar_clipboard' }, 'tabpages' },
   })
 end
