@@ -1,17 +1,17 @@
 local loader = require('lu5je0.ext.loader')
-local lazy_load = loader.lazy_load
+local ext_load = loader.ext_load
 
 -- winbar (custom buffer tabs per window)
-lazy_load({
+ext_load({
   name = 'winbar',
   config = function()
     require('lu5je0.ext.winbar')
   end,
-  event = { 'UIEnter' },
+
 })
 
 -- diff_base
-lazy_load({
+ext_load({
   name = 'diff_base',
   config = function()
     require('lu5je0.ext.diff-base').setup()
@@ -20,7 +20,7 @@ lazy_load({
 })
 
 -- tree-sidebar
-lazy_load({
+ext_load({
   name = 'tree-sidebar',
   config = function()
     require('lu5je0.ext.tree-sidebar').setup()
@@ -38,21 +38,21 @@ lazy_load({
 })
 
 -- im
-lazy_load({
+ext_load({
   name = 'im',
   config = function()
     if vim.fn.has('gui') == 0 then
       require('lu5je0.misc.im.im').setup()
     end
   end,
-  event = { 'InsertEnter', 'CursorHold', 'VimEnter' },
+  event = { 'InsertEnter', 'CursorHold', 'ExtVeryLazy' },
   keys = {
     { mode = { 'n' }, '<leader>vi' },
   }
 })
 
 -- json-helper
-lazy_load({
+ext_load({
   name = 'json-helper',
   config = function()
     require('lu5je0.misc.json-helper').setup()
@@ -61,7 +61,7 @@ lazy_load({
 })
 
 -- junkfile
-lazy_load({
+ext_load({
   name = 'junkfile',
   config = function()
     require('lu5je0.misc.junkfile').setup()
@@ -70,7 +70,7 @@ lazy_load({
 })
 
 -- formatter
-lazy_load({
+ext_load({
   name = 'formatter',
   config = function()
     local formatter = require('lu5je0.misc.formatter.formatter')
@@ -158,7 +158,7 @@ lazy_load({
 })
 
 -- var-naming-converter
-lazy_load({
+ext_load({
   name = 'var-naming-converter',
   config = function()
     require('lu5je0.misc.var-naming-converter').key_mapping()
@@ -169,7 +169,7 @@ lazy_load({
 })
 
 -- code-runner
-lazy_load({
+ext_load({
   name = 'code-runner',
   config = function()
     require('lu5je0.misc.code-runner').key_mapping()
@@ -183,7 +183,7 @@ lazy_load({
 })
 
 -- quit-prompt
-lazy_load({
+ext_load({
   name = 'quit-prompt',
   config = function()
     require('lu5je0.misc.quit-prompt').setup()
@@ -194,7 +194,7 @@ lazy_load({
   }
 })
 
-lazy_load({
+ext_load({
   name = 'redir',
   config = function()
     require('lu5je0.misc.redir')
@@ -203,7 +203,7 @@ lazy_load({
   complete = true,
 })
 
-lazy_load({
+ext_load({
   name = 'base64',
   config = function()
     require('lu5je0.misc.base64').create_command()
@@ -211,7 +211,7 @@ lazy_load({
   cmd = { 'Base64Decode', 'Base64Encode' }
 })
 
-lazy_load({
+ext_load({
   name = 'gmt',
   config = function()
     require('lu5je0.misc.gmt').create_command()
@@ -219,7 +219,7 @@ lazy_load({
   cmd = { 'TimestampToggle' }
 })
 
-lazy_load({
+ext_load({
   name = 'timestamp',
   config = function()
     require('lu5je0.misc.timestamp').setup()
@@ -227,7 +227,7 @@ lazy_load({
   cmd = { 'TimestampModify', 'TimestampShow', 'TimestampReplaceAll' }
 })
 
-lazy_load({
+ext_load({
   name = 'set-operation',
   config = function()
     require('lu5je0.misc.set-operation').setup()
@@ -235,7 +235,7 @@ lazy_load({
   cmd = { 'SetOperation' }
 })
 
-lazy_load({
+ext_load({
   name = 'line-tools',
   config = function()
     require('lu5je0.misc.line-tools').setup()
@@ -243,7 +243,7 @@ lazy_load({
   cmd = { 'KeepLines', 'DelLines', 'KeepMatchs' }
 })
 
-lazy_load({
+ext_load({
   name = 'comment',
   config = function()
     require('lu5je0.core.comment').setup()
@@ -253,7 +253,7 @@ lazy_load({
   }
 })
 
-lazy_load({
+ext_load({
   name = 'calculator',
   config = function()
     require('lu5je0.misc.calculator').setup()
@@ -264,7 +264,7 @@ lazy_load({
   }
 })
 
-lazy_load({
+ext_load({
   name = 'translator',
   config = function()
     require('lu5je0.misc.translator').setup({
@@ -277,7 +277,7 @@ lazy_load({
   }
 })
 
-lazy_load({
+ext_load({
   name = 'boole',
   config = function()
     require('lu5je0.ext.boole').setup({
@@ -300,7 +300,7 @@ lazy_load({
   }
 })
 
-lazy_load({
+ext_load({
   name = 'git',
   config = function()
     require('lu5je0.ext.git').setup({
@@ -342,14 +342,35 @@ lazy_load({
 -- snippets
 -- require('lu5je0.core.snippets').setup()
 
-require('lu5je0.ext.statusline').setup()
+ext_load({
+  name = 'statusline',
+  config = function()
+    require('lu5je0.ext.statusline').setup()
+  end,
+})
 
 -- require('lu5je0.misc.dirbuf-hijack').setup()
-require('lu5je0.misc.oil-hijack').setup()
+ext_load({
+  name = 'oil-hijack',
+  config = function()
+    require('lu5je0.misc.oil-hijack').setup()
+  end,
+})
 
-require('lu5je0.misc.time-machine').setup()
+
+ext_load({
+  name = 'time-machine',
+  config = function()
+    require('lu5je0.misc.time-machine').setup()
+  end,
+})
 
 -- patch
-require('lu5je0.patch.fix-untitled-buffer-diagnostic')
+ext_load({
+  name = 'fix-untitled-buffer-diagnostic',
+  config = function()
+    require('lu5je0.patch.fix-untitled-buffer-diagnostic')
+  end,
+})
 
 return loader

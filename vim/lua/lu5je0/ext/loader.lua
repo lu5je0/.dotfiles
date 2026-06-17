@@ -1,12 +1,23 @@
 local ext_loader_group = vim.api.nvim_create_augroup('ext_loader_group', { clear = true })
 
+vim.api.nvim_create_autocmd('UIEnter', {
+  group = ext_loader_group,
+  once = true,
+  callback = function()
+    vim.schedule(function()
+      vim.api.nvim_exec_autocmds('User', { pattern = 'ExtVeryLazy' })
+    end)
+  end,
+})
+
 local M = {}
 M.lazy_load_active_cmd_opts_map = {}
 
 local _all_opts = {}
 
-local function load_ext(opts)
+local function load_ext(opts, triggered_by)
   if not opts.loaded then
+    opts._triggered_by = triggered_by
     if type(opts.config) == 'function' then
       local t0 = vim.uv.hrtime()
       opts.config()
@@ -16,7 +27,7 @@ local function load_ext(opts)
   end
 end
 
-M.lazy_load = function(opts)
+M.ext_load = function(opts)
   _all_opts[#_all_opts + 1] = opts
   if opts and opts.keys then
     for _, key in ipairs(opts.keys) do
@@ -27,7 +38,7 @@ M.lazy_load = function(opts)
           for _, m in ipairs(key.mode) do
             pcall(vim.keymap.del, m, lhs)
           end
-          load_ext(opts)
+          load_ext(opts, { type = 'key', value = lhs })
           vim.defer_fn(function()
             require('lu5je0.core.keys').feedkey(lhs)
           end, opts.keys.defer or 0)
@@ -55,7 +66,7 @@ M.lazy_load = function(opts)
         end
         vim.api.nvim_del_user_command(cmd)
 
-        load_ext(opts)
+        load_ext(opts, { type = 'cmd', value = ':' .. cmd })
 
         local info = vim.api.nvim_get_commands({})[cmd] or vim.api.nvim_buf_get_commands(0, {})[cmd]
         command.nargs = info.nargs
@@ -71,7 +82,7 @@ M.lazy_load = function(opts)
           -- Load real command definition before completion so command-specific
           -- completions are available even on first Tab.
           pcall(vim.api.nvim_del_user_command, cmd)
-          load_ext(M.lazy_load_active_cmd_opts_map[cmd])
+          load_ext(M.lazy_load_active_cmd_opts_map[cmd], { type = 'cmd', value = ':' .. cmd })
 
           local info = vim.api.nvim_get_commands({})[cmd] or vim.api.nvim_buf_get_commands(0, {})[cmd]
           if not info then
@@ -87,15 +98,25 @@ M.lazy_load = function(opts)
 
   if opts and opts.event then
     for _, event in ipairs(opts.event) do
-      vim.api.nvim_create_autocmd(event, {
+      local ac_event = event
+      local ac_pattern = { '*' }
+      if event == 'ExtVeryLazy' then
+        ac_event = 'User'
+        ac_pattern = { 'ExtVeryLazy' }
+      end
+      vim.api.nvim_create_autocmd(ac_event, {
         group = ext_loader_group,
         once = true,
-        pattern = { '*' },
+        pattern = ac_pattern,
         callback = function(_)
-          load_ext(opts)
+          load_ext(opts, { type = 'event', value = event })
         end
       })
     end
+  end
+
+  if not opts.keys and not opts.cmd and not opts.event then
+    load_ext(opts, { type = 'immediate' })
   end
 end
 
@@ -145,7 +166,16 @@ local function show_popup()
     local name = opts.name or '(unnamed)'
     local triggers = collect_triggers(opts)
     if opts.loaded then
-      loaded[#loaded + 1] = { name = name, ms = opts._load_time_ms or 0, triggers = triggers }
+      local triggered_by = opts._triggered_by
+      local triggered_trigger
+      if triggered_by then
+        if triggered_by.type == 'immediate' then
+          triggered_trigger = { text = 'immediate', type = 'immediate' }
+        else
+          triggered_trigger = { text = triggered_by.value, type = triggered_by.type }
+        end
+      end
+      loaded[#loaded + 1] = { name = name, ms = opts._load_time_ms or 0, triggers = triggers, triggered_by = triggered_trigger }
     else
       pending[#pending + 1] = { name = name, triggers = triggers }
     end
@@ -192,7 +222,7 @@ local function show_popup()
         col = #line
       end
       line = line .. t.text
-      local hl = t.type == 'key' and 'Special' or t.type == 'cmd' and 'Function' or 'Type'
+      local hl = t.hl_override or (t.type == 'key' and 'Special' or t.type == 'cmd' and 'Function' or 'Type')
       add_hl(row, col, col + #t.text, hl)
       col = #line
     end
@@ -206,7 +236,13 @@ local function show_popup()
     add_hl(#lines - 1, 1, 8, 'Title')
     for _, e in ipairs(loaded) do
       local time_str = string.format('%6.2fms', e.ms)
-      local line = format_trigger_line('✓', 'DiagnosticOk', time_str, e.name, e.triggers, #lines)
+      local display_triggers = e.triggers
+      if e.triggered_by then
+        local t = e.triggered_by
+        local hl = t.type == 'key' and 'Special' or t.type == 'cmd' and 'Function' or t.type == 'event' and 'Type' or 'Comment'
+        display_triggers = { { text = t.text, type = t.type, hl_override = hl } }
+      end
+      local line = format_trigger_line('✓', 'DiagnosticOk', time_str, e.name, display_triggers, #lines)
       lines[#lines + 1] = line
     end
   end
