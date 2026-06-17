@@ -62,7 +62,16 @@ do
       local cb = state.files and state.files._clipboard
       if cb then
         local label = cb.action == 'move' and ' cutting' or ' copying'
-        return '%#StatusLineGrey#' .. label
+        local name = cb.path and vim.fs.basename(cb.path) or ''
+        if name ~= '' then
+          local devicons = require('nvim-web-devicons')
+          local icon, hl = devicons.get_icon(name, vim.fn.fnamemodify(name, ':e'), { default = true })
+          icon = icon or ''
+          hl = hl or 'StatusLineGrey'
+          name = ' ' .. string.format('%%#%s#%s %%#StatusLineGrey#%s', hl, icon,
+            require('lu5je0.lang.string-utils').get_short_filename(name, 15))
+        end
+        return '%#StatusLineGrey#' .. label .. name
       end
       return nil
     end,
