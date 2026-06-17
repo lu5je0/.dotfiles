@@ -342,7 +342,7 @@ lazy_load({
 -- snippets
 -- require('lu5je0.core.snippets').setup()
 
-require('lu5je0.core.statusline').setup()
+require('lu5je0.ext.statusline').setup()
 
 -- require('lu5je0.misc.dirbuf-hijack').setup()
 require('lu5je0.misc.oil-hijack').setup()

@@ -46,20 +46,33 @@ function M.open()
 
   state.win = win
   vim.api.nvim_win_set_hl_ns(win, win_hl_ns)
-  vim.wo[win].statusline = '%!v:lua.require("lu5je0.ext.tree-sidebar.window").statusline()'
 end
 
-function M.statusline()
-  local parts = { '%#StatusLineGrey# ', config.filetype:upper() }
-  local cb = state.files and state.files._clipboard
-  if cb then
-    local label = cb.action == 'move' and ' cutting' or ' copying'
-    parts[#parts + 1] = '%='
-    parts[#parts + 1] = '%#StatusLineGrey#'
-    parts[#parts + 1] = label
-    parts[#parts + 1] = ' '
-  end
-  return table.concat(parts)
+do
+  local statusline = require('lu5je0.ext.statusline')
+
+  statusline.register_component('tree_sidebar_label', {
+    function()
+      return '%#StatusLineGrey#' .. config.filetype:upper()
+    end,
+  })
+
+  statusline.register_component('tree_sidebar_clipboard', {
+    function()
+      local cb = state.files and state.files._clipboard
+      if cb then
+        local label = cb.action == 'move' and ' cutting' or ' copying'
+        return '%#StatusLineGrey#' .. label
+      end
+      return nil
+    end,
+  })
+
+  statusline.append_config({
+    match = { filetype = config.filetype },
+    left = { { name = 'tree_sidebar_label' } },
+    right = { { name = 'tree_sidebar_clipboard' }, 'tabpages' },
+  })
 end
 
 function M.close()
