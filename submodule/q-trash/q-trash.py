@@ -28,6 +28,7 @@ Commands:
 
 Options:
   --trash-dir DIR          operate on a specific trash directory only
+  --dest PATH              restore to PATH instead of original location
   --help                   display this help
   --version                show version
 
@@ -37,6 +38,8 @@ Examples:
   {PROG} restore                # interactive restore (all files)
   {PROG} restore /path/to/file  # restore specific file (latest match)
   {PROG} restore --all .        # restore all files from current dir
+  {PROG} restore --dest /tmp /path/to/file
+                                # restore to /tmp instead of original
   {PROG} empty                  # empty all trash (with confirmation)
   {PROG} empty --days 30        # empty items older than 30 days
   {PROG} size                   # show trash usage per volume
@@ -84,18 +87,36 @@ def cmd_list(args: List[str], trash_dir_opt: Optional[str]) -> int:
 def cmd_restore(args: List[str], trash_dir_opt: Optional[str]) -> int:
     restore_all = False
     overwrite = False
+    dest_opt: Optional[str] = None
     remaining: List[str] = []
 
-    for arg in args:
+    i = 0
+    while i < len(args):
+        arg = args[i]
         if arg == "--all":
             restore_all = True
+            i += 1
         elif arg == "--overwrite":
             overwrite = True
+            i += 1
         elif arg == "--help":
             sys.stdout.write(HELP_TEXT)
             return 0
+        elif arg == "--dest":
+            if i + 1 >= len(args):
+                print(f"{PROG}: --dest requires an argument", file=sys.stderr)
+                return 1
+            dest_opt = args[i + 1]
+            i += 2
+        elif arg.startswith("--dest="):
+            dest_opt = arg[len("--dest="):]
+            if not dest_opt:
+                print(f"{PROG}: --dest requires an argument", file=sys.stderr)
+                return 1
+            i += 1
         else:
             remaining.append(arg)
+            i += 1
 
     explicit_path = bool(remaining)
     if explicit_path:
@@ -158,16 +179,36 @@ def cmd_restore(args: List[str], trash_dir_opt: Optional[str]) -> int:
                     print(f"{PROG}: index {idx} out of range", file=sys.stderr)
                     return 1
 
+    if dest_opt is not None:
+        dest_abs = os.path.abspath(dest_opt)
+        is_existing_dir = os.path.isdir(dest_abs) and not os.path.islink(dest_abs)
+        if not is_existing_dir and len(to_restore) > 1:
+            try:
+                os.makedirs(dest_abs, exist_ok=True)
+            except OSError as e:
+                print(f"{PROG}: cannot create dest '{dest_abs}': {e.strerror}",
+                      file=sys.stderr)
+                return 1
+            is_existing_dir = True
+
+        plan: List[tuple] = []
+        for t in to_restore:
+            if is_existing_dir:
+                final_dest = os.path.join(dest_abs, os.path.basename(t.original_path))
+            else:
+                final_dest = dest_abs
+            plan.append((t, final_dest))
+    else:
+        plan = [(t, t.original_path) for t in to_restore]
+
     ok = True
-    for t in to_restore:
-        if not _do_restore(t, overwrite):
+    for t, final_dest in plan:
+        if not _do_restore(t, final_dest, overwrite):
             ok = False
     return 0 if ok else 1
 
 
-def _do_restore(t: TrashedFile, overwrite: bool) -> bool:
-    dest = t.original_path
-
+def _do_restore(t: TrashedFile, dest: str, overwrite: bool) -> bool:
     if not os.path.exists(t.files_path) and not os.path.islink(t.files_path):
         print(f"{PROG}: backup file missing: '{t.files_path}'", file=sys.stderr)
         return False

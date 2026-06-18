@@ -65,17 +65,16 @@ def _get_backends():
 def scan_trash(specific_dir: Optional[str] = None) -> List[TrashedFile]:
     """Scan all applicable backends and return merged TrashedFiles."""
     if specific_dir:
-        return _load_backend("freedesktop").scan(specific_dir)
-
-    backends = _get_backends()
-    if not backends:
-        return []
-
-    if len(backends) == 1:
-        all_results = [backends[0].scan()]
+        all_results = [_load_backend("freedesktop").scan(specific_dir)]
     else:
-        with ThreadPoolExecutor(max_workers=len(backends)) as pool:
-            all_results = list(pool.map(lambda b: b.scan(), backends))
+        backends = _get_backends()
+        if not backends:
+            return []
+        if len(backends) == 1:
+            all_results = [backends[0].scan()]
+        else:
+            with ThreadPoolExecutor(max_workers=len(backends)) as pool:
+                all_results = list(pool.map(lambda b: b.scan(), backends))
 
     results: List[TrashedFile] = []
     seen: set[str] = set()

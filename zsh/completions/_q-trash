@@ -22,6 +22,7 @@ _q_trash_list() {
 _q_trash_restore() {
   _arguments -s \
     '--trash-dir=[operate on specific trash dir]:dir:_directories' \
+    '--dest=[restore to this path instead of original location]:dest:_files' \
     '--all[restore all matching files]' \
     '--overwrite[overwrite existing files]' \
     '*:path:_files'
