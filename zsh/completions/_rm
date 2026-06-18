@@ -1,7 +1,7 @@
 #compdef rm
 
 if (( $+commands[q-trash] )); then
-  _arguments -s -S -A '-*' \
+  _arguments -s -S \
     '(-f --force)'{-f,--force}'[ignore nonexistent files, never prompt]' \
     '(-I --interactive)-i[prompt before every removal]' \
     '(-i --interactive)-I[prompt when removing many files]' \
