@@ -1,3 +1,7 @@
+local get_highlight
+local devicons
+local string_utils
+
 local colors = {
   bg       = '#212328',
   white    = '#bcc6d3',
@@ -38,6 +42,13 @@ local mode_mappings = {
   nt = { text = 'TER' },
 }
 
+local mode_hl = setmetatable({}, {
+  __index = function(self, color)
+    self[color] = get_highlight({ fg = color })
+    return self[color]
+  end
+})
+
 local components = {
   mode = {
     function(args)
@@ -48,8 +59,7 @@ local components = {
         mode = vim.api.nvim_get_mode().mode
       end
       local mapping = mode_mappings[mode] or mode_mappings.fallback
-      local fg_color = { fg = mapping.color or colors.yellow }
-      return require('lu5je0.ext.statusline').get_highlight(fg_color) .. mapping.text
+      return mode_hl[mapping.color or colors.yellow] .. mapping.text
     end,
     cond = function(args)
       return conditions.hide_in_width(args.win_id, 40)
@@ -59,7 +69,7 @@ local components = {
 
   filename = {
     function(args)
-      local devicons = require('nvim-web-devicons')
+      devicons = devicons or require('nvim-web-devicons')
       local filename
       if args.filename ~= '' then
         filename = args.filename
@@ -74,7 +84,8 @@ local components = {
       local icon, highlight = devicons.get_icon(args.filename, args.filetype, {})
       icon = icon or ''
       highlight = highlight or 'StatusLineGrey'
-      filename = require('lu5je0.lang.string-utils').get_short_filename(filename, 25)
+      string_utils = string_utils or require('lu5je0.lang.string-utils')
+      filename = string_utils.get_short_filename(filename, 25)
       filename = string.gsub(filename, '%%', '%%%%')
       return ("%%#%s#%s %%#%s#%s"):format(highlight, icon, 'StatusLineViolet', filename)
     end,
@@ -104,14 +115,19 @@ local components = {
       return ('[%s/%s]'):format(vm_infos['current'], vm_infos['total'])
     end,
     cond = function()
-      return vim.b.VM_Selection ~= nil and vim.api.nvim_eval('empty(b:VM_Selection)') == 0
+      local selection = vim.b.VM_Selection
+      return selection ~= nil and not vim.tbl_isempty(selection)
     end,
     color = { fg = colors.white },
   },
 
   gps_path = {
-    function()
-      local path = require('lu5je0.misc.gps-path').path()
+    function(args)
+      local big_file = require('lu5je0.ext.big-file')
+      if big_file.is_big_file(args.buf_id) then return nil end
+      local gps = require('lu5je0.misc.gps-path')
+      if not gps.is_available(args.buf_id) then return nil end
+      local path = gps.path()
       if not path then return nil end
       local max_len = 35
       if #path > max_len then
@@ -126,8 +142,7 @@ local components = {
     end,
     inactive = false,
     cond = function(args)
-      return conditions.hide_in_width(args.win_id, 80) and not require('lu5je0.ext.big-file').is_big_file(args.buf_id) and
-          require('lu5je0.misc.gps-path').is_available(args.buf_id)
+      return conditions.hide_in_width(args.win_id, 80)
     end,
     cache_ttl = 1000,
     color = { fg = colors.white },
@@ -135,7 +150,6 @@ local components = {
 
   diagnostics = {
     function(args)
-      local get_highlight = require('lu5je0.ext.statusline').get_highlight
       local diagnostics = vim.diagnostic.get(args.buf_id)
       if #diagnostics == 0 then
         return nil
@@ -169,7 +183,6 @@ local components = {
 
   git_diff = {
     function()
-      local get_highlight = require('lu5je0.ext.statusline').get_highlight
       local gitsigns = vim.b.gitsigns_status_dict
       if gitsigns then
         local parts = {}
@@ -225,7 +238,6 @@ local components = {
 
   tabpages = {
     function()
-      local get_highlight = require('lu5je0.ext.statusline').get_highlight
       local pages = vim.api.nvim_list_tabpages()
       if #pages <= 1 then return nil end
       local cur = vim.api.nvim_get_current_tabpage()
@@ -236,9 +248,6 @@ local components = {
       end
       return table.concat(parts, ' ')
     end,
-    cond = function()
-      return #vim.api.nvim_list_tabpages() > 1
-    end,
   },
 
   filetype_label = {
@@ -248,4 +257,4 @@ local components = {
   },
 }
 
-return { components = components, colors = colors }
+return { components = components, colors = colors, _set_get_highlight = function(fn) get_highlight = fn end }

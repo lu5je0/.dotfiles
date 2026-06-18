@@ -14,10 +14,10 @@ function M.get_highlight(color)
 
     if not highlight_cache[hl_group] then
       vim.api.nvim_set_hl(0, hl_group, { fg = fg, bg = bg, bold = color.bold })
-      highlight_cache[hl_group] = true
+      highlight_cache[hl_group] = string.format("%%#%s#", hl_group)
     end
 
-    return string.format("%%#%s#", hl_group)
+    return highlight_cache[hl_group]
   end
   return "%#StatusLine#"
 end
@@ -134,6 +134,11 @@ local function resolve_components(component_refs)
   return result
 end
 
+local function resolve_rule(rule)
+  rule._left = resolve_components(rule.left or {})
+  rule._right = resolve_components(rule.right or {})
+end
+
 local function create_statusline_timer(mills)
   local timer = vim.loop.new_timer()
   timer:start(0, mills, vim.schedule_wrap(function()
@@ -149,6 +154,7 @@ end
 
 function M.append_config(rule)
   local pos = #config.statusline_config
+  resolve_rule(rule)
   table.insert(config.statusline_config, pos, rule)
 end
 
@@ -156,8 +162,14 @@ M.setup = function()
   vim.api.nvim_set_hl(0, 'StatusLineGrey', { fg = '#cccccc', bg = '#212328', bold = false })
   vim.api.nvim_set_hl(0, 'StatusLineViolet', { fg = config.colors.violet, bg = '#212328', bold = false })
 
+  require('lu5je0.ext.statusline.components')._set_get_highlight(M.get_highlight)
+
   for _, component in pairs(config.components) do
     prepare_component(component)
+  end
+
+  for _, rule in ipairs(config.statusline_config) do
+    resolve_rule(rule)
   end
 
   M.statusline = function()
@@ -173,11 +185,8 @@ M.setup = function()
 
     for _, rule in ipairs(config.statusline_config) do
       if match_rule(rule, filetype, buftype) then
-        local left_components = resolve_components(rule.left or {})
-        local right_components = resolve_components(rule.right or {})
-
-        local left_parts = process_components(left_components, args, focus_win_id, focus_win_is_floating, 'left')
-        local right_parts = process_components(right_components, args, focus_win_id, focus_win_is_floating, 'right')
+        local left_parts = process_components(rule._left, args, focus_win_id, focus_win_is_floating, 'left')
+        local right_parts = process_components(rule._right, args, focus_win_id, focus_win_is_floating, 'right')
 
         return table.concat({ table.concat(left_parts, ''), "%=", table.concat(right_parts, '') })
       end
