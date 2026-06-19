@@ -412,6 +412,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         if argv[i] == "--trash-dir" and i + 1 < len(argv):
             trash_dir_opt = argv[i + 1]
             i += 2
+        elif argv[i].startswith("--trash-dir="):
+            trash_dir_opt = argv[i][len("--trash-dir="):]
+            i += 1
         else:
             filtered_argv.append(argv[i])
             i += 1
