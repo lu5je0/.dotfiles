@@ -129,150 +129,99 @@ end
 
 function M.close_buffer()
   local valid_buffers = require('lu5je0.core.buffers').valid_buffers()
-  local cur_buf_nr = vim.api.nvim_get_current_buf()
+  local valid_set = {}
+  for _, b in ipairs(valid_buffers) do valid_set[b] = true end
+  local cur_buf = vim.api.nvim_get_current_buf()
   local cur_win = vim.api.nvim_get_current_win()
+  local winbar_state = require('lu5je0.ext.winbar.state')
 
   local txt_window_cnt = 0
-  for _, v in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if vim.tbl_contains(valid_buffers, vim.api.nvim_win_get_buf(v)) then
+  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if valid_set[vim.api.nvim_win_get_buf(w)] then
       txt_window_cnt = txt_window_cnt + 1
     end
   end
 
-  if txt_window_cnt ~= 0 and not vim.tbl_contains(valid_buffers, cur_buf_nr) then
-    vim.cmd('q')
+  -- Case 1: current buffer isn't a listed text buffer (sidebar, help, ...).
+  if not valid_set[cur_buf] then
+    if txt_window_cnt > 0 then
+      vim.cmd('q')
+    end
     return
   end
 
-  local function confirm_discard(bufnr)
-    if not vim.bo[bufnr].modified then return true end
+  local function confirm_discard()
+    if not vim.bo[cur_buf].modified then return true end
     return vim.fn.confirm('Close without saving?', '&No\n&Yes') == 2
   end
 
-  local winbar_state = require('lu5je0.ext.winbar.state')
-  local win_bufs = winbar_state.win_bufs[cur_win]
-
-  if win_bufs then
-    local filtered = {}
-    local cur_idx
-    for _, b in ipairs(win_bufs) do
-      if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
-        filtered[#filtered + 1] = b
-        if b == cur_buf_nr then
-          cur_idx = #filtered
+  local function buf_owned_elsewhere()
+    for w, bufs in pairs(winbar_state.win_bufs) do
+      if w ~= cur_win and vim.api.nvim_win_is_valid(w) then
+        for _, b in ipairs(bufs) do
+          if b == cur_buf then return true end
         end
       end
     end
+    return false
+  end
 
-    if cur_idx and #filtered > 1 then
-      local prev_buf
-      if cur_idx < #filtered then
-        prev_buf = filtered[cur_idx + 1]
-      else
-        prev_buf = filtered[cur_idx - 1]
-      end
-
-      -- check if this buffer is owned by other windows before deciding to confirm
-      local buf_in_other_win = false
-      for w, bufs in pairs(winbar_state.win_bufs) do
-        if w ~= cur_win and vim.api.nvim_win_is_valid(w) then
-          for _, b in ipairs(bufs) do
-            if b == cur_buf_nr then
-              buf_in_other_win = true
-              break
-            end
-          end
-          if buf_in_other_win then break end
-        end
-      end
-
-      if not buf_in_other_win and not confirm_discard(cur_buf_nr) then
-        return
-      end
-
-      -- remove from current window's list
-      local new_list = {}
-      for _, b in ipairs(win_bufs) do
-        if b ~= cur_buf_nr then
-          new_list[#new_list + 1] = b
-        end
-      end
-      winbar_state.win_bufs[cur_win] = new_list
-
-      vim.api.nvim_set_current_buf(prev_buf)
-
-      if not buf_in_other_win then
-        vim.cmd('silent! bd! ' .. cur_buf_nr)
-      end
-      return
-    elseif cur_idx and #filtered == 1 then
-      if txt_window_cnt > 1 then
-        local buf_in_other_win = false
-        for w, bufs in pairs(winbar_state.win_bufs) do
-          if w ~= cur_win and vim.api.nvim_win_is_valid(w) then
-            for _, b in ipairs(bufs) do
-              if b == cur_buf_nr then
-                buf_in_other_win = true
-                break
-              end
-            end
-            if buf_in_other_win then break end
-          end
-        end
-
-        if not buf_in_other_win and not confirm_discard(cur_buf_nr) then
-          return
-        end
-
-        winbar_state.win_bufs[cur_win] = nil
-        vim.cmd('q')
-        keys.feedkey('<c-w>p')
-
-        if not buf_in_other_win then
-          vim.cmd('silent! bd! ' .. cur_buf_nr)
-        end
-        return
-      end
-
-      if #vim.api.nvim_list_tabpages() > 1 then
-        if not confirm_discard(cur_buf_nr) then return end
-        winbar_state.win_bufs[cur_win] = nil
-        vim.cmd('q')
-        return
-      end
-
-      -- single window, single tab: find another valid buf to switch to
-      local alt_buf
-      for _, b in ipairs(valid_buffers) do
-        if b ~= cur_buf_nr then
-          alt_buf = b
-          break
-        end
-      end
-      if alt_buf then
-        if not confirm_discard(cur_buf_nr) then
-          return
-        end
-
-        winbar_state.win_bufs[cur_win] = { alt_buf }
-        vim.api.nvim_set_current_buf(alt_buf)
-        vim.cmd('silent! bd! ' .. cur_buf_nr)
-        return
+  local win_bufs = winbar_state.win_bufs[cur_win]
+  local filtered = {}
+  local cur_idx
+  if win_bufs then
+    for _, b in ipairs(win_bufs) do
+      if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
+        filtered[#filtered + 1] = b
+        if b == cur_buf then cur_idx = #filtered end
       end
     end
   end
 
+  -- Case 2: current window has more than one buffer in its winbar list.
+  if cur_idx and #filtered > 1 then
+    local owned_elsewhere = buf_owned_elsewhere()
+    if not owned_elsewhere and not confirm_discard() then return end
+
+    local neighbor = filtered[cur_idx + 1] or filtered[cur_idx - 1]
+    local new_list = {}
+    for _, b in ipairs(win_bufs) do
+      if b ~= cur_buf then new_list[#new_list + 1] = b end
+    end
+    winbar_state.win_bufs[cur_win] = new_list
+
+    vim.api.nvim_set_current_buf(neighbor)
+    if not owned_elsewhere then
+      vim.cmd('silent! bd! ' .. cur_buf)
+    end
+    return
+  end
+
+  -- Case 3: this tab has additional text windows — close just this window.
   if txt_window_cnt > 1 then
+    local owned_elsewhere = buf_owned_elsewhere()
+    if not owned_elsewhere and not confirm_discard() then return end
+
+    winbar_state.win_bufs[cur_win] = nil
     vim.cmd('q')
     keys.feedkey('<c-w>p')
-  else
-    if not confirm_discard(cur_buf_nr) then return end
-    if #vim.api.nvim_list_tabpages() > 1 then
-      vim.cmd('q')
-    else
-      vim.cmd('bp')
-      vim.cmd('silent! bd! ' .. cur_buf_nr)
+
+    if not owned_elsewhere then
+      vim.cmd('silent! bd! ' .. cur_buf)
     end
+    return
+  end
+
+  -- Case 4: only text window in the tab — never close the window.
+  if not confirm_discard() then return end
+
+  local owned_elsewhere = buf_owned_elsewhere()
+  winbar_state.win_bufs[cur_win] = nil
+
+  vim.cmd('enew')
+  local replaced = vim.api.nvim_get_current_buf() ~= cur_buf
+  if replaced and not owned_elsewhere then
+    vim.cmd('silent! bdelete! ' .. cur_buf)
   end
 end
 
