@@ -6,6 +6,7 @@ lives in trash_backend.py; this file is the CLI front-end.
 """
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import os
 import shutil
@@ -16,23 +17,8 @@ from typing import List, Optional
 VERSION = "0.1.0"
 PROG = "q-trash"
 
-HELP_TEXT = f"""\
-Usage: {PROG} <command> [options]
-
-Commands:
-  list [PATH]              list trashed files (optionally filter by original path)
-  restore [PATTERN]        interactively restore trashed files
-  empty [--days N]         permanently delete trashed files
-  size                     show trash disk usage
-  rm [OPTION]... [FILE]... move files to trash (same as q-rm)
-
-Options:
-  --trash-dir DIR          operate on a specific trash directory only
-  --dest PATH              restore to PATH instead of original location
-  --help                   display this help
-  --version                show version
-
-Examples:
+EXAMPLES = f"""\
+examples:
   {PROG} list                   # list all trashed files
   {PROG} list .                 # list files trashed from current directory
   {PROG} restore                # interactive restore (all files)
@@ -64,12 +50,12 @@ scan_trash = _backend.scan_trash
 
 # ---------- commands ----------
 
-def cmd_list(args: List[str], trash_dir_opt: Optional[str]) -> int:
+def cmd_list(ns: argparse.Namespace) -> int:
     filter_path: Optional[str] = None
-    if args:
-        filter_path = os.path.abspath(args[0])
+    if ns.path:
+        filter_path = os.path.abspath(ns.path)
 
-    items = scan_trash(trash_dir_opt)
+    items = scan_trash(ns.trash_dir)
     if filter_path:
         items = [t for t in items
                  if t.original_path == filter_path
@@ -84,47 +70,15 @@ def cmd_list(args: List[str], trash_dir_opt: Optional[str]) -> int:
     return 0
 
 
-def cmd_restore(args: List[str], trash_dir_opt: Optional[str]) -> int:
-    restore_all = False
-    overwrite = False
-    dest_opt: Optional[str] = None
-    remaining: List[str] = []
+def cmd_restore(ns: argparse.Namespace) -> int:
+    restore_all = ns.all
+    overwrite = ns.overwrite
+    dest_opt = ns.dest
 
-    i = 0
-    while i < len(args):
-        arg = args[i]
-        if arg == "--all":
-            restore_all = True
-            i += 1
-        elif arg == "--overwrite":
-            overwrite = True
-            i += 1
-        elif arg == "--help":
-            sys.stdout.write(HELP_TEXT)
-            return 0
-        elif arg == "--dest":
-            if i + 1 >= len(args):
-                print(f"{PROG}: --dest requires an argument", file=sys.stderr)
-                return 1
-            dest_opt = args[i + 1]
-            i += 2
-        elif arg.startswith("--dest="):
-            dest_opt = arg[len("--dest="):]
-            if not dest_opt:
-                print(f"{PROG}: --dest requires an argument", file=sys.stderr)
-                return 1
-            i += 1
-        else:
-            remaining.append(arg)
-            i += 1
+    explicit_path = bool(ns.path)
+    filter_path = os.path.abspath(ns.path) if explicit_path else None
 
-    explicit_path = bool(remaining)
-    if explicit_path:
-        filter_path = os.path.abspath(remaining[0])
-    else:
-        filter_path = None
-
-    items = scan_trash(trash_dir_opt)
+    items = scan_trash(ns.trash_dir)
 
     exact = [t for t in items if t.original_path == filter_path] if filter_path else []
     if explicit_path and exact and not restore_all:
@@ -243,41 +197,11 @@ def _do_restore(t: TrashedFile, dest: str, overwrite: bool) -> bool:
     return True
 
 
-def cmd_empty(args: List[str], trash_dir_opt: Optional[str]) -> int:
-    days: Optional[int] = None
-    force = False
+def cmd_empty(ns: argparse.Namespace) -> int:
+    days = ns.days
+    force = ns.force
 
-    i = 0
-    while i < len(args):
-        arg = args[i]
-        if arg == "--help":
-            sys.stdout.write(HELP_TEXT)
-            return 0
-        if arg == "--days":
-            if i + 1 >= len(args):
-                print(f"{PROG}: --days requires an argument", file=sys.stderr)
-                return 1
-            try:
-                days = int(args[i + 1])
-            except ValueError:
-                print(f"{PROG}: invalid --days value", file=sys.stderr)
-                return 1
-            i += 2
-        elif arg.startswith("--days="):
-            try:
-                days = int(arg[len("--days="):])
-            except ValueError:
-                print(f"{PROG}: invalid --days value", file=sys.stderr)
-                return 1
-            i += 1
-        elif arg in ("-f", "--force"):
-            force = True
-            i += 1
-        else:
-            print(f"{PROG}: unknown argument '{arg}'", file=sys.stderr)
-            return 1
-
-    items = scan_trash(trash_dir_opt)
+    items = scan_trash(ns.trash_dir)
 
     if days is not None:
         cutoff = datetime.now()
@@ -331,8 +255,8 @@ def cmd_empty(args: List[str], trash_dir_opt: Optional[str]) -> int:
     return 0
 
 
-def cmd_size(args: List[str], trash_dir_opt: Optional[str]) -> int:
-    items = scan_trash(trash_dir_opt)
+def cmd_size(ns: argparse.Namespace) -> int:
+    items = scan_trash(ns.trash_dir)
     if not items:
         print("All trash directories are empty.")
         return 0
@@ -388,58 +312,111 @@ def _human_size(n: int) -> str:
     return f"{size:.1f} PB"
 
 
-def cmd_rm(args: List[str]) -> int:
-    return _load_module("rm_action.py", "rm_action").main(args)
+def cmd_rm(ns: argparse.Namespace) -> int:
+    return _load_module("rm_action.py", "rm_action").main(ns.args)
 
 
 # ---------- main ----------
+
+class _Parser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        if "invalid choice" in message:
+            tok = message.split("'")[1] if "'" in message else "?"
+            self.exit(1, f"{PROG}: unknown command '{tok}'\n"
+                     f"Try '{PROG} --help' for more information.\n")
+        if "expected one argument" in message:
+            flag = message.split(":")[0].replace("argument ", "")
+            self.exit(1, f"{PROG}: {flag} requires an argument\n")
+        super().error(message)
+
+
+def _build_parser() -> _Parser:
+    parser = _Parser(
+        prog=PROG,
+        description="Manage trash (list / restore / empty / size).",
+        epilog=EXAMPLES,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--version", action="version", version=f"{PROG} {VERSION}")
+    parser.add_argument("--trash-dir", dest="trash_dir", default=None,
+                        help="operate on a specific trash directory only")
+
+    sub = parser.add_subparsers(dest="command", parser_class=_Parser)
+
+    # list
+    p_list = sub.add_parser("list", aliases=["ls"], help="list trashed files")
+    p_list.add_argument("path", nargs="?", default=None,
+                        help="filter by original path")
+    p_list.set_defaults(func=cmd_list)
+
+    # restore
+    p_restore = sub.add_parser("restore", help="interactively restore trashed files")
+    p_restore.add_argument("--all", action="store_true",
+                           help="restore all matches without interactive prompt")
+    p_restore.add_argument("--overwrite", action="store_true",
+                           help="overwrite existing files at restore destination")
+    p_restore.add_argument("--dest", default=None,
+                           help="restore to DIR instead of original location")
+    p_restore.add_argument("path", nargs="?", default=None,
+                           help="filter by original path")
+    p_restore.set_defaults(func=cmd_restore)
+
+    # empty
+    p_empty = sub.add_parser("empty", help="permanently delete trashed files")
+    p_empty.add_argument("--days", type=int, default=None,
+                         help="only delete items older than N days")
+    p_empty.add_argument("-f", "--force", action="store_true",
+                         help="skip confirmation prompt")
+    p_empty.set_defaults(func=cmd_empty)
+
+    # size
+    p_size = sub.add_parser("size", help="show trash disk usage")
+    p_size.set_defaults(func=cmd_size)
+
+    # rm
+    p_rm = sub.add_parser("rm", help="move files to trash (same as q-rm)")
+    p_rm.add_argument("args", nargs=argparse.REMAINDER,
+                      help="arguments passed to q-rm")
+    p_rm.set_defaults(func=cmd_rm)
+
+    return parser
+
 
 def main(argv: Optional[List[str]] = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
-    if not argv or argv[0] in ("--help", "-h"):
-        sys.stdout.write(HELP_TEXT)
-        return 0
-    if argv[0] == "--version":
-        print(f"{PROG} {VERSION}")
-        return 0
-
-    trash_dir_opt: Optional[str] = None
-    filtered_argv: List[str] = []
+    # 'rm' subcommand passes arbitrary flags to rm_action; locate it before argparse.
+    rm_idx = None
     i = 0
     while i < len(argv):
-        if argv[i] == "--trash-dir" and i + 1 < len(argv):
-            trash_dir_opt = argv[i + 1]
+        a = argv[i]
+        if a == "rm":
+            rm_idx = i
+            break
+        if a == "--trash-dir":
             i += 2
-        elif argv[i].startswith("--trash-dir="):
-            trash_dir_opt = argv[i][len("--trash-dir="):]
+            continue
+        if a.startswith("-"):
             i += 1
-        else:
-            filtered_argv.append(argv[i])
-            i += 1
+            continue
+        break
+    if rm_idx is not None:
+        pre = argv[:rm_idx]
+        rm_args = argv[rm_idx + 1:]
+        parser = _build_parser()
+        ns = parser.parse_args(pre + ["rm"])
+        ns.args = rm_args
+        return ns.func(ns)
 
-    if not filtered_argv:
-        sys.stdout.write(HELP_TEXT)
+    parser = _build_parser()
+    ns = parser.parse_args(argv)
+
+    if not ns.command:
+        parser.print_help()
         return 0
 
-    cmd = filtered_argv[0]
-    cmd_args = filtered_argv[1:]
-
-    if cmd == "list" or cmd == "ls":
-        return cmd_list(cmd_args, trash_dir_opt)
-    elif cmd == "restore":
-        return cmd_restore(cmd_args, trash_dir_opt)
-    elif cmd == "empty":
-        return cmd_empty(cmd_args, trash_dir_opt)
-    elif cmd == "size":
-        return cmd_size(cmd_args, trash_dir_opt)
-    elif cmd == "rm":
-        return cmd_rm(cmd_args)
-    else:
-        print(f"{PROG}: unknown command '{cmd}'\n"
-              f"Try '{PROG} --help' for more information.", file=sys.stderr)
-        return 1
+    return ns.func(ns)
 
 
 if __name__ == "__main__":
