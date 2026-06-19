@@ -2,15 +2,9 @@ local M = {}
 
 local state = require('lu5je0.ext.winbar.state')
 local config = require('lu5je0.ext.winbar.config')
+local util = require('lu5je0.ext.winbar.util')
 
-local function is_normal_win(win)
-  local cfg = vim.api.nvim_win_get_config(win)
-  if cfg.relative and cfg.relative ~= '' then return false end
-  local buf = vim.api.nvim_win_get_buf(win)
-  local bt = vim.bo[buf].buftype
-  if bt ~= '' then return false end
-  return true
-end
+local is_normal_win = util.is_normal_win
 
 local function track_buf(win, buf)
   if not vim.api.nvim_buf_is_valid(buf) or not vim.bo[buf].buflisted then return end
@@ -100,28 +94,39 @@ function M.setup(group)
       if not closed_win then return end
       local closed_bufs = state.win_bufs[closed_win]
       if closed_bufs then
-        -- find target win in the same tabpage
-        local cur_tabpage = vim.api.nvim_get_current_tabpage()
-        local tabpage_wins = {}
-        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(cur_tabpage)) do
-          if w ~= closed_win then tabpage_wins[w] = true end
-        end
-
-        local other_set = {}
-        local target_win
-        for w, bufs in pairs(state.win_bufs) do
-          if w ~= closed_win and tabpage_wins[w] then
-            if not target_win then target_win = w end
-            for _, b in ipairs(bufs) do
-              other_set[b] = true
+        local target_tabpage
+        for _, tp in ipairs(vim.api.nvim_list_tabpages()) do
+          for _, w in ipairs(vim.api.nvim_tabpage_list_wins(tp)) do
+            if w ~= closed_win and state.win_bufs[w] then
+              target_tabpage = tp
+              break
             end
           end
+          if target_tabpage then break end
         end
-        if target_win then
-          local target = state.win_bufs[target_win]
-          for _, b in ipairs(closed_bufs) do
-            if not other_set[b] then
-              target[#target + 1] = b
+
+        if target_tabpage then
+          local tabpage_wins = {}
+          for _, w in ipairs(vim.api.nvim_tabpage_list_wins(target_tabpage)) do
+            if w ~= closed_win then tabpage_wins[w] = true end
+          end
+
+          local other_set = {}
+          local target_win
+          for w, bufs in pairs(state.win_bufs) do
+            if w ~= closed_win and tabpage_wins[w] then
+              if not target_win then target_win = w end
+              for _, b in ipairs(bufs) do
+                other_set[b] = true
+              end
+            end
+          end
+          if target_win then
+            local target = state.win_bufs[target_win]
+            for _, b in ipairs(closed_bufs) do
+              if not other_set[b] then
+                target[#target + 1] = b
+              end
             end
           end
         end

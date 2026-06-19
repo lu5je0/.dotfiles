@@ -1,42 +1,10 @@
 local M = {}
 
 local state = require('lu5je0.ext.winbar.state')
+local util = require('lu5je0.ext.winbar.util')
 
 local function get_buf_list()
-  local win = vim.api.nvim_get_current_win()
-
-  local single_win = true
-  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if w ~= win then
-      local cfg = vim.api.nvim_win_get_config(w)
-      if not cfg.relative or cfg.relative == '' then
-        local bt = vim.bo[vim.api.nvim_win_get_buf(w)].buftype
-        if bt == '' then
-          single_win = false
-          break
-        end
-      end
-    end
-  end
-
-  if single_win then
-    return require('lu5je0.core.buffers').valid_buffers()
-  end
-
-  local win_bufs = state.win_bufs[win]
-  if not win_bufs or #win_bufs == 0 then
-    return require('lu5je0.core.buffers').valid_buffers()
-  end
-  local valid = {}
-  for _, b in ipairs(win_bufs) do
-    if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
-      valid[#valid + 1] = b
-    end
-  end
-  if #valid == 0 then
-    return require('lu5je0.core.buffers').valid_buffers()
-  end
-  return valid
+  return util.get_buf_list()
 end
 
 local function current_ordinal()
@@ -48,7 +16,7 @@ local function current_ordinal()
   return nil
 end
 
-function M.go_to_ordinal(i, _abs)
+function M.go_to_ordinal(i)
   local list = get_buf_list()
   local b = list[i]
   if b and vim.api.nvim_buf_is_valid(b) then

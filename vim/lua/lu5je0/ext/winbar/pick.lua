@@ -2,6 +2,7 @@ local M = {}
 
 local state = require('lu5je0.ext.winbar.state')
 local naming = require('lu5je0.ext.winbar.naming')
+local util = require('lu5je0.ext.winbar.util')
 
 local POOL = 'abcdefghijklmnopqrstuvwxyz'
 
@@ -36,7 +37,7 @@ end
 
 function M.start(opts)
   opts = opts or {}
-  local bufs = require('lu5je0.core.buffers').valid_buffers()
+  local bufs = util.get_buf_list()
   if #bufs == 0 then return end
 
   state.pick_map = build_letter_map(bufs)

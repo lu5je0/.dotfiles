@@ -3,6 +3,7 @@ local M = {}
 local config = require('lu5je0.ext.winbar.config')
 local state = require('lu5je0.ext.winbar.state')
 local naming = require('lu5je0.ext.winbar.naming')
+local util = require('lu5je0.ext.winbar.util')
 
 local strwidth = vim.api.nvim_strwidth
 local rep = string.rep
@@ -260,19 +261,7 @@ function M.build_winbar(win_id)
   if #all_valid == 0 then return '%#BufferLineFill#' end
 
   local bufs
-  local single_win = true
-  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if win ~= win_id then
-      local cfg = vim.api.nvim_win_get_config(win)
-      if not cfg.relative or cfg.relative == '' then
-        local bt = vim.api.nvim_get_option_value('buftype', { buf = vim.api.nvim_win_get_buf(win) })
-        if bt == '' then
-          single_win = false
-          break
-        end
-      end
-    end
-  end
+  local single_win = not util.tabpage_has_multiple_normal_wins(win_id)
 
   local multi_tabpage = #vim.api.nvim_list_tabpages() > 1
 

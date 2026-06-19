@@ -35,7 +35,7 @@ function M.setup_keymaps()
 
   for i = 1, 9 do
     vim.keymap.set('n', '<leader>' .. i, function()
-      actions.go_to_ordinal(i, true)
+      actions.go_to_ordinal(i)
     end, { silent = true })
   end
 
