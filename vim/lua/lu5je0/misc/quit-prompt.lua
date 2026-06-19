@@ -236,8 +236,22 @@ function M.close_buffer()
 
       if #vim.api.nvim_list_tabpages() > 1 then
         if not confirm_discard(cur_buf_nr) then return end
-        winbar_state.win_bufs[cur_win] = nil
-        vim.cmd('q')
+
+        local alt_buf
+        for _, b in ipairs(valid_buffers) do
+          if b ~= cur_buf_nr then
+            alt_buf = b
+            break
+          end
+        end
+        if alt_buf then
+          winbar_state.win_bufs[cur_win] = { alt_buf }
+          vim.api.nvim_set_current_buf(alt_buf)
+        else
+          winbar_state.win_bufs[cur_win] = nil
+          vim.cmd('enew')
+        end
+        vim.cmd('silent! bd! ' .. cur_buf_nr)
         return
       end
 
@@ -267,12 +281,8 @@ function M.close_buffer()
     keys.feedkey('<c-w>p')
   else
     if not confirm_discard(cur_buf_nr) then return end
-    if #vim.api.nvim_list_tabpages() > 1 then
-      vim.cmd('q')
-    else
-      vim.cmd('bp')
-      vim.cmd('silent! bd! ' .. cur_buf_nr)
-    end
+    vim.cmd('bp')
+    vim.cmd('silent! bd! ' .. cur_buf_nr)
   end
 end
 
