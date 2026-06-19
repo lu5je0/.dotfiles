@@ -346,6 +346,10 @@ end
 
 M.show_file_info = info.show
 
+function M.stop_watchers()
+  watcher.release(state.tab())
+end
+
 -- ── find_file (reveal) ──────────────────────────────────
 
 function M.find_file(filepath)
