@@ -107,6 +107,8 @@ function M.setup()
     state.ime_control = require('lu5je0.misc.im.win.ime-control').setup()
   elseif vim.fn.has('mac') == 1 then
     state.ime_control = require('lu5je0.misc.im.mac.ime-control').setup()
+  elseif vim.fn.has('linux') == 1 and not vim.env.SSH_TTY then
+    state.ime_control = require('lu5je0.misc.im.linux.ime-control').setup()
   else
     state.ime_control = require('lu5je0.misc.im.ssh.ime-control').setup()
   end

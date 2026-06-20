@@ -159,31 +159,10 @@ local defer_options = {
     vim.cmd [[ silent! rsh ]]
   end,
   function()
-    -- windows和macos中regtype * 和 + 相同，都是系统剪切板
-    -- linux中 * 是selection clipboard，+ 是system clipboard，
-    -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard
-    if has('ssh_client') then
-      if has('kitty') or has('ghostty') then
-        o.clipboard = 'unnamedplus'
-        vim.g.clipboard = 'osc52'
-      else
-        vim.g.loaded_clipboard_provider = 1
-        local copy = require("vim.ui.clipboard.osc52").copy('\"')
-        vim.api.nvim_create_autocmd('TextYankPost', {
-          group = vim.api.nvim_create_augroup('osc52_autocmd_group', { clear = true }),
-          pattern = '*',
-          callback = function()
-            copy(vim.split(vim.fn.getreg('"'), '\n'))
-          end
-        })
-      end
-    elseif has('mac') then
-      require('lu5je0.misc.clipboard.mac').setup()
-    elseif has('wsl') then
-      require('lu5je0.misc.clipboard.wsl').setup()
-    end
-    -- end
     vim.cmd [[ packadd matchit ]]
+  end,
+  function()
+    require('lu5je0.misc.clipboard').setup()
   end
 }
 for delay, fn in ipairs(defer_options) do
