@@ -3,7 +3,6 @@ local M = {}
 local has = function(feature)
   return vim.fn.has(feature) == 1
 end
-local o = vim.o
 
 M.setup = function()
   -- windows和macos中regtype * 和 + 相同，都是系统剪切板
@@ -11,7 +10,7 @@ M.setup = function()
   -- 如果设置了unamedplus，所有的操作都会自动被粘贴进system clipboard
   if has('ssh_client') then
     if has('kitty') or has('ghostty') then
-      o.clipboard = 'unnamedplus'
+      vim.o.clipboard = 'unnamedplus'
       vim.g.clipboard = 'osc52'
     else
       vim.g.loaded_clipboard_provider = 1
@@ -29,7 +28,7 @@ M.setup = function()
   elseif has('wsl') then
     require('lu5je0.misc.clipboard.wsl').setup()
   elseif has('linux') then
-    o.clipboard = 'unnamedplus'
+    vim.o.clipboard = 'unnamedplus'
     vim.g.clipboard = {
       name = 'wl-clipboard',
       copy = {
