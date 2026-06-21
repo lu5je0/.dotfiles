@@ -1,6 +1,8 @@
 local M = {}
 
-local has = vim.fn.has
+local has = function(feature)
+  return vim.fn.has(feature) == 1
+end
 local o = vim.o
 
 M.setup = function()
