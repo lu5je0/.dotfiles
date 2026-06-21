@@ -77,6 +77,8 @@ M.files = {
     open       = "",
     empty      = "",
     empty_open = "",
+    symlink      = "",
+    symlink_open = "",
   },
 }
 

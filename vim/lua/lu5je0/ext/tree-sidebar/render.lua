@@ -82,6 +82,12 @@ function M.render_tree(root_children, opts)
   local simple_indent = opts.simple_indent or false
 
   local function default_dir_icon(node)
+    if node.is_symlink then
+      if node.expanded then
+        return config.files.folder_icons.symlink_open
+      end
+      return config.files.folder_icons.symlink
+    end
     local has_children = node.children and #node.children > 0
     if not has_children and node.children then
       for _, c in ipairs(node.children) do

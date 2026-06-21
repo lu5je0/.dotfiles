@@ -26,14 +26,19 @@ function M.scan_dir(path)
     if not name then break end
     local prefix = path == '/' and '' or path
     local abs_path = prefix .. '/' .. name
+    local is_symlink = false
     if type == 'link' then
       local stat = vim.uv.fs_stat(abs_path)
-      if stat and stat.type == 'directory' then type = 'directory' end
+      if stat and stat.type == 'directory' then
+        type = 'directory'
+        is_symlink = true
+      end
     end
     entries[#entries + 1] = {
       name = name,
       abs_path = abs_path,
       type = type or 'file',
+      is_symlink = is_symlink,
       children = nil,
       expanded = false,
     }
