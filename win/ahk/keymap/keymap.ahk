@@ -61,17 +61,17 @@ ResizeWindow(position) {
 
     ; 定义特定应用的窗口大小和位置映射
     specialAppMap := Map(
-        "alacritty.exe", Map(
-            "center_i", { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 },
-            "center_j", { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
-        ),
-        "WindowsTerminal.exe", Map(
-            "center_i", { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 },
-            "center_j", { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
-        ),
+        ; "alacritty.exe", Map(
+        ;     "center_i", { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 },
+        ;     "center_j", { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
+        ; ),
+        ; "WindowsTerminal.exe", Map(
+        ;     "center_i", { width: 2457, height: 2038, x_offset: (screenWidth - 2457) / 2, y_offset: 23 },
+        ;     "center_j", { width: 1931, height: 1596, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
+        ; ),
         "wezterm-gui.exe", Map(
-            "center_i", { width: 2713, height: 2004, x_offset: (screenWidth - 2713) / 2, y_offset: 43 },
-            "center_j", { width: 1977, height: 1645, x_offset: (screenWidth - 1931) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
+            "center_i", { width: 2710, height: 2023, x_offset: (screenWidth - 2713) / 2, y_offset: 43 },
+            "center_j", { width: 1999, height: 1689, x_offset: (screenWidth - 1999) / 2, y_offset: (screenHeight - 1596) / 2 - 100 }
         )
     )
     

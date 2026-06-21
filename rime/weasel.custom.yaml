@@ -1,0 +1,45 @@
+customization:
+  distribution_code_name: Weasel
+  distribution_version: 0.17.4
+  generator: "Weasel::UIStyleSettings"
+  modified_time: "Sun Jun 21 11:40:46 2026"
+  rime_version: 1.13.1
+  
+patch:
+  show_notifications: false
+  style/+:
+    label_format: "%s"
+    inline_preedit: true
+    font_point: 11
+    label_font_point: 11
+    comment_font_point: 11
+    horizontal: true
+    color_scheme: wechat
+    layout:
+      max_height: 0
+      max_width: 1200
+      min_width: 10
+      margin_x: 8
+      margin_y: 6
+      candidate_spacing: 24
+      hilite_spacing: 6
+      hilite_padding: 3
+      hilite_padding_x: 5
+      corner_radius: 8
+      round_corner: 8
+      shadow_radius: 4
+  preset_color_schemes/+:
+    wechat:
+      name: "微信／Wechat"
+      text_color: 0x424242
+      label_color: 0x999999
+      back_color: 0xFFFFFF
+      border_color: 0xFFFFFF
+      comment_text_color: 0x999999
+      candidate_text_color: 0x3c3c3c
+      hilited_comment_text_color: 0xFFFFFF
+      hilited_back_color: 0x79af22
+      hilited_text_color: 0xFFFFFF
+      hilited_label_color: 0xFFFFFF
+      hilited_candidate_back_color: 0x79af22
+      shadow_color: 0x20000000

@@ -24,7 +24,7 @@ local font = (function()
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal" },
     }
     r.tab_bar_font_size = 10
-    r.font_size = 11.5
+    r.font_size = 12
   elseif is_mac then
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },

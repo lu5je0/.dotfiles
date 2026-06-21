@@ -3,3 +3,74 @@ patch:
     name: fuzzy_pinyin
     reset: 0
     states: [ 精确, 模糊 ]
+  speller:
+    alphabet: zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA`
+    initials: zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA
+    delimiter: "''"
+    algebra:
+      ### 模糊音（自定义新增）
+      - derive/^([zcs])h/$1/
+      - derive/^([zcs])([^h])/$1h$2/
+      - derive/ang$/an/
+      - derive/an$/ang/
+      - derive/eng$/en/
+      - derive/en$/eng/
+      - derive/ing$/in/
+      - derive/in$/ing/
+      - derive/iang$/ian/
+      - derive/ian$/iang/
+      - derive/uang$/uan/
+      - derive/uan$/uang/
+
+      ### 超级简拼
+      - erase/^hm$/
+      - erase/^m$/
+      - erase/^n$/
+      - erase/^ng$/
+      - abbrev/^([a-z]).+$/$1/
+      - abbrev/^([zcs]h).+$/$1/
+
+      ### v u 转换
+      - derive/^([nl])ve$/$1ue/
+      - derive/^([jqxy])u/$1v/
+      - derive/^([nl])ue$/$1ve/
+      - derive/^([jqxy])v/$1u/
+
+      ### 自动纠错
+      - derive/([zcs])h(a|e|i|u|ai|ei|an|en|ou|uo|ua|un|ui|uan|uai|uang|ang|eng|ong)$/h$1$2/
+      - derive/([zcs])h([aeiu])$/$1$2h/
+      - derive/^([wghk])ai$/$1ia/
+      - derive/([wfghkz])ei$/$1ie/
+      - derive/([jqx])ie$/$1ei/
+      - derive/([rtypsdghklzcbnm])ao$/$1oa/
+      - derive/([ypfm])ou$/$1uo/
+      - derive/([wrtypsdfghklzcbnm])ang$/$1nag/
+      - derive/([wrtypsdfghklzcbnm])ang$/$1agn/
+      - derive/([wrtpsdfghklzcbnm])eng$/$1neg/
+      - derive/([wrtpsdfghklzcbnm])eng$/$1egn/
+      - derive/([qtypdjlxbnm])ing$/$1nig/
+      - derive/([qtypdjlxbnm])ing$/$1ign/
+      - derive/([rtysdghklzcn])ong$/$1nog/
+      - derive/([rtysdghklzcn])ong$/$1ogn/
+      - derive/([qtpdjlxbnm])iao$/$1ioa/
+      - derive/([qtpdjlxbnm])iao$/$1oia/
+      - derive/([rtsghkzc])ui$/$1iu/
+      - derive/([qjlxnm])iu$/$1ui/
+      - derive/([qjlxn])iang$/$1aing/
+      - derive/([qjlxn])iang$/$1inag/
+      - derive/([g|k|h|zh|sh])ua$/$1au/
+      - derive/([g|h|k|zh|ch|sh])uai$/$1aui/
+      - derive/([qrtysdghjklzxcn])uan$/$1aun/
+      - derive/([nlyjqx])ue$/$1eu/
+      - derive/([g|h|k|zh|ch|sh])uang$/$1aung/
+      - derive/([g|h|k|zh|ch|sh])uang$/$1uagn/
+      - derive/([g|h|k|zh|ch|sh])uang$/$1unag/
+      - derive/([g|h|k|zh|ch|sh])uang$/$1augn/
+      - derive/([jqx])iong$/$1inog/
+      - derive/([jqx])iong$/$1oing/
+      - derive/([jqx])iong$/$1iogn/
+      - derive/([jqx])iong$/$1oign/
+      - derive/([rtsdghkzc])o(u|ng)$/$1o/
+      - derive/(.+)ong$/$1on/
+      - derive/([tl])eng$/$1en/
+      - derive/([qwrtypsdfghjklzxcbnm])([aeio])ng$/$1ng/
