@@ -1,0 +1,81 @@
+customization:
+  distribution_code_name: Squirrel
+  generator: "Rime::SwitcherSettings"
+  modified_time: "Sun Jun 21 11:40:41 2026"
+  rime_version: 1.13.1
+  
+patch:
+  show_notifications_when: appropriate     # 状态通知，可设为全开（always）全关（never）  
+
+  # 浅色主题
+  style/color_scheme: wechat_light
+  # 深色主题
+  style/color_scheme_dark: wechat_dark
+  # 横排显示
+  style/candidate_list_layout: linear
+
+  # 皮肤主题
+  preset_color_schemes:
+    wechat_light:
+      name: 微信键盘浅色
+      horizontal: true                          # true横排，false竖排
+      back_color: 0xFFFFFF                      # 候选条背景色
+      border_height: 0                          # 窗口上下高度，大于圆角半径才生效
+      border_width: 8                           # 窗口左右宽度，大于圆角半径才生效
+      candidate_format: "%c %@ "                # 用 1/6 em 空格 U+2005 来控制编号 %c 和候选词 %@ 前后的空间
+      comment_text_color: 0x999999              # 拼音等提示文字颜色
+      corner_radius: 5                          # 窗口圆角
+      hilited_corner_radius: 5                  # 高亮圆角
+      font_face: PingFangSC                     # 候选词字体
+      font_point: 16                            # 候选字大小
+      hilited_candidate_back_color: 0x75B100    # 第一候选项背景色
+      hilited_candidate_text_color: 0xFFFFFF    # 第一候选项文字颜色
+      label_font_point: 12                      # 候选编号大小
+      text_color: 0x424242                      # 拼音行文字颜色
+      inline_preedit: true                      # 拼音位于： 候选框 false | 行内 true
+
+    wechat_dark:
+      name: 微信键盘深色
+      horizontal: true                          # true横排，false竖排
+      back_color: 0x2e2925                      # 候选条背景色
+      border_height: 0                          # 窗口上下高度，大于圆角半径才生效
+      border_width: 8                           # 窗口左右宽度，大于圆角半径才生效
+      candidate_format: "%c %@"                 # 用 1/6 em 空格 U+2005 来控制编号 %c 和候选词 %@ 前后的空间
+      comment_text_color: 0x999999              # 拼音等提示文字颜色
+      corner_radius: 5                          # 窗口圆角
+      hilited_corner_radius: 5                  # 高亮圆角
+      font_face: PingFangSC                     # 候选词字体
+      font_point: 16                            # 候选字大小
+      hilited_candidate_back_color: 0x75B100    # 第一候选项背景色
+      hilited_candidate_text_color: 0xFFFFFF    # 第一候选项文字颜色
+      label_font_point: 12                      # 候选编号大小
+      text_color: 0x424242                      # 拼音行文字颜色
+      label_color: 0x999999                     # 预选栏编号颜色
+      candidate_text_color: 0xe9e9ea            # 预选项文字颜色
+      inline_preedit: true                      # 拼音位于： 候选框 false | 行内 true
+
+  # 特定App默认中/英文输入
+  # app_options:
+  #   com.apple.Spotlight: # 聚焦搜索
+  #     ascii_mode: true             # true默认英文,false默认中文
+  #   com.runningwithcrayons.Alfred: # alfred
+  #     ascii_mode: true
+  #   com.apple.Terminal: # 终端
+  #     ascii_mode: true
+  #   com.microsoft.VSCode: # Visual Studio Code
+  #     ascii_mode: true
+  #     ascii_punct: true            # 中文状态输出英文标点(半角)
+  #   com.tencent.Lemon: # 腾讯柠檬
+  #     ascii_mode: true
+  #   com.apple.dt.Xcode: # Xcode
+  #     ascii_mode: true
+  #   com.nektony.App-Cleaner-SII: # App Cleaner & Uninstaller
+  #     ascii_mode: true
+  #   com.xunyong.hapigo: # hapigo
+  #     ascii_mode: true
+  #   com.termius-dmg.mac: # termius
+  #     ascii_mode: true
+  #   com.raycast.macos: # Raycast
+  #     ascii_mode: true
+  #   com.jetbrains.intellij: # idea
+  #     ascii_mode: true
