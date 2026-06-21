@@ -239,7 +239,9 @@ render_menu() {
   fi
   buf+="\n"
   if (( search_mode )); then
-    buf+="${C_CYAN}> ${C_RESET}${search_query}"
+    buf+="${C_CYAN}/ ${C_RESET}${search_query}"
+  elif [[ -n "$search_query" ]]; then
+    buf+="${C_DIM}filter: ${C_RESET}${search_query}${C_DIM}  (Esc to clear)${C_RESET}\n"
   else
     buf+="${C_DIM}------------------------------------------------------------${C_RESET}\n"
   fi
@@ -252,9 +254,14 @@ read_key() {
   local k rest1 rest2
   IFS= read -rsn1 k
   if [[ "$k" == $'\x1b' ]]; then
-    IFS= read -rsn1 -t 0.01 rest1 || { echo "$k"; return; }
+    rest1=""
+    IFS= read -rsn1 -t 0.01 rest1
+    if [[ -z "$rest1" ]]; then
+      echo "ESC"; return
+    fi
     if [[ "$rest1" == "[" ]]; then
-      IFS= read -rsn1 -t 0.01 rest2 || { echo "$k"; return; }
+      rest2=""
+      IFS= read -rsn1 -t 0.01 rest2
       case "$rest2" in
         A) echo "UP"; return ;;
         B) echo "DOWN"; return ;;
@@ -262,7 +269,14 @@ read_key() {
         D) echo "LEFT"; return ;;
       esac
     fi
-    echo "$k"
+    echo "ESC"
+    return
+  fi
+  if [[ "$k" == "g" ]]; then
+    local next=""
+    IFS= read -rsn1 -t 0.5 next
+    [[ "$next" == "g" ]] && { echo "gg"; return; }
+    echo "g"
     return
   fi
   echo "$k"
@@ -282,8 +296,12 @@ while :; do
 
   if (( search_mode )); then
     case "$key" in
-      ""|"ESC"|$'\x1b')
-        # Exit search mode
+      "")
+        # Enter: exit search mode, keep filter
+        search_mode=0
+        ;;
+      "ESC")
+        # ESC: exit search mode, clear filter
         search_mode=0
         search_query=""
         update_filter
@@ -333,6 +351,13 @@ while :; do
     case "$key" in
       "q") cleanup_tui; trap - EXIT; exit 0 ;;
       "") cleanup_tui; trap - EXIT; break ;;
+      "ESC")
+        if [[ -n "$search_query" ]]; then
+          search_query=""
+          update_filter
+          cursor=0
+        fi
+        ;;
       " ")
         if (( fi_total > 0 )); then
           real_idx="${filtered_indices[$cursor]}"
@@ -356,6 +381,32 @@ while :; do
       "k"|"UP")
         if (( fi_total > 0 )); then
           cursor=$(( (cursor - 1 + fi_total) % fi_total ))
+        fi
+        ;;
+      $'\x04')
+        # Ctrl-D: half page down
+        if (( fi_total > 0 )); then
+          half=$(( fi_total / 2 ))
+          (( half < 1 )) && half=1
+          cursor=$(( cursor + half ))
+          (( cursor >= fi_total )) && cursor=$(( fi_total - 1 ))
+        fi
+        ;;
+      $'\x15')
+        # Ctrl-U: half page up
+        if (( fi_total > 0 )); then
+          half=$(( fi_total / 2 ))
+          (( half < 1 )) && half=1
+          cursor=$(( cursor - half ))
+          (( cursor < 0 )) && cursor=0
+        fi
+        ;;
+      "gg")
+        cursor=0
+        ;;
+      "G")
+        if (( fi_total > 0 )); then
+          cursor=$(( fi_total - 1 ))
         fi
         ;;
     esac
