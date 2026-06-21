@@ -537,10 +537,36 @@ function M.toggle_auto_follow()
   vim.notify('Symbols auto-follow: ' .. (state.symbols.auto_follow and 'on' or 'off'), vim.log.levels.INFO)
 end
 
+function M.open_node_recursive()
+  if not state:is_open() then return end
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local item = state.symbols.display_items[line]
+  if not item or not item.node then return end
+
+  if item.node.type == 'directory' then
+    local function expand_recursive(node)
+      node.expanded = true
+      if node.children then
+        for _, child in ipairs(node.children) do
+          if child.type == 'directory' then
+            expand_recursive(child)
+          end
+        end
+      end
+    end
+    expand_recursive(item.node)
+    M.render()
+    pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+  else
+    M.open_symbol()
+  end
+end
+
 function M.keymaps()
   return {
     { 'l', M.toggle_node, desc = 'Expand node' },
     { 'zo', M.toggle_node, desc = 'Expand node' },
+    { 'zO', M.open_node_recursive, desc = 'Open node recursive' },
     { 'h', M.close_node, desc = 'Collapse node' },
     { 'zc', M.close_node, desc = 'Collapse node' },
     { '<cr>', M.open_symbol, desc = 'Go to symbol' },

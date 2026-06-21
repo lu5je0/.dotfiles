@@ -497,6 +497,49 @@ function M.locate_file(filepath)
   locate_mod.locate_file(filepath, M.render, M.refresh, M.find_section_for_line)
 end
 
+function M.open_node_recursive()
+  if not state:is_open() then return end
+  local line = vim.api.nvim_win_get_cursor(state.win)[1]
+  local item = state.git_changes.display_items[line]
+  if not item then return end
+
+  local function expand_recursive(node, section_key)
+    node.expanded = true
+    if node.abs_path and section_key then
+      local ds = state.git_changes._dir_states or {}
+      ds[section_key] = ds[section_key] or {}
+      ds[section_key][node.abs_path] = true
+      state.git_changes._dir_states = ds
+    end
+    if node.children then
+      for _, child in ipairs(node.children) do
+        if child.type == 'directory' then
+          expand_recursive(child, section_key)
+        end
+      end
+    end
+  end
+
+  local section_key = M.find_section_for_line(line)
+
+  if item._is_section then
+    state.git_changes._expanded[item.section] = true
+    expand_recursive(item.node, item.section)
+    M.render()
+    pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+    return
+  end
+
+  if item.type == 'dir' and item.node then
+    expand_recursive(item.node, section_key)
+    M.render()
+    pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+    return
+  end
+
+  M.open_node()
+end
+
 -- ── keymaps ─────────────────────────────────────────────
 
 function M.keymaps()
@@ -506,6 +549,7 @@ function M.keymaps()
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
     { 'zo', M.open_node, desc = 'Open node' },
+    { 'zO', M.open_node_recursive, desc = 'Open node recursive' },
     { 'h', M.close_node, desc = 'Close node' },
     { 'zc', M.close_node, desc = 'Close node' },
     { 'a', git_ops.stage_file, desc = 'Stage file' },
