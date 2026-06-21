@@ -86,6 +86,19 @@ function M.render(opts)
   source_base.render(spec, opts or {})
 end
 
+-- Walk a reveal_path up to its nearest still-existing ancestor. Returns nil
+-- only when no ancestor (including '/') exists. Lets reveal-anchored renders
+-- survive when the originally revealed file gets deleted underfoot.
+local function downgrade_reveal_path(p)
+  while p and p ~= '' do
+    if vim.uv.fs_stat(p) then return p end
+    local parent = vim.fs.dirname(p)
+    if parent == p then return nil end
+    p = parent
+  end
+  return nil
+end
+
 -- Invoked by watcher.lua after a fs_event debounce. The timer may fire
 -- after the user switched tabs, so we explicitly target the originating
 -- tabpage's state and only repaint when still on that tab.
@@ -96,7 +109,7 @@ watcher.on_files_changed = function(tabpage)
   if ts.root then
     tree.rescan_node(ts.root)
   end
-  ts.reveal_path = nil
+  ts.reveal_path = downgrade_reveal_path(ts.reveal_path)
   git.refresh_for(tabpage, function()
     if vim.api.nvim_get_current_tabpage() == tabpage and state:is_open() then
       if state.active_tab_idx == config.tab_idx('files') then
@@ -238,6 +251,43 @@ function M.refresh()
   end
   M.render()
   M.refresh_git_status(M.render)
+end
+
+-- Refresh after deleting `deleted_path`. Anchors reveal_path to the parent
+-- so dotfile ancestors stay expanded, then moves the cursor to the nearest
+-- surviving neighbour (next sibling -> prev sibling -> parent dir).
+function M.refresh_after_delete(deleted_path, fallback_paths)
+  local anchor = downgrade_reveal_path(vim.fs.dirname(deleted_path))
+  if state.files.root then
+    tree.rescan_node(state.files.root)
+  else
+    tree.build_root()
+  end
+  state.files.reveal_path = anchor
+  M.render({ reveal_path = anchor })
+
+  local function place_cursor()
+    if not state:is_open() then return end
+    local candidates = {}
+    if fallback_paths then
+      for _, p in ipairs(fallback_paths) do candidates[#candidates + 1] = p end
+    end
+    if anchor then candidates[#candidates + 1] = anchor end
+    for _, target in ipairs(candidates) do
+      for line, item in ipairs(state.files.display_items) do
+        if item.node and item.node.abs_path == target then
+          pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+          return
+        end
+      end
+    end
+  end
+
+  place_cursor()
+  M.refresh_git_status(function()
+    M.render({ reveal_path = state.files.reveal_path })
+    place_cursor()
+  end)
 end
 
 function M.refresh_git_status(callback)

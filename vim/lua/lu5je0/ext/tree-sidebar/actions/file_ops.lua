@@ -173,16 +173,52 @@ local function close_bufs_under(abs_path)
   end
 end
 
+local function collect_delete_fallbacks(target_node)
+  if not state:is_open() then return {} end
+  local items = state.files.display_items or {}
+  local cursor_line
+  for i, item in ipairs(items) do
+    if item.node and item.node.abs_path == target_node.abs_path then
+      cursor_line = i
+      break
+    end
+  end
+  if not cursor_line then return {} end
+  local fallbacks = {}
+  for i = cursor_line + 1, #items do
+    local it = items[i]
+    if it.node and it.type ~= 'root' and it.type ~= 'filter' then
+      fallbacks[#fallbacks + 1] = it.node.abs_path
+      break
+    end
+  end
+  for i = cursor_line - 1, 1, -1 do
+    local it = items[i]
+    if it.node and it.type ~= 'root' and it.type ~= 'filter' then
+      fallbacks[#fallbacks + 1] = it.node.abs_path
+      break
+    end
+  end
+  return fallbacks
+end
+
+local function refresh_after_delete(abs_path, fallbacks)
+  local files = require('lu5je0.ext.tree-sidebar.sources.files')
+  files.refresh_after_delete(abs_path, fallbacks)
+end
+
 function M.delete()
   local node = get_current_node()
   if not node then return end
+
+  local fallbacks = collect_delete_fallbacks(node)
 
   if has_trash() then
     local choice = vim.fn.confirm('Trash ' .. node.name .. '?', '&Yes\n&No', 2)
     if choice ~= 1 then return end
     if trash(node.abs_path) then
       close_bufs_under(node.abs_path)
-      refresh()
+      refresh_after_delete(node.abs_path, fallbacks)
     else
       vim.notify('Trash failed', vim.log.levels.ERROR)
     end
@@ -191,7 +227,7 @@ function M.delete()
     if choice ~= 1 then return end
     close_bufs_under(node.abs_path)
     vim.fn.delete(node.abs_path, 'rf')
-    refresh()
+    refresh_after_delete(node.abs_path, fallbacks)
   end
 end
 
