@@ -1,0 +1,5 @@
+patch:
+  switches/@next:
+    name: fuzzy_pinyin
+    reset: 0
+    states: [ 精确, 模糊 ]
