@@ -4,6 +4,11 @@ set -e
 DOTFILES_RIME="$(cd "$(dirname "$0")" && pwd)"
 RIME_ICE="$DOTFILES_RIME/rime-ice"
 
+if [[ ! -d "$RIME_ICE" || ! -f "$RIME_ICE/default.yaml" ]]; then
+  echo "error: submodule rime-ice not found. Run: git submodule update --init rime/rime-ice" >&2
+  exit 1
+fi
+
 # Detect platform and set RIME data directory
 if [[ "$(uname)" == "Darwin" ]]; then
   RIME_DIR="${HOME}/Library/Rime"
