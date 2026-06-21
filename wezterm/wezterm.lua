@@ -3,6 +3,7 @@ local mux = wezterm.mux
 
 local is_win = string.find(wezterm.target_triple, 'windows')
 local is_mac = string.find(wezterm.target_triple, 'apple')
+local is_linux = string.find(wezterm.target_triple, 'linux')
 
 -- "Thin"
 -- "ExtraLight"
@@ -28,6 +29,12 @@ local font = (function()
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "DemiBold", stretch = "Normal", style = "Normal" },
       { family = "PingFang SC",                    weight = "Medium",   stretch = "Normal", style = "Normal" }
+    }
+    r.tab_bar_font_size = 12
+    r.font_size = 14.5
+  elseif is_linux then
+    r.text_font = wezterm.font_with_fallback {
+      { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal" },
     }
     r.tab_bar_font_size = 12
     r.font_size = 14.5
@@ -111,28 +118,19 @@ local function basename(s)
   return string.gsub(s, '(.*[/\\])(.*)', '%2')
 end
 
+config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+config.integrated_title_button_color = "auto"
+config.integrated_title_button_alignment = "Right"
 if is_mac then
   -- tab bar在上面
   config.hide_tab_bar_if_only_one_tab = false
   config.use_fancy_tab_bar = true
   config.tab_bar_at_bottom = false
-  config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
   config.integrated_title_button_style = "MacOsNative"
-  -- config.integrated_title_button_style = "Windows"
-  config.integrated_title_button_color = "auto"
-  config.integrated_title_button_alignment = "Right"
-end
-if is_win then
-  -- tab bar在下面
-  -- config.hide_tab_bar_if_only_one_tab = true
-  -- config.use_fancy_tab_bar = false
-  -- config.tab_bar_at_bottom = true
-  -- config.use_resize_increments = true
-
-  config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+elseif is_win then
   config.integrated_title_button_style = "Windows"
-  config.integrated_title_button_color = "auto"
-  config.integrated_title_button_alignment = "Right"
+elseif is_linux then
+  config.integrated_title_button_style = "Windows"
 end
 
 config.cursor_thickness = '0.06cell'
@@ -305,6 +303,8 @@ local tssh = (function()
     return 'tssh'
   elseif is_win then
     return '/mnt/c/Users/lu5je0/scoop/shims/tssh.exe'
+  elseif is_linux then
+    return 'tssh'
   end
 end)()
 config.launch_menu = {}
