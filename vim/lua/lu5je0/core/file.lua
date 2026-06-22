@@ -20,11 +20,7 @@ function M.hunman_readable_file_size(filepath)
 end
 
 local function print_with_red(msg)
-    vim.cmd (([[
-    echohl Error
-    echo "%s"
-    echohl NONE
-    ]]):format(msg))
+    vim.api.nvim_echo({{msg, 'ErrorMsg'}}, true, {})
 end
 
 function M.save_buffer()
@@ -50,7 +46,7 @@ function M.save_buffer()
       print(vim.g.output)
     end
   else
-    print_with_red(string.gsub(err, '^vim.+write%)%:', '', 1))
+    print_with_red(string.gsub(err, '.*Vim%(.-%):%s*', '', 1))
   end
 end
 

@@ -137,9 +137,10 @@ function spec.build(ts, _ctx)
   }
   for _, pair in ipairs(order) do
     local key, label = pair[1], pair[2]
-    if sections[key] and #sections[key] > 0 then
+    local files = sections[key] or {}
+    if key == 'changes' or #files > 0 then
       ts._dir_states[key] = ts._dir_states[key] or {}
-      roots[#roots + 1] = build_section_tree(key, label, sections[key], ts._expanded[key], ts._dir_states[key])
+      roots[#roots + 1] = build_section_tree(key, label, files, ts._expanded[key], ts._dir_states[key])
     end
   end
   local stash_sec = build_stash_section(ts)
