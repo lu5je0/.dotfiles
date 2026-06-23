@@ -26,6 +26,10 @@ function M.snap_path(abspath)
   return root_dir() .. '/' .. sha1(abspath) .. '.snap'
 end
 
+function M.staged_path(abspath)
+  return root_dir() .. '/' .. sha1(abspath) .. '.staged'
+end
+
 function M.read_index()
   local path = index_path()
   local fd = io.open(path, 'r')
@@ -89,9 +93,50 @@ end
 function M.delete(abspath)
   local snap = M.snap_path(abspath)
   os.remove(snap)
+  os.remove(M.staged_path(abspath))
   local index = M.read_index()
   index[sha1(abspath)] = nil
   M.write_index(index)
+end
+
+function M.exists_staged(abspath)
+  return uv.fs_stat(M.staged_path(abspath)) ~= nil
+end
+
+function M.load_staged(abspath)
+  local fd = io.open(M.staged_path(abspath), 'rb')
+  if not fd then return nil end
+  local content = fd:read('*a')
+  fd:close()
+  if not content then return nil end
+  local lines = vim.split(content, '\n', { plain = true })
+  if #lines > 0 and lines[#lines] == '' then
+    lines[#lines] = nil
+  end
+  return lines
+end
+
+function M.save_staged(abspath, lines)
+  ensure_dir()
+  local snap = M.staged_path(abspath)
+  local tmp = snap .. '.tmp'
+  local fd = io.open(tmp, 'wb')
+  if not fd then return false end
+  fd:write(table.concat(lines, '\n'))
+  fd:close()
+  os.rename(tmp, snap)
+
+  local index = M.read_index()
+  local key = sha1(abspath)
+  if index[key] then
+    index[key].mtime = os.time()
+    M.write_index(index)
+  end
+  return true
+end
+
+function M.delete_staged(abspath)
+  os.remove(M.staged_path(abspath))
 end
 
 function M.gc(max_age_days)
@@ -103,6 +148,7 @@ function M.gc(max_age_days)
     local mtime = entry.mtime or entry.created_at or 0
     if mtime < cutoff then
       os.remove(root_dir() .. '/' .. key .. '.snap')
+      os.remove(root_dir() .. '/' .. key .. '.staged')
       index[key] = nil
       removed = removed + 1
     end

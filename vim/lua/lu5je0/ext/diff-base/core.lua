@@ -25,8 +25,14 @@ local function recompute(bufnr)
   local s = M.state[bufnr]
   if not s then return end
   local current = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  s.hunks = diff.compute(s.base, current)
-  signs.draw(bufnr, s.hunks)
+  local reference = s.staged or s.base
+  s.hunks = diff.compute(reference, current)
+  if s.staged then
+    s.staged_hunks = diff.compute(s.base, s.staged)
+  else
+    s.staged_hunks = {}
+  end
+  signs.draw(bufnr, { unstaged = s.hunks, staged = s.staged_hunks })
   update_status(bufnr, s.hunks)
 end
 
@@ -122,7 +128,7 @@ local function speculative_update(bufnr, start, old_end, new_end)
 
   table.sort(new_hunks, function(a, b) return a.new_start < b.new_start end)
   s.hunks = new_hunks
-  signs.draw(bufnr, s.hunks)
+  signs.draw(bufnr, { unstaged = s.hunks, staged = s.staged_hunks or {} })
 end
 
 local function attach_buf(bufnr)
@@ -155,6 +161,9 @@ local function attach_autocmds(bufnr)
       local p = abspath(bufnr)
       if p then
         store.save(p, s.base)
+        if s.staged then
+          store.save_staged(p, s.staged)
+        end
         s.path = p
         vim.notify('DiffBase persisted to disk', vim.log.levels.INFO)
       end
@@ -175,11 +184,18 @@ end
 
 function M.activate(bufnr, base_lines, opts)
   opts = opts or {}
+  local path = abspath(bufnr)
+  local staged
+  if path and store.exists_staged(path) then
+    staged = store.load_staged(path)
+  end
   M.state[bufnr] = {
     base = base_lines,
+    staged = staged,
     hunks = {},
+    staged_hunks = {},
     timer = nil,
-    path = abspath(bufnr),
+    path = path,
   }
   keymaps.apply(bufnr)
   attach_buf(bufnr)
@@ -196,6 +212,26 @@ function M.update_base(bufnr, lines)
   s.base = vim.deepcopy(lines)
   if s.path then
     store.save(s.path, s.base)
+  end
+  recompute(bufnr)
+end
+
+function M.stage_lines(bufnr, lines)
+  local s = M.state[bufnr]
+  if not s then return end
+  s.staged = vim.deepcopy(lines)
+  if s.path then
+    store.save_staged(s.path, s.staged)
+  end
+  recompute(bufnr)
+end
+
+function M.unstage(bufnr)
+  local s = M.state[bufnr]
+  if not s then return end
+  s.staged = nil
+  if s.path then
+    store.delete_staged(s.path)
   end
   recompute(bufnr)
 end
