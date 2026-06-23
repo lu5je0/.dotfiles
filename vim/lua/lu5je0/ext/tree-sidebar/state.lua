@@ -86,6 +86,7 @@ local function new_tab_state()
       _dir_states = nil,      -- per-section { [abs_path] = bool }
       _stash_entries = nil,   -- { { ref, message, expanded, children, _files_loaded } }
       _undo_stack = nil,      -- list of undo entries pushed by git_ops
+      _redo_stack = nil,      -- list of redo entries for redo support
       _last_git_root = nil,
       _is_loading = false,
     },

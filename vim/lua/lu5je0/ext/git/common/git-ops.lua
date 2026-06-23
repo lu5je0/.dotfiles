@@ -184,11 +184,66 @@ function M.run_undo_op(op, cwd)
     return undo_restore_blobs(op, cwd)
   elseif op.type == 'store_stash' then
     return M.run_git({ 'git', 'stash', 'store', '-m', op.message, op.sha }, 'Undo failed: ', cwd)
+  elseif op.type == 'drop_stash_by_sha' then
+    local list_result = vim.system({ 'git', 'stash', 'list', '--format=%gd %H' }, { text = true, cwd = cwd }):wait()
+    if list_result.code ~= 0 then
+      vim.notify('Failed to list stashes', vim.log.levels.ERROR)
+      return false
+    end
+    local target_ref
+    for line in (list_result.stdout or ''):gmatch('[^\n]+') do
+      local ref, sha = line:match('^(%S+)%s+(%S+)')
+      if sha == op.sha then target_ref = ref; break end
+    end
+    if not target_ref then
+      vim.notify('Stash not found', vim.log.levels.WARN)
+      return false
+    end
+    return M.run_git({ 'git', 'stash', 'drop', target_ref }, 'Failed to drop stash: ', cwd)
   end
   return false
 end
 
-function M.undo_last_action(stack, cwd, callback)
+function M.compute_inverse_entry(entry, cwd)
+  local inv_ops = {}
+  for _, op in ipairs(entry.ops) do
+    if op.type == 'reset_paths' then
+      local snapshot = M.index_snapshot(cwd, op.paths)
+      inv_ops[#inv_ops + 1] = { type = 'add_paths', paths = op.paths, expected_index = snapshot }
+    elseif op.type == 'add_paths' then
+      local snapshot = M.index_snapshot(cwd, op.paths)
+      inv_ops[#inv_ops + 1] = { type = 'reset_paths', paths = op.paths, expected_index = snapshot }
+    elseif op.type == 'restore_blobs' then
+      local inv_files = {}
+      for _, file in ipairs(op.files or {}) do
+        local abs_path = cwd .. '/' .. file.path
+        if file.delete then
+          if file.expected_blob then
+            inv_files[#inv_files + 1] = { path = file.path, blob = file.expected_blob, expected_absent = true }
+          end
+        elseif file.expected_absent then
+          local blob = M.hash_file(abs_path, true, cwd)
+          if blob then
+            inv_files[#inv_files + 1] = { path = file.path, delete = true, expected_blob = blob }
+          end
+        else
+          local current_blob = M.hash_file(abs_path, true, cwd)
+          if current_blob and file.expected_blob then
+            inv_files[#inv_files + 1] = { path = file.path, blob = file.expected_blob, expected_blob = current_blob }
+          end
+        end
+      end
+      inv_ops[#inv_ops + 1] = { type = 'restore_blobs', files = inv_files }
+    elseif op.type == 'store_stash' then
+      inv_ops[#inv_ops + 1] = { type = 'drop_stash_by_sha', sha = op.sha, message = op.message }
+    elseif op.type == 'drop_stash_by_sha' then
+      inv_ops[#inv_ops + 1] = { type = 'store_stash', sha = op.sha, message = op.message }
+    end
+  end
+  return { label = entry.label, ops = inv_ops }
+end
+
+function M.undo_last_action(stack, cwd, callback, redo_stack)
   local entry = stack[#stack]
   if not entry then
     vim.notify('Nothing to undo', vim.log.levels.INFO)
@@ -200,7 +255,29 @@ function M.undo_last_action(stack, cwd, callback)
     end
   end
   table.remove(stack)
+  if redo_stack then
+    local inverse = M.compute_inverse_entry(entry, cwd)
+    redo_stack[#redo_stack + 1] = inverse
+  end
   vim.notify('Undid ' .. entry.label, vim.log.levels.INFO)
+  if callback then callback() end
+end
+
+function M.redo_last_action(redo_stack, undo_stack, cwd, callback)
+  local entry = redo_stack[#redo_stack]
+  if not entry then
+    vim.notify('Nothing to redo', vim.log.levels.INFO)
+    return
+  end
+  for i = #entry.ops, 1, -1 do
+    if not M.run_undo_op(entry.ops[i], cwd) then
+      return
+    end
+  end
+  table.remove(redo_stack)
+  local inverse = M.compute_inverse_entry(entry, cwd)
+  undo_stack[#undo_stack + 1] = inverse
+  vim.notify('Redid ' .. entry.label, vim.log.levels.INFO)
   if callback then callback() end
 end
 

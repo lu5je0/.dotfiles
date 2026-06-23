@@ -9,8 +9,12 @@ local locate_mod = require('lu5je0.ext.tree-sidebar.sources.git_changes.locate')
 
 local M = {}
 
+local _refresh_timer = nil
+local _last_refresh_dispatched = 0
+
 local watcher = require('lu5je0.ext.tree-sidebar.watcher')
 watcher.on_index_changed = function(_tabpage)
+  if vim.uv.now() - _last_refresh_dispatched < 500 then return end
   if state:is_open() then M.refresh() end
 end
 
@@ -255,24 +259,37 @@ end
 -- ── refresh ─────────────────────────────────────────────
 
 function M.refresh(callback)
-  -- Capture originating tab: ts holds its state ref, tabpage gates render.
+  if _refresh_timer then
+    _refresh_timer:stop()
+    _refresh_timer:close()
+    _refresh_timer = nil
+  end
+
   local ts = state.git_changes
   local tabpage = vim.api.nvim_get_current_tabpage()
   local tab_active_idx = state.active_tab_idx
-  pcall(function()
-    require('lu5je0.ext.tree-sidebar.actions.diff_preview').invalidate_short_head_cache()
-  end)
-  vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
-    vim.schedule(function()
-      ts.sections = parser.parse(result.stdout)
-      if vim.api.nvim_get_current_tabpage() == tabpage
-          and state:is_open() and tab_active_idx == state.active_tab_idx
-          and state.active_tab_idx == config.tab_idx('git_changes') then
-        M.render()
-      end
-      if callback then callback() end
+
+  local timer = vim.uv.new_timer()
+  _refresh_timer = timer
+  timer:start(30, 0, vim.schedule_wrap(function()
+    if _refresh_timer == timer then _refresh_timer = nil end
+    pcall(function() timer:close() end)
+    _last_refresh_dispatched = vim.uv.now()
+    pcall(function()
+      require('lu5je0.ext.tree-sidebar.actions.diff_preview').invalidate_short_head_cache()
     end)
-  end)
+    vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
+      vim.schedule(function()
+        ts.sections = parser.parse(result.stdout)
+        if vim.api.nvim_get_current_tabpage() == tabpage
+            and state:is_open() and tab_active_idx == state.active_tab_idx
+            and state.active_tab_idx == config.tab_idx('git_changes') then
+          M.render()
+        end
+        if callback then callback() end
+      end)
+    end)
+  end))
 end
 
 function M.update_sections_from_stdout(tab_state, stdout)
@@ -556,6 +573,7 @@ function M.keymaps()
     { 'a', git_ops.stage_file, desc = 'Stage file' },
     { 'A', git_ops.stage_section, desc = 'Stage section' },
     { 'u', git_ops.undo_last_action, desc = 'Undo' },
+    { '<C-r>', git_ops.redo_last_action, desc = 'Redo' },
     { 'x', function()
       local line = vim.api.nvim_win_get_cursor(state.win)[1]
       local item = state.git_changes.display_items[line]
