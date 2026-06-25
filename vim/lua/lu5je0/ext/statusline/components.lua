@@ -209,8 +209,8 @@ local components = {
     function(args)
       local lnum = vim.api.nvim_win_get_cursor(args.win_id)[1]
       local hunks
-      local gs_ok, gitsigns = pcall(require, 'gitsigns')
-      if gs_ok and gitsigns.get_hunks then
+      local gitsigns = package.loaded['gitsigns']
+      if gitsigns and gitsigns.get_hunks then
         hunks = gitsigns.get_hunks(args.buf_id)
       end
       if not hunks then
