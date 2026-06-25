@@ -17,16 +17,49 @@ local disabled_plugins = {
   "rrhelper",
   "spellfile",
   "spellfile_plugin",
-  -- "zip",
-  -- "zipPlugin",
-  -- "gzip",
-  -- "tar",
-  -- "tarPlugin",
+  "zip",
+  "zipPlugin",
+  "gzip",
+  "tar",
+  "tarPlugin",
+  "net",
+  "osc52",
+  "shada",
   "tohtml",
   "tutor",
   "vimball",
   "vimballPlugin",
 }
+
+local lazy_builtin_plugins = {
+  { plugins = { "zip", "zipPlugin" }, patterns = { "*.zip" }, events = { "BufReadCmd", "FileReadCmd" } },
+  { plugins = { "gzip" }, patterns = { "*.gz", "*.bz2", "*.Z" }, events = { "BufReadCmd", "FileReadCmd" } },
+  { plugins = { "tar", "tarPlugin" }, patterns = { "*.tar", "*.tar.gz", "*.tgz", "*.tar.bz2", "*.tbz", "*.tar.xz", "*.txz", "*.tar.zst", "*.tar.lz", "*.tar.Z", "*.taz" }, events = { "BufReadCmd", "FileReadCmd" } },
+  { plugins = { "osc52" }, events = { "UIEnter" }, cond = function() return vim.env.SSH_TTY ~= nil end },
+  -- { plugins = { "shada" }, patterns = { "*.shada", "*.shada.tmp.*" }, events = { "BufReadCmd", "FileReadCmd" } },
+}
+
+for _, item in ipairs(lazy_builtin_plugins) do
+  if not item.cond or item.cond() then
+    local au_opts = {
+      once = true,
+      callback = function(ev)
+        for _, name in ipairs(item.plugins) do
+          vim.g["loaded_" .. name] = nil
+          vim.cmd("silent! runtime plugin/" .. name .. ".vim")
+          vim.cmd("silent! runtime plugin/" .. name .. ".lua")
+        end
+        if ev.file and ev.file ~= "" and item.patterns then
+          vim.cmd("doautocmd BufReadCmd " .. vim.fn.fnameescape(ev.file))
+        end
+      end,
+    }
+    if item.patterns then
+      au_opts.pattern = item.patterns
+    end
+    vim.api.nvim_create_autocmd(item.events, au_opts)
+  end
+end
 
 local opts = {
   concurrency = 20,
