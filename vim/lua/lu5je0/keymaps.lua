@@ -318,7 +318,17 @@ vim.schedule(function()
   set_map('n', 'v', "m'v", default_opts)
   set_map('n', 'V', "m'V", default_opts)
 
-  set_map('n', '<leader>wo', '<C-w>o', remap_opts)
+  set_map('n', '<leader>wo', '<C-w>o', { silent = true, remap = true, desc = 'hide other windows' })
+
+  set_map('n', '<leader>wn', '<cmd>vnew<cr>', desc_opts('vnew'))
+  set_map('n', '<leader>wN', '<cmd>new<cr>', desc_opts('new'))
+  set_map('n', '<leader>wp', '<cmd>BufferLinePickFromWin<cr>', desc_opts('pick buffer from other win'))
+  set_map('n', '<leader>wq', '<cmd>only<cr>', desc_opts('break window'))
+  set_map('n', '<leader>ws', '<cmd>vsplit<cr>', desc_opts('vspilt'))
+  set_map('n', '<leader>wc', '<c-w>c', desc_opts('close split'))
+  set_map('n', '<leader>wS', '<cmd>split<cr>', desc_opts('spilt'))
+  set_map('n', '<leader>wu', '<c-w>x', desc_opts('buffer pick'))
+  set_map('n', '<leader>wm', '<cmd>BufferLinePickSplit<cr>', desc_opts('spilit with'))
 
   set_map('x', '<leader>xz', '<cmd>!opencc -c t2s<CR>', remap_opts)
   set_map('n', '<leader>xz', '<cmd>%!opencc -c t2s<CR>', remap_opts)
