@@ -17,7 +17,8 @@ M.statusline_config = {
     },
     right = {
       { name = 'diagnostics' },
-      { name = 'git_diff' },
+      -- { name = 'git_diff' },
+      { name = 'hunk_nav' },
       { name = 'position' },
       { name = 'encoding' },
       { name = 'tabpages' },

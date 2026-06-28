@@ -10,11 +10,7 @@ local tree = require('lu5je0.ext.tree-sidebar.sources.files.tree')
 
 local M = {}
 
-local DIR_STATUS_PRIORITY = {
-  TreeSidebarGitDirty = 1,
-  TreeSidebarGitNew = 2,
-  TreeSidebarGitStaged = 3,
-}
+local DIR_HL_ORDER = { 'TreeSidebarGitDirty', 'TreeSidebarGitNew', 'TreeSidebarGitStaged' }
 
 --- Convert XY status bytes into the glyph + hl group used in the tree.
 function M.status_to_glyph(xy)
@@ -40,7 +36,7 @@ end
 function M.build_status_map(stdout)
   local map = {}
   if not stdout or stdout == '' then return map end
-  local dir_status = {}
+  local dir_hls = {}
   local entries = vim.split(stdout, '\0', { trimempty = true })
   local i = 1
   while i <= #entries do
@@ -57,17 +53,32 @@ function M.build_status_map(stdout)
       local dir = ''
       for pi = 1, #parts - 1 do
         dir = dir .. (pi > 1 and '/' or '') .. parts[pi]
-        local existing = dir_status[dir]
-        if not existing or (DIR_STATUS_PRIORITY[hl] or 99) < (DIR_STATUS_PRIORITY[existing.hl] or 99) then
-          dir_status[dir] = { xy = xy, glyph = glyph, hl = hl }
+        local bucket = dir_hls[dir]
+        if not bucket then
+          bucket = {}
+          dir_hls[dir] = bucket
+        end
+        if not bucket[hl] then
+          bucket[hl] = { xy = xy, glyph = glyph, hl = hl }
         end
       end
     end
     ::next::
     i = i + 1
   end
-  for dir, info in pairs(dir_status) do
-    map[dir .. '/'] = info
+  for dir, bucket in pairs(dir_hls) do
+    local glyphs = {}
+    local winner
+    for _, hl in ipairs(DIR_HL_ORDER) do
+      local info = bucket[hl]
+      if info then
+        glyphs[#glyphs + 1] = { info.glyph, info.hl }
+        if not winner then winner = info end
+      end
+    end
+    if winner then
+      map[dir .. '/'] = { xy = winner.xy, glyph = winner.glyph, hl = winner.hl, glyphs = glyphs }
+    end
   end
   return map
 end

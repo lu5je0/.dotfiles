@@ -14,7 +14,7 @@ vim.opt.rtp:prepend(lazypath)
 
 local core_modules = {
   'lu5je0.options',
-  'lu5je0.mappings',
+  'lu5je0.keymaps',
   'lu5je0.plugins',
   'lu5je0.ext-config',
   'lu5je0.commands',
@@ -32,3 +32,4 @@ end
 vim.defer_fn(function()
   vim.cmd('runtime plugin/matchparen.vim')
 end, 100)
+

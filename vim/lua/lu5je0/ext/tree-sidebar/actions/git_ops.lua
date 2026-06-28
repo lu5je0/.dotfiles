@@ -22,8 +22,18 @@ local function get_undo_stack()
   return state.git_changes._undo_stack
 end
 
+local function get_redo_stack()
+  state.git_changes._redo_stack = state.git_changes._redo_stack or {}
+  return state.git_changes._redo_stack
+end
+
+local function clear_redo_stack()
+  state.git_changes._redo_stack = {}
+end
+
 local function push_undo(label, ops)
   git_ops.push_undo(get_undo_stack(), label, ops)
+  clear_redo_stack()
 end
 
 local function git_changes_mod()
@@ -192,22 +202,21 @@ end
 -- ── discard file (x) ────────────────────────────────────
 
 --- Discard a single file. Returns undo op on success, nil on failure.
-local function discard_single_file(node, section_key)
+local function discard_single_file(node, section_key, root)
   local eff = effective_section_for_file(section_key, node)
   local path = node.rel_path or node.name
-  local root = git_root()
   local abs_path = root .. '/' .. path
 
   if eff == 'untracked' then
-    local blob = hash_file(abs_path, true)
+    local blob = git_ops.hash_file(abs_path, true, root)
     if not blob then return nil end
     os.remove(abs_path)
     return { type = 'restore_blobs', files = { { path = path, blob = blob, expected_absent = true } } }
   elseif eff == 'unstaged' then
     local existed = vim.uv.fs_stat(abs_path) ~= nil
-    local blob = existed and hash_file(abs_path, true) or nil
-    if not run_git({ 'git', 'checkout', '--', path }, 'Failed to restore: ') then return nil end
-    local expected_blob = hash_file(abs_path, false)
+    local blob = existed and git_ops.hash_file(abs_path, true, root) or nil
+    if not git_ops.run_git({ 'git', 'checkout', '--', path }, 'Failed to restore: ', root) then return nil end
+    local expected_blob = git_ops.hash_file(abs_path, false, root)
     if not expected_blob then return nil end
     if blob then
       return { type = 'restore_blobs', files = { { path = path, blob = blob, expected_blob = expected_blob } } }
@@ -215,10 +224,131 @@ local function discard_single_file(node, section_key)
       return { type = 'restore_blobs', files = { { path = path, delete = true, expected_blob = expected_blob } } }
     end
   elseif eff == 'staged' then
-    if not run_git({ 'git', 'reset', 'HEAD', '--', path }, 'Failed to unstage: ') then return nil end
-    local snapshot = git_ops.index_snapshot(git_root(),{ path })
+    if not git_ops.run_git({ 'git', 'reset', 'HEAD', '--', path }, 'Failed to unstage: ', root) then return nil end
+    local snapshot = git_ops.index_snapshot(root, { path })
     return { type = 'add_paths', paths = { path }, expected_index = snapshot }
   end
+end
+
+--- Batch discard files under a directory node.
+local function discard_dir_batched(nodes, section_key, root)
+  local untracked_nodes = {}
+  local unstaged_nodes = {}
+  local staged_paths = {}
+
+  for _, node in ipairs(nodes) do
+    local eff = effective_section_for_file(section_key, node)
+    if eff == 'untracked' then
+      untracked_nodes[#untracked_nodes + 1] = node
+    elseif eff == 'unstaged' then
+      unstaged_nodes[#unstaged_nodes + 1] = node
+    elseif eff == 'staged' then
+      staged_paths[#staged_paths + 1] = node.rel_path or node.name
+    end
+  end
+
+  local ops = {}
+
+  if #untracked_nodes > 0 then
+    local abs_paths = {}
+    for _, node in ipairs(untracked_nodes) do
+      abs_paths[#abs_paths + 1] = root .. '/' .. (node.rel_path or node.name)
+    end
+    local result = vim.system({ 'git', 'hash-object', '-w', '--stdin-paths' },
+      { text = true, cwd = root, stdin = table.concat(abs_paths, '\n') }):wait()
+    if result.code ~= 0 then
+      vim.notify('Failed to hash files: ' .. (result.stderr or ''), vim.log.levels.ERROR)
+      return nil
+    end
+    local blobs = {}
+    for line in (result.stdout or ''):gmatch('[^\n]+') do blobs[#blobs + 1] = line end
+    if #blobs ~= #untracked_nodes then
+      vim.notify('Hash mismatch', vim.log.levels.ERROR)
+      return nil
+    end
+    local restore_files = {}
+    for i, node in ipairs(untracked_nodes) do
+      restore_files[#restore_files + 1] = { path = node.rel_path or node.name, blob = blobs[i], expected_absent = true }
+      os.remove(abs_paths[i])
+    end
+    ops[#ops + 1] = { type = 'restore_blobs', files = restore_files }
+  end
+
+  if #unstaged_nodes > 0 then
+    local existing_abs = {}
+    local existing_indices = {}
+    for i, node in ipairs(unstaged_nodes) do
+      local abs_path = root .. '/' .. (node.rel_path or node.name)
+      if vim.uv.fs_stat(abs_path) then
+        existing_abs[#existing_abs + 1] = abs_path
+        existing_indices[#existing_indices + 1] = i
+      end
+    end
+
+    local pre_blobs = {}
+    if #existing_abs > 0 then
+      local result = vim.system({ 'git', 'hash-object', '-w', '--stdin-paths' },
+        { text = true, cwd = root, stdin = table.concat(existing_abs, '\n') }):wait()
+      if result.code ~= 0 then
+        vim.notify('Failed to hash files: ' .. (result.stderr or ''), vim.log.levels.ERROR)
+        return nil
+      end
+      local idx = 1
+      for line in (result.stdout or ''):gmatch('[^\n]+') do
+        pre_blobs[existing_indices[idx]] = line
+        idx = idx + 1
+      end
+    end
+
+    local args = { 'git', 'checkout', '--' }
+    for _, node in ipairs(unstaged_nodes) do
+      args[#args + 1] = node.rel_path or node.name
+    end
+    if not git_ops.run_git(args, 'Failed to restore: ', root) then return nil end
+
+    local post_abs = {}
+    local post_indices = {}
+    for i, node in ipairs(unstaged_nodes) do
+      local abs_path = root .. '/' .. (node.rel_path or node.name)
+      if vim.uv.fs_stat(abs_path) then
+        post_abs[#post_abs + 1] = abs_path
+        post_indices[#post_indices + 1] = i
+      end
+    end
+    local post_blobs = {}
+    if #post_abs > 0 then
+      local result = vim.system({ 'git', 'hash-object', '--stdin-paths' },
+        { text = true, cwd = root, stdin = table.concat(post_abs, '\n') }):wait()
+      if result.code == 0 then
+        local idx = 1
+        for line in (result.stdout or ''):gmatch('[^\n]+') do
+          post_blobs[post_indices[idx]] = line
+          idx = idx + 1
+        end
+      end
+    end
+
+    local restore_files = {}
+    for i, node in ipairs(unstaged_nodes) do
+      local path = node.rel_path or node.name
+      if pre_blobs[i] then
+        restore_files[#restore_files + 1] = { path = path, blob = pre_blobs[i], expected_blob = post_blobs[i] }
+      else
+        restore_files[#restore_files + 1] = { path = path, delete = true, expected_blob = post_blobs[i] }
+      end
+    end
+    ops[#ops + 1] = { type = 'restore_blobs', files = restore_files }
+  end
+
+  if #staged_paths > 0 then
+    local args = { 'git', 'reset', 'HEAD', '--' }
+    for _, p in ipairs(staged_paths) do args[#args + 1] = p end
+    if not git_ops.run_git(args, 'Failed to unstage: ', root) then return nil end
+    local snapshot = git_ops.index_snapshot(root, staged_paths)
+    ops[#ops + 1] = { type = 'add_paths', paths = staged_paths, expected_index = snapshot }
+  end
+
+  return ops
 end
 
 function M.discard_file()
@@ -234,24 +364,21 @@ function M.discard_file()
     if #files == 0 then return end
     local choice = vim.fn.confirm('Discard ' .. #files .. ' files in ' .. item.node.name .. '/?', '&Yes\n&No', 2)
     if choice ~= 1 then return end
-    local ops = {}
-    for _, node in ipairs(files) do
-      local op = discard_single_file(node, section_key)
-      if op then ops[#ops + 1] = op end
-    end
+    local ops = discard_dir_batched(files, section_key, root)
+    if not ops then return end
     if #ops > 0 then
       push_undo('discarded dir', ops)
     end
     for _, node in ipairs(files) do
       reload_buf(root .. '/' .. (node.rel_path or node.name))
     end
-    vim.notify(string.format('Discarded %d files', #ops), vim.log.levels.INFO)
+    vim.notify(string.format('Discarded %d files', #files), vim.log.levels.INFO)
     refresh()
     return
   end
 
   if item.type ~= 'file' then return end
-  local op = discard_single_file(item.node, section_key)
+  local op = discard_single_file(item.node, section_key, root)
   if op then
     push_undo('discarded', { op })
     local path = item.node.rel_path or item.node.name
@@ -486,31 +613,48 @@ function M.drop_stash()
   git_changes_mod().reload_stash_list()
 end
 
--- ── undo (U) ────────────────────────────────────────────
+-- ── undo / redo ─────────────────────────────────────────
+
+local function reload_blobs_in_entry(entry, root)
+  if not entry then return end
+  for _, op in ipairs(entry.ops) do
+    if op.type == 'restore_blobs' then
+      for _, file in ipairs(op.files or {}) do
+        reload_buf(root .. '/' .. file.path)
+      end
+    end
+  end
+end
+
+local function post_undo_redo_refresh()
+  refresh()
+  git_changes_mod().reload_stash_list(function()
+    for i, item in ipairs(state.git_changes.display_items or {}) do
+      if item.node and item.node._is_stash and item.node.stash_ref == 'stash@{0}' then
+        pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
+        return
+      end
+    end
+  end)
+end
 
 function M.undo_last_action()
   local stack = get_undo_stack()
   local entry = stack[#stack]
   local root = git_root()
   git_ops.undo_last_action(stack, root, function()
-    if entry then
-      for _, op in ipairs(entry.ops) do
-        if op.type == 'restore_blobs' then
-          for _, file in ipairs(op.files or {}) do
-            reload_buf(root .. '/' .. file.path)
-          end
-        end
-      end
-    end
-    refresh()
-    git_changes_mod().reload_stash_list(function()
-      for i, item in ipairs(state.git_changes.display_items or {}) do
-        if item.node and item.node._is_stash and item.node.stash_ref == 'stash@{0}' then
-          pcall(vim.api.nvim_win_set_cursor, state.win, { i, 0 })
-          return
-        end
-      end
-    end)
+    reload_blobs_in_entry(entry, root)
+    post_undo_redo_refresh()
+  end, get_redo_stack())
+end
+
+function M.redo_last_action()
+  local redo_stack = get_redo_stack()
+  local entry = redo_stack[#redo_stack]
+  local root = git_root()
+  git_ops.redo_last_action(redo_stack, get_undo_stack(), root, function()
+    reload_blobs_in_entry(entry, root)
+    post_undo_redo_refresh()
   end)
 end
 

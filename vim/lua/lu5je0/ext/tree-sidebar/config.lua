@@ -20,6 +20,7 @@ M.passthrough_mappings = {
   '<leader>fr',
   '<leader>fm',
   '<leader>fj',
+  '<leader>tN',
 }
 
 M.highlights = {

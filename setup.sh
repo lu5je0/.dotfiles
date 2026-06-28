@@ -274,7 +274,7 @@ read_key() {
   fi
   if [[ "$k" == "g" ]]; then
     local next=""
-    IFS= read -rsn1 -t 0.5 next
+    IFS= read -rsn1 -t 1 next
     [[ "$next" == "g" ]] && { echo "gg"; return; }
     echo "g"
     return

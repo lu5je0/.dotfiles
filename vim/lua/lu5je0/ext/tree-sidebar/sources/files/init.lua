@@ -29,9 +29,18 @@ local function file_suffix(node)
 end
 
 local function dir_suffix(node)
+  if node.expanded then return end
   local key = tree.rel_to_cwd(node.abs_path) .. '/'
   local g = state.files.git_status_map[key]
-  if g then return g.glyph, g.hl end
+  if not g then return end
+  if g.glyphs and #g.glyphs > 1 then
+    local vt = {}
+    for _, gl in ipairs(g.glyphs) do
+      vt[#vt + 1] = { gl[1], gl[2] }
+    end
+    return '', vt
+  end
+  return g.glyph, g.hl
 end
 
 local function dotfile_hl(node)

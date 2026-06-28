@@ -36,6 +36,18 @@ function M.setup()
         return '<Ignore>'
       end, { expr = true })
 
+      map('n', ']c', function()
+        if vim.wo.diff then return ']c' end
+        vim.schedule(function() gs.nav_hunk('next', { target = 'all' }) end)
+        return '<Ignore>'
+      end, { expr = true })
+      
+      map('n', '[c', function()
+        if vim.wo.diff then return '[c' end
+        vim.schedule(function() gs.nav_hunk('prev', { target = 'all' }) end)
+        return '<Ignore>'
+      end, { expr = true })
+
       -- Actions
       map('n', '<leader>ga', gs.stage_hunk)
 

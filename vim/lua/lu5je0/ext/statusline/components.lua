@@ -205,6 +205,44 @@ local components = {
     cache_ttl = 100,
   },
 
+  hunk_nav = {
+    function(args)
+      local lnum = vim.api.nvim_win_get_cursor(args.win_id)[1]
+      local hunks
+      local gitsigns = package.loaded['gitsigns']
+      if gitsigns and gitsigns.get_hunks then
+        hunks = gitsigns.get_hunks(args.buf_id)
+      end
+      if not hunks then
+        local db_ok, core = pcall(require, 'lu5je0.ext.diff-base.core')
+        if db_ok and core.state[args.buf_id] then
+          hunks = core.state[args.buf_id].hunks
+        end
+      end
+      if not hunks or #hunks == 0 then return nil end
+      local above, below = 0, 0
+      for _, h in ipairs(hunks) do
+        local start = h.added and h.added.start or h.new_start or 0
+        if start < lnum then
+          above = above + 1
+        elseif start > lnum then
+          below = below + 1
+        end
+      end
+      if above == 0 and below == 0 then return nil end
+      local parts = {}
+      if above > 0 then
+        parts[#parts + 1] = string.format('%s%d↑', get_highlight({ fg = colors.green }), above)
+      end
+      if below > 0 then
+        parts[#parts + 1] = string.format('%s%d↓', get_highlight({ fg = colors.green }), below)
+      end
+      return table.concat(parts, ' ')
+    end,
+    inactive = false,
+    cond = function(args) return conditions.hide_in_width(args.win_id, 30) end,
+  },
+
   position = {
     function(args)
       local cursor_pos = vim.api.nvim_win_get_cursor(args.win_id)
