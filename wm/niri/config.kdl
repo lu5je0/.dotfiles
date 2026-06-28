@@ -295,6 +295,14 @@ animations {
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Window-Rules
 
+workspace "hidden"
+
+window-rule {
+    match app-id="xwaylandvideobridge"
+    open-on-workspace "hidden"
+    open-focused false
+}
+
 // Work around WezTerm's initial configure bug
 // by setting an empty default-column-width.
 window-rule {
