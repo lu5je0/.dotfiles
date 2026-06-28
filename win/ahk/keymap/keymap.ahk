@@ -279,7 +279,8 @@ SnapWithSwap(side) {
     }
 }
 
-^#+5:: ; Ctrl + Win + % - fork 一个进程，原窗口贴左，新窗口贴右
+^#5::
+^#+5:: ; Ctrl + Win + 5 / Ctrl + Win + % - fork 一个进程，原窗口贴左，新窗口贴右
 {
     static forkWhitelist := Map(
         "chrome.exe", true,
