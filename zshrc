@@ -120,13 +120,14 @@ alias crontab="cron.sh"
 alias ls='ls -F --show-control-chars --color=auto'
 
 if [[ -o interactive ]]; then
-  rm() {
+  safe_rm() {
     if (( $+commands[q-trash] )); then
       command q-trash rm "$@"
     else
       command rm "$@"
     fi
   }
+  alias rm=safe_rm
 fi
 
 alias sudo='sudo env PATH=/sbin:$PATH'
