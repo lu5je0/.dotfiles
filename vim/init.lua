@@ -32,3 +32,4 @@ end
 vim.defer_fn(function()
   vim.cmd('runtime plugin/matchparen.vim')
 end, 100)
+
