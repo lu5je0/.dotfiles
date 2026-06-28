@@ -1,4 +1,4 @@
-#compdef rm
+#compdef safe_rm
 
 if (( $+commands[q-trash] )); then
   _arguments -s -S \
