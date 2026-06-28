@@ -1,0 +1,220 @@
+/* ===== ChromeOS Shelf — Waybar Theme ===== */
+@import "colors.css";
+
+* {
+    font-family: "Roboto", "JetBrainsMono Nerd Font", sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    min-height: 0;
+}
+
+/* ---------- Bar ---------- */
+window#waybar {
+    background-color: alpha(@bg, 0.80);
+    color: @text;
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid alpha(@text, 0.06);
+    transition-property: background-color;
+    transition-duration: 0.3s;
+}
+
+/* ========== LEFT MODULES ========== */
+
+/* Launcher button — ChromeOS circle */
+#custom-launcher {
+    font-size: 20px;
+    padding: 0px 14px 0 9px;
+    margin: 6px 2px 6px 6px;
+    border-radius: 50%;
+    background: alpha(@text, 0.10);
+    color: @text;
+    transition: all 0.2s ease;
+}
+
+#custom-launcher:hover {
+    background: alpha(@text, 0.12);
+}
+
+/* Workspaces — pill indicators */
+#workspaces {
+    margin: 6px 4px;
+    padding: 0 6px;
+    border-radius: 16px;
+    background: alpha(@text, 0.06);
+}
+
+#workspaces button {
+    all: unset;
+    min-width: 20px;
+    min-height: 8px;
+    margin: 14px 4px;
+    border-radius: 4px;
+    background: alpha(@text, 0.25);
+    transition: all 0.3s ease;
+}
+
+#workspaces button label {
+    font-size: 0px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+#workspaces button:hover {
+    background: alpha(@text, 0.40);
+}
+
+#workspaces button.active,
+#workspaces button.active:hover {
+    min-width: 8px;
+    border-radius: 50%;
+    background: @accent;
+}
+
+/* ========== CENTER MODULE ========== */
+
+#taskbar {
+    margin: 6px 4px;
+    padding: 0 4px;
+    border-radius: 16px;
+    background: transparent;
+}
+
+#taskbar button {
+    all: unset;
+    padding: 2px 7px;
+    margin: 2px 5px;
+    border-radius: 6px;
+    background-color: transparent;
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: 18px 2px;
+    transition: background-color 0.15s ease;
+}
+
+#taskbar button:hover {
+    background-color: alpha(@text, 0.10);
+}
+
+#taskbar button.active {
+    background-color: alpha(@text, 0.12);
+    background-image: linear-gradient(@accent, @accent);
+}
+
+#taskbar button.active:hover {
+    background-color: alpha(@text, 0.16);
+}
+
+/* ========== RIGHT MODULES ========== */
+
+/* System tray */
+#tray {
+    padding: 0 8px;
+    margin: 8px 4px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* ----- Notification bell (standalone pill) ----- */
+#custom-notifications {
+    padding: 1px 15px 0 12px;
+    margin: 6px 4px;
+    border-radius: 18px;
+    background: alpha(@text, 0.08);
+    color: @text;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+#custom-notifications:hover {
+    background: alpha(@text, 0.12);
+}
+
+#custom-notifications.has-notifs {
+    color: @text;
+}
+
+/* ----- Date pill (standalone) ----- */
+#clock.date {
+    padding: 1px 16px 0;
+    margin: 6px 4px;
+    border-radius: 18px;
+    background: alpha(@text, 0.08);
+    color: @text;
+    font-size: 14px;
+}
+
+#clock.date:hover {
+    background: alpha(@text, 0.12);
+}
+
+/* ----- System status pill group: clock | audio | net | bt | battery/power ----- */
+#clock,
+#pulseaudio,
+#network,
+#bluetooth,
+#battery,
+#custom-power {
+    padding: 1px 10px 0;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    background: alpha(@text, 0.08);
+    color: @text;
+    transition: background 0.2s ease;
+}
+
+#clock:hover,
+#pulseaudio:hover,
+#network:hover,
+#bluetooth:hover,
+#battery:hover,
+#custom-power:hover {
+    background: alpha(@text, 0.12);
+}
+
+/* First in group — left rounded */
+#clock {
+    border-radius: 18px 0 0 18px;
+    padding-left: 14px;
+    font-weight: 700;
+}
+
+/* Last in group — right rounded */
+#bluetooth {
+    border-radius: 0 18px 18px 0;
+    padding-right: 14px;
+    margin-right: 6px;
+}
+
+/* ========== STATE VARIANTS ========== */
+
+#battery.warning {
+    color: @warning;
+}
+
+#battery.critical {
+    color: @critical;
+}
+
+#battery.charging {
+    color: @charging;
+}
+
+#network.disconnected {
+    color: alpha(@text, 0.40);
+}
+
+#bluetooth.disabled {
+    color: alpha(@text, 0.30);
+}
+
+#pulseaudio.muted {
+    color: alpha(@text, 0.40);
+}

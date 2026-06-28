@@ -17,13 +17,17 @@ function M.apply_clipboard_mark()
     return
   end
   vim.cmd('redrawstatus')
+  local paths = {}
+  for _, p in ipairs(cb.paths or {}) do
+    paths[p] = true
+  end
+  local hl = cb.action == 'move' and 'TreeSidebarCut' or 'TreeSidebarCopy'
   local items = state.files.display_items or {}
   for line, item in ipairs(items) do
-    if item.node and item.node.abs_path == cb.path then
+    if item.node and paths[item.node.abs_path] then
       vim.api.nvim_buf_set_extmark(state.buf, _mark_ns, line - 1, 0, {
-        line_hl_group = cb.action == 'move' and 'TreeSidebarCut' or 'TreeSidebarCopy',
+        line_hl_group = hl,
       })
-      break
     end
   end
 end
@@ -38,6 +42,27 @@ local function get_current_node()
     return nil
   end
   return item.node
+end
+
+local function get_visual_nodes()
+  if not state:is_open() then return {} end
+  local s = vim.fn.getpos('v')[2]
+  local e = vim.fn.getpos('.')[2]
+  if s > e then s, e = e, s end
+  -- exit visual back to normal so the cursor lands on a single line afterwards
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'nx', false)
+  local items = state.files.display_items or {}
+  local nodes, seen = {}, {}
+  for line = s, e do
+    local item = items[line]
+    if item and item.node and item.type ~= 'root' and item.type ~= 'filter' then
+      if not seen[item.node.abs_path] then
+        seen[item.node.abs_path] = true
+        nodes[#nodes + 1] = item.node
+      end
+    end
+  end
+  return nodes
 end
 
 local function get_parent_dir()
@@ -236,7 +261,7 @@ function M.cut()
   if not node then
     return
   end
-  state.files._clipboard = { action = 'move', path = node.abs_path }
+  state.files._clipboard = { action = 'move', paths = { node.abs_path } }
   M.apply_clipboard_mark()
   print('Cut: ' .. node.name)
 end
@@ -246,14 +271,34 @@ function M.copy()
   if not node then
     return
   end
-  state.files._clipboard = { action = 'copy', path = node.abs_path }
+  state.files._clipboard = { action = 'copy', paths = { node.abs_path } }
   M.apply_clipboard_mark()
   print('Copy: ' .. node.name)
 end
 
+function M.cut_visual()
+  local nodes = get_visual_nodes()
+  if #nodes == 0 then return end
+  local paths = {}
+  for _, n in ipairs(nodes) do paths[#paths + 1] = n.abs_path end
+  state.files._clipboard = { action = 'move', paths = paths }
+  M.apply_clipboard_mark()
+  print(string.format('Cut: %d item%s', #paths, #paths == 1 and '' or 's'))
+end
+
+function M.copy_visual()
+  local nodes = get_visual_nodes()
+  if #nodes == 0 then return end
+  local paths = {}
+  for _, n in ipairs(nodes) do paths[#paths + 1] = n.abs_path end
+  state.files._clipboard = { action = 'copy', paths = paths }
+  M.apply_clipboard_mark()
+  print(string.format('Copy: %d item%s', #paths, #paths == 1 and '' or 's'))
+end
+
 function M.paste()
   local cb = state.files._clipboard
-  if not cb then
+  if not cb or not cb.paths or #cb.paths == 0 then
     print('Nothing in clipboard')
     return
   end
@@ -268,33 +313,68 @@ function M.paste()
     dest_dir = vim.fs.dirname(node.abs_path)
   end
 
-  local src = cb.path
-  local name = vim.fs.basename(src)
-  local dest = dest_dir .. '/' .. name
-
-  local function do_paste(final_dest)
+  local function do_one(src, final_dest)
     if cb.action == 'move' then
       vim.uv.fs_rename(src, final_dest)
     elseif cb.action == 'copy' then
       vim.fn.system({ 'cp', '-r', src, final_dest })
     end
+  end
+
+  local function unique_dest(dest)
+    if not vim.uv.fs_stat(dest) then return dest end
+    local dir = vim.fs.dirname(dest)
+    local base = vim.fs.basename(dest)
+    local stem, ext = base:match('^(.-)(%.[^.]+)$')
+    if not stem then stem, ext = base, '' end
+    for i = 1, 999 do
+      local suffix = i == 1 and '-copy' or ('-copy-' .. i)
+      local candidate = dir .. '/' .. stem .. suffix .. ext
+      if not vim.uv.fs_stat(candidate) then return candidate end
+    end
+    return nil
+  end
+
+  local function finish()
     state.files._clipboard = nil
     refresh()
   end
 
-  if vim.uv.fs_stat(dest) then
-    vim.ui.input({ prompt = 'Rename to: ', default = dest }, function(new_dest)
-      if not new_dest or new_dest == '' then return end
-      if vim.uv.fs_stat(new_dest) then
-        vim.notify('Target already exists: ' .. new_dest, vim.log.levels.WARN)
-        return
-      end
-      do_paste(new_dest)
-    end)
+  -- Single-item paste keeps the legacy rename-on-conflict prompt.
+  if #cb.paths == 1 then
+    local src = cb.paths[1]
+    local name = vim.fs.basename(src)
+    local dest = dest_dir .. '/' .. name
+    if vim.uv.fs_stat(dest) then
+      vim.ui.input({ prompt = 'Rename to: ', default = dest }, function(new_dest)
+        if not new_dest or new_dest == '' then return end
+        if vim.uv.fs_stat(new_dest) then
+          vim.notify('Target already exists: ' .. new_dest, vim.log.levels.WARN)
+          return
+        end
+        do_one(src, new_dest)
+        finish()
+      end)
+      return
+    end
+    do_one(src, dest)
+    finish()
     return
   end
 
-  do_paste(dest)
+  -- Multi-item paste auto-renames conflicts to keep the flow non-interactive.
+  local count = 0
+  for _, src in ipairs(cb.paths) do
+    local name = vim.fs.basename(src)
+    local dest = dest_dir .. '/' .. name
+    local final_dest = vim.uv.fs_stat(dest) and unique_dest(dest) or dest
+    if final_dest then
+      do_one(src, final_dest)
+      count = count + 1
+    end
+  end
+  print(string.format('Pasted: %d item%s', count, count == 1 and '' or 's'))
+  finish()
 end
 
 function M.copy_name()

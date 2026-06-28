@@ -1,0 +1,7 @@
+/* macOS Dark Mode system palette — graphite + system blue accent */
+@define-color bg #1C1C1E;
+@define-color text #F2F2F7;
+@define-color accent #0A84FF;
+@define-color warning #FF9F0A;
+@define-color critical #FF453A;
+@define-color charging #30D158;

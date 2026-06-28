@@ -60,18 +60,22 @@ do
   statusline.register_component('tree_sidebar_clipboard', {
     function()
       local cb = state.files and state.files._clipboard
-      if cb then
+      if cb and cb.paths and #cb.paths > 0 then
         local label = cb.action == 'move' and ' cutting' or ' copying'
-        local name = cb.path and vim.fs.basename(cb.path) or ''
-        if name ~= '' then
-          local devicons = require('nvim-web-devicons')
-          local icon, hl = devicons.get_icon(name, vim.fn.fnamemodify(name, ':e'), { default = true })
-          icon = icon or ''
-          hl = hl or 'StatusLineGrey'
-          name = ' ' .. string.format('%%#%s#%s %%#StatusLineGrey#%s', hl, icon,
+        local first = cb.paths[1]
+        local name = first and vim.fs.basename(first) or ''
+        local devicons = require('nvim-web-devicons')
+        local icon, hl = devicons.get_icon(name, vim.fn.fnamemodify(name, ':e'), { default = true })
+        icon = icon or ''
+        hl = hl or 'StatusLineGrey'
+        local display
+        if #cb.paths > 1 then
+          display = string.format(' %%#%s#%s %%#StatusLineGrey#%d items', hl, icon, #cb.paths)
+        else
+          display = string.format(' %%#%s#%s %%#StatusLineGrey#%s', hl, icon,
             require('lu5je0.lang.string-utils').get_short_filename(name, 15))
         end
-        return '%#StatusLineGrey#' .. label .. name
+        return '%#StatusLineGrey#' .. label .. display
       end
       return nil
     end,

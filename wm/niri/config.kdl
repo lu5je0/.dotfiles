@@ -45,8 +45,8 @@ input {
     mouse {
         // off
         // natural-scroll
-        // accel-speed 0.2
-        // accel-profile "flat"
+        accel-speed 0.35
+        accel-profile "flat" // 关闭鼠标加速
         // scroll-method "no-scroll"
     }
 
@@ -240,18 +240,25 @@ layout {
     }
 }
 
+xwayland-satellite {
+}
+
 // Add lines like this to spawn processes at startup.
 // Note that running niri as a session supports xdg-desktop-autostart,
 // which may be more convenient to use.
 // See the binds section below for more spawn examples.
 
 // This line starts waybar, a commonly used bar for Wayland compositors.
-// spawn-at-startup "waybar"
+spawn-at-startup "waybar"
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
 spawn-sh-at-startup "swaybg -i ~/4.png -m fill"
-spawn-sh-at-startup "dbus-update-activation-environment DISPLAY WAYLAND_DISPLAY"
+spawn-at-startup "qs"
+spawn-at-startup "fcitx5" "-d" "--replace"
+// niri 自动管理 xwayland-satellite 并设置 DISPLAY
+// 若 flatpak 应用仍无法启动，可能需要恢复手动推送：
+// spawn-sh-at-startup "sleep 2 && export DISPLAY=:$(ls /tmp/.X11-unix/ | grep -o '[0-9]*' | sort -n | tail -1) && dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY"
 
 hotkey-overlay {
     // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
@@ -382,12 +389,12 @@ binds {
     Mod+Q repeat=false { close-window; }
 
     Mod+Left  { focus-column-left; }
-    Mod+Down  { focus-window-down; }
-    Mod+Up    { focus-window-up; }
+    Mod+Down  { focus-window-or-workspace-down; }
+    Mod+Up    { focus-window-or-workspace-up; }
     Mod+Right { focus-column-right; }
     Mod+H     { focus-column-left; }
-    Mod+J     { focus-window-down; }
-    Mod+K     { focus-window-up; }
+    Mod+J     { focus-window-or-workspace-down; }
+    Mod+K     { focus-window-or-workspace-up; }
     Mod+L     { focus-column-right; }
 
     Mod+Ctrl+Left  { move-column-left; }
@@ -395,8 +402,8 @@ binds {
     Mod+Ctrl+Up    { move-window-up; }
     Mod+Ctrl+Right { move-column-right; }
     Mod+Ctrl+H     { move-column-left; }
-    Mod+Ctrl+J     { move-window-down; }
-    Mod+Ctrl+K     { move-window-up; }
+    Mod+Ctrl+J     { move-window-down-or-to-workspace-down; }
+    Mod+Ctrl+K     { move-window-up-or-to-workspace-up; }
     Mod+Ctrl+L     { move-column-right; }
 
     // Alternative commands that move across workspaces when reaching
