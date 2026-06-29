@@ -21,6 +21,12 @@ local function track_buf(win, buf)
 end
 
 local function set_winbar(win)
+  if not vim.api.nvim_win_is_valid(win) then return end
+  local cfg = vim.api.nvim_win_get_config(win)
+  if cfg.relative and cfg.relative ~= '' then
+    if vim.wo[win].winbar ~= '' then vim.wo[win].winbar = '' end
+    return
+  end
   if not is_normal_win(win) then
     local buf = vim.api.nvim_win_get_buf(win)
     local ft = vim.bo[buf].filetype

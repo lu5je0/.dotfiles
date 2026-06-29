@@ -17,14 +17,17 @@ function M.setup()
   vim.o.showtabline = 0
 
   local win = vim.api.nvim_get_current_win()
-  local buf = vim.api.nvim_get_current_buf()
-  if vim.bo[buf].buflisted then
-    state.win_bufs[win] = { buf }
-  end
+  local cfg = vim.api.nvim_win_get_config(win)
+  if not (cfg.relative and cfg.relative ~= '') then
+    local buf = vim.api.nvim_get_current_buf()
+    if vim.bo[buf].buflisted then
+      state.win_bufs[win] = { buf }
+    end
 
-  vim.wo[win].winbar = string.format(
-    "%%{%%v:lua.require'lu5je0.ext.winbar.render'.winbar(%d)%%}", win
-  )
+    vim.wo[win].winbar = string.format(
+      "%%{%%v:lua.require'lu5je0.ext.winbar.render'.winbar(%d)%%}", win
+    )
+  end
 
   vim.schedule(function()
     require('lu5je0.ext.winbar.config').setup_keymaps()
