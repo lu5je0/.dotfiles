@@ -86,6 +86,7 @@ local config = {
   -- text_background_opacity = 0.9,
   color_scheme = "Gruvbox Dark (Gogh)",
   colors = {
+    background = "#252525",
     tab_bar = {
       active_tab = {
         bg_color = "#3C3C3C",

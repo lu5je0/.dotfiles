@@ -2,13 +2,18 @@ local M = {}
 
 local state = require('lu5je0.ext.winbar.state')
 
+local extra_normal_filetypes = {
+  tree_edit = true,
+}
+
 function M.is_normal_win(win)
   if not vim.api.nvim_win_is_valid(win) then return false end
   local cfg = vim.api.nvim_win_get_config(win)
   if cfg.relative and cfg.relative ~= '' then return false end
   local buf = vim.api.nvim_win_get_buf(win)
   local bt = vim.bo[buf].buftype
-  return bt == ''
+  if bt == '' then return true end
+  return extra_normal_filetypes[vim.bo[buf].filetype] == true
 end
 
 function M.tabpage_has_multiple_normal_wins(win)

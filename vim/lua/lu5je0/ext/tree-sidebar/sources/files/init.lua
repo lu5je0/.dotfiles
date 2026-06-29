@@ -499,16 +499,8 @@ function M.keymaps()
     { 'o', function()
       local item = state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
       if not item or not item.node then return end
-      local dir = item.node.type == 'directory' and item.node.abs_path or vim.fs.dirname(item.node.abs_path)
-      local win = require('lu5je0.ext.tree-sidebar.window')
-      local target = win.get_target_win()
-      if not target then
-        vim.cmd('belowright vsplit')
-      else
-        vim.api.nvim_set_current_win(target)
-      end
-      vim.cmd('Oil ' .. vim.fn.fnameescape(dir))
-    end, desc = 'Oil' },
+      require('lu5je0.ext.tree-sidebar.sources.files.tree-edit').open(item.node)
+    end, desc = 'Tree edit' },
     { '<space>', preview.toggle, desc = 'Preview' },
     { 't', function()
       local item = state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
