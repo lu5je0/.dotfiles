@@ -397,6 +397,101 @@ r.run('different names at same level = no duplicate', function()
 end)
 
 -- ============================================================================
+r.group('saved_children: mutate includes cached lines')
+-- ============================================================================
+
+r.run('cached new file in collapsed dir produces create action', function()
+  -- Simulate: dir /r/src exists with inner.lua, user pastes new.txt inside,
+  -- then collapses. The cached lines include the new file.
+  local s = make_session('/r', {
+    { name = 'src', abs_path = '/r/src', type = 'directory' },
+    { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
+  })
+  -- After collapse, expanded_dirs cleared, inner.lua removed from id_to_path, new.txt cached
+  s.id_to_path[2] = nil
+  s.saved_children = { ['/r/src'] = { '    /2 inner.lua', '    new.txt' } }
+
+  -- Visible buffer only shows collapsed dir
+  local raw_lines = { '/1 src/' }
+  -- Expand saved_children into buf_lines (same logic as mutate)
+  local buf_lines = {}
+  for _, l in ipairs(raw_lines) do
+    buf_lines[#buf_lines + 1] = l
+    local lid, _, _, lis_dir = parse_line(l)
+    if lis_dir and lid and s.store[lid] then
+      local labs = s.store[lid].abs_path
+      if not s.expanded_dirs[labs] and s.saved_children[labs] then
+        for _, cl in ipairs(s.saved_children[labs]) do
+          buf_lines[#buf_lines + 1] = cl
+        end
+      end
+    end
+  end
+
+  local a = compute_actions(s, buf_lines)
+  r.assert_truthy(find_action(a, 'create', { dst = '/r/src/new.txt' }))
+end)
+
+r.run('cached moved file in collapsed dir produces copy action', function()
+  -- file /r/a.txt (id=2) pasted into /r/src/ while src is expanded, then collapsed
+  local s = make_session('/r', {
+    { name = 'src', abs_path = '/r/src', type = 'directory' },
+    { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
+  })
+  s.id_to_path[2] = nil -- collapsed, removed from id_to_path but still in store
+  s.saved_children = { ['/r/src'] = { '    /2 a.txt' } }
+
+  local raw_lines = { '/1 src/' }
+  local buf_lines = {}
+  for _, l in ipairs(raw_lines) do
+    buf_lines[#buf_lines + 1] = l
+    local lid, _, _, lis_dir = parse_line(l)
+    if lis_dir and lid and s.store[lid] then
+      local labs = s.store[lid].abs_path
+      if not s.expanded_dirs[labs] and s.saved_children[labs] then
+        for _, cl in ipairs(s.saved_children[labs]) do
+          buf_lines[#buf_lines + 1] = cl
+        end
+      end
+    end
+  end
+
+  local a = compute_actions(s, buf_lines)
+  r.assert_eq(#a, 1)
+  r.assert_eq(a[1].name, 'copy')
+  r.assert_eq(a[1].src, '/r/a.txt')
+  r.assert_eq(a[1].dst, '/r/src/a.txt')
+end)
+
+r.run('no saved_children means no extra actions for collapsed dir', function()
+  local s = make_session('/r', {
+    { name = 'src', abs_path = '/r/src', type = 'directory' },
+    { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
+  })
+  -- collapsed: inner.lua not in id_to_path, no saved_children
+  s.id_to_path[2] = nil
+  s.saved_children = {}
+
+  local raw_lines = { '/1 src/' }
+  local buf_lines = {}
+  for _, l in ipairs(raw_lines) do
+    buf_lines[#buf_lines + 1] = l
+    local lid, _, _, lis_dir = parse_line(l)
+    if lis_dir and lid and s.store[lid] then
+      local labs = s.store[lid].abs_path
+      if not s.expanded_dirs[labs] and s.saved_children[labs] then
+        for _, cl in ipairs(s.saved_children[labs]) do
+          buf_lines[#buf_lines + 1] = cl
+        end
+      end
+    end
+  end
+
+  local a = compute_actions(s, buf_lines)
+  r.assert_eq(#a, 0)
+end)
+
+-- ============================================================================
 -- summary
 -- ============================================================================
 

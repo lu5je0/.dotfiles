@@ -152,12 +152,33 @@ local function on_enter(session)
       session.expanded_dirs[abs] = nil
       local total = vim.api.nvim_buf_line_count(session.buf)
       local removed_ids = {}
+      local child_lines_cache = {}
       for j = line_nr + 1, total do
         local l = vim.api.nvim_buf_get_lines(session.buf, j - 1, j, false)[1]
         local _, _, d = parse_line(l)
         if d <= depth then break end
+        child_lines_cache[#child_lines_cache + 1] = l
         local cid = l:match('/(%d+) ')
         if cid then removed_ids[tonumber(cid)] = true end
+      end
+      if #child_lines_cache > 0 then
+        local disk_lines, _ = render_children(session, abs, depth + 1)
+        local has_diff = #disk_lines ~= #child_lines_cache
+        if not has_diff then
+          for ci = 1, #child_lines_cache do
+            if child_lines_cache[ci] ~= disk_lines[ci] then
+              has_diff = true
+              break
+            end
+          end
+        end
+        if has_diff then
+          session.saved_children[abs] = child_lines_cache
+        else
+          session.saved_children[abs] = nil
+        end
+      else
+        session.saved_children[abs] = nil
       end
       remove_children_lines(session, session.buf, line_nr, depth)
       if session.id_order and next(removed_ids) then
@@ -170,7 +191,19 @@ local function on_enter(session)
       refresh_decorations(session, session.buf)
     else
       session.expanded_dirs[abs] = true
-      local child_lines, new_ids = render_children(session, abs, depth + 1)
+      local child_lines, new_ids
+      local cached = session.saved_children[abs]
+      if cached then
+        child_lines = cached
+        session.saved_children[abs] = nil
+        new_ids = {}
+        for _, l in ipairs(child_lines) do
+          local cid = l:match('/(%d+) ')
+          if cid then new_ids[#new_ids + 1] = tonumber(cid) end
+        end
+      else
+        child_lines, new_ids = render_children(session, abs, depth + 1)
+      end
       if #child_lines > 0 then
         vim.api.nvim_buf_set_lines(session.buf, line_nr, line_nr, false, child_lines)
         if session.id_order then
@@ -187,7 +220,9 @@ local function on_enter(session)
       end
       refresh_decorations(session, session.buf)
     end
-    vim.bo[session.buf].modified = false
+    if not next(session.saved_children) then
+      vim.bo[session.buf].modified = false
+    end
   elseif id and not is_dir then
     local entry = session.store[id]
     if entry then
@@ -199,9 +234,23 @@ end
 local function mutate(session)
   if not vim.bo[session.buf].modified then return end
 
-  local buf_lines = vim.tbl_filter(function(l)
+  local raw_lines = vim.tbl_filter(function(l)
     return #l > 0
   end, vim.api.nvim_buf_get_lines(session.buf, 0, -1, false))
+
+  local buf_lines = {}
+  for _, l in ipairs(raw_lines) do
+    buf_lines[#buf_lines + 1] = l
+    local lid, _, _, lis_dir = parse_line(l)
+    if lis_dir and lid and session.store[lid] then
+      local labs = session.store[lid].abs_path
+      if not session.expanded_dirs[labs] and session.saved_children[labs] then
+        for _, cl in ipairs(session.saved_children[labs]) do
+          buf_lines[#buf_lines + 1] = cl
+        end
+      end
+    end
+  end
 
   local dupes = check_duplicates(session, buf_lines)
   local actions = compute_actions(session, buf_lines)
@@ -222,6 +271,7 @@ local function mutate(session)
     session.next_id = 1
     session.id_to_path = {}
     session.path_to_id = {}
+    session.saved_children = {}
 
     local lines = render_to_lines(session)
     vim.api.nvim_buf_set_lines(session.buf, 0, -1, false, lines)
@@ -273,6 +323,7 @@ function M.open(node, opts)
     id_to_path = {},
     path_to_id = {},
     expanded_dirs = {},
+    saved_children = {},
   }
 
   if state.files and state.files.root then
@@ -512,6 +563,20 @@ function M.open(node, opts)
     local cursor_row = vim.api.nvim_win_get_cursor(0)[1]
     local all_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
+    local cursor_line = all_lines[cursor_row]
+    if cursor_line then
+      local cid, _, _, cis_dir = parse_line(cursor_line)
+      if cis_dir and cid and session.store[cid] then
+        local cabs = session.store[cid].abs_path
+        if not session.expanded_dirs[cabs] and session.saved_children[cabs] then
+          session.saved_children[cabs] = nil
+          refresh_decorations(session, buf)
+          refresh_diff_signs(session, buf)
+          return
+        end
+      end
+    end
+
     -- use compute_actions to find what's actually changed
     local buf_lines = {}
     local line_map = {} -- filtered_idx -> 1-based line number
@@ -701,6 +766,7 @@ function M.open(node, opts)
       session.next_id = 1
       session.id_to_path = {}
       session.path_to_id = {}
+      session.saved_children = {}
       local lines = render_to_lines(session)
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
       refresh_decorations(session, buf)

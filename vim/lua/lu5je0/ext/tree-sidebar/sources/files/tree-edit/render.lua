@@ -125,6 +125,15 @@ function M.refresh_decorations(session, buf_nr)
         hl_group = 'TreeSidebarFolderName',
         end_col = #p.line,
       })
+      if p.id and session.store[p.id] then
+        local entry = session.store[p.id]
+        if not session.expanded_dirs[entry.abs_path] and session.saved_children[entry.abs_path] then
+          vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, 0, {
+            virt_text = { { ' [+]', 'GitSignsChange' } },
+            virt_text_pos = 'eol',
+          })
+        end
+      end
     end
   end
 end
