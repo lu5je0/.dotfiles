@@ -324,7 +324,7 @@ function M.open(node, opts)
   vim.wo[session.win].number = true
   vim.wo[session.win].signcolumn = 'yes:1'
 
-  vim.cmd([[syn match TreeEditStoreID /\/\d\+\s/ conceal]])
+  vim.cmd([[syn match TreeEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
 
   sessions[buf] = session
 
@@ -689,6 +689,25 @@ function M.open(node, opts)
 
   vim.keymap.set('n', '<leader>gg', preview_hunk, { buffer = buf, nowait = true })
   vim.keymap.set('n', '<leader>gu', reset_hunk, { buffer = buf, nowait = true })
+
+  vim.api.nvim_create_autocmd('BufReadCmd', {
+    buffer = buf,
+    callback = function()
+      if vim.bo[buf].modified then
+        local choice = vim.fn.confirm('Discard unsaved changes and refresh?', '&Yes\n&No', 2)
+        if choice ~= 1 then return end
+      end
+      session.store = {}
+      session.next_id = 1
+      session.id_to_path = {}
+      session.path_to_id = {}
+      local lines = render_to_lines(session)
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+      refresh_decorations(session, buf)
+      vim.cmd([[syn match TreeEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
+      vim.bo[buf].modified = false
+    end,
+  })
 
   vim.keymap.set('n', '<CR>', function() on_enter(session) end, { buffer = buf, nowait = true })
   vim.keymap.set('n', 'q', close_buf, { buffer = buf, nowait = true })
