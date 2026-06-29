@@ -48,7 +48,24 @@ local function register_entry(session, abs_path, name, entry_type)
   return id
 end
 
+local function count_entries(session, dir_path)
+  local count = 0
+  local entries = tree.scan_dir(dir_path)
+  for _, entry in ipairs(entries) do
+    count = count + 1
+    if entry.type == 'directory' and session.expanded_dirs[entry.abs_path] then
+      count = count + count_entries(session, entry.abs_path)
+    end
+  end
+  return count
+end
+
 local function render_to_lines(session)
+  local total = session.next_id + count_entries(session, session.root_dir)
+  local id_width = math.max(1, #tostring(total))
+  session._id_width = id_width
+  local fmt = '%s/%0' .. id_width .. 'd %s'
+
   local lines = {}
   local id_order = {}
 
@@ -62,7 +79,7 @@ local function render_to_lines(session)
       if entry.type == 'directory' then
         name = name .. '/'
       end
-      lines[#lines + 1] = string.format('%s/%d %s', indent, id, name)
+      lines[#lines + 1] = string.format(fmt, indent, id, name)
       id_order[#id_order + 1] = id
       if expanded then
         walk(entry.abs_path, depth + 1)
@@ -76,6 +93,8 @@ local function render_to_lines(session)
 end
 
 local function render_children(session, dir_path, depth)
+  local id_width = session._id_width or 1
+  local fmt = '%s/%0' .. id_width .. 'd %s'
   local lines = {}
   local new_ids = {}
 
@@ -90,7 +109,7 @@ local function render_children(session, dir_path, depth)
       if entry.type == 'directory' then
         name = name .. '/'
       end
-      lines[#lines + 1] = string.format('%s/%d %s', indent, id, name)
+      lines[#lines + 1] = string.format(fmt, indent, id, name)
       new_ids[#new_ids + 1] = id
       if expanded then
         walk(entry.abs_path, d + 1)
@@ -569,7 +588,8 @@ function M.open(node, opts)
           if entry then
             local indent = string.rep('  ', depth)
             local restored = entry.type == 'directory' and (entry.name .. '/') or entry.name
-            vim.api.nvim_buf_set_lines(buf, i - 1, i, false, { string.format('%s/%d %s', indent, id, restored) })
+            local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
+            vim.api.nvim_buf_set_lines(buf, i - 1, i, false, { string.format(fmt, indent, id, restored) })
           end
           ids_before_hunk[id] = true
         end
@@ -586,14 +606,15 @@ function M.open(node, opts)
           for _ in rel:gmatch('/') do depth = depth + 1 end
           local indent = string.rep('  ', depth)
           local restored = entry.type == 'directory' and (entry.name .. '/') or entry.name
-          local restored_line = string.format('%s/%d %s', indent, del.id, restored)
+          local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
+          local restored_line = string.format(fmt, indent, del.id, restored)
           vim.api.nvim_buf_set_lines(buf, cursor_row, cursor_row, false, { restored_line })
         end
       end
     end
   end
 
-  vim.api.nvim_create_autocmd('CursorMoved', {
+  vim.api.nvim_create_autocmd({ 'CursorMoved', 'ModeChanged' }, {
     buffer = buf,
     callback = snap_to_name_start,
   })
