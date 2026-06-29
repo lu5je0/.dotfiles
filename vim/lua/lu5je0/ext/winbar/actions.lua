@@ -76,6 +76,8 @@ local function bdelete_safe(buf)
   pcall(vim.cmd, 'bdelete ' .. buf)
 end
 
+M.bdelete_safe = bdelete_safe
+
 function M.close_left()
   local idx = current_ordinal()
   if not idx then return end

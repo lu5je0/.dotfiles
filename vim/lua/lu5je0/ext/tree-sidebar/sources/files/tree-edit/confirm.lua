@@ -57,7 +57,7 @@ M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
   end
 
   local choice = has_conflict and '[N]o' or '[Y]es, [N]o'
-  local width = 55
+  local width = math.max(55, math.floor(vim.o.columns * 0.6))
   local max_height = math.floor(vim.o.lines * 0.7)
   local height = math.min(1 + #content_lines, max_height)
 

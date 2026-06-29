@@ -38,13 +38,13 @@ local function seed_expanded(session, node)
 end
 
 local function register_entry(session, abs_path, name, entry_type)
-  for id, entry in pairs(session.store) do
-    if entry.abs_path == abs_path then return id end
-  end
+  local existing = session.path_to_id[abs_path]
+  if existing then return existing end
   local id = session.next_id
   session.next_id = id + 1
   session.store[id] = { name = name, abs_path = abs_path, type = entry_type }
   session.id_to_path[id] = abs_path
+  session.path_to_id[abs_path] = id
   return id
 end
 
@@ -167,6 +167,7 @@ local function on_enter(session)
         end
         session.id_order = new_order
       end
+      refresh_decorations(session, session.buf)
     else
       session.expanded_dirs[abs] = true
       local child_lines, new_ids = render_children(session, abs, depth + 1)
@@ -184,6 +185,7 @@ local function on_enter(session)
           end
         end
       end
+      refresh_decorations(session, session.buf)
     end
     vim.bo[session.buf].modified = false
   elseif id and not is_dir then
@@ -209,6 +211,8 @@ local function mutate(session)
     return
   end
 
+  actions_mod.add_implicit_creates(actions, session.root_dir)
+
   confirm.show(actions, dupes, session.root_dir, function(confirmed)
     if not confirmed then return end
 
@@ -217,6 +221,7 @@ local function mutate(session)
     session.store = {}
     session.next_id = 1
     session.id_to_path = {}
+    session.path_to_id = {}
 
     local lines = render_to_lines(session)
     vim.api.nvim_buf_set_lines(session.buf, 0, -1, false, lines)
@@ -266,6 +271,7 @@ function M.open(node, opts)
     store = {},
     next_id = 1,
     id_to_path = {},
+    path_to_id = {},
     expanded_dirs = {},
   }
 
@@ -359,24 +365,7 @@ function M.open(node, opts)
   local function close_buf()
     if not vim.api.nvim_buf_is_valid(buf) then return end
     vim.bo[buf].modified = false
-    local win = vim.api.nvim_get_current_win()
-    local winbar_state = require('lu5je0.ext.winbar.state')
-    local win_bufs = winbar_state.win_bufs[win]
-    if win_bufs and vim.api.nvim_win_get_buf(win) == buf then
-      local filtered = {}
-      local cur_idx
-      for _, b in ipairs(win_bufs) do
-        if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
-          filtered[#filtered + 1] = b
-          if b == buf then cur_idx = #filtered end
-        end
-      end
-      if cur_idx and #filtered > 1 then
-        local t = filtered[cur_idx < #filtered and cur_idx + 1 or cur_idx - 1]
-        vim.api.nvim_set_current_buf(t)
-      end
-    end
-    pcall(vim.cmd, 'bdelete ' .. buf)
+    require('lu5je0.ext.winbar.actions').bdelete_safe(buf)
   end
 
   local function quit_with_check()
@@ -449,12 +438,36 @@ function M.open(node, opts)
     local content = {}
     local old_path = id and (session.id_to_path[id] or (session.store[id] and session.store[id].abs_path))
     if id and old_path then
-      local old_name = session.store[id] and session.store[id].name or vim.fs.basename(old_path)
-      local raw_name = is_dir and name:sub(1, -2) or name
-      if raw_name ~= old_name then
-        content[#content + 1] = '- ' .. old_name
-        content[#content + 1] = '+ ' .. raw_name
-      else
+      -- compute current path via stack scan
+      local all = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+      local pstack = { { path = session.root_dir, depth = -1 } }
+      local cur_path
+      for li = 1, row do
+        local lid, lname, ldepth, lis_dir = parse_line(all[li])
+        while #pstack > 1 and pstack[#pstack].depth >= ldepth do
+          table.remove(pstack)
+        end
+        if li == row then
+          local raw = is_dir and name:sub(1, -2) or name
+          cur_path = pstack[#pstack].path .. '/' .. raw
+        else
+          if lid and lis_dir then
+            local raw = lname:sub(1, -2)
+            table.insert(pstack, { path = pstack[#pstack].path .. '/' .. raw, depth = ldepth })
+          elseif lid and session.store[lid] and session.store[lid].type == 'directory' then
+            table.insert(pstack, { path = session.store[lid].abs_path, depth = ldepth })
+          elseif not lid and lis_dir then
+            local raw = lname:sub(1, -2)
+            table.insert(pstack, { path = pstack[#pstack].path .. '/' .. raw, depth = ldepth })
+          end
+        end
+      end
+      if cur_path and cur_path ~= old_path then
+        local rel_old = old_path:sub(#session.root_dir + 2)
+        local rel_new = cur_path:sub(#session.root_dir + 2)
+        content[#content + 1] = '- ' .. rel_old
+        content[#content + 1] = '+ ' .. rel_new
+      elseif cur_path and cur_path == old_path then
         vim.notify('No change at cursor', vim.log.levels.INFO)
         return
       end
@@ -495,55 +508,100 @@ function M.open(node, opts)
     })
   end
 
-  local function is_line_changed(line, id_counts)
-    if not line or line == '' then return false end
-    local id, name, _, is_dir = parse_line(line)
-    if not id then return true end
-    if id_counts and id_counts[id] and id_counts[id] > 1 then return true end
-    local old_path = session.id_to_path[id] or (session.store[id] and session.store[id].abs_path)
-    if not old_path then return false end
-    local entry = session.store[id]
-    if not entry then return false end
-    local raw_name = is_dir and name:sub(1, -2) or name
-    return raw_name ~= entry.name
-  end
-
   local function reset_hunk()
     local cursor_row = vim.api.nvim_win_get_cursor(0)[1]
     local all_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
-    local id_counts = {}
-    local seen_ids = {}
-    for _, l in ipairs(all_lines) do
-      local lid = parse_line(l)
-      if lid then
-        seen_ids[lid] = true
-        id_counts[lid] = (id_counts[lid] or 0) + 1
+    -- use compute_actions to find what's actually changed
+    local buf_lines = {}
+    local line_map = {} -- filtered_idx -> 1-based line number
+    for i, l in ipairs(all_lines) do
+      if #l > 0 then
+        buf_lines[#buf_lines + 1] = l
+        line_map[#buf_lines] = i
       end
     end
 
+    local act = compute_actions(session, buf_lines)
+    local dupes = check_duplicates(session, buf_lines)
+    if #act == 0 and #dupes == 0 then
+      vim.notify('No change at cursor', vim.log.levels.INFO)
+      return
+    end
+
+    -- build set of changed line numbers (1-based)
+    -- per-line path check (same as refresh_diff_signs)
+    local changed_set = {}
+    local stack = { { path = session.root_dir, depth = -1 } }
+    for i = 1, #buf_lines do
+      local id, name, depth, is_dir = parse_line(buf_lines[i])
+      while #stack > 1 and stack[#stack].depth >= depth do
+        table.remove(stack)
+      end
+      local parent_path = stack[#stack].path
+
+      if id then
+        local raw_name = is_dir and name:sub(1, -2) or name
+        local new_path = parent_path .. '/' .. raw_name
+        local old_path = session.id_to_path[id] or (session.store[id] and session.store[id].abs_path)
+        if old_path and new_path ~= old_path then
+          changed_set[line_map[i]] = true
+        end
+        if is_dir then
+          table.insert(stack, { path = new_path, depth = depth })
+        elseif session.store[id] and session.store[id].type == 'directory' then
+          table.insert(stack, { path = session.store[id].abs_path, depth = depth })
+        end
+      else
+        if name and name ~= '' then
+          changed_set[line_map[i]] = true
+        end
+        if is_dir then
+          table.insert(stack, { path = parent_path .. '/' .. name:sub(1, -2), depth = depth })
+        end
+      end
+    end
+
+    -- also mark duplicate lines
+    if #dupes > 0 then
+      local id_counts = {}
+      for _, l in ipairs(all_lines) do
+        local lid = parse_line(l)
+        if lid then id_counts[lid] = (id_counts[lid] or 0) + 1 end
+      end
+      for i, l in ipairs(all_lines) do
+        local lid = parse_line(l)
+        if lid and id_counts[lid] > 1 then
+          changed_set[i] = true
+        end
+      end
+    end
+
+    -- also check for deleted entries at cursor
     local deleted_to_restore = {}
     if session.id_order then
+      local seen_ids = {}
+      for _, l in ipairs(all_lines) do
+        local lid = parse_line(l)
+        if lid then seen_ids[lid] = true end
+      end
       local id_to_line = {}
       for i, l in ipairs(all_lines) do
         local lid = parse_line(l)
         if lid then id_to_line[lid] = i end
       end
-
       for idx, oid in ipairs(session.id_order) do
         if session.id_to_path[oid] and not seen_ids[oid] then
           local neighbor_line
           for k = idx - 1, 1, -1 do
             if id_to_line[session.id_order[k]] then
-              neighbor_line = id_to_line[session.id_order[k]]
-              break
+              neighbor_line = id_to_line[session.id_order[k]]; break
             end
           end
           if not neighbor_line then
             for k = idx + 1, #session.id_order do
               if id_to_line[session.id_order[k]] then
-                neighbor_line = id_to_line[session.id_order[k]]
-                break
+                neighbor_line = id_to_line[session.id_order[k]]; break
               end
             end
           end
@@ -554,20 +612,19 @@ function M.open(node, opts)
       end
     end
 
-    local has_changed_line = is_line_changed(all_lines[cursor_row], id_counts)
-
-    if not has_changed_line and #deleted_to_restore == 0 then
+    if not changed_set[cursor_row] and #deleted_to_restore == 0 then
       vim.notify('No change at cursor', vim.log.levels.INFO)
       return
     end
 
-    if has_changed_line then
+    -- expand hunk from cursor
+    if changed_set[cursor_row] then
       local hunk_start = cursor_row
-      while hunk_start > 1 and is_line_changed(all_lines[hunk_start - 1], id_counts) do
+      while hunk_start > 1 and changed_set[hunk_start - 1] do
         hunk_start = hunk_start - 1
       end
       local hunk_end = cursor_row
-      while hunk_end < #all_lines and is_line_changed(all_lines[hunk_end + 1], id_counts) do
+      while hunk_end < #all_lines and changed_set[hunk_end + 1] do
         hunk_end = hunk_end + 1
       end
 
@@ -577,8 +634,9 @@ function M.open(node, opts)
         if lid then ids_before_hunk[lid] = true end
       end
 
+      local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
       for i = hunk_end, hunk_start, -1 do
-        local id, _, depth = parse_line(all_lines[i])
+        local id = parse_line(all_lines[i])
         if not id then
           vim.api.nvim_buf_set_lines(buf, i - 1, i, false, {})
         elseif ids_before_hunk[id] then
@@ -586,9 +644,11 @@ function M.open(node, opts)
         else
           local entry = session.store[id]
           if entry then
-            local indent = string.rep('  ', depth)
+            local rel = entry.abs_path:sub(#session.root_dir + 2)
+            local orig_depth = 0
+            for _ in rel:gmatch('/') do orig_depth = orig_depth + 1 end
+            local indent = string.rep('  ', orig_depth)
             local restored = entry.type == 'directory' and (entry.name .. '/') or entry.name
-            local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
             vim.api.nvim_buf_set_lines(buf, i - 1, i, false, { string.format(fmt, indent, id, restored) })
           end
           ids_before_hunk[id] = true
@@ -596,8 +656,10 @@ function M.open(node, opts)
       end
     end
 
+    -- restore deleted entries
     if #deleted_to_restore > 0 then
       table.sort(deleted_to_restore, function(a, b) return a.after_idx > b.after_idx end)
+      local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
       for _, del in ipairs(deleted_to_restore) do
         local entry = session.store[del.id]
         if entry then
@@ -606,9 +668,7 @@ function M.open(node, opts)
           for _ in rel:gmatch('/') do depth = depth + 1 end
           local indent = string.rep('  ', depth)
           local restored = entry.type == 'directory' and (entry.name .. '/') or entry.name
-          local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
-          local restored_line = string.format(fmt, indent, del.id, restored)
-          vim.api.nvim_buf_set_lines(buf, cursor_row, cursor_row, false, { restored_line })
+          vim.api.nvim_buf_set_lines(buf, cursor_row, cursor_row, false, { string.format(fmt, indent, del.id, restored) })
         end
       end
     end
@@ -624,8 +684,8 @@ function M.open(node, opts)
   vim.keymap.set('n', 'J', '<nop>', { buffer = buf, nowait = true })
   vim.keymap.set('n', 'gJ', '<nop>', { buffer = buf, nowait = true })
 
-  vim.keymap.set('n', 'p', function() smart_paste('"0p') end, { buffer = buf, nowait = true })
-  vim.keymap.set('n', 'P', function() smart_paste('"0P') end, { buffer = buf, nowait = true })
+  vim.keymap.set('n', 'p', function() smart_paste('p') end, { buffer = buf, nowait = true })
+  vim.keymap.set('n', 'P', function() smart_paste('P') end, { buffer = buf, nowait = true })
 
   vim.keymap.set('n', '<leader>gg', preview_hunk, { buffer = buf, nowait = true })
   vim.keymap.set('n', '<leader>gu', reset_hunk, { buffer = buf, nowait = true })

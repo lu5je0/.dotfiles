@@ -167,19 +167,85 @@ local function rename_bufs(old_path, new_path)
   end
 end
 
+function M.add_implicit_creates(actions, root_dir)
+  local existing_dirs = { [root_dir] = true }
+  for _, a in ipairs(actions) do
+    if a.name == 'create' and vim.endswith(a.dst, '/') then
+      existing_dirs[a.dst:sub(1, -2)] = true
+    end
+  end
+  local added = {}
+  for _, a in ipairs(actions) do
+    if (a.name == 'move' or a.name == 'copy') and a.dst then
+      local parent = vim.fs.dirname(a.dst)
+      while parent and parent ~= root_dir and not existing_dirs[parent] do
+        if not vim.uv.fs_stat(parent) then
+          added[parent] = true
+        end
+        existing_dirs[parent] = true
+        parent = vim.fs.dirname(parent)
+      end
+    end
+  end
+  for dir in pairs(added) do
+    table.insert(actions, { name = 'create', dst = dir .. '/' })
+  end
+end
+
 function M.execute_actions(actions)
+  -- build sets of paths that each action occupies/frees
+  local dst_paths = {} -- paths that will be written to (need to be free)
+  local src_paths = {} -- paths that will be freed (delete src, move src)
+  for _, a in ipairs(actions) do
+    if a.dst then
+      local p = a.dst
+      if vim.endswith(p, '/') then p = p:sub(1, -2) end
+      dst_paths[p] = true
+    end
+    if a.name == 'delete' then
+      src_paths[a.src] = true
+    elseif a.name == 'move' and a.src then
+      src_paths[a.src] = true
+    end
+  end
+
+  -- phase 1: actions that free paths needed by others (delete/move whose src = another action's dst)
   local ordered = {}
-  for _, a in ipairs(actions) do
-    if a.name == 'create' then table.insert(ordered, a) end
+  local done = {}
+  for i, a in ipairs(actions) do
+    if a.name == 'delete' and dst_paths[a.src] then
+      table.insert(ordered, a); done[i] = true
+    end
   end
-  for _, a in ipairs(actions) do
-    if a.name == 'move' then table.insert(ordered, a) end
+  -- moves whose src is needed by a create (rename A→B then create new A)
+  for i, a in ipairs(actions) do
+    if not done[i] and a.name == 'move' and a.src and dst_paths[a.src] then
+      table.insert(ordered, a); done[i] = true
+    end
   end
-  for _, a in ipairs(actions) do
-    if a.name == 'copy' then table.insert(ordered, a) end
+  -- phase 2: creates
+  for i, a in ipairs(actions) do
+    if not done[i] and a.name == 'create' then
+      table.insert(ordered, a); done[i] = true
+    end
   end
-  for _, a in ipairs(actions) do
-    if a.name == 'delete' then table.insert(ordered, a) end
+  -- phase 3: remaining moves
+  for i, a in ipairs(actions) do
+    if not done[i] and a.name == 'move' then
+      table.insert(ordered, a); done[i] = true
+    end
+  end
+  -- phase 4: copies
+  for i, a in ipairs(actions) do
+    if not done[i] and a.name == 'copy' then
+      table.insert(ordered, a); done[i] = true
+    end
+  end
+  -- phase 5: remaining deletes
+  for i, a in ipairs(actions) do
+    if not done[i] and a.name == 'delete' then
+      table.insert(ordered, a); done[i] = true
+    end
   end
 
   for _, action in ipairs(ordered) do
