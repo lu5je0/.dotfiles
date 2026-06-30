@@ -1,6 +1,6 @@
 local config = require('lu5je0.ext.tree-sidebar.config')
 local sidebar_render = require('lu5je0.ext.tree-sidebar.render')
-local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.tree-edit.actions')
+local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
 
 local M = {}
 
@@ -9,7 +9,7 @@ local compute_actions = actions_mod.compute_actions
 local check_duplicates = actions_mod.check_duplicates
 
 local hl_ns = vim.api.nvim_create_namespace('tree_sidebar_fyler')
-local sign_ns = vim.api.nvim_create_namespace('tree_edit_signs')
+local sign_ns = vim.api.nvim_create_namespace('fs_edit_signs')
 
 M.hl_ns = hl_ns
 M.sign_ns = sign_ns
@@ -113,8 +113,12 @@ function M.refresh_decorations(session, buf_nr)
       icon, icon_hl = get_icon_for_name(p.name, p.is_dir)
     end
     if icon then
-      vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, #indent, {
-        virt_text = { { icon .. ' ', icon_hl } },
+      local indent_len = #indent
+      local placeholder = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions').PLACEHOLDER
+      local has_placeholder = not p.id and p.line:sub(indent_len + 1, indent_len + #placeholder) == placeholder
+      local icon_text = has_placeholder and icon or (icon .. ' ')
+      vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, indent_len, {
+        virt_text = { { icon_text, icon_hl } },
         virt_text_pos = 'inline',
       })
     end

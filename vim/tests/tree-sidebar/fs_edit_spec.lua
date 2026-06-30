@@ -1,5 +1,5 @@
--- tree-edit tests: parse_line + compute_actions (conceal /NNN approach).
--- Usage: cd vim && nvim --headless -u NONE -l tests/tree-sidebar/tree_edit_spec.lua
+-- fs-edit tests: parse_line + compute_actions (conceal /NNN approach).
+-- Usage: cd vim && nvim --headless -u NONE -l tests/tree-sidebar/fs_edit_spec.lua
 
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
 vim.opt.runtimepath:prepend(repo_root .. '/vim')
@@ -7,7 +7,7 @@ vim.opt.runtimepath:prepend(repo_root .. '/vim')
 local h = dofile(vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h') .. '/helpers.lua')
 local r = h.make_runner()
 
-local te = require('lu5je0.ext.tree-sidebar.sources.files.tree-edit')
+local te = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit')
 local parse_line = te._parse_line
 local compute_actions = te._compute_actions
 
@@ -492,7 +492,27 @@ r.run('no saved_children means no extra actions for collapsed dir', function()
 end)
 
 -- ============================================================================
--- summary
+r.group('execute_actions: path swap')
 -- ============================================================================
+
+r.run('A->B and B->A routed via temp path', function()
+  local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
+  local tmp = vim.fn.tempname()
+  vim.fn.mkdir(tmp, 'p')
+  local a = tmp .. '/a.txt'
+  local b = tmp .. '/b.txt'
+  vim.fn.writefile({ 'A' }, a)
+  vim.fn.writefile({ 'B' }, b)
+
+  local actions = {
+    { name = 'move', src = a, dst = b },
+    { name = 'move', src = b, dst = a },
+  }
+  actions_mod.execute_actions(actions)
+
+  r.assert_eq(table.concat(vim.fn.readfile(a)), 'B')
+  r.assert_eq(table.concat(vim.fn.readfile(b)), 'A')
+  vim.fn.delete(tmp, 'rf')
+end)
 
 r.finish()

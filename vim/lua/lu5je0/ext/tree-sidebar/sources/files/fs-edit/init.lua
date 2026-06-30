@@ -1,8 +1,8 @@
 local tree = require('lu5je0.ext.tree-sidebar.sources.files.tree')
 local win_mod = require('lu5je0.ext.tree-sidebar.window')
-local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.tree-edit.actions')
-local te_render = require('lu5je0.ext.tree-sidebar.sources.files.tree-edit.render')
-local confirm = require('lu5je0.ext.tree-sidebar.sources.files.tree-edit.confirm')
+local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
+local te_render = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.render')
+local confirm = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.confirm')
 
 local parse_line = actions_mod.parse_line
 local compute_actions = actions_mod.compute_actions
@@ -126,11 +126,13 @@ local function remove_children_lines(session, buf, line_nr, depth)
   local end_line = line_nr + 1
   while end_line <= total do
     local l = vim.api.nvim_buf_get_lines(buf, end_line - 1, end_line, false)[1]
-    local _, _, d = parse_line(l)
-    if d <= depth then break end
-    local cid = l:match('/(%d+) ')
-    if cid then
-      session.id_to_path[tonumber(cid)] = nil
+    if l ~= '' and l:match('%S') then
+      local _, _, d = parse_line(l)
+      if d <= depth then break end
+      local cid = l:match('/(%d+) ')
+      if cid then
+        session.id_to_path[tonumber(cid)] = nil
+      end
     end
     end_line = end_line + 1
   end
@@ -155,11 +157,13 @@ local function on_enter(session)
       local child_lines_cache = {}
       for j = line_nr + 1, total do
         local l = vim.api.nvim_buf_get_lines(session.buf, j - 1, j, false)[1]
-        local _, _, d = parse_line(l)
-        if d <= depth then break end
-        child_lines_cache[#child_lines_cache + 1] = l
-        local cid = l:match('/(%d+) ')
-        if cid then removed_ids[tonumber(cid)] = true end
+        if l ~= '' and l:match('%S') then
+          local _, _, d = parse_line(l)
+          if d <= depth then break end
+          child_lines_cache[#child_lines_cache + 1] = l
+          local cid = l:match('/(%d+) ')
+          if cid then removed_ids[tonumber(cid)] = true end
+        end
       end
       if #child_lines_cache > 0 then
         local disk_lines, _ = render_children(session, abs, depth + 1)
@@ -337,9 +341,9 @@ function M.open(node, opts)
 
   local buf = vim.api.nvim_create_buf(true, false)
   session.buf = buf
-  vim.api.nvim_buf_set_name(buf, 'tree-edit://' .. root_dir)
+  vim.api.nvim_buf_set_name(buf, 'fs-edit://' .. root_dir)
   vim.bo[buf].buftype = 'acwrite'
-  vim.bo[buf].filetype = 'tree_edit'
+  vim.bo[buf].filetype = 'fs_edit'
   vim.bo[buf].bufhidden = 'hide'
   vim.bo[buf].swapfile = false
   vim.bo[buf].expandtab = true
@@ -375,7 +379,7 @@ function M.open(node, opts)
   vim.wo[session.win].number = true
   vim.wo[session.win].signcolumn = 'yes:1'
 
-  vim.cmd([[syn match TreeEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
+  vim.cmd([[syn match FsEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
 
   sessions[buf] = session
 
@@ -445,12 +449,28 @@ function M.open(node, opts)
     local paste_start = vim.api.nvim_win_get_cursor(0)[1]
     local paste_end = paste_start + pasted_count - 1
 
-    local target_indent = string.rep('  ', target_depth)
-    for i = paste_start, paste_end do
-      local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
-      local stripped = l:match('^%s*(.*)$')
-      vim.api.nvim_buf_set_lines(buf, i - 1, i, false, { target_indent .. stripped })
+    local pasted = vim.api.nvim_buf_get_lines(buf, paste_start - 1, paste_end, false)
+    local min_indent
+    for _, l in ipairs(pasted) do
+      if l:match('%S') then
+        local indent = #(l:match('^(%s*)') or '')
+        if not min_indent or indent < min_indent then min_indent = indent end
+      end
     end
+    min_indent = min_indent or 0
+
+    local target_prefix = string.rep('  ', target_depth)
+    local rewritten = {}
+    for i, l in ipairs(pasted) do
+      if l:match('%S') then
+        local indent = l:match('^(%s*)') or ''
+        local extra = math.max(0, #indent - min_indent)
+        rewritten[i] = target_prefix .. string.rep(' ', extra) .. l:sub(#indent + 1)
+      else
+        rewritten[i] = l
+      end
+    end
+    vim.api.nvim_buf_set_lines(buf, paste_start - 1, paste_end, false, rewritten)
   end
 
   local function snap_to_name_start()
@@ -749,8 +769,29 @@ function M.open(node, opts)
   vim.keymap.set('n', 'J', '<nop>', { buffer = buf, nowait = true })
   vim.keymap.set('n', 'gJ', '<nop>', { buffer = buf, nowait = true })
 
+  local function open_new_line(direction)
+    local cur_line = vim.api.nvim_get_current_line()
+    local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
+    local is_expanded = false
+    if cur_is_dir and cur_id and session.store[cur_id] then
+      is_expanded = session.expanded_dirs[session.store[cur_id].abs_path] == true
+    end
+    local target_depth = (direction == 'o' and cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
+    local indent = string.rep('  ', target_depth)
+    local placeholder = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions').PLACEHOLDER
+
+    local row = vim.api.nvim_win_get_cursor(0)[1]
+    local insert_row = direction == 'o' and row or (row - 1)
+    vim.api.nvim_buf_set_lines(buf, insert_row, insert_row, false, { indent .. placeholder })
+    vim.api.nvim_win_set_cursor(0, { insert_row + 1, #indent + #placeholder })
+    vim.cmd('startinsert!')
+  end
+
   vim.keymap.set('n', 'p', function() smart_paste('p') end, { buffer = buf, nowait = true })
   vim.keymap.set('n', 'P', function() smart_paste('P') end, { buffer = buf, nowait = true })
+
+  vim.keymap.set('n', 'o', function() open_new_line('o') end, { buffer = buf, nowait = true })
+  vim.keymap.set('n', 'O', function() open_new_line('O') end, { buffer = buf, nowait = true })
 
   vim.keymap.set('n', '<leader>gg', preview_hunk, { buffer = buf, nowait = true })
   vim.keymap.set('n', '<leader>gu', reset_hunk, { buffer = buf, nowait = true })
@@ -770,7 +811,7 @@ function M.open(node, opts)
       local lines = render_to_lines(session)
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
       refresh_decorations(session, buf)
-      vim.cmd([[syn match TreeEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
+      vim.cmd([[syn match FsEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
       vim.bo[buf].modified = false
     end,
   })

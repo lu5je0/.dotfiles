@@ -269,7 +269,7 @@ vim.schedule(function()
   set_map('n', '<S-Left>', '<C-w><', default_opts)
 
   set_map('n', 'zl', 'zMzvzz', remap_opts)
-  set_map('i', '.', '<C-g>u.', default_opts)
+  -- set_map('i', '.', '<C-g>u.', default_opts)
 
   set_map('o', 'il', '<cmd>normal! v$o^oh<CR>', default_opts)
   set_map('x', 'il', '$o^oh', default_opts)

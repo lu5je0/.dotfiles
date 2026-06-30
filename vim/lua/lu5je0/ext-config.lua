@@ -357,9 +357,9 @@ ext_load({
 --   end,
 -- })
 ext_load({
-  name = 'tree-edit-hijack',
+  name = 'fs-edit-hijack',
   config = function()
-    local group = vim.api.nvim_create_augroup('tree-edit-hijack', { clear = true })
+    local group = vim.api.nvim_create_augroup('fs-edit-hijack', { clear = true })
     vim.api.nvim_create_autocmd('BufEnter', {
       group = group,
       pattern = '*',
@@ -368,7 +368,7 @@ ext_load({
         if vim.fn.isdirectory(ev.file) == 0 then return end
         vim.api.nvim_del_augroup_by_id(group)
         vim.defer_fn(function()
-          require('lu5je0.ext.tree-sidebar.sources.files.tree-edit').open_dir(ev.file)
+          require('lu5je0.ext.tree-sidebar.sources.files.fs-edit').open_dir(ev.file)
         end, 0)
       end,
     })

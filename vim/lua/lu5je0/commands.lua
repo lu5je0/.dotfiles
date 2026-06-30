@@ -237,3 +237,8 @@ vim.api.nvim_create_user_command('ClearUndo', function()
   vim.api.nvim_feedkeys(keys, 'nx', false)
   vim.o.undolevels = old_undolevels
 end, { nargs = 0 })
+
+vim.api.nvim_create_user_command('FsEdit', function(opts)
+  local dir = opts.args ~= '' and opts.args or vim.fn.getcwd()
+  require('lu5je0.ext.tree-sidebar.sources.files.fs-edit').open_dir(dir)
+end, { nargs = '?', complete = 'dir' })

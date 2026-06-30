@@ -499,7 +499,7 @@ function M.keymaps()
     { 'o', function()
       local item = state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
       if not item or not item.node then return end
-      require('lu5je0.ext.tree-sidebar.sources.files.tree-edit').open(item.node)
+      require('lu5je0.ext.tree-sidebar.sources.files.fs-edit').open(item.node)
     end, desc = 'Tree edit' },
     { '<space>', preview.toggle, desc = 'Preview' },
     { 't', function()

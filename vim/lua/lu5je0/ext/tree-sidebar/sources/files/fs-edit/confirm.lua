@@ -1,4 +1,4 @@
-local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.tree-edit.actions')
+local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
 
 local M = {}
 
@@ -73,7 +73,7 @@ M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
   -- highlights
-  local ns = vim.api.nvim_create_namespace('tree_edit_confirm')
+  local ns = vim.api.nvim_create_namespace('fs_edit_confirm')
   for i, ch in ipairs(content_hls) do
     vim.hl.range(buf, ns, ch.hl, { i - 1, 0 }, { i - 1, ch.col_end })
   end

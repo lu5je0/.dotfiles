@@ -3,7 +3,7 @@ local M = {}
 local state = require('lu5je0.ext.winbar.state')
 
 local extra_normal_filetypes = {
-  tree_edit = true,
+  fs_edit = true,
 }
 
 function M.is_normal_win(win)

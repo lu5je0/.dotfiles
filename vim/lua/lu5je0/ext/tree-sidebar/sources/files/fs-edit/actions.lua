@@ -1,5 +1,7 @@
 local M = {}
 
+M.PLACEHOLDER = '\194\160' -- NBSP (U+00A0). Used by o/O to keep a real char so the cursor lands after the icon.
+
 -- Parse a buffer line. Returns id (or nil), name, depth, is_dir.
 function M.parse_line(line)
   local indent = line:match('^(%s*)')
@@ -14,6 +16,9 @@ function M.parse_line(line)
     name = rest
   end
   if not name then name = '' end
+  if not id and vim.startswith(name, M.PLACEHOLDER) then
+    name = name:sub(#M.PLACEHOLDER + 1)
+  end
   local is_dir = vim.endswith(name, '/')
   return id, name, depth, is_dir
 end
@@ -44,6 +49,7 @@ function M.compute_actions(session, buf_lines)
         table.insert(stack, { path = session.store[id].abs_path, depth = depth })
       end
     else
+      if name == '' then goto continue end
       local segments = {}
       for seg in name:gmatch('[^/]+') do
         segments[#segments + 1] = seg
@@ -69,6 +75,7 @@ function M.compute_actions(session, buf_lines)
         table.insert(actions, { name = 'create', dst = parent_path .. '/' .. name })
       end
     end
+    ::continue::
   end
 
   for id, path in pairs(session.id_to_path) do
@@ -192,20 +199,67 @@ function M.add_implicit_creates(actions, root_dir)
   end
 end
 
+local function strip_trailing_slash(p)
+  if vim.endswith(p, '/') then return p:sub(1, -2) end
+  return p
+end
+
+local function do_rename(src, dst)
+  local ok, err, name = vim.uv.fs_rename(src, dst)
+  if ok then return true end
+  if name == 'EXDEV' then
+    local res = vim.fn.system({ 'cp', '-r', src, dst })
+    if vim.v.shell_error ~= 0 then
+      return false, res
+    end
+    vim.fn.delete(src, 'rf')
+    return true
+  end
+  return false, err
+end
+
 function M.execute_actions(actions)
   -- build sets of paths that each action occupies/frees
   local dst_paths = {} -- paths that will be written to (need to be free)
   local src_paths = {} -- paths that will be freed (delete src, move src)
   for _, a in ipairs(actions) do
     if a.dst then
-      local p = a.dst
-      if vim.endswith(p, '/') then p = p:sub(1, -2) end
-      dst_paths[p] = true
+      dst_paths[strip_trailing_slash(a.dst)] = true
     end
     if a.name == 'delete' then
       src_paths[a.src] = true
     elseif a.name == 'move' and a.src then
       src_paths[a.src] = true
+    end
+  end
+
+  -- detect path-swap cycles: move A->B and move B->A (mutual src/dst dependency).
+  -- For each such pair we route one move via a temp path so neither clobbers the other.
+  local move_by_src = {}
+  for i, a in ipairs(actions) do
+    if a.name == 'move' and a.src then
+      move_by_src[strip_trailing_slash(a.src)] = i
+    end
+  end
+  local detour = {} -- i -> { stage1 = { name='move', src=src, dst=tmp }, stage2 = { name='move', src=tmp, dst=dst } }
+  local seen_cycle = {}
+  for i, a in ipairs(actions) do
+    if a.name == 'move' and a.src and not seen_cycle[i] then
+      local src = strip_trailing_slash(a.src)
+      local dst = strip_trailing_slash(a.dst)
+      local j = move_by_src[dst]
+      if j and j ~= i then
+        local other = actions[j]
+        if strip_trailing_slash(other.dst) == src then
+          local tmp = src .. '.fs-edit-swap-' .. i
+          detour[i] = {
+            stage1 = { name = 'move', src = a.src, dst = tmp },
+            stage2 = { name = 'move', src = tmp, dst = a.dst },
+          }
+          seen_cycle[i] = true
+          seen_cycle[j] = true
+        end
+      end
     end
   end
 
@@ -220,7 +274,12 @@ function M.execute_actions(actions)
   -- moves whose src is needed by a create (rename A→B then create new A)
   for i, a in ipairs(actions) do
     if not done[i] and a.name == 'move' and a.src and dst_paths[a.src] then
-      table.insert(ordered, a); done[i] = true
+      if detour[i] then
+        table.insert(ordered, detour[i].stage1)
+      else
+        table.insert(ordered, a)
+      end
+      done[i] = true
     end
   end
   -- phase 2: creates
@@ -232,7 +291,12 @@ function M.execute_actions(actions)
   -- phase 3: remaining moves
   for i, a in ipairs(actions) do
     if not done[i] and a.name == 'move' then
-      table.insert(ordered, a); done[i] = true
+      if detour[i] then
+        table.insert(ordered, detour[i].stage1)
+      else
+        table.insert(ordered, a)
+      end
+      done[i] = true
     end
   end
   -- phase 4: copies
@@ -246,6 +310,10 @@ function M.execute_actions(actions)
     if not done[i] and a.name == 'delete' then
       table.insert(ordered, a); done[i] = true
     end
+  end
+  -- phase 6: finalize swap detours (tmp -> final dst)
+  for i, _ in pairs(detour) do
+    table.insert(ordered, detour[i].stage2)
   end
 
   for _, action in ipairs(ordered) do
@@ -266,21 +334,21 @@ function M.execute_actions(actions)
       end
       close_bufs_under(action.src)
     elseif action.name == 'move' then
-      local src = action.src
-      if vim.endswith(src, '/') then src = src:sub(1, -2) end
-      local dst = action.dst
-      if vim.endswith(dst, '/') then dst = dst:sub(1, -2) end
+      local src = strip_trailing_slash(action.src)
+      local dst = strip_trailing_slash(action.dst)
       local new_parent = vim.fs.dirname(dst)
       if not vim.uv.fs_stat(new_parent) then
         vim.fn.mkdir(new_parent, 'p')
       end
-      vim.uv.fs_rename(src, dst)
-      rename_bufs(src, dst)
+      local ok, err = do_rename(src, dst)
+      if ok then
+        rename_bufs(src, dst)
+      else
+        vim.notify('fs-edit: move failed: ' .. tostring(err), vim.log.levels.ERROR)
+      end
     elseif action.name == 'copy' then
-      local src = action.src
-      if vim.endswith(src, '/') then src = src:sub(1, -2) end
-      local dst = action.dst
-      if vim.endswith(dst, '/') then dst = dst:sub(1, -2) end
+      local src = strip_trailing_slash(action.src)
+      local dst = strip_trailing_slash(action.dst)
       vim.fn.system({ 'cp', '-r', src, dst })
     end
   end
