@@ -97,7 +97,7 @@ function M.refresh_decorations(session, buf_nr)
 
       vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, 0, {
         virt_text = guide_parts,
-        virt_text_pos = 'overlay',
+        virt_text_pos = 'overlay', invalidate = true,
       })
     end
 
@@ -119,7 +119,7 @@ function M.refresh_decorations(session, buf_nr)
       local icon_text = has_placeholder and icon or (icon .. ' ')
       vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, indent_len, {
         virt_text = { { icon_text, icon_hl } },
-        virt_text_pos = 'inline',
+        virt_text_pos = 'inline', invalidate = true,
       })
     end
 
@@ -128,13 +128,14 @@ function M.refresh_decorations(session, buf_nr)
       vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, name_start, {
         hl_group = 'TreeSidebarFolderName',
         end_col = #p.line,
+        invalidate = true,
       })
       if p.id and session.store[p.id] then
         local entry = session.store[p.id]
         if not session.expanded_dirs[entry.abs_path] and session.saved_children[entry.abs_path] then
           vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, 0, {
             virt_text = { { ' [+]', 'GitSignsChange' } },
-            virt_text_pos = 'eol',
+            virt_text_pos = 'eol', invalidate = true,
           })
         end
       end
@@ -177,6 +178,7 @@ function M.refresh_diff_signs(session, buf_nr)
       sign_text = text,
       sign_hl_group = hl,
       priority = 999,
+      invalidate = true,
     })
   end
 

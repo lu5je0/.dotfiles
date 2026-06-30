@@ -271,6 +271,32 @@ local function mutate(session)
 
     execute_actions(actions)
 
+    local function expand_ancestors(p)
+      if not p or p == '' then return end
+      local parent = vim.fs.dirname(p)
+      while parent and parent ~= session.root_dir and parent ~= '/' and parent ~= '.' do
+        session.expanded_dirs[parent] = true
+        if parent == vim.fs.dirname(parent) then break end
+        parent = vim.fs.dirname(parent)
+      end
+    end
+    for _, a in ipairs(actions) do
+      if a.name == 'create' then
+        local dst = a.dst
+        if vim.endswith(dst, '/') then
+          session.expanded_dirs[dst:sub(1, -2)] = true
+          expand_ancestors(dst:sub(1, -2))
+        else
+          expand_ancestors(dst)
+        end
+      elseif a.name == 'move' or a.name == 'copy' then
+        if a.dst then
+          local dst = vim.endswith(a.dst, '/') and a.dst:sub(1, -2) or a.dst
+          expand_ancestors(dst)
+        end
+      end
+    end
+
     session.store = {}
     session.next_id = 1
     session.id_to_path = {}
@@ -442,8 +468,12 @@ function M.open(node, opts)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
     local is_expanded = false
-    if cur_is_dir and cur_id and session.store[cur_id] then
-      is_expanded = session.expanded_dirs[session.store[cur_id].abs_path] == true
+    if cur_is_dir then
+      if cur_id and session.store[cur_id] then
+        is_expanded = session.expanded_dirs[session.store[cur_id].abs_path] == true
+      else
+        is_expanded = true
+      end
     end
     local target_depth = (cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
 
@@ -780,8 +810,12 @@ function M.open(node, opts)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
     local is_expanded = false
-    if cur_is_dir and cur_id and session.store[cur_id] then
-      is_expanded = session.expanded_dirs[session.store[cur_id].abs_path] == true
+    if cur_is_dir then
+      if cur_id and session.store[cur_id] then
+        is_expanded = session.expanded_dirs[session.store[cur_id].abs_path] == true
+      else
+        is_expanded = true
+      end
     end
     local target_depth = (direction == 'o' and cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
     local indent = string.rep('  ', target_depth)
