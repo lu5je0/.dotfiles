@@ -3,6 +3,7 @@ local win_mod = require('lu5je0.ext.tree-sidebar.window')
 local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
 local te_render = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.render')
 local confirm = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.confirm')
+local pu = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.path_util')
 
 local parse_line = actions_mod.parse_line
 local compute_actions = actions_mod.compute_actions
@@ -238,23 +239,9 @@ end
 local function mutate(session)
   if not vim.bo[session.buf].modified then return end
 
-  local raw_lines = vim.tbl_filter(function(l)
-    return #l > 0
-  end, vim.api.nvim_buf_get_lines(session.buf, 0, -1, false))
-
-  local buf_lines = {}
-  for _, l in ipairs(raw_lines) do
-    buf_lines[#buf_lines + 1] = l
-    local lid, _, _, lis_dir = parse_line(l)
-    if lis_dir and lid and session.store[lid] then
-      local labs = session.store[lid].abs_path
-      if not session.expanded_dirs[labs] and session.saved_children[labs] then
-        for _, cl in ipairs(session.saved_children[labs]) do
-          buf_lines[#buf_lines + 1] = cl
-        end
-      end
-    end
-  end
+  local buf_lines = actions_mod.effective_buf_lines(
+    session, vim.api.nvim_buf_get_lines(session.buf, 0, -1, false)
+  )
 
   local dupes = check_duplicates(session, buf_lines)
   local actions = compute_actions(session, buf_lines)
@@ -272,27 +259,23 @@ local function mutate(session)
     execute_actions(actions)
 
     local function expand_ancestors(p)
-      if not p or p == '' then return end
-      local parent = vim.fs.dirname(p)
-      while parent and parent ~= session.root_dir and parent ~= '/' and parent ~= '.' do
+      pu.iter_ancestors(p, session.root_dir, function(parent)
         session.expanded_dirs[parent] = true
-        if parent == vim.fs.dirname(parent) then break end
-        parent = vim.fs.dirname(parent)
-      end
+      end)
     end
     for _, a in ipairs(actions) do
       if a.name == 'create' then
         local dst = a.dst
         if vim.endswith(dst, '/') then
-          session.expanded_dirs[dst:sub(1, -2)] = true
-          expand_ancestors(dst:sub(1, -2))
+          local d = pu.strip_slash(dst)
+          session.expanded_dirs[d] = true
+          expand_ancestors(d)
         else
           expand_ancestors(dst)
         end
       elseif a.name == 'move' or a.name == 'copy' then
         if a.dst then
-          local dst = vim.endswith(a.dst, '/') and a.dst:sub(1, -2) or a.dst
-          expand_ancestors(dst)
+          expand_ancestors(pu.strip_slash(a.dst))
         end
       end
     end
@@ -467,14 +450,7 @@ function M.open(node, opts)
   local function smart_paste(put_cmd)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
-    local is_expanded = false
-    if cur_is_dir then
-      if cur_id and session.store[cur_id] then
-        is_expanded = session.expanded_dirs[session.store[cur_id].abs_path] == true
-      else
-        is_expanded = true
-      end
-    end
+    local is_expanded = cur_is_dir and pu.is_dir_expanded(session, cur_id) or false
     local target_depth = (cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
 
     local before = vim.api.nvim_buf_line_count(buf)
@@ -543,87 +519,40 @@ function M.open(node, opts)
     local line = all_lines[row]
     if not line then return end
 
-    local function rel(p)
-      if vim.startswith(p, session.root_dir .. '/') then
-        return p:sub(#session.root_dir + 2)
-      end
-      return p
-    end
-    local function strip_slash(p)
-      if vim.endswith(p, '/') then return p:sub(1, -2) end
-      return p
-    end
-    local function path_inside(child, parent)
-      if not child or not parent or parent == '' then return false end
-      child = strip_slash(child)
-      parent = strip_slash(parent)
-      return child == parent or vim.startswith(child, parent .. '/')
-    end
-
-    -- compute current line's scope path
-    local id, name, depth, is_dir = parse_line(line)
-    local pstack = { { path = session.root_dir, depth = -1 } }
-    for li = 1, row do
-      local lid, lname, ldepth, lis_dir = parse_line(all_lines[li])
-      while #pstack > 1 and pstack[#pstack].depth >= ldepth do
-        table.remove(pstack)
-      end
-      if li < row then
-        if lid and lis_dir then
-          local raw = lname:sub(1, -2)
-          table.insert(pstack, { path = pstack[#pstack].path .. '/' .. raw, depth = ldepth })
-        elseif lid and session.store[lid] and session.store[lid].type == 'directory' then
-          table.insert(pstack, { path = session.store[lid].abs_path, depth = ldepth })
-        elseif not lid and lis_dir then
-          local raw = lname:sub(1, -2)
-          table.insert(pstack, { path = pstack[#pstack].path .. '/' .. raw, depth = ldepth })
+    local scope, is_dir
+    do
+      local i = 0
+      for entry in actions_mod.iter_lines(session, all_lines) do
+        i = i + 1
+        if i == row then
+          scope = entry.current_path
+          is_dir = entry.is_dir
+          break
         end
       end
-    end
-    local parent_path = pstack[#pstack].path
-    local scope
-    if name and name ~= '' then
-      local raw = is_dir and name:sub(1, -2) or name
-      scope = parent_path .. '/' .. raw
     end
 
     -- recompute actions from current buffer
-    local raw_lines = vim.tbl_filter(function(l) return #l > 0 end, all_lines)
-    local buf_lines = {}
-    for _, l in ipairs(raw_lines) do
-      buf_lines[#buf_lines + 1] = l
-      local lid, _, _, lis_dir = parse_line(l)
-      if lis_dir and lid and session.store[lid] then
-        local labs = session.store[lid].abs_path
-        if not session.expanded_dirs[labs] and session.saved_children[labs] then
-          for _, cl in ipairs(session.saved_children[labs]) do
-            buf_lines[#buf_lines + 1] = cl
-          end
-        end
-      end
-    end
+    local buf_lines = actions_mod.effective_buf_lines(session, all_lines)
     local actions = compute_actions(session, buf_lines)
 
     local content = {}
     local function add(prefix, p)
-      content[#content + 1] = prefix .. ' ' .. rel(p)
+      content[#content + 1] = prefix .. ' ' .. pu.rel(session.root_dir, p)
     end
 
-    -- entries already covered (avoid double-listing the dir row's own move)
-    local handled_actions = {}
-    for ai, a in ipairs(actions) do
-      local s = a.src and strip_slash(a.src)
-      local d = a.dst and strip_slash(a.dst)
+    for _, a in ipairs(actions) do
+      local s = a.src and pu.strip_slash(a.src)
+      local d = a.dst and pu.strip_slash(a.dst)
       local hits
       if not scope then
         hits = false
       elseif is_dir then
-        hits = (s and path_inside(s, scope)) or (d and path_inside(d, scope))
+        hits = (s and pu.inside(s, scope)) or (d and pu.inside(d, scope))
       else
-        hits = (s == strip_slash(scope)) or (d == strip_slash(scope))
+        hits = (s == pu.strip_slash(scope)) or (d == pu.strip_slash(scope))
       end
       if hits then
-        handled_actions[ai] = true
         if a.name == 'create' then
           add('+', a.dst)
         elseif a.name == 'delete' then
@@ -907,14 +836,7 @@ function M.open(node, opts)
   local function open_new_line(direction)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
-    local is_expanded = false
-    if cur_is_dir then
-      if cur_id and session.store[cur_id] then
-        is_expanded = session.expanded_dirs[session.store[cur_id].abs_path] == true
-      else
-        is_expanded = true
-      end
-    end
+    local is_expanded = cur_is_dir and pu.is_dir_expanded(session, cur_id) or false
     local target_depth = (direction == 'o' and cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
     local indent = string.rep('  ', target_depth)
     local placeholder = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions').PLACEHOLDER

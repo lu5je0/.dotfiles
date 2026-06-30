@@ -23,33 +23,84 @@ function M.parse_line(line)
   return id, name, depth, is_dir
 end
 
-function M.compute_actions(session, buf_lines)
-  local parse_line = M.parse_line
-  local seen_ids = {}
-  local stack = { { path = session.root_dir, depth = -1 } }
-  local actions = {}
-  local transitions = {}
+-- Expand a buffer's raw lines into the effective list used for action computation:
+-- empty lines are dropped and, for any collapsed directory whose line is present,
+-- its saved_children are spliced in after the directory line.
+function M.effective_buf_lines(session, all_lines)
+  local out = {}
+  for _, l in ipairs(all_lines) do
+    if #l > 0 then
+      out[#out + 1] = l
+      local lid, _, _, lis_dir = M.parse_line(l)
+      if lis_dir and lid and session.store[lid] then
+        local labs = session.store[lid].abs_path
+        if not session.expanded_dirs[labs] and session.saved_children[labs] then
+          for _, cl in ipairs(session.saved_children[labs]) do
+            out[#out + 1] = cl
+          end
+        end
+      end
+    end
+  end
+  return out
+end
 
-  for _, line in ipairs(buf_lines) do
-    local id, name, depth, is_dir = parse_line(line)
+-- Stateful single-pass walker over buf_lines. Each iteration yields:
+--   { line, id, name, depth, is_dir, parent_path, current_path }
+-- where current_path = parent_path .. '/' .. raw_name (nil for blank-name lines).
+-- The depth-based path stack is maintained internally so callers don't need to
+-- reimplement it. Stack push rules match compute_actions / refresh_diff_signs:
+--   * id + is_dir         -> push current_path
+--   * id + dir-in-store   -> push session.store[id].abs_path (collapsed-paste case)
+--   * no id + is_dir      -> push current_path
+function M.iter_lines(session, buf_lines)
+  local stack = { { path = session.root_dir, depth = -1 } }
+  local i = 0
+  return function()
+    i = i + 1
+    local line = buf_lines[i]
+    if line == nil then return nil end
+    local id, name, depth, is_dir = M.parse_line(line)
     while #stack > 1 and stack[#stack].depth >= depth do
       table.remove(stack)
     end
     local parent_path = stack[#stack].path
+    local current_path
+    if name and name ~= '' then
+      local raw_name = is_dir and name:sub(1, -2) or name
+      current_path = parent_path .. '/' .. raw_name
+    elseif id then
+      -- legacy fallback: id'd line with empty name acts as parent_path .. '/'
+      current_path = parent_path .. '/'
+    end
+    if id then
+      if is_dir and current_path then
+        table.insert(stack, { path = current_path, depth = depth })
+      elseif session.store[id] and session.store[id].type == 'directory' then
+        table.insert(stack, { path = session.store[id].abs_path, depth = depth })
+      end
+    elseif is_dir and current_path then
+      table.insert(stack, { path = current_path, depth = depth })
+    end
+    return { line = line, id = id, name = name, depth = depth, is_dir = is_dir,
+             parent_path = parent_path, current_path = current_path }
+  end
+end
+
+function M.compute_actions(session, buf_lines)
+  local seen_ids = {}
+  local actions = {}
+  local transitions = {}
+
+  for entry in M.iter_lines(session, buf_lines) do
+    local id, name, depth, is_dir = entry.id, entry.name, entry.depth, entry.is_dir
+    local parent_path = entry.parent_path
 
     if id then
       seen_ids[id] = true
       transitions[id] = transitions[id] or {}
-      local raw_name = is_dir and name:sub(1, -2) or name
-      local new_path = parent_path .. '/' .. raw_name
-      table.insert(transitions[id], new_path)
-      if is_dir then
-        table.insert(stack, { path = new_path, depth = depth })
-      elseif session.store[id] and session.store[id].type == 'directory' then
-        table.insert(stack, { path = session.store[id].abs_path, depth = depth })
-      end
-    else
-      if name == '' then goto continue end
+      table.insert(transitions[id], entry.current_path)
+    elseif name ~= '' then
       local segments = {}
       for seg in name:gmatch('[^/]+') do
         segments[#segments + 1] = seg
@@ -60,7 +111,6 @@ function M.compute_actions(session, buf_lines)
           current = current .. '/' .. seg
           table.insert(actions, { name = 'create', dst = current .. '/' })
         end
-        table.insert(stack, { path = parent_path .. '/' .. name:sub(1, -2), depth = depth })
       elseif #segments > 1 then
         local current = parent_path
         for si, seg in ipairs(segments) do
@@ -75,7 +125,6 @@ function M.compute_actions(session, buf_lines)
         table.insert(actions, { name = 'create', dst = parent_path .. '/' .. name })
       end
     end
-    ::continue::
   end
 
   for id, path in pairs(session.id_to_path) do
@@ -116,29 +165,19 @@ function M.compute_actions(session, buf_lines)
 end
 
 function M.check_duplicates(session, buf_lines)
-  local parse_line = M.parse_line
-  local stack = { { path = session.root_dir, depth = -1 } }
   local seen_names = {}
   local dupes = {}
 
-  for _, line in ipairs(buf_lines) do
-    local _, name, depth, is_dir = parse_line(line)
-    if name == '' then goto continue end
-    while #stack > 1 and stack[#stack].depth >= depth do
-      table.remove(stack)
+  for entry in M.iter_lines(session, buf_lines) do
+    if entry.current_path and entry.name ~= '' then
+      local key = entry.current_path
+      local raw_name = entry.is_dir and entry.name:sub(1, -2) or entry.name
+      if seen_names[key] then
+        dupes[#dupes + 1] = raw_name
+      else
+        seen_names[key] = true
+      end
     end
-    local parent_path = stack[#stack].path
-    local raw_name = is_dir and name:sub(1, -2) or name
-    local key = parent_path .. '/' .. raw_name
-    if seen_names[key] then
-      dupes[#dupes + 1] = raw_name
-    else
-      seen_names[key] = true
-    end
-    if is_dir then
-      table.insert(stack, { path = parent_path .. '/' .. raw_name, depth = depth })
-    end
-    ::continue::
   end
   return dupes
 end

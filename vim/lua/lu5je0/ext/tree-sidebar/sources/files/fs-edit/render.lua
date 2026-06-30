@@ -1,6 +1,7 @@
 local config = require('lu5je0.ext.tree-sidebar.config')
 local sidebar_render = require('lu5je0.ext.tree-sidebar.render')
 local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
+local pu = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.path_util')
 
 local M = {}
 
@@ -185,54 +186,40 @@ function M.refresh_diff_signs(session, buf_nr)
   local seen_ids = {}
   local id_to_line = {}
   local dir_path_to_line = {}
-  local stack = { { path = session.root_dir, depth = -1 } }
-  for i = 1, #buf_lines do
-    local id, name, depth, is_dir = parse_line(buf_lines[i])
+  local i = 0
+  for entry in actions_mod.iter_lines(session, buf_lines) do
+    i = i + 1
     local lnum = line_map[i]
-    while #stack > 1 and stack[#stack].depth >= depth do
-      table.remove(stack)
-    end
-    local parent_path = stack[#stack].path
+    local id, name, is_dir = entry.id, entry.name, entry.is_dir
+    local new_path = entry.current_path
 
     if id then
       seen_ids[id] = true
       id_to_line[id] = lnum
-      local raw_name = is_dir and name:sub(1, -2) or name
-      local new_path = parent_path .. '/' .. raw_name
       local old_path = session.id_to_path[id] or (session.store[id] and session.store[id].abs_path)
-      if old_path and new_path ~= old_path then
+      if old_path and new_path and new_path ~= old_path then
         place(lnum, '▎', 'GitSignsChange')
       end
-      if is_dir then
+      if is_dir and new_path then
         dir_path_to_line[new_path] = lnum
-        table.insert(stack, { path = new_path, depth = depth })
       elseif session.store[id] and session.store[id].type == 'directory' then
         dir_path_to_line[session.store[id].abs_path] = lnum
-        table.insert(stack, { path = session.store[id].abs_path, depth = depth })
       end
     else
       if name and name ~= '' then
         place(lnum, '▎', 'GitSignsAdd')
-      end
-      if is_dir then
-        local raw = name:sub(1, -2)
-        local new_dir = parent_path .. '/' .. raw
-        dir_path_to_line[new_dir] = lnum
-        table.insert(stack, { path = new_dir, depth = depth })
+        if is_dir and new_path then
+          dir_path_to_line[new_path] = lnum
+        end
       end
     end
   end
 
   local function mark_ancestors(p)
-    if not p or p == '' then return end
-    if vim.endswith(p, '/') then p = p:sub(1, -2) end
-    local parent = vim.fs.dirname(p)
-    while parent and parent ~= session.root_dir and parent ~= '/' and parent ~= '.' do
+    pu.iter_ancestors(p, session.root_dir, function(parent)
       local lnum = dir_path_to_line[parent]
       if lnum then place(lnum, '▎', 'GitSignsChange') end
-      if parent == vim.fs.dirname(parent) then break end
-      parent = vim.fs.dirname(parent)
-    end
+    end)
   end
   for _, a in ipairs(act) do
     if a.src then mark_ancestors(a.src) end
