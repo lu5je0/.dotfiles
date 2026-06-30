@@ -348,6 +348,11 @@ function M.open(node, opts)
   vim.bo[buf].swapfile = false
   vim.bo[buf].expandtab = true
   vim.bo[buf].shiftwidth = 2
+  vim.b[buf].winbar_display = {
+    name = (vim.fs.basename(root_dir) ~= '' and vim.fs.basename(root_dir) or root_dir) .. '/',
+    icon = '',
+    icon_hl = 'Directory'
+  }
 
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   refresh_decorations(session, buf)

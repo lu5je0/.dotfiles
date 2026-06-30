@@ -135,8 +135,13 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
   target_size = target_size or opts.tab_size
   local devicons = opts.show_devicons and get_devicons() or nil
 
+  local ok_disp, display = pcall(function() return vim.b[buf].winbar_display end)
+  if not ok_disp then display = nil end
+
   local name
-  if buf_name == '' then
+  if display and display.name then
+    name = display.name
+  elseif buf_name == '' then
     local n = state.buffer_name_map[buf]
     name = n and ('Untitled-' .. n) or '[No Name]'
   else
@@ -162,7 +167,12 @@ local function buffer_segment(buf, ordinal, is_selected, all_basenames, buf_name
 
   local icon_part = ''
   local icon_visible_w = 0
-  if devicons then
+  if display and display.icon then
+    local icon_hl = display.icon_hl or hl_buf
+    local combined_hl = get_icon_hl(icon_hl, hl_buf)
+    icon_part = '%#' .. combined_hl .. '#' .. display.icon .. ' %#' .. hl_buf .. '#'
+    icon_visible_w = 2
+  elseif devicons then
     local base_for_icon = basename(buf_name)
     local ext = base_for_icon:match('%.([^%.]+)$') or ''
     local icon, icon_hl = devicons.get_icon(base_for_icon, ext, { default = true })
