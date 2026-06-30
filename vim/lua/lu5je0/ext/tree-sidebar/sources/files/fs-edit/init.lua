@@ -304,7 +304,7 @@ function M.open(node, opts)
 
   for b, s in pairs(sessions) do
     if s.root_dir == root_dir and vim.api.nvim_buf_is_valid(b) then
-      if opts.replace then
+      if opts.replace or opts.inplace then
         vim.api.nvim_win_set_buf(0, b)
       else
         local target, cancelled = win_mod.get_target_win()
@@ -364,6 +364,8 @@ function M.open(node, opts)
     if vim.api.nvim_buf_is_valid(old_buf) and not vim.bo[old_buf].modified and old_buf ~= buf then
       pcall(vim.api.nvim_buf_delete, old_buf, {})
     end
+  elseif opts.inplace then
+    vim.api.nvim_win_set_buf(0, buf)
   else
     local target, cancelled = win_mod.get_target_win()
     if cancelled then
@@ -826,9 +828,12 @@ function M.open(node, opts)
   vim.keymap.set('n', '<leader>q', quit_with_check, { buffer = buf, nowait = true })
 end
 
-function M.open_dir(dir_path)
+function M.open_dir(dir_path, opts)
+  opts = opts or {}
   dir_path = vim.fn.fnamemodify(dir_path, ':p'):gsub('/$', '')
-  M.open({ type = 'directory', abs_path = dir_path }, { replace = true })
+  local replace = opts.replace
+  if replace == nil then replace = true end
+  M.open({ type = 'directory', abs_path = dir_path }, { replace = replace, inplace = opts.inplace })
 end
 
 M._parse_line = parse_line
