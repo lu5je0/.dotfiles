@@ -82,6 +82,10 @@ local config = {
     end
   end)(),
   max_fps = 240,
+  inactive_pane_hsb = {
+    saturation = 1.0,
+    brightness = 1.0,
+  },
   -- window_background_opacity = 0.992,
   -- text_background_opacity = 0.9,
   color_scheme = "Gruvbox Dark (Gogh)",
