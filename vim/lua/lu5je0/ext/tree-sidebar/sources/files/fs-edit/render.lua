@@ -184,6 +184,7 @@ function M.refresh_diff_signs(session, buf_nr)
 
   local seen_ids = {}
   local id_to_line = {}
+  local dir_path_to_line = {}
   local stack = { { path = session.root_dir, depth = -1 } }
   for i = 1, #buf_lines do
     local id, name, depth, is_dir = parse_line(buf_lines[i])
@@ -203,8 +204,10 @@ function M.refresh_diff_signs(session, buf_nr)
         place(lnum, '▎', 'GitSignsChange')
       end
       if is_dir then
+        dir_path_to_line[new_path] = lnum
         table.insert(stack, { path = new_path, depth = depth })
       elseif session.store[id] and session.store[id].type == 'directory' then
+        dir_path_to_line[session.store[id].abs_path] = lnum
         table.insert(stack, { path = session.store[id].abs_path, depth = depth })
       end
     else
@@ -213,9 +216,27 @@ function M.refresh_diff_signs(session, buf_nr)
       end
       if is_dir then
         local raw = name:sub(1, -2)
-        table.insert(stack, { path = parent_path .. '/' .. raw, depth = depth })
+        local new_dir = parent_path .. '/' .. raw
+        dir_path_to_line[new_dir] = lnum
+        table.insert(stack, { path = new_dir, depth = depth })
       end
     end
+  end
+
+  local function mark_ancestors(p)
+    if not p or p == '' then return end
+    if vim.endswith(p, '/') then p = p:sub(1, -2) end
+    local parent = vim.fs.dirname(p)
+    while parent and parent ~= session.root_dir and parent ~= '/' and parent ~= '.' do
+      local lnum = dir_path_to_line[parent]
+      if lnum then place(lnum, '▎', 'GitSignsChange') end
+      if parent == vim.fs.dirname(parent) then break end
+      parent = vim.fs.dirname(parent)
+    end
+  end
+  for _, a in ipairs(act) do
+    if a.src then mark_ancestors(a.src) end
+    if a.dst then mark_ancestors(a.dst) end
   end
 
   if session.id_order then
