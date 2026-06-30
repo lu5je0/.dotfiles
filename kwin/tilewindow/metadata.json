@@ -1,0 +1,10 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Id": "tilewindow",
+        "Name": "Tile Window",
+        "Version": "1.0",
+        "Description": "Vim-style window tiling with Ctrl+Meta+HJKLI"
+    },
+    "X-Plasma-API": "javascript"
+}

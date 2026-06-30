@@ -36,8 +36,8 @@ local font = (function()
     r.text_font = wezterm.font_with_fallback {
       { family = "JetBrainsMonoNL Nerd Font Mono", weight = "Medium", stretch = "Normal", style = "Normal" },
     }
-    r.tab_bar_font_size = 12
-    r.font_size = 14.5
+    r.tab_bar_font_size = 11
+    r.font_size = 12.5
   end
   return r
 end)()
@@ -113,6 +113,8 @@ local config = {
   line_height = (function()
     if is_mac then
       return 0.95
+    elseif is_linux then
+      return 1.05
     end
     return nil
   end)(),
