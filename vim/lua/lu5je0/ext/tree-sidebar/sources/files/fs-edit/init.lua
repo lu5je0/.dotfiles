@@ -143,6 +143,7 @@ local function remove_children_lines(session, buf, line_nr, depth)
 end
 
 local function on_enter(session)
+  local was_modified = vim.bo[session.buf].modified
   local line_nr = vim.api.nvim_win_get_cursor(0)[1]
   local line = vim.api.nvim_buf_get_lines(session.buf, line_nr - 1, line_nr, false)[1]
   local id, _, depth, is_dir = parse_line(line)
@@ -225,9 +226,7 @@ local function on_enter(session)
       end
       refresh_decorations(session, session.buf)
     end
-    if not next(session.saved_children) then
-      vim.bo[session.buf].modified = false
-    end
+    vim.bo[session.buf].modified = was_modified or next(session.saved_children) ~= nil
   elseif id and not is_dir then
     local entry = session.store[id]
     if entry then
