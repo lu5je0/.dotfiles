@@ -152,6 +152,10 @@ local function on_enter(session)
     local entry = session.store[id]
     if not entry then return end
     local abs = entry.abs_path
+    if pu.is_displaced(session, session.buf, line_nr) then
+      vim.notify('Save first to expand', vim.log.levels.ERROR)
+      return
+    end
     if session.expanded_dirs[abs] then
       session.expanded_dirs[abs] = nil
       local total = vim.api.nvim_buf_line_count(session.buf)
@@ -449,7 +453,9 @@ function M.open(node, opts)
   local function smart_paste(put_cmd)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
-    local is_expanded = cur_is_dir and pu.is_dir_expanded(session, cur_id) or false
+    local cur_row = vim.api.nvim_win_get_cursor(0)[1]
+    local is_expanded = cur_is_dir and (pu.is_dir_expanded(session, cur_id)
+      or pu.is_displaced(session, buf, cur_row)) or false
     local target_depth = (cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
 
     local before = vim.api.nvim_buf_line_count(buf)
@@ -835,12 +841,13 @@ function M.open(node, opts)
   local function open_new_line(direction)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
-    local is_expanded = cur_is_dir and pu.is_dir_expanded(session, cur_id) or false
+    local row = vim.api.nvim_win_get_cursor(0)[1]
+    local is_expanded = cur_is_dir and (pu.is_dir_expanded(session, cur_id)
+      or pu.is_displaced(session, buf, row)) or false
     local target_depth = (direction == 'o' and cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
     local indent = string.rep('  ', target_depth)
     local placeholder = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions').PLACEHOLDER
 
-    local row = vim.api.nvim_win_get_cursor(0)[1]
     local insert_row = direction == 'o' and row or (row - 1)
     vim.api.nvim_buf_set_lines(buf, insert_row, insert_row, false, { indent .. placeholder })
     vim.api.nvim_win_set_cursor(0, { insert_row + 1, #indent + #placeholder })

@@ -79,11 +79,17 @@ function M.refresh_decorations(session, buf_nr)
   end
 
   local continuation = {}
+  local path_stack = { { path = session.root_dir, depth = -1 } }
   for i = 1, count do
     local d = depths[i]
     local p = parsed[i]
     local indent = p.line:match('^(%s*)')
     local line_idx = i - 1
+
+    while #path_stack > 1 and path_stack[#path_stack].depth >= d do
+      table.remove(path_stack)
+    end
+    local parent_path = path_stack[#path_stack].path
 
     if d >= 1 then
       local guide_parts = {}
@@ -108,10 +114,28 @@ function M.refresh_decorations(session, buf_nr)
     local icon, icon_hl
     if p.id and session.store[p.id] then
       local entry = session.store[p.id]
-      local expanded = p.is_dir and session.expanded_dirs[entry.abs_path]
+      local expanded
+      if p.is_dir then
+        local raw_name = p.name:sub(1, -2)
+        local current_path = parent_path .. '/' .. raw_name
+        local displaced = current_path ~= entry.abs_path
+        expanded = not displaced and session.expanded_dirs[entry.abs_path]
+      end
       icon, icon_hl = get_icon(entry, expanded)
+      if p.is_dir then
+        if session.expanded_dirs[entry.abs_path] and not expanded then
+          table.insert(path_stack, { path = parent_path .. '/' .. p.name:sub(1, -2), depth = d })
+        else
+          table.insert(path_stack, { path = expanded and entry.abs_path or (parent_path .. '/' .. p.name:sub(1, -2)), depth = d })
+        end
+      elseif entry.type == 'directory' then
+        table.insert(path_stack, { path = entry.abs_path, depth = d })
+      end
     else
       icon, icon_hl = get_icon_for_name(p.name, p.is_dir)
+      if p.is_dir and p.name ~= '' then
+        table.insert(path_stack, { path = parent_path .. '/' .. p.name:sub(1, -2), depth = d })
+      end
     end
     if icon then
       local indent_len = #indent

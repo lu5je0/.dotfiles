@@ -321,13 +321,19 @@ function M.execute_actions(actions)
       done[i] = true
     end
   end
-  -- phase 2: creates
+  -- phase 2: copies
+  for i, a in ipairs(actions) do
+    if not done[i] and a.name == 'copy' then
+      table.insert(ordered, a); done[i] = true
+    end
+  end
+  -- phase 3: creates
   for i, a in ipairs(actions) do
     if not done[i] and a.name == 'create' then
       table.insert(ordered, a); done[i] = true
     end
   end
-  -- phase 3: remaining moves
+  -- phase 4: remaining moves
   for i, a in ipairs(actions) do
     if not done[i] and a.name == 'move' then
       if detour[i] then
@@ -388,6 +394,10 @@ function M.execute_actions(actions)
     elseif action.name == 'copy' then
       local src = strip_trailing_slash(action.src)
       local dst = strip_trailing_slash(action.dst)
+      local new_parent = vim.fs.dirname(dst)
+      if not vim.uv.fs_stat(new_parent) then
+        vim.fn.mkdir(new_parent, 'p')
+      end
       vim.fn.system({ 'cp', '-r', src, dst })
     end
   end
