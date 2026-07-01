@@ -188,7 +188,7 @@ function M.refresh_diff_signs(session, buf_nr)
   local dupes = check_duplicates(session, buf_lines)
 
   if #act == 0 and #dupes == 0 then
-    if vim.bo[buf_nr].modified and next(session.saved_children) == nil then
+    if vim.bo[buf_nr].modified and not actions_mod.has_pending_changes(session, all_lines) then
       vim.bo[buf_nr].modified = false
     end
     return
@@ -235,6 +235,16 @@ function M.refresh_diff_signs(session, buf_nr)
         if is_dir and new_path then
           dir_path_to_line[new_path] = lnum
         end
+      end
+    end
+  end
+
+  for i_idx = 1, #buf_lines do
+    local lid, _, _, lis_dir = parse_line(buf_lines[i_idx])
+    if lis_dir and lid and session.store[lid] then
+      local labs = session.store[lid].abs_path
+      if not session.expanded_dirs[labs] and session.saved_children[labs] then
+        place(line_map[i_idx], '▎', 'GitSignsChange')
       end
     end
   end

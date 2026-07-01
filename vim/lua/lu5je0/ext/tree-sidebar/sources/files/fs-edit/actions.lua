@@ -183,6 +183,15 @@ function M.check_duplicates(session, buf_lines)
   return dupes
 end
 
+function M.has_pending_changes(session, visible_lines)
+  local buf_lines = M.effective_buf_lines(session, visible_lines)
+  local actions = M.compute_actions(session, buf_lines)
+  if #actions > 0 then return true end
+  local dupes = M.check_duplicates(session, buf_lines)
+  if #dupes > 0 then return true end
+  return next(session.saved_children) ~= nil
+end
+
 local function has_trash()
   return vim.fn.executable('q-trash') == 1
 end

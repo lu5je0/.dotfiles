@@ -262,7 +262,9 @@ local function mutate(session)
   local actions = compute_actions(session, buf_lines)
 
   if #actions == 0 and #dupes == 0 then
-    vim.bo[session.buf].modified = false
+    if next(session.saved_children) == nil then
+      vim.bo[session.buf].modified = false
+    end
     return
   end
 
