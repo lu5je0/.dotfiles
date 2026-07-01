@@ -188,7 +188,7 @@ function M.refresh_diff_signs(session, buf_nr)
   local dupes = check_duplicates(session, buf_lines)
 
   if #act == 0 and #dupes == 0 then
-    if vim.bo[buf_nr].modified then
+    if vim.bo[buf_nr].modified and next(session.saved_children) == nil then
       vim.bo[buf_nr].modified = false
     end
     return

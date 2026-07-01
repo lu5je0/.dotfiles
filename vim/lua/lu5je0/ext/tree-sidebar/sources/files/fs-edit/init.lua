@@ -182,6 +182,18 @@ local function on_enter(session)
             end
           end
         end
+        if not has_diff then
+          for _, cl in ipairs(child_lines_cache) do
+            local cid, _, _, cis_dir = parse_line(cl)
+            if cis_dir and cid and session.store[cid] then
+              local cabs = session.store[cid].abs_path
+              if session.saved_children[cabs] then
+                has_diff = true
+                break
+              end
+            end
+          end
+        end
         if has_diff then
           session.saved_children[abs] = child_lines_cache
         else

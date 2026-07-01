@@ -28,20 +28,21 @@ end
 -- its saved_children are spliced in after the directory line.
 function M.effective_buf_lines(session, all_lines)
   local out = {}
-  for _, l in ipairs(all_lines) do
-    if #l > 0 then
-      out[#out + 1] = l
-      local lid, _, _, lis_dir = M.parse_line(l)
-      if lis_dir and lid and session.store[lid] then
-        local labs = session.store[lid].abs_path
-        if not session.expanded_dirs[labs] and session.saved_children[labs] then
-          for _, cl in ipairs(session.saved_children[labs]) do
-            out[#out + 1] = cl
+  local function expand(lines)
+    for _, l in ipairs(lines) do
+      if #l > 0 then
+        out[#out + 1] = l
+        local lid, _, _, lis_dir = M.parse_line(l)
+        if lis_dir and lid and session.store[lid] then
+          local labs = session.store[lid].abs_path
+          if not session.expanded_dirs[labs] and session.saved_children[labs] then
+            expand(session.saved_children[labs])
           end
         end
       end
     end
   end
+  expand(all_lines)
   return out
 end
 
@@ -342,12 +343,6 @@ function M.execute_actions(actions)
         table.insert(ordered, a)
       end
       done[i] = true
-    end
-  end
-  -- phase 4: copies
-  for i, a in ipairs(actions) do
-    if not done[i] and a.name == 'copy' then
-      table.insert(ordered, a); done[i] = true
     end
   end
   -- phase 5: remaining deletes
