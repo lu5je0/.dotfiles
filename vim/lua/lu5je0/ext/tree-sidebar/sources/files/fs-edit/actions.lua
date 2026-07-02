@@ -128,25 +128,108 @@ function M.compute_actions(session, buf_lines)
     end
   end
 
+  -- collect top-level ancestor moves for suppression of redundant child moves
+  local ancestor_moves = {} -- non-phantom dir renames
+  local copy_shadow = session.copy_shadow or {}
+
+  for id, new_paths in pairs(transitions) do
+    local id_in_snapshot = session.id_to_path[id]
+    local store_entry = session.store[id]
+    if store_entry and store_entry.type == 'directory' and not copy_shadow[id] then
+      local old_path = id_in_snapshot or store_entry.abs_path
+      local keep_original = vim.tbl_contains(new_paths, old_path)
+      local collapsed = not id_in_snapshot
+      if not keep_original and not collapsed then
+        local last = new_paths[#new_paths]
+        if last ~= old_path then
+          ancestor_moves[#ancestor_moves + 1] = { old = old_path, new = last }
+        end
+      end
+    end
+  end
+
+  -- phantom dir targets and modified-subtree detection
+  local phantom_dir_targets = {}
+  for id, new_paths in pairs(transitions) do
+    if copy_shadow[id] and session.store[id] and session.store[id].type == 'directory' then
+      phantom_dir_targets[id] = new_paths[#new_paths]
+    end
+  end
+  local dir_has_child_phantom = {}
+  for cid, cnew_paths in pairs(transitions) do
+    if copy_shadow[cid] then
+      local ctarget = cnew_paths[#cnew_paths]
+      for did, dtarget in pairs(phantom_dir_targets) do
+        if did ~= cid and vim.startswith(ctarget, dtarget .. '/') then
+          dir_has_child_phantom[did] = true
+        end
+      end
+    end
+  end
+
+  local function implied_by_ancestor_move(old_path, new_path)
+    for _, am in ipairs(ancestor_moves) do
+      if vim.startswith(old_path, am.old .. '/') then
+        local suffix = old_path:sub(#am.old + 1)
+        if am.new .. suffix == new_path then
+          return true
+        end
+      end
+    end
+    return false
+  end
+
+  local function under_ancestor_move(path)
+    for _, am in ipairs(ancestor_moves) do
+      if path == am.old or vim.startswith(path, am.old .. '/') then
+        return am
+      end
+    end
+    return nil
+  end
+
   for id, path in pairs(session.id_to_path) do
     if not seen_ids[id] then
-      table.insert(actions, { name = 'delete', src = path })
+      if not under_ancestor_move(path) and not copy_shadow[id] then
+        table.insert(actions, { name = 'delete', src = path })
+      end
     end
   end
 
   for id, new_paths in pairs(transitions) do
-    local id_in_snapshot = session.id_to_path[id]
-    local old_path = id_in_snapshot or (session.store[id] and session.store[id].abs_path)
-    if old_path then
-      local keep_original = vim.tbl_contains(new_paths, old_path)
-      local collapsed = not id_in_snapshot and session.store[id] ~= nil
-      for i, new_path in ipairs(new_paths) do
-        if new_path ~= old_path then
-          if keep_original or collapsed or i < #new_paths then
-            table.insert(actions, { name = 'copy', src = old_path, dst = new_path })
-          else
-            table.insert(actions, { name = 'move', src = old_path, dst = new_path })
+    local shadow_src = copy_shadow[id]
+    if shadow_src then
+      -- phantom entry: independent of buffer position, always emit copy from shadow
+      local target = new_paths[#new_paths]
+      local store_entry = session.store[id]
+      local is_dir = store_entry and store_entry.type == 'directory'
+      if is_dir and dir_has_child_phantom[id] then
+        -- subtree modified in buffer: create the dir; children emit their own copies
+        table.insert(actions, { name = 'create', dst = target .. '/' })
+      else
+        -- unmodified subtree or a phantom file: single copy (bulk cp -r for dirs)
+        table.insert(actions, { name = 'copy', src = shadow_src, dst = target })
+      end
+    else
+      local id_in_snapshot = session.id_to_path[id]
+      local old_path = id_in_snapshot or (session.store[id] and session.store[id].abs_path)
+      if old_path then
+        local keep_original = vim.tbl_contains(new_paths, old_path)
+        local collapsed = not id_in_snapshot and session.store[id] ~= nil
+        local multi_relocate = not keep_original and not collapsed and #new_paths > 1
+        for i, new_path in ipairs(new_paths) do
+          if new_path ~= old_path then
+            if implied_by_ancestor_move(old_path, new_path) then
+              -- parent rename carries this child; skip
+            elseif keep_original or collapsed or multi_relocate or i < #new_paths then
+              table.insert(actions, { name = 'copy', src = old_path, dst = new_path })
+            else
+              table.insert(actions, { name = 'move', src = old_path, dst = new_path })
+            end
           end
+        end
+        if multi_relocate then
+          table.insert(actions, { name = 'delete', src = old_path })
         end
       end
     end
@@ -189,7 +272,9 @@ function M.has_pending_changes(session, visible_lines)
   if #actions > 0 then return true end
   local dupes = M.check_duplicates(session, buf_lines)
   if #dupes > 0 then return true end
-  return next(session.saved_children) ~= nil
+  if next(session.saved_children) ~= nil then return true end
+  if session.copy_shadow and next(session.copy_shadow) ~= nil then return true end
+  return false
 end
 
 local function has_trash()
@@ -267,103 +352,134 @@ local function do_rename(src, dst)
   return false, err
 end
 
-function M.execute_actions(actions)
-  -- build sets of paths that each action occupies/frees
-  local dst_paths = {} -- paths that will be written to (need to be free)
-  local src_paths = {} -- paths that will be freed (delete src, move src)
-  for _, a in ipairs(actions) do
-    if a.dst then
-      dst_paths[strip_trailing_slash(a.dst)] = true
+function M.plan_actions(actions)
+  local function strip(p) return strip_trailing_slash(p) end
+  local expanded = {}
+  do
+    local move_by_src = {}
+    for _, a in ipairs(actions) do
+      if a.name == 'move' and a.src then
+        move_by_src[strip(a.src)] = a
+      end
     end
-    if a.name == 'delete' then
-      src_paths[a.src] = true
-    elseif a.name == 'move' and a.src then
-      src_paths[a.src] = true
+    local handled = {}
+    for i, a in ipairs(actions) do
+      if a.name == 'move' and a.src and not handled[a] then
+        local s = strip(a.src)
+        local d = strip(a.dst)
+        local other = move_by_src[d]
+        if other and other ~= a and strip(other.dst) == s and not handled[other] then
+          local tmp = s .. '.fs-edit-swap-' .. i
+          local stage1 = { name = 'move', src = a.src, dst = tmp }
+          local stage2 = { name = 'move', src = tmp, dst = a.dst }
+          expanded[#expanded + 1] = stage1
+          expanded[#expanded + 1] = other
+          expanded[#expanded + 1] = stage2
+          stage2._after_action = other
+          handled[a] = true
+          handled[other] = true
+        else
+          expanded[#expanded + 1] = a
+          handled[a] = true
+        end
+      elseif not handled[a] then
+        expanded[#expanded + 1] = a
+        handled[a] = true
+      end
     end
   end
 
-  -- detect path-swap cycles: move A->B and move B->A (mutual src/dst dependency).
-  -- For each such pair we route one move via a temp path so neither clobbers the other.
-  local move_by_src = {}
-  for i, a in ipairs(actions) do
-    if a.name == 'move' and a.src then
-      move_by_src[strip_trailing_slash(a.src)] = i
+  local nodes = {}
+  for _, a in ipairs(expanded) do
+    local reads, consumes, writes = nil, nil, nil
+    if a.name == 'create' then
+      writes = strip(a.dst)
+    elseif a.name == 'delete' then
+      reads = a.src
+      consumes = a.src
+    elseif a.name == 'move' then
+      reads = strip(a.src)
+      consumes = strip(a.src)
+      writes = strip(a.dst)
+    elseif a.name == 'copy' then
+      reads = strip(a.src)
+      writes = strip(a.dst)
     end
+    nodes[#nodes + 1] = { action = a, reads = reads, consumes = consumes, writes = writes }
   end
-  local detour = {} -- i -> { stage1 = { name='move', src=src, dst=tmp }, stage2 = { name='move', src=tmp, dst=dst } }
-  local seen_cycle = {}
-  for i, a in ipairs(actions) do
-    if a.name == 'move' and a.src and not seen_cycle[i] then
-      local src = strip_trailing_slash(a.src)
-      local dst = strip_trailing_slash(a.dst)
-      local j = move_by_src[dst]
-      if j and j ~= i then
-        local other = actions[j]
-        if strip_trailing_slash(other.dst) == src then
-          local tmp = src .. '.fs-edit-swap-' .. i
-          detour[i] = {
-            stage1 = { name = 'move', src = a.src, dst = tmp },
-            stage2 = { name = 'move', src = tmp, dst = a.dst },
-          }
-          seen_cycle[i] = true
-          seen_cycle[j] = true
+
+  local function covers(ancestor, descendant)
+    if not ancestor or not descendant then return false end
+    return descendant == ancestor or vim.startswith(descendant, ancestor .. '/')
+  end
+  local function strict_ancestor(ancestor, descendant)
+    if not ancestor or not descendant then return false end
+    return descendant ~= ancestor and vim.startswith(descendant, ancestor .. '/')
+  end
+
+  local n = #nodes
+  local indeg = {}
+  local edges = {}
+  for i = 1, n do indeg[i] = 0; edges[i] = {} end
+
+  local function add_edge(i, j)
+    if i == j then return end
+    for _, k in ipairs(edges[i]) do if k == j then return end end
+    edges[i][#edges[i] + 1] = j
+    indeg[j] = indeg[j] + 1
+  end
+
+  for i = 1, n do
+    for j = 1, n do
+      if i ~= j then
+        local a, b = nodes[i], nodes[j]
+        if a.reads and b.consumes and covers(b.consumes, a.reads) then
+          add_edge(i, j)
+        end
+        if a.writes and b.writes and strict_ancestor(a.writes, b.writes) then
+          add_edge(i, j)
+        end
+        if a.writes and b.reads and strict_ancestor(a.writes, b.reads) then
+          add_edge(i, j)
+        end
+        if a.action.name == 'delete' and b.action.name == 'create'
+          and a.consumes and b.writes and a.consumes == b.writes then
+          add_edge(i, j)
+        end
+        if b.action._after_action and a.action == b.action._after_action then
+          add_edge(i, j)
         end
       end
     end
   end
 
-  -- phase 1: actions that free paths needed by others (delete/move whose src = another action's dst)
+  local queue = {}
+  for i = 1, n do
+    if indeg[i] == 0 then queue[#queue + 1] = i end
+  end
   local ordered = {}
-  local done = {}
-  for i, a in ipairs(actions) do
-    if a.name == 'delete' and dst_paths[a.src] then
-      table.insert(ordered, a); done[i] = true
+  local head = 1
+  while head <= #queue do
+    local i = queue[head]; head = head + 1
+    ordered[#ordered + 1] = nodes[i].action
+    for _, j in ipairs(edges[i]) do
+      indeg[j] = indeg[j] - 1
+      if indeg[j] == 0 then queue[#queue + 1] = j end
     end
   end
-  -- moves whose src is needed by a create (rename A→B then create new A)
-  for i, a in ipairs(actions) do
-    if not done[i] and a.name == 'move' and a.src and dst_paths[a.src] then
-      if detour[i] then
-        table.insert(ordered, detour[i].stage1)
-      else
-        table.insert(ordered, a)
-      end
-      done[i] = true
-    end
+
+  if #ordered ~= n then
+    vim.notify('fs-edit: dependency cycle detected, falling back to input order', vim.log.levels.WARN)
+    ordered = {}
+    for _, node in ipairs(nodes) do ordered[#ordered + 1] = node.action end
   end
-  -- phase 2: copies
-  for i, a in ipairs(actions) do
-    if not done[i] and a.name == 'copy' then
-      table.insert(ordered, a); done[i] = true
-    end
-  end
-  -- phase 3: creates
-  for i, a in ipairs(actions) do
-    if not done[i] and a.name == 'create' then
-      table.insert(ordered, a); done[i] = true
-    end
-  end
-  -- phase 4: remaining moves
-  for i, a in ipairs(actions) do
-    if not done[i] and a.name == 'move' then
-      if detour[i] then
-        table.insert(ordered, detour[i].stage1)
-      else
-        table.insert(ordered, a)
-      end
-      done[i] = true
-    end
-  end
-  -- phase 5: remaining deletes
-  for i, a in ipairs(actions) do
-    if not done[i] and a.name == 'delete' then
-      table.insert(ordered, a); done[i] = true
-    end
-  end
-  -- phase 6: finalize swap detours (tmp -> final dst)
-  for i, _ in pairs(detour) do
-    table.insert(ordered, detour[i].stage2)
-  end
+
+  return ordered
+end
+
+function M.execute_actions(actions)
+  local ordered = M.plan_actions(actions)
+  local function strip(p) return strip_trailing_slash(p) end
 
   for _, action in ipairs(ordered) do
     if action.name == 'create' then
@@ -383,8 +499,8 @@ function M.execute_actions(actions)
       end
       close_bufs_under(action.src)
     elseif action.name == 'move' then
-      local src = strip_trailing_slash(action.src)
-      local dst = strip_trailing_slash(action.dst)
+      local src = strip(action.src)
+      local dst = strip(action.dst)
       local new_parent = vim.fs.dirname(dst)
       if not vim.uv.fs_stat(new_parent) then
         vim.fn.mkdir(new_parent, 'p')
@@ -396,8 +512,8 @@ function M.execute_actions(actions)
         vim.notify('fs-edit: move failed: ' .. tostring(err), vim.log.levels.ERROR)
       end
     elseif action.name == 'copy' then
-      local src = strip_trailing_slash(action.src)
-      local dst = strip_trailing_slash(action.dst)
+      local src = strip(action.src)
+      local dst = strip(action.dst)
       local new_parent = vim.fs.dirname(dst)
       if not vim.uv.fs_stat(new_parent) then
         vim.fn.mkdir(new_parent, 'p')
@@ -435,11 +551,7 @@ function M.format_action(action, root_dir)
 end
 
 function M.sort_actions(actions)
-  local type_order = { create = 1, move = 2, copy = 3, delete = 4 }
-  local sorted = {}
-  for _, a in ipairs(actions) do sorted[#sorted + 1] = a end
-  table.sort(sorted, function(a, b) return (type_order[a.name] or 9) < (type_order[b.name] or 9) end)
-  return sorted
+  return M.plan_actions(actions)
 end
 
 return M

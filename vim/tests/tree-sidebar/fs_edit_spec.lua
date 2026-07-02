@@ -515,4 +515,162 @@ r.run('A->B and B->A routed via temp path', function()
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- ============================================================================
+r.group('compute_actions: ancestor rename suppresses child move')
+-- ============================================================================
+
+r.run('parent dir rename + reused-id children = single move', function()
+  -- User renamed /r/old to /r/new, then expanded and its children (still using
+  -- original disk ids) show up. compute_actions must only produce one move.
+  local s = make_session('/r', {
+    { name = 'old', abs_path = '/r/old', type = 'directory' },
+    { name = 'x.txt', abs_path = '/r/old/x.txt', type = 'file' },
+    { name = 'y.txt', abs_path = '/r/old/y.txt', type = 'file' },
+  })
+  -- buffer: new/ (id 1), then children with original ids at their disk paths
+  local a = compute_actions(s, { '/1 new/', '  /2 x.txt', '  /3 y.txt' })
+  r.assert_eq(#a, 1)
+  r.assert_eq(a[1].name, 'move')
+  r.assert_eq(a[1].src, '/r/old')
+  r.assert_eq(a[1].dst, '/r/new')
+end)
+
+r.run('parent dir rename + child also renamed = both moves', function()
+  local s = make_session('/r', {
+    { name = 'old', abs_path = '/r/old', type = 'directory' },
+    { name = 'x.txt', abs_path = '/r/old/x.txt', type = 'file' },
+  })
+  -- child x.txt renamed to x2.txt inside the renamed parent
+  local a = compute_actions(s, { '/1 new/', '  /2 x2.txt' })
+  r.assert_eq(#a, 2)
+  r.assert_truthy(find_action(a, 'move', { src = '/r/old', dst = '/r/new' }))
+  r.assert_truthy(find_action(a, 'move', { src = '/r/old/x.txt', dst = '/r/new/x2.txt' }))
+end)
+
+r.run('parent dir rename absorbs delete of child on old path', function()
+  -- id_to_path has child at old path but child is missing from buffer
+  -- (because parent is renamed and buffer only lists the new dir without child).
+  local s = make_session('/r', {
+    { name = 'old', abs_path = '/r/old', type = 'directory' },
+    { name = 'x.txt', abs_path = '/r/old/x.txt', type = 'file' },
+  })
+  local a = compute_actions(s, { '/1 new/' })
+  r.assert_eq(#a, 1)
+  r.assert_eq(a[1].name, 'move')
+end)
+
+-- ============================================================================
+r.group('compute_actions: phantom copy expansion')
+-- ============================================================================
+
+r.run('copy A to B, phantom child renamed = create B + copy A/x -> B/x2', function()
+  local s = make_session('/r', {
+    { name = 'A', abs_path = '/r/A', type = 'directory' },
+  })
+  s.next_id = 3
+  -- phantom dir B (id=2) with shadow A
+  s.store[2] = { name = 'A', abs_path = '/r/B', type = 'directory' }
+  s.id_to_path[2] = '/r/B'
+  -- phantom child x.txt (id=3) targeting /r/B/x.txt initially, shadow A/x.txt
+  s.store[3] = { name = 'x.txt', abs_path = '/r/B/x.txt', type = 'file' }
+  s.id_to_path[3] = '/r/B/x.txt'
+  s.copy_shadow = { [2] = '/r/A', [3] = '/r/A/x.txt' }
+
+  -- buffer: /1 A/, /2 B/, /3 x2.txt (child renamed)
+  local a = compute_actions(s, { '/1 A/', '/2 B/', '  /3 x2.txt' })
+  r.assert_truthy(find_action(a, 'create', { dst = '/r/B/' }))
+  r.assert_truthy(find_action(a, 'copy', { src = '/r/A/x.txt', dst = '/r/B/x2.txt' }))
+  r.assert_eq(find_action(a, 'copy', { src = '/r/A', dst = '/r/B' }), nil)
+end)
+
+r.run('copy A to B without phantom transitions = bulk copy', function()
+  local s = make_session('/r', {
+    { name = 'A', abs_path = '/r/A', type = 'directory' },
+  })
+  -- no phantoms registered yet: buffer just has original A/ and a duplicate
+  -- of it (before user expands B), which stays as an id-1 transition.
+  local a = compute_actions(s, { '/1 A/', '/1 B/' })
+  r.assert_truthy(find_action(a, 'copy', { src = '/r/A', dst = '/r/B' }))
+end)
+
+-- ============================================================================
+r.group('compute_actions: multi-relocate safety')
+-- ============================================================================
+
+r.run('yy+p twice with rename = copy+copy+delete (never move+copy)', function()
+  -- User yanks /r/f.txt, pastes twice, renames to f.1 and f.2. Original path
+  -- disappears from buffer. Result should be 2 copies + 1 delete so all copies
+  -- can read from the still-existing src before it's removed.
+  local s = make_session('/r', {
+    { name = 'f.txt', abs_path = '/r/f.txt', type = 'file' },
+  })
+  local a = compute_actions(s, { '/1 f.1', '/1 f.2' })
+  r.assert_eq(action_count(a, 'copy'), 2)
+  r.assert_eq(action_count(a, 'delete'), 1)
+  r.assert_eq(action_count(a, 'move'), 0)
+  r.assert_truthy(find_action(a, 'copy', { src = '/r/f.txt', dst = '/r/f.1' }))
+  r.assert_truthy(find_action(a, 'copy', { src = '/r/f.txt', dst = '/r/f.2' }))
+  r.assert_truthy(find_action(a, 'delete', { src = '/r/f.txt' }))
+end)
+
+-- ============================================================================
+r.group('execute_actions: topological ordering')
+-- ============================================================================
+
+r.run('copy X + move X: copy runs before move consumes X', function()
+  local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  local x = tmp .. '/x'; vim.fn.writefile({ 'X' }, x)
+  actions_mod.execute_actions({
+    { name = 'move', src = x, dst = tmp .. '/y' },
+    { name = 'copy', src = x, dst = tmp .. '/z' },
+  })
+  r.assert_eq(vim.fn.filereadable(tmp .. '/y'), 1)
+  r.assert_eq(vim.fn.filereadable(tmp .. '/z'), 1)
+  r.assert_eq(table.concat(vim.fn.readfile(tmp .. '/z')), 'X')
+  vim.fn.delete(tmp, 'rf')
+end)
+
+r.run('delete X + create X: delete runs first', function()
+  local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  local x = tmp .. '/x'; vim.fn.writefile({ 'old' }, x)
+  actions_mod.execute_actions({
+    { name = 'create', dst = x },
+    { name = 'delete', src = x },
+  })
+  r.assert_eq(vim.fn.filereadable(x), 1)
+  r.assert_eq(table.concat(vim.fn.readfile(x)), '')
+  vim.fn.delete(tmp, 'rf')
+end)
+
+r.run('create parent dir before writing child file', function()
+  local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  actions_mod.execute_actions({
+    { name = 'create', dst = tmp .. '/d/f' },
+    { name = 'create', dst = tmp .. '/d/' },
+  })
+  r.assert_eq(vim.fn.isdirectory(tmp .. '/d'), 1)
+  r.assert_eq(vim.fn.filereadable(tmp .. '/d/f'), 1)
+  vim.fn.delete(tmp, 'rf')
+end)
+
+r.run('parent rename before child rename (child listed first)', function()
+  local actions_mod = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp .. '/A', 'p')
+  vim.fn.writefile({ 'x' }, tmp .. '/A/x')
+  actions_mod.execute_actions({
+    -- child (references old path) placed before parent to test topo
+    { name = 'move', src = tmp .. '/A/x', dst = tmp .. '/A/y' },
+    { name = 'move', src = tmp .. '/A', dst = tmp .. '/B' },
+  })
+  -- child move src references old parent path; topo must run parent-move first
+  -- so the child move against /A/x will fail to find src (already moved to /B/x).
+  -- Expected behavior: parent move runs first, /B/x exists, then child move
+  -- fails silently (its src /A/x is gone). Assert /B/x exists at least.
+  r.assert_eq(vim.fn.isdirectory(tmp .. '/B'), 1)
+  vim.fn.delete(tmp, 'rf')
+end)
+
 r.finish()

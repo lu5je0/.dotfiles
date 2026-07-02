@@ -142,22 +142,237 @@ local function remove_children_lines(session, buf, line_nr, depth)
   end
 end
 
+local function current_path_for_line(session, buf, line_nr)
+  -- returns the effective on-disk path for the entry at line_nr (respecting
+  -- any parent renames present in the buffer above). Falls back to entry.abs_path
+  -- when the id/depth logic can't determine a parent.
+  local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
+  if not line then return nil end
+  local id, name, depth, is_dir = parse_line(line)
+  if not id then return nil end
+  local parent_path = session.root_dir
+  for i = line_nr - 1, 1, -1 do
+    local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
+    if l and l:match('%S') then
+      local pid, pname, pdepth, pis_dir = parse_line(l)
+      if pdepth < depth then
+        if pid and session.store[pid] then
+          local pcur = current_path_for_line(session, buf, i)
+          if pcur then
+            parent_path = pcur
+          elseif pis_dir then
+            parent_path = session.store[pid].abs_path
+          end
+        elseif pis_dir and pname ~= '' then
+          parent_path = parent_path .. '/' .. pname:sub(1, -2)
+        end
+        break
+      end
+    end
+  end
+  local raw_name = is_dir and name:sub(1, -2) or name
+  return parent_path .. '/' .. raw_name
+end
+
+local function count_id_in_buf(session, buf, target_id)
+  local total = vim.api.nvim_buf_line_count(buf)
+  local n = 0
+  for i = 1, total do
+    local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
+    if l then
+      local lid = parse_line(l)
+      if lid == target_id then n = n + 1 end
+    end
+  end
+  return n
+end
+
+local function render_phantom_children(session, disk_dir, target_dir, depth, is_copy)
+  local id_width = session._id_width or 1
+  local fmt = '%s/%0' .. id_width .. 'd %s'
+  local lines = {}
+  local new_ids = {}
+
+  local function walk(disk_path, tgt_path, d)
+    local entries = tree.scan_dir(disk_path)
+    for _, entry in ipairs(entries) do
+      local child_disk = entry.abs_path
+      local child_tgt = tgt_path .. '/' .. entry.name
+      local id
+      if is_copy then
+        id = session.next_id
+        session.next_id = id + 1
+        session.store[id] = { name = entry.name, abs_path = child_tgt, type = entry.type }
+        session.id_to_path[id] = child_tgt
+        session.path_to_id[child_tgt] = id
+        session.copy_shadow[id] = child_disk
+      else
+        -- displaced rename: reuse original id keyed by disk path
+        id = register_entry(session, child_disk, entry.name, entry.type)
+        session.id_to_path[id] = child_disk
+      end
+      local indent = string.rep('  ', d)
+      local name = entry.name
+      if entry.type == 'directory' then
+        name = name .. '/'
+      end
+      lines[#lines + 1] = string.format(fmt, indent, id, name)
+      new_ids[#new_ids + 1] = id
+      -- do not auto-recurse into displaced children by default; expand on demand
+    end
+  end
+
+  walk(disk_dir, target_dir, depth)
+  return lines, new_ids
+end
+
 local function on_enter(session)
   local was_modified = vim.bo[session.buf].modified
   local line_nr = vim.api.nvim_win_get_cursor(0)[1]
   local line = vim.api.nvim_buf_get_lines(session.buf, line_nr - 1, line_nr, false)[1]
   local id, _, depth, is_dir = parse_line(line)
 
+  -- If a directory id appears multiple times in the buffer (yy+p copy),
+  -- reassign a fresh phantom id to *this* line so its expansion state is
+  -- independent from the original. Skip the first occurrence (keeps the
+  -- original id) and only re-id subsequent copies.
+  if is_dir and id and session.store[id] and session.store[id].type == 'directory'
+    and count_id_in_buf(session, session.buf, id) > 1 then
+    local first_line_nr
+    do
+      local total = vim.api.nvim_buf_line_count(session.buf)
+      for j = 1, total do
+        local l = vim.api.nvim_buf_get_lines(session.buf, j - 1, j, false)[1]
+        if l and parse_line(l) == id then
+          first_line_nr = j
+          break
+        end
+      end
+    end
+    if first_line_nr and first_line_nr ~= line_nr then
+      local origin_abs = session.store[id].abs_path
+      local origin_shadow = session.copy_shadow[id] or origin_abs
+      local cur_path = current_path_for_line(session, session.buf, line_nr) or origin_abs
+      -- extract current name from the buffer line (user may have renamed it)
+      local _, cur_name_with_slash = parse_line(line)
+      local raw_name = cur_name_with_slash:sub(1, -2) -- strip trailing '/'
+      local new_id = session.next_id
+      session.next_id = new_id + 1
+      session.store[new_id] = { name = raw_name, abs_path = cur_path, type = 'directory' }
+      session.id_to_path[new_id] = cur_path
+      session.path_to_id[cur_path] = new_id
+      session.copy_shadow[new_id] = origin_shadow
+      local id_width = session._id_width or 1
+      local fmt = '%s/%0' .. id_width .. 'd %s'
+      local indent = line:match('^(%s*)') or ''
+      local new_line = string.format(fmt, indent, new_id, raw_name .. '/')
+      vim.api.nvim_buf_set_lines(session.buf, line_nr - 1, line_nr, false, { new_line })
+      if session.id_order then
+        local inserted = false
+        for i, oid in ipairs(session.id_order) do
+          if oid == id and not inserted then
+            table.insert(session.id_order, i + 1, new_id)
+            inserted = true
+            break
+          end
+        end
+        if not inserted then
+          session.id_order[#session.id_order + 1] = new_id
+        end
+      end
+
+      -- Snapshot origin's currently-expanded subtree, preserving its expansion
+      -- structure: each level is stored keyed by the new phantom id of that
+      -- directory, so expanding only inserts that directory's direct children.
+      local origin_line = vim.api.nvim_buf_get_lines(session.buf, first_line_nr - 1, first_line_nr, false)[1]
+      local _, _, origin_depth = parse_line(origin_line or '')
+      local total = vim.api.nvim_buf_line_count(session.buf)
+      local snapshot_lines = {}
+      for j = first_line_nr + 1, total do
+        local l = vim.api.nvim_buf_get_lines(session.buf, j - 1, j, false)[1]
+        if not l or l == '' or not l:match('%S') then break end
+        local _, _, d = parse_line(l)
+        if d <= origin_depth then break end
+        snapshot_lines[#snapshot_lines + 1] = { line = l, depth = d }
+      end
+      if #snapshot_lines > 0 then
+        session.copy_snapshot = session.copy_snapshot or {}
+        local origin_target = current_path_for_line(session, session.buf, first_line_nr) or origin_abs
+        -- stack[i] = { depth, target, shadow, dir_new_id, indent_len, direct_children (list of lines) }
+        local stack = {
+          { depth = origin_depth, target = origin_target, shadow = origin_shadow,
+            dir_new_id = new_id, indent_len = indent:len(), direct_children = {} }
+        }
+        for _, entry in ipairs(snapshot_lines) do
+          local cid, cname, d = parse_line(entry.line)
+          -- pop stacks deeper than this entry's parent
+          while #stack > 0 and stack[#stack].depth >= d do
+            local finished = table.remove(stack)
+            if #finished.direct_children > 0 then
+              session.copy_snapshot[finished.dir_new_id] = finished.direct_children
+            end
+          end
+          local parent = stack[#stack]
+          local parent_target = parent.target
+          local parent_shadow = parent.shadow
+          local parent_indent_len = parent.indent_len
+          local raw = (cname:sub(-1) == '/') and cname:sub(1, -2) or cname
+          local child_target = parent_target .. '/' .. raw
+          local child_shadow
+          if cid and session.copy_shadow[cid] then
+            child_shadow = session.copy_shadow[cid]
+          elseif cid and session.store[cid] then
+            child_shadow = session.store[cid].abs_path
+          else
+            child_shadow = parent_shadow .. '/' .. raw
+          end
+          local is_dir_c = (cname:sub(-1) == '/')
+          local ctype = is_dir_c and 'directory' or 'file'
+          local nid = session.next_id
+          session.next_id = nid + 1
+          session.store[nid] = { name = raw, abs_path = child_target, type = ctype }
+          session.id_to_path[nid] = child_target
+          session.path_to_id[child_target] = nid
+          session.copy_shadow[nid] = child_shadow
+          local child_indent_len = parent_indent_len + 2
+          local child_indent = string.rep(' ', child_indent_len)
+          local cline = string.format(fmt, child_indent, nid, raw .. (is_dir_c and '/' or ''))
+          parent.direct_children[#parent.direct_children + 1] = cline
+          if is_dir_c then
+            stack[#stack + 1] = {
+              depth = d, target = child_target, shadow = child_shadow,
+              dir_new_id = nid, indent_len = child_indent_len, direct_children = {},
+            }
+          end
+        end
+        while #stack > 0 do
+          local finished = table.remove(stack)
+          if #finished.direct_children > 0 then
+            session.copy_snapshot[finished.dir_new_id] = finished.direct_children
+          end
+        end
+      end
+
+      id = new_id
+      line = new_line
+    end
+  end
+
   if is_dir and id then
     local entry = session.store[id]
     if not entry then return end
     local abs = entry.abs_path
-    if pu.is_displaced(session, session.buf, line_nr) then
-      vim.notify('Save first to expand', vim.log.levels.ERROR)
-      return
+    local displaced = pu.is_displaced(session, session.buf, line_nr)
+    local current_path = displaced and current_path_for_line(session, session.buf, line_nr) or abs
+    local shadow_src = session.copy_shadow[id]
+    local expand_key
+    if shadow_src then
+      expand_key = shadow_src .. '#' .. id
+    else
+      expand_key = current_path or abs
     end
-    if session.expanded_dirs[abs] then
-      session.expanded_dirs[abs] = nil
+    if session.expanded_dirs[expand_key] then
+      session.expanded_dirs[expand_key] = nil
       local total = vim.api.nvim_buf_line_count(session.buf)
       local removed_ids = {}
       local child_lines_cache = {}
@@ -171,7 +386,7 @@ local function on_enter(session)
           if cid then removed_ids[tonumber(cid)] = true end
         end
       end
-      if #child_lines_cache > 0 then
+      if #child_lines_cache > 0 and not displaced and not shadow_src then
         local disk_lines, _ = render_children(session, abs, depth + 1)
         local has_diff = #disk_lines ~= #child_lines_cache
         if not has_diff then
@@ -199,8 +414,10 @@ local function on_enter(session)
         else
           session.saved_children[abs] = nil
         end
+      elseif #child_lines_cache > 0 then
+        session.saved_children[expand_key] = child_lines_cache
       else
-        session.saved_children[abs] = nil
+        session.saved_children[expand_key] = nil
       end
       remove_children_lines(session, session.buf, line_nr, depth)
       if session.id_order and next(removed_ids) then
@@ -212,17 +429,31 @@ local function on_enter(session)
       end
       refresh_decorations(session, session.buf)
     else
-      session.expanded_dirs[abs] = true
+      session.expanded_dirs[expand_key] = true
       local child_lines, new_ids
-      local cached = session.saved_children[abs]
+      local cached = session.saved_children[expand_key] or (not displaced and not shadow_src and session.saved_children[abs])
       if cached then
         child_lines = cached
-        session.saved_children[abs] = nil
+        session.saved_children[expand_key] = nil
+        if not shadow_src then session.saved_children[abs] = nil end
         new_ids = {}
         for _, l in ipairs(child_lines) do
           local cid = l:match('/(%d+) ')
           if cid then new_ids[#new_ids + 1] = tonumber(cid) end
         end
+      elseif shadow_src and session.copy_snapshot and session.copy_snapshot[id] then
+        child_lines = session.copy_snapshot[id]
+        session.copy_snapshot[id] = nil
+        new_ids = {}
+        for _, l in ipairs(child_lines) do
+          local cid = l:match('/(%d+) ')
+          if cid then new_ids[#new_ids + 1] = tonumber(cid) end
+        end
+      elseif shadow_src then
+        child_lines, new_ids = render_phantom_children(session, shadow_src, abs, depth + 1, true)
+      elseif displaced then
+        local is_copy = count_id_in_buf(session, session.buf, id) > 1
+        child_lines, new_ids = render_phantom_children(session, abs, current_path, depth + 1, is_copy)
       else
         child_lines, new_ids = render_children(session, abs, depth + 1)
       end
@@ -242,7 +473,7 @@ local function on_enter(session)
       end
       refresh_decorations(session, session.buf)
     end
-    vim.bo[session.buf].modified = was_modified or next(session.saved_children) ~= nil
+    vim.bo[session.buf].modified = was_modified or next(session.saved_children) ~= nil or next(session.copy_shadow) ~= nil
   elseif id and not is_dir then
     local entry = session.store[id]
     if entry then
@@ -262,7 +493,7 @@ local function mutate(session)
   local actions = compute_actions(session, buf_lines)
 
   if #actions == 0 and #dupes == 0 then
-    if next(session.saved_children) == nil then
+    if next(session.saved_children) == nil and next(session.copy_shadow) == nil then
       vim.bo[session.buf].modified = false
     end
     return
@@ -302,6 +533,8 @@ local function mutate(session)
     session.id_to_path = {}
     session.path_to_id = {}
     session.saved_children = {}
+    session.copy_shadow = {}
+    session.copy_snapshot = {}
 
     local lines = render_to_lines(session)
     vim.api.nvim_buf_set_lines(session.buf, 0, -1, false, lines)
@@ -354,6 +587,8 @@ function M.open(node, opts)
     path_to_id = {},
     expanded_dirs = {},
     saved_children = {},
+    copy_shadow = {},
+    copy_snapshot = {},
   }
 
   if state.files and state.files.root then
@@ -468,8 +703,7 @@ function M.open(node, opts)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
     local cur_row = vim.api.nvim_win_get_cursor(0)[1]
-    local is_expanded = cur_is_dir and (pu.is_dir_expanded(session, cur_id)
-      or pu.is_displaced(session, buf, cur_row)) or false
+    local is_expanded = cur_is_dir and pu.is_expanded_at(session, buf, cur_row) or false
     local target_depth = (cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
 
     local before = vim.api.nvim_buf_line_count(buf)
@@ -856,8 +1090,7 @@ function M.open(node, opts)
     local cur_line = vim.api.nvim_get_current_line()
     local cur_id, _, cur_depth, cur_is_dir = parse_line(cur_line)
     local row = vim.api.nvim_win_get_cursor(0)[1]
-    local is_expanded = cur_is_dir and (pu.is_dir_expanded(session, cur_id)
-      or pu.is_displaced(session, buf, row)) or false
+    local is_expanded = cur_is_dir and pu.is_expanded_at(session, buf, row) or false
     local target_depth = (direction == 'o' and cur_is_dir and is_expanded) and (cur_depth + 1) or cur_depth
     local indent = string.rep('  ', target_depth)
     local placeholder = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions').PLACEHOLDER
@@ -889,6 +1122,8 @@ function M.open(node, opts)
       session.id_to_path = {}
       session.path_to_id = {}
       session.saved_children = {}
+      session.copy_shadow = {}
+      session.copy_snapshot = {}
       local lines = render_to_lines(session)
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
       refresh_decorations(session, buf)

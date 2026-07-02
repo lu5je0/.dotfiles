@@ -63,10 +63,14 @@ function M.refresh_decorations(session, buf_nr)
 
   local depths = {}
   local parsed = {}
+  local first_line_of_id = {}
   for i, line in ipairs(all_lines) do
     local id, name, depth, is_dir = parse_line(line)
     depths[i] = depth
     parsed[i] = { id = id, name = name, depth = depth, is_dir = is_dir, line = line }
+    if id and not first_line_of_id[id] then
+      first_line_of_id[id] = i
+    end
   end
 
   local is_last = {}
@@ -115,19 +119,25 @@ function M.refresh_decorations(session, buf_nr)
     if p.id and session.store[p.id] then
       local entry = session.store[p.id]
       local expanded
+      local dir_path_for_stack
       if p.is_dir then
         local raw_name = p.name:sub(1, -2)
         local current_path = parent_path .. '/' .. raw_name
-        local displaced = current_path ~= entry.abs_path
-        expanded = not displaced and session.expanded_dirs[entry.abs_path]
+        local shadow_src = session.copy_shadow and session.copy_shadow[p.id]
+        if shadow_src then
+          expanded = session.expanded_dirs[shadow_src .. '#' .. p.id] == true
+        else
+          expanded = session.expanded_dirs[current_path] == true
+            or (current_path == entry.abs_path and session.expanded_dirs[entry.abs_path] == true)
+        end
+        if first_line_of_id[p.id] and first_line_of_id[p.id] ~= i then
+          expanded = false
+        end
+        dir_path_for_stack = current_path
       end
       icon, icon_hl = get_icon(entry, expanded)
       if p.is_dir then
-        if session.expanded_dirs[entry.abs_path] and not expanded then
-          table.insert(path_stack, { path = parent_path .. '/' .. p.name:sub(1, -2), depth = d })
-        else
-          table.insert(path_stack, { path = expanded and entry.abs_path or (parent_path .. '/' .. p.name:sub(1, -2)), depth = d })
-        end
+        table.insert(path_stack, { path = dir_path_for_stack, depth = d })
       elseif entry.type == 'directory' then
         table.insert(path_stack, { path = entry.abs_path, depth = d })
       end

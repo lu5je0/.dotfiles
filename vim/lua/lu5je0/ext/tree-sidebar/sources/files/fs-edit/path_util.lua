@@ -1,5 +1,7 @@
 local M = {}
 
+local parse_line = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions').parse_line
+
 function M.strip_slash(p)
   if not p then return p end
   if vim.endswith(p, '/') then return p:sub(1, -2) end
@@ -39,7 +41,39 @@ function M.is_dir_expanded(session, id)
   return session.expanded_dirs[entry.abs_path] == true
 end
 
-local parse_line = require('lu5je0.ext.tree-sidebar.sources.files.fs-edit.actions').parse_line
+function M.is_expanded_at(session, buf, line_nr)
+  local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
+  if not line then return false end
+  local id, name, depth, is_dir = parse_line(line)
+  if not id or not is_dir then return false end
+  local entry = session.store[id]
+  if not entry then return false end
+  -- compute current_path via displaced logic
+  local parent_path = session.root_dir
+  for i = line_nr - 1, 1, -1 do
+    local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
+    if l and l:match('%S') then
+      local pid, pname, pdepth, pis_dir = parse_line(l)
+      if pdepth < depth then
+        if pid and session.store[pid] then
+          if session.expanded_dirs[session.store[pid].abs_path] then
+            parent_path = session.store[pid].abs_path
+          else
+            local raw = pis_dir and pname:sub(1, -2) or pname
+            parent_path = parent_path .. '/' .. raw
+          end
+        elseif pis_dir and pname ~= '' then
+          parent_path = parent_path .. '/' .. pname:sub(1, -2)
+        end
+        break
+      end
+    end
+  end
+  local raw_name = name:sub(1, -2)
+  local current_path = parent_path .. '/' .. raw_name
+  return session.expanded_dirs[current_path] == true
+    or session.expanded_dirs[entry.abs_path] == true
+end
 
 function M.is_displaced(session, buf, line_nr)
   local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
