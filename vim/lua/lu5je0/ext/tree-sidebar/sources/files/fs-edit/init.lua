@@ -197,6 +197,7 @@ local function render_phantom_children(session, disk_dir, target_dir, depth, is_
     local entries = tree.scan_dir(disk_path)
     for _, entry in ipairs(entries) do
       local child_disk = entry.abs_path
+      if child_disk == disk_dir then goto continue end
       local child_tgt = tgt_path .. '/' .. entry.name
       local id
       if is_copy then
@@ -218,7 +219,7 @@ local function render_phantom_children(session, disk_dir, target_dir, depth, is_
       end
       lines[#lines + 1] = string.format(fmt, indent, id, name)
       new_ids[#new_ids + 1] = id
-      -- do not auto-recurse into displaced children by default; expand on demand
+      ::continue::
     end
   end
 
@@ -238,6 +239,7 @@ local function on_enter(session)
   -- original id) and only re-id subsequent copies.
   if is_dir and id and session.store[id] and session.store[id].type == 'directory'
     and count_id_in_buf(session, session.buf, id) > 1 then
+    local orig_id = id
     local first_line_nr
     do
       local total = vim.api.nvim_buf_line_count(session.buf)
@@ -288,12 +290,25 @@ local function on_enter(session)
       local _, _, origin_depth = parse_line(origin_line or '')
       local total = vim.api.nvim_buf_line_count(session.buf)
       local snapshot_lines = {}
+      local skip_depth = nil
       for j = first_line_nr + 1, total do
         local l = vim.api.nvim_buf_get_lines(session.buf, j - 1, j, false)[1]
         if not l or l == '' or not l:match('%S') then break end
-        local _, _, d = parse_line(l)
+        local cid, _, d = parse_line(l)
         if d <= origin_depth then break end
-        snapshot_lines[#snapshot_lines + 1] = { line = l, depth = d }
+        if skip_depth and d > skip_depth then
+          -- inside a self-reference subtree, skip
+        else
+          skip_depth = nil
+          if cid and cid == orig_id then
+            skip_depth = d
+          elseif cid and session.copy_shadow[cid] and session.copy_shadow[cid] == origin_shadow
+            and session.store[cid] and session.store[cid].type == 'directory' then
+            skip_depth = d
+          else
+            snapshot_lines[#snapshot_lines + 1] = { line = l, depth = d }
+          end
+        end
       end
       if #snapshot_lines > 0 then
         session.copy_snapshot = session.copy_snapshot or {}
