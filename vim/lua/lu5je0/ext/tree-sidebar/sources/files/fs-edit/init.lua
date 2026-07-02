@@ -914,6 +914,57 @@ function M.open(node, opts)
       end
     end
 
+    -- If cursor is on or inside an expanded phantom dir, collapse it (undo expand).
+    do
+      local _, _, cursor_depth = parse_line(cursor_line or '')
+      local phantom_dir_row, phantom_dir_depth
+      -- check cursor line itself
+      if cursor_line then
+        local cid, _, _, cis_dir = parse_line(cursor_line)
+        if cis_dir and cid and session.copy_shadow[cid] then
+          local shadow_src = session.copy_shadow[cid]
+          local ek = shadow_src .. '#' .. cid
+          if session.expanded_dirs[ek] then
+            phantom_dir_row = cursor_row
+            phantom_dir_depth = cursor_depth
+          end
+        end
+      end
+      -- search upward for enclosing phantom dir
+      if not phantom_dir_row then
+        for j = cursor_row - 1, 1, -1 do
+          local l = all_lines[j]
+          if l and l:match('%S') then
+            local pid, _, pd, pis_dir = parse_line(l)
+            if pd < cursor_depth then
+              if pis_dir and pid and session.copy_shadow[pid] then
+                local shadow_src = session.copy_shadow[pid]
+                local ek = shadow_src .. '#' .. pid
+                if session.expanded_dirs[ek] then
+                  phantom_dir_row = j
+                  phantom_dir_depth = pd
+                end
+              end
+              if pd == 0 then break end
+              cursor_depth = pd
+            end
+          end
+        end
+      end
+      if phantom_dir_row then
+        local pid, _, pd = parse_line(all_lines[phantom_dir_row])
+        local shadow_src = session.copy_shadow[pid]
+        local ek = shadow_src .. '#' .. pid
+        session.expanded_dirs[ek] = nil
+        session.saved_children[ek] = nil
+        if session.copy_snapshot then session.copy_snapshot[pid] = nil end
+        remove_children_lines(session, buf, phantom_dir_row, pd)
+        refresh_decorations(session, buf)
+        refresh_diff_signs(session, buf)
+        return
+      end
+    end
+
     -- use compute_actions to find what's actually changed
     local buf_lines = {}
     local line_map = {} -- filtered_idx -> 1-based line number

@@ -298,6 +298,7 @@ function M.refresh_diff_signs(session, buf_nr)
   if #dupes > 0 then
     local dupe_stack = { { path = session.root_dir, depth = -1 } }
     local name_count = {}
+    local name_lines = {}
     for i = 1, #buf_lines do
       local _, name, depth, is_dir = parse_line(buf_lines[i])
       if name ~= '' then
@@ -308,11 +309,27 @@ function M.refresh_diff_signs(session, buf_nr)
         local raw = is_dir and name:sub(1, -2) or name
         local key = parent .. '/' .. raw
         name_count[key] = (name_count[key] or 0) + 1
-        if name_count[key] > 1 then
-          place(line_map[i], '▎', 'DiagnosticError')
-        end
+        name_lines[key] = name_lines[key] or {}
+        name_lines[key][#name_lines[key] + 1] = i
         if is_dir then
           table.insert(dupe_stack, { path = parent .. '/' .. raw, depth = depth })
+        end
+      end
+    end
+    for key, cnt in pairs(name_count) do
+      if cnt > 1 then
+        for _, idx in ipairs(name_lines[key]) do
+          local lnum = line_map[idx]
+          place(lnum, '▎', 'GitSignsChange')
+          local bline = buf_lines[idx]
+          local _, bname = parse_line(bline)
+          local name_start = #bline - #bname
+          pcall(vim.api.nvim_buf_set_extmark, buf_nr, sign_ns, lnum, name_start, {
+            end_col = #bline,
+            hl_group = 'DiagnosticUnderlineError',
+            priority = 998,
+            invalidate = true,
+          })
         end
       end
     end
