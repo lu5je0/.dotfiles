@@ -34,9 +34,15 @@ function M.effective_buf_lines(session, all_lines)
         out[#out + 1] = l
         local lid, _, _, lis_dir = M.parse_line(l)
         if lis_dir and lid and session.store[lid] then
-          local labs = session.store[lid].abs_path
-          if not session.expanded_dirs[labs] and session.saved_children[labs] then
-            expand(session.saved_children[labs])
+          local shadow_src = session.copy_shadow and session.copy_shadow[lid]
+          local key
+          if shadow_src then
+            key = shadow_src .. '#' .. lid
+          else
+            key = session.store[lid].abs_path
+          end
+          if not session.expanded_dirs[key] and session.saved_children[key] then
+            expand(session.saved_children[key])
           end
         end
       end
@@ -166,6 +172,18 @@ function M.compute_actions(session, buf_lines)
       end
     end
   end
+  -- detect phantom dirs that originally had children (even if all deleted from buffer)
+  local dir_ever_had_children = {}
+  for cid, _ in pairs(copy_shadow) do
+    if session.store[cid] then
+      local cabs = session.store[cid].abs_path
+      for did, dtarget in pairs(phantom_dir_targets) do
+        if did ~= cid and vim.startswith(cabs, dtarget .. '/') then
+          dir_ever_had_children[did] = true
+        end
+      end
+    end
+  end
 
   local function implied_by_ancestor_move(old_path, new_path)
     for _, am in ipairs(ancestor_moves) do
@@ -203,8 +221,8 @@ function M.compute_actions(session, buf_lines)
       local target = new_paths[#new_paths]
       local store_entry = session.store[id]
       local is_dir = store_entry and store_entry.type == 'directory'
-      if is_dir and dir_has_child_phantom[id] then
-        -- subtree modified in buffer: create the dir; children emit their own copies
+      if is_dir and (dir_has_child_phantom[id] or dir_ever_had_children[id]) then
+        -- subtree was expanded: create dir; surviving children emit their own copies
         table.insert(actions, { name = 'create', dst = target .. '/' })
       else
         -- unmodified subtree or a phantom file: single copy (bulk cp -r for dirs)
@@ -217,19 +235,27 @@ function M.compute_actions(session, buf_lines)
         local keep_original = vim.tbl_contains(new_paths, old_path)
         local collapsed = not id_in_snapshot and session.store[id] ~= nil
         local multi_relocate = not keep_original and not collapsed and #new_paths > 1
+        -- rewrite src if it lives under a renamed ancestor
+        local effective_src = old_path
+        for _, am in ipairs(ancestor_moves) do
+          if vim.startswith(old_path, am.old .. '/') then
+            effective_src = am.new .. old_path:sub(#am.old + 1)
+            break
+          end
+        end
         for i, new_path in ipairs(new_paths) do
           if new_path ~= old_path then
             if implied_by_ancestor_move(old_path, new_path) then
               -- parent rename carries this child; skip
             elseif keep_original or collapsed or multi_relocate or i < #new_paths then
-              table.insert(actions, { name = 'copy', src = old_path, dst = new_path })
+              table.insert(actions, { name = 'copy', src = effective_src, dst = new_path })
             else
-              table.insert(actions, { name = 'move', src = old_path, dst = new_path })
+              table.insert(actions, { name = 'move', src = effective_src, dst = new_path })
             end
           end
         end
         if multi_relocate then
-          table.insert(actions, { name = 'delete', src = old_path })
+          table.insert(actions, { name = 'delete', src = effective_src })
         end
       end
     end

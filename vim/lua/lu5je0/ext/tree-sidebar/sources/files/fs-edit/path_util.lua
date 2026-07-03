@@ -48,7 +48,10 @@ function M.is_expanded_at(session, buf, line_nr)
   if not id or not is_dir then return false end
   local entry = session.store[id]
   if not entry then return false end
-  -- compute current_path via displaced logic
+  local shadow_src = session.copy_shadow and session.copy_shadow[id]
+  if shadow_src then
+    return session.expanded_dirs[shadow_src .. '#' .. id] == true
+  end
   local parent_path = session.root_dir
   for i = line_nr - 1, 1, -1 do
     local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]

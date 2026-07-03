@@ -167,7 +167,11 @@ function M.refresh_decorations(session, buf_nr)
       })
       if p.id and session.store[p.id] then
         local entry = session.store[p.id]
-        if not session.expanded_dirs[entry.abs_path] and session.saved_children[entry.abs_path] then
+        local shadow_src = session.copy_shadow and session.copy_shadow[p.id]
+        local sc_key = shadow_src and (shadow_src .. '#' .. p.id) or entry.abs_path
+        local exp_key = shadow_src and (shadow_src .. '#' .. p.id) or nil
+        local is_exp = exp_key and session.expanded_dirs[exp_key] or session.expanded_dirs[entry.abs_path]
+        if not is_exp and session.saved_children[sc_key] then
           vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, 0, {
             virt_text = { { ' [+]', 'GitSignsChange' } },
             virt_text_pos = 'eol', invalidate = true,
@@ -252,8 +256,10 @@ function M.refresh_diff_signs(session, buf_nr)
   for i_idx = 1, #buf_lines do
     local lid, _, _, lis_dir = parse_line(buf_lines[i_idx])
     if lis_dir and lid and session.store[lid] then
-      local labs = session.store[lid].abs_path
-      if not session.expanded_dirs[labs] and session.saved_children[labs] then
+      local shadow_src = session.copy_shadow and session.copy_shadow[lid]
+      local key = shadow_src and (shadow_src .. '#' .. lid) or session.store[lid].abs_path
+      local exp = shadow_src and session.expanded_dirs[key] or session.expanded_dirs[session.store[lid].abs_path]
+      if not exp and session.saved_children[key] then
         place(line_map[i_idx], '▎', 'GitSignsChange')
       end
     end
@@ -266,7 +272,7 @@ function M.refresh_diff_signs(session, buf_nr)
     end)
   end
   for _, a in ipairs(act) do
-    if a.src then mark_ancestors(a.src) end
+    if a.name ~= 'copy' and a.src then mark_ancestors(a.src) end
     if a.dst then mark_ancestors(a.dst) end
   end
 

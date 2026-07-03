@@ -544,7 +544,7 @@ r.run('parent dir rename + child also renamed = both moves', function()
   local a = compute_actions(s, { '/1 new/', '  /2 x2.txt' })
   r.assert_eq(#a, 2)
   r.assert_truthy(find_action(a, 'move', { src = '/r/old', dst = '/r/new' }))
-  r.assert_truthy(find_action(a, 'move', { src = '/r/old/x.txt', dst = '/r/new/x2.txt' }))
+  r.assert_truthy(find_action(a, 'move', { src = '/r/new/x.txt', dst = '/r/new/x2.txt' }))
 end)
 
 r.run('parent dir rename absorbs delete of child on old path', function()

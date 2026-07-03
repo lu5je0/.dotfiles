@@ -436,9 +436,20 @@ local function on_enter(session)
       end
       remove_children_lines(session, session.buf, line_nr, depth)
       if session.id_order and next(removed_ids) then
+        local surviving_ids = {}
+        local total_after = vim.api.nvim_buf_line_count(session.buf)
+        for j = 1, total_after do
+          local l = vim.api.nvim_buf_get_lines(session.buf, j - 1, j, false)[1]
+          if l then
+            local lid = parse_line(l)
+            if lid then surviving_ids[lid] = true end
+          end
+        end
         local new_order = {}
         for _, oid in ipairs(session.id_order) do
-          if not removed_ids[oid] then new_order[#new_order + 1] = oid end
+          if not removed_ids[oid] or surviving_ids[oid] then
+            new_order[#new_order + 1] = oid
+          end
         end
         session.id_order = new_order
       end
@@ -446,7 +457,7 @@ local function on_enter(session)
     else
       session.expanded_dirs[expand_key] = true
       local child_lines, new_ids
-      local cached = session.saved_children[expand_key] or (not displaced and not shadow_src and session.saved_children[abs])
+      local cached = session.saved_children[expand_key] or (not shadow_src and session.saved_children[abs])
       if cached then
         child_lines = cached
         session.saved_children[expand_key] = nil
