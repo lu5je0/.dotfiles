@@ -597,20 +597,19 @@ end)
 r.group('compute_actions: multi-relocate safety')
 -- ============================================================================
 
-r.run('yy+p twice with rename = copy+copy+delete (never move+copy)', function()
+r.run('yy+p twice with rename = copy + move (last one is move)', function()
   -- User yanks /r/f.txt, pastes twice, renames to f.1 and f.2. Original path
-  -- disappears from buffer. Result should be 2 copies + 1 delete so all copies
-  -- can read from the still-existing src before it's removed.
+  -- disappears from buffer. Result: first N-1 are copy, last one is move.
+  -- Topo sort ensures copies run before the move consumes src.
   local s = make_session('/r', {
     { name = 'f.txt', abs_path = '/r/f.txt', type = 'file' },
   })
   local a = compute_actions(s, { '/1 f.1', '/1 f.2' })
-  r.assert_eq(action_count(a, 'copy'), 2)
-  r.assert_eq(action_count(a, 'delete'), 1)
-  r.assert_eq(action_count(a, 'move'), 0)
+  r.assert_eq(action_count(a, 'copy'), 1)
+  r.assert_eq(action_count(a, 'move'), 1)
+  r.assert_eq(action_count(a, 'delete'), 0)
   r.assert_truthy(find_action(a, 'copy', { src = '/r/f.txt', dst = '/r/f.1' }))
-  r.assert_truthy(find_action(a, 'copy', { src = '/r/f.txt', dst = '/r/f.2' }))
-  r.assert_truthy(find_action(a, 'delete', { src = '/r/f.txt' }))
+  r.assert_truthy(find_action(a, 'move', { src = '/r/f.txt', dst = '/r/f.2' }))
 end)
 
 -- ============================================================================

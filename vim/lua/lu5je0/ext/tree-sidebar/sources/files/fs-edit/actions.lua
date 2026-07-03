@@ -255,15 +255,12 @@ function M.compute_actions(session, buf_lines)
           if new_path ~= old_path then
             if implied_by_ancestor_move(old_path, new_path) then
               -- parent rename carries this child; skip
-            elseif keep_original or collapsed or multi_relocate or i < #new_paths then
+            elseif keep_original or collapsed or (multi_relocate and i < #new_paths) then
               table.insert(actions, { name = 'copy', src = effective_src, dst = new_path })
             else
               table.insert(actions, { name = 'move', src = effective_src, dst = new_path })
             end
           end
-        end
-        if multi_relocate then
-          table.insert(actions, { name = 'delete', src = effective_src })
         end
       end
     end
