@@ -66,7 +66,12 @@ local function open_and_helpers(dir_path)
   local function do_save()
     local all_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
     local buf_lines = actions_mod.effective_buf_lines(session, all_lines)
+    local dupes = actions_mod.check_duplicates(session, buf_lines)
+    if #dupes > 0 then
+      error('do_save: duplicates detected: ' .. table.concat(dupes, ', '), 2)
+    end
     local actions = actions_mod.compute_actions(session, buf_lines)
+    if #actions == 0 then return end
     actions_mod.add_implicit_creates(actions, session.root_dir)
     actions_mod.execute_actions(actions)
     -- reset session
@@ -685,6 +690,700 @@ r.run('copy reads before source delete runs', function()
   r.assert_truthy(isfile(tmp .. '/dst/a_copy.txt'), 'dst/a_copy.txt exists')
   r.assert_eq(readfile(tmp .. '/dst/a_copy.txt'), 'aaa')
   r.assert_truthy(isfile(tmp .. '/dst/b.txt'), 'dst/b.txt exists')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: simple file rename')
+-- ============================================================================
+
+r.run('file renamed on disk', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  local top_line = find_line(buf, 'top.txt')
+  r.assert_truthy(top_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, top_line - 1, top_line, false,
+    { gsub(lines[top_line], 'top%.txt', 'bottom.txt') })
+
+  do_save()
+
+  r.assert_truthy(not exists(tmp .. '/top.txt'), 'top.txt gone')
+  r.assert_truthy(isfile(tmp .. '/bottom.txt'), 'bottom.txt exists')
+  r.assert_eq(readfile(tmp .. '/bottom.txt'), 'top')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: delete file')
+-- ============================================================================
+
+r.run('file removed from disk', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  local top_line = find_line(buf, 'top.txt')
+  r.assert_truthy(top_line)
+  vim.api.nvim_buf_set_lines(buf, top_line - 1, top_line, false, {})
+
+  do_save()
+
+  r.assert_truthy(not exists(tmp .. '/top.txt'), 'top.txt deleted')
+  r.assert_truthy(isdir(tmp .. '/src'), 'src/ still there')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: copy file (yy+p+rename)')
+-- ============================================================================
+
+r.run('file duplicated on disk', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  local top_line = find_line(buf, 'top.txt')
+  r.assert_truthy(top_line)
+  local lines = buf_lines(buf)
+  -- Duplicate and rename copy
+  vim.api.nvim_buf_set_lines(buf, top_line, top_line, false,
+    { gsub(lines[top_line], 'top%.txt', 'top_copy.txt') })
+
+  do_save()
+
+  r.assert_truthy(isfile(tmp .. '/top.txt'), 'original preserved')
+  r.assert_truthy(isfile(tmp .. '/top_copy.txt'), 'copy created')
+  r.assert_eq(readfile(tmp .. '/top_copy.txt'), 'top')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: move file out of dir')
+-- ============================================================================
+
+r.run('file moved from subdir to root', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Expand src/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  do_enter(src_line)
+
+  -- Find a.txt inside src/ and move it to root level (remove indent)
+  local a_line = find_line(buf, 'a.txt', src_line + 1)
+  r.assert_truthy(a_line)
+  local lines = buf_lines(buf)
+  local a_text = lines[a_line]
+  -- Remove from current position
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false, {})
+  -- Insert at end of buffer at root depth (no indent, keep id)
+  local id_part = a_text:match('^%s*(.*)')
+  local total = vim.api.nvim_buf_line_count(buf)
+  vim.api.nvim_buf_set_lines(buf, total, total, false, { id_part })
+
+  do_save()
+
+  r.assert_truthy(isfile(tmp .. '/a.txt'), 'a.txt at root')
+  r.assert_truthy(not exists(tmp .. '/src/a.txt'), 'a.txt gone from src/')
+  r.assert_eq(readfile(tmp .. '/a.txt'), 'aaa')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: create nested path')
+-- ============================================================================
+
+r.run('intermediate dirs auto-created', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Add a new line with nested path
+  local total = vim.api.nvim_buf_line_count(buf)
+  vim.api.nvim_buf_set_lines(buf, total, total, false, { 'deep/nested/file.txt' })
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/deep'), 'deep/ created')
+  r.assert_truthy(isdir(tmp .. '/deep/nested'), 'deep/nested/ created')
+  r.assert_truthy(isfile(tmp .. '/deep/nested/file.txt'), 'file.txt created')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: rename dir + add new file inside')
+-- ============================================================================
+
+r.run('dir renamed and new file created inside', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Rename src/ → lib/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line - 1, src_line, false,
+    { gsub(lines[src_line], 'src/', 'lib/') })
+
+  -- Expand lib/
+  do_enter(src_line)
+
+  -- Add new file inside lib/
+  lines = buf_lines(buf)
+  local _, _, src_depth = parse_line(lines[src_line])
+  local child_indent = string.rep('  ', src_depth + 1)
+  -- Insert after last child
+  local insert_pos = src_line
+  for i = src_line + 1, #lines do
+    local _, _, d = parse_line(lines[i])
+    if d <= src_depth then break end
+    insert_pos = i
+  end
+  vim.api.nvim_buf_set_lines(buf, insert_pos, insert_pos, false,
+    { child_indent .. 'new.lua' })
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/lib'), 'lib/ exists')
+  r.assert_truthy(not exists(tmp .. '/src'), 'src/ gone')
+  r.assert_truthy(isfile(tmp .. '/lib/a.txt'), 'a.txt preserved')
+  r.assert_truthy(isfile(tmp .. '/lib/new.lua'), 'new.lua created')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: copy dir + expand + add new file inside')
+-- ============================================================================
+
+r.run('copy with new file added', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Copy src/ → dst/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { lines[src_line] })
+  local copy_line = src_line + 1
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, copy_line - 1, copy_line, false,
+    { gsub(lines[copy_line], 'src/', 'dst/') })
+
+  -- Expand dst/
+  do_enter(copy_line)
+
+  -- Add new file inside dst/
+  lines = buf_lines(buf)
+  local _, _, copy_depth = parse_line(lines[copy_line])
+  local child_indent = string.rep('  ', copy_depth + 1)
+  local insert_pos = copy_line
+  for i = copy_line + 1, #lines do
+    local _, _, d = parse_line(lines[i])
+    if d <= copy_depth then break end
+    insert_pos = i
+  end
+  vim.api.nvim_buf_set_lines(buf, insert_pos, insert_pos, false,
+    { child_indent .. 'extra.txt' })
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/dst'), 'dst/ exists')
+  r.assert_truthy(isfile(tmp .. '/dst/a.txt'), 'a.txt copied')
+  r.assert_truthy(isfile(tmp .. '/dst/b.txt'), 'b.txt copied')
+  r.assert_truthy(isfile(tmp .. '/dst/extra.txt'), 'extra.txt created')
+  r.assert_truthy(isdir(tmp .. '/src'), 'src/ preserved')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: multiple dirs renamed simultaneously')
+-- ============================================================================
+
+r.run('all dirs renamed on disk', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  mkdir(tmp .. '/alpha')
+  mkdir(tmp .. '/beta')
+  mkdir(tmp .. '/gamma')
+  writefile(tmp .. '/alpha/x.txt', {'ax'})
+  writefile(tmp .. '/beta/y.txt', {'by'})
+  writefile(tmp .. '/gamma/z.txt', {'gz'})
+
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Rename all three
+  local lines = buf_lines(buf)
+  for i, l in ipairs(lines) do
+    local _, name = parse_line(l)
+    if name == 'alpha/' then
+      vim.api.nvim_buf_set_lines(buf, i - 1, i, false, { gsub(l, 'alpha/', 'aaa/') })
+    elseif name == 'beta/' then
+      vim.api.nvim_buf_set_lines(buf, i - 1, i, false, { gsub(l, 'beta/', 'bbb/') })
+    elseif name == 'gamma/' then
+      vim.api.nvim_buf_set_lines(buf, i - 1, i, false, { gsub(l, 'gamma/', 'ccc/') })
+    end
+  end
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/aaa'), 'aaa/ exists')
+  r.assert_truthy(isdir(tmp .. '/bbb'), 'bbb/ exists')
+  r.assert_truthy(isdir(tmp .. '/ccc'), 'ccc/ exists')
+  r.assert_truthy(not exists(tmp .. '/alpha'))
+  r.assert_truthy(not exists(tmp .. '/beta'))
+  r.assert_truthy(not exists(tmp .. '/gamma'))
+  r.assert_eq(readfile(tmp .. '/aaa/x.txt'), 'ax')
+  r.assert_eq(readfile(tmp .. '/bbb/y.txt'), 'by')
+  r.assert_eq(readfile(tmp .. '/ccc/z.txt'), 'gz')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: copy dir + expand + rename child + rename parent')
+-- ============================================================================
+
+r.run('both parent and child renames applied', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Copy src/ → dst/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { lines[src_line] })
+  local copy_line = src_line + 1
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, copy_line - 1, copy_line, false,
+    { gsub(lines[copy_line], 'src/', 'dst/') })
+
+  -- Expand dst/
+  do_enter(copy_line)
+
+  -- Rename a.txt → aa.txt inside dst/
+  local a_line = find_line(buf, 'a.txt', copy_line + 1)
+  r.assert_truthy(a_line)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', 'aa.txt') })
+
+  -- Now also rename dst/ → final/
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, copy_line - 1, copy_line, false,
+    { gsub(lines[copy_line], 'dst/', 'final/') })
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/final'), 'final/ exists')
+  r.assert_truthy(isfile(tmp .. '/final/aa.txt'), 'aa.txt inside final/')
+  r.assert_truthy(isfile(tmp .. '/final/b.txt'), 'b.txt inside final/')
+  r.assert_eq(readfile(tmp .. '/final/aa.txt'), 'aaa')
+  r.assert_truthy(isdir(tmp .. '/src'), 'src/ preserved')
+  r.assert_truthy(not exists(tmp .. '/dst'), 'dst/ should not exist')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: rename dir + move child to another dir')
+-- ============================================================================
+
+r.run('child moved across directories', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  mkdir(tmp .. '/foo')
+  mkdir(tmp .. '/bar')
+  writefile(tmp .. '/foo/x.txt', {'xx'})
+  writefile(tmp .. '/bar/y.txt', {'yy'})
+
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Expand both foo/ and bar/
+  local foo_line = find_line(buf, 'foo/')
+  r.assert_truthy(foo_line)
+  do_enter(foo_line)
+
+  local bar_line = find_line(buf, 'bar/')
+  r.assert_truthy(bar_line)
+  do_enter(bar_line)
+
+  -- Move x.txt from foo/ into bar/ (change indent)
+  local x_line = find_line(buf, 'x.txt', foo_line + 1)
+  r.assert_truthy(x_line)
+  local lines = buf_lines(buf)
+  local x_text = lines[x_line]
+  -- Remove from foo/
+  vim.api.nvim_buf_set_lines(buf, x_line - 1, x_line, false, {})
+  -- Find bar/'s children end and insert there
+  bar_line = find_line(buf, 'bar/')
+  r.assert_truthy(bar_line)
+  lines = buf_lines(buf)
+  local _, _, bar_depth = parse_line(lines[bar_line])
+  local bar_end = bar_line
+  for i = bar_line + 1, #lines do
+    local _, _, d = parse_line(lines[i])
+    if d <= bar_depth then break end
+    bar_end = i
+  end
+  local bar_indent = string.rep('  ', bar_depth + 1)
+  local id_part = x_text:match('^%s*(.*)')
+  vim.api.nvim_buf_set_lines(buf, bar_end, bar_end, false, { bar_indent .. id_part })
+
+  do_save()
+
+  r.assert_truthy(not exists(tmp .. '/foo/x.txt'), 'x.txt gone from foo/')
+  r.assert_truthy(isfile(tmp .. '/bar/x.txt'), 'x.txt in bar/')
+  r.assert_eq(readfile(tmp .. '/bar/x.txt'), 'xx')
+  r.assert_truthy(isfile(tmp .. '/bar/y.txt'), 'y.txt preserved')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: same source copied twice with different child edits')
+-- ============================================================================
+
+r.run('two copies from same source, independently edited', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  local src_text = lines[src_line]
+
+  -- Copy src/ → copy1/
+  vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { src_text })
+  local c1_line = src_line + 1
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, c1_line - 1, c1_line, false,
+    { gsub(lines[c1_line], 'src/', 'copy1/') })
+
+  -- Copy src/ → copy2/ (insert after copy1/)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, c1_line, c1_line, false, { lines[src_line] })
+  local c2_line = c1_line + 1
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, c2_line - 1, c2_line, false,
+    { gsub(lines[c2_line], 'src/', 'copy2/') })
+
+  -- Expand copy1/
+  do_enter(c1_line)
+  -- Rename a.txt → one.txt in copy1/
+  local a1_line = find_line(buf, 'a.txt', c1_line + 1)
+  r.assert_truthy(a1_line)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a1_line - 1, a1_line, false,
+    { gsub(lines[a1_line], 'a%.txt', 'one.txt') })
+
+  -- Find copy2/ (line shifted after expand)
+  c2_line = find_line(buf, 'copy2/')
+  r.assert_truthy(c2_line)
+  -- Expand copy2/
+  do_enter(c2_line)
+  -- Rename a.txt → two.txt in copy2/
+  local a2_line
+  lines = buf_lines(buf)
+  for i = c2_line + 1, #lines do
+    if lines[i]:find('a.txt', 1, true) then a2_line = i; break end
+  end
+  r.assert_truthy(a2_line)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a2_line - 1, a2_line, false,
+    { gsub(lines[a2_line], 'a%.txt', 'two.txt') })
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/src'), 'src/ preserved')
+  r.assert_truthy(isfile(tmp .. '/src/a.txt'), 'src/a.txt intact')
+  r.assert_truthy(isdir(tmp .. '/copy1'), 'copy1/ exists')
+  r.assert_truthy(isfile(tmp .. '/copy1/one.txt'), 'copy1/one.txt')
+  r.assert_truthy(isfile(tmp .. '/copy1/b.txt'), 'copy1/b.txt')
+  r.assert_truthy(isdir(tmp .. '/copy2'), 'copy2/ exists')
+  r.assert_truthy(isfile(tmp .. '/copy2/two.txt'), 'copy2/two.txt')
+  r.assert_truthy(isfile(tmp .. '/copy2/b.txt'), 'copy2/b.txt')
+  r.assert_eq(readfile(tmp .. '/copy1/one.txt'), 'aaa')
+  r.assert_eq(readfile(tmp .. '/copy2/two.txt'), 'aaa')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: deeply nested expand + rename in sub-dir')
+-- ============================================================================
+
+r.run('rename file two levels deep', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  mkdir(tmp .. '/a')
+  mkdir(tmp .. '/a/b')
+  writefile(tmp .. '/a/b/deep.txt', {'deep'})
+
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Expand a/
+  local a_line = find_line(buf, 'a/')
+  r.assert_truthy(a_line)
+  do_enter(a_line)
+
+  -- Expand a/b/
+  local b_line = find_line(buf, 'b/', a_line + 1)
+  r.assert_truthy(b_line)
+  do_enter(b_line)
+
+  -- Rename deep.txt → renamed.txt
+  local deep_line = find_line(buf, 'deep.txt', b_line + 1)
+  r.assert_truthy(deep_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, deep_line - 1, deep_line, false,
+    { gsub(lines[deep_line], 'deep%.txt', 'renamed.txt') })
+
+  do_save()
+
+  r.assert_truthy(isfile(tmp .. '/a/b/renamed.txt'), 'renamed.txt exists')
+  r.assert_truthy(not exists(tmp .. '/a/b/deep.txt'), 'deep.txt gone')
+  r.assert_eq(readfile(tmp .. '/a/b/renamed.txt'), 'deep')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: rename dir + create + delete + rename child simultaneously')
+-- ============================================================================
+
+r.run('all mixed operations in one dir', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  mkdir(tmp .. '/work')
+  writefile(tmp .. '/work/keep.txt', {'keep'})
+  writefile(tmp .. '/work/remove.txt', {'rm'})
+  writefile(tmp .. '/work/rename_me.txt', {'ren'})
+
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Rename work/ → proj/
+  local work_line = find_line(buf, 'work/')
+  r.assert_truthy(work_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, work_line - 1, work_line, false,
+    { gsub(lines[work_line], 'work/', 'proj/') })
+
+  -- Expand proj/
+  do_enter(work_line)
+
+  -- Delete remove.txt
+  local rm_line = find_line(buf, 'remove.txt', work_line + 1)
+  r.assert_truthy(rm_line)
+  vim.api.nvim_buf_set_lines(buf, rm_line - 1, rm_line, false, {})
+
+  -- Rename rename_me.txt → done.txt
+  local ren_line = find_line(buf, 'rename_me.txt', work_line + 1)
+  r.assert_truthy(ren_line)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, ren_line - 1, ren_line, false,
+    { gsub(lines[ren_line], 'rename_me%.txt', 'done.txt') })
+
+  -- Add new file
+  lines = buf_lines(buf)
+  local _, _, wd = parse_line(lines[work_line])
+  local child_indent = string.rep('  ', wd + 1)
+  local insert_pos = work_line
+  for i = work_line + 1, #lines do
+    local _, _, d = parse_line(lines[i])
+    if d <= wd then break end
+    insert_pos = i
+  end
+  vim.api.nvim_buf_set_lines(buf, insert_pos, insert_pos, false,
+    { child_indent .. 'added.txt' })
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/proj'), 'proj/ exists')
+  r.assert_truthy(not exists(tmp .. '/work'), 'work/ gone')
+  r.assert_truthy(isfile(tmp .. '/proj/keep.txt'), 'keep.txt preserved')
+  r.assert_truthy(not exists(tmp .. '/proj/remove.txt'), 'remove.txt gone')
+  r.assert_truthy(not exists(tmp .. '/proj/rename_me.txt'), 'rename_me.txt gone')
+  r.assert_truthy(isfile(tmp .. '/proj/done.txt'), 'done.txt exists')
+  r.assert_truthy(isfile(tmp .. '/proj/added.txt'), 'added.txt created')
+  r.assert_eq(readfile(tmp .. '/proj/keep.txt'), 'keep')
+  r.assert_eq(readfile(tmp .. '/proj/done.txt'), 'ren')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: copy dir + expand + collapse + re-expand')
+-- ============================================================================
+
+r.run('children survive collapse/re-expand cycle', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Copy src/ → dst/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { lines[src_line] })
+  local copy_line = src_line + 1
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, copy_line - 1, copy_line, false,
+    { gsub(lines[copy_line], 'src/', 'dst/') })
+
+  -- Expand → collapse → re-expand
+  do_enter(copy_line)
+  local a_line = find_line(buf, 'a.txt', copy_line + 1)
+  r.assert_truthy(a_line, 'a.txt visible after first expand')
+
+  do_enter(copy_line) -- collapse
+
+  local a_after_collapse = find_line(buf, 'a.txt', copy_line + 1)
+  -- After collapse, children not visible in immediate subsequent lines of same depth
+  -- (they belong to saved_children now)
+
+  do_enter(copy_line) -- re-expand
+
+  local a_after_reexpand = find_line(buf, 'a.txt', copy_line + 1)
+  r.assert_truthy(a_after_reexpand, 'a.txt visible after re-expand')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: delete entire dir (unexpanded)')
+-- ============================================================================
+
+r.run('dir and all contents removed from disk', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Delete src/ line
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  vim.api.nvim_buf_set_lines(buf, src_line - 1, src_line, false, {})
+
+  do_save()
+
+  r.assert_truthy(not exists(tmp .. '/src'), 'src/ gone')
+  r.assert_truthy(not exists(tmp .. '/src/a.txt'), 'src/a.txt gone')
+  r.assert_truthy(isfile(tmp .. '/top.txt'), 'top.txt preserved')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: rename file with path separator creates subdir')
+-- ============================================================================
+
+r.run('rename top.txt to sub/top.txt creates sub/', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Expand src/ so we have an expanded dir context
+  local src_line = find_line(buf, 'src/')
+  do_enter(src_line)
+
+  -- Find a.txt in src/ and "rename" it to nested/a.txt (writes path separator)
+  local a_line = find_line(buf, 'a.txt', src_line + 1)
+  r.assert_truthy(a_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', 'nested/a.txt') })
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/src/nested'), 'src/nested/ created')
+  r.assert_truthy(isfile(tmp .. '/src/nested/a.txt'), 'a.txt moved into nested/')
+  r.assert_truthy(not exists(tmp .. '/src/a.txt'), 'old a.txt gone')
+  r.assert_eq(readfile(tmp .. '/src/nested/a.txt'), 'aaa')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: duplicate detection blocks save')
+-- ============================================================================
+
+r.run('copy dir + expand + rename child to same name = duplicate error', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Copy src/ → dst/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { lines[src_line] })
+  local copy_line = src_line + 1
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, copy_line - 1, copy_line, false,
+    { gsub(lines[copy_line], 'src/', 'dst/') })
+
+  -- Expand dst/
+  do_enter(copy_line)
+
+  -- Rename b.txt → a.txt (creates duplicate with existing a.txt)
+  local b_line = find_line(buf, 'b.txt', copy_line + 1)
+  r.assert_truthy(b_line)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, b_line - 1, b_line, false,
+    { gsub(lines[b_line], 'b%.txt', 'a.txt') })
+
+  -- do_save should error due to duplicate
+  local ok, err = pcall(do_save)
+  r.assert_truthy(not ok, 'should fail on duplicate')
+  r.assert_truthy(err:find('duplicates detected'), 'error mentions duplicates')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: swap two file names in same dir')
+-- ============================================================================
+
+r.run('two files swapped within expanded dir', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  mkdir(tmp .. '/d')
+  writefile(tmp .. '/d/A.txt', {'AAA'})
+  writefile(tmp .. '/d/B.txt', {'BBB'})
+
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Expand d/
+  local d_line = find_line(buf, 'd/')
+  r.assert_truthy(d_line)
+  do_enter(d_line)
+
+  -- Find A.txt and B.txt
+  local lines = buf_lines(buf)
+  local a_line, b_line
+  for i = d_line + 1, #lines do
+    local _, name = parse_line(lines[i])
+    if name == 'A.txt' then a_line = i end
+    if name == 'B.txt' then b_line = i end
+  end
+  r.assert_truthy(a_line)
+  r.assert_truthy(b_line)
+
+  -- Swap names
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'A%.txt', 'B.txt') })
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, b_line - 1, b_line, false,
+    { gsub(lines[b_line], 'B%.txt', 'A.txt') })
+
+  do_save()
+
+  r.assert_eq(readfile(tmp .. '/d/A.txt'), 'BBB')
+  r.assert_eq(readfile(tmp .. '/d/B.txt'), 'AAA')
 
   vim.fn.delete(tmp, 'rf')
 end)

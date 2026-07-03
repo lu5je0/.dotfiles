@@ -208,8 +208,16 @@ function M.compute_actions(session, buf_lines)
 
   for id, path in pairs(session.id_to_path) do
     if not seen_ids[id] then
-      if not under_ancestor_move(path) and not copy_shadow[id] then
-        table.insert(actions, { name = 'delete', src = path })
+      if copy_shadow[id] then
+        -- phantom: never emit delete for phantom targets
+      else
+        local am = under_ancestor_move(path)
+        if not am then
+          table.insert(actions, { name = 'delete', src = path })
+        elseif session.expanded_dirs[am.new] or session.expanded_dirs[am.old] then
+          local suffix = path:sub(#am.old + 1)
+          table.insert(actions, { name = 'delete', src = am.new .. suffix })
+        end
       end
     end
   end
