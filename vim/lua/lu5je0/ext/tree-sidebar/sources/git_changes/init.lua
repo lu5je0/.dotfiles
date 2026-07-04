@@ -600,6 +600,12 @@ function M.keymaps()
     end, desc = 'Locate in files' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
     { '<space>', preview.toggle, desc = 'Preview' },
+    { 'gd', function()
+      local diff_preview = require('lu5je0.ext.tree-sidebar.actions.diff_preview')
+      local next_mode = diff_preview.toggle_mode()
+      vim.notify('Diff mode: ' .. next_mode, vim.log.levels.INFO)
+      preview.refresh()
+    end, desc = 'Toggle diff mode (single/dual)' },
     { 'yn', function()
       local line = vim.api.nvim_win_get_cursor(state.win)[1]
       local item = state.git_changes.display_items[line]

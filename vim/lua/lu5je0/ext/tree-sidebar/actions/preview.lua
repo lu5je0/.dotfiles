@@ -94,7 +94,7 @@ local function setup_autocmds()
       vim.schedule(function()
         local cur_win = vim.api.nvim_get_current_win()
         local dp_state = state.diff_preview
-        if cur_win == dp_state.win_left or cur_win == dp_state.win_right then
+        if cur_win == dp_state.win_left or cur_win == dp_state.win_right or cur_win == dp_state.win_single then
           return
         end
         local popup = ui.current_popup
@@ -165,7 +165,9 @@ local function enter_diff_window()
   clear_autocmds()
 
   local dp_state = state.diff_preview
-  if dp_state.win_left and vim.api.nvim_win_is_valid(dp_state.win_left) then
+  if dp_state.win_single and vim.api.nvim_win_is_valid(dp_state.win_single) then
+    vim.api.nvim_set_current_win(dp_state.win_single)
+  elseif dp_state.win_left and vim.api.nvim_win_is_valid(dp_state.win_left) then
     vim.api.nvim_set_current_win(dp_state.win_left)
   elseif dp_state.win_right and vim.api.nvim_win_is_valid(dp_state.win_right) then
     vim.api.nvim_set_current_win(dp_state.win_right)
@@ -178,6 +180,12 @@ end
 
 function M.stop()
   stop_preview()
+end
+
+function M.refresh()
+  if pv().active then
+    update_preview()
+  end
 end
 
 function M.toggle()
@@ -202,7 +210,9 @@ function M.scroll_down()
     return
   end
   if p.type == 'diff' then
-    local dwin = state.diff_preview.win_left
+    local dp_state = state.diff_preview
+    local dwin = (dp_state.win_single and vim.api.nvim_win_is_valid(dp_state.win_single)) and dp_state.win_single
+      or dp_state.win_left
     if dwin and vim.api.nvim_win_is_valid(dwin) then
       vim.api.nvim_win_call(dwin, function()
         vim.cmd('normal! \\<C-d>')
@@ -224,7 +234,9 @@ function M.scroll_up()
     return
   end
   if p.type == 'diff' then
-    local dwin = state.diff_preview.win_left
+    local dp_state = state.diff_preview
+    local dwin = (dp_state.win_single and vim.api.nvim_win_is_valid(dp_state.win_single)) and dp_state.win_single
+      or dp_state.win_left
     if dwin and vim.api.nvim_win_is_valid(dwin) then
       vim.api.nvim_win_call(dwin, function()
         vim.cmd('normal! \\<C-u>')

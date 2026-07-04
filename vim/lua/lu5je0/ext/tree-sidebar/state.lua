@@ -113,12 +113,14 @@ local function new_tab_state()
       type = nil,
     },
 
-    -- diff_preview floating windows
+    -- diff_preview floating windows (dual mode uses left/right, single mode uses win_single)
     diff_preview = {
       win_left = nil,
       win_right = nil,
       buf_left = nil,
       buf_right = nil,
+      win_single = nil,
+      buf_single = nil,
     },
   }
 end
@@ -149,7 +151,11 @@ local function release_tab_resources(ts)
     if dp.win_right and vim.api.nvim_win_is_valid(dp.win_right) then
       pcall(vim.api.nvim_win_close, dp.win_right, true)
     end
+    if dp.win_single and vim.api.nvim_win_is_valid(dp.win_single) then
+      pcall(vim.api.nvim_win_close, dp.win_single, true)
+    end
     dp.win_left, dp.win_right, dp.buf_left, dp.buf_right = nil, nil, nil, nil
+    dp.win_single, dp.buf_single = nil, nil
   end
 end
 

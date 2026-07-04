@@ -21,7 +21,7 @@ local function write_file(filename, content)
 end
 
 function M.get(name, default)
-  if cache[name] then
+  if cache[name] ~= nil then
     return cache[name]
   end
 

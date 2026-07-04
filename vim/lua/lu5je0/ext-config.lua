@@ -42,7 +42,7 @@ ext_load({
   name = 'im',
   config = function()
     if vim.fn.has('gui') == 0 then
-      require('lu5je0.misc.im.im').setup()
+      require('lu5je0.misc.im').setup()
     end
   end,
   event = { 'InsertEnter', 'CursorHold', 'ExtVeryLazy' },

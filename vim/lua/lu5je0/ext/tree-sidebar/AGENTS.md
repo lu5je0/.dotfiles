@@ -42,7 +42,7 @@ tree-sidebar/
     ├── git_ops.lua           -- Git 操作（调用 git/common/git-ops.lua）
     ├── navigation.lua        -- cwd 历史 back/forward
     ├── preview.lua           -- 预览控制器
-    └── diff_preview.lua      -- diff 预览（per-tab 浮窗，5s pending 超时兜底）
+    └── diff_preview.lua      -- diff 预览（per-tab 浮窗，5s pending 超时兜底；`sidebar_diff_mode` 控制 dual / single 布局，`gd` 在 git_changes tab 切换）
 ```
 
 外部共享：`ext/git/common/git-ops.lua`（sidebar 和 git-status 共用的日志/undo/git 工具）

@@ -1,8 +1,7 @@
+-- Windows / WSL backend: delegates to tui-bridge's IME extension.
 local M = {}
 
-local state = {
-  ime = nil
-}
+local state = { ime = nil }
 
 function M.normal()
   state.ime.normal()
@@ -12,7 +11,7 @@ function M.insert()
   state.ime.insert()
 end
 
-M.switch_en = function()
+M.ascii_mode = function()
   M.normal()
 end
 
@@ -21,12 +20,12 @@ function M.keeper(enable)
 end
 
 function M.on_change(handler)
-  state.ime.on_change(handler)
-end
-
-function M.should_normalize(args)
-  local ime_state = args.state or args.source_id
-  return ime_state == 'chi'
+  state.ime.on_change(function(args)
+    local ime_state = args.state or args.source_id
+    if ime_state == 'chi' then
+      handler()
+    end
+  end)
 end
 
 function M.setup()

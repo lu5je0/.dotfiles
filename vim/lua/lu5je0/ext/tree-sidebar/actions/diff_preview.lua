@@ -162,14 +162,40 @@ local function close_for(ts)
   if d.win_right and vim.api.nvim_win_is_valid(d.win_right) then
     vim.api.nvim_win_close(d.win_right, true)
   end
+  if d.win_single and vim.api.nvim_win_is_valid(d.win_single) then
+    vim.api.nvim_win_close(d.win_single, true)
+  end
   d.win_left = nil
   d.win_right = nil
   d.buf_left = nil
   d.buf_right = nil
+  d.win_single = nil
+  d.buf_single = nil
 end
 
 function M.close()
   close_for(state.tab())
+end
+
+-- ── mode (single | dual) ───────────────────────────────────────────────
+
+local VALID_MODES = { single = true, dual = true }
+
+function M.get_mode()
+  local mode = env_keeper.get('sidebar_diff_mode', 'dual')
+  if not VALID_MODES[mode] then mode = 'dual' end
+  return mode
+end
+
+function M.set_mode(mode)
+  if not VALID_MODES[mode] then return end
+  env_keeper.set('sidebar_diff_mode', mode)
+end
+
+function M.toggle_mode()
+  local next_mode = M.get_mode() == 'dual' and 'single' or 'dual'
+  M.set_mode(next_mode)
+  return next_mode
 end
 
 function M.show(item, on_state_change)
@@ -186,19 +212,7 @@ function M.show(item, on_state_change)
   local rendered = false
   local timeout_timer
 
-  local function maybe_render()
-    if pending > 0 or rendered then return end
-    if timeout_timer then
-      pcall(function() timeout_timer:stop() end)
-      pcall(function() timeout_timer:close() end)
-      timeout_timer = nil
-    end
-    rendered = true
-    local d = dp(ts)
-    close_for(ts)
-    ui.close_current_popup()
-    if on_state_change then on_state_change('diff') end
-
+  local function render_dual(d, changes_only, left_title)
     local gap = 2
     local total_width = math.floor(vim.o.columns * 0.85)
     local half_width = math.floor((total_width - gap) / 2)
@@ -221,20 +235,8 @@ function M.show(item, on_state_change)
       return buf
     end
 
-    -- If a fetch never delivered (e.g. timeout fired), substitute a
-    -- placeholder so the diff still opens instead of hanging.
-    left_data = left_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
-    right_data = right_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
     d.buf_left = make_buf(left_data)
     d.buf_right = make_buf(right_data)
-
-    local changes_only = env_keeper.get('sidebar_diff_changes_only', false)
-
-    -- Augment HEAD title with short hash when appropriate.
-    local left_title = targets.left_title
-    if left_title:find('HEAD') and head_short and head_short ~= '' then
-      left_title = left_title:gsub('HEAD', 'HEAD (' .. head_short .. ')')
-    end
 
     d.win_left = vim.api.nvim_open_win(d.buf_left, false, {
       relative = 'editor',
@@ -288,10 +290,17 @@ function M.show(item, on_state_change)
       vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
     end
 
+    local function toggle_mode_here()
+      M.set_mode('single')
+      vim.notify('Diff mode: single', vim.log.levels.INFO)
+      vim.schedule(function() M.show(item, on_state_change) end)
+    end
+
     for _, buf in ipairs({ d.buf_left, d.buf_right }) do
       local bopts = { buffer = buf, nowait = true, silent = true }
       vim.keymap.set('n', 'q', close_and_return, bopts)
       vim.keymap.set('n', 'd', toggle_changes_only, bopts)
+      vim.keymap.set('n', 'gd', toggle_mode_here, bopts)
     end
 
     vim.keymap.set('n', '<c-l>', function()
@@ -314,9 +323,6 @@ function M.show(item, on_state_change)
           if on_state_change then on_state_change(nil) end
           vim.schedule(function()
             local cur = dp(ts)
-            -- Only collapse if the closing pair still matches the
-            -- currently-tracked windows; otherwise a newer diff session
-            -- has taken over and we shouldn't tear it down.
             if cur.win_left ~= cur_left or cur.win_right ~= cur_right then
               return
             end
@@ -327,6 +333,126 @@ function M.show(item, on_state_change)
           end)
         end,
       })
+    end
+  end
+
+  local function build_unified_diff_lines(left_lines, right_lines, left_title, right_title)
+    local left_text = #left_lines > 0 and (table.concat(left_lines, '\n') .. '\n') or ''
+    local right_text = #right_lines > 0 and (table.concat(right_lines, '\n') .. '\n') or ''
+    local ok, diff_str = pcall(vim.text.diff, left_text, right_text, {
+      algorithm = 'histogram',
+      ctxlen = 3,
+    })
+    if not ok or not diff_str or diff_str == '' then
+      return { '--- a' .. left_title, '+++ b' .. right_title, '', '-- No changes --' }
+    end
+    local lines = vim.split(diff_str, '\n', { plain = true })
+    if #lines > 0 and lines[#lines] == '' then table.remove(lines) end
+    table.insert(lines, 1, '+++ b' .. right_title)
+    table.insert(lines, 1, '--- a' .. left_title)
+    return lines
+  end
+
+  local function render_single(d, left_title)
+    local width = math.floor(vim.o.columns * 0.85)
+    local height = math.floor(vim.o.lines * 0.8)
+    local row = math.floor((vim.o.lines - height) / 2)
+    local col = math.floor((vim.o.columns - width) / 2)
+
+    local lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title)
+
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[buf].buftype = 'nofile'
+    vim.bo[buf].bufhidden = 'wipe'
+    vim.bo[buf].filetype = 'diff'
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    vim.bo[buf].modifiable = false
+
+    d.buf_single = buf
+    d.win_single = vim.api.nvim_open_win(buf, false, {
+      relative = 'editor',
+      row = row, col = col,
+      width = width, height = height,
+      style = 'minimal', border = 'single',
+      title = left_title .. '  →' .. targets.right_title,
+      title_pos = 'center',
+    })
+    vim.wo[d.win_single].wrap = false
+    vim.wo[d.win_single].cursorline = false
+    vim.wo[d.win_single].number = false
+    vim.wo[d.win_single].relativenumber = false
+    vim.wo[d.win_single].signcolumn = 'no'
+    vim.wo[d.win_single].foldcolumn = '0'
+    vim.wo[d.win_single].winhighlight = 'Normal:Normal,FloatBorder:Fg'
+
+    local function close_and_return()
+      vim.schedule(function()
+        close_for(ts)
+        if on_state_change then on_state_change(nil) end
+        if ts.win and vim.api.nvim_win_is_valid(ts.win) then
+          vim.api.nvim_set_current_win(ts.win)
+        end
+      end)
+    end
+
+    local function toggle_mode_here()
+      M.set_mode('dual')
+      vim.notify('Diff mode: dual', vim.log.levels.INFO)
+      vim.schedule(function() M.show(item, on_state_change) end)
+    end
+
+    local bopts = { buffer = buf, nowait = true, silent = true }
+    vim.keymap.set('n', 'q', close_and_return, bopts)
+    vim.keymap.set('n', 'gd', toggle_mode_here, bopts)
+
+    local cur_win = d.win_single
+    vim.api.nvim_create_autocmd('WinClosed', {
+      pattern = tostring(cur_win),
+      once = true,
+      callback = function()
+        if on_state_change then on_state_change(nil) end
+        vim.schedule(function()
+          local cur = dp(ts)
+          if cur.win_single ~= cur_win then return end
+          close_for(ts)
+          if ts.win and vim.api.nvim_win_is_valid(ts.win) then
+            vim.api.nvim_set_current_win(ts.win)
+          end
+        end)
+      end,
+    })
+  end
+
+  local function maybe_render()
+    if pending > 0 or rendered then return end
+    if timeout_timer then
+      pcall(function() timeout_timer:stop() end)
+      pcall(function() timeout_timer:close() end)
+      timeout_timer = nil
+    end
+    rendered = true
+    local d = dp(ts)
+    close_for(ts)
+    ui.close_current_popup()
+    if on_state_change then on_state_change('diff') end
+
+    -- If a fetch never delivered (e.g. timeout fired), substitute a
+    -- placeholder so the diff still opens instead of hanging.
+    left_data = left_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
+    right_data = right_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
+
+    local changes_only = env_keeper.get('sidebar_diff_changes_only', false)
+
+    -- Augment HEAD title with short hash when appropriate.
+    local left_title = targets.left_title
+    if left_title:find('HEAD') and head_short and head_short ~= '' then
+      left_title = left_title:gsub('HEAD', 'HEAD (' .. head_short .. ')')
+    end
+
+    if M.get_mode() == 'single' then
+      render_single(d, left_title)
+    else
+      render_dual(d, changes_only, left_title)
     end
   end
 
