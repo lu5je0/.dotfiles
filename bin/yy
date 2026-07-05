@@ -4,8 +4,8 @@ set -euo pipefail
 
 WCLIP="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../win/bin/wclip.exe"
 
-if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v _clipboard_osc52 >/dev/null 2>&1; then
-  exec _clipboard_osc52 copy
+if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v clipboard-osc52 >/dev/null 2>&1; then
+  exec clipboard-osc52 copy
 fi
 
 uname_info=$(uname -a)

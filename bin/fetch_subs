@@ -1,5 +1,0 @@
-#!/bin/bash
-SCRIPT_PATH=~/.dotfiles/submodule/fetch-subs
-SCRIPT_NAME=fetch_subs.py
-
-source ~/.dotfiles/submodule/python-install/runner.sh

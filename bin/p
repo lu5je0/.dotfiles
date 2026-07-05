@@ -32,8 +32,8 @@ while getopts "fh" opt; do
   esac
 done
 
-if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v _clipboard_osc52 >/dev/null 2>&1; then
-  exec _clipboard_osc52 paste
+if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v clipboard-osc52 >/dev/null 2>&1; then
+  exec clipboard-osc52 paste
 fi
 
 uname_info=$(uname -a)

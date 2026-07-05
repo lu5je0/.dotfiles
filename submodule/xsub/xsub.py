@@ -1,13 +1,21 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import json
+import os
 import subprocess
 import sys
 import tempfile
+import warnings
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
+
+
+# suppress SyntaxWarning from asstosrt (invalid escape in upstream lib)
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="asstosrt")
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -364,7 +372,7 @@ def pick_auto_streams(streams: list[SubtitleStream]) -> tuple[SubtitleStream, Su
     if not text_streams:
         raise SystemExit(
             "没有找到可转换的文本字幕流；当前文件只有图片字幕（例如 PGS/SUP），"
-            "q-xsub 目前不支持这类字幕，请先用 `list-streams` 确认。"
+            "xsub 目前不支持这类字幕，请先用 `list-streams` 确认。"
         )
     zh_stream = next((stream for stream in text_streams if is_simplified_chinese_stream(stream)), None)
     if zh_stream is None:
@@ -446,6 +454,91 @@ def default_output_path(input_path: Path, output: str | None, suffix: str = ".as
     return input_path.with_suffix(suffix)
 
 
+# ── fetch (shooter.cn) ──────────────────────────────────────────────────────
+
+
+SUB_SUFFIXES = ["srt", "ass"]
+
+
+def video_hash(file_path: str) -> str:
+    with open(file_path, "rb") as file:
+        file.seek(0, 2)
+        length = file.tell()
+        chunks = []
+        for i in [4096, int(length * 2 / 3), int(length / 3), length - 8192]:
+            file.seek(i, 0)
+            chunks.append(hashlib.md5(file.read(4096)).hexdigest())
+        return ";".join(chunks)
+
+
+def get_subs(file_hash: str, video_name: str) -> list:
+    requests = require_dependency("requests")
+    resp = requests.post(
+        "https://www.shooter.cn/api/subapi.php",
+        data={"filehash": file_hash, "pathinfo": video_name, "format": "json"},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def download_sub(url: str, path: str, video_name: str, ext: str, num: int) -> None:
+    requests = require_dependency("requests")
+    chardet = require_dependency("chardet")
+    resp = requests.get(url, timeout=15)
+    resp.raise_for_status()
+    sub_name = f"{video_name}.{num}.{ext}" if num else f"{video_name}.{ext}"
+    file_path = os.path.join(path, sub_name)
+    content = resp.content
+    charset = chardet.detect(content)["encoding"].lower()
+    if charset in ("gb2312", "big5"):
+        charset = "gb18030"
+    with open(file_path, "w", encoding="utf8") as f:
+        f.write(bytes.decode(content, encoding=charset))
+    log(f"downloaded: {sub_name}")
+    if ext == "ass":
+        duplicate_srt(file_path)
+
+
+def duplicate_srt(ass_path: str) -> None:
+    srt_path = ass_path.replace(".ass", ".srt")
+    asstosrt = require_dependency("asstosrt")
+    try:
+        with open(ass_path, encoding="utf8") as f:
+            srt_content = asstosrt.convert(f)
+        with open(srt_path, "w", encoding="utf8") as f:
+            f.write(srt_content)
+        log(f"duplicated srt: {srt_path}")
+    except Exception as e:
+        log(f"duplicate srt failed: {e}")
+
+
+def check_existing_subs(filename: str) -> bool:
+    return any(os.path.exists(f"{filename}.{suffix}") for suffix in SUB_SUFFIXES)
+
+
+def fetch_one(video: str) -> None:
+    log(f"fetching: {video}")
+    path = os.getcwd()
+    if check_existing_subs(video):
+        return
+    try:
+        subs = get_subs(video_hash(os.path.join(path, video)), video)
+        for num, sub in enumerate(subs):
+            for file in sub["Files"]:
+                download_sub(file["Link"], path, video, file["Ext"], num)
+    except Exception as e:
+        log(f"not found: {video} ({e})")
+
+
+def handle_fetch(args: argparse.Namespace) -> int:
+    executor = ThreadPoolExecutor(max_workers=30)
+    for video in args.videos:
+        executor.submit(fetch_one, video)
+    executor.shutdown()
+    return 0
+
+
 def handle_list_templates(_args: argparse.Namespace) -> int:
     templates = list_builtin_templates()
     if not templates:
@@ -509,7 +602,7 @@ def handle_extract(args: argparse.Namespace) -> int:
             raise SystemExit("没有找到字幕流。")
         log(f"probed: found {len(streams)} subtitle streams")
 
-        with tempfile.TemporaryDirectory(prefix="q-xsub-") as tempdir:
+        with tempfile.TemporaryDirectory(prefix="xsub-") as tempdir:
             tempdir_path = Path(tempdir)
             output_path = default_output_path(video_path, args.output if len(args.inputs) == 1 else None)
 
@@ -553,7 +646,7 @@ def handle_extract(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="q-xsub",
+        prog="xsub",
         description="提取 MKV 内置字幕，并按 pyass 模板重建 ASS 样式。",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -617,6 +710,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     extract_parser.set_defaults(english_standalone_font=True)
     extract_parser.set_defaults(handler=handle_extract)
+
+    fetch_parser = subparsers.add_parser("fetch", help="从 shooter.cn 下载字幕")
+    fetch_parser.add_argument("videos", nargs="+", help="一个或多个视频文件路径")
+    fetch_parser.set_defaults(handler=handle_fetch)
 
     return parser
 

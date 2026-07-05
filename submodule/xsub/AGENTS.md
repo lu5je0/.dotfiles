@@ -2,17 +2,17 @@
 
 ## Overview
 
-- This repo provides `q-xsub`, a small CLI for extracting text subtitles from MKV files and rewriting them into templated `.ass` output.
+- This repo provides `xsub`, a small CLI for extracting text subtitles from MKV files and rewriting them into templated `.ass` output.
 - The project is intended to be run with `uv`.
 - Built-in ASS templates live in `template/`.
 
 ## Commands
 
 - Install dependencies: `uv sync`
-- Run the CLI locally: `uv run python q_xsub.py ...`
+- Run the CLI locally: `uv run python xsub.py ...`
 - Common checks:
-  - `python3 q_xsub.py convert -h`
-  - `python3 q_xsub.py extract -h`
+  - `python3 xsub.py convert -h`
+  - `python3 xsub.py extract -h`
 
 ## Behavior Notes
 
@@ -32,4 +32,4 @@
 ## Sandbox Notes
 
 - Real subtitle extraction may write `.ass` output next to MKV files outside the repo. That requires escalated execution in this environment.
-- `uv run q-xsub ...` may fail unless the entrypoint is installed; `uv run python q_xsub.py ...` is the reliable repo-local invocation.
+- `uv run xsub ...` may fail unless the entrypoint is installed; `uv run python xsub.py ...` is the reliable repo-local invocation.

@@ -1,6 +1,7 @@
-q-xsub
+xsub
 
 使用 `ffmpeg`/`ffprobe` 从 MKV 提取内置字幕，并按仓库内置模板生成目标样式的 `.ass` 文件。
+也可从 shooter.cn 下载字幕。
 
 依赖
 
@@ -9,11 +10,12 @@ q-xsub
 
 命令
 
-- `uv run q-xsub list-templates`
-- `uv run q-xsub list-streams input.mkv`
-- `uv run q-xsub extract input.mkv`
-- `uv run q-xsub extract a.mkv b.mkv`
-- `uv run q-xsub convert sub.srt`
+- `uv run xsub list-templates`
+- `uv run xsub list-streams input.mkv`
+- `uv run xsub extract input.mkv`
+- `uv run xsub extract a.mkv b.mkv`
+- `uv run xsub convert sub.srt`
+- `uv run xsub fetch video.mkv`
 
 默认行为
 
@@ -22,22 +24,23 @@ q-xsub
 - 如果只找到中文字幕流，则只输出中文。
 - `convert` 和 `extract --stream` 默认不会拆中英行；加 `--split-zh-and-en-lines` 后，会把单轨中英混合字幕拆成中文在上、英文在下。
 - 英文默认套用 `Eng` 样式；可用 `--no-english-standalone-font` 关闭，这个开关在 `convert`、`extract --stream` 和 `extract` 自动双流合并时都生效。
-- 如果自动模式找不到简中流，可先运行 `uv run q-xsub list-streams input.mkv`，再用 `--stream` 手动指定。
+- 如果自动模式找不到简中流，可先运行 `uv run xsub list-streams input.mkv`，再用 `--stream` 手动指定。
 
 示例
 
 ```bash
 uv sync
-uv run q-xsub list-templates
-uv run q-xsub list-streams movie.mkv
-uv run q-xsub extract movie.mkv -t 2
-uv run q-xsub extract ep1.mkv ep2.mkv
-uv run q-xsub extract movie.mkv --stream 0
-uv run q-xsub extract movie.mkv --stream 0 -s
-uv run q-xsub extract movie.mkv --no-english-standalone-font
-uv run q-xsub convert input.srt -t 3
-uv run q-xsub convert input.srt -t 3 -s
-uv run q-xsub convert input.srt -t 3 --no-english-standalone-font
+uv run xsub list-templates
+uv run xsub list-streams movie.mkv
+uv run xsub extract movie.mkv -t 2
+uv run xsub extract ep1.mkv ep2.mkv
+uv run xsub extract movie.mkv --stream 0
+uv run xsub extract movie.mkv --stream 0 -s
+uv run xsub extract movie.mkv --no-english-standalone-font
+uv run xsub convert input.srt -t 3
+uv run xsub convert input.srt -t 3 -s
+uv run xsub convert input.srt -t 3 --no-english-standalone-font
+uv run xsub fetch movie.mkv
 ```
 
 兼容 pyass 的功能
