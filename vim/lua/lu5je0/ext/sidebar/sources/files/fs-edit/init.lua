@@ -5,6 +5,11 @@ local te_render = require('lu5je0.ext.sidebar.sources.files.fs-edit.render')
 local confirm = require('lu5je0.ext.sidebar.sources.files.fs-edit.confirm')
 local pu = require('lu5je0.ext.sidebar.sources.files.fs-edit.path_util')
 
+-- Fixed byte width for the concealed `/N ` prefix. Must be constant across
+-- all lines so <C-v> visual-block selections stay aligned when the buffer
+-- mixes small and large IDs.
+local ID_WIDTH = 6
+
 local parse_line = actions_mod.parse_line
 local compute_actions = actions_mod.compute_actions
 local check_duplicates = actions_mod.check_duplicates
@@ -62,10 +67,8 @@ local function count_entries(session, dir_path)
 end
 
 local function render_to_lines(session)
-  local total = session.next_id + count_entries(session, session.root_dir)
-  local id_width = math.max(1, #tostring(total))
-  session._id_width = id_width
-  local fmt = '%s/%0' .. id_width .. 'd %s'
+  session._id_width = ID_WIDTH
+  local fmt = '%s/%0' .. ID_WIDTH .. 'd %s'
 
   local lines = {}
   local id_order = {}
@@ -94,8 +97,7 @@ local function render_to_lines(session)
 end
 
 local function render_children(session, dir_path, depth)
-  local id_width = session._id_width or 1
-  local fmt = '%s/%0' .. id_width .. 'd %s'
+  local fmt = '%s/%0' .. ID_WIDTH .. 'd %s'
   local lines = {}
   local new_ids = {}
 
@@ -188,8 +190,7 @@ local function count_id_in_buf(session, buf, target_id)
 end
 
 local function render_phantom_children(session, disk_dir, target_dir, depth, is_copy)
-  local id_width = session._id_width or 1
-  local fmt = '%s/%0' .. id_width .. 'd %s'
+  local fmt = '%s/%0' .. ID_WIDTH .. 'd %s'
   local lines = {}
   local new_ids = {}
 
@@ -264,8 +265,7 @@ local function on_enter(session)
       session.id_to_path[new_id] = cur_path
       session.path_to_id[cur_path] = new_id
       session.copy_shadow[new_id] = origin_shadow
-      local id_width = session._id_width or 1
-      local fmt = '%s/%0' .. id_width .. 'd %s'
+      local fmt = '%s/%0' .. ID_WIDTH .. 'd %s'
       local indent = line:match('^(%s*)') or ''
       local new_line = string.format(fmt, indent, new_id, raw_name .. '/')
       vim.api.nvim_buf_set_lines(session.buf, line_nr - 1, line_nr, false, { new_line })
@@ -766,6 +766,7 @@ function M.open(node, opts)
   end
 
   local function snap_to_name_start()
+    if vim.fn.mode():sub(1, 1) ~= 'n' then return end
     local row, col = unpack(vim.api.nvim_win_get_cursor(0))
     local line = vim.api.nvim_buf_get_lines(buf, row - 1, row, false)[1]
     if not line then return end
@@ -1113,7 +1114,7 @@ function M.open(node, opts)
         if lid then ids_before_hunk[lid] = true end
       end
 
-      local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
+      local fmt = '%s/%0' .. ID_WIDTH .. 'd %s'
       for i = hunk_end, hunk_start, -1 do
         local id = parse_line(all_lines[i])
         if not id then
@@ -1138,7 +1139,7 @@ function M.open(node, opts)
     -- restore deleted entries
     if #deleted_to_restore > 0 then
       table.sort(deleted_to_restore, function(a, b) return a.after_idx > b.after_idx end)
-      local fmt = '%s/%0' .. (session._id_width or 1) .. 'd %s'
+      local fmt = '%s/%0' .. ID_WIDTH .. 'd %s'
       for _, del in ipairs(deleted_to_restore) do
         local entry = session.store[del.id]
         if entry then
