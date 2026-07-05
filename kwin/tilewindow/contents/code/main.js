@@ -19,15 +19,15 @@ const layoutConfig = {
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
         "center_j": function(sw, sh) {
-            const w = 1241;
-            const h = 1032;
+            const w = 1139;
+            const h = 940;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
     },
 };
 
 function getWorkArea(window) {
-    return workspace.clientArea(KWin.PlacementArea, window.output, workspace.currentDesktop);
+    return workspace.clientArea(KWin.MaximizeArea, window.output, workspace.currentDesktop);
 }
 
 function getProcessName(window) {
@@ -105,7 +105,10 @@ function findOtherWindowAtRect(rx, ry, rw, rh, excludeWindow) {
         if (w.minimized) continue;
         if (!w.normalWindow) continue;
         if (w.output !== excludeWindow.output) continue;
+        if (w.fullScreen) continue;
+        const area = workspace.clientArea(KWin.MaximizeArea, w.output, workspace.currentDesktop);
         const geo = w.frameGeometry;
+        if (geo.width >= area.width && geo.height >= area.height) continue;
         if (geo.width <= 0 || geo.height <= 0) continue;
         const cx = geo.x + geo.width / 2;
         const cy = geo.y + geo.height / 2;
@@ -156,10 +159,14 @@ function resizeWindow(position) {
         let shifts = 0;
         while (shifts < maxShifts && findOtherWindowAtRect(newX, newY, newWidth, newHeight, client)) {
             newX += offsetStep;
-            newY += offsetStep;
             shifts++;
         }
     }
+
+    if (newY + newHeight > area.y + area.height)
+        newY = area.y + area.height - newHeight;
+    if (newX + newWidth > area.x + area.width)
+        newX = area.x + area.width - newWidth;
 
     client.setMaximize(false, false);
     moveWindowTo(client, { x: newX, y: newY, width: newWidth, height: newHeight });
