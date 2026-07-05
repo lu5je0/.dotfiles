@@ -21,10 +21,10 @@ def generate_run_script(script_path, script_name, output_dir, output_name=None):
     # Get base name of Python script to name the run.sh
     script_name = os.path.basename(script_name)
     target_name = f"{os.path.splitext(script_name)[0]}"
-    
+
     run_script_content = f"""
     #!/bin/bash
-    INSTALL_PATH=$(dirname "$(realpath "${{BASH_SOURCE[0]}}")")
+    : "${{DOTFILES_DIR:=$HOME/.dotfiles}}"
     SCRIPT_PATH={script_path}
     SCRIPT_NAME={script_name}
     """
@@ -36,7 +36,7 @@ def generate_run_script(script_path, script_name, output_dir, output_name=None):
             lines = script.readlines()
             ext_script = "".join(lines)
             run_script_content += ext_script
-            
+
             # set target_name
             ext_script_map = source_shell_file(lines)
             if 'TARGET_NAME' in ext_script_map:
@@ -45,8 +45,8 @@ def generate_run_script(script_path, script_name, output_dir, output_name=None):
     if output_name:
         target_name = output_name
 
-    run_script_content += '\nsource ${INSTALL_PATH}/../submodule/python-install/runner.sh'
-        
+    run_script_content += '\nsource $DOTFILES_DIR/submodule/python-install/runner.sh\n'
+
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
@@ -58,18 +58,19 @@ def generate_run_script(script_path, script_name, output_dir, output_name=None):
     os.chmod(run_script_path, 0o755)
     print(f"run.sh script generated at {run_script_path}")
 
-def replace_home_with_tilde(path):
+def rewrite_path_with_dotfiles(path):
     home_dir = os.path.expanduser("~")
-    if path.startswith(home_dir + "/.dotfiles"):
-        return path.replace(home_dir + "/.dotfiles", "${INSTALL_PATH}/..", 1)
+    dotfiles_root = home_dir + "/.dotfiles"
+    if path.startswith(dotfiles_root):
+        return path.replace(dotfiles_root, "$DOTFILES_DIR", 1)
     return path
 
 def main():
     parser = argparse.ArgumentParser(description="Generate run.sh script for a Python project.")
     parser.add_argument("python_script", help="The Python script that will be run by the generated run.sh.")
-    parser.add_argument("-o", "--output-dir", default=os.path.expanduser("~/.dotfiles/bin"), help="Directory to place the generated run.sh script (default: '~/.dotfiles/bin').")
+    parser.add_argument("-o", "--output-dir", default=os.path.expanduser("~/.dotfiles/bin/common"), help="Directory to place the generated run.sh script (default: '~/.dotfiles/bin/common').")
     parser.add_argument("--output-name", help="Name of the generated launcher script.")
-    
+
     args = parser.parse_args()
 
     script_name = args.python_script
@@ -82,7 +83,7 @@ def main():
 
     # Generate run.sh script
     generate_run_script(
-        replace_home_with_tilde(os.getcwd()),
+        rewrite_path_with_dotfiles(os.getcwd()),
         script_name,
         output_dir,
         output_name=args.output_name,

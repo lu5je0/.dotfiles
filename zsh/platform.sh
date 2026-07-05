@@ -25,7 +25,7 @@ if [[ $OSTYPE == darwin* ]]; then
   # echo -en "\033]6;1;bg;green;brightness;46\a"
   # echo -en "\033]6;1;bg;blue;brightness;51\a"
   
-  export PATH=$HOME/.dotfiles/bin/macos_arm64:$PATH
+  export PATH=$HOME/.dotfiles/bin/macos-arm64:$PATH
 elif [[ -n $WSL_DISTRO_NAME ]]; then
   export WIN_HOME=/mnt/c/Users/lu5je0
   
@@ -61,15 +61,15 @@ if [[ $OSTYPE == linux-gnu* ]]; then
   
   arch=`arch`
   if [[ $arch =~ 'x86_64' ]]; then
-    export PATH=/home/lu5je0/.dotfiles/bin/linux_x86_64:$PATH
+    export PATH=/home/lu5je0/.dotfiles/bin/linux-x86_64:$PATH
   elif [[ $arch =~ 'aarch64' ]]; then
-    export PATH=/home/lu5je0/.dotfiles/bin/linux_aarch64:$PATH
+    export PATH=/home/lu5je0/.dotfiles/bin/linux-aarch64:$PATH
   fi
 fi
 
 # termux
 if [[ -n $TERMUX_VERSION ]]; then
-  export PATH=$HOME/.dotfiles/bin/linux_aarch64:$PATH
+  export PATH=$HOME/.dotfiles/bin/linux-aarch64:$PATH
   alias apk-install='termux-open --view --content-type "application/vnd.android.package-archive" '
   alias speedtest='termux-chroot speedtest --ca-certificate=$PREFIX/etc/tls/cert.pem'
 fi

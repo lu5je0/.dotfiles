@@ -1,0 +1,6 @@
+#!/bin/bash
+: "${DOTFILES_DIR:=$HOME/.dotfiles}"
+SCRIPT_PATH=$DOTFILES_DIR/submodule/xsub
+SCRIPT_NAME=xsub.py
+
+source $DOTFILES_DIR/submodule/python-install/runner.sh

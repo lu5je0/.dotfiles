@@ -1,0 +1,6 @@
+#!/bin/bash
+: "${DOTFILES_DIR:=$HOME/.dotfiles}"
+SCRIPT_PATH=$DOTFILES_DIR/submodule/iocr
+SCRIPT_NAME=iocr.py
+
+source $DOTFILES_DIR/submodule/python-install/runner.sh

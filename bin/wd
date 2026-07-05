@@ -1,5 +1,0 @@
-#!/bin/bash
-SCRIPT_PATH=~/.dotfiles/submodule/wd
-SCRIPT_NAME=wd.py
-
-source ~/.dotfiles/submodule/python-install/runner.sh

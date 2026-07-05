@@ -1,0 +1,6 @@
+#!/bin/bash
+: "${DOTFILES_DIR:=$HOME/.dotfiles}"
+SCRIPT_PATH=$DOTFILES_DIR/submodule/exif-fix
+SCRIPT_NAME=q-exif-fix.py
+
+source $DOTFILES_DIR/submodule/python-install/runner.sh

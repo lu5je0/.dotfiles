@@ -1,0 +1,6 @@
+#!/bin/bash
+: "${DOTFILES_DIR:=$HOME/.dotfiles}"
+SCRIPT_PATH=$DOTFILES_DIR/submodule/q-push
+SCRIPT_NAME=q-push.py
+
+source $DOTFILES_DIR/submodule/python-install/runner.sh
