@@ -22,7 +22,7 @@ M.offsets = {
   { filetype = 'fern',          text = 'Fern',     highlight = 'NvimTreeNormal', text_align = 'center' },
   { filetype = 'neo-tree',      text = 'NeoTree',  highlight = 'Normal',         text_align = 'center' },
   { filetype = 'NvimTree',      text = 'NvimTree', highlight = 'Normal',         text_align = 'center', separator = '█' },
-  { filetype = 'TreeSidebar',   text = 'Explorer', highlight = 'Normal',         text_align = 'center', separator = '█' },
+  { filetype = 'Sidebar',   text = 'Explorer', highlight = 'Normal',         text_align = 'center', separator = '█' },
   { filetype = 'Outline',       text = 'Symbols',  highlight = 'Normal',         text_align = 'center', separator = '█' },
   { filetype = 'vista',         text = 'Vista',    highlight = 'Directory',      text_align = 'center' },
 }

@@ -39,8 +39,8 @@ ext/tabline/
 
 ## 兼容接口
 
-- `require('lu5je0.ext.tabline').buffer_name_map`：被 `tree-sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。修改 state.buffer_name_map 的结构时必须确认 sidebar 兼容。
-- `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表（buflisted + is_valid），被 tabline、tree-sidebar、time-machine 共用。
+- `require('lu5je0.ext.tabline').buffer_name_map`：被 `sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。修改 state.buffer_name_map 的结构时必须确认 sidebar 兼容。
+- `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表（buflisted + is_valid），被 tabline、sidebar、time-machine 共用。
 
 ## 按键映射
 
@@ -57,6 +57,6 @@ ext/tabline/
 ## 维护注意
 
 - 新增/修改高亮组：在 `highlights.apply()` 的 `groups` 表内操作，不要散落到其他文件。
-- 改动 buffer 列表逻辑：确认 `core/buffers.lua` 的消费方（tree-sidebar、time-machine）不受影响。
+- 改动 buffer 列表逻辑：确认 `core/buffers.lua` 的消费方（sidebar、time-machine）不受影响。
 - 改动 offset 逻辑：确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
 - 改动 truncation 或 tab 指示器宽度计算时，两处必须同步（`tab_section_w` 估算 + 实际渲染）。

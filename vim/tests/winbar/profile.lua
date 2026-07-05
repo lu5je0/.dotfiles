@@ -18,7 +18,7 @@ highlights.apply()
 
 local filenames = {
   'lua/lu5je0/ext/winbar/render.lua',
-  'lua/lu5je0/ext/tree-sidebar/window.lua',
+  'lua/lu5je0/ext/sidebar/window.lua',
   'lua/lu5je0/misc/quit-prompt.lua',
   'lua/lu5je0/ext/winbar/config.lua',
   'lua/lu5je0/ext/winbar/state.lua',
@@ -26,9 +26,9 @@ local filenames = {
   'lua/lu5je0/core/buffers.lua',
   'package.json',
   'README.md',
-  'tests/tree-sidebar/helpers.lua',
-  'lua/lu5je0/ext/tree-sidebar/sources/files/init.lua',
-  'lua/lu5je0/ext/tree-sidebar/sources/git_changes/parser.lua',
+  'tests/sidebar/helpers.lua',
+  'lua/lu5je0/ext/sidebar/sources/files/init.lua',
+  'lua/lu5je0/ext/sidebar/sources/git_changes/parser.lua',
   'tsconfig.json',
   'src/components/App.tsx',
   'src/utils/format.ts',

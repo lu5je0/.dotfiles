@@ -176,7 +176,7 @@ local plugins = {
   },
 
   
-  -- replaced by custom tree-sidebar
+  -- replaced by custom sidebar
   -- {
   --   'nvim-tree/nvim-tree.lua',
   --   dependencies = {

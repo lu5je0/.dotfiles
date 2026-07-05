@@ -19,29 +19,29 @@ printf '%s[project-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR
 nvim --headless -u NONE -l "${SCRIPT_DIR}/project-log/spec.lua"
 
 printf '\n'
-printf '%s[tree-sidebar:state]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/state_spec.lua" "${RESET}"
-nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/state_spec.lua"
+printf '%s[sidebar:state]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/state_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/state_spec.lua"
 
 printf '\n'
-printf '%s[tree-sidebar]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/spec.lua" "${RESET}"
-nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/spec.lua"
+printf '%s[sidebar]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/spec.lua"
 
 printf '\n'
-printf '%s[tree-sidebar:interactive]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/interactive_spec.lua" "${RESET}"
-nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/interactive_spec.lua"
+printf '%s[sidebar:interactive]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/interactive_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/interactive_spec.lua"
 
 printf '\n'
-printf '%s[tree-sidebar:diff-preview]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/diff_preview_spec.lua" "${RESET}"
-nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/diff_preview_spec.lua"
+printf '%s[sidebar:diff-preview]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/diff_preview_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/diff_preview_spec.lua"
 
 printf '\n'
-printf '%s[tree-sidebar:parser]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/parser_spec.lua" "${RESET}"
-nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/parser_spec.lua"
+printf '%s[sidebar:parser]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/parser_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/parser_spec.lua"
 
 printf '\n'
-printf '%s[tree-sidebar:git-changes]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/git_changes_spec.lua" "${RESET}"
-nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/git_changes_spec.lua"
+printf '%s[sidebar:git-changes]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/git_changes_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/git_changes_spec.lua"
 
 printf '\n'
-printf '%s[tree-sidebar:git-ops]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tree-sidebar/git_ops_spec.lua" "${RESET}"
-nvim --headless -u NONE -l "${SCRIPT_DIR}/tree-sidebar/git_ops_spec.lua"
+printf '%s[sidebar:git-ops]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/git_ops_spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/git_ops_spec.lua"

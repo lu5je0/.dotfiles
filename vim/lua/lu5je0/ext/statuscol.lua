@@ -8,7 +8,7 @@ M.setup = function()
 
   require("statuscol").setup({
     -- configuration goes here, for example:
-    ft_ignore = { 'NvimTree', 'TreeSidebar', 'undotree', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
+    ft_ignore = { 'NvimTree', 'Sidebar', 'undotree', 'Outline', 'dapui_scopes', 'dapui_breakpoints', 'dapui_repl' },
     bt_ignore = { 'terminal' },
     segments = {
       { text = { builtin.foldfunc }, click = "v:lua.ScFa" },

@@ -240,5 +240,5 @@ end, { nargs = 0 })
 
 vim.api.nvim_create_user_command('FsEdit', function(opts)
   local dir = opts.args ~= '' and opts.args or vim.fn.getcwd()
-  require('lu5je0.ext.tree-sidebar.sources.files.fs-edit').open_dir(dir, { replace = false, inplace = true })
+  require('lu5je0.ext.sidebar.sources.files.fs-edit').open_dir(dir, { replace = false, inplace = true })
 end, { nargs = '?', complete = 'dir' })

@@ -37,7 +37,7 @@
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
 - `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
-- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log` 与 `tree-sidebar`，并按功能子目录组织。
+- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log` 与 `sidebar`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
 ## Tabline (自定义实现)
@@ -74,8 +74,8 @@ ext/tabline/
 
 ### 兼容接口
 
-- `require('lu5je0.ext.tabline').buffer_name_map`：被 `tree-sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。
-- `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表函数（`buflisted` + `is_valid`），被 bufferline、tree-sidebar、time-machine 共用。
+- `require('lu5je0.ext.tabline').buffer_name_map`：被 `sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。
+- `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表函数（`buflisted` + `is_valid`），被 bufferline、sidebar、time-machine 共用。
 
 ### 按键映射
 
@@ -97,7 +97,7 @@ ext/tabline/
 ### 维护注意
 
 - 新增/修改高亮组时，在 `highlights.apply()` 的 `groups` 表内操作，不要散落到其他文件。
-- 改动 buffer 列表逻辑时，确认 `core/buffers.lua` 的消费方（tree-sidebar、time-machine）不受影响。
+- 改动 buffer 列表逻辑时，确认 `core/buffers.lua` 的消费方（sidebar、time-machine）不受影响。
 - 改动 offset 逻辑时，确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
 
 ## 改动落点规则
@@ -131,7 +131,7 @@ ext/tabline/
   - `cd vim && nvim --headless '+qa'`
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/tree-sidebar/state_spec.lua`、`tests/tree-sidebar/spec.lua`、`tests/tree-sidebar/interactive_spec.lua`、`tests/tree-sidebar/diff_preview_spec.lua`、`tests/tree-sidebar/parser_spec.lua`、`tests/tree-sidebar/git_changes_spec.lua`、`tests/tree-sidebar/git_ops_spec.lua`。
+- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`。
 - 如果你新增了独立 Lua 功能且具备稳定输入输出，优先补到 `tests/`，不要只依赖手动打开 Neovim 验证。
 - 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
 
