@@ -601,6 +601,14 @@ function M.open(node, opts)
         end
         vim.api.nvim_win_set_buf(0, b)
       end
+      local win = vim.api.nvim_get_current_win()
+      vim.wo[win].concealcursor = 'nvic'
+      vim.wo[win].conceallevel = 3
+      vim.wo[win].number = true
+      vim.wo[win].signcolumn = 'yes:1'
+      s.win = win
+      vim.cmd([[syn match FsEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
+      te_render.refresh_decorations(s, b)
       return
     end
   end
@@ -682,7 +690,7 @@ function M.open(node, opts)
     callback = function() mutate(session) end,
   })
 
-  vim.api.nvim_create_autocmd('BufWipeout', {
+  vim.api.nvim_create_autocmd({ 'BufWipeout', 'BufDelete' }, {
     buffer = buf,
     callback = function() sessions[buf] = nil end,
   })
