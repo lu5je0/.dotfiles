@@ -57,9 +57,12 @@ function spec.build(ts, _ctx)
   local header = { lines = {}, items = {}, highlights = {} }
   if cwd ~= '/' then
     header.lines[1] = vim.fn.fnamemodify(cwd, ':~') .. '/..'
-    header.items[1] = { type = 'root', node = ts.root, line_idx = 0 }
+    header.highlights[1] = { line = 0, hl = 'SidebarRootFolder', col_start = 0, col_end = -1 }
+  else
+    header.lines[1] = '/..'
     header.highlights[1] = { line = 0, hl = 'SidebarRootFolder', col_start = 0, col_end = -1 }
   end
+  header.items[1] = { type = 'root', node = ts.root, line_idx = 0 }
   if ts.live_filter then
     local prefix = '[FILTER]: '
     local filter_line = prefix .. '/' .. ts.live_filter .. '/'
