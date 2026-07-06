@@ -1388,5 +1388,49 @@ r.run('two files swapped within expanded dir', function()
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- ============================================================================
+r.group('e2e: rename children + collapse parent + re-expand + save')
+-- ============================================================================
+
+r.run('renames become MOVE (not COPY) after collapse/re-expand cycle', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Expand src/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  do_enter(src_line)
+
+  -- Rename a.txt -> 1.txt
+  local a_line = find_line(buf, 'a.txt', src_line + 1)
+  r.assert_truthy(a_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', '1.txt') })
+
+  -- Rename b.txt -> 2.txt
+  local b_line = find_line(buf, 'b.txt', src_line + 1)
+  r.assert_truthy(b_line)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, b_line - 1, b_line, false,
+    { gsub(lines[b_line], 'b%.txt', '2.txt') })
+
+  -- Collapse src/
+  do_enter(src_line)
+  -- Re-expand src/
+  do_enter(src_line)
+
+  do_save()
+
+  r.assert_truthy(isfile(tmp .. '/src/1.txt'), 'src/1.txt exists')
+  r.assert_truthy(isfile(tmp .. '/src/2.txt'), 'src/2.txt exists')
+  r.assert_truthy(not exists(tmp .. '/src/a.txt'), 'src/a.txt gone (MOVE, not COPY)')
+  r.assert_truthy(not exists(tmp .. '/src/b.txt'), 'src/b.txt gone (MOVE, not COPY)')
+  r.assert_eq(readfile(tmp .. '/src/1.txt'), 'aaa')
+  r.assert_eq(readfile(tmp .. '/src/2.txt'), 'bbb')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
 r.finish()
 

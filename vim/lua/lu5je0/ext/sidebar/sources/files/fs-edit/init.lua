@@ -132,10 +132,6 @@ local function remove_children_lines(session, buf, line_nr, depth)
     if l ~= '' and l:match('%S') then
       local _, _, d = parse_line(l)
       if d <= depth then break end
-      local cid = l:match('/(%d+) ')
-      if cid then
-        session.id_to_path[tonumber(cid)] = nil
-      end
     end
     end_line = end_line + 1
   end
