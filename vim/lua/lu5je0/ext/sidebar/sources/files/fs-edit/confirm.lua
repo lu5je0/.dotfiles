@@ -13,6 +13,48 @@ local action_hls = {
   copy = 'DiagnosticInfo',
 }
 
+local function strip_slash(p)
+  if p and vim.endswith(p, '/') then return p:sub(1, -2) end
+  return p
+end
+
+-- Returns a set (keyed by action table) of actions whose destination already
+-- exists on disk and is NOT freed by another action in the same batch. Pure
+-- function over `sorted` + `vim.uv.fs_stat`; safe to unit-test.
+function M.detect_conflicts(sorted)
+  local will_be_deleted = {}
+  for _, a in ipairs(sorted) do
+    if a.name == 'delete' and a.src then
+      will_be_deleted[strip_slash(a.src)] = true
+    end
+  end
+  local will_be_moved_away = {}
+  for _, a in ipairs(sorted) do
+    if a.name == 'move' and a.src then
+      will_be_moved_away[strip_slash(a.src)] = true
+    end
+  end
+
+  local conflicts = {}
+  for _, action in ipairs(sorted) do
+    if action.dst then
+      local check_path = strip_slash(action.dst)
+      if action.name ~= 'create' or not vim.endswith(action.dst, '/') then
+        if vim.uv.fs_stat(check_path)
+          and not will_be_deleted[check_path]
+          and not will_be_moved_away[check_path] then
+          local is_self = action.src and (action.src == check_path or action.src:sub(1, -2) == check_path)
+          local is_case_rename = action.src and check_path:lower() == action.src:lower()
+          if not is_self and not is_case_rename then
+            conflicts[action] = true
+          end
+        end
+      end
+    end
+  end
+  return conflicts
+end
+
 M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
   if #actions == 0 and #dupes == 0 then
     cb(true)
@@ -21,26 +63,16 @@ M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
 
   local has_conflict = false
   local sorted = actions_mod.sort_actions(actions)
+  local conflicts = M.detect_conflicts(sorted)
 
   local content_lines = {}
   local content_hls = {}
   for _, action in ipairs(sorted) do
     local line, label = actions_mod.format_action(action, root_dir)
-    local conflict = false
-    if action.dst then
-      local check_path = action.dst
-      if vim.endswith(check_path, '/') then check_path = check_path:sub(1, -2) end
-      if action.name ~= 'create' or not vim.endswith(action.dst, '/') then
-        if vim.uv.fs_stat(check_path) then
-          local is_self = action.src and (action.src == check_path or action.src:sub(1, -2) == check_path)
-          local is_case_rename = action.src and check_path:lower() == action.src:lower()
-          if not is_self and not is_case_rename then
-            has_conflict = true
-            conflict = true
-            line = line .. '  [CONFLICT]'
-          end
-        end
-      end
+    local conflict = conflicts[action] == true
+    if conflict then
+      has_conflict = true
+      line = line .. '  [CONFLICT]'
     end
     content_lines[#content_lines + 1] = line
     content_hls[#content_hls + 1] = {

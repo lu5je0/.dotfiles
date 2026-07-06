@@ -672,4 +672,46 @@ r.run('parent rename before child rename (child listed first)', function()
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- ============================================================================
+r.group('confirm.detect_conflicts')
+-- ============================================================================
+
+r.run('move to existing path flagged as conflict', function()
+  local confirm = require('lu5je0.ext.sidebar.sources.files.fs-edit.confirm')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  local a = tmp .. '/a.txt'; vim.fn.writefile({ 'a' }, a)
+  local b = tmp .. '/b.txt'; vim.fn.writefile({ 'b' }, b)
+  local action = { name = 'move', src = a, dst = b }
+  local conflicts = confirm.detect_conflicts({ action })
+  r.assert_eq(conflicts[action], true)
+  vim.fn.delete(tmp, 'rf')
+end)
+
+r.run('move over existing path is not conflict when delete frees it', function()
+  local confirm = require('lu5je0.ext.sidebar.sources.files.fs-edit.confirm')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  local existing = tmp .. '/Regular.ttf'; vim.fn.writefile({ 'old' }, existing)
+  local rename_src = tmp .. '/Regular (2).ttf'; vim.fn.writefile({ 'new' }, rename_src)
+  local del = { name = 'delete', src = existing }
+  local mv = { name = 'move', src = rename_src, dst = existing }
+  local conflicts = confirm.detect_conflicts({ del, mv })
+  r.assert_eq(conflicts[mv], nil)
+  r.assert_eq(conflicts[del], nil)
+  vim.fn.delete(tmp, 'rf')
+end)
+
+r.run('move over existing path is not conflict when another move relocates it', function()
+  local confirm = require('lu5je0.ext.sidebar.sources.files.fs-edit.confirm')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  local a = tmp .. '/a.txt'; vim.fn.writefile({ 'a' }, a)
+  local b = tmp .. '/b.txt'; vim.fn.writefile({ 'b' }, b)
+  local c = tmp .. '/c.txt'
+  local mv1 = { name = 'move', src = a, dst = b }
+  local mv2 = { name = 'move', src = b, dst = c }
+  local conflicts = confirm.detect_conflicts({ mv2, mv1 })
+  r.assert_eq(conflicts[mv1], nil)
+  r.assert_eq(conflicts[mv2], nil)
+  vim.fn.delete(tmp, 'rf')
+end)
+
 r.finish()
