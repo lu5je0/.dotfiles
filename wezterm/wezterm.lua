@@ -150,6 +150,7 @@ config.keys = {
   { key = 'c',      mods = 'LEADER',       action = wezterm.action { SpawnTab = "DefaultDomain" } },
   { key = 'l',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Right" } },
   { key = 'n',      mods = 'LEADER',       action = wezterm.action { ActivateTabRelative = 1 } },
+  { key = 'n',      mods = 'LEADER|CTRL',  action = wezterm.action { ActivateTabRelative = 1 } },
   { key = 'p',      mods = 'LEADER',       action = wezterm.action { ActivateTabRelative = -1 } },
   { key = 'h',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Left" } },
   { key = 'j',      mods = 'LEADER',       action = wezterm.action { ActivatePaneDirection = "Down" } },

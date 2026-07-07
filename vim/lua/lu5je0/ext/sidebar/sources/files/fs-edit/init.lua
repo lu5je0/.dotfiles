@@ -424,6 +424,9 @@ local function on_enter(session)
           session.saved_children[abs] = child_lines_cache
         else
           session.saved_children[abs] = nil
+          for cid in pairs(removed_ids) do
+            session.id_to_path[cid] = nil
+          end
         end
       elseif #child_lines_cache > 0 then
         session.saved_children[expand_key] = child_lines_cache
@@ -937,7 +940,22 @@ function M.open(node, opts)
       if cis_dir and cid and session.store[cid] then
         local cabs = session.store[cid].abs_path
         if not session.expanded_dirs[cabs] and session.saved_children[cabs] then
+          local dropped = {}
+          for _, cl in ipairs(session.saved_children[cabs]) do
+            local did = cl:match('/(%d+) ')
+            if did then dropped[tonumber(did)] = true end
+          end
           session.saved_children[cabs] = nil
+          for did in pairs(dropped) do
+            session.id_to_path[did] = nil
+          end
+          if session.id_order and next(dropped) then
+            local new_order = {}
+            for _, oid in ipairs(session.id_order) do
+              if not dropped[oid] then new_order[#new_order + 1] = oid end
+            end
+            session.id_order = new_order
+          end
           refresh_decorations(session, buf)
           refresh_diff_signs(session, buf)
           return

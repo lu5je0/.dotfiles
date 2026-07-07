@@ -1432,5 +1432,78 @@ r.run('renames become MOVE (not COPY) after collapse/re-expand cycle', function(
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- ============================================================================
+r.group('e2e: expand + collapse (no edits) + delete sibling + save')
+-- ============================================================================
+
+r.run('collapsed dir children survive when a sibling is deleted', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Expand src/ (children match disk exactly).
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  do_enter(src_line)
+
+  -- Collapse src/ (has_diff=false path clears saved_children).
+  do_enter(src_line)
+
+  -- Delete the sibling top.txt line (simulating `dd`).
+  local top_line = find_line(buf, 'top.txt')
+  r.assert_truthy(top_line)
+  vim.api.nvim_buf_set_lines(buf, top_line - 1, top_line, false, {})
+
+  do_save()
+
+  r.assert_truthy(not exists(tmp .. '/top.txt'), 'top.txt deleted (as requested)')
+  r.assert_truthy(isfile(tmp .. '/src/a.txt'), 'src/a.txt preserved')
+  r.assert_truthy(isfile(tmp .. '/src/b.txt'), 'src/b.txt preserved')
+  r.assert_eq(readfile(tmp .. '/src/a.txt'), 'aaa')
+  r.assert_eq(readfile(tmp .. '/src/b.txt'), 'bbb')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: expand + edit child + collapse (stashed) + reset_hunk + save')
+-- ============================================================================
+
+r.run('reset_hunk on collapsed dir keeps original children on disk', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  do_enter(src_line)
+
+  -- Rename a.txt -> x.txt (edits get stashed on collapse).
+  local a_line = find_line(buf, 'a.txt', src_line + 1)
+  r.assert_truthy(a_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', 'x.txt') })
+
+  -- Collapse src/ so the edit lives in saved_children.
+  do_enter(src_line)
+
+  -- Invoke reset_hunk (<leader>gu) on src/ line to drop the stashed edit.
+  vim.api.nvim_win_set_cursor(0, { src_line, 0 })
+  local maps = vim.api.nvim_buf_get_keymap(buf, 'n')
+  local reset_cb
+  for _, m in ipairs(maps) do
+    if m.lhs == '\\gu' then reset_cb = m.callback; break end
+  end
+  r.assert_truthy(reset_cb, '<leader>gu keymap not found')
+  reset_cb()
+
+  do_save()
+
+  r.assert_truthy(isfile(tmp .. '/src/a.txt'), 'src/a.txt preserved (rename undone)')
+  r.assert_truthy(isfile(tmp .. '/src/b.txt'), 'src/b.txt preserved')
+  r.assert_truthy(not exists(tmp .. '/src/x.txt'), 'src/x.txt should not exist')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
 r.finish()
 
