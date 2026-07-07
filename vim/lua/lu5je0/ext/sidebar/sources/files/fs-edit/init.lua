@@ -397,41 +397,12 @@ local function on_enter(session)
           if cid then removed_ids[tonumber(cid)] = true end
         end
       end
-      if #child_lines_cache > 0 and not displaced and not shadow_src then
-        local disk_lines, _ = render_children(session, abs, depth + 1)
-        local has_diff = #disk_lines ~= #child_lines_cache
-        if not has_diff then
-          for ci = 1, #child_lines_cache do
-            if child_lines_cache[ci] ~= disk_lines[ci] then
-              has_diff = true
-              break
-            end
-          end
-        end
-        if not has_diff then
-          for _, cl in ipairs(child_lines_cache) do
-            local cid, _, _, cis_dir = parse_line(cl)
-            if cis_dir and cid and session.store[cid] then
-              local cabs = session.store[cid].abs_path
-              if session.saved_children[cabs] then
-                has_diff = true
-                break
-              end
-            end
-          end
-        end
-        if has_diff then
-          session.saved_children[abs] = child_lines_cache
+      if #child_lines_cache > 0 then
+        if displaced or shadow_src then
+          session.saved_children[expand_key] = child_lines_cache
         else
-          session.saved_children[abs] = nil
-          for cid in pairs(removed_ids) do
-            session.id_to_path[cid] = nil
-          end
+          session.saved_children[abs] = child_lines_cache
         end
-      elseif #child_lines_cache > 0 then
-        session.saved_children[expand_key] = child_lines_cache
-      else
-        session.saved_children[expand_key] = nil
       end
       remove_children_lines(session, session.buf, line_nr, depth)
       if session.id_order and next(removed_ids) then
@@ -513,6 +484,27 @@ local function mutate(session)
   local buf_lines = actions_mod.effective_buf_lines(
     session, vim.api.nvim_buf_get_lines(session.buf, 0, -1, false)
   )
+
+  if vim.g.fs_edit_debug then
+    local seen = {}
+    for _, l in ipairs(buf_lines) do
+      local lid = parse_line(l)
+      if lid then seen[lid] = true end
+    end
+    for id, _ in pairs(session.id_to_path) do
+      if session.store[id] and not (session.copy_shadow and session.copy_shadow[id])
+        and not seen[id] then
+        local visible_row
+        local raw = vim.api.nvim_buf_get_lines(session.buf, 0, -1, false)
+        for i, l in ipairs(raw) do
+          if parse_line(l) == id then visible_row = i; break end
+        end
+        if visible_row then
+          vim.notify(('fs-edit invariant: id %d visible in buffer but dropped by effective_buf_lines'):format(id), vim.log.levels.WARN)
+        end
+      end
+    end
+  end
 
   local dupes = check_duplicates(session, buf_lines)
   local actions = compute_actions(session, buf_lines)
@@ -940,21 +932,12 @@ function M.open(node, opts)
       if cis_dir and cid and session.store[cid] then
         local cabs = session.store[cid].abs_path
         if not session.expanded_dirs[cabs] and session.saved_children[cabs] then
-          local dropped = {}
-          for _, cl in ipairs(session.saved_children[cabs]) do
-            local did = cl:match('/(%d+) ')
-            if did then dropped[tonumber(did)] = true end
-          end
-          session.saved_children[cabs] = nil
-          for did in pairs(dropped) do
-            session.id_to_path[did] = nil
-          end
-          if session.id_order and next(dropped) then
-            local new_order = {}
-            for _, oid in ipairs(session.id_order) do
-              if not dropped[oid] then new_order[#new_order + 1] = oid end
-            end
-            session.id_order = new_order
+          local _, _, cdepth = parse_line(cursor_line)
+          local disk_lines = render_children(session, cabs, cdepth + 1)
+          if #disk_lines > 0 then
+            session.saved_children[cabs] = disk_lines
+          else
+            session.saved_children[cabs] = nil
           end
           refresh_decorations(session, buf)
           refresh_diff_signs(session, buf)
