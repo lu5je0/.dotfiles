@@ -303,7 +303,10 @@ function M.has_pending_changes(session, visible_lines)
   if #actions > 0 then return true end
   local dupes = M.check_duplicates(session, buf_lines)
   if #dupes > 0 then return true end
-  if next(session.saved_children) ~= nil then return true end
+  local clean = session.saved_children_clean or {}
+  for k, _ in pairs(session.saved_children or {}) do
+    if not clean[k] then return true end
+  end
   if session.copy_shadow and next(session.copy_shadow) ~= nil then return true end
   return false
 end

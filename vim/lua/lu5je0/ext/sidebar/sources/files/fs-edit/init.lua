@@ -398,10 +398,27 @@ local function on_enter(session)
         end
       end
       if #child_lines_cache > 0 then
+        local cache_key
         if displaced or shadow_src then
-          session.saved_children[expand_key] = child_lines_cache
+          cache_key = expand_key
         else
-          session.saved_children[abs] = child_lines_cache
+          cache_key = abs
+        end
+        session.saved_children[cache_key] = child_lines_cache
+        local disk_lines = render_children(session, abs, depth + 1)
+        local match_disk = #disk_lines == #child_lines_cache
+        if match_disk then
+          for k = 1, #disk_lines do
+            if disk_lines[k] ~= child_lines_cache[k] then
+              match_disk = false
+              break
+            end
+          end
+        end
+        if match_disk then
+          session.saved_children_clean[cache_key] = true
+        else
+          session.saved_children_clean[cache_key] = nil
         end
       end
       remove_children_lines(session, session.buf, line_nr, depth)
@@ -424,6 +441,7 @@ local function on_enter(session)
         session.id_order = new_order
       end
       refresh_decorations(session, session.buf)
+      refresh_diff_signs(session, session.buf)
     else
       session.expanded_dirs[expand_key] = true
       local child_lines, new_ids
@@ -431,7 +449,11 @@ local function on_enter(session)
       if cached then
         child_lines = cached
         session.saved_children[expand_key] = nil
-        if not shadow_src then session.saved_children[abs] = nil end
+        session.saved_children_clean[expand_key] = nil
+        if not shadow_src then
+          session.saved_children[abs] = nil
+          session.saved_children_clean[abs] = nil
+        end
         new_ids = {}
         for _, l in ipairs(child_lines) do
           local cid = l:match('/(%d+) ')
@@ -468,8 +490,16 @@ local function on_enter(session)
         end
       end
       refresh_decorations(session, session.buf)
+      refresh_diff_signs(session, session.buf)
     end
-    vim.bo[session.buf].modified = was_modified or next(session.saved_children) ~= nil or next(session.copy_shadow) ~= nil
+    local has_dirty_saved = false
+    for k, _ in pairs(session.saved_children) do
+      if not session.saved_children_clean[k] then
+        has_dirty_saved = true
+        break
+      end
+    end
+    vim.bo[session.buf].modified = was_modified or has_dirty_saved or next(session.copy_shadow) ~= nil
   elseif id and not is_dir then
     local entry = session.store[id]
     if entry then
@@ -510,7 +540,14 @@ local function mutate(session)
   local actions = compute_actions(session, buf_lines)
 
   if #actions == 0 and #dupes == 0 then
-    if next(session.saved_children) == nil and next(session.copy_shadow) == nil then
+    local any_dirty_saved = false
+    for k, _ in pairs(session.saved_children) do
+      if not session.saved_children_clean[k] then
+        any_dirty_saved = true
+        break
+      end
+    end
+    if not any_dirty_saved and next(session.copy_shadow) == nil then
       vim.bo[session.buf].modified = false
     end
     return
@@ -550,6 +587,7 @@ local function mutate(session)
     session.id_to_path = {}
     session.path_to_id = {}
     session.saved_children = {}
+    session.saved_children_clean = {}
     session.copy_shadow = {}
     session.copy_snapshot = {}
 
@@ -612,6 +650,7 @@ function M.open(node, opts)
     path_to_id = {},
     expanded_dirs = {},
     saved_children = {},
+    saved_children_clean = {},
     copy_shadow = {},
     copy_snapshot = {},
   }
@@ -936,8 +975,10 @@ function M.open(node, opts)
           local disk_lines = render_children(session, cabs, cdepth + 1)
           if #disk_lines > 0 then
             session.saved_children[cabs] = disk_lines
+            session.saved_children_clean[cabs] = true
           else
             session.saved_children[cabs] = nil
+            session.saved_children_clean[cabs] = nil
           end
           refresh_decorations(session, buf)
           refresh_diff_signs(session, buf)
@@ -1205,6 +1246,7 @@ function M.open(node, opts)
       session.id_to_path = {}
       session.path_to_id = {}
       session.saved_children = {}
+      session.saved_children_clean = {}
       session.copy_shadow = {}
       session.copy_snapshot = {}
       local lines = render_to_lines(session)

@@ -171,7 +171,8 @@ function M.refresh_decorations(session, buf_nr)
         local sc_key = shadow_src and (shadow_src .. '#' .. p.id) or entry.abs_path
         local exp_key = shadow_src and (shadow_src .. '#' .. p.id) or nil
         local is_exp = exp_key and session.expanded_dirs[exp_key] or session.expanded_dirs[entry.abs_path]
-        if not is_exp and session.saved_children[sc_key] then
+        if not is_exp and session.saved_children[sc_key]
+          and not (session.saved_children_clean and session.saved_children_clean[sc_key]) then
           vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, 0, {
             virt_text = { { ' [+]', 'GitSignsChange' } },
             virt_text_pos = 'eol', invalidate = true,
@@ -189,14 +190,45 @@ function M.refresh_diff_signs(session, buf_nr)
   local all_lines = vim.api.nvim_buf_get_lines(buf_nr, 0, -1, false)
   local line_count = #all_lines
 
+  -- Build buf_lines (== effective_buf_lines output) and a parallel line_map
+  -- that maps each buf_lines entry to its 0-based visible row, or -1 if the
+  -- entry was spliced in from saved_children (not backed by a real buffer row).
+  -- Use a closure over a cursor into all_lines to track which all_lines row
+  -- we've consumed so far. This avoids relying on string identity.
   local buf_lines = {}
   local line_map = {}
-  for i, l in ipairs(all_lines) do
-    if #l > 0 then
-      buf_lines[#buf_lines + 1] = l
-      line_map[#buf_lines] = i - 1
+  local all_cursor = 0
+  local function append(lines, is_spliced)
+    for _, l in ipairs(lines) do
+      if #l > 0 then
+        buf_lines[#buf_lines + 1] = l
+        if is_spliced then
+          line_map[#buf_lines] = -1
+        else
+          -- advance all_cursor to the next non-empty row in all_lines
+          while all_cursor < #all_lines and #all_lines[all_cursor + 1] == 0 do
+            all_cursor = all_cursor + 1
+          end
+          all_cursor = all_cursor + 1
+          line_map[#buf_lines] = all_cursor - 1
+        end
+        local lid, _, _, lis_dir = parse_line(l)
+        if lis_dir and lid and session.store[lid] then
+          local shadow_src = session.copy_shadow and session.copy_shadow[lid]
+          local key
+          if shadow_src then
+            key = shadow_src .. '#' .. lid
+          else
+            key = session.store[lid].abs_path
+          end
+          if not session.expanded_dirs[key] and session.saved_children[key] then
+            append(session.saved_children[key], true)
+          end
+        end
+      end
     end
   end
+  append(all_lines, false)
 
   local act = compute_actions(session, buf_lines)
   local dupes = check_duplicates(session, buf_lines)
@@ -259,7 +291,9 @@ function M.refresh_diff_signs(session, buf_nr)
       local shadow_src = session.copy_shadow and session.copy_shadow[lid]
       local key = shadow_src and (shadow_src .. '#' .. lid) or session.store[lid].abs_path
       local exp = shadow_src and session.expanded_dirs[key] or session.expanded_dirs[session.store[lid].abs_path]
-      if not exp and session.saved_children[key] then
+      if not exp and session.saved_children[key]
+        and not (session.saved_children_clean and session.saved_children_clean[key])
+        and line_map[i_idx] and line_map[i_idx] >= 0 then
         place(line_map[i_idx], '▎', 'GitSignsChange')
       end
     end
@@ -277,8 +311,25 @@ function M.refresh_diff_signs(session, buf_nr)
   end
 
   if session.id_order then
+    -- Pre-compute abs paths of collapsed directories whose cache matches disk.
+    -- Missing ids underneath these should not get delete markers.
+    local clean_collapsed = {}
+    local clean = session.saved_children_clean or {}
+    for abs, _ in pairs(session.saved_children or {}) do
+      if clean[abs] then
+        clean_collapsed[abs .. '/'] = true
+      end
+    end
+    local function under_clean_collapsed(path)
+      for prefix, _ in pairs(clean_collapsed) do
+        if vim.startswith(path, prefix) then return true end
+      end
+      return false
+    end
+
     for idx, id in ipairs(session.id_order) do
-      if session.id_to_path[id] and not seen_ids[id] then
+      local path = session.id_to_path[id]
+      if path and not seen_ids[id] and not under_clean_collapsed(path) then
         local target_line = nil
         for k = idx - 1, 1, -1 do
           if id_to_line[session.id_order[k]] then

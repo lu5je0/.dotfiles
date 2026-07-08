@@ -1505,5 +1505,131 @@ r.run('reset_hunk on collapsed dir keeps original children on disk', function()
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- ============================================================================
+r.group('e2e: expand + collapse (no edits) = no diff sign')
+-- ============================================================================
+
+r.run('expand then collapse leaves no spurious diff sign on directory', function()
+  local tmp = make_fixture()
+  local buf, session, _do_save, do_enter = open_and_helpers(tmp)
+
+  local te_render = require('lu5je0.ext.sidebar.sources.files.fs-edit.render')
+
+  -- Baseline: not modified on open.
+  r.assert_eq(vim.bo[buf].modified, false, 'buffer not modified on open')
+
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line, 'src/ not found')
+
+  -- Expand src/
+  do_enter(src_line)
+
+  -- src/ is now expanded → still no diff sign expected.
+  r.assert_eq(vim.bo[buf].modified, false, 'buffer not modified after expand')
+
+  -- Collapse src/ (no edits inside)
+  do_enter(src_line)
+
+  -- Assertions on the session state.
+  r.assert_eq(vim.bo[buf].modified, false, 'buffer not modified after expand+collapse (no edits)')
+
+  local src_id = parse_line(buf_lines(buf)[src_line])
+  r.assert_truthy(src_id, 'src/ has id')
+  local src_abs = session.store[src_id].abs_path
+  r.assert_truthy(session.saved_children[src_abs], 'saved_children populated for src/')
+  r.assert_truthy(session.saved_children_clean[src_abs], 'saved_children_clean flag set for src/')
+
+  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), false,
+    'has_pending_changes returns false after expand+collapse with no edits')
+
+  -- Assertions on rendered signs / [+] virt_text. refresh_diff_signs has
+  -- already been called synchronously by on_enter; check its extmarks.
+  local signs_on_src = {}
+  for _, em in ipairs(vim.api.nvim_buf_get_extmarks(buf, te_render.sign_ns, 0, -1, { details = true })) do
+    if em[2] + 1 == src_line then
+      table.insert(signs_on_src, (em[4].sign_text or ''))
+    end
+  end
+  r.assert_eq(#signs_on_src, 0,
+    'no diff sign on src/ line (got: ' .. table.concat(signs_on_src, ',') .. ')')
+
+  local plus_on_src = false
+  for _, em in ipairs(vim.api.nvim_buf_get_extmarks(buf, te_render.hl_ns, 0, -1, { details = true })) do
+    if em[2] + 1 == src_line and em[4].virt_text then
+      local t = ''
+      for _, chunk in ipairs(em[4].virt_text) do t = t .. chunk[1] end
+      if t:find('%[%+%]') then plus_on_src = true; break end
+    end
+  end
+  r.assert_eq(plus_on_src, false, 'no [+] virt_text on src/ line')
+
+  -- Sanity: compute_actions on effective lines sees zero actions, matching
+  -- what refresh_diff_signs / mutate see.
+  local eff = actions_mod.effective_buf_lines(session, buf_lines(buf))
+  local actions = actions_mod.compute_actions(session, eff)
+  r.assert_eq(#actions, 0, 'compute_actions on effective lines is empty')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: expand + edit + collapse = diff sign preserved')
+-- ============================================================================
+
+r.run('edit inside expanded dir then collapse keeps diff sign', function()
+  local tmp = make_fixture()
+  local buf, session, _do_save, do_enter = open_and_helpers(tmp)
+
+  local te_render = require('lu5je0.ext.sidebar.sources.files.fs-edit.render')
+
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line, 'src/ not found')
+  do_enter(src_line)
+
+  -- Edit: rename a.txt → z.txt
+  local a_line = find_line(buf, 'a.txt', src_line + 1)
+  r.assert_truthy(a_line, 'a.txt not found')
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', 'z.txt') })
+
+  -- Collapse src/ (edits get stashed)
+  do_enter(src_line)
+
+  local src_id = parse_line(buf_lines(buf)[src_line])
+  r.assert_truthy(src_id, 'src/ has id')
+  local src_abs = session.store[src_id].abs_path
+  r.assert_truthy(session.saved_children[src_abs], 'saved_children populated')
+  r.assert_eq(session.saved_children_clean[src_abs], nil,
+    'saved_children_clean NOT set when edits differ from disk')
+  r.assert_eq(vim.bo[buf].modified, true, 'buffer modified after stashed edit')
+  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), true,
+    'has_pending_changes returns true after stashed edit')
+
+  -- A [+] virt_text must appear on the src/ line (dirty collapse).
+  local plus_on_src = false
+  for _, em in ipairs(vim.api.nvim_buf_get_extmarks(buf, te_render.hl_ns, 0, -1, { details = true })) do
+    if em[2] + 1 == src_line and em[4].virt_text then
+      local t = ''
+      for _, chunk in ipairs(em[4].virt_text) do t = t .. chunk[1] end
+      if t:find('%[%+%]') then plus_on_src = true; break end
+    end
+  end
+  r.assert_eq(plus_on_src, true, '[+] virt_text appears on src/ after dirty collapse')
+
+  -- At least one sign-column marker must appear on the src/ line (either the
+  -- explicit saved_children_dirty marker or a rename marker from the z.txt line).
+  local signs_on_src = {}
+  for _, em in ipairs(vim.api.nvim_buf_get_extmarks(buf, te_render.sign_ns, 0, -1, { details = true })) do
+    if em[2] + 1 == src_line then
+      table.insert(signs_on_src, (em[4].sign_text or ''))
+    end
+  end
+  r.assert_truthy(#signs_on_src > 0,
+    'at least one diff sign on src/ after dirty collapse')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
 r.finish()
 
