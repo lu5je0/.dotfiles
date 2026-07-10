@@ -37,7 +37,7 @@ def _log(msg):
         pass
 
 
-_SHARED = os.path.join(os.path.dirname(os.path.realpath(_HERE)), "shared", "tui-pick")
+_SHARED = os.path.join(os.path.dirname(os.path.realpath(_HERE)), "submodule", "tui-pick")
 sys.path.insert(0, _SHARED)
 import tabpick_core  # noqa: E402
 

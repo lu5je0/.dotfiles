@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(
     0,
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "shared", "tui-pick"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "submodule", "tui-pick"),
 )
 import tabpick_core  # noqa: E402
 

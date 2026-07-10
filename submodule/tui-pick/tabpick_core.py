@@ -204,11 +204,11 @@ SEL_BAR = CSI + "48;2;108;101;133;38;2;235;235;235m"  # muted purple bg, light f
 
 def run(out):
     query = ""
-    idx = 0
     filtering = False
     parse_cache = {}
 
     all_items = get_items()
+    idx = next((i for i, it in enumerate(all_items) if it.get("active")), 0)
 
     while True:
         items = fuzzy(all_items, query)

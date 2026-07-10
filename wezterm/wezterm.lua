@@ -235,7 +235,6 @@ config.keys = {
     key = 'w',
     mods = 'LEADER',
     action = wezterm.action_callback(function(win, pane)
-      local pick_script = wezterm.config_dir .. '/tabpick.py'
       local items = {}
       local mux_win = win:mux_window()
       for _, tab_info in ipairs(mux_win:tabs_with_info()) do
@@ -309,7 +308,12 @@ config.keys = {
         end
       end
       local tab = mux_win:spawn_tab {
-        args = { 'python3', '-S', pick_script, wezterm.json_encode(items) },
+        args = {
+          'python3',
+          '-S',
+          wezterm.config_dir .. '/tabpick.py',
+          wezterm.json_encode(items),
+        },
       }
       tab:set_title('__tabpick__')
     end)
