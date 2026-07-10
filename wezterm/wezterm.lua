@@ -235,45 +235,83 @@ config.keys = {
     key = 'w',
     mods = 'LEADER',
     action = wezterm.action_callback(function(win, pane)
-      local choices = {}
-      local tabs_with_info = win:mux_window():tabs_with_info()
-      for _, tab_info in ipairs(tabs_with_info) do
+      local pick_script = wezterm.config_dir .. '/tabpick.py'
+      local items = {}
+      local mux_win = win:mux_window()
+      for _, tab_info in ipairs(mux_win:tabs_with_info()) do
         local tab = tab_info.tab
-        local panes_with_info = tab:panes_with_info()
-        for _, pane_info in ipairs(panes_with_info) do
+        local tab_title = tab:get_title()
+        local panes = {}
+        local active_pane_id = nil
+        local active_name = ''
+        local active_cwd = ''
+        local tw, th = 0, 0
+        local only_picker = true
+        for _, pane_info in ipairs(tab:panes_with_info()) do
           local p = pane_info.pane
-          local title = p:get_title()
-          local proc = p:get_foreground_process_info()
-          local name = proc and basename(proc.executable) or title
-          local prefix = tab_info.is_active and '*' or ' '
-          local label = string.format('%s %d:%d %s', prefix, tab_info.index + 1, pane_info.index + 1, name)
-          table.insert(choices, { label = label, id = tostring(tab_info.index) .. ':' .. tostring(pane_info.index) })
-        end
-      end
-
-      win:perform_action(
-        wezterm.action.InputSelector {
-          action = wezterm.action_callback(function(window, cur_pane, id, label)
-            if not id and not label then
-              return
-            end
-            local tab_idx, pane_idx = id:match('(%d+):(%d+)')
-            tab_idx = tonumber(tab_idx)
-            pane_idx = tonumber(pane_idx)
-            window:perform_action(wezterm.action.ActivateTab(tab_idx), cur_pane)
-            local target_tab = window:mux_window():tabs_with_info()[tab_idx + 1]
-            if target_tab then
-              local target_panes = target_tab.tab:panes_with_info()
-              if target_panes[pane_idx + 1] then
-                target_panes[pane_idx + 1].pane:activate()
+          local is_pick = false
+          local ok, proc = pcall(function() return p:get_foreground_process_info() end)
+          if ok and proc and proc.argv then
+            for _, a in ipairs(proc.argv) do
+              if tostring(a):find('wz%-pick%.py') then
+                is_pick = true
+                break
               end
             end
-          end),
-          title = 'Select Tab/Pane',
-          choices = choices,
-        },
-        pane
-      )
+          end
+          if not is_pick then
+            only_picker = false
+            local preview = ''
+            local okp, txt = pcall(function() return p:get_lines_as_escapes() end)
+            if okp and txt then
+              preview = txt
+            end
+            tw = math.max(tw, pane_info.left + pane_info.width)
+            th = math.max(th, pane_info.top + pane_info.height)
+            table.insert(panes, {
+              pane_id = p:pane_id(),
+              left = pane_info.left,
+              top = pane_info.top,
+              width = pane_info.width,
+              height = pane_info.height,
+              is_active = pane_info.is_active,
+              preview = preview,
+            })
+            if pane_info.is_active then
+              active_pane_id = p:pane_id()
+              active_name = (tab_title and #tab_title > 0) and tab_title or p:get_title()
+              local d = p:get_current_working_dir()
+              if d then
+                if type(d) == 'table' and d.file_path then
+                  active_cwd = d.file_path
+                else
+                  active_cwd = tostring(d):gsub('^file://[^/]*', '')
+                end
+              end
+            end
+          end
+        end
+        if not only_picker and #panes > 0 then
+          if not active_pane_id then
+            active_pane_id = panes[1].pane_id
+            active_name = (tab_title and #tab_title > 0) and tab_title or ''
+          end
+          table.insert(items, {
+            tab_id = tab_info.index,
+            active = tab_info.is_active,
+            name = active_name,
+            cwd = active_cwd,
+            active_pane_id = active_pane_id,
+            tw = tw,
+            th = th,
+            panes = panes,
+          })
+        end
+      end
+      local tab = mux_win:spawn_tab {
+        args = { 'python3', '-S', pick_script, wezterm.json_encode(items) },
+      }
+      tab:set_title('__tabpick__')
     end)
   },
   { key = 'Q',      mods = 'LEADER',       action = wezterm.action_callback(function(win, pane) pane:move_to_new_window() end) },
@@ -444,6 +482,9 @@ local TAB_TITLE_MAX_LENGTH = 10
 
 wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
   local title = tab.tab_title
+  if title == '__tabpick__' then
+    return ' '
+  end
   if not title or #title == 0 then
     title = tab.active_pane.title
   end
@@ -472,6 +513,18 @@ end)()
 local tui_bridge_pipe = nil
 
 wezterm.on('user-var-changed', function(window, pane, name, value)
+  if name == 'tabpick_select' then
+    -- close the picker tab first (pane is the picker pane that emitted the var)
+    window:perform_action(wezterm.action.CloseCurrentTab { confirm = false }, pane)
+    if value ~= 'cancel' then
+      local ok, target = pcall(function() return wezterm.mux.get_pane(tonumber(value)) end)
+      if ok and target then
+        pcall(function() target:tab():activate() end)
+        target:activate()
+      end
+    end
+    return
+  end
   if not tui_bridge_path then
     return
   end
