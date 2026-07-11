@@ -1,4 +1,6 @@
 patch:
+  # Ctrl+b 切英文直通,放行给 kitty(见 rime.lua)
+  engine/processors/@before 0: lua_processor@ctrl_b_passthrough
   switches/@next:
     name: fuzzy_pinyin
     reset: 0
