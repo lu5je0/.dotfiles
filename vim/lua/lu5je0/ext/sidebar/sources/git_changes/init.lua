@@ -588,14 +588,15 @@ function M.keymaps()
       local line = vim.api.nvim_win_get_cursor(state.win)[1]
       local item = state.git_changes.display_items[line]
       if not item or not item.node or item._is_section then return end
-      if not vim.uv.fs_stat(item.node.abs_path) then
+      local target = item.display_node or item.node
+      if not vim.uv.fs_stat(target.abs_path) then
         vim.notify('File deleted', vim.log.levels.WARN)
         return
       end
       local tabs = require('lu5je0.ext.sidebar.tabs')
       tabs.switch_to(config.tab_idx('files'))
       local files = require('lu5je0.ext.sidebar.sources.files')
-      files.find_file(item.node.abs_path)
+      files.find_file(target.abs_path)
       vim.cmd('normal! zz')
     end, desc = 'Locate in files' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },

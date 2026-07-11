@@ -189,6 +189,9 @@ function M.render_tree(root_children, opts)
         lines[#lines + 1] = line
         local line_idx = #lines - 1
         add_item(child, line_idx, 'dir')
+        -- The row visually represents the compressed chain leaf; expose it so
+        -- consumers (e.g. locate) can target the directory the user sees.
+        items[#items].display_node = display_node
 
         if dir_suffix then
           add_suffix(line_idx, dir_suffix(child))

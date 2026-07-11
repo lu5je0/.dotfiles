@@ -428,15 +428,18 @@ function M.find_file(filepath)
 
   local rel_parts = vim.split(tree.rel_to_cwd(filepath), '/', { trimempty = true })
   local node = state.files.root
-  for i = 1, #rel_parts - 1 do
+  for i = 1, #rel_parts do
     tree.ensure_children(node)
     node.expanded = true
-    if node.children then
-      for _, child in ipairs(node.children) do
-        if child.name == rel_parts[i] then node = child; break end
-      end
+    if not node.children then break end
+    local next_node
+    for _, child in ipairs(node.children) do
+      if child.name == rel_parts[i] then next_node = child; break end
     end
+    if not next_node then break end
+    node = next_node
   end
+  -- When the reveal target itself is a directory, expand it so its contents show.
   if node.type == 'directory' then
     tree.ensure_children(node)
     node.expanded = true

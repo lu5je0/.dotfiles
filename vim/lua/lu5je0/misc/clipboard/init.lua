@@ -28,18 +28,7 @@ M.setup = function()
   elseif has('wsl') then
     require('lu5je0.misc.clipboard.wsl').setup()
   elseif has('linux') then
-    vim.o.clipboard = 'unnamedplus'
-    vim.g.clipboard = {
-      name = 'wl-clipboard',
-      copy = {
-        ['+'] = 'wl-copy',
-        ['*'] = 'wl-copy --primary',
-      },
-      paste = {
-        ['+'] = 'wl-paste --no-newline',
-        ['*'] = 'wl-paste --no-newline --primary',
-      },
-    }
+    require('lu5je0.misc.clipboard.wayland').setup()
   end
 end
 

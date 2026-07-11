@@ -122,6 +122,9 @@ ext/tabline/
 
 ## TUI Bridge 与平台联动
 - `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/im/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
+- `lua/lu5je0/misc/clipboard/init.lua` 按平台选择后端：SSH 走 OSC52；macOS 走 `mac.lua`(FFI 加载 `liblibclipboard.dylib`)；WSL 走 `wsl.lua`；Linux 走 `wayland.lua`，失败回退到外部 `wl-clipboard`。
+  - `wayland.lua` 是纯 Lua 实现：用 LuaJIT FFI 只调 libc 的 `socket/connect/sendmsg/recvmsg`(SCM_RIGHTS 传 fd),直接手写 Wayland wire 协议 + `zwlr_data_control_unstable_v1`,事件循环挂在 `vim.uv` 上常驻持有 selection。**不 fork 外部进程、不依赖编译 .so**;`struct msghdr/cmsghdr` 布局按 Linux 64 位 ABI(x86_64/arm64)。
+  - 依赖 compositor 支持 wlr/ext-data-control(`wl-paste --list-types` 可验证);不支持时 `setup()` 抛错,由 `init.lua` 回退 `wl-clipboard`。注意纯 X11/XWayland 桥接方案在 KWin 上无法粘贴 Wayland 内容(KWin 仅在 X11 窗口获焦时才同步),故未采用。
 - `vim/lib/macos/bin/tui_bridge` 与 `vim/lib/windows/bin/tui_bridge` 来自 `submodule/tui-bridge` 构建产物；平台由目录区分，不再靠文件名后缀区分。不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
 - `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下的 native 资源路径；新增平台二进制或动态库时，优先复用这个入口，不要在业务模块里继续硬编码 `stdpath('config') .. '/lib/...'`。
 - 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `submodule/tui-bridge/AGENTS.md`。
