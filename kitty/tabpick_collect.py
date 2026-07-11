@@ -94,6 +94,7 @@ def handle_result(args, result, target_window_id, boss):
             active_cwd = wins[0].cwd_of_child or ""
         items.append({
             "tab_id": ti,
+            "close_id": getattr(tab, "id", None),
             "active": tab is active_tab,
             "name": active_name,
             "cwd": active_cwd,

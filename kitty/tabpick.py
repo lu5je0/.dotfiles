@@ -9,6 +9,8 @@ process.
 
 import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -51,6 +53,23 @@ def ime(method):
     sys.stdout.flush()
 
 
+def close_tab(item):
+    tid = item.get("close_id")
+    if tid is None:
+        return
+    sock = os.environ.get("KITTY_LISTEN_ON") or "unix:/tmp/mykitty"
+    exe = shutil.which("kitten") or shutil.which("kitty") or "kitten"
+    try:
+        subprocess.run(
+            [exe, "@", "--to", sock, "close-tab", "--match", f"id:{tid}"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=3,
+        )
+    except Exception:
+        _log("close-tab FAILED for id={}".format(tid))
+
+
 def main(args):
     try:
         with open(DATA_PATH) as f:
@@ -69,6 +88,7 @@ def main(args):
             items,
             on_enter=lambda: ime("normal"),
             on_exit=lambda: ime("insert"),
+            on_close=close_tab,
         )
     except Exception:
         import traceback

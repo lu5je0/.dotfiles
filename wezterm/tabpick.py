@@ -32,6 +32,10 @@ def ime(method):
     set_user_var("tui_bridge", req)
 
 
+def close_tab(item):
+    set_user_var("tabpick_close", item["active_pane_id"])
+
+
 def main():
     if len(sys.argv) <= 1:
         return
@@ -46,6 +50,7 @@ def main():
         items,
         on_enter=lambda: ime("normal"),
         on_exit=lambda: ime("insert"),
+        on_close=close_tab,
     )
 
     if target:

@@ -517,6 +517,14 @@ end)()
 local tui_bridge_pipe = nil
 
 wezterm.on('user-var-changed', function(window, pane, name, value)
+  if name == 'tabpick_close' then
+    -- kill the tab that owns the given pane, keep the picker running
+    local ok, target = pcall(function() return wezterm.mux.get_pane(tonumber(value)) end)
+    if ok and target then
+      window:perform_action(wezterm.action.CloseCurrentTab { confirm = false }, target)
+    end
+    return
+  end
   if name == 'tabpick_select' then
     -- close the picker tab first (pane is the picker pane that emitted the var)
     window:perform_action(wezterm.action.CloseCurrentTab { confirm = false }, pane)

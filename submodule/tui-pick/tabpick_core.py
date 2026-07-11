@@ -165,14 +165,17 @@ def read_key(timeout):
     r, _, _ = select.select([sys.stdin], [], [], timeout)
     if not r:
         return None
-    ch = sys.stdin.read(1)
-    if ch == "\x1b":
-        r2, _, _ = select.select([sys.stdin], [], [], 0.01)
-        if r2:
-            seq = sys.stdin.read(2)
-            return "\x1b" + seq
-        return "\x1b"
-    return ch
+    # Read straight from the raw fd: sys.stdin.read() buffers, which would
+    # swallow the "[A" tail of an arrow sequence and leave a bare ESC behind
+    # (making arrow keys look like a quit). os.read returns whatever the
+    # terminal delivered in one go, e.g. b"\x1b[A" or b"\x1bOA".
+    try:
+        data = os.read(sys.stdin.fileno(), 32)
+    except OSError:
+        return None
+    if not data:
+        return None
+    return data.decode("utf-8", "ignore")
 
 
 # ---- fuzzy --------------------------------------------------------------
@@ -200,11 +203,13 @@ BORDER = CSI + "38;5;244m"            # dim gray border
 TITLE = CSI + "1;38;5;255m"           # bold white title
 INDEX = CSI + "38;5;179m"             # yellow (n) prefix
 SEL_BAR = CSI + "48;2;108;101;133;38;2;235;235;235m"  # muted purple bg, light fg
+CONFIRM = CSI + "48;5;179;38;5;16m"   # yellow bg, dark fg (tmux confirm bar)
 
 
-def run(out):
+def run(out, on_close=None):
     query = ""
     filtering = False
+    confirming = None
     parse_cache = {}
 
     all_items = get_items()
@@ -253,12 +258,13 @@ def run(out):
 
         # ---- preview box top border with title ----
         tl, tr, bl, br, hz, vt = "┌", "┐", "└", "┘", "─", "│"
+        title_color = TITLE
         title = f"{idx} (sort: index)"
         if filtering:
             title = f"{idx} (sort: index)  /{query}"
         title = title[: max(0, cols - 6)]
         lead = tl + hz
-        title_seg = " " + TITLE + title + RESET + BORDER + " "
+        title_seg = " " + title_color + title + RESET + BORDER + " "
         used = 2 + 1 + len(title) + 1
         fill = max(0, cols - 1 - used)
         buf.append(
@@ -328,11 +334,37 @@ def run(out):
             CSI + f"{list_h + box_h};1H" + BORDER + bl + hz * (cols - 2) + br + RESET
         )
 
+        # ---- bottom status bar: tmux-style kill confirmation prompt ----
+        if confirming is not None:
+            prompt = f"kill window {confirming['tab_id']} ({confirming['name']})? (y/n)"
+            prompt, pw = clip_visible(prompt, cols)
+            bar = prompt + " " * max(0, cols - pw)
+            buf.append(CSI + f"{rows};1H" + CONFIRM + bar + RESET)
+
         out.write("".join(buf))
         out.flush()
 
         key = read_key(0.15)
         if key is None:
+            continue
+
+        if confirming is not None:
+            if key in ("y", "Y"):
+                victim = confirming
+                confirming = None
+                if on_close:
+                    try:
+                        on_close(victim)
+                    except Exception:
+                        pass
+                if victim in all_items:
+                    all_items.remove(victim)
+                if not all_items:
+                    return None
+                if idx >= len(all_items):
+                    idx = max(0, len(all_items) - 1)
+            else:
+                confirming = None
             continue
 
         if filtering:
@@ -343,6 +375,10 @@ def run(out):
                 filtering = False
             elif key in ("\x7f", "\b"):
                 query = query[:-1]
+            elif key in (CSI + "B", "\x1b[B", "\x1bOB"):
+                idx = min(len(items) - 1, idx + 1)
+            elif key in (CSI + "A", "\x1b[A", "\x1bOA"):
+                idx = max(0, idx - 1)
             elif len(key) == 1 and key.isprintable():
                 query += key
                 idx = 0
@@ -354,14 +390,17 @@ def run(out):
                 return items[n]
         elif key in ("q", "\x1b"):
             return None
-        elif key in ("j", CSI + "B", "\x1b[B"):
+        elif key in ("j", CSI + "B", "\x1b[B", "\x1bOB"):
             idx = min(len(items) - 1, idx + 1)
-        elif key in ("k", CSI + "A", "\x1b[A"):
+        elif key in ("k", CSI + "A", "\x1b[A", "\x1bOA"):
             idx = max(0, idx - 1)
         elif key == "g":
             idx = 0
         elif key == "G":
             idx = len(items) - 1
+        elif key == "x":
+            if items:
+                confirming = items[idx]
         elif key == "/":
             filtering = True
             query = ""
@@ -371,10 +410,12 @@ def run(out):
             return None
 
 
-def pick(items, on_enter=None, on_exit=None, stream=None):
+def pick(items, on_enter=None, on_exit=None, stream=None, on_close=None):
     """Full picker entry: set raw mode + alt screen, run loop, restore.
 
     on_enter/on_exit are optional callbacks (e.g. IME switching).
+    on_close(item) is an optional callback invoked when the user confirms
+    killing a tab (x then y); the item is then dropped from the list.
     stream is the tty stream to draw on (defaults to sys.stdout).
     Returns the selected item dict, or None if cancelled.
     """
@@ -391,7 +432,7 @@ def pick(items, on_enter=None, on_exit=None, stream=None):
         out.flush()
         if on_enter:
             on_enter()
-        selected = run(out)
+        selected = run(out, on_close=on_close)
     finally:
         if on_exit:
             on_exit()
