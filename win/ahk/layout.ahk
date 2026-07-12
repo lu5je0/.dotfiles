@@ -6,23 +6,46 @@
 global LayoutConfig := Map(
     "default", Map(
         "center_i", (sw, sh) => (
+            MonitorGetWorkArea(MonitorGetPrimary(), &wl, &wt, &wr, &wb),
+            margin := 23,
             w := sw * (11 / 16),
-            h := sh - 120,
-            { width: w, height: h, x: (sw - w) / 2, y: 23 }
+            h := (wb - wt) - margin * 2,
+            { width: w, height: h, x: (sw - w) / 2, y: wt + margin }
         ),
         "center_j", (sw, sh) => (
+            MonitorGetWorkArea(MonitorGetPrimary(), &wl, &wt, &wr, &wb),
             w := sw * 3 / 5,
-            h := sh * (17 / 20),
-            { width: w, height: h, x: (sw - w) / 2, y: (sh - h) / 2 }
+            h := (wb - wt) * (17 / 20),
+            { width: w, height: h, x: (sw - w) / 2, y: wt + ((wb - wt) - h) / 2 }
         ),
     ),
     "wezterm-gui.exe", Map(
-        "center_i", (sw, sh) => { width: 2710, height: 2023, x: (sw - 2713) / 2, y: 43 },
-        "center_j", (sw, sh) => { width: 1999, height: 1689, x: (sw - 1999) / 2, y: (sh - 1596) / 2 - 100 },
+        "center_i", (sw, sh) => (
+            MonitorGetWorkArea(MonitorGetPrimary(), &wl, &wt, &wr, &wb),
+            margin := 43,
+            h := (wb - wt) - margin * 2,
+            { width: 2710, height: h, x: (sw - 2713) / 2, y: wt + margin }
+        ),
+        "center_j", (sw, sh) => (
+            MonitorGetWorkArea(MonitorGetPrimary(), &wl, &wt, &wr, &wb),
+            w := 1999,
+            h := 1689,
+            { width: w, height: h, x: (sw - w) / 2, y: wt + ((wb - wt) - h) / 2 }
+        ),
     ),
     "WindowsTerminal.exe", Map(
-        "center_i", (sw, sh) => { width: 2457, height: 2038, x: (sw - 2457) / 2, y: 23 },
-        "center_j", (sw, sh) => { width: 1931, height: 1596, x: (sw - 1931) / 2, y: (sh - 1596) / 2 - 100 },
+        "center_i", (sw, sh) => (
+            MonitorGetWorkArea(MonitorGetPrimary(), &wl, &wt, &wr, &wb),
+            margin := 23,
+            h := (wb - wt) - margin * 2,
+            { width: 2457, height: h, x: (sw - 2457) / 2, y: wt + margin }
+        ),
+        "center_j", (sw, sh) => (
+            MonitorGetWorkArea(MonitorGetPrimary(), &wl, &wt, &wr, &wb),
+            w := 1931,
+            h := 1596,
+            { width: w, height: h, x: (sw - w) / 2, y: wt + ((wb - wt) - h) / 2 }
+        ),
     ),
 )
 
