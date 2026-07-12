@@ -429,7 +429,7 @@ wezterm.on('gui-startup', function(cmd)
     end
     
     local cwd = cmd and cmd.cwd or nil
-    mux.spawn_window { width = 119, height = 43, cwd = wsl_path(cwd) }
+    mux.spawn_window { width = 116, height = 43, cwd = wsl_path(cwd) }
     wezterm.sleep_ms(400)
     wezterm.run_child_process { "C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe", "C:\\Users\\lu5je0\\.dotfiles\\win\\ahk\\wezterm\\resize.ahk" }
   elseif is_mac then
