@@ -1234,6 +1234,14 @@ function M.open(node, opts)
   vim.keymap.set('n', '<leader>gg', preview_hunk, { buffer = buf, nowait = true })
   vim.keymap.set('n', '<leader>gu', reset_hunk, { buffer = buf, nowait = true })
 
+  vim.keymap.set('n', 'K', function()
+    local row = vim.api.nvim_win_get_cursor(0)[1]
+    local path = current_path_for_line(session, buf, row)
+    if path then
+      require('lu5je0.ext.sidebar.sources.files.info').show_for_path(path, { win = 0, buf = buf, line = row })
+    end
+  end, { buffer = buf, nowait = true })
+
   vim.api.nvim_create_autocmd('BufReadCmd', {
     buffer = buf,
     callback = function()
