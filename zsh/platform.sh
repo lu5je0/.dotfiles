@@ -9,7 +9,6 @@ if [[ $OSTYPE == darwin* ]]; then
   export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
   
   # eval $(gdircolors -b $HOME/.dir_colors)
-  alias e='open'
   alias sed='gsed'
   alias iterm='open -a iTerm .'
   alias fdfind='fd'
@@ -40,7 +39,15 @@ elif [[ -n $WSL_DISTRO_NAME ]]; then
   }
   
   alias grep='grep --color'
-  alias e='/mnt/c/Windows/explorer.exe'
+  open() {
+    if [[ $# -eq 0 ]]; then
+      explorer.exe .
+    elif [[ "$1" =~ ^https?:// ]]; then
+      powershell.exe -noprofile start "$1"
+    else
+      explorer.exe "$(wslpath -w "$1")"
+    fi
+  }
   alias cmd='/mnt/c/Windows/System32/cmd.exe /c'
   alias scoop="PATH=$PATH:/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/ $WIN_HOME/scoop/shims/scoop"
   alias powershell='/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe'
