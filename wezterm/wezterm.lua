@@ -515,6 +515,7 @@ local tui_bridge_path = (function()
 end)()
 
 local tui_bridge_pipe = nil
+local tui_bridge_ime_saved = {}
 
 wezterm.on('user-var-changed', function(window, pane, name, value)
   if name == 'tabpick_close' then
@@ -551,7 +552,31 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
         tui_bridge_pipe:flush()
       end
     elseif is_win then
-      wezterm.run_child_process { tui_bridge_path, '-j', value }
+      -- Single-shot `-j` per OSC (no console flash, unlike io.popen). The
+      -- per-process saved state is lost between calls, so we hold it here in
+      -- the long-lived WezTerm Lua process, keyed by pane so SSH sessions
+      -- don't clobber each other.
+      local ok_req, req = pcall(wezterm.json_parse, value)
+      local pane_id = pane and pane:pane_id() or 0
+      if ok_req and type(req) == 'table' and req.module == 'ime' and req.method == 'normal' then
+        local ok, stdout = wezterm.run_child_process { tui_bridge_path, '-j', value }
+        if ok and stdout then
+          local ok_resp, resp = pcall(wezterm.json_parse, stdout)
+          if ok_resp and type(resp) == 'table' and resp.ok and resp.result and resp.result.state then
+            tui_bridge_ime_saved[pane_id] = resp.result.state
+          end
+        end
+      elseif ok_req and type(req) == 'table' and req.module == 'ime' and req.method == 'insert' then
+        local restore = tui_bridge_ime_saved[pane_id]
+        if restore then
+          req.params = req.params or {}
+          req.params.restore = restore
+          value = wezterm.json_encode(req)
+        end
+        wezterm.run_child_process { tui_bridge_path, '-j', value }
+      else
+        wezterm.run_child_process { tui_bridge_path, '-j', value }
+      end
     end
   end
 end)
