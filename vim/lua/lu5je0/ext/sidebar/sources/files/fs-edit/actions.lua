@@ -316,8 +316,10 @@ local function has_trash()
 end
 M.has_trash = has_trash
 
-local function trash(abs_path)
-  local result = vim.system({ 'q-trash', 'rm', '-rf', abs_path }):wait()
+local function trash(abs_paths)
+  local cmd = { 'q-trash', 'rm', '-rf' }
+  vim.list_extend(cmd, abs_paths)
+  local result = vim.system(cmd):wait()
   return result.code == 0
 end
 
@@ -515,7 +517,10 @@ function M.execute_actions(actions)
   local ordered = M.plan_actions(actions)
   local function strip(p) return strip_trailing_slash(p) end
 
-  for _, action in ipairs(ordered) do
+  local i = 1
+  local n = #ordered
+  while i <= n do
+    local action = ordered[i]
     if action.name == 'create' then
       if vim.endswith(action.dst, '/') then
         vim.fn.mkdir(action.dst:sub(1, -2), 'p')
@@ -525,13 +530,26 @@ function M.execute_actions(actions)
         local fd = vim.uv.fs_open(action.dst, 'w', 420)
         if fd then vim.uv.fs_close(fd) end
       end
+      i = i + 1
     elseif action.name == 'delete' then
-      if has_trash() then
-        trash(action.src)
-      else
-        vim.fn.delete(action.src, 'rf')
+      -- Coalesce a run of consecutive deletes into one q-trash spawn.
+      -- Pure deletes have no ordering constraint among themselves, so
+      -- batching is safe; we never merge across create/move/copy.
+      local batch = {}
+      while i <= n and ordered[i].name == 'delete' do
+        table.insert(batch, ordered[i].src)
+        i = i + 1
       end
-      close_bufs_under(action.src)
+      if has_trash() then
+        trash(batch)
+      else
+        for _, src in ipairs(batch) do
+          vim.fn.delete(src, 'rf')
+        end
+      end
+      for _, src in ipairs(batch) do
+        close_bufs_under(src)
+      end
     elseif action.name == 'move' then
       local src = strip(action.src)
       local dst = strip(action.dst)
@@ -545,6 +563,7 @@ function M.execute_actions(actions)
       else
         vim.notify('fs-edit: move failed: ' .. tostring(err), vim.log.levels.ERROR)
       end
+      i = i + 1
     elseif action.name == 'copy' then
       local src = strip(action.src)
       local dst = strip(action.dst)
@@ -553,6 +572,9 @@ function M.execute_actions(actions)
         vim.fn.mkdir(new_parent, 'p')
       end
       vim.fn.system({ 'cp', '-r', src, dst })
+      i = i + 1
+    else
+      i = i + 1
     end
   end
 end
