@@ -22,6 +22,29 @@ QTRASH = HERE.parent / "q-trash.py"
 
 FAIL: list[str] = []
 PASS = 0
+SKIP = 0
+
+# macOS trashes via the Foundation API, which always targets the real
+# per-volume ~/.Trash and ignores $HOME. The freedesktop-style fake-HOME
+# isolation therefore can't work: round-trip tests run against the real
+# trash (scoped by a unique sandbox path, then cleaned up), and whole-trash
+# operations (empty / size / global list) are skipped.
+IS_MAC = sys.platform == "darwin"
+
+
+def _load_trash_backend():
+    import importlib.util
+    path = HERE.parent / "trash_backend.py"
+    spec = importlib.util.spec_from_file_location("trash_backend", str(path))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def skip(name: str, reason: str) -> None:
+    global SKIP
+    SKIP += 1
+    print(f"  SKIP  {name}: {reason}")
 
 
 def _build_env(home: Path, env_extra=None) -> dict:
@@ -29,15 +52,32 @@ def _build_env(home: Path, env_extra=None) -> dict:
     # Wipe any setting that could redirect trash outside the fake HOME.
     for key in ("XDG_DATA_HOME", "TRASH_DIR"):
         e.pop(key, None)
-    e["HOME"] = str(home)
+    # On macOS the mac backend reads the real ~/.Trash via expanduser, so we
+    # must keep the inherited real HOME; overriding it would make scans look
+    # in an empty fake trash while files were trashed to the real one.
+    if not IS_MAC:
+        e["HOME"] = str(home)
     if env_extra:
         e.update(env_extra)
     return e
 
 
 def run_qtrash(*args, home: Path, env_extra=None, cwd=None, stdin=None):
+    arg_list = list(args)
+    if IS_MAC:
+        # Drop "--trash-dir <val>" so reads hit the real ~/.Trash via the mac
+        # backend, matching where Foundation actually trashed the files.
+        cleaned: list[str] = []
+        i = 0
+        while i < len(arg_list):
+            if arg_list[i] == "--trash-dir":
+                i += 2
+                continue
+            cleaned.append(arg_list[i])
+            i += 1
+        arg_list = cleaned
     return subprocess.run(
-        [sys.executable, str(QTRASH), *args],
+        [sys.executable, str(QTRASH), *arg_list],
         capture_output=True, text=True,
         env=_build_env(home, env_extra), cwd=cwd, input=stdin,
     )
@@ -61,8 +101,43 @@ def check(name: str, cond: bool, detail: str = "") -> None:
         print(f"  FAIL  {name}: {detail}")
 
 
+def _purge_real_trash(sandbox: Path) -> None:
+    """Remove real-trash entries whose original path is under `sandbox`.
+
+    Scoped strictly by the unique sandbox prefix so a user's other trashed
+    files are never touched. macOS records put-back paths in .DS_Store
+    asynchronously, so a bounded retry catches late-flushed records. macOS only.
+    """
+    import time
+
+    prefix = str(sandbox)
+    for attempt in range(5):
+        try:
+            tb = _load_trash_backend()
+            matched = False
+            for t in tb.scan_trash(None):
+                op = t.original_path
+                if op == prefix or op.startswith(prefix.rstrip("/") + "/"):
+                    matched = True
+                    p = t.files_path
+                    try:
+                        if os.path.isdir(p) and not os.path.islink(p):
+                            shutil.rmtree(p, ignore_errors=True)
+                        else:
+                            os.remove(p)
+                    except OSError:
+                        pass
+        except Exception:
+            return
+        if not matched and attempt > 0:
+            return
+        time.sleep(0.1)
+
+
 def cleanup(*dirs: Path) -> None:
     for d in dirs:
+        if IS_MAC:
+            _purge_real_trash(d)
         shutil.rmtree(d, ignore_errors=True)
 
 
@@ -74,6 +149,10 @@ def make_sandbox() -> tuple[Path, Path]:
     fully self-contained.
     """
     sandbox = Path(tempfile.mkdtemp(prefix="qts_"))
+    if IS_MAC:
+        # Foundation records put-back paths canonically (/private/var/...),
+        # so resolve the sandbox to match those records and q-trash's filters.
+        sandbox = sandbox.resolve()
     home = sandbox / "home"
     work = sandbox / "work"
     home.mkdir()
@@ -90,6 +169,9 @@ def trash_dir(home: Path) -> str:
 def test_list_empty():
     """list on empty trash prints 'No trashed files.'"""
     print("[case] list empty trash")
+    if IS_MAC:
+        skip("list empty", "shared real ~/.Trash can't be guaranteed empty on macOS")
+        return
     home, work = make_sandbox()
     try:
         r = run_qtrash("--trash-dir", trash_dir(home), "list", home=home)
@@ -322,7 +404,8 @@ def test_restore_dest_to_existing_dir():
         check("dest dir: file in target",
               (target_dir / "src.txt").exists())
         check("dest dir: content intact",
-              (target_dir / "src.txt").read_text() == "payload")
+              (target_dir / "src.txt").exists()
+              and (target_dir / "src.txt").read_text() == "payload")
         check("dest dir: original location empty", not f.exists())
     finally:
         cleanup(home.parent)
@@ -457,6 +540,9 @@ def test_restore_dest_missing_arg():
 def test_empty_all():
     """empty --force removes all items."""
     print("[case] empty --force")
+    if IS_MAC:
+        skip("empty all", "empty --force is unscoped; can't run against real ~/.Trash")
+        return
     home, work = make_sandbox()
     try:
         td = trash_dir(home)
@@ -479,6 +565,9 @@ def test_empty_all():
 def test_empty_days_filter():
     """empty --days N only removes items older than N days."""
     print("[case] empty --days filter")
+    if IS_MAC:
+        skip("empty days", "empty is unscoped; can't run against real ~/.Trash")
+        return
     home, work = make_sandbox()
     try:
         td = trash_dir(home)
@@ -503,6 +592,9 @@ def test_empty_days_filter():
 def test_empty_confirm_no():
     """empty without --force asks confirmation; 'n' cancels."""
     print("[case] empty confirm no")
+    if IS_MAC:
+        skip("empty confirm no", "empty is unscoped; can't run against real ~/.Trash")
+        return
     home, work = make_sandbox()
     try:
         td = trash_dir(home)
@@ -526,6 +618,9 @@ def test_empty_confirm_no():
 def test_size_empty():
     """size on empty trash."""
     print("[case] size empty")
+    if IS_MAC:
+        skip("size empty", "size reads whole trash; real ~/.Trash may be non-empty")
+        return
     home, _work = make_sandbox()
     try:
         r = run_qtrash("--trash-dir", trash_dir(home), "size", home=home)
@@ -539,6 +634,9 @@ def test_size_empty():
 def test_size_nonempty():
     """size shows usage after trashing files."""
     print("[case] size non-empty")
+    if IS_MAC:
+        skip("size nonempty", "size is unscoped; exact item count unreliable on real ~/.Trash")
+        return
     home, work = make_sandbox()
     try:
         (work / "big").write_text("x" * 10000)
@@ -665,6 +763,7 @@ def main() -> int:
 
     print()
     print(f"PASS {PASS}")
+    print(f"SKIP {SKIP}")
     print(f"FAIL {len(FAIL)}")
     if FAIL:
         for line in FAIL:
