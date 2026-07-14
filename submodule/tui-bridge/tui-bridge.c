@@ -65,27 +65,26 @@ static void add_rt_field(cJSON *json, double rt_ms) {
   cJSON_AddStringToObject(json, "rt", rt_text);
 }
 
-void bridge_emit_ime_changed(const char *source_id) {
+void bridge_emit_ime_changed_full(const char *source_id, const char *state) {
   cJSON *json = cJSON_CreateObject();
   if (!json) {
     return;
   }
   cJSON_AddStringToObject(json, "event", "ime_changed");
   cJSON_AddStringToObject(json, "source_id", source_id ? source_id : "");
+  if (state) {
+    cJSON_AddStringToObject(json, "state", state);
+  }
   print_json_message(json);
   cJSON_Delete(json);
 }
 
+void bridge_emit_ime_changed(const char *source_id) {
+  bridge_emit_ime_changed_full(source_id, NULL);
+}
+
 void bridge_emit_ime_changed_state(const char *state) {
-  cJSON *json = cJSON_CreateObject();
-  if (!json) {
-    return;
-  }
-  cJSON_AddStringToObject(json, "event", "ime_changed");
-  cJSON_AddStringToObject(json, "source_id", state ? state : "");
-  cJSON_AddStringToObject(json, "state", state ? state : "");
-  print_json_message(json);
-  cJSON_Delete(json);
+  bridge_emit_ime_changed_full(state, state);
 }
 
 static void respond_error(int id, const char *code, const char *message) {

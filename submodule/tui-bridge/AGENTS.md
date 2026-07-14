@@ -26,11 +26,11 @@
 - 统一入口：`./build.sh [output]`
 - 默认行为就是按当前环境自动选择：macOS 下构建 mac 版本，WSL / Windows 环境下构建 Windows 版本
 - 构建会一并编译 vendored 的 `third_party/cjson/cJSON.c`，不依赖系统安装的 `cJSON` 开发包
-- 默认输出文件名统一为 `tui_bridge`；不再附带 `mac` 或 `win` 后缀
-- 在 WSL 中默认构建 Windows 版本时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 Vim `lib/windows/bin/tui_bridge`
-- 构建成功后，如存在 `../../vim/lib`，会自动同步到：
-  - macOS: `vim/lib/macos/bin/tui_bridge`
-  - Windows/WSL: `vim/lib/windows/bin/tui_bridge`
+- 默认输出文件名统一为 `tui-bridge`；不再附带 `mac` 或 `win` 后缀
+- 在 WSL 中默认构建 Windows 版本时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 `bin/windows-x86_64/tui-bridge`
+- 构建成功后，如存在 `../../bin`，会自动同步到仓库顶层 `bin/<平台-架构>/tui-bridge`：
+  - macOS: `bin/macos-arm64/tui-bridge`
+  - Windows/WSL: `bin/windows-x86_64/tui-bridge`
 
 ## 协议
 
@@ -75,14 +75,14 @@
 - 请求：`{"id":1,"module":"ime","method":"normal","params":{}}`
 - 结果：`{"state":"eng"}`
 - 说明：
-  - macOS: 切换到英文输入源，并保存当前非英文输入源状态。
+  - macOS: 记录当前（Esc 时刻）的输入源，然后切换到英文输入源。无论当刻是中文还是英文都会记录，供 `insert` 精确还原。
   - Windows: 将前台窗口 IME 切到英文状态，并保存当前 IME open/close 状态。
 
 2. `ime.insert`
 - 请求：`{"id":2,"module":"ime","method":"insert","params":{}}`
 - 结果：`{"state":"chi"}` 或 `{"state":"eng"}`
 - 说明：
-  - macOS: 恢复之前保存的非英文输入源；如果没有保存状态，则保持英文。
+  - macOS: 还原 `normal`（上次 Esc）时记录的输入源。若当刻是英文则保持英文（返回 eng）；是非英文源才切回并返回 chi。
   - Windows: 恢复之前保存的 IME open/close 状态。
 
 3. `ime.watch`
@@ -94,19 +94,19 @@
   - Windows: 监听前台窗口中文输入法内部中/英文状态变化，并主动推送状态变更事件。当前实现基于轮询前台窗口 IME 状态，而不是系统级输入源通知。
 
 ### IME 事件
-当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）：
+当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）。事件契约在各平台统一：始终带 `source_id` 与归一化的 `state`（`eng`/`chi`）：
 
 ```json
-{"event":"ime_changed","source_id":"com.apple.keylayout.ABC"}
-{"event":"ime_changed","source_id":"com.apple.inputmethod.SCIM.ITABC"}
+{"event":"ime_changed","source_id":"com.apple.keylayout.ABC","state":"eng"}
+{"event":"ime_changed","source_id":"com.apple.inputmethod.SCIM.ITABC","state":"chi"}
 {"event":"ime_changed","source_id":"chi","state":"chi"}
 {"event":"ime_changed","source_id":"eng","state":"eng"}
 ```
 
 说明：
-- macOS: `source_id` 是系统输入源 ID。
-- Windows: `state` 表示中文输入法内部的中/英文状态，取值为 `eng` 或 `chi`。
-- Windows: `source_id` 当前为兼容旧调用方保留，值与 `state` 相同；不要把它当作真正的输入法 ID。
+- `state` 是跨平台归一化信号，调用方（如 keeper）统一按 `state` 判断，不要按平台分叉。
+- macOS: `source_id` 是系统输入源 ID；`state` 由「当前源是否等于 ASCII 源」推导——ASCII 源为 `eng`，任意非 ASCII 源（中文/日文等 IME）为 `chi`。
+- Windows: `state` 表示中文输入法内部的中/英文状态；`source_id` 为兼容旧调用方保留，值与 `state` 相同，不要当作真正的输入法 ID。
 
 ## Clipboard
 

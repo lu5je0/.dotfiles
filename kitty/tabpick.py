@@ -49,7 +49,7 @@ import base64  # noqa: E402
 def ime(method):
     req = json.dumps({"id": 1, "module": "ime", "method": method, "params": {}})
     b64 = base64.b64encode(req.encode()).decode()
-    sys.stdout.write(f"\x1b]1337;SetUserVar=tui_bridge={b64}\x07")
+    sys.stdout.write(f"\x1b]1337;SetUserVar=tui-bridge={b64}\x07")
     sys.stdout.flush()
 
 

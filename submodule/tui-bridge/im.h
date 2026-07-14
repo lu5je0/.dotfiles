@@ -6,6 +6,7 @@
 
 void bridge_emit_ime_changed(const char *source_id);
 void bridge_emit_ime_changed_state(const char *state);
+void bridge_emit_ime_changed_full(const char *source_id, const char *state);
 
 #ifdef __APPLE__
 // Returns "eng"

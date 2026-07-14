@@ -29,7 +29,7 @@ def set_user_var(name, value):
 
 def ime(method):
     req = json.dumps({"id": 1, "module": "ime", "method": method, "params": {}})
-    set_user_var("tui_bridge", req)
+    set_user_var("tui-bridge", req)
 
 
 def close_tab(item):

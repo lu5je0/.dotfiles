@@ -6,7 +6,7 @@ cd "${SCRIPT_DIR}"
 
 OUT_ARG="${1:-}"
 
-VIM_LIB_DIR="${SCRIPT_DIR}/../../vim/lib"
+BIN_DIR="${SCRIPT_DIR}/../../bin"
 WIN_CC="${WIN_CC:-/mnt/c/Users/lu5je0/scoop/apps/gcc/13.2.0/bin/gcc.exe}"
 WIN_TEMP_ROOT="${WIN_TEMP_ROOT:-C:\\Users\\lu5je0\\AppData\\Local\\Temp}"
 
@@ -31,18 +31,19 @@ detect_target() {
   esac
 }
 
-sync_to_vim_lib() {
+sync_to_bin() {
   local built_out="$1"
-  local vim_lib_out="$2"
+  local bin_out="$2"
 
-  if [[ -d "${VIM_LIB_DIR}" ]]; then
-    mkdir -p "$(dirname "${vim_lib_out}")"
-    cp "${built_out}" "${vim_lib_out}"
+  if [[ -d "${BIN_DIR}" ]]; then
+    mkdir -p "$(dirname "${bin_out}")"
+    cp "${built_out}" "${bin_out}.new"
+    mv -f "${bin_out}.new" "${bin_out}"
   fi
 }
 
 build_mac() {
-  local out="${1:-tui_bridge}"
+  local out="${1:-tui-bridge}"
   local sources=(
     "third_party/cjson/cJSON.c"
     "request-dispatch.c"
@@ -51,19 +52,19 @@ build_mac() {
     "mac/clipboard-bridge.m"
     "mac/platform.c"
   )
-  local cflags=("-O3" "-flto" "-DNDEBUG" "-Wl,-dead_strip")
+  local cflags=("-O3" "-flto" "-DNDEBUG" "-fobjc-arc" "-Wl,-dead_strip")
   local ldflags=("-framework" "Carbon" "-framework" "AppKit")
-  local vim_lib_out="${VIM_LIB_DIR}/macos/bin/tui_bridge"
+  local bin_out="${BIN_DIR}/macos-arm64/tui-bridge"
 
   clang "${sources[@]}" -o "${out}" "${cflags[@]}" "${ldflags[@]}"
-  sync_to_vim_lib "${out}" "${vim_lib_out}"
+  sync_to_bin "${out}" "${bin_out}"
 }
 
 build_win() {
-  local out="${1:-tui_bridge}"
+  local out="${1:-tui-bridge}"
   local out_basename
   local out_dir
-  local vim_lib_out="${VIM_LIB_DIR}/windows/bin/tui_bridge"
+  local bin_out="${BIN_DIR}/windows-x86_64/tui-bridge"
   local sources=(
     "third_party/cjson/cJSON.c"
     "request-dispatch.c"
@@ -106,17 +107,17 @@ build_win() {
     "${WIN_CC}" "${sources[@]}" -o "${out}" "${cflags[@]}" "${ldflags[@]}"
   fi
 
-  sync_to_vim_lib "${out}" "${vim_lib_out}"
+  sync_to_bin "${out}" "${bin_out}"
 }
 
 TARGET="$(detect_target)"
 
 case "${TARGET}" in
   mac)
-    build_mac "${OUT_ARG:-tui_bridge}"
+    build_mac "${OUT_ARG:-tui-bridge}"
     ;;
   win)
-    build_win "${OUT_ARG:-tui_bridge}"
+    build_win "${OUT_ARG:-tui-bridge}"
     ;;
   *)
     echo "Unsupported platform for auto build: ${TARGET}" >&2

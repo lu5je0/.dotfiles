@@ -3,7 +3,7 @@
 set -euo pipefail
 
 : "${DOTFILES_DIR:=$HOME/.dotfiles}"
-WCLIP="$DOTFILES_DIR/win/bin/wclip.exe"
+WCLIP="$DOTFILES_DIR/bin/windows-x86_64/wclip.exe"
 
 usage() {
   cat <<'EOF'

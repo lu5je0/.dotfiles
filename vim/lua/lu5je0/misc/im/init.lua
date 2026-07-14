@@ -34,10 +34,10 @@ end
 
 local function select_backend_module()
   if vim.fn.has('wsl') == 1 then
-    return 'lu5je0.misc.im.win.backend'
+    return 'lu5je0.misc.im.tui-bridge.backend'
   end
   if vim.fn.has('mac') == 1 then
-    return 'lu5je0.misc.im.mac.backend'
+    return 'lu5je0.misc.im.tui-bridge.backend'
   end
   if vim.fn.has('linux') == 1 and not vim.env.SSH_TTY then
     return 'lu5je0.misc.im.linux.backend'
@@ -66,8 +66,6 @@ end
 
 local function set_keeper(enable)
   state.keeper_enabled = enable
-  ---@diagnostic disable-next-line: need-check-nil
-  state.backend.keeper(enable)
 end
 
 -- ── autocmds ──────────────────────────────────────────────────
@@ -86,30 +84,39 @@ end
 
 local function wire_keeper_signal(backend)
   backend.on_change(function()
-    -- backend.keeper(false) may not have flushed pending events yet;
-    -- keeper_enabled acts as the last-line filter for that race.
+    -- Watch runs while Neovim is focused; keeper_enabled gates whether a change
+    -- snaps back to ASCII (true in normal mode, false in insert/cmdline).
     if state.keeper_enabled then
       backend.ascii_mode()
     end
   end)
 end
 
-local function wire_keeper_autocmds()
+local function wire_keeper_autocmds(backend)
   local group = vim.api.nvim_create_augroup('ime-keeper-common', { clear = true })
 
+  -- keeper_enabled gate: on in normal mode, off in insert / cmdline.
   vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave', 'TermLeave' }, {
     group = group,
     callback = function() set_keeper(true) end,
   })
 
-  vim.api.nvim_create_autocmd({ 'InsertEnter', 'FocusLost', 'TermEnter', 'CmdlineEnter' }, {
+  vim.api.nvim_create_autocmd({ 'InsertEnter', 'TermEnter', 'CmdlineEnter' }, {
     group = group,
     callback = function() set_keeper(false) end,
+  })
+
+  -- Native watch follows focus: only subscribe while Neovim is focused so the
+  -- keeper never fights the IME of another app.
+  vim.api.nvim_create_autocmd('FocusLost', {
+    group = group,
+    callback = function() backend.keeper(false) end,
   })
 
   vim.api.nvim_create_autocmd('FocusGained', {
     group = group,
     callback = function()
+      backend.keeper(true)
       if vim.api.nvim_get_mode().mode == 'n' then
         M.normal()
         set_keeper(true)
@@ -122,7 +129,10 @@ local function config_keeper(backend)
   if keeper_disabled_here() then return end
   if not backend.on_change or not backend.keeper then return end
   wire_keeper_signal(backend)
-  wire_keeper_autocmds()
+  wire_keeper_autocmds(backend)
+
+  -- Assume focused at startup; watch is toggled by FocusLost/FocusGained.
+  backend.keeper(true)
 
   if vim.api.nvim_get_mode().mode == 'n' then
     M.normal()

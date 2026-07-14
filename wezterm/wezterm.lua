@@ -502,15 +502,15 @@ end)
 
 local tui_bridge_path = (function()
   local home = os.getenv("USERPROFILE") or os.getenv("HOME")
-  local tui_bridge_root = home and (home .. "/.dotfiles/vim/lib")
+  local tui_bridge_root = home and (home .. "/.dotfiles/bin")
   if not tui_bridge_root then
     return nil
   end
 
   if is_mac then
-    return tui_bridge_root .. "/macos/bin/tui_bridge"
+    return tui_bridge_root .. "/macos-arm64/tui-bridge"
   elseif is_win then
-    return tui_bridge_root .. "/windows/bin/tui_bridge"
+    return tui_bridge_root .. "/windows-x86_64/tui-bridge"
   end
 end)()
 
@@ -540,7 +540,7 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
   if not tui_bridge_path then
     return
   end
-  if name == 'tui_bridge' then
+  if name == 'tui-bridge' then
     if is_mac then
       if tui_bridge_pipe == nil then
         print('popen tui_bridge_path')

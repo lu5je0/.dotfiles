@@ -5,7 +5,7 @@ from kitty.window import Window  # type: ignore
 import subprocess
 
 proc = subprocess.Popen(
-    ["/Users/lu5je0/.dotfiles/vim/lib/macos/bin/tui_bridge", "-i"],
+    ["/Users/lu5je0/.dotfiles/bin/macos-arm64/tui-bridge", "-i"],
     stdin=subprocess.PIPE,
     stdout=subprocess.PIPE,
     text=True,
@@ -13,7 +13,7 @@ proc = subprocess.Popen(
 
 
 def on_set_user_var(boss: Boss, window: Window, data: dict[str, Any]) -> None:
-    if data["key"] == "tui_bridge":
+    if data["key"] == "tui-bridge":
         value = data["value"] + '\n'
         proc.stdin.write(value)
         proc.stdin.flush()

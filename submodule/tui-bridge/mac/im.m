@@ -6,7 +6,7 @@
 #include "../im.h"
 
 static NSString *asciiSourceID = nil;
-static NSString *lastNonAsciiSourceID = nil;
+static NSString *savedSourceID = nil;
 static NSString *lastReportedSourceID = nil;
 static BOOL initialized = NO;
 static BOOL watchEnabled = NO;
@@ -52,13 +52,20 @@ static void inputSourceChanged(CFNotificationCenterRef center,
                                CFNotificationName name,
                                const void *object,
                                CFDictionaryRef userInfo) {
-    if (!watchEnabled) return;
-    
     NSString *currentID = getCurrentInputSourceID();
-    if (currentID && ![currentID isEqualToString:lastReportedSourceID]) {
-        lastReportedSourceID = currentID;
-        bridge_emit_ime_changed([currentID UTF8String]);
-    }
+    if (!currentID) return;
+
+    BOOL changed = ![currentID isEqualToString:lastReportedSourceID];
+    // Always track the latest source so dedup state stays in sync even while
+    // watch is disabled (e.g. during insert mode, where im_insert/im_normal
+    // programmatically switch the TIS source). Otherwise re-enabling watch
+    // could leave lastReportedSourceID stale and suppress the next real change.
+    lastReportedSourceID = currentID;
+
+    if (!watchEnabled || !changed) return;
+
+    const char *state = (asciiSourceID && [currentID isEqualToString:asciiSourceID]) ? "eng" : "chi";
+    bridge_emit_ime_changed_full([currentID UTF8String], state);
 }
 
 static void setup(void) {
@@ -83,11 +90,11 @@ const char *im_normal(void) {
         setup();
         
         NSString *currentID = getCurrentInputSourceID();
-        if (currentID && asciiSourceID && ![currentID isEqualToString:asciiSourceID]) {
-            lastNonAsciiSourceID = currentID;
+        if (currentID) {
+            savedSourceID = currentID;
         }
         
-        if (asciiSourceID) {
+        if (asciiSourceID && currentID && ![currentID isEqualToString:asciiSourceID]) {
             selectInputSource(asciiSourceID);
         }
         
@@ -99,8 +106,8 @@ const char *im_insert(void) {
     @autoreleasepool {
         setup();
         
-        if (lastNonAsciiSourceID) {
-            selectInputSource(lastNonAsciiSourceID);
+        if (savedSourceID && asciiSourceID && ![savedSourceID isEqualToString:asciiSourceID]) {
+            selectInputSource(savedSourceID);
             return "chi";
         }
         

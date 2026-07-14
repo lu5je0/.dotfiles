@@ -3,7 +3,7 @@
 set -euo pipefail
 
 : "${DOTFILES_DIR:=$HOME/.dotfiles}"
-WCLIP="$DOTFILES_DIR/win/bin/wclip.exe"
+WCLIP="$DOTFILES_DIR/bin/windows-x86_64/wclip.exe"
 
 if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v clipboard-osc52 >/dev/null 2>&1; then
   exec clipboard-osc52 copy

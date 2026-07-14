@@ -1,4 +1,6 @@
--- Windows / WSL backend: delegates to tui-bridge's IME extension.
+-- Shared tui-bridge IME backend for platforms that speak the tui-bridge
+-- protocol (macOS and Windows/WSL). Platform differences live in the native
+-- tui-bridge binary; here we only speak the normalized event contract.
 local M = {}
 
 local state = { ime = nil }
@@ -21,8 +23,7 @@ end
 
 function M.on_change(handler)
   state.ime.on_change(function(args)
-    local ime_state = args.state or args.source_id
-    if ime_state == 'chi' then
+    if args.state == 'chi' then
       handler()
     end
   end)

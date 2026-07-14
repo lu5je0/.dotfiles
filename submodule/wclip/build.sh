@@ -7,7 +7,7 @@ cd "${SCRIPT_DIR}"
 WIN_CC="${WIN_CC:-/mnt/c/Users/lu5je0/scoop/apps/gcc/13.2.0/bin/gcc.exe}"
 WIN_TEMP_ROOT="${WIN_TEMP_ROOT:-C:\\Users\\lu5je0\\AppData\\Local\\Temp}"
 
-OUT_DIR="${SCRIPT_DIR}/../../win/bin"
+OUT_DIR="${SCRIPT_DIR}/../../bin/windows-x86_64"
 OUT_NAME="wclip"
 SRC="wclip.c"
 CFLAGS=("-O3" "-flto" "-DNDEBUG" "-s" "-Wl,--gc-sections")

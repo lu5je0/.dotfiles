@@ -8,10 +8,10 @@ if [[ -n $WSL_DISTRO_NAME ]]; then
 # elif [[ $UNAME_INFO =~ "Darwin" ]]; then
 else
   function disable_ime_cmd {
-    printf "\033]1337;SetUserVar=tui_bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoibm9ybWFsIiwicGFyYW1zIjp7fX0=\007"
+    printf "\033]1337;SetUserVar=tui-bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoibm9ybWFsIiwicGFyYW1zIjp7fX0=\007"
   }
   function enable_ime_cmd {
-    printf "\033]1337;SetUserVar=tui_bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoiaW5zZXJ0IiwicGFyYW1zIjp7fX0=\007"
+    printf "\033]1337;SetUserVar=tui-bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoiaW5zZXJ0IiwicGFyYW1zIjp7fX0=\007"
   }
 fi
 
