@@ -6,7 +6,7 @@
 ## 组件职责
 - `q-rm.py`：rm 兼容的命令行入口，把文件移动到 freedesktop.org Trash Spec 1.0 回收站。
   - 严格按 spec：文件只进入它所在卷的回收站；不做跨卷拷贝，找不到合适 trash 目录时报错。
-  - WSL 下 Windows 原生路径走 PowerShell 回收站；macOS 走系统 `trash` 命令。
+  - WSL 下 Windows 原生路径走 PowerShell 回收站；macOS 通过 ctypes 调 Foundation API（`NSFileManager trashItemAtURL:`），无需第三方 `trash` 命令。
   - 与 trash-cli 互通：`trash-list` 能列、`trash-restore --trash-dir=...` 能恢复。
 - `q-trash.py`：管理回收站本身（`list` / `restore` / `empty` / `size` / `rm`）。
   - 通过 importlib 复用 `q-rm.py` 的 `is_safe_top_trash`、`home_trash_dir`、`_read_mount_fstype_map`，避免重复实现。

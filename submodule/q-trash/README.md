@@ -15,7 +15,7 @@
   - 文件与 `$HOME` 同卷 → `$XDG_DATA_HOME/Trash`（默认 `~/.local/share/Trash`），`Path=` 写绝对路径
   - 文件在其他挂载点 → 优先 `$top/.Trash/$UID`（要求 sticky + 非 symlink），否则 `$top/.Trash-$UID`，`Path=` 写**相对该挂载点**的路径
 - **WSL**：路径在 Windows 原生盘（`drvfs` / `9p` / `virtiofs` 挂载，例如 `/mnt/c/...`）→ 走 **Windows 回收站**（PowerShell + `Microsoft.VisualBasic.FileIO`），可在 Windows 资源管理器还原。Linux 侧路径仍按上面的 Trash Spec。
-- **macOS**：调用系统 `trash` 命令。
+- **macOS**：通过 ctypes 调用系统 Foundation API（`NSFileManager trashItemAtURL:`），无需第三方 `trash` 命令，put-back 记录由系统写入。
 
 不做跨卷拷贝。Linux 下找不到合适 trash 目录就报错，提示 `--purge`。
 

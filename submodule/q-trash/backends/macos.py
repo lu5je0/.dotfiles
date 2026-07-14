@@ -2,16 +2,22 @@
 
 Scans ~/.Trash and reads original paths from the .DS_Store put-back
 records (ptbL / ptbN) without external dependencies.
+
+Trashing is done through the native Foundation API
+(-[NSFileManager trashItemAtURL:resultingItemURL:error:]) via ctypes,
+so it needs neither the third-party `trash` binary nor PyObjC. The
+system API records the put-back metadata itself, keeping Finder's
+"Put Back" and this backend's scan/restore working.
 """
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
 import importlib.util
 import os
-import shutil
 import struct
-import subprocess
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 def _load_trash_backend():
@@ -125,20 +131,112 @@ def scan() -> List[TrashedFile]:
     return results
 
 
-def trash(paths: List[str]) -> List[str]:
-    """Move paths to macOS trash via system `trash` command. Returns errors."""
-    if not shutil.which("trash"):
-        return [
-            "'trash' command not found; install one (e.g. `brew install trash`) "
-            "or use --purge"
-        ]
-    abs_paths = [os.path.abspath(p) for p in paths]
-    r = subprocess.run(
-        ["trash", *abs_paths],
-        capture_output=True, text=True,
+# ---------- Objective-C runtime binding (ctypes, no PyObjC) ----------
+
+_objc_cache: Dict[str, object] = {}
+
+
+def _objc_runtime():
+    """Lazily build the Objective-C bindings needed for trashing.
+
+    Returns a dict of ready-to-call ctypes function pointers and cached
+    class/selector pointers, or raises OSError if the runtime can't load.
+    """
+    if _objc_cache:
+        return _objc_cache
+
+    objc_path = ctypes.util.find_library("objc")
+    if not objc_path:
+        raise OSError("libobjc not found")
+    objc = ctypes.CDLL(objc_path)
+    # Loading Foundation registers NSFileManager / NSURL / NSString.
+    foundation_path = ctypes.util.find_library("Foundation")
+    if not foundation_path:
+        raise OSError("Foundation framework not found")
+    ctypes.CDLL(foundation_path)
+
+    void_p = ctypes.c_void_p
+    objc.objc_getClass.restype = void_p
+    objc.objc_getClass.argtypes = [ctypes.c_char_p]
+    objc.sel_registerName.restype = void_p
+    objc.sel_registerName.argtypes = [ctypes.c_char_p]
+
+    def make_send(restype, argtypes):
+        proto = ctypes.CFUNCTYPE(restype, *argtypes)
+        return proto(("objc_msgSend", objc))
+
+    cls = lambda name: objc.objc_getClass(name.encode())
+    sel = lambda name: objc.sel_registerName(name.encode())
+
+    _objc_cache.update({
+        "NSFileManager": cls("NSFileManager"),
+        "NSString": cls("NSString"),
+        "NSURL": cls("NSURL"),
+        "sel_defaultManager": sel("defaultManager"),
+        "sel_stringWithUTF8String": sel("stringWithUTF8String:"),
+        "sel_fileURLWithPath": sel("fileURLWithPath:"),
+        "sel_trashItem": sel("trashItemAtURL:resultingItemURL:error:"),
+        "sel_localizedDescription": sel("localizedDescription"),
+        "sel_UTF8String": sel("UTF8String"),
+        # id method(id, SEL)
+        "send_id0": make_send(void_p, [void_p, void_p]),
+        # id method(id, SEL, char*)
+        "send_id_cstr": make_send(void_p, [void_p, void_p, ctypes.c_char_p]),
+        # id method(id, SEL, id)
+        "send_id_id": make_send(void_p, [void_p, void_p, void_p]),
+        # BOOL method(id, SEL, id, id*, id*)
+        "send_trash": make_send(
+            ctypes.c_bool,
+            [void_p, void_p, void_p, void_p, void_p],
+        ),
+        # char* method(id, SEL)
+        "send_cstr": make_send(ctypes.c_char_p, [void_p, void_p]),
+    })
+    return _objc_cache
+
+
+def _nsstring(rt, s: str) -> ctypes.c_void_p:
+    return rt["send_id_cstr"](
+        rt["NSString"], rt["sel_stringWithUTF8String"],
+        s.encode("utf-8"),
     )
-    if r.returncode != 0:
-        msg = (r.stderr or r.stdout or "").strip().splitlines()
-        last = msg[-1] if msg else f"exit {r.returncode}"
-        return [f"macOS trash failed: {last}"]
-    return []
+
+
+def _error_message(rt, err_ptr: ctypes.c_void_p) -> Optional[str]:
+    if not err_ptr:
+        return None
+    desc = rt["send_id0"](err_ptr, rt["sel_localizedDescription"])
+    if not desc:
+        return None
+    cstr = rt["send_cstr"](desc, rt["sel_UTF8String"])
+    return cstr.decode("utf-8", errors="replace") if cstr else None
+
+
+def trash(paths: List[str]) -> List[str]:
+    """Move paths to macOS trash via Foundation API. Returns errors."""
+    try:
+        rt = _objc_runtime()
+    except OSError as e:
+        return [f"macOS trash unavailable: {e}"]
+
+    void_p = ctypes.c_void_p
+    errors: List[str] = []
+    for p in paths:
+        abs_path = os.path.abspath(p)
+        url = rt["send_id_id"](
+            rt["NSURL"], rt["sel_fileURLWithPath"], _nsstring(rt, abs_path),
+        )
+        if not url:
+            errors.append(f"macOS trash failed: bad path {abs_path}")
+            continue
+        manager = rt["send_id0"](
+            rt["NSFileManager"], rt["sel_defaultManager"],
+        )
+        err = void_p(0)
+        ok = rt["send_trash"](
+            manager, rt["sel_trashItem"], url, None, ctypes.byref(err),
+        )
+        if not ok:
+            msg = _error_message(rt, err) or "unknown error"
+            errors.append(f"macOS trash failed for {abs_path}: {msg}")
+    return errors
