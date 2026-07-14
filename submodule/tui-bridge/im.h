@@ -19,7 +19,9 @@ void im_watch(bool enable);
 void im_run_interactive(void (*line_handler)(const char *line));
 #else
 int bridge_ime_normal(char *state_out, size_t state_out_sz);
-int bridge_ime_insert(char *state_out, size_t state_out_sz);
+// restore: "chi"/"eng" to force a target; NULL falls back to the process-local
+// state saved by the most recent bridge_ime_normal.
+int bridge_ime_insert(const char *restore, char *state_out, size_t state_out_sz);
 int bridge_ime_watch(bool enable);
 unsigned long bridge_ime_watch_error(void);
 const char *bridge_ime_watch_error_step(void);

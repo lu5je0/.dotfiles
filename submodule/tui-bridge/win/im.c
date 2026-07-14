@@ -172,18 +172,22 @@ int bridge_ime_normal(char *state_out, size_t state_out_sz) {
     saved_ime_status = current_status;
   }
   set_ime_open_status(false);
-  strncpy(state_out, "eng", state_out_sz - 1);
+  // Report the pre-switch state so stateless callers can remember what to
+  // restore on the next insert (current_status == -1 -> default to eng).
+  strncpy(state_out, current_status == 1 ? "chi" : "eng", state_out_sz - 1);
   state_out[state_out_sz - 1] = '\0';
   return BRIDGE_STATUS_OK;
 }
 
-int bridge_ime_insert(char *state_out, size_t state_out_sz) {
+int bridge_ime_insert(const char *restore, char *state_out, size_t state_out_sz) {
   if (!state_out || state_out_sz == 0) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
 
   bool target_is_open = false;
-  if (saved_ime_status != -1) {
+  if (restore != NULL) {
+    target_is_open = (strcmp(restore, "chi") == 0);
+  } else if (saved_ime_status != -1) {
     target_is_open = (saved_ime_status == 1);
   }
   set_ime_open_status(target_is_open);

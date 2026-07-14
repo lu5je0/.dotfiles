@@ -73,17 +73,18 @@
 ### IME 接口
 1. `ime.normal`
 - 请求：`{"id":1,"module":"ime","method":"normal","params":{}}`
-- 结果：`{"state":"eng"}`
+- 结果：`{"state":"eng"}` 或 `{"state":"chi"}`
 - 说明：
-  - macOS: 记录当前（Esc 时刻）的输入源，然后切换到英文输入源。无论当刻是中文还是英文都会记录，供 `insert` 精确还原。
-  - Windows: 将前台窗口 IME 切到英文状态，并保存当前 IME open/close 状态。
+  - macOS: 记录当前（Esc 时刻）的输入源，然后切换到英文输入源。无论当刻是中文还是英文都会记录，供 `insert` 精确还原。返回 `eng`。
+  - Windows: 将前台窗口 IME 切到英文状态，并保存当前 IME open/close 状态。返回值是**切换前**的状态（`chi`/`eng`），供无状态调用方记住稍后要还原成什么（无前台 IME 时默认 `eng`）。
 
 2. `ime.insert`
 - 请求：`{"id":2,"module":"ime","method":"insert","params":{}}`
+- 可选参数：`{"id":2,"module":"ime","method":"insert","params":{"restore":"chi"}}`
 - 结果：`{"state":"chi"}` 或 `{"state":"eng"}`
 - 说明：
-  - macOS: 还原 `normal`（上次 Esc）时记录的输入源。若当刻是英文则保持英文（返回 eng）；是非英文源才切回并返回 chi。
-  - Windows: 恢复之前保存的 IME open/close 状态。
+  - macOS: 还原 `normal`（上次 Esc）时记录的输入源。若当刻是英文则保持英文（返回 eng）；是非英文源才切回并返回 chi。忽略 `restore` 参数。
+  - Windows: 若带 `params.restore`（`chi`/`eng`），直接按它设置并返回；否则回退到进程内 `normal` 保存的 open/close 状态。`restore` 用于 SSH → WezTerm 这条每次都是全新进程、进程内无记忆的链路：由 WezTerm Lua 记住 `normal` 的返回值，再在 `insert` 时回填。
 
 3. `ime.watch`
 - 请求：`{"id":3,"module":"ime","method":"watch","params":{"enable":true}}`

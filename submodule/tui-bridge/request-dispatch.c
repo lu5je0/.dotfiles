@@ -69,8 +69,13 @@ static void dispatch_ime(const char *method, cJSON *params,
   }
 
   if (strcmp(method, "insert") == 0) {
+    const char *restore_ptr = NULL;
+    cJSON *restore = params ? cJSON_GetObjectItemCaseSensitive(params, "restore") : NULL;
+    if (cJSON_IsString(restore) && restore->valuestring) {
+      restore_ptr = restore->valuestring;
+    }
     char state[16] = {0};
-    int status = bridge_ime_insert(state, sizeof(state));
+    int status = bridge_ime_insert(restore_ptr, state, sizeof(state));
     if (status == BRIDGE_STATUS_OK) {
       set_state(result, state);
       return;
