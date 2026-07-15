@@ -34,15 +34,15 @@ end
 
 local function select_backend_module()
   if vim.fn.has('wsl') == 1 then
-    return 'lu5je0.misc.im.tui-bridge.backend'
+    return 'lu5je0.misc.ime.tui-bridge.backend'
   end
   if vim.fn.has('mac') == 1 then
-    return 'lu5je0.misc.im.tui-bridge.backend'
+    return 'lu5je0.misc.ime.tui-bridge.backend'
   end
   if vim.fn.has('linux') == 1 and not vim.env.SSH_TTY then
-    return 'lu5je0.misc.im.linux.backend'
+    return 'lu5je0.misc.ime.linux.backend'
   end
-  return 'lu5je0.misc.im.ssh.backend'
+  return 'lu5je0.misc.ime.ssh.backend'
 end
 
 -- ── public API ────────────────────────────────────────────────

@@ -9,9 +9,9 @@ void bridge_emit_ime_changed_state(const char *state);
 void bridge_emit_ime_changed_full(const char *source_id, const char *state);
 
 #ifdef __APPLE__
-// Returns "eng"
+// Returns "ascii"
 const char *im_normal(void);
-// Returns "chi" or "eng"
+// Returns "ime" or "ascii"
 const char *im_insert(void);
 // Enable/disable ime watch (emit events on input source change)
 void im_watch(bool enable);
@@ -19,7 +19,7 @@ void im_watch(bool enable);
 void im_run_interactive(void (*line_handler)(const char *line));
 #else
 int bridge_ime_normal(char *state_out, size_t state_out_sz);
-// restore: "chi"/"eng" to force a target; NULL falls back to the process-local
+// restore: "ime"/"ascii" to force a target; NULL falls back to the process-local
 // state saved by the most recent bridge_ime_normal.
 int bridge_ime_insert(const char *restore, char *state_out, size_t state_out_sz);
 int bridge_ime_watch(bool enable);

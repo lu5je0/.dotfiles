@@ -75,7 +75,7 @@ vim.schedule(function()
   set_n_map('<leader>vd', option_toggler.new_toggle_fn({ 'windo difft', 'windo diffo' }), desc_opts('toggle diff'))
   set_n_map('<leader>vc', option_toggler.new_toggle_fn({ 'set noignorecase', 'set ignorecase' }),
     desc_opts('toggle case insensitive'))
-  -- set_n_map('<leader>vi', require('lu5je0.misc.im.mac.im').toggle_save_last_ime)
+  -- set_n_map('<leader>vi', require('lu5je0.misc.ime.mac.im').toggle_save_last_ime)
   set_n_map('<leader>vw', function()
     if vim.wo.wrap then
       print("setlocal nowrap")

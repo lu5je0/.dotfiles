@@ -60,7 +60,7 @@ static int get_ime_open_status(void) {
 }
 
 static const char *status_to_state(int status) {
-  return status == 1 ? "chi" : "eng";
+  return status == 1 ? "ime" : "ascii";
 }
 
 static DWORD WINAPI watch_thread_main(void *unused) {
@@ -173,8 +173,8 @@ int bridge_ime_normal(char *state_out, size_t state_out_sz) {
   }
   set_ime_open_status(false);
   // Report the pre-switch state so stateless callers can remember what to
-  // restore on the next insert (current_status == -1 -> default to eng).
-  strncpy(state_out, current_status == 1 ? "chi" : "eng", state_out_sz - 1);
+  // restore on the next insert (current_status == -1 -> default to ascii).
+  strncpy(state_out, current_status == 1 ? "ime" : "ascii", state_out_sz - 1);
   state_out[state_out_sz - 1] = '\0';
   return BRIDGE_STATUS_OK;
 }
@@ -186,12 +186,12 @@ int bridge_ime_insert(const char *restore, char *state_out, size_t state_out_sz)
 
   bool target_is_open = false;
   if (restore != NULL) {
-    target_is_open = (strcmp(restore, "chi") == 0);
+    target_is_open = (strcmp(restore, "ime") == 0);
   } else if (saved_ime_status != -1) {
     target_is_open = (saved_ime_status == 1);
   }
   set_ime_open_status(target_is_open);
-  strncpy(state_out, target_is_open ? "chi" : "eng", state_out_sz - 1);
+  strncpy(state_out, target_is_open ? "ime" : "ascii", state_out_sz - 1);
   state_out[state_out_sz - 1] = '\0';
   return BRIDGE_STATUS_OK;
 }

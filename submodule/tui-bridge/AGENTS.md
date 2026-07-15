@@ -12,10 +12,10 @@
 - `request-dispatch.c`: 请求分发层，负责 `module` / `method` 路由、参数语义校验，以及把请求映射到 IME/clipboard 能力。
 - `third_party/cjson/`: vendored `cJSON` 源码，统一用于请求解析、事件输出与响应 JSON 序列化。
 - `win/im.c`: Windows IME 实现层。
-- `win/clipboard-bridge.c`: Windows 剪贴板实现层（调用 `win32yank.exe`）。
+- `win/clipboard-bridge.c`: Windows 剪贴板实现层（直接调用 Win32 剪贴板 API `OpenClipboard` / `GetClipboardData` / `SetClipboardData`）。
 - `win/platform.c`: Windows 平台初始化（控制台编码等）。
 - `mac/im.m`: macOS IME 实现层。
-- `mac/clipboard-bridge.c`: macOS 剪贴板实现层。
+- `mac/clipboard-bridge.m`: macOS 剪贴板实现层（直接调用 AppKit `NSPasteboard`）。
 - `mac/platform.c`: macOS 平台初始化。
 
 ### 运行方式
@@ -73,18 +73,18 @@
 ### IME 接口
 1. `ime.normal`
 - 请求：`{"id":1,"module":"ime","method":"normal","params":{}}`
-- 结果：`{"state":"eng"}` 或 `{"state":"chi"}`
+- 结果：`{"state":"ascii"}` 或 `{"state":"ime"}`
 - 说明：
-  - macOS: 记录当前（Esc 时刻）的输入源，然后切换到英文输入源。无论当刻是中文还是英文都会记录，供 `insert` 精确还原。返回 `eng`。
-  - Windows: 将前台窗口 IME 切到英文状态，并保存当前 IME open/close 状态。返回值是**切换前**的状态（`chi`/`eng`），供无状态调用方记住稍后要还原成什么（无前台 IME 时默认 `eng`）。
+  - macOS: 记录当前（Esc 时刻）的输入源，然后切换到英文输入源。无论当刻是中文还是英文都会记录，供 `insert` 精确还原。返回 `ascii`。
+  - Windows: 将前台窗口 IME 切到英文状态，并保存当前 IME open/close 状态。返回值是**切换前**的状态（`ime`/`ascii`），供无状态调用方记住稍后要还原成什么（无前台 IME 时默认 `ascii`）。
 
 2. `ime.insert`
 - 请求：`{"id":2,"module":"ime","method":"insert","params":{}}`
-- 可选参数：`{"id":2,"module":"ime","method":"insert","params":{"restore":"chi"}}`
-- 结果：`{"state":"chi"}` 或 `{"state":"eng"}`
+- 可选参数：`{"id":2,"module":"ime","method":"insert","params":{"restore":"ime"}}`
+- 结果：`{"state":"ime"}` 或 `{"state":"ascii"}`
 - 说明：
-  - macOS: 还原 `normal`（上次 Esc）时记录的输入源。若当刻是英文则保持英文（返回 eng）；是非英文源才切回并返回 chi。忽略 `restore` 参数。
-  - Windows: 若带 `params.restore`（`chi`/`eng`），直接按它设置并返回；否则回退到进程内 `normal` 保存的 open/close 状态。`restore` 用于 SSH → WezTerm 这条每次都是全新进程、进程内无记忆的链路：由 WezTerm Lua 记住 `normal` 的返回值，再在 `insert` 时回填。
+  - macOS: 还原 `normal`（上次 Esc）时记录的输入源。若当刻是英文则保持英文（返回 ascii）；是非英文源才切回并返回 ime。忽略 `restore` 参数。
+  - Windows: 若带 `params.restore`（`ime`/`ascii`），直接按它设置并返回；否则回退到进程内 `normal` 保存的 open/close 状态。`restore` 用于 SSH → WezTerm 这条每次都是全新进程、进程内无记忆的链路：由 WezTerm Lua 记住 `normal` 的返回值，再在 `insert` 时回填。
 
 3. `ime.watch`
 - 请求：`{"id":3,"module":"ime","method":"watch","params":{"enable":true}}`
@@ -95,18 +95,18 @@
   - Windows: 监听前台窗口中文输入法内部中/英文状态变化，并主动推送状态变更事件。当前实现基于轮询前台窗口 IME 状态，而不是系统级输入源通知。
 
 ### IME 事件
-当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）。事件契约在各平台统一：始终带 `source_id` 与归一化的 `state`（`eng`/`chi`）：
+当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）。事件契约在各平台统一：始终带 `source_id` 与归一化的 `state`（`ascii`/`ime`）：
 
 ```json
-{"event":"ime_changed","source_id":"com.apple.keylayout.ABC","state":"eng"}
-{"event":"ime_changed","source_id":"com.apple.inputmethod.SCIM.ITABC","state":"chi"}
-{"event":"ime_changed","source_id":"chi","state":"chi"}
-{"event":"ime_changed","source_id":"eng","state":"eng"}
+{"event":"ime_changed","source_id":"com.apple.keylayout.ABC","state":"ascii"}
+{"event":"ime_changed","source_id":"com.apple.inputmethod.SCIM.ITABC","state":"ime"}
+{"event":"ime_changed","source_id":"ime","state":"ime"}
+{"event":"ime_changed","source_id":"ascii","state":"ascii"}
 ```
 
 说明：
 - `state` 是跨平台归一化信号，调用方（如 keeper）统一按 `state` 判断，不要按平台分叉。
-- macOS: `source_id` 是系统输入源 ID；`state` 由「当前源是否等于 ASCII 源」推导——ASCII 源为 `eng`，任意非 ASCII 源（中文/日文等 IME）为 `chi`。
+- macOS: `source_id` 是系统输入源 ID；`state` 由「当前源是否等于 ASCII 源」推导——ASCII 源为 `ascii`，任意非 ASCII 源（中文/日文等 IME）为 `ime`。
 - Windows: `state` 表示中文输入法内部的中/英文状态；`source_id` 为兼容旧调用方保留，值与 `state` 相同，不要当作真正的输入法 ID。
 
 ## Clipboard

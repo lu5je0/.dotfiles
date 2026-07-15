@@ -23,7 +23,7 @@ end
 
 function M.on_change(handler)
   state.ime.on_change(function(args)
-    if args.state == 'chi' then
+    if args.state == 'ime' then
       handler()
     end
   end)

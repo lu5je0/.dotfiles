@@ -121,14 +121,14 @@ ext/tabline/
 - 仅在确有必要时调整 `disabled_plugins` 列表；这会直接影响启动时的运行时插件集合。
 
 ## TUI Bridge 与平台联动
-- `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/im/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
+- `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/ime/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
 - `lua/lu5je0/misc/clipboard/init.lua` 按平台选择后端：SSH 走 OSC52；macOS 走 `mac.lua`(FFI 加载 `liblibclipboard.dylib`)；WSL 走 `wsl.lua`；Linux 走 `wayland.lua`，失败回退到外部 `wl-clipboard`。
   - `wayland.lua` 是纯 Lua 实现：用 LuaJIT FFI 只调 libc 的 `socket/connect/sendmsg/recvmsg`(SCM_RIGHTS 传 fd),直接手写 Wayland wire 协议 + `zwlr_data_control_unstable_v1`,事件循环挂在 `vim.uv` 上常驻持有 selection。**不 fork 外部进程、不依赖编译 .so**;`struct msghdr/cmsghdr` 布局按 Linux 64 位 ABI(x86_64/arm64)。
   - 依赖 compositor 支持 wlr/ext-data-control(`wl-paste --list-types` 可验证);不支持时 `setup()` 抛错,由 `init.lua` 回退 `wl-clipboard`。注意纯 X11/XWayland 桥接方案在 KWin 上无法粘贴 Wayland 内容(KWin 仅在 X11 窗口获焦时才同步),故未采用。
 - `bin/macos-arm64/tui-bridge` 与 `bin/windows-x86_64/tui-bridge`（仓库顶层 `bin/`，非 `vim/lib`）来自 `submodule/tui-bridge` 构建产物；平台由目录区分，文件名统一为连字符 `tui-bridge`。`lua/lu5je0/misc/tui-bridge/tui-bridge.lua` 直接解析 `~/.dotfiles/bin/<平台-架构>/tui-bridge`，不再走 `core.native`。不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
 - `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下剩余的 native 资源（如 `liblibclipboard.dylib`）；新增落在 `vim/lib/` 的动态库时优先复用这个入口，不要硬编码 `stdpath('config') .. '/lib/...'`。注意 `tui-bridge` 已迁出 `vim/lib`，不再经此解析。
 - 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `submodule/tui-bridge/AGENTS.md`。
-- macOS 与 Windows/WSL 共用同一个 IME 后端 `lua/lu5je0/misc/im/tui-bridge/backend.lua`（由 `misc/im/init.lua` 的 `select_backend_module` 为两者选中）；平台差异下沉到 native `tui-bridge`，Lua 侧只按归一化的 `ime_changed.state`（`eng`/`chi`）判断，keeper 不再按平台分叉。旧的 FFI 后端 `lua/lu5je0/misc/im/mac/backend.lua`(XkbSwitchLib) 保留但已不接入。
+- macOS 与 Windows/WSL 共用同一个 IME 后端 `lua/lu5je0/misc/ime/tui-bridge/backend.lua`（由 `misc/ime/init.lua` 的 `select_backend_module` 为两者选中）；平台差异下沉到 native `tui-bridge`，Lua 侧只按归一化的 `ime_changed.state`（`ascii`/`ime`）判断，keeper 不再按平台分叉。旧的 FFI 后端 `lua/lu5je0/misc/ime/mac/backend.lua`(XkbSwitchLib) 保留但已不接入。
 
 ## 测试与验证
 - 最小启动验证：

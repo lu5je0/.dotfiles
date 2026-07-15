@@ -64,7 +64,7 @@ static void inputSourceChanged(CFNotificationCenterRef center,
 
     if (!watchEnabled || !changed) return;
 
-    const char *state = (asciiSourceID && [currentID isEqualToString:asciiSourceID]) ? "eng" : "chi";
+    const char *state = (asciiSourceID && [currentID isEqualToString:asciiSourceID]) ? "ascii" : "ime";
     bridge_emit_ime_changed_full([currentID UTF8String], state);
 }
 
@@ -98,7 +98,7 @@ const char *im_normal(void) {
             selectInputSource(asciiSourceID);
         }
         
-        return "eng";
+        return "ascii";
     }
 }
 
@@ -108,10 +108,10 @@ const char *im_insert(void) {
         
         if (savedSourceID && asciiSourceID && ![savedSourceID isEqualToString:asciiSourceID]) {
             selectInputSource(savedSourceID);
-            return "chi";
+            return "ime";
         }
         
-        return "eng";
+        return "ascii";
     }
 }
 
