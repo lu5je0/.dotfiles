@@ -28,7 +28,7 @@ global LayoutConfig := Map(
         ),
         "center_j", (sw, sh) => (
             MonitorGetWorkArea(MonitorGetPrimary(), &wl, &wt, &wr, &wb),
-            w := 1999,
+            w := 1996,
             h := 1689,
             { width: w, height: h, x: (sw - w) / 2, y: wt + ((wb - wt) - h) / 2 }
         ),
