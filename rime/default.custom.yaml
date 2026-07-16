@@ -7,7 +7,7 @@ customization:
 patch:
   schema_list:
     - {schema: rime_ice}
-  menu/page_size: 5
+  menu/page_size: 6
   ascii_composer:
     switch_key:
       Shift_L: commit_code
