@@ -15,6 +15,7 @@ local state = {
   is_running = false,
   next_id = 1,
   pending = {},
+  callbacks = {},
   stdout_buffer = '',
   event_handlers = {},
 }
@@ -25,6 +26,7 @@ local function reset_state()
   state.stdout_pipe = nil
   state.is_running = false
   state.pending = {}
+  state.callbacks = {}
   state.stdout_buffer = ''
   state.event_handlers = {}
 end
@@ -40,7 +42,20 @@ local function process_stdout_line(line)
   end
 
   if type(resp.id) == 'number' then
-    state.pending[resp.id] = resp
+    local callback = state.callbacks[resp.id]
+    if callback then
+      state.callbacks[resp.id] = nil
+      vim.schedule(function()
+        if resp.ok ~= true then
+          local err = resp.error or {}
+          callback(nil, (err.code or 'unknown_error') .. ': ' .. (err.message or ''))
+        else
+          callback(resp.result)
+        end
+      end)
+    else
+      state.pending[resp.id] = resp
+    end
     return
   end
 
@@ -154,6 +169,11 @@ function M.call(module, method, params, opts)
   local id = state.next_id
   state.next_id = state.next_id + 1
 
+  local callback = opts.callback
+  if callback then
+    state.callbacks[id] = callback
+  end
+
   local payload_params = params
   if payload_params == nil then
     payload_params = vim.empty_dict()
@@ -177,6 +197,10 @@ function M.call(module, method, params, opts)
       }
     end
   end)
+
+  if callback then
+    return true
+  end
 
   if not wait_response then
     return true

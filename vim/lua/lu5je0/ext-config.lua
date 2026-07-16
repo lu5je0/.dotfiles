@@ -10,6 +10,15 @@ ext_load({
 
 })
 
+-- clipboard
+ext_load({
+  name = 'clipboard',
+  config = function()
+    require('lu5je0.misc.clipboard').setup()
+  end,
+  event = { 'ExtVeryLazy' },
+})
+
 -- diff_base
 ext_load({
   name = 'diff_base',

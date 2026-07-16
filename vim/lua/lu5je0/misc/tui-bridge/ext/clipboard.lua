@@ -22,4 +22,17 @@ function M.output(opts)
   return result.text or ''
 end
 
+function M.output_async(opts, callback)
+  local params = opts or { eol = 'lf' }
+  state.bridge.call('clipboard', 'output', params, {
+    callback = function(result, err)
+      if not result then
+        callback(nil, err)
+      else
+        callback(result.text or '')
+      end
+    end,
+  })
+end
+
 return M

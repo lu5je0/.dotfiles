@@ -9,8 +9,7 @@ local delay_input = require('lu5je0.lang.function-utils').debounce(function(text
   return clipboard.input(text)
 end, 1000)
 
-local function sync_from(init)
-  local text = clipboard.output({ eol = 'lf' })
+local function apply_synced_text(text, init)
   if not text then
     return
   end
@@ -25,6 +24,16 @@ local function sync_from(init)
     return
   end
   active_entry = { lines = data, regtype = 'v' }
+end
+
+local function sync_from(init)
+  apply_synced_text(clipboard.output({ eol = 'lf' }), init)
+end
+
+local function sync_from_async(init)
+  clipboard.output_async({ eol = 'lf' }, function(text)
+    apply_synced_text(text, init)
+  end)
 end
 
 function M.copy(lines, regtype)
@@ -72,7 +81,7 @@ function M.setup()
       end
     end,
   })
-  sync_from(true)
+  sync_from_async(true)
 
   vim.keymap.set('i', '<c-v>', function()
     sync_from(true)

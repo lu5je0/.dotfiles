@@ -161,9 +161,6 @@ local defer_options = {
   function()
     vim.cmd [[ packadd matchit ]]
   end,
-  function()
-    require('lu5je0.misc.clipboard').setup()
-  end
 }
 for delay, fn in ipairs(defer_options) do
   vim.defer_fn(fn, 2 * delay)
