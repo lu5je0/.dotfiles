@@ -7,7 +7,6 @@ ext_load({
   config = function()
     require('lu5je0.ext.winbar')
   end,
-
 })
 
 -- clipboard
@@ -390,6 +389,7 @@ ext_load({
   config = function()
     require('lu5je0.misc.time-machine').setup()
   end,
+  event = { 'ExtVeryLazy' },
 })
 
 -- patch
