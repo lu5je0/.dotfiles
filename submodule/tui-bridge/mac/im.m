@@ -2,6 +2,10 @@
 #import <AppKit/AppKit.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "../im.h"
 
@@ -125,37 +129,82 @@ void im_watch(bool enable) {
 void im_run_interactive(void (*line_handler)(const char *line)) {
     @autoreleasepool {
         setup();
-        
+
+        // Non-blocking so a single readiness event can drain everything.
+        int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+        if (flags != -1) {
+            fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+        }
+
         dispatch_source_t stdinSource = dispatch_source_create(
             DISPATCH_SOURCE_TYPE_READ,
             STDIN_FILENO,
             0,
             dispatch_get_main_queue()
         );
-        
+
+        // Persists across events so a partial line survives until its newline.
+        static char *acc = NULL;
+        static size_t acc_len = 0;
+        static size_t acc_cap = 0;
+
         dispatch_source_set_event_handler(stdinSource, ^{
-            char line[32768];
-            if (fgets(line, sizeof(line), stdin)) {
-                size_t len = strlen(line);
-                if (len > 0 && line[len - 1] == '\n') {
-                    line[len - 1] = '\0';
-                    len--;
-                }
-                if (len > 0) {
-                    if (strcmp(line, "exit") == 0) {
-                        dispatch_source_cancel(stdinSource);
-                        CFRunLoopStop(CFRunLoopGetMain());
-                        return;
+            char chunk[32768];
+            for (;;) {
+                ssize_t n = read(STDIN_FILENO, chunk, sizeof(chunk));
+                if (n > 0) {
+                    if (acc_len + (size_t)n + 1 > acc_cap) {
+                        size_t new_cap = acc_cap ? acc_cap : 65536;
+                        while (new_cap < acc_len + (size_t)n + 1) new_cap *= 2;
+                        char *grown = realloc(acc, new_cap);
+                        if (!grown) {
+                            // Drop what we cannot buffer rather than crash.
+                            acc_len = 0;
+                            continue;
+                        }
+                        acc = grown;
+                        acc_cap = new_cap;
                     }
-                    line_handler(line);
+                    memcpy(acc + acc_len, chunk, (size_t)n);
+                    acc_len += (size_t)n;
+
+                    size_t start = 0;
+                    for (size_t i = 0; i < acc_len; i++) {
+                        if (acc[i] != '\n') continue;
+                        size_t line_len = i - start;
+                        if (line_len > 0 && acc[start + line_len - 1] == '\r') {
+                            line_len--;
+                        }
+                        acc[start + line_len] = '\0';
+                        char *line = acc + start;
+                        start = i + 1;
+                        if (line_len == 0) continue;
+                        if (strcmp(line, "exit") == 0) {
+                            dispatch_source_cancel(stdinSource);
+                            CFRunLoopStop(CFRunLoopGetMain());
+                            return;
+                        }
+                        line_handler(line);
+                    }
+                    if (start > 0) {
+                        memmove(acc, acc + start, acc_len - start);
+                        acc_len -= start;
+                    }
+                    continue;
                 }
-            } else {
-                // EOF
+                if (n == 0) {
+                    dispatch_source_cancel(stdinSource);
+                    CFRunLoopStop(CFRunLoopGetMain());
+                    return;
+                }
+                if (errno == EINTR) continue;
+                if (errno == EAGAIN || errno == EWOULDBLOCK) break;
                 dispatch_source_cancel(stdinSource);
                 CFRunLoopStop(CFRunLoopGetMain());
+                return;
             }
         });
-        
+
         dispatch_resume(stdinSource);
         CFRunLoopRun();
     }
