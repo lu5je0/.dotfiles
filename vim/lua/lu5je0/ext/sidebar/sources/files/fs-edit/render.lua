@@ -73,13 +73,22 @@ function M.refresh_decorations(session, buf_nr)
     end
   end
 
+  -- is_last[i] = no later sibling at the same depth before the next shallower
+  -- line. Single stack pass: the nearest previous line with depth <= d is the
+  -- stack top after popping deeper entries; an equal-depth top is a previous
+  -- sibling and therefore not the last one.
   local is_last = {}
+  local sib_stack = {}
   for i = 1, count do
-    is_last[i] = true
-    for j = i + 1, count do
-      if depths[j] < depths[i] then break end
-      if depths[j] == depths[i] then is_last[i] = false; break end
+    local d = depths[i]
+    while #sib_stack > 0 and depths[sib_stack[#sib_stack]] > d do
+      sib_stack[#sib_stack] = nil
     end
+    if #sib_stack > 0 and depths[sib_stack[#sib_stack]] == d then
+      is_last[sib_stack[#sib_stack]] = false
+    end
+    is_last[i] = true
+    sib_stack[#sib_stack + 1] = i
   end
 
   local continuation = {}
@@ -123,13 +132,9 @@ function M.refresh_decorations(session, buf_nr)
       if p.is_dir then
         local raw_name = p.name:sub(1, -2)
         local current_path = parent_path .. '/' .. raw_name
-        local shadow_src = session.copy_shadow and session.copy_shadow[p.id]
-        if shadow_src then
-          expanded = session.expanded_dirs[shadow_src .. '#' .. p.id] == true
-        else
-          expanded = session.expanded_dirs[current_path] == true
-            or (current_path == entry.abs_path and session.expanded_dirs[entry.abs_path] == true)
-        end
+        -- expand_key covers both cases: shadow#id for phantoms, current_path
+        -- for real dirs (which equals abs_path when not displaced).
+        expanded = session.expanded_dirs[actions_mod.expand_key(session, p.id, current_path)] == true
         if first_line_of_id[p.id] and first_line_of_id[p.id] ~= i then
           expanded = false
         end
@@ -166,11 +171,8 @@ function M.refresh_decorations(session, buf_nr)
         invalidate = true,
       })
       if p.id and session.store[p.id] then
-        local entry = session.store[p.id]
-        local shadow_src = session.copy_shadow and session.copy_shadow[p.id]
-        local sc_key = shadow_src and (shadow_src .. '#' .. p.id) or entry.abs_path
-        local exp_key = shadow_src and (shadow_src .. '#' .. p.id) or nil
-        local is_exp = exp_key and session.expanded_dirs[exp_key] or session.expanded_dirs[entry.abs_path]
+        local sc_key = actions_mod.saved_children_key(session, p.id)
+        local is_exp = session.expanded_dirs[actions_mod.expand_key(session, p.id)]
         if not is_exp and session.saved_children[sc_key]
           and not (session.saved_children_clean and session.saved_children_clean[sc_key]) then
           vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, 0, {
@@ -190,45 +192,9 @@ function M.refresh_diff_signs(session, buf_nr)
   local all_lines = vim.api.nvim_buf_get_lines(buf_nr, 0, -1, false)
   local line_count = #all_lines
 
-  -- Build buf_lines (== effective_buf_lines output) and a parallel line_map
-  -- that maps each buf_lines entry to its 0-based visible row, or -1 if the
-  -- entry was spliced in from saved_children (not backed by a real buffer row).
-  -- Use a closure over a cursor into all_lines to track which all_lines row
-  -- we've consumed so far. This avoids relying on string identity.
-  local buf_lines = {}
-  local line_map = {}
-  local all_cursor = 0
-  local function append(lines, is_spliced)
-    for _, l in ipairs(lines) do
-      if #l > 0 then
-        buf_lines[#buf_lines + 1] = l
-        if is_spliced then
-          line_map[#buf_lines] = -1
-        else
-          -- advance all_cursor to the next non-empty row in all_lines
-          while all_cursor < #all_lines and #all_lines[all_cursor + 1] == 0 do
-            all_cursor = all_cursor + 1
-          end
-          all_cursor = all_cursor + 1
-          line_map[#buf_lines] = all_cursor - 1
-        end
-        local lid, _, _, lis_dir = parse_line(l)
-        if lis_dir and lid and session.store[lid] then
-          local shadow_src = session.copy_shadow and session.copy_shadow[lid]
-          local key
-          if shadow_src then
-            key = shadow_src .. '#' .. lid
-          else
-            key = session.store[lid].abs_path
-          end
-          if not session.expanded_dirs[key] and session.saved_children[key] then
-            append(session.saved_children[key], true)
-          end
-        end
-      end
-    end
-  end
-  append(all_lines, false)
+  -- buf_lines: effective lines (saved_children of collapsed dirs spliced in);
+  -- line_map: effective index -> 0-based visible row, -1 for spliced entries.
+  local buf_lines, line_map = actions_mod.effective_buf_lines_mapped(session, all_lines)
 
   local act = compute_actions(session, buf_lines)
   local dupes = check_duplicates(session, buf_lines)
@@ -289,7 +255,7 @@ function M.refresh_diff_signs(session, buf_nr)
     local lid, _, _, lis_dir = parse_line(buf_lines[i_idx])
     if lis_dir and lid and session.store[lid] then
       local shadow_src = session.copy_shadow and session.copy_shadow[lid]
-      local key = shadow_src and (shadow_src .. '#' .. lid) or session.store[lid].abs_path
+      local key = actions_mod.saved_children_key(session, lid)
       local exp = shadow_src and session.expanded_dirs[key] or session.expanded_dirs[session.store[lid].abs_path]
       if not exp and session.saved_children[key]
         and not (session.saved_children_clean and session.saved_children_clean[key])

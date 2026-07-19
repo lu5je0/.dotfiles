@@ -1631,5 +1631,291 @@ r.run('edit inside expanded dir then collapse keeps diff sign', function()
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- ============================================================================
+r.group('e2e: rename file + recreate same name in one batch')
+-- ============================================================================
+
+r.run('move runs before create, original content preserved', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  writefile(tmp .. '/a.txt', {'AAA'})
+  local buf, session, do_save = open_and_helpers(tmp)
+
+  -- Rename a.txt -> b.txt, then add a brand-new line named a.txt.
+  local lines = buf_lines(buf)
+  local a_line = find_line(buf, 'a.txt')
+  r.assert_truthy(a_line)
+  lines[a_line] = gsub(lines[a_line], 'a%.txt', 'b.txt')
+  table.insert(lines, 'a.txt')
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+  do_save()
+
+  r.assert_eq(readfile(tmp .. '/b.txt'), 'AAA', 'b.txt should hold the original content')
+  r.assert_truthy(isfile(tmp .. '/a.txt'), 'a.txt should be recreated')
+  r.assert_eq(readfile(tmp .. '/a.txt'), '', 'recreated a.txt should be empty')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: 3-cycle rename')
+-- ============================================================================
+
+r.run('a->b, b->c, c->a rotates contents without clobbering', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  writefile(tmp .. '/a.txt', {'AAA'})
+  writefile(tmp .. '/b.txt', {'BBB'})
+  writefile(tmp .. '/c.txt', {'CCC'})
+  local buf, session, do_save = open_and_helpers(tmp)
+
+  local lines = buf_lines(buf)
+  for i, l in ipairs(lines) do
+    if l:find('a.txt', 1, true) then
+      lines[i] = gsub(l, 'a%.txt', 'b.txt')
+    elseif l:find('b.txt', 1, true) then
+      lines[i] = gsub(l, 'b%.txt', 'c.txt')
+    elseif l:find('c.txt', 1, true) then
+      lines[i] = gsub(l, 'c%.txt', 'a.txt')
+    end
+  end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+  do_save()
+
+  r.assert_eq(readfile(tmp .. '/a.txt'), 'CCC', 'a.txt should get c content')
+  r.assert_eq(readfile(tmp .. '/b.txt'), 'AAA', 'b.txt should get a content')
+  r.assert_eq(readfile(tmp .. '/c.txt'), 'BBB', 'c.txt should get b content')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: rename dir + expand + edit child + collapse + save')
+-- ============================================================================
+
+r.run('child edit inside collapsed renamed dir still applies', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- Rename src/ -> dst/
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line - 1, src_line, false,
+    { gsub(lines[src_line], 'src/', 'dst/') })
+
+  -- Expand dst/, rename a.txt -> a2.txt inside
+  do_enter(src_line)
+  local a_line = find_line(buf, 'a.txt', src_line + 1)
+  r.assert_truthy(a_line)
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', 'a2.txt') })
+
+  -- Collapse dst/ so the child edit is stashed in saved_children
+  do_enter(src_line)
+
+  do_save()
+
+  r.assert_truthy(isdir(tmp .. '/dst'), 'dst/ should exist')
+  r.assert_truthy(isfile(tmp .. '/dst/a2.txt'), 'dst/a2.txt should exist (stashed rename applied)')
+  r.assert_truthy(not exists(tmp .. '/dst/a.txt'), 'dst/a.txt should not exist')
+  r.assert_truthy(isfile(tmp .. '/dst/b.txt'), 'dst/b.txt should exist')
+  r.assert_eq(readfile(tmp .. '/dst/a2.txt'), 'aaa')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: phantom dir pasted then deleted = no stuck modified')
+-- ============================================================================
+
+r.run('buffer is clean again after phantom lines are removed', function()
+  local tmp = make_fixture()
+  local buf, session, _, do_enter = open_and_helpers(tmp)
+
+  -- Duplicate the src/ line (yy+p), then <CR> on the copy to mint a phantom.
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line)
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { lines[src_line] })
+  local copy_line = src_line + 1
+  do_enter(copy_line)
+  r.assert_truthy(next(session.copy_shadow) ~= nil, 'phantom copy_shadow registered')
+  r.assert_eq(vim.bo[buf].modified, true, 'buffer modified after phantom expansion')
+
+  -- Delete the phantom dir line together with its children.
+  local _, _, pdepth = parse_line(buf_lines(buf)[copy_line])
+  local total = vim.api.nvim_buf_line_count(buf)
+  local end_line = copy_line + 1
+  while end_line <= total do
+    local l = buf_lines(buf)[end_line]
+    if l ~= '' and l:match('%S') then
+      local _, _, d = parse_line(l)
+      if d <= pdepth then break end
+    end
+    end_line = end_line + 1
+  end
+  vim.api.nvim_buf_set_lines(buf, copy_line - 1, end_line - 1, false, {})
+
+  -- Nothing pending anymore: :w must clear modified (used to stay stuck).
+  vim.cmd('write')
+  r.assert_eq(vim.bo[buf].modified, false, 'modified clears once phantom lines are gone')
+  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), false,
+    'has_pending_changes false after phantom deletion')
+  r.assert_truthy(isdir(tmp .. '/src'), 'original src/ untouched')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: dir nested under new dirs resolves full path')
+-- ============================================================================
+
+r.run('expand under newa/newb registers expansion at the nested path', function()
+  local tmp = make_fixture()
+  local buf, session, _, do_enter = open_and_helpers(tmp)
+
+  -- Restructure buffer: newa/ > newb/ > src(id) ; top.txt stays at root.
+  local lines = buf_lines(buf)
+  local src_text = lines[find_line(buf, 'src/')]
+  local top_text = lines[find_line(buf, 'top.txt')]
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    'newa/',
+    '  newb/',
+    '    ' .. src_text,
+    top_text,
+  })
+
+  local sub_line = find_line(buf, 'src/')
+  r.assert_truthy(sub_line)
+  do_enter(sub_line)
+
+  r.assert_truthy(session.expanded_dirs[tmp .. '/newa/newb/src'],
+    'expanded_dirs keyed by the full nested path')
+  r.assert_truthy(find_line(buf, 'a.txt', sub_line + 1), 'children rendered under nested src/')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: preview_hunk anchors deletion next to collapsed dirs')
+-- ============================================================================
+
+r.run('deletion preview shows the removed file at the neighbor row', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  mkdir(tmp .. '/dirA')
+  mkdir(tmp .. '/dirB')
+  writefile(tmp .. '/dirA/c1.txt', {'c1'})
+  writefile(tmp .. '/dirB/c2.txt', {'c2'})
+  writefile(tmp .. '/z.txt', {'z'})
+  local buf, session, _, do_enter = open_and_helpers(tmp)
+
+  -- Expand then collapse both dirs (children stashed in saved_children).
+  local a_line = find_line(buf, 'dirA/')
+  do_enter(a_line)
+  do_enter(a_line)
+  local b_line = find_line(buf, 'dirB/')
+  do_enter(b_line)
+  do_enter(b_line)
+
+  -- Delete z.txt, then preview at the neighbor row (dirB/).
+  local z_line = find_line(buf, 'z.txt')
+  r.assert_truthy(z_line)
+  vim.api.nvim_buf_set_lines(buf, z_line - 1, z_line, false, {})
+  local anchor = find_line(buf, 'dirB/')
+  vim.api.nvim_win_set_cursor(0, { anchor, 0 })
+
+  local preview_cb
+  for _, m in ipairs(vim.api.nvim_buf_get_keymap(buf, 'n')) do
+    if m.lhs == '\\gg' then preview_cb = m.callback; break end
+  end
+  r.assert_truthy(preview_cb, '<leader>gg keymap not found')
+  preview_cb()
+
+  local found = false
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_config(win).relative ~= '' then
+      local plines = vim.api.nvim_buf_get_lines(vim.api.nvim_win_get_buf(win), 0, -1, false)
+      for _, l in ipairs(plines) do
+        if l:find('%- z.txt') then found = true end
+      end
+      pcall(vim.api.nvim_win_close, win, true)
+    end
+  end
+  r.assert_truthy(found, "preview lists '- z.txt' for the deletion anchored at cursor row")
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: create failure notifies instead of silent no-op')
+-- ============================================================================
+
+r.run('create file under read-only dir reports an error', function()
+  local tmp = vim.fn.tempname()
+  mkdir(tmp)
+  writefile(tmp .. '/keep.txt', {'k'})
+  vim.uv.fs_chmod(tmp, tonumber('555', 8))
+  local ok, err = pcall(function()
+    local buf, session, do_save = open_and_helpers(tmp)
+    local lines = buf_lines(buf)
+    table.insert(lines, 'new.txt')
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+    local notified = {}
+    local orig_notify = vim.notify
+    vim.notify = function(msg) notified[#notified + 1] = msg end
+    do_save()
+    vim.notify = orig_notify
+
+    r.assert_truthy(#notified > 0, 'expected an error notification for failed create')
+    r.assert_truthy(not exists(tmp .. '/new.txt'), 'new.txt not created')
+  end)
+  vim.uv.fs_chmod(tmp, tonumber('755', 8))
+  vim.fn.delete(tmp, 'rf')
+  if not ok then error(err) end
+end)
+
+-- ============================================================================
+r.group('e2e: phantom edited + collapsed + deleted = no stuck modified')
+-- ============================================================================
+
+r.run('dirty stash of a deleted phantom does not pin modified', function()
+  local tmp = make_fixture()
+  local buf, session, _, do_enter = open_and_helpers(tmp)
+
+  -- Duplicate src/, <CR> the copy to mint a phantom (auto-expands).
+  local src_line = find_line(buf, 'src/')
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { lines[src_line] })
+  local copy_line = src_line + 1
+  do_enter(copy_line)
+
+  -- Edit a child inside the phantom, then collapse: dirty stash under shadow#id.
+  local a_line = find_line(buf, 'a.txt', copy_line + 1)
+  r.assert_truthy(a_line, 'phantom child a.txt not found')
+  lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', 'a9.txt') })
+  do_enter(copy_line)
+  r.assert_eq(vim.bo[buf].modified, true, 'buffer modified with dirty phantom stash')
+
+  -- Delete the phantom dir line together with its (collapsed-invisible) row.
+  vim.api.nvim_buf_set_lines(buf, copy_line - 1, copy_line, false, {})
+
+  vim.cmd('write')
+  r.assert_eq(vim.bo[buf].modified, false,
+    'modified clears after deleting the phantom with a dirty stash')
+  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), false,
+    'has_pending_changes false with orphan dirty phantom stash')
+  r.assert_truthy(isdir(tmp .. '/src'), 'original src/ untouched')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
 r.finish()
 

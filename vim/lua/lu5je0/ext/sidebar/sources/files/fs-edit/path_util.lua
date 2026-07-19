@@ -1,6 +1,7 @@
 local M = {}
 
-local parse_line = require('lu5je0.ext.sidebar.sources.files.fs-edit.actions').parse_line
+local actions = require('lu5je0.ext.sidebar.sources.files.fs-edit.actions')
+local parse_line = actions.parse_line
 
 function M.strip_slash(p)
   if not p then return p end
@@ -41,74 +42,74 @@ function M.is_dir_expanded(session, id)
   return session.expanded_dirs[entry.abs_path] == true
 end
 
+-- Effective buffer path of the id'd entry at line_nr, respecting any renames
+-- above it. Walks up through every shallower line: no-id dirs contribute a
+-- path segment each (they may nest several levels), an id'd line anchors the
+-- walk via recursion. Returns nil when the line has no id.
+function M.current_path(session, buf, line_nr)
+  local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
+  if not line then return nil end
+  local id, name, depth, is_dir = parse_line(line)
+  if not id then return nil end
+  local segments = {}
+  local parent_path
+  local cur_depth = depth
+  for i = line_nr - 1, 1, -1 do
+    local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
+    if l and l:match('%S') then
+      local pid, pname, pdepth, pis_dir = parse_line(l)
+      if pdepth < cur_depth then
+        if pid and session.store[pid] then
+          local pcur = M.current_path(session, buf, i)
+          if pcur then
+            parent_path = pcur
+          elseif pis_dir then
+            parent_path = session.store[pid].abs_path
+          end
+          break
+        elseif pis_dir and pname ~= '' then
+          table.insert(segments, 1, pname:sub(1, -2))
+          cur_depth = pdepth
+        else
+          break
+        end
+      end
+    end
+  end
+  parent_path = parent_path or session.root_dir
+  for _, seg in ipairs(segments) do
+    parent_path = parent_path .. '/' .. seg
+  end
+  local raw_name = is_dir and name:sub(1, -2) or name
+  return parent_path .. '/' .. raw_name
+end
+
 function M.is_expanded_at(session, buf, line_nr)
   local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
   if not line then return false end
-  local id, name, depth, is_dir = parse_line(line)
+  local id, _, _, is_dir = parse_line(line)
   if not id or not is_dir then return false end
   local entry = session.store[id]
   if not entry then return false end
   local shadow_src = session.copy_shadow and session.copy_shadow[id]
   if shadow_src then
-    return session.expanded_dirs[shadow_src .. '#' .. id] == true
+    return session.expanded_dirs[actions.expand_key(session, id)] == true
   end
-  local parent_path = session.root_dir
-  for i = line_nr - 1, 1, -1 do
-    local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
-    if l and l:match('%S') then
-      local pid, pname, pdepth, pis_dir = parse_line(l)
-      if pdepth < depth then
-        if pid and session.store[pid] then
-          if session.expanded_dirs[session.store[pid].abs_path] then
-            parent_path = session.store[pid].abs_path
-          else
-            local raw = pis_dir and pname:sub(1, -2) or pname
-            parent_path = parent_path .. '/' .. raw
-          end
-        elseif pis_dir and pname ~= '' then
-          parent_path = parent_path .. '/' .. pname:sub(1, -2)
-        end
-        break
-      end
-    end
-  end
-  local raw_name = name:sub(1, -2)
-  local current_path = parent_path .. '/' .. raw_name
-  return session.expanded_dirs[current_path] == true
+  local current_path = M.current_path(session, buf, line_nr)
+  if not current_path then return false end
+  return session.expanded_dirs[actions.expand_key(session, id, current_path)] == true
     or session.expanded_dirs[entry.abs_path] == true
 end
 
 function M.is_displaced(session, buf, line_nr)
   local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
   if not line then return false end
-  local id, name, depth, is_dir = parse_line(line)
+  local id, _, _, is_dir = parse_line(line)
   if not id or not is_dir then return false end
   local entry = session.store[id]
   if not entry then return false end
-
-  local parent_path = session.root_dir
-  for i = line_nr - 1, 1, -1 do
-    local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
-    if l and l:match('%S') then
-      local pid, pname, pdepth, pis_dir = parse_line(l)
-      if pdepth < depth then
-        if pid and session.store[pid] then
-          if session.expanded_dirs[session.store[pid].abs_path] then
-            parent_path = session.store[pid].abs_path
-          else
-            local raw = pis_dir and pname:sub(1, -2) or pname
-            parent_path = parent_path .. '/' .. raw
-          end
-        elseif pis_dir and pname ~= '' then
-          parent_path = parent_path .. '/' .. pname:sub(1, -2)
-        end
-        break
-      end
-    end
-  end
-
-  local raw_name = name:sub(1, -2)
-  local current_path = parent_path .. '/' .. raw_name
+  local current_path = M.current_path(session, buf, line_nr)
+  if not current_path then return false end
   return current_path ~= entry.abs_path
 end
 

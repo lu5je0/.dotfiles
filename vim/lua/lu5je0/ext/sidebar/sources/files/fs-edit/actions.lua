@@ -23,32 +23,64 @@ function M.parse_line(line)
   return id, name, depth, is_dir
 end
 
+-- Single source for the two directory key families (see AGENTS.md invariants):
+-- saved_children is keyed by abs_path for real dirs and by `shadow#id` for
+-- phantoms; expanded_dirs uses the same phantom key but the *current* buffer
+-- path for displaced real dirs.
+function M.saved_children_key(session, id)
+  local shadow_src = session.copy_shadow and session.copy_shadow[id]
+  if shadow_src then return shadow_src .. '#' .. id end
+  local entry = session.store[id]
+  return entry and entry.abs_path or nil
+end
+
+function M.expand_key(session, id, current_path)
+  local shadow_src = session.copy_shadow and session.copy_shadow[id]
+  if shadow_src then return shadow_src .. '#' .. id end
+  if current_path then return current_path end
+  local entry = session.store[id]
+  return entry and entry.abs_path or nil
+end
+
 -- Expand a buffer's raw lines into the effective list used for action computation:
 -- empty lines are dropped and, for any collapsed directory whose line is present,
 -- its saved_children are spliced in after the directory line.
-function M.effective_buf_lines(session, all_lines)
+-- Also returns a parallel line_map: effective index -> 0-based row in all_lines,
+-- or -1 for entries spliced in from saved_children (no real buffer row).
+function M.effective_buf_lines_mapped(session, all_lines)
   local out = {}
-  local function expand(lines)
+  local line_map = {}
+  local all_cursor = 0
+  local function expand(lines, is_spliced)
     for _, l in ipairs(lines) do
       if #l > 0 then
         out[#out + 1] = l
+        if is_spliced then
+          line_map[#out] = -1
+        else
+          -- advance all_cursor to the next non-empty row in all_lines
+          while all_cursor < #all_lines and #all_lines[all_cursor + 1] == 0 do
+            all_cursor = all_cursor + 1
+          end
+          all_cursor = all_cursor + 1
+          line_map[#out] = all_cursor - 1
+        end
         local lid, _, _, lis_dir = M.parse_line(l)
         if lis_dir and lid and session.store[lid] then
-          local shadow_src = session.copy_shadow and session.copy_shadow[lid]
-          local key
-          if shadow_src then
-            key = shadow_src .. '#' .. lid
-          else
-            key = session.store[lid].abs_path
-          end
-          if not session.expanded_dirs[key] and session.saved_children[key] then
-            expand(session.saved_children[key])
+          local key = M.saved_children_key(session, lid)
+          if key and not session.expanded_dirs[key] and session.saved_children[key] then
+            expand(session.saved_children[key], true)
           end
         end
       end
     end
   end
-  expand(all_lines)
+  expand(all_lines, false)
+  return out, line_map
+end
+
+function M.effective_buf_lines(session, all_lines)
+  local out = M.effective_buf_lines_mapped(session, all_lines)
   return out
 end
 
@@ -297,17 +329,57 @@ function M.check_duplicates(session, buf_lines)
   return dupes
 end
 
+-- A phantom id is "active" only while its line is still present in the
+-- (effective) buffer. Deleting the phantom lines orphans the copy_shadow
+-- entries; orphans must not pin the buffer as modified forever.
+function M.has_active_phantom(session, buf_lines)
+  if not session.copy_shadow or next(session.copy_shadow) == nil then return false end
+  local seen = {}
+  for _, l in ipairs(buf_lines) do
+    local lid = M.parse_line(l)
+    if lid then seen[lid] = true end
+  end
+  for id, _ in pairs(session.copy_shadow) do
+    if seen[id] then return true end
+  end
+  return false
+end
+
+-- True when any saved_children cache is dirty, ignoring orphan phantom keys
+-- (`shadow#id` entries whose phantom line was deleted). Orphan keys for
+-- non-phantom dirs can't linger: deleting the dir line emits a delete action.
+function M.has_dirty_saved_children(session, buf_lines)
+  local clean = session.saved_children_clean or {}
+  local orphans
+  for k, _ in pairs(session.saved_children or {}) do
+    if not clean[k] then
+      if not orphans then
+        orphans = {}
+        if session.copy_shadow and next(session.copy_shadow) ~= nil then
+          local seen = {}
+          for _, l in ipairs(buf_lines) do
+            local lid = M.parse_line(l)
+            if lid then seen[lid] = true end
+          end
+          for id, _ in pairs(session.copy_shadow) do
+            if not seen[id] then orphans[M.saved_children_key(session, id)] = true end
+          end
+        end
+      end
+      if not orphans[k] then return true end
+    end
+  end
+  return false
+end
+
 function M.has_pending_changes(session, visible_lines)
   local buf_lines = M.effective_buf_lines(session, visible_lines)
   local actions = M.compute_actions(session, buf_lines)
   if #actions > 0 then return true end
   local dupes = M.check_duplicates(session, buf_lines)
   if #dupes > 0 then return true end
-  local clean = session.saved_children_clean or {}
-  for k, _ in pairs(session.saved_children or {}) do
-    if not clean[k] then return true end
-  end
-  if session.copy_shadow and next(session.copy_shadow) ~= nil then return true end
+  if M.has_dirty_saved_children(session, buf_lines) then return true end
+  if M.has_active_phantom(session, buf_lines) then return true end
   return false
 end
 
@@ -401,19 +473,33 @@ function M.plan_actions(actions)
     local handled = {}
     for i, a in ipairs(actions) do
       if a.name == 'move' and a.src and not handled[a] then
-        local s = strip(a.src)
-        local d = strip(a.dst)
-        local other = move_by_src[d]
-        if other and other ~= a and strip(other.dst) == s and not handled[other] then
-          local tmp = s .. '.fs-edit-swap-' .. i
+        -- Follow the dst->src chain; if it loops back to `a` we have a move
+        -- cycle (A<->B swap is the length-2 case). Break it by staging a.src
+        -- through a temp name: stage1 frees a.src, the rest of the cycle can
+        -- then proceed, and stage2 fills the last vacated dst.
+        local chain = { a }
+        local in_chain = { [a] = true }
+        local cur = a
+        while true do
+          local nxt = move_by_src[strip(cur.dst)]
+          if not nxt or in_chain[nxt] then break end
+          chain[#chain + 1] = nxt
+          in_chain[nxt] = true
+          cur = nxt
+        end
+        if move_by_src[strip(cur.dst)] == a and #chain > 1 then
+          local tmp = strip(a.src) .. '.fs-edit-swap-' .. i
           local stage1 = { name = 'move', src = a.src, dst = tmp }
+          stage1._provides_tmp = tmp
           local stage2 = { name = 'move', src = tmp, dst = a.dst }
+          stage2._after_action = chain[#chain]
           expanded[#expanded + 1] = stage1
-          expanded[#expanded + 1] = other
+          for k = 2, #chain do
+            expanded[#expanded + 1] = chain[k]
+            handled[chain[k]] = true
+          end
           expanded[#expanded + 1] = stage2
-          stage2._after_action = other
           handled[a] = true
-          handled[other] = true
         else
           expanded[#expanded + 1] = a
           handled[a] = true
@@ -478,8 +564,14 @@ function M.plan_actions(actions)
         if a.writes and b.reads and strict_ancestor(a.writes, b.reads) then
           add_edge(i, j)
         end
-        if a.action.name == 'delete' and b.action.name == 'create'
-          and a.consumes and b.writes and a.consumes == b.writes then
+        -- Consumer runs before the writer that clobbers the consumed path:
+        -- move/delete free a path (or subtree) before a create/move/copy
+        -- writes into it. Covers delete->create and move->create at equal
+        -- paths (rename + recreate would otherwise truncate the source).
+        -- Exception: cycle staging writes a temp name that its own stage2
+        -- consumes; that pair must run writer-first.
+        if a.consumes and b.writes and covers(a.consumes, b.writes)
+          and b.action._provides_tmp ~= a.consumes then
           add_edge(i, j)
         end
         if b.action._after_action and a.action == b.action._after_action then
@@ -523,12 +615,18 @@ function M.execute_actions(actions)
     local action = ordered[i]
     if action.name == 'create' then
       if vim.endswith(action.dst, '/') then
-        vim.fn.mkdir(action.dst:sub(1, -2), 'p')
+        if vim.fn.mkdir(action.dst:sub(1, -2), 'p') == 0 then
+          vim.notify('fs-edit: mkdir failed: ' .. action.dst, vim.log.levels.ERROR)
+        end
       else
         local parent = vim.fs.dirname(action.dst)
         vim.fn.mkdir(parent, 'p')
         local fd = vim.uv.fs_open(action.dst, 'w', 420)
-        if fd then vim.uv.fs_close(fd) end
+        if fd then
+          vim.uv.fs_close(fd)
+        else
+          vim.notify('fs-edit: create failed: ' .. action.dst, vim.log.levels.ERROR)
+        end
       end
       i = i + 1
     elseif action.name == 'delete' then
@@ -541,10 +639,14 @@ function M.execute_actions(actions)
         i = i + 1
       end
       if has_trash() then
-        trash(batch)
+        if not trash(batch) then
+          vim.notify('fs-edit: trash failed: ' .. table.concat(batch, ', '), vim.log.levels.ERROR)
+        end
       else
         for _, src in ipairs(batch) do
-          vim.fn.delete(src, 'rf')
+          if vim.fn.delete(src, 'rf') ~= 0 then
+            vim.notify('fs-edit: delete failed: ' .. src, vim.log.levels.ERROR)
+          end
         end
       end
       for _, src in ipairs(batch) do
@@ -571,7 +673,10 @@ function M.execute_actions(actions)
       if not vim.uv.fs_stat(new_parent) then
         vim.fn.mkdir(new_parent, 'p')
       end
-      vim.fn.system({ 'cp', '-r', src, dst })
+      local res = vim.fn.system({ 'cp', '-r', src, dst })
+      if vim.v.shell_error ~= 0 then
+        vim.notify('fs-edit: copy failed: ' .. tostring(res), vim.log.levels.ERROR)
+      end
       i = i + 1
     else
       i = i + 1

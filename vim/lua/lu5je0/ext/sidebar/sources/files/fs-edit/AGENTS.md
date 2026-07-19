@@ -8,15 +8,17 @@
 ## 模块职责
 
 - `init.lua`：入口 `M.open` / `M.open_dir`。管理 `sessions` 表、buffer 生命周期、按键映射、`on_enter`（展开/折叠）、`mutate`（保存流程）、`reset_hunk` / `preview_hunk` 等交互。所有 buffer 行读写、折叠时的 `saved_children` 与 phantom（`copy_shadow` / `copy_snapshot`）状态维护都在这里。
-- `actions.lua`：核心 diff 引擎。`parse_line` 解析 `/000123 name` 前缀行，`iter_lines` 提供带 depth stack 的迭代器，`effective_buf_lines` 把折叠目录的 `saved_children` 拼回来用于 diff。`compute_actions` 是所有 diff 决策的单一来源，`plan_actions` 做拓扑排序保证执行顺序（含 A↔B 交换的临时目录改名）。`execute_actions` 真正落盘（支持 `q-trash`、`EXDEV` 跨设备回退）。
+- `actions.lua`：核心 diff 引擎。`parse_line` 解析 `/000123 name` 前缀行，`iter_lines` 提供带 depth stack 的迭代器，`effective_buf_lines` / `effective_buf_lines_mapped` 把折叠目录的 `saved_children` 拼回来用于 diff（后者额外返回 effective 下标 → 可见行的映射）。`compute_actions` 是所有 diff 决策的单一来源，`plan_actions` 做拓扑排序保证执行顺序：move 环（A↔B 及更长环）过 `.fs-edit-swap-N` 临时中转，并有 consumer-before-writer 边（先释放路径再写入，防止 rename+同名新建截断原文件）。`execute_actions` 真正落盘（支持 `q-trash`、`EXDEV` 跨设备回退；create/copy/delete/trash 失败会 `vim.notify` 报错）。
 - `render.lua`：装饰层。管理 icon、diff sign（`+ - ~ *`）、行内高亮，都是纯读；不修改 buffer 内容，也不做同步外部命令。
 - `confirm.lua`：保存前的浮窗预览与冲突检测。`detect_conflicts` 处理"目标已存在但同批次会被 delete/move 腾空"的情况。
-- `path_util.lua`：路径工具（`strip_slash` / `rel` / `inside` / `iter_ancestors` / `is_displaced` / `is_expanded_at` 等），供其它模块复用。
+- `path_util.lua`：路径工具（`strip_slash` / `rel` / `inside` / `iter_ancestors` / `current_path` / `is_displaced` / `is_expanded_at` 等），供其它模块复用。`current_path` 是带 id 行的 buffer 内有效路径解析器：向上累积无 id（新建）目录段、遇 id 行递归锚定，`init.lua` 的 `current_path_for_line` 直接委托给它。
 
 ## 核心不变式
 
 - **id 与路径的映射**：`session.id_to_path[id]` 记录 id 在快照时的原始磁盘路径；`session.store[id]` 记录首次 register 时的 `{ name, abs_path, type }`。`compute_actions` 依赖 `id_to_path[id]` 判定 "collapsed"（既有 id 但当前 buffer 里看不到该 id 对应的行）。
 - **折叠不等于删除**：折叠一个目录时，子行只是从 buffer 移除，`id_to_path` **不应清理**——`saved_children` 会在展开时把它们注入回来，`effective_buf_lines` 也会在 diff 阶段把它们拼上。清空会让 `compute_actions` 把仍然存在的 id 判定为 collapsed，从而把 MOVE 强行改成 COPY。
+- **saved_children 的 key**：非 phantom 目录一律用 `store.abs_path`（原始磁盘路径）——即使目录在 buffer 里被改名（displaced）也一样。`effective_buf_lines`、render 的 `[+]` 标记、`reset_hunk` 都只按 abs_path 查；若折叠时改用新路径做 key，拼不回去会导致子项编辑在保存时静默丢失。phantom 目录仍用 `shadow_src .. '#' .. id`。两类 key（saved_children / expanded_dirs）的推导统一走 `actions.saved_children_key` / `actions.expand_key`，不要在调用点手拼。
+- **phantom 活跃度**：`copy_shadow` 条目只有当其 id 仍出现在 effective buffer 行里才算数（`actions.has_active_phantom`）。删掉 phantom 行后残留的是孤儿 shadow，不参与 pending 判断，否则 buffer 会永远卡在 modified。undo 恢复行后 shadow 重新生效，不要物理清除。同理，`saved_children` 里 `shadow#id` 的 dirty 缓存也要按孤儿忽略（`actions.has_dirty_saved_children`）；非 phantom 的 abs_path key 无此问题——删掉目录行本身就会产生 delete action。
 - **phantom（copy_shadow）**：yy + p + 改名 触发的"复制"分支。phantom id 是新分配的，`copy_shadow[id]` 指向 disk 源，`expand_key = shadow_src .. '#' .. id` 用来隔离多个 phantom 的展开状态。删除路径永远不会 emit 到 phantom id。
 - **fixed-width id 前缀**：`ID_WIDTH = 6`。所有渲染都用 `%s/%06d %s`，保证 `<C-v>` 视觉块选择列对齐；改这个常量前先确认所有解析点都能容忍。
 - **PLACEHOLDER**：`o` / `O` 新建空行时插入 U+00A0（NBSP），让光标能停在图标之后；`parse_line` 会在无 id 且以 PLACEHOLDER 开头时剥掉它。
