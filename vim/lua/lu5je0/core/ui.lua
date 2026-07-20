@@ -112,6 +112,23 @@ local function is_binary_file(file_path)
   return data:find('\0') ~= nil
 end
 
+-- Whether snacks.image recognizes this path as a renderable image format.
+local function image_supported(file_path)
+  local ok, supported = pcall(function()
+    return Snacks and Snacks.image and Snacks.image.supports_file(file_path)
+  end)
+  return ok and supported == true
+end
+
+-- Drop any leftover snacks.image placement/extmarks on the reused preview buffer.
+local function clear_image(bufnr)
+  pcall(function()
+    local placement = Snacks.image.placement
+    placement.clean(bufnr)
+    vim.api.nvim_buf_clear_namespace(bufnr, placement.ns, 0, -1)
+  end)
+end
+
 function M.close_current_popup()
   local winid = get_popup_winid()
 
@@ -121,6 +138,10 @@ function M.close_current_popup()
   M.current_popup_winclosed_autocmd = nil
 
   reset_popup_state()
+
+  if _preview_buf and vim.api.nvim_buf_is_valid(_preview_buf) then
+    clear_image(_preview_buf)
+  end
 
   if winid ~= nil then
     pcall(vim.api.nvim_win_close, winid, true)
@@ -138,6 +159,32 @@ function M.preview(file_path)
 
   if vim.api.nvim_win_get_buf(winid) ~= bufnr then
     vim.api.nvim_win_set_buf(winid, bufnr)
+  end
+
+  clear_image(bufnr)
+
+  if image_supported(file_path) then
+    vim.bo[bufnr].modifiable = true
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
+    vim.bo[bufnr].modifiable = false
+    vim.bo[bufnr].filetype = 'image'
+
+    if vim.api.nvim_win_is_valid(winid) then
+      set_winopt(winid, 'number', false)
+      set_winopt(winid, 'relativenumber', false)
+      set_winopt(winid, 'signcolumn', 'no')
+      set_winopt(winid, 'foldcolumn', '0')
+      set_winopt(winid, 'cursorline', false)
+      set_winopt(winid, 'wrap', false)
+      set_winopt(winid, 'winhighlight', 'Normal:Normal,FloatBorder:Fg')
+      pcall(vim.api.nvim_win_set_cursor, winid, { 1, 0 })
+    end
+
+    pcall(function()
+      Snacks.image.buf.attach(bufnr, { src = file_path })
+    end)
+
+    return M.current_popup
   end
 
   vim.bo[bufnr].modifiable = true

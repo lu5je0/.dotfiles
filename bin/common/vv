@@ -99,12 +99,44 @@ def write_chunked(**cmd):
         sys.stdout.flush()
         cmd.clear()
 
+def get_terminal_pixel_size():
+    try:
+        import fcntl
+        import termios
+        buf = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, b'\0' * 8)
+        _rows, _cols, xpix, ypix = struct.unpack('HHHH', buf)
+        if xpix > 0 and ypix > 0:
+            return xpix, ypix
+    except Exception:
+        pass
+    return None
+
+def maybe_downscale(image_data):
+    size = get_terminal_pixel_size()
+    max_w, max_h = size if size else (1920, 1920)
+    img_w, img_h = get_image_dimensions(image_data)
+    if img_w and img_h and img_w <= max_w and img_h <= max_h:
+        return image_data
+    magick = shutil.which('magick') or shutil.which('convert')
+    if not magick:
+        return image_data
+    try:
+        result = subprocess.run(
+            [magick, '-', '-resize', f'{max_w}x{max_h}>', 'png:-'],
+            input=image_data, capture_output=True, timeout=10)
+        if result.returncode == 0 and result.stdout:
+            return result.stdout
+    except Exception:
+        pass
+    return image_data
+
 def display_image(image_data):
     if is_kitty():
         # 使用subprocess.Popen来创建一个管道
         p = subprocess.Popen(['kitty', '+kitten', 'icat'], stdin=subprocess.PIPE)
         p.communicate(input=image_data)
     else:
+        image_data = maybe_downscale(image_data)
         extra = {}
         if is_wsl_wezterm():
             pane = get_wezterm_pane_size()
