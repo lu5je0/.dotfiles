@@ -132,34 +132,6 @@ local function start_preview()
   setup_autocmds()
 end
 
-local function enter_file_preview_window()
-  local popup = ui.current_popup
-  local buf = ui.get_preview_buf()
-  if not popup or not popup.winid or not vim.api.nvim_win_is_valid(popup.winid) or not buf then
-    return
-  end
-
-  local p = pv()
-  p.active = false
-  clear_autocmds()
-
-  vim.keymap.set('n', 'q', function()
-    ui.close_current_popup()
-    p.type = nil
-    if state.win and vim.api.nvim_win_is_valid(state.win) then
-      vim.api.nvim_set_current_win(state.win)
-    end
-  end, { buffer = buf, nowait = true, silent = true })
-
-  if ui.current_popup_autocmd then
-    pcall(vim.api.nvim_del_autocmd, ui.current_popup_autocmd)
-    ui.current_popup_autocmd = nil
-  end
-
-  vim.api.nvim_win_set_config(popup.winid, { focusable = true })
-  vim.api.nvim_set_current_win(popup.winid)
-end
-
 local function enter_diff_window()
   pv().active = false
   clear_autocmds()
@@ -197,7 +169,7 @@ function M.toggle()
     if p.type == 'diff' then
       enter_diff_window()
     else
-      enter_file_preview_window()
+      stop_preview()
     end
   else
     start_preview()
