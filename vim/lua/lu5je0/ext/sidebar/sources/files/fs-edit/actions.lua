@@ -5,7 +5,7 @@ M.PLACEHOLDER = '\194\160' -- NBSP (U+00A0). Used by o/O to keep a real char so 
 -- Parse a buffer line. Returns id (or nil), name, depth, is_dir.
 function M.parse_line(line)
   local indent = line:match('^(%s*)')
-  local depth = #indent / 2
+  local depth = math.floor(#indent / 2)
   local rest = line:sub(#indent + 1)
   local id_str = rest:match('^/(%d+) ')
   local id = id_str and tonumber(id_str) or nil
@@ -42,6 +42,35 @@ function M.expand_key(session, id, current_path)
   return entry and entry.abs_path or nil
 end
 
+-- Unified expansion-state accessors. `expanded_dirs` mixes three key families
+-- (abs_path, current buffer path for displaced dirs, shadow#id for phantoms);
+-- a dir renamed while expanded may carry its state under either path key, so
+-- every read/write must go through these instead of poking expanded_dirs.
+function M.is_expanded(session, id, current_path)
+  local shadow_src = session.copy_shadow and session.copy_shadow[id]
+  if shadow_src then
+    return session.expanded_dirs[shadow_src .. '#' .. id] == true
+  end
+  if current_path and session.expanded_dirs[current_path] then return true end
+  local entry = session.store[id]
+  return entry ~= nil and session.expanded_dirs[entry.abs_path] == true
+end
+
+function M.set_expanded(session, id, current_path)
+  local key = M.expand_key(session, id, current_path)
+  if key then session.expanded_dirs[key] = true end
+end
+
+function M.set_collapsed(session, id, current_path)
+  local key = M.expand_key(session, id, current_path)
+  if key then session.expanded_dirs[key] = nil end
+  if not (session.copy_shadow and session.copy_shadow[id]) then
+    local entry = session.store[id]
+    if entry then session.expanded_dirs[entry.abs_path] = nil end
+    if current_path then session.expanded_dirs[current_path] = nil end
+  end
+end
+
 -- Expand a buffer's raw lines into the effective list used for action computation:
 -- empty lines are dropped and, for any collapsed directory whose line is present,
 -- its saved_children are spliced in after the directory line.
@@ -68,7 +97,7 @@ function M.effective_buf_lines_mapped(session, all_lines)
         local lid, _, _, lis_dir = M.parse_line(l)
         if lis_dir and lid and session.store[lid] then
           local key = M.saved_children_key(session, lid)
-          if key and not session.expanded_dirs[key] and session.saved_children[key] then
+          if key and not M.is_expanded(session, lid) and session.saved_children[key] then
             expand(session.saved_children[key], true)
           end
         end
@@ -318,9 +347,8 @@ function M.check_duplicates(session, buf_lines)
   for entry in M.iter_lines(session, buf_lines) do
     if entry.current_path and entry.name ~= '' then
       local key = entry.current_path
-      local raw_name = entry.is_dir and entry.name:sub(1, -2) or entry.name
       if seen_names[key] then
-        dupes[#dupes + 1] = raw_name
+        dupes[#dupes + 1] = entry.is_dir and entry.name:sub(1, -2) or entry.name
       else
         seen_names[key] = true
       end
@@ -450,7 +478,7 @@ local function do_rename(src, dst)
   local ok, err, name = vim.uv.fs_rename(src, dst)
   if ok then return true end
   if name == 'EXDEV' then
-    local res = vim.fn.system({ 'cp', '-r', src, dst })
+    local res = vim.fn.system({ 'cp', '-a', src, dst })
     if vim.v.shell_error ~= 0 then
       return false, res
     end
@@ -568,9 +596,13 @@ function M.plan_actions(actions)
         -- move/delete free a path (or subtree) before a create/move/copy
         -- writes into it. Covers delete->create and move->create at equal
         -- paths (rename + recreate would otherwise truncate the source).
-        -- Exception: cycle staging writes a temp name that its own stage2
-        -- consumes; that pair must run writer-first.
+        -- Exceptions: (1) cycle staging writes a temp name that its own
+        -- stage2 consumes; that pair must run writer-first. (2) a writer
+        -- whose read source is inside the consumed subtree operates in the
+        -- pre-consumption world (child move under a renamed parent); rule 1
+        -- already orders it before the consumer.
         if a.consumes and b.writes and covers(a.consumes, b.writes)
+          and not (b.reads and covers(a.consumes, b.reads))
           and b.action._provides_tmp ~= a.consumes then
           add_edge(i, j)
         end
@@ -597,16 +629,18 @@ function M.plan_actions(actions)
   end
 
   if #ordered ~= n then
-    vim.notify('fs-edit: dependency cycle detected, falling back to input order', vim.log.levels.WARN)
-    ordered = {}
-    for _, node in ipairs(nodes) do ordered[#ordered + 1] = node.action end
+    return nil, 'dependency cycle detected'
   end
 
   return ordered
 end
 
 function M.execute_actions(actions)
-  local ordered = M.plan_actions(actions)
+  local ordered, plan_err = M.plan_actions(actions)
+  if not ordered then
+    vim.notify('fs-edit: save aborted: ' .. plan_err .. '. Split the operation into smaller saves.', vim.log.levels.ERROR)
+    return false
+  end
   local function strip(p) return strip_trailing_slash(p) end
 
   local i = 1
@@ -673,7 +707,7 @@ function M.execute_actions(actions)
       if not vim.uv.fs_stat(new_parent) then
         vim.fn.mkdir(new_parent, 'p')
       end
-      local res = vim.fn.system({ 'cp', '-r', src, dst })
+      local res = vim.fn.system({ 'cp', '-a', src, dst })
       if vim.v.shell_error ~= 0 then
         vim.notify('fs-edit: copy failed: ' .. tostring(res), vim.log.levels.ERROR)
       end
@@ -682,6 +716,7 @@ function M.execute_actions(actions)
       i = i + 1
     end
   end
+  return true
 end
 
 function M.format_action(action, root_dir)

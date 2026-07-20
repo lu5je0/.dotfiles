@@ -19,7 +19,9 @@ local function strip_slash(p)
 end
 
 -- Returns a set (keyed by action table) of actions whose destination already
--- exists on disk and is NOT freed by another action in the same batch. Pure
+-- exists on disk and is NOT freed by another action in the same batch, plus a
+-- second set of actions whose src no longer exists on disk (stale snapshot)
+-- and is not produced by another action's dst in the same batch. Pure
 -- function over `sorted` + `vim.uv.fs_stat`; safe to unit-test.
 function M.detect_conflicts(sorted)
   local will_be_deleted = {}
@@ -52,18 +54,47 @@ function M.detect_conflicts(sorted)
       end
     end
   end
-  return conflicts
+
+  local provided = {}
+  for _, a in ipairs(sorted) do
+    if a.dst then provided[strip_slash(a.dst)] = true end
+  end
+  local function produced_in_batch(path)
+    if provided[path] then return true end
+    for p in pairs(provided) do
+      if vim.startswith(path, p .. '/') then return true end
+    end
+    return false
+  end
+  local missing = {}
+  for _, action in ipairs(sorted) do
+    if action.src and (action.name == 'move' or action.name == 'copy' or action.name == 'delete') then
+      local sp = strip_slash(action.src)
+      if not vim.uv.fs_stat(sp) and not produced_in_batch(sp) then
+        conflicts[action] = true
+        missing[action] = true
+      end
+    end
+  end
+
+  return conflicts, missing
 end
 
-M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
+M.show = function(actions, dupes, root_dir, cb)
   if #actions == 0 and #dupes == 0 then
     cb(true)
     return
   end
 
+  local sorted, plan_err = actions_mod.sort_actions(actions)
+  if not sorted then
+    vim.notify('fs-edit: save aborted: ' .. plan_err .. '. Split the operation into smaller saves.', vim.log.levels.ERROR)
+    cb(false)
+    return
+  end
+
   local has_conflict = false
-  local sorted = actions_mod.sort_actions(actions)
-  local conflicts = M.detect_conflicts(sorted)
+  local conflicts, missing = M.detect_conflicts(sorted)
 
   local content_lines = {}
   local content_hls = {}
@@ -72,7 +103,7 @@ M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
     local conflict = conflicts[action] == true
     if conflict then
       has_conflict = true
-      line = line .. '  [CONFLICT]'
+      line = line .. (missing[action] and '  [MISSING]' or '  [CONFLICT]')
     end
     content_lines[#content_lines + 1] = line
     content_hls[#content_hls + 1] = {
@@ -93,18 +124,15 @@ M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
   local max_height = math.floor(vim.o.lines * 0.7)
   local height = math.min(1 + #content_lines, max_height)
 
-  -- build buffer content
   local lines = {}
   for _, line in ipairs(content_lines) do
     lines[#lines + 1] = line
   end
   lines[#lines + 1] = text_align_center(choice, width)
 
-  -- write content BEFORE opening window
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
-  -- highlights
   local ns = vim.api.nvim_create_namespace('fs_edit_confirm')
   for i, ch in ipairs(content_hls) do
     vim.hl.range(buf, ns, ch.hl, { i - 1, 0 }, { i - 1, ch.col_end })
@@ -113,10 +141,9 @@ M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
   vim.bo[buf].bufhidden = 'wipe'
   vim.bo[buf].modifiable = false
 
-  -- open window with content already set
   local row = math.floor((vim.o.lines - height) / 2) - 3
   local col = math.floor((vim.o.columns - width) / 2)
-  local win = vim.api.nvim_open_win(buf, true, {
+  local win = vim.api.nvim_open_win(buf, false, {
     relative = 'editor',
     width = width,
     height = height,
@@ -125,46 +152,41 @@ M.show = vim.schedule_wrap(function(actions, dupes, root_dir, cb)
     style = 'minimal',
     border = 'single',
     zindex = 100,
+    focusable = false,
   })
   vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal,FloatBorder:Normal', { win = win })
   vim.wo[win].cursorline = false
+  vim.cmd('redraw')
 
-  local function close()
-    if vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, true)
-    end
-    if vim.api.nvim_buf_is_valid(buf) then
-      vim.api.nvim_buf_delete(buf, { force = true })
+  -- Blocking prompt: keeps mutate synchronous inside BufWriteCmd so that
+  -- :wq / :x see the final 'modified' state instead of racing an async UI.
+  local confirmed = false
+  while true do
+    local ok, ch = pcall(vim.fn.getcharstr)
+    if not ok then break end
+    if ch == '\r' or ch == 'y' or ch == 'Y' then
+      confirmed = not has_conflict
+      break
+    elseif ch == 'n' or ch == 'N' or ch == 'q' or ch == '\27' or ch == '\3' then
+      break
+    elseif ch == 'j' or ch == 'k' or ch == '\5' or ch == '\25' then
+      local down = ch == 'j' or ch == '\5'
+      vim.api.nvim_win_call(win, function()
+        vim.cmd('normal! ' .. (down and '\5' or '\25'))
+      end)
+      vim.cmd('redraw')
     end
   end
 
-  local function keymap(mode, lhs, rhs)
-    if type(lhs) == 'table' then
-      for _, k in ipairs(lhs) do
-        vim.keymap.set(mode, k, rhs, { noremap = true, nowait = true, buffer = buf })
-      end
-    else
-      vim.keymap.set(mode, lhs, rhs, { noremap = true, nowait = true, buffer = buf })
-    end
+  if vim.api.nvim_win_is_valid(win) then
+    vim.api.nvim_win_close(win, true)
   end
-
-  keymap('n', { '<Esc>', 'q', '<C-c>', 'n', 'N' }, close)
-  keymap('n', { 'i', 'o', 'v', 'V' }, '<nop>')
-
-  if has_conflict then
-    keymap('n', '<CR>', close)
-  else
-    keymap('n', { '<CR>', 'y', 'Y' }, function()
-      close()
-      cb(true)
-    end)
+  if vim.api.nvim_buf_is_valid(buf) then
+    vim.api.nvim_buf_delete(buf, { force = true })
   end
+  vim.cmd('redraw')
 
-  vim.api.nvim_create_autocmd('BufLeave', {
-    buffer = buf,
-    once = true,
-    callback = close,
-  })
-end)
+  cb(confirmed)
+end
 
 return M

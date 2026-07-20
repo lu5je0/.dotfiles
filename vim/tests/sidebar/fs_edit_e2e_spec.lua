@@ -74,14 +74,7 @@ local function open_and_helpers(dir_path)
     if #actions == 0 then return end
     actions_mod.add_implicit_creates(actions, session.root_dir)
     actions_mod.execute_actions(actions)
-    -- reset session
-    session.store = {}
-    session.next_id = 1
-    session.id_to_path = {}
-    session.path_to_id = {}
-    session.saved_children = {}
-    session.copy_shadow = {}
-    session.copy_snapshot = {}
+    require('lu5je0.ext.sidebar.sources.files.fs-edit.session').reset(session)
   end
 
   -- Simulate on_enter (expand/collapse) by calling the CR keymap
@@ -1913,6 +1906,62 @@ r.run('dirty stash of a deleted phantom does not pin modified', function()
   r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), false,
     'has_pending_changes false with orphan dirty phantom stash')
   r.assert_truthy(isdir(tmp .. '/src'), 'original src/ untouched')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: collapse after external file creation must not delete it')
+-- ============================================================================
+
+r.run('externally created file under collapsed dir survives save', function()
+  local tmp = make_fixture()
+  local buf, session, do_save, do_enter = open_and_helpers(tmp)
+
+  -- expand src/, then a file appears on disk that fs-edit never displayed
+  local src_line = find_line(buf, 'src/')
+  do_enter(src_line)
+  writefile(tmp .. '/src/external.txt', { 'ext' })
+
+  -- collapse src/: the cache-vs-disk comparison must not register the
+  -- external file into id_to_path (that would emit DELETE for it on save)
+  do_enter(src_line)
+
+  local eff = actions_mod.effective_buf_lines(session, buf_lines(buf))
+  local acts = actions_mod.compute_actions(session, eff)
+  for _, a in ipairs(acts) do
+    r.assert_truthy(a.name ~= 'delete' or a.src ~= tmp .. '/src/external.txt',
+      'no delete emitted for a file the user never saw')
+  end
+
+  do_save()
+  r.assert_truthy(isfile(tmp .. '/src/external.txt'),
+    'external.txt still on disk after save')
+
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('e2e: real :write goes through synchronous confirm')
+-- ============================================================================
+
+r.run(':write with queued y executes actions and clears modified in one pass', function()
+  local tmp = make_fixture()
+  local buf = select(1, open_and_helpers(tmp))
+
+  local top_line = find_line(buf, 'top.txt')
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, top_line - 1, top_line, false,
+    { gsub(lines[top_line], 'top%.txt', 'top2.txt') })
+
+  -- confirm.show blocks on getcharstr; feed the confirmation up front so the
+  -- whole BufWriteCmd completes synchronously (the :wq contract).
+  vim.api.nvim_input('y')
+  vim.cmd('write')
+
+  r.assert_truthy(isfile(tmp .. '/top2.txt'), 'rename applied on disk')
+  r.assert_truthy(not exists(tmp .. '/top.txt'), 'old name gone')
+  r.assert_eq(vim.bo[buf].modified, false, 'modified cleared when :write returns')
 
   vim.fn.delete(tmp, 'rf')
 end)

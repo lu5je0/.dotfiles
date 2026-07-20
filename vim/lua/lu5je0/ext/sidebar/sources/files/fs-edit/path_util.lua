@@ -35,19 +35,12 @@ function M.iter_ancestors(p, root_dir, fn)
   end
 end
 
-function M.is_dir_expanded(session, id)
-  if not id then return true end
-  local entry = session.store[id]
-  if not entry then return false end
-  return session.expanded_dirs[entry.abs_path] == true
-end
-
 -- Effective buffer path of the id'd entry at line_nr, respecting any renames
 -- above it. Walks up through every shallower line: no-id dirs contribute a
 -- path segment each (they may nest several levels), an id'd line anchors the
 -- walk via recursion. Returns nil when the line has no id.
-function M.current_path(session, buf, line_nr)
-  local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
+local function current_path_in_lines(session, lines, line_nr)
+  local line = lines[line_nr]
   if not line then return nil end
   local id, name, depth, is_dir = parse_line(line)
   if not id then return nil end
@@ -55,12 +48,12 @@ function M.current_path(session, buf, line_nr)
   local parent_path
   local cur_depth = depth
   for i = line_nr - 1, 1, -1 do
-    local l = vim.api.nvim_buf_get_lines(buf, i - 1, i, false)[1]
+    local l = lines[i]
     if l and l:match('%S') then
       local pid, pname, pdepth, pis_dir = parse_line(l)
       if pdepth < cur_depth then
         if pid and session.store[pid] then
-          local pcur = M.current_path(session, buf, i)
+          local pcur = current_path_in_lines(session, lines, i)
           if pcur then
             parent_path = pcur
           elseif pis_dir then
@@ -84,21 +77,23 @@ function M.current_path(session, buf, line_nr)
   return parent_path .. '/' .. raw_name
 end
 
+function M.current_path(session, buf, line_nr)
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, line_nr, false)
+  return current_path_in_lines(session, lines, line_nr)
+end
+
 function M.is_expanded_at(session, buf, line_nr)
   local line = vim.api.nvim_buf_get_lines(buf, line_nr - 1, line_nr, false)[1]
   if not line then return false end
   local id, _, _, is_dir = parse_line(line)
   if not id or not is_dir then return false end
-  local entry = session.store[id]
-  if not entry then return false end
-  local shadow_src = session.copy_shadow and session.copy_shadow[id]
-  if shadow_src then
-    return session.expanded_dirs[actions.expand_key(session, id)] == true
+  if not session.store[id] then return false end
+  if session.copy_shadow and session.copy_shadow[id] then
+    return actions.is_expanded(session, id)
   end
   local current_path = M.current_path(session, buf, line_nr)
   if not current_path then return false end
-  return session.expanded_dirs[actions.expand_key(session, id, current_path)] == true
-    or session.expanded_dirs[entry.abs_path] == true
+  return actions.is_expanded(session, id, current_path)
 end
 
 function M.is_displaced(session, buf, line_nr)

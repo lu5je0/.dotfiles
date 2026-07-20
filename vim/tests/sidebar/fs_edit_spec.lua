@@ -655,7 +655,7 @@ r.run('create parent dir before writing child file', function()
   vim.fn.delete(tmp, 'rf')
 end)
 
-r.run('parent rename before child rename (child listed first)', function()
+r.run('child move in pre-rename world runs before parent rename', function()
   local actions_mod = require('lu5je0.ext.sidebar.sources.files.fs-edit.actions')
   local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp .. '/A', 'p')
   vim.fn.writefile({ 'x' }, tmp .. '/A/x')
@@ -664,11 +664,11 @@ r.run('parent rename before child rename (child listed first)', function()
     { name = 'move', src = tmp .. '/A/x', dst = tmp .. '/A/y' },
     { name = 'move', src = tmp .. '/A', dst = tmp .. '/B' },
   })
-  -- child move src references old parent path; topo must run parent-move first
-  -- so the child move against /A/x will fail to find src (already moved to /B/x).
-  -- Expected behavior: parent move runs first, /B/x exists, then child move
-  -- fails silently (its src /A/x is gone). Assert /B/x exists at least.
+  -- child move operates on pre-rename paths, so it must run first (A/x -> A/y),
+  -- then the parent rename carries it along: final state is B/y.
   r.assert_eq(vim.fn.isdirectory(tmp .. '/B'), 1)
+  r.assert_eq(vim.fn.filereadable(tmp .. '/B/y'), 1)
+  r.assert_eq(vim.fn.filereadable(tmp .. '/B/x'), 0)
   vim.fn.delete(tmp, 'rf')
 end)
 
@@ -711,6 +711,57 @@ r.run('move over existing path is not conflict when another move relocates it', 
   local conflicts = confirm.detect_conflicts({ mv2, mv1 })
   r.assert_eq(conflicts[mv1], nil)
   r.assert_eq(conflicts[mv2], nil)
+  vim.fn.delete(tmp, 'rf')
+end)
+
+r.run('missing src flagged as conflict (stale snapshot)', function()
+  local confirm = require('lu5je0.ext.sidebar.sources.files.fs-edit.confirm')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  local mv = { name = 'move', src = tmp .. '/ghost.txt', dst = tmp .. '/dst.txt' }
+  local conflicts, missing = confirm.detect_conflicts({ mv })
+  r.assert_eq(conflicts[mv], true)
+  r.assert_eq(missing[mv], true)
+  vim.fn.delete(tmp, 'rf')
+end)
+
+r.run('missing src not flagged when produced by another action in the batch', function()
+  local confirm = require('lu5je0.ext.sidebar.sources.files.fs-edit.confirm')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp, 'p')
+  local a = tmp .. '/a.txt'; vim.fn.writefile({ 'a' }, a)
+  local staged = tmp .. '/a.txt.fs-edit-swap-1'
+  local s1 = { name = 'move', src = a, dst = staged }
+  local s2 = { name = 'move', src = staged, dst = tmp .. '/b.txt' }
+  local conflicts, missing = confirm.detect_conflicts({ s1, s2 })
+  r.assert_eq(conflicts[s2], nil)
+  r.assert_eq(missing[s2], nil)
+  vim.fn.delete(tmp, 'rf')
+end)
+
+-- ============================================================================
+r.group('plan_actions: dependency cycle aborts the save')
+-- ============================================================================
+
+r.run('unresolvable cycle returns nil and execute_actions runs nothing', function()
+  local actions_mod = require('lu5je0.ext.sidebar.sources.files.fs-edit.actions')
+  local tmp = vim.fn.tempname(); vim.fn.mkdir(tmp .. '/A', 'p')
+  vim.fn.writefile({ 'x' }, tmp .. '/A/f')
+  -- move A -> B requires A freed before B/x... while move B -> A/x requires B
+  -- freed before writing under A: mutually contradictory, cannot be ordered.
+  local acts = {
+    { name = 'move', src = tmp .. '/A', dst = tmp .. '/B' },
+    { name = 'move', src = tmp .. '/B', dst = tmp .. '/A/x' },
+  }
+  local ordered, err = actions_mod.plan_actions(acts)
+  r.assert_eq(ordered, nil)
+  r.assert_truthy(err and err:find('cycle') ~= nil, 'error mentions cycle')
+
+  local orig_notify = vim.notify
+  vim.notify = function() end
+  local ok = actions_mod.execute_actions(acts)
+  vim.notify = orig_notify
+  r.assert_eq(ok, false)
+  r.assert_truthy(vim.uv.fs_stat(tmp .. '/A/f') ~= nil, 'source tree untouched')
+  r.assert_eq(vim.uv.fs_stat(tmp .. '/B'), nil, 'no partial move executed')
   vim.fn.delete(tmp, 'rf')
 end)
 

@@ -132,9 +132,7 @@ function M.refresh_decorations(session, buf_nr)
       if p.is_dir then
         local raw_name = p.name:sub(1, -2)
         local current_path = parent_path .. '/' .. raw_name
-        -- expand_key covers both cases: shadow#id for phantoms, current_path
-        -- for real dirs (which equals abs_path when not displaced).
-        expanded = session.expanded_dirs[actions_mod.expand_key(session, p.id, current_path)] == true
+        expanded = actions_mod.is_expanded(session, p.id, current_path)
         if first_line_of_id[p.id] and first_line_of_id[p.id] ~= i then
           expanded = false
         end
@@ -172,7 +170,7 @@ function M.refresh_decorations(session, buf_nr)
       })
       if p.id and session.store[p.id] then
         local sc_key = actions_mod.saved_children_key(session, p.id)
-        local is_exp = session.expanded_dirs[actions_mod.expand_key(session, p.id)]
+        local is_exp = actions_mod.is_expanded(session, p.id)
         if not is_exp and session.saved_children[sc_key]
           and not (session.saved_children_clean and session.saved_children_clean[sc_key]) then
           vim.api.nvim_buf_set_extmark(buf_nr, hl_ns, line_idx, 0, {
@@ -254,9 +252,8 @@ function M.refresh_diff_signs(session, buf_nr)
   for i_idx = 1, #buf_lines do
     local lid, _, _, lis_dir = parse_line(buf_lines[i_idx])
     if lis_dir and lid and session.store[lid] then
-      local shadow_src = session.copy_shadow and session.copy_shadow[lid]
       local key = actions_mod.saved_children_key(session, lid)
-      local exp = shadow_src and session.expanded_dirs[key] or session.expanded_dirs[session.store[lid].abs_path]
+      local exp = actions_mod.is_expanded(session, lid)
       if not exp and session.saved_children[key]
         and not (session.saved_children_clean and session.saved_children_clean[key])
         and line_map[i_idx] and line_map[i_idx] >= 0 then
