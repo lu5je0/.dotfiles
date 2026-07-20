@@ -42,6 +42,11 @@ function M.copy(lines, regtype)
 end
 
 function M.get_active()
+  -- 首次 paste 且异步 initial sync 还没回来时，缓存为空会返回 nil 触发 E353，
+  -- 这里按需做一次同步读补上，避免和启动异步同步抢跑。
+  if active_entry.lines == nil then
+    sync_from()
+  end
   return { active_entry.lines, active_entry.regtype }
 end
 
