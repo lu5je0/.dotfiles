@@ -1,4 +1,4 @@
--- fs-edit tests: parse_line + compute_actions (conceal /NNN approach).
+-- fs-edit tests: parse_line + model reconcile/diff (conceal /NNN approach).
 -- Usage: cd vim && nvim --headless -u NONE -l tests/sidebar/fs_edit_spec.lua
 
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
@@ -8,24 +8,39 @@ local h = dofile(vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h')
 local r = h.make_runner()
 
 local te = require('lu5je0.ext.sidebar.sources.files.fs-edit')
+local model_mod = require('lu5je0.ext.sidebar.sources.files.fs-edit.model')
 local parse_line = te._parse_line
-local compute_actions = te._compute_actions
 
-local function make_session(root_dir, entries)
-  local session = {
-    root_dir = root_dir,
-    store = {},
-    id_to_path = {},
-    expanded_dirs = {},
-    next_id = 1,
-  }
+-- Build a model whose snapshot contains `entries` (ordered; ids assigned
+-- 1..n). Entries nested under an earlier directory entry are attached as its
+-- (collapsed) stash children, mirroring what scan_children produces.
+local function make_model(root_dir, entries)
+  local m = model_mod.new(root_dir)
+  local by_path = {}
   for _, e in ipairs(entries or {}) do
-    local id = session.next_id
-    session.next_id = id + 1
-    session.store[id] = { name = e.name, abs_path = e.abs_path, type = e.type }
-    session.id_to_path[id] = e.abs_path
+    local id = model_mod.mint_disk(m, e.abs_path, e.name, e.type)
+    m.disk[id].tracked = true
+    local node = {
+      kind = 'entity', id = id, name = e.name, type = e.type,
+      expanded = false, loaded = false, children = {},
+    }
+    m.nodes[id] = node
+    by_path[e.abs_path] = node
+    local parent = by_path[vim.fs.dirname(e.abs_path)]
+    if parent then
+      parent.loaded = true
+      parent.children[#parent.children + 1] = node
+    else
+      m.root.children[#m.root.children + 1] = node
+    end
   end
-  return session
+  m.root.loaded = true
+  return m
+end
+
+local function compute(m, lines)
+  model_mod.reconcile(m, lines)
+  return model_mod.diff(m)
 end
 
 local function find_action(actions, name, opts)
@@ -74,6 +89,11 @@ r.run('nested depth', function()
   r.assert_eq(depth, 3)
 end)
 
+r.run('odd indent floors depth', function()
+  local _, _, depth = parse_line('   /3 odd.txt')
+  r.assert_eq(depth, 1)
+end)
+
 r.run('new line without id', function()
   local id, name, depth, is_dir = parse_line('  newfile.txt')
   r.assert_eq(id, nil)
@@ -104,68 +124,66 @@ r.run('dotfile', function()
 end)
 
 -- ============================================================================
-r.group('compute_actions: no changes')
+r.group('diff: no changes')
 -- ============================================================================
 
 r.run('unchanged buffer', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
     { name = 'b.txt', abs_path = '/r/b.txt', type = 'file' },
   })
-  r.assert_eq(#compute_actions(s, { '/1 a.txt', '/2 b.txt' }), 0)
+  r.assert_eq(#compute(m, { '/1 a.txt', '/2 b.txt' }), 0)
 end)
 
 r.run('unchanged expanded dir', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'main.lua', abs_path = '/r/src/main.lua', type = 'file' },
   })
-  s.expanded_dirs['/r/src'] = true
-  r.assert_eq(#compute_actions(s, { '/1 src/', '  /2 main.lua' }), 0)
+  r.assert_eq(#compute(m, { '/1 src/', '  /2 main.lua' }), 0)
 end)
 
 r.run('swapping order', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
     { name = 'b.txt', abs_path = '/r/b.txt', type = 'file' },
   })
-  r.assert_eq(#compute_actions(s, { '/2 b.txt', '/1 a.txt' }), 0)
+  r.assert_eq(#compute(m, { '/2 b.txt', '/1 a.txt' }), 0)
 end)
 
 r.run('dir trailing slash no spurious move', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'lib', abs_path = '/r/lib', type = 'directory' },
   })
-  r.assert_eq(#compute_actions(s, { '/1 src/', '/2 lib/' }), 0)
+  r.assert_eq(#compute(m, { '/1 src/', '/2 lib/' }), 0)
 end)
 
 -- ============================================================================
-r.group('compute_actions: create')
+r.group('diff: create')
 -- ============================================================================
 
 r.run('new file (no id)', function()
-  local s = make_session('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
-  local a = compute_actions(s, { '/1 a.txt', 'new.txt' })
+  local m = make_model('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
+  local a = compute(m, { '/1 a.txt', 'new.txt' })
   r.assert_eq(#a, 1)
   r.assert_eq(a[1].name, 'create')
   r.assert_eq(a[1].dst, '/r/new.txt')
 end)
 
 r.run('new dir', function()
-  local a = compute_actions(make_session('/r', {}), { 'newdir/' })
+  local a = compute(make_model('/r', {}), { 'newdir/' })
   r.assert_eq(a[1].dst, '/r/newdir/')
 end)
 
 r.run('new file inside dir', function()
-  local s = make_session('/r', { { name = 'src', abs_path = '/r/src', type = 'directory' } })
-  s.expanded_dirs['/r/src'] = true
-  local a = compute_actions(s, { '/1 src/', '  new.lua' })
+  local m = make_model('/r', { { name = 'src', abs_path = '/r/src', type = 'directory' } })
+  local a = compute(m, { '/1 src/', '  new.lua' })
   r.assert_eq(a[1].dst, '/r/src/new.lua')
 end)
 
 r.run('nested path creates intermediates', function()
-  local a = compute_actions(make_session('/r', {}), { 'a/b/c.txt' })
+  local a = compute(make_model('/r', {}), { 'a/b/c.txt' })
   r.assert_eq(#a, 3)
   r.assert_truthy(find_action(a, 'create', { dst = '/r/a/' }))
   r.assert_truthy(find_action(a, 'create', { dst = '/r/a/b/' }))
@@ -173,143 +191,139 @@ r.run('nested path creates intermediates', function()
 end)
 
 -- ============================================================================
-r.group('compute_actions: delete')
+r.group('diff: delete')
 -- ============================================================================
 
 r.run('removed line', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
     { name = 'b.txt', abs_path = '/r/b.txt', type = 'file' },
   })
-  local a = compute_actions(s, { '/1 a.txt' })
+  local a = compute(m, { '/1 a.txt' })
   r.assert_eq(a[1].name, 'delete')
   r.assert_eq(a[1].src, '/r/b.txt')
 end)
 
 r.run('remove all', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
     { name = 'b.txt', abs_path = '/r/b.txt', type = 'file' },
   })
-  r.assert_eq(action_count(compute_actions(s, {}), 'delete'), 2)
+  r.assert_eq(action_count(compute(m, {}), 'delete'), 2)
 end)
 
 -- ============================================================================
-r.group('compute_actions: rename/move')
+r.group('diff: rename/move')
 -- ============================================================================
 
 r.run('rename', function()
-  local s = make_session('/r', { { name = 'old.txt', abs_path = '/r/old.txt', type = 'file' } })
-  local a = compute_actions(s, { '/1 new.txt' })
+  local m = make_model('/r', { { name = 'old.txt', abs_path = '/r/old.txt', type = 'file' } })
+  local a = compute(m, { '/1 new.txt' })
   r.assert_eq(a[1].name, 'move')
   r.assert_eq(a[1].src, '/r/old.txt')
   r.assert_eq(a[1].dst, '/r/new.txt')
 end)
 
 r.run('move into dir', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'f.txt', abs_path = '/r/f.txt', type = 'file' },
   })
-  s.expanded_dirs['/r/src'] = true
-  local a = compute_actions(s, { '/1 src/', '  /2 f.txt' })
+  local a = compute(m, { '/1 src/', '  /2 f.txt' })
   r.assert_eq(a[1].name, 'move')
   r.assert_eq(a[1].dst, '/r/src/f.txt')
 end)
 
 r.run('move out of dir', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
   })
-  s.expanded_dirs['/r/src'] = true
-  local a = compute_actions(s, { '/1 src/', '/2 inner.lua' })
+  -- src expanded: child line moved to root, dir line has no children left
+  local a = compute(m, { '/1 src/', '/2 inner.lua' })
   r.assert_eq(a[1].dst, '/r/inner.lua')
 end)
 
 r.run('rename dir', function()
-  local s = make_session('/r', { { name = 'old', abs_path = '/r/old', type = 'directory' } })
-  local a = compute_actions(s, { '/1 new/' })
+  local m = make_model('/r', { { name = 'old', abs_path = '/r/old', type = 'directory' } })
+  local a = compute(m, { '/1 new/' })
   r.assert_eq(a[1].name, 'move')
   r.assert_eq(a[1].src, '/r/old')
   r.assert_eq(a[1].dst, '/r/new')
 end)
 
 -- ============================================================================
-r.group('compute_actions: copy')
+r.group('diff: copy')
 -- ============================================================================
 
 r.run('yy+p+rename = copy', function()
-  local s = make_session('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
-  local a = compute_actions(s, { '/1 a.txt', '/1 a-copy.txt' })
+  local m = make_model('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
+  local a = compute(m, { '/1 a.txt', '/1 a-copy.txt' })
   r.assert_eq(a[1].name, 'copy')
   r.assert_eq(a[1].src, '/r/a.txt')
   r.assert_eq(a[1].dst, '/r/a-copy.txt')
 end)
 
 r.run('copy into subdir', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
   })
-  s.expanded_dirs['/r/src'] = true
-  local a = compute_actions(s, { '/1 src/', '  /2 a.txt', '/2 a.txt' })
+  local a = compute(m, { '/1 src/', '  /2 a.txt', '/2 a.txt' })
   r.assert_eq(a[1].name, 'copy')
   r.assert_eq(a[1].dst, '/r/src/a.txt')
 end)
 
 r.run('same id same path = no action', function()
-  local s = make_session('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
-  r.assert_eq(#compute_actions(s, { '/1 a.txt', '/1 a.txt', '/1 a.txt' }), 0)
+  local m = make_model('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
+  r.assert_eq(#compute(m, { '/1 a.txt', '/1 a.txt', '/1 a.txt' }), 0)
 end)
 
 -- ============================================================================
-r.group('compute_actions: mixed')
+r.group('diff: mixed')
 -- ============================================================================
 
 r.run('create + delete + rename', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'keep.txt', abs_path = '/r/keep.txt', type = 'file' },
     { name = 'rm.txt', abs_path = '/r/rm.txt', type = 'file' },
     { name = 'old.txt', abs_path = '/r/old.txt', type = 'file' },
   })
-  local a = compute_actions(s, { '/1 keep.txt', '/3 new.txt', 'brand.txt' })
+  local a = compute(m, { '/1 keep.txt', '/3 new.txt', 'brand.txt' })
   r.assert_eq(action_count(a, 'delete'), 1)
   r.assert_eq(action_count(a, 'move'), 1)
   r.assert_eq(action_count(a, 'create'), 1)
 end)
 
 r.run('dedup', function()
-  local a = compute_actions(make_session('/r', {}), { 'x/', 'x/' })
+  local a = compute(make_model('/r', {}), { 'x/', 'x/' })
   r.assert_eq(#a, 1)
 end)
 
 -- ============================================================================
-r.group('compute_actions: undo safety (conceal ID survives undo)')
+r.group('diff: undo safety (conceal ID survives undo)')
 -- ============================================================================
 
 r.run('dd then undo restores ID in text', function()
-  -- With conceal approach, undo restores the line text including /ID
-  local s = make_session('/r', {
+  -- With the conceal approach undo restores the line text including /ID; the
+  -- reconciled model re-claims the node together with its state.
+  local m = make_model('/r', {
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
     { name = 'b.txt', abs_path = '/r/b.txt', type = 'file' },
   })
-  -- After dd on b.txt:
-  local a1 = compute_actions(s, { '/1 a.txt' })
+  local a1 = compute(m, { '/1 a.txt' })
   r.assert_eq(#a1, 1)
   r.assert_eq(a1[1].name, 'delete')
 
-  -- After undo (b.txt line restored with /2 prefix):
-  local a2 = compute_actions(s, { '/1 a.txt', '/2 b.txt' })
+  local a2 = compute(m, { '/1 a.txt', '/2 b.txt' })
   r.assert_eq(#a2, 0)
 end)
 
 r.run('yy+p preserves ID for copy detection', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'file.lua', abs_path = '/r/file.lua', type = 'file' },
   })
-  -- yy copies "/1 file.lua", p pastes it, user renames to file2.lua
-  local a = compute_actions(s, { '/1 file.lua', '/1 file2.lua' })
+  local a = compute(m, { '/1 file.lua', '/1 file2.lua' })
   r.assert_eq(#a, 1)
   r.assert_eq(a[1].name, 'copy')
   r.assert_eq(a[1].src, '/r/file.lua')
@@ -317,63 +331,59 @@ r.run('yy+p preserves ID for copy detection', function()
 end)
 
 -- ============================================================================
-r.group('compute_actions: expand/collapse')
+r.group('diff: expand/collapse')
 -- ============================================================================
 
 r.run('expanded children = no actions', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'm.lua', abs_path = '/r/src/m.lua', type = 'file' },
   })
-  s.expanded_dirs['/r/src'] = true
-  r.assert_eq(#compute_actions(s, { '/1 src/', '  /2 m.lua' }), 0)
+  r.assert_eq(#compute(m, { '/1 src/', '  /2 m.lua' }), 0)
 end)
 
-r.run('collapsed children not in id_to_path = no delete', function()
-  local s = make_session('/r', { { name = 'src', abs_path = '/r/src', type = 'directory' } })
-  r.assert_eq(#compute_actions(s, { '/1 src/' }), 0)
+r.run('never-loaded collapsed dir = no actions', function()
+  local m = make_model('/r', { { name = 'src', abs_path = '/r/src', type = 'directory' } })
+  r.assert_eq(#compute(m, { '/1 src/' }), 0)
 end)
 
 -- ============================================================================
-r.group('compute_actions: collapsed source')
+r.group('diff: collapsed stash source')
 -- ============================================================================
 
 r.run('copy from collapsed dir to root detects copy', function()
-  local s = make_session('/r', {
+  -- inner.lua lives in src's collapsed stash AND is pasted at root:
+  -- the stash position sits at the disk path, so the root line is a copy.
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
   })
-  -- collapse: remove inner.lua from id_to_path but keep in store
-  s.id_to_path[2] = nil
-  -- buffer: src/ (collapsed), pasted inner.lua at root, a.txt
-  local a = compute_actions(s, { '/1 src/', '/2 inner.lua', '/3 a.txt' })
+  local a = compute(m, { '/1 src/', '/2 inner.lua', '/3 a.txt' })
   r.assert_eq(#a, 1)
   r.assert_eq(a[1].name, 'copy')
   r.assert_eq(a[1].src, '/r/src/inner.lua')
   r.assert_eq(a[1].dst, '/r/inner.lua')
 end)
 
-r.run('collapsed entry pasted with new name = copy (original still on disk)', function()
-  local s = make_session('/r', {
+r.run('collapsed stash entry pasted with new name = copy', function()
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
   })
-  s.id_to_path[2] = nil
-  local a = compute_actions(s, { '/1 src/', '/2 moved.lua' })
+  local a = compute(m, { '/1 src/', '/2 moved.lua' })
   r.assert_eq(#a, 1)
   r.assert_eq(a[1].name, 'copy')
   r.assert_eq(a[1].src, '/r/src/inner.lua')
   r.assert_eq(a[1].dst, '/r/moved.lua')
 end)
 
-r.run('collapsed entry not in buffer = no delete', function()
-  local s = make_session('/r', {
+r.run('collapsed stash entry not in buffer = no delete', function()
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
   })
-  s.id_to_path[2] = nil
-  local a = compute_actions(s, { '/1 src/' })
+  local a = compute(m, { '/1 src/' })
   r.assert_eq(#a, 0)
 end)
 
@@ -382,113 +392,70 @@ r.group('duplicate detection')
 -- ============================================================================
 
 r.run('same name at same level = duplicate', function()
-  local s = make_session('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
-  -- yy+p without rename: same ID same name twice
-  local a = compute_actions(s, { '/1 a.txt', '/1 a.txt' })
-  -- compute_actions sees no change (same id same path), but this is a duplicate
-  r.assert_eq(#a, 0) -- no actions, but mutate should catch via check_duplicates
+  local m = make_model('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
+  local a = compute(m, { '/1 a.txt', '/1 a.txt' })
+  r.assert_eq(#a, 0) -- no actions, but check_dupes must flag it
+  local dupes = model_mod.check_dupes(m)
+  r.assert_eq(#dupes, 1)
+  r.assert_eq(dupes[1], 'a.txt')
 end)
 
 r.run('different names at same level = no duplicate', function()
-  local s = make_session('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
-  local a = compute_actions(s, { '/1 a.txt', '/1 b.txt' })
+  local m = make_model('/r', { { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' } })
+  local a = compute(m, { '/1 a.txt', '/1 b.txt' })
   r.assert_eq(#a, 1)
   r.assert_eq(a[1].name, 'copy')
+  r.assert_eq(#model_mod.check_dupes(m), 0)
 end)
 
 -- ============================================================================
-r.group('saved_children: mutate includes cached lines')
+r.group('stash: hidden edits participate in diff')
 -- ============================================================================
 
-r.run('cached new file in collapsed dir produces create action', function()
-  -- Simulate: dir /r/src exists with inner.lua, user pastes new.txt inside,
-  -- then collapses. The cached lines include the new file.
-  local s = make_session('/r', {
+r.run('new file stashed in collapsed dir produces create action', function()
+  -- User typed new.txt under expanded src, then collapsed: the create element
+  -- is stashed inside the node's children and must still emit on save.
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
   })
-  -- After collapse, expanded_dirs cleared, inner.lua removed from id_to_path, new.txt cached
-  s.id_to_path[2] = nil
-  s.saved_children = { ['/r/src'] = { '    /2 inner.lua', '    new.txt' } }
+  local src = m.nodes[1]
+  src.children[#src.children + 1] =
+    { kind = 'create', name = 'new.txt', type = 'file', children = {} }
 
-  -- Visible buffer only shows collapsed dir
-  local raw_lines = { '/1 src/' }
-  -- Expand saved_children into buf_lines (same logic as mutate)
-  local buf_lines = {}
-  for _, l in ipairs(raw_lines) do
-    buf_lines[#buf_lines + 1] = l
-    local lid, _, _, lis_dir = parse_line(l)
-    if lis_dir and lid and s.store[lid] then
-      local labs = s.store[lid].abs_path
-      if not s.expanded_dirs[labs] and s.saved_children[labs] then
-        for _, cl in ipairs(s.saved_children[labs]) do
-          buf_lines[#buf_lines + 1] = cl
-        end
-      end
-    end
-  end
-
-  local a = compute_actions(s, buf_lines)
+  local a = compute(m, { '/1 src/' })
   r.assert_truthy(find_action(a, 'create', { dst = '/r/src/new.txt' }))
 end)
 
-r.run('cached moved file in collapsed dir produces copy action', function()
-  -- file /r/a.txt (id=2) pasted into /r/src/ while src is expanded, then collapsed
-  local s = make_session('/r', {
+r.run('root file moved into collapsed stash = move', function()
+  -- a.txt's line was deleted at root and its node now lives only inside the
+  -- collapsed src stash: the model reads that as a move (the old architecture
+  -- degraded this to a copy because collapse bookkeeping lost the intent).
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'a.txt', abs_path = '/r/a.txt', type = 'file' },
   })
-  s.id_to_path[2] = nil -- collapsed, removed from id_to_path but still in store
-  s.saved_children = { ['/r/src'] = { '    /2 a.txt' } }
-
-  local raw_lines = { '/1 src/' }
-  local buf_lines = {}
-  for _, l in ipairs(raw_lines) do
-    buf_lines[#buf_lines + 1] = l
-    local lid, _, _, lis_dir = parse_line(l)
-    if lis_dir and lid and s.store[lid] then
-      local labs = s.store[lid].abs_path
-      if not s.expanded_dirs[labs] and s.saved_children[labs] then
-        for _, cl in ipairs(s.saved_children[labs]) do
-          buf_lines[#buf_lines + 1] = cl
-        end
-      end
-    end
+  local src, a_node = m.nodes[1], m.nodes[2]
+  -- detach a.txt from root, stash it under src
+  for i, c in ipairs(m.root.children) do
+    if c == a_node then table.remove(m.root.children, i) break end
   end
+  src.loaded = true
+  src.children[#src.children + 1] = a_node
 
-  local a = compute_actions(s, buf_lines)
+  local a = compute(m, { '/1 src/' })
   r.assert_eq(#a, 1)
-  r.assert_eq(a[1].name, 'copy')
+  r.assert_eq(a[1].name, 'move')
   r.assert_eq(a[1].src, '/r/a.txt')
   r.assert_eq(a[1].dst, '/r/src/a.txt')
 end)
 
-r.run('no saved_children means no extra actions for collapsed dir', function()
-  local s = make_session('/r', {
+r.run('untouched stash means no extra actions for collapsed dir', function()
+  local m = make_model('/r', {
     { name = 'src', abs_path = '/r/src', type = 'directory' },
     { name = 'inner.lua', abs_path = '/r/src/inner.lua', type = 'file' },
   })
-  -- collapsed: inner.lua not in id_to_path, no saved_children
-  s.id_to_path[2] = nil
-  s.saved_children = {}
-
-  local raw_lines = { '/1 src/' }
-  local buf_lines = {}
-  for _, l in ipairs(raw_lines) do
-    buf_lines[#buf_lines + 1] = l
-    local lid, _, _, lis_dir = parse_line(l)
-    if lis_dir and lid and s.store[lid] then
-      local labs = s.store[lid].abs_path
-      if not s.expanded_dirs[labs] and s.saved_children[labs] then
-        for _, cl in ipairs(s.saved_children[labs]) do
-          buf_lines[#buf_lines + 1] = cl
-        end
-      end
-    end
-  end
-
-  local a = compute_actions(s, buf_lines)
-  r.assert_eq(#a, 0)
+  r.assert_eq(#compute(m, { '/1 src/' }), 0)
 end)
 
 -- ============================================================================
@@ -516,19 +483,16 @@ r.run('A->B and B->A routed via temp path', function()
 end)
 
 -- ============================================================================
-r.group('compute_actions: ancestor rename suppresses child move')
+r.group('diff: ancestor rename suppresses child move')
 -- ============================================================================
 
 r.run('parent dir rename + reused-id children = single move', function()
-  -- User renamed /r/old to /r/new, then expanded and its children (still using
-  -- original disk ids) show up. compute_actions must only produce one move.
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'old', abs_path = '/r/old', type = 'directory' },
     { name = 'x.txt', abs_path = '/r/old/x.txt', type = 'file' },
     { name = 'y.txt', abs_path = '/r/old/y.txt', type = 'file' },
   })
-  -- buffer: new/ (id 1), then children with original ids at their disk paths
-  local a = compute_actions(s, { '/1 new/', '  /2 x.txt', '  /3 y.txt' })
+  local a = compute(m, { '/1 new/', '  /2 x.txt', '  /3 y.txt' })
   r.assert_eq(#a, 1)
   r.assert_eq(a[1].name, 'move')
   r.assert_eq(a[1].src, '/r/old')
@@ -536,75 +500,67 @@ r.run('parent dir rename + reused-id children = single move', function()
 end)
 
 r.run('parent dir rename + child also renamed = both moves', function()
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'old', abs_path = '/r/old', type = 'directory' },
     { name = 'x.txt', abs_path = '/r/old/x.txt', type = 'file' },
   })
-  -- child x.txt renamed to x2.txt inside the renamed parent
-  local a = compute_actions(s, { '/1 new/', '  /2 x2.txt' })
+  local a = compute(m, { '/1 new/', '  /2 x2.txt' })
   r.assert_eq(#a, 2)
   r.assert_truthy(find_action(a, 'move', { src = '/r/old', dst = '/r/new' }))
   r.assert_truthy(find_action(a, 'move', { src = '/r/new/x.txt', dst = '/r/new/x2.txt' }))
 end)
 
-r.run('parent dir rename absorbs delete of child on old path', function()
-  -- id_to_path has child at old path but child is missing from buffer
-  -- (because parent is renamed and buffer only lists the new dir without child).
-  local s = make_session('/r', {
+r.run('parent dir rename absorbs child carried in the collapsed stash', function()
+  -- child lives in the stash; the parent rename carries it implicitly.
+  local m = make_model('/r', {
     { name = 'old', abs_path = '/r/old', type = 'directory' },
     { name = 'x.txt', abs_path = '/r/old/x.txt', type = 'file' },
   })
-  local a = compute_actions(s, { '/1 new/' })
+  local a = compute(m, { '/1 new/' })
   r.assert_eq(#a, 1)
   r.assert_eq(a[1].name, 'move')
 end)
 
 -- ============================================================================
-r.group('compute_actions: phantom copy expansion')
+r.group('diff: copy node expansion')
 -- ============================================================================
 
-r.run('copy A to B, phantom child renamed = create B + copy A/x -> B/x2', function()
-  local s = make_session('/r', {
+r.run('copy A to B, copied child renamed = create B + copy A/x -> B/x2', function()
+  local m = make_model('/r', {
     { name = 'A', abs_path = '/r/A', type = 'directory' },
+    { name = 'x.txt', abs_path = '/r/A/x.txt', type = 'file' },
   })
-  s.next_id = 3
-  -- phantom dir B (id=2) with shadow A
-  s.store[2] = { name = 'A', abs_path = '/r/B', type = 'directory' }
-  s.id_to_path[2] = '/r/B'
-  -- phantom child x.txt (id=3) targeting /r/B/x.txt initially, shadow A/x.txt
-  s.store[3] = { name = 'x.txt', abs_path = '/r/B/x.txt', type = 'file' }
-  s.id_to_path[3] = '/r/B/x.txt'
-  s.copy_shadow = { [2] = '/r/A', [3] = '/r/A/x.txt' }
+  -- persistent copy node B (id 3) with a materialized copied child (id 4)
+  local b = { kind = 'copy', id = 3, origin = 1, name = 'B', type = 'directory',
+              expanded = true, loaded = true, children = {} }
+  local bx = { kind = 'copy', id = 4, origin = 2, name = 'x.txt', type = 'file', children = {} }
+  b.children[1] = bx
+  m.nodes[3], m.nodes[4] = b, bx
+  m.next_id = 5
 
-  -- buffer: /1 A/, /2 B/, /3 x2.txt (child renamed)
-  local a = compute_actions(s, { '/1 A/', '/2 B/', '  /3 x2.txt' })
+  local a = compute(m, { '/1 A/', '/3 B/', '  /4 x2.txt' })
   r.assert_truthy(find_action(a, 'create', { dst = '/r/B/' }))
   r.assert_truthy(find_action(a, 'copy', { src = '/r/A/x.txt', dst = '/r/B/x2.txt' }))
   r.assert_eq(find_action(a, 'copy', { src = '/r/A', dst = '/r/B' }), nil)
 end)
 
-r.run('copy A to B without phantom transitions = bulk copy', function()
-  local s = make_session('/r', {
+r.run('duplicated dir line without expansion = bulk copy', function()
+  local m = make_model('/r', {
     { name = 'A', abs_path = '/r/A', type = 'directory' },
   })
-  -- no phantoms registered yet: buffer just has original A/ and a duplicate
-  -- of it (before user expands B), which stays as an id-1 transition.
-  local a = compute_actions(s, { '/1 A/', '/1 B/' })
+  local a = compute(m, { '/1 A/', '/1 B/' })
   r.assert_truthy(find_action(a, 'copy', { src = '/r/A', dst = '/r/B' }))
 end)
 
 -- ============================================================================
-r.group('compute_actions: multi-relocate safety')
+r.group('diff: multi-relocate safety')
 -- ============================================================================
 
 r.run('yy+p twice with rename = copy + move (last one is move)', function()
-  -- User yanks /r/f.txt, pastes twice, renames to f.1 and f.2. Original path
-  -- disappears from buffer. Result: first N-1 are copy, last one is move.
-  -- Topo sort ensures copies run before the move consumes src.
-  local s = make_session('/r', {
+  local m = make_model('/r', {
     { name = 'f.txt', abs_path = '/r/f.txt', type = 'file' },
   })
-  local a = compute_actions(s, { '/1 f.1', '/1 f.2' })
+  local a = compute(m, { '/1 f.1', '/1 f.2' })
   r.assert_eq(action_count(a, 'copy'), 1)
   r.assert_eq(action_count(a, 'move'), 1)
   r.assert_eq(action_count(a, 'delete'), 0)

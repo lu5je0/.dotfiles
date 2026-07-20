@@ -10,6 +10,7 @@ local r = h.make_runner()
 
 local fs_edit = require('lu5je0.ext.sidebar.sources.files.fs-edit')
 local actions_mod = require('lu5je0.ext.sidebar.sources.files.fs-edit.actions')
+local model_mod = require('lu5je0.ext.sidebar.sources.files.fs-edit.model')
 local parse_line = actions_mod.parse_line
 
 -- ============================================================================
@@ -40,41 +41,21 @@ local function gsub(s, pat, rep) return (s:gsub(pat, rep)) end
 local function open_and_helpers(dir_path)
   fs_edit.open_dir(dir_path, { inplace = true })
   local buf = vim.api.nvim_get_current_buf()
-
-  -- Find session by scanning private state
-  local sessions = debug.getupvalue and nil
-  -- Alternative: use _parse_line + _compute_actions exposed on module
-  -- We access session via the BufWriteCmd closure. But simpler: extract from
-  -- the module's internal table by iterating buffers. The module stores sessions
-  -- keyed by buf in a local `sessions` table. We can poke at it by reading the
-  -- upvalue of the BufWriteCmd autocmd callback.
-  local session
-  do
-    local autocmds = vim.api.nvim_get_autocmds({ event = 'BufWriteCmd', buffer = buf })
-    if #autocmds > 0 and autocmds[1].callback then
-      -- The callback is `function() mutate(session) end` where session is upvalue
-      local i = 1
-      while true do
-        local name, val = debug.getupvalue(autocmds[1].callback, i)
-        if not name then break end
-        if name == 'session' then session = val; break end
-        i = i + 1
-      end
-    end
-  end
+  -- the session table IS the model (extended with buf/win)
+  local session = fs_edit._sessions[buf]
 
   local function do_save()
     local all_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    local buf_lines = actions_mod.effective_buf_lines(session, all_lines)
-    local dupes = actions_mod.check_duplicates(session, buf_lines)
+    model_mod.reconcile(session, all_lines)
+    local dupes = model_mod.check_dupes(session)
     if #dupes > 0 then
       error('do_save: duplicates detected: ' .. table.concat(dupes, ', '), 2)
     end
-    local actions = actions_mod.compute_actions(session, buf_lines)
+    local actions = model_mod.diff(session)
     if #actions == 0 then return end
     actions_mod.add_implicit_creates(actions, session.root_dir)
     actions_mod.execute_actions(actions)
-    require('lu5je0.ext.sidebar.sources.files.fs-edit.session').reset(session)
+    model_mod.rebuild(session, {})
   end
 
   -- Simulate on_enter (expand/collapse) by calling the CR keymap
@@ -1528,12 +1509,16 @@ r.run('expand then collapse leaves no spurious diff sign on directory', function
 
   local src_id = parse_line(buf_lines(buf)[src_line])
   r.assert_truthy(src_id, 'src/ has id')
-  local src_abs = session.store[src_id].abs_path
-  r.assert_truthy(session.saved_children[src_abs], 'saved_children populated for src/')
-  r.assert_truthy(session.saved_children_clean[src_abs], 'saved_children_clean flag set for src/')
+  local src_node = session.nodes[src_id]
+  r.assert_truthy(src_node.loaded and #src_node.children > 0,
+    'collapsed node keeps its children stash')
+  model_mod.reconcile(session, buf_lines(buf))
+  model_mod.diff(session) -- annotate wpath
+  r.assert_eq(model_mod.has_hidden_pending(session, src_node), false,
+    'no hidden pending under src/ after clean expand+collapse')
 
-  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), false,
-    'has_pending_changes returns false after expand+collapse with no edits')
+  r.assert_eq(model_mod.has_pending(session, buf_lines(buf)), false,
+    'has_pending returns false after expand+collapse with no edits')
 
   -- Assertions on rendered signs / [+] virt_text. refresh_diff_signs has
   -- already been called synchronously by on_enter; check its extmarks.
@@ -1556,11 +1541,11 @@ r.run('expand then collapse leaves no spurious diff sign on directory', function
   end
   r.assert_eq(plus_on_src, false, 'no [+] virt_text on src/ line')
 
-  -- Sanity: compute_actions on effective lines sees zero actions, matching
-  -- what refresh_diff_signs / mutate see.
-  local eff = actions_mod.effective_buf_lines(session, buf_lines(buf))
-  local actions = actions_mod.compute_actions(session, eff)
-  r.assert_eq(#actions, 0, 'compute_actions on effective lines is empty')
+  -- Sanity: a fresh reconcile+diff sees zero actions, matching what the
+  -- decoration refresh and mutate see.
+  model_mod.reconcile(session, buf_lines(buf))
+  local actions = model_mod.diff(session)
+  r.assert_eq(#actions, 0, 'diff on reconciled model is empty')
 
   vim.fn.delete(tmp, 'rf')
 end)
@@ -1591,13 +1576,15 @@ r.run('edit inside expanded dir then collapse keeps diff sign', function()
 
   local src_id = parse_line(buf_lines(buf)[src_line])
   r.assert_truthy(src_id, 'src/ has id')
-  local src_abs = session.store[src_id].abs_path
-  r.assert_truthy(session.saved_children[src_abs], 'saved_children populated')
-  r.assert_eq(session.saved_children_clean[src_abs], nil,
-    'saved_children_clean NOT set when edits differ from disk')
+  local src_node = session.nodes[src_id]
+  r.assert_truthy(src_node.loaded and #src_node.children > 0, 'children stashed on collapse')
+  model_mod.reconcile(session, buf_lines(buf))
+  model_mod.diff(session) -- annotate wpath
+  r.assert_eq(model_mod.has_hidden_pending(session, src_node), true,
+    'hidden pending detected when stashed edits differ from disk')
   r.assert_eq(vim.bo[buf].modified, true, 'buffer modified after stashed edit')
-  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), true,
-    'has_pending_changes returns true after stashed edit')
+  r.assert_eq(model_mod.has_pending(session, buf_lines(buf)), true,
+    'has_pending returns true after stashed edit')
 
   -- A [+] virt_text must appear on the src/ line (dirty collapse).
   local plus_on_src = false
@@ -1736,7 +1723,11 @@ r.run('buffer is clean again after phantom lines are removed', function()
   vim.api.nvim_buf_set_lines(buf, src_line, src_line, false, { lines[src_line] })
   local copy_line = src_line + 1
   do_enter(copy_line)
-  r.assert_truthy(next(session.copy_shadow) ~= nil, 'phantom copy_shadow registered')
+  local has_copy_node = false
+  for _, n in pairs(session.nodes) do
+    if n.kind == 'copy' then has_copy_node = true break end
+  end
+  r.assert_truthy(has_copy_node, 'persistent copy node minted')
   r.assert_eq(vim.bo[buf].modified, true, 'buffer modified after phantom expansion')
 
   -- Delete the phantom dir line together with its children.
@@ -1756,8 +1747,8 @@ r.run('buffer is clean again after phantom lines are removed', function()
   -- Nothing pending anymore: :w must clear modified (used to stay stuck).
   vim.cmd('write')
   r.assert_eq(vim.bo[buf].modified, false, 'modified clears once phantom lines are gone')
-  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), false,
-    'has_pending_changes false after phantom deletion')
+  r.assert_eq(model_mod.has_pending(session, buf_lines(buf)), false,
+    'has_pending false after phantom deletion')
   r.assert_truthy(isdir(tmp .. '/src'), 'original src/ untouched')
 
   vim.fn.delete(tmp, 'rf')
@@ -1786,8 +1777,9 @@ r.run('expand under newa/newb registers expansion at the nested path', function(
   r.assert_truthy(sub_line)
   do_enter(sub_line)
 
-  r.assert_truthy(session.expanded_dirs[tmp .. '/newa/newb/src'],
-    'expanded_dirs keyed by the full nested path')
+  local sub_id = parse_line(buf_lines(buf)[sub_line])
+  r.assert_truthy(session.nodes[sub_id] and session.nodes[sub_id].expanded,
+    'expansion recorded on the node itself under nested new dirs')
   r.assert_truthy(find_line(buf, 'a.txt', sub_line + 1), 'children rendered under nested src/')
 
   vim.fn.delete(tmp, 'rf')
@@ -1903,8 +1895,8 @@ r.run('dirty stash of a deleted phantom does not pin modified', function()
   vim.cmd('write')
   r.assert_eq(vim.bo[buf].modified, false,
     'modified clears after deleting the phantom with a dirty stash')
-  r.assert_eq(actions_mod.has_pending_changes(session, buf_lines(buf)), false,
-    'has_pending_changes false with orphan dirty phantom stash')
+  r.assert_eq(model_mod.has_pending(session, buf_lines(buf)), false,
+    'has_pending false with orphan dirty phantom stash')
   r.assert_truthy(isdir(tmp .. '/src'), 'original src/ untouched')
 
   vim.fn.delete(tmp, 'rf')
@@ -1927,8 +1919,8 @@ r.run('externally created file under collapsed dir survives save', function()
   -- external file into id_to_path (that would emit DELETE for it on save)
   do_enter(src_line)
 
-  local eff = actions_mod.effective_buf_lines(session, buf_lines(buf))
-  local acts = actions_mod.compute_actions(session, eff)
+  model_mod.reconcile(session, buf_lines(buf))
+  local acts = model_mod.diff(session)
   for _, a in ipairs(acts) do
     r.assert_truthy(a.name ~= 'delete' or a.src ~= tmp .. '/src/external.txt',
       'no delete emitted for a file the user never saw')
