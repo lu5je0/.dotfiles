@@ -129,7 +129,7 @@ o.smartindent = true
 -- o.cmdheight = 0
 
 -- 不显示启动界面
-o.shortmess = o.shortmess .. 'I'
+-- o.shortmess = o.shortmess .. 'I'
 o.showcmd = false
 
 -- disable some default providers
