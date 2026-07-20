@@ -16,6 +16,12 @@ ext_load({
     require('lu5je0.misc.clipboard').setup()
   end,
   event = { 'ExtVeryLazy' },
+  keys = {
+    { 'p',  mode = { 'n', 'x' } },
+    { 'P',  mode = { 'n', 'x' } },
+    { 'gp', mode = { 'n', 'x' } },
+    { 'gP', mode = { 'n', 'x' } },
+  },
 })
 
 -- diff_base
@@ -398,6 +404,7 @@ ext_load({
   config = function()
     require('lu5je0.patch.fix-untitled-buffer-diagnostic')
   end,
+  event = { 'ExtVeryLazy' },
 })
 
 return loader

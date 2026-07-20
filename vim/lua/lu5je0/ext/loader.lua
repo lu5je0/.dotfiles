@@ -17,6 +17,15 @@ local _all_opts = {}
 
 local function load_ext(opts, triggered_by)
   if not opts.loaded then
+    -- Remove all lazy-load proxy keymaps for this ext before running config,
+    -- regardless of which trigger (key/cmd/event) fired first, so no stale
+    -- proxy mapping lingers and config() can install the real mappings.
+    if opts._proxy_keys then
+      for _, pk in ipairs(opts._proxy_keys) do
+        pcall(vim.keymap.del, pk.mode, pk.lhs)
+      end
+      opts._proxy_keys = nil
+    end
     opts._triggered_by = triggered_by
     if type(opts.config) == 'function' then
       local t0 = vim.uv.hrtime()
@@ -30,14 +39,12 @@ end
 M.ext_load = function(opts)
   _all_opts[#_all_opts + 1] = opts
   if opts and opts.keys then
+    opts._proxy_keys = {}
     for _, key in ipairs(opts.keys) do
       for _, mode in ipairs(key.mode) do
         local lhs = key[1]
+        opts._proxy_keys[#opts._proxy_keys + 1] = { mode = mode, lhs = lhs }
         vim.keymap.set(mode, lhs, function()
-          -- Delete proxy keymaps for all modes of this key
-          for _, m in ipairs(key.mode) do
-            pcall(vim.keymap.del, m, lhs)
-          end
           load_ext(opts, { type = 'key', value = lhs })
           vim.defer_fn(function()
             require('lu5je0.core.keys').feedkey(lhs)
