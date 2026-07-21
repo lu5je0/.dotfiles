@@ -5,10 +5,15 @@ import subprocess
 import struct
 import json
 import shutil
+import time
 from base64 import standard_b64encode
 
 def is_kitty():
     return os.environ.get('TERM') == 'xterm-kitty'
+
+def is_tmux():
+    return bool(os.environ.get('TMUX')) or \
+        os.environ.get('TERM', '').startswith(('tmux', 'screen'))
 
 def is_wsl_wezterm():
     return (os.path.exists('/proc/sys/fs/binfmt_misc/WSLInterop') and
@@ -77,6 +82,10 @@ def get_image_dimensions(data):
             i += 2 + length
     return None, None
 
+def tmux_passthrough(seq):
+    # tmux 需要 passthrough DCS 包裹，且内部 ESC 要加倍
+    return b'\033Ptmux;' + seq.replace(b'\033', b'\033\033') + b'\033\\'
+
 def serialize_gr_command(**cmd):
     payload = cmd.pop('payload', None)
     cmd = ','.join(f'{k}={v}' for k, v in cmd.items())
@@ -91,11 +100,14 @@ def serialize_gr_command(**cmd):
 
 def write_chunked(**cmd):
     data = standard_b64encode(cmd.pop('data'))
+    wrap = is_tmux()
     while data:
         chunk, data = data[:4096], data[4096:]
         m = 1 if data else 0
-        sys.stdout.buffer.write(serialize_gr_command(payload=chunk, m=m,
-                                                    **cmd))
+        seq = serialize_gr_command(payload=chunk, m=m, **cmd)
+        if wrap:
+            seq = tmux_passthrough(seq)
+        sys.stdout.buffer.write(seq)
         sys.stdout.flush()
         cmd.clear()
 
@@ -130,6 +142,77 @@ def maybe_downscale(image_data):
         pass
     return image_data
 
+def get_tmux_cell_size():
+    try:
+        result = subprocess.run(
+            ['tmux', 'display-message', '-p',
+             '#{client_cell_width},#{client_cell_height}'],
+            capture_output=True, text=True, timeout=2)
+        w, h = result.stdout.strip().split(',')
+        w, h = int(w), int(h)
+        if w > 0 and h > 0:
+            return w, h
+    except Exception:
+        pass
+    return 8, 16
+
+def get_tmux_pane_position():
+    try:
+        result = subprocess.run(
+            ['tmux', 'display-message', '-p', '-t',
+             os.environ.get('TMUX_PANE', ''),
+             '#{pane_top},#{pane_left},#{cursor_y},#{cursor_x},'
+             '#{status},#{status-position}'],
+            capture_output=True, text=True, timeout=2)
+        top, left, cy, cx, status, status_pos = \
+            result.stdout.strip().split(',')
+        top, left, cy, cx = int(top), int(left), int(cy), int(cx)
+        if status_pos == 'top' and status != 'off':
+            top += 1 if status == 'on' else int(status)
+        return top, left, cy, cx
+    except Exception:
+        return None
+
+def display_tmux(image_data):
+    img_w, img_h = get_image_dimensions(image_data)
+    if not (img_w and img_h):
+        write_chunked(a='T', f=100, data=image_data)
+        return
+    cw, ch = get_tmux_cell_size()
+    try:
+        term = os.get_terminal_size()
+        max_cols, max_rows = term.columns, max(1, term.lines - 2)
+    except OSError:
+        max_cols, max_rows = 80, 22
+    scale = min(max_cols * cw / img_w, max_rows * ch / img_h, 1.0)
+    cols = max(1, int(img_w * scale / cw))
+    rows = max(1, int((img_h * scale + ch - 1) / ch))
+
+    img_id = os.getpid() % 0xFFFFFF + 1
+
+    # 预留行数，让 tmux 先滚动出图片空间
+    sys.stdout.write('\n' * rows)
+    sys.stdout.flush()
+    time.sleep(0.05)
+
+    # 只传输数据不显示（q=2 抑制应答，避免污染 tmux）
+    write_chunked(a='t', f=100, i=img_id, q=2, data=image_data)
+
+    pos = get_tmux_pane_position()
+    place = serialize_gr_command(a='p', i=img_id, C=1,
+                                 c=cols, r=rows, q=2)
+    if pos:
+        top, left, cy, cx = pos
+        row = top + cy - rows + 1  # 1-based 绝对行
+        col = left + 1
+        # 在同一个 passthrough 中完成: 存光标 -> 绝对定位 -> 放置 -> 还原光标
+        inner = (b'\0337' + f'\033[{row};{col}H'.encode('ascii') +
+                 place + b'\0338')
+    else:
+        inner = place
+    sys.stdout.buffer.write(tmux_passthrough(inner))
+    sys.stdout.flush()
+
 def display_image(image_data):
     if is_kitty():
         # 使用subprocess.Popen来创建一个管道
@@ -137,6 +220,9 @@ def display_image(image_data):
         p.communicate(input=image_data)
     else:
         image_data = maybe_downscale(image_data)
+        if is_tmux():
+            display_tmux(image_data)
+            return
         extra = {}
         if is_wsl_wezterm():
             pane = get_wezterm_pane_size()
