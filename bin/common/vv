@@ -8,6 +8,10 @@ import shutil
 import time
 from base64 import standard_b64encode
 
+def is_wezterm():
+    return (os.environ.get('TERM_PROGRAM') == 'WezTerm' and
+            shutil.which('wezterm') is not None)
+
 def is_kitty():
     return os.environ.get('TERM') == 'xterm-kitty'
 
@@ -215,8 +219,10 @@ def display_tmux(image_data):
 
 def display_image(image_data):
     if is_kitty():
-        # 使用subprocess.Popen来创建一个管道
         p = subprocess.Popen(['kitty', '+kitten', 'icat'], stdin=subprocess.PIPE)
+        p.communicate(input=image_data)
+    elif is_wezterm():
+        p = subprocess.Popen(['wezterm', 'imgcat'], stdin=subprocess.PIPE)
         p.communicate(input=image_data)
     else:
         image_data = maybe_downscale(image_data)
@@ -251,4 +257,3 @@ if __name__ == "__main__":
         sys.exit(1)
     
     display_image(image_data)
-
