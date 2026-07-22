@@ -15,7 +15,6 @@
 #include "request-dispatch.h"
 #include "third_party/cjson/cJSON.h"
 
-#define MAX_LINE 32768
 #ifdef _WIN32
 static double get_time_ms(void) {
   static LARGE_INTEGER freq = {0};
@@ -254,21 +253,55 @@ static void print_usage(const char *prog_name) {
 }
 
 static int run_interactive_mode(void) {
-  char line[MAX_LINE];
-  while (fgets(line, sizeof(line), stdin)) {
-    size_t len = strlen(line);
-    if (len > 0 && line[len - 1] == '\n') {
-      line[len - 1] = '\0';
-      len--;
+  size_t cap = 8192;
+  char *line = (char *)malloc(cap);
+  if (!line) {
+    return 1;
+  }
+
+  while (true) {
+    size_t len = 0;
+    int c;
+    while ((c = getc(stdin)) != EOF && c != '\n') {
+      if (len + 1 >= cap) {
+        size_t new_cap = cap * 2;
+        char *grown = (char *)realloc(line, new_cap);
+        if (!grown) {
+          free(line);
+          return 1;
+        }
+        line = grown;
+        cap = new_cap;
+      }
+      line[len++] = (char)c;
     }
+
+    if (c == EOF && len == 0) {
+      break;
+    }
+
+    line[len] = '\0';
+    if (len > 0 && line[len - 1] == '\r') {
+      line[--len] = '\0';
+    }
+
     if (len == 0) {
+      if (c == EOF) {
+        break;
+      }
       continue;
     }
     if (strcmp(line, "exit") == 0) {
       break;
     }
     process_json_line(line);
+
+    if (c == EOF) {
+      break;
+    }
   }
+
+  free(line);
   return 0;
 }
 

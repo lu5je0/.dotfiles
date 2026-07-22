@@ -8,7 +8,7 @@
 #include "im.h"
 #include "request-dispatch.h"
 
-#define MAX_TEXT 32768
+#define MAX_TEXT (64 * 1024 * 1024)
 
 static void set_error(bridge_dispatch_result_t *result, const char *code,
                       const char *message) {

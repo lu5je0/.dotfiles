@@ -1,0 +1,75 @@
+name: Build tui-bridge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "submodule/tui-bridge/**"
+      - ".github/workflows/build-tui-bridge.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-x86_64-gcc
+      - name: Build (Windows)
+        run: |
+          cd submodule/tui-bridge
+          WIN_CC=gcc ./build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-bridge-windows-x86_64
+          path: bin/windows-x86_64/tui-bridge
+
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (macOS arm64)
+        run: |
+          cd submodule/tui-bridge
+          ./build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-bridge-macos-arm64
+          path: bin/macos-arm64/tui-bridge
+
+  commit:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: tui-bridge-windows-x86_64
+          path: bin/windows-x86_64
+      - uses: actions/download-artifact@v4
+        with:
+          name: tui-bridge-macos-arm64
+          path: bin/macos-arm64
+      - name: Commit rebuilt binaries
+        run: |
+          chmod +x bin/windows-x86_64/tui-bridge bin/macos-arm64/tui-bridge
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bin/windows-x86_64/tui-bridge bin/macos-arm64/tui-bridge
+          if git diff --cached --quiet; then
+            echo "No binary changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(tui-bridge): rebuild binaries via CI [skip ci]"
+          git push

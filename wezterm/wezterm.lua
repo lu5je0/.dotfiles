@@ -172,14 +172,12 @@ config.keys = {
   {
     key = 'u',
     mods = 'LEADER',
+    action = wezterm.action.RotatePanes 'Clockwise',
+  },
+  {
+    key = 'U',
+    mods = 'LEADER|SHIFT',
     action = wezterm.action { PaneSelect = { mode = "SwapWithActiveKeepFocus" } },
-    -- action = wezterm.action_callback(function(win, pane)
-    --   local tab = win:active_tab()
-    --   local next_pane = tab:get_pane_direction("Right")
-    --   if next_pane then
-    --     tab.swap_active_with_index(next_pane, true)
-    --   end
-    -- end)
   },
   {
     key = 'm',
