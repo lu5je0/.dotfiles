@@ -2,11 +2,6 @@ name: Build tui-bridge
 
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
-    paths:
-      - "submodule/tui-bridge/**"
-      - ".github/workflows/build-tui-bridge.yml"
 
 permissions:
   contents: write
