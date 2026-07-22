@@ -80,6 +80,7 @@ build_win() {
   out_dir="$(dirname "${out}")"
   mkdir -p "${out_dir}"
 
+  local built
   if command -v wslpath >/dev/null 2>&1; then
     local win_build_dir="${WIN_TEMP_ROOT}\\tui-bridge-build"
     local win_build_dir_wsl
@@ -103,17 +104,18 @@ build_win() {
     else
       cp "${win_build_dir_wsl}/${out_basename}.exe" "${out}"
     fi
+    built="${out}"
   else
     "${WIN_CC}" "${sources[@]}" -o "${out}.exe" "${cflags[@]}" "${ldflags[@]}"
-    cp -f "${out}.exe" "${out}"
+    built="${out}.exe"
   fi
 
-  if [[ ! -f "${out}" ]]; then
-    echo "build_win: expected output '${out}' not found after build" >&2
+  if [[ ! -f "${built}" ]]; then
+    echo "build_win: expected output '${built}' not found after build" >&2
     exit 1
   fi
 
-  sync_to_bin "${out}" "${bin_out}"
+  sync_to_bin "${built}" "${bin_out}"
 }
 
 TARGET="$(detect_target)"
