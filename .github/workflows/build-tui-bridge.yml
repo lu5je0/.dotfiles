@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: build-tui-bridge
+  cancel-in-progress: false
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -30,10 +34,16 @@ jobs:
         run: |
           cd submodule/tui-bridge
           WIN_CC=gcc ./build.sh
+      - name: Verify binary
+        run: |
+          test -f bin/windows-x86_64/tui-bridge
+          file bin/windows-x86_64/tui-bridge
+          sha256sum bin/windows-x86_64/tui-bridge
       - uses: actions/upload-artifact@v4
         with:
           name: tui-bridge-windows-x86_64
           path: bin/windows-x86_64/tui-bridge
+          if-no-files-found: error
 
   build-macos:
     runs-on: macos-14
@@ -43,10 +53,16 @@ jobs:
         run: |
           cd submodule/tui-bridge
           ./build.sh
+      - name: Verify binary
+        run: |
+          test -f bin/macos-arm64/tui-bridge
+          file bin/macos-arm64/tui-bridge
+          shasum -a 256 bin/macos-arm64/tui-bridge
       - uses: actions/upload-artifact@v4
         with:
           name: tui-bridge-macos-arm64
           path: bin/macos-arm64/tui-bridge
+          if-no-files-found: error
 
   commit:
     needs: [build-windows, build-macos]
@@ -72,4 +88,13 @@ jobs:
             exit 0
           fi
           git commit -m "chore(tui-bridge): rebuild binaries via CI [skip ci]"
-          git push
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed on attempt ${attempt}."
+              exit 0
+            fi
+            echo "Push rejected, rebasing on latest master (attempt ${attempt})..."
+            git pull --rebase --autostash origin master
+          done
+          echo "Failed to push after retries." >&2
+          exit 1

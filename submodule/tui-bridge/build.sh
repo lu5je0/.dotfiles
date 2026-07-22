@@ -104,7 +104,13 @@ build_win() {
       cp "${win_build_dir_wsl}/${out_basename}.exe" "${out}"
     fi
   else
-    "${WIN_CC}" "${sources[@]}" -o "${out}" "${cflags[@]}" "${ldflags[@]}"
+    "${WIN_CC}" "${sources[@]}" -o "${out}.exe" "${cflags[@]}" "${ldflags[@]}"
+    cp -f "${out}.exe" "${out}"
+  fi
+
+  if [[ ! -f "${out}" ]]; then
+    echo "build_win: expected output '${out}' not found after build" >&2
+    exit 1
   fi
 
   sync_to_bin "${out}" "${bin_out}"
