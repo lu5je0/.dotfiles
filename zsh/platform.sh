@@ -27,6 +27,7 @@ if [[ $OSTYPE == darwin* ]]; then
   export PATH=$HOME/.dotfiles/bin/macos-arm64:$PATH
 elif [[ -n $WSL_DISTRO_NAME ]]; then
   export WIN_HOME=/mnt/c/Users/lu5je0
+  export PATH=$HOME/.dotfiles/bin/wsl:$PATH
   
   # windows 目录使用 windows 的 git
   # 直接定义 git 函数而非 alias + 独立函数，避免非交互式 shell 中 alias 加载但函数未定义的问题
