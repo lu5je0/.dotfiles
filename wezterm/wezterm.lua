@@ -482,6 +482,12 @@ end
 
 local TAB_TITLE_MAX_LENGTH = 10
 
+-- Titles matching these patterns are shown untruncated,
+-- e.g. tmux's set-titles-string "S:#S ..." status-style title.
+local TAB_TITLE_NO_TRUNCATE = {
+  '^S:',
+}
+
 wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
   local title = tab.tab_title
   if title == '__tabpick__' then
@@ -491,8 +497,18 @@ wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_wid
     title = tab.active_pane.title
   end
 
-  if #title > TAB_TITLE_MAX_LENGTH then
-    title = title:sub(1, TAB_TITLE_MAX_LENGTH - 1) .. '\u{2026}'
+  for _, pat in ipairs(TAB_TITLE_NO_TRUNCATE) do
+    if title:find(pat) then
+      return ' ' .. title .. ' '
+    end
+  end
+
+  -- Truncate by display cells with wezterm.truncate_right: byte-wise sub()
+  -- can split a multi-byte UTF-8 char, and the invalid string makes the
+  -- callback fail, falling back to the default (unformatted) tab title.
+  local truncated = wezterm.truncate_right(title, TAB_TITLE_MAX_LENGTH)
+  if truncated ~= title then
+    title = truncated .. '\u{2026}'
   end
 
   return ' ' .. title .. ' '
