@@ -1,6 +1,6 @@
 -- Shared tui-bridge IME backend for platforms that speak the tui-bridge
--- protocol (macOS and Windows/WSL). Platform differences live in the native
--- tui-bridge binary; here we only speak the normalized event contract.
+-- protocol (macOS, Windows/WSL and Linux). Platform differences live in the
+-- native tui-bridge binary; here we only speak the normalized event contract.
 local M = {}
 
 local state = { ime = nil }

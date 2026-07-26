@@ -17,6 +17,10 @@
 - `mac/im.m`: macOS IME 实现层。
 - `mac/clipboard-bridge.m`: macOS 剪贴板实现层（直接调用 AppKit `NSPasteboard`）。
 - `mac/platform.c`: macOS 平台初始化。
+- `linux/im.c`: Linux IME 实现层（libdbus-1 调 fcitx5 rime 的 `org.fcitx.Fcitx.Rime1` `SetAsciiMode`/`IsAsciiMode`，切换 rime 自身中英文状态而不是停用整个 IM）。
+- `linux/clipboard-bridge.c`: Linux 剪贴板实现层（libwayland-client + data-control 协议；优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`，两者结构相同，经内部 vtable 共享处理逻辑）。
+- `linux/platform.c`: Linux 平台初始化。
+- `linux/protocol/*.xml`: vendored Wayland data-control 协议定义，构建时由 `wayland-scanner` 生成代码到 `linux/gen/`（gitignored）。
 
 ### 运行方式
 - 交互模式: `tui-bridge -i`
@@ -24,13 +28,15 @@
 
 ### 构建说明
 - 统一入口：`./build.sh [output]`
-- 默认行为就是按当前环境自动选择：macOS 下构建 mac 版本，WSL / Windows 环境下构建 Windows 版本
+- 默认行为就是按当前环境自动选择：macOS 下构建 mac 版本，WSL / Windows 环境下构建 Windows 版本，非 WSL 的 Linux 下构建 Linux 版本
 - 构建会一并编译 vendored 的 `third_party/cjson/cJSON.c`，不依赖系统安装的 `cJSON` 开发包
+- Linux 构建依赖：`gcc`、`pkg-config`、`wayland-scanner`、`libwayland-dev`、`libdbus-1-dev`；运行时动态链接 `libwayland-client` 与 `libdbus-1`
 - 默认输出文件名统一为 `tui-bridge`；不再附带 `mac` 或 `win` 后缀
 - 在 WSL 中默认构建 Windows 版本时，会先在 Windows 临时目录中构建，再复制回仓库输出文件，并同步到 `bin/windows-x86_64/tui-bridge`
 - 构建成功后，如存在 `../../bin`，会自动同步到仓库顶层 `bin/<平台-架构>/tui-bridge`：
   - macOS: `bin/macos-arm64/tui-bridge`
   - Windows/WSL: `bin/windows-x86_64/tui-bridge`
+  - Linux: `bin/linux-x86_64/tui-bridge`
 
 ## 协议
 
@@ -77,6 +83,7 @@
 - 说明：
   - macOS: 记录当前（Esc 时刻）的输入源，然后切换到英文输入源。无论当刻是中文还是英文都会记录，供 `insert` 精确还原。返回 `ascii`。
   - Windows: 将前台窗口 IME 切到英文状态，并保存当前 IME open/close 状态。返回值是**切换前**的状态（`ime`/`ascii`），供无状态调用方记住稍后要还原成什么（无前台 IME 时默认 `ascii`）。
+  - Linux: 通过 DBus 把 fcitx5 rime 的 ascii_mode 切到英文，并保存当前状态。返回值是**切换前**的状态（`ime`/`ascii`），语义与 Windows 一致。fcitx5 未运行或 rime 插件不可用时返回 `IME_FAILED`。
 
 2. `ime.insert`
 - 请求：`{"id":2,"module":"ime","method":"insert","params":{}}`
@@ -85,6 +92,7 @@
 - 说明：
   - macOS: 还原 `normal`（上次 Esc）时记录的输入源。若当刻是英文则保持英文（返回 ascii）；是非英文源才切回并返回 ime。忽略 `restore` 参数。
   - Windows: 若带 `params.restore`（`ime`/`ascii`），直接按它设置并返回；否则回退到进程内 `normal` 保存的 open/close 状态。`restore` 用于 SSH → WezTerm 这条每次都是全新进程、进程内无记忆的链路：由 WezTerm Lua 记住 `normal` 的返回值，再在 `insert` 时回填。
+  - Linux: 与 Windows 相同：`params.restore` 优先，否则用进程内 `normal` 保存的状态；目标是 `ime` 时把 rime ascii_mode 切回中文，目标是 `ascii` 时不动。
 
 3. `ime.watch`
 - 请求：`{"id":3,"module":"ime","method":"watch","params":{"enable":true}}`
@@ -93,6 +101,7 @@
   - 需要在交互模式 (`-i`) 下使用。
   - macOS: 监听输入源变化，并主动推送输入源变更事件。
   - Windows: 监听前台窗口中文输入法内部中/英文状态变化，并主动推送状态变更事件。当前实现基于轮询前台窗口 IME 状态，而不是系统级输入源通知。
+  - Linux: 监听 rime ascii_mode 变化并推送事件。rime 的 Shift 切换不发 DBus 信号，因此实现为独立线程每 200ms 轮询 `IsAsciiMode`。
 
 ### IME 事件
 当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）。事件契约在各平台统一：始终带 `source_id` 与归一化的 `state`（`ascii`/`ime`）：
@@ -108,6 +117,7 @@
 - `state` 是跨平台归一化信号，调用方（如 keeper）统一按 `state` 判断，不要按平台分叉。
 - macOS: `source_id` 是系统输入源 ID；`state` 由「当前源是否等于 ASCII 源」推导——ASCII 源为 `ascii`，任意非 ASCII 源（中文/日文等 IME）为 `ime`。
 - Windows: `state` 表示中文输入法内部的中/英文状态；`source_id` 为兼容旧调用方保留，值与 `state` 相同，不要当作真正的输入法 ID。
+- Linux: 同 Windows，`state` 表示 rime ascii_mode 状态，`source_id` 值与 `state` 相同。
 
 ## Clipboard
 
@@ -120,3 +130,9 @@
 2. `clipboard.input`
 - 请求：`{"id":4,"module":"clipboard","method":"input","params":{"text":"hello"}}`
 - 结果：空对象 `{}`。
+
+### Linux 平台说明
+- 实现基于 Wayland data-control 协议（优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`），首次 clipboard 调用时惰性连接 `$WAYLAND_DISPLAY` 并启动常驻事件线程。
+- `clipboard.input` 写入后由 tui-bridge 进程本身持有 selection 并响应其他应用的粘贴请求，因此 **`-j` 单次模式写入的内容会随进程退出而失效**；Linux 下剪贴板写入需要 `-i` 常驻进程（Neovim 侧正是 `-i`）。
+- 无 `$WAYLAND_DISPLAY`、compositor 不支持 data-control 协议时返回 `CLIPBOARD_FAILED`。
+- 剪贴板为空或内容无文本 mime 时返回空字符串。

@@ -40,7 +40,7 @@ local function select_backend_module()
     return 'lu5je0.misc.ime.tui-bridge.backend'
   end
   if vim.fn.has('linux') == 1 and not vim.env.SSH_TTY then
-    return 'lu5je0.misc.ime.linux.backend'
+    return 'lu5je0.misc.ime.tui-bridge.backend'
   end
   return 'lu5je0.misc.ime.ssh.backend'
 end

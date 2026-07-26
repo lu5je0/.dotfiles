@@ -29,7 +29,7 @@ M.setup = function()
   elseif has('wsl') then
     require('lu5je0.misc.clipboard.tui-bridge').setup()
   elseif has('linux') then
-    require('lu5je0.misc.clipboard.wayland').setup()
+    require('lu5je0.misc.clipboard.tui-bridge').setup()
   end
 end
 

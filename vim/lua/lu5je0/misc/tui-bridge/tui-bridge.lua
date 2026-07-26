@@ -5,6 +5,8 @@ if vim.fn.has("mac") == 1 then
   exe_path = vim.fn.expand('~/.dotfiles/bin/macos-arm64/tui-bridge')
 elseif vim.fn.has('wsl') == 1 then
   exe_path = vim.fn.expand('~/.dotfiles/bin/windows-x86_64/tui-bridge')
+elseif vim.fn.has('linux') == 1 then
+  exe_path = vim.fn.expand('~/.dotfiles/bin/linux-x86_64/tui-bridge')
 end
 
 local state = {

@@ -19,7 +19,7 @@ detect_target() {
       if command -v wslpath >/dev/null 2>&1; then
         printf 'win\n'
       else
-        printf 'unsupported\n'
+        printf 'linux\n'
       fi
       ;;
     MINGW*|MSYS*|CYGWIN*)
@@ -40,6 +40,39 @@ sync_to_bin() {
     cp "${built_out}" "${bin_out}.new"
     mv -f "${bin_out}.new" "${bin_out}"
   fi
+}
+
+build_linux() {
+  local out="${1:-tui-bridge}"
+  local gen_dir="${SCRIPT_DIR}/linux/gen"
+  local wlr_xml="${SCRIPT_DIR}/linux/protocol/wlr-data-control-unstable-v1.xml"
+  local ext_xml="${SCRIPT_DIR}/linux/protocol/ext-data-control-v1.xml"
+  local sources=(
+    "third_party/cjson/cJSON.c"
+    "request-dispatch.c"
+    "tui-bridge.c"
+    "linux/im.c"
+    "linux/clipboard-bridge.c"
+    "linux/platform.c"
+    "linux/gen/wlr-data-control-unstable-v1-protocol.c"
+    "linux/gen/ext-data-control-v1-protocol.c"
+  )
+  local cflags=("-O3" "-flto" "-DNDEBUG" "-s" "-Wl,--gc-sections" "-I${gen_dir}")
+  local bin_out="${BIN_DIR}/linux-x86_64/tui-bridge"
+
+  mkdir -p "${gen_dir}"
+  wayland-scanner client-header "${wlr_xml}" \
+    "${gen_dir}/wlr-data-control-unstable-v1-client-protocol.h"
+  wayland-scanner private-code "${wlr_xml}" \
+    "${gen_dir}/wlr-data-control-unstable-v1-protocol.c"
+  wayland-scanner client-header "${ext_xml}" \
+    "${gen_dir}/ext-data-control-v1-client-protocol.h"
+  wayland-scanner private-code "${ext_xml}" \
+    "${gen_dir}/ext-data-control-v1-protocol.c"
+
+  gcc "${sources[@]}" -o "${out}" "${cflags[@]}" \
+    $(pkg-config --cflags --libs dbus-1 wayland-client) -lpthread
+  sync_to_bin "${out}" "${bin_out}"
 }
 
 build_mac() {
@@ -126,6 +159,9 @@ case "${TARGET}" in
     ;;
   win)
     build_win "${OUT_ARG:-tui-bridge}"
+    ;;
+  linux)
+    build_linux "${OUT_ARG:-tui-bridge}"
     ;;
   *)
     echo "Unsupported platform for auto build: ${TARGET}" >&2

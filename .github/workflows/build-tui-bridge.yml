@@ -59,8 +59,31 @@ jobs:
           path: bin/macos-arm64/tui-bridge
           if-no-files-found: error
 
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdbus-1-dev libwayland-dev
+      - name: Build (Linux x86_64)
+        run: |
+          cd submodule/tui-bridge
+          ./build.sh
+      - name: Verify binary
+        run: |
+          test -f bin/linux-x86_64/tui-bridge
+          file bin/linux-x86_64/tui-bridge
+          sha256sum bin/linux-x86_64/tui-bridge
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tui-bridge-linux-x86_64
+          path: bin/linux-x86_64/tui-bridge
+          if-no-files-found: error
+
   commit:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
