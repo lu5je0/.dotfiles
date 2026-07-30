@@ -16,6 +16,7 @@ import ctypes.util
 import importlib.util
 import os
 import struct
+import sys
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
@@ -95,7 +96,12 @@ def scan() -> List[TrashedFile]:
 
     try:
         entries = os.listdir(trash_dir)
-    except OSError:
+    except OSError as e:
+        msg = f"q-trash: cannot read ~/.Trash: {e.strerror or e}"
+        if isinstance(e, PermissionError):
+            msg += (" (grant Full Disk Access to this terminal in "
+                    "System Settings > Privacy & Security)")
+        print(msg, file=sys.stderr)
         return []
 
     putback = _parse_dsstore_putback(os.path.join(trash_dir, ".DS_Store"))
