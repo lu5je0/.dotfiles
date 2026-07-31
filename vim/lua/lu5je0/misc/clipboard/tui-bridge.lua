@@ -5,9 +5,27 @@ local active_entry = {}
 
 local clipboard = require('lu5je0.misc.tui-bridge.ext.clipboard').setup()
 
-local delay_input = require('lu5je0.lang.function-utils').debounce(function(text)
-  return clipboard.input(text)
-end, 1000)
+-- nvim 内是否有尚未写入系统剪切板的 yank。
+-- 只有此标记为 true 时才允许把缓存回写系统剪切板，
+-- 否则失焦时会把系统剪切板里更新的内容（如截图图片）覆盖掉。
+local pending_copy = false
+local input_timer = vim.uv.new_timer()
+
+local function delay_input(text)
+  input_timer:stop()
+  input_timer:start(500, 0, vim.schedule_wrap(function()
+    pending_copy = false
+    clipboard.input(text)
+  end))
+end
+
+local function flush_pending_copy()
+  if pending_copy and active_entry and active_entry.lines then
+    input_timer:stop()
+    pending_copy = false
+    clipboard.input(table.concat(active_entry.lines, '\n'))
+  end
+end
 
 local function apply_synced_text(text, init)
   if not text then
@@ -37,6 +55,7 @@ local function sync_from_async(init)
 end
 
 function M.copy(lines, regtype)
+  pending_copy = true
   delay_input(table.concat(lines, '\n'))
   active_entry = { lines = lines, regtype = regtype }
 end
@@ -78,13 +97,9 @@ function M.setup()
     callback = sync_from,
   })
 
-  vim.api.nvim_create_autocmd({ 'VimLeavePre', 'FocusLost' }, {
+  vim.api.nvim_create_autocmd({ 'VimLeavePre' }, {
     group = augroup,
-    callback = function()
-      if active_entry and active_entry.lines then
-        clipboard.input(table.concat(active_entry.lines, '\n'))
-      end
-    end,
+    callback = flush_pending_copy,
   })
   sync_from_async(true)
 
