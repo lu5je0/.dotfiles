@@ -24,8 +24,8 @@ M.setup = function()
       })
     end
   elseif has('mac') then
-    -- require('lu5je0.misc.clipboard.mac').setup()
-    require('lu5je0.misc.clipboard.tui-bridge').setup()
+    require('lu5je0.misc.clipboard.mac').setup()
+    -- require('lu5je0.misc.clipboard.tui-bridge').setup()
   elseif has('wsl') then
     require('lu5je0.misc.clipboard.tui-bridge').setup()
   elseif has('linux') then
