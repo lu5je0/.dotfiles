@@ -18,7 +18,7 @@ local window_special_cases = {
   kitty = {
     center_j = {
       main = { w = 990, h = 815 },
-      external = { w = 1023, h = 835 },
+      external = { w = 1023, h = 863 },
     },
     center_i = {
       main = { w = 1105, h = 863 },

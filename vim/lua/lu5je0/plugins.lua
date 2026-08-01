@@ -956,6 +956,7 @@ local plugins = {
   
   {
     "folke/snacks.nvim",
+    patches = { 'snacks-wezterm-placeholders.diff' },
     config = function()
       require('lu5je0.ext.snacks').setup()
     end,

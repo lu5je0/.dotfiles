@@ -1,0 +1,13 @@
+diff --git a/lua/snacks/image/terminal.lua b/lua/snacks/image/terminal.lua
+index 0a42c49..567c7b1 100644
+--- a/lua/snacks/image/terminal.lua
++++ b/lua/snacks/image/terminal.lua
+@@ -21,7 +21,7 @@ local environments = {
+     name = "wezterm",
+     terminal = "wezterm",
+     supported = true,
+-    placeholders = false,
++    placeholders = os.getenv("WEZTERM_UNICODE_PLACEHOLDER") == "1",
+   },
+   {
+     name = "tmux",

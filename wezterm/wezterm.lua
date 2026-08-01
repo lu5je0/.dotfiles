@@ -439,6 +439,9 @@ if is_mac then
   config.set_environment_variables = {
     PATH = '/opt/homebrew/bin:' .. os.getenv('PATH')
   }
+  -- kitty协议增强
+  config.set_environment_variables = config.set_environment_variables or {}
+  config.set_environment_variables.WEZTERM_UNICODE_PLACEHOLDER = '1'
 end
 
 if is_win then
@@ -480,7 +483,7 @@ end
 --   end
 -- )
 
-local TAB_TITLE_MAX_LENGTH = 10
+local TAB_TITLE_MAX_LENGTH = 13
 
 -- Titles matching these patterns are shown untruncated,
 -- e.g. tmux's set-titles-string "S:#S ..." status-style title.
