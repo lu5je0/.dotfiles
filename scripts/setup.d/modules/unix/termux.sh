@@ -9,13 +9,3 @@ else
   mkdir -p "$HOME/.config"
   ln -s "$DOTFILES_DIR/termux" "$TARGET"
 fi
-
-TERMUX_FONT_URL="https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/JetBrainsMono/NoLigatures/Regular/JetBrainsMonoNLNerdFontMono-Regular.ttf"
-TERMUX_FONT_PATH="$HOME/.termux/font.ttf"
-
-mkdir -p "$HOME/.termux"
-if [[ -e "$TERMUX_FONT_PATH" ]]; then
-  echo "skip: $TERMUX_FONT_PATH exists"
-else
-  curl -L -o "$TERMUX_FONT_PATH" "$TERMUX_FONT_URL"
-fi
