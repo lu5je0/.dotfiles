@@ -92,6 +92,73 @@ r.run('expanded_dirs overrides default directory expansion', function()
   end)
 end)
 
+r.run('directory with all deleted files is all_deleted', function()
+  with_cwd(vim.fn.tempname(), function()
+    local files = {
+      { path = 'src/a.lua', xy = 'D ', x = 'D', y = ' ' },
+      { path = 'src/sub/b.lua', xy = 'D ', x = 'D', y = ' ' },
+      { path = 'src/sub/c.lua', xy = 'D ', x = 'D', y = ' ' },
+    }
+    local nodes = parser.files_to_tree_nodes(files, {}, 'staged')
+    r.assert_eq(#nodes, 1)
+    r.assert_eq(nodes[1].name, 'src')
+    r.assert_eq(nodes[1].all_deleted, true)
+    r.assert_eq(nodes[1].children[1].name, 'sub')
+    r.assert_eq(nodes[1].children[1].all_deleted, true)
+  end)
+end)
+
+r.run('directory with any non-deleted file is not all_deleted', function()
+  with_cwd(vim.fn.tempname(), function()
+    local files = {
+      { path = 'src/a.lua', xy = 'D ', x = 'D', y = ' ' },
+      { path = 'src/b.lua', xy = 'M ', x = 'M', y = ' ' },
+      { path = 'src/sub/c.lua', xy = 'D ', x = 'D', y = ' ' },
+    }
+    local nodes = parser.files_to_tree_nodes(files, {}, 'staged')
+    r.assert_eq(#nodes, 1)
+    r.assert_eq(nodes[1].all_deleted, false)
+    r.assert_eq(nodes[1].children[1].name, 'sub')
+    r.assert_eq(nodes[1].children[1].all_deleted, true)
+  end)
+end)
+
+r.run('all_deleted respects unstaged delete column', function()
+  with_cwd(vim.fn.tempname(), function()
+    local files = {
+      { path = 'src/a.lua', xy = ' D', x = ' ', y = 'D' },
+      { path = 'src/b.lua', xy = ' D', x = ' ', y = 'D' },
+    }
+    local nodes = parser.files_to_tree_nodes(files, {}, 'unstaged')
+    r.assert_eq(#nodes, 1)
+    r.assert_eq(nodes[1].all_deleted, true)
+  end)
+end)
+
+r.run('all_deleted in changes section counts either delete column', function()
+  with_cwd(vim.fn.tempname(), function()
+    local files = {
+      { path = 'src/a.lua', xy = 'D ', x = 'D', y = ' ' },
+      { path = 'src/b.lua', xy = ' D', x = ' ', y = 'D' },
+    }
+    local nodes = parser.files_to_tree_nodes(files, {}, 'changes')
+    r.assert_eq(#nodes, 1)
+    r.assert_eq(nodes[1].all_deleted, true)
+  end)
+end)
+
+r.run('untracked files never make a directory all_deleted', function()
+  with_cwd(vim.fn.tempname(), function()
+    local files = {
+      { path = 'src/a.lua', xy = '??', x = '?', y = '?' },
+      { path = 'src/b.lua', xy = '??', x = '?', y = '?' },
+    }
+    local nodes = parser.files_to_tree_nodes(files, {}, 'untracked')
+    r.assert_eq(#nodes, 1)
+    r.assert_eq(nodes[1].all_deleted, false)
+  end)
+end)
+
 -- ============================================================================
 -- group: git_root cache auto-invalidation
 -- ============================================================================

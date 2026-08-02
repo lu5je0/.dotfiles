@@ -161,6 +161,11 @@ function spec.render_opts(_ts, _ctx)
         return node.expanded and config.git_changes.section_icons.expanded or config.git_changes.section_icons.collapsed
       end
     end,
+    node_hl = function(node)
+      if node.type == 'directory' and node.all_deleted then
+        return 'GitFileStatusDeleted'
+      end
+    end,
     file_suffix = function(node)
       if not node.xy then return end
       local label

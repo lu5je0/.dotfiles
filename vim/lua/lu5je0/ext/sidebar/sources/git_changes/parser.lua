@@ -134,6 +134,29 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key)
     end
   end
 
+  local function file_is_deleted(f)
+    if f.section == 'staged' or f.section == 'stash' then return f.x == 'D' end
+    if f.section == 'unstaged' then return f.y == 'D' end
+    if f.section == 'changes' then return f.x == 'D' or f.y == 'D' end
+    return false
+  end
+
+  -- A directory is all_deleted when every descendant file is a deletion
+  -- in this section (children are finalized before parents, so subdirs
+  -- already carry their own all_deleted flag).
+  local function dir_all_deleted(dir)
+    local children = dir.children
+    if not children or #children == 0 then return false end
+    for _, c in ipairs(children) do
+      if c.type == 'directory' then
+        if not c.all_deleted then return false end
+      elseif not file_is_deleted(c) then
+        return false
+      end
+    end
+    return true
+  end
+
   local function finalize(dirs_table, files_table)
     local nodes = {}
     table.sort(dirs_table, function(a, b) return a.name < b.name end)
@@ -141,6 +164,7 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key)
     for _, dir in ipairs(dirs_table) do
       dir.children = finalize(dir._subdirs, dir._files)
       dir._subdirs, dir._files = nil, nil
+      dir.all_deleted = dir_all_deleted(dir)
       if expanded_dirs[dir.abs_path] ~= nil then
         dir.expanded = expanded_dirs[dir.abs_path]
       end
