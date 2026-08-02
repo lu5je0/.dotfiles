@@ -5,6 +5,7 @@
 ## 目录结构
 - `vim/`: Neovim 配置（有独立 `AGENTS.md`）
 - `zsh/`, `zshrc`, `bashrc`: Shell 配置
+- `ime/`: 输入法配置，fcitx5/Squirrel/Weasel + Rime（有独立 `AGENTS.md`）
 - `scripts/`: 安装与环境初始化脚本（`setup.d/` 有独立 `AGENTS.md`）
 - `skills/`: 本地 skills，清单见 `skills/INDEX.md`
 - `submodule/`: 个人工具项目

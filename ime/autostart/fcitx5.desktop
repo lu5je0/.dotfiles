@@ -1,0 +1,15 @@
+[Desktop Entry]
+# Debian 的 im-config 在 Wayland 会话下不会启动输入法：
+# /etc/xdg/autostart/im-launch.desktop 执行 `im-launch true`，而 im-launch 里
+# 启动守护进程的分支依赖 IM_CONFIG_PHASE=1，该变量只由 /etc/X11/Xsession.d/70im-config_launch
+# 设置，Wayland 会话不走 Xsession.d，于是 im-launch 退化成 `exec true`（什么都不做）。
+# 所以这里显式自启 fcitx5；输入法环境变量由 environment.d/10-input-method.conf 负责。
+Name=Fcitx 5
+GenericName=Input Method
+Exec=/usr/bin/fcitx5
+Icon=fcitx
+Type=Application
+Terminal=false
+X-GNOME-AutoRestart=false
+X-GNOME-Autostart-Notify=false
+X-KDE-autostart-phase=1
