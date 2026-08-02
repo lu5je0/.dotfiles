@@ -67,7 +67,7 @@ if [[ $OSTYPE == linux-gnu* ]]; then
   
   fpath=($HOMEBREW_PATH/share/zsh/site-functions $fpath)
   
-  arch=`arch`
+  arch=`uname -m`
   if [[ $arch =~ 'x86_64' ]]; then
     export PATH=/home/lu5je0/.dotfiles/bin/linux-x86_64:$PATH
   elif [[ $arch =~ 'aarch64' ]]; then
