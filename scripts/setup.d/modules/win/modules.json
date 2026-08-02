@@ -1,0 +1,37 @@
+[
+  {
+    "name": "wezterm",
+    "action": "link",
+    "desc": "WezTerm config (Windows side junction)",
+    "script": "wezterm.sh",
+    "check": "$WIN_HOME/.config/wezterm"
+  },
+  {
+    "name": "gitconfig",
+    "action": "link",
+    "desc": "gitconfig (Windows side symlink)",
+    "script": "gitconfig.sh",
+    "check": "$WIN_HOME/.gitconfig"
+  },
+  {
+    "name": "wslconfig",
+    "action": "link",
+    "desc": "wslconfig (Windows side symlink)",
+    "script": "wslconfig.sh",
+    "check": "$WIN_HOME/.wslconfig"
+  },
+  {
+    "name": "neovide",
+    "action": "link",
+    "desc": "neovide config.toml (Windows side symlink)",
+    "script": "neovide.sh",
+    "check": "$WIN_HOME/AppData/Roaming/neovide/config.toml"
+  },
+  {
+    "name": "rime-ime",
+    "action": "install",
+    "desc": "Weasel + Rime, shallow-clone rime-ice (ime/install.bat)",
+    "script": "rime-ime.sh",
+    "check": "$WIN_HOME/AppData/Roaming/Rime/cn_dicts"
+  }
+]

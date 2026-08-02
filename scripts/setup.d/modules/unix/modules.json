@@ -1,0 +1,99 @@
+[
+  { "name": "zshrc", "source": "zshrc", "target": "~/.zshrc" },
+  { "name": "nvim", "source": "vim", "target": "~/.config/nvim" },
+  { "name": "ssh", "source": "ssh/config", "target": "~/.ssh/config" },
+  { "name": "git", "source": "git", "target": "~/.config/git" },
+  { "name": "maven", "source": "m2/settings.xml", "target": "~/.m2/settings.xml" },
+  { "name": "ideavimrc", "source": "ideavimrc", "target": "~/.ideavimrc" },
+  { "name": "tmux", "source": "tmux", "target": "~/.config/tmux" },
+  { "name": "ghostty", "source": "ghostty", "target": "~/.config/ghostty" },
+  { "name": "wezterm", "source": "wezterm", "target": "~/.config/wezterm" },
+  { "name": "yazi", "source": "yazi", "target": "~/.config/yazi" },
+  { "name": "kitty", "source": "kitty", "target": "~/.config/kitty" },
+  {
+    "name": "alacritty",
+    "action": "link",
+    "desc": "alacritty config (~/.config/alacritty)",
+    "script": "alacritty.sh",
+    "check": "~/.config/alacritty/alacritty.toml"
+  },
+  {
+    "name": "q-trash",
+    "action": "link",
+    "desc": "q-trash → ~/.local/bin",
+    "script": "q-trash.sh",
+    "check": "~/.local/bin/q-trash"
+  },
+  {
+    "name": "rime-ime",
+    "action": "install",
+    "desc": "fcitx5/Squirrel + Rime, shallow-clone rime-ice (ime/install.sh)",
+    "script": "rime-ime.sh",
+    "check": {
+      "mac": "~/Library/Rime/cn_dicts",
+      "linux": "~/.config/fcitx5"
+    },
+    "os": ["mac", "linux"]
+  },
+  {
+    "name": "nerd-font",
+    "action": "install",
+    "desc": "JetBrainsMonoNL Nerd Font Mono Regular (Windows user fonts on WSL)",
+    "script": "nerd-font.sh",
+    "check_exists": {
+      "wsl": "$WIN_HOME/AppData/Local/Microsoft/Windows/Fonts/JetBrainsMonoNLNerdFontMono-Regular.ttf",
+      "mac": "~/Library/Fonts/JetBrainsMonoNLNerdFontMono-Regular.ttf",
+      "termux": "~/.termux/font.ttf",
+      "linux": "~/.local/share/fonts/JetBrainsMonoNLNerdFontMono-Regular.ttf"
+    }
+  },
+  {
+    "name": "hammerspoon",
+    "source": "hammerspoon",
+    "target": "~/.hammerspoon",
+    "os": ["mac"]
+  },
+  {
+    "name": "karabiner",
+    "source": "karabiner",
+    "target": "~/.config/karabiner",
+    "os": ["mac"]
+  },
+  {
+    "name": "termux",
+    "action": "link",
+    "desc": "termux config (~/.config/termux)",
+    "script": "termux.sh",
+    "check": "~/.config/termux",
+    "os": ["termux"]
+  },
+  {
+    "name": "waybar",
+    "source": "wm/waybar",
+    "target": "~/.config/waybar",
+    "os": ["linux"]
+  },
+  { "name": "niri", "source": "wm/niri", "target": "~/.config/niri", "os": ["linux"] },
+  {
+    "name": "quickshell",
+    "source": "wm/quickshell",
+    "target": "~/.config/quickshell",
+    "os": ["linux"]
+  },
+  {
+    "name": "kwin-tilewindow",
+    "action": "install",
+    "desc": "KWin tilewindow script (kpackagetool6)",
+    "script": "kwin-tilewindow.sh",
+    "check_exists": "~/.local/share/kwin/scripts/tilewindow",
+    "os": ["linux"]
+  },
+  {
+    "name": "keyd",
+    "action": "symlink",
+    "desc": "keyd config → /etc/keyd/default.conf (needs sudo)",
+    "script": "keyd.sh",
+    "check": "/etc/keyd/default.conf",
+    "os": ["linux"]
+  }
+]

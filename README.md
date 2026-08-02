@@ -12,7 +12,7 @@ Personal infrastructure for a consistent, reproducible, and high-efficiency deve
 
 ```bash
 git clone https://github.com/lu5je0/.dotfiles.git ~/.dotfiles
-bash ~/.dotfiles/scripts/setup.sh
+python3 ~/.dotfiles/setup.py
 ```
 
 ## Included Components

@@ -53,7 +53,7 @@ git fetch --depth 1 origin && git reset --hard origin/HEAD
 生成一份覆盖并追加 flag，但那意味着每次重跑都 `rm -f` 后重写，会吞掉手改内容；
 现在这些文件完全由你手动维护，dotfiles 不接管。
 
-安装由 `scripts/setup.d/modules/{unix,win}/modules.conf` 的 `[rime-ime]` 模块触发，
+安装由 `scripts/setup.d/modules/{unix,win}/modules.json` 的 `rime-ime` 模块触发，
 分别调用 `ime/install.sh` 与 `ime/install.bat`（对应 `rime-ime.sh`）。脚本幂等，可重复执行。
 
 ## 为什么 link 方式不统一
