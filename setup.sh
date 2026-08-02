@@ -1,6 +1,13 @@
 #!/bin/bash
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "$0")" && pwd)}"
+
+# Only run from ~/.dotfiles to avoid linking against a stray clone
+if [[ "$DOTFILES_DIR" != "$HOME/.dotfiles" ]]; then
+  echo "setup.sh must be run from ~/.dotfiles (current: $DOTFILES_DIR)" >&2
+  exit 1
+fi
+
 SETUP_DIR="$DOTFILES_DIR/scripts/setup.d"
 
 if [[ "$(uname -a)" == *WSL* ]] && [[ "$DOTFILES_DIR" == /mnt/c/* ]]; then
