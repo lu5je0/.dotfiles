@@ -20,7 +20,7 @@ const layoutConfig = {
         },
         "center_j": function(sw, sh) {
             const w = 1140;
-            const h = 989;
+            const h = 945;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
     },
