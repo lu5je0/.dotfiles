@@ -15,12 +15,12 @@ const layoutConfig = {
     "kitty": {
         "center_i": function(sw, sh) {
             const w = 1567;
-            const h = 1195;
+            const h = 1202;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
         "center_j": function(sw, sh) {
             const w = 1139;
-            const h = 985;
+            const h = 980;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
     },
