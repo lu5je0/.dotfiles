@@ -48,7 +48,9 @@ def detect_tags():
 
 TAGS = detect_tags()
 IS_WIN_MODE = "wsl" in TAGS and DOTFILES_DIR.parts[:3] == ("/", "mnt", "c")
-MODULE_DIR = DOTFILES_DIR / "scripts/setup.d/modules" / ("win" if IS_WIN_MODE else "unix")
+if IS_WIN_MODE:
+    TAGS = ["win"]  # win-side modules only; unix modules need a real unix checkout
+MODULE_DIR = DOTFILES_DIR / "scripts/setup.d/modules"
 
 
 def windows_home():
@@ -103,7 +105,10 @@ class Module:
         self.source = spec.get("source")
         self.target = spec.get("target")
         self.os_spec = spec.get("os") or []
-        self.supported = not self.os_spec or any(t in TAGS for t in self.os_spec)
+        if IS_WIN_MODE:
+            self.supported = "win" in self.os_spec
+        else:
+            self.supported = not self.os_spec or any(t in TAGS for t in self.os_spec)
         self.selected = False
         self.status = ""
 
@@ -116,44 +121,60 @@ class Module:
         else:
             die(f"module {self.name!r} needs either `script` or `source`+`target`")
 
-        check = pick_by_tag(spec.get("check"))
-        check_exists = pick_by_tag(spec.get("check_exists"))
+        self.target_path = expand(self.target) if self.target else None
+        self.checks = []  # [(kind, Path)] where kind is "link" or "exists"
+        if not self.supported:
+            return
         if not self.script:
-            self.check_path = expand(self.target)
-            self.check_kind = "symlink"
-        elif check:
-            self.check_path = expand(check)
-            self.check_kind = "symlink"
-        elif check_exists:
-            self.check_path = expand(check_exists)
-            self.check_kind = "exists"
-        else:
-            self.check_path = None
-            self.check_kind = None
+            self.checks = [("link", self.target_path)]
+            return
+        self.vars = {k: pick_by_tag(v) for k, v in (spec.get("vars") or {}).items()}
+        for item in spec.get("checks") or []:
+            item_os = item.get("os")
+            if item_os and not any(t in TAGS for t in item_os):
+                continue
+            kind = "link" if "link" in item else "exists" if "exists" in item else None
+            if not kind:
+                die(f"module {self.name!r}: check item needs `link` or `exists`: {item}")
+            self.checks.append((kind, self.resolve(item[kind])))
+
+    def resolve(self, path):
+        for name, value in self.vars.items():
+            if value is None:
+                die(f"module {self.name!r}: var {name!r} has no value for {'/'.join(TAGS)}")
+            path = path.replace(f"${name}", value)
+        return expand(path)
 
     @property
     def os_label(self):
         return "/".join(self.os_spec)
 
     def refresh_status(self):
-        if not self.supported or self.check_path is None:
+        if not self.supported or not self.checks:
             self.status = ""
             return
-        path = self.check_path
-        if not path.exists() and not path.is_symlink():
-            self.status = ""
-        elif self.check_kind == "exists":
-            self.status = "installed"
-        elif path.is_symlink() and str(path.resolve()).startswith(str(DOTFILES_DIR.resolve())):
+        states = set()
+        for kind, path in self.checks:
+            if not path.exists() and not path.is_symlink():
+                states.add("missing")
+            elif kind == "exists":
+                states.add("ok")
+            elif path.is_symlink() and str(path.resolve()).startswith(str(DOTFILES_DIR.resolve())):
+                states.add("ok")
+            else:
+                states.add("conflict")
+        if "conflict" in states:
+            self.status = "conflict"
+        elif states == {"ok"}:
             self.status = "installed"
         else:
-            self.status = "conflict"
+            self.status = ""
 
     def run(self):
         if self.script:
             script = MODULE_DIR / self.script
             return subprocess.run(["bash", str(script)], cwd=DOTFILES_DIR).returncode
-        target = self.check_path
+        target = self.target_path
         if target.exists() or target.is_symlink():
             print(f"skip: {target} exists")
             return 0

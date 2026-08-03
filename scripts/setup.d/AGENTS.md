@@ -8,16 +8,18 @@
 python3 ~/.dotfiles/setup.py
 ```
 
-模块按平台分目录存放在 `scripts/setup.d/modules/` 下：
+模块统一在 `scripts/setup.d/modules/` 下：
 
-- `unix/` — macOS / Linux / WSL / Termux（从 WSL 内部视角）
-- `win/` — WSL 环境且 dotfiles 位于 `/mnt/c/` 时，操作 Windows 侧文件
+- `modules.json` — 全平台共用一份模块清单
+- `unix/` — macOS / Linux / WSL / Termux 的模块脚本
+- `win/` — Windows 侧模块脚本（WSL 环境且 dotfiles 位于 `/mnt/c/` 时）
 
-平台自动识别：WSL + `DOTFILES_DIR` 在 `/mnt/c/*` 时加载 `win/`，否则加载 `unix/`。
+平台自动识别：WSL + `DOTFILES_DIR` 在 `/mnt/c/*` 时进入 win 模式（`TAGS = ["win"]`），
+此时**只有显式声明 `"os": ["win"]` 的模块可用**；反之 win 模块在 unix 平台置灰。
 
 ## modules.json
 
-每个平台目录下有一个 `modules.json`，顶层是数组，按声明顺序展示。
+`modules/modules.json` 顶层是数组，按声明顺序展示。
 
 ### LINK 模块
 
@@ -35,32 +37,51 @@ python3 ~/.dotfiles/setup.py
 
 ### SCRIPT 模块
 
-复杂逻辑（多文件、下载、sudo 等），指向同目录下的 .sh 脚本：
+复杂逻辑（多文件、下载、sudo 等），`script` 写相对 `modules/` 的路径（含 `unix/` 或 `win/` 前缀）：
 
 ```json
 {
-  "name": "termux",
-  "action": "link",
-  "desc": "termux config (~/.config/termux)",
-  "script": "termux.sh",
-  "check": "~/.config/termux"
+  "name": "rime-ime",
+  "action": "install",
+  "desc": "fcitx5/Squirrel + Rime, shallow-clone rime-ice (ime/install.sh)",
+  "script": "unix/rime-ime.sh",
+  "vars": {
+    "RIME_DIR": { "mac": "~/Library/Rime", "linux": "~/.local/share/fcitx5/rime" }
+  },
+  "checks": [
+    { "link": "$RIME_DIR/rime_ice.custom.yaml" },
+    { "exists": "$RIME_DIR/rime-ice/default.yaml" },
+    { "link": "~/.config/fcitx5", "os": ["linux"] }
+  ],
+  "os": ["mac", "linux"]
 }
 ```
 
 - `desc` 必填，只写宾语，动词放 `action`
 - `action` 主动词（`link` / `symlink` / `install` / `clone` …），TUI 里单独一列对齐；不写默认 `run`
-- `check` — symlink 检测（指向 dotfiles → installed，否则 → conflict）
-- `check_exists` — 仅存在性检测（用于 cp / 下载模式）
-- `check` 和 `check_exists` 二选一，不写则无状态显示
-- 路径支持 `~` 与环境变量（如 `$WIN_HOME`）
 
-`check` / `check_exists` 也可写成按平台标签取值的对象，命中当前平台的第一个标签：
+### checks 状态检测
+
+`checks` 是一维数组，每项一条检查，key 即语义：
+
+- `link` — 路径必须是 symlink 且解析到 dotfiles 内部（存在但不满足 → conflict，即位置被别的东西占了）
+- `exists` — 路径存在即可（用于 cp / 下载 / 浅克隆等运行时产物）
+- 每项可加 `os` 过滤（如 `{ "link": "~/.config/fcitx5", "os": ["linux"] }`），不匹配当前平台则跳过
+
+聚合规则：任一 link 项冲突 → `▲ conflict`；全部通过 → `● installed`；有缺失但无冲突 → 无状态（未装/装了一半）。
+不写 `checks` 则无状态显示。
+
+### vars 路径变量
+
+平台间只差路径前缀时，用模块级 `vars` 消除重复。值可以是字符串，也可以是按平台标签取值的对象
+（命中当前平台第一个标签，可用 `"default"` 兜底），在 `checks` 路径里以 `$NAME` 引用：
 
 ```json
-"check": { "mac": "~/Library/Rime/cn_dicts", "linux": "~/.config/fcitx5" }
+"vars": { "FONT": { "mac": "~/Library/Fonts/x.ttf", "linux": "~/.local/share/fonts/x.ttf" } },
+"checks": [{ "exists": "$FONT" }]
 ```
 
-可用 `"default"` 作为兜底键。
+所有路径支持 `~` 与环境变量（如 `$WIN_HOME`）。
 
 ## os 平台限制
 
@@ -78,8 +99,9 @@ python3 ~/.dotfiles/setup.py
 | macOS | `mac` |
 | WSL | `wsl`, `linux` |
 | 其他 Linux | `linux` |
+| win 模式（WSL + dotfiles 在 `/mnt/c/*`） | `win` |
 
-省略 `os` 表示全平台可用。
+省略 `os` 表示所有 unix 平台可用；win 模式下只有显式带 `win` 标签的模块可用。
 
 ## 脚本编写规则
 
@@ -93,8 +115,8 @@ python3 ~/.dotfiles/setup.py
 **纯 symlink**：在 `modules.json` 加一项，写 `name`、`source`、`target`（按需加 `os`）。
 
 **复杂逻辑**：
-1. 在 `modules.json` 加一项，写 `name`、`desc`、`script`、`check`/`check_exists`（按需加 `os`）
-2. 创建对应 .sh 脚本，实现安装逻辑
+1. 在 `modules.json` 加一项，写 `name`、`desc`、`script`（含 `unix/` 或 `win/` 前缀）、`checks`（按需加 `vars`、`os`）
+2. 在对应子目录创建 .sh 脚本，实现安装逻辑
 
 ## TUI 功能
 
