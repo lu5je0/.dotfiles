@@ -88,6 +88,12 @@ def expand(path):
     return Path(os.path.expandvars(path)).expanduser()
 
 
+def shorten(path):
+    text = str(path)
+    home = str(HOME)
+    return "~" + text[len(home) :] if text.startswith(home + os.sep) else text
+
+
 def pick_by_tag(value):
     """A check may be a plain path, or a {tag: path} map resolved against this platform."""
     if not isinstance(value, dict):
@@ -171,16 +177,19 @@ class Module:
             self.status = ""
 
     def run(self):
-        if self.script:
-            script = MODULE_DIR / self.script
-            return subprocess.run(["bash", str(script)], cwd=DOTFILES_DIR).returncode
+        script = MODULE_DIR / self.script
+        return subprocess.run(["bash", str(script)], cwd=DOTFILES_DIR).returncode
+
+    def run_link(self):
+        """Returns ("linked"|"created"|"occupied", detail)."""
         target = self.target_path
+        if target.is_symlink() and str(target.resolve()).startswith(str(DOTFILES_DIR.resolve())):
+            return "linked", ""
         if target.exists() or target.is_symlink():
-            print(f"skip: {target} exists")
-            return 0
+            return "occupied", shorten(target)
         target.parent.mkdir(parents=True, exist_ok=True)
         os.symlink(DOTFILES_DIR / self.source, target)
-        return 0
+        return "created", shorten(target)
 
 
 def load_modules():
@@ -573,30 +582,47 @@ def main():
         sys.exit(1)
 
     failed = []
-    for module in chosen:
-        section(module.name)
-        try:
-            code = module.run()
-        except OSError as exc:
-            print(f"{exc.strerror}: {exc.filename}")
-            code = 1
-        if code == 0:
-            print(f"{GREEN}✓{RESET} {module.name}")
-        else:
-            failed.append(module)
-            print(f"{RED}✗{RESET} {module.name} {DIM}exit {code}{RESET}")
-
-    section("summary")
+    script_ran = False
     width = max(len(m.name) for m in chosen)
     for module in chosen:
-        module.refresh_status()
-        badge = {
-            "installed": f"{GREEN}●{RESET} {DIM}installed{RESET}",
-            "conflict": f"{YELLOW}▲ conflict{RESET}",
-        }.get(module.status, f"{RED}○ not installed{RESET}")
-        print(f"  {module.name.ljust(width)}  {badge}")
-    tally = f"{len(chosen) - len(failed)}/{len(chosen)} ran successfully"
-    print(f"  {DIM}{'─' * (width + 18)}{RESET}\n  {DIM}{tally}{RESET}")
+        if module.script:
+            script_ran = True
+            section(module.name)
+            code = module.run()
+            if code == 0:
+                print(f"{GREEN}✓{RESET} {module.name}")
+            else:
+                failed.append(module)
+                print(f"{RED}✗{RESET} {module.name} {DIM}exit {code}{RESET}")
+            continue
+        name = module.name.ljust(width)
+        try:
+            state, detail = module.run_link()
+        except OSError as exc:
+            failed.append(module)
+            print(f"{RED}✗{RESET} {name}  {exc.strerror}: {exc.filename}")
+            continue
+        if state == "linked":
+            print(f"{GREEN}✓{RESET} {name}  {DIM}已链接（跳过）{RESET}")
+        elif state == "created":
+            print(f"{GREEN}✓{RESET} {name}  新建 → {detail}")
+        else:
+            failed.append(module)
+            print(f"{YELLOW}▲{RESET} {name}  目标被占用: {detail} 不是 dotfiles 链接")
+
+    if script_ran or failed:
+        section("summary")
+        for module in chosen:
+            module.refresh_status()
+            badge = {
+                "installed": f"{GREEN}●{RESET} {DIM}installed{RESET}",
+                "conflict": f"{YELLOW}▲ conflict{RESET}",
+            }.get(module.status, f"{RED}○ not installed{RESET}")
+            print(f"  {module.name.ljust(width)}  {badge}")
+        tally = f"{len(chosen) - len(failed)}/{len(chosen)} ran successfully"
+        print(f"  {DIM}{'─' * (width + 18)}{RESET}\n  {DIM}{tally}{RESET}")
+    else:
+        print(f"{DIM}{len(chosen)}/{len(chosen)} ok{RESET}")
     sys.exit(1 if failed else 0)
 
 

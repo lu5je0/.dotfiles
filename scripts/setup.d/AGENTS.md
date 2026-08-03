@@ -135,5 +135,5 @@ python3 ~/.dotfiles/setup.py
 - `j/k` 或方向键移动，`Space` 选择，`Ctrl-D`/`Ctrl-U` 半页，`gg`/`G` 首尾
 - `/` 搜索（匹配 name 与 desc，大小写不敏感），`Esc` 清除过滤
 - `Enter` 执行，`q` 退出
-- 执行时每个模块一条 `── <name> ──` 分隔，结果为 `✓` / `✗ exit N`
-- 结尾 summary 复用状态图标并统计成功数；有模块失败时退出码为 1
+- 执行输出分两种：LINK 模块每个一行结果（`✓ 已链接（跳过）` / `✓ 新建 → <target>` / `▲ 目标被占用`，占用计为失败）；SCRIPT 模块保留 `── <name> ──` 分隔（脚本 stdout 需要归属），结果为 `✓` / `✗ exit N`
+- 只有跑过 script 模块或有失败时才打印 summary（状态图标 + 成功数）；纯 link 全成功时结尾一行 `N/N ok`。有失败时退出码为 1
