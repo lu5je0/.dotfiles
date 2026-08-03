@@ -143,7 +143,10 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key)
 
   -- A directory is all_deleted when every descendant file is a deletion
   -- in this section (children are finalized before parents, so subdirs
-  -- already carry their own all_deleted flag).
+  -- already carry their own all_deleted flag). The section tree only
+  -- contains changed files, so "all changes are deletions" alone can't
+  -- tell a truly removed directory from one that still has untouched
+  -- files; require the directory to be gone from disk as well.
   local function dir_all_deleted(dir)
     local children = dir.children
     if not children or #children == 0 then return false end
@@ -154,7 +157,7 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key)
         return false
       end
     end
-    return true
+    return vim.uv.fs_stat(dir.abs_path) == nil
   end
 
   local function finalize(dirs_table, files_table)

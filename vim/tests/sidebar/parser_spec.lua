@@ -108,6 +108,21 @@ r.run('directory with all deleted files is all_deleted', function()
   end)
 end)
 
+r.run('directory still on disk is not all_deleted even if its only change is a deletion', function()
+  with_cwd(vim.fn.tempname(), function()
+    local cwd = parser.git_root()
+    vim.fn.mkdir(cwd .. '/src', 'p')
+    vim.fn.writefile({}, cwd .. '/src/kept.lua')
+    local files = {
+      { path = 'src/a.lua', xy = 'D ', x = 'D', y = ' ' },
+    }
+    local nodes = parser.files_to_tree_nodes(files, {}, 'staged')
+    r.assert_eq(#nodes, 1)
+    r.assert_eq(nodes[1].name, 'src')
+    r.assert_eq(nodes[1].all_deleted, false)
+  end)
+end)
+
 r.run('directory with any non-deleted file is not all_deleted', function()
   with_cwd(vim.fn.tempname(), function()
     local files = {
