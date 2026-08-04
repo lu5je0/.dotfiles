@@ -182,7 +182,7 @@ function M.setup()
   }
   -- gitsigns()
   
-  vim.keymap.set('n', '<tab>', function()
+  vim.keymap.set('n', '<leader><tab>', function()
     if vim.g.scrollview_enabled then
       vim.cmd('ScrollViewDisable')
       return
