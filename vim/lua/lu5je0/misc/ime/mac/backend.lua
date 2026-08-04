@@ -68,6 +68,10 @@ M.ascii_mode = function()
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
 end
 
+--- Quitting hands the terminal back to the shell, so leave it on ABC. The FFI
+--- call is synchronous, so it always lands before we go away.
+M.on_exit = M.ascii_mode
+
 function M.keeper(enable)
   state.ime.watch(enable == true)
 end

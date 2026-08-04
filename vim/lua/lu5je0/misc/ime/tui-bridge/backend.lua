@@ -17,6 +17,11 @@ M.ascii_mode = function()
   M.normal()
 end
 
+--- Quitting hands the terminal back to the shell, so leave it in ASCII.
+M.on_exit = function()
+  require('lu5je0.misc.tui-bridge.ext.im').ascii_now()
+end
+
 function M.keeper(enable)
   state.ime.watch(enable == true)
 end

@@ -104,25 +104,31 @@ function M.setup()
     --   end
     -- },
   }
+  -- <Cmd> instead of ":...<CR>": running these through the cmdline enters and
+  -- leaves cmdline mode on every press, which shows up as spurious mode
+  -- transitions to anything tracking the current mode (the IME switcher saw the
+  -- mapping "end" in cmdline rather than in the terminal). <Cmd> does not change
+  -- mode at all. The explicit <Esc> / <C-\><C-n> stay because those transitions
+  -- are real.
   vim.cmd([[
-  imap <silent> <m-i> <ESC>:lua require('lu5je0.ext.terminal').toggle()<CR>
-  imap <silent> <d-i> <ESC>:lua require('lu5je0.ext.terminal').toggle()<CR>
+  imap <silent> <m-i> <Esc><Cmd>lua require('lu5je0.ext.terminal').toggle()<CR>
+  imap <silent> <d-i> <Esc><Cmd>lua require('lu5je0.ext.terminal').toggle()<CR>
 
-  nmap <silent> <m-i> :lua require('lu5je0.ext.terminal').toggle()<CR>
-  nmap <silent> <d-i> :lua require('lu5je0.ext.terminal').toggle()<CR>
-  
-  tmap <silent> <c-w>L <c-\><c-n><m-i>:lua require('lu5je0.ext.terminal').change_terminal_direction('vertical')<CR>
-  tmap <silent> <c-w>J <c-\><c-n><m-i>:lua require('lu5je0.ext.terminal').change_terminal_direction('horizontal')<CR>
-  tmap <silent> <c-w>F <c-\><c-n><m-i>:lua require('lu5je0.ext.terminal').change_terminal_direction('float')<CR>
-  
-  
-  tmap <silent> <m-i> <c-\><c-n>:lua require('lu5je0.ext.terminal').toggle()<CR>:let g:terminal_mode='i'<cr>
-  tmap <silent> <d-i> <c-\><c-n>:lua require('lu5je0.ext.terminal').toggle()<CR>:let g:terminal_mode='i'<cr>
-  tmap <silent> <c-h> <c-\><c-n><c-w>h:let g:terminal_mode='i'<cr>
-  tmap <silent> <c-l> <c-\><c-n><c-w>l:let g:terminal_mode='i'<cr>
-  tmap <silent> <c-j> <c-\><c-n><c-w>j:let g:terminal_mode='i'<cr>
-  tmap <silent> <c-k> <c-\><c-n><c-w>k:let g:terminal_mode='i'<cr>
-  tmap <silent> <c-q> <c-\><c-n>:let g:terminal_mode='n'<cr>
+  nmap <silent> <m-i> <Cmd>lua require('lu5je0.ext.terminal').toggle()<CR>
+  nmap <silent> <d-i> <Cmd>lua require('lu5je0.ext.terminal').toggle()<CR>
+
+  tmap <silent> <c-w>L <c-\><c-n><m-i><Cmd>lua require('lu5je0.ext.terminal').change_terminal_direction('vertical')<CR>
+  tmap <silent> <c-w>J <c-\><c-n><m-i><Cmd>lua require('lu5je0.ext.terminal').change_terminal_direction('horizontal')<CR>
+  tmap <silent> <c-w>F <c-\><c-n><m-i><Cmd>lua require('lu5je0.ext.terminal').change_terminal_direction('float')<CR>
+
+
+  tmap <silent> <m-i> <c-\><c-n><Cmd>lua require('lu5je0.ext.terminal').toggle()<CR><Cmd>let g:terminal_mode='i'<CR>
+  tmap <silent> <d-i> <c-\><c-n><Cmd>lua require('lu5je0.ext.terminal').toggle()<CR><Cmd>let g:terminal_mode='i'<CR>
+  tmap <silent> <c-h> <c-\><c-n><c-w>h<Cmd>let g:terminal_mode='i'<CR>
+  tmap <silent> <c-l> <c-\><c-n><c-w>l<Cmd>let g:terminal_mode='i'<CR>
+  tmap <silent> <c-j> <c-\><c-n><c-w>j<Cmd>let g:terminal_mode='i'<CR>
+  tmap <silent> <c-k> <c-\><c-n><c-w>k<Cmd>let g:terminal_mode='i'<CR>
+  tmap <silent> <c-q> <c-\><c-n><Cmd>let g:terminal_mode='n'<CR>
   ]])
   
   keep_terminal_mode()

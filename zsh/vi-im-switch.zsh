@@ -15,65 +15,45 @@ else
   }
 fi
 
-vi-escape-im() {
-  disable_ime_cmd
-  zle vi-cmd-mode
-}
-zle -N vi-escape-im
-bindkey "^[" vi-escape-im
+# Keep the IME in sync with the vi keymap.
+#
+# kitty disables its IME outright for the window (see the kitty fork's
+# agents.md), so unlike a plain input-source switch there is no way to bring it
+# back by hand -- every path into insert mode has to re-enable it explicitly.
+# Hooking the keymap hooks covers all of them (i a o O s S c C R /, visual, ...)
+# without a widget per key.
+#
+# vi-mode.zsh is sourced first and defines these hooks for the cursor shape, so
+# wrap them rather than redefining.
 
-# vi-insert-im() {
-#   enable_ime_cmd
-#   zle vi-insert
-# }
-# zle -N vi-insert-im
-# bindkey -a i vi-insert-im
-#
-# vi-add-eol-im() {
-# $enable_ime_cmd
-# zle vi-add-eol
-# }
-# zle -N vi-add-eol-im
-# bindkey -a A vi-add-eol-im
-#
-# vi-insert-bol-im() {
-# $enable_ime_cmd
-# zle vi-insert-bol
-# }
-# zle -N vi-insert-bol-im
-# bindkey -a I vi-insert-bol-im
-#
-# vi-open-line-above-im() {
-# $enable_ime_cmd
-# zle vi-open-line-above
-# }
-# zle -N vi-open-line-above-im
-# bindkey -a O vi-open-line-above-im
-#
-# vi-open-line-below-im() {
-# $enable_ime_cmd
-# zle vi-open-line-below
-# }
-# zle -N vi-open-line-below-im
-# bindkey -a o vi-open-line-below-im
-#
-# vi-substitute-im() {
-# $enable_ime_cmd
-# zle vi-substitute
-# }
-# zle -N vi-substitute-im
-# bindkey -a s vi-substitute-im
-#
-# vi-change-whole-line-im() {
-# $enable_ime_cmd
-# zle vi-change-whole-line
-# }
-# zle -N vi-change-whole-line-im
-# bindkey -a S vi-change-whole-line-im
-#
-# vi-change-eol-im() {
-# $enable_ime_cmd
-# zle vi-change-eol
-# }
-# zle -N vi-change-eol-im
-# bindkey -a C vi-change-eol-im
+function _vi-im-apply-for-keymap() {
+  # Grouped the same way as _vi-mode-set-cursor-shape-for-keymap
+  case "${1:-${KEYMAP:-main}}" in
+    main|viins|isearch|command) enable_ime_cmd ;;
+    *)                          disable_ime_cmd ;;
+  esac
+}
+
+functions -c zle-keymap-select _vi-im-prev-keymap-select
+function zle-keymap-select() {
+  _vi-im-prev-keymap-select "$@"
+  _vi-im-apply-for-keymap "$KEYMAP"
+}
+zle -N zle-keymap-select
+
+# A fresh prompt always starts in insert mode, and paths like Ctrl-C can skip
+# zle-keymap-select entirely, so re-enable here as the safety net.
+functions -c zle-line-init _vi-im-prev-line-init
+function zle-line-init() {
+  _vi-im-prev-line-init "$@"
+  enable_ime_cmd
+}
+zle -N zle-line-init
+
+# Never leave the IME disabled while a command runs.
+functions -c zle-line-finish _vi-im-prev-line-finish
+function zle-line-finish() {
+  _vi-im-prev-line-finish "$@"
+  enable_ime_cmd
+}
+zle -N zle-line-finish

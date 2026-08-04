@@ -98,6 +98,12 @@ function M.ascii_mode()
   set_ascii_mode(true)
 end
 
+--- Quitting hands the terminal back to the shell, so leave rime in English.
+--- busctl is spawned detached, so it still completes as we go away.
+function M.on_exit()
+  M.ascii_mode()
+end
+
 function M.keeper(enable)
   stop_keeper_timer()
   if not enable then return end
