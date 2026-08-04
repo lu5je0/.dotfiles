@@ -132,14 +132,44 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
   `ThemeImage` 构造函数里画边框的代码包在 `if (!image_) { ... }` 里（`src/ui/classic/theme.cpp`），
   背景图加载成功就永远进不了那个分支。所以**边框也必须烘进 PNG**，
   而且就算能生效也不能用 —— fcitx5 画的是直角边框，和 9-patch 的圆角对不上。
-- **面板背景图用 `themes/gen-panel.sh` 生成**，不要手改。尺寸/圆角/边框颜色都是
-  脚本顶部的参数，两个主题一起重生。两个坑已写进脚本注释：不能用 `-stroke`
-  画 1px 边框（抗锯齿会把不透明度摊到 67%，边框发虚），降采样必须用 `-filter Box`
-  （Lanczos 会振铃，颜色偏）。`Background/Margin` 必须 >= 圆角半径，否则拉伸区切进圆角。
+- **背景图现在是手写 SVG**（`themes/*/panel.svg`、`highlight.svg`），改 `rx` / `fill` 即可，不需要生成脚本。
+  `gen-panel.sh` 和两张 PNG 是旧的位图方案，配置已不引用它们（SVG 在没链 rsvg 的 fcitx5 上
+  也能通过 gdk-pixbuf 显示，见下条），留着只是备查、可删，
+  里面那两个位图坑仍然成立：不能用 `-stroke` 画 1px 边框（抗锯齿把不透明度摊到 67%，发虚），
+  降采样必须 `-filter Box`（Lanczos 会振铃、颜色偏）。
+  `Background/Margin` 无论 PNG 还是 SVG 都必须 >= 圆角半径，否则拉伸区切进圆角。
 - **微信面板的边界感主要靠投影，不是边框**。拿微信输入法截图逐像素量过：
   白底 `#ffffff` 上只有 1px `#dadada` 描边，外侧另有一层约 15px 的投影
   （`#fbfbfb` → `#efefef`，越近面板越深）。只抄那条 `#dadada` 会觉得“几乎看不到边框”，
   要得到同样的轮廓感得把阴影也烘进 PNG（靠四周透明边 + 同比例抬高 `Background/Margin`）。
+- **描边发虚的主因是小数缩放，不是 PNG**。本机 4K + `scale: 1.7`（`~/.config/kwinoutputconfig.json`），
+  1 个逻辑像素的描边 = 1.7 个物理像素，矢量画法一样要抗锯齿 —— 所以从 PNG 换 SVG 时边框看着毫无变化，
+  换掉的只是「圆角弧线被上采样」那部分。实测剖面（暗底→白面板）：`37 → 218(#dadada) → 229 → 255`，
+  里面那行 229 就是 0.7 的覆盖率。
+  要实心整数个物理像素，**SVG 里别用 `stroke`**，改成「外层圆角矩形填边框色 + 内层内缩 `想要的物理像素数 / 缩放`
+  填背景色」：外沿正好压在 9-patch 角块的对齐边界上（`theme.cpp` 把 `gridX/gridY` floor/ceil 到设备像素），
+  剖面就变成 `218 218 218 → 255`。代价是内缩值写死了本机的 1.7，换机器要按 `1/缩放` 重算内层 `rx`。
+  位图路线下换更大的图没用：9-patch 角块永远是「源 = 图里 margin 个像素 → 目标 = 同样数量的逻辑像素」。
+- **SVG 皮肤在哪个 fcitx5 上都能显示，但只有新版才是矢量重绘**。5.1.21 的 `libclassicui.so` 没链 librsvg，
+  可 `Image=*.svg` 依然能用 —— Arch 的 `gdk-pixbuf2` 依赖 **glycin**，SVG 是它支持的格式，
+  所以走的是 `loadImage` 位图路径：**按 SVG 的标称尺寸（32x32）栅格化后再当位图上采样**，
+  边框于是退回发虚。实测面板上边框逐行剖面：
+  位图路径 `218 → 222 → 228 → 244 → 255`，矢量路径 `218 → 218 → 218 → 255`（3 行实心）。
+  要矢量就得 **fcitx5 > 5.1.21**（native SVG 是 2026-07-27 才进 master 的 commit `1f752ec7`，构建时链 librsvg），
+  本机用 AUR `fcitx5-git`。它的两个坑：PKGBUILD 还停在 5.1.19，`depends` 缺 master 新增的 `nlohmann-json`，
+  也缺默认开启的 `USE_SYSTEM_PLASMA_WAYLAND_PROTOCOLS` 所需的 `plasma-wayland-protocols`，
+  这两个不先装就编不过；ABI 没变（Core 7 / Config 6 / Utils 2），所以 `fcitx5-rime` 不用重编。
+  回滚到官方包用缓存里的 `fcitx5-5.1.21` + `xcb-imdkit-1.0.9` 即可，皮肤不用动。
+- **`Highlight/Margin` 是一个键干两件事**：它既是 9-patch 的拉伸边界（所以高亮图的圆角必须 <= 它，
+  否则圆弧被拉伸区切开），也是绿块相对候选文字向外扩张的量（`inputwindow.cpp` 里
+  高亮矩形 = 候选文字盒 ± 该 margin）。**结论：绿块想更圆就必然更胖，反之亦然。**
+  绿块的竖直内边距还额外含一份字体 ascent+descent 与字形墨迹的差（实测约 6 物理像素），
+  这部分调不掉 —— 和 macOS 微信输入法「绿块高度≈行高」比总会略胖一点。
+- **面板留白和候选之间的间距共用 `TextMargin`**：
+  面板边→绿块 = `ContentMargin + TextMargin − Highlight/Margin`，
+  候选间距 = `TextMargin.Left + TextMargin.Right − Highlight/Margin`。
+  想让绿块和面板的圆角看起来「对得上」，按同心圆取：
+  `高亮圆角 = 面板圆角 − 面板边到绿块的间距`（当前 4 = 10 − 6），两条圆弧才平行。
 - 主题未声明 `[AccentColorField]` 时，`UseAccentColor=True` 不会覆盖主题颜色。
 
 ## 本目录之外的相关配置

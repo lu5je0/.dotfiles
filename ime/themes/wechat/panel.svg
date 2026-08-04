@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- 边框画成「外层填边框色 + 内层内缩」而不是 stroke：内缩 1.765 = 3/1.7，
+       1.7 是本机的显示缩放（~/.config/kwinoutputconfig.json），这样描边在设备空间正好
+       3 个物理像素、外沿又贴齐 9-patch 角块的对齐边界，边缘才是实的。
+       用 stroke-width 会让描边跨到半个物理像素上，里侧发虚（实测 218→229→255）。
+       换缩放比例的机器要改：内缩 = 想要的物理像素数 / 缩放，内层 rx = 10 − 内缩。 -->
+  <rect x="0" y="0" width="32" height="32" rx="10" ry="10" fill="#dadada"/>
+  <rect x="1.765" y="1.765" width="28.47" height="28.47" rx="8.235" ry="8.235" fill="#ffffff"/>
+</svg>
