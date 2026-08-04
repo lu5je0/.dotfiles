@@ -27,14 +27,12 @@ end
 
 --- Switch the input source to ASCII, for use on exit.
 ---
---- Best effort on purpose: this is a fire-and-forget write to a child process we
---- own, so on exit it can occasionally be lost. Waiting for the reply would
---- block quitting, and losing it only leaves the input source where it was --
---- still switchable by hand. Also works without setup(), since a backend may
---- talk to the helper for this call alone.
+--- Uses a detached one-shot rather than the interactive helper: on exit a write
+--- to our own child may never flush, and on hosts that do not otherwise run the
+--- helper (kitty, where the terminal handles the IME itself) it would be
+--- cold-spawned only to die immediately.
 function M.ascii_now()
-  local bridge = state.bridge or require('lu5je0.misc.tui-bridge.tui-bridge').singleton()
-  bridge.call('ime', 'normal', {}, { wait_response = false })
+  require('lu5je0.misc.tui-bridge.tui-bridge').call_detached('ime', 'normal')
 end
 
 return M

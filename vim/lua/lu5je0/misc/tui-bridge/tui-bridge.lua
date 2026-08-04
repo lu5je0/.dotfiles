@@ -225,6 +225,26 @@ function M.call(module, method, params, opts)
   return resp.result
 end
 
+--- One-shot request in a detached process.
+---
+--- For exit-time calls: the interactive helper is our child, so a write issued
+--- while quitting may never flush, and on hosts where it is not already running
+--- it would be cold-spawned only to die immediately. A detached one-shot lives
+--- on past us.
+function M.call_detached(module, method, params)
+  if not state.exe_path or vim.fn.executable(state.exe_path) == 0 then
+    return false
+  end
+  local payload = vim.json.encode({
+    id = 1,
+    module = module,
+    method = method,
+    params = params or vim.empty_dict(),
+  })
+  vim.fn.jobstart({ state.exe_path, '-j', payload }, { detach = true })
+  return true
+end
+
 function M.subscribe(event, handler)
   if not state.event_handlers[event] then
     state.event_handlers[event] = {}
