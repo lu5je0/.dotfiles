@@ -1,29 +1,15 @@
 -- Git status output → section trees (Changes / Staged / Unstaged / Untracked).
 local M = {}
 
-local function get_git_root_sync()
-  local result = vim.system({ 'git', 'rev-parse', '--show-toplevel' }, { text = true }):wait()
-  if result.code == 0 and result.stdout then
-    return result.stdout:gsub('%s+$', '')
-  end
-  return vim.fn.getcwd()
-end
-
 local _git_root_cache = {}
-
-local function cached_root_is_valid(cwd, root)
-  if not root or root == '' then return false end
-  if not vim.startswith(cwd, root) then return false end
-  return vim.uv.fs_stat(root .. '/.git') ~= nil
-end
 
 function M.git_root()
   local cwd = vim.fn.getcwd()
   local cached = _git_root_cache[cwd]
-  if cached and cached_root_is_valid(cwd, cached) then
+  if cached and vim.uv.fs_stat(cached .. '/.git') then
     return cached
   end
-  local root = get_git_root_sync()
+  local root = vim.fs.root(cwd, '.git') or cwd
   _git_root_cache[cwd] = root
   return root
 end
