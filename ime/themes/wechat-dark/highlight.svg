@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <!-- rx 必须 <= theme.conf 的 Highlight/Margin（=4），否则圆弧被 9-patch 的拉伸区切开。
+       4 是按同心圆算的：面板圆角 10 − 绿块到面板边的间距 6，这样两条圆弧平行、看起来才对得上。 -->
+  <rect x="0" y="0" width="20" height="20" rx="4" ry="4" fill="#00b175"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- 同浅色 panel.svg：内缩 1.765 = 3/1.7（本机显示缩放），描边在设备空间正好 3 个物理像素。
+       换机器要改：内缩 = 想要的物理像素数 / 缩放，内层 rx = 10 − 内缩。 -->
+  <rect x="0" y="0" width="32" height="32" rx="10" ry="10" fill="#4a4e53"/>
+  <rect x="1.765" y="1.765" width="28.47" height="28.47" rx="8.235" ry="8.235" fill="#25292e"/>
+</svg>
