@@ -33,16 +33,15 @@ local function keeper_disabled_here()
 end
 
 local function select_backend_module()
+  if vim.env.TERM == 'xterm-kitty' then
+    return 'lu5je0.misc.ime.osc.backend'
+  end
   if vim.fn.has('wsl') == 1 then
     return 'lu5je0.misc.ime.tui-bridge.backend'
   end
   if vim.fn.has('mac') == 1 then
-    if vim.env.TERM == 'xterm-kitty' then
-      return 'lu5je0.misc.ime.osc.backend'
-    else
-      -- return 'lu5je0.misc.ime.tui-bridge.backend'
-      return 'lu5je0.misc.ime.mac.backend'
-    end
+    -- return 'lu5je0.misc.ime.tui-bridge.backend'
+    return 'lu5je0.misc.ime.mac.backend'
   end
   if vim.fn.has('linux') == 1 and not vim.env.SSH_TTY then
     return 'lu5je0.misc.ime.tui-bridge.backend'
