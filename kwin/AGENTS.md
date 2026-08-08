@@ -22,6 +22,7 @@ qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start
 | Ctrl+Meta+I | center_i 布局（大） |
 | Ctrl+Meta+J | center_j 布局（小） |
 | Ctrl+Meta+K | 最大化 |
+| Alt+M | 最小化当前窗口 |
 | Ctrl+Meta+T | 切换置顶 |
 | Ctrl+Meta+W | 输出窗口信息到 journal |
 | Ctrl+Meta+R | 重载脚本（DBus 卸载 + 加载 + 启动） |

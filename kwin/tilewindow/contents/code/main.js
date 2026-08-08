@@ -235,6 +235,13 @@ registerShortcut("TileWindow: Window Info", "TileWindow: Window Info", "Ctrl+Met
     console.log("TileWindow: X:" + geo.x + " Y:" + geo.y + " W:" + geo.width + " H:" + geo.height + " | " + client.resourceClass + " | Area:" + area.width + "x" + area.height);
 });
 
+// Alt+M: minimize active window
+registerShortcut("TileWindow: Minimize", "TileWindow: Minimize", "Alt+M", function() {
+    const client = workspace.activeWindow;
+    if (!client || !client.normalWindow) return;
+    client.minimized = true;
+});
+
 // Ctrl+Meta+R: reload script (unload + load + start via DBus)
 registerShortcut("TileWindow: Reload", "TileWindow: Reload", "Ctrl+Meta+R", function() {
     const scriptPath = "/home/lu5je0/.local/share/kwin/scripts/tilewindow/contents/code/main.js";
