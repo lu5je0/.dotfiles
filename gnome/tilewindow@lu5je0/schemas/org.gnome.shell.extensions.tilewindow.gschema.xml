@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.tilewindow" path="/org/gnome/shell/extensions/tilewindow/">
+    <key name="snap-left" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;h']</default>
+      <summary>Snap left with swap</summary>
+    </key>
+    <key name="snap-right" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;l']</default>
+      <summary>Snap right with swap</summary>
+    </key>
+    <key name="center-i" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;i']</default>
+      <summary>Center layout (large)</summary>
+    </key>
+    <key name="center-j" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;j']</default>
+      <summary>Center layout (medium)</summary>
+    </key>
+    <key name="maximize-window" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;k']</default>
+      <summary>Maximize window</summary>
+    </key>
+    <key name="toggle-above" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;t']</default>
+      <summary>Toggle always on top</summary>
+    </key>
+    <key name="window-info" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;w']</default>
+      <summary>Log window info</summary>
+    </key>
+  </schema>
+</schemalist>

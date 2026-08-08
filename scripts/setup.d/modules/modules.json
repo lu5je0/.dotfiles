@@ -99,6 +99,14 @@
     "os": ["linux"]
   },
   {
+    "name": "gnome-tilewindow",
+    "action": "install",
+    "desc": "GNOME Shell tilewindow extension (symlink + enable)",
+    "script": "unix/gnome-tilewindow.sh",
+    "checks": [{ "link": "~/.local/share/gnome-shell/extensions/tilewindow@lu5je0" }],
+    "os": ["linux"]
+  },
+  {
     "name": "keyd",
     "action": "symlink",
     "desc": "keyd config → /etc/keyd/default.conf (needs sudo)",

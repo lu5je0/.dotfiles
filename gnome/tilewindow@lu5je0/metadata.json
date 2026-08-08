@@ -1,0 +1,7 @@
+{
+    "uuid": "tilewindow@lu5je0",
+    "name": "TileWindow",
+    "description": "Window tiling shortcuts (port of the KWin tilewindow script)",
+    "shell-version": ["48", "49", "50"],
+    "settings-schema": "org.gnome.shell.extensions.tilewindow"
+}
