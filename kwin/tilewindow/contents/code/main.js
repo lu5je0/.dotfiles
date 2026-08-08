@@ -234,3 +234,19 @@ registerShortcut("TileWindow: Window Info", "TileWindow: Window Info", "Ctrl+Met
     const area = getWorkArea(client);
     console.log("TileWindow: X:" + geo.x + " Y:" + geo.y + " W:" + geo.width + " H:" + geo.height + " | " + client.resourceClass + " | Area:" + area.width + "x" + area.height);
 });
+
+// Ctrl+Meta+R: reload script (unload + load + start via DBus)
+registerShortcut("TileWindow: Reload", "TileWindow: Reload", "Ctrl+Meta+R", function() {
+    const scriptPath = "/home/lu5je0/.local/share/kwin/scripts/tilewindow/contents/code/main.js";
+    const conn = QDBusConnection.sessionBus();
+
+    function dbusCall(method, args) {
+        const msg = QDBusMessage.createMethodCall("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", method);
+        msg.arguments = args;
+        conn.send(msg);
+    }
+
+    dbusCall("unloadScript", ["tilewindow"]);
+    dbusCall("loadScript", [scriptPath, "tilewindow"]);
+    dbusCall("start", []);
+});
