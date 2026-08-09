@@ -241,19 +241,3 @@ registerShortcut("TileWindow: Minimize", "TileWindow: Minimize", "Alt+M", functi
     if (!client || !client.normalWindow) return;
     client.minimized = true;
 });
-
-// Ctrl+Meta+R: reload script (unload + load + start via DBus)
-registerShortcut("TileWindow: Reload", "TileWindow: Reload", "Ctrl+Meta+R", function() {
-    const scriptPath = "/home/lu5je0/.local/share/kwin/scripts/tilewindow/contents/code/main.js";
-    const conn = QDBusConnection.sessionBus();
-
-    function dbusCall(method, args) {
-        const msg = QDBusMessage.createMethodCall("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", method);
-        msg.arguments = args;
-        conn.send(msg);
-    }
-
-    dbusCall("unloadScript", ["tilewindow"]);
-    dbusCall("loadScript", [scriptPath, "tilewindow"]);
-    dbusCall("start", []);
-});

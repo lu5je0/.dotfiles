@@ -1,9 +1,26 @@
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-// Layout config: wmClass (lowercase) -> position -> fn(sw, sh) => {x, y, width, height}
+// Set in enable() to <extension dir>/layout.json; read on every keypress so
+// sizes can be tuned live without reloading the shell
+let configPath = null;
+
+function loadFileConfig() {
+    if (!configPath)
+        return null;
+    try {
+        const [, contents] = Gio.File.new_for_path(configPath).load_contents(null);
+        return JSON.parse(new TextDecoder().decode(contents));
+    } catch {
+        return null;
+    }
+}
+
+// Built-in fallback layout; per-app sizes in layout.json (extension dir) take precedence
 const layoutConfig = {
     'default': {
         'center_i': (sw, sh) => {
@@ -14,18 +31,6 @@ const layoutConfig = {
         'center_j': (sw, sh) => {
             const w = Math.round(sw * 3 / 5);
             const h = Math.round(sh * 17 / 20);
-            return {width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2)};
-        },
-    },
-    'kitty': {
-        'center_i': (sw, sh) => {
-            const w = 1760 * (1.66 / 1.7);
-            const h = 1197 * (1.66 / 1.7);
-            return {width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2)};
-        },
-        'center_j': (sw, sh) => {
-            const w = 1140 * (1.66 / 1.7);
-            const h = 973 * (1.66 / 1.7);
             return {width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2)};
         },
     },
@@ -44,16 +49,26 @@ function isNormal(win) {
 }
 
 function getCenterLayout(wmClass, position, sw, sh) {
-    const key = layoutConfig[wmClass] ? wmClass : 'default';
-    const appMap = layoutConfig[key];
+    const fileConfig = loadFileConfig();
+    const entry = fileConfig?.[wmClass]?.[position] ?? fileConfig?.['default']?.[position];
+    if (entry?.width > 0 && entry.height > 0) {
+        const w = entry.width;
+        const h = entry.height;
+        const x = entry.x ?? Math.round((sw - w) / 2);
+        const y = entry.y ?? Math.round((sh - h) / 2);
+        return {width: w, height: h, x, y};
+    }
+
+    const appMap = layoutConfig[wmClass] ?? layoutConfig['default'];
     if (!appMap[position])
         return null;
     return appMap[position](sw, sh);
 }
 
 function getSideRect(side, area) {
-    const w = 1139;
-    const h = 1218;
+    const sideConfig = loadFileConfig()?.['side'];
+    const w = sideConfig?.width ?? 1139;
+    const h = sideConfig?.height ?? 1218;
     const halfWidth = area.width / 2;
     const x = (side === 'left')
         ? area.x + Math.round((halfWidth - w) / 2)
@@ -191,6 +206,7 @@ export default class TileWindowExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._names = [];
+        configPath = GLib.build_filenamev([this.path, 'layout.json']);
 
         const bind = (name, handler) => {
             Main.wm.addKeybinding(name, this._settings,

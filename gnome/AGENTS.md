@@ -1,6 +1,7 @@
 # GNOME TileWindow Extension
 
-GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑保持一致（含 `layoutConfig` 的 kitty 专属尺寸）。
+GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑保持一致。
+窗口尺寸不再写死在代码里，而是放在 `tilewindow@lu5je0/layout.json`，每次按键实时读取。
 
 目录即扩展本体：`tilewindow@lu5je0/`，通过 symlink 安装到
 `~/.local/share/gnome-shell/extensions/tilewindow@lu5je0`（setup 模块 `gnome-tilewindow`）。
@@ -19,8 +20,23 @@ GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑�
 与 kwin 版一致：Ctrl+Super + H/L（贴边交换）、I/J（居中大/小）、K（最大化）、T（置顶）、W（窗口信息到 journal）。
 快捷键定义在 gschema 里，可用 dconf 改（`/org/gnome/shell/extensions/tilewindow/`）。
 
+## layout.json
+
+按 wmClass（小写）配置居中尺寸，`side` 配置左右贴边尺寸，示例见 `tilewindow@lu5je0/layout.json`：
+
+```json
+{
+    "side": { "width": 1139, "height": 1218 },
+    "kitty": { "center_j": { "width": 1113, "height": 950 } }
+}
+```
+
+- 每次按键实时读取，改完立即生效，无需注销
+- 查找顺序：`<wmClass>` -> `default` -> 代码内置 fallback
+- 条目只写 `width`/`height` 时自动居中，可选 `x`/`y` 指定相对 workArea 的偏移
+- 内置 fallback 与 `kwin/tilewindow/contents/code/main.js` 的 `layoutConfig` 保持同步
+
 ## 注意
 
-- `layoutConfig` 改动需与 `kwin/tilewindow/contents/code/main.js` 保持同步
 - 匹配 key 用 `get_wm_class()` 小写（kwin 侧是 `resourceClass`）
 - mutter-18 的 `maximize()/unmaximize()` 无参数（旧版 MaximizeFlags 已移除）
