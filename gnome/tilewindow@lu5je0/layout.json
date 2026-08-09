@@ -1,7 +1,16 @@
 {
-    "side": { "width": 1139, "height": 1218 },
-    "kitty": {
-        "center_i": { "width": 1716, "height": 1165 },
-        "center_j": { "width": 1113, "height": 944 }
+  "side": {
+    "width": 1134,
+    "height": 1243
+  },
+  "kitty": {
+    "center_i": {
+      "width": 1731,
+      "height": 1152
+    },
+    "center_j": {
+      "width": 1113,
+      "height": 947
     }
+  }
 }
