@@ -115,6 +115,18 @@
     "os": ["linux"]
   },
   {
+    "name": "nas-mount",
+    "action": "install",
+    "desc": "NAS CIFS automount → /etc/fstab (needs sudo)",
+    "script": "unix/nas-mount.sh",
+    "checks": [
+      { "exists": "/run/systemd/generator/mnt-st2000.automount" },
+      { "exists": "/run/systemd/generator/mnt-mg08.automount" },
+      { "exists": "/run/systemd/generator/mnt-share.automount" }
+    ],
+    "os": ["linux"]
+  },
+  {
     "name": "wezterm-win",
     "action": "link",
     "desc": "WezTerm config (Windows side junction)",
