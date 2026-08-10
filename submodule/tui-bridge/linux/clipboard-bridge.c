@@ -26,6 +26,8 @@
 #include "ext-data-control-v1-client-protocol.h"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 
+#include "clipboard-x11.h"
+
 #include "../bridge-status.h"
 #include "../clipboard-bridge.h"
 
@@ -835,20 +837,28 @@ int bridge_clipboard_output(const char *eol, char **text_out) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
 
-  if (!ensure_clip_init()) {
-    return BRIDGE_STATUS_FAILED;
-  }
-
-  char *text = NULL;
-  int status = submit_cmd(CMD_OUTPUT, NULL, &text);
-  if (status != BRIDGE_STATUS_OK || !text) {
+  if (ensure_clip_init()) {
+    char *text = NULL;
+    int status = submit_cmd(CMD_OUTPUT, NULL, &text);
+    if (status == BRIDGE_STATUS_OK && text) {
+      normalize_lf_inplace(text);
+      *text_out = text;
+      return BRIDGE_STATUS_OK;
+    }
     free(text);
-    return BRIDGE_STATUS_FAILED;
   }
 
-  normalize_lf_inplace(text);
-  *text_out = text;
-  return BRIDGE_STATUS_OK;
+  if (x11_clipboard_available()) {
+    int status = x11_clipboard_output(text_out);
+    if (status == BRIDGE_STATUS_OK && *text_out) {
+      normalize_lf_inplace(*text_out);
+      return BRIDGE_STATUS_OK;
+    }
+    free(*text_out);
+    *text_out = NULL;
+  }
+
+  return BRIDGE_STATUS_FAILED;
 }
 
 int bridge_clipboard_input(const char *text) {
@@ -856,9 +866,19 @@ int bridge_clipboard_input(const char *text) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
 
-  if (!ensure_clip_init()) {
-    return BRIDGE_STATUS_FAILED;
+  if (ensure_clip_init()) {
+    int status = submit_cmd(CMD_INPUT, text, NULL);
+    if (status == BRIDGE_STATUS_OK) {
+      return BRIDGE_STATUS_OK;
+    }
   }
 
-  return submit_cmd(CMD_INPUT, text, NULL);
+  if (x11_clipboard_available()) {
+    int status = x11_clipboard_input(text);
+    if (status == BRIDGE_STATUS_OK) {
+      return BRIDGE_STATUS_OK;
+    }
+  }
+
+  return BRIDGE_STATUS_FAILED;
 }

@@ -53,6 +53,7 @@ build_linux() {
     "tui-bridge.c"
     "linux/im.c"
     "linux/clipboard-bridge.c"
+    "linux/clipboard-x11.c"
     "linux/platform.c"
     "linux/gen/wlr-data-control-unstable-v1-protocol.c"
     "linux/gen/ext-data-control-v1-protocol.c"
@@ -71,7 +72,7 @@ build_linux() {
     "${gen_dir}/ext-data-control-v1-protocol.c"
 
   gcc "${sources[@]}" -o "${out}" "${cflags[@]}" \
-    $(pkg-config --cflags --libs dbus-1 wayland-client) -lpthread
+    $(pkg-config --cflags --libs dbus-1 wayland-client x11) -lpthread
   sync_to_bin "${out}" "${bin_out}"
 }
 
