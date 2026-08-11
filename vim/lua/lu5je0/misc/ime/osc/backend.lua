@@ -12,13 +12,21 @@ local function write(osc)
   io.stderr:write(osc)
 end
 
+-- tmux consumes OSC 1337 instead of forwarding it, so inside tmux the escape has
+-- to travel in a DCS passthrough wrapper with every inner ESC doubled. Requires
+-- `set -g allow-passthrough on` (tmux/tmux.conf).
+local function tmux_wrap(osc)
+  return '\27Ptmux;' .. (osc:gsub('\27', '\27\27')) .. '\27\\'
+end
+
 -- There are only ever two payloads, so encode them once instead of formatting
 -- and base64-ing the same strings on every mode change.
 local OSC = {}
 for _, method in ipairs({ 'normal', 'insert' }) do
   local payload = string.format('{"id":1,"module":"ime","method":"%s","params":{}}', method)
-  OSC[method] = string.format('\27]1337;SetUserVar=tui-bridge=%s\7',
+  local osc = string.format('\27]1337;SetUserVar=tui-bridge=%s\7',
     require('lu5je0.misc.base64').encode(payload))
+  OSC[method] = vim.env.TMUX and tmux_wrap(osc) or osc
 end
 
 -- Read once: an env var cannot change mid-session, and vim.env goes through a

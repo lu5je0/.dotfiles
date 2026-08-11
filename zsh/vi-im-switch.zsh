@@ -7,11 +7,22 @@ if [[ -n $WSL_DISTRO_NAME ]]; then
   }
 # elif [[ $UNAME_INFO =~ "Darwin" ]]; then
 else
+  _ime_osc_normal=$'\033]1337;SetUserVar=tui-bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoibm9ybWFsIiwicGFyYW1zIjp7fX0=\007'
+  _ime_osc_insert=$'\033]1337;SetUserVar=tui-bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoiaW5zZXJ0IiwicGFyYW1zIjp7fX0=\007'
+
+  # tmux consumes OSC 1337 instead of forwarding it, so inside tmux the escape has
+  # to travel in a DCS passthrough wrapper with every inner ESC doubled. Requires
+  # `set -g allow-passthrough on` (tmux/tmux.conf).
+  if [[ -n $TMUX ]]; then
+    _ime_osc_normal=$'\033Ptmux;'${_ime_osc_normal//$'\033'/$'\033\033'}$'\033\\'
+    _ime_osc_insert=$'\033Ptmux;'${_ime_osc_insert//$'\033'/$'\033\033'}$'\033\\'
+  fi
+
   function disable_ime_cmd {
-    printf "\033]1337;SetUserVar=tui-bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoibm9ybWFsIiwicGFyYW1zIjp7fX0=\007"
+    print -rn -- $_ime_osc_normal
   }
   function enable_ime_cmd {
-    printf "\033]1337;SetUserVar=tui-bridge=eyJpZCI6MSwibW9kdWxlIjoiaW1lIiwibWV0aG9kIjoiaW5zZXJ0IiwicGFyYW1zIjp7fX0=\007"
+    print -rn -- $_ime_osc_insert
   }
 fi
 

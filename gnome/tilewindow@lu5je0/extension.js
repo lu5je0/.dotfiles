@@ -36,8 +36,24 @@ const layoutConfig = {
     },
 };
 
+// Autohide docks (dash-to-dock with dock-fixed=false) set no struts, so mutter's
+// work area still spans under them; `insets` in layout.json trims that back
 function getWorkArea(win) {
-    return win.get_work_area_current_monitor();
+    const area = win.get_work_area_current_monitor();
+    const insets = loadFileConfig()?.['insets'];
+    if (!insets)
+        return area;
+
+    const top = insets.top ?? 0;
+    const bottom = insets.bottom ?? 0;
+    const left = insets.left ?? 0;
+    const right = insets.right ?? 0;
+    return {
+        x: area.x + left,
+        y: area.y + top,
+        width: Math.max(1, area.width - left - right),
+        height: Math.max(1, area.height - top - bottom),
+    };
 }
 
 function getWmClass(win) {

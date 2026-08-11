@@ -34,6 +34,9 @@ GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑�
 - 每次按键实时读取，改完立即生效，无需注销
 - 查找顺序：`<wmClass>` -> `default` -> 代码内置 fallback
 - 条目只写 `width`/`height` 时自动居中，可选 `x`/`y` 指定相对 workArea 的偏移
+- `insets`（可选，`top`/`bottom`/`left`/`right`）从 mutter workArea 里再扣掉一圈：顶栏本身已由 struts 排除，
+  但自动隐藏的 dash-to-dock（`dock-fixed=false`）不设 struts，需要用 `bottom` 手动预留其高度。
+  对居中与左右贴边都生效
 - 内置 fallback 与 `kwin/tilewindow/contents/code/main.js` 的 `layoutConfig` 保持同步
 
 ## 注意
