@@ -982,6 +982,14 @@ local plugins = {
     end
   },
   
+  {
+    "monkoose/matchparen.nvim",
+    config = function()
+      require("matchparen").setup()
+    end,
+    event = { 'CursorHold', 'VeryLazy' }
+  },
+  
 }
 
 require('lu5je0.ext.lazy_patch').setup(plugins)

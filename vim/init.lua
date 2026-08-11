@@ -28,7 +28,3 @@ for _, module in ipairs(core_modules) do
     vim.notify('Error loading ' .. module .. '\n\n' .. err)
   end
 end
-
-vim.defer_fn(function()
-  vim.cmd('runtime plugin/matchparen.vim')
-end, 100)
