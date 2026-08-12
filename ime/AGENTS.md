@@ -1,6 +1,6 @@
 # 输入法（IM）工作指引
 
-fcitx5 / Squirrel / Weasel + Rime（雾凇拼音）的全部配置集中在本目录。
+fcitx5 / Squirrel + Rime（雾凇拼音）的全部配置集中在本目录。
 
 ## 目录职责
 
@@ -12,7 +12,6 @@ fcitx5 / Squirrel / Weasel + Rime（雾凇拼音）的全部配置集中在本�
 | `autostart/*.desktop` | `~/.config/autostart/` | 单文件 |
 | `themes/<name>/` | `~/.local/share/fcitx5/themes/<name>` | 整目录 |
 | `install.sh` | Linux / macOS 安装入口 | — |
-| `install.bat` | Windows（Weasel）安装入口 | — |
 
 `install.sh` 另外还写 `kwinrc` 的 `[Wayland] InputMethod`（见下）。
 
@@ -53,8 +52,8 @@ git fetch --depth 1 origin && git reset --hard origin/HEAD
 生成一份覆盖并追加 flag，但那意味着每次重跑都 `rm -f` 后重写，会吞掉手改内容；
 现在这些文件完全由你手动维护，dotfiles 不接管。
 
-安装由 `scripts/setup.d/modules/{unix,win}/modules.json` 的 `rime-ime` 模块触发，
-分别调用 `ime/install.sh` 与 `ime/install.bat`（对应 `rime-ime.sh`）。脚本幂等，可重复执行。
+安装由 `scripts/setup.d/modules/modules.json` 的 `rime-ime` 模块触发，
+调用 `ime/install.sh`。脚本幂等，可重复执行。
 
 ## 为什么 link 方式不统一
 
@@ -109,12 +108,11 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
 
 ## 候选框皮肤
 
-三个平台的皮肤是三套完全独立的配置，改一处不会影响另两处：
+两个平台的皮肤是两套完全独立的配置，改一处不会影响另一处：
 
 | 平台 | 前端 | 皮肤配置 |
 |---|---|---|
 | Linux | fcitx5 classicui | `fcitx5/conf/classicui.conf` + `themes/` |
-| Windows | Weasel | `rime/weasel.custom.yaml` |
 | macOS | Squirrel | `rime/squirrel.custom.yaml` |
 
 坑：

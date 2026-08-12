@@ -157,22 +157,5 @@
     "script": "win/neovide.sh",
     "checks": [{ "link": "$WIN_HOME/AppData/Roaming/neovide/config.toml" }],
     "os": ["win"]
-  },
-  {
-    "name": "rime-ime-win",
-    "action": "install",
-    "desc": "Weasel + Rime, shallow-clone rime-ice (ime/install.bat)",
-    "script": "win/rime-ime.sh",
-    "vars": {
-      "RIME_DIR": "$WIN_HOME/AppData/Roaming/Rime"
-    },
-    "checks": [
-      { "link": "$RIME_DIR/rime_ice.custom.yaml" },
-      { "link": "$RIME_DIR/rime.lua" },
-      { "link": "$RIME_DIR/custom_phrase.txt" },
-      { "exists": "$RIME_DIR/rime-ice/default.yaml" },
-      { "exists": "$RIME_DIR/cn_dicts" }
-    ],
-    "os": ["win"]
   }
 ]
