@@ -21,6 +21,10 @@
       <default>['&lt;Control&gt;&lt;Super&gt;k']</default>
       <summary>Maximize window</summary>
     </key>
+    <key name="minimize-window" type="as">
+      <default>['&lt;Alt&gt;m']</default>
+      <summary>Minimize window</summary>
+    </key>
     <key name="toggle-above" type="as">
       <default>['&lt;Control&gt;&lt;Super&gt;t']</default>
       <summary>Toggle always on top</summary>

@@ -36,10 +36,55 @@ const layoutConfig = {
     },
 };
 
+const DOCK_ACTOR_NAME = 'dashtodockContainer';
+
 // Autohide docks (dash-to-dock with dock-fixed=false) set no struts, so mutter's
-// work area still spans under them; `insets` in layout.json trims that back
+// work area still spans under them. dash-to-dock keeps the geometry the dock
+// occupies when shown in `staticBox`, which stays valid while it is slid out.
+function getDockRects() {
+    const rects = [];
+    for (const actor of Main.layoutManager.uiGroup.get_children()) {
+        if (actor.name !== DOCK_ACTOR_NAME || !actor.visible)
+            continue;
+        const box = actor.staticBox ?? actor.get_allocation_box();
+        const width = box.x2 - box.x1;
+        const height = box.y2 - box.y1;
+        if (width > 0 && height > 0)
+            rects.push({x: box.x1, y: box.y1, width, height});
+    }
+    return rects;
+}
+
+// Push `area` out of `rect`, cutting only the edge the dock hugs. A fixed dock
+// already sets struts, so its rect no longer overlaps and nothing is cut; same
+// goes for a dock living on another monitor
+function trimAreaByRect(area, rect) {
+    const ax2 = area.x + area.width;
+    const ay2 = area.y + area.height;
+    const rx2 = rect.x + rect.width;
+    const ry2 = rect.y + rect.height;
+    const overlapX = Math.min(ax2, rx2) - Math.max(area.x, rect.x);
+    const overlapY = Math.min(ay2, ry2) - Math.max(area.y, rect.y);
+    if (overlapX <= 0 || overlapY <= 0)
+        return area;
+
+    // the dock's thin axis tells left/right apart from top/bottom
+    if (overlapX <= overlapY) {
+        if (rect.x - area.x <= ax2 - rx2)
+            return {x: rx2, y: area.y, width: Math.max(1, ax2 - rx2), height: area.height};
+        return {x: area.x, y: area.y, width: Math.max(1, rect.x - area.x), height: area.height};
+    }
+    if (rect.y - area.y <= ay2 - ry2)
+        return {x: area.x, y: ry2, width: area.width, height: Math.max(1, ay2 - ry2)};
+    return {x: area.x, y: area.y, width: area.width, height: Math.max(1, rect.y - area.y)};
+}
+
 function getWorkArea(win) {
-    const area = win.get_work_area_current_monitor();
+    let area = win.get_work_area_current_monitor();
+    for (const rect of getDockRects())
+        area = trimAreaByRect(area, rect);
+
+    // optional manual trim on top of the detected docks
     const insets = loadFileConfig()?.['insets'];
     if (!insets)
         return area;
@@ -64,6 +109,14 @@ function isNormal(win) {
     return win.window_type === Meta.WindowType.NORMAL;
 }
 
+// Fullscreen clients (games etc.) are left alone entirely
+function getTargetWindow() {
+    const win = global.display.get_focus_window();
+    if (!win || !isNormal(win) || win.is_fullscreen())
+        return null;
+    return win;
+}
+
 function getCenterLayout(wmClass, position, sw, sh) {
     const fileConfig = loadFileConfig();
     const entry = fileConfig?.[wmClass]?.[position] ?? fileConfig?.['default']?.[position];
@@ -83,12 +136,15 @@ function getCenterLayout(wmClass, position, sw, sh) {
 
 function getSideRect(side, area) {
     const sideConfig = loadFileConfig()?.['side'];
-    const w = sideConfig?.width ?? 1139;
     const h = sideConfig?.height ?? 1218;
-    const halfWidth = area.width / 2;
+    const padding = sideConfig?.padding ?? 0;
+    // `padding` is kept on both outer edges and again in the middle, so the two
+    // halves never overlap no matter how wide `width` is configured
+    const maxWidth = Math.max(1, Math.floor((area.width - 3 * padding) / 2));
+    const w = Math.min(sideConfig?.width ?? 1139, maxWidth);
     const x = (side === 'left')
-        ? area.x + Math.round((halfWidth - w) / 2)
-        : area.x + Math.round(halfWidth) + Math.round((halfWidth - w) / 2);
+        ? area.x + padding
+        : area.x + area.width - padding - w;
     const y = area.y + Math.round((area.height - h) / 2);
     return {x, y, width: w, height: h};
 }
@@ -97,6 +153,7 @@ function listCandidates(excludeWin) {
     return global.workspace_manager.get_active_workspace().list_windows()
         .filter(w => w !== excludeWin &&
             !w.minimized &&
+            !w.is_fullscreen() &&
             isNormal(w) &&
             w.get_monitor() === excludeWin.get_monitor());
 }
@@ -112,7 +169,9 @@ function findOtherWindowOnSide(side, area, excludeWin) {
     return listCandidates(excludeWin).find(w => isWindowSnappedTo(w, side, area)) ?? null;
 }
 
-function findFullscreenWindow(area, excludeWin) {
+// Catches an already spread-out window (maximized or nearly so) that should be
+// pushed aside; true fullscreen windows are filtered out by listCandidates()
+function findCoveringWindow(area, excludeWin) {
     const waArea = area.width * area.height;
     if (waArea <= 0)
         return null;
@@ -135,8 +194,6 @@ function findOtherWindowAtRect(rx, ry, rw, rh, excludeWin) {
     const targetCy = ry + rh / 2;
     const centerTolerance = 30;
     return listCandidates(excludeWin).find(w => {
-        if (w.is_fullscreen())
-            return false;
         const area = w.get_work_area_current_monitor();
         const geo = w.get_frame_rect();
         if (geo.width >= area.width && geo.height >= area.height)
@@ -149,14 +206,16 @@ function findOtherWindowAtRect(rx, ry, rw, rh, excludeWin) {
     }) ?? null;
 }
 
+// A fullscreen window ignores move_resize_frame(), but those never reach here:
+// getTargetWindow() and listCandidates() both filter them out
 function moveWindowTo(win, geo) {
     win.unmaximize();
     win.move_resize_frame(true, geo.x, geo.y, geo.width, geo.height);
 }
 
 function resizeWindow(position) {
-    const client = global.display.get_focus_window();
-    if (!client || !isNormal(client))
+    const client = getTargetWindow();
+    if (!client)
         return;
 
     const area = getWorkArea(client);
@@ -201,8 +260,8 @@ function resizeWindow(position) {
 }
 
 function snapWithSwap(side) {
-    const client = global.display.get_focus_window();
-    if (!client || !isNormal(client))
+    const client = getTargetWindow();
+    if (!client)
         return;
 
     const area = getWorkArea(client);
@@ -210,7 +269,7 @@ function snapWithSwap(side) {
 
     let occupier = findOtherWindowOnSide(side, area, client);
     if (!occupier)
-        occupier = findFullscreenWindow(area, client);
+        occupier = findCoveringWindow(area, client);
 
     if (occupier)
         moveWindowTo(occupier, getSideRect(otherSide, area));
@@ -237,14 +296,20 @@ export default class TileWindowExtension extends Extension {
         bind('center-i', () => resizeWindow('center_i'));
         bind('center-j', () => resizeWindow('center_j'));
         bind('maximize-window', () => {
-            const client = global.display.get_focus_window();
-            if (!client || !isNormal(client))
+            const client = getTargetWindow();
+            if (!client)
                 return;
             client.maximize();
         });
+        bind('minimize-window', () => {
+            const client = getTargetWindow();
+            if (!client)
+                return;
+            client.minimize();
+        });
         bind('toggle-above', () => {
-            const client = global.display.get_focus_window();
-            if (!client || !isNormal(client))
+            const client = getTargetWindow();
+            if (!client)
                 return;
             if (client.is_above())
                 client.unmake_above();
@@ -257,7 +322,10 @@ export default class TileWindowExtension extends Extension {
                 return;
             const geo = client.get_frame_rect();
             const area = getWorkArea(client);
-            console.log(`TileWindow: X:${geo.x} Y:${geo.y} W:${geo.width} H:${geo.height} | ${getWmClass(client)} | Area:${area.width}x${area.height}`);
+            const docks = getDockRects()
+                .map(r => `${r.width}x${r.height}+${r.x}+${r.y}`)
+                .join(' ') || 'none';
+            console.log(`TileWindow: X:${geo.x} Y:${geo.y} W:${geo.width} H:${geo.height} | ${getWmClass(client)} | Area:${area.width}x${area.height}+${area.x}+${area.y} | Dock:${docks}`);
         });
     }
 

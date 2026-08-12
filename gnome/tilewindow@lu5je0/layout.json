@@ -1,10 +1,8 @@
 {
-  "insets": {
-    "bottom": 56
-  },
   "side": {
     "width": 1134,
-    "height": 1243
+    "height": 1243,
+    "padding": 16
   },
   "kitty": {
     "center_i": {
