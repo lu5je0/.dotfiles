@@ -11,13 +11,6 @@
   { "name": "yazi", "source": "yazi", "target": "~/.config/yazi" },
   { "name": "kitty", "source": "kitty", "target": "~/.config/kitty" },
   {
-    "name": "alacritty",
-    "action": "link",
-    "desc": "alacritty config (~/.config/alacritty)",
-    "script": "unix/alacritty.sh",
-    "checks": [{ "link": "~/.config/alacritty/alacritty.toml" }]
-  },
-  {
     "name": "q-trash",
     "action": "link",
     "desc": "q-trash → ~/.local/bin",
