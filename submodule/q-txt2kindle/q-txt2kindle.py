@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""q-txt2kindle - 把中文 TXT 小说转成 Kindle 可读的 EPUB(带章节目录)。
+"""q-txt2kindle - 把中文 TXT 小说转成 Kindle 电子书(自动识别编码与章节)。
 
 用法:
   q-txt2kindle *.txt                 # 转当前目录下的小说
@@ -14,6 +14,7 @@ import html
 import os
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import unicodedata
@@ -115,7 +116,9 @@ STRONG_W, WEAK_W = 10, 1
 
 def norm_line(raw):
     line = raw.replace('\t', ' ').replace('\u00a0', ' ')
-    line = ''.join(c for c in line if unicodedata.category(c)[0] != 'C')
+    # 剔除控制类字符；emoji 等非 BMP 字符 MOBI6 无法渲染，会让 Kindle 打开时卡死
+    line = ''.join(c for c in line
+                   if unicodedata.category(c)[0] != 'C' and ord(c) <= 0xffff)
     return line.strip().strip(IDEO_SPACE).strip()
 
 
@@ -464,6 +467,9 @@ def convert(path, args):
     print('\n\x1b[1m%s\x1b[0m' % os.path.basename(path))
     print('  编码: %s%s' % (enc, '' if enc.startswith('utf-8') else '  -> 转 UTF-8'))
     print('  书名: %s   作者: %s' % (title, author))
+    dropped = sum(1 for c in text if ord(c) > 0xffff)
+    if dropped:
+        print('  \x1b[33m剔除 %d 个非 BMP 字符(emoji 等，MOBI6 渲染器会卡死)\x1b[0m' % dropped)
     print('  章节: %d' % len(marks))
     if marks:
         show = marks if args.list_chapters or len(marks) <= 6 else \
@@ -477,31 +483,42 @@ def convert(path, args):
 
     chapters = split_chapters(lines, marks)
     stem = re.sub(r'[/\\:]', '_', title) or 'book'
-    out = os.path.join(args.outdir, stem + '.epub')
-    n = write_epub(out, title, author, chapters, args.keep_noise)
-    print('  \x1b[32m已生成\x1b[0m %s  (目录 %d 项, %.1f MB)'
-          % (out, n, os.path.getsize(out) / 1048576))
+    epub_path = os.path.join(args.outdir, stem + '.epub')
+    n_toc = write_epub(epub_path, title, author, chapters, args.keep_noise)
+    outputs = []
 
-    if args.format != 'epub':
-        conv = shutil.which('ebook-convert')
-        if not conv:
-            print('  \x1b[33m未安装 calibre(ebook-convert)，跳过 %s\x1b[0m' % args.format)
+    def report(target):
+        print('  \x1b[32m已生成\x1b[0m %s  (目录 %d 项, %.1f MB)'
+              % (target, n_toc, os.path.getsize(target) / 1048576))
+        outputs.append(target)
+
+    if args.format in ('epub', 'both'):
+        report(epub_path)
+    if args.format in ('mobi', 'azw3', 'both'):
+        ext = 'azw3' if args.format == 'azw3' else 'mobi'
+        target = os.path.join(args.outdir, stem + '.' + ext)
+        cmd = [shutil.which('ebook-convert'), epub_path, target]
+        if ext == 'mobi':
+            cmd.append('--mobi-file-type=old')   # Kindle 侧载认的是 MOBI6
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        if os.path.exists(target):
+            report(target)
         else:
-            target = os.path.splitext(out)[0] + '.' + args.format
-            subprocess.run([conv, out, target], check=False,
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if os.path.exists(target):
-                print('  \x1b[32m已生成\x1b[0m %s' % target)
-    return out
+            print('  \x1b[31mebook-convert 失败\x1b[0m\n%s' % r.stderr.strip()[:500])
+    if args.format not in ('epub', 'both'):
+        os.remove(epub_path)                     # EPUB 只是中间产物
+    return outputs
 
 
 def main():
     ap = argparse.ArgumentParser(
-        prog='q-txt2kindle', description='中文 TXT 小说 -> Kindle EPUB(自动识别编码与章节)')
+        prog='q-txt2kindle', description='中文 TXT 小说 -> Kindle 电子书(自动识别编码与章节)')
     ap.add_argument('inputs', nargs='+', help='txt 文件或目录')
     ap.add_argument('-o', '--outdir', default='kindle', help='输出目录(默认 ./kindle)')
-    ap.add_argument('-f', '--format', default='epub', choices=['epub', 'azw3', 'mobi'],
-                    help='输出格式，azw3/mobi 需要 calibre')
+    ap.add_argument('-f', '--format', default='mobi',
+                    choices=['mobi', 'azw3', 'epub', 'both'],
+                    help='输出格式(默认 mobi；azw3 排版更好但部分设备不认。'
+                         'mobi/azw3 由 calibre 转换)')
     ap.add_argument('-n', '--dry-run', action='store_true', help='只识别不生成')
     ap.add_argument('-l', '--list-chapters', action='store_true', help='列出全部章节名')
     ap.add_argument('--encoding', help='强制指定源编码，如 gb18030')
@@ -523,6 +540,9 @@ def main():
             print('跳过非 txt: %s' % item, file=sys.stderr)
     if not files:
         sys.exit('没有找到 txt 文件')
+    if args.format != 'epub' and not args.dry_run and not shutil.which('ebook-convert'):
+        sys.exit('mobi/azw3 需要 calibre 的 ebook-convert：sudo pacman -S calibre\n'
+                 '(只要 epub 可以加 -f epub，不依赖 calibre)')
     if not args.dry_run:
         os.makedirs(args.outdir, exist_ok=True)
 

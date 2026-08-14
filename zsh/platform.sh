@@ -73,6 +73,14 @@ if [[ $OSTYPE == linux-gnu* ]]; then
   elif [[ $arch =~ 'aarch64' ]]; then
     export PATH=/home/lu5je0/.dotfiles/bin/linux-aarch64:$PATH
   fi
+
+  # macOS 自带 open，WSL 上面用 explorer.exe 实现，原生 linux 用 xdg-open 补齐
+  # WSL 的 OSTYPE 也是 linux-gnu，这里要跳过，否则会覆盖上面的实现
+  if [[ -z $WSL_DISTRO_NAME ]]; then
+    open() {
+      xdg-open "${1:-.}" >/dev/null 2>&1 &!
+    }
+  fi
 fi
 
 # termux
