@@ -4,7 +4,7 @@
 用法:
   q-txt2kindle *.txt                 # 转当前目录下的小说
   q-txt2kindle novel.txt --dry-run   # 只看识别结果(编码/章节数/章节名)
-  q-txt2kindle novel.txt -o out -f azw3
+  q-txt2kindle novel.txt -o out -f epub
   q-txt2kindle *.txt -j 4              # 4 个文件并发转换
 """
 
@@ -16,7 +16,6 @@ import html
 import os
 import re
 import shutil
-import struct
 import subprocess
 import sys
 import unicodedata
@@ -387,6 +386,7 @@ def write_epub(out_path, title, author, chapters, keep_noise):
 %s
 </manifest>
 <spine toc="ncx">
+<itemref idref="nav" linear="no"/>
 %s
 </spine>
 <guide><reference type="toc" title="目录" href="nav.xhtml"/></guide>
@@ -456,6 +456,19 @@ def split_chapters(lines, marks):
     return chapters
 
 
+def to_mobi(epub_path, target):
+    """epub -> mobi。返回 kindlegen 的输出；成败由调用方看产物是否存在。
+
+    kindlegen 有警告时退出码也是 1，不能拿它判断成败。
+    """
+    # -o 只接受文件名，产物固定落在源 epub 同目录；-c2 huffdic 压缩，
+    # -dont_append_source 不把 epub 塞进成品(省约 20% 体积)
+    r = subprocess.run([shutil.which('kindlegen'), epub_path, '-c2',
+                        '-dont_append_source', '-o', os.path.basename(target)],
+                       capture_output=True, text=True)
+    return r.stdout + r.stderr
+
+
 def convert(path, args):
     """返回 (outputs, log)；并发下由调用方整块打印 log，避免多文件输出穿插。"""
     log = []
@@ -498,17 +511,13 @@ def convert(path, args):
 
     if args.format in ('epub', 'both'):
         report(epub_path)
-    if args.format in ('mobi', 'azw3', 'both'):
-        ext = 'azw3' if args.format == 'azw3' else 'mobi'
-        target = os.path.join(args.outdir, stem + '.' + ext)
-        cmd = [shutil.which('ebook-convert'), epub_path, target]
-        if ext == 'mobi':
-            cmd.append('--mobi-file-type=old')   # Kindle 侧载认的是 MOBI6
-        r = subprocess.run(cmd, capture_output=True, text=True)
+    if args.format in ('mobi', 'both'):
+        target = os.path.join(args.outdir, stem + '.mobi')
+        out = to_mobi(epub_path, target)
         if os.path.exists(target):
             report(target)
         else:
-            log.append('  \x1b[31mebook-convert 失败\x1b[0m\n%s' % r.stderr.strip()[:500])
+            log.append('  \x1b[31mkindlegen 失败\x1b[0m\n%s' % out.strip()[-500:])
     if args.format not in ('epub', 'both'):
         os.remove(epub_path)                     # EPUB 只是中间产物
     return outputs, log
@@ -520,9 +529,8 @@ def main():
     ap.add_argument('inputs', nargs='+', help='txt 文件或目录')
     ap.add_argument('-o', '--outdir', default='kindle', help='输出目录(默认 ./kindle)')
     ap.add_argument('-f', '--format', default='mobi',
-                    choices=['mobi', 'azw3', 'epub', 'both'],
-                    help='输出格式(默认 mobi；azw3 排版更好但部分设备不认。'
-                         'mobi/azw3 由 calibre 转换)')
+                    choices=['mobi', 'epub', 'both'],
+                    help='输出格式(默认 mobi，由 kindlegen 生成；epub 无外部依赖)')
     ap.add_argument('-n', '--dry-run', action='store_true', help='只识别不生成')
     ap.add_argument('-l', '--list-chapters', action='store_true', help='列出全部章节名')
     ap.add_argument('--encoding', help='强制指定源编码，如 gb18030')
@@ -546,9 +554,9 @@ def main():
             print('跳过非 txt: %s' % item, file=sys.stderr)
     if not files:
         sys.exit('没有找到 txt 文件')
-    if args.format != 'epub' and not args.dry_run and not shutil.which('ebook-convert'):
-        sys.exit('mobi/azw3 需要 calibre 的 ebook-convert：sudo pacman -S calibre\n'
-                 '(只要 epub 可以加 -f epub，不依赖 calibre)')
+    if args.format != 'epub' and not args.dry_run and not shutil.which('kindlegen'):
+        sys.exit('mobi 需要 kindlegen：yay -S kindlegen\n'
+                 '(只要 epub 可以加 -f epub，无外部依赖)')
     if not args.dry_run:
         os.makedirs(args.outdir, exist_ok=True)
 
@@ -571,7 +579,7 @@ def main():
     except KeyboardInterrupt:
         ex.shutdown(wait=False, cancel_futures=True)
         print('\n\x1b[33m已取消\x1b[0m (已完成 %d/%d)' % (ok, len(files)), file=sys.stderr)
-        # 正在跑的 ebook-convert 已随 SIGINT 一起收到信号；用 _exit 跳过
+        # 正在跑的 kindlegen 已随 SIGINT 一起收到信号；用 _exit 跳过
         # 解释器退出时对工作线程的 join，否则会再抛一次 KeyboardInterrupt
         sys.stdout.flush()
         sys.stderr.flush()
