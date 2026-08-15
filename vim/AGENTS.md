@@ -123,7 +123,7 @@ ext/tabline/
 ## TUI Bridge 与平台联动
 - `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/ime/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
 - `lua/lu5je0/misc/clipboard/init.lua` 按平台选择后端：SSH 走 OSC52；macOS / WSL / Linux 桌面均走 `clipboard/tui-bridge.lua`（native `tui-bridge` 进程桥接）。
-  - Linux 的 native 实现在 `submodule/tui-bridge/linux/clipboard-bridge.c`：libwayland-client + data-control 协议（优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`），由常驻 `-i` 进程持有 selection。
+  - Linux 的 native 实现在 `submodule/tui-bridge/linux/clipboard-bridge.c`：libwayland-client + data-control 协议（优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`），由常驻 `-i` 进程持有 selection；`clipboard.input` 同时写 regular（CLIPBOARD/`+`）与 primary（`*`）两个 selection，保证 yank 后其他应用中键粘贴可用。
   - 旧的纯 Lua 实现 `wayland.lua`（LuaJIT FFI 手写 Wayland wire 协议）保留在仓库但已不接入，不作为 fallback。注意纯 X11/XWayland 桥接方案在 KWin 上无法粘贴 Wayland 内容(KWin 仅在 X11 窗口获焦时才同步)，故未采用。
 - `bin/macos-arm64/tui-bridge`、`bin/windows-x86_64/tui-bridge` 与 `bin/linux-x86_64/tui-bridge`（仓库顶层 `bin/`，非 `vim/lib`）来自 `submodule/tui-bridge` 构建产物；平台由目录区分，文件名统一为连字符 `tui-bridge`。`lua/lu5je0/misc/tui-bridge/tui-bridge.lua` 直接解析 `~/.dotfiles/bin/<平台-架构>/tui-bridge`，不再走 `core.native`。不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
 - `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下剩余的 native 资源（如 `liblibclipboard.dylib`）；新增落在 `vim/lib/` 的动态库时优先复用这个入口，不要硬编码 `stdpath('config') .. '/lib/...'`。注意 `tui-bridge` 已迁出 `vim/lib`，不再经此解析。

@@ -54,6 +54,7 @@ typedef struct {
   void (*add_source_listener)(void *source, char *text);
   void (*add_offer_listener)(void *offer, mime_list_t *list);
   void (*set_selection)(void *device, void *source);
+  void (*set_primary_selection)(void *device, void *source);
   void (*source_offer)(void *source, const char *mime);
   void (*offer_receive)(void *offer, const char *mime, int fd);
   void (*offer_destroy)(void *offer);
@@ -80,6 +81,11 @@ static void *current_offer = NULL;
 static void *own_source = NULL;
 static char *own_text = NULL;
 static bool own_active = false;
+static void *own_primary_source = NULL;
+static char *own_primary_text = NULL;
+// zwlr's set_primary_selection is since=2; sending it to a v1-only compositor
+// is out of contract, so the request must be gated on the bound version.
+static bool primary_supported = false;
 static bool clip_fatal = false;
 
 static bool clip_initialized = false;
@@ -256,6 +262,10 @@ static void handle_cancelled(void *data, void *source) {
     own_text = NULL;
     own_active = false;
   }
+  if (source == own_primary_source) {
+    own_primary_source = NULL;
+    own_primary_text = NULL;
+  }
   dc->source_destroy(source);
   free(data);
 }
@@ -346,6 +356,9 @@ static void zwlr_add_offer_listener(void *offer, mime_list_t *list) {
 static void zwlr_set_selection(void *dev, void *src) {
   zwlr_data_control_device_v1_set_selection(dev, src);
 }
+static void zwlr_set_primary_selection(void *dev, void *src) {
+  zwlr_data_control_device_v1_set_primary_selection(dev, src);
+}
 static void zwlr_source_offer(void *src, const char *mime) {
   zwlr_data_control_source_v1_offer(src, mime);
 }
@@ -372,6 +385,7 @@ static const dc_backend_t zwlr_backend = {
     .add_source_listener = zwlr_add_source_listener,
     .add_offer_listener = zwlr_add_offer_listener,
     .set_selection = zwlr_set_selection,
+    .set_primary_selection = zwlr_set_primary_selection,
     .source_offer = zwlr_source_offer,
     .offer_receive = zwlr_offer_receive,
     .offer_destroy = zwlr_offer_destroy,
@@ -465,6 +479,9 @@ static void ext_add_offer_listener(void *offer, mime_list_t *list) {
 static void ext_set_selection(void *dev, void *src) {
   ext_data_control_device_v1_set_selection(dev, src);
 }
+static void ext_set_primary_selection(void *dev, void *src) {
+  ext_data_control_device_v1_set_primary_selection(dev, src);
+}
 static void ext_source_offer(void *src, const char *mime) {
   ext_data_control_source_v1_offer(src, mime);
 }
@@ -491,6 +508,7 @@ static const dc_backend_t ext_backend = {
     .add_source_listener = ext_add_source_listener,
     .add_offer_listener = ext_add_offer_listener,
     .set_selection = ext_set_selection,
+    .set_primary_selection = ext_set_primary_selection,
     .source_offer = ext_source_offer,
     .offer_receive = ext_offer_receive,
     .offer_destroy = ext_offer_destroy,
@@ -553,10 +571,19 @@ static int do_input(const char *text) {
   if (!copy) {
     return BRIDGE_STATUS_FAILED;
   }
+  char *primary_copy = NULL;
+  if (primary_supported) {
+    primary_copy = strdup(text);
+    if (!primary_copy) {
+      free(copy);
+      return BRIDGE_STATUS_FAILED;
+    }
+  }
 
   void *source = dc->create_data_source(manager);
   if (!source) {
     free(copy);
+    free(primary_copy);
     return BRIDGE_STATUS_FAILED;
   }
 
@@ -570,6 +597,34 @@ static int do_input(const char *text) {
   own_source = source;
   own_text = copy;
   own_active = true;
+
+  // Also publish to the primary selection so middle-click paste in other apps
+  // works. A source may back only one selection, so use a dedicated source with
+  // its own copy of the text.
+  if (primary_supported) {
+    // A compositor that has the request but no primary selection silently
+    // ignores it, so that source never gets a cancelled event to free it. Drop
+    // the previous one here instead of relying on the compositor; both requests
+    // are flushed together, so the selection is never observably unset.
+    if (own_primary_source) {
+      dc->source_destroy(own_primary_source);
+      free(own_primary_text);
+      own_primary_source = NULL;
+      own_primary_text = NULL;
+    }
+    void *primary_source = dc->create_data_source(manager);
+    if (primary_source) {
+      dc->add_source_listener(primary_source, primary_copy);
+      for (size_t i = 0; i < sizeof(OFFER_MIMES) / sizeof(OFFER_MIMES[0]); i++) {
+        dc->source_offer(primary_source, OFFER_MIMES[i]);
+      }
+      dc->set_primary_selection(device, primary_source);
+      own_primary_source = primary_source;
+      own_primary_text = primary_copy;
+    } else {
+      free(primary_copy);
+    }
+  }
 
   wl_display_flush(display);
   return BRIDGE_STATUS_OK;
@@ -752,11 +807,13 @@ static bool ensure_clip_init(void) {
     dc = &ext_backend;
     manager = wl_registry_bind(registry, ext_name,
                                &ext_data_control_manager_v1_interface, 1);
+    primary_supported = true;
   } else {
     dc = &zwlr_backend;
-    manager = wl_registry_bind(registry, zwlr_name,
-                               &zwlr_data_control_manager_v1_interface,
-                               zwlr_version < 2 ? zwlr_version : 2);
+    uint32_t bound = zwlr_version < 2 ? zwlr_version : 2;
+    manager = wl_registry_bind(
+        registry, zwlr_name, &zwlr_data_control_manager_v1_interface, bound);
+    primary_supported = bound >= 2;
   }
 
   device = dc->get_data_device(manager, seat);

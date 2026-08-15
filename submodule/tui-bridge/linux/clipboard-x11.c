@@ -2,8 +2,8 @@
 // but run an XWayland server (e.g. GNOME on Wayland). This talks directly
 // to the X server via Xlib and does not spawn external processes.
 //
-// input forks a small daemon that owns the CLIPBOARD selection and serves
-// SelectionRequest events until it loses the selection. output opens a
+// input forks a small daemon that owns the CLIPBOARD and PRIMARY selections
+// and serves SelectionRequest events until it loses both. output opens a
 // short-lived connection, converts the current selection and reads it back.
 //
 // Limitations:
@@ -195,16 +195,19 @@ static void send_selection_notify(Display *dpy,
 }
 
 static void serve_selection(Display *dpy, Window win, Atom clipboard,
-                            const char *text) {
+                            Atom primary, const char *text) {
   Atom utf8 = get_atoms(dpy, "UTF8_STRING");
   Atom string_atom = get_atoms(dpy, "STRING");
   Atom text_atom = get_atoms(dpy, "TEXT");
   Atom targets_atom = get_atoms(dpy, "TARGETS");
 
   XSetSelectionOwner(dpy, clipboard, win, CurrentTime);
+  XSetSelectionOwner(dpy, primary, win, CurrentTime);
   XFlush(dpy);
 
-  if (XGetSelectionOwner(dpy, clipboard) != win) {
+  int own_clip = XGetSelectionOwner(dpy, clipboard) == win;
+  int own_prim = XGetSelectionOwner(dpy, primary) == win;
+  if (!own_clip && !own_prim) {
     return;
   }
 
@@ -248,7 +251,16 @@ static void serve_selection(Display *dpy, Window win, Atom clipboard,
         }
         XFlush(dpy);
       } else if (e.type == SelectionClear) {
-        running = false;
+        // Losing one selection (e.g. another X app takes PRIMARY) must not
+        // drop the other; only exit once we own neither.
+        if (e.xselectionclear.selection == clipboard) {
+          own_clip = 0;
+        } else if (e.xselectionclear.selection == primary) {
+          own_prim = 0;
+        }
+        if (!own_clip && !own_prim) {
+          running = false;
+        }
       }
     }
   }
@@ -294,7 +306,8 @@ int x11_clipboard_input(const char *text) {
   }
 
   Atom clipboard = get_atoms(dpy, "CLIPBOARD");
-  serve_selection(dpy, win, clipboard, copy);
+  Atom primary = get_atoms(dpy, "PRIMARY");
+  serve_selection(dpy, win, clipboard, primary, copy);
 
   XDestroyWindow(dpy, win);
   XCloseDisplay(dpy);

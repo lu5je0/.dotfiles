@@ -133,6 +133,8 @@
 
 ### Linux 平台说明
 - 实现基于 Wayland data-control 协议（优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`），首次 clipboard 调用时惰性连接 `$WAYLAND_DISPLAY` 并启动常驻事件线程。
-- `clipboard.input` 写入后由 tui-bridge 进程本身持有 selection 并响应其他应用的粘贴请求，因此 **`-j` 单次模式写入的内容会随进程退出而失效**；Linux 下剪贴板写入需要 `-i` 常驻进程（Neovim 侧正是 `-i`）。
-- 当 compositor 不支持 data-control 但 `$DISPLAY` 可用时（典型场景如 GNOME on XWayland），自动回退到内部 X11 clipboard 实现：直接通过 Xlib 读写 `CLIPBOARD` selection，不依赖外部进程。
+- `clipboard.input` 写入后由 tui-bridge 进程本身持有 selection 并响应其他应用的粘贴请求，因此 **`-j` 单次模式写入的内容会随进程退出而失效**；Linux 下剪贴板写入需要 `-i` 常驻进程（Neovim 侧正是 `-i`）。写入时同时设置 regular（CLIPBOARD/`+`）与 primary（`*`）两个 selection：regular 用主 source，primary 用独立 source（各持一份 text 副本），保证 yank 后其他应用中键粘贴可用。注意 primary 会覆盖用户鼠标划选的内容，这是有意的。
+- primary 写入按协商到的协议版本 gate（`primary_supported`）：`ext_data_control_v1` 从 v1 就有 `set_primary_selection`，而 zwlr 的该请求是 `since="2"`，只广告 v1 的旧 wlroots 不能发，否则是越版本请求。
+- primary source 的生命周期不依赖 `cancelled`：compositor 支持该请求但不支持 primary selection 时会静默忽略，source 永远收不到 `cancelled`，常驻进程会每次写入泄漏一个 proxy + 一份副本；因此下次写入时由我们主动 `destroy` 上一个 primary source（`cancelled` 已回收时全局指针已清空，不会二次释放）。两个请求同批 flush，selection 不会出现可观测的空窗。
+- 当 compositor 不支持 data-control 但 `$DISPLAY` 可用时（典型场景如 GNOME on XWayland），自动回退到内部 X11 clipboard 实现：直接通过 Xlib 读写 `CLIPBOARD` 与 `PRIMARY` selection（daemon 同时 own 两者），不依赖外部进程。
 - 剪贴板为空或内容无文本 mime 时返回空字符串。
