@@ -31,7 +31,8 @@
       { "link": "$RIME_DIR/custom_phrase.txt" },
       { "exists": "$RIME_DIR/rime-ice/default.yaml" },
       { "exists": "$RIME_DIR/cn_dicts" },
-      { "link": "~/.config/fcitx5", "os": ["linux"] }
+      { "link": "~/.config/fcitx5", "os": ["linux"] },
+      { "link": "~/.config/fontconfig/conf.d/75-noto-emoji-over-symbols2.conf", "os": ["linux"] }
     ],
     "os": ["mac", "linux"]
   },

@@ -134,6 +134,23 @@ for f in "$IME_DIR/autostart"/*.desktop; do
   [ -f "$f" ] && link_file "$f" "${HOME}/.config/autostart/$(basename "$f")"
 done
 
+# ---------------------------------------------- 候选框 emoji 字体回退（fontconfig）
+# 打出 🛏(U+1F6CF) 等 emoji 时被黑白的 Noto Sans Symbols 2 截胡、渲染成宽扁字形
+# 撑大候选框。原因与做法详见 fontconfig/75-noto-emoji-over-symbols2.conf 顶部注释。
+# conf.d 是共享 XDG 目录，只放这一个文件（单文件 link）；scan 规则要 fc-cache -f 才生效。
+for f in "$IME_DIR/fontconfig"/*.conf; do
+  [ -f "$f" ] && link_file "$f" "${HOME}/.config/fontconfig/conf.d/$(basename "$f")"
+done
+if command -v fc-cache >/dev/null; then
+  fc-cache -f >/dev/null
+  winner="$(fc-match -s "Noto Sans:charset=1f6cf" family 2>/dev/null | head -1)"
+  echo "fontconfig: fc-cache rebuilt, U+1F6CF -> ${winner:-?}"
+  case "$winner" in
+    *"Color Emoji"*) : ;;
+    *) echo "warn: emoji 回退仍未指向 Color Emoji，字体版本可能变化，需重算码点集" >&2 ;;
+  esac
+fi
+
 # ------------------------------------------------- Chromium 系应用的 Wayland 输入法
 # 本脚本**不管** ~/.local/share/applications/ 下的 desktop 覆盖（qoder.desktop 等）。
 # 以前这里会从系统 desktop 生成一份并追加 flag，但那意味着每次重跑都会

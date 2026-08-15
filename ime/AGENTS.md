@@ -11,6 +11,7 @@ fcitx5 / Squirrel + Rime（雾凇拼音）的全部配置集中在本目录。
 | `environment.d/*.conf` | `~/.config/environment.d/` | 单文件 |
 | `autostart/*.desktop` | `~/.config/autostart/` | 单文件 |
 | `themes/<name>/` | `~/.local/share/fcitx5/themes/<name>` | 整目录 |
+| `fontconfig/*.conf` | `~/.config/fontconfig/conf.d/` | 单文件 |
 | `install.sh` | Linux / macOS 安装入口 | — |
 
 `install.sh` 另外还写 `kwinrc` 的 `[Wayland] InputMethod`（见下）。
@@ -91,6 +92,12 @@ git fetch --depth 1 origin && git reset --hard origin/HEAD
      Qt/GTK 应用不受这条影响 —— 它们靠 `*_IM_MODULE` 直连 fcitx5 的 D-Bus（`frontend:dbus`）。
      该 launcher 不会另起 fcitx5，只是把 KWin 给的 socket 通过 `OpenWaylandConnectionSocket`
      交给现有实例。**KWin 只在启动时读这个键，改完必须重新登录。**
+- **某些 emoji 撑大候选框是字体回退问题，不是输入法**。打出 🛏(U+1F6CF) 等 emoji 时被黑白的
+  `Noto Sans Symbols 2` 截胡、渲成宽扁字形；而 🛌 之类只有 `Noto Color Emoji` 有的正常。
+  fontconfig 取「sans-serif 回退链里第一个覆盖该码点的字体」，Symbols 2(#28)远早于
+  Color Emoji(#185)，重叠的 267 个码点全被抢走。`fontconfig/75-noto-emoji-over-symbols2.conf`
+  在 scan 阶段把这 267 个从 Symbols 2 charset 减掉，逼回退落到 Color Emoji；改完必须
+  `fc-cache -f`（install.sh 已代跑）。完整推导见该 conf 顶部注释。换字体版本要重算码点集。
 
 ## 排查手法
 
@@ -108,12 +115,22 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
 
 ## 候选框皮肤
 
-两个平台的皮肤是两套完全独立的配置，改一处不会影响另一处：
+三套完全独立的配置，改一处不影响另一处；**关键是先分清当前候选框由谁绘制**：
 
-| 平台 | 前端 | 皮肤配置 |
+| 场景 | 前端 | 皮肤配置 |
 |---|---|---|
-| Linux | fcitx5 classicui | `fcitx5/conf/classicui.conf` + `themes/` |
+| Linux 非 GNOME（KWin 等）| fcitx5 classicui | `fcitx5/conf/classicui.conf` + `themes/` |
+| **Linux GNOME** | **`kimpanel@kde.org` GNOME Shell 扩展** | GNOME Shell 弹出菜单主题（见下） |
 | macOS | Squirrel | `rime/squirrel.custom.yaml` |
+
+- **GNOME 下候选框不是 fcitx5 画的，classicui.conf 的 wechat 主题完全不生效**。
+  fcitx5 只通过 kimpanel 的 DBus 把候选词喂给 `kimpanel@kde.org` 扩展，外观由该扩展绘制。
+  它的 `stylesheet.css`（`~/.local/share/gnome-shell/extensions/kimpanel@kde.org/`）
+  自己不设背景/文字色，用的是 Shell 标准类 `.popup-menu-boxpointer` / `.popup-menu-content`，
+  所以**黑/白 = GNOME Shell 弹出菜单皮肤**。GNOME 47+ 起 Shell UI 跟随系统「浅色/深色」外观：
+  `gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'` → 白，`'prefer-dark'` → 黑
+  （`'default'` 在本机实测偏黑）。要脱离系统固定颜色，只能改那份 `stylesheet.css`，
+  但它不在本仓库、扩展升级会被覆盖。
 
 坑：
 
