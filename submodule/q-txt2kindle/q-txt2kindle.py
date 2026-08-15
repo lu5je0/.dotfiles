@@ -456,14 +456,17 @@ def split_chapters(lines, marks):
     return chapters
 
 
-def to_mobi(epub_path, target):
+def to_mobi(epub_path, target, huffdic=False):
     """epub -> mobi。返回 kindlegen 的输出；成败由调用方看产物是否存在。
 
     kindlegen 有警告时退出码也是 1，不能拿它判断成败。
     """
-    # -o 只接受文件名，产物固定落在源 epub 同目录；-c2 huffdic 压缩，
-    # -dont_append_source 不把 epub 塞进成品(省约 20% 体积)
-    r = subprocess.run([shutil.which('kindlegen'), epub_path, '-c2',
+    # -o 只接受文件名，产物固定落在源 epub 同目录；
+    # -dont_append_source 不把 epub 塞进成品(省约 20% 体积)；
+    # -c2 要对全文扫最多 4096 遍来训练 huffman 字典，14MB 的书 6s -> 117s，
+    # 只换来 4 倍体积，所以默认走 -c1
+    r = subprocess.run([shutil.which('kindlegen'), epub_path,
+                        '-c2' if huffdic else '-c1',
                         '-dont_append_source', '-o', os.path.basename(target)],
                        capture_output=True, text=True)
     return r.stdout + r.stderr
@@ -513,7 +516,7 @@ def convert(path, args):
         report(epub_path)
     if args.format in ('mobi', 'both'):
         target = os.path.join(args.outdir, stem + '.mobi')
-        out = to_mobi(epub_path, target)
+        out = to_mobi(epub_path, target, args.c2)
         if os.path.exists(target):
             report(target)
         else:
@@ -539,6 +542,8 @@ def main():
     ap.add_argument('--author')
     ap.add_argument('--max-title-len', type=int, default=48, help='标题最大长度(默认48)')
     ap.add_argument('--keep-noise', action='store_true', help='保留 章节编号/点阅 等噪音行')
+    ap.add_argument('--c2', action='store_true',
+                    help='kindlegen 用 huffdic 压缩(体积约小 4 倍，但慢一个数量级)')
     ap.add_argument('-j', '--jobs', type=int, default=0,
                     help='并发转换的文件数(默认 CPU 核数；1 为串行)')
     args = ap.parse_args()
