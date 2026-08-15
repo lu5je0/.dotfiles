@@ -5,10 +5,12 @@
   q-txt2kindle *.txt                 # 转当前目录下的小说
   q-txt2kindle novel.txt --dry-run   # 只看识别结果(编码/章节数/章节名)
   q-txt2kindle novel.txt -o out -f azw3
+  q-txt2kindle *.txt -j 4              # 4 个文件并发转换
 """
 
 import argparse
 import bisect
+import concurrent.futures as cf
 import hashlib
 import html
 import os
@@ -455,6 +457,8 @@ def split_chapters(lines, marks):
 
 
 def convert(path, args):
+    """返回 (outputs, log)；并发下由调用方整块打印 log，避免多文件输出穿插。"""
+    log = []
     with open(path, 'rb') as f:
         raw = f.read()
     text, enc = decode_bytes(raw, args.encoding)
@@ -464,22 +468,22 @@ def convert(path, args):
     author = args.author or author
     marks = detect_chapters(lines, args.max_title_len, args.pattern)
 
-    print('\n\x1b[1m%s\x1b[0m' % os.path.basename(path))
-    print('  编码: %s%s' % (enc, '' if enc.startswith('utf-8') else '  -> 转 UTF-8'))
-    print('  书名: %s   作者: %s' % (title, author))
+    log.append('\x1b[1m%s\x1b[0m' % os.path.basename(path))
+    log.append('  编码: %s%s' % (enc, '' if enc.startswith('utf-8') else '  -> 转 UTF-8'))
+    log.append('  书名: %s   作者: %s' % (title, author))
     dropped = sum(1 for c in text if ord(c) > 0xffff)
     if dropped:
-        print('  \x1b[33m剔除 %d 个非 BMP 字符(emoji 等，MOBI6 渲染器会卡死)\x1b[0m' % dropped)
-    print('  章节: %d' % len(marks))
+        log.append('  \x1b[33m剔除 %d 个非 BMP 字符(emoji 等，MOBI6 渲染器会卡死)\x1b[0m' % dropped)
+    log.append('  章节: %d' % len(marks))
     if marks:
         show = marks if args.list_chapters or len(marks) <= 6 else \
             marks[:3] + [('...', '...')] + marks[-3:]
         for pos, t in show:
-            print('    %s' % (t if pos == '...' else '%-8s %s' % ('L%d' % pos, t)))
+            log.append('    %s' % (t if pos == '...' else '%-8s %s' % ('L%d' % pos, t)))
     else:
-        print('    \x1b[33m未识别到章节，整本作为一章(可用 --pattern 指定)\x1b[0m')
+        log.append('    \x1b[33m未识别到章节，整本作为一章(可用 --pattern 指定)\x1b[0m')
     if args.dry_run:
-        return None
+        return [], log
 
     chapters = split_chapters(lines, marks)
     stem = re.sub(r'[/\\:]', '_', title) or 'book'
@@ -488,8 +492,8 @@ def convert(path, args):
     outputs = []
 
     def report(target):
-        print('  \x1b[32m已生成\x1b[0m %s  (目录 %d 项, %.1f MB)'
-              % (target, n_toc, os.path.getsize(target) / 1048576))
+        log.append('  \x1b[32m已生成\x1b[0m %s  (目录 %d 项, %.1f MB)'
+                   % (target, n_toc, os.path.getsize(target) / 1048576))
         outputs.append(target)
 
     if args.format in ('epub', 'both'):
@@ -504,10 +508,10 @@ def convert(path, args):
         if os.path.exists(target):
             report(target)
         else:
-            print('  \x1b[31mebook-convert 失败\x1b[0m\n%s' % r.stderr.strip()[:500])
+            log.append('  \x1b[31mebook-convert 失败\x1b[0m\n%s' % r.stderr.strip()[:500])
     if args.format not in ('epub', 'both'):
         os.remove(epub_path)                     # EPUB 只是中间产物
-    return outputs
+    return outputs, log
 
 
 def main():
@@ -527,6 +531,8 @@ def main():
     ap.add_argument('--author')
     ap.add_argument('--max-title-len', type=int, default=48, help='标题最大长度(默认48)')
     ap.add_argument('--keep-noise', action='store_true', help='保留 章节编号/点阅 等噪音行')
+    ap.add_argument('-j', '--jobs', type=int, default=0,
+                    help='并发转换的文件数(默认 CPU 核数；1 为串行)')
     args = ap.parse_args()
 
     files = []
@@ -546,15 +552,36 @@ def main():
     if not args.dry_run:
         os.makedirs(args.outdir, exist_ok=True)
 
+    jobs = args.jobs if args.jobs > 0 else (os.cpu_count() or 1)
+    jobs = max(1, min(jobs, len(files)))
+
     ok = 0
-    for path in files:
-        try:
-            convert(path, args)
+    ex = cf.ThreadPoolExecutor(max_workers=jobs)
+    futures = {ex.submit(convert, path, args): path for path in files}
+    try:
+        for fut in cf.as_completed(futures):
+            path = futures[fut]
+            try:
+                _outputs, log = fut.result()
+            except Exception as e:  # noqa: BLE001
+                print('  \x1b[31m失败\x1b[0m %s: %s' % (path, e), file=sys.stderr)
+                continue
+            print('\n' + '\n'.join(log))
             ok += 1
-        except Exception as e:  # noqa: BLE001
-            print('  \x1b[31m失败\x1b[0m %s: %s' % (path, e), file=sys.stderr)
+    except KeyboardInterrupt:
+        ex.shutdown(wait=False, cancel_futures=True)
+        print('\n\x1b[33m已取消\x1b[0m (已完成 %d/%d)' % (ok, len(files)), file=sys.stderr)
+        # 正在跑的 ebook-convert 已随 SIGINT 一起收到信号；用 _exit 跳过
+        # 解释器退出时对工作线程的 join，否则会再抛一次 KeyboardInterrupt
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(130)
+    ex.shutdown()
     print('\n完成 %d/%d' % (ok, len(files)))
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(130)
