@@ -21,14 +21,18 @@ EXAMPLES = f"""\
 examples:
   {PROG} list                   # list all trashed files
   {PROG} list .                 # list files trashed from current directory
+  {PROG} list --current-disk    # list files trashed from the current disk (volume)
   {PROG} restore                # interactive restore (all files)
   {PROG} restore /path/to/file  # restore specific file (latest match)
   {PROG} restore --all .        # restore all files from current dir
+  {PROG} restore --current-disk # restore files trashed from the current disk (volume)
   {PROG} restore --dest /tmp /path/to/file
                                 # restore to /tmp instead of original
   {PROG} empty                  # empty all trash (with confirmation)
   {PROG} empty --days 30        # empty items older than 30 days
+  {PROG} empty --current-disk   # empty only files trashed from the current disk (volume)
   {PROG} size                   # show trash usage per volume
+  {PROG} size --current-disk    # show trash usage for the current disk (volume)
 """
 
 
@@ -56,6 +60,13 @@ def cmd_list(ns: argparse.Namespace) -> int:
         filter_path = os.path.abspath(ns.path)
 
     items = scan_trash(ns.trash_dir)
+
+    if ns.current_disk:
+        fd = _backend._load_backend("freedesktop")
+        cur_vol = fd._volume_of_dir(os.getcwd())
+        items = [t for t in items
+                 if fd._guess_volume_of_trash(t.trash_dir) == cur_vol]
+
     if filter_path:
         items = [t for t in items
                  if t.original_path == filter_path
@@ -79,6 +90,12 @@ def cmd_restore(ns: argparse.Namespace) -> int:
     filter_path = os.path.abspath(ns.path) if explicit_path else None
 
     items = scan_trash(ns.trash_dir)
+
+    if ns.current_disk:
+        fd = _backend._load_backend("freedesktop")
+        cur_vol = fd._volume_of_dir(os.getcwd())
+        items = [t for t in items
+                 if fd._guess_volume_of_trash(t.trash_dir) == cur_vol]
 
     exact = [t for t in items if t.original_path == filter_path] if filter_path else []
     if explicit_path and exact and not restore_all:
@@ -203,6 +220,12 @@ def cmd_empty(ns: argparse.Namespace) -> int:
 
     items = scan_trash(ns.trash_dir)
 
+    if ns.current_disk:
+        fd = _backend._load_backend("freedesktop")
+        cur_vol = fd._volume_of_dir(os.getcwd())
+        items = [t for t in items
+                 if fd._guess_volume_of_trash(t.trash_dir) == cur_vol]
+
     if days is not None:
         cutoff = datetime.now()
         filtered = []
@@ -257,6 +280,13 @@ def cmd_empty(ns: argparse.Namespace) -> int:
 
 def cmd_size(ns: argparse.Namespace) -> int:
     items = scan_trash(ns.trash_dir)
+
+    if ns.current_disk:
+        fd = _backend._load_backend("freedesktop")
+        cur_vol = fd._volume_of_dir(os.getcwd())
+        items = [t for t in items
+                 if fd._guess_volume_of_trash(t.trash_dir) == cur_vol]
+
     if not items:
         print("All trash directories are empty.")
         return 0
@@ -345,6 +375,8 @@ def _build_parser() -> _Parser:
 
     # list
     p_list = sub.add_parser("list", aliases=["ls"], help="list trashed files")
+    p_list.add_argument("--current-disk", action="store_true",
+                        help="only list files trashed from the current disk (volume)")
     p_list.add_argument("path", nargs="?", default=None,
                         help="filter by original path")
     p_list.set_defaults(func=cmd_list)
@@ -357,6 +389,8 @@ def _build_parser() -> _Parser:
                            help="overwrite existing files at restore destination")
     p_restore.add_argument("--dest", default=None,
                            help="restore to DIR instead of original location")
+    p_restore.add_argument("--current-disk", action="store_true",
+                           help="only restore files trashed from the current disk (volume)")
     p_restore.add_argument("path", nargs="?", default=None,
                            help="filter by original path")
     p_restore.set_defaults(func=cmd_restore)
@@ -365,12 +399,16 @@ def _build_parser() -> _Parser:
     p_empty = sub.add_parser("empty", help="permanently delete trashed files")
     p_empty.add_argument("--days", type=int, default=None,
                          help="only delete items older than N days")
+    p_empty.add_argument("--current-disk", action="store_true",
+                         help="only empty files trashed from the current disk (volume)")
     p_empty.add_argument("-f", "--force", action="store_true",
                          help="skip confirmation prompt")
     p_empty.set_defaults(func=cmd_empty)
 
     # size
     p_size = sub.add_parser("size", help="show trash disk usage")
+    p_size.add_argument("--current-disk", action="store_true",
+                        help="only show usage for files trashed from the current disk (volume)")
     p_size.set_defaults(func=cmd_size)
 
     # rm

@@ -16,6 +16,7 @@ _q_trash_commands() {
 _q_trash_list() {
   _arguments -s \
     '--trash-dir=[operate on specific trash dir]:dir:_directories' \
+    '--current-disk[only list files trashed from the current disk]' \
     '*:filter path:_files'
 }
 
@@ -23,6 +24,7 @@ _q_trash_restore() {
   _arguments -s \
     '--trash-dir=[operate on specific trash dir]:dir:_directories' \
     '--dest=[restore to this path instead of original location]:dest:_files' \
+    '--current-disk[only restore files trashed from the current disk]' \
     '--all[restore all matching files]' \
     '--overwrite[overwrite existing files]' \
     '*:path:_files'
@@ -32,13 +34,15 @@ _q_trash_empty() {
   _arguments -s \
     '--trash-dir=[operate on specific trash dir]:dir:_directories' \
     '--days=[only delete items older than N days]:days: ' \
+    '--current-disk[only empty files trashed from the current disk]' \
     '-f[skip confirmation]' \
     '--force[skip confirmation]'
 }
 
 _q_trash_size() {
   _arguments -s \
-    '--trash-dir=[operate on specific trash dir]:dir:_directories'
+    '--trash-dir=[operate on specific trash dir]:dir:_directories' \
+    '--current-disk[only show usage for files trashed from the current disk]'
 }
 
 _q_trash_rm() {
