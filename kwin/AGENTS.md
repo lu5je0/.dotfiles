@@ -25,6 +25,7 @@ qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start
 | Alt+M | 最小化当前窗口 |
 | Ctrl+Meta+T | 切换置顶 |
 | Ctrl+Meta+W | 输出窗口信息到 journal |
+| Ctrl+Meta+Left/Right | 切换左右虚拟桌面 |
 
 ## layoutConfig
 

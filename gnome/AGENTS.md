@@ -18,6 +18,7 @@ GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑�
 ## 快捷键
 
 与 kwin 版一致：Ctrl+Super + H/L（贴边交换）、I/J（居中大/小）、K（最大化）、T（置顶）、W（窗口信息到 journal），Alt+M（最小化）。
+另有 Ctrl+Super+Left/Right 切换左右工作区（等效系统 Ctrl+Alt+Left/Right：workspace_manager 激活相邻工作区，并复刻 `_showWorkspaceSwitcher` 的 WorkspaceSwitcherPopup 指示器；新版 gnome-shell 已移除 `Main.wm.actionMoveWorkspace*`）。
 快捷键定义在 gschema 里，可用 dconf 改（`/org/gnome/shell/extensions/tilewindow/`）。
 
 ## layout.json

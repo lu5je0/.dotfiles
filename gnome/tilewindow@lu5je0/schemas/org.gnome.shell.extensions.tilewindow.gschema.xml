@@ -33,5 +33,13 @@
       <default>['&lt;Control&gt;&lt;Super&gt;w']</default>
       <summary>Log window info</summary>
     </key>
+    <key name="workspace-left" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;Left']</default>
+      <summary>Switch to left workspace</summary>
+    </key>
+    <key name="workspace-right" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;Right']</default>
+      <summary>Switch to right workspace</summary>
+    </key>
   </schema>
 </schemalist>

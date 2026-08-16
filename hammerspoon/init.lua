@@ -125,6 +125,14 @@ hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
   end
 end)
 
+-- 切换虚拟桌面：模拟系统默认的 Ctrl+Left/Right
+hs.hotkey.bind({ "ctrl", "option" }, "Left", function()
+  hs.eventtap.keyStroke({ "ctrl" }, "left")
+end)
+hs.hotkey.bind({ "ctrl", "option" }, "Right", function()
+  hs.eventtap.keyStroke({ "ctrl" }, "right")
+end)
+
 -- 禁止粘贴
 -- hs.hotkey.bind({ 'cmd', 'shift' }, 'v', function() hs.eventtap.keyStrokes(hs.pasteboard.getContents()) end)
 

@@ -3,6 +3,7 @@ import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as WorkspaceSwitcherPopup from 'resource:///org/gnome/shell/ui/workspaceSwitcherPopup.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 // Set in enable() to <extension dir>/layout.json; read on every keypress so
@@ -213,6 +214,35 @@ function moveWindowTo(win, geo) {
     win.move_resize_frame(true, geo.x, geo.y, geo.width, geo.height);
 }
 
+// 等效于系统 Ctrl+Alt+Left/Right（switch-to-workspace-left/right）：
+// 新版 gnome-shell 移除了 Main.wm.actionMoveWorkspace*，直接用稳定的
+// workspace_manager API 激活相邻工作区，并复刻 _showWorkspaceSwitcher
+// 末尾的 WorkspaceSwitcherPopup 逻辑，保持虚拟桌面指示器显示
+let workspaceSwitcherPopup = null;
+
+function switchWorkspace(offset) {
+    const wsManager = global.workspace_manager;
+    const index = wsManager.get_active_workspace_index();
+    const target = wsManager.get_workspace_by_index(index + offset);
+    if (!target || target.active)
+        return;
+
+    target.activate(global.get_current_time());
+
+    if (!Main.overview.visible) {
+        if (!workspaceSwitcherPopup) {
+            workspaceSwitcherPopup = new WorkspaceSwitcherPopup.WorkspaceSwitcherPopup();
+            workspaceSwitcherPopup.connect('destroy', () => {
+                Main.wm._workspaceTracker?.unblockUpdates();
+                workspaceSwitcherPopup = null;
+            });
+        }
+        // 弹窗期间阻止动态工作区回收，与 _showWorkspaceSwitcher 一致
+        Main.wm._workspaceTracker?.blockUpdates();
+        workspaceSwitcherPopup.display(target.index());
+    }
+}
+
 function resizeWindow(position) {
     const client = getTargetWindow();
     if (!client)
@@ -316,6 +346,8 @@ export default class TileWindowExtension extends Extension {
             else
                 client.make_above();
         });
+        bind('workspace-left', () => switchWorkspace(-1));
+        bind('workspace-right', () => switchWorkspace(1));
         bind('window-info', () => {
             const client = global.display.get_focus_window();
             if (!client)

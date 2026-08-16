@@ -241,3 +241,14 @@ registerShortcut("TileWindow: Minimize", "TileWindow: Minimize", "Alt+M", functi
     if (!client || !client.normalWindow) return;
     client.minimized = true;
 });
+
+// Ctrl+Meta+Left/Right: switch virtual desktop
+registerShortcut("TileWindow: Desktop Left", "TileWindow: Desktop Left", "Ctrl+Meta+Left", function() {
+    if (workspace.currentDesktop > 1)
+        workspace.currentDesktop = workspace.currentDesktop - 1;
+});
+
+registerShortcut("TileWindow: Desktop Right", "TileWindow: Desktop Right", "Ctrl+Meta+Right", function() {
+    if (workspace.currentDesktop < workspace.desktops.length)
+        workspace.currentDesktop = workspace.currentDesktop + 1;
+});
