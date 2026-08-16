@@ -107,6 +107,26 @@ static void dispatch_ime(const char *method, cJSON *params,
 #endif
 }
 
+static bool parse_selection(cJSON *params, bridge_selection_t *out) {
+  *out = BRIDGE_SELECTION_REGULAR;
+  cJSON *selection =
+      params ? cJSON_GetObjectItemCaseSensitive(params, "selection") : NULL;
+  if (!selection || cJSON_IsNull(selection)) {
+    return true;
+  }
+  if (!cJSON_IsString(selection) || !selection->valuestring) {
+    return false;
+  }
+  if (strcmp(selection->valuestring, "regular") == 0) {
+    return true;
+  }
+  if (strcmp(selection->valuestring, "primary") == 0) {
+    *out = BRIDGE_SELECTION_PRIMARY;
+    return true;
+  }
+  return false;
+}
+
 static void dispatch_clipboard(const char *method, cJSON *params,
                                bridge_dispatch_result_t *result) {
   if (strcmp(method, "output") == 0) {
@@ -116,8 +136,15 @@ static void dispatch_clipboard(const char *method, cJSON *params,
       eol_ptr = eol->valuestring;
     }
 
+    bridge_selection_t selection;
+    if (!parse_selection(params, &selection)) {
+      set_error(result, "INVALID_PARAMS",
+                "params.selection must be regular or primary");
+      return;
+    }
+
     char *text = NULL;
-    int status = bridge_clipboard_output(eol_ptr, &text);
+    int status = bridge_clipboard_output(eol_ptr, selection, &text);
     if (status == BRIDGE_STATUS_INVALID_PARAMS) {
       set_error(result, "INVALID_PARAMS",
                 "clipboard.output only supports eol=lf");
@@ -145,7 +172,14 @@ static void dispatch_clipboard(const char *method, cJSON *params,
       return;
     }
 
-    int status = bridge_clipboard_input(text->valuestring);
+    bridge_selection_t selection;
+    if (!parse_selection(params, &selection)) {
+      set_error(result, "INVALID_PARAMS",
+                "params.selection must be regular or primary");
+      return;
+    }
+
+    int status = bridge_clipboard_input(text->valuestring, selection);
     if (status == BRIDGE_STATUS_INVALID_PARAMS) {
       set_error(result, "INVALID_PARAMS", "missing params.text");
       return;

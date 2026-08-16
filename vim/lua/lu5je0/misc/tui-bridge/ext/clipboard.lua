@@ -9,8 +9,13 @@ function M.setup(opts)
   return M
 end
 
-M.input = function(text)
-  return state.bridge.call('clipboard', 'input', { text = text or '' }, { wait_response = false })
+--- opts.selection: 'regular'（默认，CLIPBOARD/`+`）或 'primary'（`*`）。
+M.input = function(text, opts)
+  local params = { text = text or '' }
+  if opts and opts.selection then
+    params.selection = opts.selection
+  end
+  return state.bridge.call('clipboard', 'input', params, { wait_response = false })
 end
 
 function M.output(opts)

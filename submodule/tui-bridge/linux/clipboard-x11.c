@@ -2,8 +2,8 @@
 // but run an XWayland server (e.g. GNOME on Wayland). This talks directly
 // to the X server via Xlib and does not spawn external processes.
 //
-// input forks a small daemon that owns the CLIPBOARD and PRIMARY selections
-// and serves SelectionRequest events until it loses both. output opens a
+// input forks a small daemon that owns the requested selection (CLIPBOARD or
+// PRIMARY) and serves SelectionRequest events until it loses it. output opens a
 // short-lived connection, converts the current selection and reads it back.
 //
 // Limitations:
@@ -115,7 +115,7 @@ static bool pump_selection_notify(Display *dpy, long timeout_ms,
   return false;
 }
 
-int x11_clipboard_output(char **text_out) {
+int x11_clipboard_output(bool primary, char **text_out) {
   if (!text_out) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
@@ -132,12 +132,12 @@ int x11_clipboard_output(char **text_out) {
     return BRIDGE_STATUS_FAILED;
   }
 
-  Atom clipboard = get_atoms(dpy, "CLIPBOARD");
+  Atom selection = get_atoms(dpy, primary ? "PRIMARY" : "CLIPBOARD");
   Atom utf8 = get_atoms(dpy, "UTF8_STRING");
   Atom string_atom = get_atoms(dpy, "STRING");
   Atom property = get_atoms(dpy, "TUI_BRIDGE_CLIP");
 
-  Window owner = XGetSelectionOwner(dpy, clipboard);
+  Window owner = XGetSelectionOwner(dpy, selection);
   if (owner == None) {
     XDestroyWindow(dpy, win);
     XCloseDisplay(dpy);
@@ -145,7 +145,7 @@ int x11_clipboard_output(char **text_out) {
     return *text_out ? BRIDGE_STATUS_OK : BRIDGE_STATUS_FAILED;
   }
 
-  XConvertSelection(dpy, clipboard, utf8, property, win, CurrentTime);
+  XConvertSelection(dpy, selection, utf8, property, win, CurrentTime);
   XFlush(dpy);
 
   XEvent event;
@@ -156,7 +156,7 @@ int x11_clipboard_output(char **text_out) {
   }
 
   if (event.xselection.property == None) {
-    XConvertSelection(dpy, clipboard, string_atom, property, win, CurrentTime);
+    XConvertSelection(dpy, selection, string_atom, property, win, CurrentTime);
     XFlush(dpy);
     if (!pump_selection_notify(dpy, X11_IO_TIMEOUT_MS, &event)) {
       XDestroyWindow(dpy, win);
@@ -194,20 +194,17 @@ static void send_selection_notify(Display *dpy,
   XSendEvent(dpy, req->requestor, True, 0, (XEvent *)&send);
 }
 
-static void serve_selection(Display *dpy, Window win, Atom clipboard,
-                            Atom primary, const char *text) {
+static void serve_selection(Display *dpy, Window win, Atom selection,
+                            const char *text) {
   Atom utf8 = get_atoms(dpy, "UTF8_STRING");
   Atom string_atom = get_atoms(dpy, "STRING");
   Atom text_atom = get_atoms(dpy, "TEXT");
   Atom targets_atom = get_atoms(dpy, "TARGETS");
 
-  XSetSelectionOwner(dpy, clipboard, win, CurrentTime);
-  XSetSelectionOwner(dpy, primary, win, CurrentTime);
+  XSetSelectionOwner(dpy, selection, win, CurrentTime);
   XFlush(dpy);
 
-  int own_clip = XGetSelectionOwner(dpy, clipboard) == win;
-  int own_prim = XGetSelectionOwner(dpy, primary) == win;
-  if (!own_clip && !own_prim) {
+  if (XGetSelectionOwner(dpy, selection) != win) {
     return;
   }
 
@@ -251,14 +248,7 @@ static void serve_selection(Display *dpy, Window win, Atom clipboard,
         }
         XFlush(dpy);
       } else if (e.type == SelectionClear) {
-        // Losing one selection (e.g. another X app takes PRIMARY) must not
-        // drop the other; only exit once we own neither.
-        if (e.xselectionclear.selection == clipboard) {
-          own_clip = 0;
-        } else if (e.xselectionclear.selection == primary) {
-          own_prim = 0;
-        }
-        if (!own_clip && !own_prim) {
+        if (e.xselectionclear.selection == selection) {
           running = false;
         }
       }
@@ -266,7 +256,7 @@ static void serve_selection(Display *dpy, Window win, Atom clipboard,
   }
 }
 
-int x11_clipboard_input(const char *text) {
+int x11_clipboard_input(const char *text, bool primary) {
   if (!text) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
@@ -305,9 +295,8 @@ int x11_clipboard_input(const char *text) {
     _exit(1);
   }
 
-  Atom clipboard = get_atoms(dpy, "CLIPBOARD");
-  Atom primary = get_atoms(dpy, "PRIMARY");
-  serve_selection(dpy, win, clipboard, primary, copy);
+  Atom selection = get_atoms(dpy, primary ? "PRIMARY" : "CLIPBOARD");
+  serve_selection(dpy, win, selection, copy);
 
   XDestroyWindow(dpy, win);
   XCloseDisplay(dpy);

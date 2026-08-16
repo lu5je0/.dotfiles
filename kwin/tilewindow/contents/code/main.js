@@ -14,13 +14,13 @@ const layoutConfig = {
     },
     "kitty": {
         "center_i": function(sw, sh) {
-            const w = 1562;
-            const h = 1198;
+            const w = 1722;
+            const h = 1153;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
         "center_j": function(sw, sh) {
-            const w = 1142;
-            const h = 974;
+            const w = 1113;
+            const h = 928;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
     },

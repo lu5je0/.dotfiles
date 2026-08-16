@@ -15,10 +15,11 @@ function M.set(text, regtype)
 
   -- Prefer the real clipboard registers when a provider exists. This covers
   -- GUI/local sessions and SSH sessions using `g:clipboard = "osc52"`.
+  -- Only `+`: on Linux `*` is the primary selection, and writing it would
+  -- clobber whatever the user just drag-selected with the mouse.
   local copied_to_provider = false
   if vim.fn.has('clipboard') == 1 or vim.g.clipboard ~= nil then
     copied_to_provider = pcall(vim.fn.setreg, '+', text, regtype)
-    pcall(vim.fn.setreg, '*', text, regtype)
   end
 
   -- In plain SSH TUI mode this config syncs yanks via TextYankPost, but this

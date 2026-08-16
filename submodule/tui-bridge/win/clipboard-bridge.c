@@ -67,7 +67,11 @@ static void normalize_lf_inplace(char *text) {
   *dst = '\0';
 }
 
-int bridge_clipboard_output(const char *eol, char **text_out) {
+// Windows has a single clipboard, so `selection` is accepted and ignored: a
+// primary request is served from the same clipboard.
+int bridge_clipboard_output(const char *eol, bridge_selection_t selection,
+                           char **text_out) {
+  (void)selection;
   if (!text_out) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
@@ -106,7 +110,8 @@ int bridge_clipboard_output(const char *eol, char **text_out) {
   return BRIDGE_STATUS_OK;
 }
 
-int bridge_clipboard_input(const char *text) {
+int bridge_clipboard_input(const char *text, bridge_selection_t selection) {
+  (void)selection;
   if (!text) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }

@@ -78,11 +78,13 @@ static uint32_t zwlr_version = 0;
 static bool zwlr_found = false;
 
 static void *current_offer = NULL;
+static void *current_primary_offer = NULL;
 static void *own_source = NULL;
 static char *own_text = NULL;
 static bool own_active = false;
 static void *own_primary_source = NULL;
 static char *own_primary_text = NULL;
+static bool own_primary_active = false;
 // zwlr's set_primary_selection is since=2; sending it to a v1-only compositor
 // is out of contract, so the request must be gated on the bound version.
 static bool primary_supported = false;
@@ -96,11 +98,12 @@ static pthread_t clip_thread;
 enum { CMD_NONE, CMD_INPUT, CMD_OUTPUT };
 static struct {
   int type;
+  bool primary;
   const char *in_text;
   char *out_text;
   int status;
   bool done;
-} cmd = {CMD_NONE, NULL, NULL, BRIDGE_STATUS_FAILED, false};
+} cmd = {CMD_NONE, false, NULL, NULL, BRIDGE_STATUS_FAILED, false};
 static pthread_mutex_t cmd_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cmd_cond = PTHREAD_COND_INITIALIZER;
 
@@ -245,9 +248,10 @@ static void handle_finished(void) {
 }
 
 static void handle_primary_selection(void *offer) {
-  if (offer && offer != current_offer) {
-    destroy_offer(offer);
+  if (current_primary_offer && current_primary_offer != offer) {
+    destroy_offer(current_primary_offer);
   }
+  current_primary_offer = offer;
 }
 
 static void handle_send(void *data, int fd) {
@@ -265,6 +269,7 @@ static void handle_cancelled(void *data, void *source) {
   if (source == own_primary_source) {
     own_primary_source = NULL;
     own_primary_text = NULL;
+    own_primary_active = false;
   }
   dc->source_destroy(source);
   free(data);
@@ -562,8 +567,26 @@ static const char *pick_mime(const mime_list_t *list) {
   return list->items[0];
 }
 
-static int do_input(const char *text) {
+static void *make_text_source(char *copy) {
+  void *source = dc->create_data_source(manager);
+  if (!source) {
+    return NULL;
+  }
+  dc->add_source_listener(source, copy);
+  for (size_t i = 0; i < sizeof(OFFER_MIMES) / sizeof(OFFER_MIMES[0]); i++) {
+    dc->source_offer(source, OFFER_MIMES[i]);
+  }
+  return source;
+}
+
+// Writes one selection only: regular (CLIPBOARD/`+`) and primary (`*`) are
+// independent, and a source may back just one of them anyway. Callers that want
+// both must ask twice.
+static int do_input(const char *text, bool primary) {
   if (clip_fatal) {
+    return BRIDGE_STATUS_FAILED;
+  }
+  if (primary && !primary_supported) {
     return BRIDGE_STATUS_FAILED;
   }
 
@@ -571,84 +594,67 @@ static int do_input(const char *text) {
   if (!copy) {
     return BRIDGE_STATUS_FAILED;
   }
-  char *primary_copy = NULL;
-  if (primary_supported) {
-    primary_copy = strdup(text);
-    if (!primary_copy) {
-      free(copy);
-      return BRIDGE_STATUS_FAILED;
-    }
-  }
 
-  void *source = dc->create_data_source(manager);
+  void *source = make_text_source(copy);
   if (!source) {
     free(copy);
-    free(primary_copy);
     return BRIDGE_STATUS_FAILED;
   }
 
-  dc->add_source_listener(source, copy);
-  for (size_t i = 0; i < sizeof(OFFER_MIMES) / sizeof(OFFER_MIMES[0]); i++) {
-    dc->source_offer(source, OFFER_MIMES[i]);
-  }
-  dc->set_selection(device, source);
-
-  // The previous own_source (if any) gets a cancelled event which frees it.
-  own_source = source;
-  own_text = copy;
-  own_active = true;
-
-  // Also publish to the primary selection so middle-click paste in other apps
-  // works. A source may back only one selection, so use a dedicated source with
-  // its own copy of the text.
-  if (primary_supported) {
+  if (primary) {
     // A compositor that has the request but no primary selection silently
     // ignores it, so that source never gets a cancelled event to free it. Drop
-    // the previous one here instead of relying on the compositor; both requests
-    // are flushed together, so the selection is never observably unset.
+    // the previous one here instead of relying on the compositor; the destroy
+    // and the set below are flushed together, so the selection is never
+    // observably unset. (`cancelled` already reclaimed it when the pointer is
+    // NULL, so there is no double free.)
     if (own_primary_source) {
       dc->source_destroy(own_primary_source);
       free(own_primary_text);
       own_primary_source = NULL;
       own_primary_text = NULL;
     }
-    void *primary_source = dc->create_data_source(manager);
-    if (primary_source) {
-      dc->add_source_listener(primary_source, primary_copy);
-      for (size_t i = 0; i < sizeof(OFFER_MIMES) / sizeof(OFFER_MIMES[0]); i++) {
-        dc->source_offer(primary_source, OFFER_MIMES[i]);
-      }
-      dc->set_primary_selection(device, primary_source);
-      own_primary_source = primary_source;
-      own_primary_text = primary_copy;
-    } else {
-      free(primary_copy);
-    }
+    dc->set_primary_selection(device, source);
+    own_primary_source = source;
+    own_primary_text = copy;
+    own_primary_active = true;
+  } else {
+    dc->set_selection(device, source);
+    // The previous own_source (if any) gets a cancelled event which frees it.
+    own_source = source;
+    own_text = copy;
+    own_active = true;
   }
 
   wl_display_flush(display);
   return BRIDGE_STATUS_OK;
 }
 
-static int do_output(char **out_text) {
+static int do_output(char **out_text, bool primary) {
   if (clip_fatal) {
     return BRIDGE_STATUS_FAILED;
   }
 
-  if (own_active && own_text) {
-    // Receiving our own offer would deadlock (this thread is also the
-    // sender), so answer from the local copy.
+  // Receiving our own offer would deadlock (this thread is also the sender),
+  // so answer from the local copy.
+  if (primary) {
+    if (own_primary_active && own_primary_text) {
+      *out_text = strdup(own_primary_text);
+      return *out_text ? BRIDGE_STATUS_OK : BRIDGE_STATUS_FAILED;
+    }
+  } else if (own_active && own_text) {
     *out_text = strdup(own_text);
     return *out_text ? BRIDGE_STATUS_OK : BRIDGE_STATUS_FAILED;
   }
 
-  if (!current_offer) {
+  void *offer = primary ? current_primary_offer : current_offer;
+  if (!offer) {
     *out_text = strdup("");
     return *out_text ? BRIDGE_STATUS_OK : BRIDGE_STATUS_FAILED;
   }
 
   const char *mime =
-      pick_mime(wl_proxy_get_user_data((struct wl_proxy *)current_offer));
+      pick_mime(wl_proxy_get_user_data((struct wl_proxy *)offer));
   if (!mime) {
     *out_text = strdup("");
     return *out_text ? BRIDGE_STATUS_OK : BRIDGE_STATUS_FAILED;
@@ -658,7 +664,7 @@ static int do_output(char **out_text) {
   if (pipe2(fds, O_CLOEXEC) != 0) {
     return BRIDGE_STATUS_FAILED;
   }
-  dc->offer_receive(current_offer, mime, fds[1]);
+  dc->offer_receive(offer, mime, fds[1]);
   wl_display_flush(display);
   close(fds[1]);
 
@@ -674,6 +680,7 @@ static int do_output(char **out_text) {
 static void handle_pending_command(void) {
   pthread_mutex_lock(&cmd_lock);
   int type = cmd.type;
+  bool primary = cmd.primary;
   const char *in_text = cmd.in_text;
   bool done = cmd.done;
   pthread_mutex_unlock(&cmd_lock);
@@ -685,9 +692,9 @@ static void handle_pending_command(void) {
   char *out_text = NULL;
   int status = BRIDGE_STATUS_FAILED;
   if (type == CMD_INPUT) {
-    status = do_input(in_text);
+    status = do_input(in_text, primary);
   } else if (type == CMD_OUTPUT) {
-    status = do_output(&out_text);
+    status = do_output(&out_text, primary);
   }
 
   pthread_mutex_lock(&cmd_lock);
@@ -843,9 +850,11 @@ static bool ensure_clip_init(void) {
   return true;
 }
 
-static int submit_cmd(int type, const char *in_text, char **out_text) {
+static int submit_cmd(int type, bool primary, const char *in_text,
+                     char **out_text) {
   pthread_mutex_lock(&cmd_lock);
   cmd.type = type;
+  cmd.primary = primary;
   cmd.in_text = in_text;
   cmd.out_text = NULL;
   cmd.status = BRIDGE_STATUS_FAILED;
@@ -884,7 +893,8 @@ static void normalize_lf_inplace(char *text) {
   *dst = '\0';
 }
 
-int bridge_clipboard_output(const char *eol, char **text_out) {
+int bridge_clipboard_output(const char *eol, bridge_selection_t selection,
+                           char **text_out) {
   if (!text_out) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
@@ -894,9 +904,11 @@ int bridge_clipboard_output(const char *eol, char **text_out) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
 
+  bool primary = selection == BRIDGE_SELECTION_PRIMARY;
+
   if (ensure_clip_init()) {
     char *text = NULL;
-    int status = submit_cmd(CMD_OUTPUT, NULL, &text);
+    int status = submit_cmd(CMD_OUTPUT, primary, NULL, &text);
     if (status == BRIDGE_STATUS_OK && text) {
       normalize_lf_inplace(text);
       *text_out = text;
@@ -906,7 +918,7 @@ int bridge_clipboard_output(const char *eol, char **text_out) {
   }
 
   if (x11_clipboard_available()) {
-    int status = x11_clipboard_output(text_out);
+    int status = x11_clipboard_output(primary, text_out);
     if (status == BRIDGE_STATUS_OK && *text_out) {
       normalize_lf_inplace(*text_out);
       return BRIDGE_STATUS_OK;
@@ -918,20 +930,22 @@ int bridge_clipboard_output(const char *eol, char **text_out) {
   return BRIDGE_STATUS_FAILED;
 }
 
-int bridge_clipboard_input(const char *text) {
+int bridge_clipboard_input(const char *text, bridge_selection_t selection) {
   if (!text) {
     return BRIDGE_STATUS_INVALID_PARAMS;
   }
 
+  bool primary = selection == BRIDGE_SELECTION_PRIMARY;
+
   if (ensure_clip_init()) {
-    int status = submit_cmd(CMD_INPUT, text, NULL);
+    int status = submit_cmd(CMD_INPUT, primary, text, NULL);
     if (status == BRIDGE_STATUS_OK) {
       return BRIDGE_STATUS_OK;
     }
   }
 
   if (x11_clipboard_available()) {
-    int status = x11_clipboard_input(text);
+    int status = x11_clipboard_input(text, primary);
     if (status == BRIDGE_STATUS_OK) {
       return BRIDGE_STATUS_OK;
     }

@@ -69,8 +69,25 @@ function M.get_active()
   return { active_entry.lines, active_entry.regtype }
 end
 
+-- `*` 是 primary selection：鼠标划选写进去，中键粘贴读回来。它不能复用 `+` 的
+-- 缓存——缓存只跟 CLIPBOARD 同步，而别的应用里划选鼠标不产生任何能让我们同步的
+-- 事件，所以 primary 每次都实时读，也不写回缓存。
+local function primary_copy(lines)
+  clipboard.input(table.concat(lines, '\n'), { selection = 'primary' })
+end
+
+local function primary_paste()
+  local text = clipboard.output({ eol = 'lf', selection = 'primary' })
+  if not text then
+    -- 读失败时给空内容，不要退回缓存，否则又粘出无关的旧文本。
+    return { { '' }, 'v' }
+  end
+  return { vim.split(text, '\n', { plain = true }), 'v' }
+end
+
 function M.setup()
-  vim.o.clipboard = 'unnamed'
+  -- unnamedplus：无名寄存器走 `+`（CLIPBOARD），把 `*` 留给 primary selection。
+  vim.o.clipboard = 'unnamedplus'
 
   local set_fn = function(lines, regtype)
     M.copy(lines, regtype)
@@ -81,14 +98,14 @@ function M.setup()
   end
 
   vim.g.clipboard = {
-    name = 'wsl-clipboard',
+    name = 'tui-bridge',
     copy = {
       ['+'] = set_fn,
-      ['*'] = set_fn,
+      ['*'] = primary_copy,
     },
     paste = {
       ['+'] = get_fn,
-      ['*'] = get_fn,
+      ['*'] = primary_paste,
     },
   }
 

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 bool x11_clipboard_available(void);
-int x11_clipboard_input(const char *text);
-int x11_clipboard_output(char **text_out);
+int x11_clipboard_input(const char *text, bool primary);
+int x11_clipboard_output(bool primary, char **text_out);
 
 #endif
