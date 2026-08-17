@@ -51,9 +51,6 @@ local function create_popup(title, filenames, choice)
 
   local height = 2 + #filenames
 
-  cursor_utils.cursor_visible(false)
-  vim.cmd('redraw')
-
   local buf = vim.api.nvim_create_buf(false, true)
 
   local row = math.floor((vim.o.lines - height) / 2) - 3
@@ -70,6 +67,8 @@ local function create_popup(title, filenames, choice)
   })
   vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal,FloatBorder:Normal', { win = win })
   vim.fn.win_execute(win, 'set ft=confirm')
+
+  cursor_utils.cursor_visible(false)
 
   -- content
   local lines = { text_align_center(title, width) }
