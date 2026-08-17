@@ -460,15 +460,20 @@ def to_mobi(epub_path, target, huffdic=False):
     """epub -> mobi。返回 kindlegen 的输出；成败由调用方看产物是否存在。
 
     kindlegen 有警告时退出码也是 1，不能拿它判断成败。
+    在网络文件系统(CIFS 等)上 kindlegen 无法正确合并 KF8，因此统一在本地
+    临时目录执行，完成后再移动产物到目标路径。
     """
-    # -o 只接受文件名，产物固定落在源 epub 同目录；
-    # -dont_append_source 不把 epub 塞进成品(省约 20% 体积)；
-    # -c2 要对全文扫最多 4096 遍来训练 huffman 字典，14MB 的书 6s -> 117s，
-    # 只换来 4 倍体积，所以默认走 -c1
-    r = subprocess.run([shutil.which('kindlegen'), epub_path,
-                        '-c2' if huffdic else '-c1',
-                        '-dont_append_source', '-o', os.path.basename(target)],
-                       capture_output=True, text=True)
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_epub = os.path.join(tmpdir, 'book.epub')
+        tmp_mobi = os.path.join(tmpdir, 'book.mobi')
+        shutil.copy2(epub_path, tmp_epub)
+        r = subprocess.run([shutil.which('kindlegen'), tmp_epub,
+                            '-c2' if huffdic else '-c1',
+                            '-dont_append_source', '-o', 'book.mobi'],
+                           capture_output=True, text=True)
+        if os.path.exists(tmp_mobi):
+            shutil.move(tmp_mobi, target)
     return r.stdout + r.stderr
 
 
