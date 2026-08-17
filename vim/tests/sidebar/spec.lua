@@ -187,6 +187,54 @@ r.run('filter hides dotfiles', function()
   r.assert_eq(items[1].node.name, 'visible.txt')
 end)
 
+r.run('node_hl applies to the matched row only, not its subtree', function()
+  local tree = {
+    dir_node('.config', { dir_node('nvim', { file_node('init.lua') }, true) }, true),
+  }
+  local _, _, hls = render.render_tree(tree, {
+    node_hl = function(node)
+      if node.name:match('^%.') then return 'SidebarDotfile' end
+    end,
+  })
+  local function groups_on(line)
+    local out = {}
+    for _, h in ipairs(hls) do
+      if h.line == line and h.hl ~= 'SidebarIndent' then out[h.hl] = true end
+    end
+    return out
+  end
+  -- row 0 is .config itself, rows 1/2 are its descendants
+  if not groups_on(0)['SidebarDotfile'] then
+    error('expected .config row to carry SidebarDotfile')
+  end
+  if groups_on(1)['SidebarDotfile'] or groups_on(2)['SidebarDotfile'] then
+    error('SidebarDotfile must not leak into the subtree')
+  end
+  if not groups_on(1)['SidebarFolderName'] then
+    error('expected nvim row to keep its normal folder highlight')
+  end
+end)
+
+r.run('node_context_hl is layered over descendants of a node_hl match', function()
+  local tree = {
+    dir_node('.config', { dir_node('nvim', { file_node('init.lua') }, true) }, true),
+    file_node('plain.txt'),
+  }
+  local _, _, hls = render.render_tree(tree, {
+    node_hl = function(node)
+      if node.name:match('^%.') then return 'SidebarDotfile' end
+    end,
+    node_context_hl = 'SidebarDotfileDescendant',
+  })
+  local ctx = {}
+  for _, h in ipairs(hls) do
+    if h.hl == 'SidebarDotfileDescendant' then ctx[h.line] = true end
+  end
+  if ctx[0] then error('the dotfile row itself must not get the context highlight') end
+  if not (ctx[1] and ctx[2]) then error('expected both descendant rows to get the context highlight') end
+  if ctx[3] then error('rows outside the dotfile subtree must stay untouched') end
+end)
+
 r.run('compress_dirs collapses single-child expanded chain into one line', function()
   -- a/b/c with each containing exactly one expanded subdir, leaf has a file
   local leaf = dir_node('c', { file_node('x.txt') }, true)
@@ -309,6 +357,28 @@ r.run('live_filter combined with dotfile hiding', function()
   r.assert_eq(filter({ name = 'vimrc', type = 'file', abs_path = '/home/vimrc' }), true)
   r.assert_eq(filter({ name = 'readme.md', type = 'file', abs_path = '/home/readme.md' }), false)
   state.files.live_filter = nil
+end)
+
+-- ============================================================================
+-- group: reveal anchor
+-- ============================================================================
+
+r.group('reveal anchor')
+
+r.run('anchor_dir on a directory target anchors on the directory itself', function()
+  local dir = vim.fn.tempname()
+  vim.fn.mkdir(dir, 'p')
+  r.assert_eq(files.anchor_dir(dir), dir)
+  vim.fn.delete(dir, 'rf')
+end)
+
+r.run('anchor_dir on a file target anchors on its parent', function()
+  local dir = vim.fn.tempname()
+  vim.fn.mkdir(dir, 'p')
+  local f = dir .. '/a.txt'
+  vim.fn.writefile({ 'x' }, f)
+  r.assert_eq(files.anchor_dir(f), dir)
+  vim.fn.delete(dir, 'rf')
 end)
 
 -- ============================================================================

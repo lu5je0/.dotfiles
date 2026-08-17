@@ -52,7 +52,9 @@ end
 --   dir_suffix(node)    -> text, hl
 --   get_dir_icon(node)  -> icon
 --   get_file_icon(node) -> icon, hl
---   node_hl(node)       -> hl-group | nil  (overrides icon+name hl, inherited downward)
+--   node_hl(node)       -> hl-group | nil  (overrides icon+name hl, that row only)
+---   node_context_hl     -> hl-group | nil  (layered over rows below a node_hl match;
+---                          carry only attributes like italic so fg still blends through)
 --   item_data(node)     -> table (merged into the produced item entry)
 --   compress_dirs       -> bool
 --   flat_depth          -> int, depth at which children skip the branch prefix
@@ -77,6 +79,7 @@ function M.render_tree(root_children, opts)
   local get_dir_icon = opts.get_dir_icon
   local get_file_icon_fn = opts.get_file_icon
   local node_hl = opts.node_hl
+  local node_context_hl = opts.node_context_hl
   local compress_dirs = opts.compress_dirs or false
   local flat_depth = opts.flat_depth or 0
   local simple_indent = opts.simple_indent or false
@@ -155,7 +158,7 @@ function M.render_tree(root_children, opts)
     return display_name, display_node
   end
 
-  local function walk(children, prefix, depth, inherited_hl)
+  local function walk(children, prefix, depth, in_context)
     local visible = {}
     for _, child in ipairs(children) do
       if filter(child) then visible[#visible + 1] = child end
@@ -198,11 +201,15 @@ function M.render_tree(root_children, opts)
         end
 
         add_indent_hls(line_idx, indent_end, branch_end)
-        local effective_hl = (node_hl and node_hl(child)) or inherited_hl
-        local folder_icon_hl = effective_hl or 'SidebarFolderIcon'
-        local folder_name_hl = effective_hl or 'SidebarFolderName'
+        local self_hl = node_hl and node_hl(child) or nil
+        local folder_icon_hl = self_hl or 'SidebarFolderIcon'
+        local folder_name_hl = self_hl or 'SidebarFolderName'
+        local name_end = branch_end + #icon + 1 + #display_name
         highlights[#highlights + 1] = { line = line_idx, hl = folder_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
-        highlights[#highlights + 1] = { line = line_idx, hl = folder_name_hl, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #display_name }
+        highlights[#highlights + 1] = { line = line_idx, hl = folder_name_hl, col_start = branch_end + #icon + 1, col_end = name_end }
+        if in_context and node_context_hl then
+          highlights[#highlights + 1] = { line = line_idx, hl = node_context_hl, col_start = branch_end, col_end = name_end }
+        end
 
         if display_node.expanded and display_node.children then
           local child_prefix
@@ -213,7 +220,7 @@ function M.render_tree(root_children, opts)
           else
             child_prefix = prefix .. (child_is_last and '  ' or '│ ')
           end
-          walk(display_node.children, child_prefix, depth + 1, effective_hl)
+          walk(display_node.children, child_prefix, depth + 1, in_context or self_hl ~= nil)
         end
       else
         local icon, icon_hl
@@ -233,17 +240,21 @@ function M.render_tree(root_children, opts)
         end
 
         add_indent_hls(line_idx, indent_end, branch_end)
-        local effective_hl = (node_hl and node_hl(child)) or inherited_hl
-        local final_icon_hl = effective_hl or icon_hl
+        local self_hl = node_hl and node_hl(child) or nil
+        local final_icon_hl = self_hl or icon_hl
+        local name_end = branch_end + #icon + 1 + #child.name
         highlights[#highlights + 1] = { line = line_idx, hl = final_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
-        if effective_hl then
-          highlights[#highlights + 1] = { line = line_idx, hl = effective_hl, col_start = branch_end + #icon + 1, col_end = branch_end + #icon + 1 + #child.name }
+        if self_hl then
+          highlights[#highlights + 1] = { line = line_idx, hl = self_hl, col_start = branch_end + #icon + 1, col_end = name_end }
+        end
+        if in_context and node_context_hl then
+          highlights[#highlights + 1] = { line = line_idx, hl = node_context_hl, col_start = branch_end, col_end = name_end }
         end
       end
     end
   end
 
-  walk(root_children, '', 0, nil)
+  walk(root_children, '', 0, false)
   return lines, items, highlights, virt_texts
 end
 

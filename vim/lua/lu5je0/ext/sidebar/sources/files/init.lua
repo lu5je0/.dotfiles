@@ -83,6 +83,7 @@ function spec.render_opts(ts, ctx)
     file_suffix = file_suffix,
     dir_suffix = dir_suffix,
     node_hl = dotfile_hl,
+    node_context_hl = 'SidebarDotfileDescendant',
     compress_dirs = ts.compress_dirs or false,
   }
 end
@@ -414,11 +415,18 @@ end
 
 -- ── find_file (reveal) ──────────────────────────────────
 
+-- Reveal anchor: a directory target anchors on itself, a file on its parent.
+-- Anchoring a directory on its parent would treat `cwd` itself as out-of-tree.
+function M.anchor_dir(path)
+  if vim.fn.isdirectory(path) == 1 then return path end
+  return vim.fs.dirname(path)
+end
+
 function M.find_file(filepath)
   if not filepath or filepath == '' then return end
 
   local cwd = vim.fn.getcwd()
-  local dir = vim.fs.dirname(filepath)
+  local dir = M.anchor_dir(filepath)
   if not vim.startswith(dir, cwd) then
     vim.cmd('cd ' .. vim.fn.fnameescape(dir))
     state.files.root = nil

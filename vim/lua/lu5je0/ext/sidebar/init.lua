@@ -66,19 +66,29 @@ function M.open_tab(idx, opts)
   end
 end
 
+-- A Tree edit buffer projects a directory instead of owning a file of its own.
+local function fs_edit_root_dir(buf)
+  local ok, fs_edit = pcall(require, 'lu5je0.ext.sidebar.sources.files.fs-edit')
+  if not ok then return nil end
+  local session = fs_edit._sessions and fs_edit._sessions[buf]
+  return session and session.root_dir or nil
+end
+
 function M.locate_in_tab(idx)
   local filepath = vim.fn.expand('%:p')
   local cur_buf = vim.api.nvim_get_current_buf()
   local source_win = vim.api.nvim_get_current_win()
 
   local file_readable = vim.fn.filereadable(filepath) == 1
+  -- Fall back to the Tree edit root so `<leader>fe` still has a target there.
+  local files_target = file_readable and filepath or fs_edit_root_dir(cur_buf)
 
-  if idx == config.tab_idx('files') and file_readable then
+  if idx == config.tab_idx('files') and files_target then
     local cwd = vim.fn.getcwd()
-    local dir = vim.fs.dirname(filepath)
+    local dir = require('lu5je0.ext.sidebar.sources.files').anchor_dir(files_target)
     if not vim.startswith(dir, cwd) then
       local choice = vim.fn.confirm(
-        'File is outside cwd. Change directory to ' .. dir .. '?',
+        'Target is outside cwd. Change directory to ' .. dir .. '?',
         '&Yes\n&No', 2)
       if choice ~= 1 then return end
     end
@@ -94,9 +104,9 @@ function M.locate_in_tab(idx)
     buffers.render()
     buffers.locate_buffer(cur_buf)
   elseif idx == config.tab_idx('files') then
-    if not file_readable then return end
+    if not files_target then return end
     local files = require('lu5je0.ext.sidebar.sources.files')
-    files.find_file(filepath)
+    files.find_file(files_target)
     vim.cmd('normal! zz')
   elseif idx == config.tab_idx('git_changes') then
     local git_changes = require('lu5je0.ext.sidebar.sources.git_changes')

@@ -32,6 +32,8 @@ M.highlights = {
   { 'SidebarGitStaged', { fg = '#51afef', default = true } },
   { 'SidebarGitIgnored', { fg = '#5c6370', default = true } },
   { 'SidebarDotfile', { fg = '#626262', default = true } },
+  -- Descendants of a dotfile dir: italic only, so devicon/name fg blends through.
+  { 'SidebarDotfileDescendant', { italic = true, default = true } },
   { 'SidebarIndent', { link = 'NonText', default = true } },
   { 'SidebarSymlink', { link = 'Normal', default = true } },
   { 'SidebarModified', { fg = '#98c379', default = true } },

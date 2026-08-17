@@ -314,6 +314,35 @@ run('back is a no-op when stack has only the initial cwd', function(fixture)
 end)
 
 -- ============================================================================
+-- group: reveal a directory target
+-- ============================================================================
+
+io.write(color.cyan .. 'reveal directory' .. color.reset .. '\n')
+
+run('find_file on cwd itself keeps cwd and lands on the root row', function(fixture)
+  files.find_file(fixture)
+
+  assert_eq(realpath(vim.fn.getcwd()), fixture)
+  local item = state.files.display_items[1]
+  assert_truthy(item, 'expected a root row in display_items')
+  assert_eq(item.type, 'root')
+end)
+
+run('find_file on a subdirectory reveals it without changing cwd', function(fixture)
+  files.find_file(fixture .. '/alpha')
+
+  assert_eq(realpath(vim.fn.getcwd()), fixture)
+  local found
+  for _, item in ipairs(state.files.display_items) do
+    if item.type == 'dir' and item.node and realpath(item.node.abs_path) == fixture .. '/alpha' then
+      found = item
+      break
+    end
+  end
+  assert_truthy(found, 'expected alpha to be revealed in display_items')
+end)
+
+-- ============================================================================
 -- summary
 -- ============================================================================
 
