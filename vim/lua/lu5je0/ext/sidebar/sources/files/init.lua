@@ -422,6 +422,23 @@ function M.anchor_dir(path)
   return vim.fs.dirname(path)
 end
 
+local function child_by_name(node, name)
+  for _, child in ipairs(node.children or {}) do
+    if child.name == name then return child end
+  end
+end
+
+-- fs_event watchers only cover expanded dirs and stop when the sidebar closes,
+-- so a cached children list can miss entries created meanwhile. Rescan once
+-- before treating the segment as nonexistent.
+local function resolve_child(node, name)
+  tree.ensure_children(node)
+  local child = child_by_name(node, name)
+  if child then return child end
+  tree.rescan_node(node)
+  return child_by_name(node, name)
+end
+
 function M.find_file(filepath)
   if not filepath or filepath == '' then return end
 
@@ -437,13 +454,8 @@ function M.find_file(filepath)
   local rel_parts = vim.split(tree.rel_to_cwd(filepath), '/', { trimempty = true })
   local node = state.files.root
   for i = 1, #rel_parts do
-    tree.ensure_children(node)
     node.expanded = true
-    if not node.children then break end
-    local next_node
-    for _, child in ipairs(node.children) do
-      if child.name == rel_parts[i] then next_node = child; break end
-    end
+    local next_node = resolve_child(node, rel_parts[i])
     if not next_node then break end
     node = next_node
   end
