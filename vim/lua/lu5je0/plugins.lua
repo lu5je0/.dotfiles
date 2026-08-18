@@ -413,6 +413,7 @@ local plugins = {
     'saghen/blink.cmp',
     -- optional: provides snippets for the snippet source
     dependencies = {
+      'saghen/blink.lib',
       -- 'rafamadriz/friendly-snippets',
       'windwp/nvim-autopairs',
       {
@@ -423,14 +424,9 @@ local plugins = {
       },
     },
 
-    patches = { 'blink-cmp.diff' },
-
-    -- use a release tag to download pre-built binaries
-    version = '*',
-    -- AND/OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
-    -- build = 'cargo build --release',
-    -- If you use nix, you can build from source using latest nightly rust with:
-    -- build = 'nix run .#build-plugin',
+    -- v2 is not tagged yet, switch back to `version = '*'` once v2.0.0 is released
+    branch = 'main',
+    build = function() require('blink.cmp').build():pwait() end,
 
     config = function()
       require('lu5je0.ext.blink').setup()
