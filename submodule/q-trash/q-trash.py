@@ -52,6 +52,37 @@ TrashedFile = _backend.TrashedFile
 scan_trash = _backend.scan_trash
 
 
+# ---------- colors ----------
+
+def _supports_color(stream) -> bool:
+    if os.environ.get("NO_COLOR") is not None:
+        return False
+    if os.environ.get("TERM") == "dumb":
+        return False
+    return hasattr(stream, "isatty") and stream.isatty()
+
+
+_COLOR_OUT = _supports_color(sys.stdout)
+_COLOR_ERR = _supports_color(sys.stderr)
+
+DIM = "2"
+RED = "31"
+GREEN = "32"
+YELLOW = "33"
+CYAN = "36"
+BOLD = "1"
+
+
+def _c(code: str, text: str, err: bool = False) -> str:
+    if not (_COLOR_ERR if err else _COLOR_OUT):
+        return text
+    return f"\033[{code}m{text}\033[0m"
+
+
+def _fmt_row(t: TrashedFile, err: bool = False) -> str:
+    return f"{_c(DIM, t.deletion_date, err)}  {t.original_path}"
+
+
 # ---------- commands ----------
 
 def cmd_list(ns: argparse.Namespace) -> int:
@@ -73,11 +104,11 @@ def cmd_list(ns: argparse.Namespace) -> int:
                  or t.original_path.startswith(filter_path.rstrip("/") + "/")]
 
     if not items:
-        print("No trashed files.", file=sys.stderr)
+        print(_c(DIM, "No trashed files.", err=True), file=sys.stderr)
         return 0
 
     for t in items:
-        print(f"{t.deletion_date}  {t.original_path}")
+        print(_fmt_row(t))
     return 0
 
 
@@ -107,7 +138,7 @@ def cmd_restore(ns: argparse.Namespace) -> int:
                      or t.original_path.startswith(filter_path.rstrip("/") + "/")]
         if not items:
             msg = f"No files trashed from '{filter_path}'" if filter_path else "No trashed files."
-            print(msg, file=sys.stderr)
+            print(_c(DIM, msg, err=True), file=sys.stderr)
             return 1
         seen: dict[str, TrashedFile] = {}
         for t in items:
@@ -120,13 +151,13 @@ def cmd_restore(ns: argparse.Namespace) -> int:
                      or t.original_path.startswith(filter_path.rstrip("/") + "/")]
         if not items:
             msg = f"No files trashed from '{filter_path}'" if filter_path else "No trashed files."
-            print(msg, file=sys.stderr)
+            print(_c(DIM, msg, err=True), file=sys.stderr)
             return 1
         for idx, t in enumerate(items):
             sys.stderr.write(
-                f"  {idx:3d}  {t.deletion_date}  {t.original_path}\n"
+                f"  {_c(CYAN, f'{idx:3d}', err=True)}  {_fmt_row(t, err=True)}\n"
             )
-        sys.stderr.write(f"What to restore [0..{len(items) - 1}, all, quit]: ")
+        sys.stderr.write(_c(BOLD, f"What to restore [0..{len(items) - 1}, all, quit]: ", err=True))
         sys.stderr.flush()
         try:
             line = sys.stdin.readline().strip()
@@ -140,14 +171,15 @@ def cmd_restore(ns: argparse.Namespace) -> int:
             try:
                 indices = [int(x.strip()) for x in line.replace(",", " ").split()]
             except ValueError:
-                print(f"{PROG}: invalid input", file=sys.stderr)
+                print(_c(RED, f"{PROG}: invalid input", err=True), file=sys.stderr)
                 return 1
             to_restore = []
             for idx in indices:
                 if 0 <= idx < len(items):
                     to_restore.append(items[idx])
                 else:
-                    print(f"{PROG}: index {idx} out of range", file=sys.stderr)
+                    print(_c(RED, f"{PROG}: index {idx} out of range", err=True),
+                          file=sys.stderr)
                     return 1
 
     if dest_opt is not None:
@@ -157,7 +189,7 @@ def cmd_restore(ns: argparse.Namespace) -> int:
             try:
                 os.makedirs(dest_abs, exist_ok=True)
             except OSError as e:
-                print(f"{PROG}: cannot create dest '{dest_abs}': {e.strerror}",
+                print(_c(RED, f"{PROG}: cannot create dest '{dest_abs}': {e.strerror}", err=True),
                       file=sys.stderr)
                 return 1
             is_existing_dir = True
@@ -181,12 +213,13 @@ def cmd_restore(ns: argparse.Namespace) -> int:
 
 def _do_restore(t: TrashedFile, dest: str, overwrite: bool) -> bool:
     if not os.path.exists(t.files_path) and not os.path.islink(t.files_path):
-        print(f"{PROG}: backup file missing: '{t.files_path}'", file=sys.stderr)
+        print(_c(RED, f"{PROG}: backup file missing: '{t.files_path}'", err=True),
+              file=sys.stderr)
         return False
 
     if os.path.exists(dest) or os.path.islink(dest):
         if not overwrite:
-            print(f"{PROG}: '{dest}' already exists (use --overwrite)",
+            print(_c(YELLOW, f"{PROG}: '{dest}' already exists (use --overwrite)", err=True),
                   file=sys.stderr)
             return False
         if os.path.isdir(dest) and not os.path.islink(dest):
@@ -201,7 +234,8 @@ def _do_restore(t: TrashedFile, dest: str, overwrite: bool) -> bool:
     try:
         os.rename(t.files_path, dest)
     except OSError as e:
-        print(f"{PROG}: cannot restore '{dest}': {e.strerror}", file=sys.stderr)
+        print(_c(RED, f"{PROG}: cannot restore '{dest}': {e.strerror}", err=True),
+              file=sys.stderr)
         return False
 
     if t.info_path:
@@ -210,7 +244,7 @@ def _do_restore(t: TrashedFile, dest: str, overwrite: bool) -> bool:
         except OSError:
             pass
 
-    print(f"Restored: {dest}")
+    print(f"{_c(GREEN, 'Restored:')} {dest}")
     return True
 
 
@@ -239,21 +273,21 @@ def cmd_empty(ns: argparse.Namespace) -> int:
         items = filtered
 
     if not items:
-        print("Trash is already empty.")
+        print(_c(DIM, "Trash is already empty."))
         return 0
 
     if not force:
         msg = f"Permanently delete {len(items)} item{'s' if len(items) != 1 else ''}?"
         if days is not None:
             msg += f" (older than {days} days)"
-        sys.stderr.write(f"{msg} [y/N] ")
+        sys.stderr.write(_c(YELLOW, msg, err=True) + " [y/N] ")
         sys.stderr.flush()
         try:
             line = sys.stdin.readline().strip()
         except KeyboardInterrupt:
             return 1
         if not line.lower().startswith("y"):
-            print("Cancelled.")
+            print(_c(DIM, "Cancelled."))
             return 0
 
     deleted = 0
@@ -264,7 +298,7 @@ def cmd_empty(ns: argparse.Namespace) -> int:
             elif os.path.exists(t.files_path) or os.path.islink(t.files_path):
                 os.unlink(t.files_path)
         except OSError as e:
-            print(f"{PROG}: cannot delete '{t.files_path}': {e.strerror}",
+            print(_c(RED, f"{PROG}: cannot delete '{t.files_path}': {e.strerror}", err=True),
                   file=sys.stderr)
             continue
         if t.info_path:
@@ -274,7 +308,7 @@ def cmd_empty(ns: argparse.Namespace) -> int:
                 pass
         deleted += 1
 
-    print(f"Deleted {deleted} item{'s' if deleted != 1 else ''}.")
+    print(_c(GREEN, f"Deleted {deleted} item{'s' if deleted != 1 else ''}."))
     return 0
 
 
@@ -288,7 +322,7 @@ def cmd_size(ns: argparse.Namespace) -> int:
                  if fd._guess_volume_of_trash(t.trash_dir) == cur_vol]
 
     if not items:
-        print("All trash directories are empty.")
+        print(_c(DIM, "All trash directories are empty."))
         return 0
 
     sized = []
@@ -308,9 +342,11 @@ def cmd_size(ns: argparse.Namespace) -> int:
     sized.sort(key=lambda x: x[0], reverse=True)
 
     for size, t in sized:
-        print(f"{_human_size(size):>10}  {t.deletion_date}  {t.original_path}")
+        print(f"{_c(GREEN, f'{_human_size(size):>10}')}  {_fmt_row(t)}")
 
-    print(f"{_human_size(total_size):>10}  Total ({len(sized)} item{'s' if len(sized) != 1 else ''})")
+    total = (f"{_human_size(total_size):>10}  "
+             f"Total ({len(sized)} item{'s' if len(sized) != 1 else ''})")
+    print(_c(BOLD, total))
     return 0
 
 
