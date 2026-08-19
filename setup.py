@@ -501,11 +501,31 @@ class Picker:
         return None
 
 
+def read_char(fd):
+    """Read one full UTF-8 character; a 1-byte read splits multibyte chars like 中."""
+    data = os.read(fd, 1)
+    if not data:
+        return ""
+    length = 1
+    lead = data[0]
+    if lead >= 0xF0:
+        length = 4
+    elif lead >= 0xE0:
+        length = 3
+    elif lead >= 0xC0:
+        length = 2
+    while len(data) < length:
+        if not select.select([fd], [], [], 0.1)[0]:
+            break
+        data += os.read(fd, 1)
+    return data.decode("utf-8", "replace")
+
+
 def read_key(fd, sequences=True):
     def pending(timeout):
         return bool(select.select([fd], [], [], timeout)[0])
 
-    char = os.read(fd, 1).decode("utf-8", "replace")
+    char = read_char(fd)
     if char == "\x1b":
         if not pending(0.02):
             return "ESC"
@@ -516,7 +536,7 @@ def read_key(fd, sequences=True):
         )
     if sequences:
         while char in PREFIXES and pending(SEQUENCE_TIMEOUT):
-            char += os.read(fd, 1).decode("utf-8", "replace")
+            char += read_char(fd)
             if char in SEQUENCES:
                 return char
     if char in ("\r", "\n"):
