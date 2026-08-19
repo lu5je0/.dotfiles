@@ -116,7 +116,8 @@ def scan() -> List[TrashedFile]:
         except OSError:
             continue
 
-        dt = datetime.fromtimestamp(st.st_mtime)
+        # rename 进回收站只更新 ctime，mtime 保留原修改时间
+        dt = datetime.fromtimestamp(st.st_ctime)
         deletion_date = dt.strftime("%Y-%m-%dT%H:%M:%S")
 
         pb = putback.get(entry)
