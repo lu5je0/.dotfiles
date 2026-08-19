@@ -44,10 +44,6 @@ Scope {
                 anchors.rightMargin: Root.Theme.padding
                 spacing: Root.Theme.paddingSmall
 
-                WorkspaceIndicator {
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
                 Item { Layout.fillWidth: true }
 
                 Item {

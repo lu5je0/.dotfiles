@@ -9,7 +9,7 @@ Scope {
     id: root
     property bool menuOpen: false
     property int selectedIndex: 0
-    readonly property int buttonCount: 4
+    readonly property int buttonCount: 3
 
     // Reset selection every time the menu opens
     onMenuOpenChanged: {
@@ -48,7 +48,7 @@ Scope {
                 }
             }
 
-            // Centered content box — semi-transparent so hyprland blur shines through
+            // Centered content box — semi-transparent so compositor blur shines through
             Rectangle {
                 id: contentBox
                 anchors.centerIn: parent
@@ -100,16 +100,9 @@ Scope {
                     }
 
                     PowerButton {
-                        icon: "󰌾"
-                        label: "Lock"
-                        selected: root.selectedIndex === 2
-                        onClicked: { lockProc.startDetached(); root.menuOpen = false; }
-                    }
-
-                    PowerButton {
                         icon: "󰤄"
                         label: "Suspend"
-                        selected: root.selectedIndex === 3
+                        selected: root.selectedIndex === 2
                         onClicked: { suspendProc.startDetached(); root.menuOpen = false; }
                     }
                 }
@@ -138,8 +131,7 @@ Scope {
                         switch (root.selectedIndex) {
                             case 0: shutdownProc.startDetached(); break;
                             case 1: rebootProc.startDetached(); break;
-                            case 2: lockProc.startDetached(); break;
-                            case 3: suspendProc.startDetached(); break;
+                            case 2: suspendProc.startDetached(); break;
                         }
                         root.menuOpen = false;
                         event.accepted = true;
@@ -152,7 +144,6 @@ Scope {
     // Process definitions outside Loader so they persist for startDetached calls
     Process { id: shutdownProc; command: ["systemctl", "poweroff"] }
     Process { id: rebootProc;   command: ["systemctl", "reboot"] }
-    Process { id: lockProc;     command: ["hyprlock"] }
     Process { id: suspendProc;  command: ["systemctl", "suspend"] }
 
     IpcHandler {

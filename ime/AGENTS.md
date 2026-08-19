@@ -189,6 +189,6 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
 
 ## 本目录之外的相关配置
 
-- `wm/hypr/hyprland.conf` 里有 `exec-once = fcitx5 -d`（Hyprland 自己的自启，不走 XDG autostart）。
+- `wm/niri/config.kdl` 里有 `spawn-at-startup "fcitx5" "-d" "--replace"`（niri 的自启，不走 XDG autostart）。
 - `submodule/tui-bridge/linux/im.c` 通过 DBus 调 `org.fcitx.Fcitx.Rime1` 切 rime 的 ascii_mode，
   供 Neovim 用；改 rime 方案时注意别动 `ascii_mode` 开关的语义。
