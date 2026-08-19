@@ -9,8 +9,6 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional
 
 
 # ---------- model ----------
@@ -33,10 +31,15 @@ class TrashedFile:
 # ---------- backend loading ----------
 
 def _load_backend(name: str):
+    mod_name = f"qtrash_backends.{name}"
+    mod = sys.modules.get(mod_name)
+    if mod is not None:
+        return mod
     self_real = os.path.realpath(__file__)
     path = os.path.join(os.path.dirname(self_real), "backends", f"{name}.py")
-    spec = importlib.util.spec_from_file_location(f"backends.{name}", path)
+    spec = importlib.util.spec_from_file_location(mod_name, path)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[mod_name] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -73,6 +76,7 @@ def scan_trash(specific_dir: Optional[str] = None) -> List[TrashedFile]:
         if len(backends) == 1:
             all_results = [backends[0].scan()]
         else:
+            from concurrent.futures import ThreadPoolExecutor
             with ThreadPoolExecutor(max_workers=len(backends)) as pool:
                 all_results = list(pool.map(lambda b: b.scan(), backends))
 

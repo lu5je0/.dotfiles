@@ -12,15 +12,17 @@ import os
 import stat
 import sys
 from datetime import datetime
-from typing import List, Optional, Tuple
 from urllib.parse import quote, unquote
 
 
 def _load_model():
+    if "trash_backend" in sys.modules:
+        return sys.modules["trash_backend"]
     parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     path = os.path.join(parent, "trash_backend.py")
     spec = importlib.util.spec_from_file_location("trash_backend", path)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules["trash_backend"] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -292,15 +294,15 @@ def scan(specific_dir: Optional[str] = None) -> List[TrashedFile]:
         if not os.path.isdir(info_dir):
             continue
         try:
-            entries = os.listdir(info_dir)
+            with os.scandir(info_dir) as it:
+                for entry in it:
+                    if not entry.name.endswith(".trashinfo"):
+                        continue
+                    tf = _parse_trashinfo(entry.path, volume_root)
+                    if tf:
+                        results.append(tf)
         except OSError:
             continue
-        for entry in entries:
-            if not entry.endswith(".trashinfo"):
-                continue
-            tf = _parse_trashinfo(os.path.join(info_dir, entry), volume_root)
-            if tf:
-                results.append(tf)
     return results
 
 

@@ -10,16 +10,18 @@ import os
 import shutil
 import stat
 import sys
-from typing import List, Optional, Tuple
 
 PROG = "q-trash"
 
 
 def _load_trash_backend():
+    if "trash_backend" in sys.modules:
+        return sys.modules["trash_backend"]
     self_real = os.path.realpath(__file__)
     path = os.path.join(os.path.dirname(self_real), "trash_backend.py")
     spec = importlib.util.spec_from_file_location("trash_backend", path)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules["trash_backend"] = mod
     spec.loader.exec_module(mod)
     return mod
 

@@ -9,10 +9,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import os
-import shutil
 import sys
-from datetime import datetime
-from typing import List, Optional
 
 VERSION = "0.1.0"
 PROG = "q-trash"
@@ -39,10 +36,14 @@ examples:
 # ---------- imports ----------
 
 def _load_module(filename: str, mod_name: str):
+    mod = sys.modules.get(mod_name)
+    if mod is not None:
+        return mod
     self_real = os.path.realpath(__file__)
     path = os.path.join(os.path.dirname(self_real), filename)
     spec = importlib.util.spec_from_file_location(mod_name, path)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[mod_name] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -212,6 +213,7 @@ def cmd_restore(ns: argparse.Namespace) -> int:
 
 
 def _do_restore(t: TrashedFile, dest: str, overwrite: bool) -> bool:
+    import shutil
     if not os.path.exists(t.files_path) and not os.path.islink(t.files_path):
         print(_c(RED, f"{PROG}: backup file missing: '{t.files_path}'", err=True),
               file=sys.stderr)
@@ -249,6 +251,8 @@ def _do_restore(t: TrashedFile, dest: str, overwrite: bool) -> bool:
 
 
 def cmd_empty(ns: argparse.Namespace) -> int:
+    import shutil
+    from datetime import datetime
     days = ns.days
     force = ns.force
 

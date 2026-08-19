@@ -11,21 +11,21 @@ system API records the put-back metadata itself, keeping Finder's
 """
 from __future__ import annotations
 
-import ctypes
-import ctypes.util
 import importlib.util
 import os
 import struct
 import sys
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 
 
 def _load_trash_backend():
+    if "trash_backend" in sys.modules:
+        return sys.modules["trash_backend"]
     parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     path = os.path.join(parent, "trash_backend.py")
     spec = importlib.util.spec_from_file_location("trash_backend", path)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules["trash_backend"] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -94,8 +94,11 @@ def scan() -> List[TrashedFile]:
     if not os.path.isdir(trash_dir):
         return []
 
+    putback = _parse_dsstore_putback(os.path.join(trash_dir, ".DS_Store"))
+
+    results: List[TrashedFile] = []
     try:
-        entries = os.listdir(trash_dir)
+        it = os.scandir(trash_dir)
     except OSError as e:
         msg = f"q-trash: cannot read ~/.Trash: {e.strerror or e}"
         if isinstance(e, PermissionError):
@@ -103,37 +106,34 @@ def scan() -> List[TrashedFile]:
                     "System Settings > Privacy & Security)")
         print(msg, file=sys.stderr)
         return []
+    with it:
+        for entry in it:
+            if entry.name in (".DS_Store", ".Trashes"):
+                continue
+            files_path = entry.path
+            try:
+                st = entry.stat(follow_symlinks=False)
+            except OSError:
+                continue
 
-    putback = _parse_dsstore_putback(os.path.join(trash_dir, ".DS_Store"))
+            # rename 进回收站只更新 ctime，mtime 保留原修改时间
+            dt = datetime.fromtimestamp(st.st_ctime)
+            deletion_date = dt.strftime("%Y-%m-%dT%H:%M:%S")
 
-    results: List[TrashedFile] = []
-    for entry in entries:
-        if entry in (".DS_Store", ".Trashes"):
-            continue
-        files_path = os.path.join(trash_dir, entry)
-        try:
-            st = os.lstat(files_path)
-        except OSError:
-            continue
+            pb = putback.get(entry.name)
+            if pb:
+                original_path = "/" + pb[0] + pb[1]
+            else:
+                original_path = entry.name
 
-        # rename 进回收站只更新 ctime，mtime 保留原修改时间
-        dt = datetime.fromtimestamp(st.st_ctime)
-        deletion_date = dt.strftime("%Y-%m-%dT%H:%M:%S")
-
-        pb = putback.get(entry)
-        if pb:
-            original_path = "/" + pb[0] + pb[1]
-        else:
-            original_path = entry
-
-        results.append(TrashedFile(
-            original_path=original_path,
-            deletion_date=deletion_date,
-            trash_dir=trash_dir,
-            info_path="",
-            files_path=files_path,
-            name=entry,
-        ))
+            results.append(TrashedFile(
+                original_path=original_path,
+                deletion_date=deletion_date,
+                trash_dir=trash_dir,
+                info_path="",
+                files_path=files_path,
+                name=entry.name,
+            ))
 
     return results
 
@@ -152,6 +152,8 @@ def _objc_runtime():
     if _objc_cache:
         return _objc_cache
 
+    import ctypes
+    import ctypes.util
     objc_path = ctypes.util.find_library("objc")
     if not objc_path:
         raise OSError("libobjc not found")
@@ -221,6 +223,7 @@ def _error_message(rt, err_ptr: ctypes.c_void_p) -> Optional[str]:
 
 def trash(paths: List[str]) -> List[str]:
     """Move paths to macOS trash via Foundation API. Returns errors."""
+    import ctypes
     try:
         rt = _objc_runtime()
     except OSError as e:
