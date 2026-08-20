@@ -30,8 +30,12 @@ M.offsets = {
 function M.setup_keymaps()
   local actions = require('lu5je0.ext.winbar.actions')
   local pick = require('lu5je0.ext.winbar.pick')
+  local drag = require('lu5je0.ext.winbar.drag')
 
   vim.keymap.set('n', '<leader>0', function() pick.start() end, { silent = true })
+
+  vim.keymap.set({ 'n', 'i', 'v' }, '<LeftDrag>', drag.left_drag, { expr = true, silent = true })
+  vim.keymap.set({ 'n', 'i', 'v' }, '<LeftRelease>', drag.left_release, { expr = true, silent = true })
 
   for i = 1, 9 do
     vim.keymap.set('n', '<leader>' .. i, function()

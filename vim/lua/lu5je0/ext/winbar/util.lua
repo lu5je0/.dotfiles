@@ -25,13 +25,55 @@ function M.tabpage_has_multiple_normal_wins(win)
   return false
 end
 
+-- true when the winbar shows the shared global buffer list (state.buf_order)
+-- rather than a per-window list (state.win_bufs).
+function M.is_single_context(win)
+  win = win or vim.api.nvim_get_current_win()
+  local single_win = not M.tabpage_has_multiple_normal_wins(win)
+  local multi_tabpage = #vim.api.nvim_list_tabpages() > 1
+  return single_win and not multi_tabpage
+end
+
+-- order all_valid by the persisted state.buf_order, appending newly seen bufs
+-- and dropping stale ones; persists the result back to state.buf_order.
+function M.ordered_valid(all_valid)
+  local present = {}
+  for _, b in ipairs(all_valid) do present[b] = true end
+
+  local result, seen = {}, {}
+  for _, b in ipairs(state.buf_order) do
+    if present[b] and not seen[b] then
+      result[#result + 1] = b
+      seen[b] = true
+    end
+  end
+  for _, b in ipairs(all_valid) do
+    if not seen[b] then
+      result[#result + 1] = b
+      seen[b] = true
+    end
+  end
+
+  state.buf_order = result
+  return result
+end
+
+-- persist a reordered logical list back to the right backing store.
+function M.persist_order(win, list)
+  if M.is_single_context(win) then
+    state.buf_order = list
+  else
+    state.win_bufs[win] = list
+  end
+end
+
 function M.get_buf_list(win)
   win = win or vim.api.nvim_get_current_win()
   local single_win = not M.tabpage_has_multiple_normal_wins(win)
   local multi_tabpage = #vim.api.nvim_list_tabpages() > 1
 
   if single_win and not multi_tabpage then
-    return require('lu5je0.core.buffers').valid_buffers()
+    return M.ordered_valid(require('lu5je0.core.buffers').valid_buffers())
   end
 
   local win_bufs = state.win_bufs[win]

@@ -16,6 +16,7 @@ ext/tabline/
 ├── render.lua      -- 纯 tabline 字符串构建 + truncation + 鼠标点击 + tab 页指示器
 ├── offsets.lua     -- 检测左侧 sidebar 窗口，生成 offset 填充块
 ├── actions.lua     -- cycle / go_to_ordinal / close_left / close_right / close_others
+├── drag.lua        -- 拖动重排：LeftDrag/LeftRelease expr 映射 + 列命中 + move
 ├── pick.lua        -- 字母分配 + getcharstr 选择模式
 ├── commands.lua    -- 用户命令注册（延迟到 vim.schedule）
 └── autocmds.lua    -- 单 augroup 'tabline'，事件触发 debounced refresh
@@ -31,6 +32,8 @@ ext/tabline/
 - **Tab 页指示器**：多 tabpage 时右对齐显示可点击的 tab 编号。
 - **Offset**：扫描 tabpage 左侧窗口，按 filetype 匹配 `config.offsets`，手动空格填充居中，末尾追加 `█` separator。宽度 = `win_width + 1`（含 window separator 列）。
 - **懒加载**：`ext-config.lua` 通过 `lazy_load` 注册，`UIEnter` 事件触发 setup。setup 内同步执行 `highlights.apply` + `autocmds` + 设置 winbar；`commands` 和 `config.setup_keymaps` 延迟到 `vim.schedule`。
+- **拖动重排**（Chrome 风格）：`render.lua` 每次渲染把可见 tab 的列区间写入 `state.tab_regions[win]`（`wincol` 1-based，含 truncation 标记与 partial 宽度）。左键点击经 click region `_click` 记录 `state.drag = {buf, win}`。`drag.lua` 用 expr 映射 `<LeftDrag>`/`<LeftRelease>`：有会话时消费事件并按 `getmousepos().wincol` 命中目标 ordinal，`move` 重排后 `redrawstatus!`；无会话时返回原键透传，保留鼠标划选。顺序落点：单窗口单 tabpage 写 `state.buf_order`（`util.ordered_valid` 持久化，`get_buf_list` 复用，故键盘 `cycle`/`go_to_ordinal` 也遵循），否则写 `state.win_bufs[win]`。
+  - **拖动阶段**：`<LeftDrag>` 实时（`on_drag`）：鼠标在起始窗口内则重排；一旦移入**另一个 normal 窗口**即实时跨窗口移动——从源窗口 `win_bufs` 删除该 buf（源窗口切到相邻 buffer），按落点列命中的 ordinal 插入目标窗口 `win_bufs`、令其显示该 buf 并 `set_current_win` 过去，同时更新 `drag.win`。若被移走的是源窗口**最后一个** tab（且非 tabpage 唯一窗口），不立即关窗，而是标记 `state.pending_close_win`：该窗口 `build_winbar` 短路返回空 tab 栏（保留窗口本身），直到 `<LeftRelease>`（`finish_drag`）才 `close_pending` 真正关掉；若拖动过程中又把该 buf 拖回这个窗口，`pending_close_win` 会被清除、取消关窗。`finish_drag` 同时兜底提交未及时完成的跨窗口移动。所有 buffer/窗口变更都 `vim.schedule` 出 expr 上下文（避免 textlock）；关窗前清空 `state.win_bufs[src]` 以免 `WinClosed` autocmd 把 buf 重分配回来。
 
 ## Nerd Font 图标
 
@@ -53,6 +56,7 @@ ext/tabline/
 | `<leader>tl` | 关闭右侧 buffer |
 | `<left>` | 切换到上一个 buffer |
 | `<right>` | 切换到下一个 buffer |
+| 鼠标左键拖动 tab | 重排 buffer 顺序（松开落位） |
 
 ## 维护注意
 
@@ -60,3 +64,4 @@ ext/tabline/
 - 改动 buffer 列表逻辑：确认 `core/buffers.lua` 的消费方（sidebar、time-machine）不受影响。
 - 改动 offset 逻辑：确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
 - 改动 truncation 或 tab 指示器宽度计算时，两处必须同步（`tab_section_w` 估算 + 实际渲染）。
+- 拖动/跨窗口移动后必须用 `redrawstatus!`（带 `!`）：不带 `!` 只重画当前窗口的 winbar，源窗口会残留旧 tab，直到切回该窗口才更新。

@@ -265,6 +265,11 @@ local function refresh_buf_cache()
 end
 
 function M.build_winbar(win_id)
+  if state.pending_close_win == win_id then
+    state.tab_regions[win_id] = nil
+    return '%#BufferLineFill#'
+  end
+
   _cwd_cache = vim.fn.getcwd() .. '/'
   refresh_buf_cache()
   local all_valid = _valid_bufs_cache
@@ -276,7 +281,7 @@ function M.build_winbar(win_id)
   local multi_tabpage = #vim.api.nvim_list_tabpages() > 1
 
   if single_win and not multi_tabpage then
-    bufs = all_valid
+    bufs = util.ordered_valid(all_valid)
     state.win_bufs[win_id] = bufs
   else
     local win_bufs = state.win_bufs[win_id]
@@ -396,17 +401,39 @@ function M.build_winbar(win_id)
   end
 
   local parts = {}
-  local left_marker = make_trunc_marker(LEFT_TRUNC, left_hidden)
-  if left_marker ~= '' then parts[#parts + 1] = left_marker end
-  if left_partial then parts[#parts + 1] = left_partial end
+  local regions = {}
+  local col = 1
+
+  local left_marker, left_marker_w = make_trunc_marker(LEFT_TRUNC, left_hidden)
+  if left_marker ~= '' then
+    parts[#parts + 1] = left_marker
+    col = col + left_marker_w
+  end
+
+  if left_partial then
+    parts[#parts + 1] = left_partial
+    local w = measure_segment_width(left_partial)
+    regions[#regions + 1] = { buf = bufs[left_start - 1], ordinal = left_start - 1, from = col, to = col + w - 1 }
+    col = col + w
+  end
 
   for i = left_start, right_end do
     parts[#parts + 1] = segments[i]
+    regions[#regions + 1] = { buf = bufs[i], ordinal = i, from = col, to = col + seg_width - 1 }
+    col = col + seg_width
   end
 
-  if right_partial then parts[#parts + 1] = right_partial end
+  if right_partial then
+    parts[#parts + 1] = right_partial
+    local w = measure_segment_width(right_partial)
+    regions[#regions + 1] = { buf = bufs[right_end + 1], ordinal = right_end + 1, from = col, to = col + w - 1 }
+    col = col + w
+  end
+
   local right_marker = make_trunc_marker(RIGHT_TRUNC, right_hidden)
   if right_marker ~= '' then parts[#parts + 1] = right_marker end
+
+  state.tab_regions[win_id] = regions
 
   parts[#parts + 1] = '%#BufferLineFill#'
   return table.concat(parts)
@@ -464,6 +491,7 @@ end
 
 function M._click(bufnr, _clicks, button, _mods)
   if button == 'l' then
+    state.drag = { buf = bufnr, win = vim.fn.getmousepos().winid }
     pcall(vim.api.nvim_set_current_buf, bufnr)
   elseif button == 'm' then
     pcall(close_buf_in_win, bufnr)
