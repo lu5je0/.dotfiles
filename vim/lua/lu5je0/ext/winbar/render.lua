@@ -440,11 +440,45 @@ function M.build_winbar(win_id)
 end
 
 function M.winbar(win_id)
+  local frame = require('lu5je0.ext.winbar.anim').frame(win_id)
+  if frame then return frame end
   local ok, str = pcall(M.build_winbar, win_id)
   if not ok then return '' end
   return str
 end
 
+-- Build the ordered, non-truncated tab segments for a window as winbar markup,
+-- one per tab. Used by the slide animation to composite tabs at interpolated
+-- columns. Returns (list = { {buf=, markup=}, ... }, seg_width, win_width).
+function M.ordered_segments(win_id)
+  _cwd_cache = vim.fn.getcwd() .. '/'
+  refresh_buf_cache()
+  naming.assign(_valid_bufs_cache)
+
+  local bufs = util.get_buf_list(win_id)
+  local buf_names, all_basenames = {}, {}
+  for _, b in ipairs(bufs) do
+    local n = vim.api.nvim_buf_get_name(b)
+    buf_names[b] = n
+    if n ~= '' then
+      local base = basename(n)
+      all_basenames[base] = (all_basenames[base] or 0) + 1
+    end
+  end
+
+  local current = vim.api.nvim_win_get_buf(win_id)
+  local list = {}
+  for i, buf in ipairs(bufs) do
+    list[i] = {
+      buf = buf,
+      markup = buffer_segment(buf, i, buf == current, all_basenames, buf_names[buf], i == 1),
+    }
+  end
+  return list, config.options.tab_size + 1, vim.api.nvim_win_get_width(win_id)
+end
+
+M.click_prefix = click_prefix
+M.close_click_prefix = close_click_prefix
 M.clear_icon_hl_cache = clear_icon_hl_cache
 
 local function close_buf_in_win(bufnr)
@@ -491,7 +525,8 @@ end
 
 function M._click(bufnr, _clicks, button, _mods)
   if button == 'l' then
-    require('lu5je0.ext.winbar.drag').begin(bufnr, vim.fn.getmousepos().winid)
+    local mp = vim.fn.getmousepos()
+    require('lu5je0.ext.winbar.drag').begin(bufnr, mp.winid, mp.wincol)
     pcall(vim.api.nvim_set_current_buf, bufnr)
   elseif button == 'm' then
     pcall(close_buf_in_win, bufnr)

@@ -228,9 +228,40 @@ do
 
   check('initial order', order(), 'A,B,C')
   c:mouse('press', t1.row, t1.col)   -- grab A
-  c:mouse('drag', t3.row, t3.col)    -- drop on third slot
+  c:mouse('drag', t3.row, t3.col)    -- drag its centre over the 3rd slot
+  check('A reordered to the end', order(), 'B,C,A')
+
+  -- mid-drag the grabbed tab is floating, so a frame is present and every frame
+  -- is well-formed (fits the window, balanced click regions).
+  check('slide frame while dragging', c:eval([[
+    return tostring(require('lu5je0.ext.winbar.anim').frame(T.w) ~= nil)
+  ]]), 'true')
+  check('frames well-formed', c:eval([[
+    local anim = require('lu5je0.ext.winbar.anim')
+    local ncols = vim.api.nvim_win_get_width(T.w)
+    local ok = true
+    for _ = 1, 40 do
+      local f = anim.frame(T.w)
+      if not f then break end
+      local plain = f:gsub('%%#[^#]*#', ''):gsub('%%%d*@[^@]*@', ''):gsub('%%X', '')
+      if vim.api.nvim_strwidth(plain) > ncols then ok = false end
+      if select(2, f:gsub('%%%d*@[^@]*@', '')) ~= select(2, f:gsub('%%X', '')) then ok = false end
+      anim.tick()
+    end
+    return tostring(ok)
+  ]]), 'true')
+
+  -- on release the grabbed tab eases into its slot and the animation settles.
   c:mouse('release', t3.row, t3.col)
-  check('A dragged to the end', order(), 'B,C,A')
+  check('animation settles after release', c:eval([[
+    local anim = require('lu5je0.ext.winbar.anim')
+    for _ = 1, 60 do
+      if anim.frame(T.w) == nil then break end
+      anim.tick()
+    end
+    return tostring(anim.frame(T.w) == nil)
+  ]]), 'true')
+  check('final order', order(), 'B,C,A')
   c:stop()
 end
 
