@@ -3,157 +3,164 @@ local M = {}
 local state = require('lu5je0.ext.winbar.state')
 local util = require('lu5je0.ext.winbar.util')
 
--- move `buf` to `target` ordinal within the window's logical buffer list,
--- persisting the new order to the right backing store.
-local function move(win, buf, target)
-  local list = util.get_buf_list(win)
-  local from
-  for i, b in ipairs(list) do
-    if b == buf then from = i; break end
-  end
-  if not from then return false end
-
-  target = math.max(1, math.min(#list, target))
-  if from == target then return false end
-
-  table.remove(list, from)
-  table.insert(list, target, buf)
-  util.persist_order(win, list)
-  return true
+local function copy(list)
+  local r = {}
+  for i, v in ipairs(list or {}) do r[i] = v end
+  return r
 end
 
--- resolve the ordinal under a mouse column for the given window's winbar.
-local function target_ordinal(win, col)
+local function listed(list)
+  local r = {}
+  for _, b in ipairs(list or {}) do
+    if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then r[#r + 1] = b end
+  end
+  return r
+end
+
+local function index_of(list, buf)
+  for i, b in ipairs(list) do
+    if b == buf then return i end
+  end
+end
+
+local function without(list, buf)
+  local r = {}
+  for _, b in ipairs(list) do
+    if b ~= buf then r[#r + 1] = b end
+  end
+  return r
+end
+
+-- start a drag session, snapshotting the tab layout so every subsequent event is
+-- applied from the original state instead of accumulating mutations.
+function M.begin(buf, win)
+  local snapshot = {}
+  for w, list in pairs(state.win_bufs) do
+    snapshot[w] = copy(list)
+  end
+  state.pending_close_win = nil
+  state.drag = {
+    buf = buf,
+    win = win,
+    snapshot = snapshot,
+    order = copy(state.buf_order),
+  }
+end
+
+-- resolve the drop index under a mouse column for the given window's winbar.
+-- returns nil when that window has no rendered tabs.
+local function drop_index(win, col)
   local regions = state.tab_regions[win]
   if not regions or #regions == 0 then return nil end
   for _, r in ipairs(regions) do
     if col >= r.from and col <= r.to then return r.ordinal end
   end
-  -- past either edge: clamp to the first / last visible tab
   if col < regions[1].from then return regions[1].ordinal end
-  return regions[#regions].ordinal
+  return regions[#regions].ordinal + 1
 end
 
-local function neighbor_of(list, buf)
-  for i, b in ipairs(list) do
-    if b == buf then return list[i + 1] or list[i - 1] end
+local function snapshot_of(drag, win)
+  local snap = drag.snapshot[win]
+  if snap then return listed(snap) end
+  local cur = listed(state.win_bufs[win])
+  if #cur > 0 then return cur end
+  if vim.api.nvim_win_is_valid(win) then
+    local b = vim.api.nvim_win_get_buf(win)
+    if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then return { b } end
   end
+  return {}
 end
 
--- move `buf` out of `source_win` and into `target_win` at `target` ordinal.
--- the target window switches to display the moved buffer. the source window
--- falls back to a neighbouring buffer, or — when the moved tab was its last one
--- — is only marked for closing, so it keeps an empty tab strip until release.
-local function move_to_window(source_win, target_win, buf, target)
-  if source_win == target_win then return false end
+local function insert_at(list, buf, ordinal)
+  ordinal = math.max(1, math.min(#list + 1, ordinal or (#list + 1)))
+  table.insert(list, ordinal, buf)
+  return list
+end
 
-  local src = util.get_buf_list(source_win)
-  local neighbor = neighbor_of(src, buf)
-  local new_src = {}
-  for _, b in ipairs(src) do
-    if b ~= buf then new_src[#new_src + 1] = b end
-  end
-  util.persist_order(source_win, new_src)
+-- recompute the layout for the current drop target from the drag snapshot.
+local function apply(drag, target_win, ordinal)
+  local origin, buf = drag.win, drag.buf
 
-  if vim.api.nvim_win_is_valid(source_win)
-    and vim.api.nvim_win_get_buf(source_win) == buf
-  then
-    if neighbor and vim.api.nvim_buf_is_valid(neighbor) then
-      pcall(vim.api.nvim_win_set_buf, source_win, neighbor)
-    elseif #vim.api.nvim_tabpage_list_wins(0) > 1 then
-      -- last tab dragged out: defer the close to release, leaving an empty strip
-      state.pending_close_win = source_win
-    end
-  end
-
-  local tgt = state.win_bufs[target_win] or {}
-  local filtered = {}
-  for _, b in ipairs(tgt) do
-    if b ~= buf and vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted then
-      filtered[#filtered + 1] = b
-    end
-  end
-  target = math.max(1, math.min(#filtered + 1, target or (#filtered + 1)))
-  table.insert(filtered, target, buf)
-  state.win_bufs[target_win] = filtered
-
-  -- dragged back into the window that was pending close: cancel it
-  if state.pending_close_win == target_win then
+  -- single normal window in a single tabpage: pure reorder of the global order
+  if util.is_single_context(origin) and target_win == origin then
+    local list = without(listed(drag.order), buf)
+    state.buf_order = insert_at(list, buf, ordinal)
     state.pending_close_win = nil
+    return
   end
 
-  pcall(vim.api.nvim_win_set_buf, target_win, buf)
-  return true
+  local origin_snap = snapshot_of(drag, origin)
+  local origin_idx = index_of(origin_snap, buf) or 1
+  local new_origin = without(origin_snap, buf)
+
+  if target_win == origin then
+    state.win_bufs[origin] = insert_at(new_origin, buf, ordinal)
+    state.pending_close_win = nil
+  else
+    state.win_bufs[origin] = new_origin
+    state.win_bufs[target_win] = insert_at(without(snapshot_of(drag, target_win), buf), buf, ordinal)
+
+    if #new_origin == 0 and #vim.api.nvim_tabpage_list_wins(0) > 1 then
+      state.pending_close_win = origin
+    else
+      state.pending_close_win = nil
+      if vim.api.nvim_win_is_valid(origin) and vim.api.nvim_win_get_buf(origin) == buf then
+        local fallback = new_origin[math.min(origin_idx, #new_origin)]
+        if fallback then pcall(vim.api.nvim_win_set_buf, origin, fallback) end
+      end
+    end
+  end
+
+  if vim.api.nvim_win_is_valid(target_win) and vim.api.nvim_win_get_buf(target_win) ~= buf then
+    pcall(vim.api.nvim_win_set_buf, target_win, buf)
+  end
+  if target_win ~= vim.api.nvim_get_current_win() then
+    pcall(vim.api.nvim_set_current_win, target_win)
+  end
 end
 
 -- close the window whose last tab was dragged away (deferred until release).
 local function close_pending()
   local win = state.pending_close_win
   state.pending_close_win = nil
-  if not win or not vim.api.nvim_win_is_valid(win) then return false end
-  if #vim.api.nvim_tabpage_list_wins(0) <= 1 then return false end
+  if not win or not vim.api.nvim_win_is_valid(win) then return end
+  if #vim.api.nvim_tabpage_list_wins(0) <= 1 then return end
 
   local remaining = state.win_bufs[win]
-  if remaining and #remaining > 0 then return false end
+  if remaining and #remaining > 0 then return end
 
   state.win_bufs[win] = nil
   state.tab_regions[win] = nil
   pcall(vim.api.nvim_win_close, win, false)
-  return true
+end
+
+-- resolve the window + drop index currently under the mouse, or nil.
+local function mouse_target(drag)
+  local mp = vim.fn.getmousepos()
+  local win = mp.winid
+  if win == 0 or not vim.api.nvim_win_is_valid(win) then return end
+  if win ~= drag.win and not util.is_normal_win(win) then return end
+  if state.pending_close_win == win then
+    return win, 1
+  end
+  return win, drop_index(win, mp.wincol)
 end
 
 -- runs on vim.schedule so buffer/window mutation happens outside expr context.
--- reorders within the hovered window, or moves the buffer live into another
--- window the moment the mouse crosses into it.
 function M.on_drag()
   local drag = state.drag
   if not drag then return end
-  local mp = vim.fn.getmousepos()
-  local win = mp.winid
-  if win == 0 then return end
+  local win, ordinal = mouse_target(drag)
+  if not win then return end
 
-  if win == drag.win then
-    local target = target_ordinal(win, mp.wincol)
-    if target and move(win, drag.buf, target) then
-      vim.cmd('redrawstatus!')
-    end
-    return
-  end
-
-  if not vim.api.nvim_win_is_valid(win) or not util.is_normal_win(win) then return end
-
-  local ordinal = target_ordinal(win, mp.wincol)
-  if not ordinal then
-    local list = state.win_bufs[win]
-    ordinal = (list and #list or 0) + 1
-  end
-
-  if move_to_window(drag.win, win, drag.buf, ordinal) then
-    drag.win = win
-    pcall(vim.api.nvim_set_current_win, win)
-    vim.cmd('redrawstatus!')
-  end
+  apply(drag, win, ordinal)
+  vim.cmd('redrawstatus!')
 end
 
--- release phase: commit any not-yet-applied cross-window move, then close the
--- window whose last tab was dragged away.
+-- release: apply the final position, then close a window left without tabs.
 function M.finish_drag(drag)
-  local mp = vim.fn.getmousepos()
-  local tgt = mp.winid
-
-  if tgt ~= 0 and tgt ~= drag.win
-    and vim.api.nvim_win_is_valid(tgt) and util.is_normal_win(tgt)
-  then
-    local ordinal = target_ordinal(tgt, mp.wincol)
-    if not ordinal then
-      local list = state.win_bufs[tgt]
-      ordinal = (list and #list or 0) + 1
-    end
-    if move_to_window(drag.win, tgt, drag.buf, ordinal) then
-      pcall(vim.api.nvim_set_current_win, tgt)
-    end
-  end
-
+  local win, ordinal = mouse_target(drag)
+  if win then apply(drag, win, ordinal) end
   close_pending()
   vim.cmd('redrawstatus!')
 end
@@ -168,7 +175,7 @@ function M.left_drag()
   return '<LeftDrag>'
 end
 
--- expr <LeftRelease>: finalise the drag (possibly cross-window), or fall through.
+-- expr <LeftRelease>: finalise the drag, or fall through.
 function M.left_release()
   local drag = state.drag
   if not drag then return '<LeftRelease>' end

@@ -33,7 +33,8 @@ ext/tabline/
 - **Offset**：扫描 tabpage 左侧窗口，按 filetype 匹配 `config.offsets`，手动空格填充居中，末尾追加 `█` separator。宽度 = `win_width + 1`（含 window separator 列）。
 - **懒加载**：`ext-config.lua` 通过 `lazy_load` 注册，`UIEnter` 事件触发 setup。setup 内同步执行 `highlights.apply` + `autocmds` + 设置 winbar；`commands` 和 `config.setup_keymaps` 延迟到 `vim.schedule`。
 - **拖动重排**（Chrome 风格）：`render.lua` 每次渲染把可见 tab 的列区间写入 `state.tab_regions[win]`（`wincol` 1-based，含 truncation 标记与 partial 宽度）。左键点击经 click region `_click` 记录 `state.drag = {buf, win}`。`drag.lua` 用 expr 映射 `<LeftDrag>`/`<LeftRelease>`：有会话时消费事件并按 `getmousepos().wincol` 命中目标 ordinal，`move` 重排后 `redrawstatus!`；无会话时返回原键透传，保留鼠标划选。顺序落点：单窗口单 tabpage 写 `state.buf_order`（`util.ordered_valid` 持久化，`get_buf_list` 复用，故键盘 `cycle`/`go_to_ordinal` 也遵循），否则写 `state.win_bufs[win]`。
-  - **拖动阶段**：`<LeftDrag>` 实时（`on_drag`）：鼠标在起始窗口内则重排；一旦移入**另一个 normal 窗口**即实时跨窗口移动——从源窗口 `win_bufs` 删除该 buf（源窗口切到相邻 buffer），按落点列命中的 ordinal 插入目标窗口 `win_bufs`、令其显示该 buf 并 `set_current_win` 过去，同时更新 `drag.win`。若被移走的是源窗口**最后一个** tab（且非 tabpage 唯一窗口），不立即关窗，而是标记 `state.pending_close_win`：该窗口 `build_winbar` 短路返回空 tab 栏（保留窗口本身），直到 `<LeftRelease>`（`finish_drag`）才 `close_pending` 真正关掉；若拖动过程中又把该 buf 拖回这个窗口，`pending_close_win` 会被清除、取消关窗。`finish_drag` 同时兜底提交未及时完成的跨窗口移动。所有 buffer/窗口变更都 `vim.schedule` 出 expr 上下文（避免 textlock）；关窗前清空 `state.win_bufs[src]` 以免 `WinClosed` autocmd 把 buf 重分配回来。
+  - **拖动阶段**：`<LeftDrag>` 实时（`on_drag`）：鼠标在起始窗口内则重排；一旦移入**另一个 normal 窗口**即实时跨窗口移动，目标窗口显示该 buf 并 `set_current_win` 过去。若被移走的是源窗口**最后一个** tab（且非 tabpage 唯一窗口），不立即关窗，而是标记 `state.pending_close_win`：该窗口 `build_winbar` 短路返回空 tab 栏（保留窗口本身），直到 `<LeftRelease>`（`finish_drag`）才 `close_pending` 真正关掉。所有 buffer/窗口变更都 `vim.schedule` 出 expr 上下文（避免 textlock）；关窗前清空 `state.win_bufs[src]` 以免 `WinClosed` autocmd 把 buf 重分配回来。
+  - **快照式重算（关键）**：`drag.begin` 在按下时快照 `win_bufs` 与 `buf_order`，之后每个拖动事件都用 `apply(snapshot, origin_win, buf, target_win, ordinal)` **从快照重算**当前布局，而不是在上一次结果上累加改动。这样拖动是幂等的，且能正确处理「同一个 buffer 同时列在多个窗口」——移除只作用于 `origin_win`，目标窗口若已含该 buf 则视为重新定位而非新增。拖回原窗口时自然回到初始布局（`pending_close_win` 也随之清空）。**不要改回增量修改**：那样把 A 从右窗口拖到左窗口（左边本来就有 A）再拖回去，会把左窗口自己的 A 删掉。
 
 ## Nerd Font 图标
 
@@ -65,3 +66,12 @@ ext/tabline/
 - 改动 offset 逻辑：确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
 - 改动 truncation 或 tab 指示器宽度计算时，两处必须同步（`tab_section_w` 估算 + 实际渲染）。
 - 拖动/跨窗口移动后必须用 `redrawstatus!`（带 `!`）：不带 `!` 只重画当前窗口的 winbar，源窗口会残留旧 tab，直到切回该窗口才更新。
+
+## 测试
+
+- `tests/winbar/drag_spec.lua`：拖动行为的端到端回归测试，入口在 `tests/run-tests.sh`。
+- 它用 `jobstart(..., {rpc=true})` 起一个 `nvim --embed` 子进程并 `nvim_ui_attach`，再用 `nvim_input_mouse` 发真实 press/drag/release，覆盖真正的 click region 与 `<LeftDrag>` 映射。
+- 写这类测试时的三个坑：
+  - `nvim_ui_attach` **不能带 `ext_linegrid`**，父进程不是真正的 grid UI，子进程会直接退出。
+  - 没有 attach UI 的 headless 子进程会静默丢弃 `nvim_input_mouse`，纯 headless 复现不出鼠标行为。
+  - tab 的 separator 与居中 padding **在 click region 之外**，点击坐标要从 `state.tab_regions` 的区间中点算，不能猜列号。

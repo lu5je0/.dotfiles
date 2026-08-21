@@ -491,7 +491,7 @@ end
 
 function M._click(bufnr, _clicks, button, _mods)
   if button == 'l' then
-    state.drag = { buf = bufnr, win = vim.fn.getmousepos().winid }
+    require('lu5je0.ext.winbar.drag').begin(bufnr, vim.fn.getmousepos().winid)
     pcall(vim.api.nvim_set_current_buf, bufnr)
   elseif button == 'm' then
     pcall(close_buf_in_win, bufnr)

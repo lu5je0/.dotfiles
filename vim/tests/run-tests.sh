@@ -45,3 +45,7 @@ nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/git_changes_spec.lua"
 printf '\n'
 printf '%s[sidebar:git-ops]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/git_ops_spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/git_ops_spec.lua"
+
+printf '\n'
+printf '%s[winbar:drag]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/winbar/drag_spec.lua" "${RESET}"
+(cd "${SCRIPT_DIR}/.." && nvim --headless -u NONE -l "${SCRIPT_DIR}/winbar/drag_spec.lua")

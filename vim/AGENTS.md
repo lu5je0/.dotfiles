@@ -138,7 +138,8 @@ ext/tabline/
   - `cd vim && nvim --headless '+qa'`
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`。
+- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`。
+- `tests/winbar/drag_spec.lua` 是唯一会起子 Neovim 并 attach UI 发真实鼠标事件的测试（winbar tab 拖动），坑点见 `lua/lu5je0/ext/winbar/agents.md` 的「测试」一节。
 - 如果你新增了独立 Lua 功能且具备稳定输入输出，优先补到 `tests/`，不要只依赖手动打开 Neovim 验证。
 - 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
 
