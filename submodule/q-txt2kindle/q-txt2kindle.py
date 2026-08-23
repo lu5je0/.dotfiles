@@ -10,6 +10,7 @@
 
 import argparse
 import bisect
+import collections
 import concurrent.futures as cf
 import hashlib
 import html
@@ -24,6 +25,8 @@ import zipfile
 CN_DIGITS = {'零': 0, '〇': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5,
              '六': 6, '七': 7, '八': 8, '九': 9}
 CN_UNITS = {'十': 10, '百': 100, '千': 1000, '万': 10000}
+CIRCLED = {chr(0x2460 + k): str(k + 1) for k in range(9)}        # ①..⑨
+CIRCLED['\u2469'] = '10'                                         # ⑩
 
 COMMON_HANZI = set('的一是了不我在人有他这上们到说和地也子时道你就那要会着没看好自来'
                    '过里下大而生去能对小多然于心学么之都得实可以为把很如从')
@@ -69,6 +72,12 @@ def cn2num(s):
     s = s.strip()
     if not s:
         return None
+    if any(c in CIRCLED for c in s):
+        # 圈数字按十进制位拼: "①⑤" = 15。这些源文件没有 ⓪，多位数里拿 ⑩ 占 0 位
+        digits = [CIRCLED.get(c, c) for c in s]
+        if len(digits) > 1:
+            digits = ['0' if d == '10' else d for d in digits]
+        s = ''.join(digits)
     if s.isdigit():
         try:
             return int(s)
@@ -96,8 +105,8 @@ def cn2num(s):
 
 # ---------------------------------------------------------------- 章节识别
 STRONG_PATTERNS = [
-    re.compile(r'^(?:\d{1,4}[\s.、]+)?第\s*([0-9〇零一二三四五六七八九十百千两]{1,8})\s*'
-               r'[章回卷話话節节篇折][\s:：、.]*(.*)$'),
+    re.compile(r'^(?:\d{1,4}[\s.、]+)?第\s*([0-9〇零一二三四五六七八九十百千两\u2460-\u2469]{1,8})'
+               r'\s*[章回卷話话節节篇折][\s:：、.]*(.*)$'),
     re.compile(r'^(?:Chapter|CHAPTER|chapter)\s*(\d{1,4})[\s.:：-]*(.*)$'),
 ]
 UNNUMBERED_RE = re.compile(r'^(番外|外篇|序章|序言|楔子|引子|尾声|尾聲|终章|終章|后记|後記|'
@@ -160,7 +169,8 @@ def collect_candidates(lines, patterns, weight, max_len, strict_indent, reject_p
     for i, raw in enumerate(lines):
         if strict_indent and indented(raw):
             continue
-        line = strip_deco(norm_line(raw))
+        m = split_marker(norm_line(raw))
+        pre, line = m if m else ('', norm_line(raw))
         if not line or len(line) > max_len:
             continue
         if reject_prose and SENTENCE_RE.search(line):
@@ -172,41 +182,51 @@ def collect_candidates(lines, patterns, weight, max_len, strict_indent, reject_p
             num = cn2num(m.group(1))
             if num is None or num > 9999:
                 break
-            out.append({'pos': i, 'num': num, 'text': line, 'w': weight})
+            out.append({'pos': i, 'num': num, 'text': line, 'w': weight, 'pre': pre})
             break
     return out
 
 
+HEADER_RE = re.compile(r'^(?:文案|标签|內容标签|内容标签|一句话简介|立意|主角|配角|其它|其他'
+                       r'|视角|评分|收藏|字数|字數|文章类型|作品风格|风格|系列|所属系列'
+                       r'|霸王票排行|霸王票|灌溉|营养液|搜索关键字|进度|完结时间)\s*[:：]')
+
+
 def title_like(text):
-    """句子和 "文〃√" 这类竖排水印不是标题；标题里的符号只会零星出现。"""
-    if SENTENCE_RE.search(text):
+    """句子、"文〃√" 这类竖排水印、站点页首字段都不是标题。"""
+    if SENTENCE_RE.search(text) or HEADER_RE.match(text):
         return False
     sym = sum(1 for c in text if unicodedata.category(c) in ('So', 'Sk', 'Sm'))
     return sym <= 0.2 * len(text)
 
 
-def collect_markers(lines, max_len):
-    """靠固定装饰前缀识别章节，用于 "☆、美人" 这种没有编号的标题。"""
-    groups = {}
+def marker_lines(lines, max_len):
+    """枚举带装饰前缀的行: [(行号, 前缀, 去掉前缀的正文)]。"""
+    out = []
     for i, raw in enumerate(lines):
-        line = norm_line(raw)
-        if not line or len(line) > max_len:
-            continue
-        m = split_marker(line)
-        if not m:
-            continue
-        groups.setdefault(m[0], []).append((i, m[1], indented(raw)))
-    best = []
-    for items in groups.values():
-        # 同一前缀也会出现在缩进的元数据行上("　　◉ 标签：…")；不缩进的占多数时只认它们
-        flat = [x for x in items if not x[2]]
-        picked = flat if len(flat) >= max(5, 0.6 * len(items)) else items
-        if len(picked) < 5 or len(picked) <= len(best):
-            continue
-        if sum(1 for _p, t, _i in picked if title_like(t)) < 0.8 * len(picked):
-            continue
-        best = picked
-    return [{'pos': p, 'num': 0, 'text': t, 'w': STRONG_W} for p, t, _i in best]
+        m = split_marker(norm_line(raw))
+        if m and len(m[1]) <= max_len and title_like(m[1]):
+            out.append((i, m[0], m[1]))
+    return out
+
+
+def series_of(marks):
+    """已确认章节里出现 5 次以上的装饰前缀，视为一个章节系列。"""
+    seen = collections.Counter(m['pre'] for m in marks if m['pre'])
+    return {p for p, n in seen.items() if n >= 5}
+
+
+def extend_series(marks, lines, max_len):
+    """把已确认系列下漏掉的行补成章节。
+
+    "☆、美人" 这类标题没有编号，单看一行没法判断；但同一前缀下已经有 5 个
+    章节被编号确认过，剩下同样写法的行就是同系列的章节。
+    """
+    known = {m['pos'] for m in marks}
+    series = series_of(marks)
+    return [{'pos': i, 'num': 0, 'text': t, 'w': STRONG_W, 'pre': pre}
+            for i, pre, t in marker_lines(lines, max_len)
+            if pre in series and i not in known]
 
 
 class FenwickMax:
@@ -308,12 +328,8 @@ def detect_chapters(lines, max_len=48, extra_pattern=None):
         if len(chain) >= 3:
             break
 
-    # 装饰前缀比编号弱，数量太少时多半是广告行，不能顶掉整本的 "第x章"
-    markers = collect_markers(lines, max_len)
-    if len(markers) >= max(5, 0.5 * len(chain)):
-        known = {c['pos'] for c in chain}
-        chain += [m for m in markers if m['pos'] not in known]
-        chain.sort(key=lambda c: c['pos'])
+    chain += extend_series(chain, lines, max_len)
+    chain.sort(key=lambda c: c['pos'])
 
     if extra_pattern:
         pat = re.compile(extra_pattern)
