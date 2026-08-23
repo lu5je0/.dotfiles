@@ -123,6 +123,15 @@ def norm_line(raw):
     return line.strip().strip(IDEO_SPACE).strip()
 
 
+def strip_deco(line):
+    """去掉行首装饰符号，有的源文件章节标题写成 "◉ 第 19 章"。"""
+    i = 0
+    while i < len(line) and (line[i].isspace()
+                             or unicodedata.category(line[i]) in ('So', 'Sk', 'Sm', 'Sc')):
+        i += 1
+    return line[i:].strip()
+
+
 def indented(raw):
     """正文缩进行(全角空格开头或多个空格开头)不当作标题。"""
     return raw.startswith(IDEO_SPACE) or re.match(r'^[ \t]{2,}\S', raw) is not None
@@ -133,7 +142,7 @@ def collect_candidates(lines, patterns, weight, max_len, strict_indent, reject_p
     for i, raw in enumerate(lines):
         if strict_indent and indented(raw):
             continue
-        line = norm_line(raw)
+        line = strip_deco(norm_line(raw))
         if not line or len(line) > max_len:
             continue
         if reject_prose and SENTENCE_RE.search(line):
@@ -262,7 +271,7 @@ def detect_chapters(lines, max_len=48, extra_pattern=None):
     for i, raw in enumerate(lines):
         if i in known or indented(raw):
             continue
-        line = norm_line(raw)
+        line = strip_deco(norm_line(raw))
         if line and len(line) <= max_len and UNNUMBERED_RE.match(line):
             chain.append({'pos': i, 'num': 0, 'text': line, 'w': STRONG_W})
 
