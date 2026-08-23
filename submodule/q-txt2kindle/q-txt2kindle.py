@@ -123,13 +123,31 @@ def norm_line(raw):
     return line.strip().strip(IDEO_SPACE).strip()
 
 
-def strip_deco(line):
-    """去掉行首装饰符号，有的源文件章节标题写成 "◉ 第 19 章"。"""
+SEP_CHARS = '、,，.．·:：'
+
+
+def split_marker(line):
+    """把 "☆、第1章" 拆成 ("☆、", "第1章")；没有装饰前缀时返回 None。
+
+    晋江等站点导出的标题带 "☆、" 这类前缀，符号后往往还跟着顿号一类分隔符。
+    """
     i = 0
-    while i < len(line) and (line[i].isspace()
-                             or unicodedata.category(line[i]) in ('So', 'Sk', 'Sm', 'Sc')):
+    while i < len(line) and unicodedata.category(line[i]) in ('So', 'Sk', 'Sm', 'Sc'):
         i += 1
-    return line[i:].strip()
+    if not i:
+        return None
+    j = i
+    while j < len(line) and (line[j].isspace() or line[j] in SEP_CHARS):
+        j += 1
+    rest = line[j:].strip()
+    if not rest:
+        return None                          # 纯符号的分隔线
+    return line[:j].strip(), rest
+
+
+def strip_deco(line):
+    m = split_marker(line)
+    return m[1] if m else line
 
 
 def indented(raw):
@@ -157,6 +175,38 @@ def collect_candidates(lines, patterns, weight, max_len, strict_indent, reject_p
             out.append({'pos': i, 'num': num, 'text': line, 'w': weight})
             break
     return out
+
+
+def title_like(text):
+    """句子和 "文〃√" 这类竖排水印不是标题；标题里的符号只会零星出现。"""
+    if SENTENCE_RE.search(text):
+        return False
+    sym = sum(1 for c in text if unicodedata.category(c) in ('So', 'Sk', 'Sm'))
+    return sym <= 0.2 * len(text)
+
+
+def collect_markers(lines, max_len):
+    """靠固定装饰前缀识别章节，用于 "☆、美人" 这种没有编号的标题。"""
+    groups = {}
+    for i, raw in enumerate(lines):
+        line = norm_line(raw)
+        if not line or len(line) > max_len:
+            continue
+        m = split_marker(line)
+        if not m:
+            continue
+        groups.setdefault(m[0], []).append((i, m[1], indented(raw)))
+    best = []
+    for items in groups.values():
+        # 同一前缀也会出现在缩进的元数据行上("　　◉ 标签：…")；不缩进的占多数时只认它们
+        flat = [x for x in items if not x[2]]
+        picked = flat if len(flat) >= max(5, 0.6 * len(items)) else items
+        if len(picked) < 5 or len(picked) <= len(best):
+            continue
+        if sum(1 for _p, t, _i in picked if title_like(t)) < 0.8 * len(picked):
+            continue
+        best = picked
+    return [{'pos': p, 'num': 0, 'text': t, 'w': STRONG_W} for p, t, _i in best]
 
 
 class FenwickMax:
@@ -258,6 +308,13 @@ def detect_chapters(lines, max_len=48, extra_pattern=None):
         if len(chain) >= 3:
             break
 
+    # 装饰前缀比编号弱，数量太少时多半是广告行，不能顶掉整本的 "第x章"
+    markers = collect_markers(lines, max_len)
+    if len(markers) >= max(5, 0.5 * len(chain)):
+        known = {c['pos'] for c in chain}
+        chain += [m for m in markers if m['pos'] not in known]
+        chain.sort(key=lambda c: c['pos'])
+
     if extra_pattern:
         pat = re.compile(extra_pattern)
         seen = {c['pos'] for c in chain}
@@ -277,14 +334,21 @@ def detect_chapters(lines, max_len=48, extra_pattern=None):
 
     chain.sort(key=lambda c: c['pos'])
 
-    # 去掉紧邻的重复标题(有些站点会把标题输出两遍)
-    result, last = [], {}
+    # 去掉紧邻的重复标题(有些站点会把标题输出两遍，两遍写法还可能不一致)
+    result, last, prev = [], {}, None
     for c in chain:
         key = re.sub(r'\s+', '', c['text'])
         if key in last and c['pos'] - last[key] <= 40:
             last[key] = c['pos']
             continue
+        if prev and c['pos'] - prev[1] <= 40 and (key in prev[0] or prev[0] in key):
+            last[key] = c['pos']
+            if len(key) < len(prev[0]):      # 后一行更干净，标题用它，位置仍取前一处
+                result[-1] = (result[-1][0], c['text'])
+                prev = (key, prev[1])
+            continue
         last[key] = c['pos']
+        prev = (key, c['pos'])
         result.append((c['pos'], c['text']))
     return result
 
