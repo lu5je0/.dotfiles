@@ -265,5 +265,59 @@ do
   c:stop()
 end
 
+--------------------------------------------------------------------------------
+print('scenario: after a cross-window move, reordering in the new host animates')
+do
+  local c = Child.new()
+  c:exec(BOOT .. [[
+    T.a, T.b = mk('/tmp/a.lua', 'aaa'), mk('/tmp/b.lua', 'bbb')
+    T.c, T.d = mk('/tmp/c.lua', 'ccc'), mk('/tmp/d.lua', 'ddd')
+    vim.cmd('split')            -- stacked, so each strip keeps full width
+    local w = vim.api.nvim_tabpage_list_wins(0)
+    T.wL, T.wR = w[1], w[2]
+    state.win_bufs[T.wL] = { T.a, T.b }
+    state.win_bufs[T.wR] = { T.c, T.d }
+    vim.api.nvim_win_set_buf(T.wL, T.a)
+    vim.api.nvim_win_set_buf(T.wR, T.c)
+    vim.cmd('redraw')
+  ]])
+  vim.wait(120)
+  local keys = { 'wL', 'wR' }
+  local L1 = c:tab_pos('wL', 1)
+  local R1, R2 = c:tab_pos('wR', 1), c:tab_pos('wR', 2)
+
+  check('initial', c:layout(keys), '[A,B] [C,D]')
+
+  c:mouse('press', L1.row, L1.col)
+  c:mouse('drag', R1.row, R1.col)          -- carry A into the other window
+  check('A moved across', c:layout(keys), '[B] [A,C,D]')
+  check('new host animating', c:eval([[
+    return tostring(require('lu5je0.ext.winbar.anim').frame(T.wR) ~= nil)
+  ]]), 'true')
+  check('old host gap easing', c:eval([[
+    return tostring(require('lu5je0.ext.winbar.anim').frame(T.wL) ~= nil)
+  ]]), 'true')
+
+  -- keep dragging inside the new host: this used to lose the animation because
+  -- the follow path only ran for the drag's origin window.
+  c:mouse('drag', R2.row, R2.col)
+  check('reordered in new host', c:layout(keys), '[B] [C,A,D]')
+  check('still animating there', c:eval([[
+    return tostring(require('lu5je0.ext.winbar.anim').frame(T.wR) ~= nil)
+  ]]), 'true')
+
+  c:mouse('release', R2.row, R2.col)
+  check('settles after release', c:eval([[
+    local anim = require('lu5je0.ext.winbar.anim')
+    for _ = 1, 80 do
+      if anim.frame(T.wR) == nil and anim.frame(T.wL) == nil then break end
+      anim.tick()
+    end
+    return tostring(anim.frame(T.wR) == nil and anim.frame(T.wL) == nil)
+  ]]), 'true')
+  check('final layout', c:layout(keys), '[B] [C,A,D]')
+  c:stop()
+end
+
 print(string.format('\n%d passed, %d failed', total - failed, failed))
 os.exit(failed == 0 and 0 or 1)

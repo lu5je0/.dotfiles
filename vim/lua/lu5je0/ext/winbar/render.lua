@@ -461,8 +461,8 @@ function M.build_winbar(win_id)
 end
 
 function M.winbar(win_id)
-  local frame = require('lu5je0.ext.winbar.anim').frame(win_id)
-  if frame then return frame end
+  local ok_frame, frame = pcall(require('lu5je0.ext.winbar.anim').frame, win_id)
+  if ok_frame and frame then return frame end
   local ok, str = pcall(M.build_winbar, win_id)
   if not ok then return '' end
   return str

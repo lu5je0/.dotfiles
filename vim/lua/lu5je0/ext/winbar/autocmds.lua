@@ -98,6 +98,12 @@ function M.setup(group)
     callback = function(ev)
       local closed_win = tonumber(ev.match)
       if not closed_win then return end
+      -- drop per-window render/animation caches (window ids get reused)
+      pcall(function()
+        require('lu5je0.ext.winbar.anim').clear(closed_win)
+        require('lu5je0.ext.winbar.render').forget(closed_win)
+      end)
+      state.tab_regions[closed_win] = nil
       local closed_bufs = state.win_bufs[closed_win]
       if closed_bufs then
         local target_tabpage

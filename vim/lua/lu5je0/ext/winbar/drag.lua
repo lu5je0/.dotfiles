@@ -160,18 +160,6 @@ local function close_pending()
   pcall(vim.api.nvim_win_close, win, false)
 end
 
--- resolve the window + drop index currently under the mouse, or nil.
-local function mouse_target(drag)
-  local mp = vim.fn.getmousepos()
-  local win = mp.winid
-  if win == 0 or not vim.api.nvim_win_is_valid(win) then return end
-  if win ~= drag.win and not util.is_normal_win(win) then return end
-  if state.pending_close_win == win then
-    return win, 1
-  end
-  return win, drop_index(win, mp.wincol)
-end
-
 -- Floating column + drop ordinal for a drag inside its own window, derived from
 -- the live (truncation-aware) layout. Returns nil when the grabbed tab has no
 -- visible placement, in which case the caller falls back to an instant reorder.
@@ -209,29 +197,42 @@ local function follow_target(drag, win, mouse_col)
 end
 
 -- runs on vim.schedule so buffer/window mutation happens outside expr context.
+-- `drag.win` stays the snapshot origin; `drag.host` is the window the grabbed
+-- tab currently lives in, and that is what gets the follow animation.
 function M.on_drag()
   local drag = state.drag
   if not drag then return end
   local mp = vim.fn.getmousepos()
   local win = mp.winid
+  if win == 0 or not vim.api.nvim_win_is_valid(win) then return end
+  if win ~= drag.win and not util.is_normal_win(win) then return end
 
-  if win == drag.win then
-    local float_left, ordinal = follow_target(drag, win, mp.wincol)
-    if float_left then
-      apply(drag, win, ordinal)
-      -- re-resolve after the reorder: the visible window may have scrolled
-      local next_left = follow_target(drag, win, mp.wincol)
-      anim().follow(win, drag.buf, next_left or float_left)
-      vim.cmd('redrawstatus!')
-      return
+  -- drop index: from the layout once the tab lives here, else by span hit-test
+  local float_left, ordinal = follow_target(drag, win, mp.wincol)
+  if not ordinal then
+    ordinal = (state.pending_close_win == win) and 1 or drop_index(win, mp.wincol)
+  end
+  if not ordinal then return end
+
+  apply(drag, win, ordinal)
+
+  local prev_host = drag.host or drag.win
+  drag.host = win
+
+  -- after apply the tab lives in `win`, so its float column is resolvable
+  local settled_left = select(1, follow_target(drag, win, mp.wincol)) or float_left
+  if not (settled_left and anim().follow(win, drag.buf, settled_left)) then
+    anim().clear(win)
+  end
+  if prev_host ~= win then
+    -- close the gap left behind, unless that window is going away entirely
+    if state.pending_close_win == prev_host then
+      anim().clear(prev_host)
+    else
+      anim().reflow(prev_host)
     end
   end
 
-  local twin, ordinal = mouse_target(drag)
-  if not twin then return end
-  apply(drag, twin, ordinal)
-  anim().clear(twin)
-  if twin ~= drag.win then anim().clear(drag.win) end
   vim.cmd('redrawstatus!')
 end
 
@@ -239,23 +240,25 @@ end
 function M.finish_drag(drag)
   local mp = vim.fn.getmousepos()
   local win = mp.winid
+  local host = drag.host or drag.win
   local settling = false
 
-  if win == drag.win then
+  if win ~= 0 and vim.api.nvim_win_is_valid(win)
+    and (win == drag.win or util.is_normal_win(win))
+  then
     local float_left, ordinal = follow_target(drag, win, mp.wincol)
-    if float_left then
-      apply(drag, win, ordinal)
-      anim().release(win)
-      settling = true
+    if not ordinal then
+      ordinal = (state.pending_close_win == win) and 1 or drop_index(win, mp.wincol)
     end
-  end
-
-  if not settling then
-    local twin, ordinal = mouse_target(drag)
-    if twin then
-      apply(drag, twin, ordinal)
-      anim().clear(twin)
-      if twin ~= drag.win then anim().clear(drag.win) end
+    if ordinal then
+      apply(drag, win, ordinal)
+      if float_left or follow_target(drag, win, mp.wincol) then
+        anim().release(win)
+        settling = true
+      else
+        anim().clear(win)
+      end
+      if host ~= win and state.pending_close_win ~= host then anim().reflow(host) end
     end
   end
 
