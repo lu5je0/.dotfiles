@@ -2,7 +2,6 @@ local M = {}
 
 local state = require('lu5je0.ext.winbar.state')
 local util = require('lu5je0.ext.winbar.util')
-local config = require('lu5je0.ext.winbar.config')
 
 local function anim()
   return require('lu5je0.ext.winbar.anim')
@@ -173,36 +172,40 @@ local function mouse_target(drag)
   return win, drop_index(win, mp.wincol)
 end
 
--- geometry of the grabbed window's tab strip
-local function follow_geo(win)
-  local W = config.options.tab_size + 1
-  local ncols = vim.api.nvim_win_get_width(win)
-  local N = #util.get_buf_list(win)
-  return W, ncols, N
-end
-
--- true when the grabbed tab should float+follow inside `win` (everything fits)
-local function follow_eligible(win)
-  local W, ncols, N = follow_geo(win)
-  return N > 0 and N * W <= ncols, W, ncols, N
-end
-
--- floating left column + drop ordinal (>50% overlap = centre crossing a slot).
+-- Floating column + drop ordinal for a drag inside its own window, derived from
+-- the live (truncation-aware) layout. Returns nil when the grabbed tab has no
+-- visible placement, in which case the caller falls back to an instant reorder.
+--
+-- Swap rule: the grabbed tab's centre landing inside another tab's span is
+-- exactly ">50% overlap" for equal-width tabs.
 local function follow_target(drag, win, mouse_col)
-  local W, ncols, N = follow_geo(win)
-  local max_left = (N - 1) * W + 1
-  local float_left = clamp(mouse_col - (drag.grab_offset or 0), 1, max_left)
-  local ordinal = clamp(math.floor((float_left + W / 2 - 1) / W) + 1, 1, N)
-  return float_left, ordinal
-end
+  local layout = require('lu5je0.ext.winbar.render').layout(win)
+  if not layout or #layout.tabs == 0 then return nil end
 
--- non-follow drop: cross-window moves, or within-window when the strip is
--- truncated. Reorders instantly and clears any slide.
-local function snap_apply(drag, win, ordinal)
-  apply(drag, win, ordinal)
-  anim().clear(win)
-  if win ~= drag.win then anim().clear(drag.win) end
-  vim.cmd('redrawstatus!')
+  local dragged
+  for _, t in ipairs(layout.tabs) do
+    if t.buf == drag.buf then dragged = t; break end
+  end
+  if not dragged then return nil end
+
+  local W = dragged.width
+  local first, last = layout.tabs[1], layout.tabs[#layout.tabs]
+  local min_left = first.col
+  local max_left = math.max(min_left, last.col + last.width - W)
+  local float_left = clamp(mouse_col - (drag.grab_offset or 0), min_left, max_left)
+
+  local centre = float_left + math.floor(W / 2)
+  local ordinal = first.ordinal
+  for _, t in ipairs(layout.tabs) do
+    if centre >= t.col and centre <= t.col + t.width - 1 then
+      ordinal = t.ordinal
+      break
+    elseif centre > t.col + t.width - 1 then
+      ordinal = t.ordinal
+    end
+  end
+
+  return float_left, ordinal
 end
 
 -- runs on vim.schedule so buffer/window mutation happens outside expr context.
@@ -212,31 +215,42 @@ function M.on_drag()
   local mp = vim.fn.getmousepos()
   local win = mp.winid
 
-  if win == drag.win and follow_eligible(win) then
+  if win == drag.win then
     local float_left, ordinal = follow_target(drag, win, mp.wincol)
-    apply(drag, win, ordinal)
-    anim().follow(win, drag.buf, float_left)
-    vim.cmd('redrawstatus!')
-    return
+    if float_left then
+      apply(drag, win, ordinal)
+      -- re-resolve after the reorder: the visible window may have scrolled
+      local next_left = follow_target(drag, win, mp.wincol)
+      anim().follow(win, drag.buf, next_left or float_left)
+      vim.cmd('redrawstatus!')
+      return
+    end
   end
 
   local twin, ordinal = mouse_target(drag)
   if not twin then return end
-  snap_apply(drag, twin, ordinal)
+  apply(drag, twin, ordinal)
+  anim().clear(twin)
+  if twin ~= drag.win then anim().clear(drag.win) end
+  vim.cmd('redrawstatus!')
 end
 
 -- release: settle the grabbed tab into its slot, then close an emptied window.
 function M.finish_drag(drag)
   local mp = vim.fn.getmousepos()
   local win = mp.winid
-  local followed = false
+  local settling = false
 
-  if win == drag.win and follow_eligible(win) then
+  if win == drag.win then
     local float_left, ordinal = follow_target(drag, win, mp.wincol)
-    apply(drag, win, ordinal)
-    anim().release(win)
-    followed = true
-  else
+    if float_left then
+      apply(drag, win, ordinal)
+      anim().release(win)
+      settling = true
+    end
+  end
+
+  if not settling then
     local twin, ordinal = mouse_target(drag)
     if twin then
       apply(drag, twin, ordinal)
@@ -246,7 +260,7 @@ function M.finish_drag(drag)
   end
 
   close_pending()
-  if not followed then vim.cmd('redrawstatus!') end
+  if not settling then vim.cmd('redrawstatus!') end
 end
 
 -- expr <LeftDrag>: consume + reorder while a session is active, otherwise fall

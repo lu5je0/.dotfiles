@@ -264,16 +264,22 @@ local function refresh_buf_cache()
   _modified_cache = modified
 end
 
+local _layout_cache = {}
+
 function M.build_winbar(win_id)
   if state.pending_close_win == win_id then
     state.tab_regions[win_id] = nil
+    _layout_cache[win_id] = nil
     return '%#BufferLineFill#'
   end
 
   _cwd_cache = vim.fn.getcwd() .. '/'
   refresh_buf_cache()
   local all_valid = _valid_bufs_cache
-  if #all_valid == 0 then return '%#BufferLineFill#' end
+  if #all_valid == 0 then
+    _layout_cache[win_id] = nil
+    return '%#BufferLineFill#'
+  end
 
   local bufs
   local single_win = not util.tabpage_has_multiple_normal_wins(win_id)
@@ -291,6 +297,7 @@ function M.build_winbar(win_id)
         win_bufs = { buf }
         state.win_bufs[win_id] = win_bufs
       else
+        _layout_cache[win_id] = nil
         return '%#BufferLineFill#'
       end
     end
@@ -303,7 +310,10 @@ function M.build_winbar(win_id)
       if valid_set[b] then bufs[#bufs + 1] = b end
     end
     state.win_bufs[win_id] = bufs
-    if #bufs == 0 then return '%#BufferLineFill#' end
+    if #bufs == 0 then
+      _layout_cache[win_id] = nil
+      return '%#BufferLineFill#'
+    end
   end
 
   naming.assign(all_valid)
@@ -402,38 +412,49 @@ function M.build_winbar(win_id)
 
   local parts = {}
   local regions = {}
+  local layout = { ncols = available, seg_width = seg_width, tabs = {}, markers = {} }
   local col = 1
 
   local left_marker, left_marker_w = make_trunc_marker(LEFT_TRUNC, left_hidden)
   if left_marker ~= '' then
     parts[#parts + 1] = left_marker
+    layout.markers[#layout.markers + 1] = { markup = left_marker, col = col, width = left_marker_w }
     col = col + left_marker_w
   end
 
   if left_partial then
     parts[#parts + 1] = left_partial
     local w = measure_segment_width(left_partial)
-    regions[#regions + 1] = { buf = bufs[left_start - 1], ordinal = left_start - 1, from = col, to = col + w - 1 }
+    local buf, ordinal = bufs[left_start - 1], left_start - 1
+    regions[#regions + 1] = { buf = buf, ordinal = ordinal, from = col, to = col + w - 1 }
+    layout.tabs[#layout.tabs + 1] = { buf = buf, ordinal = ordinal, markup = left_partial, col = col, width = w }
     col = col + w
   end
 
   for i = left_start, right_end do
     parts[#parts + 1] = segments[i]
     regions[#regions + 1] = { buf = bufs[i], ordinal = i, from = col, to = col + seg_width - 1 }
+    layout.tabs[#layout.tabs + 1] = { buf = bufs[i], ordinal = i, markup = segments[i], col = col, width = seg_width }
     col = col + seg_width
   end
 
   if right_partial then
     parts[#parts + 1] = right_partial
     local w = measure_segment_width(right_partial)
-    regions[#regions + 1] = { buf = bufs[right_end + 1], ordinal = right_end + 1, from = col, to = col + w - 1 }
+    local buf, ordinal = bufs[right_end + 1], right_end + 1
+    regions[#regions + 1] = { buf = buf, ordinal = ordinal, from = col, to = col + w - 1 }
+    layout.tabs[#layout.tabs + 1] = { buf = buf, ordinal = ordinal, markup = right_partial, col = col, width = w }
     col = col + w
   end
 
-  local right_marker = make_trunc_marker(RIGHT_TRUNC, right_hidden)
-  if right_marker ~= '' then parts[#parts + 1] = right_marker end
+  local right_marker, right_marker_w = make_trunc_marker(RIGHT_TRUNC, right_hidden)
+  if right_marker ~= '' then
+    parts[#parts + 1] = right_marker
+    layout.markers[#layout.markers + 1] = { markup = right_marker, col = col, width = right_marker_w }
+  end
 
   state.tab_regions[win_id] = regions
+  _layout_cache[win_id] = layout
 
   parts[#parts + 1] = '%#BufferLineFill#'
   return table.concat(parts)
@@ -447,34 +468,18 @@ function M.winbar(win_id)
   return str
 end
 
--- Build the ordered, non-truncated tab segments for a window as winbar markup,
--- one per tab. Used by the slide animation to composite tabs at interpolated
--- columns. Returns (list = { {buf=, markup=}, ... }, seg_width, win_width).
-function M.ordered_segments(win_id)
-  _cwd_cache = vim.fn.getcwd() .. '/'
-  refresh_buf_cache()
-  naming.assign(_valid_bufs_cache)
+-- Truncation-aware placement of the current tab strip, as used by the static
+-- render: { ncols, seg_width, tabs = { {buf, ordinal, markup, col, width} },
+-- markers = { {markup, col, width} } }. Recomputed from the live state; the
+-- slide animation composites these at interpolated columns.
+function M.layout(win_id)
+  local ok = pcall(M.build_winbar, win_id)
+  if not ok then return nil end
+  return _layout_cache[win_id]
+end
 
-  local bufs = util.get_buf_list(win_id)
-  local buf_names, all_basenames = {}, {}
-  for _, b in ipairs(bufs) do
-    local n = vim.api.nvim_buf_get_name(b)
-    buf_names[b] = n
-    if n ~= '' then
-      local base = basename(n)
-      all_basenames[base] = (all_basenames[base] or 0) + 1
-    end
-  end
-
-  local current = vim.api.nvim_win_get_buf(win_id)
-  local list = {}
-  for i, buf in ipairs(bufs) do
-    list[i] = {
-      buf = buf,
-      markup = buffer_segment(buf, i, buf == current, all_basenames, buf_names[buf], i == 1),
-    }
-  end
-  return list, config.options.tab_size + 1, vim.api.nvim_win_get_width(win_id)
+function M.forget(win_id)
+  _layout_cache[win_id] = nil
 end
 
 M.click_prefix = click_prefix
