@@ -1,6 +1,7 @@
 local state = require('lu5je0.ext.sidebar.state')
 local clipboard = require('lu5je0.core.clipboard')
 local tree = require('lu5je0.ext.sidebar.sources.files.tree')
+local core_buffers = require('lu5je0.core.buffers')
 
 local M = {}
 
@@ -126,13 +127,7 @@ function M.rename()
       vim.fn.mkdir(new_parent, 'p')
     end
     vim.uv.fs_rename(node.abs_path, new_path)
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      local buf_path = vim.api.nvim_buf_get_name(buf)
-      if buf_path == node.abs_path or vim.startswith(buf_path, node.abs_path .. '/') then
-        local new_buf_path = new_path .. buf_path:sub(#node.abs_path + 1)
-        vim.api.nvim_buf_set_name(buf, new_buf_path)
-      end
-    end
+    core_buffers.rename_buffers(node.abs_path, new_path)
     refresh()
   end)
 end
@@ -315,7 +310,9 @@ function M.paste()
 
   local function do_one(src, final_dest)
     if cb.action == 'move' then
-      vim.uv.fs_rename(src, final_dest)
+      if vim.uv.fs_rename(src, final_dest) then
+        core_buffers.rename_buffers(src, final_dest)
+      end
     elseif cb.action == 'copy' then
       vim.fn.system({ 'cp', '-r', src, final_dest })
     end

@@ -2,6 +2,7 @@
 -- (execute_actions) for the create/delete/move/copy lists produced by
 -- model.diff(). Knows nothing about buffers or the working tree.
 local fmt = require('lu5je0.ext.sidebar.sources.files.fs-edit.format')
+local core_buffers = require('lu5je0.core.buffers')
 
 local M = {}
 
@@ -33,13 +34,7 @@ local function close_bufs_under(abs_path)
 end
 
 local function rename_bufs(old_path, new_path)
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    local buf_path = vim.api.nvim_buf_get_name(buf)
-    if buf_path == old_path or vim.startswith(buf_path, old_path .. '/') then
-      local new_buf_path = new_path .. buf_path:sub(#old_path + 1)
-      vim.api.nvim_buf_set_name(buf, new_buf_path)
-    end
-  end
+  core_buffers.rename_buffers(old_path, new_path)
 end
 
 function M.add_implicit_creates(actions, root_dir)
