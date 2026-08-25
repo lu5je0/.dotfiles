@@ -60,33 +60,29 @@ function M.seed(win)
   last_pos[win] = pos
 end
 
--- Update the drag animation for the current order (the caller has already moved
--- the grabbed tab to its new index) and floating column. Returns true when a
--- slide is in effect, false when the caller should just redraw instantly.
-function M.follow(win, dragged, float_left)
-  if not vim.api.nvim_win_is_valid(win) then return false end
+-- Build animation state for `win`. With `dragged` that tab is pinned to
+-- `float_left` and painted on top; without it every tab just eases to its slot
+-- (used for the window a tab was dragged out of, so its gap closes smoothly).
+local function build(win, dragged, float_left)
+  if not vim.api.nvim_win_is_valid(win) then return nil end
   local layout = render().layout(win)
-  if not layout or #layout.tabs == 0 then
-    M.clear(win)
-    return false
-  end
+  if not layout or #layout.tabs == 0 then return nil end
 
   local tabs, order = {}, {}
-  local seen_dragged = false
+  local has_dragged = false
   for _, t in ipairs(layout.tabs) do
     tabs[t.buf] = { cells = canvas.parse(t.markup), target = t.col, width = t.width }
-    if t.buf == dragged then
-      seen_dragged = true
+    if dragged and t.buf == dragged then
+      has_dragged = true
     else
       order[#order + 1] = t.buf
     end
   end
-  if not seen_dragged then
-    -- grabbed tab scrolled out of the visible strip: nothing sensible to float
-    M.clear(win)
-    return false
+  if dragged then
+    -- grabbed tab has no visible placement here: nothing sensible to float
+    if not has_dragged then return nil end
+    order[#order + 1] = dragged -- painted last, on top
   end
-  order[#order + 1] = dragged -- painted last, on top
 
   local markers = {}
   for _, mk in ipairs(layout.markers) do
@@ -118,10 +114,36 @@ function M.follow(win, dragged, float_left)
     end
   end
 
-  anims[win] = {
+  return {
     tabs = tabs, order = order, pos = pos, markers = markers,
-    dragged = dragged, float = float_left, floating = true, ncols = layout.ncols,
+    dragged = dragged, float = float_left, ncols = layout.ncols,
   }
+end
+
+-- Update the drag animation for `win`, the window currently hosting the grabbed
+-- tab. Returns true when a slide is in effect, false to redraw instantly.
+function M.follow(win, dragged, float_left)
+  local a = build(win, dragged, float_left)
+  if not a then
+    M.clear(win)
+    return false
+  end
+  a.floating = true
+  anims[win] = a
+  ensure_timer()
+  return true
+end
+
+-- Ease a window's tabs to their slots with nothing floating: used for the window
+-- the grabbed tab just left, so its gap closes with motion instead of snapping.
+function M.reflow(win)
+  local a = build(win, nil, nil)
+  if not a then
+    M.clear(win)
+    return false
+  end
+  a.floating = false
+  anims[win] = a
   ensure_timer()
   return true
 end

@@ -1958,5 +1958,67 @@ r.run(':write with queued y executes actions and clears modified in one pass', f
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- ============================================================================
+r.group('e2e: open buffer follows moved file and stays writable')
+-- ============================================================================
+
+r.run('save after mv re-associates the open buffer (no E13)', function()
+  local tmp = vim.fn.resolve(make_fixture())
+  local file_path = tmp .. '/src/a.txt'
+
+  vim.cmd('edit ' .. vim.fn.fnameescape(file_path))
+  local file_buf = vim.api.nvim_get_current_buf()
+
+  -- replace = false: the default would delete the pre-opened file buffer
+  fs_edit.open_dir(tmp, { replace = false, inplace = true })
+  local buf = vim.api.nvim_get_current_buf()
+  local session = fs_edit._sessions[buf]
+  local function do_save()
+    local all_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    model_mod.reconcile(session, all_lines)
+    local actions = model_mod.diff(session)
+    if #actions == 0 then return end
+    actions_mod.add_implicit_creates(actions, session.root_dir)
+    actions_mod.execute_actions(actions)
+    model_mod.rebuild(session, {})
+  end
+  local function do_enter(line_nr)
+    vim.api.nvim_win_set_cursor(0, { line_nr, 0 })
+    for _, m in ipairs(vim.api.nvim_buf_get_keymap(buf, 'n')) do
+      if m.lhs == '<CR>' and m.callback then
+        m.callback()
+        return
+      end
+    end
+  end
+
+  local src_line = find_line(buf, 'src/')
+  r.assert_truthy(src_line, 'src/ not found')
+  do_enter(src_line)
+
+  local a_line = find_line(buf, 'a.txt', src_line + 1)
+  r.assert_truthy(a_line, 'a.txt not found')
+  local lines = buf_lines(buf)
+  vim.api.nvim_buf_set_lines(buf, a_line - 1, a_line, false,
+    { gsub(lines[a_line], 'a%.txt', 'a2.txt') })
+
+  do_save()
+
+  r.assert_truthy(isfile(tmp .. '/src/a2.txt'), 'renamed file on disk')
+  r.assert_truthy(not exists(file_path), 'old name gone')
+  r.assert_eq(vim.api.nvim_buf_get_name(file_buf), tmp .. '/src/a2.txt',
+    'open buffer renamed to new path')
+
+  vim.cmd('buffer ' .. file_buf)
+  vim.api.nvim_buf_set_lines(file_buf, 0, -1, false, { 'after move' })
+  local wok, werr = pcall(vim.cmd.write)
+  r.assert_truthy(wok, 'write must not raise E13: ' .. tostring(werr))
+  r.assert_eq(readfile(tmp .. '/src/a2.txt'), 'after move', 'content lands in new file')
+  r.assert_truthy(not exists(file_path), 'old file not recreated by save')
+
+  vim.api.nvim_buf_delete(file_buf, { force = true })
+  vim.fn.delete(tmp, 'rf')
+end)
+
 r.finish()
 
