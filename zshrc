@@ -110,8 +110,11 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 # Enable truecolor for CLI tools over SSH
 export COLORTERM=truecolor
+
+# golang
 export GOMODCACHE="$HOME/.cache/go/pkg/mod"
 export GOBIN="$HOME/.local/bin"
+export GOPATH="$HOME/.local/share/go"
 
 ##########################################
 # alias
