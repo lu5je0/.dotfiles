@@ -14,13 +14,19 @@ const layoutConfig = {
     },
     "kitty": {
         "center_i": function(sw, sh) {
-            const w = 1722;
-            const h = 1153;
+            // 170%缩放
+            // const w = 1722;
+            // const h = 1153;
+            const w = 1726;
+            const h = 1144;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
         "center_j": function(sw, sh) {
+            // 170%缩放
+            // const w = 1113;
+            // const h = 928;
             const w = 1113;
-            const h = 928;
+            const h = 945;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
     },
