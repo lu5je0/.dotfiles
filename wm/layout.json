@@ -1,0 +1,94 @@
+{
+  "rules": [
+    {
+      "wm": "hammerspoon",
+      "app": "WezTerm",
+      "screen": "main",
+      "size": {
+        "center_j": { "w": 1000, "h": 825 },
+        "center_i": { "w": 1126, "h": 862 }
+      }
+    },
+    {
+      "wm": "hammerspoon",
+      "app": "WezTerm",
+      "screen": "external",
+      "size": {
+        "center_j": { "w": 1013, "h": 840 },
+        "center_i": {
+          "w": { "ratio": 0.75, "offset": -27 },
+          "h": { "ratio": 1, "offset": -24 }
+        }
+      }
+    },
+    {
+      "wm": "hammerspoon",
+      "app": "kitty",
+      "screen": "main",
+      "size": {
+        "center_j": { "w": 990, "h": 815 },
+        "center_i": { "w": 1105, "h": 863 }
+      }
+    },
+    {
+      "wm": "hammerspoon",
+      "app": "kitty",
+      "screen": "external",
+      "size": {
+        "center_j": { "w": 1023, "h": 863 },
+        "center_i": { "w": 1420, "h": 992 }
+      }
+    },
+    {
+      "wm": "hammerspoon",
+      "app": "Ghostty",
+      "screen": "main",
+      "size": {
+        "center_j": { "w": 952, "h": 806 },
+        "center_i": { "w": 1105, "h": 863 }
+      }
+    },
+    {
+      "wm": "hammerspoon",
+      "app": "Ghostty",
+      "screen": "external",
+      "size": {
+        "center_j": { "w": 1016, "h": 846 },
+        "center_i": {
+          "w": { "ratio": 0.75, "offset": -20 },
+          "h": { "ratio": 1, "offset": -16 }
+        }
+      }
+    },
+    {
+      "wm": "hammerspoon",
+      "size": {
+        "center_i": { "w": { "ratio": 0.9 }, "h": { "ratio": 1 } },
+        "center_j": { "w": { "ratio": 0.65 }, "h": { "ratio": 0.85 } },
+        "maximize": { "w": { "ratio": 1 }, "h": { "ratio": 1 } },
+        "halfleft": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } },
+        "halfright": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } }
+      }
+    },
+    {
+      "wm": ["kwin", "gnome"],
+      "app": "kitty",
+      "size": {
+        "center_i": { "w": 1726, "h": 1144 },
+        "center_j": { "w": 1113, "h": 945 }
+      }
+    },
+    {
+      "size": {
+        "center_i": {
+          "w": { "ratio": 0.6875 },
+          "h": { "ratio": 1, "offset": -120 },
+          "y": { "align": "top", "offset": 23 }
+        },
+        "center_j": { "w": { "ratio": 0.6 }, "h": { "ratio": 0.85 } }
+      }
+    }
+  ],
+  "side": { "width": 1139, "height": 1218 },
+  "insets": {}
+}

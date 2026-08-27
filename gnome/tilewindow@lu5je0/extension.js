@@ -6,8 +6,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as WorkspaceSwitcherPopup from 'resource:///org/gnome/shell/ui/workspaceSwitcherPopup.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-// Set in enable() to <extension dir>/layout.json; read on every keypress so
-// sizes can be tuned live without reloading the shell
+// Set in enable() to <repo>/wm/layout.json (unified across wms); read on every
+// keypress so sizes can be tuned live without reloading the shell
 let configPath = null;
 
 function loadFileConfig() {
@@ -21,7 +21,7 @@ function loadFileConfig() {
     }
 }
 
-// Built-in fallback layout; per-app sizes in layout.json (extension dir) take precedence
+// Built-in fallback layout; per-app sizes in wm/layout.json take precedence
 const layoutConfig = {
     'default': {
         'center_i': (sw, sh) => {
@@ -118,17 +118,54 @@ function getTargetWindow() {
     return win;
 }
 
+function resolveDim(spec, max) {
+    if (typeof spec === 'number')
+        return Math.round(spec);
+    return Math.round(max * (spec.ratio ?? 1) + (spec.offset ?? 0));
+}
+
+function alignPos(axis, spec, size, max) {
+    const align = spec.align ?? 'center';
+    const offset = spec.offset ?? 0;
+    if (axis === 'x') {
+        if (align === 'left') return offset;
+        if (align === 'right') return max - size - offset;
+        return Math.round((max - size) / 2) + offset;
+    }
+    if (align === 'top') return offset;
+    if (align === 'bottom') return max - size - offset;
+    return Math.round((max - size) / 2) + offset;
+}
+
+// wm/layout.json: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
+// 字段可为字符串或数组，缺省即通配
+function findEntry(config, wm, app, screen, mode) {
+    const matchField = (spec, value) => {
+        if (spec == null)
+            return true;
+        const list = Array.isArray(spec) ? spec : [spec];
+        return list.includes(value);
+    };
+    for (const rule of config?.rules ?? []) {
+        if (!matchField(rule.wm, wm) || !matchField(rule.app, app) || !matchField(rule.screen, screen))
+            continue;
+        if (rule.size && rule.size[mode])
+            return rule.size[mode];
+    }
+    return null;
+}
+
 function getCenterLayout(wmClass, position, sw, sh) {
-    const fileConfig = loadFileConfig();
-    const entry = fileConfig?.[wmClass]?.[position] ?? fileConfig?.['default']?.[position];
-    if (entry?.width > 0 && entry.height > 0) {
-        const w = entry.width;
-        const h = entry.height;
-        const x = entry.x ?? Math.round((sw - w) / 2);
-        const y = entry.y ?? Math.round((sh - h) / 2);
+    const entry = findEntry(loadFileConfig(), 'gnome', wmClass, 'default', position);
+    if (entry) {
+        const w = resolveDim(entry.w, sw);
+        const h = resolveDim(entry.h, sh);
+        const x = entry.x != null ? alignPos('x', entry.x, w, sw) : Math.round((sw - w) / 2);
+        const y = entry.y != null ? alignPos('y', entry.y, h, sh) : Math.round((sh - h) / 2);
         return {width: w, height: h, x, y};
     }
 
+    // 内置兜底，与 wm/layout.json 的全局 fallback 规则保持一致
     const appMap = layoutConfig[wmClass] ?? layoutConfig['default'];
     if (!appMap[position])
         return null;
@@ -136,16 +173,14 @@ function getCenterLayout(wmClass, position, sw, sh) {
 }
 
 function getSideRect(side, area) {
-    const sideConfig = loadFileConfig()?.['side'];
+    const sideConfig = loadFileConfig()?.side;
+    const w = sideConfig?.width ?? 1139;
     const h = sideConfig?.height ?? 1218;
-    const padding = sideConfig?.padding ?? 0;
-    // `padding` is kept on both outer edges and again in the middle, so the two
-    // halves never overlap no matter how wide `width` is configured
-    const maxWidth = Math.max(1, Math.floor((area.width - 3 * padding) / 2));
-    const w = Math.min(sideConfig?.width ?? 1139, maxWidth);
+    // 与 kwin 一致：贴边窗口居中在各自半屏内
+    const halfWidth = area.width / 2;
     const x = (side === 'left')
-        ? area.x + padding
-        : area.x + area.width - padding - w;
+        ? area.x + Math.round((halfWidth - w) / 2)
+        : area.x + Math.round(halfWidth) + Math.round((halfWidth - w) / 2);
     const y = area.y + Math.round((area.height - h) / 2);
     return {x, y, width: w, height: h};
 }
@@ -311,7 +346,7 @@ export default class TileWindowExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._names = [];
-        configPath = GLib.build_filenamev([this.path, 'layout.json']);
+        configPath = GLib.build_filenamev([GLib.get_home_dir(), '.dotfiles', 'wm', 'layout.json']);
 
         const bind = (name, handler) => {
             Main.wm.addKeybinding(name, this._settings,

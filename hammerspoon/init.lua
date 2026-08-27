@@ -4,7 +4,7 @@ hs.hotkey.bind({ "ctrl", "option" }, "R", function()
   hs.reload()
 end)
 
-local config_path = hs.configdir .. "/window_sizes.json"
+local config_path = os.getenv("HOME") .. "/.dotfiles/wm/layout.json"
 
 -- spec: 数字表示绝对像素; {ratio, offset} 表示 max_dim * ratio + offset
 local function resolve_dim(spec, max_dim)
@@ -12,6 +12,38 @@ local function resolve_dim(spec, max_dim)
     return spec
   end
   return max_dim * (spec.ratio or 1) + (spec.offset or 0)
+end
+
+-- 字段可为字符串或数组，缺省即通配
+local function field_matches(spec, value)
+  if spec == nil then
+    return true
+  end
+  if type(spec) == "string" then
+    return spec == value
+  end
+  for _, item in ipairs(spec) do
+    if item == value then
+      return true
+    end
+  end
+  return false
+end
+
+local function rule_matches(rule, wm, app, screen)
+  return field_matches(rule.wm, wm)
+    and field_matches(rule.app, app)
+    and field_matches(rule.screen, screen)
+end
+
+-- rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
+local function find_entry(config, wm, app, screen, mode)
+  for _, rule in ipairs(config.rules or {}) do
+    if rule_matches(rule, wm, app, screen) and rule.size and rule.size[mode] then
+      return rule.size[mode]
+    end
+  end
+  return nil
 end
 
 local function apply_size(win, entry, max, mode)
@@ -44,22 +76,14 @@ local function size_focused_window(mode)
 
     local config, err = hs.json.read(config_path)
     if not config then
-      hs.alert.show("window_sizes.json 解析失败: " .. tostring(err))
+      hs.alert.show("wm/layout.json 解析失败: " .. tostring(err))
       return
     end
 
-    local entry
-    local profile_name = config.apps and config.apps[app_name]
-    local profile = profile_name and config.profiles and config.profiles[profile_name]
-    if profile and profile[mode] then
-      local screen_type = screen:id() == 1 and "main" or "external"
-      entry = profile[mode][screen_type]
-    end
+    local screen_type = screen:id() == 1 and "main" or "external"
+    local entry = find_entry(config, "hammerspoon", app_name, screen_type, mode)
     if not entry then
-      entry = config.defaults and config.defaults[mode]
-    end
-    if not entry then
-      hs.alert.show("window_sizes.json 中未找到 " .. app_name .. " / " .. mode .. " 的配置")
+      hs.alert.show("wm/layout.json 中未找到 " .. app_name .. " / " .. mode .. " 的配置")
       return
     end
 

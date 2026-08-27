@@ -4,14 +4,14 @@ KDE Wayland 下的窗口管理脚本，等同于 Windows 下的 AHK 窗口管理
 
 ## 重载脚本
 
-修改 `contents/code/main.js` 后，执行：
+修改 `contents/code/main.js` 或 `wm/layout.json` 后执行（会同步布局配置到 kwinrc 并重载脚本）：
 
 ```bash
-kpackagetool6 --type KWin/Script --upgrade ~/.dotfiles/kwin/tilewindow
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript tilewindow
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$HOME/.local/share/kwin/scripts/tilewindow/contents/code/main.js" tilewindow
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start
+bash ~/.dotfiles/kwin/reload.sh
 ```
+
+reload.sh 做的事：`wm/layout.json` 同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` →
+`kpackagetool6 --upgrade` → qdbus 卸载/加载/启动脚本 → 启用插件。
 
 ## 快捷键
 
@@ -27,6 +27,31 @@ qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start
 | Ctrl+Meta+W | 输出窗口信息到 journal |
 | Ctrl+Meta+Left/Right | 切换左右虚拟桌面 |
 
-## layoutConfig
+## 布局配置（wm/layout.json）
 
-`main.js` 顶部的 `layoutConfig` 按 `resourceClass`（小写）配置每个应用的居中尺寸。layout 函数接收 workArea 的宽高（已排除任务栏），返回相对于 workArea 的坐标。
+hammerspoon/kwin/gnome 共用的统一配置。kwin 脚本无文件 IO 能力（QJSEngine 只暴露
+readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.sh` 把
+`wm/layout.json` 整段同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` key，
+脚本每次按键通过 `readConfig` 读取并解析。改配置后需跑一次 `reload.sh`。
+
+`rules` 为有序数组，每条规则由 `wm` / `app` / `screen` 三个可选字段 + `size` 组成：
+
+```json
+{
+    "rules": [
+        { "wm": ["kwin", "gnome"], "app": "kitty", "size": { "center_j": { "w": 1113, "h": 945 } } },
+        { "size": { "center_i": { "w": { "ratio": 0.6875 } } } }
+    ],
+    "side": { "width": 1139, "height": 1218 }
+}
+```
+
+- 匹配：从前往后取第一条「字段全匹配且 size 提供该 mode」的规则；字段缺省即通配，
+  最后一条无字段规则是全局 fallback
+- `wm` / `app` 可为字符串或数组；本端 `wm` 固定为 `kwin`、`screen` 固定为 `default`，
+  app 匹配用 `resourceClass`（小写）
+- 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；
+  可选 `x/y` 为 `{align, offset}`（align: left/center/right/top/bottom，缺省 center），
+  不写 `x/y` 时自动居中；坐标相对 workArea（已排除任务栏）
+- `side` 给左右贴边用
+- `main.js` 里的 `layoutConfig` 仅作读不到文件时的内置兜底

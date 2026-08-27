@@ -1,4 +1,4 @@
-// Layout config: processName -> position -> fn(sw, sh) => {x, y, width, height}
+// Built-in fallback layout; sizes in wm/layout.json take precedence
 const layoutConfig = {
     "default": {
         "center_i": function(sw, sh) {
@@ -14,23 +14,79 @@ const layoutConfig = {
     },
     "kitty": {
         "center_i": function(sw, sh) {
-            // 170%缩放
-            // const w = 1722;
-            // const h = 1153;
             const w = 1726;
             const h = 1144;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
         "center_j": function(sw, sh) {
-            // 170%缩放
-            // const w = 1113;
-            // const h = 928;
             const w = 1113;
             const h = 945;
             return { width: w, height: h, x: Math.round((sw - w) / 2), y: Math.round((sh - h) / 2) };
         },
     },
 };
+
+// kwin 脚本无文件 IO；wm/layout.json 由 reload.sh 同步进 kwinrc [Script-tilewindow]，
+// 这里通过 readConfig 读整段 JSON 字符串再解析
+function loadFileConfig() {
+    const raw = readConfig("wm_layout_json", "");
+    if (!raw)
+        return null;
+    try {
+        return JSON.parse(raw);
+    } catch (e) {
+        console.log("TileWindow: failed to parse wm_layout_json: " + e);
+        return null;
+    }
+}
+
+function resolveDim(spec, max) {
+    if (typeof spec === "number")
+        return Math.round(spec);
+    const ratio = spec.ratio !== undefined ? spec.ratio : 1;
+    const offset = spec.offset !== undefined ? spec.offset : 0;
+    return Math.round(max * ratio + offset);
+}
+
+function alignPos(axis, spec, size, max) {
+    const align = spec.align !== undefined ? spec.align : "center";
+    const offset = spec.offset !== undefined ? spec.offset : 0;
+    if (axis === "x") {
+        if (align === "left") return offset;
+        if (align === "right") return max - size - offset;
+        return Math.round((max - size) / 2) + offset;
+    }
+    if (align === "top") return offset;
+    if (align === "bottom") return max - size - offset;
+    return Math.round((max - size) / 2) + offset;
+}
+
+// wm/layout.json: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
+// 字段可为字符串或数组，缺省即通配
+function matchField(spec, value) {
+    if (spec === undefined || spec === null)
+        return true;
+    if (typeof spec === "string")
+        return spec === value;
+    for (let i = 0; i < spec.length; i++) {
+        if (spec[i] === value)
+            return true;
+    }
+    return false;
+}
+
+function findEntry(config, wm, app, screen, mode) {
+    if (!config || !config.rules)
+        return null;
+    for (let i = 0; i < config.rules.length; i++) {
+        const rule = config.rules[i];
+        if (!matchField(rule.wm, wm) || !matchField(rule.app, app) || !matchField(rule.screen, screen))
+            continue;
+        if (rule.size && rule.size[mode])
+            return rule.size[mode];
+    }
+    return null;
+}
 
 function getWorkArea(window) {
     return workspace.clientArea(KWin.MaximizeArea, window.output, workspace.currentDesktop);
@@ -41,6 +97,16 @@ function getProcessName(window) {
 }
 
 function getCenterLayout(processName, position, sw, sh) {
+    const entry = findEntry(loadFileConfig(), "kwin", processName, "default", position);
+    if (entry) {
+        const w = resolveDim(entry.w, sw);
+        const h = resolveDim(entry.h, sh);
+        const x = entry.x != null ? alignPos("x", entry.x, w, sw) : Math.round((sw - w) / 2);
+        const y = entry.y != null ? alignPos("y", entry.y, h, sh) : Math.round((sh - h) / 2);
+        return { width: w, height: h, x: x, y: y };
+    }
+
+    // 内置兜底，与 wm/layout.json 的全局 fallback 规则保持一致
     const key = layoutConfig[processName] ? processName : "default";
     const appMap = layoutConfig[key];
     if (!appMap[position]) return null;
@@ -48,8 +114,9 @@ function getCenterLayout(processName, position, sw, sh) {
 }
 
 function getSideRect(side, area) {
-    const w = 1139;
-    const h = 1218;
+    const config = loadFileConfig();
+    const w = (config && config.side && config.side.width) || 1139;
+    const h = (config && config.side && config.side.height) || 1218;
     const halfWidth = area.width / 2;
     const x = (side === "left")
         ? area.x + Math.round((halfWidth - w) / 2)

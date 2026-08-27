@@ -1,7 +1,7 @@
 # GNOME TileWindow Extension
 
 GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑保持一致。
-窗口尺寸不再写死在代码里，而是放在 `tilewindow@lu5je0/layout.json`，每次按键实时读取。
+窗口尺寸统一放在仓库根的 `wm/layout.json`（hammerspoon/kwin/gnome 共用），每次按键实时读取。
 
 目录即扩展本体：`tilewindow@lu5je0/`，通过 symlink 安装到
 `~/.local/share/gnome-shell/extensions/tilewindow@lu5je0`（setup 模块 `gnome-tilewindow`）。
@@ -21,22 +21,30 @@ GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑�
 另有 Ctrl+Super+Left/Right 切换左右工作区（等效系统 Ctrl+Alt+Left/Right：workspace_manager 激活相邻工作区，并复刻 `_showWorkspaceSwitcher` 的 WorkspaceSwitcherPopup 指示器；新版 gnome-shell 已移除 `Main.wm.actionMoveWorkspace*`）。
 快捷键定义在 gschema 里，可用 dconf 改（`/org/gnome/shell/extensions/tilewindow/`）。
 
-## layout.json
+## 布局配置（wm/layout.json）
 
-按 wmClass（小写）配置居中尺寸，`side` 配置左右贴边尺寸，示例见 `tilewindow@lu5je0/layout.json`：
+hammerspoon/kwin/gnome 共用的统一配置，每次按键实时读取，改完立即生效，无需注销。
+`rules` 为有序数组，每条规则由 `wm` / `app` / `screen` 三个可选字段 + `size` 组成：
 
 ```json
 {
-    "side": { "width": 1139, "height": 1218, "padding": 16 },
-    "kitty": { "center_j": { "width": 1113, "height": 950 } }
+    "rules": [
+        { "wm": "gnome", "app": "kitty", "size": { "center_j": { "w": 1113, "h": 950 } } },
+        { "size": { "center_i": { "w": { "ratio": 0.6875 } } } }
+    ],
+    "side": { "width": 1139, "height": 1218 },
+    "insets": {}
 }
 ```
 
-- 每次按键实时读取，改完立即生效，无需注销
-- 查找顺序：`<wmClass>` -> `default` -> 代码内置 fallback
-- 条目只写 `width`/`height` 时自动居中，可选 `x`/`y` 指定相对 workArea 的偏移
-- `side.padding`（可选，默认 0）：左右贴边时外侧与中间各留这么多空白，
-  `side.width` 变成上限，超过 `(workArea.width - 3 * padding) / 2` 会被压下去，所以两边永不重叠
+- 匹配：从前往后取第一条「字段全匹配且 size 提供该 mode」的规则；字段缺省即通配，
+  最后一条无字段规则是全局 fallback
+- `wm` / `app` 可为字符串或数组（数组 = 多端/多 app 共享一条规则）；本端 `wm` 固定为
+  `gnome`、`screen` 固定为 `default`
+- 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；
+  可选 `x/y` 为 `{align, offset}`（align: left/center/right/top/bottom，缺省 center），
+  不写 `x/y` 时自动居中
+- `side` 给左右贴边用，放置与 kwin 一致（窗口居中在各自半屏内）
 - `insets`（可选，`top`/`bottom`/`left`/`right`）在自动 dock 检测之后再手动扣一圈，
   一般不需要，仅用于自动检测失效或想额外留白的场景
 - 内置 fallback 与 `kwin/tilewindow/contents/code/main.js` 的 `layoutConfig` 保持同步
