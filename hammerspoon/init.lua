@@ -48,7 +48,14 @@ local function read_config()
   end
   local text = f:read("*a")
   f:close()
-  return hs.json.decode(strip_comments(text))
+  local ok, config, err = pcall(hs.json.decode, strip_comments(text))
+  if not ok then
+    return nil, tostring(config)
+  end
+  if not config then
+    return nil, tostring(err)
+  end
+  return config
 end
 
 -- spec: 数字表示绝对像素; {ratio, offset} 表示 max_dim * ratio + offset
