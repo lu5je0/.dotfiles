@@ -13,7 +13,7 @@
   {
     "name": "pi",
     "action": "install",
-    "desc": "pi 配置",
+    "desc": "pi agent config",
     "script": "unix/pi.sh",
     "checks": [{ "link": "~/.pi/agent/extensions" }]
   },

@@ -30,8 +30,8 @@
       "app": "kitty",
       "screen": "main",
       "size": {
-        "center_i": { "w": 1105, "h": 863 },
-        "center_j": { "w": 990, "h": 815 }
+        "center_i": { "w": 1217, "h": 863 },
+        "center_j": { "w": 989, "h": 807 }
       }
     },
     {

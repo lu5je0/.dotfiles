@@ -216,7 +216,7 @@ SEQUENCE_TIMEOUT = 1.0
 
 def frame_size():
     size = shutil.get_terminal_size((100, 30))
-    return size, max(24, min(size.columns - 1, 110))
+    return size, max(24, size.columns - 1)
 
 
 def wlen(text):
