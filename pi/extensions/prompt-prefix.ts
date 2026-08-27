@@ -7,7 +7,8 @@ class PromptEditor extends CustomEditor {
 		const lines = super.render(width);
 		const pad = this.getPaddingX();
 		if (pad >= 2 && lines.length >= 3 && lines[1].startsWith(" ".repeat(pad))) {
-			lines[1] = `> ${lines[1].slice(2)}`;
+			// ">" 前加一个空格；行宽固定，行尾恒有右 padding 空格，吃掉一个保持总宽不变
+			lines[1] = ` > ${lines[1].slice(2, -1)}`;
 		}
 		return lines;
 	}

@@ -79,7 +79,7 @@
       "wm": ["kwin", "gnome"],
       "app": "kitty",
       "size": {
-        "center_i": { "w": 1726, "h": 1144 },
+        "center_i": { "w": 1727, "h": 1144 },
         "center_j": { "w": 1113, "h": 945 }
       }
     },
