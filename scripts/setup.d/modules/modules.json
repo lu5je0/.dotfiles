@@ -11,6 +11,13 @@
   { "name": "yazi", "source": "yazi", "target": "~/.config/yazi" },
   { "name": "kitty", "source": "kitty", "target": "~/.config/kitty" },
   {
+    "name": "pi",
+    "action": "install",
+    "desc": "pi 配置",
+    "script": "unix/pi.sh",
+    "checks": [{ "link": "~/.pi/agent/extensions" }]
+  },
+  {
     "name": "q-trash",
     "action": "link",
     "desc": "q-trash → ~/.local/bin",

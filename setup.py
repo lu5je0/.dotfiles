@@ -10,8 +10,8 @@ import signal
 import subprocess
 import sys
 import termios
-import textwrap
 import tty
+import unicodedata
 from pathlib import Path
 
 DOTFILES_DIR = Path(os.environ.get("DOTFILES_DIR") or Path(__file__).resolve().parent)
@@ -219,10 +219,45 @@ def frame_size():
     return size, max(24, min(size.columns - 1, 110))
 
 
+def wlen(text):
+    return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in text)
+
+
 def fit(text, width):
     if width <= 0:
         return ""
-    return text if len(text) <= width else text[: width - 1] + "…"
+    if wlen(text) <= width:
+        return text
+    out, w = [], 0
+    for c in text:
+        cw = 2 if unicodedata.east_asian_width(c) in "WF" else 1
+        if w + cw > width - 1:
+            break
+        out.append(c)
+        w += cw
+    return "".join(out) + "…"
+
+
+def wrap_text(text, width):
+    out, cur, w, last_space = [], "", 0, -1
+    for c in text:
+        cw = 2 if unicodedata.east_asian_width(c) in "WF" else 1
+        if cur and w + cw > width:
+            if last_space > 0:
+                out.append(cur[:last_space].rstrip())
+                cur = cur[last_space + 1:]
+            else:
+                out.append(cur.rstrip())
+                cur = ""
+            w, last_space = wlen(cur), -1
+            if c == " ":
+                continue
+        if c == " ":
+            last_space = len(cur)
+        cur += c
+        w += cw
+    out.append(cur.rstrip())
+    return out or [""]
 
 
 class Picker:
@@ -266,7 +301,7 @@ class Picker:
     def desc_chunks(self, module, desc_w):
         if not self.wrap:
             return [fit(module.desc, desc_w)]
-        return textwrap.wrap(module.desc, desc_w) or [""]
+        return wrap_text(module.desc, desc_w)
 
     def rows(self, desc_w):
         """One tuple per screen line: ("divider", …) or ("module", index, chunk, is_continuation)."""
@@ -320,7 +355,7 @@ class Picker:
         indent = name_w + 4 + (action_w + 2 if action_w else 0)
 
         if continuation:
-            pad = " " * (desc_w - len(chunk) + 2 + status_w)
+            pad = " " * (desc_w - wlen(chunk) + 2 + status_w)
             return f"{bg}{pointer} {' ' * indent}{dim}{chunk}{reset}{pad}{RESET}"
 
         plain_status, status = self.status_cell(module, status_w, dim, reset)
@@ -341,8 +376,9 @@ class Picker:
         if action_w:
             action = f"{dim}{fit(module.action, action_w).ljust(action_w)}{reset}  "
 
-        pad = " " * (desc_w - len(chunk) + 2 + status_w - len(plain_status))
-        return f"{bg}{pointer} {mark} {name}  {action}{dim}{chunk}{reset}{pad}{status}{RESET}"
+        pad = " " * (desc_w - wlen(chunk) + 2)
+        tail = " " * (status_w - len(plain_status))
+        return f"{bg}{pointer} {mark} {name}  {action}{dim}{chunk}{reset}{pad}{status}{tail}{RESET}"
 
     def divider_line(self, width):
         label = fit(f"unavailable on {'/'.join(TAGS)}", max(0, width - 6))
