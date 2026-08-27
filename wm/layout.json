@@ -5,8 +5,8 @@
       "app": "WezTerm",
       "screen": "main",
       "size": {
-        "center_j": { "w": 1000, "h": 825 },
-        "center_i": { "w": 1126, "h": 862 }
+        "center_i": { "w": 1126, "h": 862 },
+        "center_j": { "w": 1000, "h": 825 }
       }
     },
     {
@@ -14,11 +14,11 @@
       "app": "WezTerm",
       "screen": "external",
       "size": {
-        "center_j": { "w": 1013, "h": 840 },
         "center_i": {
           "w": { "ratio": 0.75, "offset": -27 },
           "h": { "ratio": 1, "offset": -24 }
-        }
+        },
+        "center_j": { "w": 1013, "h": 840 }
       }
     },
     {
@@ -26,8 +26,8 @@
       "app": "kitty",
       "screen": "main",
       "size": {
-        "center_j": { "w": 990, "h": 815 },
-        "center_i": { "w": 1105, "h": 863 }
+        "center_i": { "w": 1105, "h": 863 },
+        "center_j": { "w": 990, "h": 815 }
       }
     },
     {
@@ -35,8 +35,8 @@
       "app": "kitty",
       "screen": "external",
       "size": {
-        "center_j": { "w": 1023, "h": 863 },
-        "center_i": { "w": 1420, "h": 992 }
+        "center_i": { "w": 1420, "h": 992 },
+        "center_j": { "w": 1023, "h": 863 }
       }
     },
     {
@@ -44,8 +44,8 @@
       "app": "Ghostty",
       "screen": "main",
       "size": {
-        "center_j": { "w": 952, "h": 806 },
-        "center_i": { "w": 1105, "h": 863 }
+        "center_i": { "w": 1105, "h": 863 },
+        "center_j": { "w": 952, "h": 806 }
       }
     },
     {
@@ -53,11 +53,11 @@
       "app": "Ghostty",
       "screen": "external",
       "size": {
-        "center_j": { "w": 1016, "h": 846 },
         "center_i": {
           "w": { "ratio": 0.75, "offset": -20 },
           "h": { "ratio": 1, "offset": -16 }
-        }
+        },
+        "center_j": { "w": 1016, "h": 846 }
       }
     },
     {
