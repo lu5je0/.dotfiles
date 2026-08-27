@@ -4,98 +4,66 @@ hs.hotkey.bind({ "ctrl", "option" }, "R", function()
   hs.reload()
 end)
 
-local window_special_cases = {
-  WezTerm = {
-    center_j = {
-      main = { w = 1000, h = 825 },
-      external = { w = 1013, h = 840 },
-    },
-    center_i = {
-      main = { w = 1126, h = 862 },
-      external = function(max) return { w = max.w * (3 / 4) - 27, h = max.h - 24 } end,
-    },
-  },
-  kitty = {
-    center_j = {
-      main = { w = 990, h = 815 },
-      external = { w = 1023, h = 863 },
-    },
-    center_i = {
-      main = { w = 1105, h = 863 },
-      external = function(max) return { w = max.w * (3 / 4) - 20, h = max.h - 58 } end,
-    },
-  },
-  Ghostty = {
-    center_j = {
-      main = { w = 952, h = 806 },
-      external = { w = 1016, h = 846 },
-    },
-    center_i = {
-      main = { w = 1105, h = 863 },
-      external = function(max) return { w = max.w * (3 / 4) - 20, h = max.h - 16 } end,
-    },
-  },
-}
+local config_path = hs.configdir .. "/window_sizes.json"
+
+-- spec: 数字表示绝对像素; {ratio, offset} 表示 max_dim * ratio + offset
+local function resolve_dim(spec, max_dim)
+  if type(spec) == "number" then
+    return spec
+  end
+  return max_dim * (spec.ratio or 1) + (spec.offset or 0)
+end
+
+local function apply_size(win, entry, max, mode)
+  local f = win:frame()
+  f.w = resolve_dim(entry.w, max.w)
+  f.h = resolve_dim(entry.h, max.h)
+
+  if mode == "maximize" then
+    f.x, f.y = max.x, max.y
+  elseif mode == "halfleft" then
+    f.x, f.y = max.x, max.y
+  elseif mode == "halfright" then
+    f.x, f.y = max.x + max.w / 2, max.y
+  else
+    f.x = max.x + (max.w - f.w) / 2
+    f.y = max.y + (max.h - f.h) / 2
+  end
+
+  win:setFrame(f, 0)   -- 0 取消动画
+end
 
 local function size_focused_window(mode)
   return function()
     local win = hs.window.focusedWindow()
-    local f = win:frame()
     local screen = win:screen()
     local max = screen:frame()
 
     local app_name = win:application():name()
     print(app_name)
-    local appCases = window_special_cases[app_name]
 
-    if appCases and appCases[mode] then
+    local config, err = hs.json.read(config_path)
+    if not config then
+      hs.alert.show("window_sizes.json 解析失败: " .. tostring(err))
+      return
+    end
+
+    local entry
+    local profile_name = config.apps and config.apps[app_name]
+    local profile = profile_name and config.profiles and config.profiles[profile_name]
+    if profile and profile[mode] then
       local screen_type = screen:id() == 1 and "main" or "external"
-      local entry = appCases[mode][screen_type]
-      if type(entry) == "function" then
-        entry = entry(max)
-      end
-      f.w = entry.w
-      f.h = entry.h
-      f.x = max.x + (screen:frame().w - f.w) / 2
-      f.y = max.y + (screen:frame().h - f.h) / 2
-      win:setFrame(f, 0)
+      entry = profile[mode][screen_type]
+    end
+    if not entry then
+      entry = config.defaults and config.defaults[mode]
+    end
+    if not entry then
+      hs.alert.show("window_sizes.json 中未找到 " .. app_name .. " / " .. mode .. " 的配置")
       return
     end
 
-    if mode == "maximize" then
-      f.x = max.x
-      f.y = max.y
-      f.w = max.w
-      f.h = max.h
-    elseif mode == "center_j" then
-      f.w = max.w / 1.4
-      f.h = max.h / 1.1
-      f.x = max.x + (screen:frame().w - f.w) / 2
-      f.y = max.y + (screen:frame().h - f.h) / 2
-      win:setFrame(f, 0)
-      return
-    elseif mode == "center_i" then
-      f.x = max.x
-      f.y = max.y
-      f.w = max.w * (3 / 4)
-      f.h = max.h
-      f.x = max.x + (screen:frame().w - f.w) / 2
-      f.y = max.y + (screen:frame().h - f.h) / 2
-      win:setFrame(f, 0)
-      return
-    elseif mode == "halfleft" then
-      f.x = max.x
-      f.y = max.y
-      f.w = max.w / 2
-      f.h = max.h
-    elseif mode == "halfright" then
-      f.x = max.x + max.w / 2
-      f.y = max.y
-      f.w = max.w / 2
-      f.h = max.h
-    end
-
-    win:setFrame(f, 0)   -- 0 取消动画
+    apply_size(win, entry, max, mode)
   end
 end
 
