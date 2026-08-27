@@ -1,5 +1,9 @@
 {
+  // 窗口布局统一配置（JSONC，支持注释）
+  // rules 从前往后匹配，取第一条「wm/app/screen 字段全匹配且 size 提供该 mode」的规则；
+  // 字段缺省即通配，可为字符串或数组。最后一条无字段规则是全局 fallback。
   "rules": [
+    // ---------- hammerspoon (macOS)：screen 分 main / external ----------
     {
       "wm": "hammerspoon",
       "app": "WezTerm",
@@ -70,6 +74,7 @@
         "halfright": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } }
       }
     },
+    // ---------- linux (kwin / gnome)：screen 用 default（缺省） ----------
     {
       "wm": ["kwin", "gnome"],
       "app": "kitty",
@@ -79,6 +84,7 @@
       }
     },
     {
+      // 全局 fallback（无字段规则，所有平台通用）
       "size": {
         "center_i": {
           "w": { "ratio": 0.6875 },
@@ -89,6 +95,8 @@
       }
     }
   ],
+  // 左右贴边尺寸（kwin/gnome 共用）
   "side": { "width": 1139, "height": 1218 },
+  // gnome 手动 insets（top/bottom/left/right），一般留空
   "insets": {}
 }

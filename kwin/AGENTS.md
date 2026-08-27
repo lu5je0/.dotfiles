@@ -4,13 +4,13 @@ KDE Wayland 下的窗口管理脚本，等同于 Windows 下的 AHK 窗口管理
 
 ## 重载脚本
 
-修改 `contents/code/main.js` 或 `wm/layout.json` 后执行（会同步布局配置到 kwinrc 并重载脚本）：
+修改 `contents/code/main.js` 或 `wm/layout.jsonc` 后执行（会同步布局配置到 kwinrc 并重载脚本）：
 
 ```bash
 bash ~/.dotfiles/kwin/reload.sh
 ```
 
-reload.sh 做的事：`wm/layout.json` 同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` →
+reload.sh 做的事：`wm/layout.jsonc` 同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` →
 `kpackagetool6 --upgrade` → qdbus 卸载/加载/启动脚本 → 启用插件。
 
 ## 快捷键
@@ -27,11 +27,11 @@ reload.sh 做的事：`wm/layout.json` 同步进 kwinrc `[Script-tilewindow]` �
 | Ctrl+Meta+W | 输出窗口信息到 journal |
 | Ctrl+Meta+Left/Right | 切换左右虚拟桌面 |
 
-## 布局配置（wm/layout.json）
+## 布局配置（wm/layout.jsonc）
 
-hammerspoon/kwin/gnome 共用的统一配置。kwin 脚本无文件 IO 能力（QJSEngine 只暴露
+hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` 注释）。kwin 脚本无文件 IO 能力（QJSEngine 只暴露
 readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.sh` 把
-`wm/layout.json` 整段同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` key，
+`wm/layout.jsonc` 剥注释后整段同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` key，
 脚本每次按键通过 `readConfig` 读取并解析。改配置后需跑一次 `reload.sh`。
 
 `rules` 为有序数组，每条规则由 `wm` / `app` / `screen` 三个可选字段 + `size` 组成：

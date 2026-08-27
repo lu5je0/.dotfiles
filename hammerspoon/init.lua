@@ -4,7 +4,52 @@ hs.hotkey.bind({ "ctrl", "option" }, "R", function()
   hs.reload()
 end)
 
-local config_path = os.getenv("HOME") .. "/.dotfiles/wm/layout.json"
+local config_path = os.getenv("HOME") .. "/.dotfiles/wm/layout.jsonc"
+
+-- 剥离 JSONC 注释（// 与 /* */），字符串字面量内的原样保留
+local function strip_comments(text)
+  local out = {}
+  local i, n = 1, #text
+  while i <= n do
+    local c = text:sub(i, i)
+    if c == '"' then
+      local j = i
+      i = i + 1
+      while i <= n do
+        local d = text:sub(i, i)
+        if d == "\\" then
+          i = i + 2
+        elseif d == '"' then
+          i = i + 1
+          break
+        else
+          i = i + 1
+        end
+      end
+      out[#out + 1] = text:sub(j, i - 1)
+    elseif c == "/" and i < n and text:sub(i + 1, i + 1) == "/" then
+      local e = text:find("\n", i + 2, true)
+      i = e or (n + 1)
+    elseif c == "/" and i < n and text:sub(i + 1, i + 1) == "*" then
+      local e = text:find("*/", i + 2, true)
+      i = e and (e + 2) or (n + 1)
+    else
+      out[#out + 1] = c
+      i = i + 1
+    end
+  end
+  return table.concat(out)
+end
+
+local function read_config()
+  local f = io.open(config_path, "r")
+  if not f then
+    return nil, "无法打开 " .. config_path
+  end
+  local text = f:read("*a")
+  f:close()
+  return hs.json.decode(strip_comments(text))
+end
 
 -- spec: 数字表示绝对像素; {ratio, offset} 表示 max_dim * ratio + offset
 local function resolve_dim(spec, max_dim)
@@ -74,16 +119,16 @@ local function size_focused_window(mode)
     local app_name = win:application():name()
     print(app_name)
 
-    local config, err = hs.json.read(config_path)
+    local config, err = read_config()
     if not config then
-      hs.alert.show("wm/layout.json 解析失败: " .. tostring(err))
+      hs.alert.show("wm/layout.jsonc 解析失败: " .. tostring(err))
       return
     end
 
     local screen_type = screen:id() == 1 and "main" or "external"
     local entry = find_entry(config, "hammerspoon", app_name, screen_type, mode)
     if not entry then
-      hs.alert.show("wm/layout.json 中未找到 " .. app_name .. " / " .. mode .. " 的配置")
+      hs.alert.show("wm/layout.jsonc 中未找到 " .. app_name .. " / " .. mode .. " 的配置")
       return
     end
 

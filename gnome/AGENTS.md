@@ -1,7 +1,7 @@
 # GNOME TileWindow Extension
 
 GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑保持一致。
-窗口尺寸统一放在仓库根的 `wm/layout.json`（hammerspoon/kwin/gnome 共用），每次按键实时读取。
+窗口尺寸统一放在仓库根的 `wm/layout.jsonc`（hammerspoon/kwin/gnome 共用），每次按键实时读取。
 
 目录即扩展本体：`tilewindow@lu5je0/`，通过 symlink 安装到
 `~/.local/share/gnome-shell/extensions/tilewindow@lu5je0`（setup 模块 `gnome-tilewindow`）。
@@ -21,9 +21,9 @@ GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑�
 另有 Ctrl+Super+Left/Right 切换左右工作区（等效系统 Ctrl+Alt+Left/Right：workspace_manager 激活相邻工作区，并复刻 `_showWorkspaceSwitcher` 的 WorkspaceSwitcherPopup 指示器；新版 gnome-shell 已移除 `Main.wm.actionMoveWorkspace*`）。
 快捷键定义在 gschema 里，可用 dconf 改（`/org/gnome/shell/extensions/tilewindow/`）。
 
-## 布局配置（wm/layout.json）
+## 布局配置（wm/layout.jsonc）
 
-hammerspoon/kwin/gnome 共用的统一配置，每次按键实时读取，改完立即生效，无需注销。
+hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` 注释），每次按键实时读取，改完立即生效，无需注销。
 `rules` 为有序数组，每条规则由 `wm` / `app` / `screen` 三个可选字段 + `size` 组成：
 
 ```json

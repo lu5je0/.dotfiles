@@ -6,22 +6,56 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as WorkspaceSwitcherPopup from 'resource:///org/gnome/shell/ui/workspaceSwitcherPopup.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-// Set in enable() to <repo>/wm/layout.json (unified across wms); read on every
+// Set in enable() to <repo>/wm/layout.jsonc (unified across wms); read on every
 // keypress so sizes can be tuned live without reloading the shell
 let configPath = null;
+
+// 剥离 JSONC 注释（// 与 /* */），字符串字面量内的原样保留
+function stripComments(text) {
+    let out = '';
+    let i = 0;
+    while (i < text.length) {
+        const c = text[i];
+        if (c === '"') {
+            const start = i;
+            i++;
+            while (i < text.length) {
+                if (text[i] === '\\')
+                    i += 2;
+                else if (text[i] === '"') {
+                    i++;
+                    break;
+                } else {
+                    i++;
+                }
+            }
+            out += text.slice(start, i);
+        } else if (c === '/' && text[i + 1] === '/') {
+            while (i < text.length && text[i] !== '\n')
+                i++;
+        } else if (c === '/' && text[i + 1] === '*') {
+            const end = text.indexOf('*/', i + 2);
+            i = end < 0 ? text.length : end + 2;
+        } else {
+            out += c;
+            i++;
+        }
+    }
+    return out;
+}
 
 function loadFileConfig() {
     if (!configPath)
         return null;
     try {
         const [, contents] = Gio.File.new_for_path(configPath).load_contents(null);
-        return JSON.parse(new TextDecoder().decode(contents));
+        return JSON.parse(stripComments(new TextDecoder().decode(contents)));
     } catch {
         return null;
     }
 }
 
-// Built-in fallback layout; per-app sizes in wm/layout.json take precedence
+// Built-in fallback layout; per-app sizes in wm/layout.jsonc take precedence
 const layoutConfig = {
     'default': {
         'center_i': (sw, sh) => {
@@ -137,7 +171,7 @@ function alignPos(axis, spec, size, max) {
     return Math.round((max - size) / 2) + offset;
 }
 
-// wm/layout.json: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
+// wm/layout.jsonc: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
 // 字段可为字符串或数组，缺省即通配
 function findEntry(config, wm, app, screen, mode) {
     const matchField = (spec, value) => {
@@ -165,7 +199,7 @@ function getCenterLayout(wmClass, position, sw, sh) {
         return {width: w, height: h, x, y};
     }
 
-    // 内置兜底，与 wm/layout.json 的全局 fallback 规则保持一致
+    // 内置兜底，与 wm/layout.jsonc 的全局 fallback 规则保持一致
     const appMap = layoutConfig[wmClass] ?? layoutConfig['default'];
     if (!appMap[position])
         return null;
@@ -346,7 +380,7 @@ export default class TileWindowExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._names = [];
-        configPath = GLib.build_filenamev([GLib.get_home_dir(), '.dotfiles', 'wm', 'layout.json']);
+        configPath = GLib.build_filenamev([GLib.get_home_dir(), '.dotfiles', 'wm', 'layout.jsonc']);
 
         const bind = (name, handler) => {
             Main.wm.addKeybinding(name, this._settings,

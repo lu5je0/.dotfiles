@@ -1,4 +1,4 @@
-// Built-in fallback layout; sizes in wm/layout.json take precedence
+// Built-in fallback layout; sizes in wm/layout.jsonc take precedence
 const layoutConfig = {
     "default": {
         "center_i": function(sw, sh) {
@@ -26,7 +26,7 @@ const layoutConfig = {
     },
 };
 
-// kwin 脚本无文件 IO；wm/layout.json 由 reload.sh 同步进 kwinrc [Script-tilewindow]，
+// kwin 脚本无文件 IO；wm/layout.jsonc 由 reload.sh 同步进 kwinrc [Script-tilewindow]，
 // 这里通过 readConfig 读整段 JSON 字符串再解析
 function loadFileConfig() {
     const raw = readConfig("wm_layout_json", "");
@@ -61,7 +61,7 @@ function alignPos(axis, spec, size, max) {
     return Math.round((max - size) / 2) + offset;
 }
 
-// wm/layout.json: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
+// wm/layout.jsonc: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
 // 字段可为字符串或数组，缺省即通配
 function matchField(spec, value) {
     if (spec === undefined || spec === null)
@@ -106,7 +106,7 @@ function getCenterLayout(processName, position, sw, sh) {
         return { width: w, height: h, x: x, y: y };
     }
 
-    // 内置兜底，与 wm/layout.json 的全局 fallback 规则保持一致
+    // 内置兜底，与 wm/layout.jsonc 的全局 fallback 规则保持一致
     const key = layoutConfig[processName] ? processName : "default";
     const appMap = layoutConfig[key];
     if (!appMap[position]) return null;
