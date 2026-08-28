@@ -66,6 +66,26 @@ local function resolve_dim(spec, max_dim)
   return max_dim * (spec.ratio or 1) + (spec.offset or 0)
 end
 
+-- spec: {align, offset}，返回相对可用区原点的坐标；align 缺省 center
+local function align_pos(axis, spec, size, max_dim)
+  local align = spec.align or "center"
+  local offset = spec.offset or 0
+  if axis == "x" then
+    if align == "left" then
+      return offset
+    elseif align == "right" then
+      return max_dim - size - offset
+    end
+  else
+    if align == "top" then
+      return offset
+    elseif align == "bottom" then
+      return max_dim - size - offset
+    end
+  end
+  return (max_dim - size) / 2 + offset
+end
+
 -- 字段可为字符串或数组，缺省即通配
 local function field_matches(spec, value)
   if spec == nil then
@@ -110,8 +130,8 @@ local function apply_size(win, entry, max, mode)
   elseif mode == "halfright" then
     f.x, f.y = max.x + max.w / 2, max.y
   else
-    f.x = max.x + (max.w - f.w) / 2
-    f.y = max.y + (max.h - f.h) / 2
+    f.x = max.x + (entry.x and align_pos("x", entry.x, f.w, max.w) or (max.w - f.w) / 2)
+    f.y = max.y + (entry.y and align_pos("y", entry.y, f.h, max.h) or (max.h - f.h) / 2)
   end
 
   win:setFrame(f, 0)   -- 0 取消动画
