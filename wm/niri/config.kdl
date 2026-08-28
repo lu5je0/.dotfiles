@@ -69,11 +69,11 @@ input {
     // focus-follows-mouse max-scroll-amount="0%"
 }
 
-output "DP-2" {
+output "DP-1" {
  //分辨率和刷新率
  mode "3840x2160@120"
  //缩放倍率
- scale 1.67
+ scale 1.73
  //位置，x=0 y=0 代表最左上角
  position x=0 y=0
  //启动时聚焦此显示器
