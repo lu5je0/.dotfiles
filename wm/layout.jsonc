@@ -64,16 +64,6 @@
         "center_j": { "w": 1016, "h": 846 }
       }
     },
-    {
-      "wm": "hammerspoon",
-      "size": {
-        "center_i": { "w": { "ratio": 0.9 }, "h": { "ratio": 1 } },
-        "center_j": { "w": { "ratio": 0.65 }, "h": { "ratio": 0.85 } },
-        "maximize": { "w": { "ratio": 1 }, "h": { "ratio": 1 } },
-        "halfleft": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } },
-        "halfright": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } }
-      }
-    },
     // ---------- linux (kwin / gnome)：screen 用 default（缺省） ----------
     {
       "wm": ["kwin", "gnome"],
@@ -84,14 +74,13 @@
       }
     },
     {
-      // 全局 fallback（无字段规则，所有平台通用）
+      // "wm": "hammerspoon",
       "size": {
-        "center_i": {
-          "w": { "ratio": 0.6875 },
-          "h": { "ratio": 1, "offset": -120 },
-          "y": { "align": "top", "offset": 23 }
-        },
-        "center_j": { "w": { "ratio": 0.6 }, "h": { "ratio": 0.85 } }
+        "center_i": { "w": { "ratio": 0.9 }, "h": { "ratio": 1 } },
+        "center_j": { "w": { "ratio": 0.65 }, "h": { "ratio": 0.85 } },
+        "maximize": { "w": { "ratio": 1 }, "h": { "ratio": 1 } },
+        "halfleft": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } },
+        "halfright": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } }
       }
     }
   ],
