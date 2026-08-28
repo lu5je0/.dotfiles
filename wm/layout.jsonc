@@ -30,8 +30,8 @@
       "app": "kitty",
       "screen": "main",
       "size": {
-        "center_i": { "w": 1251, "h": 863, "y": { "offset": -300 } },
-        "center_j": { "w": 989, "h": 807 }
+        "center_i": { "w": 1251, "h": 863, "x": { "offset": 30 } },
+        "center_j": { "w": 989, "h": 807, "x": { "offset": 30 } }
       }
     },
     {
