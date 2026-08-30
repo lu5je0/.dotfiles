@@ -2,6 +2,9 @@ patch:
   # 关闭候选词后的拼音提示
   translator/spelling_hints: 0
 
+  # emoji 默认关闭（switches 第 4 项），需要时 Ctrl+` 菜单手动打开
+  "switches/@3/reset": 0
+
   # Ctrl+b 切英文直通,放行给 kitty(见 rime.lua)
   engine/processors/@before 0: lua_processor@ctrl_b_passthrough
   switches/@next:
