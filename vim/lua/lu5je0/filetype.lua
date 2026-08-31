@@ -6,6 +6,8 @@ vim.filetype.add {
     plantuml = 'plantuml',
     sh = 'bash',
     arthas = 'arthas',
+    -- shebang 兜底：nvim 匹配不到 hashbang pattern 时会用解释器名回查 extension 表
+    bun = 'typescript',
   },
   filename = {
     ['.bashrc'] = 'bash',

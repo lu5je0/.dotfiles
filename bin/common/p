@@ -1,13 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+import os
+import shutil
+import subprocess
+import sys
 
-set -euo pipefail
-
-: "${DOTFILES_DIR:=$HOME/.dotfiles}"
-WCLIP="$DOTFILES_DIR/bin/windows-x86_64/wclip.exe"
-
-usage() {
-  cat <<'EOF'
-Usage: p [options]
+USAGE = """Usage: p [options]
 
 Paste clipboard content to stdout.
 
@@ -20,51 +17,70 @@ Examples:
   p > 1.png      Save clipboard image to file
   p | vv         Display clipboard image in terminal
   p -f           Force binary output to terminal
-EOF
-  exit 0
-}
+"""
 
-force=0
-while getopts "fh" opt; do
-  case $opt in
-    f) force=1 ;;
-    h) usage ;;
-    *) usage ;;
-  esac
-done
+DOTFILES_DIR = os.environ.get('DOTFILES_DIR') or os.path.expanduser('~/.dotfiles')
+WCLIP = os.path.join(DOTFILES_DIR, 'bin', 'windows-x86_64', 'wclip.exe')
 
-if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v clipboard-osc52 >/dev/null 2>&1; then
-  exec clipboard-osc52 paste
-fi
 
-uname_info=$(uname -a)
+def die(message):
+    sys.stderr.write('p: %s\n' % message)
+    sys.exit(1)
 
-if [[ $uname_info == *Darwin* ]] && command -v mac_clipboard_cli >/dev/null 2>&1; then
-  exec mac_clipboard_cli -p
-fi
 
-if [[ $uname_info == *WSL* ]]; then
-  # If stdout is not a terminal or force is set, skip detect and paste directly
-  if [[ ! -t 1 ]] || (( force )); then
-    exec "$WCLIP" paste
-  fi
+def has_image(cmd):
+    out = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout
+    return any(t.startswith(b'image/') for t in out.splitlines())
 
-  # stdout is a terminal without -f, detect type to block binary
-  cb_type=$("$WCLIP" paste --detect | tr -d '\r\n')
-  case $cb_type in
-    image|file)
-      printf 'p: clipboard contains %s data, use -f to force output or redirect to a file\n' "$cb_type" >&2
-      exit 1
-      ;;
-    text)
-      exec "$WCLIP" paste
-      ;;
-    *)
-      printf 'p: clipboard is empty\n' >&2
-      exit 1
-      ;;
-  esac
-fi
 
-printf 'p: clipboard backend unavailable\n' >&2
-exit 1
+def is_wsl():
+    try:
+        with open('/proc/version') as f:
+            return 'microsoft' in f.read().lower()
+    except OSError:
+        return False
+
+
+force = False
+for arg in sys.argv[1:]:
+    for flag in arg[1:] if arg.startswith('-') else '?':
+        if flag == 'f':
+            force = True
+        else:
+            sys.stdout.write(USAGE)
+            sys.exit(0 if flag == 'h' else 1)
+
+raw = force or not sys.stdout.isatty()
+
+if (os.environ.get('SSH_CLIENT') or os.environ.get('SSH_TTY')) and shutil.which('clipboard-osc52'):
+    os.execvp('clipboard-osc52', ['clipboard-osc52', 'paste'])
+
+if sys.platform == 'darwin' and shutil.which('mac_clipboard_cli'):
+    os.execvp('mac_clipboard_cli', ['mac_clipboard_cli', '-p'])
+
+if sys.platform.startswith('linux') and is_wsl():
+    if not raw:
+        detect = subprocess.run(
+            [WCLIP, 'paste', '--detect'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+        )
+        cb_type = detect.stdout.decode('utf-8', 'replace').strip()
+        if cb_type in ('image', 'file'):
+            die('clipboard contains %s data, use -f to force output or redirect to a file' % cb_type)
+        if cb_type != 'text':
+            die('clipboard is empty')
+    os.execvp(WCLIP, [WCLIP, 'paste'])
+
+if os.environ.get('WAYLAND_DISPLAY') and shutil.which('wl-paste'):
+    if raw:
+        os.execvp('wl-paste', ['wl-paste'])
+    if has_image(['wl-paste', '--list-types']):
+        die('clipboard contains image data, use -f to force output or redirect to a file')
+    os.execvp('wl-paste', ['wl-paste', '--no-newline'])
+
+if os.environ.get('DISPLAY') and shutil.which('xclip'):
+    paste = ['xclip', '-selection', 'clipboard', '-o']
+    if not raw and has_image(['xclip', '-selection', 'clipboard', '-t', 'TARGETS', '-o']):
+        die('clipboard contains image data, use -f to force output or redirect to a file')
+    os.execvp('xclip', paste)
+
+die('clipboard backend unavailable')

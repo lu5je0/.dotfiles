@@ -1,23 +1,34 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+import os
+import shutil
+import sys
 
-set -euo pipefail
+DOTFILES_DIR = os.environ.get('DOTFILES_DIR') or os.path.expanduser('~/.dotfiles')
+WCLIP = os.path.join(DOTFILES_DIR, 'bin', 'windows-x86_64', 'wclip.exe')
 
-: "${DOTFILES_DIR:=$HOME/.dotfiles}"
-WCLIP="$DOTFILES_DIR/bin/windows-x86_64/wclip.exe"
 
-if [[ -n ${SSH_CLIENT:-}${SSH_TTY:-} ]] && command -v clipboard-osc52 >/dev/null 2>&1; then
-  exec clipboard-osc52 copy
-fi
+def is_wsl():
+    try:
+        with open('/proc/version') as f:
+            return 'microsoft' in f.read().lower()
+    except OSError:
+        return False
 
-uname_info=$(uname -a)
 
-if [[ $uname_info == *Darwin* ]] && command -v mac_clipboard_cli >/dev/null 2>&1; then
-  exec mac_clipboard_cli -c
-fi
+if (os.environ.get('SSH_CLIENT') or os.environ.get('SSH_TTY')) and shutil.which('clipboard-osc52'):
+    os.execvp('clipboard-osc52', ['clipboard-osc52', 'copy'])
 
-if [[ $uname_info == *WSL* ]]; then
-  exec "$WCLIP" copy
-fi
+if sys.platform == 'darwin' and shutil.which('mac_clipboard_cli'):
+    os.execvp('mac_clipboard_cli', ['mac_clipboard_cli', '-c'])
 
-printf 'yy: clipboard backend unavailable\n' >&2
-exit 1
+if sys.platform.startswith('linux') and is_wsl():
+    os.execvp(WCLIP, [WCLIP, 'copy'])
+
+if os.environ.get('WAYLAND_DISPLAY') and shutil.which('wl-copy'):
+    os.execvp('wl-copy', ['wl-copy'])
+
+if os.environ.get('DISPLAY') and shutil.which('xclip'):
+    os.execvp('xclip', ['xclip', '-selection', 'clipboard', '-i'])
+
+sys.stderr.write('yy: clipboard backend unavailable\n')
+sys.exit(1)
