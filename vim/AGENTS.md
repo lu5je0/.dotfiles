@@ -130,6 +130,7 @@ ext/tabline/
 - `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下剩余的 native 资源（如 `liblibclipboard.dylib`）；新增落在 `vim/lib/` 的动态库时优先复用这个入口，不要硬编码 `stdpath('config') .. '/lib/...'`。注意 `tui-bridge` 已迁出 `vim/lib`，不再经此解析。
 - 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `submodule/tui-bridge/AGENTS.md`。
 - macOS、Windows/WSL 与 Linux 桌面共用同一个 IME 后端 `lua/lu5je0/misc/ime/tui-bridge/backend.lua`（由 `misc/ime/init.lua` 的 `select_backend_module` 选中）；平台差异下沉到 native `tui-bridge`，Lua 侧只按归一化的 `ime_changed.state`（`ascii`/`ime`）判断，keeper 不再按平台分叉。旧后端 `lua/lu5je0/misc/ime/mac/backend.lua`(XkbSwitchLib FFI) 与 `lua/lu5je0/misc/ime/linux/backend.lua`(busctl 轮询 fcitx5 rime) 保留但已不接入。
+- 会临时切换内部窗口的输入 UI 通过 `require('lu5je0.misc.ime').set_typing_context(name, active)` 声明输入上下文；例如 Telescope 在 prompt 生命周期内保持该上下文，避免 preview 刷新产生的短暂 Normal 模式关闭 IME。
 - kitty 下优先走 OSC 后端 `lua/lu5je0/misc/ime/osc/backend.lua`（kitty 原生处理 `SetUserVar=tui-bridge`，按窗口屏蔽自身 IME）。识别由 `select_backend_module` 前的 `is_kitty()` 负责：tmux 内 `TERM` 是 tmux 自己的 terminfo，改问 `tmux display-message -p '#{client_termname}'`（带 `-t $TMUX_PANE`），只在 tmux 里 fork 一次。
 - OSC 后端在 tmux 内会把转义序列包进 `\ePtmux;…\e\\`（内层 ESC 加倍），否则 tmux 直接吞掉 OSC 1337；依赖 `tmux/tmux.conf` 的 `allow-passthrough on`。`zsh/vi-im-switch.zsh` 用同一套包装。
 

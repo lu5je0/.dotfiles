@@ -5,6 +5,8 @@ local env_keeper = require('lu5je0.misc.env-keeper')
 local state = {
   keeper_enabled = false,
   backend = nil,
+  applied = nil,
+  typing_contexts = {},
 }
 
 local rate_limiter
@@ -61,24 +63,33 @@ local function wanted_for_mode(mode)
   return 'normal'
 end
 
---- We are not the only writer: a shell running in :terminal drives the very same
---- terminal state (Neovim forwards the escape), so every trigger re-asserts
---- unconditionally instead of trusting a cached value.
----
---- A throttled update is dropped, so correctness relies on that re-assertion:
---- ModeChanged plus FocusGained/BufEnter/WinEnter re-derive the state.
+--- Mode transitions are never throttled: dropping the final transition can leave
+--- the terminal IME disabled. Same-mode triggers only re-assert external state;
+--- normal re-assertions must not overwrite the input source saved on transition.
 local function apply(want)
   if not state.backend then return end
   if want == 'insert' and not save_last_ime_enabled() then return end
-  if not rate_limiter:get() then return end
+
+  local changed = state.applied ~= want
+  if not changed and not rate_limiter:get() then return end
 
   if profile_timer then profile_timer.begin_timer() end
-  state.backend[want]()
+  if not changed and want == 'normal' then
+    state.backend.ascii_mode()
+  else
+    state.backend[want]()
+  end
+  state.applied = want
   if profile_timer then profile_timer.end_timer() end
 end
 
+local function wanted_for_context()
+  if next(state.typing_contexts) then return 'insert' end
+  return wanted_for_mode(vim.api.nvim_get_mode().mode)
+end
+
 local function sync()
-  apply(wanted_for_mode(vim.api.nvim_get_mode().mode))
+  apply(wanted_for_context())
 end
 
 --- Leaving is backend specific: one that switches the input source wants ASCII,
@@ -97,6 +108,16 @@ end
 
 local function set_keeper(enable)
   state.keeper_enabled = enable
+end
+
+local function sync_keeper()
+  set_keeper(wanted_for_context() == 'normal')
+end
+
+function M.set_typing_context(name, active)
+  state.typing_contexts[name] = active and true or nil
+  sync()
+  sync_keeper()
 end
 
 -- ── autocmds ──────────────────────────────────────────────────
@@ -146,15 +167,10 @@ end
 local function wire_keeper_autocmds(backend)
   local group = vim.api.nvim_create_augroup('ime-keeper-common', { clear = true })
 
-  -- keeper_enabled gate: on in normal mode, off in insert / cmdline.
-  vim.api.nvim_create_autocmd({ 'InsertLeave', 'CmdlineLeave', 'TermLeave' }, {
+  vim.api.nvim_create_autocmd('ModeChanged', {
     group = group,
-    callback = function() set_keeper(true) end,
-  })
-
-  vim.api.nvim_create_autocmd({ 'InsertEnter', 'TermEnter', 'CmdlineEnter' }, {
-    group = group,
-    callback = function() set_keeper(false) end,
+    pattern = '*:*',
+    callback = function() sync_keeper() end,
   })
 
   -- Native watch follows focus: only subscribe while Neovim is focused so the
@@ -168,10 +184,7 @@ local function wire_keeper_autocmds(backend)
     group = group,
     callback = function()
       backend.keeper(true)
-      if vim.api.nvim_get_mode().mode == 'n' then
-        M.normal()
-        set_keeper(true)
-      end
+      sync_keeper()
     end,
   })
 end
@@ -181,7 +194,7 @@ end
 --- that do not implement the keeper.
 local function sync_initial_state()
   sync()
-  set_keeper(vim.api.nvim_get_mode().mode:sub(1, 1) == 'n')
+  sync_keeper()
 end
 
 local function config_keeper(backend)
