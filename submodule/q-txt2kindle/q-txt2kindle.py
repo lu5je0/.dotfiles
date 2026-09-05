@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""q-txt2kindle - 把中文 TXT 小说转成 Kindle 电子书(自动识别编码与章节)。
+"""q-txt2kindle - 把中文 TXT 或 EPUB 转成 Kindle 电子书。
 
 用法:
-  q-txt2kindle *.txt                 # 转当前目录下的小说
+  q-txt2kindle *.txt                 # 转当前目录下的 TXT 小说
   q-txt2kindle novel.txt --dry-run   # 只看识别结果(编码/章节数/章节名)
   q-txt2kindle novel.txt -o out -f epub
-  q-txt2kindle *.txt -j 4              # 4 个文件并发转换
+  q-txt2kindle book.epub             # 保留原书结构并转成 MOBI
+  q-txt2kindle . -j 4                # 并发转换目录中的 TXT 和 EPUB
 """
 
 import argparse
@@ -566,7 +567,7 @@ def to_mobi(epub_path, target, huffdic=False):
     return r.stdout + r.stderr
 
 
-def convert(path, args):
+def convert_txt(path, args):
     """返回 (outputs, log)；并发下由调用方整块打印 log，避免多文件输出穿插。"""
     log = []
     with open(path, 'rb') as f:
@@ -620,14 +621,39 @@ def convert(path, args):
     return outputs, log
 
 
+def convert_epub(path, args):
+    log = ['\x1b[1m%s\x1b[0m' % os.path.basename(path),
+           '  来源: EPUB（保留原书结构）']
+    if args.dry_run:
+        return [], log
+
+    stem = os.path.splitext(os.path.basename(path))[0]
+    target = os.path.join(args.outdir, stem + '.mobi')
+    out = to_mobi(path, target, args.c2)
+    if os.path.exists(target):
+        log.append('  \x1b[32m已生成\x1b[0m %s  (%.1f MB)'
+                   % (target, os.path.getsize(target) / 1048576))
+        return [target], log
+
+    log.append('  \x1b[31mkindlegen 失败\x1b[0m\n%s' % out.strip()[-500:])
+    return [], log
+
+
+def convert(path, args):
+    if path.lower().endswith('.epub'):
+        return convert_epub(path, args)
+    return convert_txt(path, args)
+
+
 def main():
     ap = argparse.ArgumentParser(
-        prog='q-txt2kindle', description='中文 TXT 小说 -> Kindle 电子书(自动识别编码与章节)')
-    ap.add_argument('inputs', nargs='+', help='txt 文件或目录')
+        prog='q-txt2kindle',
+        description='中文 TXT 或 EPUB -> Kindle 电子书（TXT 自动识别编码与章节）')
+    ap.add_argument('inputs', nargs='+', help='TXT、EPUB 文件或目录')
     ap.add_argument('-o', '--outdir', default='kindle', help='输出目录(默认 ./kindle)')
     ap.add_argument('-f', '--format', default='mobi',
                     choices=['mobi', 'epub', 'both'],
-                    help='输出格式(默认 mobi，由 kindlegen 生成；epub 无外部依赖)')
+                    help='输出格式（EPUB 输入仅支持 mobi；TXT 默认 mobi）')
     ap.add_argument('-n', '--dry-run', action='store_true', help='只识别不生成')
     ap.add_argument('-l', '--list-chapters', action='store_true', help='列出全部章节名')
     ap.add_argument('--encoding', help='强制指定源编码，如 gb18030')
@@ -646,16 +672,18 @@ def main():
     for item in args.inputs:
         if os.path.isdir(item):
             files += sorted(os.path.join(item, f) for f in os.listdir(item)
-                            if f.lower().endswith('.txt'))
-        elif item.lower().endswith('.txt'):
+                            if f.lower().endswith(('.txt', '.epub')))
+        elif item.lower().endswith(('.txt', '.epub')):
             files.append(item)
         else:
-            print('跳过非 txt: %s' % item, file=sys.stderr)
+            print('跳过非 TXT/EPUB: %s' % item, file=sys.stderr)
     if not files:
-        sys.exit('没有找到 txt 文件')
+        sys.exit('没有找到 TXT 或 EPUB 文件')
+    if any(path.lower().endswith('.epub') for path in files) and args.format != 'mobi':
+        sys.exit('EPUB 输入仅支持 -f mobi')
     if args.format != 'epub' and not args.dry_run and not shutil.which('kindlegen'):
         sys.exit('mobi 需要 kindlegen：yay -S kindlegen\n'
-                 '(只要 epub 可以加 -f epub，无外部依赖)')
+                 '(TXT 只要 epub 可以加 -f epub，无外部依赖)')
     if not args.dry_run:
         os.makedirs(args.outdir, exist_ok=True)
 
