@@ -315,13 +315,51 @@ registerShortcut("TileWindow: Minimize", "TileWindow: Minimize", "Alt+M", functi
     client.minimized = true;
 });
 
-// Ctrl+Meta+Left/Right: switch virtual desktop
+function getAdjacentDesktop(offset) {
+    const desktops = workspace.desktops;
+    if (desktops.length < 2)
+        return null;
+    const index = desktops.indexOf(workspace.currentDesktop);
+    if (index < 0)
+        return null;
+    return desktops[(index + offset + desktops.length) % desktops.length];
+}
+
+function switchDesktop(offset) {
+    const target = getAdjacentDesktop(offset);
+    if (target)
+        workspace.currentDesktop = target;
+}
+
+function moveActiveWindowToDesktop(offset) {
+    const client = workspace.activeWindow;
+    const target = getAdjacentDesktop(offset);
+    if (!client || !client.normalWindow || !target)
+        return;
+    client.desktops = [target];
+    workspace.currentDesktop = target;
+}
+
 registerShortcut("TileWindow: Desktop Left", "TileWindow: Desktop Left", "Ctrl+Meta+Left", function() {
-    if (workspace.currentDesktop > 1)
-        workspace.currentDesktop = workspace.currentDesktop - 1;
+    switchDesktop(-1);
 });
 
 registerShortcut("TileWindow: Desktop Right", "TileWindow: Desktop Right", "Ctrl+Meta+Right", function() {
-    if (workspace.currentDesktop < workspace.desktops.length)
-        workspace.currentDesktop = workspace.currentDesktop + 1;
+    switchDesktop(1);
+});
+
+registerShortcut("TileWindow: Desktop Next", "TileWindow: Desktop Next", "Ctrl+Meta+N", function() {
+    switchDesktop(1);
+});
+
+registerShortcut("TileWindow: Desktop Previous", "TileWindow: Desktop Previous", "Ctrl+Meta+P", function() {
+    switchDesktop(-1);
+});
+
+registerShortcut("TileWindow: Move Window to Next Desktop", "TileWindow: Move Window to Next Desktop", "Ctrl+Meta+Shift+N", function() {
+    moveActiveWindowToDesktop(1);
+});
+
+registerShortcut("TileWindow: Move Window to Previous Desktop", "TileWindow: Move Window to Previous Desktop", "Ctrl+Meta+Shift+P", function() {
+    moveActiveWindowToDesktop(-1);
 });

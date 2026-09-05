@@ -25,7 +25,9 @@ reload.sh 做的事：`wm/layout.jsonc` 同步进 kwinrc `[Script-tilewindow]` �
 | Alt+M | 最小化当前窗口 |
 | Ctrl+Meta+T | 切换置顶 |
 | Ctrl+Meta+W | 输出窗口信息到 journal |
-| Ctrl+Meta+Left/Right | 切换左右虚拟桌面 |
+| Ctrl+Meta+N/P | 循环切换下一个/上一个虚拟桌面 |
+| Ctrl+Meta+Shift+N/P | 将当前窗口移到下一个/上一个虚拟桌面并跟随（循环） |
+| Ctrl+Meta+Left/Right | 循环切换左右虚拟桌面 |
 
 ## 布局配置（wm/layout.jsonc）
 

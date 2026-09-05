@@ -289,10 +289,20 @@ function moveWindowTo(win, geo) {
 // 末尾的 WorkspaceSwitcherPopup 逻辑，保持虚拟桌面指示器显示
 let workspaceSwitcherPopup = null;
 
-function switchWorkspace(offset) {
+function getAdjacentWorkspace(offset) {
     const wsManager = global.workspace_manager;
+    const total = wsManager.get_n_workspaces();
+    const count = Meta.prefs_get_dynamic_workspaces() && total > 2 ? total - 1 : total;
+    if (count < 2)
+        return null;
+
     const index = wsManager.get_active_workspace_index();
-    const target = wsManager.get_workspace_by_index(index + offset);
+    if (index >= count)
+        return wsManager.get_workspace_by_index(offset > 0 ? 0 : count - 1);
+    return wsManager.get_workspace_by_index((index + offset + count) % count);
+}
+
+function activateWorkspace(target) {
     if (!target || target.active)
         return;
 
@@ -310,6 +320,19 @@ function switchWorkspace(offset) {
         Main.wm._workspaceTracker?.blockUpdates();
         workspaceSwitcherPopup.display(target.index());
     }
+}
+
+function switchWorkspace(offset) {
+    activateWorkspace(getAdjacentWorkspace(offset));
+}
+
+function moveFocusedWindowToWorkspace(offset) {
+    const client = getTargetWindow();
+    const target = getAdjacentWorkspace(offset);
+    if (!client || !target)
+        return;
+    client.change_workspace(target);
+    activateWorkspace(target);
 }
 
 function resizeWindow(position) {
@@ -417,6 +440,10 @@ export default class TileWindowExtension extends Extension {
         });
         bind('workspace-left', () => switchWorkspace(-1));
         bind('workspace-right', () => switchWorkspace(1));
+        bind('workspace-next', () => switchWorkspace(1));
+        bind('workspace-previous', () => switchWorkspace(-1));
+        bind('move-window-next-workspace', () => moveFocusedWindowToWorkspace(1));
+        bind('move-window-previous-workspace', () => moveFocusedWindowToWorkspace(-1));
         bind('window-info', () => {
             const client = global.display.get_focus_window();
             if (!client)

@@ -174,7 +174,7 @@ hs.hotkey.bind({ "ctrl", "option" }, "M", function()
   local win = hs.window.focusedWindow()
   win:minimize()
 end)
-hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
+hs.hotkey.bind({ "ctrl", "option" }, "O", function()
   local win_win = require('win_win')
   local win = hs.window.focusedWindow()
   local f = win:frame()
@@ -187,6 +187,58 @@ hs.hotkey.bind({ "ctrl", "option" }, 'N', function()
   if width_rate > 0.98 then
     size_focused_window('maximize')()
   end
+end)
+
+local function adjacent_space(offset, screen)
+  local screen_id = screen:getUUID()
+  local active_space = hs.spaces.activeSpaces()[screen_id]
+  local spaces = {}
+  for _, space_id in ipairs(hs.spaces.spacesForScreen(screen_id) or {}) do
+    if hs.spaces.spaceType(space_id) == "user" then
+      spaces[#spaces + 1] = space_id
+    end
+  end
+
+  for index, space_id in ipairs(spaces) do
+    if space_id == active_space then
+      return spaces[(index - 1 + offset) % #spaces + 1]
+    end
+  end
+  return nil
+end
+
+local function switch_space(offset)
+  local win = hs.window.focusedWindow()
+  local screen = win and win:screen() or hs.screen.mainScreen()
+  local target = adjacent_space(offset, screen)
+  if target then
+    hs.spaces.gotoSpace(target)
+  end
+end
+
+local function move_window_to_space(offset)
+  local win = hs.window.focusedWindow()
+  if not win then
+    return
+  end
+  local target = adjacent_space(offset, win:screen())
+  if target then
+    hs.spaces.moveWindowToSpace(win:id(), target)
+    hs.spaces.gotoSpace(target)
+  end
+end
+
+hs.hotkey.bind({ "ctrl", "option" }, "N", function()
+  switch_space(1)
+end)
+hs.hotkey.bind({ "ctrl", "option" }, "P", function()
+  switch_space(-1)
+end)
+hs.hotkey.bind({ "ctrl", "option", "shift" }, "N", function()
+  move_window_to_space(1)
+end)
+hs.hotkey.bind({ "ctrl", "option", "shift" }, "P", function()
+  move_window_to_space(-1)
 end)
 
 -- 切换虚拟桌面：模拟系统默认的 Ctrl+Left/Right

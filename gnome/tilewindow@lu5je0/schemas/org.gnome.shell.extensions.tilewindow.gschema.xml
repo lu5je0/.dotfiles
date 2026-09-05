@@ -41,5 +41,21 @@
       <default>['&lt;Control&gt;&lt;Super&gt;Right']</default>
       <summary>Switch to right workspace</summary>
     </key>
+    <key name="workspace-next" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;n']</default>
+      <summary>Switch to next workspace</summary>
+    </key>
+    <key name="workspace-previous" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;p']</default>
+      <summary>Switch to previous workspace</summary>
+    </key>
+    <key name="move-window-next-workspace" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;&lt;Shift&gt;n']</default>
+      <summary>Move focused window to next workspace</summary>
+    </key>
+    <key name="move-window-previous-workspace" type="as">
+      <default>['&lt;Control&gt;&lt;Super&gt;&lt;Shift&gt;p']</default>
+      <summary>Move focused window to previous workspace</summary>
+    </key>
   </schema>
 </schemalist>
