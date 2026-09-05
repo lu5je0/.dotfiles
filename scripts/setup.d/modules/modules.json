@@ -44,6 +44,13 @@
     "os": ["mac", "linux"]
   },
   {
+    "name": "fontconfig",
+    "desc": "font rendering: subpixel rgba + hintfull (fontconfig/fonts.conf)",
+    "source": "fontconfig/fonts.conf",
+    "target": "~/.config/fontconfig/fonts.conf",
+    "os": ["linux"]
+  },
+  {
     "name": "nerd-font",
     "action": "install",
     "desc": "JetBrainsMonoNL Nerd Font Mono Regular (Windows user fonts on WSL)",
