@@ -172,6 +172,63 @@ local function key_mapping()
   set_map('<leader>f"', function() telescope_builtin.registers(theme()) end)
 end
 
+local function restore_last_search(group)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local search = M.telescope_last_search
+  vim.api.nvim_feedkeys(search, '', false)
+
+  vim.schedule(function()
+    if not vim.api.nvim_buf_is_valid(bufnr) then return end
+
+    local prompt = vim.fn.prompt_getprompt(bufnr)
+    local restored = prompt .. search
+    local ns = vim.api.nvim_create_namespace('telescope-restored-search')
+    local mark = vim.api.nvim_buf_set_extmark(bufnr, ns, 0, #prompt, {
+      end_col = #restored,
+      hl_group = 'Visual',
+    })
+
+    vim.api.nvim_create_autocmd('TextChangedI', {
+      group = group,
+      buffer = bufnr,
+      once = true,
+      callback = function()
+        pcall(vim.api.nvim_buf_del_extmark, bufnr, ns, mark)
+        local line = vim.api.nvim_get_current_line()
+        if line:sub(1, #restored) ~= restored then return end
+
+        local col = vim.api.nvim_win_get_cursor(0)[2]
+        vim.api.nvim_set_current_line(prompt .. line:sub(#restored + 1))
+        vim.api.nvim_win_set_cursor(0, { 1, math.max(#prompt, col - #search) })
+      end,
+    })
+  end)
+end
+
+local function configure_ime_context(group, bufnr)
+  local ime = require('lu5je0.misc.ime')
+  local name = 'telescope:' .. bufnr
+  ime.set_typing_context(name, true)
+
+  vim.api.nvim_create_autocmd('ModeChanged', {
+    group = group,
+    buffer = bufnr,
+    callback = function()
+      local mode = vim.api.nvim_get_mode().mode:sub(1, 1)
+      ime.set_typing_context(name, mode == 'i' or mode == 'R' or mode == 's')
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'BufLeave', 'BufWipeout' }, {
+    group = group,
+    buffer = bufnr,
+    once = true,
+    callback = function()
+      vim.schedule(function() ime.set_typing_context(name, false) end)
+    end,
+  })
+end
+
 local function remember_last_search()
   local group = vim.api.nvim_create_augroup('telescope', { clear = true })
 
@@ -194,14 +251,14 @@ local function remember_last_search()
     group = group,
     pattern = { 'TelescopePrompt' },
     callback = function()
+      local bufnr = vim.api.nvim_win_get_buf(0)
       local opts = { noremap = true, silent = true, buffer = true, desc = 'telescope', nowait = true }
+      configure_ime_context(group, bufnr)
 
       if not M.disable_keep_last_search and M.telescope_last_search ~= nil and M.telescope_last_search ~= "" then
-        vim.api.nvim_feedkeys(M.telescope_last_search, '', false)
-        require('lu5je0.core.keys').feedkey('<esc>v$o^lloh<c-g><c-r>_', 'n')
+        restore_last_search(group)
       end
 
-      local bufnr = vim.api.nvim_win_get_buf(0)
       vim.keymap.set({ 'i', 'v' }, '<esc>', function()
         require('telescope.actions').close(bufnr)
       end, opts)
