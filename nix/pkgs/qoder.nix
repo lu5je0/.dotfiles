@@ -27,7 +27,7 @@
   libxfixes,
   libxkbcommon,
   libxrandr,
-  libxss,
+  libXScrnSaver,
   libxtst,
   makeWrapper,
   nspr,
@@ -49,6 +49,8 @@ stdenv.mkDerivation {
     makeWrapper
     wrapGAppsHook3
   ];
+
+  autoPatchelfIgnoreMissingDeps = [ "libc.musl-x86_64.so.1" ];
 
   buildInputs = [
     alsa-lib
@@ -74,7 +76,7 @@ stdenv.mkDerivation {
     libxfixes
     libxkbcommon
     libxrandr
-    libxss
+    libXScrnSaver
     libxtst
     nspr
     nss

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgsUnstable, ... }:
 
 {
   environment.systemPackages = with pkgs; [
@@ -6,9 +6,16 @@
   ];
 
   users.users.lu5je0.packages = with pkgs; [
+    git
+    nodejs
+    ripgrep
+    fzf
+    htop
+    btop
     cargo
     gcc
-    neovim
+    gnumake
+    pkgsUnstable.neovim
     python3
     rustc
     tree-sitter

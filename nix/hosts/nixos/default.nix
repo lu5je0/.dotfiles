@@ -21,6 +21,9 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  environment.sessionVariables.NPM_CONFIG_PREFIX = "/home/lu5je0/.local";
+  environment.localBinInPath = true;
+
   time.timeZone = "Asia/Shanghai";
   i18n.defaultLocale = "zh_CN.UTF-8";
   i18n.extraLocaleSettings = {
