@@ -68,3 +68,10 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
 - 匹配 key 用 `get_wm_class()` 小写（kwin 侧是 `resourceClass`）
 - mutter-18 的 `maximize()/unmaximize()` 无参数（旧版 MaximizeFlags 已移除）
 - Ctrl+Super+W 会把当前窗口几何、workArea 与检测到的 dock 矩形打到 journal，用于排查
+- `bind()` 在每个快捷键处理函数跑完后调 `scheduleModifierResync()`，绕过 mutter 上游 bug
+  （mutter#3636、#3672，50.4 仍未修）：mutter 抓走带修饰键的快捷键后，客户端可能收不到
+  修饰键的 release，其修饰键状态卡住，表现为**悬停高亮正常但点击失效**（点击被当成
+  Ctrl+点击），极易误判成「应用卡死」。用虚拟键盘补发一次 RELEASED 即可解除。
+  必须轮询等到修饰键真正松开才补发，否则会打断按住 Ctrl+Super 连按 N/P 的连续切换；
+  长按超过 3s 就放弃本次重同步。刻意不含 Super——卡住的 Super 在 GTK 侧无默认点击行为，
+  而合成它的 release 会让 `overlay-key` 误弹 Overview

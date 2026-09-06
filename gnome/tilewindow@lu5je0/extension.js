@@ -1,3 +1,4 @@
+import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
@@ -400,6 +401,60 @@ function snapWithSwap(side) {
     resizeWindow(side);
 }
 
+// 缓解 mutter 上游 bug：抓取带修饰键的全局快捷键后，客户端可能收不到修饰键的
+// release，其修饰键状态就此卡住——表现为悬停高亮正常、但点击被当成 Ctrl+点击而失效
+// （mutter#3636、mutter#3672，截至 50.4 仍未修）。补发一次 RELEASED 让客户端重新同步，
+// 等价于用户手动点一下 Ctrl。
+// 不含 Super：卡住的 Super 在 GTK 侧无默认点击行为，而合成它的 release 会干扰
+// overlay-key 误弹 Overview。
+const RESYNC_MODIFIERS = [
+    [Clutter.ModifierType.CONTROL_MASK, Clutter.KEY_Control_L],
+    [Clutter.ModifierType.SHIFT_MASK, Clutter.KEY_Shift_L],
+    [Clutter.ModifierType.MOD1_MASK, Clutter.KEY_Alt_L],
+];
+const RESYNC_POLL_MS = 100;
+const RESYNC_GIVEUP_MS = 3000;
+
+let virtualKeyboard = null;
+let resyncTimeoutId = null;
+
+function anyModifierHeld() {
+    const [, , mods] = global.get_pointer();
+    return RESYNC_MODIFIERS.some(([mask]) => mods & mask);
+}
+
+function sendModifierReleases() {
+    if (!virtualKeyboard) {
+        const seat = Clutter.get_default_backend().get_default_seat();
+        virtualKeyboard = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+    }
+    const time = global.get_current_time() * 1000;
+    for (const [, keyval] of RESYNC_MODIFIERS)
+        virtualKeyboard.notify_keyval(time, keyval, Clutter.KeyState.RELEASED);
+}
+
+// 必须等用户真正松手才能补发，否则会打断按住 Ctrl+Super 连按 N/P 的连续切换
+function scheduleModifierResync() {
+    if (resyncTimeoutId)
+        return;
+
+    let waited = 0;
+    resyncTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, RESYNC_POLL_MS, () => {
+        waited += RESYNC_POLL_MS;
+        if (anyModifierHeld()) {
+            if (waited < RESYNC_GIVEUP_MS)
+                return GLib.SOURCE_CONTINUE;
+            // 长按不放：放弃本次重同步，强行补发会打断用户
+            resyncTimeoutId = null;
+            return GLib.SOURCE_REMOVE;
+        }
+
+        sendModifierReleases();
+        resyncTimeoutId = null;
+        return GLib.SOURCE_REMOVE;
+    });
+}
+
 export default class TileWindowExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
@@ -410,7 +465,10 @@ export default class TileWindowExtension extends Extension {
             Main.wm.addKeybinding(name, this._settings,
                 Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
                 Shell.ActionMode.NORMAL,
-                handler);
+                (...args) => {
+                    handler(...args);
+                    scheduleModifierResync();
+                });
             this._names.push(name);
         };
 
@@ -463,5 +521,11 @@ export default class TileWindowExtension extends Extension {
             Main.wm.removeKeybinding(name);
         this._names = [];
         this._settings = null;
+
+        if (resyncTimeoutId) {
+            GLib.source_remove(resyncTimeoutId);
+            resyncTimeoutId = null;
+        }
+        virtualKeyboard = null;
     }
 }
