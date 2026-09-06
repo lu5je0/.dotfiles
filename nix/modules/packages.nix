@@ -11,7 +11,9 @@
     ripgrep
     fzf
     htop
+    fastfetch
     btop
+    gh
     cargo
     gcc
     gnumake
