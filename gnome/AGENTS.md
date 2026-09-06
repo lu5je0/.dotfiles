@@ -45,7 +45,8 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
 - 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；
   可选 `x/y` 为 `{align, offset}`（align: left/center/right/top/bottom，缺省 center），
   不写 `x/y` 时自动居中
-- `side` 给左右贴边用，放置与 kwin 一致（窗口居中在各自半屏内）
+- `side` 给左右贴边用，放置与 kwin 一致（窗口居中在各自半屏内）；`width`/`height` 是上限，
+  实际会夹到 workArea（宽 ≤ 半屏、高 ≤ workArea 高），否则固定像素值会压到顶栏和 dock 上
 - `insets`（可选，`top`/`bottom`/`left`/`right`）在自动 dock 检测之后再手动扣一圈，
   一般不需要，仅用于自动检测失效或想额外留白的场景
 - 内置 fallback 与 `kwin/tilewindow/contents/code/main.js` 的 `layoutConfig` 保持同步

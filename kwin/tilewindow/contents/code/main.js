@@ -115,8 +115,9 @@ function getCenterLayout(processName, position, sw, sh) {
 
 function getSideRect(side, area) {
     const config = loadFileConfig();
-    const w = (config && config.side && config.side.width) || 1139;
-    const h = (config && config.side && config.side.height) || 1218;
+    // 配置值是上限，夹到 workArea 内，否则会压到面板上
+    const w = Math.min((config && config.side && config.side.width) || 1139, Math.floor(area.width / 2));
+    const h = Math.min((config && config.side && config.side.height) || 1218, area.height);
     const halfWidth = area.width / 2;
     const x = (side === "left")
         ? area.x + Math.round((halfWidth - w) / 2)

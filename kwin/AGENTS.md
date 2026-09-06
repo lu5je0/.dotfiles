@@ -55,5 +55,5 @@ readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.
 - 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；
   可选 `x/y` 为 `{align, offset}`（align: left/center/right/top/bottom，缺省 center），
   不写 `x/y` 时自动居中；坐标相对 workArea（已排除任务栏）
-- `side` 给左右贴边用
+- `side` 给左右贴边用；`width`/`height` 是上限，实际会夹到 workArea（宽 ≤ 半屏、高 ≤ workArea 高）
 - `main.js` 里的 `layoutConfig` 仅作读不到文件时的内置兜底

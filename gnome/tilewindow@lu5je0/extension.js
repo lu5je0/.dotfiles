@@ -208,8 +208,9 @@ function getCenterLayout(wmClass, position, sw, sh) {
 
 function getSideRect(side, area) {
     const sideConfig = loadFileConfig()?.side;
-    const w = sideConfig?.width ?? 1139;
-    const h = sideConfig?.height ?? 1218;
+    // 配置值是上限，夹到 workArea 内，否则会压到顶栏/dock 上
+    const w = Math.min(sideConfig?.width ?? 1139, Math.floor(area.width / 2));
+    const h = Math.min(sideConfig?.height ?? 1218, area.height);
     // 与 kwin 一致：贴边窗口居中在各自半屏内
     const halfWidth = area.width / 2;
     const x = (side === 'left')
