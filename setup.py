@@ -15,6 +15,7 @@ import unicodedata
 from pathlib import Path
 
 DOTFILES_DIR = Path(os.environ.get("DOTFILES_DIR") or Path(__file__).resolve().parent)
+DOTFILES_ROOT = DOTFILES_DIR.resolve()
 HOME = Path.home()
 
 
@@ -109,6 +110,7 @@ class Module:
         self.name = spec.get("name") or die(f"module without a name: {spec}")
         self.script = spec.get("script")
         self.source = spec.get("source")
+        self.source_path = (DOTFILES_DIR / self.source).resolve() if self.source else None
         self.target = spec.get("target")
         self.os_spec = spec.get("os") or []
         if IS_WIN_MODE:
@@ -155,6 +157,18 @@ class Module:
     def os_label(self):
         return "/".join(self.os_spec)
 
+    def owns_link(self, path):
+        if not path.is_symlink():
+            return False
+        try:
+            resolved = path.resolve()
+            if self.source_path is not None:
+                return resolved == self.source_path
+            resolved.relative_to(DOTFILES_ROOT)
+        except (OSError, RuntimeError, ValueError):
+            return False
+        return True
+
     def refresh_status(self):
         if not self.supported or not self.checks:
             self.status = ""
@@ -165,7 +179,7 @@ class Module:
                 states.add("missing")
             elif kind == "exists":
                 states.add("ok")
-            elif path.is_symlink() and str(path.resolve()).startswith(str(DOTFILES_DIR.resolve())):
+            elif self.owns_link(path):
                 states.add("ok")
             else:
                 states.add("conflict")
@@ -183,13 +197,37 @@ class Module:
     def run_link(self):
         """Returns ("linked"|"created"|"occupied", detail)."""
         target = self.target_path
-        if target.is_symlink() and str(target.resolve()).startswith(str(DOTFILES_DIR.resolve())):
+        if self.owns_link(target):
             return "linked", ""
         if target.exists() or target.is_symlink():
             return "occupied", shorten(target)
         target.parent.mkdir(parents=True, exist_ok=True)
         os.symlink(DOTFILES_DIR / self.source, target)
         return "created", shorten(target)
+
+    def uninstall_links(self):
+        if self.script:
+            targets = [path for kind, path in self.checks if kind == "link"]
+        else:
+            targets = [self.target_path]
+
+        results = []
+        for target in dict.fromkeys(targets):
+            detail = shorten(target)
+            if not target.is_symlink():
+                state = "missing" if not target.exists() else "conflict"
+                results.append((state, detail))
+                continue
+            if not self.owns_link(target):
+                results.append(("conflict", detail))
+                continue
+            try:
+                target.unlink()
+            except OSError as exc:
+                results.append(("error", f"{detail}: {exc}"))
+            else:
+                results.append(("removed", detail))
+        return results
 
 
 def load_modules():
@@ -280,7 +318,13 @@ class Picker:
     def update_filter(self):
         query = self.query.lower()
         matched = [m for m in self.modules if query in f"{m.name} {m.desc}".lower()]
-        self.visible = [m for m in matched if m.supported] + [m for m in matched if not m.supported]
+        self.visible = sorted(
+            matched,
+            key=lambda module: (
+                2 if not module.supported else 1 if module.status == "installed" else 0,
+                module.name.casefold(),
+            ),
+        )
 
     def current(self):
         return self.visible[self.cursor] if self.visible else None
@@ -460,9 +504,16 @@ class Picker:
         return ["", rule, "  " + self.hints(width - 2)]
 
     def hints(self, width):
-        full = [("j/k", "move"), ("space", "select"), ("/", "filter"), ("enter", "run"), ("q", "quit")]
+        full = [
+            ("j/k", "move"),
+            ("space", "select"),
+            ("/", "filter"),
+            ("enter", "install"),
+            ("X", "uninstall"),
+            ("q", "quit"),
+        ]
         wide = full[:3] + [(",vw", "wrap")] + full[3:]
-        for keys in (wide, full, full[:2] + full[-1:], [(k, "") for k, _ in full]):
+        for keys in (wide, full, full[:2] + full[3:], [(k, "") for k, _ in full]):
             if len(" · ".join(f"{k} {v}".strip() for k, v in keys)) <= width:
                 return f" {DIM}·{RESET} ".join(
                     f"{BOLD}{k}{RESET}" + (f"{DIM} {v}{RESET}" if v else "") for k, v in keys
@@ -502,14 +553,16 @@ class Picker:
             self.cursor = 0
 
     def handle(self, key):
-        """Return "run" or "quit" to leave the loop."""
+        """Return an action name to leave the loop, or None to continue."""
         if self.searching:
             self.handle_search(key)
             return None
         if key == "q":
             return "quit"
         if key == "ENTER":
-            return "run"
+            return "install"
+        if key == "X":
+            return "uninstall"
         if key == "ESC" and self.query:
             self.query = ""
             self.update_filter()
@@ -604,7 +657,7 @@ def pick(modules):
             if fd in ready:
                 action = picker.handle(read_key(fd, sequences=not picker.searching))
                 if action:
-                    return action == "run"
+                    return action
             picker.render()
     finally:
         signal.set_wakeup_fd(-1)
@@ -623,19 +676,77 @@ def section(label, width=None):
     print(f"\n{DIM}──{RESET} {BOLD}{CYAN}{label}{RESET} {DIM}{'─' * dashes}{RESET}")
 
 
+def confirm_action(chosen, action):
+    label = "安装" if action == "install" else "卸载"
+    names = ", ".join(module.name for module in chosen)
+    print(f"{YELLOW}即将{label}:{RESET} {names}")
+    prompt = (
+        "确认安装这些模块？[y/n] "
+        if action == "install"
+        else "确认删除这些模块中由 dotfiles 管理的链接？[y/n] "
+    )
+    while True:
+        try:
+            answer = input(prompt).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return False
+        if answer == "y":
+            return True
+        if answer == "n":
+            return False
+
+
+def uninstall_modules(chosen):
+    failed = []
+    width = max(len(module.name) for module in chosen)
+    for module in chosen:
+        results = module.uninstall_links()
+        if not results:
+            failed.append(module)
+            print(f"{YELLOW}▲{RESET} {module.name.ljust(width)}  没有可安全卸载的 dotfiles 链接")
+            continue
+
+        module_failed = False
+        for state, detail in results:
+            name = module.name.ljust(width)
+            if state == "removed":
+                print(f"{GREEN}✓{RESET} {name}  删除 → {detail}")
+            elif state == "missing":
+                print(f"{GREEN}✓{RESET} {name}  {DIM}不存在（跳过）: {detail}{RESET}")
+            elif state == "conflict":
+                module_failed = True
+                print(f"{YELLOW}▲{RESET} {name}  保留: {detail} 不是该模块的 dotfiles 链接")
+            else:
+                module_failed = True
+                print(f"{RED}✗{RESET} {name}  {detail}")
+        if module_failed:
+            failed.append(module)
+
+    succeeded = len(chosen) - len(failed)
+    print(f"{DIM}{succeeded}/{len(chosen)} uninstalled{RESET}")
+    return 1 if failed else 0
+
+
 def main():
     if not sys.stdin.isatty():
         die("setup.py needs an interactive terminal")
     modules = load_modules()
     if not modules:
         die("No modules found. Exit.")
-    if not pick(modules):
+    action = pick(modules)
+    if action == "quit":
         sys.exit(0)
 
     chosen = [m for m in modules if m.selected]
     if not chosen:
         print(f"{DIM}nothing selected{RESET}")
         sys.exit(1)
+    if not confirm_action(chosen, action):
+        print(f"{DIM}{action} cancelled{RESET}")
+        sys.exit(0)
+    if action == "uninstall":
+        sys.exit(uninstall_modules(chosen))
 
     failed = []
     script_ran = False

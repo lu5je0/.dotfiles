@@ -2,7 +2,7 @@
 
 ## 概览
 
-`setup.py`（仓库根目录，仅支持 Python 3）是 dotfiles 安装入口，提供 TUI 多选菜单，按模块执行安装。
+`setup.py`（仓库根目录，仅支持 Python 3）是 dotfiles 管理入口，提供 TUI 多选菜单，按模块执行安装或卸载。
 
 ```bash
 python3 ~/.dotfiles/setup.py
@@ -130,10 +130,12 @@ python3 ~/.dotfiles/setup.py
 - 多键序列由 `SEQUENCES` 表驱动（`gg`、`,vw`），前缀键等待 1s 超时，与 nvim 的 `timeoutlen` 同理；`/` 输入过滤时自动关闭，避免吞掉 `,`、`g` 等字符
 - 状态列：`● installed` 绿色、`▲ conflict` 黄色、不可用模块显示其 `os` 标签
 - 窄终端逐级降级：状态列先缩为单图标、再隐藏动作列、最后隐藏状态列；名称列最多占半行，按键提示同步精简，任何宽度都不折行
+- 排序依次为未安装（含 conflict）、已安装、不支持；每组内按名称排序
 - 不可用模块沉到列表底部，用 `unavailable on <tags>` 分隔线分组，且无法选中
 - 列表超出屏幕时自动滚动，上下用 `↑ N more` / `↓ N more` 提示
 - `j/k` 或方向键移动，`Space` 选择，`Ctrl-D`/`Ctrl-U` 半页，`gg`/`G` 首尾
 - `/` 搜索（匹配 name 与 desc，大小写不敏感），`Esc` 清除过滤
-- `Enter` 执行，`q` 退出
-- 执行输出分两种：LINK 模块每个一行结果（`✓ 已链接（跳过）` / `✓ 新建 → <target>` / `▲ 目标被占用`，占用计为失败）；SCRIPT 模块保留 `── <name> ──` 分隔（脚本 stdout 需要归属），结果为 `✓` / `✗ exit N`
+- `Enter` 安装，`X` 卸载，`q` 退出；安装或卸载前都会显示所选模块，并要求输入 `y` 或 `n` 确认
+- 卸载只删除 LINK 模块指向其声明 source 的链接，以及 SCRIPT 模块 checks 中解析到 dotfiles 内部的 link，普通文件、外部链接和 exists 产物一律保留
+- 安装输出分两种：LINK 模块每个一行结果（`✓ 已链接（跳过）` / `✓ 新建 → <target>` / `▲ 目标被占用`，占用计为失败）；SCRIPT 模块保留 `── <name> ──` 分隔（脚本 stdout 需要归属），结果为 `✓` / `✗ exit N`
 - 只有跑过 script 模块或有失败时才打印 summary（状态图标 + 成功数）；纯 link 全成功时结尾一行 `N/N ok`。有失败时退出码为 1
