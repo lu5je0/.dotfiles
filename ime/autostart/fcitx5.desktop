@@ -6,7 +6,7 @@
 # 所以这里显式自启 fcitx5；输入法环境变量由 environment.d/10-input-method.conf 负责。
 Name=Fcitx 5
 GenericName=Input Method
-Exec=/usr/bin/fcitx5
+Exec=fcitx5
 Icon=fcitx
 Type=Application
 Terminal=false

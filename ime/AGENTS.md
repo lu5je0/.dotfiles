@@ -189,6 +189,7 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
 
 ## 本目录之外的相关配置
 
+- `nix/modules/fcitx5-rime.nix` 在 NixOS 上安装 fcitx5、Rime、GTK 输入模块和 GNOME Kimpanel；本目录继续管理用户词库、主题与运行时配置。
 - `wm/niri/config.kdl` 里有 `spawn-at-startup "fcitx5" "-d" "--replace"`（niri 的自启，不走 XDG autostart）。
 - `submodule/tui-bridge/linux/im.c` 通过 DBus 调 `org.fcitx.Fcitx.Rime1` 切 rime 的 ascii_mode，
   供 Neovim 用；改 rime 方案时注意别动 `ascii_mode` 开关的语义。

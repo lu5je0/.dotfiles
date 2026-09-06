@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # 输入法安装：fcitx5(Linux) / Squirrel(macOS) + Rime 方案 + Linux 桌面侧集成
 set -e
 
