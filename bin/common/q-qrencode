@@ -47,7 +47,7 @@ else
 fi
 
 detect_image_terminal() {
-  if [ "${TERM:-}" = "xterm-kitty" ] && command -v kitty &>/dev/null; then
+  if { [ "${TERM:-}" = "xterm-kitty" ] || [ -n "${KITTY_WINDOW_ID:-}" ]; } && command -v kitty &>/dev/null; then
     echo "kitty"
     return 0
   fi
@@ -78,7 +78,7 @@ render_kitty() {
 
   qrencode -s 10 -o "$tmp_png" <<< "$input"
   if [ "$image_term" = "kitty" ]; then
-    kitty +kitten icat "$tmp_png"
+    kitty +kitten icat --transfer-mode stream --stdin no "$tmp_png"
     rc=$?
   else
     wezterm imgcat "$tmp_png"
