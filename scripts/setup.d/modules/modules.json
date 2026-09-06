@@ -51,6 +51,13 @@
     "os": ["linux"]
   },
   {
+    "name": "proton",
+    "desc": "PROTON_ENABLE_WAYLAND session env (environment.d, needs re-login)",
+    "source": "proton/environment.d/20-proton.conf",
+    "target": "~/.config/environment.d/20-proton.conf",
+    "os": ["linux"]
+  },
+  {
     "name": "nerd-font",
     "action": "install",
     "desc": "JetBrainsMonoNL Nerd Font Mono Regular (Windows user fonts on WSL)",
