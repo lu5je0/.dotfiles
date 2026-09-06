@@ -16,9 +16,22 @@
         "type": "github"
       }
     },
+    "qoder-deb": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-BAKpZCticqoy9TrH+kwM1uE4ZoaF6pzCHXpmSBYmnog=",
+        "type": "file",
+        "url": "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb"
+      }
+    },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "qoder-deb": "qoder-deb"
       }
     }
   },

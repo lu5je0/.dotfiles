@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ../../modules/nix-ld.nix
     ../../modules/packages.nix
     ../../modules/zsh.nix
   ];
@@ -34,31 +35,12 @@
     LC_TIME = "zh_CN.UTF-8";
   };
 
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
-  services.xserver.xkb = {
-    layout = "cn";
-    variant = "";
-  };
-
-  services.printing.enable = true;
-  services.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
-
   users.users.lu5je0 = {
     isNormalUser = true;
     description = "lu5je0";
     extraGroups = [ "networkmanager" "wheel" ];
   };
 
-  programs.firefox.enable = true;
-  nixpkgs.config.allowUnfree = true;
   services.openssh.enable = true;
 
   system.stateVersion = "26.05";
