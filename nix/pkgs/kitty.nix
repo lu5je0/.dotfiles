@@ -13,8 +13,8 @@ let
   src = fetchFromGitHub {
     owner = "lu5je0";
     repo = "kitty";
-    rev = "cb5587f4326c288629c39447b8670aae80e300bd";
-    hash = "sha256-jioUP/zqp8SSyvvNR1c8EDw3VQGqAzx+vlyvLm2IXiU=";
+    rev = "64029f551744f963988bf68dd41712b5030052b9";
+    hash = "sha256-MXzDPq8k9PMY+BT2bXcdk/OHBAHL4Q1DFiGv2E95A8M=";
   };
 in
 kitty.overrideAttrs (old: {

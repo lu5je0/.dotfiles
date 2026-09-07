@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
   imports = [
@@ -9,10 +9,7 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  systemd.tmpfiles.rules = [
-    "L+ /bin/bash - - - - ${pkgs.bash}/bin/bash"
-    "L+ /bin/env - - - - ${pkgs.coreutils}/bin/env"
-  ];
+  services.envfs.enable = true;
 
   environment.sessionVariables.NPM_CONFIG_PREFIX = "/home/lu5je0/.local";
   environment.localBinInPath = true;
