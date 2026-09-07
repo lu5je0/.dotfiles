@@ -17,7 +17,6 @@
     gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
     google-chrome
-    lutris
     pkgsUnstable.qq
     steam-run
     wechat
