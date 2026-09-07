@@ -1,6 +1,9 @@
 local M = {}
 
-local fold_suffix_filetypes = { 'lua', 'java', 'json', 'xml', 'rust', 'html', 'c', 'cpp' }
+local fold_suffix_filetypes = {
+  'lua', 'java', 'json', 'xml', 'rust',
+  'html', 'c', 'cpp', 'nix'
+}
 
 local function should_append_end_line(bufnr)
   return vim.tbl_contains(fold_suffix_filetypes, vim.bo[bufnr].filetype)

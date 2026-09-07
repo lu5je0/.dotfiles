@@ -15,12 +15,46 @@
 
   fonts = {
     packages = with pkgs; [
-      noto-fonts-cjk-sans
+      corefonts
       nerd-fonts.jetbrains-mono
+      noto-fonts-cjk-sans
+      noto-fonts-cjk-serif
+      stix-two
+      symbola
+      vista-fonts
     ];
-    fontconfig.defaultFonts = {
-      sansSerif = [ "Noto Sans CJK SC" ];
-      monospace = [ "JetBrainsMonoNL Nerd Font Mono" ];
+    fontconfig = {
+      defaultFonts = {
+        sansSerif = [ "Noto Sans CJK SC" ];
+        serif = [ "Noto Serif CJK SC" ];
+        monospace = [ "JetBrainsMonoNL Nerd Font Mono" ];
+      };
+      localConf = ''
+        <?xml version="1.0"?>
+        <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+        <fontconfig>
+          <alias>
+            <family>Symbol</family>
+            <prefer><family>Symbola</family></prefer>
+          </alias>
+          <alias>
+            <family>Wingdings</family>
+            <prefer><family>Symbola</family></prefer>
+          </alias>
+          <alias>
+            <family>Wingdings 2</family>
+            <prefer><family>Symbola</family></prefer>
+          </alias>
+          <alias>
+            <family>Wingdings 3</family>
+            <prefer><family>Symbola</family></prefer>
+          </alias>
+          <alias>
+            <family>MT Extra</family>
+            <prefer><family>STIX Two Math</family></prefer>
+          </alias>
+        </fontconfig>
+      '';
     };
   };
 
@@ -36,7 +70,7 @@
     pulse.enable = true;
   };
 
-  programs.firefox.enable = true;
+  programs.firefox.enable = false;
   programs.dconf.profiles.user.databases = [
     {
       settings = {
@@ -66,6 +100,6 @@
     pkgsUnstable.qq
     steam-run
     wechat
-    wpsoffice
+    wpsoffice-cn
   ];
 }

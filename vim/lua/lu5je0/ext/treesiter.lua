@@ -4,7 +4,8 @@ M.filetypes = {
   'json', 'python', 'java', 'bash', 'go', 'vim', 'lua', 'cpp', 'c',
   'rust', 'toml', 'yaml', 'markdown', 'http', 'typescript',
   'javascript', 'sql', 'html', 'json5', 'regex', 'vue',
-  'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy', 'arthas', 'plantuml'
+  'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy',
+  'arthas', 'plantuml', 'nix'
 }
 
 local function set_treesitter_highlights()
