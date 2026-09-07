@@ -34,10 +34,13 @@
           ./nix/profiles/base.nix
           ./nix/hosts/nixpve
           ./nix/profiles/desktop.nix
+          ./nix/modules/nas-mount.nix
         ];
-        nixpve-server = mkSystem [
+        huskar = mkSystem [
+          # ./nix/hosts/huskar
           ./nix/profiles/base.nix
-          ./nix/hosts/nixpve
+          ./nix/profiles/desktop.nix
+          ./nix/modules/nas-mount.nix
         ];
       };
     };
