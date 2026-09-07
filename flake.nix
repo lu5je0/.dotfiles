@@ -16,7 +16,7 @@
         inherit system;
         config.allowUnfree = true;
       };
-      qoder = pkgs.callPackage ./pkgs/qoder.nix { src = qoder-deb; };
+      qoder = pkgs.callPackage ./nix/pkgs/qoder.nix { src = qoder-deb; };
       mkSystem = modules:
         nixpkgs.lib.nixosSystem {
           inherit system modules;
@@ -31,13 +31,13 @@
 
       nixosConfigurations = {
         nixpve = mkSystem [
-          ./profiles/base.nix
-          ./hosts/nixpve
-          ./profiles/desktop.nix
+          ./nix/profiles/base.nix
+          ./nix/hosts/nixpve
+          ./nix/profiles/desktop.nix
         ];
         nixpve-server = mkSystem [
-          ./profiles/base.nix
-          ./hosts/nixpve
+          ./nix/profiles/base.nix
+          ./nix/hosts/nixpve
         ];
       };
     };
