@@ -6,6 +6,25 @@
     ../modules/mission-center.nix
   ];
 
+  environment.systemPackages = with pkgs; [
+    gnomeExtensions.appindicator
+    gnomeExtensions.astra-monitor
+    gnomeExtensions.brightness-control-using-ddcutil
+    gnomeExtensions.clipboard-indicator
+    gnomeExtensions.dash-to-dock
+    gnomeExtensions.gtk4-desktop-icons-ng-ding
+    gnomeExtensions.show-desktop-button
+    gnomeExtensions.transparent-top-bar-adjustable-transparency
+    pkgsUnstable.gnomeExtensions.chinese-calendar
+    google-chrome
+    lutris
+    pkgsUnstable.qq
+    steam-run
+    wechat
+    wineWow64Packages.stable
+    wpsoffice-cn
+  ];
+
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
   services.xserver.xkb = {
@@ -59,6 +78,7 @@
   };
 
   hardware.graphics.enable32Bit = true;
+  hardware.i2c.enable = true;
 
   services.flatpak.enable = true;
   services.printing.enable = false;
@@ -82,10 +102,17 @@
         };
         "org/gnome/shell" = {
           always-show-log-out = true;
-          enabled-extensions = with pkgs.gnomeExtensions; [
-            appindicator.extensionUuid
-            dash-to-dock.extensionUuid
-            kimpanel.extensionUuid
+          enabled-extensions = [
+            pkgs.gnomeExtensions.appindicator.extensionUuid
+            pkgs.gnomeExtensions.astra-monitor.extensionUuid
+            pkgs.gnomeExtensions.brightness-control-using-ddcutil.extensionUuid
+            pkgs.gnomeExtensions.clipboard-indicator.extensionUuid
+            pkgs.gnomeExtensions.dash-to-dock.extensionUuid
+            pkgs.gnomeExtensions.gtk4-desktop-icons-ng-ding.extensionUuid
+            pkgs.gnomeExtensions.kimpanel.extensionUuid
+            pkgs.gnomeExtensions.show-desktop-button.extensionUuid
+            pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency.extensionUuid
+            pkgsUnstable.gnomeExtensions.chinese-calendar.extensionUuid
           ];
         };
       };
@@ -93,14 +120,4 @@
   ];
 
   nixpkgs.config.allowUnfree = true;
-  environment.systemPackages = with pkgs; [
-    gnomeExtensions.appindicator
-    gnomeExtensions.dash-to-dock
-    google-chrome
-    lutris
-    pkgsUnstable.qq
-    steam-run
-    wechat
-    wpsoffice-cn
-  ];
 }

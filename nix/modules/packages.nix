@@ -9,11 +9,16 @@
     uv
     p7zip
     zip
+    unzip
+    vim
+    tmux
   ];
 
   users.users.lu5je0.packages = with pkgs; [
+    bun
     nodejs
     ripgrep
+    luajit
     fzf
     fastfetch
     wget
