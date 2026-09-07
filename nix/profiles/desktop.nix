@@ -1,8 +1,5 @@
-{ pkgs, qoderDeb, ... }:
+{ pkgs, ... }:
 
-let
-  qoder = pkgs.callPackage ../pkgs/qoder.nix { src = qoderDeb; };
-in
 {
   imports = [
     ../modules/fcitx5-rime.nix
@@ -14,6 +11,17 @@ in
   services.xserver.xkb = {
     layout = "cn";
     variant = "";
+  };
+
+  fonts = {
+    packages = with pkgs; [
+      noto-fonts-cjk-sans
+      nerd-fonts.jetbrains-mono
+    ];
+    fontconfig.defaultFonts = {
+      sansSerif = [ "Noto Sans CJK SC" ];
+      monospace = [ "JetBrainsMonoNL Nerd Font Mono" ];
+    };
   };
 
   hardware.graphics.enable32Bit = true;
@@ -31,13 +39,20 @@ in
   programs.firefox.enable = true;
   programs.dconf.profiles.user.databases = [
     {
-      settings."org/gnome/shell" = {
-        always-show-log-out = true;
-        enabled-extensions = with pkgs.gnomeExtensions; [
-          appindicator.extensionUuid
-          dash-to-dock.extensionUuid
-          kimpanel.extensionUuid
-        ];
+      settings = {
+        "org/gnome/desktop/interface" = {
+          font-name = "Noto Sans CJK SC 11";
+          document-font-name = "Noto Sans CJK SC 12";
+          monospace-font-name = "JetBrainsMonoNL Nerd Font Mono 11";
+        };
+        "org/gnome/shell" = {
+          always-show-log-out = true;
+          enabled-extensions = with pkgs.gnomeExtensions; [
+            appindicator.extensionUuid
+            dash-to-dock.extensionUuid
+            kimpanel.extensionUuid
+          ];
+        };
       };
     }
   ];
@@ -48,6 +63,5 @@ in
     gnomeExtensions.dash-to-dock
     google-chrome
     lutris
-    qoder
   ];
 }

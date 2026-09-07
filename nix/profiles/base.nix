@@ -1,23 +1,11 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
   imports = [
-    ./hardware-configuration.nix
-    ../../modules/nix-ld.nix
-    ../../modules/packages.nix
-    ../../modules/zsh.nix
+    ../modules/nix-ld.nix
+    ../modules/packages.nix
+    ../modules/zsh.nix
   ];
-
-  boot.loader.grub = {
-    enable = true;
-    device = "/dev/sda";
-    useOSProber = true;
-    fsIdentifier = "provided";
-  };
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-
-  networking.hostName = "nixos";
-  networking.networkmanager.enable = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
@@ -45,6 +33,4 @@
   };
 
   services.openssh.enable = true;
-
-  system.stateVersion = "26.05";
 }

@@ -11,25 +11,33 @@
 
   outputs = { nixpkgs, nixpkgs-unstable, mission-center-nixpkgs, qoder-deb, ... }:
     let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+      qoder = pkgs.callPackage ./pkgs/qoder.nix { src = qoder-deb; };
       mkSystem = modules:
         nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
+          inherit system modules;
           specialArgs = {
-            qoderDeb = qoder-deb;
-            pkgsMissionCenter = mission-center-nixpkgs.legacyPackages.x86_64-linux;
-            pkgsUnstable = nixpkgs-unstable.legacyPackages.x86_64-linux;
+            pkgsMissionCenter = mission-center-nixpkgs.legacyPackages.${system};
+            pkgsUnstable = nixpkgs-unstable.legacyPackages.${system};
           };
-          inherit modules;
         };
     in
     {
+      packages.${system}.qoder = qoder;
+
       nixosConfigurations = {
-        desktop = mkSystem [
-          ./hosts/nixos
+        nixpve = mkSystem [
+          ./profiles/base.nix
+          ./hosts/nixpve
           ./profiles/desktop.nix
         ];
-        server = mkSystem [
-          ./hosts/nixos
+        nixpve-server = mkSystem [
+          ./profiles/base.nix
+          ./hosts/nixpve
         ];
       };
     };
