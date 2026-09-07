@@ -60,7 +60,8 @@
 
   hardware.graphics.enable32Bit = true;
 
-  services.printing.enable = true;
+  services.flatpak.enable = true;
+  services.printing.enable = false;
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {

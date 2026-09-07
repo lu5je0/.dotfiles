@@ -34,8 +34,10 @@
   users.users.lu5je0 = {
     isNormalUser = true;
     description = "lu5je0";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "docker" "networkmanager" "wheel" ];
   };
 
+  services.cron.enable = true;
   services.openssh.enable = true;
+  virtualisation.docker.enable = true;
 }
