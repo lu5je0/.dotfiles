@@ -3,31 +3,31 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   inputs.nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-  inputs.mission-center-nixpkgs.url = "github:NixOS/nixpkgs/c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0";
-  inputs.qoder-deb = {
-    url = "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb";
-    flake = false;
-  };
 
-  outputs = { nixpkgs, nixpkgs-unstable, mission-center-nixpkgs, qoder-deb, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
       };
-      qoder = pkgs.callPackage ./nix/pkgs/qoder.nix { src = qoder-deb; };
+      pkgsUnstable = import nixpkgs-unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
+      localPackages = import ./nix/pkgs {
+        inherit pkgs;
+      };
       mkSystem = modules:
         nixpkgs.lib.nixosSystem {
           inherit system modules;
           specialArgs = {
-            pkgsMissionCenter = mission-center-nixpkgs.legacyPackages.${system};
-            pkgsUnstable = nixpkgs-unstable.legacyPackages.${system};
+            inherit pkgsUnstable;
           };
         };
     in
     {
-      packages.${system}.qoder = qoder;
+      packages.${system} = localPackages;
 
       nixosConfigurations = {
         nixpve = mkSystem [

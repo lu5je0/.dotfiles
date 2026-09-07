@@ -1,7 +1,7 @@
 {
   lib,
   stdenv,
-  src,
+  fetchurl,
   alsa-lib,
   at-spi2-atk,
   at-spi2-core,
@@ -41,7 +41,10 @@
 stdenv.mkDerivation {
   pname = "qoder";
   version = "latest";
-  inherit src;
+  src = fetchurl {
+    url = "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb";
+    hash = "sha256-L/jhwrCC3zd71ALLyCato7tZK5AajYxGuhjdUaTa54M=";
+  };
 
   nativeBuildInputs = [
     autoPatchelfHook

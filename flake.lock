@@ -1,21 +1,5 @@
 {
   "nodes": {
-    "mission-center-nixpkgs": {
-      "locked": {
-        "lastModified": 1788614874,
-        "narHash": "sha256-7QYjT2vHLuX9Z1pdxHXDKCbh1CR3D/2rywB9Tx0MPRg=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1788584326,
@@ -48,24 +32,10 @@
         "type": "github"
       }
     },
-    "qoder-deb": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-BAKpZCticqoy9TrH+kwM1uE4ZoaF6pzCHXpmSBYmnog=",
-        "type": "file",
-        "url": "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb"
-      }
-    },
     "root": {
       "inputs": {
-        "mission-center-nixpkgs": "mission-center-nixpkgs",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-unstable": "nixpkgs-unstable",
-        "qoder-deb": "qoder-deb"
+        "nixpkgs-unstable": "nixpkgs-unstable"
       }
     }
   },

@@ -3,23 +3,28 @@
 {
   environment.systemPackages = with pkgs; [
     kitty.terminfo
+    htop
+    python3
+    git
+    uv
+    p7zip
+    zip
   ];
 
   users.users.lu5je0.packages = with pkgs; [
-    git
     nodejs
     ripgrep
     fzf
-    htop
     fastfetch
+    wget
     btop
     gh
     cargo
     gcc
     gnumake
     pkgsUnstable.neovim
-    python3
     rustc
+    jq
     tree-sitter
   ];
 }

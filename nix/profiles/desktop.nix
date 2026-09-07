@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgsUnstable, ... }:
 
 {
   imports = [
@@ -63,5 +63,9 @@
     gnomeExtensions.dash-to-dock
     google-chrome
     lutris
+    pkgsUnstable.qq
+    steam-run
+    wechat
+    wpsoffice
   ];
 }

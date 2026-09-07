@@ -1,4 +1,4 @@
-{ pkgs, pkgsMissionCenter, ... }:
+{ pkgs, pkgsUnstable, ... }:
 
 {
   services.udev.extraRules = ''
@@ -14,6 +14,6 @@
 
   environment.systemPackages = [
     pkgs.lm_sensors
-    pkgsMissionCenter.mission-center
+    pkgsUnstable.mission-center
   ];
 }
