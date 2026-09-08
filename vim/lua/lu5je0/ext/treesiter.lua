@@ -54,6 +54,8 @@ M.setup = function()
       return
     end
 
+    vim.bo[bufnr].syntax = vim.bo[bufnr].filetype
+
     vim.api.nvim_buf_call(bufnr, function()
       vim.cmd('doautocmd <nomodeline> User TreesitterAttach')
     end)

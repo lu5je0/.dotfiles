@@ -1,120 +1,289 @@
+local api = vim.api
+local fn = vim.fn
+
 local M = {}
 
+local BASE_HIGHLIGHT = 'FoldTextNormal'
+local TREESITTER_PRIORITY = vim.hl.priorities.treesitter
+
 local fold_suffix_filetypes = {
-  'lua', 'java', 'json', 'xml', 'rust',
-  'html', 'c', 'cpp', 'nix'
+  c = true,
+  cpp = true,
+  html = true,
+  java = true,
+  json = true,
+  lua = true,
+  nix = true,
+  python = true,
+  rust = true,
+  xml = true,
 }
 
+local buffer_cache = {}
+local capture_highlight_cache = {}
+local query_cache = {}
+local syntax_highlight_cache = {}
+local attached_buffers = {}
+
 local function should_append_end_line(bufnr)
-  return vim.tbl_contains(fold_suffix_filetypes, vim.bo[bufnr].filetype)
+  return fold_suffix_filetypes[vim.bo[bufnr].filetype] == true
 end
 
-local function fallback_fold_text()
-  return { { vim.fn.foldtext(), 'Folded' } }
+local function has_highlight_attributes(name)
+  local ok, attrs = pcall(api.nvim_get_hl, 0, { name = name, link = false })
+  return ok and next(attrs) ~= nil
 end
 
 local function resolve_capture_highlight(capture, lang)
+  if capture:sub(1, 1) == '_' then
+    return nil
+  end
+
+  local key = lang .. '\0' .. capture
+  local cached = capture_highlight_cache[key]
+  if cached ~= nil then
+    return cached or nil
+  end
+
   local highlight = '@' .. capture
   local lang_highlight = highlight .. '.' .. lang
-  if vim.fn.hlexists(lang_highlight) == 1 then
-    return lang_highlight
+  if fn.hlexists(lang_highlight) == 1 and has_highlight_attributes(lang_highlight) then
+    capture_highlight_cache[key] = lang_highlight
+  elseif fn.hlexists(highlight) == 1 and has_highlight_attributes(highlight) then
+    capture_highlight_cache[key] = highlight
+  else
+    capture_highlight_cache[key] = false
   end
-  return highlight
+
+  return capture_highlight_cache[key] or nil
 end
 
-local function merge_highlight_spans(spans, line_text)
-  table.insert(spans, 1, { text = line_text, pos = { 0, #line_text }, highlight = 'Folded' })
+local function resolve_syntax_highlight(line_num, col)
+  local syntax_id = fn.synIDtrans(fn.synID(line_num, col, 1))
+  local cached = syntax_highlight_cache[syntax_id]
+  if cached ~= nil then
+    return cached or nil
+  end
 
-  local merged = {}
+  local name = fn.synIDattr(syntax_id, 'name')
+  syntax_highlight_cache[syntax_id] = name ~= '' and has_highlight_attributes(name) and name or false
+  return syntax_highlight_cache[syntax_id] or nil
+end
 
-  for _, span in ipairs(spans) do
-    local span_start = span.pos[1]
-    local span_end = span.pos[2]
-    local next_merged = {}
+local function add_span(spans, start_col, end_col, highlight, priority)
+  if highlight == nil or start_col >= end_col then
+    return
+  end
 
-    for _, merged_span in ipairs(merged) do
-      local merged_start = merged_span.pos[1]
-      local merged_end = merged_span.pos[2]
+  spans[#spans + 1] = {
+    start_col = start_col,
+    end_col = end_col,
+    highlight = highlight,
+    priority = priority,
+    order = #spans + 1,
+  }
+end
 
-      if span_start >= merged_end or span_end <= merged_start then
-        table.insert(next_merged, merged_span)
-      else
-        if merged_start < span_start then
-          table.insert(next_merged, {
-            highlight = merged_span.highlight,
-            pos = { merged_start, span_start },
-            text = string.sub(merged_span.text, 1, span_start - merged_start),
-          })
+local function collect_syntax_spans(spans, bufnr, line_num, line_text)
+  if vim.bo[bufnr].syntax == '' then
+    return
+  end
+
+  local max_col = vim.bo[bufnr].synmaxcol
+  local scan_end = max_col > 0 and math.min(#line_text, max_col) or #line_text
+  local current_highlight
+  local span_start = 0
+
+  for _, col in ipairs(vim.str_utf_pos(line_text)) do
+    if col > scan_end then
+      break
+    end
+
+    local highlight = resolve_syntax_highlight(line_num, col)
+    local start_col = col - 1
+    if highlight ~= current_highlight then
+      add_span(spans, span_start, start_col, current_highlight, vim.hl.priorities.syntax)
+      current_highlight = highlight
+      span_start = start_col
+    end
+  end
+
+  add_span(spans, span_start, scan_end, current_highlight, vim.hl.priorities.syntax)
+end
+
+local function get_query(lang)
+  local cached = query_cache[lang]
+  if cached ~= nil then
+    return cached or nil
+  end
+
+  local ok, query = pcall(vim.treesitter.query.get, lang, 'highlights')
+  query_cache[lang] = ok and query or false
+  return query_cache[lang] or nil
+end
+
+local function get_buffer_state(bufnr)
+  local tick = api.nvim_buf_get_changedtick(bufnr)
+  local state = buffer_cache[bufnr]
+  if state == nil or state.tick ~= tick then
+    state = { tick = tick, lines = {}, parser_checked = false }
+    buffer_cache[bufnr] = state
+  end
+  return state
+end
+
+local function get_parser(state, bufnr)
+  if state.parser_checked then
+    return state.parser
+  end
+
+  state.parser_checked = true
+  local lang = vim.treesitter.language.get_lang(vim.bo[bufnr].filetype)
+  state.parser = vim.treesitter.get_parser(bufnr, lang, { error = false })
+  if state.parser and not pcall(state.parser.parse, state.parser) then
+    state.parser = nil
+  end
+  return state.parser
+end
+
+local function capture_range_on_line(node, metadata, bufnr, row, line_length)
+  local range = vim.treesitter.get_range(node, bufnr, metadata)
+  local start_row, start_col, end_row, end_col = range[1], range[2], range[4], range[5]
+  if start_row > row or end_row < row or (end_row == row and end_col == 0) then
+    return nil
+  end
+
+  start_col = start_row < row and 0 or start_col
+  end_col = end_row > row and line_length or end_col
+  start_col = math.max(0, math.min(start_col, line_length))
+  end_col = math.max(start_col, math.min(end_col, line_length))
+  return start_col, end_col
+end
+
+local function collect_treesitter_spans(spans, state, bufnr, line_num, line_text)
+  local parser = get_parser(state, bufnr)
+  if parser == nil then
+    return
+  end
+
+  local row = line_num - 1
+  pcall(function()
+    parser:for_each_tree(function(tree, language_tree)
+      local lang = language_tree:lang()
+      local query = get_query(lang)
+      if query == nil then
+        return
+      end
+
+      for id, node, metadata in query:iter_captures(tree:root(), bufnr, row, row + 1) do
+        local capture = query.captures[id]
+        local highlight = resolve_capture_highlight(capture, lang)
+        if highlight then
+          local capture_metadata = metadata and metadata[id] or nil
+          local start_col, end_col = capture_range_on_line(node, capture_metadata, bufnr, row, #line_text)
+          if start_col then
+            local priority = tonumber(
+              (capture_metadata and capture_metadata.priority) or (metadata and metadata.priority)
+            ) or TREESITTER_PRIORITY
+            add_span(spans, start_col, end_col, highlight, priority)
+          end
         end
+      end
+    end)
+  end)
+end
 
-        if merged_end > span_end then
-          table.insert(next_merged, {
-            highlight = merged_span.highlight,
-            pos = { span_end, merged_end },
-            text = string.sub(merged_span.text, span_end - merged_start + 1, merged_end - merged_start),
-          })
-        end
+local function append_chunk(chunks, text, highlight)
+  if text == '' then
+    return
+  end
+
+  local last = chunks[#chunks]
+  if last and last[2] == highlight then
+    last[1] = last[1] .. text
+  else
+    chunks[#chunks + 1] = { text, highlight }
+  end
+end
+
+local function spans_to_chunks(spans, line_text)
+  local starts = {}
+  local stops = {}
+  local boundaries = { [0] = true, [#line_text] = true }
+
+  for id, span in ipairs(spans) do
+    boundaries[span.start_col] = true
+    boundaries[span.end_col] = true
+    starts[span.start_col] = starts[span.start_col] or {}
+    stops[span.end_col] = stops[span.end_col] or {}
+    starts[span.start_col][#starts[span.start_col] + 1] = id
+    stops[span.end_col][#stops[span.end_col] + 1] = id
+  end
+
+  local positions = vim.tbl_keys(boundaries)
+  table.sort(positions)
+
+  local active = {}
+  local chunks = {}
+  for index = 1, #positions - 1 do
+    local pos = positions[index]
+    for _, id in ipairs(stops[pos] or {}) do
+      active[id] = nil
+    end
+    for _, id in ipairs(starts[pos] or {}) do
+      active[id] = spans[id]
+    end
+
+    local winner
+    for _, span in pairs(active) do
+      if
+        winner == nil
+        or span.priority > winner.priority
+        or (span.priority == winner.priority and span.order > winner.order)
+      then
+        winner = span
       end
     end
 
-    table.insert(next_merged, {
-      highlight = span.highlight,
-      pos = { span_start, span_end },
-      text = span.text,
-    })
-
-    table.sort(next_merged, function(a, b)
-      return a.pos[1] < b.pos[1]
-    end)
-
-    merged = next_merged
-  end
-
-  return merged
-end
-
-local function get_line_fold_chunks(bufnr, line_num)
-  local line_text = vim.api.nvim_buf_get_lines(bufnr, line_num - 1, line_num, false)[1]
-  if line_text == nil then
-    return fallback_fold_text()
-  end
-
-  local lang = vim.treesitter.language.get_lang(vim.bo[bufnr].filetype)
-  local parser = vim.treesitter.get_parser(bufnr, lang, { error = false })
-  if parser == nil then
-    return fallback_fold_text()
-  end
-
-  local query = vim.treesitter.query.get(parser:lang(), 'highlights')
-  if query == nil then
-    return { { line_text, 'Folded' } }
-  end
-
-  local tree = parser:parse({ line_num - 1, line_num })[1]
-  if tree == nil then
-    return fallback_fold_text()
-  end
-
-  local spans = {}
-  for id, node in query:iter_captures(tree:root(), bufnr, line_num - 1, line_num) do
-    local start_row, start_col, end_row, end_col = node:range()
-    if start_row == line_num - 1 and end_row == line_num - 1 and start_col and end_col then
-      table.insert(spans, {
-        text = vim.treesitter.get_node_text(node, bufnr),
-        pos = { start_col, end_col },
-        highlight = resolve_capture_highlight(query.captures[id], lang),
-      })
-    end
-  end
-
-  local chunks = {}
-  for _, span in ipairs(merge_highlight_spans(spans, line_text)) do
-    if not string.match(span.text, '\n') then -- xml 有时会产生包含换行的空片段
-      table.insert(chunks, { span.text, span.highlight })
-    end
+    local next_pos = positions[index + 1]
+    append_chunk(
+      chunks,
+      string.sub(line_text, pos + 1, next_pos),
+      winner and winner.highlight or BASE_HIGHLIGHT
+    )
   end
 
   return chunks
+end
+
+local function get_line_fold_chunks(bufnr, line_num)
+  local state = get_buffer_state(bufnr)
+  if state.lines[line_num] then
+    return state.lines[line_num]
+  end
+
+  local line_text = api.nvim_buf_get_lines(bufnr, line_num - 1, line_num, false)[1]
+  if line_text == nil then
+    return { { fn.foldtext(), 'Folded' } }
+  end
+
+  local spans = {}
+  collect_syntax_spans(spans, bufnr, line_num, line_text)
+  collect_treesitter_spans(spans, state, bufnr, line_num, line_text)
+
+  local chunks = spans_to_chunks(spans, line_text)
+  state.lines[line_num] = chunks
+  return chunks
+end
+
+local function copy_chunks(target, source, trim_leading_space)
+  for index, chunk in ipairs(source) do
+    local text = chunk[1]
+    if trim_leading_space and index == 1 then
+      text = text:gsub('^%s+', '')
+    end
+    append_chunk(target, text, chunk[2])
+  end
 end
 
 local function truncate_foldtext(chunks, leftcol)
@@ -123,206 +292,152 @@ local function truncate_foldtext(chunks, leftcol)
   end
 
   local result = {}
-  local foldtext_col = 0
-  local found = false
+  local remaining = leftcol
+  local visible = false
 
   for _, chunk in ipairs(chunks) do
     local text = chunk[1]
-    local hl = chunk[2]
-
-    for i = 1, vim.fn.strchars(text) do
-      local c = vim.fn.strcharpart(text, i - 1, 1)
-      local width = vim.fn.strwidth(c)
-      foldtext_col = foldtext_col + width
-      if foldtext_col > leftcol then
-        if width == 1 or (width > 1 and foldtext_col - leftcol == 2) then
-          table.insert(result, { vim.fn.strcharpart(text, i - 1), hl })
-        else
-          table.insert(result, { '>', 'Conceal' })
-          table.insert(result, { vim.fn.strcharpart(text, i), hl })
+    local highlight = chunk[2]
+    if visible then
+      append_chunk(result, text, highlight)
+    else
+      local width = fn.strwidth(text)
+      if width <= remaining then
+        remaining = remaining - width
+      else
+        local positions = vim.str_utf_pos(text)
+        local consumed = 0
+        for index, byte_col in ipairs(positions) do
+          local next_byte = positions[index + 1] or (#text + 1)
+          local char = text:sub(byte_col, next_byte - 1)
+          local char_width = fn.strwidth(char)
+          if consumed + char_width > remaining then
+            if consumed < remaining then
+              append_chunk(result, '>', 'Conceal')
+              byte_col = next_byte
+            end
+            append_chunk(result, text:sub(byte_col), highlight)
+            break
+          end
+          consumed = consumed + char_width
         end
-        found = true
-        goto continue
+        visible = true
       end
     end
-
-    if found then
-      table.insert(result, chunk)
-    end
-
-    ::continue::
   end
 
   return result
 end
 
-local function set_foldtext_highlights()
-  vim.api.nvim_set_hl(0, 'TSPunctBracket', { fg = '#ABB2BF' })
-end
-
-function M.custom_foldtext(foldstart, foldend)
-  local bufnr = vim.api.nvim_get_current_buf()
-  local chunks = get_line_fold_chunks(bufnr, foldstart)
-
-  if should_append_end_line(bufnr) then
-    table.insert(chunks, { ' … ', 'TSPunctBracket' })
-    for i, chunk in ipairs(get_line_fold_chunks(bufnr, foldend)) do
-      if i == 1 then
-        chunk[1] = chunk[1]:gsub('^%s+', '')
-      end
-      table.insert(chunks, chunk)
-    end
+local function prefix_by_width(text, max_width)
+  local width = fn.strwidth(text)
+  if width <= max_width then
+    return text, width
   end
 
-  local leftcol = vim.fn.winsaveview().leftcol
-  chunks = truncate_foldtext(chunks, leftcol)
-
-  return chunks
+  local positions = vim.str_utf_pos(text)
+  local used = 0
+  local end_byte = 0
+  for index, byte_col in ipairs(positions) do
+    local next_byte = positions[index + 1] or (#text + 1)
+    local char_width = fn.strwidth(text:sub(byte_col, next_byte - 1))
+    if used + char_width > max_width then
+      break
+    end
+    used = used + char_width
+    end_byte = next_byte - 1
+  end
+  return text:sub(1, end_byte), used
 end
 
 local function append_fold_count(chunks, foldstart, foldend)
   local suffix = (' 󰁂 %d '):format(foldend - foldstart)
   local ellipsis = '…'
-
   local text_width = 0
   for _, chunk in ipairs(chunks) do
-    text_width = text_width + vim.fn.strwidth(chunk[1])
+    text_width = text_width + fn.strwidth(chunk[1])
   end
 
-  local wininfo = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1]
+  local wininfo = fn.getwininfo(api.nvim_get_current_win())[1]
   local win_width = wininfo.width - wininfo.textoff
-  local suffix_width = vim.fn.strwidth(suffix)
+  local suffix_width = fn.strwidth(suffix)
   local padding = win_width - text_width - suffix_width
 
   if padding > 0 then
-    table.insert(chunks, { string.rep(' ', padding), 'Folded' })
+    append_chunk(chunks, string.rep(' ', padding), 'Folded')
   elseif padding < 0 then
-    local ellipsis_width = vim.fn.strwidth(ellipsis)
-    local max_text_width = win_width - suffix_width - ellipsis_width
-    if max_text_width < 0 then
-      max_text_width = 0
-    end
-
+    local max_text_width = math.max(0, win_width - suffix_width - fn.strwidth(ellipsis))
     local truncated = {}
-    local w = 0
+    local used = 0
     for _, chunk in ipairs(chunks) do
-      if w >= max_text_width then
+      if used >= max_text_width then
         break
       end
-      local text = chunk[1]
-      local chunk_width = vim.fn.strwidth(text)
-      if w + chunk_width <= max_text_width then
-        table.insert(truncated, chunk)
-        w = w + chunk_width
-      else
-        local partial = ''
-        for ci = 1, vim.fn.strchars(text) do
-          local c = vim.fn.strcharpart(text, ci - 1, 1)
-          local cw = vim.fn.strwidth(c)
-          if w + cw > max_text_width then
-            break
-          end
-          partial = partial .. c
-          w = w + cw
-        end
-        if #partial > 0 then
-          table.insert(truncated, { partial, chunk[2] })
-        end
+
+      local text, width = prefix_by_width(chunk[1], max_text_width - used)
+      append_chunk(truncated, text, chunk[2])
+      used = used + width
+      if #text < #chunk[1] then
         break
       end
     end
-
-    table.insert(truncated, { ellipsis, 'Comment' })
+    append_chunk(truncated, ellipsis, 'Comment')
     chunks = truncated
   end
 
-  table.insert(chunks, { suffix, 'Comment' })
-
+  append_chunk(chunks, suffix, 'Comment')
   return chunks
 end
 
+local function set_foldtext_highlights()
+  local normal = api.nvim_get_hl(0, { name = 'Normal', link = false })
+  local folded = api.nvim_get_hl(0, { name = 'Folded', link = false })
+  api.nvim_set_hl(0, BASE_HIGHLIGHT, { fg = normal.fg, bg = folded.bg })
+  api.nvim_set_hl(0, 'TSPunctBracket', { fg = '#ABB2BF' })
+end
+
+local function clear_highlight_caches()
+  capture_highlight_cache = {}
+  query_cache = {}
+  syntax_highlight_cache = {}
+  buffer_cache = {}
+end
+
+function M.custom_foldtext(foldstart, foldend)
+  local bufnr = api.nvim_get_current_buf()
+  local chunks = {}
+  copy_chunks(chunks, get_line_fold_chunks(bufnr, foldstart), false)
+
+  if should_append_end_line(bufnr) then
+    append_chunk(chunks, ' … ', 'TSPunctBracket')
+    copy_chunks(chunks, get_line_fold_chunks(bufnr, foldend), true)
+  end
+
+  return truncate_foldtext(chunks, fn.winsaveview().leftcol)
+end
+
 function M.apply_treesitter_fold(bufnr, win_id)
-  vim.defer_fn(function()
-    if not vim.api.nvim_win_is_valid(win_id) or vim.api.nvim_win_get_buf(win_id) ~= bufnr then
+  vim.schedule(function()
+    if not api.nvim_win_is_valid(win_id) or api.nvim_win_get_buf(win_id) ~= bufnr then
       return
     end
 
     vim.wo[win_id].foldmethod = 'expr'
     vim.wo[win_id].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
     vim.wo[win_id].foldtext = 'v:lua.__custom_foldtext()'
-  end, 100)
+  end)
 end
 
-local function setup_fold_text_cache(group)
-  local foldtext_cache = {}
-
-  local cached_fold_text = function()
-    local foldstart = vim.v.foldstart
-    local foldend = vim.v.foldend
-    local win_id = vim.api.nvim_get_current_win()
-    local buf_id = vim.api.nvim_win_get_buf(win_id)
-    local cache = foldtext_cache
-
-    local chunks
-    if
-      cache[win_id]
-      and cache[win_id][buf_id]
-      and cache[win_id][buf_id][foldstart]
-      and cache[win_id][buf_id][foldstart][foldend]
-    then
-      chunks = cache[win_id][buf_id][foldstart][foldend]
-    else
-      chunks = M.custom_foldtext(foldstart, foldend)
-
-      cache[win_id] = cache[win_id] or {}
-      cache[win_id][buf_id] = cache[win_id][buf_id] or {}
-      cache[win_id][buf_id][foldstart] = cache[win_id][buf_id][foldstart] or {}
-      cache[win_id][buf_id][foldstart][foldend] = chunks
-    end
-
-    return append_fold_count(vim.deepcopy(chunks), foldstart, foldend)
+local function apply_to_buffer_windows(bufnr)
+  attached_buffers[bufnr] = true
+  buffer_cache[bufnr] = nil
+  for _, win_id in ipairs(fn.win_findbuf(bufnr)) do
+    M.apply_treesitter_fold(bufnr, win_id)
   end
-
-  vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout', 'BufWinLeave', 'TextChanged', 'TextChangedI' }, {
-    group = group,
-    callback = require('lu5je0.lang.function-utils').throttle(function(args)
-      local buf_id = args.buf
-      for win_id, win_data in pairs(foldtext_cache) do
-        if win_data[buf_id] then
-          win_data[buf_id] = nil
-          if next(win_data) == nil then
-            foldtext_cache[win_id] = nil
-          end
-        end
-      end
-    end, 100),
-  })
-
-  vim.api.nvim_create_autocmd('WinClosed', {
-    group = group,
-    callback = function(args)
-      local win_id = tonumber(args.match)
-      if win_id then
-        foldtext_cache[win_id] = nil
-      end
-    end,
-  })
-
-  vim.api.nvim_create_autocmd('WinScrolled', {
-    group = group,
-    callback = function(args)
-      local win_id = tonumber(args.match)
-      if win_id then
-        foldtext_cache[win_id] = nil
-      end
-    end,
-  })
-
-  _G.__custom_foldtext = cached_fold_text
 end
 
 function M.setup()
-  local group = vim.api.nvim_create_augroup('Lu5je0Fold', { clear = true })
+  local group = api.nvim_create_augroup('Lu5je0Fold', { clear = true })
 
   _G.__custom_foldtext = function()
     local foldstart = vim.v.foldstart
@@ -331,20 +446,51 @@ function M.setup()
   end
 
   set_foldtext_highlights()
-  vim.api.nvim_create_autocmd('ColorScheme', {
+  api.nvim_create_autocmd('ColorScheme', {
     group = group,
-    callback = set_foldtext_highlights,
-  })
-
-  vim.api.nvim_create_autocmd('User', {
-    group = group,
-    pattern = 'TreesitterAttach',
-    callback = function(args)
-      M.apply_treesitter_fold(args.buf, vim.api.nvim_get_current_win())
+    callback = function()
+      clear_highlight_caches()
+      set_foldtext_highlights()
     end,
   })
 
-  setup_fold_text_cache(group)
+  api.nvim_create_autocmd('User', {
+    group = group,
+    pattern = 'TreesitterAttach',
+    callback = function(args)
+      apply_to_buffer_windows(args.buf)
+    end,
+  })
+
+  api.nvim_create_autocmd('User', {
+    group = group,
+    pattern = 'TSUpdate',
+    callback = clear_highlight_caches,
+  })
+
+  api.nvim_create_autocmd('BufWinEnter', {
+    group = group,
+    callback = function(args)
+      if attached_buffers[args.buf] then
+        M.apply_treesitter_fold(args.buf, api.nvim_get_current_win())
+      end
+    end,
+  })
+
+  api.nvim_create_autocmd('Syntax', {
+    group = group,
+    callback = function(args)
+      buffer_cache[args.buf] = nil
+    end,
+  })
+
+  api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
+    group = group,
+    callback = function(args)
+      buffer_cache[args.buf] = nil
+      attached_buffers[args.buf] = nil
+    end,
+  })
 end
 
 return M
