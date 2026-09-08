@@ -11,6 +11,7 @@ local fold_suffix_filetypes = {
   cpp = true,
   html = true,
   java = true,
+  jsonc = true,
   json = true,
   lua = true,
   nix = true,
