@@ -40,10 +40,10 @@
 
 stdenv.mkDerivation {
   pname = "qoder";
-  version = "latest";
+  version = "0.2.1";
   src = fetchurl {
     url = "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb";
-    hash = "sha256-L/jhwrCC3zd71ALLyCato7tZK5AajYxGuhjdUaTa54M=";
+    hash = "sha256-Obr9cYU2Nja4wa1qm3QuzHXCgGZE/1t8VRYuKuX7iNc=";
   };
 
   nativeBuildInputs = [
@@ -52,8 +52,6 @@ stdenv.mkDerivation {
     makeWrapper
     wrapGAppsHook3
   ];
-
-  autoPatchelfIgnoreMissingDeps = [ "libc.musl-x86_64.so.1" ];
 
   buildInputs = [
     alsa-lib
@@ -91,6 +89,12 @@ stdenv.mkDerivation {
     runHook preUnpack
     dpkg-deb -x "$src" .
     runHook postUnpack
+  '';
+
+  postUnpack = ''
+    rm -rf \
+      opt/Qoder/resources/app.asar.unpacked/node_modules/@img/sharp-linuxmusl-x64 \
+      opt/Qoder/resources/app.asar.unpacked/node_modules/@img/sharp-libvips-linuxmusl-x64
   '';
 
   installPhase = ''
