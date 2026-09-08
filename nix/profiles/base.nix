@@ -11,7 +11,11 @@
 
   services.envfs.enable = true;
 
-  environment.sessionVariables.NPM_CONFIG_PREFIX = "/home/lu5je0/.local";
+  environment.sessionVariables = {
+    NPM_CONFIG_PREFIX = "/home/lu5je0/.local";
+    SSL_CERT_DIR = "/etc/ssl/certs";
+  };
+
   environment.localBinInPath = true;
 
   time.timeZone = "Asia/Shanghai";
