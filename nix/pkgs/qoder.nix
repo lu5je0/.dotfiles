@@ -16,6 +16,7 @@
   gtk3,
   libdrm,
   libgbm,
+  libglvnd,
   libnotify,
   libsecret,
   libuuid,
@@ -66,6 +67,7 @@ stdenv.mkDerivation {
     gtk3
     libdrm
     libgbm
+    libglvnd
     libnotify
     libsecret
     libuuid
@@ -109,7 +111,10 @@ stdenv.mkDerivation {
 
     makeWrapper "$out/opt/Qoder/qoder" "$out/bin/qoder" \
       --prefix PATH : "${lib.makeBinPath [ xdg-utils ]}" \
-      --prefix LD_LIBRARY_PATH : "$out/opt/Qoder"
+      --prefix LD_LIBRARY_PATH : "$out/opt/Qoder:${lib.makeLibraryPath [ libgbm libglvnd ]}:/run/opengl-driver/lib" \
+      --add-flags "--ozone-platform=wayland" \
+      --add-flags "--use-gl=angle" \
+      --add-flags "--use-angle=gl"
 
     runHook postInstall
   '';
