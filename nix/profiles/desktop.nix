@@ -1,8 +1,12 @@
 { pkgs, pkgsUnstable, ... }:
 
+let
+  tilewindow = pkgs.callPackage ../pkgs/tilewindow.nix { };
+in
 {
   imports = [
     ../modules/fcitx5-rime.nix
+    ../modules/keyd.nix
     ../modules/mission-center.nix
   ];
 
@@ -16,6 +20,7 @@
     gnomeExtensions.show-desktop-button
     gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
+    tilewindow
     google-chrome
     pkgsUnstable.qq
     steam-run
@@ -112,6 +117,7 @@
             pkgs.gnomeExtensions.show-desktop-button.extensionUuid
             pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency.extensionUuid
             pkgsUnstable.gnomeExtensions.chinese-calendar.extensionUuid
+            tilewindow.extensionUuid
           ];
         };
       };
