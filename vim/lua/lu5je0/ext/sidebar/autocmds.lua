@@ -22,39 +22,17 @@ function M.setup(group)
     callback = function() config.apply_highlights() end,
   })
 
-  -- Shared git status refresh: one git status per BufWritePost / FocusGained,
-  -- result fanned out to the files and git_changes sources.
-  local files_source = require('lu5je0.ext.sidebar.sources.files')
-  local git_changes_source = require('lu5je0.ext.sidebar.sources.git_changes')
+  local git_status = require('lu5je0.ext.sidebar.git_status')
 
   vim.api.nvim_create_autocmd({ 'BufWritePost', 'FocusGained' }, {
     group = group,
     callback = function()
       if not state:is_open() then return end
       if not vim.fs.root(vim.fn.getcwd(), '.git') then return end
-      -- Capture the originating tab so async writes land on this tab's
-      -- state and we only render when the user is still on this tab.
       local tabpage = vim.api.nvim_get_current_tabpage()
-      local tab_files = state.files
-      local tab_gc = state.git_changes
-      local tab_idx = state.active_tab_idx
-      vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all', '--ignored' },
-        { text = true },
-        function(result)
-          vim.schedule(function()
-            if result.code ~= 0 then return end
-            files_source.update_git_status_from_stdout(tab_files, result.stdout)
-            git_changes_source.update_sections_from_stdout(tab_gc, result.stdout)
-            if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
-            if state:is_open() and tab_idx == state.active_tab_idx then
-              if state.active_tab_idx == config.tab_idx('files') then
-                files_source.render()
-              elseif state.active_tab_idx == config.tab_idx('git_changes') then
-                git_changes_source.render()
-              end
-            end
-          end)
-        end)
+      git_status.refresh_for(tabpage, function()
+        git_status.render_active(tabpage)
+      end)
     end,
   })
 

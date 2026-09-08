@@ -9,6 +9,7 @@ local tabs = require('lu5je0.ext.sidebar.tabs')
 local keymaps = require('lu5je0.ext.sidebar.keymaps')
 local autocmds = require('lu5je0.ext.sidebar.autocmds')
 local watcher = require('lu5je0.ext.sidebar.watcher')
+local git_status = require('lu5je0.ext.sidebar.git_status')
 
 local function init_sidebar(do_render)
   tabs.render_winbar()
@@ -19,11 +20,9 @@ local function init_sidebar(do_render)
     if source and source.render then source.render() end
   end
   if state.active_tab_idx == config.tab_idx('files') then
-    local files_source = require('lu5je0.ext.sidebar.sources.files')
-    files_source.refresh_git_status(function()
-      if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
-        files_source.render()
-      end
+    local tabpage = vim.api.nvim_get_current_tabpage()
+    git_status.refresh_for(tabpage, function()
+      git_status.render_active(tabpage)
     end)
   end
   watcher.start()
@@ -159,13 +158,9 @@ function M._on_dir_changed(args)
   end
 
   if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
-    local files_source = require('lu5je0.ext.sidebar.sources.files')
-    files_source.render()
-    files_source.refresh_git_status(function()
-      if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
-      if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
-        files_source.render()
-      end
+    require('lu5je0.ext.sidebar.sources.files').render()
+    git_status.refresh_for(tabpage, function()
+      git_status.render_active(tabpage)
     end)
   end
 end

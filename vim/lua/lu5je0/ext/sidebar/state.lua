@@ -51,6 +51,13 @@ local function new_tab_state()
     tab_cursors = {},
     _visible_start = 1,
 
+    git_status = {
+      timer = nil,
+      generation = 0,
+      callbacks = {},
+      last_dispatched = 0,
+    },
+
     files = {
       root = nil,
       display_items = {},
@@ -131,6 +138,7 @@ end
 local function release_tab_resources(ts)
   if not ts then return end
   require('lu5je0.ext.sidebar.watcher').release(ts)
+  require('lu5je0.ext.sidebar.git_status').release(ts)
   if ts.files then
     local lf = ts.files._live_filter
     if lf then

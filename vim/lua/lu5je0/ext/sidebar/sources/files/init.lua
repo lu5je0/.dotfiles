@@ -7,6 +7,7 @@ local view = require('lu5je0.ext.sidebar.view')
 local tree = require('lu5je0.ext.sidebar.sources.files.tree')
 local watcher = require('lu5je0.ext.sidebar.watcher')
 local git = require('lu5je0.ext.sidebar.sources.files.git')
+local git_status = require('lu5je0.ext.sidebar.git_status')
 local info = require('lu5je0.ext.sidebar.sources.files.info')
 
 local M = {}
@@ -123,14 +124,8 @@ watcher.on_files_changed = function(tabpage)
     tree.rescan_node(ts.root)
   end
   ts.reveal_path = downgrade_reveal_path(ts.reveal_path)
-  git.refresh_for(tabpage, function()
-    if vim.api.nvim_get_current_tabpage() == tabpage and state:is_open() then
-      if state.active_tab_idx == config.tab_idx('files') then
-        M.render()
-      elseif state.active_tab_idx == config.tab_idx('git_changes') then
-        require('lu5je0.ext.sidebar.sources.git_changes').refresh()
-      end
-    end
+  git_status.refresh_for(tabpage, function()
+    git_status.render_active(tabpage)
   end)
 end
 
@@ -256,6 +251,7 @@ end
 -- ── refresh ─────────────────────────────────────────────
 
 function M.refresh()
+  local tabpage = vim.api.nvim_get_current_tabpage()
   state.files.reveal_path = nil
   if state.files.root then
     tree.rescan_node(state.files.root)
@@ -263,13 +259,16 @@ function M.refresh()
     tree.build_root()
   end
   M.render()
-  M.refresh_git_status(M.render)
+  git_status.refresh_for(tabpage, function()
+    git_status.render_active(tabpage)
+  end)
 end
 
 -- Refresh after deleting `deleted_path`. Anchors reveal_path to the parent
 -- so dotfile ancestors stay expanded, then moves the cursor to the nearest
 -- surviving neighbour (next sibling -> prev sibling -> parent dir).
 function M.refresh_after_delete(deleted_path, fallback_paths)
+  local tabpage = vim.api.nvim_get_current_tabpage()
   local anchor = downgrade_reveal_path(vim.fs.dirname(deleted_path))
   if state.files.root then
     tree.rescan_node(state.files.root)
@@ -297,14 +296,15 @@ function M.refresh_after_delete(deleted_path, fallback_paths)
   end
 
   place_cursor()
-  M.refresh_git_status(function()
-    M.render({ reveal_path = state.files.reveal_path })
-    place_cursor()
+  git_status.refresh_for(tabpage, function()
+    if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
+    if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
+      M.render({ reveal_path = state.files.reveal_path })
+      place_cursor()
+    else
+      git_status.render_active(tabpage)
+    end
   end)
-end
-
-function M.refresh_git_status(callback)
-  git.refresh(callback)
 end
 
 function M.update_git_status_from_stdout(tab_files, stdout)

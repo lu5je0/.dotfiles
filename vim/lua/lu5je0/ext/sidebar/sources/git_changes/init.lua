@@ -6,16 +6,16 @@ local render = require('lu5je0.ext.sidebar.render')
 
 local parser = require('lu5je0.ext.sidebar.sources.git_changes.parser')
 local locate_mod = require('lu5je0.ext.sidebar.sources.git_changes.locate')
+local git_status = require('lu5je0.ext.sidebar.git_status')
 
 local M = {}
 
-local _refresh_timer = nil
-local _last_refresh_dispatched = 0
-
 local watcher = require('lu5je0.ext.sidebar.watcher')
-watcher.on_index_changed = function(_tabpage)
-  if vim.uv.now() - _last_refresh_dispatched < 500 then return end
-  if state:is_open() then M.refresh() end
+watcher.on_index_changed = function(tabpage)
+  if git_status.was_recently_dispatched(tabpage, 500) then return end
+  git_status.refresh_for(tabpage, function()
+    git_status.render_active(tabpage)
+  end)
 end
 
 -- ── status → highlight tables ───────────────────────────
@@ -263,38 +263,15 @@ end
 
 -- ── refresh ─────────────────────────────────────────────
 
+function M.refresh_for(tabpage, callback)
+  git_status.refresh_for(tabpage, function(success)
+    git_status.render_active(tabpage)
+    if callback then callback(success) end
+  end)
+end
+
 function M.refresh(callback)
-  if _refresh_timer then
-    _refresh_timer:stop()
-    _refresh_timer:close()
-    _refresh_timer = nil
-  end
-
-  local ts = state.git_changes
-  local tabpage = vim.api.nvim_get_current_tabpage()
-  local tab_active_idx = state.active_tab_idx
-
-  local timer = vim.uv.new_timer()
-  _refresh_timer = timer
-  timer:start(30, 0, vim.schedule_wrap(function()
-    if _refresh_timer == timer then _refresh_timer = nil end
-    pcall(function() timer:close() end)
-    _last_refresh_dispatched = vim.uv.now()
-    pcall(function()
-      require('lu5je0.ext.sidebar.actions.diff_preview').invalidate_short_head_cache()
-    end)
-    vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--untracked-files=all' }, { text = true }, function(result)
-      vim.schedule(function()
-        ts.sections = parser.parse(result.stdout)
-        if vim.api.nvim_get_current_tabpage() == tabpage
-            and state:is_open() and tab_active_idx == state.active_tab_idx
-            and state.active_tab_idx == config.tab_idx('git_changes') then
-          M.render()
-        end
-        if callback then callback() end
-      end)
-    end)
-  end))
+  M.refresh_for(vim.api.nvim_get_current_tabpage(), callback)
 end
 
 function M.update_sections_from_stdout(tab_state, stdout)
