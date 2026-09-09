@@ -23,6 +23,7 @@
     pkgsUnstable.pi-coding-agent
     nodejs
     stylua
+    opencc
     ripgrep
     luajit
     fzf

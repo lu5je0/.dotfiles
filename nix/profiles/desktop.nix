@@ -15,6 +15,7 @@
     steam-run
     telegram-desktop
     wechat
+    mpv
     wineWow64Packages.stable
     wpsoffice-cn
   ];

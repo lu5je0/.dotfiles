@@ -46,6 +46,30 @@
     options = [ "fmask=0022" "dmask=0022" ];
   };
 
+  fileSystems."/mnt/d" = {
+    device = "/dev/disk/by-uuid/FC64FF6A64FF2654";
+    fsType = "ntfs";
+    options = [
+      "nofail"
+      "uid=1000"
+      "gid=1000"
+      "iocharset=utf8"
+      "x-systemd.device-timeout=5s"
+    ];
+  };
+
+  fileSystems."/mnt/e" = {
+    device = "/dev/disk/by-uuid/74F281FEF281C4B8";
+    fsType = "ntfs";
+    options = [
+      "nofail"
+      "uid=1000"
+      "gid=1000"
+      "iocharset=utf8"
+      "x-systemd.device-timeout=5s"
+    ];
+  };
+
   swapDevices = [ ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
