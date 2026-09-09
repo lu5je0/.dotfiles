@@ -27,6 +27,24 @@
     "/home/.snapshots".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
   };
 
+  services.snapper = {
+    snapshotInterval = "hourly";
+    cleanupInterval = "1d";
+    persistentTimer = true;
+    configs.home = {
+      SUBVOLUME = "/home";
+      FSTYPE = "btrfs";
+      ALLOW_USERS = [ "lu5je0" ];
+      TIMELINE_CREATE = true;
+      TIMELINE_CLEANUP = true;
+      TIMELINE_LIMIT_HOURLY = 10;
+      TIMELINE_LIMIT_DAILY = 7;
+      TIMELINE_LIMIT_WEEKLY = 4;
+      TIMELINE_LIMIT_MONTHLY = 2;
+      TIMELINE_LIMIT_YEARLY = 0;
+    };
+  };
+
   networking.hostName = "huskar";
   networking.networkmanager.enable = true;
 

@@ -1,36 +1,23 @@
 { pkgs, pkgsUnstable, ... }:
 
-let
-  tilewindow = pkgs.callPackage ../pkgs/tilewindow.nix { };
-in
 {
   imports = [
+    ../modules/arcglyph.nix
     ../modules/fcitx5-rime.nix
+    ../modules/gnome.nix
     ../modules/keyd.nix
     ../modules/mission-center.nix
   ];
 
   environment.systemPackages = with pkgs; [
-    gnomeExtensions.appindicator
-    gnomeExtensions.astra-monitor
-    gnomeExtensions.brightness-control-using-ddcutil
-    gnomeExtensions.clipboard-indicator
-    gnomeExtensions.dash-to-dock
-    gnomeExtensions.gtk4-desktop-icons-ng-ding
-    gnomeExtensions.show-desktop-button
-    gnomeExtensions.transparent-top-bar-adjustable-transparency
-    pkgsUnstable.gnomeExtensions.chinese-calendar
-    tilewindow
     google-chrome
     pkgsUnstable.qq
     steam-run
+    telegram-desktop
     wechat
     wineWow64Packages.stable
     wpsoffice-cn
   ];
-
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
   services.xserver.xkb = {
     layout = "cn";
     variant = "";
@@ -96,33 +83,6 @@ in
   };
 
   programs.firefox.enable = false;
-  programs.dconf.profiles.user.databases = [
-    {
-      settings = {
-        "org/gnome/desktop/interface" = {
-          font-name = "Noto Sans CJK SC 11";
-          document-font-name = "Noto Sans CJK SC 12";
-          monospace-font-name = "JetBrainsMonoNL Nerd Font Mono 11";
-        };
-        "org/gnome/shell" = {
-          always-show-log-out = true;
-          enabled-extensions = [
-            pkgs.gnomeExtensions.appindicator.extensionUuid
-            pkgs.gnomeExtensions.astra-monitor.extensionUuid
-            pkgs.gnomeExtensions.brightness-control-using-ddcutil.extensionUuid
-            pkgs.gnomeExtensions.clipboard-indicator.extensionUuid
-            pkgs.gnomeExtensions.dash-to-dock.extensionUuid
-            pkgs.gnomeExtensions.gtk4-desktop-icons-ng-ding.extensionUuid
-            pkgs.gnomeExtensions.kimpanel.extensionUuid
-            pkgs.gnomeExtensions.show-desktop-button.extensionUuid
-            pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency.extensionUuid
-            pkgsUnstable.gnomeExtensions.chinese-calendar.extensionUuid
-            tilewindow.extensionUuid
-          ];
-        };
-      };
-    }
-  ];
 
   nixpkgs.config.allowUnfree = true;
 }
