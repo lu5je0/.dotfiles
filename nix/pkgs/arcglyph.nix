@@ -8,6 +8,8 @@
   fontconfig,
   wayland,
   libxkbcommon,
+  vulkan-loader,
+  noto-fonts-cjk-sans-static,
 }:
 
 rustPlatform.buildRustPackage rec {
@@ -17,8 +19,8 @@ rustPlatform.buildRustPackage rec {
   src = fetchFromGitHub {
     owner = "lu5je0";
     repo = "arcglyph";
-    rev = "73431b2158448e81a194ec904505f927aadc52a0";
-    hash = "sha256-h0x+x4OEZkXWNaNQKfgaeAMj5baR5FK2wGLMVOCgNic=";
+    rev = "91128be01aab6b084e4d134b05c7f16f2727d927";
+    hash = "sha256-unVYFie20Qyya43JRGFwQWQ+czi1BeCe9iemDPt+Ci8=";
   };
 
   cargoHash = "sha256-E3mH1qd5onvskZBK0eIKfngx6sNM8D3tHGppIWunNU0=";
@@ -33,6 +35,7 @@ rustPlatform.buildRustPackage rec {
     fontconfig
     wayland
     libxkbcommon
+    vulkan-loader
   ];
 
   postInstall = ''
@@ -44,7 +47,8 @@ rustPlatform.buildRustPackage rec {
 
   postFixup = ''
     wrapProgram "$out/bin/arcglyph" \
-      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ wayland libxkbcommon ]}"
+      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ wayland libxkbcommon vulkan-loader ]}" \
+      --set ARCGLYPH_FONT "${noto-fonts-cjk-sans-static}/share/fonts/opentype/noto-cjk/NotoSansCJK-Regular.ttc"
   '';
 
   meta = {

@@ -3,6 +3,7 @@
 {
   environment.systemPackages = with pkgs; [
     kitty.terminfo
+    gnome-tweaks
     htop
     (pkgsUnstable.python3.withPackages (pythonPackages: [
       pythonPackages.requests
@@ -26,8 +27,10 @@
     opencc
     ripgrep
     luajit
+    yazi
     fzf
     fastfetch
+    wl-clipboard
     wget
     btop
     gh

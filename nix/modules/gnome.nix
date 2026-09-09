@@ -33,6 +33,7 @@ in
           document-font-name = "Noto Sans CJK SC 12";
           monospace-font-name = "JetBrainsMonoNL Nerd Font Mono 11";
         };
+        "org/gnome/desktop/wm/preferences".button-layout = "appmenu:minimize,maximize,close";
         "org/gnome/shell" = {
           always-show-log-out = true;
           enabled-extensions = map (extension: extension.extensionUuid) shellExtensions;

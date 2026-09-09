@@ -67,6 +67,13 @@
     };
   };
 
+  # CPU 固定高性能
+  powerManagement.cpuFreqGovernor = "performance";
+  # GNOME 用 mkDefault 打开 power-profiles-daemon，它在 multi-user.target 之后启动，
+  # 会把 governor 改回 powersave、EPP 改回 balance_performance，覆盖掉上面的设置。
+  # 代价：GNOME 设置里的「电源模式」开关消失
+  services.power-profiles-daemon.enable = false;
+
   networking.hostName = "huskar";
   networking.networkmanager.enable = true;
 

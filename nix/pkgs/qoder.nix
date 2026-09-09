@@ -113,6 +113,8 @@ stdenv.mkDerivation {
       --prefix PATH : "${lib.makeBinPath [ xdg-utils ]}" \
       --prefix LD_LIBRARY_PATH : "$out/opt/Qoder:${lib.makeLibraryPath [ libgbm libglvnd ]}:/run/opengl-driver/lib" \
       --add-flags "--ozone-platform=wayland" \
+      --add-flags "--enable-features=WaylandWindowDecorations" \
+      --add-flags "--password-store=gnome-libsecret" \
       --add-flags "--use-gl=angle" \
       --add-flags "--use-angle=gl"
 
