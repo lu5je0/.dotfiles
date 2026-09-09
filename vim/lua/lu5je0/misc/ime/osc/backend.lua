@@ -5,11 +5,10 @@
 -- its own IME per window.
 local M = {}
 
--- fd 2 is the terminal. C stderr is unbuffered, so this lands immediately while
--- avoiding the vim.fn bridge and the open/close that writefile('/dev/fd/2') does
--- per call -- measured 0.5us against 22us for that.
+-- Queue escapes with the TUI renderer so they cannot interleave with a partial
+-- screen update. This is the same path Neovim's built-in OSC 52 backend uses.
 local function write(osc)
-  io.stderr:write(osc)
+  vim.api.nvim_ui_send(osc)
 end
 
 -- tmux consumes OSC 1337 instead of forwarding it, so inside tmux the escape has
@@ -22,10 +21,9 @@ end
 -- There are only ever two payloads, so encode them once instead of formatting
 -- and base64-ing the same strings on every mode change.
 local OSC = {}
-for _, method in ipairs({ 'normal', 'insert' }) do
+for _, method in ipairs { 'normal', 'insert' } do
   local payload = string.format('{"id":1,"module":"ime","method":"%s","params":{}}', method)
-  local osc = string.format('\27]1337;SetUserVar=tui-bridge=%s\7',
-    require('lu5je0.misc.base64').encode(payload))
+  local osc = string.format('\27]1337;SetUserVar=tui-bridge=%s\7', require('lu5je0.misc.base64').encode(payload))
   OSC[method] = vim.env.TMUX and tmux_wrap(osc) or osc
 end
 
@@ -67,7 +65,9 @@ end
 M.on_exit = function()
   M.insert()
   -- over ssh the helper binary lives on the other machine
-  if vim.env.SSH_TTY then return end
+  if vim.env.SSH_TTY then
+    return
+  end
   pcall(require('lu5je0.misc.tui-bridge.ext.im').ascii_now)
 end
 
