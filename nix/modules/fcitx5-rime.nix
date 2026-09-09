@@ -25,8 +25,4 @@
       };
     };
   };
-
-  environment.systemPackages = [
-    pkgs.gnomeExtensions.kimpanel
-  ];
 }

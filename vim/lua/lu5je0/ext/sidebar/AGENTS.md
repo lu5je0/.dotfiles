@@ -11,6 +11,7 @@ sidebar/
 ├── init.lua           -- 入口：setup / toggle / focus / open_tab / locate_in_tab / _on_dir_changed
 ├── config.lua         -- 配置：图标、highlight、tabs、宽度；M.apply_highlights() 集中应用
 ├── state.lua          -- per-tab 状态（metatable 按 tabpage 隔离），new_tab_state() 是 schema 单一来源
+├── git_status.lua     -- 单次异步 git status，按 tab 更新 Files/Git Changes 缓存并合并刷新请求
 ├── window.lua         -- 窗口生命周期、guicursor
 ├── full_name.lua      -- 长文件名浮窗（CursorMoved/WinScrolled 触发）
 ├── tabs.lua           -- winbar 渲染、tab 切换
@@ -27,7 +28,7 @@ sidebar/
 │   │   ├── init.lua          -- files source 门面（render / open_node / find_file / cd_* / keymaps）
 │   │   ├── tree.lua          -- 节点 / scan_dir / ensure_children / rescan / rel_to_cwd / make_filter
 │   │   ├── watcher.lua       -- fs_event 增量挂载
-│   │   ├── git.lua           -- build_status_map / status_to_glyph / refresh / is_git_item
+│   │   ├── git.lua           -- build_status_map / status_to_glyph / is_git_item
 │   │   ├── live_filter.lua   -- 过滤 overlay（per-tab buf/win/closing 在 state.files._live_filter）
 │   │   └── info.lua          -- show_file_info 浮窗
 │   ├── git_changes.lua       -- 兼容 shim → sources.git_changes.init
@@ -75,7 +76,7 @@ sidebar/
 
 - **render 路径禁止同步外部命令**。git 数据通过异步预加载，render 只读缓存。
 - **改动涉及 render、CursorMoved、高频 autocmd 时，必须提前告知用户性能影响。**
-- `BufWritePost`/`FocusGained` 共享一次 `git status`，并在 `autocmds.lua` 内分发给 files 与 git_changes，不要拆成多次。
+- 所有 Git 状态触发统一调用 `git_status.lua`，由它执行一次 `git status` 并分发给 Files 与 Git Changes；不要在 source 或 autocmd 中另起查询。
 - devicons 已缓存、fullname popup 复用 buffer/window、suffix 用 `right_align` virt_text — 不要退化。
 
 ## 集成点

@@ -1,8 +1,8 @@
 -- Git status integration for the file tree.
 --
 -- Two responsibilities:
--- 1. Parse `git status --porcelain=v1 -z --ignored` into a path → status map,
---    aggregating directory state by priority for tree decoration.
+-- 1. Parse porcelain-v1 status output into a path → status map, aggregating
+--    directory state by priority for tree decoration.
 -- 2. Map status (X,Y) bytes onto a (glyph, hl-group) pair.
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
@@ -81,24 +81,6 @@ function M.build_status_map(stdout)
     end
   end
   return map
-end
-
-function M.refresh(callback)
-  M.refresh_for(vim.api.nvim_get_current_tabpage(), callback)
-end
-
--- Per-tab variant: writes git status into the captured tabpage's state,
--- so async refreshes triggered on tab A still update tab A even if the
--- user switched tabs while git status was running.
-function M.refresh_for(tabpage, callback)
-  local tab_files = state.tab_for(tabpage).files
-  vim.system({ 'git', 'status', '--porcelain=v1', '-z', '--ignored' }, { text = true }, function(result)
-    vim.schedule(function()
-      if not vim.api.nvim_tabpage_is_valid(tabpage) then return end
-      tab_files.git_status_map = M.build_status_map(result.code == 0 and result.stdout or '')
-      if callback then callback() end
-    end)
-  end)
 end
 
 function M.update_from_stdout(tab_files, stdout)

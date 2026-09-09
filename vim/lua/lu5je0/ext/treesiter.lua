@@ -1,12 +1,15 @@
 local M = {}
 
-M.filetypes = {
+M.parsers = {
   'json', 'python', 'java', 'bash', 'go', 'vim', 'lua', 'cpp', 'c',
   'rust', 'toml', 'yaml', 'markdown', 'http', 'typescript',
   'javascript', 'sql', 'html', 'json5', 'regex', 'vue',
   'css', 'dockerfile', 'vimdoc', 'query', 'xml', 'groovy',
   'arthas', 'plantuml', 'nix'
 }
+
+-- jsonc reuses the json parser and is not an installable parser name.
+M.filetypes = vim.list_extend(vim.deepcopy(M.parsers), { 'jsonc' })
 
 local function set_treesitter_highlights()
   vim.api.nvim_set_hl(0, '@constructor.lua', { fg = '#ABB2BF' })
@@ -33,7 +36,7 @@ end
 M.setup = function()
   M.setup_custom_parsers()
 
-  require("nvim-treesitter").install(M.filetypes)
+  require("nvim-treesitter").install(M.parsers)
   require('lu5je0.ext.fold').setup()
 
   local function attach(bufnr)
