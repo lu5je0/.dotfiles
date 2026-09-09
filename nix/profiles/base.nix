@@ -9,6 +9,16 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+    persistent = true;
+  };
+
+  # 定期执行 nix store optimise，用硬链接合并 store 中内容相同的文件
+  nix.optimise.automatic = true;
+
   services.envfs.enable = true;
 
   environment.sessionVariables = {

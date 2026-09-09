@@ -15,6 +15,7 @@
     vim
     tmux
     file
+    ncdu
   ];
 
   users.users.lu5je0.packages = with pkgs; [
