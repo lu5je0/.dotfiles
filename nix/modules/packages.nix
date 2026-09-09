@@ -4,7 +4,9 @@
   environment.systemPackages = with pkgs; [
     kitty.terminfo
     htop
-    python3
+    (pkgsUnstable.python3.withPackages (pythonPackages: [
+      pythonPackages.requests
+    ]))
     git
     uv
     p7zip
@@ -16,7 +18,9 @@
 
   users.users.lu5je0.packages = with pkgs; [
     bun
+    pkgsUnstable.pi-coding-agent
     nodejs
+    stylua
     ripgrep
     luajit
     fzf
