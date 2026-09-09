@@ -25,6 +25,28 @@
     "/nix".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
     "/.snapshots".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
     "/home/.snapshots".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
+    "/mnt/d" = {
+      device = "/dev/disk/by-uuid/FC64FF6A64FF2654";
+      fsType = "ntfs3";
+      options = [
+        "nofail"
+          "uid=1000"
+          "gid=1000"
+          "iocharset=utf8"
+          "x-systemd.device-timeout=5s"
+      ];
+    };
+    "/mnt/e" = {
+      device = "/dev/disk/by-uuid/74F281FEF281C4B8";
+      fsType = "ntfs3";
+      options = [
+        "nofail"
+          "uid=1000"
+          "gid=1000"
+          "iocharset=utf8"
+          "x-systemd.device-timeout=5s"
+      ];
+    };
   };
 
   services.snapper = {
