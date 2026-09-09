@@ -14,6 +14,7 @@
     unzip
     vim
     tmux
+    file
   ];
 
   users.users.lu5je0.packages = with pkgs; [

@@ -21,6 +21,9 @@ in
 
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
+  services.gnome.gnome-remote-desktop.enable = true;
+
+  networking.firewall.allowedTCPPorts = [ 3389 ];
 
   programs.dconf.profiles.user.databases = [
     {
