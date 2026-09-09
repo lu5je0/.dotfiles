@@ -107,11 +107,11 @@ stdenv.mkDerivation {
     cp -r usr/share/applications usr/share/icons "$out/share/"
 
     substituteInPlace "$out/share/applications/qoder.desktop" \
-      --replace-fail "Exec=/opt/Qoder/qoder %U" "Exec=$out/bin/qoder %U"
+      --replace-fail "Exec=/opt/Qoder/qoder %U" "Exec=$out/bin/qoder --ozone-platform=wayland %U"
 
     makeWrapper "$out/opt/Qoder/qoder" "$out/bin/qoder" \
       --prefix PATH : "${lib.makeBinPath [ xdg-utils ]}" \
-      --prefix LD_LIBRARY_PATH : "$out/opt/Qoder:${lib.makeLibraryPath [ libgbm libglvnd ]}:/run/opengl-driver/lib" \
+      --prefix LD_LIBRARY_PATH : "$out/opt/Qoder:${lib.makeLibraryPath [ libgbm libglvnd libsecret ]}:/run/opengl-driver/lib" \
       --add-flags "--ozone-platform=wayland" \
       --add-flags "--enable-features=WaylandWindowDecorations" \
       --add-flags "--password-store=gnome-libsecret" \

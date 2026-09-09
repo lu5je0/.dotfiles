@@ -3,10 +3,8 @@
 {
   programs.steam = {
     enable = true;
+    # Steam FHS needs the cursor theme to avoid a tiny fallback cursor: https://github.com/ValveSoftware/steam-for-linux/issues/12092
     extraPackages = [ pkgs.adwaita-icon-theme ];
-    # package = pkgs.steam.override {
-    #   extraEnv.XCURSOR_SIZE = "40";
-    # };
   };
 
   environment.systemPackages = with pkgs; [
