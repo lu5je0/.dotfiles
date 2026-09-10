@@ -67,6 +67,26 @@
     };
   };
 
+  # ── 内核卡死自动重启 ──
+  # 参考：系统卡死时不需要强制关机，配置好后 30s 自动复位。
+  # btrfs COW 保证文件系统不会坏，最多丢最近 30 秒未保存数据。
+  boot.kernel.sysctl = {
+    # 启用全部 Magic SysRq 功能。
+    # 即使键盘上没有 SysRq 键，也能通过 SSH 执行：
+    #   echo b > /proc/sysrq-trigger   # 重启
+    "kernel.sysrq" = 1;
+    # 内核检测到 CPU 长时间无法调度（软锁）→ 主动内核崩溃（panic）
+    "kernel.softlockup_panic" = 1;
+    # panic 后等 10 秒自动重启，留时间给 panic notifier 刷存储缓存
+    "kernel.panic" = 10;
+  };
+  # 硬件 watchdog（Intel TCO），驱动 iTCO_wdt 已在内核中加载。
+  # watchdogd 每 10 秒"喂狗"一次；如果内核完全卡死无人喂狗，
+  # 30 秒后硬件定时器超时，直接触发主板复位（比长按电源键温和）。
+  services.watchdogd = {
+    enable = true;
+  };
+
   # CPU 固定高性能
   powerManagement.cpuFreqGovernor = "performance";
   # GNOME 用 mkDefault 打开 power-profiles-daemon，它在 multi-user.target 之后启动，
