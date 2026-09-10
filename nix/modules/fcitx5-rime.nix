@@ -17,11 +17,11 @@
           DefaultIM = "rime";
           Name = "Default";
         };
-        "Groups/0/Items/0".Name = "keyboard-us";
-        "Groups/0/Items/1" = {
+        "Groups/0/Items/0" = {
           Layout = "us";
           Name = "rime";
         };
+        "Groups/0/Items/1".Name = "keyboard-us";
       };
     };
   };
