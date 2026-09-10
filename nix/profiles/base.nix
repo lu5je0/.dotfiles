@@ -21,6 +21,8 @@
 
   services.envfs.enable = true;
 
+  nixpkgs.config.allowUnfree = true;
+
   environment.sessionVariables = {
     NPM_CONFIG_PREFIX = "/home/lu5je0/.local";
     # /etc/ssl/certs has no hashed symlinks, so CApath alone verifies nothing

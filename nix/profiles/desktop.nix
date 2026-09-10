@@ -84,6 +84,4 @@
   };
 
   programs.firefox.enable = false;
-
-  nixpkgs.config.allowUnfree = true;
 }
