@@ -10,6 +10,7 @@
   { "name": "wezterm", "source": "wezterm", "target": "~/.config/wezterm" },
   { "name": "yazi", "source": "yazi", "target": "~/.config/yazi" },
   { "name": "kitty", "source": "kitty", "target": "~/.config/kitty" },
+  { "name": "mac-nix", "source": "nix-mac/nix.conf", "target": "~/.config/nix/nix.conf", "os": ["mac"] },
   {
     "name": "pi",
     "action": "install",
