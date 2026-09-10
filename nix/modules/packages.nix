@@ -12,6 +12,7 @@
     uv
     p7zip
     zip
+    pstree
     unzip
     vim
     tmux
