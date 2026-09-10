@@ -41,10 +41,10 @@
 
 stdenv.mkDerivation {
   pname = "qoder";
-  version = "0.2.1";
+  version = "0.2.3";
   src = fetchurl {
     url = "https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb";
-    hash = "sha256-Obr9cYU2Nja4wa1qm3QuzHXCgGZE/1t8VRYuKuX7iNc=";
+    hash = "sha256-A/qDXBGFrn5tX8JW4sH70mGxRb1eTxtAV8QmMxewSx0=";
   };
 
   nativeBuildInputs = [
