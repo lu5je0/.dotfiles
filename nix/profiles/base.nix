@@ -55,4 +55,7 @@
   services.cron.enable = true;
   services.openssh.enable = true;
   virtualisation.docker.enable = true;
+
+  programs.appimage.enable = true;
+  programs.appimage.binfmt = true;
 }
