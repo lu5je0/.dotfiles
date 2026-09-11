@@ -67,6 +67,11 @@
     };
   };
 
+  # snapper/btrfs 图形管理（浏览、对比、恢复快照，scrub/balance）。
+  # 必须进 systemPackages：polkit 只扫描 /run/current-system/sw/share/polkit-1，
+  # 放进用户 profile 会让 pkexec 找不到 action 而无法提权。
+  environment.systemPackages = [ pkgs.btrfs-assistant ];
+
   # ── 内核卡死自动重启 ──
   # 参考：系统卡死时不需要强制关机，配置好后 30s 自动复位。
   # btrfs COW 保证文件系统不会坏，最多丢最近 30 秒未保存数据。
