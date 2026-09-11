@@ -123,6 +123,14 @@
     "os": ["linux"]
   },
   {
+    "name": "gnome-mark-shot-icon",
+    "action": "install",
+    "desc": "mark-shot 托盘单色图标（symbolic 链接 + AppIndicator custom-icons 覆盖）",
+    "script": "unix/mark-shot-icon.sh",
+    "checks": [{ "link": "~/.local/share/icons/hicolor/symbolic/apps/mark-shot-symbolic.svg" }],
+    "os": ["linux"]
+  },
+  {
     "name": "keyd",
     "action": "symlink",
     "desc": "keyd config → /etc/keyd/default.conf (needs sudo)",

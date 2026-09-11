@@ -75,3 +75,15 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
   必须轮询等到修饰键真正松开才补发，否则会打断按住 Ctrl+Super 连按 N/P 的连续切换；
   长按超过 3s 就放弃本次重同步。刻意不含 Super——卡住的 Super 在 GTK 侧无默认点击行为，
   而合成它的 release 会让 `overlay-key` 误弹 Overview
+
+## mark-shot 托盘图标
+
+GNOME 顶栏只对**按图标名拿到且以 `-symbolic` 结尾**的图标按前景色染色；mark-shot 自己只发彩色位图（SNI `IconName` 为空），
+所以由本机配置覆盖：`gnome/icons/mark-shot-symbolic.svg` 经 setup 模块 `gnome-mark-shot-icon` 链到
+`~/.local/share/icons/hicolor/symbolic/apps/`，再在 AppIndicator 扩展的 `custom-icons` 里按 SNI Id（`mark-shot`）指定图标名。
+该 schema 不在系统 schema 路径里，读写都要 `--schemadir <扩展目录>/schemas`。
+
+改了 SVG 重跑该模块即可（`python3 ~/.dotfiles/setup.py` 选 `gnome-mark-shot-icon`）。脚本只做链接 + gsettings，**不重启扩展**：
+设置变化不会重建 indicator actor，若图标没更新或与旧位图叠画，手动
+`gnome-extensions disable/enable appindicatorsupport@rgcjonas.gmail.com` 或重登一次
+（扩展从位图切到图标名时不清 actor 上旧的位图 `content`）。
