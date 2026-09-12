@@ -17,7 +17,17 @@ let
   ];
 in
 {
-  environment.systemPackages = shellExtensions ++ [ pkgs.gjs ];
+  environment.systemPackages = shellExtensions ++ [
+    pkgs.gjs
+    # Qt6 应用（peazip 等）的 Adwaita 风格窗口装饰插件，配合下面的 QT_WAYLAND_DECORATION 使用
+    pkgs.qadwaitadecorations-qt6
+  ];
+
+  # 修复qt应用窗口阴影
+  # https://github.com/FedoraQt/QAdwaitaDecorations/pull/89
+  # qt.enable 把 QT_PLUGIN_PATH 指到各 profile 的 lib/qt-6/plugins，Qt 插件装进 profile 才被找到
+  qt.enable = true;
+  environment.sessionVariables.QT_WAYLAND_DECORATION = "qadwaitadecorations";
 
   # gtk-frdp 2026-04-24 快照的 frdp_register_pointer 用未初始化的 rdpPointer 注册指针类，
   # 收到服务端指针更新时会 free 野指针崩溃（上游 040b75d5 已修），覆盖为修复版
