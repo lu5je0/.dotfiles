@@ -10,9 +10,12 @@
   ];
 
   environment.systemPackages = with pkgs; [
+    steam-run
+  ];
+
+  users.users.lu5je0.packages = with pkgs; [
     google-chrome
     pkgsUnstable.qq
-    steam-run
     telegram-desktop
     wechat
     mpv
@@ -20,6 +23,7 @@
     wpsoffice-cn
     peazip
   ];
+
   services.xserver.xkb = {
     layout = "cn";
     variant = "";
