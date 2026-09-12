@@ -17,6 +17,7 @@
     vim
     tmux
     file
+    cmake
     ncdu
   ];
 
