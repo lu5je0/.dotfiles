@@ -18,6 +18,7 @@
     mpv
     wineWow64Packages.stable
     wpsoffice-cn
+    peazip
   ];
   services.xserver.xkb = {
     layout = "cn";
