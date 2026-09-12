@@ -1,0 +1,83 @@
+--- a/src/ui/application_icon.cpp
++++ b/src/ui/application_icon.cpp
+@@ -19,6 +19,9 @@
+ /// @brief 图标主题与资源中使用的应用图标名。
+ constexpr char kApplicationIconName[] = "mark-shot";
+ 
++/// @brief 托盘优先使用的单色主题图标名；宿主（GNOME 顶栏等）只对 -symbolic 图标按前景色染色。
++constexpr char kApplicationTrayIconName[] = "mark-shot-symbolic";
++
+ /// @brief 内置 PNG 图标覆盖的尺寸，与 data/icons/hicolor 下的目录一一对应。
+ constexpr int kBundledIconSizes[] = {16, 22, 24, 32, 48, 64, 128, 256};
+ 
+@@ -69,28 +72,38 @@
+ 
+ #if !defined(Q_OS_WIN)
+ /**
+- * 判断应用图标是否安装在托盘宿主可见的标准图标目录中。
++ * 判断图标是否安装在托盘宿主可见的标准图标目录中。
+  *
+  * StatusNotifierItem 宿主（gnome-shell 的 AppIndicator 扩展、plasmashell）
+- * 运行在独立进程中，按 IconName 查找图标时只搜索它自己的标准 XDG 图标
+- * 路径。本进程 QIcon 能解析主题图标（例如 Nix wrapper 注入的私有
+- * XDG_DATA_DIRS、开发目录直接运行）并不代表宿主也能解析；那种情况下
+- * 必须回退为直接传像素，否则托盘显示空白（issue #78）。
++ * 运行在独立进程中，按 IconName 查找图标时只搜索它自己的 XDG 图标路径。
++ * 除固定的标准根目录外还跟随本进程的 XDG_DATA_DIRS：会话启动的应用与宿主
++ * 共享同一份会话环境，NixOS 等把图标装在系统/用户 profile（如
++ * /run/current-system/sw/share、/etc/profiles/per-user/<用户>/share）时只有它
++ * 能看到。宿主解析失败会显示空白，因此仅在确认可见时才返回图标名
++ * （issue #78）。
+  *
++ * @param iconName 待检查的主题图标名。
+  * @return 宿主大概率可按名解析时返回 true。
+  */
+-bool themeIconVisibleToTrayHost()
++bool themeIconVisibleToTrayHost(const QString &iconName)
+ {
+-    // 刻意不使用本进程的 XDG_DATA_DIRS：包装器（Nix wrapper 等）注入的私有
+-    // 路径恰恰是宿主看不到的。只认三个所有会话进程都会搜索的标准根目录。
+-    const QStringList dataRoots = {
++    QStringList dataRoots = {
+         QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation),
+         QStringLiteral("/usr/local/share"),
+         QStringLiteral("/usr/share"),
+     };
++    // 会话的 XDG_DATA_DIRS 是宿主实际搜索的路径集合（包装器注入的私有路径
++    // 最坏情况下让宿主解析失败显示空白，与传像素名称不可用时的表现一致）
++    const QStringList xdgRoots =
++        qEnvironmentVariable("XDG_DATA_DIRS").split(QLatin1Char(':'), Qt::SkipEmptyParts);
++    for (const QString &root : xdgRoots) {
++        if (!root.isEmpty() && !dataRoots.contains(root)) {
++            dataRoots.append(root);
++        }
++    }
+     const QStringList iconFileNames = {
+-        QStringLiteral("%1.svg").arg(QLatin1String(kApplicationIconName)),
+-        QStringLiteral("%1.png").arg(QLatin1String(kApplicationIconName)),
++        QStringLiteral("%1.svg").arg(iconName),
++        QStringLiteral("%1.png").arg(iconName),
+     };
+     for (const QString &root : dataRoots) {
+         if (root.isEmpty()) {
+@@ -174,9 +187,17 @@
+ #if defined(Q_OS_WIN)
+     return {};
+ #else
+-    const QIcon themed = QIcon::fromTheme(QLatin1String(kApplicationIconName));
+-    if (iconRendersPixels(themed) && themeIconVisibleToTrayHost()) {
+-        return QString::fromLatin1(kApplicationIconName);
++    // 托盘优先 -symbolic 单色图标：宿主（GNOME 顶栏等）只对按名解析到的
++    // -symbolic 图标按前景色染色；不可用时回退通用应用图标名
++    const QStringList candidateNames = {
++        QString::fromLatin1(kApplicationTrayIconName),
++        QString::fromLatin1(kApplicationIconName),
++    };
++    for (const QString &name : candidateNames) {
++        const QIcon themed = QIcon::fromTheme(name);
++        if (iconRendersPixels(themed) && themeIconVisibleToTrayHost(name)) {
++            return name;
++        }
+     }
+     return {};
+ #endif

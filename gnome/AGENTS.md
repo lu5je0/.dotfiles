@@ -78,12 +78,15 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
 
 ## mark-shot 托盘图标
 
-GNOME 顶栏只对**按图标名拿到且以 `-symbolic` 结尾**的图标按前景色染色；mark-shot 自己只发彩色位图（SNI `IconName` 为空），
-所以由本机配置覆盖：`gnome/icons/mark-shot-symbolic.svg` 经 setup 模块 `gnome-mark-shot-icon` 链到
-`~/.local/share/icons/hicolor/symbolic/apps/`，再在 AppIndicator 扩展的 `custom-icons` 里按 SNI Id（`mark-shot`）指定图标名。
-该 schema 不在系统 schema 路径里，读写都要 `--schemadir <扩展目录>/schemas`。
+GNOME 顶栏只对**按图标名拿到且以 `-symbolic` 结尾**的图标按前景色染色。mark-shot 上游的托盘逻辑是：主题名对宿主可见才发图标名，
+否则退彩色位图；而它的可见性判断只认 `/usr/share` 等标准根目录，NixOS 的 profile 路径不算，所以上游默认走位图。
+本仓库直接改默认行为（不再用 AppIndicator 扩展的 custom-icons 覆盖）：
 
-改了 SVG 重跑该模块即可（`python3 ~/.dotfiles/setup.py` 选 `gnome-mark-shot-icon`）。脚本只做链接 + gsettings，**不重启扩展**：
-设置变化不会重建 indicator actor，若图标没更新或与旧位图叠画，手动
-`gnome-extensions disable/enable appindicatorsupport@rgcjonas.gmail.com` 或重登一次
-（扩展从位图切到图标名时不清 actor 上旧的位图 `content`）。
+- `nix/pkgs/mark-shot/mark-shot-tray-symbolic.patch`（`nix/modules/packages.nix` 的 overlay 应用）让托盘优先发 `mark-shot-symbolic`，
+  并把宿主可见性判断扩展到会话的 `XDG_DATA_DIRS`（`/run/current-system/sw/share`、`/etc/profiles/per-user/*/share` 因此可识别）
+- 同名 SVG `gnome/icons/mark-shot-symbolic.svg` 由同一 overlay 装进包内 `share/icons/hicolor/symbolic/apps/`，
+  经 profile 进入宿主搜索路径，宿主按名解析后染色
+
+升级 mark-shot rev 时补丁可能要同步 rebase（上游改了 `application_icon.cpp` 会打不上）。
+临时迭代图标可直接放 `~/.local/share/icons/hicolor/symbolic/apps/mark-shot-symbolic.svg`（用户目录优先于 profile），
+重启 mark-shot 进程生效，无需重启扩展；改包内那份则要 `nixos-rebuild`。
