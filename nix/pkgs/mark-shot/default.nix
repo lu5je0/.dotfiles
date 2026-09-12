@@ -1,6 +1,7 @@
 { pkgs, flake }:
 
-# mark-shot 不装进系统配置，作为独立 flake 供 `nix profile install ~/.dotfiles/nix/pkgs/mark-shot` 使用
+# 上游 flake 由根 flake 的 mark-shot input 提供（pkgs/mark-shot 自身不再是 flake 根）；
+# 不装进系统配置，走用户 profile：`nix profile add path:~/.dotfiles#mark-shot`
 flake.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
   # 补丁：托盘默认向宿主发 -symbolic 图标名、启动时把图标链到 ~/.local/share/icons（宿主只搜系统/用户图标目录）、
   # 自启动 desktop 写成 PATH 形式；见 gnome/AGENTS.md
