@@ -1,6 +1,13 @@
-{ pkgs, pkgsUnstable, ... }:
+{ pkgs, pkgsUnstable, inputs, ... }:
 
 {
+  # mark-shot flake 只在 packages.<system>.default 暴露，注入后即可按 pkgs.mark-shot 使用
+  nixpkgs.overlays = [
+    (final: prev: {
+      mark-shot = inputs.mark-shot.packages.${final.stdenv.hostPlatform.system}.default;
+    })
+  ];
+
   environment.systemPackages = with pkgs; [
     kitty.terminfo
     gnome-tweaks
@@ -33,6 +40,7 @@
     fzf
     fastfetch
     wl-clipboard
+    mark-shot
     wget
     btop
     gh
