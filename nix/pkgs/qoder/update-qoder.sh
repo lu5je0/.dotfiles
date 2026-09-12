@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
-PACKAGE_FILE="$REPO_ROOT/nix/pkgs/qoder.nix"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd -- "$SCRIPT_DIR/../../.." && pwd)
+PACKAGE_FILE="$SCRIPT_DIR/default.nix"
 DOWNLOAD_URL="https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb"
 TEMP_DIR=$(mktemp -d)
 PACKAGE_BACKUP="$TEMP_DIR/qoder.nix"
