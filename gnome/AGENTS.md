@@ -80,13 +80,18 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
 
 GNOME 顶栏只对**按图标名拿到且以 `-symbolic` 结尾**的图标按前景色染色。mark-shot 上游的托盘逻辑是：主题名对宿主可见才发图标名，
 否则退彩色位图；而它的可见性判断只认 `/usr/share` 等标准根目录，NixOS 的 profile 路径不算，所以上游默认走位图。
-本仓库直接改默认行为（不再用 AppIndicator 扩展的 custom-icons 覆盖）：
+本仓库直接改默认行为（不再用 AppIndicator 扩展的 custom-icons 覆盖）。mark-shot 不装进系统配置，
+作为独立 flake 装进用户 profile：`nix profile install ~/.dotfiles/nix/pkgs/mark-shot`。
 
-- `nix/pkgs/mark-shot/mark-shot-tray-symbolic.patch`（`nix/modules/packages.nix` 的 overlay 应用）让托盘优先发 `mark-shot-symbolic`，
-  并把宿主可见性判断扩展到会话的 `XDG_DATA_DIRS`（`/run/current-system/sw/share`、`/etc/profiles/per-user/*/share` 因此可识别）
-- 同名 SVG `gnome/icons/mark-shot-symbolic.svg` 由同一 overlay 装进包内 `share/icons/hicolor/symbolic/apps/`，
-  经 profile 进入宿主搜索路径，宿主按名解析后染色
+- `nix/pkgs/mark-shot/default.nix`：
+  - `mark-shot-tray-symbolic.patch`：托盘优先发 `mark-shot-symbolic` 且宿主可见性判断扩展到会话的 `XDG_DATA_DIRS`；
+    自启动 desktop 写成 `Exec=mark-shot --tray`（上游写 `applicationFilePath()`，Nix 下是 store 路径且绕过 wrapper，升级后会拉起旧版本）
+  - SVG 装进包内 `share/icons/hicolor/symbolic/apps/`，应用启动（初始化托盘）时把它链到
+    `~/.local/share/icons/hicolor/symbolic/apps/`——gnome-shell 解析图标名时看不清 nix profile（实测退占位符「…」），
+    放用户目录则应用与宿主都能按名解析；该位置已有普通文件时不覆盖（可手动放文件迭代图标）
+  - wrapper 补 gtk3 的 gsettings schema 目录（内有组件要读 `org.gtk.Settings.FileChooser`，缺失时进程启动即 abort）
+- `nix/pkgs/mark-shot/flake.nix`：独立小 flake（自己的 lock），根 flake 不引用它
 
-升级 mark-shot rev 时补丁可能要同步 rebase（上游改了 `application_icon.cpp` 会打不上）。
-临时迭代图标可直接放 `~/.local/share/icons/hicolor/symbolic/apps/mark-shot-symbolic.svg`（用户目录优先于 profile），
-重启 mark-shot 进程生效，无需重启扩展；改包内那份则要 `nixos-rebuild`。
+升级：`cd ~/.dotfiles/nix/pkgs/mark-shot && nix flake update` 后 `nix profile upgrade "nix/pkgs/mark-shot"`；
+补丁可能要随上游 rebase（上游改了 `application_icon.{h,cpp}` / `windows_tray_controller.cpp` / `autostart_linux.cpp` 会打不上）。
+迭代图标：改 `nix/pkgs/mark-shot/mark-shot-symbolic.svg` 后 upgrade（应用下次启动重新链），重启 mark-shot 进程即可，不用重启扩展。

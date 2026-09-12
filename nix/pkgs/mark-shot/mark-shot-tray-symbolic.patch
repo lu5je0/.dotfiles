@@ -1,3 +1,20 @@
+--- a/src/ui/application_icon.h
++++ b/src/ui/application_icon.h
+@@ -40,4 +40,14 @@
+  */
+ QIcon applicationTrayPixmapIcon();
+ 
++/**
++ * 把单色托盘图标链接到用户的 XDG 图标目录。
++ *
++ * 托盘宿主只搜索系统与用户图标目录；应用自身的安装目录（Nix profile、
++ * 开发目录等）对宿主不可见时按名解析会失败、退成占位符。这里创建指向
++ * 包内图标的链接，使宿主可解析；目标位置已有普通文件时不覆盖（允许用户
++ * 手动放到该处迭代图标）。
++ */
++void ensureTrayIconVisible();
++
+ }  // namespace markshot::ui
 --- a/src/ui/application_icon.cpp
 +++ b/src/ui/application_icon.cpp
 @@ -19,6 +19,9 @@
@@ -81,3 +98,64 @@
      }
      return {};
  #endif
+@@ -202,4 +223,37 @@
+ #endif
+ }
+ 
++void ensureTrayIconVisible()
++{
++#if defined(Q_OS_WIN)
++    return;
++#else
++    const QString source = QCoreApplication::applicationDirPath() +
++        QStringLiteral("/../share/icons/hicolor/symbolic/apps/mark-shot-symbolic.svg");
++    if (!QFile::exists(source)) {
++        return;
++    }
++
++    const QString dataHome = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
++    if (dataHome.isEmpty()) {
++        return;
++    }
++
++    const QString targetDir = dataHome + QStringLiteral("/icons/hicolor/symbolic/apps");
++    if (!QDir().mkpath(targetDir)) {
++        return;
++    }
++
++    const QString target = targetDir + QStringLiteral("/mark-shot-symbolic.svg");
++    const QFileInfo targetInfo(target);
++    if (targetInfo.exists() && !targetInfo.isSymLink()) {
++        return;
++    }
++    if (targetInfo.isSymLink()) {
++        QFile::remove(target);
++    }
++    QFile::link(source, target);
++#endif
++}
++
+ }  // namespace markshot::ui
+--- a/src/autostart/autostart_linux.cpp
++++ b/src/autostart/autostart_linux.cpp
+@@ -59,7 +59,9 @@
+     stream << QStringLiteral("Type=Application\n");
+     stream << QStringLiteral("Name=Mark Shot\n");
+     stream << QStringLiteral("Comment=Start Mark Shot in the system tray\n");
+-    stream << QStringLiteral("Exec=%1 --tray\n").arg(desktopQuoted(QCoreApplication::applicationFilePath()));
++    // Nix 等包管理下 applicationFilePath() 是 store 内的真实二进制（且绕过 wrapper），
++    // 按名字写让启动器沿 PATH 找稳定入口，升级后自启动不会仍指向旧版本
++    stream << QStringLiteral("Exec=mark-shot --tray\n");
+     stream << QStringLiteral("Terminal=false\n");
+     stream << QStringLiteral("X-GNOME-Autostart-enabled=true\n");
+     return true;
+--- a/src/windows_tray_controller.cpp
++++ b/src/windows_tray_controller.cpp
+@@ -421,6 +421,7 @@
+         m_application->quit();
+     });
+ 
++    markshot::ui::ensureTrayIconVisible();
+     m_tray = new QSystemTrayIcon(trayIcon(), this);
+     m_tray->setToolTip(QStringLiteral("Mark Shot"));
+     m_tray->setContextMenu(m_menu);
