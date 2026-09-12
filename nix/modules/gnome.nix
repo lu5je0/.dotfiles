@@ -62,6 +62,8 @@ in
           font-name = "Noto Sans CJK SC 11";
           document-font-name = "Noto Sans CJK SC 12";
           monospace-font-name = "JetBrainsMonoNL Nerd Font Mono 11";
+          # GNOME 50 起默认关闭中键粘贴（primary selection），这里显式恢复
+          gtk-enable-primary-paste = true;
         };
         "org/gnome/desktop/wm/preferences".button-layout = "appmenu:minimize,maximize,close";
         "org/gnome/shell" = {
