@@ -10,6 +10,16 @@
   { "name": "wezterm", "source": "wezterm", "target": "~/.config/wezterm" },
   { "name": "yazi", "source": "yazi", "target": "~/.config/yazi" },
   { "name": "kitty", "source": "kitty", "target": "~/.config/kitty" },
+  {
+    "name": "mpv",
+    "action": "clone",
+    "desc": "mpv config (lu5je0/mpv-lazy, portable_config → ~/.config/mpv)",
+    "script": "unix/mpv.sh",
+    "checks": [
+      { "exists": "~/.local/share/mpv-lazy/portable_config/mpv.conf" },
+      { "exists": "~/.config/mpv/mpv.conf" }
+    ]
+  },
   { "name": "mac-nix", "source": "nix-mac/nix.conf", "target": "~/.config/nix/nix.conf", "os": ["mac"] },
   {
     "name": "pi",
