@@ -55,6 +55,7 @@
         jerry = mkSystem [
           ./nix/profiles/base.nix
           ./nix/hosts/jerry
+          ./nix/modules/gaming.nix
           ./nix/profiles/desktop.nix
           ./nix/modules/nas-mount.nix
         ];
