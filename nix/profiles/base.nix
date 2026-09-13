@@ -53,8 +53,6 @@
     group = "lu5je0";
     description = "lu5je0";
     extraGroups = [ "docker" "networkmanager" "wheel" ];
-    # 密码哈希不在 flake 里，装机时需先创建该文件，否则账户锁定、无法登录
-    hashedPasswordFile = "/etc/nixos/lu5je0-password-hash";
   };
 
   services.cron.enable = true;
