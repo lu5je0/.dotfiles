@@ -65,6 +65,13 @@ in
 
   networking.firewall.allowedTCPPorts = [ 3389 ];
 
+  # Nautilus 右键「在终端中打开」，终端用用户 profile 里的 kitty
+  # （等价于 gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal kitty）
+  programs.nautilus-open-any-terminal = {
+    enable = true;
+    terminal = "kitty";
+  };
+
   programs.dconf.profiles.user.databases = [
     {
       settings = {

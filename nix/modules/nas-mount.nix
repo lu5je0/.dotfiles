@@ -12,6 +12,9 @@ let
     "noatime"
     "nofail"
     "noauto"
+    # 共享根被服务端映射成 0555，客户端权限检查会把写入拦成 EACCES；
+    # 关掉客户端检查，交给服务端 ACL 判定（uid/gid 已强制成当前用户）
+    "noperm"
     "x-systemd.automount"
     "x-systemd.idle-timeout=600"
     "x-systemd.mount-timeout=15"

@@ -15,7 +15,8 @@ FSTAB=/etc/fstab
 BACKUP=/etc/fstab.nas-mount.bak
 BEGIN_MARK='# >>> dotfiles nas-mount >>>'
 END_MARK='# <<< dotfiles nas-mount <<<'
-OPTS="username=$NAS_USER,password=$NAS_PASS,uid=$(id -u),gid=$(id -g),vers=3.1.1,_netdev,soft,noatime,nofail,noauto,x-systemd.automount,x-systemd.idle-timeout=600,x-systemd.mount-timeout=15"
+# noperm：共享根被服务端映射成 0555，客户端权限检查会把写入拦成 EACCES，交给服务端 ACL 判定
+OPTS="username=$NAS_USER,password=$NAS_PASS,uid=$(id -u),gid=$(id -g),vers=3.1.1,_netdev,soft,noatime,nofail,noauto,noperm,x-systemd.automount,x-systemd.idle-timeout=600,x-systemd.mount-timeout=15"
 
 # 挂载点：确保存在，并在「确认未挂载」的前提下锁成 root:root 555，
 # 这样 automount 没起来时写入直接 EACCES，不会静默落到本地盘。
