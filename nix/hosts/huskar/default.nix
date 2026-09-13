@@ -102,5 +102,10 @@
   networking.hostName = "huskar";
   networking.networkmanager.enable = true;
 
+  # 关闭 WiFi 省电。NM 侧默认是 "ignore"（不管 mac80211 PS），显式关掉；
+  # iwlmvm 固件档位默认 2=balanced，改 1=active（modinfo: 1-active/2-balanced/3-low power），重启后生效
+  networking.networkmanager.wifi.powersave = false;
+  boot.extraModprobeConfig = "options iwlmvm power_scheme=1\n";
+
   system.stateVersion = "26.05";
 }
