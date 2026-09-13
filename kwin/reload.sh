@@ -40,6 +40,9 @@ src = pathlib.Path.home() / ".dotfiles" / "wm" / "layout.jsonc"
 print(json.dumps(json.loads(strip_comments(src.read_text())), separators=(",", ":"), ensure_ascii=False))
 ')
 kwriteconfig6 --file kwinrc --group Script-tilewindow --key wm_layout_json "$JSON"
+# 本机短主机名，供脚本匹配 layout.jsonc 里的 host 字段（kwin 脚本无 hostname API）
+kwriteconfig6 --file kwinrc --group Script-tilewindow --key wm_host_name \
+  "$(python3 -c 'import socket; print(socket.gethostname().split(".")[0])')"
 
 if [ -d "$HOME/.local/share/kwin/scripts/tilewindow" ]; then
     kpackagetool6 --type KWin/Script --upgrade "$DOTFILES_DIR/kwin/tilewindow"

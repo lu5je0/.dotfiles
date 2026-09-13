@@ -10,7 +10,8 @@ KDE Wayland 下的窗口管理脚本，等同于 Windows 下的 AHK 窗口管理
 bash ~/.dotfiles/kwin/reload.sh
 ```
 
-reload.sh 做的事：`wm/layout.jsonc` 同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` →
+reload.sh 做的事：`wm/layout.jsonc` 同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json`，
+本机短主机名写进同组的 `wm_host_name`（脚本用它匹配规则里的 `host`）→
 `kpackagetool6 --upgrade` → qdbus 卸载/加载/启动脚本 → 启用插件。
 
 ## 快捷键
@@ -36,7 +37,7 @@ readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.
 `wm/layout.jsonc` 剥注释后整段同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` key，
 脚本每次按键通过 `readConfig` 读取并解析。改配置后需跑一次 `reload.sh`。
 
-`rules` 为有序数组，每条规则由 `wm` / `app` / `screen` 三个可选字段 + `size` 组成：
+`rules` 为有序数组，每条规则由 `wm` / `app` / `screen` / `host` 四个可选字段 + `size` 组成：
 
 ```json
 {
@@ -52,6 +53,8 @@ readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.
   最后一条无字段规则是全局 fallback
 - `wm` / `app` 可为字符串或数组；本端 `wm` 固定为 `kwin`、`screen` 固定为 `default`，
   app 匹配用 `resourceClass`（小写）
+- `host` 按本机短主机名匹配（可为字符串或数组），值来自 reload.sh 写入的 `wm_host_name`，
+  用于同一份配置在不同机器上用不同尺寸
 - 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；
   可选 `x/y` 为 `{align, offset}`（align: left/center/right/top/bottom，缺省 center），
   不写 `x/y` 时自动居中；坐标相对 workArea（已排除任务栏）

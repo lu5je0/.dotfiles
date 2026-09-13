@@ -174,7 +174,7 @@ function alignPos(axis, spec, size, max) {
 
 // wm/layout.jsonc: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
 // 字段可为字符串或数组，缺省即通配
-function findEntry(config, wm, app, screen, mode) {
+function findEntry(config, wm, app, screen, host, mode) {
     const matchField = (spec, value) => {
         if (spec == null)
             return true;
@@ -182,7 +182,8 @@ function findEntry(config, wm, app, screen, mode) {
         return list.includes(value);
     };
     for (const rule of config?.rules ?? []) {
-        if (!matchField(rule.wm, wm) || !matchField(rule.app, app) || !matchField(rule.screen, screen))
+        if (!matchField(rule.wm, wm) || !matchField(rule.app, app)
+            || !matchField(rule.screen, screen) || !matchField(rule.host, host))
             continue;
         if (rule.size && rule.size[mode])
             return rule.size[mode];
@@ -191,7 +192,7 @@ function findEntry(config, wm, app, screen, mode) {
 }
 
 function getCenterLayout(wmClass, position, sw, sh) {
-    const entry = findEntry(loadFileConfig(), 'gnome', wmClass, 'default', position);
+    const entry = findEntry(loadFileConfig(), 'gnome', wmClass, 'default', GLib.get_host_name(), position);
     if (entry) {
         const w = resolveDim(entry.w, sw);
         const h = resolveDim(entry.h, sh);

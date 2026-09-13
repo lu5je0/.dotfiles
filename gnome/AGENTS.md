@@ -42,6 +42,8 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
   最后一条无字段规则是全局 fallback
 - `wm` / `app` 可为字符串或数组（数组 = 多端/多 app 共享一条规则）；本端 `wm` 固定为
   `gnome`、`screen` 固定为 `default`
+- `host` 按本机短主机名匹配（`GLib.get_host_name()`，即 `hostname -s`，可为字符串或数组），
+  用于同一份配置在不同机器上用不同尺寸
 - 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；
   可选 `x/y` 为 `{align, offset}`（align: left/center/right/top/bottom，缺省 center），
   不写 `x/y` 时自动居中

@@ -102,10 +102,39 @@ local function field_matches(spec, value)
   return false
 end
 
+-- host 匹配本机名；macOS 的 shell 主机名与「电脑名称」常不一致，二者任一命中即可
+local HOST_NAMES = {}
+do
+  local ok, out = pcall(hs.execute, "hostname -s")
+  if ok and out and out ~= "" then
+    HOST_NAMES[(out:gsub("%s+$", ""))] = true
+  end
+  local localized = hs.host.localizedName()
+  if localized then
+    HOST_NAMES[localized] = true
+  end
+end
+
+local function host_matches(spec)
+  if spec == nil then
+    return true
+  end
+  if type(spec) == "string" then
+    return HOST_NAMES[spec] == true
+  end
+  for _, item in ipairs(spec) do
+    if HOST_NAMES[item] then
+      return true
+    end
+  end
+  return false
+end
+
 local function rule_matches(rule, wm, app, screen)
   return field_matches(rule.wm, wm)
     and field_matches(rule.app, app)
     and field_matches(rule.screen, screen)
+    and host_matches(rule.host)
 end
 
 -- rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则

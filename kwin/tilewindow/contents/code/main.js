@@ -75,12 +75,18 @@ function matchField(spec, value) {
     return false;
 }
 
-function findEntry(config, wm, app, screen, mode) {
+// reload.sh 同步 layout.jsonc 时一并写入本机短主机名
+function hostName() {
+    return readConfig("wm_host_name", "");
+}
+
+function findEntry(config, wm, app, screen, host, mode) {
     if (!config || !config.rules)
         return null;
     for (let i = 0; i < config.rules.length; i++) {
         const rule = config.rules[i];
-        if (!matchField(rule.wm, wm) || !matchField(rule.app, app) || !matchField(rule.screen, screen))
+        if (!matchField(rule.wm, wm) || !matchField(rule.app, app) || !matchField(rule.screen, screen)
+            || !matchField(rule.host, host))
             continue;
         if (rule.size && rule.size[mode])
             return rule.size[mode];
@@ -97,7 +103,7 @@ function getProcessName(window) {
 }
 
 function getCenterLayout(processName, position, sw, sh) {
-    const entry = findEntry(loadFileConfig(), "kwin", processName, "default", position);
+    const entry = findEntry(loadFileConfig(), "kwin", processName, "default", hostName(), position);
     if (entry) {
         const w = resolveDim(entry.w, sw);
         const h = resolveDim(entry.h, sh);

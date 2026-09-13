@@ -1,7 +1,8 @@
 {
   // 窗口布局统一配置（JSONC，支持注释）
-  // rules 从前往后匹配，取第一条「wm/app/screen 字段全匹配且 size 提供该 mode」的规则；
+  // rules 从前往后匹配，取第一条「wm/app/screen/host 字段全匹配且 size 提供该 mode」的规则；
   // 字段缺省即通配，可为字符串或数组。最后一条无字段规则是全局 fallback。
+  // host 为本机短主机名（Linux 取 hostname -s；macOS 取 hostname -s 或「电脑名称」，任一命中即可）
   "rules": [
     // ---------- hammerspoon (macOS)：screen 分 main / external ----------
     {
@@ -68,9 +69,21 @@
     {
       "wm": ["kwin", "gnome"],
       "app": "kitty",
+      "host": "huskar",
       "size": {
         "center_i": { "w": 1727, "h": 1146 },
         "center_j": { "w": 1113, "h": 923 }
+      }
+    },
+    {
+      // jerry：2560x1600 @166%（逻辑 1536x960，比 huskar 高一截）；按宽度等比缩放 huskar 尺寸
+      //（3840→2560 即 ÷1.5，w/h 同系数，kitty 长宽比不变）
+      "wm": ["kwin", "gnome"],
+      "app": "kitty",
+      "host": "jerry",
+      "size": {
+        "center_i": { "w": 1151, "h": 764 },
+        "center_j": { "w": 742, "h": 615 }
       }
     },
     {
