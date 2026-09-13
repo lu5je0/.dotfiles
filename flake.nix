@@ -52,6 +52,12 @@
           ./nix/profiles/desktop.nix
           ./nix/modules/nas-mount.nix
         ];
+        jerry = mkSystem [
+          ./nix/profiles/base.nix
+          ./nix/hosts/jerry
+          ./nix/profiles/desktop.nix
+          ./nix/modules/nas-mount.nix
+        ];
       };
     };
 }
