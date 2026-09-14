@@ -1,3 +1,9 @@
 {
-	"editorPaddingX": 2
+	"editorPaddingX": 2,
+	"packages": [
+		"npm:pi-commandcode-provider",
+		"npm:pi-smart-web-search",
+		"npm:pi-smart-fetch",
+    "npm:@juicesharp/rpiv-ask-user-question"
+	]
 }

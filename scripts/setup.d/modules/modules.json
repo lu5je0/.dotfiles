@@ -26,7 +26,10 @@
     "action": "install",
     "desc": "pi agent config",
     "script": "unix/pi.sh",
-    "checks": [{ "link": "~/.pi/agent/extensions" }]
+    "checks": [
+      { "link": "~/.pi/agent/extensions" },
+      { "link": "~/.pi/agent/models.json" }
+    ]
   },
   {
     "name": "q-trash",

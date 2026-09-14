@@ -1,0 +1,62 @@
+{
+  "providers": {
+    "llama.cpp": {
+      "modelOverrides": {
+        "Qwen3.8-27B-Q4_K_M": {
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "compat": {
+            "thinkingFormat": "qwen-chat-template",
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": false
+          }
+        },
+        "Qwen3.8-27B-heretic-ara.ROCmFP4-STRIX": {
+          "reasoning": true,
+          "contextWindow": 229376,
+          "maxTokens": 65536,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "compat": {
+            "thinkingFormat": "qwen-chat-template",
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": false
+          }
+        }
+      }
+    },
+    "commandcode": {
+      "modelOverrides": {
+        "deepseek/deepseek-v4.1-flash": {
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": "high",
+            "xhigh": null,
+            "max": "max"
+          },
+          "compat": {
+            "supportsReasoningEffort": true
+          }
+        }
+      }
+    }
+  }
+}
