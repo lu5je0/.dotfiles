@@ -2,6 +2,23 @@
   "providers": {
     "llama.cpp": {
       "modelOverrides": {
+        "Qwen3.8-27B-Uncensored-Q4_K_M": {
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "compat": {
+            "thinkingFormat": "qwen-chat-template",
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": false
+          }
+        },
         "Qwen3.8-27B-Q4_K_M": {
           "reasoning": true,
           "thinkingLevelMap": {
