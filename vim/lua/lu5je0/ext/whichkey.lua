@@ -98,8 +98,8 @@ function M.opts()
       { '<leader>vs', desc = 'toggle signcolumn' },
       { '<leader>vS', '<cmd>set signcolumn=yes | echo "set signcolumn=yes"<cr>', desc = 'set signcolumn=yes' },
       { '<leader>vi', desc = 'toggle-save-last-ime' },
-      { '<leader>vv', function() vim.cmd('edit ' ..
-        vim.env.HOME .. '/.dotfiles/vim/init.lua | cd ' .. vim.env.HOME .. '/.dotfiles/vim') end, desc = 'edit init.lua' },
+      -- { '<leader>vv', function() vim.cmd('edit ' ..
+        -- vim.env.HOME .. '/.dotfiles/vim/init.lua | cd ' .. vim.env.HOME .. '/.dotfiles/vim') end, desc = 'edit init.lua' },
       { '<leader>W', group = 'workspace' },
       { '<leader>w', group = 'windows', mode = { 'n', 'x' } },
       { '<leader>wr', desc = 'translate and replace', mode = { 'n', 'x' } },

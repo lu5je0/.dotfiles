@@ -230,6 +230,14 @@ vim.api.nvim_create_user_command('Escape', function(opts)
   vim.api.nvim_set_current_line(escaped_line)
 end, { nargs = '*' })
 
+vim.api.nvim_create_user_command('Dotfiles', function()
+  vim.cmd('edit ' .. vim.env.HOME .. '/.dotfiles/vim/init.lua | cd ' .. vim.env.HOME .. '/.dotfiles/vim')
+end, { nargs = 0 })
+
+vim.api.nvim_create_user_command('Nix', function()
+  vim.cmd('edit ' .. vim.env.HOME .. '/.dotfiles/nix/flake.nix | cd ' .. vim.env.HOME .. '/.dotfiles/nix')
+end, { nargs = 0 })
+
 vim.api.nvim_create_user_command('ClearUndo', function()
   local old_undolevels = vim.o.undolevels
   vim.o.undolevels = -1
