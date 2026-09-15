@@ -9,6 +9,9 @@
     ../modules/mission-center.nix
   ];
 
+  # 关闭防火墙
+  networking.firewall.enable = false;
+
   environment.systemPackages = with pkgs; [
     steam-run
   ];

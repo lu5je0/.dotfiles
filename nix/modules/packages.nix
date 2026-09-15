@@ -25,6 +25,7 @@
     bun
     pkgsUnstable.pi-coding-agent
     nodejs
+    openssl
     stylua
     opencc
     ripgrep

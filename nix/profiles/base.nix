@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ../modules/nh.nix
     ../modules/nix-ld.nix
     ../modules/packages.nix
     ../modules/zsh.nix
@@ -60,5 +61,4 @@
   virtualisation.docker.enable = true;
 
   programs.appimage.enable = true;
-  programs.appimage.binfmt = true;
 }

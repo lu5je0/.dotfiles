@@ -42,7 +42,6 @@
         nixpve = mkSystem [
           ./nix/profiles/base.nix
           ./nix/hosts/nixpve
-          ./nix/profiles/desktop.nix
           ./nix/modules/nas-mount.nix
         ];
         huskar = mkSystem [

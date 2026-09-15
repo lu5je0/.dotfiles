@@ -3,19 +3,34 @@
 _q_push_targets() {
   local -a targets
   targets=(
-    'feishu:push to Feishu'
     'telegram:push to Telegram'
+    'feishu:push to Feishu'
     'all:push to all configured targets'
   )
   _describe -t targets 'push target' targets
+}
+
+_q_push_formats() {
+  local -a formats
+  formats=(
+    'text:plain text payload'
+    'markdown:send as MarkdownV2 (telegram)'
+    'html:send with parse_mode=HTML (telegram)'
+  )
+  _describe -t formats 'payload format' formats
 }
 
 _q_push() {
   _arguments -s \
     '-t+[push target]:target:_q_push_targets' \
     '--target=[push target]:target:_q_push_targets' \
+    '-f+[payload format]:format:_q_push_formats' \
+    '--format=[payload format]:format:_q_push_formats' \
     '-m[send as markdown when target supports it]' \
     '--markdown[send as markdown when target supports it]' \
+    '-H[send as html when target supports it]' \
+    '--html[send as html when target supports it]' \
+    '*--file[attach a file, - reads stdin]:file:_files' \
     '-h[show help]' \
     '--help[show help]' \
     '*:message: '
