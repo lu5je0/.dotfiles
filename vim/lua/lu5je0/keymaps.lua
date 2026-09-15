@@ -126,7 +126,45 @@ vim.schedule(function()
       require('lu5je0.core.keys').feedkey('zo' .. end_line .. 'ggI')
     end
   end)
-  
+
+  -- 折起与光标同层、且同属一个父节点的折叠（父节点之外的同层节点不动）
+  set_map('n', 'zB', function()
+    local win = vim.api.nvim_get_current_win()
+    local lnum = vim.api.nvim_win_get_cursor(win)[1]
+    local level = vim.fn.foldlevel(lnum)
+    if level == 0 then
+      return
+    end
+
+    local saved = vim.wo.foldlevel
+    local first, last = 1, vim.fn.line('$')
+
+    if level > 1 then
+      vim.wo.foldlevel = level - 2
+      first = vim.fn.foldclosed(lnum)
+      last = vim.fn.foldclosedend(lnum)
+      if first < 0 then
+        vim.wo.foldlevel = saved
+        return
+      end
+    end
+
+    vim.wo.foldlevel = level - 1
+    local heads = {}
+    for i = first, last do
+      if vim.fn.foldclosed(i) == i then
+        heads[#heads + 1] = i
+      end
+    end
+
+    vim.wo.foldlevel = saved
+    for _, head in ipairs(heads) do
+      vim.api.nvim_win_set_cursor(win, { head, 0 })
+      vim.cmd('normal! zc')
+    end
+    vim.api.nvim_win_set_cursor(win, { lnum, 0 })
+  end, desc_opts('fold siblings in current block'))
+
   -- text
   set_map('n', '<leader>xx', ":%!", { nowait = true, silent = false, desc = ':%!' })
   
