@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ../modules/nh.nix
     ../modules/nix-ld.nix
     ../modules/packages.nix
     ../modules/zsh.nix

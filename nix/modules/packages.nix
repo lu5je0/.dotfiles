@@ -19,7 +19,6 @@
     file
     cmake
     ncdu
-    nh
   ];
 
   users.users.lu5je0.packages = with pkgs; [
