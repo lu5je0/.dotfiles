@@ -106,6 +106,9 @@
   # iwlmvm 固件档位默认 2=balanced，改 1=active（modinfo: 1-active/2-balanced/3-low power），重启后生效
   networking.networkmanager.wifi.powersave = false;
   boot.extraModprobeConfig = "options iwlmvm power_scheme=1\n";
+  
+  # 关闭防火墙
+  networking.firewall.enable = false;
 
   system.stateVersion = "26.05";
 }
