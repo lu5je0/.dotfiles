@@ -36,7 +36,7 @@ CANDIDATES = {
     "mvn": ["maven"],
 }
 HINTS = {
-    "mvn": "nixpkgs carries one maven version only — press a and pin a nixpkgs rev for others",
+    "mvn": "nixpkgs carries one maven version — press a and add nixpkgs/nixos-24.11#maven for a second",
 }
 SEQUENCES = ("gg",)
 PREFIXES = {seq[:i] for seq in SEQUENCES for i in range(1, len(seq))}
@@ -172,13 +172,25 @@ class Element:
 
     @property
     def ref(self):
-        """Installable reproducing this element: the locked url when it still resolves,
-        else the original flake ref (a path: source may have been GC'd)."""
-        url = self.url.split("?")[0]
-        if url.startswith("path:"):
-            if not os.path.exists(url[len("path:"):]):
-                return f"{self.original_url or 'nixpkgs'}#{self.attr_path}"
-        return f"{self.url}#{self.attr_path}"
+        """Installable reproducing this element, best first: the locked url, the original
+        flake ref, plain nixpkgs, and finally the store path itself.
+
+        A `path:` source can be garbage-collected while the element survives, and nix
+        cannot re-fetch a store path, so a dead one is not a usable ref. The plain
+        `nixpkgs#<attr>` fallback survives because the system registry entry points at
+        a store path that the system closure keeps alive."""
+        candidates = []
+        if self.attr_path:
+            candidates += [
+                f"{self.url}#{self.attr_path}",
+                f"{self.original_url}#{self.attr_path}",
+                f"nixpkgs#{self.attr_path}",
+            ]
+        candidates += list(self.store_paths)  # installs back verbatim, no flake needed
+        for ref in candidates:
+            if resolvable_ref(ref):
+                return ref
+        return candidates[0] if candidates else f"nixpkgs#{self.name}"
 
     @property
     def source(self):
@@ -283,8 +295,61 @@ class Profile:
 # ------------------------------------------------------------- jdk symlinks
 
 
+def resolvable_ref(ref):
+    """Whether a profile element ref can actually be instantiated.
+
+    A `path:` ref only resolves while its source is still in the store, which is the
+    whole point of the fallback chain in Element.ref."""
+    if not ref:
+        return False
+    if ref.startswith("path:"):
+        return os.path.exists(ref.split("?")[0][len("path:"):])
+    return True
+
+
+def jdk_major(el):
+    """Feature version of a JDK element: 8 for both 1.8.0_504 and openjdk-8u504-b01."""
+    release = java_version(el)
+    if release:
+        return _major_from(release)
+    return _major_from(el.version)
+
+
+def _major_from(text):
+    parts = text.split(".")
+    if parts[:1] == ["1"] and len(parts) > 1:  # legacy 1.8.0_492
+        return parts[1] if parts[1].isdigit() else None
+    if parts[:1] and parts[0].isdigit():
+        return parts[0]
+    # store names without a dotted version: openjdk-8u504-b01, zulu8.72.0.17
+    m = re.search(r"(?:^|[^\d])(\d+)(?:u|\.|$)", text)
+    return m.group(1) if m else None
+
+
+def java_version(el):
+    """JAVA_VERSION from the JDK's own release file — authoritative, unlike the store
+    directory name (`openjdk-8u504-b01` does not contain a parseable version)."""
+    for sp in el.store_paths:
+        for root in (sp, os.path.join(sp, "lib", "openjdk")):
+            try:
+                with open(os.path.join(root, "release")) as f:
+                    m = re.search(r'^JAVA_VERSION="([^"]+)"', f.read(), re.MULTILINE)
+            except OSError:
+                continue
+            if m:
+                return m.group(1)
+    return None
+
+
 def jdk_home(el):
-    """Usable JDK home: mac bundle Contents/Home when present, else store root."""
+    """Usable JDK home: the mac bundle's Contents/Home when present, else the
+    directory that actually holds bin/ + release/.
+
+    On Linux the openjdk package exposes the store root with bin/, lib/ and include/
+    symlinked out of lib/openjdk/, and that inner directory is the real home — it is
+    what nixpkgs' own passthru.home and JAVA_HOME wrappers point at. Using the root
+    loses conf/ (keytool's java.security), jmods, legal, man and release, so tools that
+    identify a JDK by reading its release file see a broken install."""
     for sp in el.store_paths:
         mvms = os.path.join(sp, "Library", "Java", "JavaVirtualMachines")
         if os.path.isdir(mvms):
@@ -292,31 +357,34 @@ def jdk_home(el):
                 home = os.path.join(mvms, entry, "Contents", "Home")
                 if os.path.isdir(home):
                     return home
-        if os.path.exists(os.path.join(sp, "bin", "java")):
-            return sp
+        for home in (os.path.join(sp, "lib", "openjdk"), sp):
+            if os.path.exists(os.path.join(home, "bin", "java")):
+                return home
     return None
-
-
-def jdk_major(el):
-    parts = el.version.split(".")
-    if parts[:1] == ["1"] and len(parts) > 1:  # legacy 1.8.0_492
-        return parts[1] if parts[1].isdigit() else None
-    return parts[0] if parts[:1] and parts[0].isdigit() else None
 
 
 def reconcile_jdk_links(elements, active=None):
     """Keep ~/.local/share/nsdk/jdks/<major> pointing at every installed JDK home,
     so IDEA/gradle can reference stable paths across nsdk switches.
-    `current` tracks the active JDK home for JAVA_HOME."""
-    wanted = {}
+    `current` tracks the active JDK home for JAVA_HOME.
+
+    No GC rooting is needed: an installed element is part of the profile generation's
+    closure, so its output — and any subdirectory of it, like the openjdk store root's
+    lib/openjdk — stays alive for as long as the element is installed."""
+    homes = {}
     for el in elements:
         major, home = jdk_major(el), jdk_home(el)
         if major and home:
-            wanted[major] = home
+            homes[major] = home
+    current_home = jdk_home(active) if active is not None else None
+    wanted = dict(homes)
+    if current_home:
+        wanted["current"] = current_home
     try:
         JDK_LINK_DIR.mkdir(parents=True, exist_ok=True)
+        entries = os.listdir(JDK_LINK_DIR)
     except OSError:
-        return wanted
+        return homes
     for name, target in wanted.items():
         link = JDK_LINK_DIR / name
         if link.is_symlink():
@@ -329,30 +397,17 @@ def reconcile_jdk_links(elements, active=None):
             os.symlink(target, link)
         except OSError:
             pass
-    for entry in os.listdir(JDK_LINK_DIR):
-        if not re.fullmatch(r"\d+", entry):
+    for entry in entries:
+        if entry in wanted or not re.fullmatch(r"(?:\d+|current)", entry):
             continue
         link = JDK_LINK_DIR / entry
         if not link.is_symlink():
-            continue
-        if wanted.get(entry) == os.readlink(link):
             continue
         try:
             link.unlink()  # stale or dangling managed link
         except OSError:
             pass
-    cur = JDK_LINK_DIR / "current"
-    target = jdk_home(active) if active is not None else None
-    if target:
-        if cur.is_symlink():
-            if os.readlink(cur) != target:
-                cur.unlink()
-                os.symlink(target, cur)
-        elif not cur.exists():
-            os.symlink(target, cur)
-    elif cur.is_symlink():
-        cur.unlink()
-    return wanted
+    return homes
 
 
 # ------------------------------------------------------------- switch planning
@@ -417,11 +472,19 @@ def plan_switch(profile_path, slot, target):
         if installed:
             return [op_remove([target.name]), op_add(target_ref, slide)]
         return [op_add(target_ref, slide)]
-    demoted = free_priority({e.priority for e in others} | {1}, low=2)
-    ops = [op_remove(([target.name] if installed else []) + [winner.name])]
-    ops.append(op_add(target_ref, 1))
-    ops.append(op_add(winner.ref, demoted))
-    return ops
+    # No priority is free below the winner, so the target has to take 1 and the others shift
+    # up. Demoting only the winner can land on a priority another provider already holds,
+    # and nix rejects that with "an existing package already provides the following file",
+    # so rank the slot as 1..n. Only providers whose priority actually changes are removed
+    # and re-added, to keep the window where the slot is incomplete as small as possible.
+    ranked = sorted([winner] + others, key=lambda e: (e.priority, e.name))
+    desired = {e.name: i for i, e in enumerate(ranked, start=2)}
+    names = {e.name for e in providers}
+    removes = [e.name for e in ranked if e.priority != desired[e.name]]
+    if installed and target.name in names and target.name not in removes:
+        removes.append(target.name)
+    adds = [(target_ref, 1)] + [(e.ref, desired[e.name]) for e in ranked if e.name in removes]
+    return ([op_remove(removes)] if removes else []) + [op_add(ref, prio) for ref, prio in adds]
 
 
 def confirm_run(title, ops, profile_path):
