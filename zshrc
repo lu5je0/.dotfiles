@@ -116,6 +116,9 @@ export GOMODCACHE="$HOME/.cache/go/pkg/mod"
 export GOBIN="$HOME/.local/bin"
 export GOPATH="$HOME/.local/share/go"
 
+# java: JAVA_HOME follows the nix profile (switch versions with nsdk)
+[[ -x $HOME/.nix-profile/bin/java ]] && export JAVA_HOME="$HOME/.nix-profile"
+
 ##########################################
 # alias
 ##########################################

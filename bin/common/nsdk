@@ -1,0 +1,989 @@
+#!/usr/bin/env python3
+"""nsdk — switch package versions inside a nix profile (TUI)."""
+
+import json
+import os
+import re
+import select
+import shutil
+import signal
+import subprocess
+import sys
+import termios
+import threading
+import time
+import tty
+import unicodedata
+from pathlib import Path
+
+USAGE = """nsdk — switch package versions inside a nix profile (TUI)
+
+usage:
+  nsdk [--profile <path>]
+
+options:
+  --profile <path>   profile to manage (default: ~/.nix-profile)
+
+Slots (java, mvn, …) are horizontal tabs; versions of the selected slot
+are listed below. All versions stay installed; switching reorders element
+priorities (remove + add --priority under the hood), so switching back is
+instant as long as the store paths are still around.
+"""
+
+WATCH = ("java", "mvn")
+CANDIDATES = {
+    "java": ["jdk8", "jdk11", "jdk17", "jdk21", "jdk25"],
+    "mvn": ["maven"],
+}
+HINTS = {
+    "mvn": "nixpkgs carries one maven version only — press a and pin a nixpkgs rev for others",
+}
+SEQUENCES = ("gg",)
+PREFIXES = {seq[:i] for seq in SEQUENCES for i in range(1, len(seq))}
+SEQUENCE_TIMEOUT = 1.0
+HOME = Path.home()
+
+
+def die(msg):
+    print(msg, file=sys.stderr)
+    sys.exit(1)
+
+
+if sys.stdout.isatty() and not os.environ.get("NO_COLOR"):
+    RESET, BOLD, DIM = "\033[0m", "\033[1m", "\033[2m"
+    CYAN, GREEN, YELLOW, RED = "\033[36m", "\033[32m", "\033[33m", "\033[31m"
+    CURSOR_BG = "\033[48;5;237m"
+    KEEP_BG = "\033[22;39m"  # clears bold/dim + fg but keeps the cursorline background
+else:
+    RESET = BOLD = DIM = CYAN = GREEN = YELLOW = RED = CURSOR_BG = KEEP_BG = ""
+
+
+def shorten(path):
+    text = str(path)
+    home = str(HOME)
+    return "~" + text[len(home):] if text.startswith(home + os.sep) else text
+
+
+def frame_size():
+    # ioctl first: the COLUMNS env var (which shutil prefers) goes stale after a resize
+    try:
+        size = os.get_terminal_size(sys.stdout.fileno())
+        if size.columns > 0 and size.lines > 0:
+            return size, max(20, size.columns - 1)
+    except OSError:
+        pass
+    size = shutil.get_terminal_size((100, 30))
+    return size, max(20, size.columns - 1)
+
+
+def wlen(text):
+    return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in text)
+
+
+def fit(text, width):
+    if width <= 0:
+        return ""
+    if wlen(text) <= width:
+        return text
+    out, w = [], 0
+    for c in text:
+        cw = 2 if unicodedata.east_asian_width(c) in "WF" else 1
+        if w + cw > width - 1:
+            break
+        out.append(c)
+        w += cw
+    return "".join(out) + "…"
+
+
+def line(segs, width, cursor=False):
+    """Assemble (text, style) segments into one screen line padded to width."""
+    bg = CURSOR_BG if cursor else ""
+    reset = KEEP_BG if cursor else RESET
+    parts, w = [], 0
+    for text, style in segs:
+        room = width - w
+        if room <= 0:
+            break
+        text = fit(text, room)
+        if not text:
+            continue
+        parts.append(f"{style}{text}{reset}")
+        w += wlen(text)
+    if cursor:
+        # erase-to-EOL while the background is still active, and stay active across the
+        # newline (BCE): terminals differ on which of the two paints trailing cells
+        return bg + "".join(parts) + "\033[K"
+    return bg + "".join(parts) + " " * (width - w) + RESET
+
+
+# ---------------------------------------------------------------- data layer
+
+
+class Element:
+    def __init__(self, name, data):
+        self.name = name
+        self.attr_path = data.get("attrPath") or ""
+        self.original_url = data.get("originalUrl") or ""
+        self.url = data.get("url") or ""
+        self.priority = data.get("priority", 5)
+        self.store_paths = data.get("storePaths") or []
+        self._bins = None
+
+    def bins(self):
+        if self._bins is None:
+            found = set()
+            for sp in self.store_paths:
+                try:
+                    found.update(os.listdir(os.path.join(sp, "bin")))
+                except OSError:
+                    pass
+            self._bins = found
+        return self._bins
+
+    def pkg(self, bin_name=""):
+        """Store dir name minus hash, e.g. zulu-ca-jdk-25.0.3."""
+        paths = self.store_paths
+        if bin_name:
+            paths = [sp for sp in paths if os.path.exists(os.path.join(sp, "bin", bin_name))] or paths
+        for sp in paths:
+            base = os.path.basename(sp)
+            if "-" in base:
+                return base.split("-", 1)[1]
+        return self.name
+
+    @property
+    def attr(self):
+        return self.attr_path.rsplit(".", 1)[-1]
+
+    @property
+    def version(self):
+        """Trailing version component of the store name, e.g. 25.0.3."""
+        name = self.pkg()
+        tail = name.rsplit("-", 1)[-1]
+        return tail if tail[:1].isdigit() else name
+
+    @property
+    def flavor(self):
+        """Store name minus version, e.g. zulu-ca-jdk; '' when it adds nothing."""
+        name = self.pkg()
+        head = name.rsplit("-", 1)[0] if self.version != name else ""
+        return "" if head in ("", self.name) else head
+
+    @property
+    def ref(self):
+        """Locked url + full attrPath: re-adds the exact same store paths, no download."""
+        return f"{self.url}#{self.attr_path}"
+
+    @property
+    def source(self):
+        m = re.search(r"nixpkgs-(.+)\.[0-9a-f]{12,}/", self.url)
+        if m:
+            return f"nixpkgs {m.group(1)}"
+        return self.original_url.removeprefix("flake:") or "?"
+
+
+class Slot:
+    """A group of elements providing the same set of binaries (e.g. the installed JDKs)."""
+
+    def __init__(self, label, bins, elements):
+        self.label = label
+        self.bins = bins
+        self.elements = sorted(elements, key=lambda e: (e.priority, e.name))
+
+    def active(self, profile_path):
+        for b in self.bins:
+            # realpath, not readlink: single-element profiles symlink whole bin dirs,
+            # and some JDKs ship bin/java as a regular file
+            target = os.path.realpath(os.path.join(profile_path, "bin", b))
+            for el in self.elements:
+                if any(target.startswith(sp + "/") for sp in el.store_paths):
+                    return el
+        return None
+
+
+class Profile:
+    def __init__(self, path):
+        self.path = os.path.abspath(os.path.expanduser(path))
+        self.elements = []
+
+    def load(self):
+        proc = subprocess.run(
+            ["nix", "profile", "list", "--profile", self.path, "--json"],
+            capture_output=True, text=True,
+        )
+        if proc.returncode != 0:
+            die(f"nsdk: nix profile list failed:\n{proc.stderr.strip()}")
+        try:
+            data = json.loads(proc.stdout)
+        except json.JSONDecodeError as exc:
+            die(f"nsdk: cannot parse nix profile list --json: {exc}")
+        self.elements = [Element(k, v) for k, v in sorted(data.get("elements", {}).items())]
+
+    def generation(self):
+        cur = self.path
+        for _ in range(2):
+            try:
+                target = os.readlink(cur)
+            except OSError:
+                return None
+            m = re.search(r"-(\d+)-link$", target)
+            if m:
+                return int(m.group(1))
+            cur = target if os.path.isabs(target) else os.path.join(os.path.dirname(cur), target)
+        return None
+
+    def system(self):
+        for el in self.elements:
+            parts = el.attr_path.split(".")
+            if len(parts) >= 2 and parts[0] == "legacyPackages":
+                return parts[1]
+        proc = subprocess.run(
+            ["nix", "eval", "--impure", "--raw", "--expr", "builtins.currentSystem"],
+            capture_output=True, text=True,
+        )
+        return proc.stdout.strip() if proc.returncode == 0 else ""
+
+    def slots(self):
+        by_bin = {}
+        for el in self.elements:
+            for b in el.bins():
+                by_bin.setdefault(b, []).append(el)
+        groups = {}
+        for b, els in by_bin.items():
+            groups.setdefault(frozenset(e.name for e in els), []).append(b)
+        slots = []
+        for names, bins in groups.items():
+            label = next((w for w in WATCH if w in bins), sorted(bins)[0])
+            slots.append(Slot(label, sorted(bins), [e for e in self.elements if e.name in names]))
+        for w in WATCH:
+            if not any(w in s.bins for s in slots):
+                slots.append(Slot(w, [w], by_bin.get(w, [])))
+        # suppress noise: non-watch slots need ≥2 providers, and a slot whose element set
+        # is a proper subset of another's (jdeprscan ⊂ the JDKs) adds nothing to switch
+        keep = []
+        for s in slots:
+            if s.label in WATCH or len(s.elements) >= 2:
+                names = {e.name for e in s.elements}
+                if s.label not in WATCH and any(
+                    names < {e.name for e in t.elements} for t in slots if t is not s
+                ):
+                    continue
+                keep.append(s)
+        order = {w: i for i, w in enumerate(WATCH)}
+        keep.sort(key=lambda s: (order.get(s.label, len(order)), s.label))
+        return keep
+
+
+# ------------------------------------------------------------- switch planning
+
+
+def free_priority(used, low=1):
+    p = low
+    while p in used:
+        p += 1
+    return p
+
+
+def short_ref(ref):
+    m = re.match(r"https://[^/]+/nixpkgs/nixpkgs-(.+)\.[0-9a-f]{12,}/.*#(.+)", ref)
+    if m:
+        return f"nixpkgs@{m.group(1)}#{m.group(2).rsplit('.', 1)[-1]} (locked)"
+    return ref
+
+
+def plan_switch(profile_path, slot, target):
+    """Ops to make `target` (Element or candidate attr str) win the slot's bins.
+
+    Priorities only need to differ among providers of the same bins. If a free
+    slot below the winner exists the target slides into it (2 ops); otherwise
+    target takes priority 1 and the winner is demoted (3 ops, batched remove).
+    """
+    installed = isinstance(target, Element)
+    winner = slot.active(profile_path)
+    if installed and winner and target.name == winner.name:
+        return []
+    providers = slot.elements
+    others = [
+        e for e in providers
+        if not (installed and e.name == target.name) and not (winner and e.name == winner.name)
+    ]
+    used = {e.priority for e in others} | ({winner.priority} if winner else set())
+    target_ref = target.ref if installed else f"nixpkgs#{target}"
+
+    def op_add(ref, prio):
+        argv = ["nix", "profile", "add", "--profile", profile_path, ref]
+        disp = f"nix profile add {short_ref(ref)}"
+        if prio is not None:
+            argv += ["--priority", str(prio)]
+            disp += f" --priority {prio}"
+        return argv, disp
+
+    def op_remove(names):
+        return (
+            ["nix", "profile", "remove", "--profile", profile_path] + names,
+            "nix profile remove " + " ".join(names),
+        )
+
+    if not winner:
+        return [op_add(target_ref, free_priority(used) if used else None)]
+    lowest = min(used)
+    slide = next((p for p in range(1, lowest) if p not in used), None)
+    if slide is not None:
+        if installed:
+            return [op_remove([target.name]), op_add(target_ref, slide)]
+        return [op_add(target_ref, slide)]
+    demoted = free_priority({e.priority for e in others} | {1}, low=2)
+    ops = [op_remove(([target.name] if installed else []) + [winner.name])]
+    ops.append(op_add(target_ref, 1))
+    ops.append(op_add(winner.ref, demoted))
+    return ops
+
+
+def confirm_run(title, ops, profile_path):
+    """Show the exact nix commands, ask y/n, then run them with stdio inherited."""
+    width = frame_size()[1]
+    print(f"\n{BOLD}{CYAN}{fit(title, width)}{RESET}")
+    print(f"  {DIM}profile: {shorten(profile_path)}{RESET}")
+    for i, (_, disp) in enumerate(ops, 1):
+        print(f"  {DIM}{i}.{RESET} {fit(disp, width - 5)}")
+    while True:
+        try:
+            answer = input(f"{YELLOW}execute? [y/n] {RESET}").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return False
+        if answer == "y":
+            break
+        if answer in ("n", ""):
+            print("cancelled")
+            return False
+    for argv, disp in ops:
+        print(f"\n{DIM}$ {disp}{RESET}")
+        rc = subprocess.call(argv)
+        if rc != 0:
+            print(f"{RED}✗ failed (exit {rc}) — profile may be mid-change; r (rollback) can undo{RESET}")
+            _pause()
+            return False
+    print(f"{GREEN}✓ done{RESET}")
+    _pause()
+    return True
+
+
+def _pause():
+    try:
+        input(f"{DIM}press Enter to continue{RESET}")
+    except (EOFError, KeyboardInterrupt):
+        print()
+
+
+# ------------------------------------------------------------------- key input
+
+
+def read_char(fd):
+    """Read one full UTF-8 character; a 1-byte read splits multibyte chars like 中."""
+    data = os.read(fd, 1)
+    if not data:
+        return ""
+    length = 1
+    lead = data[0]
+    if lead >= 0xF0:
+        length = 4
+    elif lead >= 0xE0:
+        length = 3
+    elif lead >= 0xC0:
+        length = 2
+    while len(data) < length:
+        if not select.select([fd], [], [], 0.1)[0]:
+            break
+        data += os.read(fd, 1)
+    return data.decode("utf-8", "replace")
+
+
+def read_key(fd):
+    def pending(timeout):
+        return bool(select.select([fd], [], [], timeout)[0])
+
+    char = read_char(fd)
+    if char == "\x1b":
+        if not pending(0.02):
+            return "ESC"
+        if os.read(fd, 1) != b"[" or not pending(0.02):
+            return "ESC"
+        return {"A": "UP", "B": "DOWN", "C": "RIGHT", "D": "LEFT", "Z": "BTAB"}.get(
+            os.read(fd, 1).decode("utf-8", "replace"), ""
+        )
+    while char in PREFIXES and pending(SEQUENCE_TIMEOUT):
+        char += read_char(fd)
+        if char in SEQUENCES:
+            return char
+    if char in ("\r", "\n"):
+        return "ENTER"
+    if char == "\t":
+        return "TAB"
+    if char == " ":
+        return "SPACE"
+    return char
+
+
+# ----------------------------------------------------------------------- app
+
+
+class App:
+    def __init__(self, profile_path):
+        self.profile = Profile(profile_path)
+        self.profile.load()
+        self.slots = []
+        self.tab = None
+        self.rows = []
+        self.cursor = 0
+        self.offset = 0
+        self.msg = ""
+        self.last_size = None
+        self.cand_state = {}  # bin -> None (pending) | {attr: version}
+        self._system = None
+        self.reload(first=True)
+
+    # -- state
+
+    def system(self):
+        if self._system is None:
+            self._system = self.profile.system()
+        return self._system
+
+    def slot_by_label(self, label):
+        return next((s for s in self.slots if s.label == label), None)
+
+    def reload(self, first=False):
+        self.profile.load()
+        self.slots = self.profile.slots()
+        labels = [s.label for s in self.slots]
+        if first or self.tab not in labels:
+            self.tab = labels[0] if labels else None
+        self.rebuild_rows(activate_cursor=True)
+
+    def rebuild_rows(self, activate_cursor=False):
+        slot = self.slot_by_label(self.tab) if self.tab else None
+        self.rows = self.slot_rows(slot) if slot else []
+        self.rows_sig = self.cand_sig()
+        self.clamp_cursor()
+        if activate_cursor:
+            for i, r in enumerate(self.rows):
+                if r.get("active"):
+                    self.cursor = i
+                    break
+
+    def slot_rows(self, slot):
+        winner = slot.active(self.profile.path)
+        rows = []
+        for el in slot.elements:
+            rows.append({"kind": "el", "el": el, "active": bool(winner and el.name == winner.name), "sel": True})
+        label = slot.label
+        if label in CANDIDATES:
+            state = self.cand_state.get(label)
+            cands = []
+            for attr in CANDIDATES[label]:
+                ver = "…" if state is None else (state or {}).get(attr, "-")
+                if ver == "MISSING":
+                    continue
+                if self.is_duplicate(attr, ver, slot):
+                    continue
+                cands.append({"kind": "cand", "attr": attr, "ver": ver, "sel": True})
+            if cands:
+                rows.append({"kind": "sep", "sel": False})
+                rows += cands
+        if label in HINTS:
+            rows.append({"kind": "hint", "text": HINTS[label], "sel": False})
+        if not rows:
+            rows.append({"kind": "empty", "sel": False})
+        return rows
+
+    def is_duplicate(self, attr, ver, slot):
+        digits = re.sub(r"\D", "", attr)
+        for el in slot.elements:
+            tail = el.attr
+            if tail == attr:
+                return True
+            if digits and re.sub(r"\D", "", tail) == digits:
+                return True
+            if ver and ver not in ("?", "…", "-") and ver in el.pkg(slot.label):
+                return True
+        return False
+
+    def start_candidate_fetch(self, label):
+        if label not in CANDIDATES or label in self.cand_state:
+            return
+        self.cand_state[label] = None
+        threading.Thread(target=self._fetch_candidates, args=(label,), daemon=True).start()
+
+    def _fetch_candidates(self, label):
+        attrs = CANDIDATES[label]
+        attrs_nix = "[%s]" % " ".join(json.dumps(a) for a in attrs)
+        try:
+            cache = self._cand_cache()
+            if cache is not None and label in cache:
+                self.cand_state[label] = {a: cache[label].get(a, "MISSING") for a in attrs}
+                return
+            system = self.system()
+            expr = (
+                "p: let names = %s; in builtins.listToAttrs (map (n: "
+                "{ name = n; value = if builtins.hasAttr n p then "
+                "(let d = builtins.getAttr n p; in if builtins.isAttrs d then (d.version or \"?\") else \"?\") "
+                'else "MISSING"; }) names)' % attrs_nix
+            )
+            proc = subprocess.run(
+                ["nix", "eval", "--json", f"nixpkgs#legacyPackages.{system}", "--apply", expr],
+                capture_output=True, text=True, timeout=180,
+            )
+            result = json.loads(proc.stdout) if proc.returncode == 0 else {}
+            self.cand_state[label] = result
+            if result:
+                self._save_cand_cache(label, result)
+        except Exception:
+            self.cand_state[label] = {}
+        wake = getattr(self, "_wake_w", None)
+        if wake:
+            try:
+                os.write(wake, b"1")
+            except OSError:
+                pass
+
+    def _cand_cache_path(self):
+        return HOME / ".cache" / "nsdk" / f"candidates-{self.system() or 'unknown'}.json"
+
+    def _cand_cache(self, ttl=6 * 3600):
+        try:
+            with open(self._cand_cache_path()) as f:
+                store = json.load(f)
+            return store.get("labels") if time.time() - store.get("ts", 0) < ttl else None
+        except (OSError, ValueError):
+            return None
+
+    def _save_cand_cache(self, label, result):
+        try:
+            path = self._cand_cache_path()
+            store = {"ts": time.time(), "labels": {}}
+            try:
+                with open(path) as f:
+                    store = json.load(f)
+            except (OSError, ValueError):
+                pass
+            store.setdefault("labels", {})[label] = result
+            store["ts"] = time.time()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w") as f:
+                json.dump(store, f)
+        except OSError:
+            pass
+
+    def pending_fetches(self):
+        return any(v is None for v in self.cand_state.values())
+
+    def cand_sig(self):
+        """Changes when a fetch flips a slot from pending to resolved."""
+        return tuple(sorted((k, v is None) for k, v in self.cand_state.items()))
+
+    # -- cursor & tabs
+
+    def selectable(self):
+        return [i for i, r in enumerate(self.rows) if r.get("sel")]
+
+    def current(self):
+        if self.rows and 0 <= self.cursor < len(self.rows) and self.rows[self.cursor].get("sel"):
+            return self.rows[self.cursor]
+        return None
+
+    def clamp_cursor(self):
+        sel = self.selectable()
+        if not sel:
+            self.cursor = 0
+            return
+        self.cursor = min(sel, key=lambda i: (abs(i - self.cursor), i))
+
+    def move(self, delta):
+        sel = self.selectable()
+        if not sel:
+            return
+        if self.cursor in sel:
+            idx = (sel.index(self.cursor) + delta) % len(sel)
+        else:
+            idx = 0 if delta > 0 else len(sel) - 1
+        self.cursor = sel[idx]
+
+    def jump(self, delta):
+        sel = self.selectable()
+        if not sel:
+            return
+        target = self.cursor if self.cursor in sel else sel[0]
+        pos = max(0, min(len(sel) - 1, sel.index(target) + delta))
+        self.cursor = sel[pos]
+
+    def goto_edge(self, first):
+        sel = self.selectable()
+        if sel:
+            self.cursor = sel[0] if first else sel[-1]
+
+    def switch_tab(self, delta=None, index=None, label=None):
+        labels = [s.label for s in self.slots]
+        if not labels:
+            return
+        if label is not None:
+            target = label
+        elif index is not None:
+            if not 0 <= index < len(labels):
+                return
+            target = labels[index]
+        else:
+            pos = labels.index(self.tab) if self.tab in labels else 0
+            target = labels[(pos + delta) % len(labels)]
+        if target == self.tab:
+            return
+        self.tab = target
+        self.start_candidate_fetch(target)
+        self.cursor = 0
+        self.offset = 0
+        self.rebuild_rows(activate_cursor=True)
+
+    # -- rendering
+
+    def header(self, width):
+        gen = self.profile.generation()
+        right = f"{shorten(self.profile.path)}" + (f" · gen {gen}" if gen else "")
+        title = fit("nsdk — nix profile switcher", max(0, width - wlen(right) - 7))
+        gap = " " * max(1, width - 2 - wlen(title) - wlen(right))
+        return [
+            f"  {BOLD}{CYAN}{title}{RESET}{gap}{DIM}{right}{RESET}",
+            f"  {DIM}{'─' * (width - 2)}{RESET}",
+        ]
+
+    def tab_bar(self, width):
+        labels = [s.label for s in self.slots]
+        if not labels:
+            return [""]
+        idx = labels.index(self.tab) if self.tab in labels else 0
+        cell = lambda i: f" {labels[i]} "  # noqa: E731
+        styled = lambda i, text: (  # noqa: E731
+            f"{CURSOR_BG}{BOLD}{CYAN}{text}{RESET}" if i == idx else f"{DIM}{text}{RESET}"
+        )
+        bar_w = sum(wlen(cell(i)) for i in range(len(labels)))
+        if bar_w + 2 <= width:
+            return ["  " + "".join(styled(i, cell(i)) for i in range(len(labels)))]
+        # window around the selected tab, with … markers on clipped sides
+        start, end = idx, idx + 1
+        used = wlen(cell(idx))
+        while True:
+            grew = False
+            if start > 0 and used + wlen(cell(start - 1)) + 2 <= width:
+                start -= 1
+                used += wlen(cell(start))
+                grew = True
+            if end < len(labels) and used + wlen(cell(end)) + 2 <= width:
+                used += wlen(cell(end))
+                end += 1
+                grew = True
+            if not grew:
+                break
+        parts = [styled(i, cell(i)) for i in range(start, end)]
+        if start > 0:
+            parts.insert(0, f"{DIM}…{RESET}")
+        if end < len(labels):
+            parts.append(f"{DIM}…{RESET}")
+        return ["  " + "".join(parts)]
+
+    def columns(self):
+        """Column widths shared by every row so all rows line up (setup.py style)."""
+        names, vers, prios = [], [], []
+        for row in self.rows:
+            if row["kind"] == "el":
+                names.append(row["el"].name)
+                vers.append(row["el"].version)
+                prios.append(f"p{row['el'].priority}")
+            elif row["kind"] == "cand":
+                names.append(row["attr"])
+                vers.append(row["ver"])
+                prios.append("-")
+        return (
+            max([wlen(n) for n in names] + [4]),
+            max([wlen(v) for v in vers] + [3]),
+            max([wlen(p) for p in prios] + [2]),
+        )
+
+    def row_line(self, row, width, cursor, layout):
+        name_w, ver_w, prio_w = layout
+        keep = KEEP_BG if cursor else RESET
+        pointer = ("▌ ", BOLD + CYAN) if cursor else ("  ", "")
+        if row["kind"] == "el":
+            el = row["el"]
+            mark = f"{GREEN}●{keep}" if row["active"] else f"{DIM}○{keep}"
+            src = f"{el.flavor} · {el.source}" if el.flavor else el.source
+            return line([
+                pointer, (mark, ""), (" ", ""),
+                (fit(el.name, name_w).ljust(name_w) + "  ", BOLD + CYAN if cursor else ""),
+                (fit(el.version, ver_w).ljust(ver_w) + "  ", "" if cursor else DIM),
+                (f"p{el.priority}".ljust(prio_w) + "  ", "" if cursor else DIM),
+                (src, DIM),
+            ], width, cursor)
+        if row["kind"] == "cand":
+            note = "checking version…" if row["ver"] == "…" else "not installed · will download"
+            return line([
+                pointer, (f"{DIM}+{keep}", ""), (" ", ""),
+                (fit(row["attr"], name_w).ljust(name_w) + "  ", BOLD + CYAN if cursor else ""),
+                (fit(row["ver"], ver_w).ljust(ver_w) + "  ", "" if cursor else DIM),
+                ("-".ljust(prio_w) + "  ", "" if cursor else DIM),
+                (note, DIM),
+            ], width, cursor)
+        if row["kind"] == "sep":
+            label = "installable from nixpkgs"
+            dashes = max(0, width - 8 - len(label))
+            return f"    {DIM}{label} {'─' * dashes}{RESET}"
+        if row["kind"] == "hint":
+            return f"    {DIM}{fit(row['text'], width - 4)}{RESET}"
+        return f"    {DIM}(nothing installed — Enter a candidate below or press a){RESET}"
+
+    def body(self, width, height):
+        n = len(self.rows)
+        if n == 0:
+            return [""] * height
+        layout = self.columns()
+        reserved = 2 if n > height else 0
+        inner = height
+        above = below = 0
+        for _ in range(2):
+            inner = max(1, height - reserved)
+            self.offset = min(self.cursor, max(self.cursor - inner + 1, self.offset))
+            self.offset = max(0, min(self.offset, max(0, n - inner)))
+            above = self.offset
+            below = n - self.offset - inner
+            reserved = (1 if above else 0) + (1 if below > 0 else 0)
+        lines = [f"    {DIM}↑ {above} more{RESET}"] if above else []
+        for i in range(self.offset, min(n, self.offset + inner)):
+            lines.append(self.row_line(self.rows[i], width, i == self.cursor, layout))
+        if below > 0:
+            lines.append(f"    {DIM}↓ {below} more{RESET}")
+        return lines + [""] * max(0, height - len(lines))
+
+    def hints(self, width):
+        full = [
+            ("←/→", "tab"), ("j/k", "move"), ("Enter", "switch"), ("X", "remove"),
+            ("u", "upgrade"), ("a", "add ref"), ("r", "rollback"), ("q", "quit"),
+        ]
+        for keys in (full, full[:3] + full[5:], [(k, "") for k, _ in full]):
+            if wlen(" · ".join(f"{k} {v}".strip() for k, v in keys)) <= width:
+                return f" {DIM}·{RESET} ".join(
+                    f"{BOLD}{k}{RESET}" + (f"{DIM} {v}{RESET}" if v else "") for k, v in keys
+                )
+        return f"{DIM}{fit('q quit', width)}{RESET}"
+
+    def footer(self, width):
+        out = []
+        if self.msg:
+            out.append(f"  {fit(self.msg, width - 2)}")
+        out += ["", f"  {DIM}{'─' * (width - 2)}{RESET}", "  " + self.hints(width - 2)]
+        return out
+
+    def render(self):
+        size, width = frame_size()
+        header = self.header(width) + self.tab_bar(width) + [""]
+        footer = self.footer(width)
+        body = self.body(width, max(3, size.lines - len(header) - len(footer)))
+        lines = header + body + footer
+        resized = self.last_size != size
+        self.last_size = size
+        # RESET before every line: the cursor line keeps its background alive across
+        # the newline, so the next line must clear it explicitly
+        frame = "".join(f"{RESET}{l}\033[K\n" for l in lines[: max(1, size.lines - 1)])
+        sys.stdout.write(("\033[2J" if resized else "") + "\033[H" + frame + "\033[J")
+        sys.stdout.flush()
+
+    # -- keys
+
+    def handle(self, key):
+        """Return an exec-action tuple for the outer loop, or None to stay in the TUI."""
+        self.msg = ""
+        if key in ("j", "DOWN"):
+            self.move(1)
+        elif key in ("k", "UP"):
+            self.move(-1)
+        elif key in ("l", "RIGHT", "TAB"):
+            self.switch_tab(delta=1)
+        elif key in ("h", "LEFT", "BTAB"):
+            self.switch_tab(delta=-1)
+        elif key in "123456789":
+            self.switch_tab(index=int(key) - 1)
+        elif key == "\x04":
+            self.jump(max(1, len(self.selectable()) // 2))
+        elif key == "\x15":
+            self.jump(-max(1, len(self.selectable()) // 2))
+        elif key == "gg":
+            self.goto_edge(True)
+        elif key == "G":
+            self.goto_edge(False)
+        elif key == "ENTER":
+            return self.on_enter()
+        elif key in ("ESC", "q"):
+            return ("quit",)
+        elif key == "a":
+            return ("custom",)
+        elif key == "r":
+            return ("rollback",)
+        elif key == "X":
+            row = self.current()
+            if row and row["kind"] == "el":
+                return ("remove", row["el"])
+            self.msg = f"{YELLOW}nothing to remove on this row{RESET}"
+        elif key == "u":
+            row = self.current()
+            if row and row["kind"] == "el":
+                return ("upgrade", row["el"])
+            self.msg = f"{YELLOW}nothing to upgrade on this row{RESET}"
+        return None
+
+    def on_enter(self):
+        row = self.current()
+        if not row:
+            return None
+        slot = self.slot_by_label(self.tab)
+        if slot is None:
+            return None
+        if row["kind"] == "el":
+            if row["active"]:
+                self.msg = f"{YELLOW}{row['el'].name} is already active{RESET}"
+                return None
+            return ("switch", slot, row["el"])
+        if row["kind"] == "cand":
+            return ("switch", slot, row["attr"])
+        return None
+
+    # -- TUI loop
+
+    def tui(self):
+        fd = sys.stdin.fileno()
+        saved = termios.tcgetattr(fd)
+        # SIGWINCH only interrupts select() through a wakeup pipe; a bare handler would be retried
+        wake_r, wake_w = os.pipe()
+        os.set_blocking(wake_w, False)
+        self._wake_w = wake_w
+        previous = signal.signal(signal.SIGWINCH, lambda *_: None)
+        signal.set_wakeup_fd(wake_w)
+        sys.stdout.write("\033[?1049h\033[?25l")
+        try:
+            tty.setcbreak(fd)
+            self.render()
+            while True:
+                timeout = 0.3 if self.pending_fetches() else None
+                ready = select.select([fd, wake_r], [], [], timeout)[0]
+                if wake_r in ready:
+                    os.read(wake_r, 4096)
+                # a finished candidate fetch changes row content, not just colors
+                if self.cand_sig() != getattr(self, "rows_sig", None):
+                    self.rebuild_rows()
+                if fd in ready:
+                    action = self.handle(read_key(fd))
+                    if action:
+                        return action
+                self.render()
+        finally:
+            signal.set_wakeup_fd(-1)
+            signal.signal(signal.SIGWINCH, previous)
+            os.close(wake_r)
+            os.close(wake_w)
+            self._wake_w = None
+            termios.tcsetattr(fd, termios.TCSADRAIN, saved)
+            sys.stdout.write("\033[?25h\033[?1049l")
+            sys.stdout.flush()
+
+    # -- actions (run outside the alternate screen)
+
+    def execute(self, action):
+        kind = action[0]
+        if kind == "switch":
+            _, slot, target = action
+            ops = plan_switch(self.profile.path, slot, target)
+            if not ops:
+                self.msg = f"{YELLOW}already active{RESET}"
+                return
+            label = target.name if isinstance(target, Element) else f"{target} (download)"
+            current = slot.active(self.profile.path)
+            title = f"switch {slot.label}: {current.name if current else 'none'} → {label}"
+            ok = confirm_run(title, ops, self.profile.path)
+            self.reload()
+            self.msg = (
+                f"{GREEN}✓ {slot.label} → {label.split(' ')[0]}{RESET}" if ok
+                else f"{RED}✗ {slot.label} switch failed — r rolls back one generation{RESET}"
+            )
+        elif kind == "remove":
+            el = action[1]
+            ok = confirm_run(f"remove {el.name} ({el.pkg(self.tab)})", [
+                (["nix", "profile", "remove", "--profile", self.profile.path, el.name],
+                 f"nix profile remove {el.name}"),
+            ], self.profile.path)
+            self.reload()
+            self.msg = f"{GREEN}✓ removed {el.name}{RESET}" if ok else f"{RED}✗ remove failed{RESET}"
+        elif kind == "upgrade":
+            el = action[1]
+            ok = confirm_run(f"upgrade {el.name} (re-resolves its flake)", [
+                (["nix", "profile", "upgrade", "--profile", self.profile.path, el.name],
+                 f"nix profile upgrade {el.name}"),
+            ], self.profile.path)
+            self.reload()
+            self.msg = f"{GREEN}✓ upgraded {el.name}{RESET}" if ok else f"{RED}✗ upgrade failed{RESET}"
+        elif kind == "rollback":
+            ok = confirm_run("rollback profile (one generation back)", [
+                (["nix", "profile", "rollback", "--profile", self.profile.path],
+                 "nix profile rollback"),
+            ], self.profile.path)
+            self.reload()
+            self.msg = f"{GREEN}✓ rolled back{RESET}" if ok else f"{RED}✗ rollback failed{RESET}"
+        elif kind == "custom":
+            try:
+                ref = input(f"\nflake ref to add (e.g. {CYAN}nixpkgs#jdk17{RESET}, empty to cancel): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                ref = ""
+            if not ref:
+                self.msg = f"{YELLOW}cancelled{RESET}"
+                return
+            ok = confirm_run(f"add {ref}", [
+                (["nix", "profile", "add", "--profile", self.profile.path, ref],
+                 f"nix profile add {ref}"),
+            ], self.profile.path)
+            self.reload()
+            self.msg = f"{GREEN}✓ added {ref}{RESET}" if ok else f"{RED}✗ add failed{RESET}"
+
+    def run(self):
+        if self.tab:
+            self.start_candidate_fetch(self.tab)
+        while True:
+            action = self.tui()
+            if action[0] == "quit":
+                return
+            self.execute(action)
+
+
+def main():
+    args = sys.argv[1:]
+    if "-h" in args or "--help" in args:
+        print(USAGE)
+        return
+    profile_path = "~/.nix-profile"
+    rest = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--profile":
+            if i + 1 >= len(args):
+                die("nsdk: --profile needs a path")
+            profile_path = args[i + 1]
+            i += 2
+        else:
+            rest.append(args[i])
+            i += 1
+    if rest:
+        die(f"nsdk: unknown argument: {rest[0]}\n\n{USAGE}")
+    if not shutil.which("nix"):
+        die("nsdk: nix not found in PATH")
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        die("nsdk: needs a tty")
+    App(profile_path).run()
+
+
+if __name__ == "__main__":
+    main()
