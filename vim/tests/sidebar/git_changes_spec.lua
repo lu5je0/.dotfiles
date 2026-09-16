@@ -265,4 +265,107 @@ r.run('non-empty section preserves expanded state', function()
   r.assert_eq(expanded.unstaged, true, 'unstaged has files, stays expanded')
 end)
 
+-- ============================================================================
+-- group: locate_first_file (first <leader>gs on a tabpage)
+-- ============================================================================
+
+r.group('locate_first_file')
+
+local function fake_sidebar_win()
+  local buf = vim.api.nvim_create_buf(false, true)
+  local win = vim.api.nvim_open_win(buf, false, {
+    relative = 'editor', row = 0, col = 0, width = 30, height = 20,
+    style = 'minimal', focusable = false,
+  })
+  return buf, win
+end
+
+r.run('parks cursor on the first file item', function()
+  local state = require('lu5je0.ext.sidebar.state')
+  local locate = require('lu5je0.ext.sidebar.sources.git_changes.locate')
+  local buf, win = fake_sidebar_win()
+
+  local prev_win, prev_buf = state.win, state.buf
+  state.win, state.buf = win, buf
+  state.git_changes.sections = {}
+  state.git_changes._expanded = nil
+  state.git_changes._dir_states = nil
+
+  -- Pre-seed sections so locate_first_file renders without a refresh.
+  git_changes.update_sections_from_stdout(state.tab().git_changes,
+    ' M a.lua\0 M b.lua\0')
+
+  local rendered = false
+  locate.locate_first_file(function()
+    rendered = true
+    git_changes.render()
+  end, function() error('refresh not expected') end)
+
+  r.assert_eq(rendered, true, 'render_fn should run')
+  local line = vim.api.nvim_win_get_cursor(win)[1]
+  local item = state.git_changes.display_items[line]
+  r.assert_truthy(item, 'cursor line should map to an item')
+  r.assert_eq(item.type, 'file')
+  r.assert_eq(item.node.path_or_name or item.node.name, 'a.lua')
+
+  state.win, state.buf = prev_win, prev_buf
+  vim.api.nvim_win_close(win, true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end)
+
+r.run('refreshes then parks when sections are empty', function()
+  local state = require('lu5je0.ext.sidebar.state')
+  local locate = require('lu5je0.ext.sidebar.sources.git_changes.locate')
+  local buf, win = fake_sidebar_win()
+
+  local prev_win, prev_buf = state.win, state.buf
+  state.win, state.buf = win, buf
+  state.git_changes.sections = {}
+  state.git_changes._expanded = nil
+  state.git_changes._dir_states = nil
+
+  local refreshed = false
+  locate.locate_first_file(function() git_changes.render() end, function(cb)
+    refreshed = true
+    git_changes.update_sections_from_stdout(state.tab().git_changes, ' M only.lua\0')
+    cb()
+  end)
+
+  r.assert_eq(refreshed, true, 'refresh_fn should run when sections are empty')
+  local line = vim.api.nvim_win_get_cursor(win)[1]
+  local item = state.git_changes.display_items[line]
+  r.assert_truthy(item, 'cursor line should map to an item')
+  r.assert_eq(item.node.name, 'only.lua')
+
+  state.win, state.buf = prev_win, prev_buf
+  vim.api.nvim_win_close(win, true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end)
+
+r.run('renders without moving cursor when there are no changes', function()
+  local state = require('lu5je0.ext.sidebar.state')
+  local locate = require('lu5je0.ext.sidebar.sources.git_changes.locate')
+  local buf, win = fake_sidebar_win()
+
+  local prev_win, prev_buf = state.win, state.buf
+  state.win, state.buf = win, buf
+  state.git_changes.sections = {}
+  state.git_changes._expanded = nil
+  state.git_changes._dir_states = nil
+  git_changes.update_sections_from_stdout(state.tab().git_changes, '')
+
+  local rendered = false
+  locate.locate_first_file(function()
+    rendered = true
+    git_changes.render()
+  end, function() error('refresh not expected') end)
+
+  r.assert_eq(rendered, true)
+  r.assert_eq(vim.api.nvim_win_get_cursor(win)[1], 1)
+
+  state.win, state.buf = prev_win, prev_buf
+  vim.api.nvim_win_close(win, true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end)
+
 r.finish()

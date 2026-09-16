@@ -55,6 +55,30 @@ local function do_locate(filepath, render_fn, find_section_for_line)
   _ = find_section_for_line
 end
 
+-- First time the Git Changes tab is opened on a tabpage: park the cursor on
+-- the first changed file (Changes section is expanded by default).
+local function do_locate_first(render_fn)
+  render_fn()
+  for line, item in ipairs(state.git_changes.display_items or {}) do
+    if item.type == 'file' then
+      pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+      vim.cmd('normal! zz')
+      return
+    end
+  end
+end
+
+function M.locate_first_file(render_fn, refresh_fn)
+  local sections = state.git_changes.sections
+  if sections.staged or sections.unstaged or sections.untracked or sections.changes then
+    do_locate_first(render_fn)
+  else
+    refresh_fn(function()
+      do_locate_first(render_fn)
+    end)
+  end
+end
+
 function M.locate_file(filepath, render_fn, refresh_fn, find_section_for_line)
   if not filepath or filepath == '' then return end
   local sections = state.git_changes.sections

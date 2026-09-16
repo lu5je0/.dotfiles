@@ -39,6 +39,7 @@ r.run('schema declares all per-tab fields with defaults', function()
   r.assert_eq(ts.files._clipboard, nil)
   -- git_changes
   r.assert_eq(type(ts.git_changes.sections), 'table')
+  r.assert_eq(ts.git_changes._first_located, false)
   -- diff_preview
   r.assert_eq(type(ts.diff_preview), 'table')
   r.assert_eq(ts.diff_preview.win_left, nil)

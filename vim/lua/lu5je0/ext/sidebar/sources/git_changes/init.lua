@@ -497,6 +497,11 @@ function M.locate_file(filepath)
   locate_mod.locate_file(filepath, M.render, M.refresh, M.find_section_for_line)
 end
 
+-- Cursor on the first changed file; used on the first entry to this tab.
+function M.locate_first_file()
+  locate_mod.locate_first_file(M.render, M.refresh)
+end
+
 function M.open_node_recursive()
   if not state:is_open() then return end
   local line = vim.api.nvim_win_get_cursor(state.win)[1]

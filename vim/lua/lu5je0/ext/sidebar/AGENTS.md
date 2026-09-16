@@ -35,7 +35,7 @@ sidebar/
 │   ├── git_changes/
 │   │   ├── init.lua          -- git_changes source 门面
 │   │   ├── parser.lua        -- parse_git_status / files_to_tree_nodes / git_root 缓存（自失效）
-│   │   └── locate.lua        -- do_locate 实现
+│   │   └── locate.lua        -- do_locate / do_locate_first 实现
 │   ├── buffers.lua           -- Buffers source（含 setup_auto_refresh）
 │   └── symbols.lua           -- LSP Symbols source
 └── actions/
@@ -66,6 +66,11 @@ sidebar/
 - per-tab schema 单一来源：所有 per-tab 字段必须在 `state.lua` 的 `new_tab_state()` 中显式声明，便于一处看清完整 shape；持 libuv handle 或浮窗的字段同时在 `release_tab_resources` 中释放。
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
 - 所有 sidebar autocmd 都进 `sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
+
+## 快捷键
+
+- `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）；`<leader>fg` 已移除。
+- 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
 
 ## 高亮约定
 

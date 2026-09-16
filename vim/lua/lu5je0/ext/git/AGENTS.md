@@ -51,9 +51,11 @@
 8. 光标移动到文件行时，右侧 vsplit 自动显示该 commit 对该文件的 diff；文件行 `<CR>` 可手动刷新
 9. `d` / `D` 复用 line-log 的 changes-only 与 diff mode 偏好
 
-### Changes (`<leader>gs` 顶部章节)
+### Changes (`<leader>gs`)
 
-1. `<leader>gs` 打开 git status 窗口时，顶部新增 `Changes` 章节，列出当前仓库所有受影响的文件（合并 staged / unstaged / untracked，每个路径只出现一次）
+Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 git-status 窗口）。`<leader>gs` 打开/定位 sidebar 的 Git Changes tab，顶部 `Changes` 章节列出当前仓库所有受影响的文件（合并 staged / unstaged / untracked，每个路径只出现一次）。
+
+1. 每个 tabpage 首次进入 Git Changes 时光标定位到第一个变更文件；之后同 tabpage 再按仍定位当前文件。
 2. 每个文件名末尾显示 git porcelain 的 2 字符状态：
    - `MM` 同时有 staged 改动和 unstaged 改动
    - ` M` / `M ` 仅 unstaged 或仅 staged 修改
@@ -159,4 +161,4 @@
 
 ## 懒加载
 
-通过 `ext-loader.lua` 注册，首次按 `<leader>gl` / `<leader>gL` / `<leader>gs` / `<leader>gb`，或执行 `:GitStatusLog` 时加载。
+通过 `ext-loader.lua` 注册，首次按 `<leader>gl` / `<leader>gL` / `<leader>gb`，或执行 `:GitStatusLog` 时加载。

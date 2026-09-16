@@ -96,6 +96,7 @@ local function new_tab_state()
       _redo_stack = nil,      -- list of redo entries for redo support
       _last_git_root = nil,
       _is_loading = false,
+      _first_located = false,   -- first <leader>gs entry on this tabpage parks on the first changed file
     },
 
     -- libuv handles for .git/index watcher (managed by sidebar/watcher.lua)

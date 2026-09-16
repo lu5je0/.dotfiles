@@ -109,10 +109,17 @@ function M.locate_in_tab(idx)
     vim.cmd('normal! zz')
   elseif idx == config.tab_idx('git_changes') then
     local git_changes = require('lu5je0.ext.sidebar.sources.git_changes')
-    if file_readable then
-      git_changes.locate_file(filepath)
+    if state.git_changes._first_located then
+      if file_readable then
+        git_changes.locate_file(filepath)
+      else
+        git_changes.render()
+      end
     else
-      git_changes.render()
+      -- First entry on this tabpage: ignore the current file and park on the
+      -- first changed file instead.
+      state.git_changes._first_located = true
+      git_changes.locate_first_file()
     end
   elseif idx == config.tab_idx('symbols') then
     require('lu5je0.ext.sidebar.sources.symbols').request_symbols({ locate = true, source_win = source_win })
@@ -171,8 +178,7 @@ local function register_keymaps()
   vim.keymap.set('n', '<leader>e', function() M.toggle({ focus = false }) end, opts)
   vim.keymap.set('n', '<leader>E', function() M.focus() end, opts)
   vim.keymap.set('n', '<leader>fe', function() M.locate_in_tab(config.tab_idx('files')) end, opts)
-  vim.keymap.set('n', '<leader>fg', function() M.locate_in_tab(config.tab_idx('git_changes')) end, opts)
-  vim.keymap.set('n', '<leader>gs', function() M.open_tab(config.tab_idx('git_changes'), { focus = false }) end, opts)
+  vim.keymap.set('n', '<leader>gs', function() M.locate_in_tab(config.tab_idx('git_changes')) end, opts)
   vim.keymap.set('n', '<leader>fb', function() M.locate_in_tab(config.tab_idx('buffers')) end, opts)
   vim.keymap.set('n', '<leader>fs', function()
     local source_win = vim.api.nvim_get_current_win()
