@@ -27,6 +27,7 @@
     nodejs
     openssl
     stylua
+    nixfmt
     opencc
     ripgrep
     luajit

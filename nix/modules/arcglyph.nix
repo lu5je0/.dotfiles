@@ -7,7 +7,10 @@ in
   hardware.uinput.enable = true;
 
   users.users.lu5je0 = {
-    extraGroups = [ "input" "uinput" ];
+    extraGroups = [
+      "input"
+      "uinput"
+    ];
     packages = [ arcglyph ];
   };
 

@@ -111,7 +111,13 @@ stdenv.mkDerivation {
 
     makeWrapper "$out/opt/Qoder/qoder" "$out/bin/qoder" \
       --prefix PATH : "${lib.makeBinPath [ xdg-utils ]}" \
-      --prefix LD_LIBRARY_PATH : "$out/opt/Qoder:${lib.makeLibraryPath [ libgbm libglvnd libsecret ]}:/run/opengl-driver/lib" \
+      --prefix LD_LIBRARY_PATH : "$out/opt/Qoder:${
+        lib.makeLibraryPath [
+          libgbm
+          libglvnd
+          libsecret
+        ]
+      }:/run/opengl-driver/lib" \
       --add-flags "--ozone-platform=wayland" \
       --add-flags "--enable-features=WaylandWindowDecorations" \
       --add-flags "--password-store=gnome-libsecret" \

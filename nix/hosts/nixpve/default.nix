@@ -17,7 +17,7 @@
   networking.networkmanager.enable = true;
 
   system.stateVersion = "26.05";
-  
+
   # 关闭防火墙
   networking.firewall.enable = false;
 }

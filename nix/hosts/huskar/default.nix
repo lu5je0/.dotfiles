@@ -25,11 +25,36 @@
   boot.supportedFilesystems.ntfs = lib.mkForce false;
 
   fileSystems = {
-    "/".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
-    "/home".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
-    "/nix".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
-    "/.snapshots".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
-    "/home/.snapshots".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
+    "/".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
+    "/home".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
+    "/nix".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
+    "/.snapshots".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
+    "/home/.snapshots".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
     # NTFS 驱动切换：fsType = "ntfs" 走内核新驱动（kernel 7.1+ 的 NTFS，原 NTFSPLUS，作者 Namjae Jeon，
     # 模块 ntfs.ko、mount type = ntfs）；改回 "ntfs3" 则走 Paragon 老驱动（模块 ntfs3.ko）。
     # 新驱动不认 ntfs3 的布尔 prealloc 选项；共有的 uid/gid/iocharset 可照常保留。
@@ -40,11 +65,11 @@
       fsType = "ntfs";
       options = [
         "nofail"
-          "uid=1000"
-          "gid=1000"
-          "iocharset=utf8"
-          "nocase"
-          "x-systemd.device-timeout=5s"
+        "uid=1000"
+        "gid=1000"
+        "iocharset=utf8"
+        "nocase"
+        "x-systemd.device-timeout=5s"
       ];
     };
     "/mnt/e" = {
@@ -52,11 +77,11 @@
       fsType = "ntfs";
       options = [
         "nofail"
-          "uid=1000"
-          "gid=1000"
-          "iocharset=utf8"
-          "nocase"
-          "x-systemd.device-timeout=5s"
+        "uid=1000"
+        "gid=1000"
+        "iocharset=utf8"
+        "nocase"
+        "x-systemd.device-timeout=5s"
       ];
     };
   };
@@ -118,7 +143,7 @@
   # iwlmvm 固件档位默认 2=balanced，改 1=active（modinfo: 1-active/2-balanced/3-low power），重启后生效
   networking.networkmanager.wifi.powersave = false;
   boot.extraModprobeConfig = "options iwlmvm power_scheme=1\n";
-  
+
   # 关闭防火墙
   networking.firewall.enable = false;
 

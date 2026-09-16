@@ -1,4 +1,8 @@
-{ lib, stdenvNoCC, glib }:
+{
+  lib,
+  stdenvNoCC,
+  glib,
+}:
 
 let
   uuid = "tilewindow@lu5je0";

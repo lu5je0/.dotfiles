@@ -72,7 +72,12 @@ stdenv.mkDerivation rec {
     chmod +x "$appdir/launcher"
 
     makeWrapper "$appdir/launcher" "$out/bin/emby-ext-player" \
-      --prefix PATH : "${lib.makeBinPath [ mpv pythonEnv ]}"
+      --prefix PATH : "${
+        lib.makeBinPath [
+          mpv
+          pythonEnv
+        ]
+      }"
 
     install -Dm644 electron-app/icon.png \
       "$out/share/icons/hicolor/256x256/apps/emby-ext-player.png"

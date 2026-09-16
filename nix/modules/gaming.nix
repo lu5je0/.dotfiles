@@ -6,7 +6,7 @@
     # Steam FHS needs the cursor theme to avoid a tiny fallback cursor: https://github.com/ValveSoftware/steam-for-linux/issues/12092
     extraPackages = [ pkgs.adwaita-icon-theme ];
     gamescopeSession = {
-        enable = true;
+      enable = true;
     };
   };
 

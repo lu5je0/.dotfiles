@@ -1,4 +1,9 @@
-{ lib, pkgs, pkgsUnstable, ... }:
+{
+  lib,
+  pkgs,
+  pkgsUnstable,
+  ...
+}:
 
 let
   tilewindow = pkgs.callPackage ../pkgs/tilewindow.nix { };

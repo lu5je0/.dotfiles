@@ -20,9 +20,24 @@
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   fileSystems = {
-    "/".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
-    "/home".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
-    "/nix".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
+    "/".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
+    "/home".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
+    "/nix".options = [
+      "compress=zstd:3"
+      "ssd"
+      "discard=async"
+      "noatime"
+    ];
   };
 
   hardware.bluetooth.enable = true;

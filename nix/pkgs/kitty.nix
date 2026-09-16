@@ -21,11 +21,12 @@ kitty.overrideAttrs (old: {
   pname = "kitty-lu5je0";
   inherit src version;
 
-  goModules = (buildGo126Module {
-    pname = "kitty-lu5je0-go-modules";
-    inherit src version;
-    vendorHash = "sha256-TkyiG0Yu8W5OV7g+TlL1+IZEbhVR8/ybb9WL4CIhozU=";
-  }).goModules;
+  goModules =
+    (buildGo126Module {
+      pname = "kitty-lu5je0-go-modules";
+      inherit src version;
+      vendorHash = "sha256-TkyiG0Yu8W5OV7g+TlL1+IZEbhVR8/ybb9WL4CIhozU=";
+    }).goModules;
 
   nativeBuildInputs = old.nativeBuildInputs ++ [
     python3Packages.sphinx-design

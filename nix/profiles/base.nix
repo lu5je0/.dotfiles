@@ -8,7 +8,10 @@
     ../modules/zsh.nix
   ];
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   nix.gc = {
     automatic = true;
@@ -53,7 +56,11 @@
     uid = 1000;
     group = "lu5je0";
     description = "lu5je0";
-    extraGroups = [ "docker" "networkmanager" "wheel" ];
+    extraGroups = [
+      "docker"
+      "networkmanager"
+      "wheel"
+    ];
   };
 
   services.cron.enable = true;

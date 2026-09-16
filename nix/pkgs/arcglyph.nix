@@ -47,7 +47,13 @@ rustPlatform.buildRustPackage rec {
 
   postFixup = ''
     wrapProgram "$out/bin/arcglyph" \
-      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ wayland libxkbcommon vulkan-loader ]}" \
+      --prefix LD_LIBRARY_PATH : "${
+        lib.makeLibraryPath [
+          wayland
+          libxkbcommon
+          vulkan-loader
+        ]
+      }" \
       --set ARCGLYPH_FONT "${noto-fonts-cjk-sans-static}/share/fonts/opentype/noto-cjk/NotoSansCJK-Regular.ttc"
   '';
 
