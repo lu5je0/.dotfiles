@@ -19,31 +19,43 @@
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # 阻止 NixOS 因 fsType = "ntfs" 而安装 ntfs-3g，从而提供 /run/current-system/sw/bin/mount.ntfs。
+  # util-linux 的 `mount -t ntfs` 会优先使用 mount.<type> helper 而非内核模块，结果挂成 fuseblk。
+  # 压掉后才能让 /mnt/d、/mnt/e 真正走内核里的 ntfs（NTFSPLUS）模块。
+  boot.supportedFilesystems.ntfs = lib.mkForce false;
+
   fileSystems = {
     "/".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
     "/home".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
     "/nix".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
     "/.snapshots".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
     "/home/.snapshots".options = [ "compress=zstd:3" "ssd" "discard=async" "noatime" ];
+    # NTFS 驱动切换：fsType = "ntfs" 走内核新驱动（kernel 7.1+ 的 NTFS，原 NTFSPLUS，作者 Namjae Jeon，
+    # 模块 ntfs.ko、mount type = ntfs）；改回 "ntfs3" 则走 Paragon 老驱动（模块 ntfs3.ko）。
+    # 新驱动不认 ntfs3 的布尔 prealloc 选项；共有的 uid/gid/iocharset 可照常保留。
+    # nocase：大小写不敏感，和 Windows 行为对齐，避免造出仅大小写不同的同名文件
+    # （NTFS 本身大小写敏感，Windows Win32 API 却按不敏感处理，会产生 Explorer 看不见的“幽灵文件”）。
     "/mnt/d" = {
       device = "/dev/disk/by-uuid/FC64FF6A64FF2654";
-      fsType = "ntfs3";
+      fsType = "ntfs";
       options = [
         "nofail"
           "uid=1000"
           "gid=1000"
           "iocharset=utf8"
+          "nocase"
           "x-systemd.device-timeout=5s"
       ];
     };
     "/mnt/e" = {
       device = "/dev/disk/by-uuid/74F281FEF281C4B8";
-      fsType = "ntfs3";
+      fsType = "ntfs";
       options = [
         "nofail"
           "uid=1000"
           "gid=1000"
           "iocharset=utf8"
+          "nocase"
           "x-systemd.device-timeout=5s"
       ];
     };
