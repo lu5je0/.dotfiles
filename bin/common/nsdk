@@ -171,7 +171,12 @@ class Element:
 
     @property
     def ref(self):
-        """Locked url + full attrPath: re-adds the exact same store paths, no download."""
+        """Installable reproducing this element: the locked url when it still resolves,
+        else the original flake ref (a path: source may have been GC'd)."""
+        url = self.url.split("?")[0]
+        if url.startswith("path:"):
+            if not os.path.exists(url[len("path:"):]):
+                return f"{self.original_url or 'nixpkgs'}#{self.attr_path}"
         return f"{self.url}#{self.attr_path}"
 
     @property
@@ -288,6 +293,10 @@ def short_ref(ref):
     m = re.match(r"https://[^/]+/nixpkgs/nixpkgs-(.+)\.[0-9a-f]{12,}/.*#(.+)", ref)
     if m:
         return f"nixpkgs@{m.group(1)}#{m.group(2).rsplit('.', 1)[-1]} (locked)"
+    m = re.match(r"path:(/[^?]+?)/?(\?.*)?#(.+)", ref)
+    if m:
+        base = os.path.basename(m.group(1)).removesuffix("-source")
+        return f"{base}#{m.group(3).rsplit('.', 1)[-1]} (locked path)"
     return ref
 
 
