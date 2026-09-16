@@ -13,7 +13,8 @@
     };
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, ... }@inputs:
+  outputs =
+    { nixpkgs, nixpkgs-unstable, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -27,7 +28,8 @@
       localPackages = import ./nix/pkgs {
         inherit pkgs inputs;
       };
-      mkSystem = modules:
+      mkSystem =
+        modules:
         nixpkgs.lib.nixosSystem {
           inherit system modules;
           specialArgs = {

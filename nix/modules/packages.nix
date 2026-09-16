@@ -28,6 +28,7 @@
     openssl
     stylua
     nixfmt
+    nixfmt-tree
     opencc
     ripgrep
     luajit
