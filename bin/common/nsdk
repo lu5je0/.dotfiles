@@ -42,6 +42,7 @@ SEQUENCES = ("gg",)
 PREFIXES = {seq[:i] for seq in SEQUENCES for i in range(1, len(seq))}
 SEQUENCE_TIMEOUT = 1.0
 HOME = Path.home()
+JDK_LINK_DIR = HOME / ".local" / "share" / "nsdk" / "jdks"
 
 
 def die(msg):
@@ -279,6 +280,69 @@ class Profile:
         return keep
 
 
+# ------------------------------------------------------------- jdk symlinks
+
+
+def jdk_home(el):
+    """Usable JDK home: mac bundle Contents/Home when present, else store root."""
+    for sp in el.store_paths:
+        mvms = os.path.join(sp, "Library", "Java", "JavaVirtualMachines")
+        if os.path.isdir(mvms):
+            for entry in sorted(os.listdir(mvms)):
+                home = os.path.join(mvms, entry, "Contents", "Home")
+                if os.path.isdir(home):
+                    return home
+        if os.path.exists(os.path.join(sp, "bin", "java")):
+            return sp
+    return None
+
+
+def jdk_major(el):
+    parts = el.version.split(".")
+    if parts[:1] == ["1"] and len(parts) > 1:  # legacy 1.8.0_492
+        return parts[1] if parts[1].isdigit() else None
+    return parts[0] if parts[:1] and parts[0].isdigit() else None
+
+
+def reconcile_jdk_links(elements):
+    """Keep ~/.local/share/nsdk/jdks/<major> pointing at every installed JDK home,
+    so IDEA/gradle can reference stable paths across nsdk switches."""
+    wanted = {}
+    for el in elements:
+        major, home = jdk_major(el), jdk_home(el)
+        if major and home:
+            wanted[major] = home
+    try:
+        JDK_LINK_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return wanted
+    for name, target in wanted.items():
+        link = JDK_LINK_DIR / name
+        if link.is_symlink():
+            if os.readlink(link) == target:
+                continue
+            link.unlink()
+        elif link.exists():
+            continue  # never clobber a real directory or file
+        try:
+            os.symlink(target, link)
+        except OSError:
+            pass
+    for entry in os.listdir(JDK_LINK_DIR):
+        if not re.fullmatch(r"\d+", entry):
+            continue
+        link = JDK_LINK_DIR / entry
+        if not link.is_symlink():
+            continue
+        if wanted.get(entry) == os.readlink(link):
+            continue
+        try:
+            link.unlink()  # stale or dangling managed link
+        except OSError:
+            pass
+    return wanted
+
+
 # ------------------------------------------------------------- switch planning
 
 
@@ -469,6 +533,8 @@ class App:
         if first or self.tab not in labels:
             self.tab = labels[0] if labels else None
         self.rebuild_rows(activate_cursor=True)
+        java = self.slot_by_label("java")
+        self.jdk_links = reconcile_jdk_links(java.elements) if java else {}
 
     def rebuild_rows(self, activate_cursor=False):
         slot = self.slot_by_label(self.tab) if self.tab else None
@@ -718,14 +784,13 @@ class App:
 
     def row_line(self, row, width, cursor, layout):
         name_w, ver_w, prio_w = layout
-        keep = KEEP_BG if cursor else RESET
         pointer = ("▌ ", BOLD + CYAN) if cursor else ("  ", "")
         if row["kind"] == "el":
             el = row["el"]
-            mark = f"{GREEN}●{keep}" if row["active"] else f"{DIM}○{keep}"
+            mark = ("●", GREEN) if row["active"] else ("○", DIM)
             src = f"{el.flavor} · {el.source}" if el.flavor else el.source
             return line([
-                pointer, (mark, ""), (" ", ""),
+                pointer, mark, (" ", ""),
                 (fit(el.name, name_w).ljust(name_w) + "  ", BOLD + CYAN if cursor else ""),
                 (fit(el.version, ver_w).ljust(ver_w) + "  ", "" if cursor else DIM),
                 (f"p{el.priority}".ljust(prio_w) + "  ", "" if cursor else DIM),
@@ -734,7 +799,7 @@ class App:
         if row["kind"] == "cand":
             note = "checking version…" if row["ver"] == "…" else "not installed · will download"
             return line([
-                pointer, (f"{DIM}+{keep}", ""), (" ", ""),
+                pointer, ("+", DIM), (" ", ""),
                 (fit(row["attr"], name_w).ljust(name_w) + "  ", BOLD + CYAN if cursor else ""),
                 (fit(row["ver"], ver_w).ljust(ver_w) + "  ", "" if cursor else DIM),
                 ("-".ljust(prio_w) + "  ", "" if cursor else DIM),
@@ -915,8 +980,15 @@ class App:
             title = f"switch {slot.label}: {current.name if current else 'none'} → {label}"
             ok = confirm_run(title, ops, self.profile.path)
             self.reload()
+            note = ""
+            if ok and slot.label == "java":
+                java = self.slot_by_label("java")
+                act = java.active(self.profile.path) if java else None
+                major = jdk_major(act) if act else None
+                if major:
+                    note = f" {DIM}· idea: {shorten(JDK_LINK_DIR / major)}{RESET}"
             self.msg = (
-                f"{GREEN}✓ {slot.label} → {label.split(' ')[0]}{RESET}" if ok
+                f"{GREEN}✓ {slot.label} → {label.split(' ')[0]}{RESET}" + note if ok
                 else f"{RED}✗ {slot.label} switch failed — r rolls back one generation{RESET}"
             )
         elif kind == "remove":
