@@ -304,9 +304,10 @@ def jdk_major(el):
     return parts[0] if parts[:1] and parts[0].isdigit() else None
 
 
-def reconcile_jdk_links(elements):
+def reconcile_jdk_links(elements, active=None):
     """Keep ~/.local/share/nsdk/jdks/<major> pointing at every installed JDK home,
-    so IDEA/gradle can reference stable paths across nsdk switches."""
+    so IDEA/gradle can reference stable paths across nsdk switches.
+    `current` tracks the active JDK home for JAVA_HOME."""
     wanted = {}
     for el in elements:
         major, home = jdk_major(el), jdk_home(el)
@@ -340,6 +341,17 @@ def reconcile_jdk_links(elements):
             link.unlink()  # stale or dangling managed link
         except OSError:
             pass
+    cur = JDK_LINK_DIR / "current"
+    target = jdk_home(active) if active is not None else None
+    if target:
+        if cur.is_symlink():
+            if os.readlink(cur) != target:
+                cur.unlink()
+                os.symlink(target, cur)
+        elif not cur.exists():
+            os.symlink(target, cur)
+    elif cur.is_symlink():
+        cur.unlink()
     return wanted
 
 
@@ -534,7 +546,10 @@ class App:
             self.tab = labels[0] if labels else None
         self.rebuild_rows(activate_cursor=True)
         java = self.slot_by_label("java")
-        self.jdk_links = reconcile_jdk_links(java.elements) if java else {}
+        if java:
+            reconcile_jdk_links(java.elements, java.active(self.profile.path))
+        else:
+            reconcile_jdk_links([])
 
     def rebuild_rows(self, activate_cursor=False):
         slot = self.slot_by_label(self.tab) if self.tab else None

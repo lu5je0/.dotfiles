@@ -54,7 +54,6 @@ zinit light zsh-users/zsh-history-substring-search
 zinit ice depth=1 lucid wait='0'
 zinit light zsh-users/zsh-completions
 zinit ice depth=1 lucid wait='1'
-zinit light matthieusb/zsh-sdkman
 
 ##########################################
 # 本地sh文件
@@ -116,8 +115,10 @@ export GOMODCACHE="$HOME/.cache/go/pkg/mod"
 export GOBIN="$HOME/.local/bin"
 export GOPATH="$HOME/.local/share/go"
 
-# java: JAVA_HOME follows the nix profile (switch versions with nsdk)
-[[ -x $HOME/.nix-profile/bin/java ]] && export JAVA_HOME="$HOME/.nix-profile"
+# java: JAVA_HOME follows nsdk's active JDK (stable path, survives switches)
+if [[ -x $HOME/.local/share/nsdk/jdks/current/bin/java ]]; then
+  export JAVA_HOME="$HOME/.local/share/nsdk/jdks/current"
+fi
 
 ##########################################
 # alias
@@ -357,20 +358,3 @@ if [[ ! -f ~/.ohmyenv ]]; then
   echo "# export PATH=~/.local/share/neovim/bin:$PATH\n# export USER_HTTP_PROXY='http://127.0.0.1:1081'" >~/.ohmyenv
 fi
 source ~/.ohmyenv
-
-# # SDKMAN lazy loading
-# if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-#   export SDKMAN_DIR="$HOME/.sdkman"
-#
-#   # 提前设置 PATH，让 java/gradle 等命令可用
-#   export PATH="$SDKMAN_DIR/candidates/java/current/bin:$PATH"
-#   export PATH="$SDKMAN_DIR/candidates/gradle/current/bin:$PATH"
-#   export PATH="$SDKMAN_DIR/candidates/maven/current/bin:$PATH"
-#
-#   # 懒加载：首次调用 sdk 时才初始化
-#   sdk() {
-#     unfunction sdk
-#     source "$SDKMAN_DIR/bin/sdkman-init.sh"
-#     sdk "$@"
-#   }
-# fi
