@@ -32,6 +32,7 @@
 - `lua/lu5je0/ext-loader.lua`: 仓库自定义懒加载器，负责按 `keys`、`cmd`、`event` 延迟加载本地扩展。
 - `lua/lu5je0/ext/`: 第三方插件配置适配层。通常一个插件一个文件。
 - `lua/lu5je0/core/`: 可复用核心能力，供多个扩展或功能模块共享。
+  - `core/buffer-modified.lua`: 'modified' 变化的兼容注册层，见下方「临时兼容」一节。
 - `lua/lu5je0/misc/`: 独立功能模块与自定义工具，例如 IME、clipboard、timestamp、translator、json-helper。
 - `lua/lu5je0/lang/`: 轻量通用工具函数。
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
@@ -148,6 +149,40 @@ ext/tabline/
 - 改完入口或模块后，先跑 `nvim --headless '+qa'`，尽可能不在沙箱内运行，确认没有直接语法错误或 require 失败。
 - 改插件补丁时，确认补丁文件、插件声明、运行时行为三者一致。
 - 改平台相关能力时，在提交说明里明确受影响平台与未验证平台。
+
+## 临时兼容
+
+### BufModifiedSet / OptionSet modified（`core/buffer-modified.lua`）
+
+背景：0.12 与 0.13 的 'modified' 事件模型不同，单用任何一个都会漏。
+
+| 路径 | 0.12 触发 | 0.13 触发 |
+|------|-----------|-----------|
+| 自然编辑 / undo / `dd` / `x` | `BufModifiedSet` | `OptionSet modified` |
+| `:set [no]modified` | `OptionSet modified` | `OptionSet modified` |
+
+- 0.12（`release-0.12`）：自然编辑只置 `b_changed_invalid = true`，由主循环（`normal.c` / `edit.c`）派发 `BufModifiedSet`；`OptionSet modified` 只在显式 `set` 时经 `apply_optionset_autocmd()` 触发。
+- 0.13：`BufModifiedSet` 已移除（`news.txt` / `deprecated.txt`，PR #35610）。`changed_internal()` / `unchanged()` 直接调 `aucmd_defer_modified()`，`OptionSet modified` 覆盖自然编辑。
+
+因此 `core/buffer-modified.lua` 用 `vim.fn.exists('##BufModifiedSet')` 探测能力，两个都注册。0.12 上两条路径互斥（各触发一次），不会重复触发。
+
+**删除条件：当运行版本已经是 0.13 正式版（`vim.fn.has('nvim-0.13') == 1`，即 `BufModifiedSet` 已不存在）时，删除该文件**，并把 `winbar/autocmds.lua` 与 `sidebar/sources/buffers.lua` 的 `require('lu5je0.core.buffer-modified').register(group, cb)` 直接换成：
+
+```lua
+vim.api.nvim_create_autocmd('OptionSet', {
+  group = group,
+  pattern = 'modified',
+  callback = cb,
+})
+```
+
+注意：`OptionSet` 必须单独注册（需要 `pattern`，无法并入 `BufAdd/BufEnter/...` 那组事件表），且 `'modified'` 触发时是 deferred 派发。
+
+消费方（两处）：
+- `lua/lu5je0/ext/winbar/autocmds.lua`：刷新 winbar 的 modified 标记（●）。
+- `lua/lu5je0/ext/sidebar/sources/buffers.lua`：刷新 Buffers source 的 `●`。
+
+两处都**不能删掉这个事件**：`:set modified` 不走 Neovim 的 winbar 重画路径，且 winbar/sidebar 渲染的是所有 listed buffer，而内置重画只覆盖显示该 buffer 的窗口。
 
 ## 已知事实
 - 仓库根 README 将该目录视为 `neovim` 配置的一部分。

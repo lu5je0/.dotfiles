@@ -75,13 +75,19 @@ function M.setup(group)
   vim.api.nvim_create_autocmd({
     'BufAdd', 'BufDelete', 'BufWipeout',
     'BufEnter', 'BufWinEnter',
-    'BufModifiedSet', 'BufWritePost',
+    'BufWritePost',
     'WinResized', 'WinNew', 'WinClosed', 'WinEnter',
     'TabEnter',
   }, {
     group = group,
     callback = refresh,
   })
+
+  -- 'modified' toggles, via core/buffer-modified (0.12 and 0.13 differ; see that module).
+  -- Needed because `:set modified` does not go through Neovim's winbar redraw, and because
+  -- the winbar renders every listed buffer while the builtin redraw only covers windows
+  -- showing the changed buffer.
+  require('lu5je0.core.buffer-modified').register(group, refresh)
 
   vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWinEnter' }, {
     group = group,

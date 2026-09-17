@@ -18,7 +18,8 @@ sidebar/
 ├── keymaps.lua        -- 共享 + per-tab 快捷键管理
 ├── autocmds.lua       -- 集中注册到 `sidebar` augroup（DirChanged / TabClosed /
 │                          ColorScheme / BufWritePost+FocusGained / BufEnter+LspAttach /
-│                          buffers source 自动刷新）
+│                          buffers source 自动刷新：BufAdd+BufDelete+BufWipeout /
+│                          core.buffer-modified 注册的 'modified' 事件）
 ├── render.lua         -- 纯渲染引擎：tree → lines/items/highlights/virt_texts
 ├── view.lua           -- buffer/window 写入：flush / open_node / close_node / restore_cursor
 ├── source_base.lua    -- Source 基类：build / render_opts / decorate / post_flush / open / close
@@ -66,6 +67,7 @@ sidebar/
 - per-tab schema 单一来源：所有 per-tab 字段必须在 `state.lua` 的 `new_tab_state()` 中显式声明，便于一处看清完整 shape；持 libuv handle 或浮窗的字段同时在 `release_tab_resources` 中释放。
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
 - 所有 sidebar autocmd 都进 `sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
+- Buffers source 的 `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`，**不要直接写事件名**：0.12 的自然编辑走 `BufModifiedSet`（0.13 已移除，见 `news.txt` / `deprecated.txt`，PR #35610），`:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`；单用任一个都会漏。兼容层与删除条件见根 `AGENTS.md` 的「临时兼容」一节。
 
 ## 快捷键
 

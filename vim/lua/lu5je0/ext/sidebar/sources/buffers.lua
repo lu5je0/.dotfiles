@@ -129,14 +129,19 @@ function M.keymaps()
 end
 
 function M.setup_auto_refresh(group)
-  vim.api.nvim_create_autocmd({ 'BufAdd', 'BufDelete', 'BufWipeout', 'BufModifiedSet' }, {
+  local function refresh()
+    if state:is_open() and state.active_tab_idx == config.tab_idx('buffers') then
+      vim.schedule(M.render)
+    end
+  end
+
+  vim.api.nvim_create_autocmd({ 'BufAdd', 'BufDelete', 'BufWipeout' }, {
     group = group,
-    callback = function()
-      if state:is_open() and state.active_tab_idx == config.tab_idx('buffers') then
-        vim.schedule(M.render)
-      end
-    end,
+    callback = refresh,
   })
+
+  -- 'modified' toggles, via core/buffer-modified (0.12 and 0.13 differ; see that module).
+  require('lu5je0.core.buffer-modified').register(group, refresh)
 end
 
 return M

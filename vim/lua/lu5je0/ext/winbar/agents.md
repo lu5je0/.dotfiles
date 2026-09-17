@@ -72,6 +72,8 @@ ext/tabline/
 - 改动 offset 逻辑：确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
 - 改动 truncation 或 tab 指示器宽度计算时，两处必须同步（`tab_section_w` 估算 + 实际渲染）。
 - 拖动/跨窗口移动后必须用 `redrawstatus!`（带 `!`）：不带 `!` 只重画当前窗口的 winbar，源窗口会残留旧 tab，直到切回该窗口才更新。
+- `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`，**不要直接写事件名**。原因：0.12 的自然编辑走 `BufModifiedSet`（0.13 已删除，见 `news.txt` / `deprecated.txt`，PR #35610），而 `:set modified` 两条版本都走 `OptionSet` + `pattern = 'modified'`；单用任一个都会漏。兼容层与删除条件见根 `AGENTS.md` 的「临时兼容」一节。
+- 不要把这个事件当成冗余删掉：`:set modified` 不走 Neovim 的 winbar 重画路径，且 winbar 渲染的是所有 listed buffer，而内置重画只覆盖显示该 buffer 的窗口。
 
 ## 测试
 
