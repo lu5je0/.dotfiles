@@ -8,10 +8,24 @@
     ../modules/zsh.nix
   ];
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+
+    # nix-community 二进制缓存（第三方，只读公开）。用于 nightly 类包（如
+    # neovim-nightly-overlay）避免本地编译。放在系统级而不是信任 flake 的 nixConfig：
+    # 替换按路径哈希全局进行，缓存已在全局列表就不依赖 flake 提权。
+    # 只列额外缓存：cache.nixos.org 由 nixpkgs 的 nix.settings 默认定义（substituters
+    # 用 mkAfter 追加，trusted-public-keys 直给），且 list 是合并语义，重复列会得两份。
+    substituters = [
+      "https://nix-community.cachix.org"
+    ];
+    trusted-public-keys = [
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
+  };
 
   nix.gc = {
     automatic = true;

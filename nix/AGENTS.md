@@ -22,6 +22,22 @@
 - 该系统级才能解决的问题才写进 `modules/`（例如所有用户都需要的包、systemd 单元）；单包能用包内机制解决的
   （wrapper、补丁等）优先内聚在包目录里
 
+## 二进制缓存
+
+`profiles/base.nix` 的 `nix.settings` 里加了 nix-community 的 cachix（第三方只读公开缓存），
+用于 nightly 类包（如 neovim-nightly-overlay）避免本地编译。
+
+- **只列额外缓存，不要再写 `cache.nixos.org`**：nixpkgs 的 `nixos/modules/config/nix.nix` 已经在
+  `config` 段里默认定义了 `substituters = mkAfter [ "https://cache.nixos.org/" ]` 与
+  `trusted-public-keys = [ "cache.nixos.org-1:..." ]`。`nix.settings` 的 list 类型是**合并**语义（不是覆盖），
+  重复列会得到两份。要验证：`nix eval --json .#nixosConfigurations.<host>.config.nix.settings.substituters`。
+- **优先加系统级 `substituters`，而不是信任 flake 的 `nixConfig`**：替换按路径哈希全局进行，缓存已在
+  全局列表就不需要 flake 提权。给 `trusted-users` 加 `@wheel` 等于允许任意 flake 指定任意缓存，
+  权限面比这个小得多（Nix 手册：`substituters` 只要求「在 `trusted-substituters` 里」或「调用者在 `trusted-users` 里」）。
+- 改了系统配置后现行 shell 的 `nix.conf` 不会变，要 `sudo nixos-rebuild switch` 才生效；
+  临时验证可用 `nix build --substituters ...` 或 `--option`。
+- 缓存不保证命中（nightly 每天一个 commit，缓存里不一定有那一版），命不中就本地编译。
+
 ## 注意
 
 - 根 flake 的 `inputs` 只能是字面量 attrset（`import` / `let` / `//` 都会被判为 thunk 而报错），
