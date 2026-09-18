@@ -198,19 +198,20 @@ vim.schedule(function()
   end)
   
   -- neovim
+  -- 据说在0.13修复，先注释
   -- 修复按u之后，光标闪烁问题
-  set_n_map('u', function()
-    local output = vim.api.nvim_exec2('silent undo', { output = true }).output
-    vim.defer_fn(function()
-      if string.sub(output, 1, 1) == '\n' then
-        print(string.sub(output, 2))
-      else
-        print(output)
-      end
-    end, 10)
-  end)
+  -- set_n_map('u', function()
+  --   local output = vim.api.nvim_exec2('silent undo', { output = true }).output
+  --   vim.defer_fn(function()
+  --     if string.sub(output, 1, 1) == '\n' then
+  --       print(string.sub(output, 2))
+  --     else
+  --       print(output)
+  --     end
+  --   end, 10)
+  -- end)
 
-  set_map('n', 'Q', "<cmd>execute 'normal @' .. reg_recorded()<CR>", remap_opts)
+  -- set_map('n', 'Q', "<cmd>execute 'normal @' .. reg_recorded()<CR>", remap_opts)
 
   set_map('i', '<S-Tab>', '<C-V><Tab>', default_opts)
 

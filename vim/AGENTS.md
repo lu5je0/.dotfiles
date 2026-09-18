@@ -38,8 +38,108 @@
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
 - `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
-- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log` 与 `sidebar`，并按功能子目录组织。
+- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log`、`sidebar` 与 `multicursor`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
+
+## Multicursor (`ext/multicursor.lua`)
+
+Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需要 `mg979/vim-visual-multi`。
+`lua/lu5je0/ext/multicursor.lua` 只做按键适配，把原生键位调成接近 vim-visual-multi 的 ctrl-n 用法。
+
+- 能力探测用 `type(vim.api.nvim_mcursor) == 'function'`，**不要**用 `has('nvim-0.13')`：
+  该 API 是 0.13 才加的 `FUNC_API_SINCE(15)`，探测 API 比探测版本号更准，也能覆盖 nightly。
+- 0.12 上模块整体 no-op（但仍导出空的 `setup()`，因为 `ext-config.lua` 会无条件调用）。
+  同一套 `<C-n>`/`<M-n>` 由 `vim-visual-multi` 提供，见下。
+- 键位：`<C-n>` 逐个加下一个匹配（进入 extend 模式=每个 cursor 各持一个词的选区）、
+  `<M-n>` 下方同列加 cursor，两者都开 follow-mode（`q=`）；原生 `Q`/`[count]Q`/`gQ`/`]C`/`g<C-A>` 保留默认，`Q` 自己会关 follow。
+- 退出用 `<C-l>`（见下），**不用** `<Esc>`：仓库里 `<C-l>` 是 `<C-w>l`（`keymaps.lua`），
+  所以只在有 cursor 时挂一个 buffer-local 覆盖它，没 cursor 时完全不碰。
+- `\A`：一次选中当前词/选区的**所有**匹配（对齐 vim-visual-multi 的 Select All，它的 `VM_leader` 是 `\`）。
+  primary 取离原光标最近的匹配；不会为 primary 自己再加 anchor（`nvim_mcursor` 不去重）；
+  连按幂等（已存在的位置不会重复加）。
+- `<C-p>` / `<C-x>`：对齐 vim-visual-multi 的 Remove Region / Skip Region，
+  仅在有 cursor 时 buffer-local 挂载，退出时还原原映射。
+  - `<C-p>`（Remove）：删掉当前 region（primary 所在处），primary 换成另一个 cursor。
+  - `<C-x>`（Skip）：丢弃当前位置、primary 前进到下一个匹配；**anchor 不变**（总数不变）；
+    找不到就提示且不动（不环绕）。
+  - **`<C-n>`/`\A` 必须把 pattern 写进 `@/`（`remember_pattern()`）**：它们内部用
+    `vim.fn.searchpos()`，它**不更新**搜索寄存器；而 `<C-x>` 靠 `@/` 找下一个匹配。
+    不写的话 `@/` 为空或是陈旧值时，`<C-x>` 会误报 `no more matches`（用户报告过），
+    且 `<C-n>` 之后 `1Q` 全选也用不了。只 `setreg('/')` + `histadd`，**不要**顺手开 `hlsearch`。
+  - `<Esc>` 退出 extend 后 anchor 的显示列会落在词尾（如 `1:0` -> `1:2`），
+    这是上游 `mc_vsel_refresh()` 的 extmark gravity 行为，**不影响编辑位置**（实测 `x` 仍删行首），
+    不要去"修"它。
+  - 上游只有「加 cursor」的 API，删除只能删 anchor extmark；primary 本身不是 extmark，
+    所以 Remove 的实现是「删一个 anchor + 把 primary 搬过去」。删 anchor 会清掉所有选区末端
+    （`nvim.multicursor.cursor`），所以删完必须 `1q=` + `viw` 重建 extend。
+
+### `<C-l>` 是 buffer-local 且懒挂载的（取代之前的 `<Esc>` 方案）
+
+`<C-l>` **不是**永久全局映射，只在「本 buffer 有 cursor」时挂一个 buffer-local 映射，
+会话结束立刻 `keymap.del`，并**还原**可能被覆盖的原 buffer-local `<C-l>`（例如
+`ext/sidebar/actions/diff_preview.lua` 自己装了 `<C-l>`）。
+
+- 因而：没 cursor 时 `<C-l>` 就是原来的（全局 `<C-w>l` 或 diff_preview 的映射），完全不经过 Lua。
+- `n` + `x` 两个模式都挂：`<C-n>`/`<M-n>` 结尾停在 extend（visual）模式，需要先在 x 模式能命中。
+- 挂钩点：包裹上游 `vim._core.mcursor.enable()`（`src/nvim/mcursor.c` 的 `mc_lua_enable`，
+  核心在会话开始/结束会调它），在回调里 `vim.schedule(sync_cl_map)`，再用 `mc.active()` 重判。
+  另外 `BufEnter`/`BufDelete`/`BufWipeout` 兜底。
+- 坑 1：`nvim_buf_get_keymap()` 返回的 `lhs` 是规范化的 `<C-L>`（大写 L），
+  与 `'<C-l>'` 比对前必须 `:lower()`，否则 capture 永远失败、还原丢失。
+- 坑 2：`cl_action` 要**先** `unmount_cl()`（含还原）**再** `clear()`。因为 `clear()` 会触发
+  上游 `enable(false)` → scheduled `sync_cl_map` → `unmount_cl`，那时 `cl_saved` 已被清空，还原就丢了。
+- 测试注意：清 namespace 是异步触发卸载的，`reset()` 里要 `vim.wait(60, ...)` 等一拍，
+  否则上一条用例遗留的 buffer-local `<C-l>` 会污染下一条。
+
+### git 操作保护（configurable）
+
+multicursor 会话中，**会改 buffer 的 reset 类 git 操作会被拦截**（不执行 + 提示），
+因为整行 `nvim_buf_set_lines()` 会把 multicursor 的 anchor extmark（right_gravity）
+推到下一行，导致 cursor 合并/错位（最小复现见模块内注释）。
+
+- 默认名单 `guarded_keys = { '<leader>gu', '<leader>gC' }`：
+  - `reset_hunk`（gitsigns / diff-base）与 `reset_buffer`（diff-base）会 `set_lines`；
+  - gitsigns 里 `set_lines` 只出现在 `reset_hunk` 一处（`actions.lua:361`）；
+  - `stage_*` / `unstage_*` 只写 git index、不动 buffer，**不拦**。
+- 配置：`require('lu5je0.ext.multicursor').setup { guard = bool, guarded_keys = {...}, guard_message = string|fun() }`，
+  在 `ext-config.lua` 的 multicursor 条目里传入。`guard=false` 则完全不接管。
+- 实现与 `<C-l>` 同一套机制：会话中把对应键换成 buffer-local 拦截映射，退出时**还原**原映射。
+
+**坑：`nvim_buf_get_keymap()` 返回的 lhs 会把 `<leader>` 展开**（`<leader>gu` → `,gu`）。
+capture / restore 都必须先 `expand_leader()`，否则永远匹配不到（gitsigns/diff-base 的 `gu`
+都是用 `<leader>` 定义的），表现为「退出后原映射丢失」。
+
+### 五个实现上的坑（改动前务必看）
+
+1. **`busy` 重入锁是必须的**。上一轮开了 follow-mode；本次在 mapping 里移光标后，上游
+   `atom_clock_edge` 会命中 `follow && map_moved && !Visual.active` 而触发
+   `atom_lhs_replay_queue()`，把整个 `<C-n>` 配方在每个已有 cursor 上重放一次，
+   表现为「按 3 次变成 5 个 cursor」——实测 nc 序列 `1,2,5,9`。级联重放会再次递归进入
+   mapping，`busy` 直接挡掉。锁必须在回调结尾复位，**包括「无下一个匹配」的早退分支**，
+   且 `<C-n>`/`<M-n>` 共用同一个 `busy`。
+2. **`<C-n>` 必须同步执行（不能包 `vim.schedule`）**。早期版本把函数体包进 `vim.schedule`，
+   那就是「光标闪一下」的根源：移光标延后一拍 → 先重绘一次（光标还在旧位置），再重绘到
+   新位置。有了第 1 点的 `busy` 锁，同步执行不会产生级联。
+   `<C-n>` 结尾停在 visual 模式，`!Visual.active` 不成立，所以内联是安全的。
+3. **`<M-n>` 必须保留 `vim.schedule`**（与 `<C-n>` 相反）。它结尾停在 normal 模式：
+   mapping 内同步移光标 + 开 follow 会命中同一条 `follow && map_moved && !Visual.active`，
+   且在 mapping 返回后才重放（那时 `busy` 已复位），导致丢 cursor / 数量错乱。
+   整块延后一拍就不会落进当次 CmdAtom。
+4. **`x`-mode mapping 里 `vim.fn.visualmode()` 返回空串**（选区已结束），必须从 `vim.fn.mode()`
+   推导 `v`/`V`/`<C-v>` 类型；且退出 visual 后窗口光标停在「活跃端」，要显式算选区起点，
+   否则留下来的 cursor 会落在词中间。
+5. **不要在 mapping 回调里 `vim.keymap.del` 掉正在执行的那个映射**。实测（`<C-l>` 早期实现）
+   会让回调**立即中止**，后面的语句不再执行（表现为「`<C-l>` 清不掉 cursor」）。
+   所以 `cl_action` 不直接删映射，而是把要还原的状态寄存到 `pending_unmount`，
+   由 `clear()` 触发的 `enable(false)` → `scheduled sync_cl_map` 去真正 del/restore。
+   推论：`unmount_*` 都接受可选的 `(buf, saved)` 覆盖参数，以便 `sync_cl_map` 消费寄存状态。
+
+### 与 vim-visual-multi 的切换
+
+`plugins.lua` 里给 `mg979/vim-visual-multi` 加了 `enabled = function() return type(vim.api.nvim_mcursor) ~= 'function' end`，
+即 0.12 用插件、0.13 用原生，避免两套键位/语义打架。
+**删除条件**：仓库不再支持 0.12（或 `nvim-cmp` 等旧插件一并移除）时，可删掉 vim-visual-multi、
+`ext/vim-visual-multi.lua` 及其 `keys` 声明；`ext/multicursor.lua` 的能力探测也可简化掉。
 
 ## Tabline (自定义实现)
 
@@ -140,7 +240,12 @@ ext/tabline/
   - `cd vim && nvim --headless '+qa'`
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`。
+- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`。
+- `tests/multicursor/spec.lua` 只在 0.13+（当前 nvim 的 `vim.api.nvim_mcursor` 存在）真正执行，老版本输出 `SKIP` 并退出 0。
+  它起一个 `--embed` 子 Neovim、用 `nvim_input()` 发真实按键：multicursor 的 CmdAtom / follow-mode
+  只在 typed 路径上被捕获，`vim.api.nvim_feedkeys(..., 'x')` 在脚本里行为不可靠。
+  要在 0.12 下验证这部分，得用 0.13+ 的 nvim 跑整套测试；`NVIM_TEST_BIN` 只用于在外层已是 0.13 时指定另一个 0.13 二进制
+  （0.12 的 `rpcrequest` 对着 0.13 子进程会挂死，不能用来“升级”外层）。
 - `tests/winbar/drag_spec.lua` 是唯一会起子 Neovim 并 attach UI 发真实鼠标事件的测试（winbar tab 拖动），坑点见 `lua/lu5je0/ext/winbar/agents.md` 的「测试」一节。
 - 如果你新增了独立 Lua 功能且具备稳定输入输出，优先补到 `tests/`，不要只依赖手动打开 Neovim 验证。
 - 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
@@ -183,6 +288,20 @@ vim.api.nvim_create_autocmd('OptionSet', {
 - `lua/lu5je0/ext/sidebar/sources/buffers.lua`：刷新 Buffers source 的 `●`。
 
 两处都**不能删掉这个事件**：`:set modified` 不走 Neovim 的 winbar 重画路径，且 winbar/sidebar 渲染的是所有 listed buffer，而内置重画只覆盖显示该 buffer 的窗口。
+
+### multicursor：0.13 原生 vs 0.12 vim-visual-multi
+
+0.13 起 `Q` 变成「加 multicursor」，而仓库里 `keymaps.lua` 原本把 `Q` 映射成回放录制寄存器。
+该行现已注释掉（注释后在两个版本上都是对的：0.12 的 `Q` 默认本来就回放寄存器）。
+
+切换条件统一用能力探测 `type(vim.api.nvim_mcursor) == 'function'`（两个位置）：
+
+| 位置 | 0.12 | 0.13+ |
+|------|------|-------|
+| `ext-config.lua` 的 `multicursor` 条目 | `ext/multicursor.lua` 内部 no-op | 注册 `<C-n>`/`<M-n>`/`<Esc>` |
+| `plugins.lua` 的 `mg979/vim-visual-multi` | `enabled` → 加载插件 | `enabled` → 禁用 |
+
+细节见本文件「Multicursor (`ext/multicursor.lua`)」一节。测试：`tests/multicursor/spec.lua`（老版本自动 SKIP）。
 
 ## 已知事实
 - 仓库根 README 将该目录视为 `neovim` 配置的一部分。

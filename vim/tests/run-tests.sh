@@ -49,3 +49,9 @@ nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/git_ops_spec.lua"
 printf '\n'
 printf '%s[winbar:drag]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/winbar/drag_spec.lua" "${RESET}"
 (cd "${SCRIPT_DIR}/.." && nvim --headless -u NONE -l "${SCRIPT_DIR}/winbar/drag_spec.lua")
+
+printf '\n'
+printf '%s[multicursor]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/multicursor/spec.lua" "${RESET}"
+# 仅 0.13+ 的 nvim 会真正执行；老版本输出 SKIP 并退出 0。
+# 要在 0.12 下覆盖这里，需用 0.13+ 的 nvim 跑整个套件（NVIM_TEST_BIN 不能升级外层）。
+nvim --headless -u NONE -l "${SCRIPT_DIR}/multicursor/spec.lua"
