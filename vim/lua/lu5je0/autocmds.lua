@@ -66,24 +66,6 @@ vim.api.nvim_create_autocmd('ModeChanged', {
   end,
 })
 
--- 进入 Visual 模式时设置 showcmd 为 true
-vim.api.nvim_create_autocmd('ModeChanged', {
-    group = M.default_group,
-    pattern = '*:[vV\x16]*',  -- \x16 是 Ctrl-V 的十六进制表示
-    callback = function()
-        vim.opt.showcmd = true
-    end,
-})
-
--- 退出 Visual 模式时设置 showcmd 为 false
-vim.api.nvim_create_autocmd('ModeChanged', {
-    group = M.default_group,
-    pattern = '[vV\x16]*:*',  -- \x16 是 Ctrl-V 的十六进制表示
-    callback = function()
-        vim.opt.showcmd = false
-    end,
-})
-
 -- remove padding around Neovim instance 
 -- vim.api.nvim_create_autocmd({ "UIEnter", "ColorScheme" }, {
 --   callback = function()

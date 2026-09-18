@@ -109,7 +109,7 @@ multicursor 会话中，**会改 buffer 的 reset 类 git 操作会被拦截**�
 capture / restore 都必须先 `expand_leader()`，否则永远匹配不到（gitsigns/diff-base 的 `gu`
 都是用 `<leader>` 定义的），表现为「退出后原映射丢失」。
 
-### 五个实现上的坑（改动前务必看）
+### 六个实现上的坑（改动前务必看）
 
 1. **`busy` 重入锁是必须的**。上一轮开了 follow-mode；本次在 mapping 里移光标后，上游
    `atom_clock_edge` 会命中 `follow && map_moved && !Visual.active` 而触发
@@ -138,6 +138,10 @@ capture / restore 都必须先 `expand_leader()`，否则永远匹配不到（gi
    所以 `cl_action` 不直接删映射，而是把要还原的状态寄存到 `pending_unmount`，
    由 `clear()` 触发的 `enable(false)` → `scheduled sync_cl_map` 去真正 del/restore。
    推论：`unmount_*` 都接受可选的 `(buf, saved)` 覆盖参数，以便 `sync_cl_map` 消费寄存状态。
+6. **不要在 `ModeChanged` 中动态切换 `showcmd`**。`<C-n>` 内部会短暂 `v→n→v`；
+   `<Esc>` 后原生 `nvim.multicursor.cursor` 暂时为空，写 option 触发 redraw 时显示层会回退到
+   词首 anchor，随后 `viw` 再刷回 selection-end，表现为光标集体闪到行首附近。
+   `showcmd` 保持 `options.lua` 中的全局关闭状态。
 
 ### 与 vim-visual-multi 的切换
 
