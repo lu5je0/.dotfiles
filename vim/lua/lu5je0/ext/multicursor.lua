@@ -1,11 +1,12 @@
 -- 原生 multicursor（Neovim 0.13+，:help multicursor）的按键适配。
 --
--- 0.13 起 multicursor 是内建能力，不再是 vim-visual-multi 那种插件。它默认的键位和
--- vim-visual-multi 用法差异较大，这里把它调成接近 ctrl-n 风格的用法：
+-- 0.13 起 multicursor 是内建能力，不再是 vim-visual-multi 那种插件。这里保留 Ctrl-N
+-- 逐个加匹配的入口，但使用更稳定的原生 normal-mode cursor 语义：
 --
---   <C-n>  把光标下的词（或 visual 选中的文本）留成一个 cursor，primary 跳到下一个匹配；
---          连按逐个加，并开启 follow-mode（q=），所以 w/b/j/k 这类纯 motion 会在所有 cursor 重放。
---   \A     一次选中当前词/选区的**所有**匹配（visual-multi 的 Select All）。
+--   <C-n>  在光标下的词（或 visual 选中的文本）及下一个匹配处放 cursor；连按逐个加，
+--          并开启 follow-mode（q=），所以 w/b/j/k 这类纯 motion 会在所有 cursor 重放。
+--          替换每个词使用原生 operator+motion，例如 ciw。
+--   \A     一次在当前词/选区的所有匹配处放置 cursor。
 --   <M-n>  在当前行下方同列加一个 cursor（列对齐），并开启 follow-mode。
 --   <C-l>  有 multicursor 时清除光标（buffer-local，仅在有 cursor 时挂载）；
 --          没有 cursor 时 <C-l> 完全不受影响（仍是你的切窗口 / diff_preview 映射）。
@@ -46,36 +47,21 @@ end
 local mc = require('vim._core.mcursor')
 
 local ns = vim.api.nvim_create_namespace('nvim.multicursor')
+local session_patterns = {} ---@type table<integer, string>
 
---- 在移动光标**前**关掉 follow。
----
---- 这是「光标集体弹回行首闪一下」的修复核心：上游 atom_clock_edge 的级联条件是
---- `follow && map_moved && !Visual.active`。mapping 里同步调 nvim_win_set_cursor() 后，
---- 若 follow 已开（上一轮开的）就会命中，把整个 mapping 配方在每个 cursor 上 LHS-replay。
---- **重放发生在函数返回后**（busy 已复位），所以 busy 锁拦不住。
----
---- 实测闪烁特征：一次按压 ModeChanged 8~10 次（正常 2）、光标弹回行首附近、
---- anchor 从 A[1:0,2:0] 漂到 A[2:2,4:2]。先关 follow 就消除了。
-local function pause_follow()
-  vim.cmd('normal! 2q=')
+local function clear_session_state(buf)
+  session_patterns[buf] = nil
 end
 
---- 进入 extend 模式并让每个 cursor 选中自己的词（visual-multi 的 Ctrl-N 语义）。
----
---- 应配合 `pause_follow()` 使用：关 follow -> 移光标 -> enter_extend()。
---- 实测每次按压 ModeChanged 只 +2，A/V 逐次正确追加（1:0 -> 1:0,2:2 -> …）。
----
---- 走过的弯路（不要重复）：
----   - `nvim_feedkeys` 在 headless / 无 UI 环境不执行，会丢 extend 选区（V 为空）。
----   - `vim.schedule` 只是把闪烁推到下一拍，不能消除。
-local function enter_extend()
-  vim.cmd('normal! 1q=')
-  vim.cmd('normal! viw')
+--- 在移动 primary 前关掉 follow；移动完成后由调用方重新开启。
+local function pause_follow()
+  vim.cmd('normal! 2q=')
 end
 
 --- 清除当前 buffer 的所有 multicursor（等价原生 CTRL-L 的效果部分）。
 --- 清空 namespace 会同时结束会话并关闭 follow-mode。
 local function clear()
+  clear_session_state(vim.api.nvim_get_current_buf())
   vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 end
 
@@ -113,9 +99,8 @@ end
 
 --- 把当前位置留成一个 cursor，primary 移到目标位置。
 ---
---- 移光标**前先关 follow**（见 enter_extend 的注释）：follow 已开时移光标会命中上游的
---- `follow && map_moved && !Visual.active` 级联，把整个 mapping 在每个 cursor 上重放，
---- 表现为光标集体弹回行首闪一下。调用方应在移完后用 enter_extend() 重新打开 follow。
+--- 移光标前先关 follow，避免上游 `follow && map_moved && !Visual.active` 触发级联；
+--- 调用方应在移完后重新打开 follow。
 --- @param pos integer[] {row, col_1based} 目标位置
 --- @param orig integer[]? {row, col_0based} 要保留的位置；缺省用当前光标
 local function place_cursor(pos, orig)
@@ -189,17 +174,11 @@ local function visual_pattern()
   return '\\V' .. vim.fn.escape(text, '\\/')
 end
 
---- <C-n>：把当前词（或 visual 选区的文本）留成一个 cursor，primary 跳到下一个匹配，
---- 并开启 follow-mode。
+--- <C-n>：把当前位置留成一个 normal-mode cursor，primary 跳到下一个匹配，
+--- 并开启 follow-mode。后续按 `ciw` 等原生 operator+motion 同时编辑各 cursor。
 ---
---- 改动前务必看 AGENTS.md 的 multicursor 一节：
---- 1. busy 重入锁是必须的。上一轮会开 follow-mode；本次在 mapping 里移光标后，上游
----    atom_clock_edge 会命中 `follow && map_moved && !Visual.active` 而触发
----    atom_lhs_replay_queue()，把整个 <C-n> 配方在每个 cursor 上重放，导致 cursor 数量
----    指数增长（1、2、5、9…）。级联重放会再次进入本函数，busy 直接挡掉。
---- 2. **不要**把函数体包进 vim.schedule。早期版本用过 schedule，但那会让「移光标」
----    延后一拍：本次先触发一次重绘（光标还在旧位置），下一拍再重绘到新位置，
----    视觉上就是光标闪一下。有了 busy 锁，同步执行不会再产生级联，所以直接内联。
+--- 整体必须 schedule：函数最终停在 normal mode 且开启 follow；若在当前 typed CmdAtom 内
+--- 移动光标，上游会把整个 mapping LHS replay 到每个 cursor，导致数量级联。
 local busy = false
 
 local function ctrl_n()
@@ -207,88 +186,79 @@ local function ctrl_n()
     return
   end
   local visual = vim.fn.mode():find('[vV\22]') ~= nil
-  local pat = visual and (visual_pattern() or word_pattern()) or word_pattern()
+  local buf = vim.api.nvim_get_current_buf()
+  local pat = mc.active() and session_patterns[buf] or (visual and (visual_pattern() or word_pattern()) or word_pattern())
   if not pat then
     return
   end
-  -- 记进 @/：<C-x> 要靠它找下一个匹配（searchpos 不更新寄存器）。
   remember_pattern(pat)
-
-  -- 先搜、后退出选区。顺序很重要：如果先 normal! <Esc> 再搜，"没有下一个匹配"
-  -- 提前 return 时已经退出了 extend 模式且选区被清，光标状态就不对了。
-  -- searchpos + winrestview 在 visual 下不会破坏选区（已实测），可以安全前移。
   local orig = visual and visual_start() or nil
 
   busy = true
-  local pos = find_next(pat)
-  if not pos then
+  vim.schedule(function()
+    local pos = find_next(pat)
+    if not pos then
+      busy = false
+      vim.notify('multicursor: no next match', vim.log.levels.INFO)
+      return
+    end
+    if visual then
+      vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+    end
+    place_cursor(pos, orig)
+    vim.cmd('normal! 1q=')
+    session_patterns[buf] = pat
     busy = false
-    vim.notify('multicursor: no next match', vim.log.levels.INFO)
-    return
-  end
-
-  if visual then
-    -- 结束选区（用 normal! 而非 remap，避免触发其它 visual 收尾逻辑）。
-    vim.cmd('normal! ' .. vim.keycode('<Esc>'))
-  end
-  place_cursor(pos, orig)
-  -- 只有 <C-n> / <M-n> 自动开启 follow-mode；原生 Q 加的不开（Q 自己会关）。
-  -- place_cursor() 已先关 follow，这里再 enter_extend() 打开并选词。
-  enter_extend()
-  busy = false
+  end)
 end
 
---- \\A：一次选中当前词（或 visual 选区文本）的**所有**匹配（visual-multi 的 "Select All"）。
----
---- 与 <C-n> 一样，每个 cursor 各持一个词的选区，并开 follow-mode；
---- 已存在的 cursor 不会被重复添加（nvim_mcursor 同位置是 no-op）。
+--- \\A：一次在当前词（或 visual 选区文本）的所有匹配处放置 normal-mode cursor。
 --- primary 取离原光标最近的那个匹配，避免跳远。
 local function select_all()
   if busy then
     return
   end
   local visual = vim.fn.mode():find('[vV\22]') ~= nil
-  local pat = visual and (visual_pattern() or word_pattern()) or word_pattern()
+  local buf = vim.api.nvim_get_current_buf()
+  local pat = mc.active() and session_patterns[buf] or (visual and (visual_pattern() or word_pattern()) or word_pattern())
   if not pat then
     return
   end
-  -- 同 <C-n>：记进 @/，方便后续 <C-x> / 1Q
   remember_pattern(pat)
-
   local cur = vim.api.nvim_win_get_cursor(0)
-  if visual then
-    -- 同 <C-n>：结束选区
-    vim.cmd('normal! ' .. vim.keycode('<Esc>'))
-  end
-
-  local positions = find_all(pat)
-  if #positions == 0 then
-    vim.notify('multicursor: no matches', vim.log.levels.INFO)
-    return
-  end
-
-  -- primary 取离原光标最近的一个（行优先、再列），和 Sublime/visual-multi 手感一致。
-  local best = positions[1]
-  local bestd = math.huge
-  for _, p in ipairs(positions) do
-    local d = math.abs(p[1] - cur[1]) * 10000 + math.abs(p[2] - cur[2])
-    if d < bestd then
-      best, bestd = p, d
-    end
-  end
 
   busy = true
-  for _, p in ipairs(positions) do
-    -- 跳过 primary 自己的位置：nvim_mcursor() 不会去重，在 primary 位置也会建一个 anchor。
-    if not (p[1] == best[1] and p[2] == best[2]) then
-      vim.api.nvim_mcursor(0, { p[1], p[2] })
+  vim.schedule(function()
+    if visual then
+      vim.cmd('normal! ' .. vim.keycode('<Esc>'))
     end
-  end
-  -- 同 <C-n>：移光标前先关 follow，避免 follow && map_moved 级联。
-  pause_follow()
-  vim.api.nvim_win_set_cursor(0, best)
-  enter_extend()
-  busy = false
+    local positions = find_all(pat)
+    if #positions == 0 then
+      busy = false
+      vim.notify('multicursor: no matches', vim.log.levels.INFO)
+      return
+    end
+
+    local best = positions[1]
+    local bestd = math.huge
+    for _, p in ipairs(positions) do
+      local d = math.abs(p[1] - cur[1]) * 10000 + math.abs(p[2] - cur[2])
+      if d < bestd then
+        best, bestd = p, d
+      end
+    end
+
+    pause_follow()
+    for _, p in ipairs(positions) do
+      if not (p[1] == best[1] and p[2] == best[2]) then
+        vim.api.nvim_mcursor(0, { p[1], p[2] })
+      end
+    end
+    vim.api.nvim_win_set_cursor(0, best)
+    vim.cmd('normal! 1q=')
+    session_patterns[buf] = pat
+    busy = false
+  end)
 end
 
 --- 会话里所有 cursor 的位置：primary（窗口光标）+ 各 anchor。
@@ -308,8 +278,6 @@ end
 --- 所以「删当前」的实现是：找一个 anchor（优先与 primary 同位置，否则取最近的）删掉，
 --- 并把窗口光标移到那个位置——效果就是「当前 region 被移除，primary 换成另一个」。
 ---
---- 注意：删 anchor 会让上游清掉所有选区末端（nvim.multicursor.cursor），所以删完要重新
---- 进 extend（`1q=` + `viw`）恢复每个 cursor 的选区；中途先 `<Esc>` 退出旧选区。
 --- @return boolean removed
 local function remove_current()
   if not mc.active() then
@@ -335,14 +303,16 @@ local function remove_current()
     return false
   end
 
-  -- 先退出 extend（清掉旧选区），再删 anchor、搬 primary，最后重建 extend。
-  -- <Esc> 后 Visual.active 为假，所以移光标前必须关 follow，否则命中级联。
-  vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+  if vim.fn.mode():find('[vV\22]') then
+    vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+  end
   pause_follow()
   vim.api.nvim_buf_del_extmark(0, ns, pick[1])
   vim.api.nvim_win_set_cursor(0, { pick[2] + 1, pick[3] })
   if mc.active() then
-    enter_extend()
+    vim.cmd('normal! 1q=')
+  else
+    clear_session_state(vim.api.nvim_get_current_buf())
   end
   return true
 end
@@ -353,8 +323,10 @@ local function remove_region()
     return
   end
   busy = true
-  remove_current()
-  busy = false
+  vim.schedule(function()
+    remove_current()
+    busy = false
+  end)
 end
 
 --- <C-x>：跳过当前 region（primary 所在处）并选下一个匹配。
@@ -367,42 +339,44 @@ local function skip_region()
   if busy then
     return
   end
-  local pat = vim.fn.getreg('/')
+  local buf = vim.api.nvim_get_current_buf()
+  local pat = session_patterns[buf] or vim.fn.getreg('/')
   if pat == '' then
     vim.notify('multicursor: no search pattern', vim.log.levels.INFO)
     return
   end
 
   busy = true
-  -- 从 primary 当前位置的**下一列**开始往后找，避免命中词自身。不环绕。
-  local c = vim.api.nvim_win_get_cursor(0)
-  local line = vim.api.nvim_buf_get_lines(0, c[1] - 1, c[1], true)[1] or ''
-  local view = vim.fn.winsaveview()
-  vim.api.nvim_win_set_cursor(0, { c[1], math.min(c[2] + 1, #line) })
-  local pos = vim.fn.searchpos(pat, 'W')
-  vim.fn.winrestview(view)
-  vim.api.nvim_win_set_cursor(0, c)
+  vim.schedule(function()
+    local c = vim.api.nvim_win_get_cursor(0)
+    local line = vim.api.nvim_buf_get_lines(0, c[1] - 1, c[1], true)[1] or ''
+    local view = vim.fn.winsaveview()
+    vim.api.nvim_win_set_cursor(0, { c[1], math.min(c[2] + 1, #line) })
+    local pos = vim.fn.searchpos(pat, 'W')
+    vim.fn.winrestview(view)
+    vim.api.nvim_win_set_cursor(0, c)
 
-  if pos[1] == 0 then
+    if pos[1] == 0 then
+      busy = false
+      vim.notify('multicursor: no more matches', vim.log.levels.INFO)
+      return
+    end
+
+    if vim.fn.mode():find('[vV\22]') then
+      vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+    end
+    pause_follow()
+    vim.api.nvim_win_set_cursor(0, { pos[1], pos[2] - 1 })
+    if mc.active() then
+      vim.cmd('normal! 1q=')
+    end
     busy = false
-    vim.notify('multicursor: no more matches', vim.log.levels.INFO)
-    return
-  end
-
-  -- 退出旧 extend 选区，搬 primary，重建 extend。
-  -- <Esc> 后 Visual.active 为假，移光标前必须关 follow。
-  vim.cmd('normal! ' .. vim.keycode('<Esc>'))
-  pause_follow()
-  vim.api.nvim_win_set_cursor(0, { pos[1], pos[2] - 1 })
-  if mc.active() then
-    enter_extend()
-  end
-  busy = false
+  end)
 end
 
 --- <M-n>：在下方同列加一个 cursor（保持 virtual column），并开启 follow-mode。
 ---
---- 与 `<C-n>` 同一套原理（见 enter_extend 的注释）：先关 follow -> 移光标 -> 再开 follow，
+--- 与 `<C-n>` 同一套原理：先关 follow -> 移光标 -> 再开 follow，
 --- 避免命中 `follow && map_moved && !Visual.active` 级联。这里额外包一层 vim.schedule：
 --- `<M-n>` 不经 visual 模式，schedule 能让整块不落进当次 CmdAtom，实测最稳。
 local function alt_n()
@@ -590,8 +564,8 @@ local function unmount_guard(buf_override, saved_override)
   end
 end
 
---- <C-n>/<M-n> 结尾可能在 visual 模式（extend），那时 buffer-local <C-l> 需要
---- 先在 x 模式映射；两种模式的语义一致：退出选区后清除（若会话已结束则只退选区）。
+--- 同时提供 n/x 映射：本模块以 normal-mode cursor 为主，但仍允许从用户自己的 visual
+--- 选区开始会话；两种模式都可直接清除。
 ---
 --- 注意顺序：先 unmount_cl() 再 clear()。因为 clear() 会触发上游 enable(false)
 --- → sync_cl_map → unmount_cl，那时 cl_buf 已被置 nil，cl_saved 已在第一次
@@ -698,6 +672,7 @@ local function sync_cl_map()
     mount_session_keys(buf)
     mount_guard(buf)
   else
+    clear_session_state(vim.api.nvim_get_current_buf())
     unmount_session_keys()
     unmount_cl()
     unmount_guard()
@@ -738,6 +713,7 @@ function M.setup(opts)
   vim.api.nvim_create_autocmd({ 'BufWipeout', 'BufDelete' }, {
     group = group,
     callback = function(ev)
+      session_patterns[ev.buf] = nil
       if cl_buf == ev.buf then
         cl_buf = nil
         cl_saved = nil

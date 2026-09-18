@@ -122,7 +122,7 @@ end
 setup()
 
 -- ============================================================================
-group('<C-n>：加下一个匹配 + 各持选区 + follow-mode')
+group('<C-n>：加下一个匹配 + normal-mode cursor + follow-mode')
 -- ============================================================================
 
 run('<C-n> 逐个追加 cursor，不合并', function()
@@ -135,9 +135,16 @@ run('<C-n> 逐个追加 cursor，不合并', function()
   assert_eq(marks(), '1:0,2:0,3:0', 'third press is additive')
 end)
 
--- 回归：旧实现在第 3 次按压后 cursor 指数增长（1,2,5,9…）。
--- 原因：上一轮开了 follow-mode，下一轮退出 visual 再移光标，
--- 命中上游 atom_lhs_replay_queue()，把 <C-n> 配方在每个 cursor 上重放。
+run('<C-n> 连按保持首次的整词 pattern', function()
+  reset([[{'vim one','vim nvim','vim three'}]], '{1, 0}')
+  feed('<C-n>')
+  feed('<C-n>')
+  assert_eq(marks(), '1:0,2:0', 'nvim suffix must not be selected')
+  assert_eq(cursor(), '{ 3, 0 }', 'primary should advance to the third standalone vim')
+  assert_eq(lua([[return vim.fn.getreg('/')]]), '\\<vim\\>', 'whole-word pattern must stay unchanged')
+end)
+
+-- normal-mode + follow 下若不 schedule，mapping 会被 LHS replay，cursor 数量指数增长。
 run('<C-n> 连按多次不会指数增长（无重入级联）', function()
   -- 6 个匹配，5 次按压刚好得到 5 个额外 cursor；第 2、4、6 行的匹配在行中（列不是 0）。
   reset([[{'lu5je0.a','x lu5je0.b','lu5je0.c','x lu5je0.d','lu5je0.e','x lu5je0.f'}]], '{1, 0}')
@@ -146,16 +153,14 @@ run('<C-n> 连按多次不会指数增长（无重入级联）', function()
     assert_eq(#vim.split(marks(), ',', { plain = true }), i, ('after %d presses: exactly %d cursors'):format(i, i))
   end
   assert_eq(marks(), '1:0,2:2,3:0,4:2,5:0')
-  -- 第 5 次按压后 primary 已到第 6 个匹配，但尚未为它留下锚点；rZ 时 primary 也会被编辑。
-  feed('rZ')
-  assert_eq(lines(), 'ZZZZZZ.a|x ZZZZZZ.b|ZZZZZZ.c|x ZZZZZZ.d|ZZZZZZ.e|x ZZZZZZ.f')
+  -- 第 5 次按压后 primary 已到第 6 个匹配，但尚未为它留下锚点；ciw 时 primary 也会被编辑。
+  feed('ciwZ')
+  esc()
+  assert_eq(lines(), 'Z.a|x Z.b|Z.c|x Z.d|Z.e|x Z.f')
 end)
 
--- 回归（critical）：这是旧版真正会爆炸的场景，也是「光标闪一下」的修复点。
--- <C-n> 结尾停在 visual，但用户可以按 <Esc> 回 normal 而 follow-mode 仍开着；
--- 此时再按 <C-n>，旧版（无 busy 或包在 schedule 里）就会触发级联。
--- 要求：每次按压精确 +1，不得丢 cursor 或指数增长。
-run('<C-n> 在 normal 模式且 follow 已开时仍然精确 +1（不闪烁/不级联）', function()
+-- normal-mode + follow 下必须把整个实现 schedule 出当前 CmdAtom，否则会 LHS replay 级联。
+run('<C-n> 在 normal 模式且 follow 已开时仍然精确 +1（不级联）', function()
   reset([[{'lm1 f','lm2 f','lm3 f','lm4 f','lm5 f','lm6 f','lm7 f','lm8 f'}]], '{1, 3}')
   local expected = 0
   for i = 1, 8 do
@@ -171,34 +176,48 @@ run('<C-n> 在 normal 模式且 follow 已开时仍然精确 +1（不闪烁/不�
   end
 end)
 
-run('<C-n> 后进入 extend 模式（每个 cursor 各选一个词）', function()
+run('<C-n> 后保持 normal 模式', function()
   reset([[{'foo bar','foo bar'}]], '{1, 0}')
   feed('<C-n>')
-  assert_eq(mode(), 'v', 'should be in visual mode after <C-n>')
+  assert_eq(mode(), 'n', 'should stay in normal mode after <C-n>')
 end)
 
-run('<C-n> 的选区可以在所有 cursor 上替换', function()
+run('<C-n> 的 cursor 可以同时编辑', function()
   reset([[{'foo bar','foo bar','foo bar','foo bar'}]], '{1, 0}')
   feed('<C-n>')
   feed('<C-n>')
   feed('<C-n>')
-  esc()
   feed('rZ')
-  assert_eq(lines(), 'foZ bar|foZ bar|foZ bar|foZ bar')
+  assert_eq(lines(), 'Zoo bar|Zoo bar|Zoo bar|Zoo bar')
   feed('u')
   assert_eq(lines(), 'foo bar|foo bar|foo bar|foo bar', 'undo is atomic')
 end)
 
-run('c 可以在每个选区上修改', function()
+run('ciw 可以在每个 cursor 上修改单词', function()
   reset([[{'aaa baz','aaa baz','aaa baz'}]], '{1, 0}')
   feed('<C-n>')
   feed('<C-n>')
-  feed('cZZZ')
+  feed('ciwZZZ')
   esc()
   assert_eq(lines(), 'ZZZ baz|ZZZ baz|ZZZ baz')
 end)
 
-run('I 可以在每个选区前插入', function()
+run('c 后 undo 保留 primary cursor', function()
+  reset([[{'vim one','vim two','vim three'}]], '{1, 0}')
+  feed('<C-n>')
+  feed('<C-n>')
+  feed('ciwtest')
+  esc()
+  assert_eq(lines(), 'test one|test two|test three')
+  feed('u')
+  assert_eq(lines(), 'vim one|vim two|vim three')
+  assert_eq(marks(), '1:0,2:0', 'anchors should be restored')
+  assert_eq(cursor(), '{ 3, 0 }', 'primary should return to the third region')
+  feed('rZ')
+  assert_eq(lines(), 'Zim one|Zim two|Zim three', 'all three cursors must remain active')
+end)
+
+run('I 可以在每个 cursor 所在行首插入', function()
   reset([[{'one x','one x'}]], '{1, 0}')
   feed('<C-n>')
   feed('I# ')
@@ -206,11 +225,10 @@ run('I 可以在每个选区前插入', function()
   assert_eq(lines(), '# one x|# one x')
 end)
 
-run('<C-n> 开启 follow-mode：退出选区后 w 会级联', function()
+run('<C-n> 开启 follow-mode：w 会级联', function()
   reset([[{'aa bb','aa bb','aa bb'}]], '{1, 0}')
   feed('<C-n>')
   feed('<C-n>')
-  esc()
   assert_eq(mode(), 'n')
   feed('w')
   assert_eq(marks(), '1:3,2:3')
@@ -247,7 +265,7 @@ run('<M-n> 列对齐且跟随 motion', function()
 end)
 
 -- ============================================================================
-group('\\A：一次选中所有匹配（visual-multi 的 Select All）')
+group('\\A：一次在所有匹配处添加 normal-mode cursor')
 -- ============================================================================
 
 run('\\A 选中全部匹配，且不重复计数 primary', function()
@@ -255,13 +273,12 @@ run('\\A 选中全部匹配，且不重复计数 primary', function()
   feed('\\A')
   -- 5 处匹配 → 4 个额外 cursor（primary 在其中一个位置上）
   assert_eq(marks(), '1:0,2:2,4:0,5:0')
-  assert_eq(mode(), 'v', 'enters extend mode')
+  assert_eq(mode(), 'n', 'stays in normal mode')
 end)
 
 run('\\A 后可以直接编辑全部匹配', function()
   reset([[{'foo bar','x foo baz','foo qux','foo quux','foo corge'}]], '{3, 0}')
   feed('\\A')
-  esc()
   feed('ciwZZ')
   esc()
   assert_eq(lines(), 'ZZ bar|x ZZ baz|ZZ qux|ZZ quux|ZZ corge')
@@ -321,15 +338,14 @@ run('<C-l> 清除 cursor；无 cursor 时不挂映射', function()
   assert_eq(cl_buflocal(), false, 'mapping unmounted after the session ends')
 end)
 
-run('<C-l> 在 extend 模式（<C-n> 之后）也能清除', function()
+run('<C-l> 清除 <C-n> 创建的 cursors', function()
   reset([[{'foo bar','foo bar','foo bar'}]], '{1, 0}')
   feed('<C-n>')
   feed('<C-n>')
-  assert_eq(mode(), 'v', 'in extend mode')
+  assert_eq(mode(), 'n', 'in normal mode')
   assert_eq(marks(), '1:0,2:0')
   feed(vim.api.nvim_replace_termcodes('<C-l>', true, false, true))
-  assert_eq(mode(), 'n', 'leaves visual')
-  assert_eq(marks(), '', '<C-l> clears from extend mode')
+  assert_eq(marks(), '', '<C-l> clears cursors')
   assert_eq(cl_buflocal(), false, 'unmounted')
 end)
 
@@ -453,7 +469,7 @@ run('回归：@/ 是陈旧值时 <C-x> 仍能正确工作', function()
   feed('<C-x>')
   -- 应前进到 foo3（不报 no more matches）
   assert_eq(marks(), '1:0', 'anchor unchanged')
-  assert_eq(cursor(), '{ 3, 2 }', '<C-x> advanced using the recorded pattern')
+  assert_eq(cursor(), '{ 3, 0 }', '<C-x> advanced using the recorded pattern')
 end)
 
 run('<C-x> 找不到更多匹配时不动并提示', function()

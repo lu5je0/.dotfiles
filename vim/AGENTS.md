@@ -44,103 +44,52 @@
 ## Multicursor (`ext/multicursor.lua`)
 
 Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需要 `mg979/vim-visual-multi`。
-`lua/lu5je0/ext/multicursor.lua` 只做按键适配，把原生键位调成接近 vim-visual-multi 的 ctrl-n 用法。
+`lua/lu5je0/ext/multicursor.lua` 保留 Ctrl-N 风格的加匹配入口，但 cursor 使用原生 normal-mode 语义。
 
 - 能力探测用 `type(vim.api.nvim_mcursor) == 'function'`，**不要**用 `has('nvim-0.13')`：
   该 API 是 0.13 才加的 `FUNC_API_SINCE(15)`，探测 API 比探测版本号更准，也能覆盖 nightly。
 - 0.12 上模块整体 no-op（但仍导出空的 `setup()`，因为 `ext-config.lua` 会无条件调用）。
   同一套 `<C-n>`/`<M-n>` 由 `vim-visual-multi` 提供，见下。
-- 键位：`<C-n>` 逐个加下一个匹配（进入 extend 模式=每个 cursor 各持一个词的选区）、
-  `<M-n>` 下方同列加 cursor，两者都开 follow-mode（`q=`）；原生 `Q`/`[count]Q`/`gQ`/`]C`/`g<C-A>` 保留默认，`Q` 自己会关 follow。
-- 退出用 `<C-l>`（见下），**不用** `<Esc>`：仓库里 `<C-l>` 是 `<C-w>l`（`keymaps.lua`），
-  所以只在有 cursor 时挂一个 buffer-local 覆盖它，没 cursor 时完全不碰。
-- `\A`：一次选中当前词/选区的**所有**匹配（对齐 vim-visual-multi 的 Select All，它的 `VM_leader` 是 `\`）。
-  primary 取离原光标最近的匹配；不会为 primary 自己再加 anchor（`nvim_mcursor` 不去重）；
-  连按幂等（已存在的位置不会重复加）。
-- `<C-p>` / `<C-x>`：对齐 vim-visual-multi 的 Remove Region / Skip Region，
-  仅在有 cursor 时 buffer-local 挂载，退出时还原原映射。
-  - `<C-p>`（Remove）：删掉当前 region（primary 所在处），primary 换成另一个 cursor。
-  - `<C-x>`（Skip）：丢弃当前位置、primary 前进到下一个匹配；**anchor 不变**（总数不变）；
-    找不到就提示且不动（不环绕）。
-  - **`<C-n>`/`\A` 必须把 pattern 写进 `@/`（`remember_pattern()`）**：它们内部用
-    `vim.fn.searchpos()`，它**不更新**搜索寄存器；而 `<C-x>` 靠 `@/` 找下一个匹配。
-    不写的话 `@/` 为空或是陈旧值时，`<C-x>` 会误报 `no more matches`（用户报告过），
-    且 `<C-n>` 之后 `1Q` 全选也用不了。只 `setreg('/')` + `histadd`，**不要**顺手开 `hlsearch`。
-  - `<Esc>` 退出 extend 后 anchor 的显示列会落在词尾（如 `1:0` -> `1:2`），
-    这是上游 `mc_vsel_refresh()` 的 extmark gravity 行为，**不影响编辑位置**（实测 `x` 仍删行首），
-    不要去"修"它。
-  - 上游只有「加 cursor」的 API，删除只能删 anchor extmark；primary 本身不是 extmark，
-    所以 Remove 的实现是「删一个 anchor + 把 primary 搬过去」。删 anchor 会清掉所有选区末端
-    （`nvim.multicursor.cursor`），所以删完必须 `1q=` + `viw` 重建 extend。
+- `<C-n>`：在当前词和下一个整词匹配处放 cursor，连按逐个追加，并保持首次 pattern；
+  cursor 留在 normal mode，替换单词使用 `ciw`，不再模拟 vim-visual-multi 的 Visual 选区。
+- `<M-n>`：在下方同列加 cursor；它和 `<C-n>` 都开启 follow-mode（`q=`）。
+- `\A`：一次在当前词/visual 选区的所有匹配处放置 normal-mode cursor，primary 取离原光标
+  最近的匹配；不会为 primary 自己再加 anchor，连按幂等。
+- 原生 `Q`/`[count]Q`/`gQ`/`]C`/`g<C-A>` 保留默认，`Q` 自己会关 follow。
+- 退出用 `<C-l>`：只在当前 buffer 有 cursor 时挂 buffer-local 映射；会话结束后删除并还原
+  原 buffer-local `<C-l>`。无 cursor 时仍是全局 `<C-w>l` 或 diff_preview 自己的映射。
+- `<C-p>` 删除当前 region，primary 换成另一个 cursor；`<C-x>` 保留 anchors 并把 primary
+  前进到下一个匹配。两者只在会话中挂载，退出时还原原映射。
+- `<C-n>`/`\A` 必须把 pattern 写入 `@/`，供 `<C-x>` 和原生 `1Q` 使用；同时把首次 pattern
+  保存在 `session_patterns`，否则 visual 文本 pattern 或后续光标下单词可能改变匹配语义。
 
-### `<C-l>` 是 buffer-local 且懒挂载的（取代之前的 `<Esc>` 方案）
+### `<C-l>` 是 buffer-local 且懒挂载的
 
-`<C-l>` **不是**永久全局映射，只在「本 buffer 有 cursor」时挂一个 buffer-local 映射，
-会话结束立刻 `keymap.del`，并**还原**可能被覆盖的原 buffer-local `<C-l>`（例如
-`ext/sidebar/actions/diff_preview.lua` 自己装了 `<C-l>`）。
-
-- 因而：没 cursor 时 `<C-l>` 就是原来的（全局 `<C-w>l` 或 diff_preview 的映射），完全不经过 Lua。
-- `n` + `x` 两个模式都挂：`<C-n>`/`<M-n>` 结尾停在 extend（visual）模式，需要先在 x 模式能命中。
-- 挂钩点：包裹上游 `vim._core.mcursor.enable()`（`src/nvim/mcursor.c` 的 `mc_lua_enable`，
-  核心在会话开始/结束会调它），在回调里 `vim.schedule(sync_cl_map)`，再用 `mc.active()` 重判。
-  另外 `BufEnter`/`BufDelete`/`BufWipeout` 兜底。
-- 坑 1：`nvim_buf_get_keymap()` 返回的 `lhs` 是规范化的 `<C-L>`（大写 L），
-  与 `'<C-l>'` 比对前必须 `:lower()`，否则 capture 永远失败、还原丢失。
-- 坑 2：`cl_action` 要**先** `unmount_cl()`（含还原）**再** `clear()`。因为 `clear()` 会触发
-  上游 `enable(false)` → scheduled `sync_cl_map` → `unmount_cl`，那时 `cl_saved` 已被清空，还原就丢了。
-- 测试注意：清 namespace 是异步触发卸载的，`reset()` 里要 `vim.wait(60, ...)` 等一拍，
-  否则上一条用例遗留的 buffer-local `<C-l>` 会污染下一条。
+- 挂钩点是上游 `vim._core.mcursor.enable()`；回调中 schedule `sync_cl_map`，再用 `mc.active()`
+  重判。`BufEnter`/`BufDelete`/`BufWipeout` 兜底。
+- `nvim_buf_get_keymap()` 返回规范化的 `<C-L>`，比较前必须 `:lower()`。
+- 不要在 mapping 回调里删除正在执行的映射。`cl_action` 将待还原状态存进 `pending_unmount`，
+  由 `enable(false)` 后 scheduled 的 `sync_cl_map` 完成删除和还原。
+- 清 namespace 是异步触发卸载的；测试 `reset()` 必须等一拍，避免映射污染下一用例。
 
 ### git 操作保护（configurable）
 
-multicursor 会话中，**会改 buffer 的 reset 类 git 操作会被拦截**（不执行 + 提示），
-因为整行 `nvim_buf_set_lines()` 会把 multicursor 的 anchor extmark（right_gravity）
-推到下一行，导致 cursor 合并/错位（最小复现见模块内注释）。
+会话中默认拦截 `<leader>gu`/`<leader>gC`：这类 reset 用整行 `nvim_buf_set_lines()` 修改
+buffer，会让 right-gravity anchor 漂移。stage/unstage 只改 index，不拦截。配置入口为
+`require('lu5je0.ext.multicursor').setup { guard, guarded_keys, guard_message }`。
+`nvim_buf_get_keymap()` 会展开 `<leader>`，capture/restore 前必须用 `expand_leader()` 规范化。
 
-- 默认名单 `guarded_keys = { '<leader>gu', '<leader>gC' }`：
-  - `reset_hunk`（gitsigns / diff-base）与 `reset_buffer`（diff-base）会 `set_lines`；
-  - gitsigns 里 `set_lines` 只出现在 `reset_hunk` 一处（`actions.lua:361`）；
-  - `stage_*` / `unstage_*` 只写 git index、不动 buffer，**不拦**。
-- 配置：`require('lu5je0.ext.multicursor').setup { guard = bool, guarded_keys = {...}, guard_message = string|fun() }`，
-  在 `ext-config.lua` 的 multicursor 条目里传入。`guard=false` 则完全不接管。
-- 实现与 `<C-l>` 同一套机制：会话中把对应键换成 buffer-local 拦截映射，退出时**还原**原映射。
+### 实现约束
 
-**坑：`nvim_buf_get_keymap()` 返回的 lhs 会把 `<leader>` 展开**（`<leader>gu` → `,gu`）。
-capture / restore 都必须先 `expand_leader()`，否则永远匹配不到（gitsigns/diff-base 的 `gu`
-都是用 `<leader>` 定义的），表现为「退出后原映射丢失」。
-
-### 六个实现上的坑（改动前务必看）
-
-1. **`busy` 重入锁是必须的**。上一轮开了 follow-mode；本次在 mapping 里移光标后，上游
-   `atom_clock_edge` 会命中 `follow && map_moved && !Visual.active` 而触发
-   `atom_lhs_replay_queue()`，把整个 `<C-n>` 配方在每个已有 cursor 上重放一次，
-   表现为「按 3 次变成 5 个 cursor」——实测 nc 序列 `1,2,5,9`。级联重放会再次递归进入
-   mapping，`busy` 直接挡掉。锁必须在回调结尾复位，**包括「无下一个匹配」的早退分支**，
-   且 `<C-n>`/`<M-n>` 共用同一个 `busy`。
-2. **移光标前必须先关 follow（`pause_follow()`）**。这是「光标集体弹回行首闪一下」的修复。
-   级联条件是 `follow && map_moved && !Visual.active`：上一轮已开 follow，本次 mapping 里同步
-   移光标就会命中，把整个 `<C-n>` 配方（含 `viw`）在每个 cursor 上 LHS-replay。
-   **重放发生在 mapping 返回后**（busy 已复位），所以第 1 点的锁拦不住。
-   实测闪烁特征：一次按压 ModeChanged 8~10 次（正常 2）、光标弹回行首附近、anchor 从
-   `A[1:0,2:0]` 漂到 `A[2:2,4:2]`。修复 = `place_cursor()` 里先 `2q=` 关 follow，
-   移完再 `enter_extend()`（`1q=` + `viw`）打开。实测每次按压 ModeChanged 只 +2，A/V 逐次正确。
-   走过的弯路（不要重复）：`vim.schedule` 只是把闪烁推后一拍；`nvim_feedkeys('1q=viw')`
-   在 headless / 无 UI 环境不执行，会丢 extend 选区（`V` 为空）。
-3. **`<M-n>` 必须保留 `vim.schedule`**（与 `<C-n>` 相反）。它结尾停在 normal 模式：
-   mapping 内同步移光标 + 开 follow 会命中同一条 `follow && map_moved && !Visual.active`，
-   且在 mapping 返回后才重放（那时 `busy` 已复位），导致丢 cursor / 数量错乱。
-   整块延后一拍就不会落进当次 CmdAtom。
-4. **`x`-mode mapping 里 `vim.fn.visualmode()` 返回空串**（选区已结束），必须从 `vim.fn.mode()`
-   推导 `v`/`V`/`<C-v>` 类型；且退出 visual 后窗口光标停在「活跃端」，要显式算选区起点，
-   否则留下来的 cursor 会落在词中间。
-5. **不要在 mapping 回调里 `vim.keymap.del` 掉正在执行的那个映射**。实测（`<C-l>` 早期实现）
-   会让回调**立即中止**，后面的语句不再执行（表现为「`<C-l>` 清不掉 cursor」）。
-   所以 `cl_action` 不直接删映射，而是把要还原的状态寄存到 `pending_unmount`，
-   由 `clear()` 触发的 `enable(false)` → `scheduled sync_cl_map` 去真正 del/restore。
-   推论：`unmount_*` 都接受可选的 `(buf, saved)` 覆盖参数，以便 `sync_cl_map` 消费寄存状态。
-6. **不要在 `ModeChanged` 中动态切换 `showcmd`**。`<C-n>` 内部会短暂 `v→n→v`；
-   `<Esc>` 后原生 `nvim.multicursor.cursor` 暂时为空，写 option 触发 redraw 时显示层会回退到
-   词首 anchor，随后 `viw` 再刷回 selection-end，表现为光标集体闪到行首附近。
+1. `<C-n>`/`<M-n>`/`\A` 最终停在 normal mode 并开启 follow；添加和移动 cursor 的主体必须
+   `vim.schedule` 出当前 typed CmdAtom，否则 `follow && map_moved && !Visual.active` 会触发
+   LHS replay，导致 cursor 数量级联。
+2. 移动 primary 前必须用 `2q=` 关 follow，移动完成后再用 `1q=` 开启。
+3. 连按 `<C-n>` 必须复用首次 pattern；不能从后续位置重新取 `<cword>`，也不能把首次整词
+   pattern 退化为 visual 字面 pattern，否则 `vim` 会错误命中 `nvim`。
+4. x-mode mapping 中 `vim.fn.visualmode()` 返回空串，必须从 `vim.fn.mode()` 推导选区类型；退出
+   visual 后要显式使用选区左上角作为留下的 cursor。
+5. 不要在 `ModeChanged` 中动态切换 `showcmd`；修改 option 会暴露原生 cursor 的重画中间态。
    `showcmd` 保持 `options.lua` 中的全局关闭状态。
 
 ### 与 vim-visual-multi 的切换
