@@ -135,6 +135,29 @@ run('<C-n> 逐个追加 cursor，不合并', function()
   assert_eq(marks(), '1:0,2:0,3:0', 'third press is additive')
 end)
 
+run('<C-n> 光标停在词中间/词尾时 cursor 仍落在词首', function()
+  -- 回归：之前直接用 nvim_win_get_cursor() 留 cursor，`f|oo` 会留下 1:1。
+  -- visual-multi / 原生 matches() 的语义是一律落在整词第一个字符。
+  reset([[{'foo bar','foo baz'}]], '{1, 1}')
+  feed('<C-n>')
+  assert_eq(marks(), '1:0', 'mid-word cursor must snap to the word start')
+  assert_eq(cursor(), '{ 2, 0 }')
+
+  reset([[{'foo bar','foo baz'}]], '{1, 2}')
+  feed('<C-n>')
+  assert_eq(marks(), '1:0', 'last-char cursor must snap to the word start')
+
+  reset([[{'x foo y','x foo z'}]], '{1, 3}')
+  feed('<C-n>')
+  assert_eq(marks(), '1:2', 'word start must be found at a non-zero column')
+  assert_eq(cursor(), '{ 2, 2 }')
+
+  -- 词首再按不能倒退（幂等）
+  reset([[{'foo bar','foo baz'}]], '{1, 0}')
+  feed('<C-n>')
+  assert_eq(marks(), '1:0')
+end)
+
 run('<C-n> 连按保持首次的整词 pattern', function()
   reset([[{'vim one','vim nvim','vim three'}]], '{1, 0}')
   feed('<C-n>')

@@ -204,6 +204,14 @@ local function ctrl_n()
     end
     if visual then
       vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+    elseif not orig then
+      -- 非 visual 时留下的是「光标下的词」：用 pattern 自身反向搜索取词首。
+      -- 光标停在词中间（如 `f|oo`）时直接取 `nvim_win_get_cursor()` 会得到词中间的列，
+      -- 而 visual-multi / 原生 `matches()` 的语义是 cursor 一律落在整词第一个字符。
+      local start = find_next(pat, 'bcnW')
+      if start then
+        orig = { start[1], start[2] - 1 }
+      end
     end
     place_cursor(pos, orig)
     vim.cmd('normal! 1q=')
