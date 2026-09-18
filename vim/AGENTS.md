@@ -67,17 +67,11 @@ Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需
 
 - 挂钩点是上游 `vim._core.mcursor.enable()`；回调中 schedule `sync_cl_map`，再用 `mc.active()`
   重判。`BufEnter`/`BufDelete`/`BufWipeout` 兜底。
-- `nvim_buf_get_keymap()` 返回规范化的 `<C-L>`，比较前必须 `:lower()`。
+- `nvim_buf_get_keymap()` 返回规范化的 `<C-L>`，比较前必须 `:lower()`；它同时会展开
+  `<leader>`，capture/restore 前必须用 `expand_leader()` 规范化。
 - 不要在 mapping 回调里删除正在执行的映射。`cl_action` 将待还原状态存进 `pending_unmount`，
   由 `enable(false)` 后 scheduled 的 `sync_cl_map` 完成删除和还原。
 - 清 namespace 是异步触发卸载的；测试 `reset()` 必须等一拍，避免映射污染下一用例。
-
-### git 操作保护（configurable）
-
-会话中默认拦截 `<leader>gu`/`<leader>gC`：这类 reset 用整行 `nvim_buf_set_lines()` 修改
-buffer，会让 right-gravity anchor 漂移。stage/unstage 只改 index，不拦截。配置入口为
-`require('lu5je0.ext.multicursor').setup { guard, guarded_keys, guard_message }`。
-`nvim_buf_get_keymap()` 会展开 `<leader>`，capture/restore 前必须用 `expand_leader()` 规范化。
 
 ### 实现约束
 

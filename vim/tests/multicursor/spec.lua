@@ -529,7 +529,7 @@ run('会话结束后 <C-p>/<C-x> 还原成原映射', function()
 end)
 
 -- ============================================================================
-group('git 操作保护：会话中禁用 reset 类操作')
+group('git 操作不接管：会话中 <leader>gu 保持原映射')
 -- ============================================================================
 
 --- 查询某条 buffer-local 映射的 desc（不存在则 nil）。
@@ -545,40 +545,21 @@ local function gu_desc()
   ]])
 end
 
-run('有 cursor 时 <leader>gu 被接管（不执行 reset）', function()
+run('有 cursor 时 <leader>gu 仍是原映射并正常执行', function()
   reset([[{'a b','a b'}]], '{1, 0}')
   -- 装一个和 gitsigns 同形的 buffer-local <leader>gu（本测试不依赖 git）
   lua([[vim.keymap.set('n', '<leader>gu', function() _G.__hit = true end, { buffer = 0, desc = 'fake-reset' })]])
-  lua([[pcall(vim.keymap.set, 'n', '<leader>gC', function() end, { buffer = 0, desc = 'fake-reset-buf' })]])
 
   feed('Q')
-  local armed = gu_desc()
-  assert_eq(armed ~= 'NONE', true, 'gu mapping exists while a session is active')
-  -- 按下不应执行原回调
+  assert_eq(gu_desc(), 'fake-reset', 'gu mapping untouched while a session is active')
   lua([[_G.__hit = false]])
   feed(',gu')
-  assert_eq(lua([[return _G.__hit]]), false, 'original reset callback must NOT run')
-end)
-
-run('会话结束后 <leader>gu 还原成原映射', function()
-  -- 上一条用例留下了活会话，先退出（会触发还原）
+  assert_eq(lua([[return _G.__hit]]), true, 'original reset callback runs')
   feed('<C-l>')
   vim.wait(60, function()
     return false
   end)
-  assert_eq(gu_desc(), 'fake-reset', 'original mapping restored after C-l')
   lua([[pcall(vim.keymap.del, 'n', '<leader>gu', { buffer = 0 })]])
-  lua([[pcall(vim.keymap.del, 'n', '<leader>gC', { buffer = 0 })]])
-end)
-
-run('guard = false 时不接管', function()
-  reset([[{'a b','a b'}]], '{1, 0}')
-  lua([[require('lu5je0.ext.multicursor').opts.guard = false]])
-  lua([[vim.keymap.set('n', '<leader>gu', function() _G.__hit2 = true end, { buffer = 0, desc = 'fake-reset' })]])
-  feed('Q')
-  assert_eq(gu_desc(), 'fake-reset', 'must not override when guard is off')
-  lua([[require('lu5je0.ext.multicursor').opts.guard = true]])
-  feed('<C-l>')
 end)
 
 -- ============================================================================

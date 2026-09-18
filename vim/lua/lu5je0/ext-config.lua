@@ -7,14 +7,7 @@ local ext_load = loader.ext_load
 ext_load({
   name = 'multicursor',
   config = function()
-    -- multicursor 会话中禁用会改 buffer 的 git 操作（reset_hunk/reset_buffer）。
-    -- 它们用 nvim_buf_set_lines 整行替换，会把 multicursor 的 anchor extmark 推到下一行，
-    -- 导致 cursor 合并/错位。stage/unstage 只写 index、不动 buffer，所以不在名单里。
-    -- 详见 ext/multicursor.lua 的「git 操作保护」与 AGENTS.md。
-    require('lu5je0.ext.multicursor').setup {
-      guard = true,
-      guarded_keys = { '<leader>gu', '<leader>gC' },
-    }
+    require('lu5je0.ext.multicursor').setup()
   end,
 })
 

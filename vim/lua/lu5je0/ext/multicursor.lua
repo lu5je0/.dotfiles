@@ -23,20 +23,6 @@
 
 local M = {}
 
--- 可配置项（先默认，setup(opts) 可覆盖）。
---
---   guard          是否在 multicursor 会话中拦截会改 buffer 的 git 操作（见下）
---   guarded_keys   会被拦截的 buffer-local 映射；默认 reset 类操作：
---                  reset_hunk/reset_buffer 会 nvim_buf_set_lines()，而整行替换会推动
---                  multicursor 的 anchor extmark（right_gravity）漂到下一行，导致
---                  cursor 合并/错位。stage/unstage 只写 git index，不动 buffer，不需拦。
---   guard_message  拦截时的提示（nil 则不提示）；可以是 string 或 fun()
-M.opts = {
-  guard = true,
-  guarded_keys = { '<leader>gu', '<leader>gC' },
-  guard_message = 'multicursor: git reset is disabled with multiple cursors (<C-l> to exit)',
-}
-
 -- 不支持时（0.12）也导出 setup，让 ext-config 可以无条件调用。
 M.setup = function() end
 
@@ -543,35 +529,6 @@ local function mount_session_keys(buf)
     vim.keymap.set('x', item.key, item.fn, opts)
   end
 end
-local guarded_buf = nil ---@type integer?
-local guarded_saved = {} ---@type table<string, table> lhs -> {map=..., mode=...}
-
---- 拦截时的提示。
-local function guard_notify()
-  local msg = M.opts.guard_message
-  if type(msg) == 'function' then
-    msg = msg()
-  end
-  if msg then
-    vim.notify(msg, vim.log.levels.INFO)
-  end
-end
-
-local function unmount_guard(buf_override, saved_override)
-  local buf = buf_override or guarded_buf
-  local saved_all = saved_override or guarded_saved
-  guarded_buf, guarded_saved = nil, {}
-  if buf == nil or not vim.api.nvim_buf_is_valid(buf) then
-    return
-  end
-  for lhs, saved in pairs(saved_all) do
-    pcall(vim.keymap.del, 'n', lhs, { buffer = buf })
-    if saved then
-      restore_map(buf, lhs, saved.map, saved.mode)
-    end
-  end
-end
-
 --- 同时提供 n/x 映射：本模块以 normal-mode cursor 为主，但仍允许从用户自己的 visual
 --- 选区开始会话；两种模式都可直接清除。
 ---
@@ -592,11 +549,9 @@ local function cl_action()
     pending_unmount = {
       cl = cl_buf and { buf = cl_buf, saved = cl_saved } or nil,
       session = session_buf and { buf = session_buf, saved = session_saved } or nil,
-      guard = guarded_buf and { buf = guarded_buf, saved = guarded_saved } or nil,
     }
     cl_buf, cl_saved = nil, nil
     session_buf, session_saved = nil, {}
-    guarded_buf, guarded_saved = nil, {}
     clear()
     vim.cmd('nohlsearch')
   else
@@ -619,40 +574,7 @@ local function mount_cl(buf)
   vim.keymap.set('x', CL_KEY, cl_action, opts)
 end
 
--- ============================================================================
--- git 操作保护
--- ============================================================================
---
--- reset_hunk / reset_buffer（gitsigns 与 diff-base）会用 nvim_buf_set_lines() 整行替换
--- buffer 内容。而 multicursor 的 anchor 是 right_gravity 的 extmark：整行替换会让 anchor
--- 漂到下一行，然后与那里的 cursor 合并 → 表现为「按一下 <leader>gu 光标就少/乱」。
--- 实测最小复现（不涉任何配置）：
---     nvim_mcursor(0,{1,0}); nvim_mcursor(0,{2,0}); nvim_mcursor(0,{3,0})
---     nvim_buf_set_lines(0, 2, 3, false, {'x'})   -- anchors: 1:0,2:0,3:0 -> 1:0,2:0,4:0
--- 这是上游 extmark gravity 的边界问题（mc_mark_upd 用 right_gravity=true）。
---
--- 所以会话期间把这些键换成「不执行 + 提示」，退出后再还原成原有映射。
--- stage/unstage 只写 git index、不动 buffer，不在保护名单里。
-
-local function mount_guard(buf)
-  if guarded_buf == buf or not M.opts.guard then
-    return
-  end
-  unmount_guard()
-  guarded_buf = buf
-  for _, lhs in ipairs(M.opts.guarded_keys or {}) do
-    local existing = capture_buf_map(buf, lhs, 'n')
-    guarded_saved[lhs] = existing and { map = existing, mode = 'n' } or nil
-    vim.keymap.set('n', lhs, guard_notify, {
-      buffer = buf,
-      nowait = true,
-      silent = true,
-      desc = 'multicursor: disabled (multiple cursors)',
-    })
-  end
-end
-
---- 会话状态变化时同步 <C-l> 与 git 保护映射（当前 buffer）。
+--- 会话状态变化时同步 <C-l> 与其它会话键（当前 buffer）。
 --- 用 `mc.active()` 判断；cursor 是 per-buffer 的，所以还要在 BufEnter 等边界重查。
 local function sync_cl_map()
   -- 先消化 cl_action 寄存的待卸载状态（它自己不能在本回调里删映射，见 cl_action）。
@@ -665,9 +587,6 @@ local function sync_cl_map()
     if p.session then
       unmount_session_keys(p.session.buf, p.session.saved)
     end
-    if p.guard then
-      unmount_guard(p.guard.buf, p.guard.saved)
-    end
   end
 
   if mc.active() then
@@ -678,12 +597,10 @@ local function sync_cl_map()
     end
     mount_cl(buf)
     mount_session_keys(buf)
-    mount_guard(buf)
   else
     clear_session_state(vim.api.nvim_get_current_buf())
     unmount_session_keys()
     unmount_cl()
-    unmount_guard()
   end
 end
 --- MCursor 高亮：原生默认 link 到 CurSearch（edge 下是蓝色实底，本身可见），
@@ -697,13 +614,12 @@ local function apply_hl()
   vim.api.nvim_set_hl(0, 'MCursor', { fg = cs.fg, bg = cs.bg, bold = true })
 end
 
-function M.setup(opts)
-  M.opts = vim.tbl_deep_extend('force', M.opts, opts or {})
+function M.setup()
   apply_hl()
   local group = vim.api.nvim_create_augroup('lu5je0_multicursor', { clear = true })
   vim.api.nvim_create_autocmd('ColorScheme', { group = group, callback = apply_hl })
 
-  -- 会话开始/结束：同步 buffer-local <C-l> 与 git 保护映射。
+  -- 会话开始/结束：同步 buffer-local <C-l> 与其它会话键。
   -- enable() 是上游唯一在会话边界调用的 Lua 入口；但它在 mc_cleanup 里调用时
   -- 会话状态可能尚未定下来，所以统一延后一拍用 mc.active() 重新判定。
   local mc_core = require('vim._core.mcursor')
@@ -725,10 +641,6 @@ function M.setup(opts)
       if cl_buf == ev.buf then
         cl_buf = nil
         cl_saved = nil
-      end
-      if guarded_buf == ev.buf then
-        guarded_buf = nil
-        guarded_saved = {}
       end
       if session_buf == ev.buf then
         session_buf = nil
