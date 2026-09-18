@@ -117,10 +117,15 @@ capture / restore 都必须先 `expand_leader()`，否则永远匹配不到（gi
    表现为「按 3 次变成 5 个 cursor」——实测 nc 序列 `1,2,5,9`。级联重放会再次递归进入
    mapping，`busy` 直接挡掉。锁必须在回调结尾复位，**包括「无下一个匹配」的早退分支**，
    且 `<C-n>`/`<M-n>` 共用同一个 `busy`。
-2. **`<C-n>` 必须同步执行（不能包 `vim.schedule`）**。早期版本把函数体包进 `vim.schedule`，
-   那就是「光标闪一下」的根源：移光标延后一拍 → 先重绘一次（光标还在旧位置），再重绘到
-   新位置。有了第 1 点的 `busy` 锁，同步执行不会产生级联。
-   `<C-n>` 结尾停在 visual 模式，`!Visual.active` 不成立，所以内联是安全的。
+2. **移光标前必须先关 follow（`pause_follow()`）**。这是「光标集体弹回行首闪一下」的修复。
+   级联条件是 `follow && map_moved && !Visual.active`：上一轮已开 follow，本次 mapping 里同步
+   移光标就会命中，把整个 `<C-n>` 配方（含 `viw`）在每个 cursor 上 LHS-replay。
+   **重放发生在 mapping 返回后**（busy 已复位），所以第 1 点的锁拦不住。
+   实测闪烁特征：一次按压 ModeChanged 8~10 次（正常 2）、光标弹回行首附近、anchor 从
+   `A[1:0,2:0]` 漂到 `A[2:2,4:2]`。修复 = `place_cursor()` 里先 `2q=` 关 follow，
+   移完再 `enter_extend()`（`1q=` + `viw`）打开。实测每次按压 ModeChanged 只 +2，A/V 逐次正确。
+   走过的弯路（不要重复）：`vim.schedule` 只是把闪烁推后一拍；`nvim_feedkeys('1q=viw')`
+   在 headless / 无 UI 环境不执行，会丢 extend 选区（`V` 为空）。
 3. **`<M-n>` 必须保留 `vim.schedule`**（与 `<C-n>` 相反）。它结尾停在 normal 模式：
    mapping 内同步移光标 + 开 follow 会命中同一条 `follow && map_moved && !Visual.active`，
    且在 mapping 返回后才重放（那时 `busy` 已复位），导致丢 cursor / 数量错乱。

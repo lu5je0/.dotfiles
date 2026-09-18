@@ -47,9 +47,30 @@ local mc = require('vim._core.mcursor')
 
 local ns = vim.api.nvim_create_namespace('nvim.multicursor')
 
---- follow-mode 开关：1q= 开，2q= 关。
-local function set_follow(on)
-  vim.cmd(on and 'normal! 1q=' or 'normal! 2q=')
+--- 在移动光标**前**关掉 follow。
+---
+--- 这是「光标集体弹回行首闪一下」的修复核心：上游 atom_clock_edge 的级联条件是
+--- `follow && map_moved && !Visual.active`。mapping 里同步调 nvim_win_set_cursor() 后，
+--- 若 follow 已开（上一轮开的）就会命中，把整个 mapping 配方在每个 cursor 上 LHS-replay。
+--- **重放发生在函数返回后**（busy 已复位），所以 busy 锁拦不住。
+---
+--- 实测闪烁特征：一次按压 ModeChanged 8~10 次（正常 2）、光标弹回行首附近、
+--- anchor 从 A[1:0,2:0] 漂到 A[2:2,4:2]。先关 follow 就消除了。
+local function pause_follow()
+  vim.cmd('normal! 2q=')
+end
+
+--- 进入 extend 模式并让每个 cursor 选中自己的词（visual-multi 的 Ctrl-N 语义）。
+---
+--- 应配合 `pause_follow()` 使用：关 follow -> 移光标 -> enter_extend()。
+--- 实测每次按压 ModeChanged 只 +2，A/V 逐次正确追加（1:0 -> 1:0,2:2 -> …）。
+---
+--- 走过的弯路（不要重复）：
+---   - `nvim_feedkeys` 在 headless / 无 UI 环境不执行，会丢 extend 选区（V 为空）。
+---   - `vim.schedule` 只是把闪烁推到下一拍，不能消除。
+local function enter_extend()
+  vim.cmd('normal! 1q=')
+  vim.cmd('normal! viw')
 end
 
 --- 清除当前 buffer 的所有 multicursor（等价原生 CTRL-L 的效果部分）。
@@ -91,9 +112,14 @@ local function find_all(pat)
 end
 
 --- 把当前位置留成一个 cursor，primary 移到目标位置。
+---
+--- 移光标**前先关 follow**（见 enter_extend 的注释）：follow 已开时移光标会命中上游的
+--- `follow && map_moved && !Visual.active` 级联，把整个 mapping 在每个 cursor 上重放，
+--- 表现为光标集体弹回行首闪一下。调用方应在移完后用 enter_extend() 重新打开 follow。
 --- @param pos integer[] {row, col_1based} 目标位置
 --- @param orig integer[]? {row, col_0based} 要保留的位置；缺省用当前光标
 local function place_cursor(pos, orig)
+  pause_follow()
   orig = orig or vim.api.nvim_win_get_cursor(0)
   vim.api.nvim_mcursor(0, { orig[1], orig[2] })
   vim.api.nvim_win_set_cursor(0, { pos[1], pos[2] - 1 })
@@ -207,10 +233,8 @@ local function ctrl_n()
   end
   place_cursor(pos, orig)
   -- 只有 <C-n> / <M-n> 自动开启 follow-mode；原生 Q 加的不开（Q 自己会关）。
-  set_follow(true)
-  -- 像 vim-visual-multi 的 Ctrl-N 那样，让每个 cursor 各持一个词的选区（extend 模式）。
-  -- follow-mode 下 viw 会在所有 cursor 上重放，各自选中自己的词。
-  vim.cmd('normal! viw')
+  -- place_cursor() 已先关 follow，这里再 enter_extend() 打开并选词。
+  enter_extend()
   busy = false
 end
 
@@ -260,9 +284,10 @@ local function select_all()
       vim.api.nvim_mcursor(0, { p[1], p[2] })
     end
   end
+  -- 同 <C-n>：移光标前先关 follow，避免 follow && map_moved 级联。
+  pause_follow()
   vim.api.nvim_win_set_cursor(0, best)
-  set_follow(true)
-  vim.cmd('normal! viw')
+  enter_extend()
   busy = false
 end
 
@@ -311,12 +336,13 @@ local function remove_current()
   end
 
   -- 先退出 extend（清掉旧选区），再删 anchor、搬 primary，最后重建 extend。
+  -- <Esc> 后 Visual.active 为假，所以移光标前必须关 follow，否则命中级联。
   vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+  pause_follow()
   vim.api.nvim_buf_del_extmark(0, ns, pick[1])
   vim.api.nvim_win_set_cursor(0, { pick[2] + 1, pick[3] })
   if mc.active() then
-    set_follow(true)
-    vim.cmd('normal! viw')
+    enter_extend()
   end
   return true
 end
@@ -364,21 +390,21 @@ local function skip_region()
   end
 
   -- 退出旧 extend 选区，搬 primary，重建 extend。
+  -- <Esc> 后 Visual.active 为假，移光标前必须关 follow。
   vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+  pause_follow()
   vim.api.nvim_win_set_cursor(0, { pos[1], pos[2] - 1 })
   if mc.active() then
-    set_follow(true)
-    vim.cmd('normal! viw')
+    enter_extend()
   end
   busy = false
 end
 
 --- <M-n>：在下方同列加一个 cursor（保持 virtual column），并开启 follow-mode。
 ---
---- 这里必须保留 vim.schedule（不同于 <C-n>）：<M-n> 结尾停在 normal 模式，
---- mapping 内同步移光标 + 开 follow 会命中上游 `follow && map_moved && !Visual.active`，
---- 在 mapping 返回后重放整个 <M-n>（那时 busy 已复位），导致丢 cursor / 数量错乱。
---- 整块延迟到下一拍就不会落进当次 CmdAtom。
+--- 与 `<C-n>` 同一套原理（见 enter_extend 的注释）：先关 follow -> 移光标 -> 再开 follow，
+--- 避免命中 `follow && map_moved && !Visual.active` 级联。这里额外包一层 vim.schedule：
+--- `<M-n>` 不经 visual 模式，schedule 能让整块不落进当次 CmdAtom，实测最稳。
 local function alt_n()
   if busy then
     return
@@ -392,6 +418,7 @@ local function alt_n()
   local vcol = vim.fn.virtcol('.')
   busy = true
   vim.schedule(function()
+    pause_follow()
     local col = vim.fn.virtcol2col(0, next_line, vcol)
     if col <= 0 then
       -- 下一行更短：落到该行行尾。
@@ -400,7 +427,7 @@ local function alt_n()
     end
     vim.api.nvim_mcursor(0, { cur[1], cur[2] })
     vim.api.nvim_win_set_cursor(0, { next_line, col - 1 })
-    set_follow(true)
+    vim.cmd('normal! 1q=')
     busy = false
   end)
 end
