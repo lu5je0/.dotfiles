@@ -255,6 +255,15 @@ vim.api.nvim_create_autocmd('OptionSet', {
 
 细节见本文件「Multicursor (`ext/multicursor.lua`)」一节。测试：`tests/multicursor/spec.lua`（老版本自动 SKIP）。
 
+### TextYankPost 高亮：vim.hl.hl_op vs vim.hl.on_yank
+
+0.13 起 `vim.hl.on_yank()` 已废弃（0.14 移除），替代品是 0.13 新增的 `vim.hl.hl_op()`（同时覆盖 `TextYankPost`/`TextPutPost`）。
+0.12 只有 `vim.hl.on_yank()`，没有 `vim.hl.hl_op()`。
+
+`autocmds.lua` 在模块加载时用 `vim.fn.has('nvim-0.13') == 1` 选定一次：0.13+ 走 `vim.hl.hl_op`，0.12 走 `vim.hl.on_yank`，存进 `highlight_yank` 供回调 `pcall`。
+
+**删除条件**：仓库不再支持 0.12 时，直接调用 `vim.hl.hl_op`，删掉 `highlight_yank` 与版本判断。
+
 ## 已知事实
 - 仓库根 README 将该目录视为 `neovim` 配置的一部分。
 - 当前仓库在 `vim/` 目录下使用 `stylua.toml`，说明 Lua 格式化约定已本地化到该目录。

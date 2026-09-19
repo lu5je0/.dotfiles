@@ -35,11 +35,14 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   end
 })
 
+-- 0.13 起 vim.hl.on_yank 已废弃（0.14 移除），改用 vim.hl.hl_op。
+local highlight_yank = vim.fn.has('nvim-0.13') == 1 and vim.hl.hl_op or vim.hl.on_yank
+
 vim.api.nvim_create_autocmd('TextYankPost', {
   group = M.default_group,
   pattern = '*',
   callback = function()
-    pcall(vim.highlight.on_yank, { higroup = "Visual", timeout = 300 })
+    pcall(highlight_yank, { higroup = "Visual", timeout = 300 })
   end
 })
 
