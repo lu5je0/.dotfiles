@@ -4,6 +4,7 @@
 		"npm:pi-commandcode-provider",
 		"npm:pi-smart-web-search",
 		"npm:pi-smart-fetch",
-    "npm:@juicesharp/rpiv-ask-user-question"
+		"npm:@juicesharp/rpiv-ask-user-question",
+		"npm:pi-background-tasks"
 	]
 }

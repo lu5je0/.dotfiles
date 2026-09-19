@@ -55,7 +55,8 @@
             "supportsReasoningEffort": false
           }
         }
-      }
+      },
+      "api": "openai-completions"
     },
     "commandcode": {
       "modelOverrides": {
