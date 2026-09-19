@@ -105,10 +105,9 @@ function M.opts()
       { '<leader>wr', desc = 'translate and replace', mode = { 'n', 'x' } },
       { '<leader>ww', desc = 'translate', mode = { 'n', 'x' } },
 
-      { '<leader>p', group = 'lazy' },
-      { '<leader>pc', '<cmd>Lazy check<cr>', desc = 'check update' },
-      { '<leader>pp', desc = 'profile.nvim' },
-      { '<leader>ps', desc = 'snacks profile' },
+      { '<leader>l', group = 'lazy' },
+      { '<leader>lc', '<cmd>Lazy check<cr>', desc = 'check update' },
+      { '<leader>lp', desc = 'profile.nvim' },
 
       { '<leader>m', group = 'mark', mode = { 'n', 'x' } },
       { '<leader>mb', desc = 'marked in brown', mode = 'x' },

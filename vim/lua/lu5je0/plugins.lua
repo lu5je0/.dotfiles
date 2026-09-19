@@ -794,7 +794,7 @@ local plugins = {
     config = function()
       require('lu5je0.ext.profile')
     end,
-    keys = { { mode = { 'n' }, '<leader>pp' } }
+    keys = { { mode = { 'n' }, '<leader>lp' } }
   },
 
   {

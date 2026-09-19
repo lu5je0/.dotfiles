@@ -14,4 +14,4 @@ local function toggle_profile()
   end
 end
 
-vim.keymap.set("", "<leader>pp", toggle_profile)
+vim.keymap.set("", "<leader>lp", toggle_profile)

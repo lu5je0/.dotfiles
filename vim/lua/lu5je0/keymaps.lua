@@ -380,6 +380,14 @@ vim.schedule(function()
 
   set_map('c', '<C-a>', '<C-b>', remap_opts)
 
+  -- 系统剪切板粘贴。用字符串 RHS 的显式 `*` 寄存器：
+  --   - mac 上 `*` 与 `+` 等价；linux/wsl 上 `*` 是 PRIMARY（见 misc/clipboard/init.lua）。
+  --   - multicursor 里显式寄存器是全局的，会在每个 cursor 重放；隐式
+  --     `clipboard=unnamed/unnamedplus` 不会（只有 primary 生效），且 Lua 函数映射
+  --     会打断级联，所以这里必须是字符串映射。
+  set_map({ 'n', 'x' }, '<leader>p', '"*p', desc_opts('paste system clipboard'))
+  set_map({ 'n', 'x' }, '<leader>P', '"*P', desc_opts('paste system clipboard before'))
+
   del_map('v', 'crr')
   del_map('n', { 'gri', 'grr', 'gra', 'grn' })
 

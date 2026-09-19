@@ -60,6 +60,10 @@ Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需
   原 buffer-local `<C-l>`。无 cursor 时仍是全局 `<C-w>l` 或 diff_preview 自己的映射。
 - `<C-p>` 删除当前 region，primary 换成另一个 cursor；`<C-x>` 保留 anchors 并把 primary
   前进到下一个匹配。两者只在会话中挂载，退出时还原原映射。
+- 系统剪切板粘贴用**全局** `<leader>p`/`<leader>P`（`"*p`/`"*P`，字符串映射，见 `keymaps.lua`）。
+  不要在 multicursor 里依赖隐式 `clipboard=unnamed/unnamedplus`，也不要把 `p`/`P` 包成
+  Lua 函数映射（例如 lazy proxy）：实测两者都只有 primary 生效，其余 cursor 会插入错位内容。
+  显式 `"*`/`"+` 是全局寄存器，字符串映射会被原样重放，每个 cursor 都粘同一份内容。
 - `<C-n>`/`\A` 必须把 pattern 写入 `@/`，供 `<C-x>` 和原生 `1Q` 使用；同时把首次 pattern
   保存在 `session_patterns`，否则 visual 文本 pattern 或后续光标下单词可能改变匹配语义。
 
