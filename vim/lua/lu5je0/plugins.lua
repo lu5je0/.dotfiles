@@ -172,7 +172,23 @@ local plugins = {
       'nvim-lua/plenary.nvim',
       { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' }
     },
-    keys = { ',' }
+    -- 注意：**不要**写成 `keys = { ',' }`。裸 `<leader>` 会让 lazy.nvim 在全局建一个
+    -- `<leader>` proxy，which-key 的 triggers.lua:is_mapped() 会因此拒绝安装自己的
+    -- `<leader>` 触发器，导致第一次按 `<leader>` 不弹 which-key。
+    -- 这里用 ext/telescope.lua 里真实的 <leader>f* 键作为懒加载入口。
+    keys = {
+      { mode = { 'n', 'x' }, '<leader>ff' },
+      { mode = { 'n', 'x' }, '<leader>fj' },
+      { mode = { 'n', 'x' }, '<leader>fm' },
+      { mode = { 'n', 'x' }, '<leader>fh' },
+      { mode = { 'n', 'x' }, '<leader>fn' },
+      { mode = { 'n', 'x' }, '<leader>fr' },
+      { mode = { 'n', 'x' }, '<leader>fR' },
+      { mode = { 'n', 'x' }, '<leader>fC' },
+      { mode = { 'n', 'x' }, '<leader>fc' },
+      { mode = { 'n', 'x' }, '<leader>fl' },
+      { mode = { 'n', 'x' }, '<leader>f"' },
+    }
   },
 
   

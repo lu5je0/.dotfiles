@@ -55,3 +55,8 @@ printf '%s[multicursor]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR
 # 仅 0.13+ 的 nvim 会真正执行；老版本输出 SKIP 并退出 0。
 # 要在 0.12 下覆盖这里，需用 0.13+ 的 nvim 跑整个套件（NVIM_TEST_BIN 不能升级外层）。
 nvim --headless -u NONE -l "${SCRIPT_DIR}/multicursor/spec.lua"
+
+printf '\n'
+printf '%s[whichkey]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/whichkey/spec.lua" "${RESET}"
+# child 用 pty + --listen（非 headless）；which-key 未加载时输出 SKIP 并退出 0。
+nvim --headless -u NONE -l "${SCRIPT_DIR}/whichkey/spec.lua"

@@ -38,7 +38,7 @@
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
 - `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
-- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log`、`sidebar` 与 `multicursor`，并按功能子目录组织。
+- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
 ## Multicursor (`ext/multicursor.lua`)
@@ -196,13 +196,20 @@ ext/tabline/
   - `cd vim && nvim --headless '+qa'`
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`。
+- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`、`tests/whichkey/spec.lua`。
 - `tests/multicursor/spec.lua` 只在 0.13+（当前 nvim 的 `vim.api.nvim_mcursor` 存在）真正执行，老版本输出 `SKIP` 并退出 0。
   它起一个 `--embed` 子 Neovim、用 `nvim_input()` 发真实按键：multicursor 的 CmdAtom / follow-mode
   只在 typed 路径上被捕获，`vim.api.nvim_feedkeys(..., 'x')` 在脚本里行为不可靠。
   要在 0.12 下验证这部分，得用 0.13+ 的 nvim 跑整套测试；`NVIM_TEST_BIN` 只用于在外层已是 0.13 时指定另一个 0.13 二进制
   （0.12 的 `rpcrequest` 对着 0.13 子进程会挂死，不能用来“升级”外层）。
-- `tests/winbar/drag_spec.lua` 是唯一会起子 Neovim 并 attach UI 发真实鼠标事件的测试（winbar tab 拖动），坑点见 `lua/lu5je0/ext/winbar/agents.md` 的「测试」一节。
+- `tests/winbar/drag_spec.lua` 会 attach UI 发真实鼠标事件（winbar tab 拖动），坑点见 `lua/lu5je0/ext/winbar/agents.md` 的「测试」一节。
+- `tests/whichkey/spec.lua` 校验 which-key 的 `<leader>` 触发器：**child 跑在 pty 里（非 headless）**，
+  用 `--listen <sock>` 起真实 TUI（UIEnter 正常触发）、RPC 走 socket、用 `nvim_input()` 发真实按键。
+  **不要**用 `--embed` + `nvim_ui_attach`：RPC 客户端不处理 redraw，UI attach 后 child 会立刻退出。
+  which-key 的触发器本质是把 `<leader>` 本身映射成函数（`triggers.lua`），并用 `is_mapped()` 跳过已被
+  占用的 lhs。所以 **lazy.nvim 插件 spec 的 `keys` 不能写裸 `<leader>`**（例如 `keys = { ',' }`，
+  telescope 曾这么写）：那会在全局建 `<leader>` proxy，which-key 会拒绝安装自己的触发器，
+  表现为「第一次按 `<leader>` 不弹、第二次才弹」。懒加载要用真实键位（如 telescope 的 `<leader>f*`）。
 - 如果你新增了独立 Lua 功能且具备稳定输入输出，优先补到 `tests/`，不要只依赖手动打开 Neovim 验证。
 - 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
 
