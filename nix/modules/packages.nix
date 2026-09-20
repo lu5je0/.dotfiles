@@ -19,6 +19,8 @@
     file
     cmake
     ncdu
+    dnsutils
+    net-tools
   ];
 
   users.users.lu5je0.packages = with pkgs; [
