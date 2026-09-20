@@ -206,55 +206,6 @@ local function ctrl_n()
   end)
 end
 
---- \\A：一次在当前词（或 visual 选区文本）的所有匹配处放置 normal-mode cursor。
---- primary 取离原光标最近的那个匹配，避免跳远。
-local function select_all()
-  if busy then
-    return
-  end
-  local visual = vim.fn.mode():find('[vV\22]') ~= nil
-  local buf = vim.api.nvim_get_current_buf()
-  local pat = mc.active() and session_patterns[buf] or (visual and (visual_pattern() or word_pattern()) or word_pattern())
-  if not pat then
-    return
-  end
-  remember_pattern(pat)
-  local cur = vim.api.nvim_win_get_cursor(0)
-
-  busy = true
-  vim.schedule(function()
-    if visual then
-      vim.cmd('normal! ' .. vim.keycode('<Esc>'))
-    end
-    local positions = find_all(pat)
-    if #positions == 0 then
-      busy = false
-      vim.notify('multicursor: no matches', vim.log.levels.INFO)
-      return
-    end
-
-    local best = positions[1]
-    local bestd = math.huge
-    for _, p in ipairs(positions) do
-      local d = math.abs(p[1] - cur[1]) * 10000 + math.abs(p[2] - cur[2])
-      if d < bestd then
-        best, bestd = p, d
-      end
-    end
-
-    pause_follow()
-    for _, p in ipairs(positions) do
-      if not (p[1] == best[1] and p[2] == best[2]) then
-        vim.api.nvim_mcursor(0, { p[1], p[2] })
-      end
-    end
-    vim.api.nvim_win_set_cursor(0, best)
-    vim.cmd('normal! 1q=')
-    session_patterns[buf] = pat
-    busy = false
-  end)
-end
-
 --- 会话里所有 cursor 的位置：primary（窗口光标）+ 各 anchor。
 --- anchor 是 0-based（extmark 语义），这里统一转成 {row_1based, col_0based}。
 --- @return integer[][]
@@ -650,7 +601,6 @@ function M.setup()
   })
 
   vim.keymap.set({ 'n', 'x' }, '<C-n>', ctrl_n, { silent = true, desc = 'multicursor: add next match' })
-  vim.keymap.set({ 'n', 'x' }, '\\A', select_all, { silent = true, desc = 'multicursor: select all matches' })
   vim.keymap.set('n', '<M-n>', alt_n, { silent = true, desc = 'multicursor: add cursor below' })
 end
 
