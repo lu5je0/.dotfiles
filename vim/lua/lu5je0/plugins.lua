@@ -816,6 +816,9 @@ local plugins = {
   {
     "folke/flash.nvim",
     keys = { { mode = { 'n', 'x' }, 's' }, { mode = { 'n' }, 'S' }, { mode = { 'o' }, 'r' } },
+    enabled = function()
+      return vim.fn.has("nvim-0.13.0") ~= 1
+    end,
     config = function()
       require('flash').setup {
         search = { multi_window = false },
