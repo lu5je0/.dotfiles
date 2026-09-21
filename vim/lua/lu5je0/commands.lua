@@ -235,7 +235,7 @@ vim.api.nvim_create_user_command('Dotfiles', function()
 end, { nargs = 0 })
 
 vim.api.nvim_create_user_command('Nix', function()
-  vim.cmd('edit ' .. vim.env.HOME .. '/.dotfiles/nix/flake.nix | cd ' .. vim.env.HOME .. '/.dotfiles/nix')
+  vim.cmd('edit ' .. vim.env.HOME .. '/.dotfiles/flake.nix | cd ' .. vim.env.HOME .. '/.dotfiles')
 end, { nargs = 0 })
 
 vim.api.nvim_create_user_command('ClearUndo', function()

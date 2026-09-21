@@ -3,8 +3,8 @@
 
   # inputs 只能是字面量 attrset（import / let / // 都会被判为 thunk 而报错）
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
+    nixpkgs-unstable.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
 
     # 上游只有 flake 打包；补丁后不装进系统配置，`nix profile add path:~/.dotfiles#mark-shot`
     mark-shot = {
