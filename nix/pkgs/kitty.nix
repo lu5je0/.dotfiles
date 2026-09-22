@@ -9,12 +9,12 @@
 }:
 
 let
-  version = "0.48.2-unstable-2026-08-29";
+  version = "0.49.0-unstable-2026-09-22";
   src = fetchFromGitHub {
     owner = "lu5je0";
     repo = "kitty";
-    rev = "64029f551744f963988bf68dd41712b5030052b9";
-    hash = "sha256-MXzDPq8k9PMY+BT2bXcdk/OHBAHL4Q1DFiGv2E95A8M=";
+    rev = "f26944423dee292bc77adfa45e1e6810aaac1fc9";
+    hash = "sha256-BceDJPQ4TFYdziSdV9HzG9wkfaSKHaKbfMJTrnUEqQY=";
   };
 in
 kitty.overrideAttrs (old: {
@@ -25,7 +25,7 @@ kitty.overrideAttrs (old: {
     (buildGo126Module {
       pname = "kitty-lu5je0-go-modules";
       inherit src version;
-      vendorHash = "sha256-TkyiG0Yu8W5OV7g+TlL1+IZEbhVR8/ybb9WL4CIhozU=";
+      vendorHash = "sha256-G+eaFOFMIIu2Qo5Mgr3ejwoYrYmNv3EIdEEraDPIdeY=";
     }).goModules;
 
   nativeBuildInputs = old.nativeBuildInputs ++ [
