@@ -24,15 +24,13 @@ local function ensure_root()
 end
 
 local function file_suffix(node)
-  local key = tree.rel_to_cwd(node.abs_path)
-  local g = state.files.git_status_map[key]
+  local g = git.status_for_node(node)
   if g then return g.glyph, g.hl end
 end
 
 local function dir_suffix(node)
   if node.expanded then return end
-  local key = tree.rel_to_cwd(node.abs_path) .. '/'
-  local g = state.files.git_status_map[key]
+  local g = git.status_for_node(node)
   if not g then return end
   if g.glyphs and #g.glyphs > 1 then
     local vt = {}
@@ -113,19 +111,23 @@ local function downgrade_reveal_path(p)
   return nil
 end
 
--- Invoked by watcher.lua after a fs_event debounce. The timer may fire
--- after the user switched tabs, so we explicitly target the originating
--- tabpage's state and only repaint when still on that tab.
-watcher.on_files_changed = function(tabpage)
-  tabpage = tabpage or vim.api.nvim_get_current_tabpage()
+function M.refresh_for(tabpage, force_render)
   if not vim.api.nvim_tabpage_is_valid(tabpage) then return end
-  local ts = state.tab_for(tabpage).files
-  if ts.root then
-    tree.rescan_node(ts.root)
-  end
+  local tab_state = state.tab_for(tabpage)
+  local ts = tab_state.files
+  local changed = ts.root and tree.rescan_node(ts.root)
   ts.reveal_path = downgrade_reveal_path(ts.reveal_path)
-  git_status.refresh_for(tabpage, function()
+  if force_render or (changed and tab_state.active_tab_idx == config.tab_idx('files')) then
+    local old_items = ts.display_items
     git_status.render_active(tabpage)
+    if vim.api.nvim_get_current_tabpage() == tabpage and state:is_open()
+      and tab_state.active_tab_idx == config.tab_idx('files') then
+      view.restore_cursor(old_items, ts.display_items)
+    end
+  end
+  watcher.sync_files(tabpage)
+  git_status.refresh_for(tabpage, function(_, status_changed)
+    if status_changed then git_status.render_active(tabpage) end
   end)
 end
 

@@ -22,17 +22,43 @@ function M.setup(group)
     callback = function() config.apply_highlights() end,
   })
 
-  local git_status = require('lu5je0.ext.sidebar.git_status')
+  local watcher = require('lu5je0.ext.sidebar.watcher')
 
-  vim.api.nvim_create_autocmd({ 'BufWritePost', 'FocusGained' }, {
+  vim.api.nvim_create_autocmd({ 'BufWritePost', 'FileChangedShellPost' }, {
     group = group,
     callback = function()
-      if not state:is_open() then return end
-      if not vim.fs.root(vim.fn.getcwd(), '.git') then return end
-      local tabpage = vim.api.nvim_get_current_tabpage()
-      git_status.refresh_for(tabpage, function()
-        git_status.render_active(tabpage)
-      end)
+      watcher.refresh()
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('FocusGained', {
+    group = group,
+    callback = function()
+      watcher.start()
+      watcher.refresh()
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('TabEnter', {
+    group = group,
+    callback = function()
+      require('lu5je0.ext.sidebar')._on_dir_changed({ match = 'tabpage' })
+      watcher.start()
+      watcher.refresh(nil, true)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = group,
+    callback = function(args)
+      local win = tonumber(args.match)
+      for _, tabpage in ipairs(vim.api.nvim_list_tabpages()) do
+        local ts = state.tab_for(tabpage)
+        if ts.win == win then
+          watcher.stop(tabpage)
+          ts.win = nil
+        end
+      end
     end,
   })
 

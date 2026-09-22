@@ -9,7 +9,6 @@ local tabs = require('lu5je0.ext.sidebar.tabs')
 local keymaps = require('lu5je0.ext.sidebar.keymaps')
 local autocmds = require('lu5je0.ext.sidebar.autocmds')
 local watcher = require('lu5je0.ext.sidebar.watcher')
-local git_status = require('lu5je0.ext.sidebar.git_status')
 
 local function init_sidebar(do_render)
   tabs.render_winbar()
@@ -19,13 +18,8 @@ local function init_sidebar(do_render)
     local source = tabs.get_active_source()
     if source and source.render then source.render() end
   end
-  if state.active_tab_idx == config.tab_idx('files') then
-    local tabpage = vim.api.nvim_get_current_tabpage()
-    git_status.refresh_for(tabpage, function()
-      git_status.render_active(tabpage)
-    end)
-  end
   watcher.start()
+  watcher.refresh()
 end
 
 function M.toggle(opts)
@@ -131,18 +125,22 @@ function M._on_dir_changed(args)
   state.pwd_stack_push()
 
   local new_cwd = vim.fn.getcwd()
-  local old_cwd = state.files.root and state.files.root.abs_path or nil
+  local old_cwd = state.files.root and state.files.root.abs_path or state.git_status.cwd
   if old_cwd == new_cwd then return end
 
-  -- Capture tab so the async git status callback won't render foreign tabs.
   local tabpage = vim.api.nvim_get_current_tabpage()
+  watcher.stop(tabpage)
 
   state.files._root_cache = state.files._root_cache or {}
   if old_cwd and state.files.root then
     state.files._root_cache[old_cwd] = state.files.root
   end
   state.files.root = state.files._root_cache[new_cwd] or nil
+  if state.files.root then
+    require('lu5je0.ext.sidebar.sources.files.tree').rescan_node(state.files.root)
+  end
   state.files.git_status_map = {}
+  state.files.git_root = nil
   state.files.reveal_path = nil
   pcall(function()
     require('lu5je0.ext.sidebar.actions.diff_preview').invalidate_short_head_cache()
@@ -164,11 +162,12 @@ function M._on_dir_changed(args)
     end
   end
 
-  if state:is_open() and state.active_tab_idx == config.tab_idx('files') then
-    require('lu5je0.ext.sidebar.sources.files').render()
-    git_status.refresh_for(tabpage, function()
-      git_status.render_active(tabpage)
-    end)
+  if state:is_open() then
+    if state.active_tab_idx == config.tab_idx('files') then
+      require('lu5je0.ext.sidebar.sources.files').render()
+    end
+    watcher.start(tabpage)
+    watcher.refresh(tabpage)
   end
 end
 

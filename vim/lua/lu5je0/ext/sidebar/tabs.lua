@@ -115,6 +115,7 @@ function M.switch_to(idx)
 
   local keymaps = require('lu5je0.ext.sidebar.keymaps')
   keymaps.apply_for_tab(idx)
+  require('lu5je0.ext.sidebar.watcher').refresh()
 end
 
 function M.next_tab()

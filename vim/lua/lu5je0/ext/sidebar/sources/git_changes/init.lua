@@ -10,14 +10,6 @@ local git_status = require('lu5je0.ext.sidebar.git_status')
 
 local M = {}
 
-local watcher = require('lu5je0.ext.sidebar.watcher')
-watcher.on_index_changed = function(tabpage)
-  if git_status.was_recently_dispatched(tabpage, 500) then return end
-  git_status.refresh_for(tabpage, function()
-    git_status.render_active(tabpage)
-  end)
-end
-
 -- ── status → highlight tables ───────────────────────────
 
 local LETTER_HL = {

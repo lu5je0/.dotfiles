@@ -55,7 +55,10 @@ local function new_tab_state()
       timer = nil,
       generation = 0,
       callbacks = {},
-      last_dispatched = 0,
+      running = nil,
+      pending = false,
+      stdout = nil,
+      cwd = nil,
     },
 
     files = {
@@ -64,6 +67,7 @@ local function new_tab_state()
       hide_dotfiles = true,
       compress_dirs = false,
       git_status_map = {},
+      git_root = nil,
       reveal_path = nil,
       live_filter = nil,
 
@@ -99,9 +103,9 @@ local function new_tab_state()
       _first_located = false,   -- first <leader>gs entry on this tabpage parks on the first changed file
     },
 
-    -- libuv handles for .git/index watcher (managed by sidebar/watcher.lua)
+    -- Watcher resources belong to the tabpage, not the selected source.
     _index_watcher = nil,
-    _index_refresh_timer = nil,
+    _index_path = nil,
 
     buffers = {
       display_items = {},

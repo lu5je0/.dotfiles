@@ -12,12 +12,13 @@ sidebar/
 ├── config.lua         -- 配置：图标、highlight、tabs、宽度；M.apply_highlights() 集中应用
 ├── state.lua          -- per-tab 状态（metatable 按 tabpage 隔离），new_tab_state() 是 schema 单一来源
 ├── git_status.lua     -- 单次异步 git status，按 tab 更新 Files/Git Changes 缓存并合并刷新请求
+├── watcher.lua        -- 展开目录/Git 元数据 fs_event 与资源释放（无定时轮询）
 ├── window.lua         -- 窗口生命周期、guicursor
 ├── full_name.lua      -- 长文件名浮窗（CursorMoved/WinScrolled 触发）
 ├── tabs.lua           -- winbar 渲染、tab 切换
 ├── keymaps.lua        -- 共享 + per-tab 快捷键管理
-├── autocmds.lua       -- 集中注册到 `sidebar` augroup（DirChanged / TabClosed /
-│                          ColorScheme / BufWritePost+FocusGained / BufEnter+LspAttach /
+├── autocmds.lua       -- 集中注册到 `sidebar` augroup（DirChanged / TabEnter+TabClosed / WinClosed /
+│                          ColorScheme / BufWritePost+FileChangedShellPost+FocusGained / BufEnter+LspAttach /
 │                          buffers source 自动刷新：BufAdd+BufDelete+BufWipeout /
 │                          core.buffer-modified 注册的 'modified' 事件）
 ├── render.lua         -- 纯渲染引擎：tree → lines/items/highlights/virt_texts
@@ -28,7 +29,6 @@ sidebar/
 │   ├── files/
 │   │   ├── init.lua          -- files source 门面（render / open_node / find_file / cd_* / keymaps）
 │   │   ├── tree.lua          -- 节点 / scan_dir / ensure_children / rescan / rel_to_cwd / make_filter
-│   │   ├── watcher.lua       -- fs_event 增量挂载
 │   │   ├── git.lua           -- build_status_map / status_to_glyph / is_git_item
 │   │   ├── live_filter.lua   -- 过滤 overlay（per-tab buf/win/closing 在 state.files._live_filter）
 │   │   └── info.lua          -- show_file_info 浮窗
@@ -84,6 +84,12 @@ sidebar/
 - **render 路径禁止同步外部命令**。git 数据通过异步预加载，render 只读缓存。
 - **改动涉及 render、CursorMoved、高频 autocmd 时，必须提前告知用户性能影响。**
 - 所有 Git 状态触发统一调用 `git_status.lua`，由它执行一次 `git status` 并分发给 Files 与 Git Changes；不要在 source 或 autocmd 中另起查询。
+- Git 查询使用 `--no-optional-locks` 避免自身写 index 触发监听回路；每个 tabpage 最多一个在途查询，查询期间的刷新请求合并为后续补查，不按时间窗口丢弃事件。
+- `watcher.lua` 监听已展开目录与实际 gitdir（支持 worktree、无 index 的新仓库），只做事件防抖，不做定时轮询。刷新只扫描缓存树的展开目录，目录结构和 Git 输出均未变化时不重画。
+- 打开 sidebar、切 source、返回 tabpage、FocusGained 和文件保存/重载时补刷；FocusGained 同时同步监听，覆盖离焦期间新建 Git 仓库的情况。DirChanged 重绑监听、重扫复用的根节点。WinClosed/TabClosed 释放监听与防抖定时器并作废旧查询回调。
+- 未展开目录的外部修改可能没有 fs_event，需等 FocusGained、切页、保存或手动 `r` 才更新，没有周期刷新时限；关闭 sidebar 不查询，其他 tabpage/source 保留的文件/index 监听仍可能触发查询。
+- Files 的 Git 状态键相对仓库根目录，不是 cwd；折叠目录再次展开时需重扫，不能依赖折叠期间已停止的监听。
+- 查询使用 `--ignored=matching`，避免递归输出被忽略目录中的每个文件；Files 的忽略标记需继承最近的 ignored 祖先，不能仅查当前路径。
 - devicons 已缓存、fullname popup 复用 buffer/window、suffix 用 `right_align` virt_text — 不要退化。
 
 ## 集成点

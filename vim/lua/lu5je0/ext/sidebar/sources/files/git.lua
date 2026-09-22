@@ -87,17 +87,22 @@ function M.update_from_stdout(tab_files, stdout)
   tab_files.git_status_map = M.build_status_map(stdout or '')
 end
 
-function M.is_git_item(item, cwd)
-  if not item or not item.node then return false end
-  local key
-  if item.type == 'file' then
-    key = tree.rel_to_cwd(item.node.abs_path, cwd)
-  elseif item.type == 'dir' then
-    key = tree.rel_to_cwd(item.node.abs_path, cwd) .. '/'
-  else
-    return false
+function M.status_for_node(node, cwd)
+  local path = tree.rel_to_cwd(node.abs_path, state.files.git_root or cwd)
+  local map = state.files.git_status_map
+  local status = map[path .. (node.type == 'directory' and '/' or '')]
+  if status then return status end
+  local parent = path:match('^(.*)/[^/]+$')
+  while parent do
+    status = map[parent .. '/']
+    if status and status.xy == '!!' then return status end
+    parent = parent:match('^(.*)/[^/]+$')
   end
-  return state.files.git_status_map[key] ~= nil
+end
+
+function M.is_git_item(item, cwd)
+  if not item or not item.node or (item.type ~= 'file' and item.type ~= 'dir') then return false end
+  return M.status_for_node(item.node, cwd) ~= nil
 end
 
 return M

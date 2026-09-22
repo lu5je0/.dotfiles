@@ -52,8 +52,8 @@ function M.scan_dir(path)
 end
 
 function M.ensure_children(node)
-  if node.type == 'directory' and node.children == nil then
-    node.children = M.scan_dir(node.abs_path)
+  if node.type == 'directory' and (node.children == nil or not node.expanded) then
+    M.rescan_node(node)
   end
 end
 
@@ -81,24 +81,27 @@ function M.prepare_tree(node)
 end
 
 function M.rescan_node(node)
-  if node.type ~= 'directory' then return end
-  local old_expanded = {}
-  for _, child in ipairs(node.children or {}) do
-    if child.type == 'directory' and child.expanded then
-      old_expanded[child.name] = child
-    end
+  if node.type ~= 'directory' then return false end
+  local previous = node.children or {}
+  local by_name = {}
+  for _, child in ipairs(previous) do
+    by_name[child.name] = child
   end
-  node.children = M.scan_dir(node.abs_path)
-  for _, child in ipairs(node.children) do
-    if child.type == 'directory' then
-      local old = old_expanded[child.name]
-      if old then
-        child.expanded = true
-        child.children = old.children
-        M.rescan_node(child)
+  local children = M.scan_dir(node.abs_path)
+  local changed = #children ~= #previous
+  for i, child in ipairs(children) do
+    local old = by_name[child.name]
+    if old and old.type == child.type and old.is_symlink == child.is_symlink then
+      children[i] = old
+      if old.type == 'directory' and old.expanded then
+        changed = M.rescan_node(old) or changed
       end
+    else
+      changed = true
     end
   end
+  node.children = children
+  return changed
 end
 
 function M.make_filter(reveal_path)
