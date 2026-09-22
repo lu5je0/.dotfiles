@@ -218,30 +218,41 @@ hs.hotkey.bind({ "ctrl", "option" }, "O", function()
   end
 end)
 
-local function adjacent_space(offset, screen)
-  local screen_id = screen:getUUID()
-  local active_space = hs.spaces.activeSpaces()[screen_id]
+-- N/P 虚拟桌面切换先停用：hs.spaces.gotoSpace 只能靠「打开 Mission Control + 按辅助功能树里的
+-- 桌面缩略图」（新版 macOS 上该元素树有迁移，见 hammerspoon#3897），而注入原生 Ctrl+Left/Right
+-- 在实机上也没触发系统「切换桌面」快捷键。要切桌面用系统自带的 Ctrl+Left/Right（下面两条绑定）。
+--[[
+-- 返回屏幕上的用户桌面 id 列表，以及当前桌面在列表中的下标
+local function user_spaces(screen)
   local spaces = {}
-  for _, space_id in ipairs(hs.spaces.spacesForScreen(screen_id) or {}) do
+  for _, space_id in ipairs(hs.spaces.spacesForScreen(screen:getUUID()) or {}) do
     if hs.spaces.spaceType(space_id) == "user" then
       spaces[#spaces + 1] = space_id
     end
   end
 
+  local active_spaces = hs.spaces.activeSpaces()
+  local active = active_spaces and active_spaces[screen:getUUID()]
   for index, space_id in ipairs(spaces) do
-    if space_id == active_space then
-      return spaces[(index - 1 + offset) % #spaces + 1]
+    if space_id == active then
+      return spaces, index
     end
   end
-  return nil
+  return spaces, nil
 end
 
+-- 循环切到 offset 个之后的桌面：原生快捷键到边缘不绕回，按方向 + 步数换算补上绕回
 local function switch_space(offset)
   local win = hs.window.focusedWindow()
   local screen = win and win:screen() or hs.screen.mainScreen()
-  local target = adjacent_space(offset, screen)
-  if target then
-    hs.spaces.gotoSpace(target)
+  local spaces, index = user_spaces(screen)
+  if #spaces < 2 or not index then
+    return
+  end
+
+  local delta = (index - 1 + offset) % #spaces + 1 - index
+  for _ = 1, math.abs(delta) do
+    hs.eventtap.keyStroke({ "ctrl" }, delta > 0 and "right" or "left")
   end
 end
 
@@ -250,11 +261,14 @@ local function move_window_to_space(offset)
   if not win then
     return
   end
-  local target = adjacent_space(offset, win:screen())
-  if target then
-    hs.spaces.moveWindowToSpace(win:id(), target)
-    hs.spaces.gotoSpace(target)
+  local screen = win:screen()
+  local spaces, index = user_spaces(screen)
+  if #spaces < 2 or not index then
+    return
   end
+
+  hs.spaces.moveWindowToSpace(win:id(), spaces[(index - 1 + offset) % #spaces + 1])
+  switch_space(offset)
 end
 
 hs.hotkey.bind({ "ctrl", "option" }, "N", function()
@@ -269,6 +283,7 @@ end)
 hs.hotkey.bind({ "ctrl", "option", "shift" }, "P", function()
   move_window_to_space(-1)
 end)
+]]
 
 -- 切换虚拟桌面：模拟系统默认的 Ctrl+Left/Right
 hs.hotkey.bind({ "ctrl", "option" }, "Left", function()
