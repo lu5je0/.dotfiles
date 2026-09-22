@@ -40,7 +40,7 @@
       "app": "kitty",
       "screen": "external",
       "size": {
-        "center_i": { "w": 1420, "h": 992 },
+        "center_i": { "w": 1497, "h": 991 },
         "center_j": { "w": 1023, "h": 863 }
       }
     },
@@ -83,7 +83,7 @@
       "host": "jerry",
       "size": {
         "center_i": { "w": 1351, "h": 856 },
-        "center_j": { "w": 992, "h": 812 }
+        "center_j": { "w": 979, "h": 812 }
       }
     },
     {
