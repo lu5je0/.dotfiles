@@ -534,12 +534,29 @@ export default function (pi: ExtensionAPI) {
 		kind: "chip",
 		render: ({ theme, requestRender }) => {
 			requestFooterRender = requestRender;
-			return theme.fg("dim", MODES[mode].label);
+			return modeLabel(mode, theme);
 		},
 	});
 
+	/**
+	 * YOLO 的标签色。主题色板（ThemeColor）是固定联合类型，加不了自定义槽位，
+	 * dark 的 red 又是 #cc6666，所以这里自己发 ANSI：truecolor 用 38;2，
+	 * 256 色模式降级到最近的 xterm 索引（#d75f5f = 167）。
+	 */
+	const YOLO_RGB = [0xda, 0x52, 0x4b] as const;
+	const YOLO_ANSI256 = 167;
+	const modeLabel = (m: Mode, theme: ExtensionContext["ui"]["theme"]): string => {
+		const text = MODES[m].label;
+		if (m !== "yolo") return theme.fg("dim", text);
+		const escape =
+			theme.getColorMode() === "256color"
+				? `\x1b[38;5;${YOLO_ANSI256}m`
+				: `\x1b[38;2;${YOLO_RGB[0]};${YOLO_RGB[1]};${YOLO_RGB[2]}m`;
+		return `${escape}${text}\x1b[39m`;
+	};
+
 	const setStatus = (ctx: ExtensionContext) => {
-		ctx.ui.setStatus("perm", ctx.ui.theme.fg("dim", MODES[mode].label));
+		ctx.ui.setStatus("perm", modeLabel(mode, ctx.ui.theme));
 		requestFooterRender?.();
 	};
 
