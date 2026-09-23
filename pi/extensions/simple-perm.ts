@@ -632,6 +632,9 @@ export default function (pi: ExtensionAPI) {
 		if (!resolved) resolved = loadPersistedMode();
 
 		mode = resolved ?? DEFAULT_MODE;
+		// 子进程（bash/`!`/子 pi）继承当前模式。只在切模式时写的话，重启后从状态文件
+		// 恢复的这次不会导出，文档里“环境变量继承”就不成立。
+		process.env.PI_PERMISSION_MODE = mode;
 		setStatus(ctx);
 
 		if (!bwrapAvailable) {

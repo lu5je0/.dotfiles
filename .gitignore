@@ -14,3 +14,4 @@ vim/nvim.log
 .qoder/
 git/ignore
 gnome/*/schemas/gschemas.compiled
+.pi/
