@@ -20,7 +20,8 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { existsSync, readFileSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { join } from "node:path";
+import { registerFooterProvider } from "./lib/footer.ts";
 
 // ---------------------------------------------------------------------------
 // token 计算（参考 pi-token-speed）
@@ -202,21 +203,6 @@ function formatTps(tps: number): string {
 	return tps.toFixed(2);
 }
 
-function formatCwdForFooter(cwd: string, home: string | undefined): string {
-	if (!home) return cwd;
-	const resolvedCwd = resolve(cwd);
-	const resolvedHome = resolve(home);
-	const rel = relative(resolvedHome, resolvedCwd);
-	const isInsideHome =
-		rel === "" || (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
-	if (!isInsideHome) return cwd;
-	return rel === "" ? "~" : `~${sep}${rel}`;
-}
-
-function sanitizeStatusText(text: string): string {
-	return text.replace(/[\r\n\t]/g, " ").replace(/ +/g, " ").trim();
-}
-
 /** 读取 auto-compaction 开关（global 优先、project 覆盖），默认开启。 */
 function readAutoCompactionEnabled(ctx: ExtensionContext): boolean {
 	const paths = [
@@ -240,14 +226,14 @@ function readAutoCompactionEnabled(ctx: ExtensionContext): boolean {
 	return enabled ?? true;
 }
 
-function renderFooter(
+function renderStatsLine(
 	ctx: ExtensionContext,
 	theme: Theme,
 	footerData: ReadonlyFooterDataProvider,
 	engine: TokenSpeedEngine,
 	autoCompactEnabled: boolean,
 	width: number,
-): string[] {
+): string {
 	// 累计整个会话的 usage
 	let input = 0;
 	let output = 0;
@@ -288,14 +274,7 @@ function renderFooter(
 	const contextPercentValue = contextUsage?.percent ?? 0;
 	const contextPercent = contextUsage?.percent != null ? contextPercentValue.toFixed(1) : "?";
 
-	// 第一行：pwd（含 git 分支 / session 名）
-	let pwd = formatCwdForFooter(ctx.sessionManager.getCwd(), process.env.HOME || process.env.USERPROFILE);
-	const branch = footerData.getGitBranch();
-	if (branch) pwd = `${pwd} (${branch})`;
-	const sessionName = ctx.sessionManager.getSessionName();
-	if (sessionName) pwd = `${pwd} • ${sessionName}`;
-
-	// 第二行：token 统计 + context + TPS
+	// token 统计 + context + TPS（放在哪一行、右边怎么对齐由 footer host 决定）
 	const statsParts: string[] = [];
 	if (input) statsParts.push(`↑${formatTokens(input)}`);
 	if (output) statsParts.push(`↓${formatTokens(output)}`);
@@ -372,18 +351,7 @@ function renderFooter(
 	const remainder = statsLine.slice(statsLeft.length);
 	const dimRemainder = theme.fg("dim", remainder);
 
-	const pwdLine = truncateToWidth(theme.fg("dim", pwd), width, theme.fg("dim", "..."));
-	const lines = [pwdLine, dimStatsLeft + dimRemainder];
-
-	// 第三行：其他扩展的 setStatus 文本
-	const extensionStatuses = footerData.getExtensionStatuses();
-	if (extensionStatuses.size > 0) {
-		const sorted = Array.from(extensionStatuses.entries())
-			.sort(([a], [b]) => a.localeCompare(b))
-			.map(([, text]) => sanitizeStatusText(text));
-		lines.push(truncateToWidth(sorted.join(" "), width, theme.fg("dim", "...")));
-	}
-	return lines;
+	return dimStatsLeft + dimRemainder;
 }
 
 // ---------------------------------------------------------------------------
@@ -439,20 +407,17 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (_event, ctx) => {
 		engine.reset();
 		autoCompactEnabled = readAutoCompactionEnabled(ctx);
-		ctx.ui.setFooter((tui, theme, footerData) => {
-			requestRender = () => tui.requestRender();
-			const unsub = footerData.onBranchChange(() => tui.requestRender());
-			return {
-				dispose() {
-					unsub();
-					requestRender = null;
-				},
-				invalidate() {},
-				render(width: number): string[] {
-					return renderFooter(ctx, theme, footerData, engine, autoCompactEnabled, width);
-				},
-			};
-		});
+	});
+
+	// footer 槽位由 lib/footer.ts 的 host 独占，这里只注册自己那一行
+	registerFooterProvider({
+		id: "tps",
+		kind: "line",
+		order: 10,
+		render: ({ ctx, theme, footerData, width, requestRender: rerender }) => {
+			requestRender = rerender;
+			return renderStatsLine(ctx, theme, footerData, engine, autoCompactEnabled, width);
+		},
 	});
 
 	pi.on("session_shutdown", () => {
