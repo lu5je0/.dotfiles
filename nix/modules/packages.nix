@@ -20,6 +20,9 @@
     cmake
     ncdu
     dnsutils
+    bubblewrap
+    socat
+    ripgrep
     net-tools
   ];
 
@@ -32,7 +35,6 @@
     nixfmt
     nixfmt-tree
     opencc
-    ripgrep
     luajit
     yazi
     fzf

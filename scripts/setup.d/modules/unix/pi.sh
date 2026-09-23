@@ -27,7 +27,13 @@ done
 # installed plugins writes it). The files pi does write -- models-store.json and
 # commandcode-models.json -- are siblings resolved from dirname(modelsPath), so
 # they stay in ~/.pi/agent/ and never reach the symlink.
-MANAGED_FILES=(models.json)
+#
+# simple-perm.json is read-only for the extension as well: its own writes go to
+# simple-perm.local.json. keybindings.json has exactly one write path in pi --
+# migrateKeybindingsConfigFile(), which rewrites the file only when it still
+# contains legacy pre-namespaced ids (cursorUp, expandTools, ...); keep
+# namespaced ids in it and the symlink is never written through.
+MANAGED_FILES=(models.json simple-perm.json keybindings.json)
 
 link_file() {
 	local src="$1" target="$2"
