@@ -40,22 +40,30 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 
 ## 权限（simple-perm 扩展）
 
-`extensions/simple-perm.ts` 是自写的三模式权限扩展，零依赖，只需要 PATH 里有 `bwrap`：
+`extensions/simple-perm.ts` 是自写的三模式权限扩展，零依赖，沙箱后端按平台选：Linux 要 PATH 里有 `bwrap`，macOS 用系统自带的 `/usr/bin/sandbox-exec`：
 
 | 模式 | 项目外读 | 项目外写 | bash |
 |---|---|---|---|
-| `ro`（默认） | 允许 | 拒绝 | bwrap 沙箱，项目+白名单+/tmp 可写 |
+| `ro`（默认） | 允许 | 拒绝 | 沙箱，项目+白名单+/tmp 可写 |
 | `ask` | 允许 | 弹确认（可记住目录） | 同上 |
 | `yolo` | 允许 | 允许 | 不沙箱 |
 
 - 切换：`ctrl+y` 循环、`/perm <ro|ask|yolo|clear>`、启动 `--perm <mode>`、`PI_PERMISSION_MODE` 环境变量
 - 模式会记住：切换时写 session entry（resume/`/reload` 生效）+ `~/.pi/agent/simple-perm-state.json`（下次启动生效）。启动优先级：`--perm` > 本 session 记录 > `PI_PERMISSION_MODE` > 状态文件 > 默认 `ro`
 - 白名单：`simple-perm.json` 的 `allowWrite`（本目录），项目级可加 `.pi/simple-perm.json` 追加；列在这里的目录读写全放行，`/tmp` 恒可写
-- 沙箱实现是 `tool_call` 里把 bash 命令改成 `bwrap --ro-bind / / --bind …`。因此只读区域里需要写 HOME 缓存的工具（npm/uv/cargo → `~/.cache`、`~/.npm`、`~/.cargo`）会失败，需要就写进 `allowWrite`；`/tmp` 已内置
-- 项目本身在 `/tmp` 下时，`../x` 这类相对路径仍可写（`/tmp` 整个被 bind 成可写）
-- bwrap 只映射当前 uid，root 拥有的文件在沙箱内显示成 `nobody`，于是 ssh 会因 `/etc/ssh/ssh_config` 的属主校验挂掉（`git push` exit 128）；扩展把 `~/.ssh` 盖到 `/etc/ssh` 上规避
+- 沙箱实现是 `tool_call` 里把 bash / bg_run 命令改写成（`ro`、`ask` 都走这条）：
+  - Linux：`bwrap --ro-bind / / --bind <项目> … -- /bin/sh -c '<原命令>'`
+  - macOS：`sandbox-exec -p '<Seatbelt profile>' /bin/sh -c 'cd <项目> && <原命令>'`，profile 是 `(allow default)` + `(deny file-write*)` + 按白名单 `(allow file-write* (subpath …))`（Seatbelt 后匹配的规则覆盖前面的）
+  - 两者语义一致：整个文件系统只读，只有项目 + 白名单 + /tmp 可写；沙箱里再套多少层 shell 都出不去
+  - 后端探测失败（Linux 无 bwrap、macOS 的 sandbox-exec 跑不通）时不静默放行，改为逐条确认；无 UI 时直接拒绝
+  - 因此只读区域里需要写 HOME 缓存的工具（npm/uv/cargo → `~/.cache`、`~/.npm`、`~/.cargo`、macOS 的 `~/Library/Caches`）会失败，需要就写进 `allowWrite`；`/tmp` 已内置
+- 项目本身在 `/tmp` 下时，`../x` 这类相对路径仍可写（`/tmp` 整个可写）
+- macOS 特有：`TMPDIR`（`/var/folders/…/T`，0700）和 `/tmp` 一样被当作平台自带可写，否则 mktemp / python tempfile / node os.tmpdir 全 EPERM；Seatbelt 按**解析后的真实路径**匹配，所以 `/tmp` 实际写成 `/private/tmp`，profile 里的路径都过 `canonicalize()`
+- macOS 与 bwrap 的已知差异（不影响边界强度）：没有 bind mount（ask 模式放行=加进 profile 允许列表，语义反而更准）；unlink 已放行的单个文件也能成功（bwrap 下要父目录可写）；没有 `--die-with-parent`，pi 被 kill 后子进程不会被连带收走
+- `sandbox-exec` 被 Apple 标了 deprecated，但 Darwin 25（macOS 26）实测仍可用；将来真跑不通时探测会失败并自动退回逐条确认
+- Linux 上 bwrap 只映射当前 uid，root 拥有的文件在沙箱内显示成 `nobody`，于是 ssh 会因 `/etc/ssh/ssh_config` 的属主校验挂掉（`git push` exit 128）；扩展把 `~/.ssh` 盖到 `/etc/ssh` 上规避。这层 hack 只对 bwrap 生效，macOS 不需要
 - 覆盖范围：`bash` 工具 + `bg_run`（同类工具名可加在 `simple-perm.json` 的 `commandTools` 里）；`!` 用户 bash 和第三方扩展自己 spawn 的进程不走这条路径，不受沙箱约束
-- ask 模式下会启发式扫 bash/bg_run 命令里的项目外写入目标（重定向、rm/mv/cp 等写类命令的参数、`sh -c` 内嵌脚本递归），命中就弹窗；允许后**不是关沙箱**，而是只把那几个目录/文件额外 bind 成可写（unlink/rename 需要父目录可写，所以只有纯内容写才绑文件本身）
+- ask 模式下会启发式扫 bash/bg_run 命令里的项目外写入目标（重定向、rm/mv/cp 等写类命令的参数、`sh -c` 内嵌脚本递归），命中就弹窗；允许后**不是关沙箱**，而是只把那几个目录/文件额外放行（unlink/rename 需要父目录可写，所以只有纯内容写才绑文件本身）
 
 ## footer（常见坑：只有一个槽位）
 

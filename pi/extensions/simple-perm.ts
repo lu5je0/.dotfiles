@@ -15,9 +15,10 @@
  * 切换：ctrl+y 循环、/perm <mode>、启动 --perm <mode>、PI_PERMISSION_MODE 环境变量。
  *
  * 沙箱实现：在 tool_call 里把 bash 命令改写成
- *   bwrap --ro-bind / / --bind <项目> ... -- /bin/sh -c '<原命令>'
- * 即整个文件系统只读，只有项目目录 + 白名单 + /tmp 可写。不依赖任何 npm 包，
- * 只需要 PATH 里有 bwrap（bubblewrap）。
+ *   Linux  bwrap --ro-bind / / --bind <项目> ... -- /bin/sh -c '<原命令>'
+ *   macOS  sandbox-exec -p '<Seatbelt profile>' /bin/sh -c 'cd <项目> && <原命令>'
+ * 语义一致：整个文件系统只读，只有项目目录 + 白名单 + /tmp 可写。不依赖任何 npm 包，
+ * Linux 需要 PATH 里有 bwrap（bubblewrap），macOS 用系统自带的 /usr/bin/sandbox-exec。
  */
 
 import { spawnSync } from "node:child_process";
@@ -62,8 +63,34 @@ const stateFile = () => path.join(getAgentDir(), "simple-perm-state.json");
 /** 项目级追加 */
 const projectWhitelistFile = (cwd: string) => path.join(cwd, ".pi", "simple-perm.json");
 
-/** /tmp 恒可写：不写在任何文件里也生效（bash 沙箱也要靠它） */
-const ALWAYS_WRITABLE = ["/tmp"];
+/**
+ * Darwin 的用户临时目录（/var/folders/…/T，0700、按 uid 隔离）。
+ * macOS 上 TMPDIR 基本一定指向这里而不是 /tmp，不放行的话 mktemp、python tempfile、
+ * node os.tmpdir、编译器中间文件全部 EPERM——所以它和 /tmp 一样属于「平台自带可写」。
+ */
+function darwinUserTempDir(): string | undefined {
+	try {
+		const probe = spawnSync("getconf", ["DARWIN_USER_TEMP_DIR"], { encoding: "utf-8" });
+		const dir = probe.status === 0 ? probe.stdout.trim() : "";
+		return dir ? dir.replace(/\/+$/, "") : process.env.TMPDIR || undefined;
+	} catch {
+		return process.env.TMPDIR || undefined;
+	}
+}
+
+/**
+ * 恒可写的目录：不写在任何配置文件里也生效（bash 沙箱要靠它，路径工具也用同一份）。
+ * /tmp 在 macOS 上是 /private/tmp 的软链，Seatbelt 只认真实路径——不过这里不用管，
+ * writableDirs() 会在真正拼沙箱参数前 canonicalize 一遍。
+ */
+const ALWAYS_WRITABLE: string[] = (() => {
+	const list = ["/tmp"];
+	if (process.platform === "darwin") {
+		const dir = darwinUserTempDir();
+		if (dir) list.push(dir);
+	}
+	return list;
+})();
 
 // ---------------------------------------------------------------------------
 // 白名单加载 / 持久化
@@ -216,19 +243,41 @@ function isWithin(dir: string, target: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// bash 沙箱
+// bash 沙箱：Linux 用 bwrap，macOS 用 sandbox-exec（Seatbelt）
 // ---------------------------------------------------------------------------
 
-const bwrapAvailable = (() => {
+type SandboxKind = "bwrap" | "seatbelt";
+
+const SANDBOX_EXEC = "/usr/bin/sandbox-exec";
+
+/**
+ * 探测可用的沙箱后端。macOS 走系统自带的 /usr/bin/sandbox-exec（Seatbelt，Apple 私有的
+ * 内核沙箱，bwrap 那套 Linux namespace 在 Darwin 上根本不存在）。它没有 --version，
+ * 只能拿最小 profile 真跑一次；跑不通（SIP 收紧、被 EDR 拦、以后真被删掉）就诚实报不可用，
+ * 让上层退回逐条确认——绝不静默无沙箱执行。
+ */
+const sandbox: SandboxKind | null = (() => {
 	try {
-		return spawnSync("bwrap", ["--version"], { stdio: "ignore" }).status === 0;
+		if (process.platform === "darwin") {
+			const probe = spawnSync(SANDBOX_EXEC, ["-p", "(version 1)(allow default)", "/usr/bin/true"], {
+				stdio: "ignore",
+			});
+			return probe.status === 0 ? "seatbelt" : null;
+		}
+		return spawnSync("bwrap", ["--version"], { stdio: "ignore" }).status === 0 ? "bwrap" : null;
 	} catch {
-		return false;
+		return null;
 	}
 })();
 
+/** 通知/报错里显示的后端名：sandbox-exec 是用户直接能 man 到的那个二进制名 */
+const sandboxLabel = sandbox === "bwrap" ? "bwrap" : sandbox === "seatbelt" ? "sandbox-exec" : "无沙箱";
+
 /** 单引号包裹，供外层 shell 再解析一次 */
 const shQuote = (s: string): string => `'${s.split("'").join("'\\''")}'`;
+
+/** SBPL 里的字符串字面量：路径里出现 `"` 或 `\` 会把 profile 解析炸掉 */
+const sbplString = (s: string): string => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 
 /** 可写目录：项目目录 + 白名单（含 /tmp）里实际存在的目录 */
 function writableDirs(cwd: string, allowWrite: string[]): string[] {
@@ -252,6 +301,9 @@ function writableDirs(cwd: string, allowWrite: string[]): string[] {
  * 不要改成只盖 /etc/ssh/ssh_config：NixOS 上那是软链，bwrap 会拒绝
  *（Can't mount on symlink destination）。
  * 代价：沙箱内看不见系统的 ssh_known_hosts / ssh_config.d（本机无 config.d）。
+ *
+ * 这一整个 hack 只对 bwrap 有意义：Seatbelt 不动 uid，root 的文件照旧是 root，
+ * macOS 上不需要（也不该做）这层 bind。
  */
 function sshDirOverride(): string[] {
 	const sshDir = path.join(homedir(), ".ssh");
@@ -493,7 +545,7 @@ function grantPaths(targets: WriteTarget[]): string[] {
 	return out;
 }
 
-function wrapCommand(command: string, cwd: string, writable: string[]): string {
+function wrapBwrap(command: string, cwd: string, writable: string[]): string {
 	const args = [
 		"--ro-bind",
 		"/",
@@ -508,6 +560,37 @@ function wrapCommand(command: string, cwd: string, writable: string[]): string {
 	for (const dir of writable) args.push("--bind", dir, dir);
 	args.push("--chdir", cwd, "--die-with-parent", "--", "/bin/sh", "-c", command);
 	return `exec bwrap ${args.map(shQuote).join(" ")}`;
+}
+
+/**
+ * 「整个文件系统只读，只有 writable 里可写」的 Seatbelt 写法。
+ *
+ * Seatbelt 的规则是**后面的覆盖前面的**，所以先 (allow default) 把读、网络、mach 端口、
+ * 进程这些照旧放开，再用 (deny file-write*) 单独把「写文件」收回来，最后按白名单逐个放开
+ * ——效果等价于 bwrap 的 `--ro-bind / /` 加若干 `--bind`。
+ * 写设备要单独放（/dev/null、/dev/tty、/dev/fd/N…），否则 `2>/dev/null` 直接 EPERM。
+ * 路径必须是真实路径：macOS 上 /tmp、/var 都是软链，Seatbelt 按解析后的 vnode 路径匹配，
+ * 好在 writableDirs() 已经 canonicalize 过。
+ *
+ * 与 bwrap 的已知差异（都不影响边界强度）：
+ *   - 没有 bind mount：ask 模式放行项目外写入时只是把目标加进 profile 的允许列表
+ *     （bwrap 那侧是额外 `--bind` 一层），对写入边界的收敛程度一样。
+ *   - unlink 已放行的单个文件也能成功（bwrap 下 EROFS，因为要父目录可写）。
+ *   - 没有 --die-with-parent：pi 被 kill 后子进程不会被连带收走。
+ */
+function wrapSeatbelt(command: string, cwd: string, writable: string[]): string {
+	const lines = ["(version 1)", "(allow default)", "(deny file-write*)"];
+	for (const dir of writable) lines.push(`(allow file-write* (subpath ${sbplString(dir)}))`);
+	lines.push(`(allow file-write-data (subpath ${sbplString("/dev")}))`);
+	// sandbox-exec 没有 --chdir，在沙箱内先 cd。profile 会被子进程继承，
+	// 沙箱里再套多少层 shell 也逃不出去（这点和 bwrap 的 mount namespace 等价）。
+	const inner = `cd ${shQuote(cwd)} && ${command}`;
+	return `exec ${SANDBOX_EXEC} -p ${shQuote(lines.join("\n"))} /bin/sh -c ${shQuote(inner)}`;
+}
+
+/** 只做分发：调用点已经确认 sandbox 可用 */
+function wrapCommand(command: string, cwd: string, writable: string[]): string {
+	return sandbox === "seatbelt" ? wrapSeatbelt(command, cwd, writable) : wrapBwrap(command, cwd, writable);
 }
 
 // ---------------------------------------------------------------------------
@@ -591,11 +674,11 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("perm", {
 		description: `查看或切换权限模式：/perm [${CYCLE.join("|")}|clear|forget <dir>]`,
-		handler: (args, ctx) => {
+		handler: async (args, ctx) => {
 			const arg = args.trim().toLowerCase();
 			if (!arg) {
 				ctx.ui.notify(
-					`模式 ${MODES[mode].label}（${MODES[mode].hint}）｜沙箱 ${bwrapAvailable ? "可用" : "不可用"}\n` +
+					`模式 ${MODES[mode].label}（${MODES[mode].hint}）｜沙箱 ${sandbox ? `${sandboxLabel} 可用` : "不可用"}\n` +
 						`白名单：${allowWrite.join(", ")}\n` +
 						`本会话放行：${sessionWriteDirs.size ? [...sessionWriteDirs].join(", ") : "(无)"}\n` +
 						`永久允许写在：${localWhitelistFile()}`,
@@ -657,9 +740,10 @@ export default function (pi: ExtensionAPI) {
 		process.env.PI_PERMISSION_MODE = mode;
 		setStatus(ctx);
 
-		if (!bwrapAvailable) {
+		if (!sandbox) {
 			ctx.ui.notify(
-				`simple-perm: PATH 里找不到 bwrap，bash 沙箱不可用；模式 ro/ask 下的 bash 会改为逐条确认（${CYCLE_KEY} / /perm 切换模式）`,
+				`simple-perm: 找不到可用的沙箱（Linux 要 PATH 里有 bwrap，macOS 要 /usr/bin/sandbox-exec）；` +
+					`模式 ro/ask 下的 bash 会改为逐条确认（${CYCLE_KEY} / /perm 切换模式）`,
 				"warning",
 			);
 		}
@@ -668,17 +752,20 @@ export default function (pi: ExtensionAPI) {
 	pi.on("tool_call", async (event, ctx) => {
 		if (mode === "yolo") return undefined;
 
-		// --- bash / bg_run 等命令型工具：改写成 bwrap 包裹的命令 ---
+		// --- bash / bg_run 等命令型工具：改写成沙箱包裹的命令 ---
 		if (event.toolName === "bash" || commandTools.has(event.toolName)) {
 			const input = event.input as { command?: unknown };
 			if (typeof input.command !== "string") return undefined;
 
-			if (!bwrapAvailable) {
+			if (!sandbox) {
 				// 沙箱不可用时不静默放行
 				if (!ctx.hasUI) {
-					return { block: true, reason: "simple-perm: bwrap 不可用，拒绝在无沙箱的情况下执行 bash" };
+					return { block: true, reason: "simple-perm: 沙箱不可用，拒绝在无沙箱的情况下执行 bash" };
 				}
-				const ok = await ctx.ui.confirm("沙箱不可用", `bwrap 不可用，是否不沙箱执行？\n\n${input.command}`);
+				const ok = await ctx.ui.confirm(
+					"沙箱不可用",
+					`找不到可用的沙箱后端（Linux 要 bwrap，macOS 要 /usr/bin/sandbox-exec），是否不沙箱执行？\n\n${input.command}`,
+				);
 				if (!ok) return { block: true, reason: "simple-perm: 用户拒绝了无沙箱执行" };
 				return undefined;
 			}
