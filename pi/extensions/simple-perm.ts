@@ -680,13 +680,21 @@ export default function (pi: ExtensionAPI) {
 					}
 					const choice = await ctx.ui.select(
 						`bash 要写项目外（ask 模式）\n\n  ${input.command}\n\n需要放行：\n  ${grants.join("\n  ")}`,
-						["允许一次", "本会话允许这些目录", "拒绝"],
+						["允许一次", "本会话允许这些目录", "永久允许这些目录", "拒绝"],
 					);
 					if (choice === undefined || choice === "拒绝") {
 						return { block: true, reason: `simple-perm: 用户拒绝了 bash 写项目外：${pending.join(", ")}` };
 					}
 					if (choice.startsWith("本会话允许")) {
 						for (const dir of grants) sessionWriteDirs.add(dir);
+					} else if (choice.startsWith("永久允许")) {
+						// 写进 ~/.pi 下的真实文件，与 simple-perm.json（dotfiles 软链）合并
+						for (const dir of grants) persistAllowWrite(dir);
+						reloadWhitelist(ctx);
+						ctx.ui.notify(
+							`simple-perm: 已永久允许 ${grants.join(", ")}（写进 ${localWhitelistFile()}，/perm forget <dir> 可撤）`,
+							"info",
+						);
 					}
 				}
 				// 已授权的也必须带上 bind，否则“本会话允许”之后命令依旧 EROFS
