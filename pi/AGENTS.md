@@ -54,7 +54,8 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 - 沙箱实现是 `tool_call` 里把 bash 命令改成 `bwrap --ro-bind / / --bind …`。因此只读区域里需要写 HOME 缓存的工具（npm/uv/cargo → `~/.cache`、`~/.npm`、`~/.cargo`）会失败，需要就写进 `allowWrite`；`/tmp` 已内置
 - 项目本身在 `/tmp` 下时，`../x` 这类相对路径仍可写（`/tmp` 整个被 bind 成可写）
 - bwrap 只映射当前 uid，root 拥有的文件在沙箱内显示成 `nobody`，于是 ssh 会因 `/etc/ssh/ssh_config` 的属主校验挂掉（`git push` exit 128）；扩展把 `~/.ssh` 盖到 `/etc/ssh` 上规避
-- 注意：`!` 前缀的用户 bash 不走这条路径，不受沙箱约束
+- 覆盖范围：`bash` 工具 + `bg_run`（同类工具名可加在 `simple-perm.json` 的 `commandTools` 里）；`!` 用户 bash 和第三方扩展自己 spawn 的进程不走这条路径，不受沙箱约束
+- ask 模式下会启发式扫 bash/bg_run 命令里的项目外写入目标（重定向、rm/mv/cp 等写类命令的参数、`sh -c` 内嵌脚本递归），命中就弹窗；允许后**不是关沙箱**，而是只把那几个目录/文件额外 bind 成可写（unlink/rename 需要父目录可写，所以只有纯内容写才绑文件本身）
 
 ## footer（常见坑：只有一个槽位）
 
