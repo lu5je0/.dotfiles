@@ -215,8 +215,36 @@ function writableDirs(cwd: string, allowWrite: string[]): string[] {
 	return [...dirs];
 }
 
+/**
+ * bwrap 只把当前 uid 映射进 user namespace，其他 uid 一律显示成 65534(nobody)。
+ * /etc/ssh/ssh_config 及其 Include 的 store 文件都是 root 的 → 在沙箱里变成 nobody，
+ * 而 OpenSSH 读 Include 进来的配置时会校验属主（必须 root 或当前用户）：
+ *   Bad owner or permissions on .../ssh_config.d/20-systemd-ssh-proxy.conf
+ * 于是沙箱里的 ssh / git push / git fetch 全部 exit 255 / 128。
+ *
+ * 解法：把用户自己的 ~/.ssh 盖到 /etc/ssh 上——系统 config 整个消失（OpenSSH 允许没有它），
+ * ssh 照旧读 ~/.ssh/config，而且 ~/.ssh 属于当前用户，属主校验天然通过。
+ * 不要改成只盖 /etc/ssh/ssh_config：NixOS 上那是软链，bwrap 会拒绝
+ *（Can't mount on symlink destination）。
+ * 代价：沙箱内看不见系统的 ssh_known_hosts / ssh_config.d（本机无 config.d）。
+ */
+function sshDirOverride(): string[] {
+	const sshDir = path.join(homedir(), ".ssh");
+	return existsSync(sshDir) && existsSync("/etc/ssh") ? ["--ro-bind", sshDir, "/etc/ssh"] : [];
+}
+
 function wrapCommand(command: string, cwd: string, writable: string[]): string {
-	const args = ["--ro-bind", "/", "/", "--dev-bind", "/dev", "/dev", "--proc", "/proc"];
+	const args = [
+		"--ro-bind",
+		"/",
+		"/",
+		"--dev-bind",
+		"/dev",
+		"/dev",
+		"--proc",
+		"/proc",
+		...sshDirOverride(),
+	];
 	for (const dir of writable) args.push("--bind", dir, dir);
 	args.push("--chdir", cwd, "--die-with-parent", "--", "/bin/sh", "-c", command);
 	return `exec bwrap ${args.map(shQuote).join(" ")}`;
@@ -342,13 +370,6 @@ export default function (pi: ExtensionAPI) {
 
 		mode = resolved ?? DEFAULT_MODE;
 		setStatus(ctx);
-
-		if (mode === "yolo") {
-			ctx.ui.notify(
-				`simple-perm: 当前是 YOLO —— 无限制、无沙箱（用 ${CYCLE_KEY} 或 /perm ro 切回）`,
-				"warning",
-			);
-		}
 
 		if (!bwrapAvailable) {
 			ctx.ui.notify(

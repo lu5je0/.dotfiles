@@ -49,10 +49,11 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 | `yolo` | 允许 | 允许 | 不沙箱 |
 
 - 切换：`ctrl+y` 循环、`/perm <ro|ask|yolo|clear>`、启动 `--perm <mode>`、`PI_PERMISSION_MODE` 环境变量
-- 模式会记住：切换时写 session entry（resume/`/reload` 生效）+ `~/.pi/agent/simple-perm-state.json`（下次启动生效）。启动优先级：`--perm` > 本 session 记录 > `PI_PERMISSION_MODE` > 状态文件 > 默认 `ro`；恢复成 `yolo` 时会弹警告
+- 模式会记住：切换时写 session entry（resume/`/reload` 生效）+ `~/.pi/agent/simple-perm-state.json`（下次启动生效）。启动优先级：`--perm` > 本 session 记录 > `PI_PERMISSION_MODE` > 状态文件 > 默认 `ro`
 - 白名单：`simple-perm.json` 的 `allowWrite`（本目录），项目级可加 `.pi/simple-perm.json` 追加；列在这里的目录读写全放行，`/tmp` 恒可写
 - 沙箱实现是 `tool_call` 里把 bash 命令改成 `bwrap --ro-bind / / --bind …`。因此只读区域里需要写 HOME 缓存的工具（npm/uv/cargo → `~/.cache`、`~/.npm`、`~/.cargo`）会失败，需要就写进 `allowWrite`；`/tmp` 已内置
 - 项目本身在 `/tmp` 下时，`../x` 这类相对路径仍可写（`/tmp` 整个被 bind 成可写）
+- bwrap 只映射当前 uid，root 拥有的文件在沙箱内显示成 `nobody`，于是 ssh 会因 `/etc/ssh/ssh_config` 的属主校验挂掉（`git push` exit 128）；扩展把 `~/.ssh` 盖到 `/etc/ssh` 上规避
 - 注意：`!` 前缀的用户 bash 不走这条路径，不受沙箱约束
 
 ## footer（常见坑：只有一个槽位）
