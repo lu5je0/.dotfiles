@@ -64,6 +64,9 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 - Linux 上 bwrap 只映射当前 uid，root 拥有的文件在沙箱内显示成 `nobody`，于是 ssh 会因 `/etc/ssh/ssh_config` 的属主校验挂掉（`git push` exit 128）；扩展把 `~/.ssh` 盖到 `/etc/ssh` 上规避。这层 hack 只对 bwrap 生效，macOS 不需要
 - 覆盖范围：`bash` 工具 + `bg_run`（同类工具名可加在 `simple-perm.json` 的 `commandTools` 里）；`!` 用户 bash 和第三方扩展自己 spawn 的进程不走这条路径，不受沙箱约束
 - ask 模式下会启发式扫 bash/bg_run 命令里的项目外写入目标（重定向、rm/mv/cp 等写类命令的参数、`sh -c` 内嵌脚本递归），命中就弹窗；允许后**不是关沙箱**，而是只把那几个目录/文件额外放行（unlink/rename 需要父目录可写，所以只有纯内容写才绑文件本身）
+  - heredoc 正文不扫（`cat > x.js <<'EOF' … EOF` 里 `=> "/Users/me"` 这类正文不是 shell 代码）。未闭合的 heredoc 一律不动；`bash <<EOF` 这种真把正文当脚本跑的会漏判，由沙箱在内核层兜底
+  - 放行目标是「最近存在的祖先目录」：`mkdir -p ~/新目录/x` 里的目录还不存在，以前算不出目标→不弹窗也不成功，只能 EPERM
+  - 弹窗用 `ctx.ui.custom()` + `overlay`（bottom-center、宽度铺满，见 `PermDialog`），**不要用 `ui.select()`**：后者的标题不是弹层，而是直接替换输入框画在 editor 区域、没有滚动条，命令一长整个 dock 超过终端高度、editor 区域被压扁（fullscreen 下 shrink 到 minSize 3），选项就跑到屏幕外（踩过）。overlay 有自己的定位/尺寸，弹窗里每行都在 `render(width)` 里按真实宽度截断，颜色自己分配（标题 accent、命令 dim、放行目标 muted），选项用 pi 的 `SelectList` + 1-4 直选。非 TUI（RPC）回退到 `ui.select`，文案同样先压短
 
 ## footer（常见坑：只有一个槽位）
 
