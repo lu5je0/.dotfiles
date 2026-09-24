@@ -25,7 +25,14 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
-import { getAgentDir, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import {
+	DynamicBorder,
+	getAgentDir,
+	type ExtensionAPI,
+	type ExtensionContext,
+	type Theme,
+} from "@earendil-works/pi-coding-agent";
+import { type Component, SelectList, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { registerFooterProvider } from "./lib/footer.ts";
 
 // ---------------------------------------------------------------------------
@@ -373,6 +380,46 @@ const SAFE_OUTSIDE_RE = /^\/dev\/(null|zero|stdin|stdout|stderr|tty|urandom|rand
 /** 会切断“当前命令”的 token */
 const SEPARATORS = new Set([";", "&&", "||", "|", "&", "\n", "(", ")", ">", ">>"]);
 
+/** heredoc 起始：`<<` / `<<-` + 可带引号的分隔符（不匹配 `<<<` herestring） */
+const HEREDOC_START_RE = /<<(-?)[ \t]*(?:"([A-Za-z_][A-Za-z0-9_]*)"|'([A-Za-z_][A-Za-z0-9_]*)'|([A-Za-z_][A-Za-z0-9_]*))/g;
+
+/** 找 heredoc 结束行；返回正文末尾（含结束行换行）的偏移，找不到返回 -1 */
+function findHeredocEnd(text: string, delimiter: string, allowIndent: boolean): number {
+	let offset = 0;
+	for (;;) {
+		const nl = text.indexOf("\n", offset);
+		const line = nl < 0 ? text.slice(offset) : text.slice(offset, nl);
+		const candidate = allowIndent ? line.replace(/^\t+/, "") : line;
+		if (candidate.replace(/\r$/, "") === delimiter) return nl < 0 ? text.length : nl + 1;
+		if (nl < 0) return -1;
+		offset = nl + 1;
+	}
+}
+
+/**
+ * 砍掉 heredoc 正文，只给分析看（拼沙箱时用的还是原命令）。
+ *
+ * 正文是数据不是 shell 代码：`cat > x.js <<'EOF'` 里 `=> "/Users/me"` 这样的 JS
+ * 会被当成「重定向到 /Users/me」，于是写个脚本就弹窗要放行家目录。未闭合的 heredoc
+ * 一律不动（交给沙箱判），宁可漏报也不改动命令语义。
+ */
+function stripHeredocBodies(command: string): string {
+	let result = "";
+	let cursor = 0;
+	HEREDOC_START_RE.lastIndex = 0;
+	for (let match = HEREDOC_START_RE.exec(command); match; match = HEREDOC_START_RE.exec(command)) {
+		const delimiter = match[2] ?? match[3] ?? match[4] ?? "";
+		const nl = command.indexOf("\n", match.index + match[0].length);
+		if (nl < 0) break; // `<<EOF` 后面没有正文
+		const end = findHeredocEnd(command.slice(nl + 1), delimiter, match[1] === "-");
+		if (end < 0) break; // 没闭合：不认这个 heredoc
+		result += command.slice(cursor, nl + 1);
+		cursor = nl + 1 + end;
+		HEREDOC_START_RE.lastIndex = cursor;
+	}
+	return result + command.slice(cursor);
+}
+
 /** 切 token：引号内的空格不断开，控制符单独成 token */
 function splitTokens(input: string): string[] {
 	const tokens: string[] = [];
@@ -481,7 +528,7 @@ function outsideWriteTargets(
 	depth = 0,
 ): WriteTarget[] {
 	if (depth > 3) return [];
-	const tokens = splitTokens(command);
+	const tokens = splitTokens(stripHeredocBodies(command));
 	const found: WriteTarget[] = [];
 
 	const consider = (raw: string | undefined, needsDir: boolean) => {
@@ -528,19 +575,30 @@ function outsideWriteTargets(
 	return found;
 }
 
+/** 从 p 往上找第一个存在的路径（给「还不存在的新目录」找可放行的祖先） */
+function nearestExisting(p: string): string | undefined {
+	for (let cur = p; ; cur = path.dirname(cur)) {
+		if (existsSync(cur)) return cur;
+		if (path.dirname(cur) === cur) return undefined; // 到 / 了
+	}
+}
+
 /**
  * 把要放行的目标转成额外的可写 bind。
  * 注意：只绑文件的话，`rm` 依然会 EROFS —— unlink/rename 需要的是**父目录**可写权限，
  * 所以只有“纯内容写”才绑文件本身，其余一律绑父目录（粒度宽一格，但能真的做成语义）。
+ * 父目录还不存在（`mkdir -p ~/新目录/x`）时往上找到最近的祖先，否则这种命令永远只会 EPERM、
+ * 连弹窗都没有（ask 模式下白名单里人也加不进去）。
  */
 function grantPaths(targets: WriteTarget[]): string[] {
 	const out: string[] = [];
 	for (const target of targets) {
-		const entry =
+		const candidate =
 			!target.needsDir && existsSync(target.bind) && !statSync(target.bind).isDirectory()
 				? target.bind
 				: path.dirname(target.bind);
-		if (existsSync(entry) && !out.includes(entry)) out.push(entry);
+		const entry = nearestExisting(candidate);
+		if (entry && !out.includes(entry)) out.push(entry);
 	}
 	return out;
 }
@@ -591,6 +649,193 @@ function wrapSeatbelt(command: string, cwd: string, writable: string[]): string 
 /** 只做分发：调用点已经确认 sandbox 可用 */
 function wrapCommand(command: string, cwd: string, writable: string[]): string {
 	return sandbox === "seatbelt" ? wrapSeatbelt(command, cwd, writable) : wrapBwrap(command, cwd, writable);
+}
+
+// ---------------------------------------------------------------------------
+// 权限弹窗（ask 模式）
+// ---------------------------------------------------------------------------
+
+/** 命令在弹窗里最多压到多少列（真正的截断在弹窗里按终端宽度做） */
+const COMMAND_MAX_COLS = 96;
+/** 单条路径最多显示多少列 */
+const PATH_MAX_COLS = 40;
+/** 路径列表最多列几条，其余折成「+N 个」 */
+const PATH_LIST_MAX = 2;
+
+/** 折回 ~，只用于显示 */
+function tildeify(p: string): string {
+	const home = homedir();
+	if (p === home) return "~";
+	return p.startsWith(`${home}/`) ? `~${p.slice(home.length)}` : p;
+}
+
+/** 一行命令：折叠所有空白再截断（命令经常几千字符） */
+function showCommand(command: string, maxCols = COMMAND_MAX_COLS): string {
+	return truncateToWidth(command.replace(/\s+/g, " ").trim(), maxCols, "…");
+}
+
+/** 一行路径：~ 开头 + 截断 */
+function showPath(p: string, maxCols = PATH_MAX_COLS): string {
+	return truncateToWidth(tildeify(p), maxCols, "…");
+}
+
+/** 路径列表：最多 PATH_LIST_MAX 条，剩下的折成「+N 个」 */
+function showPathList(paths: string[], maxCols = PATH_MAX_COLS): string {
+	const shown = paths.slice(0, PATH_LIST_MAX).map((p) => showPath(p, maxCols));
+	const rest = paths.length - shown.length;
+	return rest > 0 ? `${shown.join(", ")}（+${rest} 个）` : shown.join(", ");
+}
+
+/** 弹窗返回的动作；用显式值而不是中文 label 比较，改文案改不坏逻辑 */
+type PermAction = "once" | "session" | "permanent" | "deny";
+
+interface PermItem {
+	value: PermAction;
+	label: string;
+	/** 右侧灰字，太长会被 SelectList 静默剪掉，控制在 20 列左右 */
+	description?: string;
+}
+
+/** 弹窗里要显示的东西（全部是纯文本，颜色由 PermDialog 决定） */
+interface PermPrompt {
+	/** 第一行：accent + bold */
+	title: string;
+	/** 要执行的命令 / 要写的路径（dim） */
+	detail: string;
+	/** 放行目标（muted） */
+	grantLine: string;
+	items: PermItem[];
+}
+
+/**
+ * 两个弹窗共用的 4 个动作。description 控制在 8 列以内：SelectList 的说明列放不下时是**静默剪掉**，
+ * 不补省略号，太长在窄终端上会变成半句话。
+ */
+function permItems(_grants: string[]): PermItem[] {
+	return [
+		{ value: "once", label: "允许一次", description: "仅本次" },
+		{ value: "session", label: "本会话允许", description: "本次会话内" },
+		{ value: "permanent", label: "永久允许", description: "写入配置文件" },
+		{ value: "deny", label: "拒绝" },
+	];
+}
+
+/**
+ * 底部提示。故意用写死的键名 + 传进来的 theme：
+ * pi 导出的 keyHint()/rawKeyHint() 用的是 pi 内部那个 theme 单例，扩展经 jiti 加载时
+ * 它可能没初始化（pi 自己在 DynamicBorder 的注释里提过这个坑）；这里只求好读，不跟 remap 联动。
+ * 统一用 · 分隔，和 footer、thinking 弹窗的调子一致。
+ */
+function dialogHint(theme: Theme): string {
+	const pair = (key: string, label: string) => `${theme.fg("dim", key)} ${theme.fg("muted", label)}`;
+	return [pair("↑↓", "选择"), pair("enter", "确认"), pair("esc", "取消"), pair("1-4", "直选")].join(
+		` ${theme.fg("dim", "·")} `,
+	);
+}
+
+/**
+ * ask 模式的权限弹窗。
+ *
+ * 为什么不用 ctx.ui.select()：它的标题不是弹层，而是直接替换输入框画在 editor 区域里、
+ * 没有滚动条——命令一长整个 dock 就超过终端高度，editor 区域被压扁（fullscreen 下
+ * shrink 到 minSize 3），选项直接跑到屏幕外（已经踩过一次）。改用 ctx.ui.custom +
+ * overlay：
+ *   - overlay 有自己的定位/尺寸，不再挤 editor，选项永远在
+ *   - 每行都在 render(width) 里按**真实宽度**截断，不会把弹窗撑高
+ *   - 颜色自己分配：标题 accent、命令 dim、放行目标 muted，选项交给 SelectList
+ * 选项列表直接用 pi 的 SelectList，快捷键/选中样式/描述列和 pi 自带弹窗一致。
+ */
+class PermDialog implements Component {
+	private readonly theme: Theme;
+	private readonly prompt: PermPrompt;
+	private readonly requestRender: () => void;
+	private readonly done: (value: PermAction | undefined) => void;
+	private readonly list: SelectList;
+
+	constructor(
+		theme: Theme,
+		prompt: PermPrompt,
+		requestRender: () => void,
+		done: (value: PermAction | undefined) => void,
+	) {
+		this.theme = theme;
+		this.prompt = prompt;
+		this.requestRender = requestRender;
+		this.done = done;
+		this.list = new SelectList(
+			prompt.items.map((item) => ({ value: item.value, label: item.label, description: item.description })),
+			prompt.items.length,
+			{
+				selectedPrefix: (t) => theme.fg("accent", t),
+				selectedText: (t) => theme.fg("accent", t),
+				description: (t) => theme.fg("muted", t),
+				scrollInfo: (t) => theme.fg("dim", t),
+				noMatch: (t) => theme.fg("warning", t),
+			},
+		);
+		this.list.onSelect = (item) => done(item.value as PermAction);
+		this.list.onCancel = () => done(undefined);
+	}
+
+	handleInput(data: string): void {
+		// 1-4 直选，不用按两下方向键
+		const digit = /^[1-9]$/.exec(data);
+		const item = digit ? this.prompt.items[Number(digit[0]) - 1] : undefined;
+		if (item) {
+			this.done(item.value);
+			return;
+		}
+		this.list.handleInput(data);
+		this.requestRender();
+	}
+
+	invalidate(): void {}
+
+	render(width: number): string[] {
+		const theme = this.theme;
+		const pad = " ";
+		const inner = Math.max(1, width - 2);
+		const border = new DynamicBorder((t) => theme.fg("border", t)).render(width)[0] ?? "";
+		const lines = [
+			border,
+			"",
+			pad + theme.fg("accent", theme.bold(truncateToWidth(this.prompt.title, inner, "…"))),
+			"",
+			pad + theme.fg("dim", truncateToWidth(this.prompt.detail, inner, "…")),
+			pad + theme.fg("muted", truncateToWidth(this.prompt.grantLine, inner, "…")),
+			"",
+		];
+		for (const line of this.list.render(inner)) lines.push(pad + line);
+		lines.push("", pad + truncateToWidth(dialogHint(theme), inner, "…"), "", border);
+		// overlay 是叠在现有画面上，每行必须自己补满宽度，否则底下的聊天会从行尾透出来
+		return lines.map((line) => {
+			const clipped = truncateToWidth(line, width, "");
+			return clipped + " ".repeat(Math.max(0, width - visibleWidth(clipped)));
+		});
+	}
+}
+
+/**
+ * 弹一个 ask 模式确认框，返回用户选了哪个动作（undefined = esc/取消，调用方按拒绝处理）。
+ * 非 TUI（RPC 等）没有 custom 组件，退回内置 select；文案同样先裁短，选项一律用短 label。
+ */
+async function pickPermission(ctx: ExtensionContext, prompt: PermPrompt): Promise<PermAction | undefined> {
+	if (ctx.mode !== "tui") {
+		const picked = await ctx.ui.select(
+			[prompt.title, "", prompt.detail, prompt.grantLine].join("\n"),
+			prompt.items.map((item) => item.label),
+		);
+		return prompt.items.find((item) => item.label === picked)?.value;
+	}
+	return ctx.ui.custom<PermAction | undefined>((tui, theme, _keybindings, done) => new PermDialog(theme, prompt, () => tui.requestRender(), done), {
+		overlay: true,
+		overlayOptions: {
+			anchor: "bottom-center",
+			width: "100%",
+			maxHeight: "100%",
+			margin: { left: 0, right: 0, bottom: 0 },
+		},
+	});
 }
 
 // ---------------------------------------------------------------------------
@@ -764,7 +1009,7 @@ export default function (pi: ExtensionAPI) {
 				}
 				const ok = await ctx.ui.confirm(
 					"沙箱不可用",
-					`找不到可用的沙箱后端（Linux 要 bwrap，macOS 要 /usr/bin/sandbox-exec），是否不沙箱执行？\n\n${input.command}`,
+					`找不到可用的沙箱后端（Linux 要 bwrap，macOS 要 /usr/bin/sandbox-exec），是否不沙箱执行？\n\n${showCommand(input.command)}`,
 				);
 				if (!ok) return { block: true, reason: "simple-perm: 用户拒绝了无沙箱执行" };
 				return undefined;
@@ -785,16 +1030,18 @@ export default function (pi: ExtensionAPI) {
 							reason: `simple-perm: bash 要写项目外 ${pending.join(", ")}，但当前没有 UI 可确认`,
 						};
 					}
-					const choice = await ctx.ui.select(
-						`bash 要写项目外（ask 模式）\n\n  ${input.command}\n\n需要放行：\n  ${grants.join("\n  ")}`,
-						["允许一次", "本会话允许这些目录", "永久允许这些目录", "拒绝"],
-					);
-					if (choice === undefined || choice === "拒绝") {
+					const action = await pickPermission(ctx, {
+						title: `${event.toolName} 要写项目外（ask）`,
+						detail: showCommand(input.command),
+						grantLine: `放行 ${showPathList(grants)}`,
+						items: permItems(grants),
+					});
+					if (action === undefined || action === "deny") {
 						return { block: true, reason: `simple-perm: 用户拒绝了 bash 写项目外：${pending.join(", ")}` };
 					}
-					if (choice.startsWith("本会话允许")) {
+					if (action === "session") {
 						for (const dir of grants) sessionWriteDirs.add(dir);
-					} else if (choice.startsWith("永久允许")) {
+					} else if (action === "permanent") {
 						// 写进 ~/.pi 下的真实文件，与 simple-perm.json（dotfiles 软链）合并
 						for (const dir of grants) persistAllowWrite(dir);
 						reloadWhitelist(ctx);
@@ -850,16 +1097,18 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		const dir = path.dirname(target);
-		const choice = await ctx.ui.select(
-			`项目外写入（ask 模式）\n\n  ${input.path}\n\n允许？`,
-			["允许一次", `本会话允许 ${dir}`, `永久允许 ${dir}`, "拒绝"],
-		);
-		if (choice === undefined || choice === "拒绝") {
+		const action = await pickPermission(ctx, {
+			title: `${event.toolName} 要写项目外（ask）`,
+			detail: showPath(input.path),
+			grantLine: `放行 ${showPath(dir)}`,
+			items: permItems([dir]),
+		});
+		if (action === undefined || action === "deny") {
 			return { block: true, reason: `simple-perm: 用户拒绝了项目外写入 ${input.path}` };
 		}
-		if (choice.startsWith("本会话允许")) {
+		if (action === "session") {
 			sessionWriteDirs.add(dir);
-		} else if (choice.startsWith("永久允许")) {
+		} else if (action === "permanent") {
 			persistAllowWrite(dir);
 			reloadWhitelist(ctx);
 			ctx.ui.notify(

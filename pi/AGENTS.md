@@ -7,7 +7,7 @@ pi（coding agent）的用户级配置目录：`~/.pi/agent/`。本目录由 `sc
 - 子目录（如 `extensions/`）→ symlink 到 `~/.pi/agent/<name>`（整目录链接，实时生效）
 - `models.json` → symlink（pi 只读它，不写）
 - `simple-perm.json` → symlink（`simple-perm` 扩展只读它，不写）
-- `keybindings.json` → symlink（pi 只在迁移旧式键位 id 时才回写，本文件全是新式 id）
+- `keybindings.json` → symlink（pi 只在迁移旧式键位 id 时才回写，本文件全是新式 id；里面三条都是为了 `thinking-fold` 占 ctrl+t，别删，原因见下面）
 - `settings.json` → **合并**而非链接，因为该文件 pi 会自己写入运行时键
 
 ## settings.json 的所有权划分
@@ -64,6 +64,18 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 - Linux 上 bwrap 只映射当前 uid，root 拥有的文件在沙箱内显示成 `nobody`，于是 ssh 会因 `/etc/ssh/ssh_config` 的属主校验挂掉（`git push` exit 128）；扩展把 `~/.ssh` 盖到 `/etc/ssh` 上规避。这层 hack 只对 bwrap 生效，macOS 不需要
 - 覆盖范围：`bash` 工具 + `bg_run`（同类工具名可加在 `simple-perm.json` 的 `commandTools` 里）；`!` 用户 bash 和第三方扩展自己 spawn 的进程不走这条路径，不受沙箱约束
 - ask 模式下会启发式扫 bash/bg_run 命令里的项目外写入目标（重定向、rm/mv/cp 等写类命令的参数、`sh -c` 内嵌脚本递归），命中就弹窗；允许后**不是关沙箱**，而是只把那几个目录/文件额外放行（unlink/rename 需要父目录可写，所以只有纯内容写才绑文件本身）
+  - heredoc 正文不扫（`cat > x.js <<'EOF' … EOF` 里 `=> "/Users/me"` 这类正文不是 shell 代码）。未闭合的 heredoc 一律不动；`bash <<EOF` 这种真把正文当脚本跑的会漏判，由沙箱在内核层兜底
+  - 放行目标是「最近存在的祖先目录」：`mkdir -p ~/新目录/x` 里的目录还不存在，以前算不出目标→不弹窗也不成功，只能 EPERM
+  - 弹窗用 `ctx.ui.custom()` + `overlay`（bottom-center、宽度铺满，见 `PermDialog`），**不要用 `ui.select()`**：后者的标题不是弹层，而是直接替换输入框画在 editor 区域、没有滚动条，命令一长整个 dock 超过终端高度、editor 区域被压扁（fullscreen 下 shrink 到 minSize 3），选项就跑到屏幕外（踩过）。overlay 有自己的定位/尺寸，弹窗里每行都在 `render(width)` 里按真实宽度截断，颜色自己分配（标题 accent、命令 dim、放行目标 muted），选项用 pi 的 `SelectList` + 1-4 直选。非 TUI（RPC）回退到 `ui.select`，文案同样先压短
+
+## thinking 折叠（thinking-fold）
+
+`extensions/thinking-fold.ts` 把 thinking 折成 qoder 的样子：`**Thinking**` 标题 + 每行 `│ ` 侧栏，正文按可用宽度折行后只留头 2 行 + `… +N rows (ctrl+t)` + 尾 3 行，≤5 行不折。
+
+- 只能走 `pi.registerMarkdownTransformer("assistant-thinking")`：pi 没有给扩展自渲染 assistant 消息的口子，样式（thinkingText + 斜体）也改不了
+- 切换后靠 `ctx.ui.setHiddenThinkingLabel()` 逼 pi 重建 thinking 的 Markdown 组件（pi-tui 的 Markdown 按 `(text,width)` 缓存，光 requestRender 不会重跑 transformer）。副作用：隐藏 thinking 时那行标签会被重置回 pi 默认的 `Thinking...`
+- 折叠键 `ctrl+t` 是从 pi 内置动作手里拿来的：`ctrl+t` 默认属于 `app.thinking.toggle`，而这个动作名在 pi 的 `RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS` 里，扩展注册同一个键会被直接拒绝。所以 `keybindings.json` 里 `app.thinking.toggle` 改绑到 `ctrl+shift+t`（仍然是「一键隐藏全部 thinking」），同时清掉 `/tree` 里也占着 ctrl+t 的 `app.tree.filter.noTools`（不清会多一行启动告警；树里用 ctrl+o 循环仍能切到 no-tools）
+- `/fold` 命令等价于按 `ctrl+t`
 
 ## footer（常见坑：只有一个槽位）
 
