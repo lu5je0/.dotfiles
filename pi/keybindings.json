@@ -1,3 +1,5 @@
 {
-	"tui.editor.yank": []
+	"tui.editor.yank": [],
+	"app.thinking.toggle": "ctrl+shift+t",
+	"app.tree.filter.noTools": []
 }
