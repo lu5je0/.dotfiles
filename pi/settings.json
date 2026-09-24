@@ -1,5 +1,6 @@
 {
 	"editorPaddingX": 2,
+	"tuiMode": "fullscreen",
 	"packages": [
 		"npm:pi-commandcode-provider",
 		"npm:pi-smart-web-search",
