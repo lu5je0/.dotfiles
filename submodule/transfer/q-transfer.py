@@ -361,11 +361,21 @@ class Uploader:
                         return False
 
         # 输出结果
-        download_url = resp.text.strip()
-        # 构建预览链接: /d/{file_id}/{filename} -> /v/{file_id}
-        view_url = download_url.replace('/d/', '/v/').rsplit('/', 1)[0] if download_url else ''
-        
-        print(f'\nView link:    {view_url}')
+        # 服务端返回两行：下载链接 + 分享链接；只返回一行时按旧格式回退推导
+        lines = [ln.strip() for ln in (resp.text or '').splitlines() if ln.strip()]
+        download_url = lines[0] if lines else ''
+        if len(lines) > 1:
+            view_url = lines[1]
+        else:
+            view_url = download_url.replace('/d/', '/v/').rsplit('/', 1)[0] if download_url else ''
+
+        is_render = '/r/' in view_url
+        print()
+        if is_render:
+            print(f'Render link:   {view_url}')
+            print('               (sandboxed HTML page — safe to share)')
+        else:
+            print(f'View link:     {view_url}')
         print(f'Download link: {download_url}')
 
         if qrcode and view_url:
