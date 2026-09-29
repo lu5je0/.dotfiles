@@ -307,6 +307,95 @@ class Uploader:
     def should_skip_gzip(file_path):
         return os.path.splitext(file_path)[1].lower() in TransferConfig.GZIP_SKIP_EXTENSIONS
 
+    # 目录里默认跳过的目录/文件
+    BUNDLE_SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '.venv', 'dist', '.idea'}
+    BUNDLE_SKIP_FILES = {'.DS_Store', 'Thumbs.db'}
+
+    @staticmethod
+    def collect_bundle_items(paths):
+        """把路径展开成 [(绝对路径, 包内相对路径)]。传目录会保留目录结构。"""
+        items = []
+        for p in paths:
+            if os.path.isdir(p):
+                base = os.path.dirname(os.path.abspath(p)) or "."
+                for root, dirs, fs in os.walk(p):
+                    dirs[:] = sorted(d for d in dirs if d not in Uploader.BUNDLE_SKIP_DIRS)
+                    for f in sorted(fs):
+                        if f in Uploader.BUNDLE_SKIP_FILES:
+                            continue
+                        ap = os.path.join(root, f)
+                        items.append((ap, os.path.relpath(ap, base).replace(os.sep, '/')))
+            else:
+                items.append((p, os.path.basename(p)))
+        return items
+
+    def upload_bundle(self, paths, entry=None, qrcode=True, bundle_id=None):
+        """打包上传：一个「文件夹」= 一条记录（一个 bundle_id）。
+
+        传 bundle_id 时走原地更新（PUT），**id 不变 => 分享链接不变**。
+        资源引用请用相对路径（src="img/a.png"），不要用 src="/img/a.png"。
+        """
+        if not self.auth.ensure_authorized():
+            return False
+
+        items = self.collect_bundle_items(paths)
+        if not items:
+            print("没有可上传的文件")
+            return False
+
+        names = [rel for _, rel in items]
+        if not entry:
+            if 'index.html' in names:
+                entry = 'index.html'
+            else:
+                htmls = [n for n in names if n.lower().endswith(('.html', '.htm'))]
+                entry = htmls[0] if len(htmls) == 1 else None
+        if not entry or entry not in names:
+            print(f"无法确定入口文件，请用 --entry 指定。候选：{', '.join(names[:8])}")
+            return False
+
+        total = sum(os.path.getsize(ap) for ap, _ in items)
+        action = f"原地更新 {bundle_id}" if bundle_id else "打包上传"
+        print(f"{action}：{len(items)} 个文件 / {FileHelper.convert_bytes(total)} -> {self.host}")
+        for _, rel in items:
+            print(f"  {rel}")
+
+        opened, files = [], []
+        try:
+            for ap, rel in items:
+                fh = open(ap, 'rb')
+                opened.append(fh)
+                files.append(('files', (rel, fh)))
+            url = (f"{self.host}/api/bundles/{bundle_id}" if bundle_id
+                   else f"{self.host}/api/bundles")
+            resp = requests.request(
+                'PUT' if bundle_id else 'POST', url,
+                headers={'Authorization': f'Bearer {self.auth.token_holder.token}'},
+                data={'entry': entry},
+                files=files,
+                timeout=600,
+            )
+            resp.raise_for_status()
+        except requests.RequestException as e:
+            body = getattr(getattr(e, 'response', None), 'text', '')
+            print(f"\n上传失败: {e}\n{body[:300]}")
+            return False
+        finally:
+            for fh in opened:
+                fh.close()
+
+        lines = [ln.strip() for ln in (resp.text or '').splitlines() if ln.strip()]
+        render_url = lines[0] if lines else ''
+        view_url = lines[1] if len(lines) > 1 else ''
+        print(f"\nRender link:   {render_url}")
+        print('               (sandboxed HTML page — safe to share)')
+        if view_url:
+            print(f'Preview link:  {view_url}')
+        if qrcode and render_url:
+            print()
+            self.print_qr_code_ascii(render_url)
+        return True
+
     def upload(self, file_path, qrcode=True, use_gzip=True, gzip_level=1, filename=None):
         """上传单个文件"""
         # 确保已授权
@@ -442,6 +531,12 @@ def main():
                         help='禁用 gzip 压缩上传')
     parser.add_argument('--gzip-level', type=int, default=1, choices=range(1, 10),
                         help='gzip 压缩级别，1-9，默认 1')
+    parser.add_argument('--entry', metavar='PATH',
+                        help='打包上传时的入口文件（默认 index.html，或唯一的 .html）')
+    parser.add_argument('--separate', action='store_true',
+                        help='多个文件也各自单传，不打包')
+    parser.add_argument('-u', '--update', metavar='BUNDLE_ID',
+                        help='原地替换已有 bundle 的内容（bundle_id 不变，分享链接不变）')
 
     args = parser.parse_args()
 
@@ -510,9 +605,15 @@ def main():
     use_gzip = not args.no_gzip
     pipe_filename = getattr(args, '_pipe_filename', None)
     try:
-        for f in args.files:
-            uploader.upload(f, qrcode=True, use_gzip=use_gzip, gzip_level=args.gzip_level,
-                            filename=pipe_filename)
+        # 一个目录 / 多个文件 => 打包上传（一个「文件夹」= 一条记录）
+        want_bundle = (len(args.files) > 1) or any(os.path.isdir(f) for f in args.files)
+        if (want_bundle or args.update) and not args.separate and pipe_filename is None:
+            uploader.upload_bundle(args.files, entry=args.entry, qrcode=True,
+                                   bundle_id=args.update)
+        else:
+            for f in args.files:
+                uploader.upload(f, qrcode=True, use_gzip=use_gzip, gzip_level=args.gzip_level,
+                                filename=pipe_filename)
     finally:
         if tmp_file is not None:
             os.unlink(tmp_file.name)
