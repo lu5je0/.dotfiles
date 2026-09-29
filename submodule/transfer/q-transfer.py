@@ -317,7 +317,7 @@ class Uploader:
         items = []
         for p in paths:
             if os.path.isdir(p):
-                base = os.path.dirname(os.path.abspath(p)) or "."
+                base = os.path.abspath(p)   # 目录内容落在包根，入口才是 index.html
                 for root, dirs, fs in os.walk(p):
                     dirs[:] = sorted(d for d in dirs if d not in Uploader.BUNDLE_SKIP_DIRS)
                     for f in sorted(fs):
@@ -477,6 +477,15 @@ class Uploader:
     def check_and_print_files_size(files):
         total_size = 0
         for file_path in files:
+            if os.path.isdir(file_path):
+                items = Uploader.collect_bundle_items([file_path])
+                if not items:
+                    print(f"{file_path} 是空目录")
+                    return False
+                size = sum(os.stat(ap).st_size for ap, _ in items)
+                total_size += size
+                print(f"{FileHelper.convert_bytes(size)}\t{file_path}/ ({len(items)} 个文件)")
+                continue
             if not os.path.isfile(file_path):
                 print(f"{file_path} is not a file")
                 return False
