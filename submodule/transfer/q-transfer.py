@@ -720,7 +720,8 @@ class Uploader:
                     return False
                 size = sum(os.stat(ap).st_size for ap, _ in items)
                 total_size += size
-                print(f"{FileHelper.convert_bytes(size)}\t{file_path}/ ({len(items)} 个文件)")
+                # 参数本身可能已经带尾斜杠（junk-file/），再拼一个就成了 // 
+                print(f"{FileHelper.convert_bytes(size)}\t{file_path.rstrip('/')}/ ({len(items)} 个文件)")
                 continue
             if not os.path.isfile(file_path):
                 print(f"{file_path} is not a file")
@@ -906,7 +907,8 @@ def main():
     if not args.yes and tmp_file is None:
         try:
             input(f'\n按 Enter 确认上传到 {host}')
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, EOFError):
+            # 同 --delete：无 tty 时 input() 抛 EOFError，当作取消
             print()
             return
 
