@@ -9,9 +9,11 @@ q-transfer - 文件上传客户端
 """
 
 import argparse
+import json
 import mimetypes
 import os
 import platform
+import re
 import subprocess
 import sys
 import tempfile
@@ -198,7 +200,231 @@ class AuthManager:
         return False
 
 
+def parse_expire_spec(text):
+    """'7d' / '24h' / '30m' / 'never' -> 发给服务端的字符串（epoch 秒 或 'never'）"""
+    if text is None:
+        return None
+    t = text.strip().lower()
+    if t in ('never', 'none', '0'):
+        return 'never'
+    m = re.fullmatch(r'(\d+)\s*([dhm])', t)
+    if not m:
+        raise ValueError(f"无法解析 --expire {text!r}：支持 7d / 24h / 30m / never")
+    n, unit = int(m.group(1)), m.group(2)
+    return str(int(time.time()) + n * {'d': 86400, 'h': 3600, 'm': 60}[unit])
+
+
+def fmt_expires(ts):
+    if ts is None:
+        return '永不过期'
+    left = int(ts) - int(time.time())
+    if left <= 0:
+        return '已过期'
+    if left >= 86400:
+        return f'{left // 86400} 天后'
+    return f'{left // 3600} 小时后'
+
+
+class Remote:
+    """CLI 的读/管理侧：列包、看详情、删包、改过期。
+
+    走同一个 Bearer token —— 服务端把它解析成 client_id，只返回**这台设备
+    自己上传的**包（以及加 upload_client_id 之前上传、无法归因的历史包）。
+    以前这些事只能开浏览器做，等于把 CLI 用户挡在门外。
+    """
+
+    def __init__(self, host):
+        self.host = host
+        self.auth = AuthManager(host)
+
+    def _ready(self):
+        return self.auth.ensure_authorized()
+
+    def _headers(self):
+        return {'Authorization': f'Bearer {self.auth.token_holder.token}'}
+
+    def _request(self, method, path, **kw):
+        kw.setdefault('headers', self._headers())
+        kw.setdefault('timeout', 60)
+        r = requests.request(method, f'{self.host}{path}', **kw)
+        if r.status_code == 401:
+            print(f'未授权，请先运行: q-transfer -r {self.host}')
+            return None
+        if r.status_code == 403:
+            print(f'没有权限：{r.json().get("detail", r.text[:120])}')
+            return None
+        r.raise_for_status()
+        return r
+
+    def list_bundles(self, per_page=50):
+        r = self._request('GET', '/api/bundles', params={'per_page': per_page})
+        if r is None:
+            return None
+        data = r.json()
+        items = data.get('items', [])
+        print(f'共 {data.get("total", len(items))} 个包'
+              + (f'（显示前 {len(items)} 个）' if data.get('total', 0) > len(items) else ''))
+        print()
+        print(f'{"ID":<34}{"入口":<28}{"文件":>4}{"大小":>10}{"下载":>6}  过期')
+        for b in items:
+            print(f'{b["id"]:<34}{b["entry_path"][:26]:<28}'
+                  f'{b["file_count"]:>4}{FileHelper.convert_bytes(b["size"]):>10}'
+                  f'{b.get("download_count") or 0:>6}  {fmt_expires(b.get("expires_at"))}')
+        if items:
+            print()
+            print(f'更新某个包： q-transfer <目录> -u {items[0]["id"]}')
+            print(f'看详情：     q-transfer --info {items[0]["id"]}')
+        return items
+
+    def info(self, file_id):
+        # /api/files/{id} 是公开的，bundle 元信息都在里面
+        r = self._request('GET', f'/api/files/{file_id}')
+        if r is None:
+            return None
+        d = r.json()
+        b = d.get('bundle') or {}
+        host = self.host
+        entry = b.get('entry_path') or d.get('rel_path') or d.get('filename')
+        print(f'入口:     {entry}')
+        print(f'大小:     {FileHelper.convert_bytes(b.get("size") or d.get("size") or 0)}')
+        print(f'文件数:   {b.get("file_count") or 1}')
+        print(f'过期:     {fmt_expires(d.get("expires_at"))}')
+        print()
+        print(f'分享:     {host}/v/{file_id}/{entry}')
+        print(f'预览:     {host}/v/{file_id}')
+        print(f'整包下载: {host}/b/{file_id}.tar')
+        files = b.get('files') or []
+        if len(files) > 1:
+            print()
+            print('包内文件:')
+            for m in files:
+                print(f'  {FileHelper.convert_bytes(m.get("size") or 0):>10}  {m["rel_path"]}')
+                print(f'{"":>12}下载 {host}/d/{file_id}/{m["rel_path"]}')
+        return d
+
+    def delete_bundle(self, bundle_id, assume_yes=False):
+        r = self._request('GET', f'/api/files/{bundle_id}')
+        name = ''
+        if r is not None:
+            b = (r.json().get('bundle') or {})
+            name = b.get('entry_path') or ''
+        if not assume_yes:
+            try:
+                if input(f'删除整包 {bundle_id}（{name}）及其所有文件？[y/N] ').strip().lower() not in ('y', 'yes'):
+                    print('已取消')
+                    return False
+            except (KeyboardInterrupt, EOFError):
+                # 无 tty（管道/CI）时 input() 会抛 EOFError —— 当作取消，
+                # 不能让它冒成 traceback，更不能默认「是」
+                print()
+                return False
+        r = self._request('DELETE', f'/api/bundles/{bundle_id}')
+        if r is None:
+            return False
+        print(f'已删除 {bundle_id}')
+        return True
+
+    def set_expires(self, bundle_id, spec):
+        body = {'expires_at': None if spec == 'never' else int(spec)}
+        r = self._request('PUT', f'/api/bundles/{bundle_id}/expires', json=body)
+        if r is None:
+            return False
+        print(f'过期时间已设为：{fmt_expires(body["expires_at"])}')
+        return True
+
+
+class BundleMap:
+    """记住「本地目录 -> 远端 bundle_id」，让原地更新不用手打 id。
+
+    存 ~/.local/state/transfer/bundles.json，**按 host 分组**（多服务器不串）。
+
+    key 用第一个参数的绝对路径 —— 这正是用户心里认定的「这个项目」。
+    目录改名/移动会让映射失效，那种情况下退回显式 `-u <id>` 即可：
+    宁可找不到，也不能猜错到别的包上（误更新比找不到严重得多）。
+    """
+
+    PATH = os.path.join(TokenHolder.STATE_BASE_DIR, 'bundles.json')
+
+    @classmethod
+    def _load(cls):
+        try:
+            with open(cls.PATH, encoding='utf-8') as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    @classmethod
+    def _save(cls, data):
+        os.makedirs(os.path.dirname(cls.PATH), exist_ok=True)
+        tmp = cls.PATH + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        os.replace(tmp, cls.PATH)      # 原子替换，别写坏已有记录
+
+    @staticmethod
+    def key_for(paths):
+        return os.path.abspath(paths[0]) if paths else ''
+
+    @classmethod
+    def remember(cls, host, paths, bundle_id, entry=None):
+        if not bundle_id or not paths:
+            return
+        data = cls._load()
+        data.setdefault(host.rstrip('/'), {})[cls.key_for(paths)] = {
+            'bundle_id': bundle_id,
+            'entry': entry,
+            'updated_at': int(time.time()),
+        }
+        cls._save(data)
+
+    @classmethod
+    def recall(cls, host, paths):
+        entry = (cls._load().get(host.rstrip('/')) or {}).get(cls.key_for(paths))
+        return entry if isinstance(entry, dict) else None
+
+
 class FileHelper:
+    @staticmethod
+    def extract_id(url):
+        """从 {host}/v/{id}[/...] 、/d/{id}/... 、/b/{id}.tar 里取出 id"""
+        for marker in ('/v/', '/d/', '/b/'):
+            if marker in url:
+                rest = url.split(marker, 1)[1]
+                return rest.split('/')[0].split('.')[0]
+        return ''
+
+    @staticmethod
+    def is_render_url(url):
+        """是 /v/{id}/{rel_path}（渲染直链）还是 /v/{id}（预览页）？
+
+        不能再用 '/r/' in url 判断 —— /r/ 路由已经并入 /v/，那样永远为假。
+        靠 /v/ 之后还有没有路径段来区分。
+        """
+        if '/v/' not in url:
+            return False
+        return '/' in url.split('/v/', 1)[1]
+
+    @staticmethod
+    def print_share_hints(base_url, bundle_id, paths=None, entry=None):
+        """打印 bundle_id / 下次更新命令 / 整包下载链接。
+
+        这三行值得单独打，是因为 CLI 的主要用法就是原地更新，而 -u 需要
+        bundle_id —— 不打出来就只能翻 scrollback 或开浏览器去列表页复制，
+        等于把「链接永久有效」这个核心能力的使用路径切断了。
+        """
+        if not bundle_id:
+            return
+        print(f'Bundle ID:     {bundle_id}')
+        if paths:
+            cmd = 'q-transfer ' + ' '.join(paths)
+            if entry:
+                cmd += f' --entry {entry}'
+            print(f'下次更新:       {cmd} -u {bundle_id}')
+        host = base_url.split('/v/', 1)[0] if '/v/' in base_url else ''
+        if host:
+            print(f'整包下载:       {host}/b/{bundle_id}.tar')
+
     @staticmethod
     def convert_bytes(num):
         for x in ['B', 'KB', 'MB', 'GB', 'TB']:
@@ -329,7 +555,7 @@ class Uploader:
                 items.append((p, os.path.basename(p)))
         return items
 
-    def upload_bundle(self, paths, entry=None, qrcode=True, bundle_id=None):
+    def upload_bundle(self, paths, entry=None, qrcode=True, bundle_id=None, expires_at=None):
         """打包上传：一个「文件夹」= 一条记录（一个 bundle_id）。
 
         传 bundle_id 时走原地更新（PUT），**id 不变 => 分享链接不变**。
@@ -371,7 +597,8 @@ class Uploader:
             resp = requests.request(
                 'PUT' if bundle_id else 'POST', url,
                 headers={'Authorization': f'Bearer {self.auth.token_holder.token}'},
-                data={'entry': entry},
+                data=({'entry': entry} if expires_at is None
+                      else {'entry': entry, 'expires_at': expires_at}),
                 files=files,
                 timeout=600,
             )
@@ -391,6 +618,12 @@ class Uploader:
         print('               (sandboxed HTML page — safe to share)')
         if view_url:
             print(f'Preview link:  {view_url}')
+
+        # 原地更新要用 bundle_id，这里顺手打出来并记进 BundleMap
+        bid = bundle_id or FileHelper.extract_id(render_url)
+        FileHelper.print_share_hints(render_url, bid, paths=paths, entry=entry)
+        BundleMap.remember(self.host, paths, bid, entry)
+
         if qrcode and render_url:
             print()
             self.print_qr_code_ascii(render_url)
@@ -458,14 +691,17 @@ class Uploader:
         else:
             view_url = download_url.replace('/d/', '/v/').rsplit('/', 1)[0] if download_url else ''
 
-        is_render = '/r/' in view_url
         print()
-        if is_render:
+        if FileHelper.is_render_url(view_url):
             print(f'Render link:   {view_url}')
             print('               (sandboxed HTML page — safe to share)')
         else:
             print(f'View link:     {view_url}')
         print(f'Download link: {download_url}')
+
+        bid = FileHelper.extract_id(view_url)
+        if bid:
+            FileHelper.print_share_hints(view_url, bid)
 
         if qrcode and view_url:
             print()
@@ -524,6 +760,10 @@ def main():
   q-transfer --no-gzip image.png           # 禁用 gzip 上传
   cat data | q-transfer -n file.txt         # 管道输入并指定文件名
   p -f | q-transfer -n screenshot.png       # 剪切板图片上传
+  q-transfer --list                        # 列出自己传过的包
+  q-transfer --info e7ZQae0z...            # 看包详情与包内文件
+  q-transfer --delete e7ZQae0z...          # 删掉整个包
+  q-transfer site/ --expire 7d             # 上传并设置 7 天后过期
         '''
     )
     parser.add_argument('-r', '--register', metavar='HOST',
@@ -544,6 +784,20 @@ def main():
                         help='打包上传时的入口文件（默认 index.html，或唯一的 .html）')
     parser.add_argument('--separate', action='store_true',
                         help='多个文件也各自单传，不打包')
+    parser.add_argument('-U', '--update-last', action='store_true',
+                        help='原地更新「这个目录上次传过的」bundle（不用查 bundle_id）')
+    parser.add_argument('--list', action='store_true',
+                        help='列出自己上传的包（id / 入口 / 大小 / 下载次数 / 过期）')
+    parser.add_argument('--info', metavar='BUNDLE_ID',
+                        help='看某个包的详情与包内文件')
+    parser.add_argument('--link', metavar='BUNDLE_ID',
+                        help='只打印某个包的链接（分享/预览/整包），不上传')
+    parser.add_argument('--delete', metavar='BUNDLE_ID',
+                        help='删除整个包（含盘上所有文件）')
+    parser.add_argument('--expire', metavar='SPEC',
+                        help='上传/更新时设置过期时间：7d / 24h / 30m / never')
+    parser.add_argument('--set-expire', metavar=('BUNDLE_ID', 'SPEC'), nargs=2,
+                        help='修改已有包的过期时间')
     parser.add_argument('-u', '--update', metavar='BUNDLE_ID',
                         help='原地替换已有 bundle 的内容（bundle_id 不变，分享链接不变）')
 
@@ -566,6 +820,30 @@ def main():
     # 确定服务器地址
     # 优先使用环境变量，其次是默认值
     host = get_default_host()
+
+    # ── 读/管理侧命令 ──
+    # 必须放在「管道输入」之前：那一段会在 stdin 非 tty 时去读 stdin，
+    # 于是 `q-transfer --list < /dev/null` 会直接卡死。
+    if args.list or args.info or args.link or args.delete or args.set_expire:
+        remote = Remote(host)
+        if not remote._ready():
+            return
+        try:
+            if args.set_expire:
+                remote.set_expires(args.set_expire[0], parse_expire_spec(args.set_expire[1]))
+            elif args.delete:
+                remote.delete_bundle(args.delete, assume_yes=args.yes)
+            elif args.info:
+                remote.info(args.info)
+            elif args.link:
+                remote.info(args.link)
+            else:
+                remote.list_bundles()
+        except ValueError as e:
+            print(e)
+        except requests.RequestException as e:
+            print(f'请求失败: {e}')
+        return
 
     # 处理管道输入
     tmp_file = None
@@ -598,6 +876,29 @@ def main():
         parser.print_help()
         return
 
+    # -U：沿用「这个目录上次传过的」bundle。必须在 check_and_print_files_size
+    # 之前解析，因为它可能补上 --entry。
+    if args.update_last:
+        if args.update:
+            print("-U 和 -u 不能同时用：-U 是自动查 id，-u 是显式指定")
+            return
+        rec = BundleMap.recall(host, args.files)
+        if not rec:
+            print(f"没有记录：{BundleMap.key_for(args.files)} 还没从这里上传过")
+            print("先 q-transfer <目录> 传一次，或显式指定 q-transfer <目录> -u <bundle_id>")
+            return
+        args.update = rec['bundle_id']
+        if not args.entry and rec.get('entry'):
+            args.entry = rec['entry']
+        print(f"沿用上次的 bundle：{args.update}")
+
+    if args.expire:
+        try:
+            parse_expire_spec(args.expire)
+        except ValueError as e:
+            print(e)
+            return
+
     if not Uploader.check_and_print_files_size(args.files):
         return
 
@@ -617,8 +918,11 @@ def main():
         # 一个目录 / 多个文件 => 打包上传（一个「文件夹」= 一条记录）
         want_bundle = (len(args.files) > 1) or any(os.path.isdir(f) for f in args.files)
         if (want_bundle or args.update) and not args.separate and pipe_filename is None:
+            if args.expire and not want_bundle:
+                print("提示：--expire 只对打包上传生效，单文件走服务端默认过期时间")
             uploader.upload_bundle(args.files, entry=args.entry, qrcode=True,
-                                   bundle_id=args.update)
+                                   bundle_id=args.update,
+                                   expires_at=parse_expire_spec(args.expire))
         else:
             for f in args.files:
                 uploader.upload(f, qrcode=True, use_gzip=use_gzip, gzip_level=args.gzip_level,
