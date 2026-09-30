@@ -265,9 +265,10 @@ class Remote:
         print(f'共 {data.get("total", len(items))} 个包'
               + (f'（显示前 {len(items)} 个）' if data.get('total', 0) > len(items) else ''))
         print()
-        print(f'{"ID":<34}{"入口":<28}{"文件":>4}{"大小":>10}{"下载":>6}  过期')
+        print(f'{"ID":<34}{"名字/入口":<28}{"文件":>4}{"大小":>10}{"下载":>6}  过期')
         for b in items:
-            print(f'{b["id"]:<34}{b["entry_path"][:26]:<28}'
+            label = b.get("name") or b["entry_path"] or '(无入口)'
+            print(f'{b["id"]:<34}{label[:26]:<28}'
                   f'{b["file_count"]:>4}{FileHelper.convert_bytes(b["size"]):>10}'
                   f'{b.get("download_count") or 0:>6}  {fmt_expires(b.get("expires_at"))}')
         if items:
@@ -276,30 +277,41 @@ class Remote:
             print(f'看详情：     q-transfer --info {items[0]["id"]}')
         return items
 
-    def info(self, file_id):
-        # /api/files/{id} 是公开的，bundle 元信息都在里面
-        r = self._request('GET', f'/api/files/{file_id}')
+    def info(self, bundle_id):
+        """看一个包的详情。
+
+        走 GET /api/bundles/{id} —— 包的规范接口。以前借的是公开的
+        /api/files/{id}（一个 files 接口返回 file 里塞 bundle），
+        那个不返回包名。
+        """
+        r = self._request('GET', f'/api/bundles/{bundle_id}')
         if r is None:
             return None
         d = r.json()
-        b = d.get('bundle') or {}
+        entry = d.get('entry_path') or ''
         host = self.host
-        entry = b.get('entry_path') or d.get('rel_path') or d.get('filename')
-        print(f'入口:     {entry}')
-        print(f'大小:     {FileHelper.convert_bytes(b.get("size") or d.get("size") or 0)}')
-        print(f'文件数:   {b.get("file_count") or 1}')
+
+        print(f'包名:     {d["name"] or "（未命名）"}')
+        print(f'入口:     {entry or "（无入口，分享用下面的索引地址）"}')
+        print(f'大小:     {FileHelper.convert_bytes(d.get("size") or 0)}')
+        print(f'文件数:   {d.get("file_count") or 1}')
         print(f'过期:     {fmt_expires(d.get("expires_at"))}')
+        if d.get('download_count'):
+            print(f'下载:     {d["download_count"]} 次 / {d.get("unique_ips") or 0} 个 IP')
         print()
-        print(f'分享:     {host}/v/{file_id}/{entry}')
-        print(f'预览:     {host}/v/{file_id}')
-        print(f'整包下载: {host}/b/{file_id}.tar')
-        files = b.get('files') or []
+        print(f'分享:     {host}/v/{bundle_id}/{entry}' if entry
+              else f'索引:     {host}/v/{bundle_id}/')
+        print(f'预览:     {host}/v/{bundle_id}')
+        print(f'整包下载: {host}/b/{bundle_id}.tar')
+
+        files = d.get('files') or []
         if len(files) > 1:
             print()
             print('包内文件:')
             for m in files:
-                print(f'  {FileHelper.convert_bytes(m.get("size") or 0):>10}  {m["rel_path"]}')
-                print(f'{"":>12}下载 {host}/d/{file_id}/{m["rel_path"]}')
+                mark = '  ← 入口' if m.get('is_entry') else ''
+                print(f'  {FileHelper.convert_bytes(m.get("size") or 0):>10}  {m["rel_path"]}{mark}')
+                print(f'{"":>12}下载 {host}/d/{bundle_id}/{m["rel_path"]}')
         return d
 
     def delete_bundle(self, bundle_id, assume_yes=False):
@@ -555,7 +567,8 @@ class Uploader:
                 items.append((p, os.path.basename(p)))
         return items
 
-    def upload_bundle(self, paths, entry=None, qrcode=True, bundle_id=None, expires_at=None):
+    def upload_bundle(self, paths, entry=None, qrcode=True, bundle_id=None,
+                      expires_at=None, name=None):
         """打包上传：一个「文件夹」= 一条记录（一个 bundle_id）。
 
         传 bundle_id 时走原地更新（PUT），**id 不变 => 分享链接不变**。
@@ -604,6 +617,8 @@ class Uploader:
             _payload['entry'] = entry
         if expires_at is not None:
             _payload['expires_at'] = expires_at
+        if name:
+            _payload['name'] = name
 
         opened, files = [], []
         try:
@@ -811,6 +826,8 @@ def main():
                         help='禁用 gzip 压缩上传')
     parser.add_argument('--gzip-level', type=int, default=1, choices=range(1, 10),
                         help='gzip 压缩级别，1-9，默认 1')
+    parser.add_argument('--bundle-name', metavar='NAME',
+                        help='给这个包起个名字（列表和预览页显示它，而不是入口文件名）')
     parser.add_argument('--entry', metavar='PATH',
                         help='打包上传时的入口文件；默认不设入口（/v/{id}/ 出目录索引），'
                              '用 --entry none 也可显式表示不要入口')
@@ -955,7 +972,8 @@ def main():
                 print("提示：--expire 只对打包上传生效，单文件走服务端默认过期时间")
             uploader.upload_bundle(args.files, entry=args.entry, qrcode=True,
                                    bundle_id=args.update,
-                                   expires_at=parse_expire_spec(args.expire))
+                                   expires_at=parse_expire_spec(args.expire),
+                                   name=args.bundle_name)
         else:
             for f in args.files:
                 uploader.upload(f, qrcode=True, use_gzip=use_gzip, gzip_level=args.gzip_level,
