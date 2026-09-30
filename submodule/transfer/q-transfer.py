@@ -570,14 +570,26 @@ class Uploader:
             return False
 
         names = [rel for _, rel in items]
-        if not entry:
-            if 'index.html' in names:
-                entry = 'index.html'
-            else:
-                htmls = [n for n in names if n.lower().endswith(('.html', '.htm'))]
-                entry = htmls[0] if len(htmls) == 1 else None
-        if not entry or entry not in names:
-            print(f"无法确定入口文件，请用 --entry 指定。候选：{', '.join(names[:8])}")
+
+        # 不再猜入口。以前 index.html 有特权（会静默盖过别的页面），
+        # 猜不出来时还会直接拒绝上传（纯图片目录就传不了）。
+        # 现在：只有 --entry 显式给了才设；否则这个包「没有门面」，
+        # /v/{bundle_id}/ 会出一个目录索引，事后也能在网页上补设。
+        entry_explicit = entry is not None
+        if entry_explicit and entry.strip().lower() in ('none', '-', '/'):
+            entry = ''                      # 显式表示不要入口
+        elif entry_explicit:
+            entry = entry.strip().lstrip('/')
+        else:
+            # None = **完全不传这个字段**。服务端据此区分：
+            #   新建 -> 没有入口；原地更新 -> 保持原有入口不动
+            # 传 '' 才是「明确清掉入口」。搞混的话 -u 会把入口误删。
+            entry = None
+
+        if entry and entry not in names:
+            print(f"入口文件不在这次上传的列表里：{entry}")
+            print(f"候选：{', '.join(names[:8])}")
+            print("（想明说「不要入口」用 --entry none）")
             return False
 
         total = sum(os.path.getsize(ap) for ap, _ in items)
@@ -585,6 +597,13 @@ class Uploader:
         print(f"{action}：{len(items)} 个文件 / {FileHelper.convert_bytes(total)} -> {self.host}")
         for _, rel in items:
             print(f"  {rel}")
+
+        # 只把用户真正给过的字段发出去（见上面 entry 的说明）
+        _payload = {}
+        if entry is not None:
+            _payload['entry'] = entry
+        if expires_at is not None:
+            _payload['expires_at'] = expires_at
 
         opened, files = [], []
         try:
@@ -597,8 +616,7 @@ class Uploader:
             resp = requests.request(
                 'PUT' if bundle_id else 'POST', url,
                 headers={'Authorization': f'Bearer {self.auth.token_holder.token}'},
-                data=({'entry': entry} if expires_at is None
-                      else {'entry': entry, 'expires_at': expires_at}),
+                data=_payload,
                 files=files,
                 timeout=600,
             )
@@ -614,15 +632,27 @@ class Uploader:
         lines = [ln.strip() for ln in (resp.text or '').splitlines() if ln.strip()]
         render_url = lines[0] if lines else ''
         view_url = lines[1] if len(lines) > 1 else ''
-        print(f"\nRender link:   {render_url}")
-        print('               (sandboxed HTML page — safe to share)')
+        # 服务端返回第一行是 /v/{id}/{entry} 或 /v/{id}/（无入口）。
+        # 用**服务端解析后**的值，-u 没传 entry 时也能显示真实入口。
+        _tail = render_url.split('/v/', 1)[-1].split('/', 1)
+        resolved_entry = _tail[1] if len(_tail) > 1 else ''
+        if resolved_entry:
+            print(f"\nRender link:   {render_url}")
+            print('               (sandboxed HTML page — safe to share)')
+        else:
+            print(f"\nIndex link:    {render_url}")
+            print('               (目录索引页 — 无入口的包用这个分享，不依赖 JS)')
         if view_url:
             print(f'Preview link:  {view_url}')
 
         # 原地更新要用 bundle_id，这里顺手打出来并记进 BundleMap
         bid = bundle_id or FileHelper.extract_id(render_url)
-        FileHelper.print_share_hints(render_url, bid, paths=paths, entry=entry)
-        BundleMap.remember(self.host, paths, bid, entry)
+        FileHelper.print_share_hints(render_url, bid, paths=paths, entry=resolved_entry)
+        BundleMap.remember(self.host, paths, bid, resolved_entry)
+
+        if not resolved_entry:
+            print('               这个包没有入口；要指定就加 --entry <路径>，')
+            print(f'               或事后在网页上设：{self.host}/v/{bid}')
 
         if qrcode and render_url:
             print()
@@ -782,7 +812,8 @@ def main():
     parser.add_argument('--gzip-level', type=int, default=1, choices=range(1, 10),
                         help='gzip 压缩级别，1-9，默认 1')
     parser.add_argument('--entry', metavar='PATH',
-                        help='打包上传时的入口文件（默认 index.html，或唯一的 .html）')
+                        help='打包上传时的入口文件；默认不设入口（/v/{id}/ 出目录索引），'
+                             '用 --entry none 也可显式表示不要入口')
     parser.add_argument('--separate', action='store_true',
                         help='多个文件也各自单传，不打包')
     parser.add_argument('-U', '--update-last', action='store_true',
