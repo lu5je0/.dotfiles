@@ -315,11 +315,11 @@ class Remote:
         return d
 
     def delete_bundle(self, bundle_id, assume_yes=False):
-        r = self._request('GET', f'/api/files/{bundle_id}')
+        r = self._request('GET', f'/api/bundles/{bundle_id}')
         name = ''
         if r is not None:
-            b = (r.json().get('bundle') or {})
-            name = b.get('entry_path') or ''
+            d = r.json()
+            name = d.get('name') or d.get('entry_path') or ''
         if not assume_yes:
             try:
                 if input(f'删除整包 {bundle_id}（{name}）及其所有文件？[y/N] ').strip().lower() not in ('y', 'yes'):
