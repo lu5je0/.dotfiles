@@ -1,3 +1,7 @@
 {
-	"allowWrite": ["/tmp", "~/.dotfiles"]
+	"allowWrite": [
+    "/tmp",
+    "~/.dotfiles",
+    "~/.cache"
+  ]
 }
