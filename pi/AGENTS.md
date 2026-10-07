@@ -67,6 +67,7 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
   - heredoc 正文不扫（`cat > x.js <<'EOF' … EOF` 里 `=> "/Users/me"` 这类正文不是 shell 代码）。未闭合的 heredoc 一律不动；`bash <<EOF` 这种真把正文当脚本跑的会漏判，由沙箱在内核层兜底
   - 放行目标是「最近存在的祖先目录」：`mkdir -p ~/新目录/x` 里的目录还不存在，以前算不出目标→不弹窗也不成功，只能 EPERM
   - 弹窗用 `ctx.ui.custom()` + `overlay`（bottom-center、宽度铺满，见 `PermDialog`），**不要用 `ui.select()`**：后者的标题不是弹层，而是直接替换输入框画在 editor 区域、没有滚动条，命令一长整个 dock 超过终端高度、editor 区域被压扁（fullscreen 下 shrink 到 minSize 3），选项就跑到屏幕外（踩过）。overlay 有自己的定位/尺寸，弹窗里每行都在 `render(width)` 里按真实宽度截断，颜色自己分配（标题 accent、命令 dim、放行目标 muted），选项用 pi 的 `SelectList` + 1-4 直选。非 TUI（RPC）回退到 `ui.select`，文案同样先压短
+- 写入边界会注入系统提示：`before_agent_start` 里往 `systemPromptOptions.sections.write_boundaries` 写一行事实披露，如 `simple-perm ro：可写 ~/Test、/tmp、~/.dotfiles；其余路径只读。`（section 名固定，pi 按 tag 增量替换）。可写目录由 `writableDirs(cwd, allowWrite)` 现算；`ask` 模式句尾加「写到边界外会弹窗确认」，`yolo` 直接 `delete` 这一节。只陈述事实，不写指令。注意 section 名只接受 `^[a-z][a-z0-9_-]*$`，内容为空就等于删掉
 
 ## thinking 折叠（thinking-fold）
 

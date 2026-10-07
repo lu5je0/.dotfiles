@@ -898,6 +898,25 @@ export default function (pi: ExtensionAPI) {
 		for (const err of loaded.errors) ctx.ui.notify(`simple-perm: 配置有问题 — ${err}`, "warning");
 	};
 
+	/**
+	 * 把当前写入边界作事实披露注入系统提示。section 名固定，pi 按 tag 做增量替换，
+	 * 模式 / 白名单一变，下一轮请求就会带上新的一段。yolo 无限制，直接删掉本节。
+	 *
+	 * 只陈述事实（哪些可写），不写“不要重试/该怎么绕过”那类指令。
+	 */
+	const writeBoundarySection = (ctx: ExtensionContext): string | undefined => {
+		if (mode === "yolo") return undefined;
+		const writable = writableDirs(ctx.cwd, allowWrite).map(tildeify);
+		const suffix = mode === "ask" ? "；写到边界外会弹窗确认" : "";
+		return `simple-perm ${mode}：可写 ${writable.join("、")}；其余路径只读${suffix}。`;
+	};
+
+	pi.on("before_agent_start", (event, ctx) => {
+		const section = writeBoundarySection(ctx);
+		if (section) event.systemPromptOptions.sections.write_boundaries = section;
+		else delete event.systemPromptOptions.sections.write_boundaries;
+	});
+
 	const switchMode = (next: Mode, ctx: ExtensionContext) => {
 		mode = next;
 		process.env.PI_PERMISSION_MODE = mode; // 传给子 pi 进程
