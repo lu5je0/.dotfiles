@@ -1,6 +1,6 @@
-#compdef q-transfer
+#compdef transfer
 
-_q_transfer() {
+_transfer() {
   _arguments -C -s \
     '(-r --register)'{-r,--register}'[register and authorize with server]:host: ' \
     '(-l --logout)'{-l,--logout}'[logout from server]:host: ' \
@@ -12,4 +12,4 @@ _q_transfer() {
     '*:file:_files'
 }
 
-_q_transfer "$@"
+_transfer "$@"

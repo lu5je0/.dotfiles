@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-q-transfer - 文件上传客户端
+transfer - 文件上传客户端
 
 使用浏览器授权流程:
-1. 运行 q-transfer -r <host> 注册设备
+1. 运行 transfer -r <host> 注册设备
 2. 按提示打开浏览器授权
 3. 授权后即可上传文件
 """
@@ -196,7 +196,7 @@ class AuthManager:
         if self.is_authorized():
             return True
 
-        print(f"未授权，请先运行: q-transfer -r {self.host}")
+        print(f"未授权，请先运行: transfer -r {self.host}")
         return False
 
 
@@ -248,7 +248,7 @@ class Remote:
         kw.setdefault('timeout', 60)
         r = requests.request(method, f'{self.host}{path}', **kw)
         if r.status_code == 401:
-            print(f'未授权，请先运行: q-transfer -r {self.host}')
+            print(f'未授权，请先运行: transfer -r {self.host}')
             return None
         if r.status_code == 403:
             print(f'没有权限：{r.json().get("detail", r.text[:120])}')
@@ -273,8 +273,8 @@ class Remote:
                   f'{b.get("download_count") or 0:>6}  {fmt_expires(b.get("expires_at"))}')
         if items:
             print()
-            print(f'更新某个包： q-transfer <目录> -u {items[0]["id"]}')
-            print(f'看详情：     q-transfer --info {items[0]["id"]}')
+            print(f'更新某个包： transfer <目录/文件> -u {items[0]["id"]}')
+            print(f'看详情：     transfer --info {items[0]["id"]}')
         return items
 
     def info(self, bundle_id):
@@ -429,7 +429,7 @@ class FileHelper:
             return
         print(f'Bundle ID:     {bundle_id}')
         if paths:
-            cmd = 'q-transfer ' + ' '.join(paths)
+            cmd = 'transfer ' + ' '.join(paths)
             if entry:
                 cmd += f' --entry {entry}'
             print(f'下次更新:       {cmd} -u {bundle_id}')
@@ -797,19 +797,19 @@ def get_default_host():
 
 def main():
     parser = argparse.ArgumentParser(
-        description='q-transfer - 文件上传工具',
+        description='transfer - 文件上传工具',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 示例:
-  q-transfer -r http://192.168.1.10:8000    # 注册授权
-  q-transfer file.txt                      # 上传文件（默认启用 gzip）
-  q-transfer --no-gzip image.png           # 禁用 gzip 上传
-  cat data | q-transfer -n file.txt         # 管道输入并指定文件名
-  p -f | q-transfer -n screenshot.png       # 剪切板图片上传
-  q-transfer --list                        # 列出自己传过的包
-  q-transfer --info e7ZQae0z...            # 看包详情与包内文件
-  q-transfer --delete e7ZQae0z...          # 删掉整个包
-  q-transfer site/ --expire 7d             # 上传并设置 7 天后过期
+  transfer -r http://192.168.1.10:8000    # 注册授权
+  transfer file.txt                      # 上传文件（默认启用 gzip）
+  transfer --no-gzip image.png           # 禁用 gzip 上传
+  cat data | transfer -n file.txt         # 管道输入并指定文件名
+  p -f | transfer -n screenshot.png       # 剪切板图片上传
+  transfer --list                        # 列出自己传过的包
+  transfer --info e7ZQae0z...            # 看包详情与包内文件
+  transfer --delete e7ZQae0z...          # 删掉整个包
+  transfer site/ --expire 7d             # 上传并设置 7 天后过期
         '''
     )
     parser.add_argument('-r', '--register', metavar='HOST',
@@ -872,7 +872,7 @@ def main():
 
     # ── 读/管理侧命令 ──
     # 必须放在「管道输入」之前：那一段会在 stdin 非 tty 时去读 stdin，
-    # 于是 `q-transfer --list < /dev/null` 会直接卡死。
+    # 于是 `transfer --list < /dev/null` 会直接卡死。
     if args.list or args.info or args.link or args.delete or args.set_expire:
         remote = Remote(host)
         if not remote._ready():
@@ -934,7 +934,7 @@ def main():
         rec = BundleMap.recall(host, args.files)
         if not rec:
             print(f"没有记录：{BundleMap.key_for(args.files)} 还没从这里上传过")
-            print("先 q-transfer <目录> 传一次，或显式指定 q-transfer <目录> -u <bundle_id>")
+            print("先 transfer <目录> 传一次，或显式指定 transfer <目录> -u <bundle_id>")
             return
         args.update = rec['bundle_id']
         if not args.entry and rec.get('entry'):
