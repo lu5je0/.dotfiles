@@ -25,23 +25,28 @@ Ctrl+Super+N/P 循环切换下一个/上一个工作区，Ctrl+Super+Shift+N/P �
 ## 布局配置（wm/layout.jsonc）
 
 hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` 注释），每次按键实时读取，改完立即生效，无需注销。
-`rules` 为有序数组，每条规则由 `wm` / `app` / `screen` 三个可选字段 + `size` 组成：
+`rules` 先按 os 分类，`rules[<os>]` 是该系统专属规则、`rules.all` 是所有系统共用的兜底：
 
 ```json
 {
-    "rules": [
-        { "wm": "gnome", "app": "kitty", "size": { "center_j": { "w": 1113, "h": 950 } } },
-        { "size": { "center_i": { "w": { "ratio": 0.6875 } } } }
-    ],
+    "rules": {
+        "linux": [
+            { "wm": "gnome", "app": "kitty", "size": { "center_j": { "w": 1113, "h": 950 } } }
+        ],
+        "all": [
+            { "size": { "center_i": { "w": { "ratio": 0.6875 } } } }
+        ]
+    },
     "side": { "width": 1139, "height": 1218 },
     "insets": {}
 }
 ```
 
-- 匹配：从前往后取第一条「字段全匹配且 size 提供该 mode」的规则；字段缺省即通配，
-  最后一条无字段规则是全局 fallback
-- `wm` / `app` 可为字符串或数组（数组 = 多端/多 app 共享一条规则）；本端 `wm` 固定为
-  `gnome`、`screen` 固定为 `default`
+- 匹配：先 `rules[<os>]` 再 `rules.all`，各组内从前往后，取第一条「字段全匹配且 size 提供该 mode」的规则；
+  每条规则由 `wm` / `app` / `screen` / `host` 四个可选字段 + `size` 组成，字段缺省即通配
+- 本端 `os` 固定为 `linux`、`wm` 固定为 `gnome`、`screen` 固定为 `default`；
+  `wm` / `app` 可为字符串或数组（数组 = 多端/多 app 共享一条规则）
+- 兼容旧的扁平数组写法（`"rules": [ ... ]` 仍可解析，全量当成本系统规则）
 - `host` 按本机短主机名匹配（`GLib.get_host_name()`，即 `hostname -s`，可为字符串或数组），
   用于同一份配置在不同机器上用不同尺寸
 - 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；

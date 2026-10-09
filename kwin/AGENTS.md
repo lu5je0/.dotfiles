@@ -37,22 +37,27 @@ readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.
 `wm/layout.jsonc` 剥注释后整段同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` key，
 脚本每次按键通过 `readConfig` 读取并解析。改配置后需跑一次 `reload.sh`。
 
-`rules` 为有序数组，每条规则由 `wm` / `app` / `screen` / `host` 四个可选字段 + `size` 组成：
+`rules` 先按 os 分类，`rules[<os>]` 是该系统专属规则、`rules.all` 是所有系统共用的兜底：
 
 ```json
 {
-    "rules": [
-        { "wm": ["kwin", "gnome"], "app": "kitty", "size": { "center_j": { "w": 1113, "h": 945 } } },
-        { "size": { "center_i": { "w": { "ratio": 0.6875 } } } }
-    ],
+    "rules": {
+        "linux": [
+            { "wm": "kwin", "app": "kitty", "size": { "center_j": { "w": 1113, "h": 945 } } }
+        ],
+        "all": [
+            { "size": { "center_i": { "w": { "ratio": 0.6875 } } } }
+        ]
+    },
     "side": { "width": 1139, "height": 1218 }
 }
 ```
 
-- 匹配：从前往后取第一条「字段全匹配且 size 提供该 mode」的规则；字段缺省即通配，
-  最后一条无字段规则是全局 fallback
-- `wm` / `app` 可为字符串或数组；本端 `wm` 固定为 `kwin`、`screen` 固定为 `default`，
+- 匹配：先 `rules[<os>]` 再 `rules.all`，各组内从前往后，取第一条「字段全匹配且 size 提供该 mode」的规则；
+  每条规则由 `wm` / `app` / `screen` / `host` 四个可选字段 + `size` 组成，字段缺省即通配
+- 本端 `os` 固定为 `linux`、`wm` 固定为 `kwin`、`screen` 固定为 `default`，
   app 匹配用 `resourceClass`（小写）
+- 兼容旧的扁平数组写法（`"rules": [ ... ]` 仍可解析，全量当成本系统规则）
 - `host` 按本机短主机名匹配（可为字符串或数组），值来自 reload.sh 写入的 `wm_host_name`，
   用于同一份配置在不同机器上用不同尺寸
 - 尺寸：`w/h` 为数字（绝对像素）或 `{ratio, offset}`（`max*ratio+offset`）；

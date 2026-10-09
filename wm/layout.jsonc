@@ -1,113 +1,124 @@
 {
   // 窗口布局统一配置（JSONC，支持注释）
-  // rules 从前往后匹配，取第一条「wm/app/screen/host 字段全匹配且 size 提供该 mode」的规则；
-  // 字段缺省即通配，可为字符串或数组。最后一条无字段规则是全局 fallback。
-  // host 为本机短主机名（Linux 取 hostname -s；macOS 取 hostname -s 或「电脑名称」，任一命中即可）
-  "rules": [
-    // ---------- hammerspoon (macOS)：screen 分 main / external ----------
-    {
-      "wm": "hammerspoon",
-      "app": "WezTerm",
-      "screen": "main",
-      "size": {
-        "center_i": { "w": 1126, "h": 862 },
-        "center_j": { "w": 1000, "h": 825 }
+  // rules 先按 os 分类：{ "macos": [...], "linux": [...], "all": [...] }
+  //   - rules[<os>]：该系统专属规则（macos → hammerspoon；linux → kwin / gnome）
+  //   - rules.all  ：所有系统共用（放全局 fallback，最后匹配）
+  // 匹配顺序：先 rules[<os>] 再 rules.all，各组内从前往后，
+  // 取第一条「wm/app/screen/host 字段全匹配且 size 提供该 mode」的规则。
+  // 字段缺省即通配，可为字符串或数组。
+  // host 为本机短主机名（Linux 取 hostname -s；macOS 取 hostname -s 或「电脑名称」，任一命中即可）。
+  // screen：macOS 用 main / external；Linux 用 default（缺省）。
+  "rules": {
+    // ---------- macOS (hammerspoon)：screen 分 main / external ----------
+    "macos": [
+      {
+        "wm": "hammerspoon",
+        "app": "WezTerm",
+        "screen": "main",
+        "size": {
+          "center_i": { "w": 1126, "h": 862 },
+          "center_j": { "w": 1000, "h": 825 }
+        }
+      },
+      {
+        "wm": "hammerspoon",
+        "app": "WezTerm",
+        "screen": "external",
+        "size": {
+          "center_i": {
+            "w": { "ratio": 0.75, "offset": -27 },
+            "h": { "ratio": 1, "offset": -24 }
+          },
+          "center_j": { "w": 1013, "h": 840 }
+        }
+      },
+      {
+        "wm": "hammerspoon",
+        "app": "kitty",
+        "host": "paladin",
+        "screen": "main",
+        "size": {
+          "center_i": { "w": 1251, "h": 863, "x": { "offset": 30 } },
+          "center_j": { "w": 989, "h": 807, "x": { "offset": 30 } }
+        }
+      },
+      {
+        "wm": "hammerspoon",
+        "app": "kitty",
+        "host": "undying",
+        "screen": "main",
+        "size": {
+          "center_i": { "w": 1352, "h": 917, "x": { "offset": 25 } },
+          "center_j": { "w": 989, "h": 807, "x": { "offset": 25 } }
+        }
+      },
+      {
+        "wm": "hammerspoon",
+        "app": "kitty",
+        "screen": "external",
+        "size": {
+          "center_i": { "w": 1497, "h": 991 },
+          "center_j": { "w": 1023, "h": 863 }
+        }
+      },
+      {
+        "wm": "hammerspoon",
+        "app": "Ghostty",
+        "screen": "main",
+        "size": {
+          "center_i": { "w": 1105, "h": 863 },
+          "center_j": { "w": 952, "h": 806 }
+        }
+      },
+      {
+        "wm": "hammerspoon",
+        "app": "Ghostty",
+        "screen": "external",
+        "size": {
+          "center_i": {
+            "w": { "ratio": 0.75, "offset": -20 },
+            "h": { "ratio": 1, "offset": -16 }
+          },
+          "center_j": { "w": 1016, "h": 846 }
+        }
       }
-    },
-    {
-      "wm": "hammerspoon",
-      "app": "WezTerm",
-      "screen": "external",
-      "size": {
-        "center_i": {
-          "w": { "ratio": 0.75, "offset": -27 },
-          "h": { "ratio": 1, "offset": -24 }
-        },
-        "center_j": { "w": 1013, "h": 840 }
+    ],
+    // ---------- Linux (kwin / gnome)：screen 用 default（缺省） ----------
+    "linux": [
+      {
+        "wm": ["kwin", "gnome"],
+        "app": "kitty",
+        "host": "huskar",
+        "size": {
+          "center_i": { "w": 1727, "h": 1146 },
+          "center_j": { "w": 1113, "h": 923 }
+        }
+      },
+      {
+        // jerry：2560x1600 @166%（逻辑 1536x960，比 huskar 高一截）；按宽度等比缩放 huskar 尺寸
+        //（3840→2560 即 ÷1.5，w/h 同系数，kitty 长宽比不变）
+        "wm": ["kwin", "gnome"],
+        "app": "kitty",
+        "host": "jerry",
+        "size": {
+          "center_i": { "w": 1351, "h": 856 },
+          "center_j": { "w": 979, "h": 812 }
+        }
       }
-    },
-    {
-      "wm": "hammerspoon",
-      "app": "kitty",
-      "host": "paladin",
-      "screen": "main",
-      "size": {
-        "center_i": { "w": 1251, "h": 863, "x": { "offset": 30 } },
-        "center_j": { "w": 989, "h": 807, "x": { "offset": 30 } }
+    ],
+    // ---------- 全局 fallback（所有 os 共用，最后匹配） ----------
+    "all": [
+      {
+        "size": {
+          "center_i": { "w": { "ratio": 0.9 }, "h": { "ratio": 1 } },
+          "center_j": { "w": { "ratio": 0.65 }, "h": { "ratio": 0.85 } },
+          "maximize": { "w": { "ratio": 1 }, "h": { "ratio": 1 } },
+          "halfleft": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } },
+          "halfright": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } }
+        }
       }
-    },
-    {
-      "wm": "hammerspoon",
-      "app": "kitty",
-      "host": "undying",
-      "screen": "main",
-      "size": {
-        "center_i": { "w": 1352, "h": 917, "x": { "offset": 25 } },
-        "center_j": { "w": 989, "h": 807, "x": { "offset": 25 } }
-      }
-    },
-    {
-      "wm": "hammerspoon",
-      "app": "kitty",
-      "screen": "external",
-      "size": {
-        "center_i": { "w": 1497, "h": 991 },
-        "center_j": { "w": 1023, "h": 863 }
-      }
-    },
-    {
-      "wm": "hammerspoon",
-      "app": "Ghostty",
-      "screen": "main",
-      "size": {
-        "center_i": { "w": 1105, "h": 863 },
-        "center_j": { "w": 952, "h": 806 }
-      }
-    },
-    {
-      "wm": "hammerspoon",
-      "app": "Ghostty",
-      "screen": "external",
-      "size": {
-        "center_i": {
-          "w": { "ratio": 0.75, "offset": -20 },
-          "h": { "ratio": 1, "offset": -16 }
-        },
-        "center_j": { "w": 1016, "h": 846 }
-      }
-    },
-    // ---------- linux (kwin / gnome)：screen 用 default（缺省） ----------
-    {
-      "wm": ["kwin", "gnome"],
-      "app": "kitty",
-      "host": "huskar",
-      "size": {
-        "center_i": { "w": 1727, "h": 1146 },
-        "center_j": { "w": 1113, "h": 923 }
-      }
-    },
-    {
-      // jerry：2560x1600 @166%（逻辑 1536x960，比 huskar 高一截）；按宽度等比缩放 huskar 尺寸
-      //（3840→2560 即 ÷1.5，w/h 同系数，kitty 长宽比不变）
-      "wm": ["kwin", "gnome"],
-      "app": "kitty",
-      "host": "jerry",
-      "size": {
-        "center_i": { "w": 1351, "h": 856 },
-        "center_j": { "w": 979, "h": 812 }
-      }
-    },
-    {
-      // "wm": "hammerspoon",
-      "size": {
-        "center_i": { "w": { "ratio": 0.9 }, "h": { "ratio": 1 } },
-        "center_j": { "w": { "ratio": 0.65 }, "h": { "ratio": 0.85 } },
-        "maximize": { "w": { "ratio": 1 }, "h": { "ratio": 1 } },
-        "halfleft": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } },
-        "halfright": { "w": { "ratio": 0.5 }, "h": { "ratio": 1 } }
-      }
-    }
-  ],
+    ]
+  },
   // 左右贴边尺寸（kwin/gnome 共用）
   "side": { "width": 1139, "height": 1218 },
   // gnome 手动 insets（top/bottom/left/right），一般留空

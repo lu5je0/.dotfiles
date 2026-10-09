@@ -172,7 +172,20 @@ function alignPos(axis, spec, size, max) {
     return Math.round((max - size) / 2) + offset;
 }
 
-// wm/layout.jsonc: rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
+// layout.jsonc 里 rules 先按 os 分类：rules[WM_OS] + rules.all（所有 os 共用的兜底）
+const WM_OS = 'linux';
+
+// 取本机 os 的规则列表：rules[WM_OS] 在前、rules.all 在后；也兼容旧的扁平数组写法
+function rulesFor(config) {
+    const rules = config?.rules;
+    if (!rules)
+        return [];
+    if (Array.isArray(rules))
+        return rules;
+    return [...(rules[WM_OS] ?? []), ...(rules.all ?? [])];
+}
+
+// wm/layout.jsonc: rules 从前往后，取第一条字段全匹配且提供该 mode 的规则
 // 字段可为字符串或数组，缺省即通配
 function findEntry(config, wm, app, screen, host, mode) {
     const matchField = (spec, value) => {
@@ -181,7 +194,7 @@ function findEntry(config, wm, app, screen, host, mode) {
         const list = Array.isArray(spec) ? spec : [spec];
         return list.includes(value);
     };
-    for (const rule of config?.rules ?? []) {
+    for (const rule of rulesFor(config)) {
         if (!matchField(rule.wm, wm) || !matchField(rule.app, app)
             || !matchField(rule.screen, screen) || !matchField(rule.host, host))
             continue;
