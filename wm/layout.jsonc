@@ -29,10 +29,21 @@
     {
       "wm": "hammerspoon",
       "app": "kitty",
+      "host": "paladin",
       "screen": "main",
       "size": {
         "center_i": { "w": 1251, "h": 863, "x": { "offset": 30 } },
         "center_j": { "w": 989, "h": 807, "x": { "offset": 30 } }
+      }
+    },
+    {
+      "wm": "hammerspoon",
+      "app": "kitty",
+      "host": "undying",
+      "screen": "main",
+      "size": {
+        "center_i": { "w": 1352, "h": 917, "x": { "offset": 25 } },
+        "center_j": { "w": 989, "h": 807, "x": { "offset": 25 } }
       }
     },
     {
