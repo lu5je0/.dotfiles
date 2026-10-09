@@ -1,9 +1,9 @@
 {
   // 窗口布局统一配置（JSONC，支持注释）
-  // rules 先按 os 分类：{ "macos": [...], "linux": [...], "all": [...] }
+  // rules 先按 os 分类：{ "macos": [...], "linux": [...], "common": [...] }
   //   - rules[<os>]：该系统专属规则（macos → hammerspoon；linux → kwin / gnome）
-  //   - rules.all  ：所有系统共用（放全局 fallback，最后匹配）
-  // 匹配顺序：先 rules[<os>] 再 rules.all，各组内从前往后，
+  //   - rules.common：所有系统共用（放全局 fallback，最后匹配）
+  // 匹配顺序：先 rules[<os>] 再 rules.common，各组内从前往后，
   // 取第一条「wm/app/screen/host 字段全匹配且 size 提供该 mode」的规则。
   // 字段缺省即通配，可为字符串或数组。
   // host 为本机短主机名（Linux 取 hostname -s；macOS 取 hostname -s 或「电脑名称」，任一命中即可）。
@@ -107,7 +107,7 @@
       }
     ],
     // ---------- 全局 fallback（所有 os 共用，最后匹配） ----------
-    "all": [
+    "common": [
       {
         "size": {
           "center_i": { "w": { "ratio": 0.9 }, "h": { "ratio": 1 } },

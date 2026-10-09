@@ -37,7 +37,7 @@ readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.
 `wm/layout.jsonc` 剥注释后整段同步进 kwinrc `[Script-tilewindow]` 的 `wm_layout_json` key，
 脚本每次按键通过 `readConfig` 读取并解析。改配置后需跑一次 `reload.sh`。
 
-`rules` 先按 os 分类，`rules[<os>]` 是该系统专属规则、`rules.all` 是所有系统共用的兜底：
+`rules` 先按 os 分类，`rules[<os>]` 是该系统专属规则、`rules.common` 是所有系统共用的兜底：
 
 ```json
 {
@@ -45,7 +45,7 @@ readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.
         "linux": [
             { "wm": "kwin", "app": "kitty", "size": { "center_j": { "w": 1113, "h": 945 } } }
         ],
-        "all": [
+        "common": [
             { "size": { "center_i": { "w": { "ratio": 0.6875 } } } }
         ]
     },
@@ -53,7 +53,7 @@ readConfig/callDBus 等，没有 XMLHttpRequest/readFile），所以由 `reload.
 }
 ```
 
-- 匹配：先 `rules[<os>]` 再 `rules.all`，各组内从前往后，取第一条「字段全匹配且 size 提供该 mode」的规则；
+- 匹配：先 `rules[<os>]` 再 `rules.common`，各组内从前往后，取第一条「字段全匹配且 size 提供该 mode」的规则；
   每条规则由 `wm` / `app` / `screen` / `host` 四个可选字段 + `size` 组成，字段缺省即通配
 - 本端 `os` 固定为 `linux`、`wm` 固定为 `kwin`、`screen` 固定为 `default`，
   app 匹配用 `resourceClass`（小写）

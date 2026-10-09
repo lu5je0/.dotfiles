@@ -61,17 +61,17 @@ function alignPos(axis, spec, size, max) {
     return Math.round((max - size) / 2) + offset;
 }
 
-// layout.jsonc 里 rules 先按 os 分类：rules[WM_OS] + rules.all（所有 os 共用的兜底）
+// layout.jsonc 里 rules 先按 os 分类：rules[WM_OS] + rules.common（所有 os 共用的兜底）
 const WM_OS = "linux";
 
-// 取本机 os 的规则列表：rules[WM_OS] 在前、rules.all 在后；也兼容旧的扁平数组写法
+// 取本机 os 的规则列表：rules[WM_OS] 在前、rules.common 在后；也兼容旧的扁平数组写法
 function rulesFor(config) {
     const rules = config && config.rules;
     if (!rules)
         return [];
     if (Array.isArray(rules))
         return rules;
-    return (rules[WM_OS] || []).concat(rules.all || []);
+    return (rules[WM_OS] || []).concat(rules.common || []);
 }
 
 // wm/layout.jsonc: rules 从前往后，取第一条字段全匹配且提供该 mode 的规则

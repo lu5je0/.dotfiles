@@ -6,7 +6,7 @@ end)
 
 local config_path = os.getenv("HOME") .. "/.dotfiles/wm/layout.jsonc"
 
--- layout.jsonc 里 rules 先按 os 分类：rules[OS] + rules.all（所有 os 共用的兜底）
+-- layout.jsonc 里 rules 先按 os 分类：rules[OS] + rules.common（所有 os 共用的兜底）
 local OS = "macos"
 
 -- 剥离 JSONC 注释（// 与 /* */），字符串字面量内的原样保留
@@ -140,7 +140,7 @@ local function rule_matches(rule, wm, app, screen)
     and host_matches(rule.host)
 end
 
--- 取本机 os 的规则列表：rules[OS] 在前、rules.all 在后；也兼容旧的扁平数组写法
+-- 取本机 os 的规则列表：rules[OS] 在前、rules.common 在后；也兼容旧的扁平数组写法
 local function rules_for(config)
   local rules = config.rules
   if type(rules) ~= "table" then
@@ -150,7 +150,7 @@ local function rules_for(config)
     return rules
   end
   local list = {}
-  for _, group in ipairs({ rules[OS], rules.all }) do
+  for _, group in ipairs({ rules[OS], rules.common }) do
     for _, rule in ipairs(group or {}) do
       list[#list + 1] = rule
     end
