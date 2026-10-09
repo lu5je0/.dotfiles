@@ -1,17 +1,12 @@
-# mac
 if [[ $OSTYPE == darwin* ]]; then
-  # intel
-  # PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
   export HOMEBREW_PATH="/opt/homebrew"
   
-  # arm
-  export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
-  export PATH="/opt/homebrew/opt/grep/libexec/gnubin:$PATH"
+  export PATH="$HOMEBREW_PATH/bin:$PATH"
+  export PATH="$HOMEBREW_PATH/opt/coreutils/libexec/gnubin:$PATH"
+  export PATH="$HOMEBREW_PATH/opt/grep/libexec/gnubin:$PATH"
   
   # eval $(gdircolors -b $HOME/.dir_colors)
   alias sed='gsed'
-  alias iterm='open -a iTerm .'
-  alias fdfind='fd'
   alias q-battery='ioreg -rn AppleSmartBattery | awk "/AppleRawMaxCapacity/{raw=\$NF} /DesignCapacity/{design=\$NF} /CycleCount/{cycle=\$NF} END{printf \"当前最大容量: %d mAh | 设计容量: %d mAh | 循环次数 %d 次 | 健康度: %.1f%%\n\", raw, design, cycle, (raw/design)*100}"'
   
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
@@ -19,11 +14,6 @@ if [[ $OSTYPE == darwin* ]]; then
   # brew
   export HOMEBREW_NO_AUTO_UPDATE=true
 
-  # iterm title bar
-  # echo -en "\033]6;1;bg;red;brightness;44\a"
-  # echo -en "\033]6;1;bg;green;brightness;46\a"
-  # echo -en "\033]6;1;bg;blue;brightness;51\a"
-  
   export PATH=$HOME/.dotfiles/bin/macos-arm64:$PATH
 elif [[ -n $WSL_DISTRO_NAME ]]; then
   export WIN_HOME=/mnt/c/Users/lu5je0
