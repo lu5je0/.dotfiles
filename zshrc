@@ -276,9 +276,22 @@ fzf-history-widget() {
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
 
+# fd 在 Debian/Ubuntu 叫 fdfind、macOS/brew 叫 fd；后者在而前者不在就补个别名，
+# 交互里两个名字都能用（原先在 zsh/platform.sh，挪到使用处更内聚）
+if [[ -z ${commands[fdfind]} && -n ${commands[fd]} ]]; then
+  alias fdfind='fd'
+fi
+
 fzf-search-widget() {
+  # fd 的二进制名：Debian/Ubuntu 是 fdfind，macOS/brew 是 fd
+  local fd_cmd=$(whence -p fdfind || whence -p fd)
+  if [[ -z $fd_cmd ]]; then
+    zle -M "fzf-search-widget: 没找到 fdfind/fd，先装 fd（macOS: brew install fd；Debian/Ubuntu: apt install fd-find）"
+    return 1
+  fi
+
   local file
-  file=$(fdfind --type f --hidden --exclude .git 2>/dev/null | fzf --height 40% --reverse)
+  file=$("$fd_cmd" --type f --hidden --exclude .git 2>/dev/null | fzf --height 40% --reverse)
 
   if [[ -n "$file" ]]; then
     # 转义特殊字符并插入到当前光标位置
