@@ -273,7 +273,7 @@ class Remote:
                   f'{b.get("download_count") or 0:>6}  {fmt_expires(b.get("expires_at"))}')
         if items:
             print()
-            print(f'更新某个包： q-transfer <目录> -u {items[0]["id"]}')
+            print(f'更新某个包： q-transfer <目录/文件> -u {items[0]["id"]}')
             print(f'看详情：     q-transfer --info {items[0]["id"]}')
         return items
 

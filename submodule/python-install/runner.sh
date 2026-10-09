@@ -20,4 +20,4 @@ ensure_uv() {
 }
 
 ensure_uv
-exec uv run --project "$SCRIPT_PATH" --python python3 "${SCRIPT_PATH}/${SCRIPT_NAME}" "$@"
+exec uv run --project "$SCRIPT_PATH" "${SCRIPT_PATH}/${SCRIPT_NAME}" "$@"
