@@ -39,6 +39,17 @@
 
   services.envfs.enable = true;
 
+  # zram：用内存压缩设备充当 swap（无磁盘 swap 时是唯一 swap）。
+  # NixOS 26.05 的 zramSwap 走 services.zram-generator，生成 /etc/systemd/zram-generator.conf：
+  #   [zram0] zram-size = 50 / 100 * ram / compression-algorithm = zstd / swap-priority = 5
+  # 默认值即 zstd + 内存的 50% + priority 5；不用另配 boot.kernelModules，
+  # zram-generator 自己 modprobe zram 与 crypto-zstd。
+  # 改了这里的值需要重启（模块固定 restartIfChanged = false，避免 switch 时
+  # swapoff → reset 与 udev 抢 /dev/zramN 报 EBUSY），或手动
+  # `systemctl restart systemd-zram-setup@zram0`。
+  # 注意：不要再手写 services.zram-generator.settings，同名赋值会与这个模块冲突。
+  zramSwap.enable = true;
+
   nixpkgs.config.allowUnfree = true;
 
   environment.sessionVariables = {
