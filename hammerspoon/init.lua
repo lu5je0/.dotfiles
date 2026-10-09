@@ -137,14 +137,23 @@ local function rule_matches(rule, wm, app, screen)
     and host_matches(rule.host)
 end
 
--- rules 数组从前往后，取第一条字段全匹配且提供该 mode 的规则
-local function find_entry(config, wm, app, screen, mode)
+-- rules 数组从前往后，取第一条字段全匹配、且 size 提供 modes 中任一 mode 的 size 表
+local function find_size_table(config, wm, app, screen, modes)
   for _, rule in ipairs(config.rules or {}) do
-    if rule_matches(rule, wm, app, screen) and rule.size and rule.size[mode] then
-      return rule.size[mode]
+    if rule_matches(rule, wm, app, screen) and rule.size then
+      for _, mode in ipairs(modes) do
+        if rule.size[mode] then
+          return rule.size
+        end
+      end
     end
   end
   return nil
+end
+
+local function find_entry(config, wm, app, screen, mode)
+  local size = find_size_table(config, wm, app, screen, { mode })
+  return size and size[mode]
 end
 
 local function apply_size(win, entry, max, mode)
@@ -166,29 +175,59 @@ local function apply_size(win, entry, max, mode)
   win:setFrame(f, 0)   -- 0 取消动画
 end
 
+-- 反查窗口当前处于哪个 mode：把当前尺寸与该屏配置算出的期望尺寸比对（仅 i/j 参与）
+-- i/j 的尺寸按屏各自配置，因此切屏时可用它判断「切过去应该复现哪个模式」
+local DETECT_MODES = { "center_i", "center_j" }
+local SIZE_TOLERANCE = 5 -- px
+
+local function detect_mode(win, size_table, max)
+  local f = win:frame()
+  for _, mode in ipairs(DETECT_MODES) do
+    local spec = size_table[mode]
+    if spec then
+      local dw = math.abs(f.w - resolve_dim(spec.w, max.w))
+      local dh = math.abs(f.h - resolve_dim(spec.h, max.h))
+      if dw <= SIZE_TOLERANCE and dh <= SIZE_TOLERANCE then
+        return mode
+      end
+    end
+  end
+  return nil
+end
+
+-- 按 win 当前所在屏幕的配置套用 mode（切屏后需重新查目标屏的配置）
+local function apply_mode(win, mode)
+  local screen = win:screen()
+  if not screen then
+    return false
+  end
+
+  local app_name = win:application():name()
+  local config, err = read_config()
+  if not config then
+    hs.alert.show("wm/layout.jsonc 解析失败: " .. tostring(err))
+    return false
+  end
+
+  local screen_type = screen:id() == 1 and "main" or "external"
+  local entry = find_entry(config, "hammerspoon", app_name, screen_type, mode)
+  if not entry then
+    hs.alert.show("wm/layout.jsonc 中未找到 " .. app_name .. " / " .. mode .. " 的配置")
+    return false
+  end
+
+  apply_size(win, entry, screen:frame(), mode)
+  return true
+end
+
 local function size_focused_window(mode)
   return function()
     local win = hs.window.focusedWindow()
-    local screen = win:screen()
-    local max = screen:frame()
-
-    local app_name = win:application():name()
-    print(app_name)
-
-    local config, err = read_config()
-    if not config then
-      hs.alert.show("wm/layout.jsonc 解析失败: " .. tostring(err))
+    if not win then
       return
     end
-
-    local screen_type = screen:id() == 1 and "main" or "external"
-    local entry = find_entry(config, "hammerspoon", app_name, screen_type, mode)
-    if not entry then
-      hs.alert.show("wm/layout.jsonc 中未找到 " .. app_name .. " / " .. mode .. " 的配置")
-      return
-    end
-
-    apply_size(win, entry, max, mode)
+    print(win:application():name())
+    apply_mode(win, mode)
   end
 end
 
@@ -206,14 +245,32 @@ end)
 hs.hotkey.bind({ "ctrl", "option" }, "O", function()
   local win_win = require('win_win')
   local win = hs.window.focusedWindow()
-  local f = win:frame()
+  if not win then
+    return
+  end
+
   local screen = win:screen()
   local max = screen:frame()
-
+  local f = win:frame()
   local width_rate = f.w / max.w
+
+  -- 切屏前按当前尺寸反查 i/j 状态；切屏后用目标屏的配置复现同一模式
+  local prev_mode
+  local config = read_config()
+  if config then
+    local app_name = win:application():name()
+    local screen_type = screen:id() == 1 and "main" or "external"
+    local size_table = find_size_table(config, "hammerspoon", app_name, screen_type, DETECT_MODES)
+    if size_table then
+      prev_mode = detect_mode(win, size_table, max)
+    end
+  end
+
   win_win:moveToScreen("next")
 
-  if width_rate > 0.98 then
+  if prev_mode then
+    apply_mode(win, prev_mode)
+  elseif width_rate > 0.98 then
     size_focused_window('maximize')()
   end
 end)
