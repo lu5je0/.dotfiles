@@ -15,6 +15,7 @@
     pstree
     unzip
     vim
+    fd
     tmux
     file
     cmake
@@ -28,7 +29,6 @@
 
   users.users.lu5je0.packages = with pkgs; [
     bun
-    pkgsUnstable.pi-coding-agent
     nodejs
     openssl
     stylua
