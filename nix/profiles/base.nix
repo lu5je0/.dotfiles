@@ -8,10 +8,9 @@
     ../modules/zsh.nix
   ];
 
-  # 入口名与 flake.nix 的 input 名保持一致，指向 nixos-unstable 频道 tarball。
   nix.registry.nixpkgs-unstable.to = {
     type = "tarball";
-    url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
+    url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
   };
 
   nix.settings = {
