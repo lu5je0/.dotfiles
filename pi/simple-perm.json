@@ -2,6 +2,7 @@
 	"allowWrite": [
     "/tmp",
     "~/.dotfiles",
-    "~/.cache"
+    "~/.cache",
+    "~/.npm"
   ]
 }
