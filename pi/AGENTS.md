@@ -71,14 +71,14 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 
 ## thinking 折叠（thinking-fold）
 
-`extensions/thinking-fold.ts` 把 thinking 折成 qoder 的样子：`**Thinking**` 标题 + 每行 `│ ` 侧栏，正文按可用宽度折行后只留头 2 行 + `… +N rows (ctrl+t)` + 尾 3 行，≤5 行不折。
+`extensions/thinking-fold.ts` 把 thinking 折成 qoder 的样子：`**Thinking**` 标题 + 每行 `│ ` 侧栏，正文按可用宽度折行后只留头 2 行 + `… +N rows (ctrl+t)` + 尾 3 行，预览行数 ≤5 不折（围栏标记行不算行）。
 
 - 竖线**不是**插件画的：每行只发 `> `（markdown 引用标记），`│ ` 由 pi 的 blockquote 渲染器对**折行之后的每一行**补一次（`quoteBorder("│ ")`）。别改回自己塞 `│ ` 字符串：那两列会进 markdown 语法，`│ ``` ` 不再是 fence（fence 要求行首最多 3 个空格）→ 代码块降级成段落 → ``` 配成跨行 code span → CommonMark 把 code span 内的换行变空格 → 折好的行被合并成一条超长行 → pi 再折一次，后续行没有前缀，正文画到竖线那一列（"字越过竖线"）。交给 pi 之后竖线在结构上不可能再丢
 - 宽度口径：`toRows` 折到 `availableWidth - 2`（quote 自己吃掉 2 列），代码块内 / list / 嵌套引用行再多留 2 列（pi 会加 `codeBlockIndent`、`- ` marker、第二层边框）。预留守的是屏幕行数 = 折行行数，不守竖线
-- 折叠预览按**字面量**渲染：切片一定切进 ``` 里，而 pi 会把折好的行当 markdown 重新解析——`  # xxx` 这种代码行会被认成标题（金色 + 多一行空行）、``` 变真代码块（上下边框 + 前后空行）、`> x` 变嵌套引用，行数和配色全跟着变。所以折叠态逐行做：行首块级起手式（fence / 标题 / 引用 / 列表 / 分隔线 / 表格 / HTML / 链接引用定义）转义成字面量、`$…$` 与 `\(…\)` 转义（pi 的 LaTeX 扩展会把它们渲染成数学）、行首缩进封顶 3 格（4 格起是缩进代码块）。行内标记（`**加粗**`、`` `code` ``、链接）不转义。折叠块因此稳定在 2 + 1 + 3 = 6 行。别改回「补配对 fence」（会涨到 9~11 行）或「把 fence 行丢掉」（代码行会变正文，`# 注释` 成金色标题）
-- 行数只保证近似：`\[ … \]` 块级数学、裸 URL 会被 pi 认出来（少见），链接在无 OSC 8 的终端里会被补 ` (url)`（这些竖线仍在，只是 `… +N rows` 会偏）
+- 折叠态把行分两类：**围栏里的内容行 / 缩进代码行**包成行内代码（`codeRow`，保留缩进、换成 `mdCode` 配色，而且 markdown 不会再把它当块级语法——`  # 注释` 以前会被就地认成金色标题并多一行空行）；**围栏标记行**不占行；其余正文照旧渲染 markdown（标题/列表/引用/行内标记都生效）。围栏识别在 `previewRows`（`fenceStart`/`fenceEnd`，≈ markdown-it 的 fences 规则；嵌套引用里的围栏靠 `dequote` 出的 depth 对平）
+- 行数账：代码行钉死在 1 行（行内代码），所以折叠块稳定在 2 + 1 + 3；`… +N rows` 按「围栏行不显示」后的行数算。仍会波动的两种情形：① 正文自己写的块级结构（标题/分隔线会让 pi 多补一行空行，表格/块级数学会多行，链接引用定义会被 markdown 吞得一行不剩）；② 围栏形态认不出来时（猜错最坏是把代码行当正文，可能变成金色标题）。连续空行、收尾空行都要补零宽空格（markdown 会把两个空行合成一行，pi 的 blockquote 会把尾部空白行剪掉）
 - 只能走 `pi.registerMarkdownTransformer("assistant-thinking")`：pi 没有给扩展自渲染 assistant 消息的口子，样式也改不了（竖线用 `mdQuoteBorder`，dark 主题 = muted 灰；正文仍是 thinkingText）
-- `toRows` / `renderThinking` 是 export 的纯函数，便于脱离 pi 验证；回归检查：`node pi/tests/thinking-fold-render.mjs`（把 transformer 的输出喂回**真** pi-tui 的 Markdown，断言除标题外每行都有 `│`、没有超宽行、展开态 fence 没被合并、折叠态一个块级 token（标题/代码块/分隔线）和嵌套引用都不出现且折叠体正好 6 行；11 个样本 × 12 宽度 × 折叠/展开。pi-tui 的位置由脚本顺着 `command -v pi` 自己找，找不到时可给 `PI_TUI_PATH`）
+- `toRows` / `renderThinking` 是 export 的纯函数，便于脱离 pi 验证；回归检查：`node pi/tests/thinking-fold-render.mjs`（把 transformer 的输出喂回**真** pi-tui 的 Markdown：断言每行都有 `│`、没有超宽行、展开态 fence 没被合并、折叠态不出现 codeBlock/codeBlockBorder、折叠体行数等于「预览行数」（>5 时是 6）、17 个代码行用例逐行核对确实是 codeSpan；13 样本 × 12 宽度 × 折叠/展开 + 17 用例 = 329 组合。token 标记用零宽 ANSI，不能用可见字符——可见标记自己占宽度，会把贴近预算的行挤到折行；pi-tui 的位置由脚本顺着 `command -v pi` 自己找，找不到时可给 `PI_TUI_PATH`）
 - 切换后靠 `ctx.ui.setHiddenThinkingLabel()` 逼 pi 重建 thinking 的 Markdown 组件（pi-tui 的 Markdown 按 `(text,width)` 缓存，光 requestRender 不会重跑 transformer）。副作用：隐藏 thinking 时那行标签会被重置回 pi 默认的 `Thinking...`
 - 折叠键 `ctrl+t` 是从 pi 内置动作手里拿来的：`ctrl+t` 默认属于 `app.thinking.toggle`，而这个动作名在 pi 的 `RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS` 里，扩展注册同一个键会被直接拒绝。所以 `keybindings.json` 里 `app.thinking.toggle` 改绑到 `ctrl+shift+t`（仍然是「一键隐藏全部 thinking」），同时清掉 `/tree` 里也占着 ctrl+t 的 `app.tree.filter.noTools`（不清会多一行启动告警；树里用 ctrl+o 循环仍能切到 no-tools）
 - `/fold` 命令等价于按 `ctrl+t`
