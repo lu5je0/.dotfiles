@@ -990,14 +990,7 @@ class App:
     def detail_text(self):
         """当前屏的上下文说明。渲染在底部，见 footer()。"""
         if self.screen == "menu":
-            text = self.cfg["repository"]
-            latest = self.latest()
-            if latest:
-                text += f" · 最新版本数据量 {human_size(snap_size(latest))}"
-                added = snap_added(latest)
-                if added:
-                    text += f" · 新增 +{human_size(added)}"
-            return text
+            return self.cfg["repository"]
         if self.screen == "snapshots":
             return "选中一个版本后按 Enter，进入该版本的操作"
         snap = self.selected_snap()
