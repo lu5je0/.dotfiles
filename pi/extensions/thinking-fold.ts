@@ -31,17 +31,16 @@
  *     扩展注册 ctrl+t 会打一行「[Extension issues] shortcut conflict」启动告警；
  *     树里的 no-tools 过滤器用 ctrl+o 循环仍可达（help 行会自动少一个键，不会留空位）
  *
- * fence 与折叠边界：折叠预览里不保留代码块。折叠切片一定会切进 ``` 里，而 pi-tui 的
- * code token 除了上下两条边框，还会在代码块和相邻段落之间补空行（renderToken 的
- * "Add spacing after code blocks"）；更糟的是「尾切片正好从闭合 fence 开始」时，补出来的
- * 开 fence 会和它配成一个空代码块（``` + 空行 + ```，白占三行）——折叠块会从 6 行涨到
- * 9~11 行。所以折叠态直接把 fence 行丢掉、把 4 格以上的缩进压到 3 格（4 格起 markdown
- * 会当成缩进代码块，pi 照样补边框），代码行按普通文本显示。折叠输出里不可能再出现
- * code token，行数就锁死在 HEAD_ROWS + 1 + TAIL_ROWS。展开态一切照旧。
+ * fence 与折叠边界：折叠预览按「字面量」渲染。折叠切片一定会切进代码块里，而 pi 会对
+ * 折好的行重新解析 markdown：`  # xxx` 这种代码行会被就地认成标题（金色 + 多一行空行）、
+ * ``` 变成真代码块（上下边框 + 前后空行）、`> x` 变成嵌套引用——行数和配色都会跟着变。
+ * 所以折叠态把行首块级起手式、`$…$` 数学、`\(…\)` 定界符转义成字面量，缩进封顶到
+ * 3 格（4 格起是缩进代码块）；行内标记（`**加粗**`、`` `code` ``）不动。展开态渲染原样。
  *
  * 已知限制：
- *   - 折叠预览里代码行是普通文本（没有代码块边框，缩进压到最多 3 格），想看成块的代码
- *     就 ctrl+t 展开
+ *   - 折叠预览里代码行是普通文本（行首标记会以字面量显示），想看成块的代码就 ctrl+t 展开
+ *   - 行内 markdown（`**加粗**`、`` `code` ``、链接）照常渲染；`\[ … \]` 块级数学和裸 URL
+ *     仍会被 pi 认出来（thinking 里少见，且本来就是 pi 的渲染行为）
  *   - 折叠边界可能切断 `**加粗**`、`` `代码` `` 等行内标记，切断了会渲染得比较怪
  *     （thinking 里少见，qoder 自己也有硬折）
  *   - 样式只能借 pi 的 markdown 主题：竖线用 mdQuoteBorder（dark 主题 = muted 灰），
@@ -136,15 +135,51 @@ export function toRows(markdown: string, width: number): string[] {
 /** 一行正文：空行只留引用标记本身，免得行尾多一个空格 */
 const quotedRow = (row: string) => (row === "" ? QUOTE.trimEnd() : QUOTE + row);
 
-/**
- * 折叠预览里不保留代码块：fence 行整行丢掉（返回 undefined），4 格以上的缩进压到 3 格。
- * 4 格起 markdown 会当成缩进代码块，pi 同样会补边框 + 空行，所以连缩进一起压掉。
- */
+/** 零宽空格：只用来把「连着两个空行」钉成两行，终端里不可见、宽度为 0 */
+const ZERO_WIDTH = "\u200b";
+
+/** 把若干行拼成引用块正文：连续空行补零宽空格，否则 markdown 会把它们合成一行 */
+function quoteRows(rows: string[]): string[] {
+	const out: string[] = [];
+	let previousBlank = false;
+	for (const row of rows) {
+		out.push(quotedRow(row === "" && previousBlank ? ZERO_WIDTH : row));
+		previousBlank = row === "";
+	}
+	return out;
+}
+
+/** 行首缩进封顶的格数：4 格以上（tab 展开后）markdown 会当成缩进代码块 */
 const PREVIEW_INDENT = 3;
 
-function previewRow(row: string): string | undefined {
-	if (FENCE_RE.test(row)) return undefined;
-	return row.replace(/^ {4,}/, " ".repeat(PREVIEW_INDENT));
+/**
+ * 行首块级起手式：这些出现在行首（缩进 <=3 格）时 markdown 会把整行吃成一个块——标题 /
+ * 代码围栏 / 引用 / 列表 / 分隔线 / 表格 / HTML / 链接引用定义。折叠切片一定会切进代码块
+ * 里，`  # xxx` 这种代码行不转义就会被认成标题（金色，还多一行空行），所以折叠预览要把
+ * 起手式转义成字面量。行内标记不动，照常渲染。
+ */
+const BLOCK_MARKER_RE =
+	/^(?:`{3,}|~{3,}|#{1,6}(?=\s|$)|>|[-*+](?=\s|$)|[*_-]{3,}[ \t]*$|=+[ \t]*$|\|?[:|\- \t]*\|[:|\- \t]*[ \t]*$|<(?=[A-Za-z/!])|\d{1,9}[.)](?=\s|$)|\[[^\]]*\](?=:))/;
+
+/** 起手式里该转义哪一个字符：有序列表转 `.`/`)`、链接引用定义转 `]`，其余转第一个 */
+function markerEscapeIndex(marker: string): number {
+	return /^\d/.test(marker) || marker.startsWith("[") ? marker.length - 1 : 0;
+}
+
+/** 折叠预览的一行：缩进封顶 + 行首块级起手式、LaTeX 定界符转义成字面量 */
+function literalRow(row: string): string {
+	// tab 展开成 4 格后统一封顶到 3 格
+	let out = row.replace(/^[ \t]+/, (ws) => ws.replace(/\t/g, "    ").slice(0, PREVIEW_INDENT));
+	// `\( \)` 是 pi LaTeX 扩展的行内数学定界符（会把括号吃掉），在反斜杠前再补一个就退化成文本
+	// （`\[ \]` 是块级定界符，补反斜杠反而会把它拆成「一段文本 + 一块数学」，所以不碰）
+	out = out.replace(/\\+(?=[()])/g, (match) => `${match}\\`);
+	// `$x$` / `$$x^2$$` 会被渲染成数学（块级的还多行），一律转义成字面量
+	out = out.replace(/(?<!\\)\$/g, "\\$");
+	const indent = out.length - out.trimStart().length;
+	const marker = BLOCK_MARKER_RE.exec(out.slice(indent))?.[0];
+	if (marker === undefined) return out;
+	const at = indent + markerEscapeIndex(marker);
+	return `${out.slice(0, at)}\\${out.slice(at)}`;
 }
 
 /** 把一段 thinking markdown 渲染成「标题 + 引用块正文」，folded 时中间收起来 */
@@ -153,23 +188,23 @@ export function renderThinking(markdown: string, width: number, folded: boolean)
 	if (rows.length === 0) return markdown;
 
 	const lines = [HEADER];
-	if (!folded || rows.length <= MAX_UNFOLDED_ROWS) {
+	if (!folded) {
 		for (const row of rows) lines.push(quotedRow(row));
 		return lines.join("\n");
 	}
 
-	// 折叠预览不保留代码块结构，理由见文件头「fence 与折叠边界」：只要输出里没有 fence、
-	// 也没有 4 格缩进，pi 就不会插代码块边框和它前后的空行，折叠块就锁在 6 行。
-	const body = rows.map(previewRow).filter((row): row is string => row !== undefined);
-	if (body.length <= MAX_UNFOLDED_ROWS) {
-		for (const row of body) lines.push(quotedRow(row));
-		return lines.join("\n");
-	}
+	// 折叠预览按字面量显示，理由见文件头「fence 与折叠边界」：切片一定会切进代码块里，
+	// 不转义的话行首标记会被 pi 就地认成标题/代码块/嵌套引用，行数和配色都会跟着变。
+	const body = rows.map(literalRow);
+	if (body.length <= MAX_UNFOLDED_ROWS) return [...lines, ...quoteRows(body)].join("\n");
 
-	for (const row of body.slice(0, HEAD_ROWS)) lines.push(quotedRow(row));
-	lines.push(quotedRow(`… +${body.length - HEAD_ROWS - TAIL_ROWS} rows (${TOGGLE_KEY})`));
-	for (const row of body.slice(-TAIL_ROWS)) lines.push(quotedRow(row));
-	return lines.join("\n");
+	const hidden = body.length - HEAD_ROWS - TAIL_ROWS;
+	const shown = [
+		...body.slice(0, HEAD_ROWS),
+		`… +${hidden} rows (${TOGGLE_KEY})`,
+		...body.slice(-TAIL_ROWS),
+	];
+	return [...lines, ...quoteRows(shown)].join("\n");
 }
 
 /** 强制 pi 重建所有 thinking 的 Markdown 组件，好让 transformer 用新状态重跑一遍 */
