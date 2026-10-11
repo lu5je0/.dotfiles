@@ -5,6 +5,8 @@
  * 为什么需要单独把输出喂回 pi-tui：竖线是 pi 的 blockquote 渲染器逐行补的，而 pi 拿到
  * transformer 返回的 markdown 之后还会「重新解析 → 渲染 token → 再折一次」。所以只有
  * 走一遍真正的 Markdown 组件，才能证明「每行都有竖线、没有一行超宽、fence 没被合并」。
+ * 折叠态还要证明代码块相关的行没有混进来：折叠预览会把 fence 行丢掉，输出里一旦还剩
+ * fence，pi 就会给代码块补上下边框和前后空行，折叠块会从 6 行涨到 9~11 行。
  *
  * 跑到 pi-tui 的方式：扩展 import 的是裸包名 `@earendil-works/pi-tui`，只有 pi 的安装
  * 目录下解析得到。脚本在临时目录里放一个指向 pi-tui 的 node_modules 软链 + 一份扩展的
@@ -85,10 +87,18 @@ const theme = Object.fromEntries(
 );
 const stripAnsi = (text) => text.replace(/\x1b\[[0-9;]*[A-Za-z]/g, "").replace(/\x1b\][^\x07]*\x07/g, "");
 const FENCE = /^\s{0,3}(?:`{3,}|~{3,})/;
+/** 折叠预览会把 fence 行整行丢掉，所以「折几行」按丢掉之后的行数算 */
+const previewRowsOf = (rows) => rows.filter((row) => !FENCE.test(row));
 
 const SAMPLES = {
 	"fences": "前言一段话。\n\n```css\n.app-footer { height: calc(1rem + 13px); }\nhtml.standalone .app-footer { padding-bottom: 13px; }\n```\n\n中间一段。\n\n```js\nconst a = 1;\nif (a) { console.log(a); }\n```\n\n结尾。",
 	"fence 切在头尾": "```css\n.a { color: red; }\n.b { color: blue; }\n.c { color: green; }\n.d { color: pink; }\n```\n收尾一句。",
+	// 尾切片正好落在闭合 fence 上：以前会补出一个开 fence 配成空代码块，白白多三行
+	"尾切片落在闭合 fence": "先说一段推理，写得长一点，长到需要折行的那种长度才好验证。\n再补一句推理。\n\n```js\nconst a = 1;\nconst b = 2;\n```\n\n收尾一句。",
+	// 整段都是代码块：头尾切片都切在 fence 里
+	"整段都是代码块": "```\nconst a = 1;\nif (x) {\n  return 1;\n}\nconst b = 2;\n```",
+	// 代码块里带 4 格缩进：折叠预览压掉缩进，否则它们会被当成缩进代码块又长出边框
+	"缩进代码行": "开头一句推理，写得长一点，长到需要折行的那种长度才好验证一下。\n\n```js\nfunction f() {\n    if (x) {\n        return 1;\n    }\n    return 0;\n}\n```\n\n收尾一句。",
 	"list-quote-heading": "先说一句。\n\n- 列表项一，写得长一点，长到超过一行需要折行的程度才好验证\n- 列表项二\n\n> 引用内容\n\n#### 小标题\n\n收尾。",
 	"cjk": "这是一段中文推理，混着 English words 和 `inline code`，还有 **加粗**，中文宽度是 2 列所以折行边界最容易出错。再来一点：图1 的 ink bottom 是 13.7 CSS，图2 是 25.3 CSS。",
 	"short": "只有一行，不折。",
@@ -110,6 +120,7 @@ for (const [name, source] of Object.entries(SAMPLES)) {
 				.render(width)
 				.map((line) => stripAnsi(line).replace(/^ /, "").replace(/\s+$/, ""));
 			const rows = toRows(source, Math.max(1, width - 4)); // width - 左 pad 1 - quote 的 2 列
+			const previewRows = previewRowsOf(rows);
 			const problems = [];
 
 			for (const [index, line] of lines.entries()) {
@@ -117,8 +128,17 @@ for (const [name, source] of Object.entries(SAMPLES)) {
 				if (!line.startsWith("│")) problems.push(`第 ${index} 行缺竖线: ${JSON.stringify(line)}`);
 				if (visibleWidth(line) > width) problems.push(`第 ${index} 行超宽 ${visibleWidth(line)}>${width}`);
 			}
-			if (folded && rows.length > 5 && !lines.some((line) => line.includes("rows (ctrl+t)"))) {
-				problems.push("折叠后没有 … +N rows 提示行");
+			if (folded) {
+				// 折叠预览不保留代码块：输出里不该再有任何 fence 边框行（有的话 pi 会给代码块补
+				// 上下边框和前后空行，折叠块就会从 6 行涨到 9~11 行）
+				const borders = lines.filter((line) => /^│\s*(?:```|~~~)/.test(line));
+				if (borders.length > 0) problems.push(`折叠态出现 ${borders.length} 行代码块边框`);
+				if (previewRows.length > 5) {
+					if (!lines.some((line) => line.includes("rows (ctrl+t)"))) problems.push("折叠后没有 … +N rows 提示行");
+					// 头 2 + 提示 1 + 尾 3，再多就只有 pi 给块级元素自己补的空行容一格
+					const body = lines.slice(lines[1] === "" ? 2 : 1);
+					if (body.length > 7) problems.push(`折叠体 ${body.length} 行 > 7`);
+				}
 			}
 			if (!folded) {
 				const expected = rows.filter((row) => FENCE.test(row)).length;

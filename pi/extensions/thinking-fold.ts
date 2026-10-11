@@ -31,10 +31,19 @@
  *     扩展注册 ctrl+t 会打一行「[Extension issues] shortcut conflict」启动告警；
  *     树里的 no-tools 过滤器用 ctrl+o 循环仍可达（help 行会自动少一个键，不会留空位）
  *
+ * fence 与折叠边界：折叠预览里不保留代码块。折叠切片一定会切进 ``` 里，而 pi-tui 的
+ * code token 除了上下两条边框，还会在代码块和相邻段落之间补空行（renderToken 的
+ * "Add spacing after code blocks"）；更糟的是「尾切片正好从闭合 fence 开始」时，补出来的
+ * 开 fence 会和它配成一个空代码块（``` + 空行 + ```，白占三行）——折叠块会从 6 行涨到
+ * 9~11 行。所以折叠态直接把 fence 行丢掉、把 4 格以上的缩进压到 3 格（4 格起 markdown
+ * 会当成缩进代码块，pi 照样补边框），代码行按普通文本显示。折叠输出里不可能再出现
+ * code token，行数就锁死在 HEAD_ROWS + 1 + TAIL_ROWS。展开态一切照旧。
+ *
  * 已知限制：
+ *   - 折叠预览里代码行是普通文本（没有代码块边框，缩进压到最多 3 格），想看成块的代码
+ *     就 ctrl+t 展开
  *   - 折叠边界可能切断 `**加粗**`、`` `代码` `` 等行内标记，切断了会渲染得比较怪
- *     （thinking 里少见，qoder 自己也有硬折）；切在 ``` 中间会补一个配对 fence，
- *     见 fenceOpenBefore()
+ *     （thinking 里少见，qoder 自己也有硬折）
  *   - 样式只能借 pi 的 markdown 主题：竖线用 mdQuoteBorder（dark 主题 = muted 灰），
  *     正文仍是 thinkingText，qoder 那种「侧栏一个色、标题一个色」做不到
  *   - 行数统计按「折出来的行」算，不完全是「屏幕上的行」：markdown 标记被渲染掉会
@@ -127,13 +136,15 @@ export function toRows(markdown: string, width: number): string[] {
 /** 一行正文：空行只留引用标记本身，免得行尾多一个空格 */
 const quotedRow = (row: string) => (row === "" ? QUOTE.trimEnd() : QUOTE + row);
 
-/** rows[index] 这一行之前，代码块是不是开着的（用来判断折叠切片有没有切在 fence 里）*/
-function fenceOpenBefore(rows: string[], index: number): boolean {
-	let open = false;
-	for (let i = 0; i < index && i < rows.length; i++) {
-		if (FENCE_RE.test(rows[i] ?? "")) open = !open;
-	}
-	return open;
+/**
+ * 折叠预览里不保留代码块：fence 行整行丢掉（返回 undefined），4 格以上的缩进压到 3 格。
+ * 4 格起 markdown 会当成缩进代码块，pi 同样会补边框 + 空行，所以连缩进一起压掉。
+ */
+const PREVIEW_INDENT = 3;
+
+function previewRow(row: string): string | undefined {
+	if (FENCE_RE.test(row)) return undefined;
+	return row.replace(/^ {4,}/, " ".repeat(PREVIEW_INDENT));
 }
 
 /** 把一段 thinking markdown 渲染成「标题 + 引用块正文」，folded 时中间收起来 */
@@ -147,15 +158,17 @@ export function renderThinking(markdown: string, width: number, folded: boolean)
 		return lines.join("\n");
 	}
 
-	const hidden = rows.length - HEAD_ROWS - TAIL_ROWS;
-	const tailStart = rows.length - TAIL_ROWS;
-	for (const row of rows.slice(0, HEAD_ROWS)) lines.push(quotedRow(row));
-	// 头切在代码块里就先把 fence 收掉，否则「… +N rows」和尾部都会被当成代码
-	if (fenceOpenBefore(rows, HEAD_ROWS)) lines.push(quotedRow("```"));
-	lines.push(quotedRow(`… +${hidden} rows (${TOGGLE_KEY})`));
-	// 尾从代码块中间开始就补一个开 fence，把代码块的配色和缩进接回来
-	if (fenceOpenBefore(rows, tailStart)) lines.push(quotedRow("```"));
-	for (const row of rows.slice(tailStart)) lines.push(quotedRow(row));
+	// 折叠预览不保留代码块结构，理由见文件头「fence 与折叠边界」：只要输出里没有 fence、
+	// 也没有 4 格缩进，pi 就不会插代码块边框和它前后的空行，折叠块就锁在 6 行。
+	const body = rows.map(previewRow).filter((row): row is string => row !== undefined);
+	if (body.length <= MAX_UNFOLDED_ROWS) {
+		for (const row of body) lines.push(quotedRow(row));
+		return lines.join("\n");
+	}
+
+	for (const row of body.slice(0, HEAD_ROWS)) lines.push(quotedRow(row));
+	lines.push(quotedRow(`… +${body.length - HEAD_ROWS - TAIL_ROWS} rows (${TOGGLE_KEY})`));
+	for (const row of body.slice(-TAIL_ROWS)) lines.push(quotedRow(row));
 	return lines.join("\n");
 }
 
