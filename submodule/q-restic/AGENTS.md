@@ -93,6 +93,12 @@
   按仓库区分，同一仓库串行、不同目标可并行。
 - **不要对已含 ANSI 转义的字符串调 `fit()`**：转义字节会被算成可见宽度而提前截断。
   底部提示的宽度控制靠 `footer()` 里的阶梯降级完成。
+- **版本列表每行的「数据量 / 新增」两列在 `body()` 里拼**：字段是 `size`（`snap_size`）和
+  `added`（`snap_added`，前面带 `+`，没有 summary 就留空），列宽按本屏实际数字算，
+  时间戳固定 19 列所以带数字列时 `label_w` 收到 20。
+  ⚠️ `avail_w` 是给**整个 desc（数字列 + 标签）**的预算，`fit()` 就 fit 到 `avail_w`；
+  写成 `avail_w - cols_w` 会把数字自己截掉（000.4 G…）。标签位不够 6 列时退回
+  把「数据量 新增 标签」全塞进 desc。
 - **restic 必须已在 PATH 里**，不再用 `nix build nixpkgs#restic` 兜底（多次求值 flake、
   systemd 服务里没网络保证）。`nix/modules/restic-home.nix` 负责把 pkgs.restic 装进系统 profile。
 - **`restic snapshots --json` 的 `summary` 里没有 `total_size`**，那个名字只存在于 `restic stats` 的输出。

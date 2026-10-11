@@ -976,6 +976,9 @@ class App:
             latest = self.latest()
             if latest:
                 text += f" · 最新版本数据量 {human_size(snap_size(latest))}"
+                added = snap_added(latest)
+                if added:
+                    text += f" · 新增 +{human_size(added)}"
             return text
         if self.screen == "snapshots":
             return "选中一个版本后按 Enter，进入该版本的操作"
@@ -1048,14 +1051,15 @@ class App:
     def snapshot_items(self):
         items = []
         for snap in self.snaps:
-            desc = human_size(snap_size(snap))
-            if snap.get("tags"):
-                desc += "  " + ",".join(snap["tags"])
+            added = snap_added(snap)
             items.append(
                 {
                     "badge": snap["short_id"],
                     "label": snap["time"][:19].replace("T", " "),
-                    "desc": desc,
+                    # 数字列由 body() 右对齐成两列；宽度不够时它会把它们挤回 desc
+                    "size": human_size(snap_size(snap)),
+                    "added": f"+{human_size(added)}" if added else "",
+                    "desc": ",".join(snap.get("tags") or []),
                     "goto": "snap_actions",
                 }
             )
@@ -1111,8 +1115,19 @@ class App:
 
         # 短 ID 列只在版本列表里有意义，主菜单/操作列表不占这一列
         badge_w = 9 if any(item.get("badge") for item in items) else 0
-        label_w = 24
-        desc_w = max(0, width - 3 - badge_w - label_w)
+        # 版本列表每行两个右对齐的数字列：数据量 / 新增（含义见 snap_size / snap_added，
+        # 与 `q-restic list` 的两列一致）。列宽按本屏实际数字算，别写死。
+        # 时间戳固定 19 列，所以带数字列时把 label_w 收到 20，省下的给标签。
+        sized = [item for item in items if item.get("size")]
+        size_w = max((wlen(item["size"]) for item in sized), default=0)
+        added_w = max((wlen(item.get("added", "")) for item in sized), default=0)
+        label_w = 20 if sized else 24
+        avail_w = max(0, width - 3 - badge_w - label_w)
+        # 数字列连着分隔空格占的固定宽度。标签至少得留 6 列，否则拆列反而会把数字挤掉，
+        # 退回“数字 + 标签”全塞进 desc。（desc 是包括数字列在内的整串，fit 到 avail_w，
+        # 不是 fit 到 avail_w - cols_w，那会把数字自己截了。）
+        cols_w = size_w + 1 + (added_w + 1 if added_w else 0)
+        cols = bool(sized) and avail_w - cols_w >= 6
         lines = []
         for idx in range(self.offset, min(len(items), self.offset + height)):
             item = items[idx]
@@ -1129,10 +1144,20 @@ class App:
                 prefix += badge
             if focused:
                 label = f"{BOLD}{label}{reset}"
+            desc = item.get("desc", "")
+            if item.get("size"):
+                if cols:
+                    parts = [f"{item['size']:>{size_w}}"]
+                    if added_w:
+                        parts.append(f"{item.get('added', ''):>{added_w}}")
+                    desc = " ".join(parts + [desc])
+                else:
+                    # 窄终端退化：两列挤回 desc，仍然看得到「新增」
+                    desc = "  ".join(p for p in (item["size"], item.get("added", ""), desc) if p)
             # 行尾用 reset（聚焦时=KEEP_BG，只清前景/粗体、不动背景），
             # 这样 render() 的 \033[K 能把光标本底色铺满整行；非聚焦行则是完全重置。
             lines.append(
-                f"{bg}{prefix}{label} {DIM}{fit(item.get('desc', ''), desc_w)}{reset}"
+                f"{bg}{prefix}{label} {DIM}{fit(desc, avail_w)}{reset}"
             )
         return lines + [""] * max(0, height - len(lines))
 
