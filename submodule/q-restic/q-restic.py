@@ -1305,7 +1305,9 @@ def build_parser():
 
     sub.add_parser("backup", help="立即备份（含保留策略清理）")
     sub.add_parser("dry-run", help="试运行，不写仓库")
-    sub.add_parser("status", help="列出版本 + 占用")
+    # restic 自己的命令就叫 snapshots，旧版 bash 脚本也用 --snapshots，所以设成别名。
+    # 注意：用别名调用时 argparse 把 args.command 设成别名本身，下面分发要一起判。
+    sub.add_parser("status", aliases=["snapshots", "list"], help="列出版本 + 占用")
     sub.add_parser("check", help="仓库完整性校验")
     sub.add_parser("forget", help="按保留策略清理旧版本")
     sub.add_parser("config", help="打印当前配置")
@@ -1355,7 +1357,7 @@ def main():
         return do_backup(cfg)
     if args.command == "dry-run":
         return do_backup(cfg, dry_run=True)
-    if args.command == "status":
+    if args.command in ("status", "snapshots", "list"):
         return do_status(cfg)
     if args.command == "check":
         return do_check(cfg)

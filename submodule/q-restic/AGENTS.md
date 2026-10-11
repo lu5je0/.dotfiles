@@ -18,6 +18,9 @@
 
 ## 关键不变量（都是实测踩出来的，改动前先看）
 
+- **子命令别名要用 `in (...)` 分发**：`status` 挂了 `snapshots` / `list` 别名（restic 自己的命令就叫
+  `snapshots`，旧版 bash 脚本也用 `--snapshots`）。用别名调用时 argparse 把 `args.command` 设成**别名本身**，
+  只判 `== "status"` 会漏掉，然后落到末尾的 TUI 分支——表现是“想列版本却把 TUI 打开了”。
 - **kitty IME 闸门必须成对，离开时必须开闸**。q-restic 全程只做导航，所以进 TUI 就发
   `OSC 1337;SetUserVar=tui-bridge=<base64>`（`method=normal`）关掉 kitty 的 IME。
   kitty 是**旁路** IME 而不是切输入源，**留着关闸状态出去，用户手动切输入源也救不回来**
