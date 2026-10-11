@@ -1,14 +1,18 @@
-{ ... }:
+{ config, ... }:
 
+let
+  # 从用户定义推导，别写死 /home/lu5je0：Nix 里没有 $HOME 可展开。
+  home = config.users.users.lu5je0.home;
+in
 {
   # nh (nix-community/nh) 官方 NixOS 模块。
   # enable 自带 systemPackages = [ pkgs.nh ]，并把 NH_FLAKE 写进 /etc/set-environment，
   # 于是 `nh os switch` 无需再指定 flake 路径。
   programs.nh = {
     enable = true;
-    # 必须用字面路径：nh 不展开 $HOME（实测 `NH_FLAKE='$HOME/.dotfiles'` 会去找
+    # 必须是展开好的字面路径：nh 不展开 $HOME（实测 `NH_FLAKE='$HOME/.dotfiles'` 会去找
     # "/tmp/$HOME/.dotfiles"）。$HOME 的展开依赖 login shell，systemd/脚本拿不到。
-    flake = "/home/lu5je0/.dotfiles";
+    flake = "${home}/.dotfiles";
   };
 
   # 自动清理交给 nix/modules/base.nix 的 nix.gc（weekly + 14d）。

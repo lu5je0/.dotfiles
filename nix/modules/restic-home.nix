@@ -1,6 +1,11 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 let
+  # 用户名写在这里（其实就是本机账户名），路径一律从 users.users.<name>.home 推导，
+  # 不写死 /home/lu5je0：Nix 里没有 $HOME 可展开。
+  user = "lu5je0";
+  home = config.users.users.${user}.home;
+
   # 定时器总开关。false = 单元已写好但不自动运行，可随时手动
   #   sudo systemctl start restic-home
   # 触发一次。等首次全量跑通、确认排除效果后再改成 true 并 rebuild。
@@ -18,7 +23,7 @@ let
   # 并把 --host 也设成同一个短名，所以每台机器的快照互相看得到但只有自己的。
   # 以前这里有个写死 "huskar" 的 repo 变量，改成 ExecStart 调 q-restic 后就没人用了，
   # 留着只会误导（q-restic 会用自己配置里的值覆盖 RESTIC_REPOSITORY）。
-  script = "/home/lu5je0/.dotfiles/submodule/q-restic/q-restic.py";
+  script = "${home}/.dotfiles/submodule/q-restic/q-restic.py";
 in
 {
   # q-restic 要求 restic 已在 PATH 里（不再用 nix build 兜底），
@@ -39,9 +44,9 @@ in
 
     serviceConfig = {
       Type = "oneshot";
-      # 以用户身份跑，不用 root：home 里的文件本来就都属于 lu5je0。
-      User = "lu5je0";
-      Group = "lu5je0";
+      # 以用户身份跑，不用 root：home 里的文件本来就都属于这个用户。
+      User = user;
+      Group = config.users.users.${user}.group;
       ExecStart = "${pkgs.python3}/bin/python3 ${script} backup";
       Nice = 10;
       IOSchedulingClass = "idle";

@@ -58,10 +58,13 @@ if [[ $OSTYPE == linux-gnu* ]]; then
   fpath=($HOMEBREW_PATH/share/zsh/site-functions $fpath)
   
   arch=`uname -m`
+  # 这个文件在 zshrc 第 72 行被 source，而 DOTFILES_DIR 是第 103 行才 export 的，
+  # 所以不能只用 $DOTFILES_DIR（会展开成空，PATH 前多出一个 /bin）。
+  DOTFILES=${DOTFILES_DIR:-$HOME/.dotfiles}
   if [[ $arch =~ 'x86_64' ]]; then
-    export PATH=/home/lu5je0/.dotfiles/bin/linux-x86_64:$PATH
+    export PATH=$DOTFILES/bin/linux-x86_64:$PATH
   elif [[ $arch =~ 'aarch64' ]]; then
-    export PATH=/home/lu5je0/.dotfiles/bin/linux-aarch64:$PATH
+    export PATH=$DOTFILES/bin/linux-aarch64:$PATH
   fi
 
   # macOS 自带 open，WSL 上面用 explorer.exe 实现，原生 linux 用 xdg-open 补齐

@@ -1,5 +1,9 @@
-{ ... }:
+{ config, ... }:
 
+let
+  # 从用户定义推导，别写死 /home/lu5je0：Nix 里没有 $HOME 可展开。
+  home = config.users.users.lu5je0.home;
+in
 {
   imports = [
     ../modules/nh.nix
@@ -58,7 +62,7 @@
   nixpkgs.config.allowUnfree = true;
 
   environment.sessionVariables = {
-    NPM_CONFIG_PREFIX = "/home/lu5je0/.local";
+    NPM_CONFIG_PREFIX = "${home}/.local";
     # /etc/ssl/certs has no hashed symlinks, so CApath alone verifies nothing
     SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
     SSL_CERT_DIR = "/etc/ssl/certs";
