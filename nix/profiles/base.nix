@@ -1,7 +1,6 @@
 { config, ... }:
 
 let
-  # 从用户定义推导，别写死 /home/lu5je0：Nix 里没有 $HOME 可展开。
   home = config.users.users.lu5je0.home;
 in
 {

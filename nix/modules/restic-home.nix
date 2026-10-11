@@ -1,8 +1,6 @@
 { config, pkgs, ... }:
 
 let
-  # 用户名写在这里（其实就是本机账户名），路径一律从 users.users.<name>.home 推导，
-  # 不写死 /home/lu5je0：Nix 里没有 $HOME 可展开。
   user = "lu5je0";
   home = config.users.users.${user}.home;
 

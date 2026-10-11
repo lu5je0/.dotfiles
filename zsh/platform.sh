@@ -58,8 +58,7 @@ if [[ $OSTYPE == linux-gnu* ]]; then
   fpath=($HOMEBREW_PATH/share/zsh/site-functions $fpath)
   
   arch=`uname -m`
-  # 这个文件在 zshrc 第 72 行被 source，而 DOTFILES_DIR 是第 103 行才 export 的，
-  # 所以不能只用 $DOTFILES_DIR（会展开成空，PATH 前多出一个 /bin）。
+  # zshrc:72 就 source 这个文件，DOTFILES_DIR 到 :103 才 export，所以要有 fallback
   DOTFILES=${DOTFILES_DIR:-$HOME/.dotfiles}
   if [[ $arch =~ 'x86_64' ]]; then
     export PATH=$DOTFILES/bin/linux-x86_64:$PATH
