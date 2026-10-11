@@ -4,7 +4,7 @@ let
   # 定时器总开关。false = 单元已写好但不自动运行，可随时手动
   #   sudo systemctl start restic-home
   # 触发一次。等首次全量跑通、确认排除效果后再改成 true 并 rebuild。
-  enableTimer = false;
+  enableTimer = true;
 
   # 备份逻辑在 submodule/q-restic/，入口符号链接是 bin/common/q-restic。
   # 这里直接调 python3 而不走那个入口：入口经 runner.sh 用 uv 起 venv，
