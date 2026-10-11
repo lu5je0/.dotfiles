@@ -1,6 +1,7 @@
 vim/pack/
 tmux/plugins
 __pycache__
+.venv/
 .idea/
 *.swp
 node_modules/

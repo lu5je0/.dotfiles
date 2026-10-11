@@ -1,0 +1,6 @@
+[project]
+name = "q-restic"
+version = "0.1.0"
+description = "restic 增量备份 home 到 NAS，带 TUI"
+requires-python = ">=3.9"
+dependencies = []

@@ -1,0 +1,48 @@
+# restic 排除清单 —— q-restic 使用，也可被 `q-restic edit-excludes` 直接编辑
+#
+# 匹配规则（已实测）:
+#   以 / 开头的模式  → 按仓库里存储的绝对路径精确匹配，如 /home/lu5je0/.cache
+#   不含 / 的模式    → 匹配任意层级下同名的文件或目录，如 node_modules
+#   **               → restic 扩展通配，可跨目录层级
+#
+# 不用 --one-file-system：/home 下没有嵌套挂载点，加了只会平白跳过东西。
+
+# ── 纯缓存 / 构建产物，全部可重新生成 ──
+/home/lu5je0/.cache
+/home/lu5je0/.npm
+/home/lu5je0/.pub-cache
+/home/lu5je0/.gradle
+/home/lu5je0/.cargo/registry
+/home/lu5je0/.cargo/git
+/home/lu5je0/.local/share/uv
+/home/lu5je0/.local/share/Trash
+/home/lu5je0/.local/share/umu
+
+# ── Steam：只排游戏本体和缓存，保留 compatdata(存档) ──
+# compatdata 是 Proton 容器的游戏存档，userdata/ 不存在，这里可能是唯一副本
+/home/lu5je0/.local/share/Steam/steamapps/common
+/home/lu5je0/.local/share/Steam/steamapps/shadercache
+/home/lu5je0/.local/share/Steam/steamapps/downloading
+/home/lu5je0/.local/share/Steam/steamapps/temp
+/home/lu5je0/.local/share/Steam/appcache
+/home/lu5je0/.local/share/Steam/logs
+
+# ── 浏览器：只排缓存，保留书签 / 密码 / profile ──
+/home/lu5je0/.config/google-chrome/*/Cache
+/home/lu5je0/.config/google-chrome/*/Code Cache
+/home/lu5je0/.config/google-chrome/*/GPUCache
+/home/lu5je0/.config/google-chrome/*/Service Worker/CacheStorage
+
+# ── 依赖 / 中间产物，任意层级 ──
+node_modules
+__pycache__
+*.pyc
+.venv
+.pytest_cache
+.mypy_cache
+
+# ── 明确保留（故意不排，留作记录） ──
+# /home/lu5je0/Models                        # 108G GGUF 权重
+# /home/lu5je0/.wine                         # 4G Wine prefix
+# /home/lu5je0/.local/share/lutris           # 1.4G 运行器数据
+# /home/lu5je0/.local/share/Steam/steamapps/compatdata
