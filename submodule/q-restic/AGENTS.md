@@ -10,6 +10,10 @@
   - CLI 子命令给脚本/定时任务用；不带参数且 stdin 是 tty 时进 TUI。
   - TUI 的备用屏、cbreak、SIGWINCH 唤醒管道、CJK 宽度计算都对齐根目录 `setup.py` 的写法，改交互时先读那份。
 - `excludes.txt`：restic 排除清单，`q-restic edit-excludes` 可直接编辑。
+  **路径里不要写死 `/home/<用户名>`**：restic 用 `os.ExpandEnv` 展开 exclude 文件里的环境变量
+  （`~` 不展开，字面 `$` 写 `$$`），所以统一写 `$HOME/...`，换机器/换用户名都不用改。
+  `restic_env()` 里 `env.setdefault("HOME", ...)` 是兼底：HOME 缺了的话 `$HOME/.cache`
+  会展开成 `/.cache`，排除静默失效，几十 G 缓存会被传上去。
 - `pyproject.toml`：无依赖，只为让 `uv run --project` 能起。
 - 入口链接在根仓库 `bin/common/q-restic`，由 `q-python-install q-restic.py` 生成，**不要手改**
   （它是 runner.sh + uv 的 launcher，改命令名要重新生成）。

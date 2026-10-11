@@ -135,6 +135,10 @@ def restic_env(cfg):
     env["RESTIC_REPOSITORY"] = cfg["repository"]
     env["RESTIC_PASSWORD_FILE"] = str(expand(cfg["password_file"]))
     env["RESTIC_CACHE_DIR"] = str(Path(env.get("XDG_CACHE_HOME") or HOME / ".cache") / "restic")
+    # excludes.txt 用 $HOME 而不是写死的 /home/<用户名>（restic 按 os.ExpandEnv 展开 exclude
+    # 文件里的变量）。这里兼底 HOME：它缺了的话 $HOME/.cache 会展开成 /.cache，
+    # 排除静默失效，整份缓存会被传上去。用 setdefault，不覆盖调用方给的值。
+    env.setdefault("HOME", str(HOME))
     env.setdefault("RESTIC_PROGRESS_FPS", "1")
     return env
 

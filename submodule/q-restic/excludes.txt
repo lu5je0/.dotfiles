@@ -1,37 +1,49 @@
 # restic 排除清单 —— q-restic 使用，也可被 `q-restic edit-excludes` 直接编辑
 #
 # 匹配规则（已实测）:
-#   以 / 开头的模式  → 按仓库里存储的绝对路径精确匹配，如 /home/lu5je0/.cache
+#   $HOME/...        → 按仓库里存储的绝对路径精确匹配，如 $HOME/.cache
+#   /...             → 锚定在**文件系统根**（不是 $HOME），如 /bin
 #   不含 / 的模式    → 匹配任意层级下同名的文件或目录，如 node_modules
 #   **               → restic 扩展通配，可跨目录层级
+#
+# **别写死 /home/<用户名>**：restic 会用 os.ExpandEnv 展开 exclude 文件里的环境变量，
+# 所以写 $HOME 就能跨机器、跨用户名复用（`~` 不会被展开，别用；要字面 $ 就写 $$）。
+# q-restic 侧还有一层保险：restic_env() 会给子进程 setdefault HOME。
 #
 # 不用 --one-file-system：/home 下没有嵌套挂载点，加了只会平白跳过东西。
 
 # ── 纯缓存 / 构建产物，全部可重新生成 ──
-/home/lu5je0/.cache
-/home/lu5je0/.npm
-/home/lu5je0/.pub-cache
-/home/lu5je0/.gradle
-/home/lu5je0/.cargo/registry
-/home/lu5je0/.cargo/git
-/home/lu5je0/.local/share/uv
-/home/lu5je0/.local/share/Trash
-/home/lu5je0/.local/share/umu
+$HOME/.cache
+$HOME/.npm
+$HOME/.pub-cache
+$HOME/.gradle
+$HOME/.local/share/uv
+$HOME/.local/share/Trash
+$HOME/.local/share/umu
+
+# ── 工具链本体 / 依赖缓存：重新下载、重装即可 ──
+# .rustup = rustup 的 toolchains，.sdkman = 各 SDK 本体，.m2 = Maven 本地库
+# （.cargo/bin 故意不排：那只是 rustup 的 shim，几十 KB）
+$HOME/.rustup
+$HOME/.sdkman
+$HOME/.m2
+$HOME/.cargo/registry
+$HOME/.cargo/git
 
 # ── Steam：只排游戏本体和缓存，保留 compatdata(存档) ──
 # compatdata 是 Proton 容器的游戏存档，userdata/ 不存在，这里可能是唯一副本
-/home/lu5je0/.local/share/Steam/steamapps/common
-/home/lu5je0/.local/share/Steam/steamapps/shadercache
-/home/lu5je0/.local/share/Steam/steamapps/downloading
-/home/lu5je0/.local/share/Steam/steamapps/temp
-/home/lu5je0/.local/share/Steam/appcache
-/home/lu5je0/.local/share/Steam/logs
+$HOME/.local/share/Steam/steamapps/common
+$HOME/.local/share/Steam/steamapps/shadercache
+$HOME/.local/share/Steam/steamapps/downloading
+$HOME/.local/share/Steam/steamapps/temp
+$HOME/.local/share/Steam/appcache
+$HOME/.local/share/Steam/logs
 
 # ── 浏览器：只排缓存，保留书签 / 密码 / profile ──
-/home/lu5je0/.config/google-chrome/*/Cache
-/home/lu5je0/.config/google-chrome/*/Code Cache
-/home/lu5je0/.config/google-chrome/*/GPUCache
-/home/lu5je0/.config/google-chrome/*/Service Worker/CacheStorage
+$HOME/.config/google-chrome/*/Cache
+$HOME/.config/google-chrome/*/Code Cache
+$HOME/.config/google-chrome/*/GPUCache
+$HOME/.config/google-chrome/*/Service Worker/CacheStorage
 
 # ── 依赖 / 中间产物，任意层级 ──
 node_modules
@@ -42,7 +54,7 @@ __pycache__
 .mypy_cache
 
 # ── 明确保留（故意不排，留作记录） ──
-# /home/lu5je0/Models                        # 108G GGUF 权重
-# /home/lu5je0/.wine                         # 4G Wine prefix
-# /home/lu5je0/.local/share/lutris           # 1.4G 运行器数据
-# /home/lu5je0/.local/share/Steam/steamapps/compatdata
+# $HOME/Models                        # 108G GGUF 权重
+# $HOME/.wine                         # 4G Wine prefix
+# $HOME/.local/share/lutris           # 1.4G 运行器数据
+# $HOME/.local/share/Steam/steamapps/compatdata
