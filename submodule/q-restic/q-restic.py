@@ -1161,17 +1161,23 @@ class App:
         sys.stdout.flush()
 
     # -- 动作 --
-    def run_suspended(self, func, *args, **kwargs):
+    def run_suspended(self, func, *args, wait_on_success=False, **kwargs):
         """把终端交还给子进程执行 func；**失败时先等一个按键再收回来**。
 
         否则 resume() 切回备用屏会把子进程打在普通屏上的错误输出盖掉，
         用户只看到一句“备份失败”，永远不知道到底怎么回事。
+
+        `wait_on_success` 给“输出本身就是结果”的命令用（dry-run 的文件清单）：
+        它们成功时也要等，否则那份清单会被备用屏瞬间盖掉，只剩底部一句提示。
+        （`wait_on_success` 是关键字参数，不会被转发给 func。）
         """
         self.term.suspend()
         try:
             code = func(*args, **kwargs)
             if code:
                 self.term.wait_key("执行失败，按任意键返回")
+            elif wait_on_success:
+                self.term.wait_key("以上是执行结果，按任意键返回")
             return code
         finally:
             self.term.resume()
@@ -1182,7 +1188,8 @@ class App:
         self.set_message("备份完成" if code == 0 else f"备份失败（退出码 {code}）")
 
     def act_dry_run(self):
-        code = self.run_suspended(do_backup, self.cfg, dry_run=True)
+        # dry-run 的产出就是屏幕上那份“会新增/修改哪些文件”的清单，必须等用户看完
+        code = self.run_suspended(do_backup, self.cfg, dry_run=True, wait_on_success=True)
         self.set_message("试运行结束，仓库未改动" if code == 0 else f"试运行失败（退出码 {code}）")
 
     def act_check(self):

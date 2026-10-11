@@ -26,6 +26,9 @@
   表现就是“跑完 diff 只剩一句按任意键返回，看不到内容”或者“只说失败、不说为什么”。
   现在失败时都先等一个键：`run_suspended()`（backup/dry-run/check）、`act_diff`、
   `act_restore`、`act_forget_snap`、`act_unmount`。新加 suspend 要子进程的操作时照此处理。
+  **dry-run 是「成功也要等」的那种**：它的产出就是屏幕上那份“会新增/修改哪些文件”的清单，
+  用 `run_suspended(..., wait_on_success=True)`。早先只判失败，于是 dry-run 一跑完就 `resume()`，
+  清单被备用屏整个盖掉，用户只看到底部一句“试运行结束，仓库未改动”。
   `wait_key()` 自己会临时切 cbreak——`suspend()` 已把终端还原成 cooked，直接 read 要等回车，
   不然提示里的“任意键”不成立。
 - **区分两套锁**：q-restic 自己的 flock（`~/.cache/q-restic.<repo hash>.lock`，只保护写流程）
