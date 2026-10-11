@@ -288,11 +288,21 @@ def do_backup(cfg, dry_run=False):
         info("dry-run 结束，仓库未改动")
         return code
     info(f"备份 {cfg['source']} → {cfg['repository']}")
-    if run_stream(restic, cfg, args) != 0:
-        return 1
-    do_forget(restic, cfg, stream=True)
-    info("完成")
-    return 0
+    code = run_stream(restic, cfg, args)
+    if code == 0:
+        do_forget(restic, cfg, stream=True)
+        info("完成")
+        return 0
+    if code == 3:
+        # 3 = 快照已建，但有文件读不到。**这种情况下也要清理**：否则一个长期读不到的
+        # 文件（root 600 之类）会让 prune 永远不跑，保留策略静默失效、旧版本无限堆积。
+        # 已知代价：这些文件在旧版本里的最后副本会随这次 prune 一起消失，
+        # 所以退出码保持 3（systemd 会把 unit 标成 failed，能看见）。
+        do_forget(restic, cfg, stream=True)
+        info("备份不完整（有文件读不到），已按保留策略清理旧版本")
+        return 3
+    # 1 = 没建快照；10/11/12 = 仓库不存在/被锁/密码错。这次什么都没写进仓库，别动它
+    return code
 
 
 def keep_args(cfg):
@@ -1187,7 +1197,8 @@ class App:
         sys.stdout.flush()
 
     # -- 动作 --
-    def run_suspended(self, func, *args, wait_on_success=False, **kwargs):
+    def run_suspended(self, func, *args, wait_on_success=False,
+                      failure_prompt="执行失败，按任意键返回", **kwargs):
         """把终端交还给子进程执行 func；**失败时先等一个按键再收回来**。
 
         否则 resume() 切回备用屏会把子进程打在普通屏上的错误输出盖掉，
@@ -1201,7 +1212,7 @@ class App:
         try:
             code = func(*args, **kwargs)
             if code:
-                self.term.wait_key("执行失败，按任意键返回")
+                self.term.wait_key(failure_prompt)
             elif wait_on_success:
                 self.term.wait_key("以上是执行结果，按任意键返回")
             return code
@@ -1210,8 +1221,14 @@ class App:
             self.refresh()
 
     def act_backup(self):
-        code = self.run_suspended(do_backup, self.cfg)
-        self.set_message("备份完成" if code == 0 else f"备份失败（退出码 {code}）")
+        # 退出码 3 也是“不完整”，不能说成“执行失败”，提示就用中性的
+        code = self.run_suspended(do_backup, self.cfg, failure_prompt="按任意键返回")
+        if code == 0:
+            self.set_message("备份完成")
+        elif code == 3:
+            self.set_message("备份不完整：有文件读不到，已清理旧版本")
+        else:
+            self.set_message(f"备份失败（退出码 {code}）")
 
     def act_dry_run(self):
         code = self.run_suspended(do_backup, self.cfg, dry_run=True, wait_on_success=True)
