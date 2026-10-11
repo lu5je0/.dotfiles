@@ -474,6 +474,18 @@ def do_browse(cfg, override=None):
     return 0
 
 
+def restore_root(cfg, snap=None):
+    """恢复出来的目录树根（相对 --target）。
+
+    restic restore 把快照里的绝对路径原样铺到 --target 下，所以树根是那条
+    `/home/<用户名>` 去掉开头的斜杠。**别写死用户名**：优先用快照自己的 paths
+    （那是备份时写进快照的，最准），拿不到再退回配置里的 source。
+    """
+    paths = (snap or {}).get("paths") or []
+    src = paths[0] if paths else cfg.get("source", "")
+    return str(expand(src)).lstrip("/") if src else ""
+
+
 def do_restore(cfg, snapshot, target=None):
     """恢复到指定目录。默认目录来自配置的 restore_dir。
 
@@ -484,7 +496,9 @@ def do_restore(cfg, snapshot, target=None):
     require_password(cfg)
     dest = expand(target) if target else expand(cfg["restore_dir"]) / snapshot
     info(f"恢复 {snapshot} 到 {dest}")
-    info(f"恢复完成后文件在以 {dest}/home/lu5je0/ 为根的目录树里")
+    root = restore_root(cfg)
+    info(f"恢复完成后文件在以 {dest}/{root}/ 为根的目录树里" if root
+         else f"恢复完成后文件在 {dest}/ 里")
     return subprocess.call(
         [restic, "restore", snapshot, "--target", str(dest)] + host_args(cfg),
         env=restic_env(cfg),
@@ -1288,7 +1302,11 @@ class App:
                 + host_args(self.cfg),
                 env=restic_env(self.cfg),
             )
-            info(f"恢复完成: {target}/home/lu5je0/" if code == 0 else "恢复失败")
+            if code == 0:
+                root = restore_root(self.cfg, snap)
+                info(f"恢复完成: {target}/{root}/" if root else f"恢复完成: {target}/")
+            else:
+                info("恢复失败")
             self.term.wait_key()
         finally:
             self.term.resume()
