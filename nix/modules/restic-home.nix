@@ -10,8 +10,15 @@ let
   # 这里直接调 python3 而不走那个入口：入口经 runner.sh 用 uv 起 venv，
   # 对常驻定时任务来说是多余的一层（要 uv、要 .venv 可用、要能求值 flake），
   # 而 q-restic 只用标准库，python3 直接跑就够了。
+  #
+  # 仓库地址/主机过滤/保留策略都在 q-restic 自己的配置文件里，不在这里重复声明：
+  #   ~/.config/q-restic/config.json
+  # 没这份配置时（新机器）默认按本机短名推导，即
+  #   sftp:lu5je0@192.168.1.10:/mnt/mg08/backups/restic/<hostname>
+  # 并把 --host 也设成同一个短名，所以每台机器的快照互相看得到但只有自己的。
+  # 以前这里有个写死 "huskar" 的 repo 变量，改成 ExecStart 调 q-restic 后就没人用了，
+  # 留着只会误导（q-restic 会用自己配置里的值覆盖 RESTIC_REPOSITORY）。
   script = "/home/lu5je0/.dotfiles/submodule/q-restic/q-restic.py";
-  repo = "sftp:lu5je0@192.168.1.10:/mnt/mg08/backups/restic/huskar";
 in
 {
   # q-restic 要求 restic 已在 PATH 里（不再用 nix build 兜底），

@@ -37,7 +37,9 @@ CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config") / "q-re
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 DEFAULT_CONFIG = {
-    "repository": "sftp:lu5je0@192.168.1.10:/mnt/mg08/backups/restic/huskar",
+    # 空 = 按主机名推导（见 default_repository）：N AS 上按机器分目录，
+    # 不要把某台机器的名字写死，否则换台机器跑会写到别人的备份里。
+    "repository": "",
     "password_file": str(HOME / ".config/restic/password"),
     "source": str(HOME),
     "excludes": str(PROJECT_DIR / "excludes.txt"),
@@ -65,6 +67,21 @@ def warn(msg):
 # ── 配置 ──────────────────────────────────────────────────────────────
 
 
+def detect_host():
+    """本机短名。默认的仓库路径和 `--host` 过滤都用它。"""
+    return subprocess.run(
+        ["hostname", "-s"], capture_output=True, text=True
+    ).stdout.strip() or "localhost"
+
+
+def default_repository(host):
+    """默认仓库：NAS 上按机器名分一个目录。
+
+    与 `--host` 过滤是同一个名字（都取本机短名），所以每台机器只看到自己的快照。
+    """
+    return f"sftp:lu5je0@192.168.1.10:/mnt/mg08/backups/restic/{host}"
+
+
 def load_config():
     cfg = json.loads(json.dumps(DEFAULT_CONFIG))  # deep copy
     if CONFIG_FILE.exists():
@@ -78,9 +95,9 @@ def load_config():
             else:
                 cfg[key] = value
     if not cfg.get("host"):
-        cfg["host"] = subprocess.run(
-            ["hostname", "-s"], capture_output=True, text=True
-        ).stdout.strip() or "localhost"
+        cfg["host"] = detect_host()
+    if not cfg.get("repository"):
+        cfg["repository"] = default_repository(cfg["host"])
     return cfg
 
 
@@ -153,6 +170,27 @@ def run_json(restic, cfg, args):
 def run_stream(restic, cfg, args):
     """直接继承终端，让 restic 自己的进度条可见。"""
     return subprocess.call([restic] + args, env=restic_env(cfg))
+
+
+def run_visible(restic, cfg, args):
+    """跑 restic，边跑边把输出打到当前终端，同时把输出收集起来。
+
+    返回 (退出码, 输出文本)。收集是为了在失败时能识别原因（比如“already locked”）
+    并给出该怎么做，而不是只报一句“失败”。
+    """
+    proc = subprocess.Popen(
+        [restic] + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+        env=restic_env(cfg),
+    )
+    lines = []
+    for line in proc.stdout:
+        lines.append(line.rstrip("\n"))
+        print(line, end="")
+    return proc.wait(), "\n".join(lines)
 
 
 def require_password(cfg):
@@ -453,6 +491,24 @@ def do_restore(cfg, snapshot, target=None):
     )
 
 
+def do_unlock(cfg):
+    """清掉残留锁。
+
+    restic 在进程被强杀（SIGKILL，或 prune 跑到一半被 Ctrl-C）时会留下锁，
+    之后 backup 和 forget --prune 都会因为拿不到排他锁而失败。
+    仓库走的是 restic 自己的锁机制，和 q-restic 那层 flock 无关。
+    """
+    restic = restic_bin()
+    require_password(cfg)
+    locks = run(restic, cfg, ["list", "locks"]).stdout.strip()
+    if not locks:
+        info("仓库没有锁，无需清理")
+        return 0
+    count = len(locks.splitlines())
+    warn(f"发现 {count} 把锁。确认此刻没有备份在跑（ps 看 restic）再继续")
+    return run_stream(restic, cfg, ["unlock"])
+
+
 def do_unmount(cfg, override=None):
     target = mount_point(cfg, override)
     if not is_mounted(target):
@@ -706,6 +762,39 @@ else:
     CURSOR_BG = KEEP_BG = ""
 
 
+# restic diff 的变更标记 -> 语义色。行格式是「标记 + 四个空格 + 路径」，
+# 必须带上空格一起判：光看首字母会把摘要行的 'D'(Dirs:)、'F'(Files:)、
+# 'O'(Others:)、'c'(comparing) 也当成变更。
+DIFF_MARKER_COLORS = {
+    "+": GREEN,      # 新增
+    "-": RED,        # 删除
+    "M": YELLOW,     # 修改
+    "T": MAGENTA,    # 类型变化（文件 <-> 目录/符号链接）
+    "U": MAGENTA,    # 其它变更
+}
+
+
+def colorize_diff_line(line):
+    """给 `restic diff` 的输出加语义色。
+
+    restic 的 diff 是纯文本（实测：TTY 下也只有进度条的擦除序列），
+    几十行 +/−/M 全一个颜色很难扫。
+    """
+    body = line.rstrip("\n")
+    if not body or not RESET:      # RESET 为空 = 未启用颜色（非 tty 或 NO_COLOR）
+        return line
+    if body[0] in DIFF_MARKER_COLORS and body[1:5] == "    ":
+        return f"{DIFF_MARKER_COLORS[body[0]]}{body}{RESET}\n"
+    if body.startswith("comparing snapshot"):
+        return f"{BOLD}{body}{RESET}\n"
+    # 合计行跟着语义走，扫一眼就知道增删量
+    if body.startswith("  Added:"):
+        return f"{GREEN}{body}{RESET}\n"
+    if body.startswith("  Removed:"):
+        return f"{RED}{body}{RESET}\n"
+    return line
+
+
 class Terminal:
     """进/出备用屏 + cbreak 的上下文管理器。"""
 
@@ -743,8 +832,20 @@ class Terminal:
             self.gate.reassert()
 
     def wait_key(self, prompt="按任意键返回"):
+        """等一个按键。
+
+        **必须在 suspend() 之后、resume() 之前调用**：子进程的输出打在普通屏上，
+        先 resume() 就会切回备用屏把那些输出盖掉，用户只能看到一个空屏。
+        suspend() 把终端还原成了 cooked 模式（read 要等回车），这里临时切 cbreak，
+        否则提示里的“任意键”不成立。
+        """
         print(f"\n{DIM}{prompt}{RESET}", end="", flush=True)
-        read_key(self.fd)
+        tty.setcbreak(self.fd)
+        try:
+            read_key(self.fd)
+        finally:
+            termios.tcsetattr(self.fd, termios.TCSADRAIN, self.saved)
+        print()
 
 
 def read_char(fd):
@@ -816,6 +917,7 @@ class App:
         self.offset = 0
         self.screen = "menu"
         self.history = []
+        self.active_snap = None
         self.last_size = None
 
     # -- 数据 --
@@ -989,9 +1091,14 @@ class App:
         return self.snapshot_items()
 
     def selected_snap(self):
-        if not self.snaps:
-            return None
-        return self.snaps[max(0, min(self.cursor, len(self.snaps) - 1))]
+        """操作屏当前针对的版本。
+
+        **不能用 self.cursor 去索引**：在 snap_actions 屏里 cursor 指的是操作项
+        （进入时被重置为 0），拿它索引 self.snaps 会永远指向第一个快照，
+        于是“恢复/对比/删除这个版本”全作用在错误的版本上。进入操作屏时记下
+        真正选中的那个（见 activate）。
+        """
+        return self.active_snap
 
     def body(self, height, width):
         items = self.current_items()
@@ -1055,9 +1162,17 @@ class App:
 
     # -- 动作 --
     def run_suspended(self, func, *args, **kwargs):
+        """把终端交还给子进程执行 func；**失败时先等一个按键再收回来**。
+
+        否则 resume() 切回备用屏会把子进程打在普通屏上的错误输出盖掉，
+        用户只看到一句“备份失败”，永远不知道到底怎么回事。
+        """
         self.term.suspend()
         try:
-            return func(*args, **kwargs)
+            code = func(*args, **kwargs)
+            if code:
+                self.term.wait_key("执行失败，按任意键返回")
+            return code
         finally:
             self.term.resume()
             self.refresh()
@@ -1090,11 +1205,17 @@ class App:
 
     def act_unmount(self):
         self.term.suspend()
+        ok = True
         try:
             do_unmount(self.cfg)
+        except SystemExit:
+            # do_unmount 用 die() 报错（消息已打到普通屏），先等一个键再收回来，
+            # 否则 resume() 会把那条消息盖掉
+            ok = False
+            self.term.wait_key("卸载失败，按任意键返回")
         finally:
             self.term.resume()
-        self.set_message("卸载完成")
+        self.set_message("卸载完成" if ok else "卸载失败")
 
     @staticmethod
     def free_space(path):
@@ -1135,11 +1256,10 @@ class App:
                 + host_args(self.cfg),
                 env=restic_env(self.cfg),
             )
+            info(f"恢复完成: {target}/home/lu5je0/" if code == 0 else "恢复失败")
+            self.term.wait_key()
         finally:
             self.term.resume()
-        if code == 0:
-            info(f"恢复完成: {target}/home/lu5je0/")
-        self.term.wait_key()
         self.set_message(f"已恢复到 {target}" if code == 0 else "恢复失败")
 
     def act_diff(self, snap):
@@ -1149,33 +1269,63 @@ class App:
             return
         prev = self.snaps[idx - 1]
         self.term.suspend()
+        code = 0
         try:
-            print(f"对比 {prev['short_id']} → {snap['short_id']}")
+            print(f"{BOLD}对比 {prev['short_id']} → {snap['short_id']}{RESET}")
             # diff 不支持 --host
-            subprocess.call(
+            proc = subprocess.Popen(
                 [self.restic, "diff", prev["short_id"], snap["short_id"]],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,           # 行缓冲，逐行着色才不会把大 diff 堆在内存里
                 env=restic_env(self.cfg),
             )
+            for line in proc.stdout:
+                print(colorize_diff_line(line), end="")
+            code = proc.wait()
+            print()
+            # 在备用屏外等：先 resume 就把 diff 输出盖掉了
+            self.term.wait_key()
         finally:
             self.term.resume()
-        self.term.wait_key()
-        self.set_message("对比结束")
+        self.set_message("对比结束" if code == 0 else f"对比失败（退出码 {code}）")
 
     def act_forget_snap(self, snap):
+        # 记下位置：删完要回到版本列表的同一处（被删的槽位由后面的版本顶上）
+        index = self.snaps.index(snap) if snap in self.snaps else 0
         self.term.suspend()
+        code = 0
         try:
             print(f"要删除版本 {snap['short_id']} ({snap['time'][:19]})")
             if input("确认删除？[y/N] ").strip().lower() != "y":
                 # 不要在这里 resume：finally 里会做，重复 resume 会让终端状态错乱
                 self.set_message("已取消")
                 return
-            code = subprocess.call(
-                [self.restic, "forget", snap["id"], "--prune"] + host_args(self.cfg),
-                env=restic_env(self.cfg),
+            code, output = run_visible(
+                self.restic,
+                self.cfg,
+                ["forget", snap["id"], "--prune"] + host_args(self.cfg),
             )
+            if code:
+                print()
+                if "already locked" in output:
+                    # restic 被强杀时会把锁留下，之后所有要排他锁的操作都这样失败。
+                    # 这里给出下一步，而不是只说“失败”。
+                    warn("仓库里有其它操作留下的残留锁。确认没有备份在跑后执行：")
+                    print("    q-restic unlock")
+                self.term.wait_key("删除失败，按任意键返回")
         finally:
             self.term.resume()
             self.refresh()
+
+        if code == 0:
+            # 这个版本已经不在列表里了，操作屏留在原地会对着一个不存在的快照。
+            # 用 go_back() 而不是直接改 self.screen：否则 history 里那条会留着，
+            # 之后要点两次 Esc 才能回主菜单。
+            self.go_back()
+            self.cursor = max(0, min(index, len(self.snaps) - 1))
+            self.offset = 0
         self.set_message("已删除" if code == 0 else "删除失败")
 
     def act_edit_policy(self):
@@ -1216,6 +1366,10 @@ class App:
         if item.get("goto"):
             # 记住当前屏的位置，Esc 返回时才能停回原处
             self.history.append((self.screen, self.cursor, self.offset))
+            # 离开版本列表时把选中的版本记下来：进入操作屏后 cursor 归零指向操作项，
+            # 那边再用 cursor 索引 self.snaps 就会错到第一个版本上
+            if self.screen == "snapshots" and self.snaps:
+                self.active_snap = self.snaps[min(self.cursor, len(self.snaps) - 1)]
             self.screen = item["goto"]
             # 进版本列表默认停在最新的那个（最常用），其它屏从第一项开始
             self.cursor = max(0, len(self.snaps) - 1) if item["goto"] == "snapshots" else 0
@@ -1310,6 +1464,10 @@ def build_parser():
     sub.add_parser("status", aliases=["snapshots", "list"], help="列出版本 + 占用")
     sub.add_parser("check", help="仓库完整性校验")
     sub.add_parser("forget", help="按保留策略清理旧版本")
+    sub.add_parser(
+        "unlock",
+        help="清掉残留锁（restic 被强杀后会留下，导致 backup/forget 失败）",
+    )
     sub.add_parser("config", help="打印当前配置")
     sub.add_parser("edit-config", help="用 $EDITOR 打开配置文件")
     sub.add_parser("edit-excludes", help="用 $EDITOR 打开排除清单")
@@ -1365,6 +1523,8 @@ def main():
         require_password(cfg)
         acquire_lock(cfg)
         return do_forget(restic_bin(), cfg)
+    if args.command == "unlock":
+        return do_unlock(cfg)
     if args.command == "mount":
         return do_mount(cfg, args.dir)
     if args.command == "browse":

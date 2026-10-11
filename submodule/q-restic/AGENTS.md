@@ -21,6 +21,25 @@
 - **子命令别名要用 `in (...)` 分发**：`status` 挂了 `snapshots` / `list` 别名（restic 自己的命令就叫
   `snapshots`，旧版 bash 脚本也用 `--snapshots`）。用别名调用时 argparse 把 `args.command` 设成**别名本身**，
   只判 `== "status"` 会漏掉，然后落到末尾的 TUI 分支——表现是“想列版本却把 TUI 打开了”。
+- **子进程的输出必须在备用屏外展示：`wait_key()` 要写在 `suspend()` 里面、`resume()` 之前**。
+  先 `resume()` 会切回备用屏，把子进程打在普通屏上的东西整个盖掉，
+  表现就是“跑完 diff 只剩一句按任意键返回，看不到内容”或者“只说失败、不说为什么”。
+  现在失败时都先等一个键：`run_suspended()`（backup/dry-run/check）、`act_diff`、
+  `act_restore`、`act_forget_snap`、`act_unmount`。新加 suspend 要子进程的操作时照此处理。
+  `wait_key()` 自己会临时切 cbreak——`suspend()` 已把终端还原成 cooked，直接 read 要等回车，
+  不然提示里的“任意键”不成立。
+- **区分两套锁**：q-restic 自己的 flock（`~/.cache/q-restic.<repo hash>.lock`，只保护写流程）
+  和 **restic 仓库锁**（`restic list locks`）。后者是另一个东西：进程被强杀
+  （SIGKILL，或 `forget --prune` 跑到一半被 Ctrl-C）会留下残留锁，之后 `forget --prune`
+  因为拿不到排他锁而失败——表现就是“删除失败”，而且每晚定时任务会在 forget 这步挂掉。
+  清理用 `q-restic unlock`。`act_forget_snap` 会识别输出里的 `already locked` 并直接把这条命令提示给用户。
+- **`selected_snap()` 不能用 `self.cursor` 索引**。在 `snap_actions` 屏里 `cursor` 指的是操作项
+  （进屏时被重置为 0），拿它去索引 `self.snaps` 会**永远指向第一个版本**，
+  于是“恢复/对比/删除这个版本”全作用在错误的版本上。离开版本列表时把选中项记进
+  `self.active_snap`（见 `activate()`），`selected_snap()` 只读它。
+- **diff 输出要过 `colorize_diff_line()`**：restic 的 diff 是纯文本（TTY 下也只有进度擦除序列），
+  `+/−/M/T` 全一个颜色很难扫。标记行的判定必须**带上后面四个空格**——光看首字母会把
+  `Dirs:` / `Files:` / `Others:` / `comparing` 的首字母当成变更。
 - **kitty IME 闸门必须成对，离开时必须开闸**。q-restic 全程只做导航，所以进 TUI 就发
   `OSC 1337;SetUserVar=tui-bridge=<base64>`（`method=normal`）关掉 kitty 的 IME。
   kitty 是**旁路** IME 而不是切输入源，**留着关闸状态出去，用户手动切输入源也救不回来**
@@ -99,5 +118,9 @@
   非 kitty 终端（`TERM=xterm-256color` 时必须完全不发）。想验证 tmux 包装就把
   `TMUX` 和 `TERM=xterm-kitty` 一起设上，检查输出里有 `\ePtmux;`。
   **测试务必跑在新建的 pty 里**，否则这些转义会写到你自己的终端窗口、真把 IME 关掉。
+- **测试要收尾干净**：pty 测试里 kill 掉一个正在跑 restic 的进程会在仓库里留下 restic 锁
+  （测试仓库就攒了好几把），之后 forget/prune 全失败。跑完用 `restic unlock` 清一下；
+  另外 TUI 里按到“挂载并浏览”会真的挂盘、按到“编辑保留策略”会真的开 `$EDITOR`
+  （没设 `EDITOR` 就是 nvim），导航测试别按过头，并给测试设 `EDITOR=/tmp/fake-editor.sh`。
 - 改动写入路径后确认并发保护仍生效：同一仓库同时跑两个实例，第二个应报
   `另一次备份正在运行`。
