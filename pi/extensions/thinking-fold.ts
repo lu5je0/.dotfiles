@@ -15,6 +15,14 @@
  * 所以折叠发生在 markdown 层：先按正文可用宽度把 thinking markdown 硬折成「行」，
  * 再取 head/tail 拼回去。头/尾行数和 qoder 一致（Vc=2、Pm=3，<=5 行不折）。
  *
+ * 竖线是 pi 画的，不是我们画的：每行只发 `> `（markdown 引用标记），pi 的
+ * blockquote 渲染器会对**折行之后的每一行**补一次 `quoteBorder("│ ")`
+ * （pi-tui/components/markdown.ts）。曾经试过自己塞 `│ ` 字符串，结果是
+ * `│ ``` ` 不再是 fence → 代码块降级成段落 → ``` 配成跨行 code span →
+ * CommonMark 规定 code span 内部的换行变空格 → 折好的行被合并成一条超长行 →
+ * pi 再折一次，后续行没有前缀，正文画到了竖线那一列（"字越过竖线"）。
+ * 交给 pi 之后竖线在结构上不可能再丢，代码块也不会被合并。
+ *
  * 按键：ctrl+t。pi 默认把 ctrl+t 绑给 `app.thinking.toggle`，而且它在
  * RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS 里（core/extensions/runner.js），
  * 扩展注册同一个键会被直接拒绝并打印诊断。所以 `keybindings.json` 里做了两件事：
@@ -25,10 +33,14 @@
  *
  * 已知限制：
  *   - 折叠边界可能切断 `**加粗**`、`` `代码` `` 等行内标记，切断了会渲染得比较怪
- *     （thinking 里少见，qoder 自己也有硬折）
- *   - 样式改不了：transformer 只能返回 markdown，颜色由 pi 的 thinking 主题
- *     （thinkingText + 斜体）统一决定，qoder 那种「侧栏 border 色、标题 primary 色」
- *     做不到；这里用 `**Thinking**` 加粗假装标题更亮
+ *     （thinking 里少见，qoder 自己也有硬折）；切在 ``` 中间会补一个配对 fence，
+ *     见 fenceOpenBefore()
+ *   - 样式只能借 pi 的 markdown 主题：竖线用 mdQuoteBorder（dark 主题 = muted 灰），
+ *     正文仍是 thinkingText，qoder 那种「侧栏一个色、标题一个色」做不到
+ *   - 行数统计按「折出来的行」算，不完全是「屏幕上的行」：markdown 标记被渲染掉会
+ *     变短（没事），pi 给 code 行加 2 格缩进、给 list 加 marker、链接在无 OSC 8 的
+ *     终端里会补 ` (url)` 会变长（这些会用 rowOverhead 预留一部分）。真对不上时
+ *     `… +N rows` 会偏一点，但不会丢竖线
  *   - 已经滚进终端 scrollback 的历史输出不会重排，切换只影响当前可见区域
  *     （pi 自带 ctrl+o 折叠工具输出也是同样的行为）
  */
@@ -42,35 +54,67 @@ const TOGGLE_KEY = "ctrl+t";
 /** 标题行：加粗让它在 thinkingText 里稍微亮一点，近似 qoder 的 primary 色标题 */
 const HEADER = "**Thinking**";
 
-/** 每行前缀的侧栏，宽度算 2 列 */
-const RAIL = "│ ";
-const RAIL_WIDTH = 2;
-
 /** 折叠后保留的头/尾行数（qoder：Vc=2、Pm=3），总行数 <= 5 就不折 */
 const HEAD_ROWS = 2;
 const TAIL_ROWS = 3;
 const MAX_UNFOLDED_ROWS = HEAD_ROWS + TAIL_ROWS;
 
 /**
+ * 每行的前缀：markdown 引用标记。真正的 `│ ` 由 pi 的 blockquote 渲染器逐行补。
+ * 空行只发 `>`（行尾不留空格）。改这个常量就等于改整个折叠的呈现方式，
+ * 见文件头的说明。
+ */
+const QUOTE = "> ";
+
+/** pi 的 blockquote 自己吃掉 2 列（`quoteContentWidth = width - 2`）*/
+const QUOTE_WIDTH = 2;
+
+/**
+ * 块类行在 pi 那边还会再窄 2 列：
+ *   - fence 里的代码行：pi 会加 `codeBlockIndent`（默认 "  "）再折
+ *   - list 行：pi 会加 `- ` / `1. ` 前缀，并按 `width - marker` 折内容
+ *   - 嵌套引用行（thinking 里本来就写了 `> xxx`）：再套一层边框
+ * 不预留的话这些行会被 pi 多折出几行（竖线仍在，只是行数和 `… +N rows` 对不上）。
+ */
+const NESTING_WIDTH = 2;
+
+const FENCE_RE = /^\s{0,3}(?:`{3,}|~{3,})/;
+const LIST_MARKER_RE = /^\s{0,3}(?:[-*+]|\d{1,9}[.)])\s/;
+const NESTED_QUOTE_RE = /^\s{0,3}>/;
+
+/** 这一行在 pi 那边会被额外占掉几列 */
+function rowOverhead(row: string, inFence: boolean): number {
+	if (inFence || FENCE_RE.test(row)) return NESTING_WIDTH;
+	if (LIST_MARKER_RE.test(row)) return NESTING_WIDTH;
+	if (NESTED_QUOTE_RE.test(row)) return NESTING_WIDTH;
+	return 0;
+}
+
+/**
  * 按显示宽度把 markdown 折成行。
  *
  * 用 pi-tui 的 wrapTextWithAnsi 而不是自己算宽度：pi 渲染时也是拿这个函数换行的，
  * 行数才和屏幕上看到的一致。source 里的 markdown 标记（`**`、`-` 等）会被当成普通
- * 字符计入宽度，属于可接受的近似。
+ * 字符计入宽度，属于可接受的近似。fence 状态要一路带着走，代码行才拿得到额外的
+ * 2 列余量（见 rowOverhead）。
  */
-function toRows(markdown: string, width: number): string[] {
+export function toRows(markdown: string, width: number): string[] {
 	const rows: string[] = [];
+	let inFence = false;
 	for (const line of markdown.replace(/\r\n?/g, "\n").split("\n")) {
 		const trimmed = line.replace(/\s+$/, "");
 		if (trimmed === "") {
 			rows.push("");
 			continue;
 		}
-		if (visibleWidth(trimmed) <= width) {
+		const fenceRow = FENCE_RE.test(trimmed);
+		const budget = Math.max(1, width - rowOverhead(trimmed, inFence));
+		if (fenceRow) inFence = !inFence;
+		if (visibleWidth(trimmed) <= budget) {
 			rows.push(trimmed);
 			continue;
 		}
-		for (const wrapped of wrapTextWithAnsi(trimmed, width)) {
+		for (const wrapped of wrapTextWithAnsi(trimmed, budget)) {
 			rows.push(wrapped.replace(/\s+$/, ""));
 		}
 	}
@@ -80,24 +124,38 @@ function toRows(markdown: string, width: number): string[] {
 	return rows;
 }
 
-/** 一行正文：空行只留侧栏，免得行尾多一个空格 */
-const railRow = (row: string) => (row === "" ? RAIL.trimEnd() : RAIL + row);
+/** 一行正文：空行只留引用标记本身，免得行尾多一个空格 */
+const quotedRow = (row: string) => (row === "" ? QUOTE.trimEnd() : QUOTE + row);
 
-/** 把一段 thinking markdown 渲染成「标题 + 侧栏正文」，folded 时中间收起来 */
-function renderThinking(markdown: string, width: number, folded: boolean): string {
-	const rows = toRows(markdown, Math.max(1, width - RAIL_WIDTH));
+/** rows[index] 这一行之前，代码块是不是开着的（用来判断折叠切片有没有切在 fence 里）*/
+function fenceOpenBefore(rows: string[], index: number): boolean {
+	let open = false;
+	for (let i = 0; i < index && i < rows.length; i++) {
+		if (FENCE_RE.test(rows[i] ?? "")) open = !open;
+	}
+	return open;
+}
+
+/** 把一段 thinking markdown 渲染成「标题 + 引用块正文」，folded 时中间收起来 */
+export function renderThinking(markdown: string, width: number, folded: boolean): string {
+	const rows = toRows(markdown, Math.max(1, width - QUOTE_WIDTH));
 	if (rows.length === 0) return markdown;
 
 	const lines = [HEADER];
 	if (!folded || rows.length <= MAX_UNFOLDED_ROWS) {
-		for (const row of rows) lines.push(railRow(row));
+		for (const row of rows) lines.push(quotedRow(row));
 		return lines.join("\n");
 	}
 
 	const hidden = rows.length - HEAD_ROWS - TAIL_ROWS;
-	for (const row of rows.slice(0, HEAD_ROWS)) lines.push(railRow(row));
-	lines.push(railRow(`… +${hidden} rows (${TOGGLE_KEY})`));
-	for (const row of rows.slice(rows.length - TAIL_ROWS)) lines.push(railRow(row));
+	const tailStart = rows.length - TAIL_ROWS;
+	for (const row of rows.slice(0, HEAD_ROWS)) lines.push(quotedRow(row));
+	// 头切在代码块里就先把 fence 收掉，否则「… +N rows」和尾部都会被当成代码
+	if (fenceOpenBefore(rows, HEAD_ROWS)) lines.push(quotedRow("```"));
+	lines.push(quotedRow(`… +${hidden} rows (${TOGGLE_KEY})`));
+	// 尾从代码块中间开始就补一个开 fence，把代码块的配色和缩进接回来
+	if (fenceOpenBefore(rows, tailStart)) lines.push(quotedRow("```"));
+	for (const row of rows.slice(tailStart)) lines.push(quotedRow(row));
 	return lines.join("\n");
 }
 

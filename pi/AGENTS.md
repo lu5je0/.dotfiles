@@ -73,7 +73,12 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 
 `extensions/thinking-fold.ts` 把 thinking 折成 qoder 的样子：`**Thinking**` 标题 + 每行 `│ ` 侧栏，正文按可用宽度折行后只留头 2 行 + `… +N rows (ctrl+t)` + 尾 3 行，≤5 行不折。
 
-- 只能走 `pi.registerMarkdownTransformer("assistant-thinking")`：pi 没有给扩展自渲染 assistant 消息的口子，样式（thinkingText + 斜体）也改不了
+- 竖线**不是**插件画的：每行只发 `> `（markdown 引用标记），`│ ` 由 pi 的 blockquote 渲染器对**折行之后的每一行**补一次（`quoteBorder("│ ")`）。别改回自己塞 `│ ` 字符串：那两列会进 markdown 语法，`│ ``` ` 不再是 fence（fence 要求行首最多 3 个空格）→ 代码块降级成段落 → ``` 配成跨行 code span → CommonMark 把 code span 内的换行变空格 → 折好的行被合并成一条超长行 → pi 再折一次，后续行没有前缀，正文画到竖线那一列（"字越过竖线"）。交给 pi 之后竖线在结构上不可能再丢
+- 宽度口径：`toRows` 折到 `availableWidth - 2`（quote 自己吃掉 2 列），代码块内 / list / 嵌套引用行再多留 2 列（pi 会加 `codeBlockIndent`、`- ` marker、第二层边框）。预留守的是屏幕行数 = 折行行数，不守竖线
+- 折叠切片切在 ``` 中间时，`fenceOpenBefore()` 会在提示行前补一个闭合 fence、在尾行前补一个开 fence，免得后半段被吞进代码块
+- 行数只保证近似：markdown 标记被渲染掉会变短（没事），链接在无 OSC 8 的终端里会被补 ` (url)`、thinking 里孤立的反引号配成跨行 code span 会合并行（这两种竖线仍在，只是 `… +N rows` 会偏）
+- 只能走 `pi.registerMarkdownTransformer("assistant-thinking")`：pi 没有给扩展自渲染 assistant 消息的口子，样式也改不了（竖线用 `mdQuoteBorder`，dark 主题 = muted 灰；正文仍是 thinkingText）
+- `toRows` / `renderThinking` 是 export 的纯函数，便于脱离 pi 验证；回归检查：`node pi/tests/thinking-fold-render.mjs`（把 transformer 的输出喂回**真** pi-tui 的 Markdown，断言除标题外每行都有 `│`、没有超宽行、展开态 fence 没被合并；6 个样本 × 12 宽度 × 折叠/展开。pi-tui 的位置由脚本顺着 `command -v pi` 自己找，找不到时可给 `PI_TUI_PATH`）
 - 切换后靠 `ctx.ui.setHiddenThinkingLabel()` 逼 pi 重建 thinking 的 Markdown 组件（pi-tui 的 Markdown 按 `(text,width)` 缓存，光 requestRender 不会重跑 transformer）。副作用：隐藏 thinking 时那行标签会被重置回 pi 默认的 `Thinking...`
 - 折叠键 `ctrl+t` 是从 pi 内置动作手里拿来的：`ctrl+t` 默认属于 `app.thinking.toggle`，而这个动作名在 pi 的 `RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS` 里，扩展注册同一个键会被直接拒绝。所以 `keybindings.json` 里 `app.thinking.toggle` 改绑到 `ctrl+shift+t`（仍然是「一键隐藏全部 thinking」），同时清掉 `/tree` 里也占着 ctrl+t 的 `app.tree.filter.noTools`（不清会多一行启动告警；树里用 ctrl+o 循环仍能切到 no-tools）
 - `/fold` 命令等价于按 `ctrl+t`
