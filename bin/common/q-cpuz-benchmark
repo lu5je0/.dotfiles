@@ -1,122 +1,204 @@
-#!/bin/sh
-# q-cpuz-benchmark - 运行 CPU-Z 复刻跑分（自动下载对应平台预编译二进制）
-#
-# 用法：
-#   q-cpuz-benchmark                      # 单线程 + 多线程各 10 秒，带实时分数面板
-#   q-cpuz-benchmark --duration 5000      # 每个 pass 5 秒
-#   q-cpuz-benchmark -q                   # 只输出两行分数
-#   q-cpuz-benchmark --json               # 机器可读输出
-#   q-cpuz-benchmark --help               # 全部参数（透传给 cpuz-bench）
-#
-# 二进制缓存在：
-#   ${XDG_CACHE_HOME:-$HOME/.cache}/cpuz-benchmark/cpuz-bench-<os>-<arch>
-# 默认每次运行会静默查一次最新 release（一个 HEAD 请求），版本变了就自动重下。
-#
-# 环境变量：
-#   CPUZ_BENCH_BIN              直接指定已有的二进制，跳过下载
-#   CPUZ_BENCH_TAG              指定 release 版本（默认 latest，例如 v0.2.1）
-#   CPUZ_BENCH_URL_PREFIX       自定义下载前缀（默认 GitHub Releases）
-#   CPUZ_BENCH_FORCE=1          强制重新下载
-#   CPUZ_BENCH_CACHE_DIR        指定缓存目录
-#   CPUZ_BENCH_NO_UPDATE_CHECK=1  跳过最新版本检查（离线/想省一次请求时用）
-set -eu
+#!/usr/bin/env python3
+"""q-cpuz-benchmark —— 运行 CPU-Z 复刻跑分（自动下载对应平台的预编译二进制）
 
-REPO="lu5je0/CPU-Z-Benchmark"
-CACHE_DIR="${CPUZ_BENCH_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/cpuz-benchmark}"
-TAG="${CPUZ_BENCH_TAG:-latest}"
-URL_PREFIX="${CPUZ_BENCH_URL_PREFIX:-https://github.com/$REPO/releases/$TAG/download}"
-RELEASE_LATEST_URL="https://github.com/$REPO/releases/latest"
+用法：
+    q-cpuz-benchmark                     # 单线程 + 多线程各 10 秒，带实时分数面板
+    q-cpuz-benchmark --duration 5000     # 每个 pass 5 秒
+    q-cpuz-benchmark -q                  # 只输出两行分数
+    q-cpuz-benchmark --json              # 机器可读输出
+    q-cpuz-benchmark --help              # 全部参数（透传给 cpuz-bench）
 
-die() {
-    echo "q-cpuz-benchmark: $*" >&2
-    exit 1
-}
+二进制缓存在 ${XDG_CACHE_HOME:-~/.cache}/cpuz-benchmark/cpuz-bench-<os>-<arch>，
+默认每次运行静默查一次最新 release（一个 HEAD 请求，不占 API 配额），版本变了就自动重下；
+查询失败（离线等）时继续用缓存。
 
-# ---- 平台识别 -------------------------------------------------------------
-os=$(uname -s)
-arch=$(uname -m)
-case "$os" in
-    Linux) os_part=linux ;;
-    Darwin) os_part=macos ;;
-    *) die "不支持的平台：$os（可在 $REPO 自行 cargo build --release）" ;;
-esac
-case "$arch" in
-    x86_64 | amd64) arch_part=x86_64 ;;
-    aarch64 | arm64) arch_part=aarch64 ;;
-    *) die "不支持的架构：$arch（可在 $REPO 自行 cargo build --release）" ;;
-esac
+环境变量：
+    CPUZ_BENCH_BIN              直接指定已有的二进制，跳过下载
+    CPUZ_BENCH_TAG              指定 release 版本（默认 latest，例如 v0.2.3）
+    CPUZ_BENCH_URL_PREFIX       自定义下载前缀（默认 GitHub Releases）
+    CPUZ_BENCH_FORCE=1          强制重新下载
+    CPUZ_BENCH_CACHE_DIR        指定缓存目录
+    CPUZ_BENCH_NO_UPDATE_CHECK=1  跳过最新版本检查（离线/想省一次请求时用）
+"""
 
-case "$os_part-$arch_part" in
-    linux-x86_64 | linux-aarch64 | macos-aarch64) ;;
-    *) die "没有 $os_part-$arch_part 的预编译产物（支持 linux-x86_64 / linux-aarch64 / macos-aarch64）" ;;
-esac
-asset="cpuz-bench-$os_part-$arch_part"
+from __future__ import annotations
 
-# ---- 下载 -----------------------------------------------------------------
-download() {
-    url="$URL_PREFIX/$asset"
-    tmp="$CACHE_DIR/.$asset.$$"
-    echo "q-cpuz-benchmark: 下载 $url" >&2
-    if command -v curl >/dev/null 2>&1; then
-        curl -fL --progress-bar -o "$tmp" "$url" || { rm -f "$tmp"; return 1; }
-    elif command -v wget >/dev/null 2>&1; then
-        wget -O "$tmp" "$url" || { rm -f "$tmp"; return 1; }
-    else
-        die "需要 curl 或 wget 才能下载"
-    fi
-    chmod +x "$tmp"
-    mv "$tmp" "$CACHE_DIR/$asset"
-}
+import os
+import platform
+import sys
+from pathlib import Path
+from urllib import error, request
 
-# 把 latest 解析成具体 tag（走 github.com 的 302，不占 API 配额）；失败就返回空
-remote_tag() {
-    [ "$TAG" = "latest" ] || { printf '%s\n' "$TAG"; return 0; }
-    [ "${CPUZ_BENCH_NO_UPDATE_CHECK:-0}" = "1" ] && { printf '\n'; return 0; }
-    if command -v curl >/dev/null 2>&1; then
-        curl -fsIL -o /dev/null -m 5 -w '%{url_effective}' "$RELEASE_LATEST_URL" 2>/dev/null |
-            sed 's#.*/tag/##' || printf '\n'
-    elif command -v wget >/dev/null 2>&1; then
-        wget -q --spider --server-response -T 5 "$RELEASE_LATEST_URL" 2>&1 |
-            sed -n 's#.*Location: .*/tag/\(.*\)\r$#\1#p' | tail -1 || printf '\n'
-    else
-        printf '\n'
-    fi
-}
+REPO = "lu5je0/CPU-Z-Benchmark"
+RELEASE_LATEST_URL = f"https://github.com/{REPO}/releases/latest"
+SUPPORTED = ("linux-x86_64", "linux-aarch64", "macos-aarch64")
+TIMEOUT = 10  # 秒：查版本 / 下载的超时
+CHUNK = 64 * 1024
 
-resolve_binary() {
-    if [ -n "${CPUZ_BENCH_BIN:-}" ]; then
-        [ -x "$CPUZ_BENCH_BIN" ] || die "CPUZ_BENCH_BIN 不可执行：$CPUZ_BENCH_BIN"
-        printf '%s\n' "$CPUZ_BENCH_BIN"
-        return
-    fi
+# 平台 -> release 资产名
+OS_MAP = {"linux": "linux", "darwin": "macos"}
+ARCH_MAP = {"x86_64": "x86_64", "amd64": "x86_64", "aarch64": "aarch64", "arm64": "aarch64"}
 
-    bin="$CACHE_DIR/$asset"
-    tag_file="$CACHE_DIR/$asset.tag"
-    if [ "${CPUZ_BENCH_FORCE:-0}" = "1" ]; then
-        rm -f "$bin"
-    fi
 
-    if [ ! -x "$bin" ]; then
-        mkdir -p "$CACHE_DIR" || die "无法创建缓存目录 $CACHE_DIR"
-        download || die "下载失败：$URL_PREFIX/$asset
-  - 检查网络，或用 CPUZ_BENCH_TAG=<tag> 指定版本
-  - 也可以 clone $REPO 后 cargo build --release，再用 CPUZ_BENCH_BIN=./target/release/cpuz-bench 运行"
-        remote_tag >"$tag_file"
-    else
-        # 缓存命中：版本变了就自动更新（离线或查不到时继续用缓存）
-        want=$(remote_tag)
-        have=$(cat "$tag_file" 2>/dev/null || printf '')
-        if [ -n "$want" ] && [ "$want" != "$have" ]; then
-            echo "q-cpuz-benchmark: 发现新版本 $want（缓存 ${have:-未知}），更新中" >&2
-            if download; then
-                printf '%s\n' "$want" >"$tag_file"
-            else
-                echo "q-cpuz-benchmark: 更新失败，继续用缓存版本" >&2
-            fi
-        fi
-    fi
-    printf '%s\n' "$bin"
-}
+def die(message: str) -> None:
+    print(f"q-cpuz-benchmark: {message}", file=sys.stderr)
+    raise SystemExit(1)
 
-binary=$(resolve_binary)
-exec "$binary" "$@"
+
+def enabled(name: str) -> bool:
+    return os.environ.get(name, "").lower() not in ("", "0", "false", "no")
+
+
+def asset_name() -> str:
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    os_part = OS_MAP.get(system)
+    if os_part is None:
+        die(f"不支持的平台：{platform.system()}（可在 {REPO} 自行 cargo build --release）")
+    arch_part = ARCH_MAP.get(machine)
+    if arch_part is None:
+        die(f"不支持的架构：{platform.machine()}（可在 {REPO} 自行 cargo build --release）")
+    key = f"{os_part}-{arch_part}"
+    if key not in SUPPORTED:
+        die(f"没有 {key} 的预编译产物（支持 {' / '.join(SUPPORTED)}）")
+    return f"cpuz-bench-{key}"
+
+
+def cache_dir() -> Path:
+    env = os.environ.get("CPUZ_BENCH_CACHE_DIR")
+    if env:
+        return Path(env).expanduser()
+    base = os.environ.get("XDG_CACHE_HOME") or os.path.join(Path.home(), ".cache")
+    return Path(base).expanduser() / "cpuz-benchmark"
+
+
+def url_prefix(tag: str) -> str:
+    env = os.environ.get("CPUZ_BENCH_URL_PREFIX")
+    if env:
+        return env.rstrip("/")
+    return f"https://github.com/{REPO}/releases/{tag}/download"
+
+
+def remote_tag(tag: str) -> str:
+    """把 latest 解析成具体 tag（跟随 github.com 的 302，不占 API 配额）。
+
+    任何失败都返回空串：查不通就继续用缓存。
+    """
+    if tag != "latest":
+        return tag
+    if enabled("CPUZ_BENCH_NO_UPDATE_CHECK"):
+        return ""
+    req = request.Request(RELEASE_LATEST_URL, method="HEAD")
+    try:
+        with request.urlopen(req, timeout=TIMEOUT) as resp:
+            final = resp.geturl()
+    except (error.URLError, error.HTTPError, OSError):
+        return ""
+    if "/tag/" not in final:
+        return ""
+    return final.rsplit("/tag/", 1)[1].strip()
+
+
+def download(url: str, dest: Path) -> None:
+    """流式下载（终端上画进度条），完成后原子替换。"""
+    tmp = dest.with_name(f".{dest.name}.{os.getpid()}")
+    show = sys.stderr.isatty()
+    try:
+        with request.urlopen(url, timeout=TIMEOUT) as resp:
+            total = int(resp.headers.get("Content-Length") or 0)
+            done = 0
+            with open(tmp, "wb") as fh:
+                while True:
+                    chunk = resp.read(CHUNK)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+                    done += len(chunk)
+                    if show and total:
+                        pct = done * 100 // total
+                        bar = "#" * (pct // 4)
+                        print(
+                            f"\rq-cpuz-benchmark: 下载 [{bar:<25}] {pct:3d}%",
+                            end="",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+        if show:
+            print(file=sys.stderr)
+        os.chmod(tmp, 0o755)
+        os.replace(tmp, dest)
+    except (error.URLError, error.HTTPError, OSError) as exc:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        raise RuntimeError(str(exc)) from exc
+
+
+def failure_hint(asset: str, tag: str) -> str:
+    return (
+        f"下载失败：{url_prefix(tag)}/{asset}\n"
+        f"  - 检查网络，或用 CPUZ_BENCH_TAG=<tag> 指定版本\n"
+        f"  - 也可以 clone {REPO} 后 cargo build --release，"
+        f"再用 CPUZ_BENCH_BIN=./target/release/cpuz-bench 运行"
+    )
+
+
+def resolve_binary(asset: str) -> Path:
+    override = os.environ.get("CPUZ_BENCH_BIN")
+    if override:
+        path = Path(override).expanduser()
+        if not os.access(path, os.X_OK):
+            die(f"CPUZ_BENCH_BIN 不可执行：{path}")
+        return path
+
+    tag = os.environ.get("CPUZ_BENCH_TAG") or "latest"
+    directory = cache_dir()
+    binary = directory / asset
+    tag_file = directory / f"{asset}.tag"
+    url = f"{url_prefix(tag)}/{asset}"
+
+    if enabled("CPUZ_BENCH_FORCE"):
+        binary.unlink(missing_ok=True)
+
+    if not os.access(binary, os.X_OK):
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            die(f"无法创建缓存目录 {directory}: {exc}")
+        print(f"q-cpuz-benchmark: 下载 {url}", file=sys.stderr)
+        try:
+            download(url, binary)
+        except RuntimeError as exc:
+            die(f"{failure_hint(asset, tag)}\n  ({exc})")
+        resolved = remote_tag(tag)
+        if resolved:
+            tag_file.write_text(resolved + "\n", encoding="utf-8")
+        return binary
+
+    # 缓存命中：版本变了就自动更新（离线或查不到时继续用缓存）
+    want = remote_tag(tag)
+    have = tag_file.read_text(encoding="utf-8").strip() if tag_file.exists() else ""
+    if want and want != have:
+        print(
+            f"q-cpuz-benchmark: 发现新版本 {want}（缓存 {have or '未知'}），更新中",
+            file=sys.stderr,
+        )
+        try:
+            download(url, binary)
+        except RuntimeError as exc:
+            print(f"q-cpuz-benchmark: 更新失败，继续用缓存版本（{exc}）", file=sys.stderr)
+        else:
+            tag_file.write_text(want + "\n", encoding="utf-8")
+    return binary
+
+
+def main(argv: list[str]) -> int:
+    binary = resolve_binary(asset_name())
+    # exec 替换进程：信号、退出码、终端行为都与直接运行二进制一致
+    os.execv(str(binary), [str(binary), *argv[1:]])
+    return 127  # 不会走到
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
