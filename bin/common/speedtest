@@ -157,20 +157,65 @@ def _probe_url(host):
     return "http://%s/speedtest/latency.txt?x=%d" % (netloc, random.getrandbits(30))
 
 
-def probe_server_latency(host, timeout=6):
-    """对候选服务器做一次 HTTP 探测，返回毫秒。"""
-    req = urllib.request.Request(_probe_url(host), headers={"User-Agent": USER_AGENT})
-    start = time.monotonic()
+def _base_from_final(url):
+    parts = urllib.parse.urlsplit(url)
+    return "%s://%s/speedtest/" % (parts.scheme, parts.netloc)
+
+
+def _fetch_final(url, timeout):
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout, context=SSL_CTX) as resp:
         resp.read()
-    return (time.monotonic() - start) * 1000.0
+        return resp.url
+
+
+def _probe(host, timeout=4):
+    """探测服务器，返回 (毫秒, 跳转后的 base)。"""
+    start = time.monotonic()
+    final = _fetch_final(_probe_url(host), timeout)
+    return (time.monotonic() - start) * 1000.0, _base_from_final(final)
+
+
+def _race(targets, worker, hard_timeout, grace):
+    """并发跑 worker(target)，收集成功结果。
+
+    避免被慢/死服务器拖住：拿到第一个成功结果后只再等 grace 秒，
+    hard_timeout 是从开始算的总上限。返回成功结果列表（可能为空）。
+    """
+    hits = []
+    lock = threading.Lock()
+
+    def runner(target):
+        try:
+            value = worker(target)
+        except Exception:
+            return
+        with lock:
+            hits.append(value)
+
+    threads = [threading.Thread(target=runner, args=(t,), daemon=True) for t in targets]
+    for thread in threads:
+        thread.start()
+    deadline = time.monotonic() + hard_timeout
+    while time.monotonic() < deadline:
+        with lock:
+            if hits:
+                break
+        if not any(t.is_alive() for t in threads):
+            break  # 全部候选都快失败，不必等满 hard_timeout
+        time.sleep(0.05)
+    grace_end = time.monotonic() + grace
+    while time.monotonic() < grace_end and any(t.is_alive() for t in threads):
+        time.sleep(0.02)
+    with lock:
+        return list(hits)
 
 
 def resolve_base(server, timeout=6):
     """解析服务器的规范 base。
 
-    依次尝试 server-<id>.prod.hosts.ooklaserver.net、原始 host 的 http/https，
-    任何一个能通就用它跟随跳转后的地址。全部失败则抛 RuntimeError（不抛超时原始异常）。
+    并行尝试 server-<id>.prod.hosts.ooklaserver.net、原始 host 的 http/https，
+    取第一个成功的跳转地址。全部失败则抛 RuntimeError（不抛超时原始异常）。
     """
     host = server["host"]
     port = host.rsplit(":", 1)[1] if ":" in host else "80"
@@ -180,34 +225,32 @@ def resolve_base(server, timeout=6):
     candidates.append("http://%s" % host)
     candidates.append("https://%s" % host)
 
-    last_error = None
-    for netloc in candidates:
+    def worker(netloc):
         url = "%s/speedtest/latency.txt?x=%d" % (netloc, random.getrandbits(30))
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=timeout, context=SSL_CTX) as resp:
-                final = resp.url
-                resp.read()
-            parts = urllib.parse.urlsplit(final)
-            return "%s://%s/speedtest/" % (parts.scheme, parts.netloc)
-        except Exception as exc:  # 网络/超时/DNS 都归一为候选失败
-            last_error = exc
-    raise RuntimeError("无法连接服务器 %s: %s" % (host, last_error))
+        return _base_from_final(_fetch_final(url, timeout))
+
+    hits = _race(candidates, worker, hard_timeout=timeout + 1, grace=0.0)
+    if hits:
+        return hits[0]
+    raise RuntimeError("无法连接服务器 %s" % host)
 
 
 def select_server(cfg):
+    """并发探测最近的几台服务器，返回 (延迟最低的 server, 它的 base)。"""
     servers = [s for s in cfg.get("servers", []) if s.get("host")]
     if not servers:
         raise RuntimeError("配置里没有可用服务器")
-    best = None
-    for server in servers[:5]:
-        try:
-            ms = probe_server_latency(server["host"])
-        except Exception:
-            continue
-        if best is None or ms < best[0]:
-            best = (ms, server)
-    return best[1] if best else servers[0]
+
+    def worker(server):
+        ms, base = _probe(server["host"])
+        return (ms, server, base)
+
+    hits = _race(servers[:5], worker, hard_timeout=6, grace=0.5)
+    if not hits:
+        return servers[0], None
+    hits.sort(key=lambda item: item[0])
+    _, server, base = hits[0]
+    return server, base
 
 
 # --------------------------------------------------------------------------- #
@@ -500,12 +543,20 @@ def main(argv):
     ping_count = int(stage.get("latency", {}).get("pingCount") or 5)
     isp = cfg.get("app", {}).get("ispName") or "Unknown"
 
-    server = servers[0] if args.server_id is not None else select_server(cfg)
-    try:
-        base = resolve_base(server)
-    except Exception as exc:
-        print("Error: %s" % exc, file=sys.stderr)
-        return 2
+    if args.server_id is not None:
+        server, base = servers[0], None
+    else:
+        try:
+            server, base = select_server(cfg)
+        except Exception as exc:
+            print("Error: %s" % exc, file=sys.stderr)
+            return 2
+    if base is None:
+        try:
+            base = resolve_base(server)
+        except Exception as exc:
+            print("Error: %s" % exc, file=sys.stderr)
+            return 2
     progress = sys.stdout.isatty() and not os.environ.get("SPEEDTEST_NO_PROGRESS")
 
     print()
