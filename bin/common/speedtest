@@ -5,7 +5,8 @@
 用法：
     speedtest              # 自动选择延迟最低的最近服务器并测速（线程数取服务端 config）
     speedtest -s 12191     # 使用指定 id 的服务器
-    speedtest -t 8         # 指定并发线程数（多线程）
+    speedtest -T           # 多线程测速（默认 4 线程，单线程为默认行为）
+    speedtest -T 8        # 指定并发线程数
     speedtest -L           # 列出最近的服务器
     speedtest -h           # 查看帮助
 
@@ -19,7 +20,7 @@
 
 环境变量：
     SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认取服务端下发值，通常 15）
-    SPEEDTEST_THREADS    并发线程数（默认取服务端 config 的 threadCount）
+    SPEEDTEST_THREADS    并发线程数（不指定 -T 时的默认值，默认单线程）
     SPEEDTEST_NO_CACHE=1  不读写 ~/.cache/speedtest 下的配置缓存
     SPEEDTEST_NO_PROGRESS=1   即使终端支持也不显示进度条
     SPEEDTEST_SAVE=1     尝试把结果保存到 speedtest.net（默认关闭，因为该接口未公开）
@@ -458,7 +459,8 @@ def main(argv):
     )
     parser.add_argument("-s", "--server-id", metavar="ID", help="指定服务器 id")
     parser.add_argument("-L", "--servers", action="store_true", help="列出最近的服务器")
-    parser.add_argument("-t", "--threads", type=int, metavar="N", help="并发线程数（默认取服务端 config 的 threadCount，通常 4）")
+    parser.add_argument("-T", "--threads", nargs="?", type=int, const=4, metavar="N",
+                        help="多线程测速，线程数默认 4；不指定则单线程")
     parser.add_argument("-V", "--version", action="version", version="speedtest(py) 1.0")
     args = parser.parse_args(argv)
 
@@ -490,9 +492,8 @@ def main(argv):
     if args.threads is not None:
         thread_count = args.threads
     else:
-        # 官方默认线程数由服务端 config 下发（当前为 4）
-        default_threads = int(engine.get("threadCount") or 4)
-        thread_count = int(os.environ.get("SPEEDTEST_THREADS") or default_threads)
+        # 不加 -T 时默认单线程
+        thread_count = int(os.environ.get("SPEEDTEST_THREADS") or 1)
     if thread_count < 1:
         print("speedtest: 线程数必须 >= 1", file=sys.stderr)
         return 1

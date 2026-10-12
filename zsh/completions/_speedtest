@@ -7,8 +7,8 @@ _arguments -s \
   '--version[Show version]' \
   '-L[List nearest servers]' \
   '--servers[List nearest servers]' \
-  '-t+[Number of concurrent threads]:threads:' \
-  '--threads=+[Number of concurrent threads]:threads:' \
+  '-T[Multhithread, default 4 threads]::threads:' \
+  '--threads=[Multithread, default 4 threads]::threads:' \
   '-s+[Specify server ID]:server ID:' \
   '--server-id=+:Specify server ID:server ID:' \
   '-I+[Bind to specified interface]:interface:' \
