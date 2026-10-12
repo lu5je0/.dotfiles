@@ -3,8 +3,9 @@
 """speedtest —— Ookla Speedtest 的纯 Python 复刻（默认自动选服 + -s 指定服务器 id）。
 
 用法：
-    speedtest              # 自动选择延迟最低的最近服务器并测速
+    speedtest              # 自动选择延迟最低的最近服务器并测速（线程数取服务端 config）
     speedtest -s 12191     # 使用指定 id 的服务器
+    speedtest -t 8         # 指定并发线程数（多线程）
     speedtest -L           # 列出最近的服务器
     speedtest -h           # 查看帮助
 
@@ -18,7 +19,8 @@
 
 环境变量：
     SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认取服务端下发值，通常 15）
-    SPEEDTEST_THREADS    并发线程数（默认 8）
+    SPEEDTEST_THREADS    并发线程数（默认取服务端 config 的 threadCount）
+    SPEEDTEST_NO_CACHE=1  不读写 ~/.cache/speedtest 下的配置缓存
     SPEEDTEST_NO_PROGRESS=1   即使终端支持也不显示进度条
     SPEEDTEST_SAVE=1     尝试把结果保存到 speedtest.net（默认关闭，因为该接口未公开）
 
@@ -43,6 +45,7 @@ import urllib.request
 
 CONFIG_URL = "https://cli.speedtest.net/api/cli/config"
 REPORT_URL = "https://results.speedtest.net/reports"
+CONFIG_CACHE_TTL = 12 * 3600  # 官方会给 config 下发过期时间，这里本地缓存 12 小时，避免频繁请求被 429
 USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
@@ -84,13 +87,60 @@ def latency_stats(samples):
     return low, high, mean, jitter
 
 
-def fetch_config(server_id=None):
+def _config_cache_path(server_id):
+    base = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+    name = "config.json" if server_id is None else "server-%s.json" % server_id
+    return os.path.join(base, "speedtest", name)
+
+
+def _read_cache(path):
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return None
+
+
+def _write_cache(path, data):
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(data, fh)
+        os.replace(tmp, path)
+    except Exception:
+        pass
+
+
+def _fetch_config_remote(server_id=None):
     url = CONFIG_URL
     if server_id is not None:
         url += "?serverid=" + urllib.parse.quote(str(server_id))
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as resp:
         return json.loads(resp.read().decode("utf-8", "replace"))
+
+
+def fetch_config(server_id=None):
+    """拉取配置，带本地缓存；请求失败时回退到过期缓存。"""
+    path = _config_cache_path(server_id)
+    if not os.environ.get("SPEEDTEST_NO_CACHE"):
+        try:
+            if time.time() - os.path.getmtime(path) < CONFIG_CACHE_TTL:
+                cached = _read_cache(path)
+                if cached:
+                    return cached
+        except OSError:
+            pass
+    try:
+        data = _fetch_config_remote(server_id)
+    except Exception:
+        cached = _read_cache(path)
+        if cached:
+            return cached
+        raise
+    _write_cache(path, data)
+    return data
 
 
 def make_conn(base):
@@ -408,6 +458,7 @@ def main(argv):
     )
     parser.add_argument("-s", "--server-id", metavar="ID", help="指定服务器 id")
     parser.add_argument("-L", "--servers", action="store_true", help="列出最近的服务器")
+    parser.add_argument("-t", "--threads", type=int, metavar="N", help="并发线程数（默认取服务端 config 的 threadCount，通常 4）")
     parser.add_argument("-V", "--version", action="version", version="speedtest(py) 1.0")
     args = parser.parse_args(argv)
 
@@ -436,7 +487,15 @@ def main(argv):
     engine = cfg.get("suite", {}).get("global", {}).get("engine", {})
     stage = cfg.get("suite", {}).get("testStage", {})
     duration = int(os.environ.get("SPEEDTEST_DURATION") or engine.get("testDurationSeconds") or 15)
-    thread_count = int(os.environ.get("SPEEDTEST_THREADS") or 8)
+    if args.threads is not None:
+        thread_count = args.threads
+    else:
+        # 官方默认线程数由服务端 config 下发（当前为 4）
+        default_threads = int(engine.get("threadCount") or 4)
+        thread_count = int(os.environ.get("SPEEDTEST_THREADS") or default_threads)
+    if thread_count < 1:
+        print("speedtest: 线程数必须 >= 1", file=sys.stderr)
+        return 1
     ping_count = int(stage.get("latency", {}).get("pingCount") or 5)
     isp = cfg.get("app", {}).get("ispName") or "Unknown"
 
