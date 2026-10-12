@@ -58,8 +58,8 @@ SSL_CTX = ssl.create_default_context()
 PROBE_PATH = "/speedtest/latency.txt"
 UPLOAD_PATH = "/speedtest/upload.php"
 DOWNLOAD_SIZE = 4000
-# 上传按请求完成确认字节，块越小收尾时在途请求的时长偏差越小
-UPLOAD_CHUNK = 2 * 1024 * 1024
+# 上传按已上送字节计数；块小一些，阶段结束时在途数据更少
+UPLOAD_CHUNK = 1024 * 1024
 SPINNER = "-\\|/"
 
 
@@ -271,6 +271,29 @@ def select_server(cfg):
 # --------------------------------------------------------------------------- #
 # 测速
 # --------------------------------------------------------------------------- #
+class _CountingBody:
+    """文件式请求体，在 http.client 按块取出时统计已上送字节。
+
+    比“等服务端确认后再计数”更健壮：慢速服务器上，请求在阶段结束时可能仍未返回，
+    按已上送字节计数不会得到 0。stop 置位后立即截断，避免结束后还长时间发送。
+    """
+
+    def __init__(self, data, add, stop):
+        self._data = data
+        self._add = add
+        self._stop = stop
+
+    def read(self, size=-1):
+        if self._stop.is_set() or not self._data:
+            return b""
+        if size is None or size < 0:
+            size = len(self._data)
+        chunk = self._data[:size]
+        self._data = self._data[size:]
+        self._add(len(chunk))
+        return chunk
+
+
 def conn_latency(conn):
     start = time.monotonic()
     conn.request("GET", PROBE_PATH + "?x=%d" % random.getrandbits(30), headers={"User-Agent": USER_AGENT})
@@ -348,15 +371,22 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
                     conn.request(
                         "POST",
                         UPLOAD_PATH,
-                        body=buf,
+                        body=_CountingBody(buf, add, stop),
                         headers={
                             "User-Agent": USER_AGENT,
                             "Content-Type": "application/x-www-form-urlencoded",
+                            "Content-Length": str(len(buf)),
                         },
                     )
+                    if stop.is_set():
+                        # body 被截断，请求不完整，直接关连接
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                        conn = None
+                        break
                     conn.getresponse().read()
-                    # 服务端确认收完整个 body 后计数，避免把内核缓冲的“假发送”算进来
-                    add(len(buf))
                 else:
                     conn.request(
                         "GET",
@@ -434,16 +464,16 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
     stop.set()
     mon.join(timeout=3)
     probe_thread.join(timeout=3)
+    join_deadline = time.monotonic() + 3
     for thread in workers:
-        thread.join(timeout=5)
+        thread.join(timeout=max(0.0, join_deadline - time.monotonic()))
 
     elapsed = time.monotonic() - start
     total_bytes = total()
     final_t = time.monotonic()
     samples.append((final_t, total_bytes))
 
-    # 下载取中间稳定窗口（跳过起步爬坡）；上传按服务端确认的总量算平均，
-    # 因为上传字节是按请求完成确认的，窗口统计容易被突发打偏。
+    # 速度取中间稳定窗口（跳过起步爬坡），不把收尾阶段 join 等待也算进去
     def bytes_at(moment):
         value = 0
         for stamp, count in samples:
@@ -453,12 +483,9 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
                 break
         return value
 
-    if upload:
-        speed = total_bytes / max(final_t - start, 1e-6)
-    else:
-        t_begin = start + duration * 0.15
-        t_end = start + duration * 0.9
-        speed = max(bytes_at(t_end) - bytes_at(t_begin), 0) / max(t_end - t_begin, 1e-6)
+    t_begin = start + duration * 0.15
+    t_end = start + duration * 0.9
+    speed = max(bytes_at(t_end) - bytes_at(t_begin), 0) / max(t_end - t_begin, 1e-6)
 
     if progress:
         _clear_progress()
@@ -594,14 +621,20 @@ def main(argv):
     print("%12s: %8.2f ms   (jitter: %.2fms, low: %.2fms, high: %.2fms)"
           % ("Idle Latency", mean, jitter, low, high))
 
+    upload_enabled = stage.get("upload", {}).get("isServerUploadEnabled", True)
+
     try:
         download = run_transfer("Download", base, duration, thread_count, False, progress)
         print_speed_line("Download", download["speed"], download["bytes"])
         print_loaded_latency(download["latency"])
 
-        upload = run_transfer("Upload", base, duration, thread_count, True, progress)
-        print_speed_line("Upload", upload["speed"], upload["bytes"])
-        print_loaded_latency(upload["latency"])
+        if upload_enabled:
+            upload = run_transfer("Upload", base, duration, thread_count, True, progress)
+            print_speed_line("Upload", upload["speed"], upload["bytes"])
+            print_loaded_latency(upload["latency"])
+        else:
+            # 服务端 config 明确禁用上传时不要跑上传阶段
+            print("%12s: 已跳过（服务器未开启上传测试）" % "Upload")
     except Exception as exc:
         print("Error: %s" % exc, file=sys.stderr)
         return 2
@@ -620,7 +653,8 @@ def main(argv):
             },
             "ping": ({"latency": idle[0]} if idle else {}),
             "download": {"bandwidth": int(download["speed"]), "bytes": download["bytes"]},
-            "upload": {"bandwidth": int(upload["speed"]), "bytes": upload["bytes"]},
+            "upload": ({"bandwidth": int(upload["speed"]), "bytes": upload["bytes"]}
+                       if upload_enabled else {}),
         }
         url = try_save_result(cfg, payload)
         if url:
