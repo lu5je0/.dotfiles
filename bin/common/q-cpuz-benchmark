@@ -20,8 +20,10 @@
     CPUZ_BENCH_CACHE_DIR        指定缓存目录
     CPUZ_BENCH_NO_UPDATE_CHECK=1  跳过最新版本检查（离线/想省一次请求时用）
 
-macOS/arm64 额外行为：会自动把 CPU-Z 官方的 cpuz_arm64.exe 放到缓存目录，
+macOS/Linux/Android 上的 arm64：会自动把 CPU-Z 官方的 cpuz_arm64.exe 放到缓存目录，
 因为 aarch64 上只有跑官方内核才是 CPU-Z 会显示的分（我们的构建更快）。
+官方内核是自包含的纯标量 AArch64 代码，Termux 里也是原生 mmap + 调用（和 Apple Silicon
+同一套做法）；个别 ROM 封了匿名可执行内存时会自动回退到内置引擎。
 x86_64 上同样会准备官方的 cpuz_x64.exe：那边的内置引擎本来就与官方发布分一致，
 但 CPUID 自己的内核才是真值来源。想只用内置引擎就传 --no-official（会透传给 cpuz-bench）。
     CPUZ_ARM64_VERSION          指定官方 ARM64 版本（默认 1.06）
@@ -40,7 +42,7 @@ from urllib import error, request
 
 REPO = "lu5je0/CPU-Z-Benchmark"
 RELEASE_LATEST_URL = f"https://github.com/{REPO}/releases/latest"
-SUPPORTED = ("linux-x86_64", "linux-aarch64", "macos-aarch64")
+SUPPORTED = ("linux-x86_64", "linux-aarch64", "macos-aarch64", "android-aarch64")
 TIMEOUT = 10  # 秒：查版本 / 下载的超时
 CHUNK = 64 * 1024
 
@@ -68,18 +70,40 @@ def enabled(name: str) -> bool:
     return os.environ.get(name, "").lower() not in ("", "0", "false", "no")
 
 
-def asset_name() -> str:
+def android_like() -> bool:
+    """Termux 上 platform.system() 仍然报 "Linux"（它只是个链 bionic 的类 Linux 构建），
+    所以还要看两个只有 Android 才有的信号：Termux 的 PREFIX 和 /system/bin/getprop。
+    Python 3.13+ 官方 Android 构建会直接报 "Android"。
+    """
+    if platform.system().lower() == "android":
+        return True
+    if "com.termux" in os.environ.get("PREFIX", ""):
+        return True
+    return os.path.exists("/system/bin/getprop")
+
+
+def platform_key() -> str:
     system = platform.system().lower()
     machine = platform.machine().lower()
-    os_part = OS_MAP.get(system)
-    if os_part is None:
-        die(f"不支持的平台：{platform.system()}（可在 {REPO} 自行 cargo build --release）")
     arch_part = ARCH_MAP.get(machine)
     if arch_part is None:
         die(f"不支持的架构：{platform.machine()}（可在 {REPO} 自行 cargo build --release）")
-    key = f"{os_part}-{arch_part}"
+    if system == "android" or android_like():
+        # Android 是独立目标：aarch64 链 bionic，和 linux-aarch64 不是同一个二进制。
+        return f"android-{arch_part}"
+    os_part = OS_MAP.get(system)
+    if os_part is None:
+        die(f"不支持的平台：{platform.system()}（可在 {REPO} 自行 cargo build --release）")
+    return f"{os_part}-{arch_part}"
+
+
+def asset_name() -> str:
+    key = platform_key()
     if key not in SUPPORTED:
-        die(f"没有 {key} 的预编译产物（支持 {' / '.join(SUPPORTED)}）")
+        die(
+            f"没有 {key} 的预编译产物（支持 {' / '.join(SUPPORTED)}）；"
+            f"可 clone {REPO} 后 cargo build --release"
+        )
     return f"cpuz-bench-{key}"
 
 
@@ -226,9 +250,12 @@ def official_spec() -> tuple[str, str, str] | None:
     """当前平台该准备哪个官方内核：(member, version, upstream_url)。"""
     system = platform.system().lower()
     machine = platform.machine().lower()
-    if machine in ("aarch64", "arm64") and system in ("linux", "darwin"):
+    android = system == "android" or android_like()
+    # 官方 ARM64 内核是纯 AArch64，Termux 里也能原生跑，所以 Android 也算。
+    if machine in ("aarch64", "arm64") and (system in ("linux", "darwin") or android):
         return (OFFICIAL_ARM64_MEMBER, OFFICIAL_ARM64_VERSION, OFFICIAL_ARM64_URL)
-    if machine in ("x86_64", "amd64") and system == "linux":
+    # 官方 x64 内核只在真正的 x86_64 Linux 上准备；Android x86_64 没有预编译产物。
+    if machine in ("x86_64", "amd64") and system == "linux" and not android:
         return (OFFICIAL_X64_MEMBER, OFFICIAL_X64_VERSION, OFFICIAL_X64_URL)
     return None
 
