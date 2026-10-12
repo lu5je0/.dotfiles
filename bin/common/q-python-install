@@ -1,6 +1,6 @@
 #!/bin/bash
 : "${DOTFILES_DIR:=$HOME/.dotfiles}"
-SCRIPT_PATH=$DOTFILES_DIR/submodule/python-install
+SCRIPT_PATH=$DOTFILES_DIR/module/python-install
 SCRIPT_NAME=q-python-install.py
 
-source $DOTFILES_DIR/submodule/python-install/runner.sh
+source $DOTFILES_DIR/module/python-install/runner.sh

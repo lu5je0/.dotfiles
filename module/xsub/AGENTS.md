@@ -24,7 +24,7 @@
 
 ## Editing Notes
 
-- Keep templates repo-local under `template/`; do not reintroduce dependency on `~/.dotfiles/submodule/pyass/template`.
+- Keep templates repo-local under `template/`; do not reintroduce dependency on `~/.dotfiles/module/pyass/template`.
 - Prefer minimal CLI surface changes and keep help text aligned with actual behavior.
 - When changing subtitle selection rules, validate against the sample file:
   - `/mnt/mg08/videos/tv/黑袍纠察队 (2019)/S05/01.mkv`

@@ -9,7 +9,7 @@
 - `nix/`: NixOS flake 与本地包定义（有独立 `AGENTS.md`）
 - `scripts/`: 安装与环境初始化脚本（`setup.d/` 有独立 `AGENTS.md`）
 - `skills/`: 本地 skills，清单见 `skills/INDEX.md`
-- `submodule/`: 个人工具项目
+- `module/`: 个人工具项目
 
 ## 目录协作
 - 改子目录内容时，先读该目录下的 `AGENTS.md`（如果存在）。

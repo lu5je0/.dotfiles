@@ -45,7 +45,7 @@ def generate_run_script(script_path, script_name, output_dir, output_name=None):
     if output_name:
         target_name = output_name
 
-    run_script_content += '\nsource $DOTFILES_DIR/submodule/python-install/runner.sh\n'
+    run_script_content += '\nsource $DOTFILES_DIR/module/python-install/runner.sh\n'
 
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)

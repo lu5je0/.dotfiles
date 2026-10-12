@@ -9,4 +9,4 @@ if [[ -L "$TARGET" ]]; then
 fi
 
 mkdir -p "$(dirname "$TARGET")"
-ln -sf "$DOTFILES_DIR/submodule/q-trash/q-trash.py" "$TARGET"
+ln -sf "$DOTFILES_DIR/module/q-trash/q-trash.py" "$TARGET"

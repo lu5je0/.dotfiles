@@ -1,6 +1,6 @@
 #!/bin/bash
 : "${DOTFILES_DIR:=$HOME/.dotfiles}"
-SCRIPT_PATH=$DOTFILES_DIR/submodule/q-restic
+SCRIPT_PATH=$DOTFILES_DIR/module/q-restic
 SCRIPT_NAME=q-restic.py
 
-source $DOTFILES_DIR/submodule/python-install/runner.sh
+source $DOTFILES_DIR/module/python-install/runner.sh

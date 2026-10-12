@@ -1,7 +1,7 @@
 # q-trash 工作指引
 
 ## 适用范围
-- 本文件适用于 `submodule/q-trash/` 目录。
+- 本文件适用于 `module/q-trash/` 目录。
 
 ## 组件职责
 - `q-rm.py`：rm 兼容的命令行入口，把文件移动到 freedesktop.org Trash Spec 1.0 回收站。

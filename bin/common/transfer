@@ -1,6 +1,6 @@
 #!/bin/bash
 : "${DOTFILES_DIR:=$HOME/.dotfiles}"
-SCRIPT_PATH=$DOTFILES_DIR/submodule/transfer
+SCRIPT_PATH=$DOTFILES_DIR/module/transfer
 SCRIPT_NAME=transfer.py
 
-source $DOTFILES_DIR/submodule/python-install/runner.sh
+source $DOTFILES_DIR/module/python-install/runner.sh

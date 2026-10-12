@@ -4,7 +4,7 @@ _xsub_templates() {
   local root template_dir
   local -a templates
 
-  root="${HOME}/.dotfiles/submodule/xsub"
+  root="${HOME}/.dotfiles/module/xsub"
   template_dir="${root}/template"
 
   if [[ -d "${template_dir}" ]]; then
