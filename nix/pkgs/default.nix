@@ -8,4 +8,5 @@
   qoder = pkgs.callPackage ./qoder { };
   terminal-browser = pkgs.callPackage ./terminal-browser { };
   tilewindow = pkgs.callPackage ./tilewindow.nix { };
+  three-finger-drag = pkgs.callPackage ./three-finger-drag.nix { };
 }
