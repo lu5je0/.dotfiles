@@ -272,9 +272,12 @@ def main(argv: list[str]) -> int:
         pass
     ensure_official_exe(directory, tag)
     # exec 替换进程：信号、退出码、终端行为都与直接运行二进制一致。
-    # 显式传缓存目录，让二进制的官方 exe 查找路径与这里一致。
+    # 显式告诉二进制去哪里找（缓存目录 + exe 路径），两边保持一致。
     env = dict(os.environ)
     env["CPUZ_BENCHMARK_CACHE_DIR"] = str(directory)
+    official = directory / OFFICIAL_MEMBER
+    if official.is_file() and not enabled("CPUZ_NO_OFFICIAL"):
+        env.setdefault("CPUZ_ARM64_EXE", str(official))
     os.execve(str(binary), [str(binary), *argv[1:]], env)
     return 127  # 不会走到
 
