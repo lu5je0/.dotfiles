@@ -14,6 +14,8 @@
     仅依赖 Python 标准库。
     - 服务器目录与元信息来自 https://cli.speedtest.net/api/cli/config
       （带 ?serverid=<id> 时返回该服务器的信息）。
+    - 最近服务器列表与当前公网 IP 相关，每次运行都会重新拉取，
+      仅当请求失败（429/离线）时才回退到本地缓存。
     - 测速复用 speedtest.net 服务器公开的 legacy 接口：
       /speedtest/latency.txt、/speedtest/random4000x4000.jpg、/speedtest/upload.php。
     - 输出格式对齐官方 CLI 的 human-readable 结果。
@@ -123,9 +125,17 @@ def _fetch_config_remote(server_id=None):
 
 
 def fetch_config(server_id=None):
-    """拉取配置，带本地缓存；请求失败时回退到过期缓存。"""
+    """拉取配置。
+
+    指定 serverid 的服务器元信息与客户端位置无关，可放心用 TTL 缓存；
+    最近服务器列表（server_id=None）依赖当前公网 IP，必须每次拉新，
+    本地缓存只在请求失败时作为兜底。
+    """
+    no_cache = bool(os.environ.get("SPEEDTEST_NO_CACHE"))
     path = _config_cache_path(server_id)
-    if not os.environ.get("SPEEDTEST_NO_CACHE"):
+
+    # 只有指定 serverid 的元信息可以长期缓存
+    if not no_cache and server_id is not None:
         try:
             if time.time() - os.path.getmtime(path) < CONFIG_CACHE_TTL:
                 cached = _read_cache(path)
@@ -133,14 +143,19 @@ def fetch_config(server_id=None):
                     return cached
         except OSError:
             pass
+
     try:
         data = _fetch_config_remote(server_id)
     except Exception:
-        cached = _read_cache(path)
+        cached = _read_cache(path) if not no_cache else None
         if cached:
+            if server_id is None:
+                print("speedtest: 获取最新服务器列表失败，回退到缓存（可能不是当前 IP 对应的节点）",
+                      file=sys.stderr)
             return cached
         raise
-    _write_cache(path, data)
+    if not no_cache:
+        _write_cache(path, data)
     return data
 
 
