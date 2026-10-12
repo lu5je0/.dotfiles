@@ -24,7 +24,6 @@
     bubblewrap
     socat
     ripgrep
-    restic
     net-tools
   ];
 

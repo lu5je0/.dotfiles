@@ -24,12 +24,19 @@ let
   script = "${home}/.dotfiles/module/q-restic/q-restic.py";
 in
 {
-  # q-restic 要求 restic 已在 PATH 里（不再用 nix build 兜底），
-  # 所以这里必须装：systemd 服务的 PATH 只含系统 profile。
+  # q-restic 要求 restic 已在 PATH 里（不再用 nix build 兜底）。
+  #
+  # 注意两处都得配，分工不同：
+  #   environment.systemPackages → 只影响 /run/current-system/sw/bin，供手动执行用；
+  #   systemd.services.<name>.path → 生成 unit 时把路径写进 PATH，systemd 跑才认这个。
+  # unit 的 PATH 是求值时按 path 选项固定生成的（默认 coreutils/findutils/gnugrep/
+  # gnused/systemd，见 nixos/lib/systemd-lib.nix 的 enableDefaultPath），跟 systemPackages
+  # 完全无关；只写 systemPackages 的话定时任务会因 PATH 里找不到 restic 而失败。
   environment.systemPackages = [ pkgs.restic ];
 
   systemd.services.restic-home = {
     description = "restic 增量备份 home 到 NAS";
+    path = [ pkgs.restic ];
 
     # 仓库走 SFTP，不依赖 /mnt/mg08 的 CIFS 挂载，所以只等网络就绪。
     # 顺带避开 CIFS 的 x-systemd.idle-timeout=600 自动卸载。

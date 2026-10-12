@@ -8,8 +8,9 @@
   * 不加 --one-file-system。/home 下没有嵌套挂载点，加了只会平白跳过东西。
   * 只读操作（status / mount / browse / unmount）不占用备份锁，
     所以备份跑着的时候照样能查状态、能挂载浏览。
-  * restic 必须已经在 PATH 里（不再用 nix build 兜底），由 nix/modules/restic-home.nix
-    把 pkgs.restic 装进系统 profile。
+  * restic 必须已经在 PATH 里（不再用 nix build 兜底）。nix/modules/restic-home.nix
+    里两个选项都配了 pkgs.restic：environment.systemPackages 管手动执行时能看到它，
+    systemd.services.<name>.path 才进得了 unit 的 PATH。
 """
 
 import argparse
@@ -118,14 +119,16 @@ def restic_bin():
 
     不用 `nix build nixpkgs#restic` 兜底：那会在每次调用时求值 flake，
     在没有网络或 /nix 不可用的场景（systemd 服务）里会失败，也拖慢每次启动；
-    而 nix/modules/restic-home.nix 已经把 pkgs.restic 装进系统 profile。
+    而 nix/modules/restic-home.nix 的两个选项都已经装了 pkgs.restic。
     """
     found = shutil.which("restic")
     if not found:
         die(
-            "PATH 里找不到 restic。\n"
-            "  系统配置已包含它，跑一次 sudo nixos-rebuild switch 即可；\n"
-            "  或临时安装：nix profile install nixpkgs#restic"
+            f"PATH 里找不到 restic。当前 PATH={os.environ.get('PATH', '')}\n"
+            "  只是临时用：nix profile install nixpkgs#restic\n"
+            "  若是定时任务报这句：unit 的 PATH 由 systemd.services.<name>.path 在求值时\n"
+            "  生成，跟 environment.systemPackages 无关，光 rebuild 不变；见\n"
+            "  nix/modules/restic-home.nix 里的 path = [ pkgs.restic ]。"
         )
     return found
 
