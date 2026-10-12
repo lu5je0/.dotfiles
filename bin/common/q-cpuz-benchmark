@@ -22,8 +22,10 @@
 
 macOS/arm64 额外行为：会自动把 CPU-Z 官方的 cpuz_arm64.exe 放到缓存目录，
 因为 aarch64 上只有跑官方内核才是 CPU-Z 会显示的分（我们的构建更快）。
-    CPUZ_NO_OFFICIAL=1          跳过这一步（只用内置引擎）
-    CPUZ_ARM64_VERSION          指定官方版本（默认 1.06）
+x86_64 上同样会准备官方的 cpuz_x64.exe：那边的内置引擎本来就与官方发布分一致，
+但 CPUID 自己的内核才是真值来源。想只用内置引擎就传 --no-official（会透传给 cpuz-bench）。
+    CPUZ_ARM64_VERSION          指定官方 ARM64 版本（默认 1.06）
+    CPUZ_X64_VERSION            指定官方 x64 版本（默认 3.01）
 """
 
 from __future__ import annotations
@@ -42,10 +44,15 @@ SUPPORTED = ("linux-x86_64", "linux-aarch64", "macos-aarch64")
 TIMEOUT = 10  # 秒：查版本 / 下载的超时
 CHUNK = 64 * 1024
 
-# CPU-Z 官方 Windows ARM64 版：aarch64 上由 cpuz-bench 直接调用它的内核计分。
-OFFICIAL_MEMBER = "cpuz_arm64.exe"
-OFFICIAL_VERSION = os.environ.get("CPUZ_ARM64_VERSION") or "1.06"
-OFFICIAL_URL = f"https://download.cpuid.com/cpu-z/arm64/cpuz-arm64_{OFFICIAL_VERSION}.zip"
+# CPU-Z 官方 Windows 内核：由 cpuz-bench 直接映射并调用其 benchmark kernel 计分。
+OFFICIAL_ARM64_MEMBER = "cpuz_arm64.exe"
+OFFICIAL_ARM64_VERSION = os.environ.get("CPUZ_ARM64_VERSION") or "1.06"
+OFFICIAL_ARM64_URL = (
+    f"https://download.cpuid.com/cpu-z/arm64/cpuz-arm64_{OFFICIAL_ARM64_VERSION}.zip"
+)
+OFFICIAL_X64_MEMBER = "cpuz_x64.exe"
+OFFICIAL_X64_VERSION = os.environ.get("CPUZ_X64_VERSION") or "3.01"
+OFFICIAL_X64_URL = f"https://download.cpuid.com/cpu-z/cpu-z_{OFFICIAL_X64_VERSION}-en.zip"
 
 # 平台 -> release 资产名
 OS_MAP = {"linux": "linux", "darwin": "macos"}
@@ -205,47 +212,55 @@ def resolve_binary(asset: str) -> Path:
     return binary
 
 
-def fetch_official_payload(url: str) -> bytes:
+def fetch_official_payload(url: str, member: str) -> bytes:
     """取官方 exe：我们的 release 直接放 exe，CPUID 原始源是 zip。"""
     with request.urlopen(url, timeout=TIMEOUT) as resp:
         data = resp.read()
     if data[:2] == b"PK":
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
-            return zf.read(OFFICIAL_MEMBER)
+            return zf.read(member)
     return data
 
 
+def official_spec() -> tuple[str, str, str] | None:
+    """当前平台该准备哪个官方内核：(member, version, upstream_url)。"""
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    if machine in ("aarch64", "arm64") and system in ("linux", "darwin"):
+        return (OFFICIAL_ARM64_MEMBER, OFFICIAL_ARM64_VERSION, OFFICIAL_ARM64_URL)
+    if machine in ("x86_64", "amd64") and system == "linux":
+        return (OFFICIAL_X64_MEMBER, OFFICIAL_X64_VERSION, OFFICIAL_X64_URL)
+    return None
+
+
 def ensure_official_exe(directory: Path, tag: str) -> None:
-    """macOS/arm64：确保缓存里有 CPU-Z 官方的 cpuz_arm64.exe。
+    """确保缓存里有本平台对应的 CPU-Z 官方内核 exe。
 
-    cpuz-bench 在 aarch64 上默认用官方内核计分（那才是 CPU-Z 的分），
-    而它只会在缓存目录里找这个文件，所以这里先把它准备好。
+    cpuz-bench 默认用官方内核计分（aarch64 上我们的构建更快，x86_64 上它是真值来源），
+    而它只会在缓存目录 / 环境变量里找这个文件，所以这里先把它准备好。
     优先从我们自己的 release 取（已 vendor 一份），CPUID 源作兜底。
-    任何失败都不中断主流程：二进制定会回退到内置引擎（分数会偏高）。
+    任何失败都不中断主流程：二进制定会回退到内置引擎。
     """
-    if enabled("CPUZ_NO_OFFICIAL"):
+    spec = official_spec()
+    if spec is None:
         return
-    if platform.system().lower() != "darwin" or platform.machine().lower() not in (
-        "arm64",
-        "aarch64",
-    ):
-        return
+    member, version, upstream = spec
 
-    target = directory / OFFICIAL_MEMBER
-    stamp = directory / f"{OFFICIAL_MEMBER}.version"
+    target = directory / member
+    stamp = directory / f"{member}.version"
     if target.is_file() and stamp.is_file():
-        if stamp.read_text(encoding="utf-8").strip() == OFFICIAL_VERSION:
+        if stamp.read_text(encoding="utf-8").strip() == version:
             return
 
     print(
-        f"q-cpuz-benchmark: 获取 CPU-Z 官方 {OFFICIAL_MEMBER} v{OFFICIAL_VERSION}"
-        f"（aarch64 用官方内核计分）",
+        f"q-cpuz-benchmark: 获取 CPU-Z 官方 {member} v{version}"
+        f"（{platform.machine()} 默认用官方内核计分）",
         file=sys.stderr,
     )
     last_error: object = "no source"
-    for url in (f"{url_prefix(tag)}/{OFFICIAL_MEMBER}", OFFICIAL_URL):
+    for url in (f"{url_prefix(tag)}/{member}", upstream):
         try:
-            data = fetch_official_payload(url)
+            data = fetch_official_payload(url, member)
         except (error.URLError, error.HTTPError, OSError, KeyError, zipfile.BadZipFile) as exc:
             last_error = exc
             continue
@@ -254,10 +269,10 @@ def ensure_official_exe(directory: Path, tag: str) -> None:
             continue
         target.write_bytes(data)
         os.chmod(target, 0o755)
-        stamp.write_text(OFFICIAL_VERSION + "\n", encoding="utf-8")
+        stamp.write_text(version + "\n", encoding="utf-8")
         return
     print(
-        f"q-cpuz-benchmark: 官方 exe 获取失败，将用内置引擎（分数偏高）：{last_error}",
+        f"q-cpuz-benchmark: 官方 exe 获取失败，将用内置引擎：{last_error}",
         file=sys.stderr,
     )
 
@@ -270,15 +285,15 @@ def main(argv: list[str]) -> int:
         directory.mkdir(parents=True, exist_ok=True)
     except OSError:
         pass
-    ensure_official_exe(directory, tag)
+    # --no-official 透传给 cpuz-bench：跳过官方 exe 的下载，用内置引擎。
+    args = list(argv[1:])
+    if "--no-official" not in args:
+        ensure_official_exe(directory, tag)
     # exec 替换进程：信号、退出码、终端行为都与直接运行二进制一致。
-    # 显式告诉二进制去哪里找（缓存目录 + exe 路径），两边保持一致。
+    # 显式告诉二进制去哪里找缓存目录；官方 exe 就在里面，不需要额外的环境变量。
     env = dict(os.environ)
     env["CPUZ_BENCHMARK_CACHE_DIR"] = str(directory)
-    official = directory / OFFICIAL_MEMBER
-    if official.is_file() and not enabled("CPUZ_NO_OFFICIAL"):
-        env.setdefault("CPUZ_ARM64_EXE", str(official))
-    os.execve(str(binary), [str(binary), *argv[1:]], env)
+    os.execve(str(binary), [str(binary), *args], env)
     return 127  # 不会走到
 
 
