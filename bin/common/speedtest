@@ -1,0 +1,511 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""speedtest —— Ookla Speedtest 的纯 Python 复刻（默认自动选服 + -s 指定服务器 id）。
+
+用法：
+    speedtest              # 自动选择延迟最低的最近服务器并测速
+    speedtest -s 12191     # 使用指定 id 的服务器
+    speedtest -L           # 列出最近的服务器
+    speedtest -h           # 查看帮助
+
+说明：
+    仅依赖 Python 标准库。
+    - 服务器目录与元信息来自 https://cli.speedtest.net/api/cli/config
+      （带 ?serverid=<id> 时返回该服务器的信息）。
+    - 测速复用 speedtest.net 服务器公开的 legacy 接口：
+      /speedtest/latency.txt、/speedtest/random4000x4000.jpg、/speedtest/upload.php。
+    - 输出格式对齐官方 CLI 的 human-readable 结果。
+
+环境变量：
+    SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认取服务端下发值，通常 15）
+    SPEEDTEST_THREADS    并发线程数（默认 8）
+    SPEEDTEST_NO_PROGRESS=1   即使终端支持也不显示进度条
+    SPEEDTEST_SAVE=1     尝试把结果保存到 speedtest.net（默认关闭，因为该接口未公开）
+
+已知差异：
+    - 默认不生成 Result URL（官方通过未公开的 results.speedtest.net 接口保存）。
+      设置 SPEEDTEST_SAVE=1 时会尽力尝试，失败则静默跳过。
+"""
+
+from __future__ import annotations
+
+import argparse
+import http.client
+import json
+import os
+import random
+import ssl
+import sys
+import threading
+import time
+import urllib.parse
+import urllib.request
+
+CONFIG_URL = "https://cli.speedtest.net/api/cli/config"
+REPORT_URL = "https://results.speedtest.net/reports"
+USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+)
+SSL_CTX = ssl.create_default_context()
+
+PROBE_PATH = "/speedtest/latency.txt"
+UPLOAD_PATH = "/speedtest/upload.php"
+DOWNLOAD_SIZE = 4000
+# 上传按请求完成确认字节，块越小收尾时在途请求的时长偏差越小
+UPLOAD_CHUNK = 2 * 1024 * 1024
+SPINNER = "-\\|/"
+
+
+# --------------------------------------------------------------------------- #
+# 小工具
+# --------------------------------------------------------------------------- #
+def human_bytes(n):
+    units = ["B", "kB", "MB", "GB", "TB"]
+    value = float(n)
+    idx = 0
+    while value >= 1000 and idx < len(units) - 1:
+        value /= 1000
+        idx += 1
+    if idx == 0:
+        return "%d B" % int(n)
+    return "%.1f %s" % (value, units[idx])
+
+
+def latency_stats(samples):
+    """返回 (low, high, mean, jitter)。jitter 取相邻样本差的平均绝对值。"""
+    low = min(samples)
+    high = max(samples)
+    mean = sum(samples) / len(samples)
+    if len(samples) > 1:
+        jitter = sum(abs(samples[i] - samples[i - 1]) for i in range(1, len(samples))) / (len(samples) - 1)
+    else:
+        jitter = 0.0
+    return low, high, mean, jitter
+
+
+def fetch_config(server_id=None):
+    url = CONFIG_URL
+    if server_id is not None:
+        url += "?serverid=" + urllib.parse.quote(str(server_id))
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8", "replace"))
+
+
+def make_conn(base):
+    parts = urllib.parse.urlsplit(base)
+    port = parts.port or (443 if parts.scheme == "https" else 80)
+    if parts.scheme == "https":
+        return http.client.HTTPSConnection(parts.hostname, port, timeout=20, context=SSL_CTX)
+    return http.client.HTTPConnection(parts.hostname, port, timeout=20)
+
+
+def _probe_url(host):
+    netloc = host if ":" in host else host + ":80"
+    return "http://%s/speedtest/latency.txt?x=%d" % (netloc, random.getrandbits(30))
+
+
+def probe_server_latency(host, timeout=6):
+    """对候选服务器做一次 HTTP 探测，返回毫秒。"""
+    req = urllib.request.Request(_probe_url(host), headers={"User-Agent": USER_AGENT})
+    start = time.monotonic()
+    with urllib.request.urlopen(req, timeout=timeout, context=SSL_CTX) as resp:
+        resp.read()
+    return (time.monotonic() - start) * 1000.0
+
+
+def resolve_base(server, timeout=6):
+    """解析服务器的规范 base。
+
+    依次尝试 server-<id>.prod.hosts.ooklaserver.net、原始 host 的 http/https，
+    任何一个能通就用它跟随跳转后的地址。全部失败则抛 RuntimeError（不抛超时原始异常）。
+    """
+    host = server["host"]
+    port = host.rsplit(":", 1)[1] if ":" in host else "80"
+    candidates = []
+    if server.get("id"):
+        candidates.append("https://server-%s.prod.hosts.ooklaserver.net:%s" % (server["id"], port))
+    candidates.append("http://%s" % host)
+    candidates.append("https://%s" % host)
+
+    last_error = None
+    for netloc in candidates:
+        url = "%s/speedtest/latency.txt?x=%d" % (netloc, random.getrandbits(30))
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(req, timeout=timeout, context=SSL_CTX) as resp:
+                final = resp.url
+                resp.read()
+            parts = urllib.parse.urlsplit(final)
+            return "%s://%s/speedtest/" % (parts.scheme, parts.netloc)
+        except Exception as exc:  # 网络/超时/DNS 都归一为候选失败
+            last_error = exc
+    raise RuntimeError("无法连接服务器 %s: %s" % (host, last_error))
+
+
+def select_server(cfg):
+    servers = [s for s in cfg.get("servers", []) if s.get("host")]
+    if not servers:
+        raise RuntimeError("配置里没有可用服务器")
+    best = None
+    for server in servers[:5]:
+        try:
+            ms = probe_server_latency(server["host"])
+        except Exception:
+            continue
+        if best is None or ms < best[0]:
+            best = (ms, server)
+    return best[1] if best else servers[0]
+
+
+# --------------------------------------------------------------------------- #
+# 测速
+# --------------------------------------------------------------------------- #
+def conn_latency(conn):
+    start = time.monotonic()
+    conn.request("GET", PROBE_PATH + "?x=%d" % random.getrandbits(30), headers={"User-Agent": USER_AGENT})
+    resp = conn.getresponse()
+    resp.read()
+    return (time.monotonic() - start) * 1000.0
+
+
+def measure_idle_latency(base, count):
+    """测量空闲延迟，返回 (样本列表, 失败数, 总探测数)。"""
+    conn = make_conn(base)
+    samples = []
+    failures = 0
+    total = count + 1  # 第一个样本作为预热丢弃
+    for index in range(total):
+        try:
+            ms = conn_latency(conn)
+        except Exception:
+            failures += 1
+            try:
+                conn.close()
+            except Exception:
+                pass
+            conn = make_conn(base)
+            continue
+        if index > 0:
+            samples.append(ms)
+    try:
+        conn.close()
+    except Exception:
+        pass
+    return samples, failures, total
+
+
+def _render_progress(label, rate_bps, percent, spin):
+    filled = percent * 20 // 100
+    body = "=" * filled
+    if filled < 20:
+        body += SPINNER[spin % 4] + " " * (19 - filled)
+    line = "\r%12s: %9.2f Mbps [%s] %3d%%" % (label, rate_bps * 8 / 1e6, body[:20], percent)
+    sys.stdout.write(line)
+    sys.stdout.flush()
+
+
+def _clear_progress():
+    sys.stdout.write("\r" + " " * 78 + "\r")
+    sys.stdout.flush()
+
+
+def run_transfer(label, base, duration, thread_count, upload, progress):
+    """并发跑一个阶段的下载或上传，返回统计结果。"""
+    lock = threading.Lock()
+    counter = {"bytes": 0}
+    samples = []
+    latencies = []
+    stop = threading.Event()
+    start = time.monotonic()
+    buf = os.urandom(UPLOAD_CHUNK) if upload else None
+
+    def add(n):
+        with lock:
+            counter["bytes"] += n
+
+    def total():
+        with lock:
+            return counter["bytes"]
+
+    def worker():
+        conn = None
+        while not stop.is_set():
+            try:
+                if conn is None:
+                    conn = make_conn(base)
+                if upload:
+                    conn.request(
+                        "POST",
+                        UPLOAD_PATH,
+                        body=buf,
+                        headers={
+                            "User-Agent": USER_AGENT,
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                    )
+                    conn.getresponse().read()
+                    # 服务端确认收完整个 body 后计数，避免把内核缓冲的“假发送”算进来
+                    add(len(buf))
+                else:
+                    conn.request(
+                        "GET",
+                        "/speedtest/random%dx%d.jpg" % (DOWNLOAD_SIZE, DOWNLOAD_SIZE),
+                        headers={"User-Agent": USER_AGENT},
+                    )
+                    resp = conn.getresponse()
+                    while not stop.is_set():
+                        chunk = resp.read(1 << 18)
+                        if not chunk:
+                            break
+                        add(len(chunk))
+            except Exception:
+                try:
+                    if conn is not None:
+                        conn.close()
+                except Exception:
+                    pass
+                conn = None
+                if stop.is_set():
+                    break
+                time.sleep(0.2)
+
+    def sampler():
+        spin = 0
+        while not stop.is_set():
+            stop.wait(0.1)
+            now = time.monotonic()
+            current = total()
+            samples.append((now, current))
+            if progress:
+                if current > 0:
+                    rate = current / max(now - start, 1e-6)
+                    percent = min(99, int((now - start) / duration * 100)) if duration else 0
+                else:
+                    # 还没有实际流量时冻结进度条（只转 spinner），和官方一致
+                    rate = 0.0
+                    percent = 0
+                _render_progress(label, rate, percent, spin)
+                spin += 1
+
+    def prober():
+        # 独立的探测线程，避免延迟探测阻塞进度条刷新
+        conn = None
+        while not stop.is_set():
+            try:
+                if conn is None:
+                    conn = make_conn(base)
+                latencies.append(conn_latency(conn))
+            except Exception:
+                try:
+                    if conn is not None:
+                        conn.close()
+                except Exception:
+                    pass
+                conn = None
+            stop.wait(0.75)
+        try:
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
+
+    workers = [threading.Thread(target=worker, daemon=True) for _ in range(thread_count)]
+    mon = threading.Thread(target=sampler, daemon=True)
+    probe_thread = threading.Thread(target=prober, daemon=True)
+    for thread in workers:
+        thread.start()
+    mon.start()
+    probe_thread.start()
+
+    deadline = start + duration
+    while time.monotonic() < deadline and not stop.is_set():
+        time.sleep(0.1)
+    stop.set()
+    mon.join(timeout=3)
+    probe_thread.join(timeout=3)
+    for thread in workers:
+        thread.join(timeout=5)
+
+    elapsed = time.monotonic() - start
+    total_bytes = total()
+    final_t = time.monotonic()
+    samples.append((final_t, total_bytes))
+
+    # 下载取中间稳定窗口（跳过起步爬坡）；上传按服务端确认的总量算平均，
+    # 因为上传字节是按请求完成确认的，窗口统计容易被突发打偏。
+    def bytes_at(moment):
+        value = 0
+        for stamp, count in samples:
+            if stamp <= moment:
+                value = count
+            else:
+                break
+        return value
+
+    if upload:
+        speed = total_bytes / max(final_t - start, 1e-6)
+    else:
+        t_begin = start + duration * 0.15
+        t_end = start + duration * 0.9
+        speed = max(bytes_at(t_end) - bytes_at(t_begin), 0) / max(t_end - t_begin, 1e-6)
+
+    if progress:
+        _clear_progress()
+    return {"bytes": total_bytes, "speed": speed, "latency": latencies, "elapsed": elapsed}
+
+
+def print_speed_line(label, speed_bps, data_bytes):
+    print("%12s: %8.2f Mbps (data used: %s)" % (label, speed_bps * 8 / 1e6, human_bytes(data_bytes)))
+
+
+def print_loaded_latency(samples):
+    if not samples:
+        return
+    low, high, mean, jitter = latency_stats(samples)
+    print("%12s  %8.2f ms   (jitter: %.2fms, low: %.2fms, high: %.2fms)"
+          % ("", mean, jitter, low, high))
+
+
+def try_save_result(cfg, payload):
+    """尽力把结果保存到 speedtest.net，失败返回 None。"""
+    app = cfg.get("app", {})
+    url = app.get("saveTestResultUrl") or REPORT_URL
+    key = app.get("licenseKey")
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "User-Agent": USER_AGENT,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-License-Key": key or "",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read().decode("utf-8", "replace"))
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    inner = data.get("result") if isinstance(data.get("result"), dict) else {}
+    if inner.get("url"):
+        return inner["url"]
+    rid = data.get("resultid") or data.get("resultId") or data.get("id") or inner.get("id")
+    return "https://www.speedtest.net/result/c/%s" % rid if rid else None
+
+
+# --------------------------------------------------------------------------- #
+# 主流程
+# --------------------------------------------------------------------------- #
+def main(argv):
+    parser = argparse.ArgumentParser(
+        prog="speedtest",
+        description="Speedtest by Ookla 的 Python 复刻",
+        add_help=True,
+    )
+    parser.add_argument("-s", "--server-id", metavar="ID", help="指定服务器 id")
+    parser.add_argument("-L", "--servers", action="store_true", help="列出最近的服务器")
+    parser.add_argument("-V", "--version", action="version", version="speedtest(py) 1.0")
+    args = parser.parse_args(argv)
+
+    try:
+        cfg = fetch_config(None if args.servers else args.server_id)
+    except Exception as exc:
+        print("speedtest: 获取配置失败: %s" % exc, file=sys.stderr)
+        return 1
+
+    servers = [s for s in cfg.get("servers", []) if s.get("host")]
+    if not servers:
+        print("speedtest: 未找到服务器 (id=%s)" % args.server_id, file=sys.stderr)
+        return 1
+
+    if args.servers:
+        print("Closest servers:")
+        print()
+        print("%6s  %-31s%-21s%s" % ("ID", "Name", "Location", "Country"))
+        print("=" * 78)
+        for item in servers:
+            print("%6s  %-31s%-21s%s"
+                  % (item.get("id", ""), item.get("sponsor", ""),
+                     item.get("name", ""), item.get("country", "")))
+        return 0
+
+    engine = cfg.get("suite", {}).get("global", {}).get("engine", {})
+    stage = cfg.get("suite", {}).get("testStage", {})
+    duration = int(os.environ.get("SPEEDTEST_DURATION") or engine.get("testDurationSeconds") or 15)
+    thread_count = int(os.environ.get("SPEEDTEST_THREADS") or 8)
+    ping_count = int(stage.get("latency", {}).get("pingCount") or 5)
+    isp = cfg.get("app", {}).get("ispName") or "Unknown"
+
+    server = servers[0] if args.server_id is not None else select_server(cfg)
+    try:
+        base = resolve_base(server)
+    except Exception as exc:
+        print("Error: %s" % exc, file=sys.stderr)
+        return 2
+    progress = sys.stdout.isatty() and not os.environ.get("SPEEDTEST_NO_PROGRESS")
+
+    print()
+    print("   Speedtest by Ookla")
+    print()
+    print("      Server: %s - %s (id: %s)"
+          % (server.get("sponsor", ""), server.get("name", ""), server.get("id", "")))
+    print("         ISP: %s" % isp)
+
+    try:
+        idle, failures, probes = measure_idle_latency(base, ping_count)
+    except Exception as exc:
+        print("Error: Latency test failed: %s" % exc, file=sys.stderr)
+        return 2
+    if not idle:
+        # 和官方一致：连延迟测试都做不了就直接失败退出
+        print("Error: Latency test failed", file=sys.stderr)
+        return 2
+    low, high, mean, jitter = latency_stats(idle)
+    print("%12s: %8.2f ms   (jitter: %.2fms, low: %.2fms, high: %.2fms)"
+          % ("Idle Latency", mean, jitter, low, high))
+
+    try:
+        download = run_transfer("Download", base, duration, thread_count, False, progress)
+        print_speed_line("Download", download["speed"], download["bytes"])
+        print_loaded_latency(download["latency"])
+
+        upload = run_transfer("Upload", base, duration, thread_count, True, progress)
+        print_speed_line("Upload", upload["speed"], upload["bytes"])
+        print_loaded_latency(upload["latency"])
+    except Exception as exc:
+        print("Error: %s" % exc, file=sys.stderr)
+        return 2
+
+    loss = (failures / probes * 100.0) if probes else 0.0
+    print("%12s: %7.1f%%" % ("Packet Loss", loss))
+
+    if os.environ.get("SPEEDTEST_SAVE"):
+        payload = {
+            "isp": isp,
+            "server": {
+                "id": server.get("id"),
+                "host": server.get("host", "").split(":")[0],
+                "name": server.get("name"),
+                "country": server.get("country"),
+            },
+            "ping": ({"latency": idle[0]} if idle else {}),
+            "download": {"bandwidth": int(download["speed"]), "bytes": download["bytes"]},
+            "upload": {"bandwidth": int(upload["speed"]), "bytes": upload["bytes"]},
+        }
+        url = try_save_result(cfg, payload)
+        if url:
+            print("%12s: %s" % ("Result URL", url))
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt:
+        print("\nspeedtest: 已中断", file=sys.stderr)
+        sys.exit(130)
