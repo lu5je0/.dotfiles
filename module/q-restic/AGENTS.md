@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-本文件适用于 `submodule/q-restic/` 目录。
+本文件适用于 `module/q-restic/` 目录。
 
 ## 组件职责
 
@@ -108,7 +108,16 @@
   写成 `avail_w - cols_w` 会把数字自己截掉（000.4 G…）。标签位不够 6 列时退回
   把「数据量 新增 标签」全塞进 desc。
 - **restic 必须已在 PATH 里**，不再用 `nix build nixpkgs#restic` 兜底（多次求值 flake、
-  systemd 服务里没网络保证）。`nix/modules/restic-home.nix` 负责把 pkgs.restic 装进系统 profile。
+  systemd 服务里没网络保证）。由 `nix/modules/restic-home.nix` 提供，且**两个选项都得配**：
+  `environment.systemPackages` 只影响 `/run/current-system/sw/bin`（手动执行的 PATH），
+  `systemd.services.<name>.path` 才是 unit 的 PATH 来源（求值时按 `enableDefaultPath`
+  生成 coreutils/findutils/gnugrep/gnused/systemd）。只写 systemPackages 的话手动跑没事、
+  定时任务天天失败在“PATH 里找不到 restic”，**rebuild 多少次也不会好**。同一坑的第二口是 `ssh`：
+  unit 里还得有 `pkgs.openssh`，因为 `preflight_sftp()` 自己调 ssh；restic 的 sftp 后端是
+  Go 原生实现、不需要 ssh（实测 PATH 清空也能列快照），所以 ssh 缺了只影响预检，
+  现在会 warn 跳过而不是抛堆栈。反过来，别把 `detect_host()` 改回 `hostname -s`：
+  那个二进制来自 net-tools、不在 unit 的 PATH 里，新机器（还没有 config.json）会直接
+  FileNotFoundError；现在用 socket.gethostname()。
 - **`restic snapshots --json` 的 `summary` 里没有 `total_size`**，那个名字只存在于 `restic stats` 的输出。
   版本数据量取 `summary.total_bytes_processed`，该版本实际写入量取 `summary.data_added_packed`。
 - **restic 时间戳是纳秒精度**，Python 3.9 的 `datetime.fromisoformat` 不接受，排序用 `snap_time_key()` 截到秒。

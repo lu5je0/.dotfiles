@@ -23,6 +23,7 @@ import os
 import select
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import termios
@@ -69,10 +70,13 @@ def warn(msg):
 
 
 def detect_host():
-    """本机短名。默认的仓库路径和 `--host` 过滤都用它。"""
-    return subprocess.run(
-        ["hostname", "-s"], capture_output=True, text=True
-    ).stdout.strip() or "localhost"
+    """本机短名。默认的仓库路径和 `--host` 过滤都用它。
+
+    用 socket.gethostname() 而不是 `hostname -s`：后者来自 net-tools，而 systemd 服务的
+    PATH 里没有它，所以新机器（还没有 config.json，会走到这里）会直接 FileNotFoundError。
+    FQDN 取第一段，跟 `hostname -s` 同义。
+    """
+    return socket.gethostname().split(".")[0] or "localhost"
 
 
 def default_repository(host):
@@ -242,7 +246,12 @@ def repo_ready(restic, cfg):
 
 
 def preflight_sftp(cfg, quiet=False):
-    """SFTP 目标预检：路径存在且可写，避免跑一半才发现写不进去。"""
+    """SFTP 目标预检：路径存在且可写，避免跑一半才发现写不进去。
+
+    要自己调 PATH 里的 ssh。找不到就只 warn 跳过，不要 die：预检只是提前发现，
+    restic 的 sftp 后端是 Go 原生实现、根本不用 ssh（实测 PATH 清空照样能列快照），
+    所以少了它备份也能跑完。
+    """
     repo = cfg["repository"]
     if not repo.startswith("sftp:"):
         return
@@ -250,11 +259,15 @@ def preflight_sftp(cfg, quiet=False):
     userhost, _, path = rest.partition(":")
     if not userhost or not path:
         return
+    ssh = shutil.which("ssh")
+    if not ssh:
+        warn("PATH 里没有 ssh，跳过 NAS 目标预检（不影响备份，只是少了提前发现）")
+        return
     if not quiet:
         info(f"预检 NAS 目标 {userhost}:{path}")
     res = subprocess.run(
         [
-            "ssh",
+            ssh,
             "-o", "BatchMode=yes",
             "-o", "ConnectTimeout=8",
             "-o", "StrictHostKeyChecking=yes",

@@ -36,7 +36,11 @@ in
 
   systemd.services.restic-home = {
     description = "restic 增量备份 home 到 NAS";
-    path = [ pkgs.restic ];
+
+    # openssh 只给 q-restic 的 NAS 预检（它自己调 ssh 试写）用，不是 restic 的依赖：
+    # restic 的 sftp 后端是 Go 原生实现，PATH 清空也能列快照（实测）。
+    # hostname 不需要——detect_host() 用的是 socket.gethostname()，跟 PATH 无关。
+    path = [ pkgs.restic pkgs.openssh ];
 
     # 仓库走 SFTP，不依赖 /mnt/mg08 的 CIFS 挂载，所以只等网络就绪。
     # 顺带避开 CIFS 的 x-systemd.idle-timeout=600 自动卸载。
