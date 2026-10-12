@@ -1,7 +1,0 @@
-{
-  "uuid": "three-finger-drag@lu5je0",
-  "name": "Three Finger Drag",
-  "description": "macOS-style three-finger drag: put three fingers on the touchpad and move to synthesize a held primary button, for dragging windows, resizing, and selecting text without pressing anything.",
-  "shell-version": ["50"],
-  "version": 1
-}

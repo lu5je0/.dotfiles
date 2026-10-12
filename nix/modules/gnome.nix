@@ -7,7 +7,6 @@
 
 let
   tilewindow = pkgs.callPackage ../pkgs/tilewindow.nix { };
-  threeFingerDrag = pkgs.callPackage ../pkgs/three-finger-drag.nix { };
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
     pkgs.gnomeExtensions.astra-monitor
@@ -19,7 +18,6 @@ let
     pkgs.gnomeExtensions.show-desktop-button
     pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
-    threeFingerDrag
     tilewindow
   ];
 in
