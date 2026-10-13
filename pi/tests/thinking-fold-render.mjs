@@ -64,7 +64,9 @@ function findPiTui() {
 		const piBin = realpathSync(execFileSync("sh", ["-c", "command -v pi"], { encoding: "utf8" }).trim());
 		let dir = path.dirname(piBin);
 		for (let i = 0; i < 5 && dir !== path.dirname(dir); i++) {
-			const hit = findFile(dir, rel, 4);
+			// 深度 6：pi-tui 藏在 <pi-coding-agent>/node_modules/@earendil-works/pi-tui，
+			// 比安装根低 5 层，原来写 4 层永远找不到
+			const hit = findFile(dir, rel, 6);
 			if (hit) return hit;
 			dir = path.dirname(dir);
 		}
