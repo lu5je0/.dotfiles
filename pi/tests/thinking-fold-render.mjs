@@ -139,6 +139,9 @@ function previewRowCount(rows) {
 	return kept;
 }
 
+const LONG = (n) =>
+	Array.from({ length: n }, (_, i) => `这是第 ${i + 1} 句推理，写得长一点好让它占满整行并且需要折行处理。`).join("\n");
+
 const SAMPLES = {
 	"fences": "前言一段话。\n\n```css\n.app-footer { height: calc(1rem + 13px); }\nhtml.standalone .app-footer { padding-bottom: 13px; }\n```\n\n中间一段。\n\n```js\nconst a = 1;\nif (a) { console.log(a); }\n```\n\n结尾。",
 	"fence 切在头尾": "```css\n.a { color: red; }\n.b { color: blue; }\n.c { color: green; }\n.d { color: pink; }\n```\n收尾一句。",
@@ -159,7 +162,27 @@ const SAMPLES = {
 	"list-quote-heading": "先说一句。\n\n- 列表项一，写得长一点，长到超过一行需要折行的程度才好验证\n- 列表项二\n\n> 引用内容\n\n#### 小标题\n\n收尾。\n\n最后一句。",
 	"cjk": "这是一段中文推理，混着 English words 和 `inline code`，还有 **加粗**，中文宽度是 2 列所以折行边界最容易出错。再来一点：图1 的 ink bottom 是 13.7 CSS，图2 是 25.3 CSS。",
 	"short": "只有一行，不折。",
+	// 行内标记（反引号/加粗）在源文本里占宽度、渲染后消失 → 渲染端会比 toRows 以为的更窄，
+	// 于是把相邻两行并成一行，折叠块从 6 行掉到 5 行。靠硬换行堵死合并这个方向。
+	"行内标记撑宽的尾巴": `${LONG(3)}\n用 \`inline_code_here\` 和 \`another_inline\` 说明，再加 \`third_snippet\` 收尾，还带 **加粗** 和 \`第四段\`。`,
+	// 裸 URL 会被 pi 渲染成 autolink（OSC 8 超链接）：行尾用反斜杠做硬换行会被吃进 URL 文本，
+	// 把链接拆成两行 → 多一行。所以硬换行用的是行尾两个空格。
+	"超长 URL（autolink）": `一个很长的 URL：https://example.com/very/long/path/that/cannot/be/broken/anywhere/at/all/ok\n${LONG(5)}`,
+	// 嵌套行内标记 / 链接（text 与 href 不同时 pi 会补 ` (href)`）/ 转义字符：都是「渲染后宽度
+	// ≠ 源宽度」的形态，宽度模型认错就会折在标记中间、行数跟着漂
+	"嵌套行内标记": `${LONG(3)}\n**加粗里带 \`inline code\` 的写法** 和 __下划线加粗__ 以及 ~~删除线~~，还有 *斜体* 与 _下划线斜体_ 混在一起，长度足够触发折行。`,
+	"链接文本与 href 不同": `${LONG(3)}\n参考 [文档说明](https://example.com/some/long/path) 和 [另一篇](https://example.org/y)，还有 <https://autolink.example.com/x> 这种 autolink。`,
+	"转义字符": `${LONG(3)}\n这里用 \\* 转义星号、\\_ 转义下划线、\\\` 转义反引号，免得被当成行内标记，长度也够折行。`,
 	"跨行反引号": "一个孤立的反引号 ` 在这一行，下一个反引号在\n下一行里，配成跨行 code span 之后 CommonMark 会把换行吃成空格。收尾。",
+
+	// 有序列表 + 惰性续行：续行在 toRows 里也要按 marker 宽度（`1. ` = 3 列）折，
+	// 否则 markdown 渲染时会再折一次，折叠体从 6 行变成 7 行（尾部出现孤字）
+	"有序列表续行": "Two tasks:\n1. Commit the ime change too.\n2. Continue the <leader>to investigation — I need more info: what exactly happens (nothing at all? partially? in which layout?). But the user said \"继续排查\" — they want me to keep digging. I can do the systematic headless matrix first and then present findings and ask for the specific scenario if needed.",
+	"无序列表续行": "Key finding:\n- sidebar/keymaps.lua 里有 buffer-local stub\n紧接着一大段普通正文，它会被 markdown 当成列表项的惰性续行，渲染时会缩进 marker 宽度，所以在折行时能吃到的列数比 toRows 以为的少几列，于是又被折了一次，整个折叠块就多出一行到两行。",
+	// 对照：空行之后另起的一段不在列表项里，不缩进，折行结果应该一致
+	"列表空行后另起段": "Two tasks:\n1. Commit the ime change too.\n\n紧接着一大段普通正文，这里空了一行，markdown 会把它当成列表之外的新段落，渲染时不再缩进，所以折行结果一致。再多写一点让这段足够长，长到尾部切片必然落在这段里。",
+	// 列表里的 fenced code：fence 缩进 + 列表缩进要相加
+	"列表里的代码块": "先列一下要点：\n1. 第一项\n\n```js\nconst a = 1;\nif (a) { console.log(a); }\n```\n\n收尾一句。",
 };
 
 const WIDTHS = [40, 52, 61, 72, 80, 96, 100, 118, 120, 137, 160, 200];
@@ -178,8 +201,17 @@ for (const [name, source] of Object.entries(SAMPLES)) {
 
 			for (const [index, line] of lines.entries()) {
 				if (line === "" || line === "Thinking") continue;
-				if (!line.startsWith("│")) problems.push(`第 ${index} 行缺竖线: ${JSON.stringify(line)}`);
+				if (folded && !line.startsWith("│")) problems.push(`第 ${index} 行缺竖线: ${JSON.stringify(line)}`);
 				if (visibleWidth(line) > width) problems.push(`第 ${index} 行超宽 ${visibleWidth(line)}>${width}`);
+			}
+			if (!folded) {
+				// 展开态**不套引用**：竖线只可能来自源文本自己写的 `>` 引用。
+				// 所以拿「不套 transformer 的原始渲染」当基准，竖线行数必须一模一样。
+				const rawQuotes = renderRaw(source, width).filter((line) => line.includes("│")).length;
+				const gotQuotes = lines.filter((line) => line.includes("│")).length;
+				if (gotQuotes !== rawQuotes) {
+					problems.push(`展开态竖线行数 ${gotQuotes} != 原始渲染 ${rawQuotes}（多出来的说明还是套了引用）`);
+				}
 			}
 			if (folded) {
 				// 折叠态：围栏行不显示，围栏里的内容行包成行内代码（mdCode），其余照旧渲染 markdown。
@@ -208,6 +240,13 @@ for (const [name, source] of Object.entries(SAMPLES)) {
 			for (const problem of problems) failures.push(`${name} @w=${width} ${folded ? "folded" : "expanded"}: ${problem}`);
 		}
 	}
+}
+
+/** 对照组：不套 transformer，直接渲染源文本（用来证明展开态没有多加引用） */
+function renderRaw(source, width) {
+	return new Markdown(source, 1, 0, theme, { color: identity, italic: true }, {})
+		.render(width)
+		.map((line) => line.replaceAll("\u200b", "").replace(/\s+$/, ""));
 }
 
 /** 走 pi 的真实路径：transform → Markdown 渲染 → 去 ANSI，返回屏幕行 */
