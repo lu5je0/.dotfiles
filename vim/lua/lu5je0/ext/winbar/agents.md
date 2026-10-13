@@ -58,7 +58,7 @@ ext/tabline/
 |------|------|
 | `<leader>0` | Pick 模式（字母跳转） |
 | `<leader>1..9` | 跳转到第 N 个 buffer |
-| `<leader>to` | 关闭其他所有 buffer |
+| `<leader>to` | 关闭其他所有 buffer（走全局列表，见「维护注意」） |
 | `<leader>th` | 关闭左侧 buffer |
 | `<leader>tl` | 关闭右侧 buffer |
 | `<left>` | 切换到上一个 buffer |
@@ -71,6 +71,17 @@ ext/tabline/
 - 改动 buffer 列表逻辑：确认 `core/buffers.lua` 的消费方（sidebar、time-machine）不受影响。
 - 改动 offset 逻辑：确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
 - 改动 truncation 或 tab 指示器宽度计算时，两处必须同步（`tab_section_w` 估算 + 实际渲染）。
+- **`<leader>to` 走全局 buffer 列表，`<leader>th`/`<leader>tl` 走当前窗口的显示列表**：`to` 是
+  "关掉除当前 buffer 之外的"（`core/buffers.valid_buffers()`），`th`/`tl` 是相对当前 winbar 条带
+  的左右（`util.get_buf_list()`，per-window 的 `state.win_bufs`）。**不要**再把 `to` 实现成
+  `close_left() + close_right()`：那份列表只含某个窗口"见过"的 buffer，`vsplit` 出的新窗口里只看得到
+  1 个、光标停在侧栏里只看到侧栏自己，于是按 `,to` 完全没反应（这就是它曾经的"失效"）。
+  拖动重排/`cycle`/`go_to_ordinal` 仍然用 per-window 列表，语义不变。
+- `bdelete_safe` 的两条硬约束（改它之前先想清楚）：`modified` 的一律不动；**正显示在别的窗口**里的
+  也不动——`:bdelete` 会把那个窗口一起带走（实测两窗口变一窗口）。判据是"此刻可见"
+  （`displayed_elsewhere` 扫所有 tabpage 的窗口），**不是** `state.win_bufs` 的历史：历史只增不减，
+  拿它当依据会让这些 buffer 永远删不掉。删的正好是当前窗口显示的 buffer 时，先把窗口切到相邻 buffer
+  再删，免得窗口跟着关。被跳过的会在 `vim.notify` 里说明原因，静默跳过会被当成键又坏了。
 - 拖动/跨窗口移动后必须用 `redrawstatus!`（带 `!`）：不带 `!` 只重画当前窗口的 winbar，源窗口会残留旧 tab，直到切回该窗口才更新。
 - `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`，**不要直接写事件名**。原因：0.12 的自然编辑走 `BufModifiedSet`（0.13 已删除，见 `news.txt` / `deprecated.txt`，PR #35610），而 `:set modified` 两条版本都走 `OptionSet` + `pattern = 'modified'`；单用任一个都会漏。兼容层与删除条件见根 `AGENTS.md` 的「临时兼容」一节。
 - 不要把这个事件当成冗余删掉：`:set modified` 不走 Neovim 的 winbar 重画路径，且 winbar 渲染的是所有 listed buffer，而内置重画只覆盖显示该 buffer 的窗口。
@@ -78,6 +89,8 @@ ext/tabline/
 ## 测试
 
 - `tests/winbar/drag_spec.lua`：拖动行为的端到端回归测试，入口在 `tests/run-tests.sh`。
+- `tests/winbar/close_others_spec.lua`：`<leader>to` 语义的回归（单窗口 / 有未保存修改 / `vsplit`
+  出新窗口 / 光标在侧栏 / 第二个 tabpage 五种布局，断言"全局列表 + 不删可见的 + 不带走窗口"）。
 - 它用 `jobstart(..., {rpc=true})` 起一个 `nvim --embed` 子进程并 `nvim_ui_attach`，再用 `nvim_input_mouse` 发真实 press/drag/release，覆盖真正的 click region 与 `<LeftDrag>` 映射。
 - 写这类测试时的三个坑：
   - `nvim_ui_attach` **不能带 `ext_linegrid`**，父进程不是真正的 grid UI，子进程会直接退出。
