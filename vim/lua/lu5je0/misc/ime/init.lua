@@ -14,6 +14,12 @@ local profile_timer = nil
 
 -- ── config helpers ────────────────────────────────────────────
 
+--- Master switch for the IME keeper. When on, a change of input source while
+--- Neovim is focused in a non-typing mode is snapped straight back to ASCII.
+--- Off for now: mode transitions still drive the IME as usual, backends just
+--- stop watching for manual toggles. Set to true to re-enable.
+local ENABLE_KEEPER = false
+
 local function save_last_ime_enabled()
   return env_keeper.get('save_last_ime', true)
 end
@@ -198,6 +204,7 @@ local function sync_initial_state()
 end
 
 local function config_keeper(backend)
+  if not ENABLE_KEEPER then return end
   if keeper_disabled_here() then return end
   if not backend.on_change or not backend.keeper then return end
   wire_keeper_signal(backend)
