@@ -119,14 +119,14 @@ try {
 	};
 
 	// 注入 / clamp / 非法值兜底
-	check("普通命令 → default 300", call("bash", { command: "ls -la" }).timeout === 300);
+	check("普通命令 → default 60", call("bash", { command: "ls -la" }).timeout === 60);
 	check("构建类命令 → long 1800", call("bash", { command: "nix build .#x" }).timeout === 1800);
 	check("交互类命令 → short 60", call("bash", { command: "npm run dev" }).timeout === 60);
 	check("显式 timeout 保留", call("bash", { command: "echo hi", timeout: 600 }).timeout === 600);
 	check("显式 timeout 被 clamp", call("bash", { command: "echo hi", timeout: 86400 }).timeout === 21600);
-	check("timeout=0 → 换成选档结果", call("bash", { command: "echo hi", timeout: 0 }).timeout === 300);
-	check("timeout=NaN → 换成选档结果", call("bash", { command: "echo hi", timeout: Number.NaN }).timeout === 300);
-	check("timeout=null → 换成选档结果", call("bash", { command: "echo hi", timeout: null }).timeout === 300);
+	check("timeout=0 → 换成选档结果", call("bash", { command: "echo hi", timeout: 0 }).timeout === 60);
+	check("timeout=NaN → 换成选档结果", call("bash", { command: "echo hi", timeout: Number.NaN }).timeout === 60);
+	check("timeout=null → 换成选档结果", call("bash", { command: "echo hi", timeout: null }).timeout === 60);
 
 	// 不该动的东西
 	const read = call("read", { path: "x" });
@@ -139,11 +139,11 @@ try {
 	const prompt = { type: "before_agent_start", systemPromptOptions: { sections: {} } };
 	for (const handler of handlers.before_agent_start) handler(prompt, {});
 	const section = prompt.systemPromptOptions.sections.bash_timeout;
-	check("注入了 bash_timeout 事实段", typeof section === "string" && section.includes("300"), String(section));
+	check("注入了 bash_timeout 事实段", typeof section === "string" && section.includes("60"), String(section));
 	check("事实段提到上界", section.includes("21600"));
 
-	// footer chip
-	check("footer chip 已注册", globalThis.__piFooterProviders?.has("bash-timeout") === true);
+	// 不在 footer 上留任何东西（历史上有过 cmd 300s 的 chip，已按要求去掉）
+	check("没有注册 footer chip", globalThis.__piFooterProviders?.has("bash-timeout") !== true);
 
 	if (failures.length > 0) {
 		console.error(`bash-timeout-smoke: ${failures.length}/${checks} 项失败\n`);

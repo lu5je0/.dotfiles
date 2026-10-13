@@ -33,12 +33,15 @@ export interface BashTimeoutConfig {
 export type BashTimeoutTier = "short" | "long" | "default";
 
 /**
- * 默认档。default 取 300 而不是 120：非构建类命令里也有 legit 的慢活
- * （大文件 curl、terraform plan、跨机 ssh），5 分钟够用又不至于像没超时。
- * long 30 分钟覆盖 nix build / npm ci / 全量测试；max 6 小时是「防止等于没超时」的兜底。
+ * 默认档。default 取 60：非构建类命令里正常几秒就结束，1 分钟足够翻倍有余，
+ * 真慢的那些（nix build / npm ci / 全量测试）由 longPatterns 走 30 分钟。
+ * max 6 小时是「防止等于没超时」的兜底。
+ *
+ * 注意 short（交互/常驻）与 default 现在同值，等于「非构建类一律 60 秒」；
+ * 想让交互类更快死掉就把 shortSeconds 调小（配置见上）。
  */
 export const DEFAULT_CONFIG: BashTimeoutConfig = {
-	defaultSeconds: 300,
+	defaultSeconds: 60,
 	longSeconds: 1800,
 	shortSeconds: 60,
 	maxSeconds: 21600,

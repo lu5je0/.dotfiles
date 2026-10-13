@@ -13,7 +13,7 @@
  *   - 选档规则与默认值见 lib/bash-timeout.ts
  *
  * 配置（可选、只读、不创建）：`~/.pi/agent/bash-timeout.json`
- *   { "defaultSeconds": 300, "longSeconds": 1800, "shortSeconds": 60, "maxSeconds": 21600,
+ *   { "defaultSeconds": 60, "longSeconds": 1800, "shortSeconds": 60, "maxSeconds": 21600,
  *     "longPatterns": ["..."], "shortPatterns": ["..."] }
  *   `PI_BASH_TIMEOUT` 环境变量只覆盖 defaultSeconds。非法项只 notify，安全默认照旧生效。
  *
@@ -24,7 +24,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { getAgentDir, type ExtensionAPI, type ExtensionUIContext } from "@earendil-works/pi-coding-agent";
-import { registerFooterProvider } from "./lib/footer.ts";
 import {
 	clampSeconds,
 	pickTimeoutSeconds,
@@ -61,13 +60,6 @@ function loadConfig(ui?: ExtensionUIContext): BashTimeoutConfig {
 
 export default function (pi: ExtensionAPI) {
 	let config = loadConfig();
-
-	// footer chip：让「兜底超时生效」可见（同 id 覆盖，/reload 安全）
-	registerFooterProvider({
-		id: "bash-timeout",
-		kind: "chip",
-		render: ({ theme }) => theme.fg("dim", `cmd ${config.defaultSeconds}s`),
-	});
 
 	pi.on("session_start", (_event, ctx) => {
 		config = loadConfig(ctx.ui);

@@ -31,13 +31,13 @@ const check = (name, ok, detail) => {
 // [命令, 期望档位, 期望秒数]
 const CASES = [
 	// default：普通命令，不快不慢，也不常驻
-	["ls -la", "default", 300],
-	["grep -rn 'leader>to' lua/", "default", 300],
-	["curl -sSL https://example.com", "default", 300],
-	["python3 script.py", "default", 300],
-	["nvim --headless -l tests/x.lua", "default", 300],
-	["git status --short", "default", 300],
-	["sleep 400", "default", 300],
+	["ls -la", "default", 60],
+	["grep -rn 'leader>to' lua/", "default", 60],
+	["curl -sSL https://example.com", "default", 60],
+	["python3 script.py", "default", 60],
+	["nvim --headless -l tests/x.lua", "default", 60],
+	["git status --short", "default", 60],
+	["sleep 400", "default", 60],
 
 	// short：交互式 / 常驻，几乎不可能自己退出
 	["tail -f /var/log/system.log", "short", 60],
@@ -55,9 +55,9 @@ const CASES = [
 	["python", "short", 60],
 	["node", "short", 60],
 	["psql -h localhost -U me mydb", "short", 60],
-	["psql -c 'select 1'", "default", 300],
-	["mysql -e 'show tables'", "default", 300],
-	["psql -f dump.sql", "default", 300],
+	["psql -c 'select 1'", "default", 60],
+	["mysql -e 'show tables'", "default", 60],
+	["psql -f dump.sql", "default", 60],
 	["python3 -m http.server 8000", "short", 60],
 	["nc -l 8080", "short", 60],
 	["nvim .", "short", 60],
@@ -113,11 +113,11 @@ for (const command of ["npm run dev", "docker logs -f x", "vite dev"]) {
 }
 {
 	const { config, errors } = resolveConfig(null);
-	check("null = 默认档", config.defaultSeconds === 300 && errors.length === 0);
+	check("null = 默认档", config.defaultSeconds === 60 && errors.length === 0);
 }
 {
 	const { config, errors } = resolveConfig({ defaultSeconds: 0, longSeconds: -5, shortSeconds: "x" });
-	check("非法秒数被忽略", config.defaultSeconds === 300 && config.longSeconds === 1800 && config.shortSeconds === 60);
+	check("非法秒数被忽略", config.defaultSeconds === 60 && config.longSeconds === 1800 && config.shortSeconds === 60);
 	check("非法秒数记进 errors", errors.length === 3, JSON.stringify(errors));
 }
 {

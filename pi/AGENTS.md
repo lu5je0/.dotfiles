@@ -79,8 +79,9 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 超时路径会 `killProcessTree` 干掉整棵进程树，所以补上 `timeout` 就够了。
 
 - 选档在 `lib/bash-timeout.ts`（零依赖纯函数，放 lib/ 是为了能脱开 pi 跑测试）：
-  short 60s（交互式/常驻）→ long 1800s（构建/安装/测试/大网络动作）→ default 300s。
-  先判 short，所以 `npm run dev` 走 60 而不是命中「npm ... run」的 1800
+  short 60s（交互式/常驻）→ long 1800s（构建/安装/测试/大网络动作）→ default 60s。
+  先判 short，所以 `npm run dev` 走 60 而不是命中「npm ... run」的 1800。
+  default 与 short 目前同值，等价于「非构建类一律 60 秒」，要更短就调 shortSeconds
 - 模型显式传的合法 timeout 只做上界 clamp（默认 21600s）：`timeout: 86400` 等于没设，不能让它
   绕过兜底；传 0/负数/NaN（pi 会直接报 Invalid timeout）由扩展换成选档结果
 - 配置（可选、只读、不创建）：`~/.pi/agent/bash-timeout.json`，字段与默认值见 `DEFAULT_CONFIG`；
@@ -94,10 +95,10 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
   误杀 legit 的长编译）；用户自己敲的 `!` 命令也不管（人在等，随时 ctrl+c）
 - `before_agent_start` 往 `systemPromptOptions.sections.bash_timeout` 写一行事实（各档秒数 +
   上界），让模型知道超长任务要显式传 timeout 或改用 bg_run；只陈述事实，不写「不要重试」那类指令
-- footer chip：`registerFooterProvider({ id: "bash-timeout" })`，显示 `cmd <defaultSeconds>s`
+- **不往 footer 放东西**：曾经注册过一个 `cmd 300s` 的 chip，按用户要求去掉了（`footer-host.ts` 收的那些 chip 只留简单/权限/tps 这类常用信息）
 - 测试：`node pi/tests/bash-timeout-pick.mjs`（52 条命令的选档 + 幂等 + 配置解析/clamp，零依赖）、
   `node pi/tests/bash-timeout-smoke.mjs`（真 SDK 载入扩展，验注入/clamp/非 bash 工具不受影响/
-  prompt 段/footer chip）。两个脚本的包发现方式同 thinking-fold（从 `pi` 可执行文件往上找，
+  prompt 段/不注册 footer chip）。两个脚本的包发现方式同 thinking-fold（从 `pi` 可执行文件往上找，
   **深 6**——pi-tui 藏在 `<pi-coding-agent>/node_modules/@earendil-works/pi-tui`，比安装根低 5 层）
 
 ## thinking 折叠（thinking-fold）
