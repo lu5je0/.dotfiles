@@ -69,6 +69,37 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
   - 弹窗用 `ctx.ui.custom()` + `overlay`（bottom-center、宽度铺满，见 `PermDialog`），**不要用 `ui.select()`**：后者的标题不是弹层，而是直接替换输入框画在 editor 区域、没有滚动条，命令一长整个 dock 超过终端高度、editor 区域被压扁（fullscreen 下 shrink 到 minSize 3），选项就跑到屏幕外（踩过）。overlay 有自己的定位/尺寸，弹窗里每行都在 `render(width)` 里按真实宽度截断，颜色自己分配（标题 accent、命令 dim、放行目标 muted），选项用 pi 的 `SelectList` + 1-4 直选。非 TUI（RPC）回退到 `ui.select`，文案同样先压短
 - 写入边界会注入系统提示：`before_agent_start` 里往 `systemPromptOptions.sections.write_boundaries` 写一行事实披露，如 `simple-perm ro：可写 ~/Test、/tmp、~/.dotfiles；其余路径只读。`（section 名固定，pi 按 tag 增量替换）。可写目录由 `writableDirs(cwd, allowWrite)` 现算；`ask` 模式句尾加「写到边界外会弹窗确认」，`yolo` 直接 `delete` 这一节。只陈述事实，不写指令。注意 section 名只接受 `^[a-z][a-z0-9_-]*$`，内容为空就等于删掉
 
+## 命令超时（bash-timeout）
+
+`extensions/bash-timeout.ts` 在 `tool_call` 里给内置 `bash` 补 `timeout`，只改这一个字段，命令行
+本身不碰，pi 原生 bash 渲染器（`$ cmd` + Took X.Xs）原样保留。起因：pi 的 bash schema 把 `timeout`
+定义成可选（描述就写着 "optional, no default timeout"），模型漏传时一条不会自己结束的命令会永远
+不返回。实测翻车是一条 `cmd | tail -40`：`tail` 等管道写端 EOF，而写端被漏掉的孙子进程
+（`nvim --embed`、`script` 起的 pty）持有，外层 shell 也就不退出，agent 卡了 50 分钟。pi 自己的
+超时路径会 `killProcessTree` 干掉整棵进程树，所以补上 `timeout` 就够了。
+
+- 选档在 `lib/bash-timeout.ts`（零依赖纯函数，放 lib/ 是为了能脱开 pi 跑测试）：
+  short 60s（交互式/常驻）→ long 1800s（构建/安装/测试/大网络动作）→ default 300s。
+  先判 short，所以 `npm run dev` 走 60 而不是命中「npm ... run」的 1800
+- 模型显式传的合法 timeout 只做上界 clamp（默认 21600s）：`timeout: 86400` 等于没设，不能让它
+  绕过兜底；传 0/负数/NaN（pi 会直接报 Invalid timeout）由扩展换成选档结果
+- 配置（可选、只读、不创建）：`~/.pi/agent/bash-timeout.json`，字段与默认值见 `DEFAULT_CONFIG`；
+  `PI_BASH_TIMEOUT` 环境变量只覆盖 defaultSeconds。非法项只 notify，安全默认照旧生效，
+  绝不因为配置写错就让扩展失效
+- 两张 patterns 表的误判方向不对称：`shortPatterns` 误判 = 把正常命令提前杀掉（危险，只收
+  「几乎不可能自己退出」的形态）；`longPatterns` 误判 = 只是挂久一点（安全，可以放宽）。
+  加模式时按这个标准，别反过来
+- regex **不要带 `g` 标志**：`RegExp` 有 lastIndex 状态，带 g 时连续 `.test()` 会漏判
+- 边界：只管 `bash`。`bg_run` 故意不动（异步 + 有任务面板 + 可手动 kill，塞默认超时反而会
+  误杀 legit 的长编译）；用户自己敲的 `!` 命令也不管（人在等，随时 ctrl+c）
+- `before_agent_start` 往 `systemPromptOptions.sections.bash_timeout` 写一行事实（各档秒数 +
+  上界），让模型知道超长任务要显式传 timeout 或改用 bg_run；只陈述事实，不写「不要重试」那类指令
+- footer chip：`registerFooterProvider({ id: "bash-timeout" })`，显示 `cmd <defaultSeconds>s`
+- 测试：`node pi/tests/bash-timeout-pick.mjs`（52 条命令的选档 + 幂等 + 配置解析/clamp，零依赖）、
+  `node pi/tests/bash-timeout-smoke.mjs`（真 SDK 载入扩展，验注入/clamp/非 bash 工具不受影响/
+  prompt 段/footer chip）。两个脚本的包发现方式同 thinking-fold（从 `pi` 可执行文件往上找，
+  **深 6**——pi-tui 藏在 `<pi-coding-agent>/node_modules/@earendil-works/pi-tui`，比安装根低 5 层）
+
 ## thinking 折叠（thinking-fold）
 
 `extensions/thinking-fold.ts` 把 thinking 折成 qoder 的样子：`**Thinking**` 标题 + 每行 `│ ` 侧栏，正文按可用宽度折行后只留头 2 行 + `… +N rows (ctrl+t)` + 尾 3 行，预览行数 ≤5 不折（围栏标记行不算行）。
