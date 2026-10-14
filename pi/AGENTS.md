@@ -127,33 +127,50 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 
 ## thinking 折叠（thinking-fold）
 
-`extensions/thinking-fold.ts` 把 thinking 折成 qoder 的样子：`**Thinking**` 标题 + 每行 `│ ` 侧栏，正文按可用宽度折行后只留头 2 行 + `… +N rows (ctrl+t)` + 尾 3 行，预览行数 ≤5 不折（围栏标记行不算行）。
+`extensions/thinking-fold.ts`：`**Thinking**` 标题 + 每行 `│ ` 侧栏；折叠时只留头 2 行 +
+`… +N rows (ctrl+t)` + 尾 3 行（≤5 行不截）。
 
-- 竖线**不是**插件画的：每行只发 `> `（markdown 引用标记），`│ ` 由 pi 的 blockquote 渲染器对**折行之后的每一行**补一次（`quoteBorder("│ ")`）。别改回自己塞 `│ ` 字符串：那两列会进 markdown 语法，`│ ``` ` 不再是 fence（fence 要求行首最多 3 个空格）→ 代码块降级成段落 → ``` 配成跨行 code span → CommonMark 把 code span 内的换行变空格 → 折好的行被合并成一条超长行 → pi 再折一次，后续行没有前缀，正文画到竖线那一列（"字越过竖线"）。交给 pi 之后竖线在结构上不可能再丢
-- 宽度口径：折叠态 `toRows` 折到 `availableWidth - 2`（quote 自己吃掉 2 列）；**展开态不套引用**，折到整宽（`availableWidth`）。预留守的是屏幕行数 = 折行行数，不守竖线
-- **展开态不要竖线**：竖线是 pi 的 blockquote 渲染器给 `> ` 前缀逐行补的，所以展开态直接发正文行（`plainRows`），折叠态才发 `> `（`quoteRows`）。回归里用「不套 transformer 的原始渲染」当基准比竖线行数——源文本自己写的 `>` 引用仍然会有竖线，不能一刀切禁止
-- **列表缩进必须按 marker 实际宽度算，不能写死 2**：`- ` 是 2 列、`1. ` 是 3 列、`12. ` 是 4 列（`listMarkerWidth`，CommonMark：marker 后的空白 1~4 格算内容缩进、5 格以上按 1 格算）。而且**列表项的续行**（惰性续行 / 空行后仍缩进的行）在渲染时同样按这个宽度缩进，所以也要减掉——以前只对行首带 marker 的行减 2，续行按整宽折，pi 拿到后按 `width - marker` 再折一次，折叠块就多出行来（表现是尾部出现孤字、6 行变 7 行）。上下文推进抽成了 `advanceContext`/`rowBudget`（`RowContext { inFence, listIndent, afterBlank }`），`toRows` 和 `refitTail` 共用，别再各写一份
-- 折叠态把行分两类：**围栏里的内容行 / 缩进代码行**包成行内代码（`codeRow`，保留缩进、换成 `mdCode` 配色，而且 markdown 不会再把它当块级语法——`  # 注释` 以前会被就地认成金色标题并多一行空行）；**围栏标记行**不占行；其余正文照旧渲染 markdown（标题/列表/引用/行内标记都生效）。围栏识别在 `previewRows`（`fenceStart`/`fenceEnd`，≈ markdown-it 的 fences 规则；嵌套引用里的围栏靠 `dequote` 出的 depth 对平）
-- 行数账：代码行钉死在 1 行（行内代码），所以折叠块稳定在 2 + 1 + 3；`… +N rows` 按「围栏行不显示」后的行数算。连续空行、收尾空行都要补零宽空格（markdown 会把两个空行合成一行，pi 的 blockquote 会把尾部空白行剪掉）
-- **尾巴要按「输出里的」上下文重折一遍**（`refitTail`）：切片把中间的行丢掉了，输出里的列表/围栏上下文可能和源文本不同。典型例子是「列表项 → 空行 → 另起一段」——源文本里那段在列表外（按整宽折），输出里却紧跟列表项，markdown 当续行缩进几列再折，于是又变 8 行。`refitTail` 用同一套上下文走一遍 head + 提示行拿到尾巴的真实预算，必要时重折，多出来的行从末尾裁掉并累加进 `+N`（保证仍是 2 + 1 + 3）。代码行不重折（已被 `codeRow` 包成行内代码，再折会撕坏定界符）
-- **折行按「渲染后宽度」衡量，行内标记不可切开**（`inlineSegments` / `measureInline` / `wrapInline`）：
-  pi 渲染时会吃掉行内标记（`` ` ``、`**`、`[text](href)` 的括号…），所以源宽度往往大于渲染后占的列数。
-  按源宽度折有两个后果，都会让高度漂：① 折出来的行渲染后偏短 → markdown 把相邻两行合并（6 行变 5 行，
-  宽屏更少）；② 可能折在行内标记中间（行尾留下未闭合反引号），渲染端拼回去又少一行。宽度模型对齐
-  pi-tui 的 `components/markdown.js`：code span 的定界符不吃宽度（内容两侧各空一格时 CommonMark 各去掉
-  一个）、strong/em/del 只留内容、`[text](href)` 渲染成 `text (href)`（text === href 的 autolink 只渲染
-  text）、`\x` 转义渲染成 1 列。认不出来的构造按普通文本算（宁可少减不多减）。**围栏里的行不走这套**
-  （代码里 `**x**` 就是字面量），仍按原样宽度折。
-- **显示的每行都加硬换行**（`hardBreaks`，折叠态两条路径都加）：markdown 会把连续行当一段重新折行，
-  硬换行把「合并」这个方向堵死，只剩「一行太宽被拆开」需要靠折行预算保证。**必须用行尾两个空格，
-  不能用行尾反斜杠**：反斜杠会被 autolink 吃进 URL 文本（实测裸 URL 结尾接 `\` 让 pi 把链接拆成两行、
-  多出一行），空格则正常终结 URL 与行内代码。
-- 仍会波动的情形：① 正文自己写的块级结构（标题/分隔线会让 pi 多补一行空行，表格/块级数学会多行，链接引用定义会被 markdown 吞得一行不剩）；② 围栏形态认不出来时（猜错最坏是把代码行当正文，可能变成金色标题）；③ 尾巴在源文本里比输出里更窄（列表开头落在被丢掉的中段）时，渲染端会把两行合并 → 折叠块显示 5 行。①②③ 都已写进回归样本能覆盖的部分，③ 是已知残留
-- 只能走 `pi.registerMarkdownTransformer("assistant-thinking")`：pi 没有给扩展自渲染 assistant 消息的口子，样式也改不了（竖线用 `mdQuoteBorder`，dark 主题 = muted 灰；正文仍是 thinkingText）
-- `toRows` / `renderThinking` 是 export 的纯函数，便于脱离 pi 验证；回归检查：`node pi/tests/thinking-fold-render.mjs`（把 transformer 的输出喂回**真** pi-tui 的 Markdown：断言折叠态每行都有 `│`、展开态竖线行数等于原始渲染、没有超宽行、展开态 fence 没被合并、折叠态不出现 codeBlock/codeBlockBorder、折叠体行数等于「预览行数」（>5 时是 6）、17 个代码行用例逐行核对确实是 codeSpan；22 样本 × 12 宽度 × 折叠/展开 + 17 用例 = 545 组合。样本里刻意放了列表项惰性续行（有序/无序）、列表空行后另起段、列表里的 fence、行内标记撑宽、嵌套行内标记、链接（text ≠ href）、转义字符、长 autolink——这几类就是折叠高度漂移的来源。token 标记用零宽 ANSI，不能用可见字符——可见标记自己占宽度，会把贴近预算的行挤到折行；pi-tui 的位置由脚本顺着 `command -v pi` 自己找，找不到时可给 `PI_TUI_PATH`）
-- 切换后靠 `ctx.ui.setHiddenThinkingLabel()` 逼 pi 重建 thinking 的 Markdown 组件（pi-tui 的 Markdown 按 `(text,width)` 缓存，光 requestRender 不会重跑 transformer）。副作用：隐藏 thinking 时那行标签会被重置回 pi 默认的 `Thinking...`
-- 折叠键 `ctrl+t` 是从 pi 内置动作手里拿来的：`ctrl+t` 默认属于 `app.thinking.toggle`，而这个动作名在 pi 的 `RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS` 里，扩展注册同一个键会被直接拒绝。所以 `keybindings.json` 里 `app.thinking.toggle` 改绑到 `ctrl+shift+t`（仍然是「一键隐藏全部 thinking」），同时清掉 `/tree` 里也占着 ctrl+t 的 `app.tree.filter.noTools`（不清会多一行启动告警；树里用 ctrl+o 循环仍能切到 no-tools）
-- `/fold` 命令等价于按 `ctrl+t`
+- **先渲染再切片，绝不自己折行**：thinking markdown 交给真 pi-tui `Markdown` 渲染成屏幕行
+  （`renderPreviewRows`），然后只做两件事——切头尾、逐行包成行内代码（`literalRow`）。
+  漂移的根源是「源文本宽度 ≠ 渲染后宽度」（行内标记被吃掉、列表续行被缩进、代码块加边距），
+  自己算就永远差一点：旧版为此写了 589 行（行内标记宽度模型 + 列表缩进 + 围栏状态 + 尾巴重折 +
+  硬换行），6 次提交全在修同一类高度漂移仍补不完。**这是本插件唯一的设计约束。**
+- **行内代码是 ANSI 载体**：切片后的行会被 pi 重新解析一遍，而它们可能是围栏内部的行
+  （`# 注释` 被认成标题并多补一行空行、` ``` ` 被认成新代码块、连续空行被吞）。包成 code span
+  后外层不再解析、不增行、不吞空白，里面已渲染的 ANSI 原样保留。定界符取行内最长反引号串 +1，
+  两侧各留一格空格（CommonMark 会吃掉这对空格）。
+- **围栏标记行不占行**：预览渲染时把 `codeBlockBorder` 换成哨兵串（`\x1b[999m`，非法 SGR，
+  终端忽略），渲染后按哨兵过滤整行。`codeBlockBorder` 在 pi-tui 里只在围栏开/闭两处调用
+  （`dist/components/markdown.js`），所以过滤掉的恰好是那两行。同一主题里还要
+  `codeBlockIndent: ""` + `highlightCode: undefined`，免得预览行被额外缩进或高亮改写。
+- **竖线不是插件画的**：每行只发 `> `，`│ ` 由 pi 的 blockquote 渲染器逐行补。别改回自己塞
+  `│ `：那两列会进 markdown 语法，`│ ``` ` 不再是 fence（行首最多 3 空格）→ 代码块降级成段落 →
+  ``` 配成跨行 code span → CommonMark 把 code span 内换行变空格 → 折好的行合并成一条超长行 →
+  pi 再折一次、后续行没有前缀，正文画到竖线那一列。交给 pi 之后竖线在结构上不可能再丢。
+- **硬换行用行尾两个空格，不用 `\`**：反斜杠会被 autolink 吃进 URL 文本（裸 URL 结尾接 `\`
+  会让 pi 把链接拆成两行、多出一行）；两个空格正常终结 URL 与行内代码。
+- 展开态直接返回 `**Thinking**` + 原 markdown：不套引用所以没有竖线，也不做任何折行。
+- 已知限制：折叠态代码行是行内代码配色（`codeBlock` 被顶替），与展开态代码块颜色不同；正文自带的
+  标题/表格等块级结构会各自多占行，所以折叠高度不总是 6 行；`… +N rows` 按「去掉围栏标记行」
+  之后的行数算；样式只能借 pi 的 markdown 主题（竖线走 `quoteBorder`，正文走 thinkingText），
+  qoder 那种「侧栏一个色、标题一个色」做不到。
+- 切换后靠 `ctx.ui.setHiddenThinkingLabel()` 逼 pi 重建 thinking 的 Markdown 组件（pi-tui 的
+  Markdown 按 `(text,width)` 缓存，光 requestRender 不会重跑 transformer）。副作用：隐藏 thinking
+  时那行标签会被重置回 pi 默认的 `Thinking...`。
+- 折叠键 `ctrl+t` 是从 pi 内置动作手里拿来的：`ctrl+t` 默认属于 `app.thinking.toggle`，而它在
+  `RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS` 里，扩展注册同键会被直接拒绝。所以
+  `keybindings.json` 里 `app.thinking.toggle` 改绑 `ctrl+shift+t`，并清掉 `/tree` 里也占 ctrl+t 的
+  `app.tree.filter.noTools`（不清会多一行启动告警）。`/fold` 命令等价于按 `ctrl+t`
+- 回归检查：`node pi/tests/thinking-fold-render.mjs` —— 把 transformer 的输出喂回**真** pi-tui 的
+  `Markdown`；期望行直接调扩展导出的 `renderPreviewRows`（预览行只有这一份口径），逐行核对竖线、
+  内容、`+N`、codeSpan 载体、ANSI 样式集、无超宽行，另加一条独立断言「输出里不得残留哨兵串」；
+  展开态要求与原始渲染逐行一致。规模：36 样本 × 17 宽度 ×
+  折叠/展开 + 18 个代码字面量 + 样式用例 + 逐字符流式（含 fold 切换与缓存失效）= 11228 组合。
+  token 标记必须是**零宽** ANSI：可见标记自己占宽度，会把贴近预算的行挤到折行。样本覆盖列表项惰性
+  续行（有序/无序）、列表空行后另起段、列表里的 fence、行内标记撑宽、嵌套/跨行行内标记、链接
+  （text ≠ href）、转义字符、半截 fence/math/链接、长 autolink、表格、checkbox 嵌套列表、
+  entities、CJK/emoji——都是折叠高度漂移的历史来源。包位置由脚本顺着 `command -v pi` 往上找
+  （深 6），可用 `PI_AGENT_PKG` / `PI_TUI_PATH` 覆盖
 
 ## footer（常见坑：只有一个槽位）
 
