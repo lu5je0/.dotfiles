@@ -380,3 +380,6 @@ export QODERCN_EXPOSE_TOKEN_USAGE=1
 # >>> ai-coding-trace >>>
 export PATH="$HOME/.r2c/bin:$PATH"
 # <<< ai-coding-trace <<<
+
+# ai-coding-trace codex-tools-trace
+[ ! -f '/Users/lu5je0/.r2c/logs/code-collect/codex-tools-trace-env.sh' ] || . '/Users/lu5je0/.r2c/logs/code-collect/codex-tools-trace-env.sh'
