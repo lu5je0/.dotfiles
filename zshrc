@@ -371,3 +371,12 @@ if [[ ! -f ~/.ohmyenv ]]; then
   echo "# export PATH=~/.local/share/neovim/bin:$PATH\n# export USER_HTTP_PROXY='http://127.0.0.1:1081'" >~/.ohmyenv
 fi
 source ~/.ohmyenv
+
+# >>> ai-coding-trace qoder-token-usage >>>
+export QODER_EXPOSE_TOKEN_USAGE=1
+export QODERCN_EXPOSE_TOKEN_USAGE=1
+# <<< ai-coding-trace qoder-token-usage <<<
+
+# >>> ai-coding-trace >>>
+export PATH="$HOME/.r2c/bin:$PATH"
+# <<< ai-coding-trace <<<
