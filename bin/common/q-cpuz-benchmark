@@ -3,14 +3,15 @@
 
 用法：
     q-cpuz-benchmark                     # 单线程 + 多线程各 10 秒，带实时分数面板
+    q-cpuz-benchmark -u                  # 更新二进制（cpuz-bench 自更新，原样透传）
     q-cpuz-benchmark --duration 5000     # 每个 pass 5 秒
     q-cpuz-benchmark -q                  # 只输出两行分数
     q-cpuz-benchmark --json              # 机器可读输出
     q-cpuz-benchmark --help              # 全部参数（透传给 cpuz-bench）
 
 二进制缓存在 ${XDG_CACHE_HOME:-~/.cache}/cpuz-benchmark/cpuz-bench-<os>-<arch>，
-默认每次运行静默查一次最新 release（一个 HEAD 请求，不占 API 配额），版本变了就自动重下；
-查询失败（离线等）时继续用缓存。
+缺失时自动下载；之后直接用缓存，本脚本不做版本检查也不联网。
+要更新就用 `-u`（由 cpuz-bench 自己拉到最新 release 并替换自身，见其 --help）。
 
 环境变量：
     CPUZ_BENCH_BIN              直接指定已有的二进制，跳过下载
@@ -18,7 +19,6 @@
     CPUZ_BENCH_URL_PREFIX       自定义下载前缀（默认 GitHub Releases）
     CPUZ_BENCH_FORCE=1          强制重新下载
     CPUZ_BENCH_CACHE_DIR        指定缓存目录
-    CPUZ_BENCH_NO_UPDATE_CHECK=1  跳过最新版本检查（离线/想省一次请求时用）
 
 macOS/arm64 额外行为：会自动把 CPU-Z 官方的 cpuz_arm64.exe 放到缓存目录，
 因为 aarch64 上只有跑官方内核才是 CPU-Z 会显示的分（我们的构建更快）。
@@ -39,7 +39,6 @@ from pathlib import Path
 from urllib import error, request
 
 REPO = "lu5je0/CPU-Z-Benchmark"
-RELEASE_LATEST_URL = f"https://github.com/{REPO}/releases/latest"
 SUPPORTED = ("linux-x86_64", "linux-aarch64", "macos-aarch64")
 TIMEOUT = 10  # 秒：查版本 / 下载的超时
 CHUNK = 64 * 1024
@@ -98,26 +97,6 @@ def url_prefix(tag: str) -> str:
     return f"https://github.com/{REPO}/releases/{tag}/download"
 
 
-def remote_tag(tag: str) -> str:
-    """把 latest 解析成具体 tag（跟随 github.com 的 302，不占 API 配额）。
-
-    任何失败都返回空串：查不通就继续用缓存。
-    """
-    if tag != "latest":
-        return tag
-    if enabled("CPUZ_BENCH_NO_UPDATE_CHECK"):
-        return ""
-    req = request.Request(RELEASE_LATEST_URL, method="HEAD")
-    try:
-        with request.urlopen(req, timeout=TIMEOUT) as resp:
-            final = resp.geturl()
-    except (error.URLError, error.HTTPError, OSError):
-        return ""
-    if "/tag/" not in final:
-        return ""
-    return final.rsplit("/tag/", 1)[1].strip()
-
-
 def download(url: str, dest: Path) -> None:
     """流式下载（终端上画进度条），完成后原子替换。"""
     tmp = dest.with_name(f".{dest.name}.{os.getpid()}")
@@ -174,41 +153,24 @@ def resolve_binary(asset: str) -> Path:
     tag = os.environ.get("CPUZ_BENCH_TAG") or "latest"
     directory = cache_dir()
     binary = directory / asset
-    tag_file = directory / f"{asset}.tag"
     url = f"{url_prefix(tag)}/{asset}"
 
     if enabled("CPUZ_BENCH_FORCE"):
         binary.unlink(missing_ok=True)
 
-    if not os.access(binary, os.X_OK):
-        try:
-            directory.mkdir(parents=True, exist_ok=True)
-        except OSError as exc:
-            die(f"无法创建缓存目录 {directory}: {exc}")
-        print(f"q-cpuz-benchmark: 下载 {url}", file=sys.stderr)
-        try:
-            download(url, binary)
-        except RuntimeError as exc:
-            die(f"{failure_hint(asset, tag)}\n  ({exc})")
-        resolved = remote_tag(tag)
-        if resolved:
-            tag_file.write_text(resolved + "\n", encoding="utf-8")
+    # 缓存命中就直接用：版本更新交给 `-u`（cpuz-bench 自更新）。
+    if os.access(binary, os.X_OK) and not enabled("CPUZ_BENCH_FORCE"):
         return binary
 
-    # 缓存命中：版本变了就自动更新（离线或查不到时继续用缓存）
-    want = remote_tag(tag)
-    have = tag_file.read_text(encoding="utf-8").strip() if tag_file.exists() else ""
-    if want and want != have:
-        print(
-            f"q-cpuz-benchmark: 发现新版本 {want}（缓存 {have or '未知'}），更新中",
-            file=sys.stderr,
-        )
-        try:
-            download(url, binary)
-        except RuntimeError as exc:
-            print(f"q-cpuz-benchmark: 更新失败，继续用缓存版本（{exc}）", file=sys.stderr)
-        else:
-            tag_file.write_text(want + "\n", encoding="utf-8")
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        die(f"无法创建缓存目录 {directory}: {exc}")
+    print(f"q-cpuz-benchmark: 下载 {url}", file=sys.stderr)
+    try:
+        download(url, binary)
+    except RuntimeError as exc:
+        die(f"{failure_hint(asset, tag)}\n  ({exc})")
     return binary
 
 
