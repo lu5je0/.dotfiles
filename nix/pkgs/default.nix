@@ -2,6 +2,7 @@
 
 {
   arcglyph = pkgs.callPackage ./arcglyph.nix { };
+  codex-desktop = pkgs.callPackage ./codex-desktop { flake = inputs.llm-agents; };
   emby-ext-player = pkgs.callPackage ./emby-ext-player.nix { };
   kitty = pkgs.callPackage ./kitty.nix { };
   mark-shot = pkgs.callPackage ./mark-shot { flake = inputs.mark-shot; };

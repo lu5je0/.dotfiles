@@ -6,6 +6,9 @@
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
     nixpkgs-unstable.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
 
+    # 保留上游 nixpkgs，复用其桌面包依赖与缓存；用 flake.lock 固定版本。
+    llm-agents.url = "github:numtide/llm-agents.nix";
+
     # 上游只有 flake 打包；补丁后不装进系统配置，`nix profile add path:~/.dotfiles#mark-shot`
     mark-shot = {
       url = "github:jswysnemc/mark-shot";
