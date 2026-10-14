@@ -15,7 +15,6 @@
 
   users.users.lu5je0.packages = with pkgs; [
     google-chrome
-    pkgsUnstable.qq
     telegram-desktop
     wechat
     mpv
