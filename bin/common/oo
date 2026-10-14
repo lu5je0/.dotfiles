@@ -3,4 +3,10 @@
 SCRIPT_PATH=$DOTFILES_DIR/module/iocr
 SCRIPT_NAME=iocr.py
 
+# macOS 用 Vision API OCR，依赖 pyobjc（Quartz/Vision）。uv run 默认只同步基础依赖，
+# 不带 macos extra 时环境里没有 Quartz，会直接报 No module named 'Quartz'。
+if [ "$(uname -s)" = "Darwin" ]; then
+  SCRIPT_EXTRAS=macos
+fi
+
 source $DOTFILES_DIR/module/python-install/runner.sh
