@@ -1,0 +1,21 @@
+{
+  "defaults": {
+    "corners": true,
+    "radius": 6,
+    "smoothing": 0.25,
+    "shadow": true,
+    "shadowStrength": 100,
+    "maximized": false,
+    "fullscreen": false
+  },
+  "rules": [
+    {
+      "match": ["chatgpt", "codex"],
+      "enabled": true
+    },
+    {
+      "match": ["PeaZip", "peazip"],
+      "enabled": true
+    }
+  ]
+}

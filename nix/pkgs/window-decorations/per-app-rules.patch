@@ -1,0 +1,43 @@
+diff --git a/src/settings/config.ts b/src/settings/config.ts
+index cdec7bb..46448be 100644
+--- a/src/settings/config.ts
++++ b/src/settings/config.ts
+@@ -67 +67 @@ export function readCornerConfig(settings: Gio.Settings): CornerConfig {
+-export function readShadowConfig(settings: Gio.Settings, focused: boolean): ShadowConfig {
++export function readShadowConfig(settings: Gio.Settings, focused: boolean, strength?: number): ShadowConfig {
+@@ -69 +69 @@ export function readShadowConfig(settings: Gio.Settings, focused: boolean): Shad
+-    if (settings.get_boolean(SettingsKey.shadowAdvanced)) {
++    if (strength === undefined && settings.get_boolean(SettingsKey.shadowAdvanced)) {
+@@ -80 +80 @@ export function readShadowConfig(settings: Gio.Settings, focused: boolean): Shad
+-    const amount = settings.get_int(SettingsKey.shadowStrength) / 100;
++    const amount = (strength ?? settings.get_int(SettingsKey.shadowStrength)) / 100;
+diff --git a/src/shell/window-manager.ts b/src/shell/window-manager.ts
+index f3884a1..9b0874b 100644
+--- a/src/shell/window-manager.ts
++++ b/src/shell/window-manager.ts
+@@ -12,0 +13,3 @@ import {readConfig} from '../settings/config.js';
++import {applyRule, selectRule} from '../settings/app-rules.js';
++import {currentRules, startRuleConfig, stopRuleConfig} from '../settings/rule-config.js';
++import {getWindowIdentifiers} from './window-filter.js';
+@@ -110 +113,7 @@ function refreshRoundedCorners(actor: Meta.WindowActor) {
+-    const cfg = readConfig(currentSettings());
++    const rule = selectRule(currentRules(), getWindowIdentifiers(win));
++    if (!rule?.enabled || ((!rule.corners || rule.radius === 0) &&
++        (!rule.shadow || rule.shadowStrength === 0))) {
++        onRemoveEffect(actor);
++        return;
++    }
++    const cfg = applyRule(readConfig(currentSettings()), rule, currentSettings());
+@@ -202,0 +212 @@ function enableEffect() {
++    startRuleConfig(refreshAll);
+@@ -240,0 +251 @@ function disableEffect() {
++    stopRuleConfig();
+diff --git a/tests/unit/extension.test.mjs b/tests/unit/extension.test.mjs
+index 4971dbb..f004859 100644
+--- a/tests/unit/extension.test.mjs
++++ b/tests/unit/extension.test.mjs
+@@ -141,0 +142,4 @@ function setupWindowLifecycle(ready = true) {
++        startRuleConfig() {}, stopRuleConfig() {}, currentRules: () => [],
++        getWindowIdentifiers: () => [],
++        selectRule: () => ({enabled: true, corners: true, radius: 8, shadow: true, shadowStrength: 100}),
++        applyRule: base => base,
