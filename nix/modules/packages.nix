@@ -47,6 +47,7 @@
     gcc
     gnumake
     pkgsUnstable.neovim
+    pkgsUnstable.pi-coding-agent
     rustc
     jq
     tree-sitter
