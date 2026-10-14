@@ -37,6 +37,30 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 - `npm:pi-commandcode-provider` — commandcode provider
 - `npm:pi-smart-web-search` — web_search 工具
 - `npm:pi-smart-fetch` — web_fetch 工具
+- `npm:@juicesharp/rpiv-ask-user-question` — ask_user_question 工具
+- `npm:pi-background-tasks` — bg_run / bg_delegate / fusion 等后台任务（本地行为调整见下节）
+
+## bg 任务（bg-tweaks）
+
+`extensions/bg-tweaks.ts` 只针对 `pi-background-tasks`，不 fork 上游包：
+
+- **关掉插件自己的版本检查**：插件在 `session_start` 查一次 npm latest，命中就往 footer 的
+  bg 片段塞 `↑ vX.Y.Z /bg-update`，更新频繁时很吵。官方开关是 `PI_BG_DISABLE_UPDATE_CHECK=1`，
+  由本扩展在加载期写进 `process.env`，不往 shell 环境塞 pi 专属变量。时序成立是因为 pi 先加载
+  本地扩展目录、后加载 `settings.packages` 的包，而插件到 `session_start` 才读这个变量；
+  已显式设过就不覆盖（`PI_BG_DISABLE_UPDATE_CHECK=0` 可临时打开）。
+  注意这是**插件**的检查；pi 主体自己的版本检查是另一个开关（`PI_SKIP_VERSION_CHECK`），
+  而 pi 的 `Package Updates Available` 块只看包是否 pinned，本扩展管不到。
+- **终态后自动 `/bg-clear`**：插件的 `bg N done · /bg-clear` 只有打开任务详情或手动 `/bg-clear`
+  才消。扩展订阅插件的 EventBus 终态频道 `pi-background-tasks:terminal:v1`，最后一次终态之后
+  静默 10 秒（可用 `PI_BG_AUTO_CLEAR_DELAY_MS` 改，非法值回落默认）补发一次 `/bg-clear`。
+  发送走 `pi.sendUserMessage("/bg-clear", { expandPromptTemplates: true })`：pi 的 `prompt()` 对
+  `/` 开头的扩展命令是「立即执行、不落消息、不触发 turn」的分支，流式期间也可用，语义等于
+  手动敲一次（会闪一行短暂的 `Cleared N ...` 状态）。先查 `pi.getCommands()` 确认命令在，
+  否则不加 `expandPromptTemplates` 的普通提示词会变成给模型的一句话。多个任务连续结束共用
+  一个 debounce；按 `task.id` 去重（终态帧可能重发）。
+- 测试：`node pi/tests/bg-tweaks-smoke.mjs`（延迟解析 + 开关 + 去重/debounce/畸形帧/shutdown，
+  零依赖，直接 import `.ts`——扩展只有 `import type`，不需要 bash-timeout 那套包发现沙盒）
 
 ## 权限（simple-perm 扩展）
 
