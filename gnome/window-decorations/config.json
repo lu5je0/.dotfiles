@@ -16,6 +16,10 @@
     {
       "match": ["PeaZip", "peazip"],
       "enabled": true
+    },
+    {
+      "match": ["2048"],
+      "enabled": true
     }
   ]
 }
