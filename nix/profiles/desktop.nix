@@ -10,6 +10,7 @@
   ];
 
   environment.systemPackages = with pkgs; [
+    (pkgs.callPackage ../pkgs/kitty.nix { })
     steam-run
   ];
 
