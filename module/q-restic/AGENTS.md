@@ -72,9 +72,16 @@
   `allow-passthrough on`。
 
 - **启动路径不能阻塞**。版本列表由 `start_load()` 的后台线程拉取，首屏必须先画出来（实测 0.09s），
-  加载完成后靠 `select` 超时自动重绘。不要在启动时调 `restic stats`：冷缓存下它要 4 秒以上
-  （要遍历 44 万个文件），而界面需要的信息在 `snapshots --json` 的 summary 里已经有了。
-  同步刷新用 `refresh()`，只在执行完动作后调用（那时已经 suspend 过，用户可接受等待）。
+  加载完成后靠 `select` 超时自动重绘。不要同步调用 `restic stats` 阻塞首屏：冷缓存下它要 4 秒以上
+  （要遍历 44 万个文件）。版本数据量取 `snapshots --json` 的 summary；版本列表底部的
+  总占用在进入版本列表后由 `start_stats_load()` 后台读取 `stats --mode raw-data`
+  （与 CLI 一样按 host 过滤），会话内缓存；备份、删除、仓库/host/密码文件变更，
+  或新版本列表与缓存不同时失效。只读操作不触发重新统计。
+  `refresh()` 也必须后台执行、保留已有列表，失败不能清空列表或冒充空仓库；
+  `snapshots()` 遇到命令失败/无效 JSON 必须抛错，CLI status 返回非零。
+  后台线程只往队列投递结果，由主线程 `poll_data()` 更新界面，旧请求不能覆盖新结果。
+  错误单独保存在 `load_error` / `repo_size_error`，导航不能清除；失败后返回主菜单
+  再进入版本列表时自动重试。不要加「刷新版本与占用」菜单项。统计失败显示不可用，不要当成 0。
 - **`select.select` 的超时是第 4 个位置参数**。写成 `select.select(rl, wl, [0.15])` 会把浮点数
   当成 xlist 而报 `TypeError: argument must be an int, or have a fileno() method`。正确写法：
   `select.select(rl, wl, [], 0.15)`。
@@ -85,6 +92,7 @@
   `↑↓/jk` 移动、`g/G`（及 Home/End）首尾、`PgUp/PgDn` 翻页、`Enter` 激活、`Esc` 返回上一层、
   主菜单里 `q` 退出。子页面靠 `item["goto"]` 切屏、`item["run"]` 执行动作，
   新增功能只要往 `menu_items()` / `snap_action_items()` 里加一项。
+  TUI 不设「校验仓库完整性」项，完整性校验保留在 CLI `q-restic check`。
   菜单不设「退出」项，退出靠 `q` / `Esc`（`go_back()` 在菜单层返回 "quit"），底部提示里有说明。
   改键位要同步 `footer()` 里的 `ladders`，那是宽度不够时的提示降级链。
 - **每个屏幕都必须实现移动键**。早期版本 `handle_menu()` 根本没处理 `j/k/UP/DOWN/ENTER`，
@@ -133,6 +141,7 @@
 ## 验证原则
 
 - 改完至少跑 `python3 -m py_compile q-restic.py`。
+- 数据加载/刷新逻辑的回归测试：`python3 -m unittest discover -s module/q-restic -p 'test_*.py'`。
 - **`config` 子命令的 stdout 必须保持纯 JSON**（提示信息一律走 stderr），
   否则 `q-restic config | jq` 会解析失败。验证：`q-restic config 2>/dev/null | python3 -m json.tool`。
 - 改 CLI / 保留策略：先用 `q-restic dry-run` 空跑，或在临时仓库上验

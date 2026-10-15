@@ -20,6 +20,7 @@ import fcntl
 import hashlib
 import json
 import os
+import queue
 import select
 import shutil
 import signal
@@ -165,13 +166,18 @@ def run(restic, cfg, args, capture=True, check=False):
     )
 
 
-def run_json(restic, cfg, args):
+def run_json(restic, cfg, args, *, strict=False):
     res = run(restic, cfg, args)
     if res.returncode != 0:
+        if strict:
+            raise RuntimeError(res.stderr.strip() or res.stdout.strip()
+                               or f"restic 退出码 {res.returncode}")
         return None
     try:
         return json.loads(res.stdout)
-    except ValueError:
+    except ValueError as exc:
+        if strict:
+            raise RuntimeError("restic 返回了无效的 JSON") from exc
         return None
 
 
@@ -359,23 +365,30 @@ def snap_time_key(snap):
 
 
 def snapshots(restic, cfg):
-    data = run_json(restic, cfg, ["snapshots", "--json"] + host_args(cfg))
-    return sorted(data or [], key=snap_time_key)
+    data = run_json(restic, cfg, ["snapshots", "--json"] + host_args(cfg), strict=True)
+    if not isinstance(data, list):
+        raise RuntimeError("restic 返回的版本列表格式无效")
+    return sorted(data, key=snap_time_key)
 
 
 def snapshot_stats(restic, cfg):
     return run_json(restic, cfg, ["stats", "--json", "latest"] + host_args(cfg))
 
 
-def repo_stats(restic, cfg):
+def repo_stats(restic, cfg, *, strict=False):
     """全仓库的实际占用（raw-data，不看 latest）。"""
-    return run_json(restic, cfg, ["stats", "--json", "--mode", "raw-data"] + host_args(cfg))
+    return run_json(restic, cfg, ["stats", "--json", "--mode", "raw-data"] + host_args(cfg),
+                    strict=strict)
 
 
 def do_status(cfg):
     restic = restic_bin()
     require_password(cfg)
-    snaps = snapshots(restic, cfg)
+    try:
+        snaps = snapshots(restic, cfg)
+    except (OSError, RuntimeError) as exc:
+        warn(f"读取仓库失败: {exc}")
+        return 1
     info(f"仓库 {cfg['repository']}")
     if not snaps:
         print("还没有任何版本。跑一次 `q-restic backup` 开始。")
@@ -953,6 +966,14 @@ class App:
         self.restic = restic_bin()
         self.snaps = []
         self.loading = False
+        self.load_error = ""
+        self.repo_size = None
+        self.repo_size_loading = False
+        self.repo_size_loaded = False
+        self.repo_size_error = ""
+        self._requests = {}
+        self._results = queue.Queue()
+        self._repo_key = self.repo_key()
         self.message = ""
         self.cursor = 0
         self.offset = 0
@@ -962,28 +983,95 @@ class App:
         self.last_size = None
 
     # -- 数据 --
-    def refresh(self):
-        """同步刷新（执行完动作之后用）。"""
-        self.snaps = snapshots(self.restic, self.cfg)
-        self.loading = False
+    def repo_key(self):
+        return tuple(self.cfg.get(key) for key in ("repository", "host", "password_file"))
 
-    def start_load(self):
-        """后台拉版本列表：启动时不要卡在 SFTP 往返上，先把界面画出来。
+    def invalidate_stats(self):
+        self._requests.pop("stats", None)
+        self.repo_size = None
+        self.repo_size_loading = False
+        self.repo_size_loaded = False
+        self.repo_size_error = ""
 
-        这里不再调 `restic stats latest`。它冷缓存下要 4 秒多（要遍历 44 万个文件），
-        而界面需要的信息（最新版本数据量）在 `snapshots --json` 的 summary 里已经有了。
-        """
+    def refresh(self, *, invalidate_stats=True):
+        """保留当前列表，后台刷新；切换仓库时清除旧仓库的数据。"""
+        if self._repo_key != self.repo_key():
+            self._repo_key = self.repo_key()
+            self.snaps = []
+            self.active_snap = None
+            invalidate_stats = True
+        if invalidate_stats:
+            self.invalidate_stats()
         self.loading = True
+        self.load_error = ""
+        self._start_request("snapshots", snapshots)
+
+    def _start_request(self, kind, loader):
+        request = self._requests[kind] = object()
+        cfg = dict(self.cfg)
 
         def worker():
             try:
-                self.snaps = snapshots(self.restic, self.cfg)
-            except Exception as exc:  # 后台线程里抛异常会静默丢失
-                self.message = f"读取仓库失败: {exc}"
-            finally:
-                self.loading = False
+                result, error = loader(self.restic, cfg), ""
+            except Exception as exc:
+                result, error = None, str(exc) or type(exc).__name__
+            self._results.put((kind, request, result, error))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def start_stats_load(self):
+        """进入版本列表后按需统计，同一次会话内复用结果。"""
+        if (self.screen != "snapshots" or self.loading or self.load_error
+                or self.repo_size_loaded or self.repo_size_loading):
+            return
+        self.repo_size_loading = True
+        self._start_request("stats", lambda r, c: repo_stats(r, c, strict=True))
+
+    def poll_data(self):
+        """只在主线程更新界面数据，忽略已过期的后台结果。"""
+        while True:
+            try:
+                kind, request, result, error = self._results.get_nowait()
+            except queue.Empty:
+                break
+            if self._requests.get(kind) is not request:
+                continue
+            del self._requests[kind]
+            if kind == "snapshots":
+                self.loading = False
+                self.load_error = error
+                if error:
+                    continue
+                old_ids = [snap.get("id", snap["short_id"]) for snap in self.snaps]
+                new_ids = [snap.get("id", snap["short_id"]) for snap in result]
+                if old_ids != new_ids:
+                    self.invalidate_stats()
+                if (self.screen == "snap_actions" and self.active_snap is not None
+                        and self.active_snap.get("id", self.active_snap["short_id"]) not in new_ids):
+                    self.go_back()
+                    self.active_snap = None
+                    self.set_message("该版本已不在仓库中")
+                if self.screen == "snapshots":
+                    if not self.snaps:
+                        self.cursor = max(0, len(result) - 1)
+                    else:
+                        selected = old_ids[min(self.cursor, len(old_ids) - 1)]
+                        self.cursor = (new_ids.index(selected) if selected in new_ids
+                                       else min(self.cursor, max(0, len(result) - 1)))
+                self.snaps = result
+            else:
+                size = result.get("total_size") if isinstance(result, dict) else None
+                if not error and (not isinstance(size, int) or size < 0):
+                    error = "restic 返回的总占用格式无效"
+                self.repo_size = None if error else size
+                self.repo_size_error = error
+                self.repo_size_loading = False
+                self.repo_size_loaded = True
+        self.start_stats_load()
+
+    def start_load(self):
+        """启动时只读取版本列表，总占用等进入列表后再统计。"""
+        self.refresh(invalidate_stats=False)
 
     def latest(self):
         return self.snaps[-1] if self.snaps else None
@@ -995,7 +1083,9 @@ class App:
     def header(self, width):
         title = "q-restic"
         if self.loading:
-            right = "读取仓库中…"
+            right = "刷新版本中…" if self.snaps else "读取仓库中…"
+        elif self.load_error:
+            right = "刷新失败 · 显示已有版本" if self.snaps else "读取仓库失败"
         else:
             right = f"{len(self.snaps)} 个版本"
             if self.latest():
@@ -1015,7 +1105,9 @@ class App:
         if self.screen == "menu":
             return self.cfg["repository"]
         if self.screen == "snapshots":
-            return "选中一个版本后按 Enter，进入该版本的操作"
+            size = ("统计中…" if not self.load_error and not self.repo_size_loaded else
+                    human_size(self.repo_size) if self.repo_size is not None else "不可用")
+            return f"总占用 {size} · 选中版本后按 Enter 查看操作"
         snap = self.selected_snap()
         if snap is None:
             return ""
@@ -1033,6 +1125,12 @@ class App:
         if detail:
             for chunk in wrap_text(detail, width - 2):
                 lines.append(f"  {DIM}{chunk}{RESET}")
+        error = f"读取仓库失败: {self.load_error}" if self.load_error else ""
+        if not error and self.screen == "snapshots" and self.repo_size_error:
+            error = f"统计占用失败: {self.repo_size_error}"
+        if error:
+            for chunk in wrap_text(error + "；返回主菜单后重新进入版本列表重试", width - 2):
+                lines.append(f"  {YELLOW}{chunk}{RESET}")
         lines.append(rule)
         if self.message:
             lines.append(f"  {YELLOW}{fit(self.message, width - 3)}{RESET}")
@@ -1068,14 +1166,13 @@ class App:
              "run": self.act_dry_run},
             {"label": "版本列表",
              "desc": ("读取仓库中…" if self.loading
+                      else "读取失败，进入后可重试" if self.load_error
                       else f"共 {len(self.snaps)} 个版本，可浏览 / 恢复 / 对比 / 删除"),
              "goto": "snapshots"},
             {"label": "挂载并浏览", "desc": "后台只读挂载，用文件管理器打开",
              "run": self.act_mount},
             {"label": "卸载挂载点", "desc": f"卸载 {self.cfg['mount_dir']}",
              "run": self.act_unmount},
-            {"label": "校验仓库完整性", "desc": "读 5% 数据（慢）",
-             "run": self.act_check},
             {"label": "编辑保留策略", "desc": f"当前 {self.keep_summary()}",
              "run": self.act_edit_policy},
             {"label": "编辑排除清单", "desc": str(expand(self.cfg["excludes"])),
@@ -1099,7 +1196,10 @@ class App:
         if not items:
             if self.loading:
                 return [{"label": "读取仓库中…", "desc": "正在从 NAS 拉取版本列表", "run": None}]
-            items = [{"label": "还没有任何版本", "desc": "先回上一层跑一次备份", "run": None}]
+            if self.load_error:
+                items = [{"label": "读取仓库失败", "desc": "返回主菜单后重新进入可重试", "run": None}]
+            else:
+                items = [{"label": "还没有任何版本", "desc": "先回上一层跑一次备份", "run": None}]
         return items
 
     def snap_action_items(self):
@@ -1213,7 +1313,7 @@ class App:
         sys.stdout.flush()
 
     # -- 动作 --
-    def run_suspended(self, func, *args, wait_on_success=False,
+    def run_suspended(self, func, *args, wait_on_success=False, refresh_repo=False,
                       failure_prompt="执行失败，按任意键返回", **kwargs):
         """把终端交还给子进程执行 func；**失败时先等一个按键再收回来**。
 
@@ -1234,11 +1334,13 @@ class App:
             return code
         finally:
             self.term.resume()
-            self.refresh()
+            if refresh_repo:
+                self.refresh()
 
     def act_backup(self):
         # 退出码 3 也是“不完整”，不能说成“执行失败”，提示就用中性的
-        code = self.run_suspended(do_backup, self.cfg, failure_prompt="按任意键返回")
+        code = self.run_suspended(do_backup, self.cfg, refresh_repo=True,
+                                  failure_prompt="按任意键返回")
         if code == 0:
             self.set_message("备份完成")
         elif code == 3:
@@ -1249,10 +1351,6 @@ class App:
     def act_dry_run(self):
         code = self.run_suspended(do_backup, self.cfg, dry_run=True, wait_on_success=True)
         self.set_message("试运行结束，仓库未改动" if code == 0 else f"试运行失败（退出码 {code}）")
-
-    def act_check(self):
-        self.run_suspended(do_check, self.cfg)
-        self.set_message("校验结束")
 
     def act_mount(self, snap_id=None):
         target = expand(self.cfg["mount_dir"])
@@ -1364,7 +1462,7 @@ class App:
         # 记下位置：删完要回到版本列表的同一处（被删的槽位由后面的版本顶上）
         index = self.snaps.index(snap) if snap in self.snaps else 0
         self.term.suspend()
-        code = 0
+        code = None
         try:
             print(f"要删除版本 {snap['short_id']} ({snap['time'][:19]})")
             if input("确认删除？[y/N] ").strip().lower() != "y":
@@ -1386,9 +1484,11 @@ class App:
                 self.term.wait_key("删除失败，按任意键返回")
         finally:
             self.term.resume()
-            self.refresh()
+            if code is not None:
+                self.refresh()
 
         if code == 0:
+            self.snaps = [item for item in self.snaps if item != snap]
             # 这个版本已经不在列表里了，操作屏留在原地会对着一个不存在的快照。
             # 用 go_back() 而不是直接改 self.screen：否则 history 里那条会留着，
             # 之后要点两次 Esc 才能回主菜单。
@@ -1408,7 +1508,7 @@ class App:
         finally:
             self.term.resume()
         self.cfg = load_config()
-        self.refresh()
+        self.refresh(invalidate_stats=False)
         self.set_message("保留策略已重新加载")
 
     def act_edit_excludes(self):
@@ -1443,6 +1543,12 @@ class App:
             # 进版本列表默认停在最新的那个（最常用），其它屏从第一项开始
             self.cursor = max(0, len(self.snaps) - 1) if item["goto"] == "snapshots" else 0
             self.offset = 0
+            if self.screen == "snapshots":
+                if self.load_error:
+                    self.refresh()
+                elif self.repo_size_error:
+                    self.invalidate_stats()
+            self.start_stats_load()
             return None
         handler = item.get("run")
         if handler:
@@ -1493,6 +1599,7 @@ class App:
                     ready = select.select([term.fd, wake_r], [], [], 0.15)[0]
                     if wake_r in ready:
                         os.read(wake_r, 4096)
+                    self.poll_data()
                     if term.fd in ready:
                         key = read_key(term.fd)
                         self.message = ""
