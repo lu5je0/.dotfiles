@@ -14,6 +14,7 @@
     zip
     pstree
     unzip
+    nmap
     vim
     fd
     tmux
@@ -39,7 +40,6 @@
     yazi
     fzf
     fastfetch
-    wl-clipboard
     wget
     btop
     gh

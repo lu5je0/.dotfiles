@@ -12,6 +12,7 @@
   environment.systemPackages = with pkgs; [
     (pkgs.callPackage ../pkgs/kitty.nix { })
     steam-run
+    wl-clipboard
   ];
 
   users.users.lu5je0.packages = with pkgs; [
