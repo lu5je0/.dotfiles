@@ -10,7 +10,7 @@ let service: Gio.DBusExportedObject | null = null;
 
 export function currentRules(): AppRule[] { return rules; }
 
-/** Watch the actual source directory so atomic saves through the symlink also reload. */
+/** Watch the rules directory so atomic saves also reload. */
 export function startRuleConfig(onChanged: () => void): void {
     stopRuleConfig();
     service = Gio.DBusExportedObject.wrapJSObject(`<node>
@@ -24,11 +24,9 @@ export function startRuleConfig(onChanged: () => void): void {
         })),
     });
     service.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/WindowDecorations');
-    let path = GLib.build_filenamev([GLib.get_user_config_dir(), 'gnome-window-decorations', 'config.json']);
-    for (let i = 0; i < 8 && GLib.file_test(path, GLib.FileTest.IS_SYMLINK); i++) {
-        const target = GLib.file_read_link(path);
-        path = GLib.canonicalize_filename(target, GLib.path_get_dirname(path));
-    }
+    const path = GLib.build_filenamev([
+        GLib.get_home_dir(), '.dotfiles', 'nix', 'pkgs', 'window-decorations', 'config.json',
+    ]);
     const file = Gio.File.new_for_path(path);
     const reload = () => {
         try {

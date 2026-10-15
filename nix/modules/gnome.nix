@@ -7,6 +7,7 @@
 
 let
   tilewindow = pkgs.callPackage ../pkgs/tilewindow.nix { };
+  windowDecorations = pkgs.callPackage ../pkgs/window-decorations { };
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
     pkgs.gnomeExtensions.astra-monitor
@@ -19,9 +20,12 @@ let
     pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
     tilewindow
+    windowDecorations
   ];
 in
 {
+  imports = [ ../pkgs/window-decorations/module.nix ];
+
   environment.systemPackages = shellExtensions ++ [
     pkgs.gjs
     # Qt6 应用（peazip 等）的 Adwaita 风格窗口装饰插件，配合下面的 QT_WAYLAND_DECORATION 使用
