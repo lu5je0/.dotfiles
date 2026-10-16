@@ -13,6 +13,7 @@
     (pkgs.callPackage ../pkgs/kitty.nix { })
     steam-run
     wl-clipboard
+    xclip
   ];
 
   users.users.lu5je0.packages = with pkgs; [
