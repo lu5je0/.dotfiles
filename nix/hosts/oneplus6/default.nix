@@ -29,7 +29,7 @@
     openFirewall = true;
   };
   services.openssh.settings = {
-    PasswordAuthentication = false;
+    PasswordAuthentication = true;
     KbdInteractiveAuthentication = false;
     PermitRootLogin = "no";
   };

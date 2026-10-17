@@ -126,7 +126,8 @@ sudo tail "$logdir/samples.csv"
 同级 `latest` 链接指向它；`latest` 是本次部署时创建的，手动运行上面的命令不会更新该链接。
 
 密码哈希由手机上的 `/var/lib/nixos/secrets/oneplus6-user-password` 提供；该文件属于
-root、权限 0600，不保存到仓库。SSH 仅接受 `authorized-key.pub` 中的公钥。
+root、权限 0600，不保存到仓库。SSH 支持该用户的密码登录和
+`authorized-key.pub` 中的公钥登录，禁止 root 直接登录。
 
 已验证触屏 GNOME、屏幕键盘、2.4/5 GHz Wi-Fi、USB/Wi-Fi SSH、熄屏点亮、普通重启，
 以及蓝牙控制器开启与扫描。蓝牙配对、蓝牙音频、相机和蜂窝通信尚未验证。
