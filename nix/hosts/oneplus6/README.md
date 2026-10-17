@@ -82,8 +82,39 @@ cat /sys/class/power_supply/pmi8998-charger/charge_behaviour
 阈值由 `hardware.oneplus6-charging.lowerThreshold` 和 `upperThreshold` 配置。
 设置 `hardware.oneplus6-charging.bypassOnBoot = false;` 可改为开机正常充电、手动启动自动控制。
 停止服务、启动失败或驱动卸载会恢复正常充电。这里是充电抑制，不是物理断开电池；
-外部供电不足时电池仍会补电。电脑 USB 当前限流 500 mA，实测停止充电时 USB 仍在线，
-但电池仍有放电电流，不能据此声称电池电流为零。
+外部供电不足时电池仍会补电。电脑 USB 限流 500 mA 时，负载较高会出现电池放电；
+换用识别为 DCP 的充电器后，输入限流为 1.5 A，正常充电时电池电流约 1.04 A，
+空闲暂停充电的 25 秒测试中电池电流持续读到 0 mA。短测不代表长期或高负载下始终零放电。
+
+`scripts/battery-monitor.py` 是只读的临时电量记录工具，不加入开机服务，
+不改变充电策略。运行目录由 `--directory` 指定，其中 `metadata.json` 的
+`stop_at_epoch` 是自动结束的 Unix 时间戳；同目录 `samples.csv` 每分钟追加一行，
+包括电量、电池电流、电压、温度、USB 输入状态和充电模式。电池电流单位为 µA，
+正值表示充电，负值表示放电；温度单位为 0.1°C。可用 `--interval` 调整采样秒数。
+
+在手机仓库根目录启动一次新的 24 小时记录：
+
+```sh
+logdir="/var/lib/nixos/oneplus6-migration/battery-monitor/$(date +%Y%m%d-%H%M%S)"
+sudo install -d -m 0700 "$logdir"
+sudo python3 - "$logdir" <<'PY'
+import json, pathlib, sys, time
+path = pathlib.Path(sys.argv[1]) / "metadata.json"
+path.write_text(json.dumps({"stop_at_epoch": time.time() + 86400}) + "\n")
+PY
+sudo systemd-run --collect --unit=oneplus6-battery-monitor \
+  --property=Restart=on-failure --property=RestartSec=10s \
+  --property=RuntimeMaxSec=25h \
+  /run/current-system/sw/bin/python3 \
+  "$PWD/nix/hosts/oneplus6/scripts/battery-monitor.py" --directory "$logdir"
+sudo tail "$logdir/samples.csv"
+```
+
+同名任务还在运行时不要重复启动。SSH 断开不影响记录；手机重启会结束临时服务，
+已写入的数据保留。手动停止使用 `sudo systemctl stop oneplus6-battery-monitor`。
+这次已启动的记录目录位于
+`/var/lib/nixos/oneplus6-migration/battery-monitor/20261018-005357/`，
+同级 `latest` 链接指向它；`latest` 是本次部署时创建的，手动运行上面的命令不会更新该链接。
 
 密码哈希由手机上的 `/var/lib/nixos/secrets/oneplus6-user-password` 提供；该文件属于
 root、权限 0600，不保存到仓库。SSH 仅接受 `authorized-key.pub` 中的公钥。
