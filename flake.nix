@@ -53,9 +53,8 @@
       nixosConfigurations = {
         oneplus6 = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
-          # Shared modules keep their existing argument; the phone uses stable
-          # packages for both sets, including the CLI tools and GNOME extensions.
-          specialArgs.pkgsUnstable = import nixpkgs {
+          # Keep the system on stable; shared modules can select ARM unstable packages.
+          specialArgs.pkgsUnstable = import nixpkgs-unstable {
             system = "aarch64-linux";
             config.allowUnfree = true;
           };

@@ -17,11 +17,7 @@ let
     pkgs.gnomeExtensions.kimpanel
     pkgs.gnomeExtensions.show-desktop-button
     pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency
-  ]
-  ++ lib.optional (
-    pkgsUnstable.gnomeExtensions ? chinese-calendar
-  ) pkgsUnstable.gnomeExtensions.chinese-calendar
-  ++ [
+    pkgsUnstable.gnomeExtensions.chinese-calendar
     tilewindow
     windowDecorations
   ];

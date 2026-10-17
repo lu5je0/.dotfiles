@@ -4,7 +4,8 @@
 `linuxPackages_latest`（当前 7.2.9）。不导入 Mobile NixOS。
 
 配置入口：`nixosConfigurations.oneplus6`。复用 `profiles/base.nix` 和 GNOME 模块；
-手机的共享模块参数 `pkgsUnstable` 指向 stable，未在 stable 提供的农历扩展不安装。
+手机的共享模块参数 `pkgsUnstable` 指向 `aarch64-linux` 的 unstable 包集，
+用于 Neovim、Python、pi-coding-agent 和农历扩展；系统、GNOME 和内核仍来自 stable。
 手机桌面设置集中在 `profiles/phone.nix`，硬件设置集中在本目录。
 
 ```sh
@@ -35,7 +36,7 @@ sudo nixos-rebuild switch --flake path:.#oneplus6
 ```
 
 日常更新内核通过 extlinux 完成，不需要重新刷写 Android boot 分区。
-电脑开发副本位于 `/home/lu5je0/Projects/dotfiles`，分支 `oneplus6-nixos-stable`。
+电脑开发副本位于 `/home/lu5je0/Projects/dotfiles`，已合并到 `master`。
 
 启动适配在 `hardware-configuration.nix` 和 `pkgs/device-tree/`：提前加载 LMh、OSM、
 显示参考电源、USB PHY 与 RTC，保留 Android 固件已配置的 SW_CTRL 引脚。
