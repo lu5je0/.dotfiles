@@ -9,6 +9,11 @@
     # 保留上游 nixpkgs，复用其桌面包依赖与缓存；用 flake.lock 固定版本。
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    fcitx5-wetypex = {
+      url = "github:lu5je0/fcitx5-wetypex";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # 上游只有 flake 打包；补丁后不装进系统配置，`nix profile add path:~/.dotfiles#mark-shot`
     mark-shot = {
       url = "github:jswysnemc/mark-shot";

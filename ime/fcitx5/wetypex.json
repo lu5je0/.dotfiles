@@ -1,0 +1,23 @@
+{
+    "ai_assistant": false,
+    "auto_update": false,
+    "fuzzy_an_ang": true,
+    "fuzzy_c_ch": true,
+    "fuzzy_en_eng": true,
+    "fuzzy_ian_iang": true,
+    "fuzzy_in_ing": true,
+    "fuzzy_nl": false,
+    "fuzzy_on_ong": true,
+    "fuzzy_rl": false,
+    "fuzzy_s_sh": true,
+    "fuzzy_uan_uang": true,
+    "fuzzy_z_zh": true,
+    "input_mode": "pinyin",
+    "keyboard": 0,
+    "smart_input": true,
+    "symbol_auto_change": false,
+    "symbol_auto_pair": false,
+    "v_mode": false,
+    "voice_hold_shortcut": false,
+    "voice_launch_shortcut": false
+}

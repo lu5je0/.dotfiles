@@ -34,6 +34,26 @@
         "type": "github"
       }
     },
+    "fcitx5-wetypex": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792222199,
+        "narHash": "sha256-tURq/rUJ8mxw10x5Sv/G51V8tTxUCSFFlWqrdkT7T/Y=",
+        "owner": "lu5je0",
+        "repo": "fcitx5-wetypex",
+        "rev": "673b308190d2f7124c53ec68160645349afb93ef",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lu5je0",
+        "repo": "fcitx5-wetypex",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -160,6 +180,7 @@
     },
     "root": {
       "inputs": {
+        "fcitx5-wetypex": "fcitx5-wetypex",
         "llm-agents": "llm-agents",
         "mark-shot": "mark-shot",
         "nixpkgs": "nixpkgs_2",
