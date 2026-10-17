@@ -1,0 +1,6 @@
+#!/bin/bash
+: "${DOTFILES_DIR:=$HOME/.dotfiles}"
+SCRIPT_PATH=$DOTFILES_DIR/module/q-txt2kindle
+SCRIPT_NAME=q-txt2kindle.py
+
+source $DOTFILES_DIR/module/python-install/runner.sh

@@ -7,6 +7,10 @@
   q-txt2kindle novel.txt -o out -f epub
   q-txt2kindle book.epub             # 保留原书结构并转成 MOBI
   q-txt2kindle . -j 4                # 并发转换目录中的 TXT 和 EPUB
+
+生成 MOBI 时优先用 PATH 中的 kindlegen，否则自动下载（Linux x86/x86_64）。
+缓存位置：${XDG_CACHE_HOME:-~/.cache}/q-txt2kindle/，命中后不再联网。
+可用 KINDLEGEN_BIN 指定已有的可执行文件，跳过自动下载。
 """
 
 import argparse
@@ -16,12 +20,17 @@ import concurrent.futures as cf
 import hashlib
 import html
 import os
+import platform
 import re
 import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 import unicodedata
 import zipfile
+from pathlib import Path
+from urllib import error, request
 
 CN_DIGITS = {'零': 0, '〇': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5,
              '六': 6, '七': 7, '八': 8, '九': 9}
@@ -36,6 +45,66 @@ NOISE_RE = re.compile(r'^\s*(?:章节编号|点阅|點閱|字数|字數|来源�
                       r'|^\s*https?://\S+\s*$')
 
 IDEO_SPACE = '\u3000'
+
+
+# ---------------------------------------------------------------- 外部依赖
+KINDLEGEN_URL = ('https://archive.org/download/kindlegen_linux_2_6_i386_v2_9/'
+                'kindlegen_linux_2.6_i386_v2_9.tar.gz')
+KINDLEGEN_SHA256 = 'd992c533961c576626dfc87153c58cad10e31c317a79da98a212de33e0128299'
+
+
+def resolve_kindlegen():
+    """在启动转换线程前解析一次；下载校验成功后原子写入缓存。"""
+    override = os.environ.get('KINDLEGEN_BIN')
+    if override:
+        binary = Path(override).expanduser().resolve()
+        if not binary.is_file() or not os.access(binary, os.X_OK):
+            raise RuntimeError('KINDLEGEN_BIN 不可执行：%s' % binary)
+        return str(binary)
+
+    installed = shutil.which('kindlegen')
+    if installed:
+        return os.path.abspath(installed)
+
+    if platform.system() != 'Linux' or platform.machine().lower() not in (
+            'x86_64', 'amd64', 'i386', 'i486', 'i586', 'i686', 'x86'):
+        raise RuntimeError('kindlegen 自动下载仅支持 Linux x86/x86_64；'
+                           '请安装 kindlegen 或用 KINDLEGEN_BIN 指定可执行文件')
+
+    base = os.environ.get('XDG_CACHE_HOME') or os.path.expanduser('~/.cache')
+    directory = Path(base).expanduser().resolve() / 'q-txt2kindle'
+    binary = directory / 'kindlegen-2.9-linux-i386'
+    if binary.is_file() and os.access(binary, os.X_OK):
+        return str(binary)
+
+    print('q-txt2kindle: 下载 kindlegen 2.9：%s' % KINDLEGEN_URL, file=sys.stderr)
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='.kindlegen-', dir=directory) as tmp:
+            archive = Path(tmp) / 'kindlegen.tar.gz'
+            digest = hashlib.sha256()
+            with request.urlopen(KINDLEGEN_URL, timeout=60) as response, \
+                    archive.open('wb') as output:
+                while chunk := response.read(64 * 1024):
+                    output.write(chunk)
+                    digest.update(chunk)
+            if digest.hexdigest() != KINDLEGEN_SHA256:
+                raise ValueError('下载文件的 SHA-256 校验失败')
+            # 只读取指定的普通文件，不把归档路径解压到文件系统。
+            with tarfile.open(archive, 'r:gz') as package:
+                member = package.getmember('kindlegen')
+                if not member.isfile():
+                    raise ValueError('归档中的 kindlegen 不是普通文件')
+                target = Path(tmp) / 'kindlegen'
+                with package.extractfile(member) as source, target.open('wb') as output:
+                    shutil.copyfileobj(source, output)
+            target.chmod(0o755)
+            os.replace(target, binary)
+    except (OSError, error.URLError, tarfile.TarError, KeyError, ValueError) as exc:
+        raise RuntimeError('kindlegen 下载失败：%s\n'
+                           '请重试，或用 KINDLEGEN_BIN 指定已有的可执行文件' % exc) from exc
+    print('q-txt2kindle: kindlegen 已缓存到 %s' % binary, file=sys.stderr)
+    return str(binary)
 
 
 # ---------------------------------------------------------------- 编码处理
@@ -546,19 +615,18 @@ def split_chapters(lines, marks):
     return chapters
 
 
-def to_mobi(epub_path, target, huffdic=False):
+def to_mobi(epub_path, target, kindlegen, huffdic=False):
     """epub -> mobi。返回 kindlegen 的输出；成败由调用方看产物是否存在。
 
     kindlegen 有警告时退出码也是 1，不能拿它判断成败。
     在网络文件系统(CIFS 等)上 kindlegen 无法正确合并 KF8，因此统一在本地
     临时目录执行，完成后再移动产物到目标路径。
     """
-    import tempfile
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_epub = os.path.join(tmpdir, 'book.epub')
         tmp_mobi = os.path.join(tmpdir, 'book.mobi')
         shutil.copy2(epub_path, tmp_epub)
-        r = subprocess.run([shutil.which('kindlegen'), tmp_epub,
+        r = subprocess.run([kindlegen, tmp_epub,
                             '-c2' if huffdic else '-c1',
                             '-dont_append_source', '-o', 'book.mobi'],
                            capture_output=True, text=True)
@@ -611,7 +679,7 @@ def convert_txt(path, args):
         report(epub_path)
     if args.format in ('mobi', 'both'):
         target = os.path.join(args.outdir, stem + '.mobi')
-        out = to_mobi(epub_path, target, args.c2)
+        out = to_mobi(epub_path, target, args.kindlegen, args.c2)
         if os.path.exists(target):
             report(target)
         else:
@@ -629,7 +697,7 @@ def convert_epub(path, args):
 
     stem = os.path.splitext(os.path.basename(path))[0]
     target = os.path.join(args.outdir, stem + '.mobi')
-    out = to_mobi(path, target, args.c2)
+    out = to_mobi(path, target, args.kindlegen, args.c2)
     if os.path.exists(target):
         log.append('  \x1b[32m已生成\x1b[0m %s  (%.1f MB)'
                    % (target, os.path.getsize(target) / 1048576))
@@ -681,9 +749,11 @@ def main():
         sys.exit('没有找到 TXT 或 EPUB 文件')
     if any(path.lower().endswith('.epub') for path in files) and args.format != 'mobi':
         sys.exit('EPUB 输入仅支持 -f mobi')
-    if args.format != 'epub' and not args.dry_run and not shutil.which('kindlegen'):
-        sys.exit('mobi 需要 kindlegen：yay -S kindlegen\n'
-                 '(TXT 只要 epub 可以加 -f epub，无外部依赖)')
+    if args.format != 'epub' and not args.dry_run:
+        try:
+            args.kindlegen = resolve_kindlegen()
+        except RuntimeError as exc:
+            sys.exit(str(exc))
     if not args.dry_run:
         os.makedirs(args.outdir, exist_ok=True)
 
