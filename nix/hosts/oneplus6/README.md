@@ -53,6 +53,11 @@ Docker 按需启动。实测普通重启到图形目标约 16 秒。
 `usb-network.nix` 自动加载 USB Ethernet gadget，手机固定地址 `169.254.42.1/16`，
 电脑使用同网段 link-local 地址后可 SSH 管理。SSH 用户为 `lu5je0`。
 
+`audio.nix` 为 PipeWire 和 WirePlumber 指定本机的 ALSA UCM 路由，包位于
+`pkgs/alsa-ucm/`，固定到 sdm845-mainline 提交 `628b9900cdd2b9b8356201293f1da5396cf0ca27`。
+该配置提供扬声器、3.5 mm 耳机及麦克风；去掉标准内核没有的 Q6Voice 通话控制项，
+避免只有虚拟输出或启用 HiFi 失败。通话音频未适配。
+
 `power.nix` 和 `pkgs/power-key/` 将物理电源键短按改为锁屏熄屏、再次点亮。
 7.2.9 的 s2idle 休眠在此设备上无法恢复，因此禁用整机休眠和自动休眠；
 屏幕熄灭时系统仍运行，耗电会高于正常休眠。

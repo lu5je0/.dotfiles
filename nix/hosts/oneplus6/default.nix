@@ -2,6 +2,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./audio.nix
     ./power.nix
     ./qualcomm.nix
     ./usb-network.nix

@@ -1,0 +1,39 @@
+--- a/ucm2/OnePlus/enchilada/enchilada.conf
++++ b/ucm2/OnePlus/enchilada/enchilada.conf
+@@ -4,14 +4,6 @@
+ 	File "/OnePlus/enchilada/HiFi.conf"
+ 	Comment "HiFi quality Music."
+ }
+-
+-SectionUseCase."Voice Call" {
+-	File "/OnePlus/enchilada/VoiceCall.conf"
+-	Comment "Make a phone call"
+-}
+-
+-Include.card-init.File "/lib/card-init.conf"
+-Include.ctl-remap.File "/lib/ctl-remap.conf"
+ 
+ BootSequence [
+ 	# Earpiece Volume
+--- a/ucm2/OnePlus/enchilada/HiFi.conf
++++ b/ucm2/OnePlus/enchilada/HiFi.conf
+@@ -18,10 +18,6 @@
+ 		cset "name='MultiMedia4 Mixer SLIMBUS_1_TX' 1"
+ 		cset "name='SLIMBUS_1_RX Audio Mixer MultiMedia5' 1"
+ 		cset "name='MultiMedia6 Mixer SLIMBUS_2_TX' 1"
+-
+-		# Q6Voice Routes for Call Audio Setup
+-		cset "name='SLIMBUS_0_RX Voice Mixer VoiceMMode1' 1"
+-		cset "name='VoiceMMode1 Capture Mixer SLIMBUS_0_TX' 1"
+ 
+ 		# Headphones
+ 		cset "name='SLIM RX2 MUX' AIF2_PB"
+@@ -139,7 +135,7 @@
+ 	Value {
+ 		PlaybackPriority 30
+ 		PlaybackPCM "hw:${CardId},4" # MultiMedia5
+-		PlaybackMixer "default:${CardId}"
++		PlaybackMixer "hw:${CardId}"
+ 		JackControl "Headphone Jack"
+ 	}
+ }
