@@ -9,7 +9,11 @@
     ./usb-network.nix
   ];
 
-  hardware.oneplus6-charging.bypassOnBoot = true;
+  hardware.oneplus6-charging = {
+    bypassOnBoot = true;
+    lowerThreshold = 40;
+    upperThreshold = 60;
+  };
 
   networking = {
     hostName = "oneplus6";
