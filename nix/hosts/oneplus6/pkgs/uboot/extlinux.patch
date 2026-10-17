@@ -1,0 +1,12 @@
+--- a/board/qualcomm/qcom-phone.env
++++ b/board/qualcomm/qcom-phone.env
+@@ -1 +1 @@
+-bootdelay=0
++bootdelay=5
+@@ -22 +22,2 @@
+-bootcmd=bootefi bootmgr; pause; run menucmd
++nixos_boot=if part number scsi 0 system_b bootpart; then sysboot scsi 0:${bootpart} fat ${pxefile_addr_r} /extlinux/extlinux.conf; fi
++bootcmd=run nixos_boot; pause; run menucmd
+@@ -30 +31 @@
+-bootmenu_0=Boot=bootefi bootmgr; pause
++bootmenu_0=Boot NixOS=run nixos_boot; pause

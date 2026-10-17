@@ -46,9 +46,25 @@
         };
     in
     {
-      packages.${system} = localPackages;
+      packages.${system} = localPackages // {
+        oneplus6-uboot = pkgs.callPackage ./nix/hosts/oneplus6/pkgs/uboot { };
+      };
 
       nixosConfigurations = {
+        oneplus6 = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          # Shared modules keep their existing argument; the phone uses stable
+          # packages for both sets, including the CLI tools and GNOME extensions.
+          specialArgs.pkgsUnstable = import nixpkgs {
+            system = "aarch64-linux";
+            config.allowUnfree = true;
+          };
+          modules = [
+            ./nix/profiles/base.nix
+            ./nix/profiles/phone.nix
+            ./nix/hosts/oneplus6
+          ];
+        };
         nixpve = mkSystem [
           ./nix/profiles/base.nix
           ./nix/hosts/nixpve
