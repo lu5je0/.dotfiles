@@ -1,0 +1,52 @@
+From: Shunsuke Nagashima
+Subject: wifi: ath10k: set the PMF peer flag on WCN3990
+
+Upstream: https://lkml.iu.edu/2610.1/19751.html
+The WCN3990 firmware supports the PMF peer flag despite not advertising
+ATH10K_FW_FEATURE_MFP_SUPPORT. Preserve negotiated PMF in firmware.
+
+diff --git a/ath10k/core.c b/ath10k/core.c
+index 7c2939cbde5f..c645f8d77ef3 100644
+--- a/ath10k/core.c
++++ b/ath10k/core.c
+@@ -746,6 +746,7 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
+ 		.use_fw_tx_credits = false,
+ 		.delay_unmap_buffer = true,
+ 		.mcast_frame_registration = false,
++		.peer_pmf_support = true,
+ 	},
+ };
+ 
+diff --git a/ath10k/hw.h b/ath10k/hw.h
+index cd468b24bd33..88e48646be73 100644
+--- a/ath10k/hw.h
++++ b/ath10k/hw.h
+@@ -638,6 +638,12 @@ struct ath10k_hw_params {
+ 
+ 	/* The hardware support multicast frame registrations */
+ 	bool mcast_frame_registration;
++
++	/* The firmware handles PMF for a peer that has the PMF peer flag,
++	 * although the firmware file does not advertise
++	 * ATH10K_FW_FEATURE_MFP_SUPPORT.
++	 */
++	bool peer_pmf_support;
+ };
+ 
+ struct htt_resp;
+diff --git a/ath10k/mac.c b/ath10k/mac.c
+index 8e604697d6c2..b30cdd1888f4 100644
+--- a/ath10k/mac.c
++++ b/ath10k/mac.c
+@@ -2254,8 +2254,9 @@ static void ath10k_peer_assoc_h_crypto(struct ath10k *ar,
+ 	}
+ 
+ 	if (sta->mfp &&
+-	    test_bit(ATH10K_FW_FEATURE_MFP_SUPPORT,
+-		     ar->running_fw->fw_file.fw_features)) {
++	    (test_bit(ATH10K_FW_FEATURE_MFP_SUPPORT,
++		      ar->running_fw->fw_file.fw_features) ||
++	     ar->hw_params.peer_pmf_support)) {
+ 		arg->peer_flags |= ar->wmi.peer_flags->pmf;
+ 	}
+ }

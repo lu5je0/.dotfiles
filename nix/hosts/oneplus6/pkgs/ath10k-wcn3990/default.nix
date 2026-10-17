@@ -8,7 +8,10 @@ stdenv.mkDerivation {
   pname = "oneplus6-ath10k-wcn3990";
   version = kernel.version;
   src = kernel.src;
-  patches = [ ./wcn3990-limit-channel-width.patch ];
+  patches = [
+    ./wcn3990-limit-channel-width.patch
+    ./wcn3990-pmf-peer-flag.patch
+  ];
   nativeBuildInputs = kernel.moduleBuildDependencies;
   hardeningDisable = [ "pic" ];
   dontPatchELF = true;
@@ -36,7 +39,7 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
   meta = {
-    description = "OnePlus 6 WCN3990 driver with working 80 MHz negotiation";
+    description = "OnePlus 6 WCN3990 driver with 80 MHz negotiation and PMF support";
     license = lib.licenses.gpl2Only;
     platforms = [ "aarch64-linux" ];
   };
