@@ -53,8 +53,9 @@ stdenvNoCC.mkDerivation {
     license = lib.licenses.unfree;
     maintainers = with lib.maintainers; [ kwaa ];
     platforms = lib.platforms.all;
-    # Firmware that was originally prefixed with `postmarketos/` needs to overwrite
-    # `linux-firmware`.
-    priority = 7;
+    # Lower numbers win in hardware.firmware's buildEnv. The device-specific
+    # crbtfw21.tlv must override linux-firmware (priority 6), otherwise the
+    # WCN3990 controller times out on HCI Reset after downloading firmware.
+    priority = 5;
   };
 }

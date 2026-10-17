@@ -53,6 +53,15 @@ Docker 按需启动。实测普通重启到图形目标约 16 秒。
 `usb-network.nix` 自动加载 USB Ethernet gadget，手机固定地址 `169.254.42.1/16`，
 电脑使用同网段 link-local 地址后可 SSH 管理。SSH 用户为 `lu5je0`。
 
+蓝牙需要本机的 `qca/crbtfw21.tlv`，不能使用通用 linux-firmware 中的同名文件。
+`pkgs/firmware/` 的优先级设为 5（数字越小优先级越高），覆盖优先级为 6 的
+linux-firmware；反过来会在固件下载后报 `Opcode 0x0c03 failed: -110`。
+设备 NVM 还包含占位地址，`bluetooth.nix` 在 BlueZ 启动前运行
+`pkgs/bluetooth-address/`：仅对缺少 public-address 的 WCN3990 控制器，
+根据本机 `/etc/machine-id` 派生固定的本地单播地址，并通过 BlueZ 管理接口配置。
+已有有效地址时保持原样；不需要重编内核或写入厂商分区。
+已验证控制器开启、BR/EDR 与 LE 支持，以及扫描附近设备；实际配对与蓝牙音频仍需设备验证。
+
 `audio.nix` 为 PipeWire 和 WirePlumber 指定本机的 ALSA UCM 路由，包位于
 `pkgs/alsa-ucm/`，固定到 sdm845-mainline 提交 `628b9900cdd2b9b8356201293f1da5396cf0ca27`。
 该配置提供扬声器、3.5 mm 耳机及麦克风；去掉标准内核没有的 Q6Voice 通话控制项，
@@ -119,6 +128,6 @@ sudo tail "$logdir/samples.csv"
 密码哈希由手机上的 `/var/lib/nixos/secrets/oneplus6-user-password` 提供；该文件属于
 root、权限 0600，不保存到仓库。SSH 仅接受 `authorized-key.pub` 中的公钥。
 
-已验证触屏 GNOME、屏幕键盘、2.4/5 GHz Wi-Fi、USB/Wi-Fi SSH、熄屏点亮和普通重启。
-蓝牙、相机和蜂窝通信尚未验证。
+已验证触屏 GNOME、屏幕键盘、2.4/5 GHz Wi-Fi、USB/Wi-Fi SSH、熄屏点亮、普通重启，
+以及蓝牙控制器开启与扫描。蓝牙配对、蓝牙音频、相机和蜂窝通信尚未验证。
 原始分区备份位于电脑 `/home/lu5je0/Projects/oneplus6-nixos/partition-backup`。

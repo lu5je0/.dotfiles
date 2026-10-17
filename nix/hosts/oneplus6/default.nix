@@ -3,6 +3,7 @@
   imports = [
     ./hardware-configuration.nix
     ./audio.nix
+    ./bluetooth.nix
     ./charging.nix
     ./power.nix
     ./qualcomm.nix
