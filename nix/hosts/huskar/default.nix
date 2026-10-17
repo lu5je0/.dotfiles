@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   imports = [
@@ -18,6 +18,53 @@
     efiSysMountPoint = "/efi";
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  # 外接显示器默认没有 /sys/class/backlight 设备，GNOME 原生滑块无法控制硬件亮度。
+  # ddcci-driver 通过 DDC/CI 将显示器暴露为标准背光设备，供 GNOME 原生亮度控制使用；
+  # 驱动随当前内核编译，并在启动时加载 ddcci-backlight。
+  # Linux 6.8+ 不支持自动探测，下面的服务在 GDM 启动前绑定 DP-1 的 AUX 总线；
+  # GNOME 不会立即识别会话启动后新增的背光设备，所以绑定必须早于登录界面。
+  # 重建并重启后，检查 /sys/class/backlight/ 是否出现 ddcci*，以及 GNOME 的原生亮度滑块。
+  boot.extraModulePackages = [
+    (pkgs.callPackage ../../pkgs/ddcci-driver {
+      kernelPackages = config.boot.kernelPackages;
+    })
+  ];
+  boot.kernelModules = [ "ddcci-backlight" ];
+
+  systemd.services.ddcci-backlight-attach = {
+    description = "Attach DDC/CI backlight on the DP-1 AUX bus";
+    wantedBy = [ "graphical.target" ];
+    before = [ "display-manager.service" ];
+    after = [ "systemd-modules-load.service" ];
+    path = [ pkgs.coreutils ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      TimeoutStartSec = 45;
+    };
+    script = ''
+      # AMDGPU 初始化晚于 modules-load；按总线名称匹配，避免写死可能变化的 i2c-9。
+      for attempt in $(seq 1 30); do
+        for adapter in /sys/bus/i2c/devices/i2c-*; do
+          [ -r "$adapter/name" ] || continue
+          [ "$(cat "$adapter/name")" = "AMDGPU DM aux hw bus 0" ] || continue
+          bus="''${adapter##*/i2c-}"
+          if [ -e "/sys/bus/i2c/devices/$bus-0037" ]; then
+            # 已绑定时不重复注册；若探测失败则让服务报错，保留内核日志供排查。
+            test -d "/sys/class/backlight/ddcci$bus"
+            exit $?
+          fi
+          printf 'ddcci 0x37\n' > "$adapter/new_device"
+          test -d "/sys/class/backlight/ddcci$bus"
+          exit $?
+        done
+        sleep 1
+      done
+      echo "DP-1 AUX bus not found" >&2
+      exit 1
+    '';
+  };
 
   # 阻止 NixOS 因 fsType = "ntfs" 而安装 ntfs-3g，从而提供 /run/current-system/sw/bin/mount.ntfs。
   # util-linux 的 `mount -t ntfs` 会优先使用 mount.<type> helper 而非内核模块，结果挂成 fuseblk。

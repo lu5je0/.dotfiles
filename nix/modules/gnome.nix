@@ -11,7 +11,6 @@ let
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
     pkgs.gnomeExtensions.astra-monitor
-    pkgs.gnomeExtensions.brightness-control-using-ddcutil
     pkgs.gnomeExtensions.clipboard-indicator
     pkgs.gnomeExtensions.dash-to-dock
     pkgs.gnomeExtensions.gtk4-desktop-icons-ng-ding
