@@ -325,4 +325,8 @@ function M.show_dual_file(state, commit, file, old_lines, new_lines)
   vim.api.nvim_set_current_win(state.log_win)
 end
 
+function M.selection_options(commits, repo_root)
+  return require('lu5je0.ext.git.common.net-diff').project(commits, repo_root)
+end
+
 return M

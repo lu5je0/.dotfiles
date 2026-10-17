@@ -38,7 +38,7 @@
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
 - `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
-- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
+- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log`、`git-selection`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
 ## Multicursor (`ext/multicursor.lua`)
@@ -196,7 +196,8 @@ ext/tabline/
   - `cd vim && nvim --headless '+qa'`
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`、`tests/whichkey/spec.lua`。
+- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/git-selection/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`、`tests/whichkey/spec.lua`。
+- `tests/git-selection/spec.lua` 用临时 Git 仓库和 `--embed` 子 Neovim 的真实 `nvim_input()` 按键验证两个 Git 日志入口的懒加载、Space 勾选、Visual Enter、连续/离散提交的净变化文件树、合并冲突与 single / dual 文件 diff，包含一加 6 四提交抵消 `gnome.nix` 变化的真实回归；合并使用临时 bare repo/index，子进程禁用用户配置与 swap/shada，避免污染用户状态。
 - `tests/multicursor/spec.lua` 只在 0.13+（当前 nvim 的 `vim.api.nvim_mcursor` 存在）真正执行，老版本输出 `SKIP` 并退出 0。
   它起一个 `--embed` 子 Neovim、用 `nvim_input()` 发真实按键：multicursor 的 CmdAtom / follow-mode
   只在 typed 路径上被捕获，`vim.api.nvim_feedkeys(..., 'x')` 在脚本里行为不可靠。

@@ -8,6 +8,8 @@ local tree = require('lu5je0.ext.git.common.tree')
 local ui = require('lu5je0.ext.git.project-log.ui')
 local env_keeper = require('lu5je0.misc.env-keeper')
 local config = require('lu5je0.ext.git.config')
+local selection = require('lu5je0.ext.git.common.commit-selection')
+local selected_diff = require('lu5je0.ext.git.common.selected-diff')
 
 local M = {}
 
@@ -107,6 +109,9 @@ local function has_diff_window()
 end
 
 local function show_file_diff(auto_preview)
+  if auto_preview and vim.api.nvim_get_current_win() ~= state.log_win then
+    return false
+  end
   if auto_preview and not has_diff_window() then
     return false
   end
@@ -243,6 +248,36 @@ end
 
 local function setup_keymaps()
   local opts = { buffer = state.log_buf, nowait = true }
+  local function item_key(item)
+    local commit = item and item.commit_idx and state.commits[item.commit_idx]
+    return commit and commit.hash
+  end
+  selection.setup(state, item_key, function()
+    ui.update_statusline(state, state.log_loading)
+  end)
+
+  local function show_selected(visual)
+    local first, last
+    if visual then
+      first, last = selection.visual_range(state)
+    end
+    local keys = selection.keys(state, item_key, first, last)
+    if #keys == 0 then
+      return false
+    end
+    local by_hash, commits = {}, {}
+    for _, commit in ipairs(state.commits) do
+      by_hash[commit.hash] = commit
+    end
+    for _, key in ipairs(keys) do
+      commits[#commits + 1] = vim.deepcopy(by_hash[key])
+    end
+    local repo_root = state.repo_root
+    local opts = diff.selection_options(commits, repo_root)
+    opts.mode, opts.changes_only = state.diff_mode, state.diff_changes_only
+    selected_diff.open(opts)
+    return true
+  end
   local preview_scheduler = scheduler.create(function()
     show_file_diff(true)
   end)
@@ -267,7 +302,14 @@ local function setup_keymaps()
   vim.keymap.set('n', 'H', function()
     tree.close_commit_node(state)
   end, opts)
-  vim.keymap.set('n', '<cr>', activate_item, opts)
+  vim.keymap.set('n', '<cr>', function()
+    if not show_selected(false) then
+      activate_item()
+    end
+  end, opts)
+  vim.keymap.set('x', '<cr>', function()
+    show_selected(true)
+  end, opts)
   vim.keymap.set('n', 'd', function()
     state.diff_changes_only = not state.diff_changes_only
     env_keeper.set('line_log_diff_changes_only', state.diff_changes_only)
@@ -339,6 +381,9 @@ local function setup_keymaps()
       'Project Log Keymaps',
       '',
       '  l/<CR>  Open node / show diff',
+      '  Space   Mark/unmark commit (Visual: mark range)',
+      '  <CR>    View marked commits / Visual range in file tree',
+      '  U       Clear marked commits',
       '  h       Fold parent node',
       '  H       Fold commit',
       '  d       Toggle changes-only',

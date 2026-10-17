@@ -2,6 +2,8 @@ local Block = require('lu5je0.ext.git.line-log.block')
 local help = require('lu5je0.ext.git.common.help')
 local scheduler = require('lu5je0.ext.git.common.scheduler')
 local config = require('lu5je0.ext.git.config')
+local selection = require('lu5je0.ext.git.common.commit-selection')
+local selected_diff = require('lu5je0.ext.git.common.selected-diff')
 
 local M = {}
 
@@ -15,6 +17,10 @@ local function show_help()
     '',
     '  j/k     Move commit (auto show diff)',
     '  v/V     Visual select (auto show aggregated diff)',
+    '  <CR>    View Visual range in a file tree',
+    '  Space   Mark/unmark commit (Visual: mark range)',
+    '  <CR>    View marked commits in a file tree (Normal)',
+    '  U       Clear marked commits',
     '  d       Toggle changes-only (single mode)',
     '  D       Toggle diff mode: single / dual',
     '  Z       Toggle window height',
@@ -28,6 +34,7 @@ local function show_help()
 end
 
 function M.update_log_statusline(state, loading)
+  state.log_loading = loading
   if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
     return
   end
@@ -43,6 +50,7 @@ function M.update_log_statusline(state, loading)
   else
     vim.wo[state.log_win].statusline = string.format(' %%#Function#Log%%* L%%#Number#%s%%* %%#Comment#%s%%*', line_range, filename)
   end
+  vim.wo[state.log_win].statusline = vim.wo[state.log_win].statusline .. selection.status(state)
 end
 
 function M.highlight_commit_lines(buf, start_idx, lines, revs)
@@ -460,7 +468,62 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
   local buf = state.log_buf
   local opts = { buffer = buf, nowait = true }
 
-  local function show_commit_diff_now()
+  local function item_key(item)
+    if not item then
+      return nil
+    end
+    if item.type == 'local_change' then
+      return 'local-change'
+    end
+    local rev = state.tracker and state.tracker.revisions[item.rev_idx]
+    return rev and rev.hash
+  end
+
+  selection.setup(state, item_key, function()
+    M.update_log_statusline(state, state.log_loading)
+  end)
+
+  local function show_selected_diff(visual)
+    local first, last
+    if visual then first, last = selection.visual_range(state) end
+    local keys = selection.keys(state, item_key, first, last)
+    if #keys == 0 then
+      return false
+    end
+    local items = {}
+    for _, item in ipairs(state.display_items) do
+      local key = item_key(item)
+      if key then
+        items[key] = item
+      end
+    end
+    local entries = {}
+    for _, key in ipairs(keys) do
+      local item = items[key]
+      local summary = get_item_summary(state, item)
+      local revision = item.rev_idx and state.tracker.revisions[item.rev_idx]
+      local new_block, new_file = get_new_side(state, item)
+      local old_block, old_file = get_old_side(state, item)
+      entries[#entries + 1] = {
+        hash = summary.short,
+        message = revision and revision.message or summary.detail,
+        path = new_file,
+        old_path = old_file,
+        old_block = old_block,
+        new_block = new_block,
+        loaded = true,
+      }
+    end
+    local selected_opts = require('lu5je0.ext.git.common.net-diff').blocks(entries)
+    selected_opts.mode, selected_opts.changes_only = state.diff_mode, state.diff_changes_only
+    selected_diff.open(selected_opts)
+    return true
+  end
+
+  local function show_commit_diff_now(force)
+    if vim.api.nvim_get_current_win() ~= state.log_win then
+      return
+    end
     if not state.log_buf or not vim.api.nvim_buf_is_valid(state.log_buf) then
       return
     end
@@ -473,11 +536,11 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
 
     local mode = vim.fn.mode()
     if mode == 'n' then
-      M.show_commit_diff(state)
+      M.show_commit_diff(state, nil, nil, force)
     elseif mode == 'v' or mode == 'V' or mode == '\22' then -- v, V, Ctrl-V
       local vstart = vim.fn.getpos('v')[2]
       local vend = vim.api.nvim_win_get_cursor(state.log_win)[1]
-      M.show_commit_diff(state, vstart, vend)
+      M.show_commit_diff(state, vstart, vend, force)
     end
   end
 
@@ -524,7 +587,10 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
   end, opts)
 
   vim.keymap.set('n', '?', show_help, opts)
-  vim.keymap.set('n', '<cr>', '<nop>', opts)
+  vim.keymap.set('n', '<cr>', function() show_selected_diff(false) end, opts)
+  vim.keymap.set('x', '<cr>', function()
+    show_selected_diff(true)
+  end, opts)
 
   local function open_source_file()
     if not state.rel_file or state.rel_file == '' then

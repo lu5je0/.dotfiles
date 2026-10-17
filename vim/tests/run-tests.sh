@@ -19,6 +19,10 @@ printf '%s[project-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR
 nvim --headless -u NONE -l "${SCRIPT_DIR}/project-log/spec.lua"
 
 printf '\n'
+printf '%s[git-selection]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/git-selection/spec.lua" "${RESET}"
+nvim --headless -u NONE -l "${SCRIPT_DIR}/git-selection/spec.lua"
+
+printf '\n'
 printf '%s[sidebar:state]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/state_spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/state_spec.lua"
 

@@ -1,5 +1,6 @@
 local common_ui = require('lu5je0.ext.git.common.ui')
 local statusline = require('lu5je0.ext.git.common.statusline')
+local selection = require('lu5je0.ext.git.common.commit-selection')
 
 local M = {}
 
@@ -23,6 +24,9 @@ M.build_file_tree_entries = common_ui.build_file_tree_entries
 M.highlight_tree_entry = common_ui.highlight_tree_entry
 
 local function format_commit_line(commit, graph_text)
+  if commit.date == '' and commit.author == '' then
+    return commit.short_hash .. ' ' .. commit.message
+  end
   if commit.local_change then
     return string.format('%s %s %s', commit.short_hash, commit.date, commit.message)
   end
@@ -55,7 +59,7 @@ local function highlight_commit_line(buf, line_idx, line, commit, graph_text, gr
   end
 
   local date_end = graph_end + 19
-  if #line >= date_end then
+  if commit.date ~= '' and #line >= date_end then
     vim.api.nvim_buf_add_highlight(buf, ns_id, 'Comment', line_idx, graph_end, date_end)
   end
 end
@@ -141,6 +145,7 @@ function M.render_log(state)
 end
 
 function M.update_statusline(state, loading)
+  state.log_loading = loading
   if not state.log_win or not vim.api.nvim_win_is_valid(state.log_win) then
     return
   end
@@ -157,6 +162,7 @@ function M.update_statusline(state, loading)
       limited = state.limited,
     })
   end
+  vim.wo[state.log_win].statusline = vim.wo[state.log_win].statusline .. selection.status(state)
 end
 
 return M

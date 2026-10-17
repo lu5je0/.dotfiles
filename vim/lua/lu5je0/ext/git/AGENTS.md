@@ -16,6 +16,9 @@
   - `render.lua`: statuscolumn segment 函数与 redraw 工具
   - `colors.lua`: 定义 `GitBlame1`–`GitBlame5` 与 `GitBlameSelected`，并响应 `ColorScheme` 重新挂载
 - `blame-menu.lua`: blame 区域右键菜单；提供 copy hash / show commit / show in project log 动作，被点中的源 buffer 行 blame 高亮为 `GitBlameSelected`，菜单关闭后清除
+- `common/commit-selection.lua`: 项目日志与行历史共用的 commit 勾选、标记与计数；以稳定 commit key 保存选择，buffer 内容变化后重新挂载行首 `✓` inline extmark
+- `common/selected-diff.lua`: 新 tab 中查看所选提交的净变化；左侧复用项目日志 UI 和 common tree，右侧 single / dual 显示当前文件的合并结果，统一管理异步读取、临时资源清理、取消和切换
+- `common/net-diff.lua`: 合并所选改动；项目日志使用临时 bare repo 和独立 index，以源仓库对象库为 alternate，连续提交直接读取结果树，离散提交按 first-parent patch 做三方应用；行历史对追踪块做三方合并。真实工作区、暂存区、refs 与对象库均不写入，冲突时明确报错
 - `line-log/`: 行级 git log 子模块
   - `init.lua`: Neovim 入口，负责 session、窗口、buffer、prefetch 调度与 UI 驱动
   - `core.lua`: 纯算法与 git 历史收集核心，负责 revision/path 链、tracker 初始化与 block 推进；测试与运行时共用
@@ -37,7 +40,7 @@
 2. 底部 split 窗口显示影响选中行的 commit 列表
 3. 异步逐版本加载，窗口名称显示加载进度
 4. 在 log 窗口移动光标会自动在右侧 vsplit 预览当前 commit 对选中行的 diff
-5. 在 log 窗口 Visual 选中多个 commit 会自动显示聚合 diff
+5. 在 log 窗口 Visual 选中多个 commit 会自动显示连续范围的聚合 diff；Visual 模式按 `<CR>` 在新 tab 合并选区内改动，按文件查看净变化，合并冲突时提示
 
 ### Project Log (`<leader>gl` normal 模式)
 
@@ -50,6 +53,20 @@
 7. 在 commit 行按 `h` 折叠 commit；在展开目录行按 `h` 先折叠当前目录，在折叠目录或文件行按 `h` 折叠父节点
 8. 光标移动到文件行时，右侧 vsplit 自动显示该 commit 对该文件的 diff；文件行 `<CR>` 可手动刷新
 9. `d` / `D` 复用 line-log 的 changes-only 与 diff mode 偏好
+10. Visual 选中多行后按 `<CR>`，在新 tab 打开选区内 commit 的文件树；文件/目录行按所属 commit 去重，graph connector 行跳过
+
+### 离散 commit 勾选（两个日志窗口共用）
+
+- Normal 模式 `<Space>` 勾选/取消光标所在 commit；项目日志的子节点按所属 commit 处理
+- Visual 模式 `<Space>` 批量勾选范围内的 commit；范围已全部勾选时批量取消，保留 Visual 选区
+- 勾选行首显示 `✓`，日志 statusline 显示已选数量；`U` 清空勾选
+- Normal 模式 `<CR>` 在新 tab 打开所有已勾选 commit 的文件树；Visual Enter 在两个日志窗口均打开当前选区内 commit 的文件树
+- 按日志中的历史顺序（从旧到新）尝试合并改动；连续提交比较最早提交的父树与最终结果树，先改后还原、新增后删除的文件从树中消失；root commit 基于空树，merge 取 first parent
+- 离散选择仅应用所选提交的改动，在临时 index 中做三方合并，不混入跳过的提交；缺少依赖或冲突时只提示错误，不展示不完整结果，也不悄悄退回逐条 diff
+- 项目日志覆盖提交的所有变更文件，也支持 local change；行历史只展示原追踪代码块
+- 新 tab 中 `D` 切换 single / dual，`d` 切换上下文显示；`]f` / `[f` 切换净变化文件；`q` 关闭并返回原日志，保留勾选。dual 的 `]c` / `[c` 保留 Neovim 原生 diff hunk 跳转
+- 左侧将所选 commit 的变更文件按完整路径合并为一棵树，同一路径只显示一次，不同目录下的同名文件各自保留；树根显示所选提交总数。目录默认展开，复用项目日志的图标、高亮、连续目录链压缩和 `l` / `<CR>` / `h` / `H` 展开折叠操作；文件行移动光标即可更新右侧预览，`<CR>` 强制刷新
+- 右侧 single 显示当前文件的一份净变化 unified patch，dual 并排显示合并前/后的内容；两种模式均保留左侧文件树。合并后完全无变化时显示 `No net changes`，不创建 diff 窗口；关闭、失败时清理临时数据，切换文件时取消过期读取
 
 ### Changes (`<leader>gs`)
 
@@ -115,6 +132,7 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
   - 现有 dotfiles 仓库里的固定 commit/文件/行段 case
   - 运行时动态创建的临时 git 仓库 fixture
 - `vim/tests/project-log/spec.lua` 负责 project-log graph 渲染回归测试，固定复杂 merge / crossover 历史段的 compact graph 输出
+- `vim/tests/git-selection/spec.lua` 通过真实按键覆盖 Space 勾选、Visual Enter、文件树折叠/展开/自动预览、single / dual 净 diff、离散提交合并成功/冲突、先改后还原与新增后删除、rename/delete/local change、真实 index/工作区不变、临时资源清理，以及一加 6 的四提交 `gnome.nix` 净变化为空的真实 case
 - 临时 fixture 定义位于 `vim/tests/line-log/fixtures.lua`，仓库本体在测试运行时创建到系统临时目录，不把 `.git` fixture 提交进仓库
 - 如果修改 revision/path 链、rename 处理、tracker 推进或 `Block` 交互，必须至少跑：
   - `cd vim && ./tests/run-tests.sh`
@@ -138,7 +156,11 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 | n (source buf) | `<leader>gb` | 切换 statuscolumn 内嵌 git blame |
 | any (statuscolumn) | 右键 on blame 区域 | 弹出 blame 操作菜单，被点行高亮 `GitBlameSelected` |
 | n (log buf) | `j` / `k` 等移动 | 自动预览当前 commit 的 diff |
-| x (log buf) | Visual 选择 | 自动预览选中 commit 范围的聚合 diff |
+| x (line log buf) | Visual 选择 | 自动预览选中 commit 范围的聚合 diff |
+| n / x (log buf) | `<Space>` | 切换当前 commit / 批量勾选选区内 commit |
+| n / x (log buf) | `U` | 清空所有 commit 勾选 |
+| n (log buf, 有勾选) | `<CR>` | 新 tab 打开已勾选提交的文件树 |
+| x (log buf) | `<CR>` | 新 tab 打开当前选区内提交的文件树 |
 | n (project log buf) | `l` / `<CR>` on commit | 展开 commit 文件树并默认展开全部目录，跳到第一个文件 |
 | n (project log buf) | `l` / `<CR>` on dir | 展开目录并跳到第一个子节点 |
 | n (project log buf) | `h` on commit | 折叠 commit |
@@ -150,7 +172,12 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 | n (log buf) | `D` | 切换 single / dual diff 模式 |
 | n (log buf) | `?` | 打开帮助浮窗并进入 help 窗口 |
 | n (help buf) | `q` / `<Esc>` | 关闭帮助浮窗并返回 log 窗口 |
-| n (log buf) | `<CR>` | 禁用；diff 由光标移动和 Visual 选择自动刷新 |
+| n (line log buf, 无勾选) | `<CR>` | 不操作；diff 由光标移动和 Visual 选择自动刷新 |
+| n (selected diff tree) | `l` / `<CR>` / `h` / `H` | 展开节点 / 刷新文件预览 / 折叠父节点 / 折叠整棵合并树 |
+| n (selected diff tab) | `D` / `d` | 切换 single / dual、上下文显示 |
+| n (selected diff tab, dual) | `]c` / `[c` | Neovim 原生下一处 / 上一处 diff hunk |
+| n (selected diff tab) | `]f` / `[f` | 下一个 / 上一个文件 |
+| n (selected diff tab) | `q` | 关闭汇总 tab，返回原日志 |
 
 ## 依赖
 
