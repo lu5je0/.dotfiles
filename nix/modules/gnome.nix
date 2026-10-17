@@ -82,6 +82,8 @@ in
 
   programs.dconf.profiles.user.databases = [
     {
+      # 统一标题栏按钮，避免旧用户设置覆盖布局后隐藏按钮。
+      locks = [ "/org/gnome/desktop/wm/preferences/button-layout" ];
       settings = {
         "org/gnome/desktop/interface" = {
           font-name = "Noto Sans CJK SC 11";
