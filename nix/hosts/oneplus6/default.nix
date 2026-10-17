@@ -3,10 +3,13 @@
   imports = [
     ./hardware-configuration.nix
     ./audio.nix
+    ./charging.nix
     ./power.nix
     ./qualcomm.nix
     ./usb-network.nix
   ];
+
+  hardware.oneplus6-charging.bypassOnBoot = true;
 
   networking = {
     hostName = "oneplus6";

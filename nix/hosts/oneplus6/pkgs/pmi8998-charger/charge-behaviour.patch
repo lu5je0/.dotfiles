@@ -1,0 +1,118 @@
+From: OnePlus 6 local configuration
+Subject: power: supply: qcom_smbx: expose charging inhibit independently of USB input
+
+Adapt the CHARGING_ENABLE_CMD idea from the user-provided OnePlus 6 diff
+to the standard charge_behaviour ABI. Return register errors, reject
+unsupported modes, notify userspace, and restore charging on driver removal.
+
+--- a/qcom_smbx.c
++++ b/qcom_smbx.c
+@@ -409,10 +409,56 @@
+ 	POWER_SUPPLY_PROP_CURRENT_NOW,
+ 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
+ 	POWER_SUPPLY_PROP_STATUS,
++	POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR,
+ 	POWER_SUPPLY_PROP_HEALTH,
+ 	POWER_SUPPLY_PROP_ONLINE,
+ 	POWER_SUPPLY_PROP_USB_TYPE,
+ };
++
++static int smb_get_charge_behaviour(struct smb_chip *chip, int *val)
++{
++	unsigned int reg;
++	int ret;
++
++	ret = regmap_read(chip->regmap, chip->base + CHARGING_ENABLE_CMD, &reg);
++	if (ret)
++		return ret;
++
++	*val = (reg & CHARGING_ENABLE_CMD_BIT) ?
++		POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO :
++		POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE;
++	return 0;
++}
++
++static int smb_set_charge_behaviour(struct smb_chip *chip, int behaviour)
++{
++	unsigned int enable;
++
++	switch (behaviour) {
++	case POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO:
++		enable = CHARGING_ENABLE_CMD_BIT;
++		break;
++	case POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE:
++		enable = 0;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	/* Keep USBIN and the existing temperature/voltage protections enabled. */
++	return regmap_update_bits(chip->regmap, chip->base + CHARGING_ENABLE_CMD,
++				  CHARGING_ENABLE_CMD_BIT, enable);
++}
++
++static void smb_restore_charging(void *data)
++{
++	struct smb_chip *chip = data;
++	int ret;
++
++	ret = smb_set_charge_behaviour(chip, POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO);
++	if (ret)
++		dev_warn(chip->dev, "Couldn't restore normal charging: %d\n", ret);
++}
+ 
+ static int smb_get_prop_usb_online(struct smb_chip *chip, int *val)
+ {
+@@ -679,6 +725,8 @@
+ 		return smb_get_prop_usb_online(chip, &val->intval);
+ 	case POWER_SUPPLY_PROP_STATUS:
+ 		return smb_get_prop_status(chip, &val->intval);
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
++		return smb_get_charge_behaviour(chip, &val->intval);
+ 	case POWER_SUPPLY_PROP_HEALTH:
+ 		return smb_get_prop_health(chip, &val->intval);
+ 	case POWER_SUPPLY_PROP_USB_TYPE:
+@@ -694,8 +742,14 @@
+ 			     const union power_supply_propval *val)
+ {
+ 	struct smb_chip *chip = power_supply_get_drvdata(psy);
++	int ret;
+ 
+ 	switch (psp) {
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
++		ret = smb_set_charge_behaviour(chip, val->intval);
++		if (!ret)
++			power_supply_changed(psy);
++		return ret;
+ 	case POWER_SUPPLY_PROP_STATUS:
+ 		return regmap_update_bits(chip->regmap, chip->base + USBIN_CMD_IL,
+ 					  USBIN_SUSPEND_BIT, !val->intval);
+@@ -712,6 +766,7 @@
+ {
+ 	switch (psp) {
+ 	case POWER_SUPPLY_PROP_STATUS:
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
+ 	case POWER_SUPPLY_PROP_CURRENT_MAX:
+ 		return 1;
+ 	default:
+@@ -775,6 +830,8 @@
+ static const struct power_supply_desc smb_psy_desc = {
+ 	.name = "pmi8998_charger",
+ 	.type = POWER_SUPPLY_TYPE_USB,
++	.charge_behaviours = BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO) |
++		BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE),
+ 	.usb_types = BIT(POWER_SUPPLY_USB_TYPE_SDP) |
+ 		     BIT(POWER_SUPPLY_USB_TYPE_CDP) |
+ 		     BIT(POWER_SUPPLY_USB_TYPE_DCP) |
+@@ -970,6 +1027,10 @@
+ 	if (rc < 0)
+ 		return rc;
+ 
++	rc = devm_add_action_or_reset(chip->dev, smb_restore_charging, chip);
++	if (rc)
++		return rc;
++
+ 	supply_config.drv_data = chip;
+ 	supply_config.fwnode = dev_fwnode(&pdev->dev);
+ 

@@ -64,6 +64,23 @@ S16_LE 能正常播放。内置声卡默认输出音量为 80%，已有的用户
 7.2.9 的 s2idle 休眠在此设备上无法恢复，因此禁用整机休眠和自动休眠；
 屏幕熄灭时系统仍运行，耗电会高于正常休眠。
 
+`charging.nix` 默认开机启动 `oneplus6-bypass.service`，暂停电池充电，同时保留 USB
+输入。`pkgs/pmi8998-charger/` 只重建 `qcom_smbx` 模块，增加标准
+`/sys/class/power_supply/pmi8998-charger/charge_behaviour` 接口。该补丁参考
+`~/junk-file/2026/10/2026-10-17T204353-一加6旁路充电.diff` 中的充电使能位，
+适配 7.2.9 并补齐参数校验、错误返回、状态通知及卸载恢复。
+
+```sh
+sudo systemctl stop oneplus6-bypass   # 恢复正常充电
+sudo systemctl start oneplus6-bypass  # 暂停充电，保留外部供电
+cat /sys/class/power_supply/pmi8998-charger/charge_behaviour
+```
+
+设置 `hardware.oneplus6-charging.bypassOnBoot = false;` 可改为开机正常充电、手动开启旁路。
+停止服务、启动失败或驱动卸载会恢复正常充电。这里是充电抑制，不是物理断开电池；
+外部供电不足时电池仍会补电。电脑 USB 当前限流 500 mA，实测停止充电时 USB 仍在线，
+但电池仍有放电电流，不能据此声称电池电流为零。
+
 密码哈希由手机上的 `/var/lib/nixos/secrets/oneplus6-user-password` 提供；该文件属于
 root、权限 0600，不保存到仓库。SSH 仅接受 `authorized-key.pub` 中的公钥。
 
