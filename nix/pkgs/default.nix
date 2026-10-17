@@ -3,7 +3,6 @@
 {
   arcglyph = pkgs.callPackage ./arcglyph.nix { };
   codex-desktop = pkgs.callPackage ./codex-desktop { flake = inputs.llm-agents; };
-  ddcci-driver = pkgs.callPackage ./ddcci-driver { };
   window-decorations = pkgs.callPackage ./window-decorations { };
   emby-ext-player = pkgs.callPackage ./emby-ext-player.nix { };
   fcitx5-wetypex = pkgs.callPackage ./fcitx5-wetypex { flake = inputs.fcitx5-wetypex; };
