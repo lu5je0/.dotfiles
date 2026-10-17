@@ -1,6 +1,11 @@
 { pkgs, ... }:
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ./hardware-configuration.nix
+    ./power.nix
+    ./qualcomm.nix
+    ./usb-network.nix
+  ];
 
   networking = {
     hostName = "oneplus6";
@@ -29,6 +34,9 @@
     ];
   };
 
-  environment.systemPackages = [ pkgs.gnome-console ];
+  environment.systemPackages = [
+    pkgs.gnome-console
+    pkgs.iw
+  ];
   system.stateVersion = "26.05";
 }
