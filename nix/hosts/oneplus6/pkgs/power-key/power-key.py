@@ -64,13 +64,18 @@ def wait_until(predicate):
 
 def toggle_screen():
     target = 3 if display_mode() == 0 else 0
+    greeter = command(
+        "loginctl", "show-session", active_session(), "-p", "Class", "--value"
+    ) == "greeter"
     locked = command(
         "loginctl", "show-session", active_session(), "-p", "LockedHint", "--value"
     ) == "yes"
     try:
         # Complete GNOME's asynchronous shield animation before changing power.
         # Never deactivate a manually locked session on wake.
-        if target == 3 or not locked:
+        # GDM's shield contains the login dialog: deactivating it slides the
+        # dialog offscreen. Its already-modal UI only needs panel power changes.
+        if not greeter and (target == 3 or not locked):
             active = "true" if target == 3 else "false"
             session_bus("call", *SCREENSAVER, "SetActive", "b", active)
             wait_until(lambda: session_bus("call", *SCREENSAVER, "GetActive") == f"b {active}")

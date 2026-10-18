@@ -31,6 +31,7 @@ class Gnome:
         self.pending = None
         self.calls = []
         self.stuck = False
+        self.session_class = "user"
 
     def bus(self, *args):
         self.calls.append(args)
@@ -41,10 +42,11 @@ class Gnome:
             return f"i {self.mode}"
         if args[0] == "set-property":
             self.mode = int(args[-1])
-            if self.mode == 3:
+            if self.mode == 3 and self.session_class != "greeter":
                 assert self.active, "Panel turned off before the shield was ready"
             return ""
         if "SetActive" in args:
+            assert self.session_class != "greeter", "ScreenSaver must not move GDM's login dialog"
             if not self.stuck:
                 self.pending = (self.clock.now + 0.3, args[-1] == "true")
             return ""
@@ -60,7 +62,7 @@ class PowerKeyTests(unittest.TestCase):
         for target, replacement in (
             ("session_bus", self.gnome.bus),
             ("active_session", lambda: "test-session"),
-            ("command", lambda *args: "yes" if self.gnome.locked else "no"),
+            ("command", self.session_property),
         ):
             patcher = patch.object(power_key, target, replacement)
             patcher.start()
@@ -69,6 +71,30 @@ class PowerKeyTests(unittest.TestCase):
             patcher = patch.object(power_key.time, name, getattr(self.clock, name))
             patcher.start()
             self.addCleanup(patcher.stop)
+
+    def session_property(self, *args):
+        if "Class" in args:
+            return self.gnome.session_class
+        if "LockedHint" in args:
+            return "yes" if self.gnome.locked else "no"
+        raise AssertionError(args)
+
+    def test_greeter_blank_wake_cycles_preserve_login_dialog(self):
+        self.gnome.session_class = "greeter"
+        for _ in range(3):
+            power_key.toggle_screen()
+            self.assertEqual(self.gnome.mode, 3)
+            power_key.toggle_screen()
+            self.assertEqual(self.gnome.mode, 0)
+        self.assertFalse(any("SetActive" in call for call in self.gnome.calls))
+
+    def test_greeter_wake_keeps_existing_shield_state(self):
+        self.gnome.session_class = "greeter"
+        self.gnome.mode = 3
+        self.gnome.active = True
+        power_key.toggle_screen()
+        self.assertEqual(self.gnome.mode, 0)
+        self.assertTrue(self.gnome.active)
 
     def test_inactive_shield_with_dark_panel_is_recovered(self):
         self.gnome.mode = 3
