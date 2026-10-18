@@ -1,6 +1,9 @@
 { lib, pkgs, ... }:
 {
-  imports = [ ../modules/gnome.nix ];
+  imports = [
+    ../modules/gnome.nix
+    ../modules/keyd.nix
+  ];
 
   fonts.packages = with pkgs; [
     noto-fonts-cjk-sans
