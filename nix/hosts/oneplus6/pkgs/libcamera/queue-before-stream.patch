@@ -1,0 +1,29 @@
+--- a/src/libcamera/pipeline/simple/simple.cpp
++++ b/src/libcamera/pipeline/simple/simple.cpp
+@@ -1675,12 +1675,6 @@
+ 						      &DelayedControls::applyControls);
+ 	}
+ 
+-	ret = video->streamOn();
+-	if (ret < 0) {
+-		stop(camera);
+-		return ret;
+-	}
+-
+ 	if (data->useConversion_) {
+ 		if (data->converter_)
+ 			ret = data->converter_->start();
+@@ -1698,6 +1692,13 @@
+ 		if (!data->rawStream_)
+ 			for (std::unique_ptr<FrameBuffer> &buffer : data->conversionBuffers_)
+ 				video->queueBuffer(buffer.get());
++	}
++
++	/* Prepare the ISP and its capture buffers before the sensor starts. */
++	ret = video->streamOn();
++	if (ret < 0) {
++		stop(camera);
++		return ret;
+ 	}
+ 
+ 	return 0;

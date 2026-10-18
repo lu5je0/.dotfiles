@@ -1,0 +1,280 @@
+--- /dev/null
++++ b/include/libcamera/internal/software_isp/imx376_pdaf.h
+@@ -0,0 +1,35 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++/* OnePlus 6 IMX376K 2592x1940: measured binned PDAF pixel positions. */
++#pragma once
++
++namespace libcamera {
++inline bool imx376PdafPixel(unsigned int x, unsigned int y,
++                           unsigned int width, unsigned int height,
++                           bool hflip, bool vflip)
++{
++ if (width != 2592 || height != 1940)
++  return false;
++ if (hflip)
++  x = width - 1 - x;
++ if (vflip)
++  y = height - 1 - y;
++ const unsigned int row = y % 16;
++ return ((row == 1 || row == 13) && x % 8 == 1) ||
++        ((row == 5 || row == 9) && x % 8 == 5);
++}
++
++template<typename Reader>
++unsigned int imx376CorrectedPixel(unsigned int x, unsigned int y,
++                                 unsigned int width, unsigned int height,
++                                 bool hflip, bool vflip, Reader read)
++{
++ if (!imx376PdafPixel(x, y, width, height, hflip, vflip))
++  return read(x, y);
++ /* Horizontal neighbours two pixels away have the same Bayer colour. */
++ if (x < 2)
++  return read(x + 2, y);
++ if (x + 2 >= width)
++  return read(x - 2, y);
++ return (read(x - 2, y) + read(x + 2, y) + 1) / 2;
++}
++} /* namespace libcamera */
+--- a/include/libcamera/internal/software_isp/meson.build
++++ b/include/libcamera/internal/software_isp/meson.build
+@@ -4,6 +4,7 @@
+     'benchmark.h',
+     'debayer_params.h',
+     'quad_bayer.h',
++    'imx376_pdaf.h',
+     'software_isp.h',
+     'swisp_stats.h',
+     'swstats_cpu.h',
+--- a/src/libcamera/software_isp/software_isp.cpp
++++ b/src/libcamera/software_isp/software_isp.cpp
+@@ -101,7 +101,7 @@
+ 	const CameraManager &cm = *pipe->cameraManager();
+ 	const bool quadBayer = softwareIspNeedsCellCollapse(sensor->model());
+ 
+-	auto stats = std::make_unique<SwStatsCpu>(cm, quadBayer);
++	auto stats = std::make_unique<SwStatsCpu>(cm, quadBayer, sensor->model() == "imx376");
+ 	if (!stats->isValid()) {
+ 		LOG(SoftwareIsp, Error) << "Failed to create SwStatsCpu object";
+ 		return;
+@@ -123,7 +123,7 @@
+ 
+ 	if (!softISPMode || softISPMode == "gpu") {
+ 		if (eGL::isAvailable()) {
+-			debayer_ = std::make_unique<DebayerEGL>(std::move(stats), cm, quadBayer);
++			debayer_ = std::make_unique<DebayerEGL>(std::move(stats), cm, quadBayer, sensor->model() == "imx376");
+ 		} else {
+ 			LOG(SoftwareIsp, Info)
+ 				<< "EGL not available, falling back to CPU debayer";
+--- a/include/libcamera/internal/software_isp/swstats_cpu.h
++++ b/include/libcamera/internal/software_isp/swstats_cpu.h
+@@ -35,7 +35,7 @@
+ class SwStatsCpu
+ {
+ public:
+-	SwStatsCpu(const CameraManager &cm, bool quadBayer = false);
++	SwStatsCpu(const CameraManager &cm, bool quadBayer = false, bool imx376Pdaf = false);
+ 	~SwStatsCpu() = default;
+ 
+ 	/*
+@@ -105,6 +105,7 @@
+ 
+ 	void processBayerFrame2(MappedFrameBuffer &in);
+ 	void processQuadBayerFrame(MappedFrameBuffer &in);
++	void processImx376Frame(MappedFrameBuffer &in);
+ 
+ 	processFrameFn processFrame_;
+ 
+@@ -123,6 +124,9 @@
+ 	unsigned int stride_;
+ 	unsigned int sumShift_;
+ 	bool quadBayer_;
++	bool imx376Pdaf_;
++	Size inputSize_;
++	BayerFormat::Order imx376Order_;
+ 	BayerFormat::Order quadBayerOrder_ = BayerFormat::RGGB;
+ 
+ 	std::vector<SwIspStats> stats_;
+--- a/src/libcamera/software_isp/swstats_cpu.cpp
++++ b/src/libcamera/software_isp/swstats_cpu.cpp
+@@ -18,6 +18,7 @@
+ #include "libcamera/internal/bayer_format.h"
+ #include "libcamera/internal/mapped_framebuffer.h"
+ #include "libcamera/internal/software_isp/quad_bayer.h"
++#include "libcamera/internal/software_isp/imx376_pdaf.h"
+ 
+ namespace libcamera {
+ 
+@@ -160,8 +161,8 @@
+ 
+ LOG_DEFINE_CATEGORY(SwStatsCpu)
+ 
+-SwStatsCpu::SwStatsCpu(const CameraManager &cm, bool quadBayer)
+-	: quadBayer_(quadBayer), sharedStats_("softIsp_stats"), bench_(cm, "CPU stats")
++SwStatsCpu::SwStatsCpu(const CameraManager &cm, bool quadBayer, bool imx376Pdaf)
++	: quadBayer_(quadBayer), imx376Pdaf_(imx376Pdaf), sharedStats_("softIsp_stats"), bench_(cm, "CPU stats")
+ {
+ 	if (!sharedStats_)
+ 		LOG(SwStatsCpu, Error)
+@@ -502,6 +503,19 @@
+ 	BayerFormat bayerFormat =
+ 		BayerFormat::fromPixelFormat(inputCfg.pixelFormat);
+ 
++ if (imx376Pdaf_ && inputCfg.size == Size(2592, 1940) &&
++     bayerFormat.bitDepth == 10 && bayerFormat.packing == BayerFormat::Packing::CSI2) {
++  inputSize_ = inputCfg.size;
++  imx376Order_ = bayerFormat.order;
++  patternSize_ = { 4, 2 };
++  xShift_ = 0;
++  ySkipMask_ = 0;
++  sumShift_ = 0;
++  processFrame_ = &SwStatsCpu::processImx376Frame;
++  return 0;
++ }
++
++
+ 	if (quadBayer_) {
+ 		if (!isQuadBayerInputFormatSupported(inputCfg.pixelFormat) ||
+ 		    !isQuadBayerInputSizeSupported(inputCfg.size))
+@@ -613,6 +627,31 @@
+ 	window_.height &= ~(patternSize_.height - 1);
+ }
+ 
++void SwStatsCpu::processImx376Frame(MappedFrameBuffer &in)
++{
++ const uint8_t *data = in.planes()[0].data();
++ const bool hflip = imx376Order_ == BayerFormat::GRBG || imx376Order_ == BayerFormat::BGGR;
++ const bool vflip = imx376Order_ == BayerFormat::GBRG || imx376Order_ == BayerFormat::BGGR;
++ auto read = [&](unsigned int x, unsigned int y) -> unsigned int {
++  return data[y * stride_ + (x / 4) * 5 + x % 4];
++ };
++ auto pixel = [&](unsigned int x, unsigned int y) {
++  return imx376CorrectedPixel(x, y, inputSize_.width, inputSize_.height,
++                             hflip, vflip, read);
++ };
++ SwIspStats &stats = stats_[0];
++ for (unsigned int y = window_.y; y + 1 < window_.y + window_.height; y += 4) {
++  SWSTATS_START_LINE_STATS(unsigned int)
++  for (unsigned int x = window_.x; x + 1 < window_.x + window_.width; x += 4) {
++   r = pixel(x + hflip, y + vflip);
++   b = pixel(x + !hflip, y + !vflip);
++   g = (pixel(x + !hflip, y + vflip) + pixel(x + hflip, y + !vflip)) / 2;
++   SWSTATS_ACCUMULATE_LINE_STATS(1)
++  }
++  SWSTATS_FINISH_LINE_STATS()
++ }
++}
++
+ void SwStatsCpu::processBayerFrame2(MappedFrameBuffer &in)
+ {
+ 	const uint8_t *src = in.planes()[0].data();
+--- a/src/libcamera/software_isp/debayer_egl.h
++++ b/src/libcamera/software_isp/debayer_egl.h
+@@ -42,7 +42,7 @@
+ {
+ public:
+ 	DebayerEGL(std::unique_ptr<SwStatsCpu> stats, const CameraManager &cm,
+-		   bool quadBayer = false);
++		   bool quadBayer = false, bool imx376Pdaf = false);
+ 	~DebayerEGL();
+ 
+ 	int configure(const StreamConfiguration &inputCfg,
+@@ -73,6 +73,8 @@
+ 
+ 	eGLImage *getCachedInputFrameBuffer(FrameBuffer *input, std::optional<MappedFrameBuffer> *inMapped, std::optional<DmaSyncer> *inDmaSyncer);
+ 	eGLImage *getCachedOutputFrameBuffer(FrameBuffer *output);
++
++	bool imx376Pdaf_;
+ 
+ 	/* Shader program identifiers */
+ 	GLuint vertexShaderId_ = 0;
+--- a/src/libcamera/software_isp/debayer_egl.cpp
++++ b/src/libcamera/software_isp/debayer_egl.cpp
+@@ -44,8 +44,8 @@
+  * \param[in] quadBayer Whether the sensor uses 2x2 same-colour cells
+  */
+ DebayerEGL::DebayerEGL(std::unique_ptr<SwStatsCpu> stats, const CameraManager &cm,
+-		       bool quadBayer)
+-	: Debayer(cm, quadBayer), stats_(std::move(stats))
++		       bool quadBayer, bool imx376Pdaf)
++	: Debayer(cm, quadBayer), imx376Pdaf_(imx376Pdaf), stats_(std::move(stats))
+ {
+ }
+ 
+@@ -157,6 +157,8 @@
+ 	egl_.pushEnv(shaderEnv, "#version 100");
+ 	if (quadBayer_)
+ 		egl_.pushEnv(shaderEnv, "#define QUAD_BAYER");
++	if (imx376Pdaf_ && width_ == 2592 && height_ == 1940)
++		egl_.pushEnv(shaderEnv, "#define IMX376_PDAF");
+ 
+ 	/* Specify GL_OES_EGL_image_external */
+ 	egl_.pushEnv(shaderEnv, "#extension GL_OES_EGL_image_external: enable");
+--- a/src/libcamera/shaders/bayer_1x_packed.frag
++++ b/src/libcamera/shaders/bayer_1x_packed.frag
+@@ -91,6 +91,29 @@
+ }
+ #endif
+ 
++#if defined(IMX376_PDAF)
++float imx376_raw(vec2 pixel)
++{
++ pixel = clamp(pixel, vec2(0.0), tex_size - vec2(1.0));
++ vec2 bytes = vec2(floor(BPP * pixel.x + 0.02) + 0.5, pixel.y + 0.5) * tex_step;
++ return texture2D(tex_y, bytes).r;
++}
++float imx376_fetch(vec2 pixel)
++{
++ pixel = clamp(floor(pixel), vec2(0.0), tex_size - vec2(1.0));
++ vec2 native = pixel;
++ if (tex_bayer_first_red.x > 0.5) native.x = tex_size.x - 1.0 - pixel.x;
++ if (tex_bayer_first_red.y > 0.5) native.y = tex_size.y - 1.0 - pixel.y;
++ float row = mod(native.y, 16.0);
++ bool affected = ((row == 1.0 || row == 13.0) && mod(native.x, 8.0) == 1.0) ||
++                 ((row == 5.0 || row == 9.0) && mod(native.x, 8.0) == 5.0);
++ if (!affected) return imx376_raw(pixel);
++ if (pixel.x < 2.0) return imx376_raw(pixel + vec2(2.0, 0.0));
++ if (pixel.x + 2.0 >= tex_size.x) return imx376_raw(pixel - vec2(2.0, 0.0));
++ return 0.5 * (imx376_raw(pixel - vec2(2.0, 0.0)) + imx376_raw(pixel + vec2(2.0, 0.0)));
++}
++#endif
++
+ float apply_contrast(float value)
+ {
+ 	// Apply simple S-curve
+@@ -154,6 +177,9 @@
+ #if defined (QUAD_BAYER)
+ 	xcoords = center_pixel.x + vec2(-2.0, 2.0);
+ 	ycoords = center_pixel.y + vec2(-2.0, 2.0);
++#elif defined(IMX376_PDAF)
++	xcoords = center_pixel.x + vec2(-1.0, 1.0);
++	ycoords = center_pixel.y + vec2(-1.0, 1.0);
+ #else
+ 	xcoords = center_bytes.x + vec2(-tex_step.x, tex_step.x);
+ 	ycoords = center_bytes.y + vec2(-tex_step.y, tex_step.y);
+@@ -234,12 +260,15 @@
+ #if defined (QUAD_BAYER)
+ 	#define fetch(x, y) quad_fetch(vec2(x, y))
+ 	float C = quad_fetch(center_pixel);
++#elif defined(IMX376_PDAF)
++	#define fetch(x, y) imx376_fetch(vec2(x, y))
++	float C = imx376_fetch(center_pixel);
+ #else
+ 	#define fetch(x, y) texture2D(tex_y, vec2(x, y)).r
+ 	float C = texture2D(tex_y, center_bytes).r;
+ #endif
+ 	vec4 patterns = vec4(
+-#if defined (QUAD_BAYER)
++#if defined (QUAD_BAYER) || defined(IMX376_PDAF)
+ 		fetch(center_pixel.x, ycoords[0]),	/* A0: (0,-1) */
+ 		fetch(xcoords[0], center_pixel.y),	/* B0: (-1,0) */
+ #else
+@@ -249,7 +278,7 @@
+ 		fetch(xcoords[0], ycoords[0]),		/* D0: (-1,-1) */
+ 		fetch(xcoords[1], ycoords[0]));		/* D1: (1,-1) */
+ 	vec4 temp = vec4(
+-#if defined (QUAD_BAYER)
++#if defined (QUAD_BAYER) || defined(IMX376_PDAF)
+ 		fetch(center_pixel.x, ycoords[1]),	/* A1: (0,1) */
+ 		fetch(xcoords[1], center_pixel.y),	/* B1: (1,0) */
+ #else

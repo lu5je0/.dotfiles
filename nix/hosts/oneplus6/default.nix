@@ -4,6 +4,7 @@
     ./hardware-configuration.nix
     ./audio.nix
     ./bluetooth.nix
+    ./camera.nix
     ./charging.nix
     ./power.nix
     ./qualcomm.nix

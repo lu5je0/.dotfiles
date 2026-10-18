@@ -1,0 +1,462 @@
+// SPDX-License-Identifier: GPL-2.0
+/* OnePlus 6 camera wiring from sdm845-mainline/linux, revision
+ * 85f1df2a4ec71d7a91dd95a7a49f889d1595ffa8 (sdm845-oneplus-common.dtsi).
+ * Keep this overlay separate from the stock tree and the WLAN pinctrl fix.
+ */
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/clock/qcom,camcc-sdm845.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/media/video-interfaces.h>
+
+&{/} {
+	main_cam_vaf: main-cam-vaf-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "main_cam_vaf";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+		regulator-enable-ramp-delay = <100>;
+
+		gpio = <&tlmm 31 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_bob>;
+	};
+
+	main_cam_vdig: main-cam-vdig-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "main_cam_vdig";
+
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+
+		gpio = <&tlmm 8 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_s3a_1p35>;
+		vbias-supply = <&vreg_bob>;
+	};
+
+	main_cam_vana: main-cam-vana-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "main_cam_vana";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 27 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_bob>;
+	};
+
+	front_cam_vdig: front-cam-vdig-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_vdig";
+
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+
+		gpio = <&tlmm 117 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+
+		vin-supply = <&vreg_s3a_1p35>;
+		vbias-supply = <&vreg_bob>;
+	};
+
+	front_cam_vana: front-cam-vana-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "front_cam_vana";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 104 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		regulator-boot-on;
+
+		vin-supply = <&vreg_bob>;
+	};
+
+	sub_cam_vana: sub-cam-vana-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "sub_cam_vana";
+
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+
+		gpio = <&tlmm 79 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_s3a_1p35>;
+		vbias-supply = <&vreg_bob>;
+	};
+
+	sub_cam_vaf: sub-cam-vaf-supply {
+		compatible = "regulator-fixed";
+		regulator-name = "sub_cam_vaf";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+		regulator-enable-ramp-delay = <100>;
+
+		gpio = <&tlmm 77 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_bob>;
+	};
+
+	sub_cam_vdig: sub-cam-vdig-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "sub_cam_vdig";
+
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 78 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&vreg_bob>;
+	};
+};
+
+&{/soc@0/rsc@179c0000/regulators-0} {
+	cam_vio_1p8: lvs1 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
+
+&camss {
+	vdda-phy-supply = <&vreg_l1a_0p875>;
+	vdda-pll-supply = <&vreg_l26a_1p2>;
+
+
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port@0 {
+			reg = <0>;
+			csiphy0_ep: endpoint {
+				bus-type = <MEDIA_BUS_TYPE_CSI2_CPHY>;
+				data-lanes = <0 1 2>;
+				remote-endpoint = <&imx519_ep>;
+			};
+		};
+
+		port@1 {
+			reg = <1>;
+			csiphy1_ep: endpoint {
+				bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&imx376k_ep>;
+			};
+		};
+
+		port@2 {
+			reg = <2>;
+			csiphy2_ep: endpoint {
+				bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&imx371_ep>;
+			};
+		};
+	};
+};
+
+&cci_i2c0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	front_cam: camera@10 {
+		compatible = "sony,imx371";
+		reg = <0x10>;
+
+		reset-gpios = <&tlmm 9 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&front_cam_default &cam_mclk1_default>;
+		pinctrl-1 = <&front_cam_sleep &cam_mclk1_sleep>;
+
+		clocks = <&clock_camcc CAM_CC_MCLK1_CLK>;
+		clock-names = "xclk";
+		clock-frequency = <24000000>;
+
+		vana-supply = <&front_cam_vana>;
+		vcore-supply = <&front_cam_vdig>;
+		vio-supply = <&cam_vio_1p8>;
+
+		orientation = <0>; /* Front camera */
+		rotation = <90>;
+
+		status = "okay";
+
+		port {
+			imx371_ep: endpoint {
+				remote-endpoint = <&csiphy2_ep>;
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <654000000>;
+			};
+		};
+	};
+
+	rear_cam: camera@1a {
+		compatible = "sony,imx519";
+		reg = <0x1a>;
+
+		reset-gpios = <&tlmm 28 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&main_cam_default &cam_mclk0_default>;
+		pinctrl-1 = <&main_cam_sleep &cam_mclk0_sleep>;
+
+		clocks = <&clock_camcc CAM_CC_MCLK0_CLK>;
+		clock-names = "xclk";
+		clock-frequency = <24000000>;
+		assigned-clocks = <&clock_camcc CAM_CC_MCLK0_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		vana-supply = <&main_cam_vana>;
+		vcore-supply = <&main_cam_vdig>;
+		vio-supply = <&cam_vio_1p8>;
+
+		orientation = <1>; /* Rear camera */
+		rotation = <270>;
+
+		lens-focus = <&rear_cam_actuator>;
+
+		status = "okay";
+
+		port {
+			imx519_ep: endpoint {
+				bus-type = <MEDIA_BUS_TYPE_CSI2_CPHY>;
+				remote-endpoint = <&csiphy0_ep>;
+				data-lanes = <1 2 3>;
+				link-frequencies = /bits/ 64 <500399375>;
+			};
+		};
+	};
+
+	rear_cam_actuator: actuator@72 {
+		compatible = "onnn,lc898217xc";
+		reg = <0x72>;
+		vana-supply = <&main_cam_vaf>;
+		vdd-supply = <&cam_vio_1p8>;
+	};
+};
+
+&cci_i2c1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	/* sa,sa3103 @ 0d */
+
+	sub_cam: camera@10 {
+		compatible = "sony,imx376k";
+		reg = <0x10>;
+
+		reset-gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&sub_cam_default &cam_mclk2_default>;
+		pinctrl-1 = <&sub_cam_sleep &cam_mclk2_sleep>;
+
+		clocks = <&clock_camcc CAM_CC_MCLK2_CLK>;
+		clock-names = "xclk";
+		clock-frequency = <24000000>;
+
+		vana-supply = <&sub_cam_vana>;
+		vcore-supply = <&sub_cam_vdig>;
+		vio-supply = <&cam_vio_1p8>;
+
+		orientation = <1>; /* Rear camera */
+		rotation = <270>;
+
+		lens-focus = <&sub_cam_actuator>;
+
+		status = "okay";
+
+		port {
+			imx376k_ep: endpoint {
+				remote-endpoint = <&csiphy1_ep>;
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <500000000>;
+			};
+		};
+	};
+
+	sub_cam_actuator: actuator@74 {
+		compatible = "onnn,lc898217xc";
+		reg = <0x74>;
+		vana-supply = <&sub_cam_vaf>;
+		vdd-supply = <&cam_vio_1p8>;
+	};
+};
+
+&tlmm {
+	main_cam_default: main-cam-default-state {
+		rst {
+			pins = "gpio28";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ois {
+			pins = "gpio40";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio27";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio8";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+	};
+
+	main_cam_sleep: main-cam-sleep-state {
+		rst {
+			pins = "gpio28";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ois {
+			pins = "gpio40";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio27";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio8";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+	};
+
+	sub_cam_default: sub-cam-default-state {
+		rst {
+			pins = "gpio23";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		vaf {
+			pins = "gpio77";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio78";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio79";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+	};
+
+	sub_cam_sleep: sub-cam-sleep-state {
+		rst {
+			pins = "gpio23";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		vaf {
+			pins = "gpio77";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio78";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio79";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+	};
+
+	front_cam_default: front-cam-default-state {
+		rst {
+			pins = "gpio9";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio104";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio117";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+	};
+
+	front_cam_sleep: front-cam-sleep-state {
+		rst {
+			pins = "gpio9";
+			function = "gpio";
+			bias-disable;
+			drive-strength = <2>;
+		};
+
+		ana {
+			pins = "gpio104";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+
+		dig {
+			pins = "gpio117";
+			function = "gpio";
+			bias-pull-down;
+			drive-strength = <2>;
+		};
+	};
+};

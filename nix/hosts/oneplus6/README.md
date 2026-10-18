@@ -69,6 +69,40 @@ linux-firmware；反过来会在固件下载后报 `Opcode 0x0c03 failed: -110`�
 WirePlumber 固定本机音频为 48 kHz/S16LE：同为 80% 音量时，S24_LE 无声，
 S16_LE 能正常播放。内置声卡默认输出音量为 80%，已有的用户音量设置仍优先。
 
+`camera.nix` 提供本机的摄像头栈：`pkgs/camera/` 从 SDM845 维护者提交
+`85f1df2a4ec71d7a91dd95a7a49f889d1595ffa8` 构建 IMX519 主摄、IMX376K 后置副摄、
+IMX371 前摄和 LC898217XC 对焦模块，并为 stock CAMSS 模块回移 C-PHY 补丁。
+完整 7.2.9 内核保持不变；`pkgs/device-tree/camera.dts` 补上供电、复位、时钟和 CSI 连接，
+与原有 Wi-Fi 引脚修复一起合入启动 DTB。
+
+`pkgs/libcamera/` 使用官方 0.7.2、postmarketOS 的 IMX371 Quad Bayer 补丁及传感器调参，
+补齐三颗 Sony 传感器的增益换算，并启用 Adreno 630 GPU 软件 ISP。包目录 pkgs/pipewire-camera/
+只重建链接本机 libcamera 的相机 SPA 插件，通过 SPA_PLUGIN_DIR 提供给 PipeWire 和 WirePlumber，
+复用缓存中的音频主体及其他插件。包目录 pkgs/snapshot/ 复用缓存中的 GNOME Camera 二进制，优先加载本机的
+相机插件，并修正 D-Bus 启动入口。界面中区分 IMX519 主摄、IMX376 副摄和 IMX371 前摄。
+不更改其他主机的相机包。调参使用社区的通用色彩矩阵，
+不包含 Android 厂商的计算摄影、HDR、电子防抖或画质算法。
+三个传感器均已通过 RAW 和 640×480 彩色连续取帧验证，主摄另通过 1280×720 处理输出测试。
+IMX519 的实验性缩小模式存在不出帧或画面不完整问题，目前只公开稳定的 4656×3496 模式，
+由 GPU 缩放预览；实测约 11 fps，不能视作 Android 相机的帧率或画质。自动对焦、录像尚未验证。
+主摄增加电源及 PLL 稳定等待，已通过自动断电后的 16 次交替启动测试。
+IMX376 的 2592×1940 模式使用本机 RAW 测得的相位像素位置，在 GPU 去马赛克及 CPU
+白平衡统计中插值校正；原始 RAW 输出保持不变。全画幅、边界及四种翻转组合的回归测试随包构建运行。
+
+```sh
+cam --list
+media-ctl --print-topology
+# 先关闭占用摄像头的应用；三个镜头共用 CAMSS 管线。
+__EGL_VENDOR_LIBRARY_DIRS=/run/opengl-driver/share/glvnd/egl_vendor.d \
+  python3 nix/hosts/oneplus6/scripts/camera-smoke-test.py \
+  --directory "$HOME/.cache/oneplus6-camera-test-$(date +%Y%m%d-%H%M%S)"
+```
+
+`system.build.oneplus6-camera` 和 `system.build.oneplus6-libcamera` 可单独构建诊断组件。
+相机包中的 overlay helper 仅供当前开机周期的手动调试，不自动加载；正常开机使用静态 DTB。
+`oneplus6-camera-live-power` 仅在无需重启的调试中为新增的 LVS1 注册独立相机供电实例，
+避免重新绑定整机 PMIC。不要在相机正在使用时卸载这些临时 overlay；重启后由静态配置接管。
+
 `power.nix` 和 `pkgs/power-key/` 将物理电源键短按改为仅熄屏、再次点亮，不触发锁屏。
 本机默认关闭 GNOME 自动锁屏，避免熄屏后因空闲计时要求密码；仍可从桌面菜单手动锁屏。
 通过 GNOME 原生屏保接口协调显示状态，避免直接关闭未锁屏桌面的面板导致 Mutter 崩溃。
@@ -135,5 +169,5 @@ root、权限 0600，不保存到仓库。SSH 支持该用户的密码登录和
 `authorized-key.pub` 中的公钥登录，禁止 root 直接登录。
 
 已验证触屏 GNOME、屏幕键盘、2.4/5 GHz Wi-Fi、USB/Wi-Fi SSH、熄屏点亮、普通重启，
-以及蓝牙控制器开启与扫描。蓝牙配对、蓝牙音频、相机和蜂窝通信尚未验证。
+以及蓝牙开启、扫描、配对与图片发送。蓝牙音频和蜂窝通信尚未验证；相机验证范围见上文。
 原始分区备份位于电脑 `/home/lu5je0/Projects/oneplus6-nixos/partition-backup`。

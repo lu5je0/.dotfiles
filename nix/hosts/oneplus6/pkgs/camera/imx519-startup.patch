@@ -1,0 +1,31 @@
+--- a/imx519.c
++++ b/imx519.c
+@@ -962,7 +962,7 @@
+  * Note, that delay between XCLR low->high and reading the CCI ID register (T6
+  * in the datasheet) is much smaller - 600us.
+  */
+-#define IMX519_XCLR_MIN_DELAY_US	8000
++#define IMX519_XCLR_MIN_DELAY_US	20000
+ #define IMX519_XCLR_DELAY_RANGE_US	1000
+ 
+ struct imx519 {
+@@ -1481,6 +1481,9 @@
+ 	if (ret)
+ 		return ret;
+ 
++	/* C-PHY PLL programming must settle after a runtime power cycle. */
++	usleep_range(5000, 6000);
++
+ 	/* set stream on register */
+ 	return cci_write(imx519->regmap, IMX519_REG_MODE_SELECT,
+ 			IMX519_MODE_STREAMING, NULL);
+@@ -1563,6 +1566,9 @@
+ 			__func__);
+ 		return ret;
+ 	}
++
++	/* Let the board camera rails settle before clocking the sensor. */
++	usleep_range(5000, 6000);
+ 
+ 	ret = clk_prepare_enable(imx519->xclk);
+ 	if (ret) {

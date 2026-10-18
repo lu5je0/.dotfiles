@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/* Live testing only: the boot-time RPMh driver has already enumerated its
+ * children, so the newly added LVS1 child needs a separate provider instance.
+ * Normal boots get LVS1 from regulators-0 in the static camera device tree.
+ */
+/dts-v1/;
+/plugin/;
+
+&apps_rsc {
+	regulators-oneplus6-camera-live {
+		compatible = "qcom,pm8998-rpmh-regulators";
+		qcom,pmic-id = "a";
+		vin-lvs-1-2-supply = <&vreg_s4a_1p8>;
+
+		cam_vio_live: lvs1 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+	};
+};
+
+&front_cam { vio-supply = <&cam_vio_live>; };
+&rear_cam { vio-supply = <&cam_vio_live>; };
+&sub_cam { vio-supply = <&cam_vio_live>; };
+&rear_cam_actuator { vdd-supply = <&cam_vio_live>; };
+&sub_cam_actuator { vdd-supply = <&cam_vio_live>; };

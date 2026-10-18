@@ -1,0 +1,36 @@
+--- a/src/libcamera/software_isp/debayer_egl.cpp
++++ b/src/libcamera/software_isp/debayer_egl.cpp
+@@ -419,8 +419,8 @@
+ 	GLfloat firstRed[] = { firstRed_x_, firstRed_y_ };
+ 	GLfloat imgSize[] = { (GLfloat)width_,
+ 			      (GLfloat)height_ };
+-	GLfloat Step[] = { static_cast<float>(bytesPerPixel_) / (inputConfig_.stride - 1),
+-			   1.0f / (height_ - 1) };
++	GLfloat Step[] = { static_cast<float>(bytesPerPixel_) / inputConfig_.stride,
++			   1.0f / height_ };
+ 	GLfloat Stride = (GLfloat)width_ / (shaderStridePixels_ / bytesPerPixel_);
+ 	/*
+ 	 * Scale the output size from the native size the algorithm produces for
+--- a/src/libcamera/shaders/bayer_1x_packed.frag
++++ b/src/libcamera/shaders/bayer_1x_packed.frag
+@@ -80,8 +80,8 @@
+ float quad_fetch(vec2 pixel)
+ {
+ 	vec2 cell = quad_cell(pixel);
+-	vec2 byte_pos = vec2(floor(BPP * cell.x + 0.02), cell.y) * tex_step;
+-	vec2 byte_pos_x1 = vec2(floor(BPP * (cell.x + 1.0) + 0.02), cell.y) * tex_step;
++	vec2 byte_pos = vec2(floor(BPP * cell.x + 0.02) + 0.5, cell.y + 0.5) * tex_step;
++	vec2 byte_pos_x1 = vec2(floor(BPP * (cell.x + 1.0) + 0.02) + 0.5, cell.y + 0.5) * tex_step;
+ 	vec2 byte_pos_y1 = byte_pos + vec2(0.0, tex_step.y);
+ 	vec2 byte_pos_xy1 = vec2(byte_pos_x1.x, byte_pos_y1.y);
+ 	return (texture2D(tex_y, byte_pos).r +
+@@ -148,7 +148,8 @@
+ 	 * of the group of the pixels.
+ 	 */
+ 	center_bytes.x = floor(center_bytes.x);
+-	center_bytes *= tex_step;
++	/* Sample texel centres; edge coordinates shift the Bayer phase. */
++	center_bytes = (center_bytes + vec2(0.5)) * tex_step;
+ 
+ #if defined (QUAD_BAYER)
+ 	xcoords = center_pixel.x + vec2(-2.0, 2.0);

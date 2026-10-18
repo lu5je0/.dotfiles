@@ -1,0 +1,19 @@
+--- a/src/ipa/libipa/camera_sensor_helper.cpp
++++ b/src/ipa/libipa/camera_sensor_helper.cpp
+@@ -665,6 +665,16 @@
+ };
+ REGISTER_CAMERA_SENSOR_HELPER("imx708", CameraSensorHelperImx708)
+ 
++/* OnePlus 6 Sony sensors use gain = 1024 / (1024 - code). */
++class CameraSensorHelperImx371 : public CameraSensorHelperImx708 {};
++REGISTER_CAMERA_SENSOR_HELPER("imx371", CameraSensorHelperImx371)
++
++class CameraSensorHelperImx376 : public CameraSensorHelperImx708 {};
++REGISTER_CAMERA_SENSOR_HELPER("imx376", CameraSensorHelperImx376)
++
++class CameraSensorHelperImx519 : public CameraSensorHelperImx708 {};
++REGISTER_CAMERA_SENSOR_HELPER("imx519", CameraSensorHelperImx519)
++
+ class CameraSensorHelperOv01a10 : public CameraSensorHelper
+ {
+ public:
