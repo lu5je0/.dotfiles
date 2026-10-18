@@ -1,7 +1,11 @@
 # OnePlus 6 / enchilada
 
 标准 NixOS 26.05 stable + GNOME，沿用仓库根 `flake.lock`，使用 stable 的
-`linuxPackages_latest`（当前 7.2.9）。不导入 Mobile NixOS。
+`linuxPackages_7_2`（当前 7.2.9）。不导入 Mobile NixOS。
+内核固定在已验证的 7.2 系列，更新 `flake.lock` 时可以获取该系列的补丁版本，
+不会自动跳到下一系列。跨系列升级需手动修改 `hardware-configuration.nix`，
+并验证启动、相机、Wi-Fi 与充电模块；若 nixpkgs 移除了 7.2 系列，求值会报错，
+不会回退到其他内核。
 
 配置入口：`nixosConfigurations.oneplus6`。复用 `profiles/base.nix` 和 GNOME 模块；
 手机的共享模块参数 `pkgsUnstable` 指向 `aarch64-linux` 的 unstable 包集，

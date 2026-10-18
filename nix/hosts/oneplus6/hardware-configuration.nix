@@ -1,8 +1,9 @@
 { config, pkgs, ... }:
 {
   nixpkgs.hostPlatform = "aarch64-linux";
-  # Follow the latest kernel provided by the pinned stable branch, as on huskar.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # Keep the tested 7.2 series: camera, WLAN and charger modules need validation
+  # before moving to another series. Patch releases still follow flake.lock.
+  boot.kernelPackages = pkgs.linuxPackages_7_2;
   # Keep the cached stock kernel; rebuild only the two affected WLAN modules.
   boot.extraModulePackages = [
     (pkgs.callPackage ./pkgs/ath10k-wcn3990 {
