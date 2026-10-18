@@ -311,19 +311,20 @@ def do_backup(cfg, dry_run=False):
         return code
     info(f"备份 {cfg['source']} → {cfg['repository']}")
     code = run_stream(restic, cfg, args)
-    if code == 0:
-        do_forget(restic, cfg, stream=True)
-        info("完成")
-        return 0
+    if code not in (0, 3):
+        # 没建快照（含仓库不存在/被锁/密码错），别动旧版本。
+        return code
     if code == 3:
         # 3 = 快照已建，但有文件读不到。**这种情况下也要清理**：否则一个长期读不到的
         # 文件（root 600 之类）会让 prune 永远不跑，保留策略静默失效、旧版本无限堆积。
         # 已知代价：这些文件在旧版本里的最后副本会随这次 prune 一起消失，
-        # 所以退出码保持 3（systemd 会把 unit 标成 failed，能看见）。
-        do_forget(restic, cfg, stream=True)
-        info("备份不完整（有文件读不到），已按保留策略清理旧版本")
-        return 3
-    # 1 = 没建快照；10/11/12 = 仓库不存在/被锁/密码错。这次什么都没写进仓库，别动它
+        # 所以退出码保持 3（即使清理也失败，仍如实报告备份不完整）。
+        warn("备份不完整（有文件读不到），仍按保留策略清理旧版本")
+    forget_code = do_forget(restic, cfg, stream=True)
+    if forget_code != 0:
+        warn(f"快照已创建，但旧版本清理失败（退出码 {forget_code}）")
+        return code or forget_code
+    info("完成" if code == 0 else "备份不完整（有文件读不到），已按保留策略清理旧版本")
     return code
 
 
@@ -338,14 +339,17 @@ def keep_args(cfg):
 
 
 def do_forget(restic, cfg, stream=True):
-    args = ["forget"] + keep_args(cfg) + ["--prune"] + host_args(cfg)
-    if not keep_args(cfg):
+    keep = keep_args(cfg)
+    if not keep:
         warn("保留策略全为 0，跳过 forget（等同于全部保留）")
         return 0
-    info("应用保留策略: " + " ".join(keep_args(cfg)))
-    if stream:
-        return run_stream(restic, cfg, args)
-    return run(restic, cfg, args).returncode
+    args = ["forget"] + keep + ["--prune"] + host_args(cfg)
+    info("应用保留策略: " + " ".join(keep))
+    code = run_stream(restic, cfg, args) if stream else run(restic, cfg, args).returncode
+    if code == 11:
+        warn("仓库被锁定，清理未完成。等待其他 restic 操作结束；若是残留锁，"
+             "运行 `q-restic unlock` 后再运行 `q-restic forget`")
+    return code
 
 
 def do_check(cfg):
@@ -554,12 +558,18 @@ def do_unlock(cfg):
     """
     restic = restic_bin()
     require_password(cfg)
-    locks = run(restic, cfg, ["list", "locks"]).stdout.strip()
+    acquire_lock(cfg)
+    result = run(restic, cfg, ["list", "locks"])
+    if result.returncode != 0:
+        warn(f"读取仓库锁失败（退出码 {result.returncode}）: "
+             + (result.stderr.strip() or result.stdout.strip()))
+        return result.returncode
+    locks = result.stdout.strip()
     if not locks:
         info("仓库没有锁，无需清理")
         return 0
     count = len(locks.splitlines())
-    warn(f"发现 {count} 把锁。确认此刻没有备份在跑（ps 看 restic）再继续")
+    info(f"发现 {count} 把仓库锁，仅清理残留锁（保留活动锁）")
     return run_stream(restic, cfg, ["unlock"])
 
 
@@ -1344,9 +1354,9 @@ class App:
         if code == 0:
             self.set_message("备份完成")
         elif code == 3:
-            self.set_message("备份不完整：有文件读不到，已清理旧版本")
+            self.set_message("备份不完整：有文件读不到")
         else:
-            self.set_message(f"备份失败（退出码 {code}）")
+            self.set_message(f"备份或清理失败（退出码 {code}）")
 
     def act_dry_run(self):
         code = self.run_suspended(do_backup, self.cfg, dry_run=True, wait_on_success=True)

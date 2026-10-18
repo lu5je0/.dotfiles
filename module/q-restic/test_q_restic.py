@@ -1,4 +1,4 @@
-"""异步加载、错误恢复和缓存回归；只用假 restic，不连接真实仓库。"""
+"""备份清理、异步加载、错误恢复和缓存回归；只用假 restic，不连接真实仓库。"""
 
 import contextlib
 import fcntl
@@ -31,6 +31,85 @@ SPEC.loader.exec_module(q)
 def snapshot(n):
     return {"id": str(n) * 64, "short_id": str(n) * 8,
             "time": f"2026-10-{n:02d}T12:00:00Z", "summary": {"total_bytes_processed": 1024}}
+
+
+class RetentionTests(unittest.TestCase):
+    def setUp(self):
+        self.cfg = dict(q.DEFAULT_CONFIG, repository="/tmp/test-repo", host="test")
+        self.out, self.err = io.StringIO(), io.StringIO()
+        self.enterContext(contextlib.redirect_stdout(self.out))
+        self.enterContext(contextlib.redirect_stderr(self.err))
+        self.enterContext(patch.object(q, "restic_bin", return_value="restic"))
+        for name in ("require_password", "acquire_lock", "preflight_sftp", "ensure_repo"):
+            self.enterContext(patch.object(q, name))
+
+    def test_cleanup_failure_reaches_caller_without_claiming_success(self):
+        for backup_code, forget_code, expected in ((0, 1, 1), (0, 11, 11), (0, 12, 12),
+                                                    (3, 1, 3), (3, 11, 3)):
+            with self.subTest(backup=backup_code, forget=forget_code), patch.object(
+                q, "run_stream", return_value=backup_code
+            ), patch.object(q, "do_forget", return_value=forget_code) as forget:
+                self.out.seek(0)
+                self.out.truncate()
+                self.err.seek(0)
+                self.err.truncate()
+                self.assertEqual(q.do_backup(self.cfg), expected)
+                forget.assert_called_once()
+                self.assertIn(f"清理失败（退出码 {forget_code}）", self.err.getvalue())
+                self.assertNotIn("完成", self.out.getvalue())
+                self.assertNotIn("已按保留策略清理", self.out.getvalue())
+
+    def test_cleanup_runs_after_both_complete_and_incomplete_backups(self):
+        for code in (0, 3):
+            with self.subTest(code=code), patch.object(q, "run_stream", return_value=code), patch.object(
+                q, "do_forget", return_value=0
+            ) as forget:
+                self.assertEqual(q.do_backup(self.cfg), code)
+                forget.assert_called_once()
+
+    def test_failed_backups_and_dry_run_do_not_apply_retention(self):
+        for code, dry_run in ((1, False), (10, False), (11, False), (12, False), (0, True), (3, True)):
+            with self.subTest(code=code, dry_run=dry_run), patch.object(
+                q, "run_stream", return_value=code
+            ), patch.object(q, "do_forget") as forget:
+                self.assertEqual(q.do_backup(self.cfg, dry_run=dry_run), code)
+                forget.assert_not_called()
+
+    def test_locked_cleanup_reports_recovery_command(self):
+        for stream in (True, False):
+            with self.subTest(stream=stream), patch.object(q, "run_stream", return_value=11), patch.object(
+                q, "run", return_value=subprocess.CompletedProcess([], 11, "", "locked")
+            ):
+                self.assertEqual(q.do_forget("restic", self.cfg, stream=stream), 11)
+        self.assertIn("q-restic unlock", self.err.getvalue())
+        self.assertIn("q-restic forget", self.err.getvalue())
+
+    def test_unlock_cannot_report_read_failure_as_no_locks(self):
+        with patch.object(q, "run", return_value=subprocess.CompletedProcess([], 12, "", "wrong password")), patch.object(
+            q, "run_stream"
+        ) as unlock:
+            self.assertEqual(q.do_unlock(self.cfg), 12)
+        unlock.assert_not_called()
+        self.assertIn("wrong password", self.err.getvalue())
+        self.assertNotIn("没有锁", self.out.getvalue())
+
+    def test_unlock_serializes_writes_and_only_removes_stale_locks(self):
+        with patch.object(q, "run", return_value=subprocess.CompletedProcess([], 0, "lock-id\n", "")), patch.object(
+            q, "run_stream", return_value=0
+        ) as unlock, patch.object(q, "acquire_lock") as lock:
+            self.assertEqual(q.do_unlock(self.cfg), 0)
+        lock.assert_called_once_with(self.cfg)
+        unlock.assert_called_once_with("restic", self.cfg, ["unlock"])
+
+    def test_tui_does_not_claim_incomplete_backup_was_cleaned(self):
+        app = q.App(self.cfg)
+        with patch.object(app, "run_suspended", return_value=3):
+            app.act_backup()
+        self.assertIn("备份不完整", app.message)
+        self.assertNotIn("已清理", app.message)
+        with patch.object(app, "run_suspended", return_value=11):
+            app.act_backup()
+        self.assertIn("清理失败", app.message)
 
 
 class LoadingTests(unittest.TestCase):

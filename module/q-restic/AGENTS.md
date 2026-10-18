@@ -39,11 +39,14 @@
   看起来 prune 会删掉这些文件在旧版本里的最后副本（代价是真的），但反过来更大：home 里只要有一个
   长期读不到的文件（root 600 之类），prune 就永远不跑，保留策略**静默失效**、旧版本无限堆积。
   只有 1（没建快照）和 10/11/12（仓库不存在/被锁/密码错）才完全不碰仓库。退出码要如实返回。
+- **清理失败不能打印“完成”或返回成功**：备份成功后，`forget --prune` 的失败码必须传到 CLI / systemd；
+  备份本身为 3 时仍保留 3，但要明确输出清理失败。TUI 对退出码 3 不能一概宣称“已清理旧版本”。
 - **区分两套锁**：q-restic 自己的 flock（`~/.cache/q-restic.<repo hash>.lock`，只保护写流程）
   和 **restic 仓库锁**（`restic list locks`）。后者是另一个东西：进程被强杀
   （SIGKILL，或 `forget --prune` 跑到一半被 Ctrl-C）会留下残留锁，之后 `forget --prune`
   因为拿不到排他锁而失败——表现就是“删除失败”，而且每晚定时任务会在 forget 这步挂掉。
   清理用 `q-restic unlock`。`act_forget_snap` 会识别输出里的 `already locked` 并直接把这条命令提示给用户。
+  `unlock` 也要拿 q-restic 的写锁，只用 restic 默认的残留锁清理，别加 `--remove-all`；读取锁失败不能说成“没有锁”。
 - **`selected_snap()` 不能用 `self.cursor` 索引**。在 `snap_actions` 屏里 `cursor` 指的是操作项
   （进屏时被重置为 0），拿它去索引 `self.snaps` 会**永远指向第一个版本**，
   于是“恢复/对比/删除这个版本”全作用在错误的版本上。离开版本列表时把选中项记进
