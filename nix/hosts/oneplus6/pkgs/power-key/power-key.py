@@ -1,10 +1,9 @@
-"""Use the phone's power key to lock/blank or wake GNOME without suspending."""
+"""Use the phone's power key to blank or wake GNOME without locking or suspending."""
 
 import logging
 from contextlib import closing
 import pwd
 import subprocess
-import time
 
 from evdev import InputDevice, ecodes
 
@@ -40,15 +39,19 @@ def toggle_screen():
     mode = int(session_bus("get-property", *display, "PowerSaveMode").split()[1])
     if mode < 0:
         raise RuntimeError("Display power management unavailable")
-    if mode == 0:
-        # logind's lock signal returns immediately even if GNOME is already
-        # locked; ScreenSaver.Lock may leave its D-Bus invocation pending.
-        command("loginctl", "lock-session", active_session())
-        # Let the lock screen become visible before powering down the panel.
-        time.sleep(0.2)
-    target = 3 if mode == 0 else 0
-    session_bus("set-property", *display, "PowerSaveMode", "i", str(target))
-    logging.info("Display power %s", "off (locked)" if target else "on")
+    if mode != 0 and command(
+        "loginctl", "show-session", active_session(), "-p", "LockedHint", "--value"
+    ) == "yes":
+        # A manually locked session must still require authentication after wake.
+        session_bus("set-property", *display, "PowerSaveMode", "i", "0")
+    else:
+        # Let GNOME prepare/clear its screen shield before changing panel power.
+        # Directly powering off an unlocked desktop can crash Mutter on this phone.
+        session_bus(
+            "call", "org.gnome.ScreenSaver", "/org/gnome/ScreenSaver",
+            "org.gnome.ScreenSaver", "SetActive", "b", "true" if mode == 0 else "false",
+        )
+    logging.info("Display power %s", "off" if mode == 0 else "on")
 
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
