@@ -1,0 +1,27 @@
+The GPU scales the full raw image to the preview, but the ordinary Bayer
+statistics path sampled only a preview-sized rectangle at the raw image's
+top-left corner. A 640x480 preview therefore metered a tiny, unrelated area
+of the sensor. Unlike the CPU line path, DebayerEGL::process() passes the
+complete raw buffer to SwStatsCpu and does not offset its origin.
+
+Meter the whole input for ordinary Bayer, keeping the existing Quad Bayer
+geometry intact. This fixes exposure/white balance without altering JPEG
+brightness or overriding sensor controls behind libcamera's back.
+
+--- a/src/libcamera/software_isp/debayer_egl.cpp
++++ b/src/libcamera/software_isp/debayer_egl.cpp
+@@ -358,11 +358,12 @@
+ 	}
+ 
+ 	/*
+-	 * Don't pass x,y from window_ since process() already adjusts for it.
+-	 * But crop the window to 2/3 of its width and height for speedup.
++	 * GPU output is scaled from the full raw image. process() passes that
++	 * whole buffer to the stats path, without applying window_'s offset.
++	 * A preview-sized window here would meter just the raw top-left corner.
+ 	 */
+-	stats_->setWindow(quadBayer_ ? window_ : Rectangle(window_.size()));
++	stats_->setWindow(quadBayer_ ? window_ : Rectangle(inputCfg.size));
+ 
+ 	inputBufferCount_ = inputCfg.bufferCount;
+ 	outputBufferCount_ = outputCfg.bufferCount;

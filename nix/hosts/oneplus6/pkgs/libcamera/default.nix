@@ -28,6 +28,7 @@ libcamera.overrideAttrs (old: {
     # CAMSS needs capture buffers ready before the sensor starts sending.
     ./queue-before-stream.patch
     ./imx376-pdaf.patch
+    ./gpu-stats-window.patch
   ];
   patchFlags = [
     "-p1"
