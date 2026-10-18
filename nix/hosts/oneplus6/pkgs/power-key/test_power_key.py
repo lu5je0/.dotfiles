@@ -2,6 +2,7 @@
 
 import importlib.util
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -141,6 +142,79 @@ class PowerKeyTests(unittest.TestCase):
         self.clock.now = handler.accept_after + 0.01
         handler.handle_release(self.clock.now)
         self.assertEqual(self.gnome.mode, 3)
+
+    def test_touch_is_blocked_before_blank_and_restored_after_wake(self):
+        events = []
+
+        class Touch:
+            def block(touch):
+                events.append(("block", self.gnome.mode, self.gnome.active))
+
+            def close(touch):
+                events.append(("restore", self.gnome.mode, self.gnome.active))
+
+        power_key.toggle_screen(Touch())
+        self.assertEqual(events, [("block", 0, False)])
+        power_key.toggle_screen(Touch())
+        self.assertEqual(events[-1], ("restore", 0, False))
+
+    def test_failed_transition_restores_touch_along_with_panel(self):
+        from unittest.mock import Mock
+        touch = Mock()
+        self.gnome.stuck = True
+        with self.assertRaises(RuntimeError):
+            power_key.toggle_screen(touch)
+        touch.block.assert_called_once()
+        touch.close.assert_called_once()
+        self.assertEqual(self.gnome.mode, 0)
+
+    def test_cannot_blank_if_touch_grab_fails(self):
+        from unittest.mock import Mock
+        touch = Mock()
+        touch.block.side_effect = OSError("Touch device busy")
+        with self.assertRaises(OSError):
+            power_key.toggle_screen(touch)
+        self.assertEqual(self.gnome.mode, 0)
+        self.assertFalse(self.gnome.active)
+        touch.close.assert_called_once()
+
+
+class TouchGuardTests(unittest.TestCase):
+    def test_grab_is_idempotent_and_descriptor_is_closed_on_wake(self):
+        from unittest.mock import Mock
+        device = Mock()
+        factory = Mock(return_value=device)
+        guard = power_key.TouchGuard(factory, lambda: "/dev/input/test-touch")
+        guard.block()
+        guard.block()
+        factory.assert_called_once_with("/dev/input/test-touch")
+        device.grab.assert_called_once()
+        guard.close()
+        guard.close()
+        device.close.assert_called_once()
+        self.assertIsNone(guard.device)
+
+    def test_failed_grab_does_not_leak_descriptor(self):
+        from unittest.mock import Mock
+        device = Mock()
+        device.grab.side_effect = OSError("Busy")
+        guard = power_key.TouchGuard(lambda path: device, lambda: "/dev/input/test-touch")
+        with self.assertRaises(OSError):
+            guard.block()
+        device.close.assert_called_once()
+        self.assertIsNone(guard.device)
+
+    def test_find_touchscreen_without_assuming_input_number(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for node, name in (("event2", "pm8941_pwrkey"), ("event8", "Synaptics S3706B")):
+                (root / node / "device").mkdir(parents=True)
+                (root / node / "device/name").write_text(name)
+            self.assertEqual(power_key.touchscreen_path(root), Path("/dev/input/event8"))
+            (root / "event9/device").mkdir(parents=True)
+            (root / "event9/device/name").write_text("Synaptics S3706B")
+            with self.assertRaises(RuntimeError):
+                power_key.touchscreen_path(root)
 
 
 if __name__ == "__main__":
