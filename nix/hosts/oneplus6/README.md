@@ -140,35 +140,28 @@ cat /sys/class/power_supply/pmi8998-charger/charge_behaviour
 换用识别为 DCP 的充电器后，输入限流为 1.5 A，正常充电时电池电流约 1.04 A，
 空闲暂停充电的 25 秒测试中电池电流持续读到 0 mA。短测不代表长期或高负载下始终零放电。
 
-`scripts/battery-monitor.py` 是只读的临时电量记录工具，不加入开机服务，
-不改变充电策略。运行目录由 `--directory` 指定，其中 `metadata.json` 的
-`stop_at_epoch` 是自动结束的 Unix 时间戳；同目录 `samples.csv` 每分钟追加一行，
-包括电量、电池电流、电压、温度、USB 输入状态和充电模式。电池电流单位为 µA，
-正值表示充电，负值表示放电；温度单位为 0.1°C。可用 `--interval` 调整采样秒数。
+`battery-monitor.nix` 将 `oneplus6-battery-monitor.service` 配置为开机常驻服务，
+异常退出自动重启，无截止时间。程序和测试位于 `pkgs/battery-monitor/`，
+每 60 秒只读记录一次电量、电流、电压、温度、充电状态及系统负载，不改变充电策略。
+电流单位为 µA（正为充电、负为放电），电压为 µV，温度为 0.1°C；
+电量百分比及满充容量可能被电量计重新估算，不能把百分比突变直接换算成耗电。
 
-在手机仓库根目录启动一次新的 24 小时记录：
+数据存放在 `/var/lib/oneplus6-battery-monitor/YYYY-MM-DD.csv`，按本机时区分日追加，
+重启后接着写，不覆盖已有数据。启动及日期变化时自动清理，只保留包含当天在内最近
+30 个自然日；正常每分钟采样时每天约 1440 条记录，磁盘占用不会随运行年限持续增长。
+按现有记录平均约 139 字节/条估算，30 天 CSV 合计约 6 MB（5.7 MiB），实际随字段长度略有变化。
+服务以独立系统用户运行，目录权限为 0755、CSV 为 0644；普通用户无需 `sudo`
+即可读取，写入仅允许服务用户。
 
 ```sh
-logdir="/var/lib/nixos/oneplus6-migration/battery-monitor/$(date +%Y%m%d-%H%M%S)"
-sudo install -d -m 0700 "$logdir"
-sudo python3 - "$logdir" <<'PY'
-import json, pathlib, sys, time
-path = pathlib.Path(sys.argv[1]) / "metadata.json"
-path.write_text(json.dumps({"stop_at_epoch": time.time() + 86400}) + "\n")
-PY
-sudo systemd-run --collect --unit=oneplus6-battery-monitor \
-  --property=Restart=on-failure --property=RestartSec=10s \
-  --property=RuntimeMaxSec=25h \
-  /run/current-system/sw/bin/python3 \
-  "$PWD/nix/hosts/oneplus6/scripts/battery-monitor.py" --directory "$logdir"
-sudo tail "$logdir/samples.csv"
+systemctl status oneplus6-battery-monitor
+journalctl -u oneplus6-battery-monitor -n 20
+tail /var/lib/oneplus6-battery-monitor/$(date +%F).csv
+ls -lh /var/lib/oneplus6-battery-monitor/
 ```
 
-同名任务还在运行时不要重复启动。SSH 断开不影响记录；手机重启会结束临时服务，
-已写入的数据保留。手动停止使用 `sudo systemctl stop oneplus6-battery-monitor`。
-这次已启动的记录目录位于
-`/var/lib/nixos/oneplus6-migration/battery-monitor/20261018-005357/`，
-同级 `latest` 链接指向它；`latest` 是本次部署时创建的，手动运行上面的命令不会更新该链接。
+原先的 24 小时临时记录在部署常驻服务时迁入对应日期的 CSV，旧临时服务停止，
+之后只保留这一套采样。维护约定见本目录 `AGENTS.md`。
 
 密码哈希由手机上的 `/var/lib/nixos/secrets/oneplus6-user-password` 提供；该文件属于
 root、权限 0600，不保存到仓库。SSH 支持该用户的密码登录和

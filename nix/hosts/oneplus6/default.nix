@@ -3,6 +3,7 @@
   imports = [
     ./hardware-configuration.nix
     ./audio.nix
+    ./battery-monitor.nix
     ./bluetooth.nix
     ./camera.nix
     ./charging.nix
