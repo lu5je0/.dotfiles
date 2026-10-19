@@ -1,0 +1,29 @@
+From: lu5je0 <lu5je0@gmail.com>
+Subject: [PATCH] backends/udev: keep matching backlights while the display is off
+
+The DRM connector's enabled attribute describes its current scanout state,
+not whether a backlight belongs to it. DPMS off makes it "disabled".
+Reconfiguring monitors in that state drops the backlight, and DPMS on does
+not recreate it, leaving GNOME's native brightness control unavailable.
+
+Match by the raw backlight's DRM connector parent and connector name even
+while scanout is disabled. Monitor activity is tracked separately by the
+monitor manager.
+
+--- a/src/backends/meta-udev.c
++++ b/src/backends/meta-udev.c
+@@ -282,10 +282,10 @@ meta_udev_backlight_find_for_connector (GList      *devices,
+       if (!prop || !g_str_has_suffix (prop, connector_suffix))
+         continue;
+ 
+-      /* Also make sure the connector is actually enabled */
+-      prop = g_udev_device_get_sysfs_attr (parent, "enabled");
+-      if (g_strcmp0 (prop, "enabled") != 0)
+-        continue;
++      /* DPMS off disables scanout, but does not change which connector owns
++       * this backlight. Keep it available across monitor reconfiguration
++       * while the display is off.
++       */
+ 
+       return g_object_ref (device);
+     }

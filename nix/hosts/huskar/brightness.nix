@@ -1,6 +1,14 @@
 { config, pkgs, ... }:
 
 {
+  # 灭屏期间重配显示器时，Mutter 50 会因 DRM enabled=disabled 丢掉背光，唤醒后不再恢复。
+  # 修正背光与接口的匹配逻辑；只覆盖 huskar，让 GNOME Shell 使用同一份修补后的 Mutter。
+  nixpkgs.overlays = [
+    (final: prev: {
+      mutter = prev.callPackage ./pkgs/mutter { inherit (prev) mutter; };
+    })
+  ];
+
   # 外接显示器默认没有 /sys/class/backlight 设备，GNOME 原生滑块无法控制硬件亮度。
   # ddcci-driver 通过 DDC/CI 将显示器暴露为标准背光设备，供 GNOME 原生亮度控制使用；
   # 驱动随当前内核编译，并在启动时加载 ddcci-backlight。
