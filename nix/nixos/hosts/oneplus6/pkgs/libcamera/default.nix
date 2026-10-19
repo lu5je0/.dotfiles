@@ -29,6 +29,9 @@ libcamera.overrideAttrs (old: {
     ./queue-before-stream.patch
     ./imx376-pdaf.patch
     ./gpu-stats-window.patch
+    ./gpu-preview-crop.patch
+    ./awb-unclipped.patch
+    ./agc-highlight.patch
   ];
   patchFlags = [
     "-p1"
@@ -61,6 +64,15 @@ libcamera.overrideAttrs (old: {
           $CXX -std=c++17 -O2 -I../include/libcamera/internal/software_isp \
             ${./imx376-pdaf-test.cpp} -o imx376-pdaf-test
           ./imx376-pdaf-test
+          $CXX -std=c++17 -O2 -I../include \
+            ${./gpu-preview-test.cpp} -o gpu-preview-test
+          ./gpu-preview-test
+          $CXX -std=c++17 -O2 -I../include/libcamera/internal/software_isp \
+            ${./awb-stats-test.cpp} -o awb-stats-test
+          ./awb-stats-test
+          $CXX -std=c++17 -O2 -I../include/libcamera/internal/software_isp \
+            ${./agc-highlight-test.cpp} -o agc-highlight-test
+          ./agc-highlight-test
         ''
       else
         ""

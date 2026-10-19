@@ -1,0 +1,82 @@
+Ordinary Bayer used a physical-size viewport and an anchored scaled quad,
+while statistics covered the complete RAW sensor. A 16:9 preview clipped
+part of a 4:3 sensor without clipping its white-balance/exposure samples.
+
+Use the existing aligned crop/texture helpers for all Bayer layouts, and
+render that exact crop into the output-sized FBO. Quad-cell sampling stays
+sensor-specific. No per-scene colour gains or JPEG tint are introduced.
+
+--- a/src/libcamera/software_isp/debayer_egl.cpp
++++ b/src/libcamera/software_isp/debayer_egl.cpp
+@@ -345,23 +345,11 @@
+ 	outputSize_ = outputCfg.size;
+ 	nativeOutputSize_ = outSizeRange.max;
+ 
+-	if (quadBayer_) {
+-		window_ = quadBayerStatsWindow(inputCfg.size, outputCfg.size);
+-	} else {
+-		window_.x = ((inputCfg.size.width - outputCfg.size.width) / 2) &
+-			    ~(inputConfig_.patternSize.width - 1);
+-		window_.y = ((inputCfg.size.height - outputCfg.size.height) / 2) &
+-			    ~(inputConfig_.patternSize.height - 1);
+-		window_.width = outputCfg.size.width;
+-		window_.height = outputCfg.size.height;
+-	}
+-
+-	/*
+-	 * GPU output is scaled from the full raw image. process() passes that
+-	 * whole buffer to the stats path, without applying window_'s offset.
+-	 * A preview-sized window here would meter just the raw top-left corner.
+-	 */
+-	stats_->setWindow(quadBayer_ ? window_ : Rectangle(inputCfg.size));
++	/* The same aligned sensor crop must feed pixels and AE/AWB statistics.
++	 * These geometry helpers work for ordinary Bayer as well as quad cells.
++	 */
++	window_ = quadBayerStatsWindow(inputCfg.size, outputCfg.size);
++	stats_->setWindow(window_);
+ 
+ 	inputBufferCount_ = inputCfg.bufferCount;
+ 	outputBufferCount_ = outputCfg.bufferCount;
+@@ -430,16 +418,14 @@
+ 	 * the input size. Keep the aspect ratio and prefer cropping over black
+ 	 * bars.
+ 	 */
+-	GLfloat scale = quadBayer_
+-				? 1.0f
+-				: std::max((GLfloat)outputSize_.width / nativeOutputSize_.width,
+-					   (GLfloat)outputSize_.height / nativeOutputSize_.height);
+-	GLfloat trans = -(1.0f - scale);
++	/* Scale the crop through texture coordinates into the actual output FBO.
++	 * A physical-size viewport with a scaled quad clips a different area.
++	 */
+ 	GLfloat projMatrix[] = {
+-		scale, 0, 0, 0,
+-		0, scale, 0, 0,
++		1, 0, 0, 0,
++		0, 1, 0, 0,
+ 		0, 0, 1, 0,
+-		trans, trans, 0, 1
++		0, 0, 0, 1
+ 	};
+ 	/* Static const coordinates */
+ 	static const GLfloat vcoordinates[4][2] = {
+@@ -448,8 +434,7 @@
+ 		{ +1.0f, +1.0f },
+ 		{ +1.0f, -1.0f },
+ 	};
+-	textureCoordinates_ = softwareIspTextureCoordinates({ width_, height_ }, window_,
+-							    quadBayer_);
++	textureCoordinates_ = softwareIspTextureCoordinates({ width_, height_ }, window_, true);
+ 
+ 	/* vertexIn - bayer_8.vert */
+ 	glEnableVertexAttribArray(attributeVertex_);
+@@ -642,8 +627,7 @@
+ 	egl_.attachTextureToFBO(*eglImageOut);
+ 	setShaderVariableValues(*eglImageIn, params);
+ 
+-	const Rectangle viewport = softwareIspViewport({ width_, height_ }, outputSize_,
+-						       quadBayer_);
++	const Rectangle viewport = softwareIspViewport({ width_, height_ }, outputSize_, true);
+ 	glViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+ 	glClear(GL_COLOR_BUFFER_BIT);
+ 	glDrawArrays(GL_TRIANGLE_FAN, 0, DEBAYER_OPENGL_COORDS);

@@ -1,0 +1,166 @@
+Exclude saturated and near-black RGB samples from software ISP white balance.
+The OP6 rear cameras often clip green before red/blue; including those samples
+underestimates the required red/blue gains and produces a strong green cast.
+Retain the original all-pixel sums/histogram for AE and black-level estimation.
+Normalize the dedicated AWB accumulator to eight bits before merging jobs,
+subtract the measured black level, and keep the previous gains when fewer
+than 64 safe samples remain. Preserve the existing 4x gain limit.
+
+--- a/include/libcamera/internal/software_isp/swisp_stats.h
++++ b/include/libcamera/internal/software_isp/swisp_stats.h
+@@ -11,6 +11,7 @@
+ #include <stdint.h>
+ 
+ #include "libcamera/internal/vector.h"
++#include "awb_stats.h"
+ 
+ namespace libcamera {
+ 
+@@ -31,6 +32,8 @@
+ 	 * \brief Sums of colour channels of all the sampled pixels
+ 	 */
+ 	RGB<uint64_t> sum_;
++	/** Unclipped, non-dark samples for white balance only. */
++	AwbAccumulator awb;
+ 	/**
+ 	 * \brief Number of bins in the yHistogram
+ 	 */
+--- a/src/libcamera/software_isp/swstats_cpu.cpp
++++ b/src/libcamera/software_isp/swstats_cpu.cpp
+@@ -182,6 +182,7 @@
+ 	uint64_t sumB = 0;
+ 
+ #define SWSTATS_ACCUMULATE_LINE_STATS(div) \
++	stats.awb.add(r / (div), g / (div), b / (div)); \
+ 	sumR += r;                         \
+ 	sumG += g;                         \
+ 	sumB += b;                         \
+@@ -421,6 +422,7 @@
+ 
+ 	for (auto &s : stats_) {
+ 		s.sum_ = RGB<uint64_t>({ 0, 0, 0 });
++		s.awb = {};
+ 		s.yHistogram.fill(0);
+ 	}
+ }
+@@ -438,9 +440,11 @@
+ 
+ 	if (valid) {
+ 		sharedStats_->sum_ = RGB<uint64_t>({ 0, 0, 0 });
++		sharedStats_->awb = {};
+ 		sharedStats_->yHistogram.fill(0);
+ 		for (const auto &s : stats_) {
+ 			sharedStats_->sum_ += s.sum_;
++			sharedStats_->awb.merge(s.awb);
+ 			for (unsigned int j = 0; j < SwIspStats::kYHistogramSize; j++)
+ 				sharedStats_->yHistogram[j] += s.yHistogram[j];
+ 		}
+--- a/src/ipa/simple/algorithms/awb.cpp
++++ b/src/ipa/simple/algorithms/awb.cpp
+@@ -49,7 +49,6 @@
+ 		  const SwIspStats *stats,
+ 		  ControlList &metadata)
+ {
+-	const SwIspStats::Histogram &histogram = stats->yHistogram;
+ 	const uint8_t blackLevel = context.activeState.blc.level;
+ 
+ 	metadata.set(controls::ColourGains, { frameContext.gains.r(),
+@@ -58,31 +57,14 @@
+ 	if (!stats->valid)
+ 		return;
+ 
+-	/*
+-	 * Black level must be subtracted to get the correct AWB ratios, they
+-	 * would be off if they were computed from the whole brightness range
+-	 * rather than from the sensor range.
++	/* Keep the previous white point if no trustworthy samples remain.
++	 * AE and BLC retain the full histogram and channel sums.
+ 	 */
+-	const uint64_t nPixels = std::accumulate(
+-		histogram.begin(), histogram.end(), uint64_t(0));
+-	const uint64_t offset = blackLevel * nPixels;
+-	const uint64_t minValid = 1;
+-	/*
+-	 * Make sure the sums are at least minValid, while preventing unsigned
+-	 * integer underflow.
+-	 */
+-	const RGB<uint64_t> sum = stats->sum_.max(offset + minValid) - offset;
+-
+-	/*
+-	 * Calculate red and blue gains for AWB.
+-	 * Clamp max gain at 4.0, this also avoids 0 division.
+-	 */
++	std::array<float, 3> next;
++	if (!stats->awb.gains(blackLevel, next))
++		return;
+ 	auto &gains = context.activeState.awb.gains;
+-	gains = { {
+-		sum.r() <= sum.g() / 4 ? 4.0f : static_cast<float>(sum.g()) / sum.r(),
+-		1.0,
+-		sum.b() <= sum.g() / 4 ? 4.0f : static_cast<float>(sum.g()) / sum.b(),
+-	} };
++	gains = { { next[0], next[1], next[2] } };
+ 
+ 	RGB<double> rgbGains{ { 1 / gains.r(), 1 / gains.g(), 1 / gains.b() } };
+ 	context.activeState.awb.temperatureK = estimateCCT(rgbGains);
+@@ -90,7 +72,8 @@
+ 
+ 	LOG(IPASoftAwb, Debug)
+ 		<< "gain R/B: " << gains << "; temperature: "
+-		<< context.activeState.awb.temperatureK;
++		<< context.activeState.awb.temperatureK
++		<< "; unclipped samples: " << stats->awb.count;
+ }
+ 
+ REGISTER_IPA_ALGORITHM(Awb, "Awb")
+--- /dev/null
++++ b/include/libcamera/internal/software_isp/awb_stats.h
+@@ -0,0 +1,48 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++#pragma once
++#include <algorithm>
++#include <array>
++#include <cstdint>
++
++namespace libcamera {
++
++/* AWB must not include channel-clipped samples: the clipped green plane
++ * otherwise underestimates both R/G and B/G correction under bright lights.
++ * Values are normalized to the same 8-bit range used by software ISP BLC.
++ */
++struct AwbAccumulator {
++    std::array<uint64_t, 3> sum{};
++    uint64_t count = 0;
++
++    void add(unsigned int r, unsigned int g, unsigned int b)
++    {
++        if (std::min({r, g, b}) <= 24 || std::max({r, g, b}) >= 240)
++            return;
++        sum[0] += r;
++        sum[1] += g;
++        sum[2] += b;
++        ++count;
++    }
++
++    void merge(const AwbAccumulator &other)
++    {
++        for (unsigned int i = 0; i < 3; ++i)
++            sum[i] += other.sum[i];
++        count += other.count;
++    }
++
++    bool gains(unsigned int blackLevel, std::array<float, 3> &result) const
++    {
++        const uint64_t offset = count * blackLevel;
++        if (count < 64 || std::min({sum[0], sum[1], sum[2]}) <= offset)
++            return false;
++        const double r = sum[0] - offset;
++        const double g = sum[1] - offset;
++        const double b = sum[2] - offset;
++        result = {static_cast<float>(std::min(4.0, g / r)), 1.0f,
++                  static_cast<float>(std::min(4.0, g / b))};
++        return true;
++    }
++};
++
++} /* namespace libcamera */

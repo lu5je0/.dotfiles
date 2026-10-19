@@ -1,0 +1,234 @@
+--- a/include/libcamera/internal/software_isp/exposure_stats.h
++++ b/include/libcamera/internal/software_isp/exposure_stats.h
+@@ -0,0 +1,77 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++#pragma once
++
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <cstdint>
++#include <numeric>
++
++namespace libcamera {
++
++/* Full RAW channel histograms, independent of the trimmed AWB samples.
++ * Ignore the brightest 2% (small lamps/specular reflections), then reserve
++ * 15% linear headroom after black subtraction and white balance. This limits
++ * real sensor exposure before clipping; it does not darken rendered pixels.
++ */
++struct ExposureStats {
++    std::array<std::array<uint32_t, 64>, 3> histogram{};
++
++    void add(unsigned int r, unsigned int g, unsigned int b)
++    {
++        ++histogram[0][std::min(r, 255u) / 4];
++        ++histogram[1][std::min(g, 255u) / 4];
++        ++histogram[2][std::min(b, 255u) / 4];
++    }
++
++    void merge(const ExposureStats &other)
++    {
++        for (unsigned int c = 0; c < 3; ++c)
++            for (unsigned int i = 0; i < 64; ++i)
++                histogram[c][i] += other.histogram[c][i];
++    }
++
++    double highlight(unsigned int black, const std::array<float, 3> &gains) const
++    {
++        if (black >= 255)
++            return 0.0;
++        double value = 0.0;
++        for (unsigned int c = 0; c < 3; ++c) {
++            const uint64_t count = std::accumulate(histogram[c].begin(),
++                                                  histogram[c].end(), uint64_t{0});
++            if (count < 64 || !std::isfinite(gains[c]) || gains[c] <= 0)
++                continue;
++            const uint64_t rank = (count * 98 + 99) / 100;
++            uint64_t sum = 0;
++            for (unsigned int i = 0; i < 64; ++i) {
++                sum += histogram[c][i];
++                if (sum < rank)
++                    continue;
++                /* Upper bin edge avoids underestimating clipped samples. */
++                const double linear = std::max(0.0, double(i * 4 + 3) - black);
++                value = std::max(value, linear * gains[c] / (255 - black));
++                break;
++            }
++        }
++        return value;
++    }
++};
++
++inline double exposureCorrection(double msv, double highlight)
++{
++    if (!std::isfinite(msv) || !std::isfinite(highlight) || msv <= 0 || highlight < 0)
++        return 1.0;
++    const double error = 2.5 - msv;
++    double factor = std::abs(error) <= 0.2 ? 1.0 : 1.0 + error * 0.04;
++    constexpr double target = 0.85;
++    /* A small dead band covers the 4-code histogram quantization. Always
++     * allow normal metering to decrease exposure, even inside this band.
++     */
++    if (highlight >= target * 0.98 && highlight <= target * 1.02)
++        factor = std::min(factor, 1.0);
++    else if (highlight > 0)
++        factor = std::min(factor, target / highlight);
++    return std::clamp(factor, 0.85, 1.15);
++}
++
++} /* namespace libcamera */
+--- a/include/libcamera/internal/software_isp/swisp_stats.h
++++ b/include/libcamera/internal/software_isp/swisp_stats.h
+@@ -12,6 +12,7 @@
+ 
+ #include "libcamera/internal/vector.h"
+ #include "awb_stats.h"
++#include "exposure_stats.h"
+ 
+ namespace libcamera {
+ 
+@@ -34,6 +35,8 @@
+ 	RGB<uint64_t> sum_;
+ 	/** Unclipped, non-dark samples for white balance only. */
+ 	AwbAccumulator awb;
++	/** Full channel histograms for white-balance-aware highlight metering. */
++	ExposureStats exposure;
+ 	/**
+ 	 * \brief Number of bins in the yHistogram
+ 	 */
+--- a/src/libcamera/software_isp/swstats_cpu.cpp
++++ b/src/libcamera/software_isp/swstats_cpu.cpp
+@@ -183,6 +183,7 @@
+ 
+ #define SWSTATS_ACCUMULATE_LINE_STATS(div) \
+ 	stats.awb.add(r / (div), g / (div), b / (div)); \
++	stats.exposure.add(r / (div), g / (div), b / (div)); \
+ 	sumR += r;                         \
+ 	sumG += g;                         \
+ 	sumB += b;                         \
+@@ -423,6 +424,7 @@
+ 	for (auto &s : stats_) {
+ 		s.sum_ = RGB<uint64_t>({ 0, 0, 0 });
+ 		s.awb = {};
++		s.exposure = {};
+ 		s.yHistogram.fill(0);
+ 	}
+ }
+@@ -441,10 +443,12 @@
+ 	if (valid) {
+ 		sharedStats_->sum_ = RGB<uint64_t>({ 0, 0, 0 });
+ 		sharedStats_->awb = {};
++		sharedStats_->exposure = {};
+ 		sharedStats_->yHistogram.fill(0);
+ 		for (const auto &s : stats_) {
+ 			sharedStats_->sum_ += s.sum_;
+ 			sharedStats_->awb.merge(s.awb);
++			sharedStats_->exposure.merge(s.exposure);
+ 			for (unsigned int j = 0; j < SwIspStats::kYHistogramSize; j++)
+ 				sharedStats_->yHistogram[j] += s.yHistogram[j];
+ 		}
+--- a/src/ipa/simple/algorithms/agc.h
++++ b/src/ipa/simple/algorithms/agc.h
+@@ -25,7 +25,7 @@
+ 		     ControlList &metadata) override;
+ 
+ private:
+-	void updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV);
++	void updateExposure(IPAContext &context, IPAFrameContext &frameContext, double factor);
+ };
+ 
+ } /* namespace ipa::soft::algorithms */
+--- a/src/ipa/simple/algorithms/agc.cpp
++++ b/src/ipa/simple/algorithms/agc.cpp
+@@ -26,63 +26,17 @@
+  */
+ static constexpr unsigned int kExposureBinsCount = 5;
+ 
+-/*
+- * The exposure is optimal when the mean sample value of the histogram is
+- * in the middle of the range.
+- */
+-static constexpr float kExposureOptimal = kExposureBinsCount / 2.0;
+-
+-/*
+- * This implements the hysteresis for the exposure adjustment.
+- * It is small enough to have the exposure close to the optimal, and is big
+- * enough to prevent the exposure from wobbling around the optimal value.
+- */
+-static constexpr float kExposureSatisfactory = 0.2;
+-
+-/*
+- * Proportional gain for exposure/gain adjustment. Maps the MSV error to a
+- * multiplicative correction factor:
+- *
+- *   factor = 1.0 + kExpProportionalGain * error
+- *
+- * With kExpProportionalGain = 0.04:
+- *   - max error ~2.5 -> factor 1.10 (~10% step, same as before)
+- *   - error 1.0      -> factor 1.04 (~4% step)
+- *   - error 0.3      -> factor 1.012 (~1.2% step)
+- *
+- * This replaces the fixed 10% bang-bang step with a proportional correction
+- * that converges smoothly and avoids overshooting near the target.
+- */
+-static constexpr float kExpProportionalGain = 0.04;
+-
+-/*
+- * Maximum multiplicative step per frame, to bound the correction when the
+- * scene changes dramatically.
+- */
+-static constexpr float kExpMaxStep = 0.15;
+-
+ Agc::Agc()
+ {
+ }
+ 
+-void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV)
++void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, double factor)
+ {
+ 	int32_t &exposure = frameContext.sensor.exposure;
+ 	double &again = frameContext.sensor.gain;
+ 
+-	double error = kExposureOptimal - exposureMSV;
+-
+-	if (std::abs(error) <= kExposureSatisfactory)
++	if (factor == 1.0)
+ 		return;
+-
+-	/*
+-	 * Compute a proportional correction factor. The sign of the error
+-	 * determines the direction: positive error means too dark (increase),
+-	 * negative means too bright (decrease).
+-	 */
+-	float step = std::clamp(static_cast<float>(error) * kExpProportionalGain,
+-				-kExpMaxStep, kExpMaxStep);
+-	float factor = 1.0f + step;
+ 
+ 	if (factor > 1.0f) {
+ 		/* Scene too dark: increase exposure first, then gain. */
+@@ -119,8 +73,7 @@
+ 	context.activeState.agc.again = again;
+ 
+ 	LOG(IPASoftExposure, Debug)
+-		<< "exposureMSV " << exposureMSV
+-		<< " error " << error << " factor " << factor
++		<< "factor " << factor
+ 		<< " exp " << exposure << " again " << again;
+ }
+ 
+@@ -189,7 +142,13 @@
+ 	}
+ 
+ 	float exposureMSV = (denom == 0 ? 0 : static_cast<float>(num) / denom);
+-	updateExposure(context, frameContext, exposureMSV);
++	const auto &gains = context.activeState.awb.gains;
++	const double highlight = stats->exposure.highlight(context.activeState.blc.level,
++							 { gains.r(), gains.g(), gains.b() });
++	const double factor = exposureCorrection(exposureMSV, highlight);
++	LOG(IPASoftExposure, Debug) << "MSV " << exposureMSV
++		<< " highlight " << highlight << " correction " << factor;
++	updateExposure(context, frameContext, factor);
+ }
+ 
+ REGISTER_IPA_ALGORITHM(Agc, "Agc")
