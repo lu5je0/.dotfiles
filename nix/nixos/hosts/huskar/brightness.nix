@@ -16,17 +16,10 @@
   # GNOME 不会立即识别会话启动后新增的背光设备，所以绑定必须早于登录界面。
   # 重建并重启后，检查 /sys/class/backlight/ 是否出现 ddcci*，以及 GNOME 的原生亮度滑块。
   boot.extraModulePackages = [
-    (config.boot.kernelPackages.ddcci-driver.overrideAttrs (oldAttrs: {
-      patches = (oldAttrs.patches or [ ]) ++ [
-        # Linux 7.2 移除了 strncpy；上游 MR !21 改用 sysfs_emit 输出设备属性。
-        # https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux/-/merge_requests/21
-        (pkgs.fetchpatch {
-          name = "ddcci-linux-7.2-sysfs-emit.patch";
-          url = "https://gitlab.com/liquidnya/ddcci-driver-linux/-/commit/9510aa4aebf32678884f55ae251e54012a354ed1.patch";
-          hash = "sha256-s12ers7nPFaHOB+8/S8t3dtdoR6slukkfNPdghgftNs=";
-        })
-      ];
-    }))
+    # 长时间灭屏后，显示器可能 ACK 了恢复请求却仍停在调暗值；驱动读回确认并有限重试。
+    (pkgs.callPackage ./pkgs/ddcci-driver {
+      inherit (config.boot.kernelPackages) ddcci-driver;
+    })
   ];
   boot.kernelModules = [ "ddcci-backlight" ];
 

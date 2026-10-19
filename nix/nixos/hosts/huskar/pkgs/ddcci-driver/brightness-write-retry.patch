@@ -1,0 +1,60 @@
+From: lu5je0 <lu5je0@gmail.com>
+Subject: [PATCH] ddcci-backlight: verify brightness writes after monitor wake
+
+Some monitors acknowledge a brightness restore while waking from DPMS but
+remain at the idle-dim level. Userspace then caches the requested value and
+does not write it again until the slider moves. Read back the value before
+reporting success and retry transient errors or ignored writes. Bound the
+retries so a disconnected monitor cannot stall writes indefinitely.
+
+--- a/ddcci-backlight/ddcci-backlight.c
++++ b/ddcci-backlight/ddcci-backlight.c
+@@ -13,6 +13,7 @@
+ 
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+ #include <linux/backlight.h>
++#include <linux/delay.h>
+ #include <linux/module.h>
+ #include <linux/fb.h>
+ #include <linux/sysfs.h>
+@@ -110,16 +111,35 @@
+ {
+ 	struct ddcci_monitor_drv_data *drv_data = bl_get_data(bl);
+ 	int brightness = bl->props.brightness;
+-	int ret;
++	unsigned short actual;
++	int attempt, ret = -EIO;
+ 
+ 	if (bl->props.power != FB_BLANK_UNBLANK ||
+ 	    bl->props.state & BL_CORE_FBBLANK)
+ 		brightness = 0;
+ 
+-	ret = ddcci_monitor_writectrl(drv_data->device, drv_data->used_vcp,
+-				      brightness);
+-	if (ret > 0)
+-		ret = 0;
++	/* A monitor waking from DPMS can acknowledge a DDC write before its
++	 * brightness control is ready. Transport success alone does not mean
++	 * the value was applied. Verify it, and retry for a bounded period so
++	 * userspace does not cache a successful restore while we are still dim.
++	 */
++	for (attempt = 0; attempt < 20; attempt++) {
++		ret = ddcci_monitor_writectrl(drv_data->device,
++					     drv_data->used_vcp, brightness);
++		if (ret >= 0) {
++			ret = ddcci_monitor_readctrl(drv_data->device,
++						    drv_data->used_vcp,
++						    &actual, NULL);
++			if (!ret && actual == brightness)
++				return 0;
++			if (!ret)
++				ret = -EIO;
++		}
++
++		if (attempt < 19)
++			msleep(100);
++	}
++
+ 	return ret;
+ }
+ 
