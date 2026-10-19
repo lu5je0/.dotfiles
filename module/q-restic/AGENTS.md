@@ -17,7 +17,7 @@
 - `pyproject.toml`：无依赖，只为让 `uv run --project` 能起。
 - 入口链接在根仓库 `bin/common/q-restic`，由 `q-python-install q-restic.py` 生成，**不要手改**
   （它是 runner.sh + uv 的 launcher，改命令名要重新生成）。
-- 系统级定时由 `nix/modules/restic-home.nix` 负责，**它直接调 python3 而不是那个入口**：
+- 系统级定时由 `nix/nixos/modules/restic-home.nix` 负责，**它直接调 python3 而不是那个入口**：
   定时任务不该依赖 uv / `.venv` / flake 求值，而本脚本只用标准库。
 
 ## 关键不变量（都是实测踩出来的，改动前先看）
@@ -119,7 +119,7 @@
   写成 `avail_w - cols_w` 会把数字自己截掉（000.4 G…）。标签位不够 6 列时退回
   把「数据量 新增 标签」全塞进 desc。
 - **restic 必须已在 PATH 里**，不再用 `nix build nixpkgs#restic` 兜底（多次求值 flake、
-  systemd 服务里没网络保证）。由 `nix/modules/restic-home.nix` 提供，且**两个选项都得配**：
+  systemd 服务里没网络保证）。由 `nix/nixos/modules/restic-home.nix` 提供，且**两个选项都得配**：
   `environment.systemPackages` 只影响 `/run/current-system/sw/bin`（手动执行的 PATH），
   `systemd.services.<name>.path` 才是 unit 的 PATH 来源（求值时按 `enableDefaultPath`
   生成 coreutils/findutils/gnugrep/gnused/systemd）。只写 systemPackages 的话手动跑没事、

@@ -90,7 +90,7 @@ GNOME 顶栏只对**按图标名拿到且以 `-symbolic` 结尾**的图标按前
 本仓库直接改默认行为（不再用 AppIndicator 扩展的 custom-icons 覆盖）。mark-shot 不装进系统配置，
 作为根 flake 的 `packages.<system>.mark-shot` 装进用户 profile：`nix profile add path:~/.dotfiles#mark-shot`。
 
-- `nix/pkgs/mark-shot/default.nix`：
+- `nix/nixos/pkgs/mark-shot/default.nix`：
   - `mark-shot-tray-symbolic.patch`：托盘优先发 `mark-shot-symbolic` 且宿主可见性判断扩展到会话的 `XDG_DATA_DIRS`；
     自启动 desktop 写成 `Exec=mark-shot --tray`（上游写 `applicationFilePath()`，Nix 下是 store 路径且绕过 wrapper，升级后会拉起旧版本）
   - SVG 装进包内 `share/icons/hicolor/symbolic/apps/`，应用启动（初始化托盘）时把它链到
@@ -98,8 +98,8 @@ GNOME 顶栏只对**按图标名拿到且以 `-symbolic` 结尾**的图标按前
     放用户目录则应用与宿主都能按名解析；该位置已有普通文件时不覆盖（可手动放文件迭代图标）
   - wrapper 补 gtk3 的 gsettings schema 目录（内有组件要读 `org.gtk.Settings.FileChooser`，缺失时进程启动即 abort）
 - 上游包定义由根 flake 的 `mark-shot` input 提供（`github:jswysnemc/mark-shot`，nixpkgs follows 根），
-  `nix/pkgs/mark-shot/` 目录不再自带 flake，只放补丁、SVG 与 `default.nix`
+  `nix/nixos/pkgs/mark-shot/` 目录不再自带 flake，只放补丁、SVG 与 `default.nix`
 
 升级：仓库根 `nix flake update mark-shot` 后 `nix profile upgrade mark-shot`（profile 元素记录的是 `path:` URL，会取当前工作树）；
 补丁可能要随上游 rebase（上游改了 `application_icon.{h,cpp}` / `windows_tray_controller.cpp` / `autostart_linux.cpp` 会打不上）。
-迭代图标：改 `nix/pkgs/mark-shot/mark-shot-symbolic.svg` 后 upgrade（会重建包，应用下次启动重新链），重启 mark-shot 进程即可，不用重启扩展。
+迭代图标：改 `nix/nixos/pkgs/mark-shot/mark-shot-symbolic.svg` 后 upgrade（会重建包，应用下次启动重新链），重启 mark-shot 进程即可，不用重启扩展。

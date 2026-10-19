@@ -1,13 +1,11 @@
-{ pkgs, pkgsUnstable, ... }:
+{ pkgs, pkgsUnstable }:
 
 {
-  environment.systemPackages = with pkgs; [
+  # 保留 NixOS 原有的系统包 / 用户包归属；Darwin 将两组安装到系统环境。
+  systemPackages = with pkgs; [
     kitty.terminfo
-    gnome-tweaks
     htop
-    (pkgsUnstable.python3.withPackages (pythonPackages: [
-      pythonPackages.requests
-    ]))
+    (pkgsUnstable.python3.withPackages (pythonPackages: [ pythonPackages.requests ]))
     git
     uv
     p7zip
@@ -22,13 +20,11 @@
     cmake
     ncdu
     dnsutils
-    bubblewrap
     socat
     ripgrep
-    net-tools
   ];
 
-  users.users.lu5je0.packages = with pkgs; [
+  userPackages = with pkgs; [
     bun
     nodejs
     openssl
@@ -44,7 +40,6 @@
     btop
     gh
     cargo
-    gcc
     gnumake
     pkgsUnstable.neovim
     pkgsUnstable.pi-coding-agent

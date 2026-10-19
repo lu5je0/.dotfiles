@@ -10,7 +10,7 @@ buildNpmPackage {
   version = "0.1.3";
 
   # 按实际分数缩放密度渲染，避免 GLSLEffect 整数离屏缩放导致文字模糊。
-  # 应用规则直接读取 ~/.dotfiles/nix/pkgs/window-decorations/config.json，保存后热更新。
+  # 应用规则直接读取 ~/.dotfiles/nix/nixos/pkgs/window-decorations/config.json，保存后热更新。
   src = fetchzip {
     url = "https://codeload.github.com/sssxks/smooth-shell-corners/tar.gz/b8e3aaa8240b2e9ccadf25d421eca2384ea503dc";
     extension = "tar.gz";

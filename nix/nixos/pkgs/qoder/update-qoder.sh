@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-REPO_ROOT=$(cd -- "$SCRIPT_DIR/../../.." && pwd)
+REPO_ROOT=$(cd -- "$SCRIPT_DIR/../../../.." && pwd)
 PACKAGE_FILE="$SCRIPT_DIR/default.nix"
 DOWNLOAD_URL="https://download.qoder.com/qoder-app/releases/latest/Qoder-linux-amd64.deb"
 TEMP_DIR=$(mktemp -d)

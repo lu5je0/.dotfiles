@@ -1,10 +1,17 @@
 {
-  description = "lu5je0's NixOS configuration";
+  description = "lu5je0's NixOS and macOS configuration";
 
   # inputs 只能是字面量 attrset（import / let / // 都会被判为 thunk 而报错）
   inputs = {
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
     nixpkgs-unstable.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
+
+    nixpkgs-darwin.url = "https://channels.nixos.org/nixpkgs-26.05-darwin/nixexprs.tar.zst";
+    nixpkgs-darwin-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
 
     # 保留上游 nixpkgs，复用其桌面包依赖与缓存；用 flake.lock 固定版本。
     llm-agents.url = "github:numtide/llm-agents.nix";
@@ -22,7 +29,12 @@
   };
 
   outputs =
-    { nixpkgs, nixpkgs-unstable, ... }@inputs:
+    {
+      nixpkgs,
+      nixpkgs-unstable,
+      nix-darwin,
+      ...
+    }@inputs:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -33,7 +45,7 @@
         inherit system;
         config.allowUnfree = true;
       };
-      localPackages = import ./nix/pkgs {
+      localPackages = import ./nix/nixos/pkgs {
         inherit pkgs inputs;
       };
       mkSystem =
@@ -47,7 +59,17 @@
     in
     {
       packages.${system} = localPackages // {
-        oneplus6-uboot = pkgs.callPackage ./nix/hosts/oneplus6/pkgs/uboot { };
+        oneplus6-uboot = pkgs.callPackage ./nix/nixos/hosts/oneplus6/pkgs/uboot { };
+      };
+
+      packages.aarch64-darwin.darwin-rebuild = nix-darwin.packages.aarch64-darwin.darwin-rebuild;
+
+      darwinConfigurations.mac = nix-darwin.lib.darwinSystem {
+        modules = [ ./nix/darwin ];
+        specialArgs.pkgsUnstable = import inputs.nixpkgs-darwin-unstable {
+          system = "aarch64-darwin";
+          config.allowUnfree = true;
+        };
       };
 
       nixosConfigurations = {
@@ -59,30 +81,30 @@
             config.allowUnfree = true;
           };
           modules = [
-            ./nix/profiles/base.nix
-            ./nix/profiles/phone.nix
-            ./nix/hosts/oneplus6
+            ./nix/nixos/profiles/base.nix
+            ./nix/nixos/profiles/phone.nix
+            ./nix/nixos/hosts/oneplus6
           ];
         };
         nixpve = mkSystem [
-          ./nix/profiles/base.nix
-          ./nix/hosts/nixpve
-          ./nix/modules/nas-mount.nix
+          ./nix/nixos/profiles/base.nix
+          ./nix/nixos/hosts/nixpve
+          ./nix/nixos/modules/nas-mount.nix
         ];
         huskar = mkSystem [
-          ./nix/profiles/base.nix
-          ./nix/hosts/huskar
-          ./nix/modules/gaming.nix
-          ./nix/profiles/desktop.nix
-          ./nix/modules/nas-mount.nix
-          ./nix/modules/restic-home.nix
+          ./nix/nixos/profiles/base.nix
+          ./nix/nixos/hosts/huskar
+          ./nix/nixos/modules/gaming.nix
+          ./nix/nixos/profiles/desktop.nix
+          ./nix/nixos/modules/nas-mount.nix
+          ./nix/nixos/modules/restic-home.nix
         ];
         jerry = mkSystem [
-          ./nix/profiles/base.nix
-          ./nix/hosts/jerry
-          ./nix/modules/gaming.nix
-          ./nix/profiles/desktop.nix
-          ./nix/modules/nas-mount.nix
+          ./nix/nixos/profiles/base.nix
+          ./nix/nixos/hosts/jerry
+          ./nix/nixos/modules/gaming.nix
+          ./nix/nixos/profiles/desktop.nix
+          ./nix/nixos/modules/nas-mount.nix
         ];
       };
     };

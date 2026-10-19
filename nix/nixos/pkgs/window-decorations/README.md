@@ -1,11 +1,11 @@
 # 按应用配置窗口圆角和阴影
 
-扩展直接读取 `~/.dotfiles/nix/pkgs/window-decorations/config.json`，无需配置链接或初始化脚本。
+扩展直接读取 `~/.dotfiles/nix/nixos/pkgs/window-decorations/config.json`，无需配置链接或初始化脚本。
 扩展使用 Smooth Shell Corners 的分数缩放渲染器，
 由本仓库的补丁添加应用规则和文件监听。保留应用自身的标题栏。
 
 本目录集中维护包定义、补丁、规则、辅助命令、测试和 `module.nix` 中的 dconf 设置。
-`nix/modules/gnome.nix` 只负责导入模块、安装并默认启用扩展，dconf 禁止扩展修改全局 GTK CSS。
+`nix/nixos/modules/gnome.nix` 只负责导入模块、安装并默认启用扩展，dconf 禁止扩展修改全局 GTK CSS。
 首次安装：
 
 ```sh

@@ -5,6 +5,7 @@ let
 in
 {
   imports = [
+    ../../common/nix.nix
     ../modules/nh.nix
     ../modules/nix-ld.nix
     ../modules/packages.nix
@@ -17,11 +18,6 @@ in
   };
 
   nix.settings = {
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-
     # nix-community 二进制缓存（第三方，只读公开）。用于 nightly 类包（如
     # neovim-nightly-overlay）避免本地编译。放在系统级而不是信任 flake 的 nixConfig：
     # 替换按路径哈希全局进行，缓存已在全局列表就不依赖 flake 提权。

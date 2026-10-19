@@ -104,7 +104,7 @@ cam --list
 media-ctl --print-topology
 # 先关闭占用摄像头的应用；三个镜头共用 CAMSS 管线。
 __EGL_VENDOR_LIBRARY_DIRS=/run/opengl-driver/share/glvnd/egl_vendor.d \
-  python3 nix/hosts/oneplus6/scripts/camera-smoke-test.py \
+  python3 nix/nixos/hosts/oneplus6/scripts/camera-smoke-test.py \
   --directory "$HOME/.cache/oneplus6-camera-test-$(date +%Y%m%d-%H%M%S)"
 ```
 

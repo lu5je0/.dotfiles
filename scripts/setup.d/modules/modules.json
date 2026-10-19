@@ -20,7 +20,14 @@
       { "exists": "~/.config/mpv/mpv.conf" }
     ]
   },
-  { "name": "mac-nix", "source": "nix-mac/nix.conf", "target": "~/.config/nix/nix.conf", "os": ["mac"] },
+  {
+    "name": "nix-darwin",
+    "action": "switch",
+    "desc": "nix-darwin 配置与共用 CLI 软件（需要 sudo）",
+    "script": "unix/nix-darwin.sh",
+    "checks": [{ "exists": "/run/current-system/darwin-version" }],
+    "os": ["mac"]
+  },
   {
     "name": "pi",
     "action": "install",

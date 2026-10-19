@@ -14,6 +14,6 @@ in
     flake = "${home}/.dotfiles";
   };
 
-  # 自动清理交给 nix/modules/base.nix 的 nix.gc（weekly + 14d）。
+  # 自动清理交给 nix/nixos/profiles/base.nix 的 nix.gc（weekly + 14d）。
   # 若在此启用 programs.nh.clean.enable，模块会警告它与 nix.gc.automatic 冲突。
 }

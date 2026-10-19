@@ -25,7 +25,7 @@ export function startRuleConfig(onChanged: () => void): void {
     });
     service.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/WindowDecorations');
     const path = GLib.build_filenamev([
-        GLib.get_home_dir(), '.dotfiles', 'nix', 'pkgs', 'window-decorations', 'config.json',
+        GLib.get_home_dir(), '.dotfiles', 'nix', 'nixos', 'pkgs', 'window-decorations', 'config.json',
     ]);
     const file = Gio.File.new_for_path(path);
     const reload = () => {

@@ -19,7 +19,7 @@ case "${1:-help}" in
 用法：
   window-decorations apps  列出当前窗口可匹配的应用标识
 
-配置：~/.dotfiles/nix/pkgs/window-decorations/config.json
+配置：~/.dotfiles/nix/nixos/pkgs/window-decorations/config.json
 规则保存后自动生效；安装或升级扩展代码后需注销 GNOME 再登录。
 USAGE
     ;;
