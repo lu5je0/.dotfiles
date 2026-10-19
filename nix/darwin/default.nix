@@ -4,6 +4,7 @@
   imports = [
     ../common/nix.nix
     ./packages.nix
+    ./modules/nh.nix
   ];
 
   nixpkgs.hostPlatform = "aarch64-darwin";
