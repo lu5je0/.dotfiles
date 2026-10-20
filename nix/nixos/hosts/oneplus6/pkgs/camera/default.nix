@@ -29,6 +29,7 @@ stdenv.mkDerivation {
     ./08-be47b48e94e6.patch
     ./09-f856703c060d.patch
     ./imx519-startup.patch
+    ./imx519-fast-mode.patch
   ];
   nativeBuildInputs = kernel.moduleBuildDependencies;
   hardeningDisable = [ "pic" ];
@@ -56,12 +57,6 @@ stdenv.mkDerivation {
     oneplus6-camera-overlay-y := overlay.o overlay-data.o
     MAKE
     runHook postUnpack
-  '';
-  postPatch = ''
-    # The smaller experimental C-PHY modes stall on this OnePlus 6. Keep the
-    # verified 4656x3496 mode (10 fps); the GPU ISP scales it for previews.
-    substituteInPlace imx519.c \
-      --replace-fail '.num_modes = ARRAY_SIZE(imx519_modes_cphy),' '.num_modes = 1,'
   '';
   buildPhase = ''
     runHook preBuild

@@ -1,0 +1,14 @@
+--- a/imx519.c
++++ b/imx519.c
+@@ -909,8 +909,9 @@
+ 		.num_of_regs = ARRAY_SIZE(imx519_cphy_regs),
+ 		.regs = imx519_cphy_regs,
+ 	},
+-	.modes = imx519_modes_cphy,
+-	.num_modes = ARRAY_SIZE(imx519_modes_cphy),
++	/* OP6: expose only the verified 2328x1748 binned readout. */
++	.modes = &imx519_modes_cphy[2],
++	.num_modes = 1,
+ };
+ 
+ /*
