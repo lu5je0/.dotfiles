@@ -22,23 +22,6 @@ sudo nixos-rebuild switch --flake .#huskar
 本地 flake 使用普通目录路径，让 Nix 按 Git 已跟踪文件取源，避免 `path:` 连同 `.git`
 内的 socket 等运行时文件一起复制。已跟踪文件的未提交修改会生效；新增配置文件需先 `git add`。
 
-国内二进制缓存镜像默认关闭。首次应用上面的 nix-darwin 配置后，可单独启动切源 TUI：
-
-```sh
-python3 ~/.dotfiles/nix/switch-source.py
-```
-
-该工具只支持 macOS，其他系统启动时直接拒绝；通过已安装的 fzf 显示选项。
-使用方向键选择，Enter 应用，Esc 取消；当前源会排在第一项。
-可选“官方 / 原有配置”与“交大 SJTUG”。选择交大时优先使用
-`https://mirror.sjtu.edu.cn/nix-channels/store?priority=10`，保留已有缓存作为备用。
-
-选择通过 sudo 保存到本机 `/etc/nix/source.conf` 并重启 Nix daemon，作用于所有用户、
-root 和后台下载的默认二进制缓存。后续重建会保留选择，切源本身不需要重新构建。
-重启失败会恢复原配置。切回官方会移除国内镜像追加项，恢复系统原有缓存列表。
-用户配置、`NIX_CONFIG` 或命令行显式覆盖仍按 Nix 的配置优先级处理。
-它只加速预编译包下载，flake inputs、GitHub 和构建时的源码下载仍使用原地址。
-
 也可以在 Mac 的仓库根目录直接运行：
 
 ```sh
@@ -50,3 +33,27 @@ sudo -H nix --extra-experimental-features 'nix-command flakes' \
 使用 Determinate Nix 的机器需要先处理其 Nix 管理方式，不能直接沿用这里的 `nix.settings`。
 
 Linux 与 Mac 的 nixpkgs 输入分别跟随各自渠道，共用一份锁文件；添加 Mac 支持不会更新现有 Linux 输入。
+
+## 全局切源
+
+国内二进制缓存镜像默认关闭。首次应用本仓库的 NixOS / nix-darwin 配置后，可单独启动切源 TUI：
+
+```sh
+python3 ~/.dotfiles/nix/switch-source.py
+```
+
+支持 macOS 与使用 systemd 的 Linux，多用户 Nix daemon 需已安装；其他环境启动时直接拒绝。
+普通 Linux 的多用户 Nix 安装可手动在系统 `nix.conf` 末尾接入 `!include /etc/nix/source.conf`。
+通过已安装的 fzf 显示选项，使用方向键选择、Enter 应用、Esc 取消；当前源会排在第一项。
+可选“官方 / 原有配置”与“交大 SJTUG”。选择交大时优先使用
+`https://mirror.sjtu.edu.cn/nix-channels/store?priority=10`，保留已有缓存作为备用。
+
+选择通过 sudo 保存到本机 `/etc/nix/source.conf`。Mac 通过 launchd 重启 Nix daemon，
+Linux 通过 `systemctl restart nix-daemon.service` 重启，作用于所有用户、root 和后台下载的默认二进制缓存。
+切源本身不需要重新构建；重启失败会恢复原配置。
+
+本机的 `source.conf` 不由 NixOS / nix-darwin 生成，rebuild 只重新生成带
+`!include /etc/nix/source.conf` 的 `nix.conf`，因此会保留选择，各机器互不影响。
+切回官方会移除国内镜像追加项，恢复系统原有缓存列表。
+用户配置、`NIX_CONFIG` 或命令行显式覆盖仍按 Nix 的配置优先级处理。
+它只加速预编译包下载，flake inputs、GitHub 和构建时的源码下载仍使用原地址。

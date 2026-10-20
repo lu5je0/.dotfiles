@@ -28,6 +28,8 @@ class SwitchSourceTest(unittest.TestCase):
         self.selection = self.root / "source.conf"
         self.daemon = self.root / "nix-daemon.plist"
         self.daemon.touch()
+        self.systemd = self.root / "systemd"
+        self.systemd.mkdir()
         self.config.write_text(
             "substituters = https://cache.nixos.org/ https://example.invalid/cache\n"
             f"!include {self.selection}\n"
@@ -37,13 +39,17 @@ class SwitchSourceTest(unittest.TestCase):
             NIX_CONFIG=self.config,
             SOURCE_CONFIG=self.selection,
             DAEMON_PLIST=self.daemon,
+            SYSTEMD_RUNTIME=self.systemd,
         )
         paths.start()
         self.addCleanup(paths.stop)
+        platform = patch.object(source.sys, "platform", "darwin")
+        platform.start()
+        self.addCleanup(platform.stop)
 
-    def test_non_mac_stops_before_reading_config_or_running_commands(self):
+    def test_unsupported_platform_stops_before_reading_config_or_running_commands(self):
         with (
-            patch.object(source.sys, "platform", "linux"),
+            patch.object(source.sys, "platform", "freebsd14"),
             patch.object(source, "ensure_ready") as ready,
             patch.object(source.subprocess, "run") as run,
             contextlib.redirect_stderr(io.StringIO()) as errors,
@@ -52,6 +58,40 @@ class SwitchSourceTest(unittest.TestCase):
         ready.assert_not_called()
         run.assert_not_called()
         self.assertIn("仅支持 macOS", errors.getvalue())
+
+    def test_linux_without_systemd_stops_before_reading_config(self):
+        with (
+            patch.object(source.sys, "platform", "linux"),
+            patch.object(source, "SYSTEMD_RUNTIME", self.root / "missing"),
+            patch.object(source, "ensure_ready") as ready,
+            contextlib.redirect_stderr(io.StringIO()) as errors,
+        ):
+            self.assertEqual(source.main([]), 1)
+        ready.assert_not_called()
+        self.assertIn("systemd", errors.getvalue())
+
+    def test_linux_checks_and_restarts_systemd_service(self):
+        with (
+            patch.object(source.sys, "platform", "linux"),
+            patch.object(source.shutil, "which", return_value="/usr/bin/systemctl"),
+            patch.object(source.subprocess, "run", return_value=SimpleNamespace(returncode=0, stdout="loaded\n")) as run,
+        ):
+            source.check_platform()
+            source.apply_source("sjtug")
+        self.assertEqual(run.call_args_list[0].args[0][-1], "nix-daemon.service")
+        self.assertEqual(run.call_args_list[0].args[0][1], "show")
+        self.assertEqual(run.call_args_list[1].args[0], ["/usr/bin/systemctl", "restart", "nix-daemon.service"])
+        self.assertEqual(source.read_source()[0], "sjtug")
+
+    def test_linux_missing_daemon_does_not_write_config(self):
+        with (
+            patch.object(source.sys, "platform", "linux"),
+            patch.object(source.shutil, "which", return_value="/usr/bin/systemctl"),
+            patch.object(source.subprocess, "run", return_value=SimpleNamespace(returncode=0, stdout="not-found\n")),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "多用户安装"):
+                source.apply_source("sjtug")
+        self.assertFalse(self.selection.exists())
 
     def test_missing_selection_defaults_to_official(self):
         self.assertEqual(source.read_source(), ("official", None))

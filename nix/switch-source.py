@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""在 macOS 上通过独立 TUI 切换整机 Nix 二进制缓存。"""
+"""在 macOS / systemd Linux 上通过独立 TUI 切换整机 Nix 二进制缓存。"""
 
 import argparse
 import os
@@ -12,6 +12,7 @@ import tempfile
 NIX_CONFIG = Path("/etc/nix/nix.conf")
 SOURCE_CONFIG = Path("/etc/nix/source.conf")
 DAEMON_PLIST = Path("/Library/LaunchDaemons/org.nixos.nix-daemon.plist")
+SYSTEMD_RUNTIME = Path("/run/systemd/system")
 MIRROR = "https://mirror.sjtu.edu.cn/nix-channels/store?priority=10"
 SOURCES = {
     "official": ("官方 / 原有配置", "关闭国内镜像，使用系统配置中的缓存源"),
@@ -38,15 +39,34 @@ def read_source():
     raise RuntimeError(f"{SOURCE_CONFIG} 已有非本工具管理的内容，请先手动检查")
 
 
+def check_platform():
+    if sys.platform == "darwin":
+        return
+    if sys.platform == "linux":
+        if not SYSTEMD_RUNTIME.is_dir() or not shutil.which("systemctl"):
+            raise RuntimeError("Linux 需要运行 systemd 并提供 systemctl，当前环境暂不支持")
+        return
+    raise RuntimeError("Nix 全局切源 TUI 仅支持 macOS 和使用 systemd 的 Linux")
+
+
 def ensure_ready():
     include = f"!include {SOURCE_CONFIG}"
     if not NIX_CONFIG.is_file() or include not in NIX_CONFIG.read_text().splitlines():
         raise RuntimeError(
-            "请先运行 ./setup.py 并应用一次 nix-darwin，将全局切源配置接入系统；"
+            f"请先在系统 Nix 配置接入 !include {SOURCE_CONFIG}；"
+            "NixOS / nix-darwin 应用本仓库配置即可（Mac 可运行 ./setup.py）。"
             "以后切源无需重新构建"
         )
-    if not DAEMON_PLIST.is_file():
-        raise RuntimeError("未找到 nix-darwin 管理的 Nix daemon，请先完成 nix-darwin 安装")
+    if sys.platform == "darwin":
+        if not DAEMON_PLIST.is_file():
+            raise RuntimeError("未找到 nix-darwin 管理的 Nix daemon，请先完成 nix-darwin 安装")
+    else:
+        result = subprocess.run(
+            [shutil.which("systemctl"), "show", "--property=LoadState", "--value", "nix-daemon.service"],
+            capture_output=True, text=True,
+        )
+        if result.returncode or result.stdout.strip() != "loaded":
+            raise RuntimeError("未找到可用的 nix-daemon.service，请先完成 Nix 多用户安装")
 
 
 def write_config(content):
@@ -63,9 +83,11 @@ def write_config(content):
 
 
 def restart_daemon():
-    subprocess.run(
-        ["/bin/launchctl", "kickstart", "-k", "system/org.nixos.nix-daemon"], check=True
-    )
+    if sys.platform == "darwin":
+        command = ["/bin/launchctl", "kickstart", "-k", "system/org.nixos.nix-daemon"]
+    else:
+        command = [shutil.which("systemctl"), "restart", "nix-daemon.service"]
+    subprocess.run(command, check=True)
 
 
 def apply_source(source):
@@ -91,7 +113,7 @@ def pick_source(current):
     if not fzf and Path("/run/current-system/sw/bin/fzf").is_file():
         fzf = "/run/current-system/sw/bin/fzf"
     if not fzf:
-        raise RuntimeError("未找到 fzf，请先通过 nix-darwin 安装共用 CLI 软件")
+        raise RuntimeError("未找到 fzf，请先安装共用 CLI 软件")
     ordered = [current] + [source for source in SOURCES if source != current]
     options = "".join(
         f"{source}\t{SOURCES[source][0]}  ·  {SOURCES[source][1]}\n" for source in ordered
@@ -126,8 +148,10 @@ def pick_source(current):
 
 
 def main(argv=None):
-    if sys.platform != "darwin":
-        print("Nix 全局切源 TUI 仅支持 macOS", file=sys.stderr)
+    try:
+        check_platform()
+    except RuntimeError as exc:
+        print(exc, file=sys.stderr)
         return 1
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", choices=SOURCES, help=argparse.SUPPRESS)
