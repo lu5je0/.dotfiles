@@ -19,6 +19,7 @@
     file
     cmake
     ncdu
+    eza
     dnsutils
     socat
     ripgrep
