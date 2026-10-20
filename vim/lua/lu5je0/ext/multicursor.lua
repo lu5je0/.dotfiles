@@ -13,27 +13,38 @@
 --
 -- 其余原生键位保留默认：
 --   Q        在当前位置切换一个 cursor（注意：原生 Q 会关闭 follow-mode）
---   [count]Q 上次搜索的每个匹配处放 cursor（1Q = 全部）
 --   gQ       恢复上次清除的 cursors
 --   ]C / [C  跳下 / 上一个 cursor
 --   g CTRL-A 每个 cursor 插入递增数字
 --
--- 只在支持该能力的版本上生效（vim.api.nvim_mcursor 存在）。0.12 上彻底 no-op，
+-- 通过原生模块和 follow 选项探测支持；新版 nightly 已移除 nvim_mcursor API。
+-- 0.12 上彻底 no-op，
 -- 由 vim-visual-multi 负责同样的键位（见 plugins.lua 的 enabled 门控）。
 
 local M = {}
+local cursor_guard = require('lu5je0.core.multicursor-guard')
+M.supported = cursor_guard.supported
 
 -- 不支持时（0.12）也导出 setup，让 ext-config 可以无条件调用。
 M.setup = function() end
 
-if type(vim.api.nvim_mcursor) ~= 'function' then
+if not M.supported then
   return M
 end
 
 local mc = require('vim._core.mcursor')
-
 local ns = vim.api.nvim_create_namespace('nvim.multicursor')
 local session_patterns = {} ---@type table<integer, string>
+
+--- @param pos integer[] {row_1based, col_0based}
+local function add_cursor(pos)
+  if type(vim.api.nvim_mcursor) == 'function' then
+    -- 兼容仍提供该接口的早期 0.13 nightly。
+    vim.api.nvim_mcursor(0, pos)
+  else
+    vim.api.nvim_buf_set_extmark(0, ns, pos[1] - 1, pos[2], {})
+  end
+end
 
 local function clear_session_state(buf)
   session_patterns[buf] = nil
@@ -47,7 +58,9 @@ end
 --- 清除当前 buffer 的所有 multicursor（等价原生 CTRL-L 的效果部分）。
 --- 清空 namespace 会同时结束会话并关闭 follow-mode。
 local function clear()
-  clear_session_state(vim.api.nvim_get_current_buf())
+  local buf = vim.api.nvim_get_current_buf()
+  cursor_guard.cancel(buf)
+  clear_session_state(buf)
   vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
 end
 
@@ -92,14 +105,14 @@ end
 local function place_cursor(pos, orig)
   pause_follow()
   orig = orig or vim.api.nvim_win_get_cursor(0)
-  vim.api.nvim_mcursor(0, { orig[1], orig[2] })
+  add_cursor(orig)
   vim.api.nvim_win_set_cursor(0, { pos[1], pos[2] - 1 })
 end
 
 --- visual 选区的起始位置（左上角）。
 --- 注意：退出 visual 后窗口光标停在「活跃端」而不是选区开头，所以必须显式算起始位置，
 --- 否则留下来的 cursor 会落在词中间，和 primary 不在同一列。
---- 返回 {row_1based, col_0based}（与 nvim_mcursor / nvim_win_get_cursor 一致）。
+--- 返回 {row_1based, col_0based}（与 nvim_win_get_cursor 一致）。
 --- @return integer[]
 local function visual_start()
   local a = vim.fn.getpos('v')
@@ -118,7 +131,7 @@ end
 ---
 --- 为什么必须做：<C-n>/<\A> 内部用 `vim.fn.searchpos()`，它**不**更新 `@/`。
 --- 而 `<C-x>`（Skip）需要靠 `@/` 找下一个匹配；不写的话，`@/` 是空或是十年前的旧值，
---- `<C-x>` 就会报 "no more matches"（用户报告过）。写进去后 `<C-n>` 之后直接 `1Q` 也能全选。
+--- `<C-x>` 就会报 "no more matches"（用户报告过）。写进去后原生搜索命令也能复用。
 ---
 --- 注意：不主动开 `hlsearch`（只写寄存器），避免把高亮强加给不想看到的人；
 --- 要清高亮用 `<C-l>`（它本来就带 nohlsearch）。
@@ -202,6 +215,53 @@ local function ctrl_n()
     place_cursor(pos, orig)
     vim.cmd('normal! 1q=')
     session_patterns[buf] = pat
+    busy = false
+  end)
+end
+
+--- \A：在所有匹配处添加 cursor，保留距离原位置最近的一处作为 primary。
+local function select_all()
+  if busy then
+    return
+  end
+  local visual = vim.fn.mode():find('[vV\22]') ~= nil
+  local buf = vim.api.nvim_get_current_buf()
+  local pat = mc.active() and session_patterns[buf] or (visual and (visual_pattern() or word_pattern()) or word_pattern())
+  if not pat then
+    return
+  end
+  remember_pattern(pat)
+  local orig = visual and visual_start() or vim.api.nvim_win_get_cursor(0)
+
+  busy = true
+  vim.schedule(function()
+    if visual then
+      vim.cmd('normal! ' .. vim.keycode('<Esc>'))
+    end
+    local positions = find_all(pat)
+    if #positions == 0 then
+      busy = false
+      return
+    end
+    local primary, distance = 1, math.huge
+    for i, pos in ipairs(positions) do
+      local d = math.abs(pos[1] - orig[1]) * 10000 + math.abs(pos[2] - orig[2])
+      if d < distance then
+        primary, distance = i, d
+      end
+    end
+    pause_follow()
+    clear()
+    vim.api.nvim_win_set_cursor(0, positions[primary])
+    for i, pos in ipairs(positions) do
+      if i ~= primary then
+        add_cursor(pos)
+      end
+    end
+    if #positions > 1 then
+      vim.cmd('normal! 1q=')
+      session_patterns[buf] = pat
+    end
     busy = false
   end)
 end
@@ -344,7 +404,7 @@ local function alt_n()
       local text = vim.api.nvim_buf_get_lines(0, next_line - 1, next_line, true)[1] or ''
       col = #text + 1
     end
-    vim.api.nvim_mcursor(0, { cur[1], cur[2] })
+    add_cursor(cur)
     vim.api.nvim_win_set_cursor(0, { next_line, col - 1 })
     vim.cmd('normal! 1q=')
     busy = false
@@ -566,6 +626,11 @@ local function apply_hl()
 end
 
 function M.setup()
+  cursor_guard.set_session_hooks(function(buf)
+    return session_patterns[buf]
+  end, function(buf, pattern)
+    session_patterns[buf] = pattern
+  end)
   apply_hl()
   local group = vim.api.nvim_create_augroup('lu5je0_multicursor', { clear = true })
   vim.api.nvim_create_autocmd('ColorScheme', { group = group, callback = apply_hl })
@@ -602,6 +667,7 @@ function M.setup()
 
   vim.keymap.set({ 'n', 'x' }, '<C-n>', ctrl_n, { silent = true, desc = 'multicursor: add next match' })
   vim.keymap.set('n', '<M-n>', alt_n, { silent = true, desc = 'multicursor: add cursor below' })
+  vim.keymap.set({ 'n', 'x' }, '\\A', select_all, { silent = true, desc = 'multicursor: add all matches' })
 end
 
 return M

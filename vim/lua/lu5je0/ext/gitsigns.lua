@@ -54,9 +54,19 @@ function M.setup()
       map('n', '<leader>gA', gs.stage_buffer)
       map('n', '<leader>gR', gs.reset_buffer_index)
 
-      map('n', '<leader>gu', gs.reset_hunk)
-      map('n', '<leader>gC', gs.reset_buffer)
-      map('v', '<leader>gu', function() gs.reset_hunk { vim.fn.line("."), vim.fn.line("v") } end)
+      local function reset_hunk(range)
+        require('lu5je0.core.multicursor-guard').preserve(function(done)
+          gs.reset_hunk(range, nil, done)
+        end)
+      end
+      map('n', '<leader>gu', function() reset_hunk() end)
+      map('n', '<leader>gC', function()
+        require('lu5je0.core.multicursor-guard').preserve(function(done)
+          gs.reset_buffer()
+          done()
+        end)
+      end)
+      map('v', '<leader>gu', function() reset_hunk { vim.fn.line("."), vim.fn.line("v") } end)
 
       map('n', '<leader>gg', gs.preview_hunk)
       

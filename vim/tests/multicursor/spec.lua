@@ -1,7 +1,8 @@
 -- multicursor 原生按键适配测试（仅 Neovim 0.13+）。
 -- Usage: cd vim && nvim --headless -u NONE -l tests/multicursor/spec.lua
 --
--- 只在本 nvim 支持 vim.api.nvim_mcursor 时真正执行，否则 SKIP（退出码 0）。
+-- 通过原生模块和 follow 选项探测能力；新版 nightly 不再提供 nvim_mcursor。
+-- 不支持原生 multicursor 时 SKIP（退出码 0）。
 -- 所以要在 0.13+ 下跑整套测试才能覆盖这里：NVIM_TEST_BIN 不能把 0.12 的外层“升级”成可跑，
 -- 因为 0.12 的 rpcrequest 对着 0.13 子进程会挂死（native RPC 不兼容）。
 -- NVIM_TEST_BIN 仅在「外层已是 0.13、想指定另一个 0.13 二进制」时有用。
@@ -18,15 +19,17 @@ local function nvim_bin()
   return vim.v.progpath
 end
 
-if type(vim.api.nvim_mcursor) ~= 'function' then
-  print('SKIP: native multicursor requires Neovim 0.13+ (vim.api.nvim_mcursor missing)')
+local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
+local rtp = repo_root .. '/vim'
+vim.opt.rtp:append(rtp)
+
+if not require('lu5je0.ext.multicursor').supported then
+  assert(vim.fn.exists('+follow') == 0, 'native multicursor was incorrectly disabled')
+  print('SKIP: native multicursor is unavailable in this Neovim build')
   os.exit(0)
 end
 
-local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
-local rtp = repo_root .. '/vim'
-
-local chan = vim.fn.jobstart({ nvim_bin(), '--embed', '--headless', '--cmd', 'set rtp+=' .. rtp }, { rpc = true })
+local chan = vim.fn.jobstart({ nvim_bin(), '--embed', '--headless', '-u', 'NONE', '-i', 'NONE', '-n', '--cmd', 'set rtp+=' .. rtp }, { rpc = true })
 if chan <= 0 then
   print('FAIL: could not start embedded nvim')
   os.exit(1)
@@ -53,7 +56,7 @@ local function esc()
 end
 
 local function setup()
-  lua([[require('lu5je0.ext.multicursor').setup()]])
+  lua([[vim.g.mapleader = ','; require('lu5je0.ext.multicursor').setup()]])
 end
 
 --- Resets mode, buffer contents, cursors, and follow-mode.

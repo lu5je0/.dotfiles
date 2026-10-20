@@ -162,18 +162,24 @@ function M.reset_hunk()
   local old_lines = get_old_lines(reference_lines(s), hunk)
   local start = hunk.new_start - 1
   local end_line = start + hunk.new_count
-  if hunk.type == 'delete' then
-    vim.api.nvim_buf_set_lines(bufnr, hunk.new_start, hunk.new_start, false, old_lines)
-  else
-    vim.api.nvim_buf_set_lines(bufnr, start, end_line, false, old_lines)
-  end
+  require('lu5je0.core.multicursor-guard').preserve(function(done)
+    if hunk.type == 'delete' then
+      vim.api.nvim_buf_set_lines(bufnr, hunk.new_start, hunk.new_start, false, old_lines)
+    else
+      vim.api.nvim_buf_set_lines(bufnr, start, end_line, false, old_lines)
+    end
+    done()
+  end)
 end
 
 function M.reset_buffer()
   local bufnr = vim.api.nvim_get_current_buf()
   local s = get_state(bufnr)
   if not s then return end
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.deepcopy(reference_lines(s)))
+  require('lu5je0.core.multicursor-guard').preserve(function(done)
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.deepcopy(reference_lines(s)))
+    done()
+  end)
 end
 
 function M.stage_hunk()

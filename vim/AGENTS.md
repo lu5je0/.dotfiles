@@ -33,6 +33,7 @@
 - `lua/lu5je0/ext/`: 第三方插件配置适配层。通常一个插件一个文件。
 - `lua/lu5je0/core/`: 可复用核心能力，供多个扩展或功能模块共享。
   - `core/buffer-modified.lua`: 'modified' 变化的兼容注册层，见下方「临时兼容」一节。
+  - `core/multicursor-guard.lua`: 原生多光标能力探测与批量编辑保护，由 gitsigns / DiffBase 共用；不加载按键适配层。
 - `lua/lu5je0/misc/`: 独立功能模块与自定义工具，例如 IME、clipboard、timestamp、translator、json-helper。
 - `lua/lu5je0/lang/`: 轻量通用工具函数。
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
@@ -46,8 +47,10 @@
 Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需要 `mg979/vim-visual-multi`。
 `lua/lu5je0/ext/multicursor.lua` 保留 Ctrl-N 风格的加匹配入口，但 cursor 使用原生 normal-mode 语义。
 
-- 能力探测用 `type(vim.api.nvim_mcursor) == 'function'`，**不要**用 `has('nvim-0.13')`：
-  该 API 是 0.13 才加的 `FUNC_API_SINCE(15)`，探测 API 比探测版本号更准，也能覆盖 nightly。
+- 能力探测统一读取 `require('lu5je0.ext.multicursor').supported`（转发共享保护模块的结果）：检查原生
+  `vim._core.mcursor` 模块与 `follow` 选项，**不要**只判断 `nvim_mcursor` 或版本号。
+  新版 0.13 nightly 已移除 `nvim_mcursor`；添加 cursor 改用 `nvim.multicursor` namespace
+  中的 extmark，仍提供旧 API 的早期 nightly 则继续走旧接口。
 - 0.12 上模块整体 no-op（但仍导出空的 `setup()`，因为 `ext-config.lua` 会无条件调用）。
   同一套 `<C-n>`/`<M-n>` 由 `vim-visual-multi` 提供，见下。
 - `<C-n>`：在当前词和下一个整词匹配处放 cursor，连按逐个追加，并保持首次 pattern；
@@ -64,8 +67,16 @@ Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需
   不要在 multicursor 里依赖隐式 `clipboard=unnamed/unnamedplus`，也不要把 `p`/`P` 包成
   Lua 函数映射（例如 lazy proxy）：实测两者都只有 primary 生效，其余 cursor 会插入错位内容。
   显式 `"*`/`"+` 是全局寄存器，字符串映射会被原样重放，每个 cursor 都粘同一份内容。
-- `<C-n>`/`\A` 必须把 pattern 写入 `@/`，供 `<C-x>` 和原生 `1Q` 使用；同时把首次 pattern
+- `<C-n>`/`\A` 必须把 pattern 写入 `@/`，供 `<C-x>` 和原生搜索命令使用；同时把首次 pattern
   保存在 `session_patterns`，否则 visual 文本 pattern 或后续光标下单词可能改变匹配语义。
+- Git reset 的调用与异步回调留在 `ext/gitsigns.lua`；DiffBase 的同步编辑留在各自 actions 中。
+  两者直接调用 `core/multicursor-guard.lua` 的 `preserve(action)`，不依赖多光标按键模块。
+  reset 仍只执行一次，`gu` 仍只恢复 primary 所在的改动块，不变成逐个 cursor 的批量 reset。
+- 共享保护模块在 typed CmdAtom 外执行 `action(done)`；同步或异步编辑结束时必须调用
+  `done(err)`。它用 `on_lines` 修正行数变化，完成后还原 cursor 和 follow 状态；实际被删除的
+  位置会夹到有效行列并去重。
+- `ext/multicursor.lua` 通过 `set_session_hooks(capture, restore)` 提供私有首次 pattern 的保存与恢复，
+  通过 `cancel(buf)` 通知主动退出。共享模块不读取该模块内部状态；手动 `<C-l>` 后不得重新创建光标。
 
 ### `<C-l>` 是 buffer-local 且懒挂载的
 
@@ -92,7 +103,7 @@ Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需
 
 ### 与 vim-visual-multi 的切换
 
-`plugins.lua` 里给 `mg979/vim-visual-multi` 加了 `enabled = function() return type(vim.api.nvim_mcursor) ~= 'function' end`，
+`plugins.lua` 里给 `mg979/vim-visual-multi` 加了 `enabled = function() return not require('lu5je0.ext.multicursor').supported end`，
 即 0.12 用插件、0.13 用原生，避免两套键位/语义打架。
 **删除条件**：仓库不再支持 0.12（或 `nvim-cmp` 等旧插件一并移除）时，可删掉 vim-visual-multi、
 `ext/vim-visual-multi.lua` 及其 `keys` 声明；`ext/multicursor.lua` 的能力探测也可简化掉。
@@ -198,11 +209,17 @@ ext/tabline/
   - `cd vim && ./tests/run-tests.sh`
 - `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/git-selection/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`、`tests/whichkey/spec.lua`。
 - `tests/git-selection/spec.lua` 用临时 Git 仓库和 `--embed` 子 Neovim 的真实 `nvim_input()` 按键验证两个 Git 日志入口的懒加载、Space 勾选、Visual Enter、连续/离散提交的净变化文件树、合并冲突与 single / dual 文件 diff，包含一加 6 四提交抵消 `gnome.nix` 变化的真实回归；合并使用临时 bare repo/index，子进程禁用用户配置与 swap/shada，避免污染用户状态。
-- `tests/multicursor/spec.lua` 只在 0.13+（当前 nvim 的 `vim.api.nvim_mcursor` 存在）真正执行，老版本输出 `SKIP` 并退出 0。
-  它起一个 `--embed` 子 Neovim、用 `nvim_input()` 发真实按键：multicursor 的 CmdAtom / follow-mode
+- `tests/multicursor/spec.lua` 通过适配层的 `supported` 探测原生能力，支持移除旧 API 的新版 nightly；
+  老版本输出 `SKIP` 并退出 0。若有 `follow` 选项却被误判为不支持，必须报错，不能静默跳过。
+  它起一个 `--embed -u NONE -i NONE -n` 子 Neovim，隔离用户配置与状态，用 `nvim_input()` 发真实按键：multicursor 的 CmdAtom / follow-mode
   只在 typed 路径上被捕获，`vim.api.nvim_feedkeys(..., 'x')` 在脚本里行为不可靠。
   要在 0.12 下验证这部分，得用 0.13+ 的 nvim 跑整套测试；`NVIM_TEST_BIN` 只用于在外层已是 0.13 时指定另一个 0.13 二进制
   （0.12 的 `rpcrequest` 对着 0.13 子进程会挂死，不能用来“升级”外层）。
+- `tests/multicursor/git_reset_spec.lua` 用临时 Git 仓库、已安装的真实 gitsigns 和独立 DiffBase buffer，
+  验证真实按键修改后 `gu` / `gC` 保留光标、只恢复当前 hunk、后续编辑与 undo/redo。
+  子进程禁用用户配置与 swap/shada；缺少 gitsigns 时仅跳过对应后端，DiffBase 仍执行。
+  异步退出用例先等待操作开始信号，再发送 `<C-l>`，避免把“开始前取消”混入“操作中退出”。
+  `tests/run-tests.sh` 在基础 multicursor 用例之后运行该入口。
 - `tests/winbar/drag_spec.lua` 会 attach UI 发真实鼠标事件（winbar tab 拖动），坑点见 `lua/lu5je0/ext/winbar/agents.md` 的「测试」一节。
 - `tests/whichkey/spec.lua` 校验 which-key 的 `<leader>` 触发器：**child 跑在 pty 里（非 headless）**，
   用 `--listen <sock>` 起真实 TUI（UIEnter 正常触发）、RPC 走 socket、用 `nvim_input()` 发真实按键。
@@ -258,11 +275,11 @@ vim.api.nvim_create_autocmd('OptionSet', {
 0.13 起 `Q` 变成「加 multicursor」，而仓库里 `keymaps.lua` 原本把 `Q` 映射成回放录制寄存器。
 该行现已注释掉（注释后在两个版本上都是对的：0.12 的 `Q` 默认本来就回放寄存器）。
 
-切换条件统一用能力探测 `type(vim.api.nvim_mcursor) == 'function'`（两个位置）：
+切换条件统一使用适配层的 `supported`（原生模块与 `follow` 选项），不依赖已移除的 `nvim_mcursor`：
 
 | 位置 | 0.12 | 0.13+ |
 |------|------|-------|
-| `ext-config.lua` 的 `multicursor` 条目 | `ext/multicursor.lua` 内部 no-op | 注册 `<C-n>`/`<M-n>`/`<Esc>` |
+| `ext-config.lua` 的 `multicursor` 条目 | `ext/multicursor.lua` 内部 no-op | 注册 `<C-n>`/`<M-n>`/`\A`，会话中挂载 `<C-l>` |
 | `plugins.lua` 的 `mg979/vim-visual-multi` | `enabled` → 加载插件 | `enabled` → 禁用 |
 
 细节见本文件「Multicursor (`ext/multicursor.lua`)」一节。测试：`tests/multicursor/spec.lua`（老版本自动 SKIP）。

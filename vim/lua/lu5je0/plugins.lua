@@ -292,7 +292,7 @@ local plugins = {
     'mg979/vim-visual-multi',
     -- Neovim 0.13+ 用原生 multicursor（见 ext/multicursor.lua），插件的键位与语义都会打架。
     enabled = function()
-      return type(vim.api.nvim_mcursor) ~= 'function'
+      return not require('lu5je0.ext.multicursor').supported
     end,
     init = function()
       vim.g.VM_maps = {
