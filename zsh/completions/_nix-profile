@@ -1,0 +1,40 @@
+#compdef nix
+
+autoload -Uz _nix
+
+if [[ ${words[2]} == profile && ${words[3]} == (add|upgrade|remove) && CURRENT -ge 4 && $PREFIX != -* ]]; then
+  local curcontext="$curcontext" context state state_descr line
+  local -A opt_args
+
+  # Let Nix handle option values; only extend positional package completion.
+  _arguments -C \
+    '1:command:' \
+    '2:profile command:' \
+    '--profile=:profile:->native' \
+    '--regex=:pattern:->native' \
+    '--priority=:priority:->native' \
+    '--all[match all packages]' \
+    '*:package:->package'
+
+  if [[ $state == package ]]; then
+    case ${words[3]} in
+      upgrade|remove)
+        local -a profile_args packages
+        if [[ -n ${opt_args[--profile]} ]]; then
+          profile_args=(--profile "${(Q)opt_args[--profile]}")
+        fi
+        packages=(${(f)"$(command nix profile list "${profile_args[@]}" --json 2>/dev/null |
+          command jq -r '.elements | keys[]' 2>/dev/null)"})
+        compadd -a packages
+        return
+        ;;
+      add)
+        if [[ $PREFIX$SUFFIX != *\#* && $PREFIX != [./~]* ]]; then
+          compadd -Q -S '' -- 'nixpkgs#' 'nixpkgs-unstable#' && return
+        fi
+        ;;
+    esac
+  fi
+fi
+
+_nix "$@"

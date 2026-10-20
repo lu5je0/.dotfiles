@@ -15,3 +15,7 @@ unset _zcompdump_stale
 
 # Replay compdefs captured by zinit before compinit, mainly from delayed plugins.
 zinit cdreplay -q
+
+# Override Nix's profile completion even when compinit reuses an existing dump.
+autoload -Uz _nix-profile
+compdef _nix-profile nix
