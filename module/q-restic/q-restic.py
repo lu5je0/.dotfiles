@@ -338,14 +338,77 @@ def keep_args(cfg):
     return args
 
 
-def do_forget(restic, cfg, stream=True):
+def retention_removals(groups):
+    """沿用 restic 的分组和时间桶，只取消「桶数不足时额外保留最老版本」。
+
+    只凭 oldest 理由保留的版本才进入删除列表；还有 daily/weekly 等正常理由的
+    必须留下。预览结构不完整时拒绝删除，避免把格式变化误当成可删版本。
+    """
+    oldest = {f"oldest {name} snapshot" for name in
+              ("hourly", "daily", "weekly", "monthly", "yearly")}
+    removals = {}
+    try:
+        if not isinstance(groups, list):
+            raise ValueError("预览不是列表")
+        for group in groups:
+            kept = {snap["id"]: snap for snap in group["keep"]}
+            removed = {snap["id"]: snap for snap in group.get("remove") or []}
+            reasons = {reason["snapshot"]["id"]: reason["matches"]
+                       for reason in group["reasons"]}
+            if not kept or kept.keys() != reasons.keys() or kept.keys() & removed.keys():
+                raise ValueError("保留列表与理由不一致")
+            for sid, matches in reasons.items():
+                if not isinstance(matches, list) or not matches or not all(
+                    isinstance(match, str) for match in matches
+                ):
+                    raise ValueError("保留理由无效")
+                if all(match in oldest for match in matches):
+                    removed[sid] = kept[sid]
+            if not kept.keys() - removed.keys():
+                raise ValueError("每组至少需要保留一个版本")
+            for sid in kept.keys() | removed.keys():
+                if not isinstance(sid, str) or len(sid) != 64 or any(
+                    c not in "0123456789abcdef" for c in sid
+                ):
+                    raise ValueError("快照 ID 无效")
+            removals.update(removed)
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise RuntimeError(f"清理预览格式无效，未删除任何版本: {exc}") from exc
+    return list(removals.values())
+
+
+def do_forget(restic, cfg, stream=True, dry_run=False):
     keep = keep_args(cfg)
     if not keep:
         warn("保留策略全为 0，跳过 forget（等同于全部保留）")
         return 0
-    args = ["forget"] + keep + ["--prune"] + host_args(cfg)
-    info("应用保留策略: " + " ".join(keep))
-    code = run_stream(restic, cfg, args) if stream else run(restic, cfg, args).returncode
+    info("应用保留策略（不额外保留最老版本）: " + " ".join(keep))
+    preview = run(restic, cfg, ["forget", "--dry-run", "--json"] + keep + host_args(cfg))
+    code = preview.returncode
+    if code:
+        warn(preview.stderr.strip() or preview.stdout.strip() or f"restic 退出码 {code}")
+    else:
+        try:
+            # 空仓库时 restic 0.18 不输出 JSON；另查列表确认，不能把异常空输出当成成功。
+            if not preview.stdout.strip() and not snapshots(restic, cfg):
+                removals = []
+            else:
+                removals = retention_removals(json.loads(preview.stdout))
+        except (ValueError, RuntimeError) as exc:
+            warn(f"清理预览失败，未删除任何版本: {exc}")
+            return 1
+        if not removals:
+            info("没有需要清理的旧版本")
+            return 0
+        info(f"{'将清理' if dry_run else '清理'} {len(removals)} 个旧版本")
+        for snap in removals:
+            print(f"  {snap['id'][:8]}  {snap.get('time', '')}")
+        if dry_run:
+            info("清理预览结束，仓库未改动")
+            return 0
+        # 只删除预览中确定的完整 ID，不再叠加保留参数，以免 oldest 规则再次生效。
+        args = ["forget"] + [snap["id"] for snap in removals] + ["--prune"] + host_args(cfg)
+        code = run_stream(restic, cfg, args) if stream else run(restic, cfg, args).returncode
     if code == 11:
         warn("仓库被锁定，清理未完成。等待其他 restic 操作结束；若是残留锁，"
              "运行 `q-restic unlock` 后再运行 `q-restic forget`")
@@ -1649,7 +1712,8 @@ def build_parser():
     # 注意：用别名调用时 argparse 把 args.command 设成别名本身，下面分发要一起判。
     sub.add_parser("status", aliases=["snapshots", "list"], help="列出版本 + 占用")
     sub.add_parser("check", help="仓库完整性校验")
-    sub.add_parser("forget", help="按保留策略清理旧版本")
+    cmd = sub.add_parser("forget", help="按保留策略清理旧版本")
+    cmd.add_argument("--dry-run", action="store_true", help="只预览将清理的版本，不修改仓库")
     sub.add_parser(
         "unlock",
         help="清掉残留锁（restic 被强杀后会留下，导致 backup/forget 失败）",
@@ -1707,8 +1771,9 @@ def main():
         return do_check(cfg)
     if args.command == "forget":
         require_password(cfg)
-        acquire_lock(cfg)
-        return do_forget(restic_bin(), cfg)
+        if not args.dry_run:
+            acquire_lock(cfg)
+        return do_forget(restic_bin(), cfg, dry_run=args.dry_run)
     if args.command == "unlock":
         return do_unlock(cfg)
     if args.command == "mount":

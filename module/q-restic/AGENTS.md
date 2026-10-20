@@ -139,7 +139,11 @@
 ## 保留策略语义
 
 `--keep-{hourly,daily,weekly,monthly,yearly}` 是**桶**语义：每个时间桶最多留一个，多条规则取**并集**。
-另外「桶装不满时额外保留最老的那个」，所以版本很少时会看到全部被保留。
+restic 原生还有「桶装不满时额外保留最老的那个」的兜底；q-restic **取消这个额外保留**：
+先读取 `forget --dry-run --json`，只把保留理由全部是 `oldest ... snapshot` 的版本加入
+原生删除列表，再用完整 ID 执行 `forget --prune`。有任一正常保留理由的版本仍然留下。
+每组至少保留一个版本；预览失败或格式不完整必须中止，不能继续删除。
+`q-restic forget --dry-run` 可只读预览实际清理列表；`q-restic dry-run` 仍是备份预览。
 
 ## 验证原则
 

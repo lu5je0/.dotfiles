@@ -84,6 +84,88 @@ class RetentionTests(unittest.TestCase):
         self.assertIn("q-restic unlock", self.err.getvalue())
         self.assertIn("q-restic forget", self.err.getvalue())
 
+    def retention_group(self, matches, removed=()):
+        return {"keep": [snapshot(n) for n in matches],
+                "remove": [snapshot(n) for n in removed] or None,
+                "reasons": [{"snapshot": snapshot(n), "matches": reasons}
+                            for n, reasons in matches.items()]}
+
+    def test_only_oldest_fallback_is_removed_and_groups_stay_independent(self):
+        groups = [self.retention_group({
+            1: ["oldest weekly snapshot", "oldest monthly snapshot"],
+            2: ["weekly snapshot"],
+            3: ["daily snapshot", "oldest weekly snapshot"],
+        }, removed=(4,)), self.retention_group({5: ["daily snapshot"]})]
+        self.assertEqual({s["id"] for s in q.retention_removals(groups)},
+                         {snapshot(1)["id"], snapshot(4)["id"]})
+
+    def test_single_snapshot_and_empty_repository_are_preserved(self):
+        group = self.retention_group({1: ["daily snapshot", "weekly snapshot"]})
+        self.assertEqual(q.retention_removals([group]), [])
+        self.assertEqual(q.retention_removals([]), [])
+
+    def test_invalid_preview_and_removing_whole_group_are_rejected(self):
+        missing_reasons = self.retention_group({1: ["daily snapshot"]})
+        missing_reasons["reasons"] = []
+        for groups in (None, {}, [{}], [missing_reasons],
+                       [self.retention_group({1: ["oldest weekly snapshot"]})],
+                       [self.retention_group({1: []})]):
+            with self.subTest(groups=groups), self.assertRaises(RuntimeError):
+                q.retention_removals(groups)
+
+    def test_cleanup_uses_exact_planned_ids_and_propagates_delete_failures(self):
+        groups = [self.retention_group({1: ["oldest weekly snapshot"],
+                                        2: ["weekly snapshot"]}, removed=(3,))]
+        preview = subprocess.CompletedProcess([], 0, json.dumps(groups), "")
+        expected_ids = {snapshot(1)["id"], snapshot(3)["id"]}
+        for stream in (True, False):
+            with self.subTest(stream=stream), patch.object(
+                q, "run", side_effect=[preview, subprocess.CompletedProcess([], 12)]
+            ) as run, patch.object(q, "run_stream", return_value=12) as run_stream:
+                self.assertEqual(q.do_forget("restic", self.cfg, stream=stream), 12)
+                preview_args = run.call_args_list[0].args[2]
+                self.assertIn("--dry-run", preview_args)
+                self.assertIn("--json", preview_args)
+                self.assertEqual(preview_args[-2:], ["--host", "test"])
+                delete_args = (run_stream if stream else run).call_args.args[2]
+                self.assertEqual(set(delete_args[1:3]), expected_ids)
+                self.assertEqual(delete_args[3:], ["--prune", "--host", "test"])
+
+    def test_dry_run_empty_and_failed_previews_never_delete(self):
+        groups = [self.retention_group({1: ["oldest weekly snapshot"],
+                                        2: ["weekly snapshot"]})]
+        for result, dry_run, expected in (
+            (subprocess.CompletedProcess([], 0, json.dumps(groups), ""), True, 0),
+            (subprocess.CompletedProcess([], 0, "[]", ""), False, 0),
+            (subprocess.CompletedProcess([], 0, "broken", ""), False, 1),
+            (subprocess.CompletedProcess([], 0, "[{}]", ""), False, 1),
+            (subprocess.CompletedProcess([], 12, "", "wrong password"), False, 12),
+        ):
+            with self.subTest(result=result, dry_run=dry_run), patch.object(
+                q, "run", return_value=result
+            ) as run, patch.object(q, "run_stream") as delete:
+                self.assertEqual(q.do_forget("restic", self.cfg, dry_run=dry_run), expected)
+                run.assert_called_once()
+                delete.assert_not_called()
+
+    def test_cli_cleanup_preview_does_not_take_write_lock(self):
+        with patch.object(q, "load_config", return_value=self.cfg), patch.object(
+            q, "do_forget", return_value=0
+        ) as forget, patch.object(q, "acquire_lock") as lock, patch.object(
+            sys, "argv", ["q-restic", "forget", "--dry-run"]
+        ):
+            self.assertEqual(q.main(), 0)
+        lock.assert_not_called()
+        forget.assert_called_once_with("restic", self.cfg, dry_run=True)
+
+    def test_empty_preview_is_only_successful_for_confirmed_empty_repository(self):
+        for snaps, expected in (([], 0), ([snapshot(1)], 1)):
+            with self.subTest(snaps=snaps), patch.object(
+                q, "run", return_value=subprocess.CompletedProcess([], 0, "", "")
+            ), patch.object(q, "snapshots", return_value=snaps), patch.object(q, "run_stream") as delete:
+                self.assertEqual(q.do_forget("restic", self.cfg), expected)
+                delete.assert_not_called()
+
     def test_unlock_cannot_report_read_failure_as_no_locks(self):
         with patch.object(q, "run", return_value=subprocess.CompletedProcess([], 12, "", "wrong password")), patch.object(
             q, "run_stream"
