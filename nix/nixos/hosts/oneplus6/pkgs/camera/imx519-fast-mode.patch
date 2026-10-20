@@ -1,14 +1,125 @@
 --- a/imx519.c
 +++ b/imx519.c
-@@ -909,8 +909,9 @@
- 		.num_of_regs = ARRAY_SIZE(imx519_cphy_regs),
- 		.regs = imx519_cphy_regs,
+@@ -762,54 +762,7 @@
+ 
+ /* C-PHY mode table - full set of resolutions */
+ static const struct imx519_mode imx519_modes_cphy[] = {
+-	{
+-		/* 16 mpix 10fps */
+-		.width = 4656,
+-		.height = 3496,
+-		.line_length_pix = 0x4200,
+-		.crop = {
+-			.left = IMX519_PIXEL_ARRAY_LEFT,
+-			.top = IMX519_PIXEL_ARRAY_TOP,
+-			.width = 4656,
+-			.height = 3496,
+-		},
+-		.timeperframe_min = {
+-			.numerator = 100,
+-			.denominator = 1000
+-		},
+-		.timeperframe_default = {
+-			.numerator = 100,
+-			.denominator = 1000
+-		},
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_4656x3496_cphy_regs),
+-			.regs = mode_4656x3496_cphy_regs,
+-		}
+-	},
+-	{
+-		/* 4K 21fps */
+-		.width = 3840,
+-		.height = 2160,
+-		.line_length_pix = 0x3870,
+-		.crop = {
+-			.left = IMX519_PIXEL_ARRAY_LEFT + 408,
+-			.top = IMX519_PIXEL_ARRAY_TOP + 672,
+-			.width = 3840,
+-			.height = 2160,
+-		},
+-		.timeperframe_min = {
+-			.numerator = 100,
+-			.denominator = 2100
+-		},
+-		.timeperframe_default = {
+-			.numerator = 100,
+-			.denominator = 2100
+-		},
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_3840x2160_cphy_regs),
+-			.regs = mode_3840x2160_cphy_regs,
+-		}
+-	},
++	/* Fast preview first; full readout is reserved for still photos. */
+ 	{
+ 		/* 2x2 binned 30fps */
+ 		.width = 2328,
+@@ -835,53 +788,30 @@
+ 		}
  	},
--	.modes = imx519_modes_cphy,
--	.num_modes = ARRAY_SIZE(imx519_modes_cphy),
-+	/* OP6: expose only the verified 2328x1748 binned readout. */
-+	.modes = &imx519_modes_cphy[2],
-+	.num_modes = 1,
+ 	{
+-		/* 1080p 60fps */
+-		.width = 1920,
+-		.height = 1080,
+-		.line_length_pix = 0x25D9,
++		/* 16 mpix 10fps */
++		.width = 4656,
++		.height = 3496,
++		.line_length_pix = 0x4200,
+ 		.crop = {
+-			.left = IMX519_PIXEL_ARRAY_LEFT + 408,
+-			.top = IMX519_PIXEL_ARRAY_TOP + 674,
+-			.width = 3840,
+-			.height = 2160,
++			.left = IMX519_PIXEL_ARRAY_LEFT,
++			.top = IMX519_PIXEL_ARRAY_TOP,
++			.width = 4656,
++			.height = 3496,
+ 		},
+ 		.timeperframe_min = {
+ 			.numerator = 100,
+-			.denominator = 6000
++			.denominator = 1000
+ 		},
+ 		.timeperframe_default = {
+ 			.numerator = 100,
+-			.denominator = 6000
++			.denominator = 1000
+ 		},
+ 		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_1920x1080_cphy_regs),
+-			.regs = mode_1920x1080_cphy_regs,
++			.num_of_regs = ARRAY_SIZE(mode_4656x3496_cphy_regs),
++			.regs = mode_4656x3496_cphy_regs,
+ 		}
+ 	},
+-	{
+-		/* 720p 120fps */
+-		.width = 1280,
+-		.height = 720,
+-		.line_length_pix = 0x1B3B,
+-		.crop = {
+-			.left = IMX519_PIXEL_ARRAY_LEFT + 1048,
+-			.top = IMX519_PIXEL_ARRAY_TOP + 1042,
+-			.width = 2560,
+-			.height = 1440,
+-		},
+-		.timeperframe_min = {
+-			.numerator = 100,
+-			.denominator = 12000
+-		},
+-		.timeperframe_default = {
+-			.numerator = 100,
+-			.denominator = 12000
+-		},
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_1280x720_cphy_regs),
+-			.regs = mode_1280x720_cphy_regs,
+-		}
+-	},
++
  };
  
- /*
+ /* PHY configuration descriptors */
