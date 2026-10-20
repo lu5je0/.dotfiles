@@ -29,6 +29,7 @@
     nodejs
     openssl
     stylua
+    zoxide
     nixfmt
     nixfmt-tree
     opencc
