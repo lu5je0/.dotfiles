@@ -32,6 +32,7 @@
 - `lua/lu5je0/ext-loader.lua`: 仓库自定义懒加载器，负责按 `keys`、`cmd`、`event` 延迟加载本地扩展。
 - `lua/lu5je0/ext/`: 第三方插件配置适配层。通常一个插件一个文件。
 - `lua/lu5je0/core/`: 可复用核心能力，供多个扩展或功能模块共享。
+  - `core/filetree.lua`: 使用 Sidebar Files 页打开目录；注册 `Plugins`、`SwapFiles`、`TimeMachine`，由 `ext-config.lua` 的 sidebar 条目懒加载，插件和 swap 目录分别从 `stdpath('data')` / `stdpath('state')` 获取。
   - `core/buffer-modified.lua`: 'modified' 变化的兼容注册层，见下方「临时兼容」一节。
   - `core/multicursor-guard.lua`: 原生多光标能力探测与批量编辑保护，由 gitsigns / DiffBase 共用；不加载按键适配层。
 - `lua/lu5je0/misc/`: 独立功能模块与自定义工具，例如 IME、clipboard、timestamp、translator、json-helper。

@@ -63,26 +63,8 @@ end, {
   nargs = 1
 })
 
-vim.api.nvim_create_user_command('TimeMachine', function()
-  require('lu5je0.core.filetree').open_path(require('lu5je0.misc.time-machine').get_path(), {
-    print_path = true
-  })
-end, { force = true })
-
 vim.api.nvim_create_user_command('TimeMachineReadUndo', function()
   require('lu5je0.misc.time-machine').read_undo()
-end, { force = true })
-
-vim.api.nvim_create_user_command('Plugins', function()
-  require('lu5je0.core.filetree').open_path('~/.local/share/nvim/lazy', {
-    print_path = true
-  })
-end, { force = true })
-
-vim.api.nvim_create_user_command('SwapFiles', function()
-  require('lu5je0.core.filetree').open_path('~/.local/state/nvim/swap', {
-    print_path = true
-  })
 end, { force = true })
 
 vim.api.nvim_create_user_command('FileEncodingReload', function(t)

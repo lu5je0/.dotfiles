@@ -48,7 +48,9 @@ ext_load({
   name = 'sidebar',
   config = function()
     require('lu5je0.ext.sidebar').setup()
+    require('lu5je0.core.filetree').setup()
   end,
+  cmd = { 'Plugins', 'SwapFiles', 'TimeMachine' },
   keys = {
     { mode = { 'n' }, '<leader>e' },
     { mode = { 'n' }, '<leader>E' },

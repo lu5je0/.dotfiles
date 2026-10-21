@@ -94,6 +94,7 @@ sidebar/
 
 ## 集成点
 
+- `core/filetree.lua` 的 `Plugins` / `SwapFiles` / `TimeMachine` 命令经 `ext-config.lua` 的 sidebar 条目首次加载，在 `setup()` 后注册；通过 `open_tab(files, { no_toggle = true, focus = false })` 展示目标目录并保留调用窗口焦点。
 - `ext-loader.lua`：懒加载触发键。**新增或修改全局快捷键时，必须同步更新 `ext-loader.lua` 的 `keys` 列表，否则按键不会触发模块加载，快捷键不生效。**
 - `ext/bufferline.lua`、`core/statusline.lua`、`ext/statuscol.lua`：Sidebar filetype 注册
 
