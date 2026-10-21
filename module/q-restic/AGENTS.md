@@ -51,9 +51,9 @@
   （进屏时被重置为 0），拿它去索引 `self.snaps` 会**永远指向第一个版本**，
   于是“恢复/对比/删除这个版本”全作用在错误的版本上。离开版本列表时把选中项记进
   `self.active_snap`（见 `activate()`），`selected_snap()` 只读它。
-- **diff 输出要过 `colorize_diff_line()`**：restic 的 diff 是纯文本（TTY 下也只有进度擦除序列），
-  `+/−/M/T` 全一个颜色很难扫。标记行的判定必须**带上后面四个空格**——光看首字母会把
-  `Dirs:` / `Files:` / `Others:` / `comparing` 的首字母当成变更。
+- **版本 diff 交给 Neovim 展示**：restic stdout 直接写临时 `.diff` 文件，以只读、不可修改的
+  diff buffer 打开 `nvim`，不在 TUI 中自行渲染。退出编辑器后清理临时文件并恢复 TUI；
+  restic 或编辑器失败时在普通屏等待按键，错误不能被备用屏盖掉。
 - **kitty IME 闸门必须成对，离开时必须开闸**。q-restic 全程只做导航，所以进 TUI 就发
   `OSC 1337;SetUserVar=tui-bridge=<base64>`（`method=normal`）关掉 kitty 的 IME。
   kitty 是**旁路** IME 而不是切输入源，**留着关闸状态出去，用户手动切输入源也救不回来**

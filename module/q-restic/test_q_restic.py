@@ -33,6 +33,54 @@ def snapshot(n):
             "time": f"2026-10-{n:02d}T12:00:00Z", "summary": {"total_bytes_processed": 1024}}
 
 
+class DiffTests(unittest.TestCase):
+    def setUp(self):
+        self.app = q.App.__new__(q.App)
+        self.app.cfg = dict(q.DEFAULT_CONFIG)
+        self.app.restic = "restic"
+        self.app.snaps = [snapshot(1), snapshot(2)]
+        self.app.term = Mock()
+        self.app.set_message = Mock()
+
+    def test_diff_opens_readonly_neovim_and_cleans_file(self):
+        paths = []
+
+        def call(args, **kwargs):
+            if args[0] == "restic":
+                self.assertEqual(args, ["restic", "diff", "11111111", "22222222"])
+                kwargs["stdout"].write(b"M    /home/test/file\n")
+            else:
+                self.assertEqual(args[:-1], [
+                    "nvim", "-R", "-n", "+setlocal filetype=diff nomodifiable", "--",
+                ])
+                paths.append(Path(args[-1]))
+                self.assertEqual(paths[-1].read_bytes(), b"M    /home/test/file\n")
+            return 0
+
+        with patch.object(q.subprocess, "call", side_effect=call):
+            self.app.act_diff(self.app.snaps[1])
+        self.assertFalse(paths[0].exists())
+        self.app.term.suspend.assert_called_once()
+        self.app.term.resume.assert_called_once()
+        self.app.term.wait_key.assert_not_called()
+
+    def test_failures_wait_before_resuming(self):
+        for result in (11, FileNotFoundError("nvim")):
+            with self.subTest(result=result):
+                self.app.term.reset_mock()
+                effects = [11] if result == 11 else [0, result]
+                with patch.object(q.subprocess, "call", side_effect=effects):
+                    self.app.act_diff(self.app.snaps[1])
+                self.assertEqual([c[0] for c in self.app.term.mock_calls],
+                                 ["suspend", "wait_key", "resume"])
+
+    def test_first_snapshot_does_not_open_editor(self):
+        with patch.object(q.subprocess, "call") as call:
+            self.app.act_diff(self.app.snaps[0])
+        call.assert_not_called()
+        self.app.term.suspend.assert_not_called()
+
+
 class RetentionTests(unittest.TestCase):
     def setUp(self):
         self.cfg = dict(q.DEFAULT_CONFIG, repository="/tmp/test-repo", host="test")

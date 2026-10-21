@@ -27,6 +27,7 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import termios
 import threading
 import time
@@ -889,39 +890,6 @@ else:
     CURSOR_BG = KEEP_BG = ""
 
 
-# restic diff 的变更标记 -> 语义色。行格式是「标记 + 四个空格 + 路径」，
-# 必须带上空格一起判：光看首字母会把摘要行的 'D'(Dirs:)、'F'(Files:)、
-# 'O'(Others:)、'c'(comparing) 也当成变更。
-DIFF_MARKER_COLORS = {
-    "+": GREEN,      # 新增
-    "-": RED,        # 删除
-    "M": YELLOW,     # 修改
-    "T": MAGENTA,    # 类型变化（文件 <-> 目录/符号链接）
-    "U": MAGENTA,    # 其它变更
-}
-
-
-def colorize_diff_line(line):
-    """给 `restic diff` 的输出加语义色。
-
-    restic 的 diff 是纯文本（实测：TTY 下也只有进度条的擦除序列），
-    几十行 +/−/M 全一个颜色很难扫。
-    """
-    body = line.rstrip("\n")
-    if not body or not RESET:      # RESET 为空 = 未启用颜色（非 tty 或 NO_COLOR）
-        return line
-    if body[0] in DIFF_MARKER_COLORS and body[1:5] == "    ":
-        return f"{DIFF_MARKER_COLORS[body[0]]}{body}{RESET}\n"
-    if body.startswith("comparing snapshot"):
-        return f"{BOLD}{body}{RESET}\n"
-    # 合计行跟着语义走，扫一眼就知道增删量
-    if body.startswith("  Added:"):
-        return f"{GREEN}{body}{RESET}\n"
-    if body.startswith("  Removed:"):
-        return f"{RED}{body}{RESET}\n"
-    return line
-
-
 class Terminal:
     """进/出备用屏 + cbreak 的上下文管理器。"""
 
@@ -1512,21 +1480,27 @@ class App:
         code = 0
         try:
             print(f"{BOLD}对比 {prev['short_id']} → {snap['short_id']}{RESET}")
-            # diff 不支持 --host
-            proc = subprocess.Popen(
-                [self.restic, "diff", prev["short_id"], snap["short_id"]],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,           # 行缓冲，逐行着色才不会把大 diff 堆在内存里
-                env=restic_env(self.cfg),
-            )
-            for line in proc.stdout:
-                print(colorize_diff_line(line), end="")
-            code = proc.wait()
-            print()
-            # 在备用屏外等：先 resume 就把 diff 输出盖掉了
-            self.term.wait_key()
+            # 直接落盘，避免大 diff 堆在内存里；退出编辑器后删除临时文件。
+            with tempfile.TemporaryDirectory(prefix="q-restic-diff-") as tmp:
+                path = Path(tmp) / f"{prev['short_id']}-{snap['short_id']}.diff"
+                with path.open("wb") as output:
+                    # diff 不支持 --host；错误留在普通屏上，不混入对比文件。
+                    code = subprocess.call(
+                        [self.restic, "diff", prev["short_id"], snap["short_id"]],
+                        stdout=output,
+                        env=restic_env(self.cfg),
+                    )
+                if code == 0:
+                    code = subprocess.call([
+                        "nvim", "-R", "-n", "+setlocal filetype=diff nomodifiable",
+                        "--", str(path),
+                    ])
+                if code:
+                    self.term.wait_key(f"对比失败（退出码 {code}），按任意键返回")
+        except OSError as exc:
+            code = 1
+            warn(f"无法打开版本对比: {exc}")
+            self.term.wait_key("按任意键返回")
         finally:
             self.term.resume()
         self.set_message("对比结束" if code == 0 else f"对比失败（退出码 {code}）")
