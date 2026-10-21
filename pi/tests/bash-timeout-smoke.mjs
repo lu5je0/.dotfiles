@@ -142,7 +142,7 @@ try {
 	check("注入了 bash_timeout 事实段", typeof section === "string" && section.includes("60"), String(section));
 	check("事实段提到上界", section.includes("21600"));
 
-	// 不在 footer 上留任何东西（历史上有过 cmd 300s 的 chip，已按要求去掉）
+	// 不在 footer 上留任何东西。
 	check("没有注册 footer chip", globalThis.__piFooterProviders?.has("bash-timeout") !== true);
 
 	if (failures.length > 0) {

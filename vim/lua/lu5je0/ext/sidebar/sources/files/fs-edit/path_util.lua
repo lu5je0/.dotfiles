@@ -1,5 +1,4 @@
--- Path helpers shared by fs-edit modules. Pure string functions; the
--- buffer-path resolution that used to live here moved into model.reconcile.
+-- Pure string path helpers shared by fs-edit modules.
 local M = {}
 
 function M.strip_slash(p)

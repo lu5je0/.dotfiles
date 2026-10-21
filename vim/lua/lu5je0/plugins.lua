@@ -191,38 +191,6 @@ local plugins = {
     }
   },
 
-  
-  -- replaced by custom sidebar
-  -- {
-  --   'nvim-tree/nvim-tree.lua',
-  --   dependencies = {
-  --     'nvim-tree/nvim-web-devicons',
-  --   },
-  --   config = function()
-  --     require('lu5je0.ext.nvimtree').setup()
-  --   end,
-  --   patches = { 'nvim-tree.diff' },
-  --   cmd = { 'NvimTreeOpen' },
-  --   event = { 'CursorHold', 'CursorHoldI' },
-  --   keys = { '<leader>e', '<leader>fe' },
-  -- },
-  
-  -- {
-  --   "nvim-neo-tree/neo-tree.nvim",
-  --   branch = "v3.x",
-  --   dependencies = {
-  --     "nvim-lua/plenary.nvim",
-  --     "MunifTanjim/nui.nvim",
-  --     "nvim-tree/nvim-web-devicons", -- optional, but recommended
-  --   },
-  --   lazy = false, -- neo-tree will lazily load itself
-  --   ---@module 'neo-tree'
-  --   ---@type neotree.Config
-  --   config = function()
-  --     require('lu5je0.ext.neo-tree').setup()
-  --   end
-  -- },
-
   -- {
   --   'rootkiter/vim-hexedit',
   --   ft = 'bin',

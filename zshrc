@@ -277,7 +277,7 @@ zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
 
 # fd 在 Debian/Ubuntu 叫 fdfind、macOS/brew 叫 fd；后者在而前者不在就补个别名，
-# 交互里两个名字都能用（原先在 zsh/platform.sh，挪到使用处更内聚）
+# 交互里两个名字都能用。
 if [[ -z ${commands[fdfind]} && -n ${commands[fd]} ]]; then
   alias fdfind='fd'
 fi

@@ -111,7 +111,7 @@ M.setup = function()
         -- cd：切当前节点为根
         ["cd"] = "set_root",
 
-        -- 防止误触（你原来有 ["c"]="noop"）
+        -- 防止误触
         ["c"] = "noop",
 
         -- x：切宽

@@ -19,8 +19,6 @@ let
   # 没这份配置时（新机器）默认按本机短名推导，即
   #   sftp:lu5je0@192.168.1.10:/mnt/mg08/backups/restic/<hostname>
   # 并把 --host 也设成同一个短名，所以每台机器的快照互相看得到但只有自己的。
-  # 以前这里有个写死 "huskar" 的 repo 变量，改成 ExecStart 调 q-restic 后就没人用了，
-  # 留着只会误导（q-restic 会用自己配置里的值覆盖 RESTIC_REPOSITORY）。
   script = "${home}/.dotfiles/module/q-restic/q-restic.py";
 in
 {

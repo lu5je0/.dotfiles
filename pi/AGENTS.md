@@ -119,7 +119,7 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
   误杀 legit 的长编译）；用户自己敲的 `!` 命令也不管（人在等，随时 ctrl+c）
 - `before_agent_start` 往 `systemPromptOptions.sections.bash_timeout` 写一行事实（各档秒数 +
   上界），让模型知道超长任务要显式传 timeout 或改用 bg_run；只陈述事实，不写「不要重试」那类指令
-- **不往 footer 放东西**：曾经注册过一个 `cmd 300s` 的 chip，按用户要求去掉了（`footer-host.ts` 收的那些 chip 只留简单/权限/tps 这类常用信息）
+- **不往 footer 放东西**：`bash-timeout` 不注册 footer chip。
 - 测试：`node pi/tests/bash-timeout-pick.mjs`（52 条命令的选档 + 幂等 + 配置解析/clamp，零依赖）、
   `node pi/tests/bash-timeout-smoke.mjs`（真 SDK 载入扩展，验注入/clamp/非 bash 工具不受影响/
   prompt 段/不注册 footer chip）。两个脚本的包发现方式同 thinking-fold（从 `pi` 可执行文件往上找，
@@ -132,9 +132,8 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 
 - **先渲染再切片，绝不自己折行**：thinking markdown 交给真 pi-tui `Markdown` 渲染成屏幕行
   （`renderPreviewRows`），然后只做两件事——切头尾、逐行包成行内代码（`literalRow`）。
-  漂移的根源是「源文本宽度 ≠ 渲染后宽度」（行内标记被吃掉、列表续行被缩进、代码块加边距），
-  自己算就永远差一点：旧版为此写了 589 行（行内标记宽度模型 + 列表缩进 + 围栏状态 + 尾巴重折 +
-  硬换行），6 次提交全在修同一类高度漂移仍补不完。**这是本插件唯一的设计约束。**
+  源文本宽度与渲染后宽度不同（行内标记被吃掉、列表续行被缩进、代码块加边距），
+  必须以渲染后的屏幕行数为准，才能让折叠高度保持一致。
 - **行内代码是 ANSI 载体**：切片后的行会被 pi 重新解析一遍，而它们可能是围栏内部的行
   （`# 注释` 被认成标题并多补一行空行、` ``` ` 被认成新代码块、连续空行被吞）。包成 code span
   后外层不再解析、不增行、不吞空白，里面已渲染的 ANSI 原样保留。定界符取行内最长反引号串 +1，

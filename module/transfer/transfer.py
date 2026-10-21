@@ -230,7 +230,6 @@ class Remote:
 
     走同一个 Bearer token —— 服务端把它解析成 client_id，只返回**这台设备
     自己上传的**包（以及加 upload_client_id 之前上传、无法归因的历史包）。
-    以前这些事只能开浏览器做，等于把 CLI 用户挡在门外。
     """
 
     def __init__(self, host):
@@ -278,12 +277,7 @@ class Remote:
         return items
 
     def info(self, bundle_id):
-        """看一个包的详情。
-
-        走 GET /api/bundles/{id} —— 包的规范接口。以前借的是公开的
-        /api/files/{id}（一个 files 接口返回 file 里塞 bundle），
-        那个不返回包名。
-        """
+        """通过 GET /api/bundles/{id} 获取并显示包详情。"""
         r = self._request('GET', f'/api/bundles/{bundle_id}')
         if r is None:
             return None
@@ -584,10 +578,8 @@ class Uploader:
 
         names = [rel for _, rel in items]
 
-        # 不再猜入口。以前 index.html 有特权（会静默盖过别的页面），
-        # 猜不出来时还会直接拒绝上传（纯图片目录就传不了）。
-        # 现在：只有 --entry 显式给了才设；否则这个包「没有门面」，
-        # /v/{bundle_id}/ 会出一个目录索引，事后也能在网页上补设。
+        # 入口仅由 --entry 显式指定；无入口的包通过 /v/{bundle_id}/ 展示目录索引，
+        # 也可在网页上设置入口。未指定 --entry 时，更新保留原有入口。
         entry_explicit = entry is not None
         if entry_explicit and entry.strip().lower() in ('none', '-', '/'):
             entry = ''                      # 显式表示不要入口
