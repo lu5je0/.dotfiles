@@ -39,7 +39,7 @@
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
 - `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
-- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`project-log`、`git-selection`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
+- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`glance`、`project-log`、`git-selection`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
 ## Multicursor (`ext/multicursor.lua`)
@@ -174,6 +174,7 @@ ext/tabline/
 - 新增仓库自定义功能，优先放到 `misc/` 或 `core/`，再在 `ext-loader.lua` 或其他明确入口里接入。
 - 新增按键或命令时，先判断是否应该懒加载；已有模式是由 `ext-loader.lua` 代理首次触发并回放按键/命令。
 - 修改 LSP 行为时，同时检查 `lsp/` 与 `core/lsp.lua` 是否都有联动。
+- `nixd` 由 Nix 安装（`nix/common/packages.nix`），不经 Mason；`core/lsp.lua` 在 PATH 中找到它时启用，`lsp/nixd.lua` 配置 Nixpkgs 补全来源与 `nixfmt` 格式化。
 - 修改文件树、补全、输入法、剪贴板等平台相关功能时，确认 macOS / WSL / Windows 路径或二进制名是否受影响。
 
 ## 插件与补丁约定
@@ -185,6 +186,7 @@ ext/tabline/
   - `dependencies`
   - `patches`
 - 如果插件行为依赖仓库内补丁，必须同时维护 `patches/*.diff` 与 `plugins.lua` 中对应的 `patches` 声明。
+- Glance 的 `glance-nixd-definition.diff` 仅忽略 nixd 的 definition 请求返回的 `unknown node type for definition`（上游 nixd#823）；只有全部响应都是该错误时，同时跳过 `No definitions found`，其他错误、正常空结果和其他客户端的结果保持原行为。
 - 改插件版本、插件源、锁定策略时，检查是否需要同步更新 `lazy-lock.json`。
 - 仅在确有必要时调整 `disabled_plugins` 列表；这会直接影响启动时的运行时插件集合。
 
@@ -205,6 +207,7 @@ ext/tabline/
 ## 测试与验证
 - 最小启动验证：
   - `cd vim && nvim --headless '+qa'`
+- `tests/glance/definition_spec.lua` 在临时目录向已安装 Glance 的 HEAD 应用补丁，验证 nixd 已知错误静默、其他错误与正常空结果保留、多客户端响应仍能返回定义；不改动插件安装目录，由 `tests/run-tests.sh` 调用。
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
 - `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/git-selection/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`、`tests/whichkey/spec.lua`。

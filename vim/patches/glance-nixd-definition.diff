@@ -1,0 +1,36 @@
+--- a/lua/glance/lsp.lua
++++ b/lua/glance/lsp.lua
+@@ -7,6 +7,7 @@
+ local function create_handler(method)
+   return function(bufnr, params, cb)
+     local _client_request_ids, cancel_all_requests, client_request_ids
++    local only_ignored_errors = true
+ 
+     _client_request_ids, cancel_all_requests = vim.lsp.buf_request(
+       bufnr,
+@@ -20,8 +21,15 @@
+             vim.tbl_deep_extend('keep', _client_request_ids, {})
+         end
+ 
++        -- nixd#823 returns an error for nodes without a supported definition.
++        local client = vim.lsp.get_client_by_id(ctx.client_id)
++        local ignored_error = method.lsp_method == 'textDocument/definition'
++          and client and client.name == 'nixd'
++          and err and err.message == 'unknown node type for definition'
++        only_ignored_errors = only_ignored_errors and not not ignored_error
++
+         -- Don't log an error when LSP method is non-standard
+-        if err and not method.non_standard then
++        if err and not method.non_standard and not ignored_error then
+           utils.error(
+             ('An error happened requesting %s: %s'):format(
+               method.label,
+@@ -39,7 +47,7 @@
+           return cb(result, ctx)
+         end
+ 
+-        if vim.tbl_isempty(client_request_ids) then
++        if vim.tbl_isempty(client_request_ids) and not only_ignored_errors then
+           cb({})
+         end
+       end

@@ -15,6 +15,10 @@ printf '%s[line-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/l
 nvim --headless -u NONE -l "${SCRIPT_DIR}/line-log/spec.lua"
 
 printf '\n'
+printf '%s[glance:definitions]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/glance/definition_spec.lua" "${RESET}"
+nvim --headless -u NONE -i NONE -l "${SCRIPT_DIR}/glance/definition_spec.lua"
+
+printf '\n'
 printf '%s[project-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/project-log/spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/project-log/spec.lua"
 

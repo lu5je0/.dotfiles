@@ -31,6 +31,7 @@
     openssl
     stylua
     zoxide
+    nixd
     nixfmt
     nixfmt-tree
     opencc

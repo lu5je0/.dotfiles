@@ -77,6 +77,10 @@ end
 function M.setup()
   local installed_server_names = { 'delance', 'lua_ls' }
 
+  if vim.fn.executable('nixd') == 1 then
+    table.insert(installed_server_names, 'nixd')
+  end
+
   for _, lsp_name in ipairs(require('mason-lspconfig').get_installed_servers()) do
     table.insert(installed_server_names, lsp_name)
   end
