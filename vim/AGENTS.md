@@ -39,8 +39,8 @@
 - `lua/lu5je0/lang/`: 轻量通用工具函数。
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
-- `patches/`: 对上游插件的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动。
-- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`glance`、`project-log`、`git-selection`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
+- `patches/`: 对上游插件 Lua 模块的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动；应用到缓存副本，不修改插件安装目录。
+- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`lazy-patch`、`glance`、`project-log`、`git-selection`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
 - `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
 
 ## Multicursor (`ext/multicursor.lua`)
@@ -187,6 +187,11 @@ ext/tabline/
   - `dependencies`
   - `patches`
 - 如果插件行为依赖仓库内补丁，必须同时维护 `patches/*.diff` 与 `plugins.lua` 中对应的 `patches` 声明。
+- `ext/lazy_patch.lua` 在 `lazy.setup()` 前注册，监听 `LazyPlugins`，从 lazy 已解析的插件表读取 `patches` 与 `plugin.dir`，通过 `package.preload` 覆盖对应模块；保留 lazy 的首次加载和配置调用语义，支持嵌套声明、依赖与自定义插件目录。
+- 补丁仅支持修改现有 `lua/**/*.lua` 模块；不支持新增、删除、重命名模块或修改其他运行时文件。首次 require 涉及的模块时，把受影响源码复制到 `stdpath('cache')/lazy-patches/<内容哈希>/` 并依次应用补丁；哈希包含源码、插件目录及补丁内容，缓存命中不调用 Git。生成过程使用临时目录并原子发布，应用或语法检查失败直接报错，不回退到原模块。
+- `LazyApplyPatch` 主动准备所有已安装插件的缓存，不修改原目录，也不热重载已加载模块；修改补丁或更新插件后，重启 Neovim 使用新的模块。恢复版本直接使用 lazy 原生命令 `Lazy restore`。补丁模块不再注册 Check / Update / Install / Sync 或退出时的 reset/apply 钩子，不执行 `git reset --hard`。
+- 仓库根目录 `lazy-restore.sh` 使用 `Lazy! restore` 阻塞等待插件恢复完成，再加载 nvim-treesitter 更新 parser；不依赖自定义恢复命令。
+- 从旧版原地补丁迁移时，先在对应插件目录用 `git apply --reverse --check <补丁绝对路径>` 确认可撤销，再执行 `git apply --reverse <补丁绝对路径>`，只移除原先应用的补丁，避免 lazy 因遗留的本地修改拒绝更新。
 - Glance 的 `glance-nixd-definition.diff` 仅忽略 nixd 的 definition 请求返回的 `unknown node type for definition`（上游 nixd#823）；只有全部响应都是该错误时，同时跳过 `No definitions found`，其他错误、正常空结果和其他客户端的结果保持原行为。
 - 改插件版本、插件源、锁定策略时，检查是否需要同步更新 `lazy-lock.json`。
 - 仅在确有必要时调整 `disabled_plugins` 列表；这会直接影响启动时的运行时插件集合。
@@ -208,6 +213,7 @@ ext/tabline/
 ## 测试与验证
 - 最小启动验证：
   - `cd vim && nvim --headless '+qa'`
+- `tests/lazy-patch/spec.lua` 用临时 Git 仓库和真实 lazy.nvim，在独立 Neovim 进程中验证嵌套声明、自定义目录、require / 命令首次加载、冷暖缓存、源码及补丁变化、恢复旧版本与冲突报错；检查插件工作区始终干净，暖缓存不调用 Git。子进程隔离 XDG 目录且禁用安装与更新检查，由 `tests/run-tests.sh` 调用。
 - `tests/glance/definition_spec.lua` 在临时目录向已安装 Glance 的 HEAD 应用补丁，验证 nixd 已知错误静默、其他错误与正常空结果保留、多客户端响应仍能返回定义；不改动插件安装目录，由 `tests/run-tests.sh` 调用。
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`

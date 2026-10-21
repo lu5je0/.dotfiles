@@ -1014,6 +1014,6 @@ local plugins = {
   
 }
 
-require('lu5je0.ext.lazy_patch').setup(plugins)
+require('lu5je0.ext.lazy_patch').setup()
 
 require("lazy").setup(plugins, opts)
