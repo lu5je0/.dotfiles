@@ -191,7 +191,7 @@ ext/tabline/
 - 补丁仅支持修改现有 `lua/**/*.lua` 模块；不支持新增、删除、重命名模块或修改其他运行时文件。首次 require 涉及的模块时，把受影响源码复制到 `stdpath('cache')/lazy-patches/<内容哈希>/` 并依次应用补丁；哈希包含源码、插件目录及补丁内容，缓存命中不调用 Git。生成过程使用临时目录并原子发布，应用或语法检查失败直接报错，不回退到原模块。
 - `LazyApplyPatch` 主动准备所有已安装插件的缓存，不修改原目录，也不热重载已加载模块；修改补丁或更新插件后，重启 Neovim 使用新的模块。恢复版本直接使用 lazy 原生命令 `Lazy restore`。补丁模块不再注册 Check / Update / Install / Sync 或退出时的 reset/apply 钩子，不执行 `git reset --hard`。
 - 仓库根目录 `lazy-restore.sh` 使用 `Lazy! restore` 阻塞等待插件恢复完成，再加载 nvim-treesitter 更新 parser；不依赖自定义恢复命令。
-- 从旧版原地补丁迁移时，先在对应插件目录用 `git apply --reverse --check <补丁绝对路径>` 确认可撤销，再执行 `git apply --reverse <补丁绝对路径>`，只移除原先应用的补丁，避免 lazy 因遗留的本地修改拒绝更新。
+- `lazy-restore.sh` 启动 Neovim 前会对 Glance、Snacks、indent-blankline 和 nvim-tree 的旧版原地补丁执行 `git apply --reverse --check`，通过后才反向应用；未应用的补丁不操作，其他本地修改保留，不强制 reset。此临时兼容段在所有环境切换到缓存副本补丁后移除。
 - Glance 的 `glance-nixd-definition.diff` 仅忽略 nixd 的 definition 请求返回的 `unknown node type for definition`（上游 nixd#823）；只有全部响应都是该错误时，同时跳过 `No definitions found`，其他错误、正常空结果和其他客户端的结果保持原行为。
 - 改插件版本、插件源、锁定策略时，检查是否需要同步更新 `lazy-lock.json`。
 - 仅在确有必要时调整 `disabled_plugins` 列表；这会直接影响启动时的运行时插件集合。
