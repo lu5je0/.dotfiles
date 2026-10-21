@@ -521,8 +521,12 @@ local plugins = {
         'mason-org/mason.nvim',
         {
           'neovim/nvim-lspconfig',
+          cmd = 'LspInfo',
           config = function()
             require('lu5je0.core.lsp').setup()
+            vim.api.nvim_create_user_command('LspInfo', function()
+              require('lu5je0.misc.lsp-info').open()
+            end, { desc = 'Show LSP information for the current buffer' })
           end,
         },
       }

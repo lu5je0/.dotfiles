@@ -36,6 +36,7 @@
   - `core/buffer-modified.lua`: 'modified' 变化的兼容注册层，见下方「临时兼容」一节。
   - `core/multicursor-guard.lua`: 原生多光标能力探测与批量编辑保护，由 gitsigns / DiffBase 共用；不加载按键适配层。
 - `lua/lu5je0/misc/`: 独立功能模块与自定义工具，例如 IME、clipboard、timestamp、translator、json-helper。
+  - `misc/lsp-info.lua`: `:LspInfo` 的只读浮窗，沿用 `ExtLoader` 的圆角边框、状态图标、分组高亮与紧凑列表；尺寸采用 Lazy 默认的 80% 编辑器宽高，居中并随 `VimResized` 调整，长行自动换行。展示当前 buffer / 其他 buffer 的客户端与当前文件类型已启用但未连接的配置；`q` / `<Esc>` 关闭。命令由 `nvim-lspconfig` spec 的 `cmd` 首次加载，配置回调在上游插件加载后注册，报告模块只在执行命令时加载。
 - `lua/lu5je0/lang/`: 轻量通用工具函数。
 - `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
 - `lsp/`: 独立语言服务器配置文件。
@@ -215,6 +216,7 @@ ext/tabline/
   - `cd vim && nvim --headless '+qa'`
 - `tests/lazy-patch/spec.lua` 用临时 Git 仓库和真实 lazy.nvim，在独立 Neovim 进程中验证嵌套声明、自定义目录、require / 命令首次加载、冷暖缓存、源码及补丁变化、恢复旧版本与冲突报错；检查插件工作区始终干净，暖缓存不调用 Git。子进程隔离 XDG 目录且禁用安装与更新检查，由 `tests/run-tests.sh` 调用。
 - `tests/glance/definition_spec.lua` 在临时目录向已安装 Glance 的 HEAD 应用补丁，验证 nixd 已知错误静默、其他错误与正常空结果保留、多客户端响应仍能返回定义；不改动插件安装目录，由 `tests/run-tests.sh` 调用。
+- `tests/lsp-info/spec.lua` 复用真实插件 spec 与已安装 lazy.nvim，验证 `:LspInfo` 首次懒加载、只读浮窗、重复打开与关闭，以及当前 / 其他 buffer 客户端、未连接配置和缺失可执行文件；由 `tests/run-tests.sh` 调用。
 - 当前自动化测试入口：
   - `cd vim && ./tests/run-tests.sh`
 - `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/git-selection/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`、`tests/whichkey/spec.lua`。
