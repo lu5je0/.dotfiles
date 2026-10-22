@@ -14,11 +14,8 @@ let
   # 对常驻定时任务来说是多余的一层（要 uv、要 .venv 可用、要能求值 flake），
   # 而 q-restic 只用标准库，python3 直接跑就够了。
   #
-  # 仓库地址/主机过滤/保留策略都在 q-restic 自己的配置文件里，不在这里重复声明：
-  #   ~/.config/q-restic/config.json
-  # 没这份配置时（新机器）默认按本机短名推导，即
-  #   sftp:lu5je0@192.168.1.10:/mnt/mg08/backups/restic/<hostname>
-  # 并把 --host 也设成同一个短名，所以每台机器的快照互相看得到但只有自己的。
+  # 仓库、备份源和保留策略由 ~/.config/q-restic/config.json 的 profiles.home 管理。
+  # CLI 仓库操作必须显式指定配置文件和 profile。
   script = "${home}/.dotfiles/module/q-restic/q-restic.py";
 in
 {
@@ -54,7 +51,7 @@ in
       # 以用户身份跑，不用 root：home 里的文件本来就都属于这个用户。
       User = user;
       Group = config.users.users.${user}.group;
-      ExecStart = "${pkgs.python3}/bin/python3 ${script} backup";
+      ExecStart = "${pkgs.python3}/bin/python3 ${script} -c ${home}/.config/q-restic/config.json -p home backup";
       Nice = 10;
       IOSchedulingClass = "idle";
 

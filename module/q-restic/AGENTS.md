@@ -20,6 +20,24 @@
 - 系统级定时由 `nix/nixos/modules/restic-home.nix` 负责，**它直接调 python3 而不是那个入口**：
   定时任务不该依赖 uv / `.venv` / flake 求值，而本脚本只用标准库。
 
+## 配置与 profile
+
+- 根配置格式是 `{"version": 2, "profiles": {...}}`，详见同目录 `README.md`。
+  新 profile 必须显式配置 `sources` 列表、`repository`、`password_file`；不能隐式备份 home。
+  `-c/--config`、`-p/--profile` 可置于子命令前后，CLI 仓库操作必须指定 profile。
+- `load_config()` 返回整个文档，`profile_config()` 返回解析路径及私有上下文的有效配置。
+  路径相对配置文件目录；保存或编辑保留策略不能把其它 profile 丢掉，也不能写回私有字段。
+- 只接受 version 2 的 profiles 文档，不保留单配置读取、迁移命令或 source 回退。
+  snapshot_tag 可显式指定快照筛选标签；未配置时自动使用 profile 独立标签。
+- 所有支持快照筛选的命令都通过 `snapshot_args()` 传主机和 profile 标签。
+  restore 对显式 ID 也先检查是否属于当前 profile，因为 restic 原生筛选只约束 latest。
+  同仓库同主机的 profile 标签不能互相匹配；写锁仍按仓库区分，check/unlock 操作整个仓库。
+- TUI 默认从 profile 列表开始，首屏不访问仓库、不要求 restic 或密码已经可用。
+  切换 profile 时废弃所有旧异步请求，不能把上一 profile 的版本、统计或错误带过来。
+- 「设置密码文件」在普通屏用 getpass 两次确认，不回显、不把密码写入配置或日志。
+  通过 600 临时文件和不覆盖目标的 link 创建；现有文件/符号链接、空密码、取消均不得覆盖或落盘。
+  失败提示和按键等待必须在恢复备用屏之前完成。
+
 ## 关键不变量（都是实测踩出来的，改动前先看）
 
 - **子命令别名要用 `in (...)` 分发**：`status` 挂了 `snapshots` / `list` 别名（restic 自己的命令就叫
@@ -41,11 +59,11 @@
   只有 1（没建快照）和 10/11/12（仓库不存在/被锁/密码错）才完全不碰仓库。退出码要如实返回。
 - **清理失败不能打印“完成”或返回成功**：备份成功后，`forget --prune` 的失败码必须传到 CLI / systemd；
   备份本身为 3 时仍保留 3，但要明确输出清理失败。TUI 对退出码 3 不能一概宣称“已清理旧版本”。
-- **区分两套锁**：q-restic 自己的 flock（`~/.cache/q-restic.<repo hash>.lock`，只保护写流程）
+- **区分两套锁**：q-restic 自己的 flock（`~/.cache/q-restic.<repo hash>.lock`，只保护写流程，writer_lock 在流程成功或失败退出时都释放 flock）
   和 **restic 仓库锁**（`restic list locks`）。后者是另一个东西：进程被强杀
   （SIGKILL，或 `forget --prune` 跑到一半被 Ctrl-C）会留下残留锁，之后 `forget --prune`
   因为拿不到排他锁而失败——表现就是“删除失败”，而且每晚定时任务会在 forget 这步挂掉。
-  清理用 `q-restic unlock`。`act_forget_snap` 会识别输出里的 `already locked` 并直接把这条命令提示给用户。
+  清理用 `q-restic -p <profile> unlock`。`act_forget_snap` 会识别输出里的 `already locked` 并直接把这条命令提示给用户。
   `unlock` 也要拿 q-restic 的写锁，只用 restic 默认的残留锁清理，别加 `--remove-all`；读取锁失败不能说成“没有锁”。
 - **`selected_snap()` 不能用 `self.cursor` 索引**。在 `snap_actions` 屏里 `cursor` 指的是操作项
   （进屏时被重置为 0），拿它去索引 `self.snaps` 会**永远指向第一个版本**，
@@ -54,7 +72,7 @@
 - **版本 diff 交给 Neovim 展示**：restic stdout 直接写临时 `.diff` 文件，以只读、不可修改的
   diff buffer 打开 `nvim`，不在 TUI 中自行渲染。退出编辑器后清理临时文件并恢复 TUI；
   restic 或编辑器失败时在普通屏等待按键，错误不能被备用屏盖掉。
-- **kitty IME 闸门必须成对，离开时必须开闸**。q-restic 全程只做导航，所以进 TUI 就发
+- **kitty IME 闸门必须成对，离开时必须开闸**。q-restic 备用屏内只做导航，密码在普通屏输入，所以进 TUI 就发
   `OSC 1337;SetUserVar=tui-bridge=<base64>`（`method=normal`）关掉 kitty 的 IME。
   kitty 是**旁路** IME 而不是切输入源，**留着关闸状态出去，用户手动切输入源也救不回来**
   （逃生阀是 kitty.conf 的 `ctrl+b>i enable_ime`）。所以 `KittyIMEGate` 把这些路径全挂上了：
@@ -78,7 +96,7 @@
   加载完成后靠 `select` 超时自动重绘。不要同步调用 `restic stats` 阻塞首屏：冷缓存下它要 4 秒以上
   （要遍历 44 万个文件）。版本数据量取 `snapshots --json` 的 summary；版本列表底部的
   总占用在进入版本列表后由 `start_stats_load()` 后台读取 `stats --mode raw-data`
-  （与 CLI 一样按 host 过滤），会话内缓存；备份、删除、仓库/host/密码文件变更，
+  （与 CLI 一样按 host 和 profile 标签过滤），会话内缓存；备份、删除、仓库/host/密码文件变更，
   或新版本列表与缓存不同时失效。只读操作不触发重新统计。
   `refresh()` 也必须后台执行、保留已有列表，失败不能清空列表或冒充空仓库；
   `snapshots()` 遇到命令失败/无效 JSON 必须抛错，CLI status 返回非零。
@@ -93,17 +111,17 @@
   否则上一行的背景色会串到下一行。在行尾直接发 `RESET` 是早期版本的毛病，那样底色只到文字为止。
 - **TUI 交互是「导航 + Enter」，不要加固定字母快捷键**。所有屏幕共用一套键：
   `↑↓/jk` 移动、`g/G`（及 Home/End）首尾、`PgUp/PgDn` 翻页、`Enter` 激活、`Esc` 返回上一层、
-  主菜单里 `q` 退出。子页面靠 `item["goto"]` 切屏、`item["run"]` 执行动作，
+  profile 列表里 `q` 退出，菜单里 `q` 返回 profile 列表。子页面靠 `item["goto"]` 切屏、`item["run"]` 执行动作，
   新增功能只要往 `menu_items()` / `snap_action_items()` 里加一项。
-  TUI 不设「校验仓库完整性」项，完整性校验保留在 CLI `q-restic check`。
-  菜单不设「退出」项，退出靠 `q` / `Esc`（`go_back()` 在菜单层返回 "quit"），底部提示里有说明。
+  TUI 不设「校验仓库完整性」项，完整性校验保留在 CLI `q-restic -p <profile> check`。
+  菜单不设「退出」项，退出靠 `q` / `Esc`（`go_back()` 在没有上层时返回 "quit"），底部提示里有说明。
   改键位要同步 `footer()` 里的 `ladders`，那是宽度不够时的提示降级链。
 - **每个屏幕都必须实现移动键**。早期版本 `handle_menu()` 根本没处理 `j/k/UP/DOWN/ENTER`，
   菜单画了光标却移不动、只能靠字母跳——修改交互后一定要用 pty 测试确认光标真的会动。
 - **CSI 序列不止 `A/B/C/D`**：方向键之外还有 `5~/6~`(PgUp/PgDn)、`1~/4~`(Home/End)，
   且 prefix 可能是 `ESC [` 也可能是 `ESC O`。统一查 `CSI_KEYS` 表，不要只读一个字节。
 - **`--host` 只有部分子命令支持**：`snapshots` / `stats` / `forget` / `restore` / `mount` 支持；
-  `diff` / `check` **不支持**，传了会直接报 `unknown flag`。用 `host_args()` 按命令挑选，
+  `diff` / `check` **不支持**，传了会直接报 `unknown flag`。用 `snapshot_args()` 按命令挑选，
   不要像早期版本那样无差别给所有命令加。
 - **只读操作不占备份锁**。`status` / `mount` / `browse` / `unmount` 必须在 `acquire_lock()` 之前
   返回，否则备份跑着时连状态都查不了（restic 自己的锁本来就允许并发读）。
@@ -133,7 +151,7 @@
   版本数据量取 `summary.total_bytes_processed`，该版本实际写入量取 `summary.data_added_packed`。
 - **restic 时间戳是纳秒精度**，Python 3.9 的 `datetime.fromisoformat` 不接受，排序用 `snap_time_key()` 截到秒。
 - **`--one-file-system` 不能用**：`/home` 下没有嵌套挂载点，加了只会平白跳过东西。
-- 仓库走 SFTP 而不是 CIFS 挂载点：restic 依赖 fsync + rename 原子性，而 fstab 里的 CIFS 用了
+- NAS 仓库走 SFTP 而不是 CIFS 挂载点，本地 ext4 仓库可直接写：restic 依赖 fsync + rename 原子性，而 fstab 里的 CIFS 用了
   `soft` + `cache=strict`，NAS 卡顿时返回 EIO 而不是等待，那正是会写坏仓库的语义。
 
 ## 保留策略语义
@@ -143,7 +161,7 @@ restic 原生还有「桶装不满时额外保留最老的那个」的兜底；q
 先读取 `forget --dry-run --json`，只把保留理由全部是 `oldest ... snapshot` 的版本加入
 原生删除列表，再用完整 ID 执行 `forget --prune`。有任一正常保留理由的版本仍然留下。
 每组至少保留一个版本；预览失败或格式不完整必须中止，不能继续删除。
-`q-restic forget --dry-run` 可只读预览实际清理列表；`q-restic dry-run` 仍是备份预览。
+`q-restic -p <profile> forget --dry-run` 可只读预览实际清理列表；`q-restic -p <profile> dry-run` 仍是备份预览。
 
 ## 验证原则
 
@@ -151,7 +169,7 @@ restic 原生还有「桶装不满时额外保留最老的那个」的兜底；q
 - 数据加载/刷新逻辑的回归测试：`python3 -m unittest discover -s module/q-restic -p 'test_*.py'`。
 - **`config` 子命令的 stdout 必须保持纯 JSON**（提示信息一律走 stderr），
   否则 `q-restic config | jq` 会解析失败。验证：`q-restic config 2>/dev/null | python3 -m json.tool`。
-- 改 CLI / 保留策略：先用 `q-restic dry-run` 空跑，或在临时仓库上验
+- 改 CLI / 保留策略：先用 `q-restic -p <profile> dry-run` 空跑，或在临时仓库上验
   （`XDG_CONFIG_HOME=<临时目录>` 指向一个本地仓库，不要拿真仓库试）。
 - 改 TUI：不能靠 `script` 喂 stdin（管道转发不可靠，按键会丢），用 `pty.fork()`
   起子进程、延迟写入按键再读回输出，见开发时用的 pty 测试法。

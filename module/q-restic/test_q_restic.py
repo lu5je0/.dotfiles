@@ -28,6 +28,23 @@ q = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(q)
 
 
+def raw_profile(**overrides):
+    cfg = dict(repository="/tmp/test-repo", password_file="/tmp/test-password", sources=["/tmp/source"],
+               host="test", tag="home", snapshot_tag="home", mount_dir="/tmp/restic-mnt/test",
+               restore_dir="/tmp/restic-restore/test", keep={"daily": 7, "weekly": 4, "monthly": 1})
+    cfg.update(overrides)
+    return cfg
+
+
+def test_config(**overrides):
+    return q.profile_config({"version": 2, "profiles": {"home": raw_profile(**overrides)}}, "home")
+
+
+def test_app(cfg=None):
+    document = {"version": 2, "profiles": {"home": cfg or raw_profile()}}
+    return q.App(document, profile="home")
+
+
 def snapshot(n):
     return {"id": str(n) * 64, "short_id": str(n) * 8,
             "time": f"2026-10-{n:02d}T12:00:00Z", "summary": {"total_bytes_processed": 1024}}
@@ -36,7 +53,7 @@ def snapshot(n):
 class DiffTests(unittest.TestCase):
     def setUp(self):
         self.app = q.App.__new__(q.App)
-        self.app.cfg = dict(q.DEFAULT_CONFIG)
+        self.app.cfg = test_config()
         self.app.restic = "restic"
         self.app.snaps = [snapshot(1), snapshot(2)]
         self.app.term = Mock()
@@ -83,7 +100,7 @@ class DiffTests(unittest.TestCase):
 
 class RetentionTests(unittest.TestCase):
     def setUp(self):
-        self.cfg = dict(q.DEFAULT_CONFIG, repository="/tmp/test-repo", host="test")
+        self.cfg = test_config()
         self.out, self.err = io.StringIO(), io.StringIO()
         self.enterContext(contextlib.redirect_stdout(self.out))
         self.enterContext(contextlib.redirect_stderr(self.err))
@@ -129,8 +146,8 @@ class RetentionTests(unittest.TestCase):
                 q, "run", return_value=subprocess.CompletedProcess([], 11, "", "locked")
             ):
                 self.assertEqual(q.do_forget("restic", self.cfg, stream=stream), 11)
-        self.assertIn("q-restic unlock", self.err.getvalue())
-        self.assertIn("q-restic forget", self.err.getvalue())
+        self.assertIn(q.command_hint(self.cfg, "unlock"), self.err.getvalue())
+        self.assertIn(q.command_hint(self.cfg, "forget"), self.err.getvalue())
 
     def retention_group(self, matches, removed=()):
         return {"keep": [snapshot(n) for n in matches],
@@ -174,10 +191,10 @@ class RetentionTests(unittest.TestCase):
                 preview_args = run.call_args_list[0].args[2]
                 self.assertIn("--dry-run", preview_args)
                 self.assertIn("--json", preview_args)
-                self.assertEqual(preview_args[-2:], ["--host", "test"])
+                self.assertEqual(preview_args[-4:], ["--host", "test", "--tag", "home"])
                 delete_args = (run_stream if stream else run).call_args.args[2]
                 self.assertEqual(set(delete_args[1:3]), expected_ids)
-                self.assertEqual(delete_args[3:], ["--prune", "--host", "test"])
+                self.assertEqual(delete_args[3:], ["--prune", "--host", "test", "--tag", "home"])
 
     def test_dry_run_empty_and_failed_previews_never_delete(self):
         groups = [self.retention_group({1: ["oldest weekly snapshot"],
@@ -197,10 +214,10 @@ class RetentionTests(unittest.TestCase):
                 delete.assert_not_called()
 
     def test_cli_cleanup_preview_does_not_take_write_lock(self):
-        with patch.object(q, "load_config", return_value=self.cfg), patch.object(
+        with patch.object(q, "load_config", return_value={"version": 2, "profiles": {}}), patch.object(q, "profile_config", return_value=self.cfg), patch.object(
             q, "do_forget", return_value=0
         ) as forget, patch.object(q, "acquire_lock") as lock, patch.object(
-            sys, "argv", ["q-restic", "forget", "--dry-run"]
+            sys, "argv", ["q-restic", "-p", "home", "forget", "--dry-run"]
         ):
             self.assertEqual(q.main(), 0)
         lock.assert_not_called()
@@ -232,7 +249,7 @@ class RetentionTests(unittest.TestCase):
         unlock.assert_called_once_with("restic", self.cfg, ["unlock"])
 
     def test_tui_does_not_claim_incomplete_backup_was_cleaned(self):
-        app = q.App(self.cfg)
+        app = test_app(self.cfg)
         with patch.object(app, "run_suspended", return_value=3):
             app.act_backup()
         self.assertIn("备份不完整", app.message)
@@ -244,8 +261,11 @@ class RetentionTests(unittest.TestCase):
 
 class LoadingTests(unittest.TestCase):
     def setUp(self):
-        with patch.object(q, "restic_bin", return_value="restic"):
-            self.app = q.App(dict(q.DEFAULT_CONFIG, repository="/tmp/test-repo", host="test"))
+        self.enterContext(patch.object(q, "acquire_lock"))
+        self.enterContext(patch.object(q, "password_ready", return_value=True))
+        self.enterContext(patch.object(q.shutil, "which", return_value="restic"))
+        self.app = test_app()
+        self.app.restic = "restic"
 
     def until(self, predicate):
         deadline = time.monotonic() + 3
@@ -428,8 +448,9 @@ class PtyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="q-restic-test-", dir="/tmp") as tmp:
             root = Path(tmp)
             (root / "q-restic").mkdir()
-            cfg = dict(q.DEFAULT_CONFIG, repository=str(root / "repo"), host="test")
-            (root / "q-restic/config.json").write_text(json.dumps(cfg))
+            cfg = raw_profile(repository=str(root / "repo"), host="test", password_file=str(root / "password"))
+            (root / "password").write_text("test-password\n")
+            (root / "q-restic/config.json").write_text(json.dumps({"version": 2, "profiles": {"home": cfg}}))
             (root / "offline").touch()
             fake = root / "restic"
             fake.write_text("#!" + sys.executable + "\n" + '''import json, os, sys, time
@@ -437,7 +458,7 @@ from pathlib import Path
 root = Path(os.environ['XDG_CONFIG_HOME'])
 with (root / 'calls').open('a') as log:
     log.write(sys.argv[1] + '\\n')
-assert sys.argv[-2:] == ['--host', 'test']
+assert sys.argv[-4:] == ['--host', 'test', '--tag', 'home']
 if (root / 'offline').exists():
     print('NAS unavailable', file=sys.stderr)
     raise SystemExit(1)
@@ -456,7 +477,7 @@ else:
             if pid == 0:
                 os.environ.update(HOME=tmp, XDG_CONFIG_HOME=tmp, TERM="xterm-256color",
                                   EDITOR="/bin/true", PATH=tmp + ":" + os.environ["PATH"])
-                os.execv(sys.executable, [sys.executable, str(SOURCE)])
+                os.execv(sys.executable, [sys.executable, str(SOURCE), "-p", "home"])
             fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 90, 0, 0))
             def read_until(text):
                 output = bytearray()
@@ -495,7 +516,7 @@ else:
                 os.write(fd, b"\r")
                 read_until("总占用 3.0 GiB")
                 self.assertEqual((root / "calls").read_text().splitlines().count("stats"), 1)
-                os.write(fd, b"hq")
+                os.write(fd, b"hqq")
                 deadline = time.monotonic() + 3
                 while time.monotonic() < deadline:
                     child, status = os.waitpid(pid, os.WNOHANG)
