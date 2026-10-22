@@ -9,6 +9,7 @@ NAS 可使用 SFTP，本地 ext4 等 POSIX 文件系统可直接作为仓库，�
 q-restic                         # 先选择 profile，再进入操作菜单
 q-restic -c /path/config.json     # 使用指定配置
 q-restic -p home                  # 直接进入 home 菜单
+q-restic -p home preflight        # 执行可选的 hooks.preflight 预检
 q-restic -p home backup           # 备份并应用该 profile 的保留策略
 q-restic -p home dry-run          # 只预览；不会初始化仓库
 q-restic -p home status           # 列出版本及数据占用，别名 snapshots / list
@@ -83,11 +84,28 @@ NixOS 的 home 定时服务由 `nix/nixos/modules/restic-home.nix` 显式传入�
 
 ## 备份前后命令
 
-profile 可选 `hooks` 对象，`before_backup` 和 `after_backup` 的值都是非空命令参数列表，
+profile 可选 `hooks` 对象，`preflight`、`before_backup` 和 `after_backup` 的值都是非空命令参数列表，
 例如 `"before_backup": ["/usr/bin/python3", "./prepare.py"]`。命令直接执行，不经过 shell；
 工作目录为配置文件所在目录，并提供 `Q_RESTIC_CONFIG`、`Q_RESTIC_PROFILE` 环境变量。
+
+`preflight` 只在显式执行 `q-restic -p home preflight` 时运行，不获取备份锁、不要求已设置仓库密码；
+未配置对应命令时返回错误。它与备份使用同一执行身份和工作目录。
 
 取得仓库写锁后先执行 `before_backup`，成功才初始化仓库并备份。`after_backup` 在准备、
 初始化或备份失败时也会执行，因此应能安全处理未完成的准备工作；它在旧版本清理之前执行。
 恢复步骤失败会返回非零并跳过清理。`dry-run` 不执行这些命令，也不初始化仓库。
 Ctrl-C、SIGTERM、SIGHUP 会经过恢复步骤；强制杀进程或断电需要准备脚本自行保留恢复状态。
+
+## 执行用户
+
+profile 可选 `run_as`，例如 `"run_as": {"user": "lu5je0", "extra_groups": []}`。
+`user` 必须是本机已有账号，主组使用该账号的默认组；`extra_groups` 是本次执行额外附带的组名列表，
+不会修改系统组成员。通过 sudo/root 启动时，先设置目标组与 UID，再重新启动整个 profile 流程。
+重新加载配置前将 HOME、USER、LOGNAME 及 XDG 配置/缓存路径设为目标用户；
+仓库、锁、缓存、密码文件和备份 hooks 都在该身份下执行，相对配置路径仍以配置文件目录为基准。
+因此执行用户必须有权读取备份源和配置、写入仓库与运行目录。
+
+普通用户只能运行属于自己 UID/主组的 profile，可以查看仓库；备份时若缺少配置要求的附加组，
+需要用 sudo 重新启动。TUI 选择需要切换身份的 profile 时打开独立会话，返回后仍可选择其它 profile。
+本地仓库文件的属主跟随执行用户；SFTP 远端仓库属主仍由连接账号决定。
+`run_as` 不修改已有文件的属主，也不改变快照中记录的源文件属主。

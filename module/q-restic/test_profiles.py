@@ -60,7 +60,7 @@ class ConfigTests(unittest.TestCase):
 
     def test_profile_selection_is_required_even_with_one_profile(self):
         self.path.write_text(json.dumps({'profiles': {'home': profile(self.root, 'home')}}))
-        for command in ('backup', 'dry-run', 'status', 'snapshots', 'list', 'forget', 'restore', 'check', 'unlock'):
+        for command in ('preflight', 'backup', 'dry-run', 'status', 'snapshots', 'list', 'forget', 'restore', 'check', 'unlock'):
             with self.subTest(command=command), patch.object(sys, 'argv', ['q-restic', '-c', str(self.path), command]):
                 with patch.object(q, 'restic_bin') as binary, self.assertRaises(SystemExit):
                     q.main()
