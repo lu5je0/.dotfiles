@@ -55,7 +55,11 @@ in
     })
   ];
 
-  services.displayManager.gdm.enable = true;
+  services.displayManager.gdm = {
+    enable = true;
+    # 登录界面保持待机可用，禁止空闲自动睡眠；不影响用户会话的电源设置。
+    autoSuspend = false;
+  };
   services.desktopManager.gnome.enable = true;
   services.gnome.gnome-remote-desktop.enable = true;
   systemd.user.services.gnome-remote-desktop = {
