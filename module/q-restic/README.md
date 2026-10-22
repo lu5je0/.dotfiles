@@ -2,6 +2,7 @@
 
 按 profile 管理 restic 备份的 Python 标准库 CLI / TUI。运行环境需要提供 `restic`；
 NAS 可使用 SFTP，本地 ext4 等 POSIX 文件系统可直接作为仓库，避免直接写入 CIFS soft 挂载点。
+入口直接使用系统 Python >= 3.9，不依赖 uv 或 `.venv`；root 运行时禁用字节码写入。
 
 ## 使用
 

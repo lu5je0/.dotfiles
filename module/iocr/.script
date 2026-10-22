@@ -1,0 +1,6 @@
+TARGET_NAME=oo
+
+# macOS 的 Vision OCR 需要显式同步可选依赖。
+if [ "$(uname -s)" = "Darwin" ]; then
+  SCRIPT_EXTRAS=macos
+fi

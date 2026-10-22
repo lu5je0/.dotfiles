@@ -1,12 +1,22 @@
 #!/bin/bash
-: "${DOTFILES_DIR:=$HOME/.dotfiles}"
-SCRIPT_PATH=$DOTFILES_DIR/module/iocr
+if [ -z "${DOTFILES_DIR:-}" ]; then
+  launcher_path=${BASH_SOURCE[0]}
+  while [ -L "$launcher_path" ]; do
+    launcher_dir=$(CDPATH= cd -P -- "$(dirname -- "$launcher_path")" && pwd) || exit 1
+    launcher_path=$(readlink "$launcher_path") || exit 1
+    [[ $launcher_path = /* ]] || launcher_path=$launcher_dir/$launcher_path
+  done
+  DOTFILES_DIR=$(CDPATH= cd -P -- "$(dirname -- "$launcher_path")"/../.. && pwd) || exit 1
+  unset launcher_path launcher_dir
+fi
+SCRIPT_PATH="$DOTFILES_DIR"/module/iocr
 SCRIPT_NAME=iocr.py
 
-# macOS 用 Vision API OCR，依赖 pyobjc（Quartz/Vision）。uv run 默认只同步基础依赖，
-# 不带 macos extra 时环境里没有 Quartz，会直接报 No module named 'Quartz'。
+TARGET_NAME=oo
+
+# macOS 的 Vision OCR 需要显式同步可选依赖。
 if [ "$(uname -s)" = "Darwin" ]; then
   SCRIPT_EXTRAS=macos
 fi
 
-source $DOTFILES_DIR/module/python-install/runner.sh
+source "$DOTFILES_DIR/module/python-install/runner.sh"

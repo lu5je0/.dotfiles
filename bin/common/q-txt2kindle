@@ -1,6 +1,17 @@
 #!/bin/bash
-: "${DOTFILES_DIR:=$HOME/.dotfiles}"
-SCRIPT_PATH=$DOTFILES_DIR/module/q-txt2kindle
+if [ -z "${DOTFILES_DIR:-}" ]; then
+  launcher_path=${BASH_SOURCE[0]}
+  while [ -L "$launcher_path" ]; do
+    launcher_dir=$(CDPATH= cd -P -- "$(dirname -- "$launcher_path")" && pwd) || exit 1
+    launcher_path=$(readlink "$launcher_path") || exit 1
+    [[ $launcher_path = /* ]] || launcher_path=$launcher_dir/$launcher_path
+  done
+  DOTFILES_DIR=$(CDPATH= cd -P -- "$(dirname -- "$launcher_path")"/../.. && pwd) || exit 1
+  unset launcher_path launcher_dir
+fi
+SCRIPT_PATH="$DOTFILES_DIR"/module/q-txt2kindle
 SCRIPT_NAME=q-txt2kindle.py
 
-source $DOTFILES_DIR/module/python-install/runner.sh
+SCRIPT_RUNNER=python3
+
+source "$DOTFILES_DIR/module/python-install/runner.sh"

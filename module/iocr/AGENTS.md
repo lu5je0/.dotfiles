@@ -43,8 +43,9 @@ uv sync --extra macos
 uv sync
 ```
 
-一般不需要手动同步：`bin/common/oo` 在 macOS 上会设置 `SCRIPT_EXTRAS=macos`，
+普通用户一般不需要手动同步：`bin/common/oo` 在 macOS 上会设置 `SCRIPT_EXTRAS=macos`，
 由 `module/python-install/runner.sh` 转成 `uv run --extra macos`，环境缺失时会自动补齐。
+root 运行只使用已有 `.venv/bin/python`，不自动同步；需要先以普通用户准备环境和 macos extra。
 （`uv run`/`uv sync` 默认只同步基础依赖，手动 `uv sync` 会把 pyobjc 卸掉，
 因此依赖必须通过 extra 声明，不能只靠一次性安装。）
 

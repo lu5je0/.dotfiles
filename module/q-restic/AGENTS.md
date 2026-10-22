@@ -15,9 +15,10 @@
   （`~` 不展开，字面 `$` 写 `$$`），所以统一写 `$HOME/...`，换机器/换用户名都不用改。
   `restic_env()` 里 `env.setdefault("HOME", ...)` 是兼底：HOME 缺了的话 `$HOME/.cache`
   会展开成 `/.cache`，排除静默失效，几十 G 缓存会被传上去。
-- `pyproject.toml`：无依赖，只为让 `uv run --project` 能起。
-- 入口链接在根仓库 `bin/common/q-restic`，由 `q-python-install q-restic.py` 生成，**不要手改**
-  （它是 runner.sh + uv 的 launcher，改命令名要重新生成）。
+- `pyproject.toml`：声明 Python >= 3.9，无第三方依赖。
+- `.script`：声明 `SCRIPT_RUNNER=python3`，入口通过 runner.sh 调用系统 Python，不创建或同步 `.venv`；root 运行禁用字节码写入。
+- 入口脚本在根仓库 `bin/common/q-restic`，由 `q-python-install q-restic.py` 生成，**不要手改**
+  （运行方式由 `.script` 声明，调整后要重新生成入口）。
 - huskar 系统级定时由 `nix/nixos/hosts/huskar/q-restic/default.nix` 负责，**它直接调 python3 而不是那个入口**：
   定时任务不该依赖 uv / `.venv` / flake 求值，而本脚本只用标准库。
 
