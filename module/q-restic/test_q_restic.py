@@ -164,6 +164,19 @@ class RetentionTests(unittest.TestCase):
         self.assertEqual({s["id"] for s in q.retention_removals(groups)},
                          {snapshot(1)["id"], snapshot(4)["id"]})
 
+    def test_reason_without_id_matches_full_snapshot_or_fails_closed(self):
+        group = self.retention_group({1: ["oldest weekly snapshot"], 2: ["daily snapshot"]})
+        for reason in group["reasons"]:
+            reason["snapshot"] = {k: v for k, v in reason["snapshot"].items() if k not in ("id", "short_id")}
+        self.assertEqual([s["id"] for s in q.retention_removals([group])], [snapshot(1)["id"]])
+        group["reasons"][0]["snapshot"]["time"] = "unknown"
+        with self.assertRaisesRegex(RuntimeError, "无法唯一匹配"):
+            q.retention_removals([group])
+        group["reasons"][0]["snapshot"] = group["reasons"][1]["snapshot"]
+        group["keep"][0]["time"] = group["keep"][1]["time"]
+        with self.assertRaisesRegex(RuntimeError, "无法唯一匹配"):
+            q.retention_removals([group])
+
     def test_single_snapshot_and_empty_repository_are_preserved(self):
         group = self.retention_group({1: ["daily snapshot", "weekly snapshot"]})
         self.assertEqual(q.retention_removals([group]), [])

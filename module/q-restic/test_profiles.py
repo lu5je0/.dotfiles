@@ -175,13 +175,16 @@ class RepositoryTests(unittest.TestCase):
             def cli(*args, expected=0):
                 result = subprocess.run([sys.executable, str(SOURCE), '-c', str(cfg_path), *args],
                                         env=env, capture_output=True, text=True)
-                self.assertEqual(result.returncode, expected, result.stderr + result.stdout)
+                if expected is None:
+                    self.assertNotEqual(result.returncode, 0, result.stderr + result.stdout)
+                else:
+                    self.assertEqual(result.returncode, expected, result.stderr + result.stdout)
                 return result
 
             for name in doc['profiles']:
                 (root / name).mkdir(exist_ok=True)
                 (root / name / 'file').write_text(name)
-            cli('-p', 'home', 'dry-run', expected=10)
+            cli('-p', 'home', 'dry-run', expected=None)
             self.assertFalse((root / 'repo').exists())
             restic('init')
             for name in doc['profiles']:

@@ -78,3 +78,14 @@ CLI 备份缺少密码时直接报错，不进入交互输入。密码不会写�
 
 NixOS 的 home 定时服务由 `nix/nixos/modules/restic-home.nix` 显式传入配置和 profile，
 修改后需重新部署系统配置。配置只需包含顶层 `profiles` 对象。
+
+## 备份前后命令
+
+profile 可选 `hooks` 对象，`before_backup` 和 `after_backup` 的值都是非空命令参数列表，
+例如 `"before_backup": ["/usr/bin/python3", "./prepare.py"]`。命令直接执行，不经过 shell；
+工作目录为配置文件所在目录，并提供 `Q_RESTIC_CONFIG`、`Q_RESTIC_PROFILE` 环境变量。
+
+取得仓库写锁后先执行 `before_backup`，成功才初始化仓库并备份。`after_backup` 在准备、
+初始化或备份失败时也会执行，因此应能安全处理未完成的准备工作；它在旧版本清理之前执行。
+恢复步骤失败会返回非零并跳过清理。`dry-run` 不执行这些命令，也不初始化仓库。
+Ctrl-C、SIGTERM、SIGHUP 会经过恢复步骤；强制杀进程或断电需要准备脚本自行保留恢复状态。

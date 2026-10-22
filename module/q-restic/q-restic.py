@@ -119,6 +119,13 @@ def profile_config(document, name):
     for key in ("excludes", "mount_dir", "restore_dir"):
         if key in cfg and (not isinstance(cfg[key], str) or not cfg[key]):
             die(f"profile {name} 的 {key} 必须是非空路径")
+    hooks = cfg.get("hooks", {})
+    if (not isinstance(hooks, dict) or set(hooks) - {"before_backup", "after_backup"}
+            or any(not isinstance(argv, list) or not argv
+                   or not all(isinstance(arg, str) and arg for arg in argv)
+                   for argv in hooks.values())):
+        die(f"profile {name} 的 hooks 必须是 before_backup/after_backup 命令参数列表")
+    cfg["hooks"] = {name: list(argv) for name, argv in hooks.items()}
     cfg["sources"] = [os.path.abspath(config_path(path)) for path in sources]
     for key in ("password_file", "excludes", "mount_dir", "restore_dir"):
         if key in cfg:
@@ -400,6 +407,53 @@ def ensure_repo(restic, cfg):
             die("仓库初始化失败")
 
 
+def run_backup_hook(cfg, name):
+    argv = cfg.get("hooks", {}).get(name)
+    if not argv:
+        return 0
+    env = dict(os.environ, Q_RESTIC_CONFIG=str(CONFIG_FILE), Q_RESTIC_PROFILE=cfg.get("_profile", ""))
+    info(f"执行 {name}")
+    try:
+        with subprocess.Popen(argv, cwd=CONFIG_FILE.parent, env=env, start_new_session=True) as proc:
+            try:
+                code = proc.wait()
+            except BaseException:
+                # 停止整个 hook 进程组，再执行恢复 hook，避免准备子进程继续写入。
+                try:
+                    os.killpg(proc.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                    proc.wait()
+                raise
+    except OSError as exc:
+        warn(f"{name} 无法执行: {exc}")
+        return 1
+    if code:
+        warn(f"{name} 失败（退出码 {code}）")
+    return code if code >= 0 else 128 - code
+
+
+@contextmanager
+def backup_signals(cfg):
+    """让带恢复 hook 的备份收到终止信号时也经过 finally。"""
+    previous = {}
+    def terminate(signum, frame):
+        signal.signal(signum, signal.SIG_IGN)
+        raise SystemExit(128 + signum)
+    if cfg.get("hooks") and threading.current_thread() is threading.main_thread():
+        for signum in (signal.SIGTERM, signal.SIGHUP):
+            previous[signum] = signal.signal(signum, terminate)
+    try:
+        yield
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+
+
 def do_backup(cfg, dry_run=False):
     restic = restic_bin()
     require_password(cfg)
@@ -416,11 +470,19 @@ def do_backup(cfg, dry_run=False):
         code = run_stream(restic, cfg, args)
         info("dry-run 结束，仓库未改动")
         return code
-    with writer_lock(cfg):
-        preflight_sftp(cfg)
-        ensure_repo(restic, cfg)
-        info(f"备份 {', '.join(cfg['sources'])} → {cfg['repository']}")
-        code = run_stream(restic, cfg, args)
+    with writer_lock(cfg), backup_signals(cfg):
+        try:
+            code = run_backup_hook(cfg, "before_backup")
+            if code == 0:
+                preflight_sftp(cfg)
+                ensure_repo(restic, cfg)
+                info(f"备份 {', '.join(cfg['sources'])} → {cfg['repository']}")
+                code = run_stream(restic, cfg, args)
+        finally:
+            after_code = run_backup_hook(cfg, "after_backup")
+        if after_code:
+            warn("备份恢复步骤失败，跳过旧版本清理；请检查 after_backup 输出")
+            return code or after_code
         if code not in (0, 3):
             # 没建快照（含仓库不存在/被锁/密码错），别动旧版本。
             return code
@@ -463,8 +525,20 @@ def retention_removals(groups):
         for group in groups:
             kept = {snap["id"]: snap for snap in group["keep"]}
             removed = {snap["id"]: snap for snap in group.get("remove") or []}
-            reasons = {reason["snapshot"]["id"]: reason["matches"]
-                       for reason in group["reasons"]}
+            reasons = {}
+            for reason in group["reasons"]:
+                snap = reason["snapshot"]
+                sid = snap.get("id")
+                if sid is None:
+                    # restic 0.14 的理由不带 ID，只能按完整快照内容唯一匹配。
+                    candidates = [key for key, item in kept.items()
+                                  if {k: v for k, v in item.items() if k not in ("id", "short_id")} == snap]
+                    if len(candidates) != 1:
+                        raise ValueError("保留理由无法唯一匹配快照")
+                    sid = candidates[0]
+                if sid in reasons:
+                    raise ValueError("保留理由重复")
+                reasons[sid] = reason["matches"]
             if not kept or kept.keys() != reasons.keys() or kept.keys() & removed.keys():
                 raise ValueError("保留列表与理由不一致")
             for sid, matches in reasons.items():
