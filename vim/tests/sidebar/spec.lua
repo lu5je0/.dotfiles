@@ -69,6 +69,40 @@ r.run('directory aggregation excludes ignored files', function()
   r.assert_eq(map['pkg/'].hl, 'SidebarGitStaged')
 end)
 
+r.run('directory summary distinguishes index-only changes from pending work', function()
+  for _, case in ipairs({
+    { 'D ', 'SidebarGitStaged' },
+    { 'R ', 'SidebarGitStaged' },
+    { 'C ', 'SidebarGitStaged' },
+    { 'MM', 'SidebarGitDirty' },
+    { 'AM', 'SidebarGitDirty' },
+    { 'AD', 'SidebarGitDirty' },
+  }) do
+    local xy, expected = unpack(case)
+    local stdout = xy .. ' pkg/file.txt\0'
+    if xy:match('^[RC]') then stdout = stdout .. 'old.txt\0' end
+    local map = files._build_git_status_map(stdout)
+    r.assert_eq(map['pkg/'].hl, expected, xy)
+    r.assert_eq(map['pkg/'].glyph, config.files.git_directory_glyphs.changed, xy)
+  end
+end)
+
+r.run('all merge conflict types override other states throughout the directory tree', function()
+  for _, xy in ipairs({ 'DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU' }) do
+    local map = files._build_git_status_map(table.concat({
+      'A  pkg/staged.txt',
+      '?? pkg/new.txt',
+      ' M pkg/dirty.txt',
+      xy .. ' pkg/nested/conflict.txt',
+      '',
+    }, '\0'))
+    r.assert_eq(map['pkg/'].hl, 'SidebarGitConflict', xy)
+    r.assert_eq(map['pkg/'].glyph, '!', xy)
+    r.assert_eq(map['pkg/nested/'].glyph, '!', xy)
+    r.assert_eq(map['pkg/nested/conflict.txt'].glyph, config.files.git_glyphs.unmerged, xy)
+  end
+end)
+
 r.run('nested directories all receive the aggregated status', function()
   local map = files._build_git_status_map(' M a/b/c/file.txt\0')
   r.assert_eq(map['a/'].hl, 'SidebarGitDirty')
@@ -268,6 +302,41 @@ r.run('file_suffix produces a virt_text entry', function()
   r.assert_eq(#virt_texts, 1)
   r.assert_eq(virt_texts[1].line, 0)
   r.assert_eq(virt_texts[1].virt_text, { { 'M', 'SidebarGitDirty' } })
+end)
+
+r.run('Files collapses mixed statuses to one dot and expands to specific file icons', function()
+  local state = require('lu5je0.ext.sidebar.state')
+  local saved_map, saved_root = state.files.git_status_map, state.files.git_root
+  local cwd = vim.fn.getcwd()
+  state.files.git_root = cwd
+  state.files.git_status_map = files._build_git_status_map(table.concat({
+    ' D pkg/deleted.txt', '?? pkg/new.txt', 'A  pkg/staged.txt', '!! ignored/', '',
+  }, '\0'))
+  local children = {}
+  for _, name in ipairs({ 'deleted.txt', 'new.txt', 'staged.txt' }) do
+    local child = file_node(name)
+    child.abs_path = cwd .. '/pkg/' .. name
+    children[#children + 1] = child
+  end
+  local pkg = dir_node('pkg', children, false)
+  pkg.abs_path = cwd .. '/pkg'
+  local clean, ignored = dir_node('clean', {}, false), dir_node('ignored', {}, false)
+  clean.abs_path, ignored.abs_path = cwd .. '/clean', cwd .. '/ignored'
+  local opts = files._spec.render_opts(state.files, {})
+  local _, _, _, collapsed = render.render_tree({ pkg, clean, ignored }, opts)
+  pkg.expanded = true
+  local _, _, _, expanded = render.render_tree({ pkg }, opts)
+  state.files.git_status_map, state.files.git_root = saved_map, saved_root
+
+  r.assert_eq(collapsed, {
+    { line = 0, virt_text = { { '●', 'SidebarGitDirectoryDirty' } } },
+    { line = 2, virt_text = { { config.files.git_glyphs.ignored, 'SidebarGitIgnored' } } },
+  })
+  r.assert_eq(expanded, {
+    { line = 1, virt_text = { { config.files.git_glyphs.deleted, 'SidebarGitDirty' } } },
+    { line = 2, virt_text = { { config.files.git_glyphs.untracked, 'SidebarGitNew' } } },
+    { line = 3, virt_text = { { config.files.git_glyphs.staged, 'SidebarGitStaged' } } },
+  })
 end)
 
 r.run('item_data fields are merged into items', function()

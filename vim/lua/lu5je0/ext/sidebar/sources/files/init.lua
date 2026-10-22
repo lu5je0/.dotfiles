@@ -32,14 +32,8 @@ local function dir_suffix(node)
   if node.expanded then return end
   local g = git.status_for_node(node)
   if not g then return end
-  if g.glyphs and #g.glyphs > 1 then
-    local vt = {}
-    for _, gl in ipairs(g.glyphs) do
-      vt[#vt + 1] = { gl[1], gl[2] }
-    end
-    return '', vt
-  end
-  return g.glyph, g.hl
+  local hl = g.hl == 'SidebarGitDirty' and 'SidebarGitDirectoryDirty' or g.hl
+  return g.glyph, hl
 end
 
 local function dotfile_hl(node)

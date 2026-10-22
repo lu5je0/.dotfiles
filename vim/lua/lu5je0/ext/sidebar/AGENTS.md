@@ -78,6 +78,10 @@ sidebar/
 
 - 全部 highlight 集中在 `config.highlights` 表（包括 `Sidebar*`、`GitChanges*`、`GitFileStatus*`），由 `init.setup` → `config.apply_highlights()` 应用。
 - ColorScheme 切换时 `autocmds.lua` 会重新 apply。
+- Files 的折叠目录将 Git 状态汇总为单个 `●`，优先级为冲突 > 未暂存 > 未跟踪 > 已暂存；
+  冲突用红色 `!`，未暂存用琥珀色、未跟踪用紫色、已暂存用蓝色。已展开目录不显示汇总，
+  文件保留具体状态图标，被忽略的目录保留灰色 `◌`；目录汇总单独判断工作区状态，
+  同一文件同时有已暂存与未暂存修改时按未暂存汇总。
 
 ## 性能规则
 

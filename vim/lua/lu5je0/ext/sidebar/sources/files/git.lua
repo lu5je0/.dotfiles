@@ -10,7 +10,8 @@ local tree = require('lu5je0.ext.sidebar.sources.files.tree')
 
 local M = {}
 
-local DIR_HL_ORDER = { 'SidebarGitDirty', 'SidebarGitNew', 'SidebarGitStaged' }
+local DIR_HL_ORDER = { 'SidebarGitConflict', 'SidebarGitDirty', 'SidebarGitNew', 'SidebarGitStaged' }
+local UNMERGED = { DD = true, AU = true, UD = true, UA = true, DU = true, AA = true, UU = true }
 
 --- Convert XY status bytes into the glyph + hl group used in the tree.
 function M.status_to_glyph(xy)
@@ -19,6 +20,8 @@ function M.status_to_glyph(xy)
     return config.files.git_glyphs.ignored, 'SidebarGitIgnored'
   elseif xy == '??' then
     return config.files.git_glyphs.untracked, 'SidebarGitNew'
+  elseif UNMERGED[xy] then
+    return config.files.git_glyphs.unmerged, 'SidebarGitConflict'
   elseif x == 'D' or y == 'D' then
     return config.files.git_glyphs.deleted, 'SidebarGitDirty'
   elseif x == 'R' then
@@ -49,6 +52,13 @@ function M.build_status_map(stdout)
       local glyph, hl = M.status_to_glyph(xy)
       map[path] = { xy = xy, glyph = glyph, hl = hl }
       if xy == '!!' then goto next end
+      -- Summaries prioritize pending work even when a file's icon favors the index.
+      local dir_hl = hl
+      if not UNMERGED[xy] and xy ~= '??' then
+        dir_hl = xy:sub(2, 2) ~= ' ' and 'SidebarGitDirty' or 'SidebarGitStaged'
+      end
+      local dir_glyph = UNMERGED[xy] and config.files.git_directory_glyphs.unmerged
+        or config.files.git_directory_glyphs.changed
       local parts = vim.split(path, '/', { trimempty = true })
       local dir = ''
       for pi = 1, #parts - 1 do
@@ -58,8 +68,8 @@ function M.build_status_map(stdout)
           bucket = {}
           dir_hls[dir] = bucket
         end
-        if not bucket[hl] then
-          bucket[hl] = { xy = xy, glyph = glyph, hl = hl }
+        if not bucket[dir_hl] then
+          bucket[dir_hl] = { xy = xy, glyph = dir_glyph, hl = dir_hl }
         end
       end
     end
@@ -67,17 +77,12 @@ function M.build_status_map(stdout)
     i = i + 1
   end
   for dir, bucket in pairs(dir_hls) do
-    local glyphs = {}
-    local winner
     for _, hl in ipairs(DIR_HL_ORDER) do
       local info = bucket[hl]
       if info then
-        glyphs[#glyphs + 1] = { info.glyph, info.hl }
-        if not winner then winner = info end
+        map[dir .. '/'] = info
+        break
       end
-    end
-    if winner then
-      map[dir .. '/'] = { xy = winner.xy, glyph = winner.glyph, hl = winner.hl, glyphs = glyphs }
     end
   end
   return map

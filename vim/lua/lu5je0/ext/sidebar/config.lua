@@ -28,6 +28,8 @@ M.highlights = {
   { 'SidebarFolderIcon', { link = 'Directory', default = true } },
   { 'SidebarRootFolder', { fg = '#e06c75', default = true } },
   { 'SidebarGitDirty', { fg = '#e06c75', default = true } },
+  { 'SidebarGitDirectoryDirty', { fg = '#d7aa62', default = true } },
+  { 'SidebarGitConflict', { fg = '#e06c75', default = true } },
   { 'SidebarGitNew', { fg = '#c678dd', default = true } },
   { 'SidebarGitStaged', { fg = '#51afef', default = true } },
   { 'SidebarGitIgnored', { fg = '#5c6370', default = true } },
@@ -66,6 +68,10 @@ M.highlights = {
 }
 
 M.files = {
+  git_directory_glyphs = {
+    changed = '●',
+    unmerged = '!',
+  },
   git_glyphs = {
     unstaged  = '✗',
     staged    = '✓',
