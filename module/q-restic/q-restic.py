@@ -922,11 +922,36 @@ def do_unmount(cfg, override=None):
     if not is_mounted(target):
         info(f"{target} 未挂载，无需卸载")
         return 0
-    for cmd in (["fusermount3", "-u"], ["fusermount", "-u"], ["umount"]):
-        if shutil.which(cmd[0]) and subprocess.call(cmd + [str(target)]) == 0:
-            info(f"已卸载 {target}")
-            return 0
-    die(f"卸载失败，可能还有程序在用 {target}")
+    commands = (("fusermount3", ["-u"], ["-u", "-z"]),
+                ("fusermount", ["-u"], ["-u", "-z"]),
+                ("umount", [], ["-l"]))
+    errors = []
+    busy = False
+    # 固定诊断语言，只对 EBUSY 做延迟卸载；权限等错误仍直接报告失败。
+    env = dict(os.environ, LC_ALL="C")
+    for lazy in (False, True):
+        if lazy and not busy:
+            break
+        for name, normal_args, lazy_args in commands:
+            helper = shutil.which(name)
+            if not helper:
+                continue
+            result = subprocess.run(
+                [helper] + (lazy_args if lazy else normal_args) + [str(target)],
+                capture_output=True, text=True, env=env,
+            )
+            if result.returncode == 0:
+                info(f"已延迟卸载 {target}（现有访问结束后释放资源）" if lazy
+                     else f"已卸载 {target}")
+                return 0
+            detail = result.stderr.strip() or result.stdout.strip()
+            busy = busy or "busy" in detail.lower()
+            errors.append(detail or f"{name}: 退出码 {result.returncode}")
+    if not errors:
+        die("找不到 fusermount3/fusermount/umount，无法卸载")
+    for detail in dict.fromkeys(errors):
+        print(detail, file=sys.stderr)
+    die(f"卸载失败，请关闭占用 {target} 的程序或检查卸载权限")
 
 
 # ── kitty IME 闸门 ────────────────────────────────────────────

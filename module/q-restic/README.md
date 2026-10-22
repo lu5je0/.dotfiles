@@ -83,6 +83,10 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 `mount_dir` 默认 `/tmp/restic-mnt/<profile>`，`restore_dir` 默认 `~/restic-restore/<profile>`。
 多目录快照恢复后，各源目录的绝对路径树都位于恢复目标下。
 
+`q-restic -p home browse` 只读挂载并用文件管理器打开，`q-restic -p home unmount` 卸载。
+普通卸载因目录被占用而失败时，自动改用延迟卸载：立即移除挂载入口，现有访问结束后释放资源。
+权限等其它错误仍会报错；不会终止占用目录的程序。
+
 `q-restic config` 输出合并后的 JSON，`q-restic -p home config` 输出该 profile 解析后的配置；
 提示信息不混入 stdout。
 

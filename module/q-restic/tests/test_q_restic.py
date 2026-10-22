@@ -98,6 +98,89 @@ class DiffTests(unittest.TestCase):
         self.app.term.suspend.assert_not_called()
 
 
+class UnmountTests(unittest.TestCase):
+    def setUp(self):
+        self.cfg = {"mount_dir": "/tmp/restic-mnt/test"}
+        self.out, self.err = io.StringIO(), io.StringIO()
+        self.enterContext(contextlib.redirect_stdout(self.out))
+        self.enterContext(contextlib.redirect_stderr(self.err))
+        self.mounted = self.enterContext(patch.object(q, "is_mounted", return_value=True))
+        self.enterContext(patch.object(q.subprocess, "call", side_effect=AssertionError(
+            "卸载测试不能调用真实子进程")))
+
+    def test_unmounted_directory_needs_no_helper(self):
+        self.mounted.return_value = False
+        with patch.object(q.subprocess, "run") as run:
+            self.assertEqual(q.do_unmount(self.cfg), 0)
+        run.assert_not_called()
+
+    def test_normal_unmount_stops_at_first_success(self):
+        with patch.object(q.shutil, "which", side_effect=lambda name: name), patch.object(
+            q.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)
+        ) as run:
+            self.assertEqual(q.do_unmount(self.cfg), 0)
+        self.assertEqual(run.call_args_list[0].args[0],
+                         ["fusermount3", "-u", self.cfg["mount_dir"]])
+        self.assertEqual(run.call_count, 1)
+        self.assertNotIn("延迟", self.out.getvalue() + self.err.getvalue())
+
+    def test_busy_mount_uses_available_lazy_helper(self):
+        for helper, normal, lazy in (("fusermount3", ["-u"], ["-u", "-z"]),
+                                     ("fusermount", ["-u"], ["-u", "-z"]),
+                                     ("umount", [], ["-l"])):
+            with self.subTest(helper=helper), patch.object(
+                q.shutil, "which", side_effect=lambda name: name if name == helper else None
+            ), patch.object(q.subprocess, "run", side_effect=[
+                subprocess.CompletedProcess([], 1, "", "Device or resource busy"),
+                subprocess.CompletedProcess([], 0, "", ""),
+            ]) as run:
+                self.assertEqual(q.do_unmount(self.cfg), 0)
+                self.assertEqual([call.args[0] for call in run.call_args_list],
+                                 [[helper] + flags + [self.cfg["mount_dir"]]
+                                  for flags in (normal, lazy)])
+                self.assertEqual(run.call_args_list[0].kwargs["env"]["LC_ALL"], "C")
+        self.assertIn("延迟卸载", self.out.getvalue())
+        self.assertNotIn("Device or resource busy", self.err.getvalue())
+
+    def test_normal_helper_fallback_precedes_lazy_unmount(self):
+        with patch.object(q.shutil, "which", side_effect=lambda name: name), patch.object(
+            q.subprocess, "run", side_effect=[
+                subprocess.CompletedProcess([], 1, "", "target is busy"),
+                subprocess.CompletedProcess([], 0, "", ""),
+            ]
+        ) as run:
+            self.assertEqual(q.do_unmount(self.cfg), 0)
+        self.assertEqual([call.args[0] for call in run.call_args_list], [
+            ["fusermount3", "-u", self.cfg["mount_dir"]],
+            ["fusermount", "-u", self.cfg["mount_dir"]],
+        ])
+        self.assertNotIn("延迟", self.out.getvalue() + self.err.getvalue())
+
+    def test_permission_error_does_not_trigger_lazy_unmount(self):
+        with patch.object(q.shutil, "which", side_effect=lambda name: name), patch.object(
+            q.subprocess, "run", return_value=subprocess.CompletedProcess(
+                [], 1, "", "Operation not permitted")
+        ) as run, self.assertRaises(SystemExit) as error:
+            q.do_unmount(self.cfg)
+        self.assertEqual(error.exception.code, 1)
+        self.assertEqual(run.call_count, 3)
+        self.assertIn("Operation not permitted", self.err.getvalue())
+        self.assertNotIn("延迟", self.err.getvalue())
+
+    def test_lazy_failure_and_missing_helpers_remain_failures(self):
+        for available in (True, False):
+            with self.subTest(available=available), patch.object(
+                q.shutil, "which", side_effect=lambda name: name if available else None
+            ), patch.object(q.subprocess, "run", return_value=subprocess.CompletedProcess(
+                [], 1, "", "target is busy")
+            ) as run, self.assertRaises(SystemExit) as error:
+                q.do_unmount(self.cfg)
+            self.assertEqual(error.exception.code, 1)
+            self.assertEqual(run.call_count, 6 if available else 0)
+        self.assertNotIn("已卸载", self.out.getvalue())
+        self.assertNotIn("已延迟卸载", self.out.getvalue())
+
+
 class RetentionTests(unittest.TestCase):
     def setUp(self):
         self.cfg = test_config()
