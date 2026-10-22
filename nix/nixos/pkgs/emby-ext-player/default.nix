@@ -17,7 +17,7 @@ stdenv.mkDerivation rec {
   # 私有仓库，走 SSH（fetchFromGitHub 匿名 HTTPS 会 404）
   src = builtins.fetchGit {
     url = "ssh://git@github.com/lu5je0/emby-local-player.git";
-    rev = "c6e3064c777b2ac6a9bb08eaf8aca923c9e81b30";
+    rev = "8d7e4deec6bc08c30838479491fe0f06b7984d36";
     shallow = true;
   };
 
