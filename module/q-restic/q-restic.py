@@ -226,10 +226,35 @@ def run(restic, cfg, args, capture=True, check=False):
     )
 
 
+class RepositoryNotInitialized(RuntimeError):
+    """尚无仓库；读取操作只提示，首次备份负责初始化。"""
+
+
+def repository_missing(result, cfg):
+    if result.returncode == 10:
+        return True
+    # restic 0.14 没有专用退出码。仅对本地路径同时检查错误和 config 缺失；
+    # 不能把密码错误、权限不足或网络失败都当成尚未初始化。
+    message = (result.stderr or "").lower()
+    if (result.returncode != 1 or ":" in cfg["repository"]
+            or "unable to open config file:" not in message
+            or "no such file or directory" not in message):
+        return False
+    try:
+        (expand(cfg["repository"]) / "config").stat()
+    except FileNotFoundError:
+        return True
+    except OSError:
+        pass
+    return False
+
+
 def run_json(restic, cfg, args, *, strict=False):
     res = run(restic, cfg, args)
     if res.returncode != 0:
         if strict:
+            if repository_missing(res, cfg):
+                raise RepositoryNotInitialized("仓库未初始化，首次备份会自动创建")
             raise RuntimeError(res.stderr.strip() or res.stdout.strip()
                                or f"restic 退出码 {res.returncode}")
         return None
@@ -361,7 +386,13 @@ def writer_lock(cfg):
 
 
 def repo_ready(restic, cfg):
-    return run(restic, cfg, ["cat", "config"]).returncode == 0
+    result = run(restic, cfg, ["cat", "config"])
+    if result.returncode == 0:
+        return True
+    if repository_missing(result, cfg):
+        return False
+    raise RuntimeError(result.stderr.strip() or result.stdout.strip()
+                       or f"restic 退出码 {result.returncode}")
 
 
 def preflight_sftp(cfg, quiet=False):
@@ -401,7 +432,11 @@ def preflight_sftp(cfg, quiet=False):
 
 
 def ensure_repo(restic, cfg):
-    if not repo_ready(restic, cfg):
+    try:
+        ready = repo_ready(restic, cfg)
+    except (OSError, RuntimeError) as exc:
+        die(f"无法读取仓库: {exc}")
+    if not ready:
         info(f"初始化仓库 {cfg['repository']}")
         if run_stream(restic, cfg, ["init"]) != 0:
             die("仓库初始化失败")
@@ -637,6 +672,10 @@ def do_status(cfg):
     require_password(cfg)
     try:
         snaps = snapshots(restic, cfg)
+    except RepositoryNotInitialized as exc:
+        info(f"profile {cfg.get('_profile', '')} · 仓库 {cfg['repository']}")
+        print(f"{exc}。运行 `{command_hint(cfg, 'backup')}` 开始。")
+        return 0
     except (OSError, RuntimeError) as exc:
         warn(f"读取仓库失败: {exc}")
         return 1
@@ -1200,6 +1239,7 @@ class App:
         self.snaps = []
         self.loading = False
         self.load_error = ""
+        self.repo_uninitialized = False
         self.repo_size = None
         self.repo_size_loading = False
         self.repo_size_loaded = False
@@ -1238,6 +1278,7 @@ class App:
         self._requests.pop("snapshots", None)
         self.loading = False
         self.load_error = ""
+        self.repo_uninitialized = False
         if not self.cfg:
             return
         if not password_ready(self.cfg):
@@ -1257,6 +1298,8 @@ class App:
         def worker():
             try:
                 result, error = loader(self.restic, cfg), ""
+            except RepositoryNotInitialized as exc:
+                result, error = None, exc
             except Exception as exc:
                 result, error = None, str(exc) or type(exc).__name__
             self._results.put((kind, request, result, error))
@@ -1265,7 +1308,7 @@ class App:
 
     def start_stats_load(self):
         """进入版本列表后按需统计，同一次会话内复用结果。"""
-        if (self.screen != "snapshots" or self.loading or self.load_error
+        if (self.screen != "snapshots" or self.loading or self.load_error or self.repo_uninitialized
                 or self.repo_size_loaded or self.repo_size_loading):
             return
         self.repo_size_loading = True
@@ -1283,7 +1326,11 @@ class App:
             del self._requests[kind]
             if kind == "snapshots":
                 self.loading = False
-                self.load_error = error
+                self.repo_uninitialized = isinstance(error, RepositoryNotInitialized) and not self.snaps
+                if self.repo_uninitialized:
+                    result, error = [], ""
+                    self.invalidate_stats()
+                self.load_error = str(error) if error else ""
                 if error:
                     continue
                 old_ids = [snap.get("id", snap["short_id"]) for snap in self.snaps]
@@ -1308,7 +1355,7 @@ class App:
                 if not error and (not isinstance(size, int) or size < 0):
                     error = "restic 返回的总占用格式无效"
                 self.repo_size = None if error else size
-                self.repo_size_error = error
+                self.repo_size_error = str(error) if error else ""
                 self.repo_size_loading = False
                 self.repo_size_loaded = True
         self.start_stats_load()
@@ -1349,6 +1396,8 @@ class App:
             right = "刷新版本中…" if self.snaps else "读取仓库中…"
         elif self.load_error:
             right = "刷新失败 · 显示已有版本" if self.snaps else "读取仓库失败"
+        elif self.repo_uninitialized:
+            right = "仓库未初始化"
         else:
             right = f"{len(self.snaps)} 个版本"
             if self.latest():
@@ -1370,6 +1419,8 @@ class App:
         if self.screen == "menu":
             return self.cfg["repository"]
         if self.screen == "snapshots":
+            if self.repo_uninitialized:
+                return "首次备份将自动初始化仓库"
             size = ("统计中…" if not self.load_error and not self.repo_size_loaded else
                     human_size(self.repo_size) if self.repo_size is not None else "不可用")
             return f"总占用 {size} · 选中版本后按 Enter 查看操作"
@@ -1433,13 +1484,15 @@ class App:
 
     def menu_items(self):
         return [
-            {"label": "立即备份", "desc": "创建当前 profile 的快照，完成后按保留策略清理",
+            {"label": "立即备份", "desc": ("初始化仓库并创建首个快照" if self.repo_uninitialized
+                                          else "创建当前 profile 的快照，完成后按保留策略清理"),
              "run": self.act_backup},
             {"label": "试运行", "desc": "只扫描并列出版本差异，不写入仓库",
              "run": self.act_dry_run},
             {"label": "版本列表",
              "desc": ("读取仓库中…" if self.loading
                       else "读取失败，进入后可重试" if self.load_error
+                      else "仓库未初始化，先执行一次备份" if self.repo_uninitialized
                       else f"共 {len(self.snaps)} 个版本，可浏览 / 恢复 / 对比 / 删除"),
              "goto": "snapshots"},
             {"label": "挂载并浏览", "desc": "后台只读挂载，用文件管理器打开",
@@ -1474,6 +1527,8 @@ class App:
                 return [{"label": "读取仓库中…", "desc": "正在从 NAS 拉取版本列表", "run": None}]
             if self.load_error:
                 items = [{"label": "读取仓库失败", "desc": "返回主菜单后重新进入可重试", "run": None}]
+            elif self.repo_uninitialized:
+                items = [{"label": "仓库未初始化", "desc": "回到菜单选择「立即备份」创建首个快照", "run": None}]
             else:
                 items = [{"label": "还没有任何版本", "desc": "先回上一层跑一次备份", "run": None}]
         return items
@@ -1814,6 +1869,7 @@ class App:
             self.loading = False
             self.snaps, self.active_snap = [], None
             self.load_error = ""
+            self.repo_uninitialized = False
             self.invalidate_stats()
         else:
             self.cfg = cfg
@@ -1877,6 +1933,7 @@ class App:
             self.loading = False
             self.invalidate_stats()
             self.load_error = ""
+            self.repo_uninitialized = False
         return None
 
     def handle(self, key):

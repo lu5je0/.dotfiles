@@ -21,6 +21,8 @@ q-restic -p home unlock           # 整个仓库的残留锁清理
 `-c/--config`、`-p/--profile` 可放在子命令前或后。默认配置是
 `~/.config/q-restic/config.json`。CLI 仓库操作必须显式指定 profile，即使文件里只有一个；
 未知 profile、显式指定的配置文件不存在时立即报错，不回退到 home 或其它仓库。
+仓库尚未创建时显示「仓库未初始化」，首次 `backup` 自动创建；查看状态不会初始化仓库。
+密码、权限或连接错误仍会报告读取失败。
 TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 profile 列表，再按一次退出。
 
 定时任务直接调用系统 Python，例如：
