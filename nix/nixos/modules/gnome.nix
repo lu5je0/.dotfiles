@@ -27,6 +27,7 @@ in
 
   environment.systemPackages = shellExtensions ++ [
     pkgs.gjs
+    pkgs.gnome-tweaks
     # Qt6 应用（peazip 等）的 Adwaita 风格窗口装饰插件，配合下面的 QT_WAYLAND_DECORATION 使用
     pkgs.qadwaitadecorations-qt6
   ];

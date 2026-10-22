@@ -7,7 +7,6 @@ in
   environment.systemPackages =
     common.systemPackages
     ++ (with pkgs; [
-      gnome-tweaks
       bubblewrap
       net-tools
     ]);
