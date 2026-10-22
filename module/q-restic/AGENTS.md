@@ -9,7 +9,8 @@
 - `q-restic.py`：唯一入口，同时是 CLI 和 TUI。仅用 Python 3 标准库。
   - CLI 子命令给脚本/定时任务用；不带参数且 stdin 是 tty 时进 TUI。
   - TUI 的备用屏、cbreak、SIGWINCH 唤醒管道、CJK 宽度计算都对齐根目录 `setup.py` 的写法，改交互时先读那份。
-- `excludes.txt`：restic 排除清单，`q-restic edit-excludes` 可直接编辑。
+- restic 排除清单由 profile 的 `excludes` 引用；主机配置与清单放在 Nix 主机目录，不放工具代码目录。
+  可写清单用 `q-restic -p <profile> edit-excludes` 编辑，Nix 部署的只读清单修改源文件后 rebuild。
   **路径里不要写死 `/home/<用户名>`**：restic 用 `os.ExpandEnv` 展开 exclude 文件里的环境变量
   （`~` 不展开，字面 `$` 写 `$$`），所以统一写 `$HOME/...`，换机器/换用户名都不用改。
   `restic_env()` 里 `env.setdefault("HOME", ...)` 是兼底：HOME 缺了的话 `$HOME/.cache`
@@ -17,7 +18,7 @@
 - `pyproject.toml`：无依赖，只为让 `uv run --project` 能起。
 - 入口链接在根仓库 `bin/common/q-restic`，由 `q-python-install q-restic.py` 生成，**不要手改**
   （它是 runner.sh + uv 的 launcher，改命令名要重新生成）。
-- 系统级定时由 `nix/nixos/modules/restic-home.nix` 负责，**它直接调 python3 而不是那个入口**：
+- huskar 系统级定时由 `nix/nixos/hosts/huskar/q-restic/default.nix` 负责，**它直接调 python3 而不是那个入口**：
   定时任务不该依赖 uv / `.venv` / flake 求值，而本脚本只用标准库。
 
 ## 配置与 profile
@@ -26,7 +27,10 @@
   新 profile 必须显式配置 `sources` 列表、`repository`、`password_file`；不能隐式备份 home。
   `-c/--config`、`-p/--profile` 可置于子命令前后，CLI 仓库操作必须指定 profile。
 - `load_config()` 返回整个文档，`profile_config()` 返回解析路径及私有上下文的有效配置。
-  路径相对配置文件目录；保存或编辑保留策略不能把其它 profile 丢掉，也不能写回私有字段。
+  `imports` 递归合并 profiles，缺失文件、循环与重名均报错，不允许覆盖。
+  路径与 hooks cwd 相对定义 profile 的文件目录；符号链接以声明路径目录为基准。
+  `ConfigDocument` 的属性记录来源与入口原文，不进入 JSON；保存入口保留 imports，不能展开合并视图。
+  编辑保留策略定位来源文件，不能把其它 profile 丢掉，也不能写回私有字段；Nix 文件拒绝直接编辑。
 - 只接受 profiles 文档，不保留单配置读取、迁移命令或 source 回退。
   snapshot_tag 可显式指定快照筛选标签；未配置时自动使用 profile 独立标签。
 - 所有支持快照筛选的命令都通过 `snapshot_args()` 传主机和 profile 标签。
@@ -144,7 +148,7 @@
   写成 `avail_w - cols_w` 会把数字自己截掉（000.4 G…）。标签位不够 6 列时退回
   把「数据量 新增 标签」全塞进 desc。
 - **restic 必须已在 PATH 里**，不再用 `nix build nixpkgs#restic` 兜底（多次求值 flake、
-  systemd 服务里没网络保证）。由 `nix/nixos/modules/restic-home.nix` 提供，且**两个选项都得配**：
+  systemd 服务里没网络保证）。由 `nix/nixos/hosts/huskar/q-restic/default.nix` 提供，且**两个选项都得配**：
   `environment.systemPackages` 只影响 `/run/current-system/sw/bin`（手动执行的 PATH），
   `systemd.services.<name>.path` 才是 unit 的 PATH 来源（求值时按 `enableDefaultPath`
   生成 coreutils/findutils/gnugrep/gnused/systemd）。只写 systemPackages 的话手动跑没事、
@@ -173,7 +177,7 @@ restic 原生还有「桶装不满时额外保留最老的那个」的兜底；q
 ## 验证原则
 
 - 改完至少跑 `python3 -m py_compile q-restic.py`。
-- 数据加载/刷新逻辑的回归测试：`python3 -m unittest discover -s module/q-restic -p 'test_*.py'`。
+- 数据加载/刷新逻辑的回归测试：`python3 -m unittest discover -s module/q-restic/tests -p 'test_*.py'`。
 - **`config` 子命令的 stdout 必须保持纯 JSON**（提示信息一律走 stderr），
   否则 `q-restic config | jq` 会解析失败。验证：`q-restic config 2>/dev/null | python3 -m json.tool`。
 - 改 CLI / 保留策略：先用 `q-restic -p <profile> dry-run` 空跑，或在临时仓库上验

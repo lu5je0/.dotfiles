@@ -67,29 +67,62 @@ def expand(path):
     return Path(os.path.expandvars(str(path))).expanduser()
 
 
-def config_path(path):
+def config_path(path, source=None):
     path = expand(path)
-    return path if path.is_absolute() else CONFIG_FILE.parent / path
+    return path if path.is_absolute() else (source or CONFIG_FILE).parent / path
+
+
+class ConfigDocument(dict):
+    """合并视图之外单独保存来源和入口原文，避免私有字段进入 JSON。"""
+
+    def __init__(self, raw):
+        super().__init__(profiles={})
+        self.raw = raw
+        self.origins = {}
 
 
 def load_config():
     if not CONFIG_FILE.exists():
         return {"profiles": {}}
-    try:
-        document = json.loads(CONFIG_FILE.read_text())
-    except (OSError, ValueError) as exc:
-        die(f"配置文件损坏: {CONFIG_FILE} ({exc})")
-    if not isinstance(document, dict):
-        die("配置必须是 JSON 对象")
-    if not isinstance(document.get("profiles"), dict):
-        die("配置需要 profiles 对象")
-    for name, profile in document["profiles"].items():
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name) or not isinstance(profile, dict):
-            die(f"profile 名称或配置无效: {name!r}")
-    return document
+    result = ConfigDocument({})
+
+    def read(path, ancestors):
+        # 保留声明路径作为相对路径基准；仅循环检测使用 realpath。
+        identity = path.resolve()
+        if identity in ancestors:
+            die(f"配置循环导入: {path}")
+        try:
+            raw = json.loads(path.read_text())
+        except (OSError, ValueError) as exc:
+            die(f"无法读取配置: {path} ({exc})")
+        if not isinstance(raw, dict):
+            die(f"配置必须是 JSON 对象: {path}")
+        imports = raw.get("imports", [])
+        if (not isinstance(imports, list)
+                or any(not isinstance(item, str) or not item.strip() for item in imports)):
+            die(f"imports 必须是非空路径字符串的列表: {path}")
+        profiles = raw.get("profiles", {} if "imports" in raw else None)
+        if not isinstance(profiles, dict):
+            die(f"配置需要 profiles 对象: {path}")
+        if not ancestors:
+            result.raw = raw
+        for item in imports:
+            read(Path(os.path.abspath(config_path(item, path))), ancestors | {identity})
+        for name, profile in profiles.items():
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name) or not isinstance(profile, dict):
+                die(f"profile 名称或配置无效: {name!r} ({path})")
+            if name in result["profiles"]:
+                die(f"profile 重名: {name} ({result.origins[name]} 与 {path})")
+            result["profiles"][name] = profile
+            result.origins[name] = path
+
+    read(CONFIG_FILE, set())
+    return result
 
 
 def save_config(document):
+    # 只能保存入口原文，不能将导入的 profiles 展平写回。
+    document = document.raw if isinstance(document, ConfigDocument) else document
     CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=".q-restic-config-", dir=CONFIG_FILE.parent)
     try:
@@ -109,6 +142,8 @@ def profile_config(document, name):
     if name not in profiles:
         die(f"profile 不存在: {name}；可选: {', '.join(profiles) or '无'}")
     cfg = dict(profiles[name])
+    origins = getattr(document, "origins", {})
+    source = origins.get(name, CONFIG_FILE)
     sources = cfg.get("sources")
     if (not isinstance(sources, list) or not sources
             or not all(isinstance(path, str) and path.strip() for path in sources)):
@@ -126,12 +161,12 @@ def profile_config(document, name):
                    for argv in hooks.values())):
         die(f"profile {name} 的 hooks 必须是 preflight/before_backup/after_backup 命令参数列表")
     cfg["hooks"] = {name: list(argv) for name, argv in hooks.items()}
-    cfg["sources"] = [os.path.abspath(config_path(path)) for path in sources]
+    cfg["sources"] = [os.path.abspath(config_path(path, source)) for path in sources]
     for key in ("password_file", "excludes", "mount_dir", "restore_dir"):
         if key in cfg:
-            cfg[key] = str(config_path(cfg[key]))
+            cfg[key] = str(config_path(cfg[key], source))
     repository = os.path.expandvars(cfg["repository"])
-    cfg["repository"] = str(config_path(repository).resolve()) if ":" not in repository else repository
+    cfg["repository"] = str(config_path(repository, source).resolve()) if ":" not in repository else repository
     cfg["host"] = cfg.get("host") or detect_host()
     cfg.setdefault("tag", "")
     cfg.setdefault("mount_dir", f"/tmp/restic-mnt/{name}")
@@ -153,7 +188,7 @@ def profile_config(document, name):
             continue
         other_repo = os.path.expandvars(profile["repository"])
         if other_repo and ":" not in other_repo:
-            other_repo = str(config_path(other_repo).resolve())
+            other_repo = str(config_path(other_repo, origins.get(other, CONFIG_FILE)).resolve())
         other_tag = profile.get("snapshot_tag", f"q-restic:profile:{other}")
         extra_tags = str(profile.get("tag") or "").split(",")
         own_tags = cfg["tag"].split(",")
@@ -163,7 +198,17 @@ def profile_config(document, name):
             die(f"profile {name} 与 {other} 的快照标签冲突")
     cfg["_profile"] = name
     cfg["_profile_tag"] = tag
+    cfg["_config_file"] = str(source)
     return cfg
+
+
+def editable_config(path):
+    path = Path(path)
+    if str(path.resolve()).startswith("/nix/store/"):
+        return "此文件由 Nix 管理，请修改对应 nix/nixos/hosts/<主机>/q-restic/ 配置并 rebuild"
+    if path.exists() and (not path.stat().st_mode & 0o222 or not os.access(path, os.W_OK)):
+        return f"文件只读，请修改配置源文件: {path}"
+    return ""
 
 
 def command_hint(cfg, command):
@@ -181,7 +226,7 @@ def restic_bin():
 
     不用 `nix build nixpkgs#restic` 兜底：那会在每次调用时求值 flake，
     在没有网络或 /nix 不可用的场景（systemd 服务）里会失败，也拖慢每次启动；
-    而 nix/nixos/modules/restic-home.nix 的两个选项都已经装了 pkgs.restic。
+    huskar 的 Nix 主机配置同时提供手动执行和 systemd 所需的 PATH。
     """
     found = shutil.which("restic")
     if not found:
@@ -190,7 +235,7 @@ def restic_bin():
             "  只是临时用：nix profile install nixpkgs#restic\n"
             "  若是定时任务报这句：unit 的 PATH 由 systemd.services.<name>.path 在求值时\n"
             "  生成，跟 environment.systemPackages 无关，光 rebuild 不变；见\n"
-            "  nix/nixos/modules/restic-home.nix 里的 path = [ pkgs.restic ]。"
+            "  Nix 主机配置中的 systemd.services.<name>.path。"
         )
     return found
 
@@ -449,7 +494,8 @@ def run_backup_hook(cfg, name):
     env = dict(os.environ, Q_RESTIC_CONFIG=str(CONFIG_FILE), Q_RESTIC_PROFILE=cfg.get("_profile", ""))
     info(f"执行 {name}")
     try:
-        with subprocess.Popen(argv, cwd=CONFIG_FILE.parent, env=env, start_new_session=True) as proc:
+        with subprocess.Popen(argv, cwd=Path(cfg.get("_config_file", CONFIG_FILE)).parent,
+                              env=env, start_new_session=True) as proc:
             try:
                 code = proc.wait()
             except BaseException:
@@ -1846,11 +1892,15 @@ class App:
 
     def act_edit_policy(self):
         editor = os.environ.get("EDITOR") or "vi"
+        target = Path(self.cfg.get("_config_file", CONFIG_FILE)) if self.screen != "profiles" else CONFIG_FILE
+        if message := editable_config(target):
+            self.set_message(message)
+            return
         if not CONFIG_FILE.exists():
             save_config(self.document or {"profiles": {}})
         self.term.suspend()
         try:
-            if subprocess.call([editor, str(CONFIG_FILE)]):
+            if subprocess.call([editor, str(target)]):
                 self.term.wait_key("编辑器退出失败，按任意键返回")
                 return
             document = load_config()
@@ -1882,9 +1932,14 @@ class App:
             self.set_message("请先在配置中设置 excludes 文件路径")
             return
         path = expand(self.cfg["excludes"])
+        if message := editable_config(path):
+            self.set_message(message)
+            return
         self.term.suspend()
         try:
-            subprocess.call([editor, str(path)])
+            if subprocess.call([editor, str(path)]):
+                self.term.wait_key("编辑器退出失败，按任意键返回")
+                return
         finally:
             self.term.resume()
         self.set_message("排除清单已保存，下次备份生效")
@@ -2035,7 +2090,7 @@ def main():
     args = parser.parse_args()
     path = getattr(args, "config", None)
     if path:
-        CONFIG_FILE = expand(path).resolve()
+        CONFIG_FILE = Path(os.path.abspath(expand(path)))
         if not CONFIG_FILE.is_file():
             parser.error(f"配置文件不存在: {CONFIG_FILE}")
     name = getattr(args, "profile", None)
@@ -2048,12 +2103,17 @@ def main():
         print(json.dumps(value, indent=2, ensure_ascii=False))
         return 0
     if args.command == "edit-config":
+        target = Path(cfg["_config_file"]) if cfg else CONFIG_FILE
+        if message := editable_config(target):
+            die(message)
         if not CONFIG_FILE.exists():
             save_config(document)
-        return subprocess.call([os.environ.get("EDITOR") or "vi", str(CONFIG_FILE)])
+        return subprocess.call([os.environ.get("EDITOR") or "vi", str(target)])
     if args.command == "edit-excludes":
         if not cfg.get("excludes"):
             die("当前 profile 未配置 excludes")
+        if message := editable_config(cfg["excludes"]):
+            die(message)
         return subprocess.call([os.environ.get("EDITOR") or "vi", cfg["excludes"]])
     if args.command == "set-password":
         return set_password_file(cfg)

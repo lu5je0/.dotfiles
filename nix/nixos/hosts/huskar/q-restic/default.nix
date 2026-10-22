@@ -3,10 +3,9 @@
 let
   user = "lu5je0";
   home = config.users.users.${user}.home;
+  configFile = "${home}/.config/q-restic/config.json";
 
-  # 定时器总开关。false = 单元已写好但不自动运行，可随时手动
-  #   sudo systemctl start restic-home
-  # 触发一次。等首次全量跑通、确认排除效果后再改成 true 并 rebuild。
+  # 关闭自动运行后仍可 sudo systemctl start restic-home 手动触发。
   enableTimer = true;
 
   # 备份逻辑在 module/q-restic/，入口符号链接是 bin/common/q-restic。
@@ -14,11 +13,33 @@ let
   # 对常驻定时任务来说是多余的一层（要 uv、要 .venv 可用、要能求值 flake），
   # 而 q-restic 只用标准库，python3 直接跑就够了。
   #
-  # 仓库、备份源和保留策略由 ~/.config/q-restic/config.json 的 profiles.home 管理。
+  # 用户入口导入本模块部署的配置，手动执行与定时任务读取同一份 profile。
   # CLI 仓库操作必须显式指定配置文件和 profile。
   script = "${home}/.dotfiles/module/q-restic/q-restic.py";
 in
 {
+  environment.etc."q-restic/huskar.json".text = builtins.toJSON {
+    profiles.home = {
+      sources = [ home ];
+      repository = "sftp:${user}@192.168.1.10:/mnt/mg08/backups/restic/huskar";
+      password_file = "${home}/.config/restic/password";
+      excludes = "/etc/q-restic/huskar-excludes.txt";
+      host = "huskar";
+      tag = "home";
+      snapshot_tag = "home";
+      mount_dir = "/tmp/restic-mnt";
+      restore_dir = "${home}/restic-restore";
+      keep = {
+        hourly = 0;
+        daily = 7;
+        weekly = 4;
+        monthly = 1;
+        yearly = 0;
+      };
+    };
+  };
+  environment.etc."q-restic/huskar-excludes.txt".source = ./excludes.txt;
+
   # q-restic 要求 restic 已在 PATH 里（不再用 nix build 兜底）。
   #
   # 注意两处都得配，分工不同：
@@ -51,13 +72,11 @@ in
       # 以用户身份跑，不用 root：home 里的文件本来就都属于这个用户。
       User = user;
       Group = config.users.users.${user}.group;
-      ExecStart = "${pkgs.python3}/bin/python3 ${script} -c ${home}/.config/q-restic/config.json -p home backup";
+      ExecStart = "${pkgs.python3}/bin/python3 ${script} -c ${configFile} -p home backup";
       Nice = 10;
       IOSchedulingClass = "idle";
 
       # 要读遍整个 home，不能开 ProtectHome。
-      # 也不要开 PrivateTmp：备份按仓库取 flock 防并发，私有 /tmp 会让它
-      # 和手动执行时拿到的锁不是同一个。
       ProtectHome = false;
       NoNewPrivileges = true;
     };

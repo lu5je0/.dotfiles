@@ -1,4 +1,4 @@
-# restic 排除清单 —— q-restic 使用，也可被 `q-restic edit-excludes` 直接编辑
+# huskar 的 restic 排除清单，由 Nix 部署；修改后需 rebuild。
 #
 # 匹配规则（已实测）:
 #   $HOME/...        → 按仓库里存储的绝对路径精确匹配，如 $HOME/.cache

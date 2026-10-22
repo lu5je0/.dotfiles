@@ -39,10 +39,10 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
   "profiles": {
     "home": {
       "sources": ["$HOME"],
-      "repository": "sftp:lu5je0@192.168.1.10:/mnt/mg08/backups/restic/huskar",
+      "repository": "sftp:user@nas:/backups/restic/home",
       "password_file": "$HOME/.config/restic/password",
       "snapshot_tag": "home",
-      "excludes": "$HOME/.dotfiles/module/q-restic/excludes.txt",
+      "excludes": "./excludes.txt",
       "keep": {"daily": 7, "weekly": 4, "monthly": 1}
     }
   }
@@ -67,7 +67,7 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 `mount_dir` 默认 `/tmp/restic-mnt/<profile>`，`restore_dir` 默认 `~/restic-restore/<profile>`。
 多目录快照恢复后，各源目录的绝对路径树都位于恢复目标下。
 
-`q-restic config` 输出完整 JSON，`q-restic -p home config` 输出该 profile 解析后的配置；
+`q-restic config` 输出合并后的 JSON，`q-restic -p home config` 输出该 profile 解析后的配置；
 提示信息不混入 stdout。
 
 ## 密码文件
@@ -79,14 +79,14 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 已有仓库需要输入原密码；此操作只设置本机密码文件，不修改仓库密钥。
 CLI 备份缺少密码时直接报错，不进入交互输入。密码不会写入配置、命令参数或日志。
 
-NixOS 的 home 定时服务由 `nix/nixos/modules/restic-home.nix` 显式传入配置和 profile，
-修改后需重新部署系统配置。配置只需包含顶层 `profiles` 对象。
+NixOS 的 home 定时服务由 `nix/nixos/hosts/huskar/q-restic/default.nix` 显式传入配置和 profile，
+修改后需重新部署系统配置。
 
 ## 备份前后命令
 
 profile 可选 `hooks` 对象，`preflight`、`before_backup` 和 `after_backup` 的值都是非空命令参数列表，
 例如 `"before_backup": ["/usr/bin/python3", "./prepare.py"]`。命令直接执行，不经过 shell；
-工作目录为配置文件所在目录，并提供 `Q_RESTIC_CONFIG`、`Q_RESTIC_PROFILE` 环境变量。
+工作目录为定义该 profile 的文件所在目录，提供入口路径 `Q_RESTIC_CONFIG` 和 `Q_RESTIC_PROFILE` 环境变量。
 
 `preflight` 只在显式执行 `q-restic -p home preflight` 时运行，不获取备份锁、不要求已设置仓库密码；
 未配置对应命令时返回错误。

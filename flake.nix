@@ -97,7 +97,6 @@
           ./nix/nixos/modules/gaming.nix
           ./nix/nixos/profiles/desktop.nix
           ./nix/nixos/modules/nas-mount.nix
-          ./nix/nixos/modules/restic-home.nix
         ];
         jerry = mkSystem [
           ./nix/nixos/profiles/base.nix

@@ -22,7 +22,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 
-SOURCE = Path(__file__).with_name("q-restic.py")
+SOURCE = Path(__file__).resolve().parents[1] / "q-restic.py"
 SPEC = importlib.util.spec_from_file_location("q_restic", SOURCE)
 q = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(q)

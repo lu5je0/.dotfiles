@@ -4,6 +4,7 @@
   imports = [
     ./hardware-configuration.nix
     ./brightness.nix
+    ./q-restic
   ];
 
   boot.loader.systemd-boot.enable = false;

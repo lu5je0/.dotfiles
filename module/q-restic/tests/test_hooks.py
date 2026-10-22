@@ -77,6 +77,7 @@ class BackupHookTests(unittest.TestCase):
             result = root / 'result.json'
             cfg = dict(self.cfg, hooks={'before_backup': [sys.executable, '-c',
                 'import json,os,sys; open("result.json","w").write(json.dumps([os.getcwd(),os.environ["Q_RESTIC_CONFIG"],os.environ["Q_RESTIC_PROFILE"],sys.argv[1]]))', '$(not-a-shell)']})
+            cfg['_config_file'] = str(root / 'config.json')
             with patch.object(q, 'CONFIG_FILE', root / 'config.json'):
                 self.assertEqual(q.run_backup_hook(cfg, 'before_backup'), 0)
             self.assertEqual(json.loads(result.read_text()), [str(root), str(root/'config.json'), 'home', '$(not-a-shell)'])
