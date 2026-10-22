@@ -33,13 +33,13 @@ class ConfigTests(unittest.TestCase):
         self.path.write_text(json.dumps({'source': '/home/test', 'repository': '/repo'}))
         with self.assertRaises(SystemExit):
             q.load_config()
-        document = {'version': 2, 'profiles': {'home': profile(self.root, 'home')}}
+        document = {'profiles': {'home': profile(self.root, 'home')}}
         q.save_config(document)
         self.assertEqual(q.load_config(), document)
         self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
 
     def test_new_configuration_never_implies_a_home_backup(self):
-        self.assertEqual(q.load_config(), {'version': 2, 'profiles': {}})
+        self.assertEqual(q.load_config(), {'profiles': {}})
         with self.assertRaises(SystemExit):
             q.profile_config(q.load_config(), 'home')
         with self.assertRaises(SystemExit):
@@ -59,7 +59,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(doc['profiles']['immich']['sources'], ['./media', '$HOME/Documents'])
 
     def test_profile_selection_is_required_even_with_one_profile(self):
-        self.path.write_text(json.dumps({'version': 2, 'profiles': {'home': profile(self.root, 'home')}}))
+        self.path.write_text(json.dumps({'profiles': {'home': profile(self.root, 'home')}}))
         for command in ('backup', 'dry-run', 'status', 'snapshots', 'list', 'forget', 'restore', 'check', 'unlock'):
             with self.subTest(command=command), patch.object(sys, 'argv', ['q-restic', '-c', str(self.path), command]):
                 with patch.object(q, 'restic_bin') as binary, self.assertRaises(SystemExit):
@@ -73,7 +73,7 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual((args.config, args.profile), ('example.json', 'immich'))
 
     def test_config_output_is_json_and_missing_explicit_file_is_not_created(self):
-        doc = {'version': 2, 'profiles': {'home': profile(self.root, 'home')}}
+        doc = {'profiles': {'home': profile(self.root, 'home')}}
         self.path.write_text(json.dumps(doc))
         with patch.object(sys, 'argv', ['q-restic', '-c', str(self.path), 'config']), contextlib.redirect_stdout(io.StringIO()) as out:
             self.assertEqual(q.main(), 0)
@@ -158,7 +158,7 @@ class RepositoryTests(unittest.TestCase):
             password = root / 'password'
             password.write_text('test-only\n')
             password.chmod(0o600)
-            doc = {'version': 2, 'profiles': {name: profile(root, name) for name in ('home', 'immich')}}
+            doc = {'profiles': {name: profile(root, name) for name in ('home', 'immich')}}
             (root / 'extra').mkdir()
             (root / 'extra' / 'shared').write_text('second source')
             doc['profiles']['immich']['sources'].append(str(root / 'extra'))

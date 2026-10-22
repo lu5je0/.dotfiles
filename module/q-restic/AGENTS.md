@@ -22,12 +22,12 @@
 
 ## 配置与 profile
 
-- 根配置格式是 `{"version": 2, "profiles": {...}}`，详见同目录 `README.md`。
+- 根配置格式是 `{"profiles": {...}}`，详见同目录 `README.md`。
   新 profile 必须显式配置 `sources` 列表、`repository`、`password_file`；不能隐式备份 home。
   `-c/--config`、`-p/--profile` 可置于子命令前后，CLI 仓库操作必须指定 profile。
 - `load_config()` 返回整个文档，`profile_config()` 返回解析路径及私有上下文的有效配置。
   路径相对配置文件目录；保存或编辑保留策略不能把其它 profile 丢掉，也不能写回私有字段。
-- 只接受 version 2 的 profiles 文档，不保留单配置读取、迁移命令或 source 回退。
+- 只接受 profiles 文档，不保留单配置读取、迁移命令或 source 回退。
   snapshot_tag 可显式指定快照筛选标签；未配置时自动使用 profile 独立标签。
 - 所有支持快照筛选的命令都通过 `snapshot_args()` 传主机和 profile 标签。
   restore 对显式 ID 也先检查是否属于当前 profile，因为 restic 原生筛选只约束 latest。

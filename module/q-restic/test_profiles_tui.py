@@ -31,7 +31,7 @@ class Session:
             profiles[name] = dict(repository=str(root / 'repo'), sources=[str(root / name)],
                                   password_file=str(password), host='test')
         self.config = root / 'config.json'
-        self.config.write_text(json.dumps({'version': 2, 'profiles': profiles}))
+        self.config.write_text(json.dumps({'profiles': profiles}))
         fake = root / 'restic'
         fake.write_text('#!' + sys.executable + '\n' + '''import json, os, sys, time
 from pathlib import Path

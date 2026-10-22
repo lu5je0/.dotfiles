@@ -74,15 +74,15 @@ def config_path(path):
 
 def load_config():
     if not CONFIG_FILE.exists():
-        return {"version": 2, "profiles": {}}
+        return {"profiles": {}}
     try:
         document = json.loads(CONFIG_FILE.read_text())
     except (OSError, ValueError) as exc:
         die(f"配置文件损坏: {CONFIG_FILE} ({exc})")
     if not isinstance(document, dict):
         die("配置必须是 JSON 对象")
-    if document.get("version") != 2 or not isinstance(document.get("profiles"), dict):
-        die("配置需要 version: 2 和 profiles 对象")
+    if not isinstance(document.get("profiles"), dict):
+        die("配置需要 profiles 对象")
     for name, profile in document["profiles"].items():
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name) or not isinstance(profile, dict):
             die(f"profile 名称或配置无效: {name!r}")
@@ -412,14 +412,14 @@ def do_backup(cfg, dry_run=False):
         args += ["--tag", tag]
     if dry_run:
         args += ["--dry-run", "--verbose"]
-        info(f"试运行 {', '.join(cfg["sources"])} → {cfg['repository']}")
+        info(f"试运行 {', '.join(cfg['sources'])} → {cfg['repository']}")
         code = run_stream(restic, cfg, args)
         info("dry-run 结束，仓库未改动")
         return code
     with writer_lock(cfg):
         preflight_sftp(cfg)
         ensure_repo(restic, cfg)
-        info(f"备份 {', '.join(cfg["sources"])} → {cfg['repository']}")
+        info(f"备份 {', '.join(cfg['sources'])} → {cfg['repository']}")
         code = run_stream(restic, cfg, args)
         if code not in (0, 3):
             # 没建快照（含仓库不存在/被锁/密码错），别动旧版本。
@@ -1718,7 +1718,7 @@ class App:
     def act_edit_policy(self):
         editor = os.environ.get("EDITOR") or "vi"
         if not CONFIG_FILE.exists():
-            save_config(self.document or {"version": 2, "profiles": {}})
+            save_config(self.document or {"profiles": {}})
         self.term.suspend()
         try:
             if subprocess.call([editor, str(CONFIG_FILE)]):

@@ -37,11 +37,11 @@ def raw_profile(**overrides):
 
 
 def test_config(**overrides):
-    return q.profile_config({"version": 2, "profiles": {"home": raw_profile(**overrides)}}, "home")
+    return q.profile_config({"profiles": {"home": raw_profile(**overrides)}}, "home")
 
 
 def test_app(cfg=None):
-    document = {"version": 2, "profiles": {"home": cfg or raw_profile()}}
+    document = {"profiles": {"home": cfg or raw_profile()}}
     return q.App(document, profile="home")
 
 
@@ -214,7 +214,7 @@ class RetentionTests(unittest.TestCase):
                 delete.assert_not_called()
 
     def test_cli_cleanup_preview_does_not_take_write_lock(self):
-        with patch.object(q, "load_config", return_value={"version": 2, "profiles": {}}), patch.object(q, "profile_config", return_value=self.cfg), patch.object(
+        with patch.object(q, "load_config", return_value={"profiles": {}}), patch.object(q, "profile_config", return_value=self.cfg), patch.object(
             q, "do_forget", return_value=0
         ) as forget, patch.object(q, "acquire_lock") as lock, patch.object(
             sys, "argv", ["q-restic", "-p", "home", "forget", "--dry-run"]
@@ -450,7 +450,7 @@ class PtyTests(unittest.TestCase):
             (root / "q-restic").mkdir()
             cfg = raw_profile(repository=str(root / "repo"), host="test", password_file=str(root / "password"))
             (root / "password").write_text("test-password\n")
-            (root / "q-restic/config.json").write_text(json.dumps({"version": 2, "profiles": {"home": cfg}}))
+            (root / "q-restic/config.json").write_text(json.dumps({"profiles": {"home": cfg}}))
             (root / "offline").touch()
             fake = root / "restic"
             fake.write_text("#!" + sys.executable + "\n" + '''import json, os, sys, time

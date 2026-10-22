@@ -33,7 +33,6 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 
 ```json
 {
-  "version": 2,
   "profiles": {
     "home": {
       "sources": ["$HOME"],
@@ -78,4 +77,4 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 CLI 备份缺少密码时直接报错，不进入交互输入。密码不会写入配置、命令参数或日志。
 
 NixOS 的 home 定时服务由 `nix/nixos/modules/restic-home.nix` 显式传入配置和 profile，
-修改后需重新部署系统配置。程序只接受 `version: 2` 的 profiles 配置。
+修改后需重新部署系统配置。配置只需包含顶层 `profiles` 对象。
