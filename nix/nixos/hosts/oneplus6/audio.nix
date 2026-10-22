@@ -4,6 +4,9 @@ let
   ucmPath = "${ucm}/share/alsa/ucm2";
 in
 {
+  # Background PipeWire must access ALSA while GDM owns the active seat.
+  users.users.lu5je0.extraGroups = [ "audio" ];
+
   environment.systemPackages = [ pkgs.alsa-utils ];
   environment.variables.ALSA_CONFIG_UCM2 = ucmPath;
   systemd.user.services.pipewire.environment.ALSA_CONFIG_UCM2 = ucmPath;
