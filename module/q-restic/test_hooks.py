@@ -126,3 +126,32 @@ q.do_backup(cfg)
                 if proc.poll() is None:
                     proc.kill()
                     proc.communicate()
+
+
+class PreflightTests(unittest.TestCase):
+    def test_preflight_keeps_callers_identity_without_repository_or_password(self):
+        with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
+            root = Path(tmp)
+            cfg = root/'config.json'
+            cfg.write_text(json.dumps({'profiles': {'home': dict(sources=['./source'], repository=str(root/'repo'),
+                password_file=str(root/'no-password'), hooks={'preflight': [sys.executable, '-c',
+                'import os,json; from pathlib import Path; Path("identity.json").write_text(json.dumps([os.getuid(),os.getgid(),os.environ.get("HOME"),os.getcwd()]))']})}}))
+            result = subprocess.run([sys.executable, str(SOURCE), '-c', str(cfg), '-p', 'home', 'preflight'],
+                capture_output=True, text=True, cwd='/tmp')
+            self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+            self.assertEqual(json.loads((root/'identity.json').read_text()),
+                [os.getuid(), os.getgid(), os.environ.get('HOME'), str(root)])
+            self.assertFalse((root/'repo').exists())
+            self.assertFalse((root/'no-password').exists())
+
+    def test_unconfigured_preflight_fails_without_creating_repository(self):
+        with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
+            root = Path(tmp)
+            cfg = root/'config.json'
+            cfg.write_text(json.dumps({'profiles': {'home': dict(sources=['./source'], repository=str(root/'repo'),
+                password_file=str(root/'no-password'))}}))
+            result = subprocess.run([sys.executable, str(SOURCE), '-c', str(cfg), '-p', 'home', 'preflight'],
+                capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('hooks.preflight', result.stderr)
+            self.assertFalse((root/'repo').exists())

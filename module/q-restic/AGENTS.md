@@ -45,13 +45,6 @@
   写锁覆盖准备、备份、恢复和清理；after_backup 在准备失败或异常时也执行，且早于清理。
   恢复失败返回非零并跳过清理；dry-run 不执行 hooks。终止信号要经过 finally。
 
-- `run_as` 配置执行账号及本次附加组；root 设置 supplementary groups → gid → uid 后 exec，
-  必须在后台线程、锁、密码文件和 hooks 启动前完成。切换后重新加载绝对路径指定的配置，
-  HOME 与 XDG 缓存跟随目标用户，防止 sudo 与普通执行使用不同缓存/写锁。
-  普通用户可查看自己 UID/主组的 profile，但实际备份必须具备全部配置组。
-  TUI profile 列表由父进程保留，身份切换在子会话中执行；不得在已有后台线程的父 TUI 降权。
-  不递归 chown 旧数据，不改变快照中记录的源文件 owner。
-
 ## 关键不变量（都是实测踩出来的，改动前先看）
 
 - **子命令别名要用 `in (...)` 分发**：`status` 挂了 `snapshots` / `list` 别名（restic 自己的命令就叫

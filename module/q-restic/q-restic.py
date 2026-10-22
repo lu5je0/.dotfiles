@@ -10,12 +10,10 @@ import atexit
 import base64
 import fcntl
 import getpass
-import grp
 import hashlib
 import json
 import os
 import queue
-import pwd
 import re
 import select
 import shutil
@@ -31,7 +29,7 @@ import time
 import tty
 import unicodedata
 import warnings
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -111,14 +109,6 @@ def profile_config(document, name):
     if name not in profiles:
         die(f"profile 不存在: {name}；可选: {', '.join(profiles) or '无'}")
     cfg = dict(profiles[name])
-    if "run_as" in cfg:
-        identity = cfg["run_as"]
-        if (not isinstance(identity, dict) or set(identity) - {"user", "extra_groups"}
-                or not isinstance(identity.get("user"), str) or not identity["user"].strip()
-                or not isinstance(identity.get("extra_groups", []), list)
-                or not all(isinstance(group, str) and group.strip() for group in identity.get("extra_groups", []))):
-            die(f"profile {name} 的 run_as 需要 user 和可选的 extra_groups 列表")
-        cfg["run_as"] = dict(user=identity["user"], extra_groups=list(dict.fromkeys(identity.get("extra_groups", []))))
     sources = cfg.get("sources")
     if (not isinstance(sources, list) or not sources
             or not all(isinstance(path, str) and path.strip() for path in sources)):
@@ -181,128 +171,6 @@ def command_hint(cfg, command):
     if cfg.get("_profile"):
         args += ["-c", str(CONFIG_FILE), "-p", cfg["_profile"]]
     return shlex.join(args + [command])
-
-
-# ── 执行身份 ──────────────────────────────────────────────────────────
-
-
-def profile_identity(cfg):
-    identity = cfg.get("run_as")
-    if identity is None:
-        return None
-    try:
-        account = pwd.getpwnam(identity["user"])
-        groups = set(os.getgrouplist(account.pw_name, account.pw_gid))
-        groups.update(grp.getgrnam(name).gr_gid for name in identity["extra_groups"])
-    except KeyError as exc:
-        die(f"run_as 的用户或组不存在: {exc}")
-    return account, sorted(groups)
-
-
-def identity_environment(account):
-    env = dict(os.environ)
-    env.update(HOME=account.pw_dir, USER=account.pw_name, LOGNAME=account.pw_name,
-               SHELL=account.pw_shell or "/bin/sh",
-               XDG_CONFIG_HOME=str(Path(account.pw_dir) / ".config"),
-               XDG_CACHE_HOME=str(Path(account.pw_dir) / ".cache"))
-    if os.geteuid() != account.pw_uid:
-        for key in ("XDG_RUNTIME_DIR", "XDG_DATA_HOME", "XDG_STATE_HOME"):
-            env.pop(key, None)
-    return env
-
-
-def identity_needs_restart(cfg):
-    identity = profile_identity(cfg)
-    if identity is None:
-        return False
-    account, groups = identity
-    if (os.geteuid(), os.getegid()) != (account.pw_uid, account.pw_gid):
-        return True
-    if os.geteuid() == 0 and set(os.getgroups()) != set(groups):
-        return True
-    env = identity_environment(account)
-    return any(os.environ.get(key) != env[key]
-               for key in ("HOME", "USER", "LOGNAME", "SHELL", "XDG_CONFIG_HOME", "XDG_CACHE_HOME"))
-
-
-def switch_profile_identity(cfg):
-    if not identity_needs_restart(cfg):
-        return
-    account, groups = profile_identity(cfg)
-    privileged = os.geteuid() == 0
-    if not privileged and (os.geteuid(), os.getegid()) != (account.pw_uid, account.pw_gid):
-        die(f"请用 sudo 启动，以便按 run_as 切换到 {account.pw_name}")
-    env = identity_environment(account)
-    # 统一把配置/profile 放到子命令前；Python 3.9/3.11 的 argparse 不支持
-    # 在已读取的位置参数与 -- 之间再插入选项。-- 后的字面路径保持原样。
-    original, forwarded = list(sys.argv[1:]), []
-    index = 0
-    while index < len(original):
-        value = original[index]
-        if value == "--":
-            forwarded.extend(original[index:])
-            break
-        if value in ("-c", "--config", "-p", "--profile"):
-            index += 2
-            continue
-        if (value.startswith(("--config=", "--profile="))
-                or (value.startswith(("-c", "-p")) and not value.startswith("--"))):
-            index += 1
-            continue
-        forwarded.append(value)
-        index += 1
-    command = [sys.executable, str(Path(__file__).resolve()), "-c", str(CONFIG_FILE.resolve()),
-               "-p", cfg["_profile"], *forwarded]
-    try:
-        if privileged:
-            os.setgroups(groups)
-            os.setgid(account.pw_gid)
-            os.setuid(account.pw_uid)
-        # root cron 的 cwd 通常是 /root；切换用户后可能无法访问。
-        if not os.access(".", os.X_OK):
-            os.chdir(CONFIG_FILE.parent)
-        os.execve(sys.executable, command, env)
-    except OSError as exc:
-        die(f"无法按 run_as 启动 {account.pw_name}: {exc}")
-
-
-def require_backup_groups(cfg):
-    identity = profile_identity(cfg)
-    if identity is None:
-        return
-    account, groups = identity
-    if os.geteuid() != account.pw_uid or os.getegid() != account.pw_gid:
-        die("执行身份与 run_as 不符，请重新选择 profile 或使用 sudo 启动")
-    required = {grp.getgrnam(name).gr_gid for name in cfg["run_as"]["extra_groups"]}
-    missing = required - {os.getegid(), *os.getgroups()}
-    if missing:
-        die("当前进程缺少 run_as 所需的附加组，请用 sudo 重新启动；"
-            "附加组只对本次执行生效")
-
-
-def run_profile_tui(name):
-    """父 TUI 保留身份，每个 profile 在新进程中按自己的配置启动。"""
-    command = [sys.executable, str(Path(__file__).resolve()), "-c", str(CONFIG_FILE), "-p", name]
-    pending = []
-    env = dict(os.environ, Q_RESTIC_PROFILE_SESSION=json.dumps([str(CONFIG_FILE), name]))
-    with subprocess.Popen(command, env=env) as proc:
-        previous = {}
-        def forward(signum, frame):
-            pending.append(signum)
-            with suppress(ProcessLookupError):
-                proc.send_signal(signum)
-        try:
-            # Ctrl-C 已由终端发给整个前台进程组，让子进程自行收尾。
-            previous[signal.SIGINT] = signal.signal(signal.SIGINT, signal.SIG_IGN)
-            for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT):
-                previous[signum] = signal.signal(signum, forward)
-            code = proc.wait()
-        finally:
-            for signum, handler in previous.items():
-                signal.signal(signum, handler)
-    if pending:
-        raise SystemExit(128 + pending[-1])
-    return code if code >= 0 else 128 - code
 
 
 # ── restic 调用 ───────────────────────────────────────────────────────
@@ -622,8 +490,6 @@ def backup_signals(cfg):
 
 
 def do_backup(cfg, dry_run=False):
-    if not dry_run:
-        require_backup_groups(cfg)
     restic = restic_bin()
     require_password(cfg)
 
@@ -1364,8 +1230,7 @@ def read_key(fd):
 
 
 class App:
-    def __init__(self, document, gate=None, *, profile=None, profile_session=False):
-        self.profile_session = profile_session
+    def __init__(self, document, gate=None, *, profile=None):
         self.document = document
         self.profile = profile
         self.cfg = profile_config(document, profile) if profile else {}
@@ -1386,7 +1251,7 @@ class App:
         self.cursor = 0
         self.offset = 0
         self.screen = "profiles" if profile is None else "menu"
-        self.history = [("profiles", 0, 0)] if profile and not profile_session else []
+        self.history = [("profiles", 0, 0)] if profile else []
         self.active_snap = None
         self.last_size = None
 
@@ -1503,16 +1368,8 @@ class App:
     def select_profile(self, name):
         try:
             cfg = profile_config(self.document, name)
-            restart = identity_needs_restart(cfg)
         except SystemExit:
             self.set_message("profile 配置无效，请编辑配置文件")
-            return
-        if restart:
-            self.run_suspended(run_profile_tui, name, propagate_exit=True)
-            try:
-                self.document = load_config()
-            except SystemExit:
-                self.set_message("配置无效，请编辑配置文件")
             return
         self.history = [("profiles", self.cursor, self.offset)]
         self.profile, self.cfg = name, cfg
@@ -1790,7 +1647,7 @@ class App:
 
     # -- 动作 --
     def run_suspended(self, func, *args, wait_on_success=False, refresh_repo=False,
-                      failure_prompt="执行失败，按任意键返回", propagate_exit=False, **kwargs):
+                      failure_prompt="执行失败，按任意键返回", **kwargs):
         """把终端交还给子进程执行 func；**失败时先等一个按键再收回来**。
 
         否则 resume() 切回备用屏会把子进程打在普通屏上的错误输出盖掉，
@@ -1805,8 +1662,6 @@ class App:
             try:
                 code = func(*args, **kwargs)
             except SystemExit as exc:
-                if propagate_exit:
-                    raise
                 code = exc.code or 1
             except OSError as exc:
                 warn(str(exc))
@@ -2006,10 +1861,6 @@ class App:
         finally:
             self.term.resume()
         self.document = document
-        if cfg is not None and cfg.get("run_as") != self.cfg.get("run_as"):
-            if self.profile_session:
-                raise SystemExit(0)
-            cfg = None
         if cfg is None:
             self.profile, self.cfg = None, {}
             self.screen, self.cursor, self.offset = "profiles", 0, 0
@@ -2192,8 +2043,6 @@ def main():
         parser.error("CLI 仓库操作必须通过 -p/--profile 指定 profile")
     document = load_config()
     cfg = profile_config(document, name) if name else None
-    if cfg is not None:
-        switch_profile_identity(cfg)
     if args.command == "config":
         value = {key: val for key, val in cfg.items() if not key.startswith("_")} if cfg else document
         print(json.dumps(value, indent=2, ensure_ascii=False))
@@ -2243,8 +2092,7 @@ def main():
     gate.install()
     try:
         gate.disable()
-        session = os.environ.get("Q_RESTIC_PROFILE_SESSION") == json.dumps([str(CONFIG_FILE), name])
-        return App(gate=gate, document=document, profile=name, profile_session=session).run()
+        return App(gate=gate, document=document, profile=name).run()
     finally:
         gate.restore()
 
