@@ -4,6 +4,7 @@
   imports = [
     ./hardware-configuration.nix
     ./brightness.nix
+    ./webhid.nix
     ./q-restic
   ];
 
