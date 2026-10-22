@@ -11,7 +11,7 @@ stdenvNoCC.mkDerivation {
   pname = "gnome-shell-extension-tilewindow";
   version = "0-unstable";
 
-  src = lib.cleanSource (../../../gnome + "/${uuid}");
+  src = lib.cleanSource (../../../../gnome + "/${uuid}");
 
   nativeBuildInputs = [ glib ];
 

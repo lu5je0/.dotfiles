@@ -10,7 +10,7 @@
   ];
 
   environment.systemPackages = with pkgs; [
-    (pkgs.callPackage ../pkgs/kitty.nix { })
+    (pkgs.callPackage ../pkgs/kitty { })
     steam-run
     wl-clipboard
     xclip

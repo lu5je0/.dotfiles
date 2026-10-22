@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 let
-  arcglyph = pkgs.callPackage ../pkgs/arcglyph.nix { };
+  arcglyph = pkgs.callPackage ../pkgs/arcglyph { };
 in
 {
   hardware.uinput.enable = true;

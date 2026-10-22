@@ -6,7 +6,7 @@
 }:
 
 let
-  tilewindow = pkgs.callPackage ../pkgs/tilewindow.nix { };
+  tilewindow = pkgs.callPackage ../pkgs/tilewindow { };
   windowDecorations = pkgs.callPackage ../pkgs/window-decorations { };
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
