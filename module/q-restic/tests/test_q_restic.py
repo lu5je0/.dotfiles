@@ -490,7 +490,7 @@ else:
             if pid == 0:
                 os.environ.update(HOME=tmp, XDG_CONFIG_HOME=tmp, TERM="xterm-256color",
                                   EDITOR="/bin/true", PATH=tmp + ":" + os.environ["PATH"])
-                os.execv(sys.executable, [sys.executable, str(SOURCE), "-p", "home"])
+                os.execv(sys.executable, [sys.executable, str(SOURCE), "-c", str(root / "q-restic/config.json"), "-p", "home"])
             fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 90, 0, 0))
             def read_until(text):
                 output = bytearray()

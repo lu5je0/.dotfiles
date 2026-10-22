@@ -120,3 +120,59 @@ class ImportTests(unittest.TestCase):
         app.act_edit_policy()
         app.term.suspend.assert_not_called()
         self.assertIn('只读', app.set_message.call_args.args[0])
+
+
+class DefaultConfigTests(unittest.TestCase):
+    write = ImportTests.write
+
+    def setUp(self):
+        ImportTests.setUp(self)
+        self.system = self.root / 'system' / 'config.json'
+        self.system.parent.mkdir()
+        self.enterContext(patch.object(q, 'DEFAULT_CONFIG_FILE', self.path))
+        self.enterContext(patch.object(q, 'SYSTEM_CONFIG_FILE', self.system))
+
+    def test_defaults_merge_profiles_and_preserve_source_paths_and_user_document(self):
+        self.write(self.system, {'profiles': {'system': self.raw}})
+        document = q.load_config()
+        self.assertEqual(set(document['profiles']), {'system', 'home'})
+        cfg = q.profile_config(document, 'system')
+        self.assertEqual(cfg['sources'], [str(self.system.parent / 'data')])
+        self.assertEqual(cfg['_config_file'], str(self.system))
+        original = json.loads(self.path.read_text())
+        q.save_config(document)
+        self.assertEqual(json.loads(self.path.read_text()), original)
+        with patch.object(sys, 'argv', ['q-restic', 'config']), contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(q.main(), 0)
+        self.assertEqual(set(json.loads(out.getvalue())['profiles']), {'system', 'home'})
+        self.assertEqual(q.command_hint(cfg, 'unlock'), 'q-restic -p system unlock')
+
+    def test_system_only_and_no_configs_do_not_create_or_copy_profiles(self):
+        self.path.unlink()
+        self.write(self.system, {'profiles': {'system': self.raw}})
+        document = q.load_config()
+        self.assertEqual(document, {'profiles': {'system': self.raw}})
+        self.assertFalse(self.path.exists())
+        q.save_config(document)
+        self.assertEqual(json.loads(self.path.read_text()), {'profiles': {}})
+        self.path.unlink()
+        self.system.unlink()
+        self.assertEqual(q.load_config(), {'profiles': {}})
+
+    def test_system_imports_and_duplicate_or_invalid_system_configuration(self):
+        self.write(self.system, {'imports': ['../host/home.json']})
+        with self.assertRaises(SystemExit):
+            q.load_config()
+        self.assertIn('重名', self.err.getvalue())
+        self.write(self.path, {'profiles': {}})
+        cfg = q.profile_config(q.load_config(), 'home')
+        self.assertEqual(cfg['_config_file'], str(self.source))
+        self.write(self.system, {'profiles': []})
+        with self.assertRaises(SystemExit):
+            q.load_config()
+
+    def test_explicit_other_entry_does_not_load_system_config(self):
+        self.system.write_text('invalid json')
+        with patch.object(sys, 'argv', ['q-restic', '-c', str(self.source), 'config']), contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(q.main(), 0)
+        self.assertEqual(json.loads(out.getvalue()), {'profiles': {'home': self.raw}})

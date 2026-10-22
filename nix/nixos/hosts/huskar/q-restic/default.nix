@@ -3,7 +3,7 @@
 let
   user = "lu5je0";
   home = config.users.users.${user}.home;
-  configFile = "${home}/.config/q-restic/config.json";
+  configFile = "/etc/q-restic/config.json";
 
   # 关闭自动运行后仍可 sudo systemctl start restic-home 手动触发。
   enableTimer = true;
@@ -13,12 +13,12 @@ let
   # 对常驻定时任务来说是多余的一层（要 uv、要 .venv 可用、要能求值 flake），
   # 而 q-restic 只用标准库，python3 直接跑就够了。
   #
-  # 用户入口导入本模块部署的配置，手动执行与定时任务读取同一份 profile。
+  # 用户入口默认合并本模块部署的配置，手动执行与定时任务读取同一份 profile。
   # CLI 仓库操作必须显式指定配置文件和 profile。
   script = "${home}/.dotfiles/module/q-restic/q-restic.py";
 in
 {
-  environment.etc."q-restic/huskar.json".text = builtins.toJSON {
+  environment.etc."q-restic/config.json".text = builtins.toJSON {
     profiles.home = {
       sources = [ home ];
       repository = "sftp:${user}@192.168.1.10:/mnt/mg08/backups/restic/huskar";

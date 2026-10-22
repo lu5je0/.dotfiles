@@ -28,6 +28,8 @@
   `-c/--config`、`-p/--profile` 可置于子命令前后，CLI 仓库操作必须指定 profile。
 - `load_config()` 返回整个文档，`profile_config()` 返回解析路径及私有上下文的有效配置。
   `imports` 递归合并 profiles，缺失文件、循环与重名均报错，不允许覆盖。
+  默认入口自动合并 `/etc/q-restic/config.json` 与用户配置，任一不存在可跳过；
+  `-c` 指向其它入口时不自动加载系统配置。系统 profile 的来源与相对路径仍指向系统文件。
   路径与 hooks cwd 相对定义 profile 的文件目录；符号链接以声明路径目录为基准。
   `ConfigDocument` 的属性记录来源与入口原文，不进入 JSON；保存入口保留 imports，不能展开合并视图。
   编辑保留策略定位来源文件，不能把其它 profile 丢掉，也不能写回私有字段；Nix 文件拒绝直接编辑。

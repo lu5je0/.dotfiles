@@ -35,7 +35,9 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent
 HOME = Path.home()
 CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config") / "q-restic"
-CONFIG_FILE = CONFIG_DIR / "config.json"
+DEFAULT_CONFIG_FILE = CONFIG_DIR / "config.json"
+SYSTEM_CONFIG_FILE = Path("/etc/q-restic/config.json")
+CONFIG_FILE = DEFAULT_CONFIG_FILE
 
 def die(msg, code=1):
     print(f"错误: {msg}", file=sys.stderr)
@@ -82,9 +84,7 @@ class ConfigDocument(dict):
 
 
 def load_config():
-    if not CONFIG_FILE.exists():
-        return {"profiles": {}}
-    result = ConfigDocument({})
+    result = ConfigDocument({"profiles": {}})
 
     def read(path, ancestors):
         # 保留声明路径作为相对路径基准；仅循环检测使用 realpath。
@@ -104,7 +104,7 @@ def load_config():
         profiles = raw.get("profiles", {} if "imports" in raw else None)
         if not isinstance(profiles, dict):
             die(f"配置需要 profiles 对象: {path}")
-        if not ancestors:
+        if not ancestors and path == CONFIG_FILE:
             result.raw = raw
         for item in imports:
             read(Path(os.path.abspath(config_path(item, path))), ancestors | {identity})
@@ -116,7 +116,10 @@ def load_config():
             result["profiles"][name] = profile
             result.origins[name] = path
 
-    read(CONFIG_FILE, set())
+    if CONFIG_FILE == DEFAULT_CONFIG_FILE and SYSTEM_CONFIG_FILE.exists():
+        read(SYSTEM_CONFIG_FILE, set())
+    if CONFIG_FILE.exists():
+        read(CONFIG_FILE, set())
     return result
 
 
@@ -214,7 +217,9 @@ def editable_config(path):
 def command_hint(cfg, command):
     args = ["q-restic"]
     if cfg.get("_profile"):
-        args += ["-c", str(CONFIG_FILE), "-p", cfg["_profile"]]
+        if CONFIG_FILE != DEFAULT_CONFIG_FILE:
+            args += ["-c", str(CONFIG_FILE)]
+        args += ["-p", cfg["_profile"]]
     return shlex.join(args + [command])
 
 
@@ -2051,7 +2056,7 @@ def build_parser():
 
     def options(target):
         target.add_argument("-c", "--config", default=argparse.SUPPRESS,
-                            help="配置文件（默认 ~/.config/q-restic/config.json）")
+                            help="配置文件（默认合并 /etc/q-restic/config.json 与用户配置）")
         target.add_argument("-p", "--profile", default=argparse.SUPPRESS,
                             help="profile 名称；CLI 仓库操作必须指定")
 

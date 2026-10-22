@@ -20,7 +20,9 @@ q-restic -p home unlock           # 整个仓库的残留锁清理
 ```
 
 `-c/--config`、`-p/--profile` 可放在子命令前或后。默认配置是
-`~/.config/q-restic/config.json`。CLI 仓库操作必须显式指定 profile，即使文件里只有一个；
+`~/.config/q-restic/config.json`，会自动合并 `/etc/q-restic/config.json` 中的 profiles，
+两份文件均可缺省，profile 重名时报错；`-c` 指向其它文件时只读取该入口及其 imports。
+CLI 仓库操作必须显式指定 profile，即使文件里只有一个；
 未知 profile、显式指定的配置文件不存在时立即报错，不回退到 home 或其它仓库。
 仓库尚未创建时显示「仓库未初始化」，首次 `backup` 自动创建；查看状态不会初始化仓库。
 密码、权限或连接错误仍会报告读取失败。
@@ -52,6 +54,19 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 每个 profile 必须提供 `sources`（非空列表）、`repository`、`password_file`，不隐式备份 home。
 路径支持 `~` 和环境变量，相对路径以配置文件所在目录为基准；SFTP 等仓库地址保持后端语法。
 `excludes` 是可选的排除文件路径。排除文件内部的变量由 restic 展开，推荐使用 `$HOME`。
+
+通过 `imports` 引入其他配置，例如在 `~/.config/q-restic/config.json` 中：
+
+```json
+{
+  "imports": ["./personal.json"],
+  "profiles": {}
+}
+```
+
+支持递归导入，相对路径以声明它的配置文件所在目录为基准；profile 重名会报错，不会覆盖。
+系统配置无需写入 `imports`。保存用户配置不会把系统或导入的 profiles 展平写回；
+编辑某个 profile 时定位到它的来源文件，Nix 管理的文件需修改 Nix 配置后 rebuild。
 
 `keep` 支持 hourly/daily/weekly/monthly/yearly 非负整数，未设置的项目为 0；全部为 0 时保留全部版本。
 数量按非空时间桶取并集，不额外保留仅由 `oldest ... snapshot` 兜底的版本，每组至少保留一个。
