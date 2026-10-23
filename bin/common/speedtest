@@ -27,7 +27,7 @@
       不含线程退出等待。阶段时长不超过 2 秒时跳过预热。
 
 环境变量：
-    SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认取服务端下发值，通常 15）
+    SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认 10）
     SPEEDTEST_THREADS    并发线程数（不指定 -T 时的默认值，默认单线程）
     SPEEDTEST_NO_CACHE=1  不读写 ~/.cache/speedtest 下的配置缓存
     SPEEDTEST_NO_PROGRESS=1   即使终端支持也不显示进度条
@@ -652,9 +652,8 @@ def main(argv):
                      item.get("name", ""), item.get("country", "")))
         return 0
 
-    engine = cfg.get("suite", {}).get("global", {}).get("engine", {})
     stage = cfg.get("suite", {}).get("testStage", {})
-    duration = int(os.environ.get("SPEEDTEST_DURATION") or engine.get("testDurationSeconds") or 15)
+    duration = int(os.environ.get("SPEEDTEST_DURATION") or 10)
     if args.threads is not None:
         thread_count = args.threads
     else:
