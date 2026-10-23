@@ -24,8 +24,8 @@
       支持子路径部署，不请求 Ookla 配置，也不保存测速结果。
       上传使用 16 MiB 二进制请求，避免 PHP 表单解析与频繁请求的开销。
     - 输出格式对齐官方 CLI 的 human-readable 结果。
-    - 进度条显示最近 2 秒的速度；最终速度统计预热 2 秒后的全部传输时间，
-      不含线程退出等待。阶段时长不超过 2 秒时跳过预热。
+    - 进度条显示最近 2 秒的速度；最终速度取各采样点完整 2 秒窗口平均速度的最大值，
+      不含线程退出等待。阶段不足 2 秒时使用全程平均速度。
 
 环境变量：
     SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认 10）
@@ -71,7 +71,6 @@ UPLOAD_CHUNK = 1024 * 1024
 LIBRESPEED_UPLOAD_CHUNK = 16 * 1024 * 1024
 IO_CHUNK = 256 * 1024
 RATE_WINDOW = 2.0
-WARMUP_SECONDS = 2.0
 SPINNER = "-\\|/"
 OOKLA_PATHS = {
     "latency": PROBE_PATH,
@@ -402,6 +401,18 @@ def sample_rate(samples, since):
     return max(last_bytes - first_bytes, 0) / (end - begin)
 
 
+def peak_window_rate(samples, window):
+    """取完整滑动窗口的最高平均速度；不足一个窗口时使用全程平均。"""
+    if len(samples) < 2:
+        return 0.0
+    start = samples[0][0]
+    if samples[-1][0] - start < window:
+        return sample_rate(samples, start)
+    return max(sample_rate(samples[:index + 1], stamp - window)
+               for index, (stamp, _) in enumerate(samples)
+               if stamp - start >= window)
+
+
 def run_transfer(label, base, duration, thread_count, upload, progress, paths=None,
                  upload_size=UPLOAD_CHUNK, upload_content_type="application/x-www-form-urlencoded"):
     """并发跑一个阶段的下载或上传，返回统计结果。"""
@@ -553,8 +564,7 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
     total_bytes = total()
     # 冻结停止传输时的快照，排除收尾等待与在途块稍后完成带来的计数。
     final_samples = [sample for sample in samples if sample[0] < end_sample[0]] + [end_sample]
-    warmup = WARMUP_SECONDS if duration > WARMUP_SECONDS else 0.0
-    speed = sample_rate(final_samples, start + warmup)
+    speed = peak_window_rate(final_samples, RATE_WINDOW)
 
     if progress:
         _clear_progress()
