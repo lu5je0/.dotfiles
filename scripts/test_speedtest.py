@@ -141,6 +141,9 @@ class SpeedtestTests(unittest.TestCase):
             self.assertEqual(call.args[1], "http://host/test/")
             self.assertEqual(call.args[3:5], (8, upload))
             self.assertEqual(call.args[6]["upload"], "/test/backend/empty.php")
+        self.assertEqual(mocks["run_transfer"].call_args.kwargs["upload_size"], 16 * 1024 * 1024)
+        self.assertEqual(mocks["run_transfer"].call_args.kwargs["upload_content_type"],
+                         "application/octet-stream")
 
     def test_default_librespeed_node(self):
         for args in (["--librespeed"], ["--librespeed="], ["--librespeed", "-T", "4"]):
@@ -167,6 +170,9 @@ class SpeedtestTests(unittest.TestCase):
                 self.assertEqual(mocks["resolve_base"].call_count, 1 if args else 0)
                 self.assertEqual(mocks["select_server"].call_count, 0 if args else 1)
                 self.assertEqual(mocks["run_transfer"].call_args.args[6], SPEEDTEST["OOKLA_PATHS"])
+                self.assertEqual(mocks["run_transfer"].call_args.kwargs["upload_size"], 1024 * 1024)
+                self.assertEqual(mocks["run_transfer"].call_args.kwargs["upload_content_type"],
+                                 "application/x-www-form-urlencoded")
                 mocks["try_save_result"].assert_called_once()
 
     def test_ookla_list_only(self):

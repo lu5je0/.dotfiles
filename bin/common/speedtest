@@ -22,6 +22,7 @@
       /speedtest/latency.txt、/speedtest/random4000x4000.jpg、/speedtest/upload.php。
     - --librespeed 使用节点 URL 下的 backend/empty.php、backend/garbage.php，
       支持子路径部署，不请求 Ookla 配置，也不保存测速结果。
+      上传使用 16 MiB 二进制请求，避免 PHP 表单解析与频繁请求的开销。
     - 输出格式对齐官方 CLI 的 human-readable 结果。
     - 进度条显示最近 2 秒的速度；最终速度统计预热 2 秒后的全部传输时间，
       不含线程退出等待。阶段时长不超过 2 秒时跳过预热。
@@ -67,6 +68,7 @@ UPLOAD_PATH = "/speedtest/upload.php"
 DOWNLOAD_SIZE = 4000
 # 请求体复用随机数据；每次 socket 发送限制在 IO_CHUNK，以便及时停止。
 UPLOAD_CHUNK = 1024 * 1024
+LIBRESPEED_UPLOAD_CHUNK = 16 * 1024 * 1024
 IO_CHUNK = 256 * 1024
 RATE_WINDOW = 2.0
 WARMUP_SECONDS = 2.0
@@ -400,7 +402,8 @@ def sample_rate(samples, since):
     return max(last_bytes - first_bytes, 0) / (end - begin)
 
 
-def run_transfer(label, base, duration, thread_count, upload, progress, paths=None):
+def run_transfer(label, base, duration, thread_count, upload, progress, paths=None,
+                 upload_size=UPLOAD_CHUNK, upload_content_type="application/x-www-form-urlencoded"):
     """并发跑一个阶段的下载或上传，返回统计结果。"""
     paths = OOKLA_PATHS if paths is None else paths
     lock = threading.Lock()
@@ -408,7 +411,7 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
     latencies = []
     errors = []
     stop = threading.Event()
-    buf = os.urandom(UPLOAD_CHUNK) if upload else None
+    buf = os.urandom(upload_size) if upload else None
     start = time.monotonic()
     samples = [(start, 0)]
 
@@ -438,7 +441,7 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
                         body=_CountingBody(buf, add, stop),
                         headers={
                             "User-Agent": USER_AGENT,
-                            "Content-Type": "application/x-www-form-urlencoded",
+                            "Content-Type": upload_content_type,
                             "Content-Length": str(len(buf)),
                         },
                     )
@@ -713,7 +716,12 @@ def main(argv):
         print_loaded_latency(download["latency"])
 
         if upload_enabled:
-            upload = run_transfer("Upload", base, duration, thread_count, True, progress, paths)
+            upload = run_transfer(
+                "Upload", base, duration, thread_count, True, progress, paths,
+                upload_size=LIBRESPEED_UPLOAD_CHUNK if args.librespeed is not None else UPLOAD_CHUNK,
+                upload_content_type=("application/octet-stream" if args.librespeed is not None
+                                     else "application/x-www-form-urlencoded"),
+            )
             print_speed_line("Upload", upload["speed"], upload["bytes"])
             print_loaded_latency(upload["latency"])
         else:
