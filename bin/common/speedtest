@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""speedtest —— Ookla Speedtest 的纯 Python 复刻（默认自动选服 + -s 指定服务器 id）。
+"""speedtest —— Ookla / LibreSpeed 纯 Python 命令行测速。
 
 用法：
-    speedtest              # 自动选择延迟最低的最近服务器并测速（线程数取服务端 config）
+    speedtest              # 自动选择延迟最低的最近服务器并测速（默认单线程）
     speedtest -s 12191     # 使用指定 id 的服务器
+    speedtest --librespeed  # 自建节点，默认 http://192.168.1.10:3000
+    speedtest --librespeed=http://host:3000  # 指定其他 speedtest-x / LibreSpeed 节点
     speedtest -T           # 多线程测速（默认 4 线程，单线程为默认行为）
     speedtest -T 8        # 指定并发线程数
     speedtest -L           # 列出最近的服务器
@@ -18,7 +20,11 @@
       仅当请求失败（429/离线）时才回退到本地缓存。
     - 测速复用 speedtest.net 服务器公开的 legacy 接口：
       /speedtest/latency.txt、/speedtest/random4000x4000.jpg、/speedtest/upload.php。
+    - --librespeed 使用节点 URL 下的 backend/empty.php、backend/garbage.php，
+      支持子路径部署，不请求 Ookla 配置，也不保存测速结果。
     - 输出格式对齐官方 CLI 的 human-readable 结果。
+    - 进度条显示最近 2 秒的速度；最终速度统计预热 2 秒后的全部传输时间，
+      不含线程退出等待。阶段时长不超过 2 秒时跳过预热。
 
 环境变量：
     SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认取服务端下发值，通常 15）
@@ -47,6 +53,7 @@ import urllib.parse
 import urllib.request
 
 CONFIG_URL = "https://cli.speedtest.net/api/cli/config"
+DEFAULT_LIBRESPEED_URL = "http://192.168.1.10:3000"
 REPORT_URL = "https://results.speedtest.net/reports"
 CONFIG_CACHE_TTL = 12 * 3600  # 官方会给 config 下发过期时间，这里本地缓存 12 小时，避免频繁请求被 429
 USER_AGENT = (
@@ -58,9 +65,17 @@ SSL_CTX = ssl.create_default_context()
 PROBE_PATH = "/speedtest/latency.txt"
 UPLOAD_PATH = "/speedtest/upload.php"
 DOWNLOAD_SIZE = 4000
-# 上传按已上送字节计数；块小一些，阶段结束时在途数据更少
+# 请求体复用随机数据；每次 socket 发送限制在 IO_CHUNK，以便及时停止。
 UPLOAD_CHUNK = 1024 * 1024
+IO_CHUNK = 256 * 1024
+RATE_WINDOW = 2.0
+WARMUP_SECONDS = 2.0
 SPINNER = "-\\|/"
+OOKLA_PATHS = {
+    "latency": PROBE_PATH,
+    "download": "/speedtest/random%dx%d.jpg" % (DOWNLOAD_SIZE, DOWNLOAD_SIZE),
+    "upload": UPLOAD_PATH,
+}
 
 
 # --------------------------------------------------------------------------- #
@@ -165,6 +180,30 @@ def make_conn(base):
     if parts.scheme == "https":
         return http.client.HTTPSConnection(parts.hostname, port, timeout=20, context=SSL_CTX)
     return http.client.HTTPConnection(parts.hostname, port, timeout=20)
+
+
+def librespeed_target(url):
+    if "://" not in url:
+        url = "http://" + url
+    parts = urllib.parse.urlsplit(url)
+    if (parts.scheme not in ("http", "https") or not parts.hostname
+            or parts.username is not None or parts.password is not None
+            or parts.query or parts.fragment):
+        raise ValueError("请指定 http(s) 节点 URL，不带认证信息、查询参数或片段")
+    # 访问 port 属性以校验端口格式与范围。
+    parts.port
+    base = urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path.rstrip("/") + "/", "", ""))
+    backend = urllib.parse.urlsplit(urllib.parse.urljoin(base, "backend/")).path
+    return base, {
+        "latency": backend + "empty.php",
+        "download": backend + "garbage.php?ckSize=50",
+        "upload": backend + "empty.php",
+    }
+
+
+def check_response(resp):
+    if not 200 <= resp.status < 300:
+        raise RuntimeError("HTTP %s %s" % (resp.status, resp.reason))
 
 
 def _probe_url(host):
@@ -272,37 +311,36 @@ def select_server(cfg):
 # 测速
 # --------------------------------------------------------------------------- #
 class _CountingBody:
-    """文件式请求体，在 http.client 按块取出时统计已上送字节。
+    """以 memoryview 分块发送请求体，复用原始缓冲区。
 
-    比“等服务端确认后再计数”更健壮：慢速服务器上，请求在阶段结束时可能仍未返回，
-    按已上送字节计数不会得到 0。stop 置位后立即截断，避免结束后还长时间发送。
+    http.client 发送完一个块后才恢复迭代，此时累计已交给 socket 的字节，
+    不必等整个请求的响应。stop 置位后不再生成新块。
     """
 
     def __init__(self, data, add, stop):
-        self._data = data
+        self._data = memoryview(data)
         self._add = add
         self._stop = stop
 
-    def read(self, size=-1):
-        if self._stop.is_set() or not self._data:
-            return b""
-        if size is None or size < 0:
-            size = len(self._data)
-        chunk = self._data[:size]
-        self._data = self._data[size:]
-        self._add(len(chunk))
-        return chunk
+    def __iter__(self):
+        for offset in range(0, len(self._data), IO_CHUNK):
+            if self._stop.is_set():
+                return
+            chunk = self._data[offset:offset + IO_CHUNK]
+            yield chunk
+            self._add(len(chunk))
 
 
-def conn_latency(conn):
+def conn_latency(conn, path=PROBE_PATH):
     start = time.monotonic()
-    conn.request("GET", PROBE_PATH + "?x=%d" % random.getrandbits(30), headers={"User-Agent": USER_AGENT})
+    conn.request("GET", path + "?x=%d" % random.getrandbits(30), headers={"User-Agent": USER_AGENT})
     resp = conn.getresponse()
+    check_response(resp)
     resp.read()
     return (time.monotonic() - start) * 1000.0
 
 
-def measure_idle_latency(base, count):
+def measure_idle_latency(base, count, probe_path=PROBE_PATH):
     """测量空闲延迟，返回 (样本列表, 失败数, 总探测数)。"""
     conn = make_conn(base)
     samples = []
@@ -310,7 +348,7 @@ def measure_idle_latency(base, count):
     total = count + 1  # 第一个样本作为预热丢弃
     for index in range(total):
         try:
-            ms = conn_latency(conn)
+            ms = conn_latency(conn, probe_path)
         except Exception:
             failures += 1
             try:
@@ -343,15 +381,36 @@ def _clear_progress():
     sys.stdout.flush()
 
 
-def run_transfer(label, base, duration, thread_count, upload, progress):
+def sample_rate(samples, since):
+    """计算 since 至最后一次采样的字节速率，边界在相邻采样之间线性插值。"""
+    if len(samples) < 2:
+        return 0.0
+    begin, first_bytes = samples[0]
+    for stamp, count in samples[1:]:
+        if stamp <= since:
+            begin, first_bytes = stamp, count
+        else:
+            if since > begin:
+                first_bytes += (count - first_bytes) * (since - begin) / (stamp - begin)
+                begin = since
+            break
+    end, last_bytes = samples[-1]
+    if end <= begin:
+        return 0.0
+    return max(last_bytes - first_bytes, 0) / (end - begin)
+
+
+def run_transfer(label, base, duration, thread_count, upload, progress, paths=None):
     """并发跑一个阶段的下载或上传，返回统计结果。"""
+    paths = OOKLA_PATHS if paths is None else paths
     lock = threading.Lock()
     counter = {"bytes": 0}
-    samples = []
     latencies = []
+    errors = []
     stop = threading.Event()
-    start = time.monotonic()
     buf = os.urandom(UPLOAD_CHUNK) if upload else None
+    start = time.monotonic()
+    samples = [(start, 0)]
 
     def add(n):
         with lock:
@@ -361,8 +420,13 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
         with lock:
             return counter["bytes"]
 
+    def snapshot():
+        with lock:
+            return time.monotonic(), counter["bytes"]
+
     def worker():
         conn = None
+        download_buf = bytearray(IO_CHUNK) if not upload else None
         while not stop.is_set():
             try:
                 if conn is None:
@@ -370,7 +434,7 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
                 if upload:
                     conn.request(
                         "POST",
-                        UPLOAD_PATH,
+                        paths["upload"],
                         body=_CountingBody(buf, add, stop),
                         headers={
                             "User-Agent": USER_AGENT,
@@ -386,20 +450,28 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
                             pass
                         conn = None
                         break
-                    conn.getresponse().read()
+                    resp = conn.getresponse()
+                    check_response(resp)
+                    resp.read()
                 else:
                     conn.request(
                         "GET",
-                        "/speedtest/random%dx%d.jpg" % (DOWNLOAD_SIZE, DOWNLOAD_SIZE),
+                        paths["download"] + ("&" if "?" in paths["download"] else "?")
+                        + "x=%d" % random.getrandbits(30),
                         headers={"User-Agent": USER_AGENT},
                     )
                     resp = conn.getresponse()
+                    check_response(resp)
                     while not stop.is_set():
-                        chunk = resp.read(1 << 18)
-                        if not chunk:
+                        size = resp.readinto(download_buf)
+                        if not size:
                             break
-                        add(len(chunk))
-            except Exception:
+                        add(size)
+            except Exception as exc:
+                if isinstance(exc, RuntimeError):
+                    with lock:
+                        errors.append(str(exc))
+                    stop.set()
                 try:
                     if conn is not None:
                         conn.close()
@@ -409,21 +481,23 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
                 if stop.is_set():
                     break
                 time.sleep(0.2)
+        try:
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
 
     def sampler():
         spin = 0
-        while not stop.is_set():
-            stop.wait(0.1)
-            now = time.monotonic()
-            current = total()
+        while not stop.wait(0.1):
+            now, current = snapshot()
             samples.append((now, current))
             if progress:
+                rate = sample_rate(samples, now - RATE_WINDOW)
                 if current > 0:
-                    rate = current / max(now - start, 1e-6)
                     percent = min(99, int((now - start) / duration * 100)) if duration else 0
                 else:
-                    # 还没有实际流量时冻结进度条（只转 spinner），和官方一致
-                    rate = 0.0
+                    # 没有实际流量时只显示 spinner。
                     percent = 0
                 _render_progress(label, rate, percent, spin)
                 spin += 1
@@ -435,7 +509,7 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
             try:
                 if conn is None:
                     conn = make_conn(base)
-                latencies.append(conn_latency(conn))
+                latencies.append(conn_latency(conn, paths["latency"]))
             except Exception:
                 try:
                     if conn is not None:
@@ -459,36 +533,32 @@ def run_transfer(label, base, duration, thread_count, upload, progress):
     probe_thread.start()
 
     deadline = start + duration
-    while time.monotonic() < deadline and not stop.is_set():
-        time.sleep(0.1)
+    while not stop.is_set():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        stop.wait(min(remaining, 0.1))
     stop.set()
+    end_sample = snapshot()
     mon.join(timeout=3)
     probe_thread.join(timeout=3)
     join_deadline = time.monotonic() + 3
     for thread in workers:
         thread.join(timeout=max(0.0, join_deadline - time.monotonic()))
 
-    elapsed = time.monotonic() - start
+    elapsed = end_sample[0] - start
     total_bytes = total()
-    final_t = time.monotonic()
-    samples.append((final_t, total_bytes))
-
-    # 速度取中间稳定窗口（跳过起步爬坡），不把收尾阶段 join 等待也算进去
-    def bytes_at(moment):
-        value = 0
-        for stamp, count in samples:
-            if stamp <= moment:
-                value = count
-            else:
-                break
-        return value
-
-    t_begin = start + duration * 0.15
-    t_end = start + duration * 0.9
-    speed = max(bytes_at(t_end) - bytes_at(t_begin), 0) / max(t_end - t_begin, 1e-6)
+    # 冻结停止传输时的快照，排除收尾等待与在途块稍后完成带来的计数。
+    final_samples = [sample for sample in samples if sample[0] < end_sample[0]] + [end_sample]
+    warmup = WARMUP_SECONDS if duration > WARMUP_SECONDS else 0.0
+    speed = sample_rate(final_samples, start + warmup)
 
     if progress:
         _clear_progress()
+    if errors:
+        raise RuntimeError("%s failed: %s" % (label, errors[0]))
+    if not total_bytes:
+        raise RuntimeError("%s failed: 未传输数据" % label)
     return {"bytes": total_bytes, "speed": speed, "latency": latencies, "elapsed": elapsed}
 
 
@@ -539,26 +609,37 @@ def try_save_result(cfg, payload):
 def main(argv):
     parser = argparse.ArgumentParser(
         prog="speedtest",
-        description="Speedtest by Ookla 的 Python 复刻",
+        description="Ookla / LibreSpeed 命令行测速",
         add_help=True,
     )
-    parser.add_argument("-s", "--server-id", metavar="ID", help="指定服务器 id")
-    parser.add_argument("-L", "--servers", action="store_true", help="列出最近的服务器")
+    target = parser.add_mutually_exclusive_group()
+    target.add_argument("-s", "--server-id", metavar="ID", help="指定 Ookla 服务器 id")
+    target.add_argument("-L", "--servers", action="store_true", help="列出最近的 Ookla 服务器")
+    target.add_argument("--librespeed", nargs="?", const=DEFAULT_LIBRESPEED_URL, metavar="URL",
+                        help="指定 speedtest-x / LibreSpeed 节点，省略地址时默认 %s" % DEFAULT_LIBRESPEED_URL)
     parser.add_argument("-T", "--threads", nargs="?", type=int, const=4, metavar="N",
                         help="多线程测速，线程数默认 4；不指定则单线程")
     parser.add_argument("-V", "--version", action="version", version="speedtest(py) 1.0")
     args = parser.parse_args(argv)
 
-    try:
-        cfg = fetch_config(None if args.servers else args.server_id)
-    except Exception as exc:
-        print("speedtest: 获取配置失败: %s" % exc, file=sys.stderr)
-        return 1
+    paths = OOKLA_PATHS
+    if args.librespeed is not None:
+        try:
+            base, paths = librespeed_target(args.librespeed or DEFAULT_LIBRESPEED_URL)
+        except ValueError as exc:
+            parser.error(str(exc))
+        cfg = {}
+    else:
+        try:
+            cfg = fetch_config(args.server_id)
+        except Exception as exc:
+            print("speedtest: 获取配置失败: %s" % exc, file=sys.stderr)
+            return 1
 
-    servers = [s for s in cfg.get("servers", []) if s.get("host")]
-    if not servers:
-        print("speedtest: 未找到服务器 (id=%s)" % args.server_id, file=sys.stderr)
-        return 1
+        servers = [s for s in cfg.get("servers", []) if s.get("host")]
+        if not servers:
+            print("speedtest: 未找到服务器 (id=%s)" % args.server_id, file=sys.stderr)
+            return 1
 
     if args.servers:
         print("Closest servers:")
@@ -585,31 +666,35 @@ def main(argv):
     ping_count = int(stage.get("latency", {}).get("pingCount") or 5)
     isp = cfg.get("app", {}).get("ispName") or "Unknown"
 
-    if args.server_id is not None:
-        server, base = servers[0], None
-    else:
-        try:
-            server, base = select_server(cfg)
-        except Exception as exc:
-            print("Error: %s" % exc, file=sys.stderr)
-            return 2
-    if base is None:
-        try:
-            base = resolve_base(server)
-        except Exception as exc:
-            print("Error: %s" % exc, file=sys.stderr)
-            return 2
+    if args.librespeed is None:
+        if args.server_id is not None:
+            server, base = servers[0], None
+        else:
+            try:
+                server, base = select_server(cfg)
+            except Exception as exc:
+                print("Error: %s" % exc, file=sys.stderr)
+                return 2
+        if base is None:
+            try:
+                base = resolve_base(server)
+            except Exception as exc:
+                print("Error: %s" % exc, file=sys.stderr)
+                return 2
     progress = sys.stdout.isatty() and not os.environ.get("SPEEDTEST_NO_PROGRESS")
 
     print()
-    print("   Speedtest by Ookla")
+    print("   Speedtest (LibreSpeed)" if args.librespeed is not None else "   Speedtest by Ookla")
     print()
-    print("      Server: %s - %s (id: %s)"
-          % (server.get("sponsor", ""), server.get("name", ""), server.get("id", "")))
-    print("         ISP: %s" % isp)
+    if args.librespeed is not None:
+        print("      Server: %s" % base)
+    else:
+        print("      Server: %s - %s (id: %s)"
+              % (server.get("sponsor", ""), server.get("name", ""), server.get("id", "")))
+        print("         ISP: %s" % isp)
 
     try:
-        idle, failures, probes = measure_idle_latency(base, ping_count)
+        idle, failures, probes = measure_idle_latency(base, ping_count, paths["latency"])
     except Exception as exc:
         print("Error: Latency test failed: %s" % exc, file=sys.stderr)
         return 2
@@ -624,12 +709,12 @@ def main(argv):
     upload_enabled = stage.get("upload", {}).get("isServerUploadEnabled", True)
 
     try:
-        download = run_transfer("Download", base, duration, thread_count, False, progress)
+        download = run_transfer("Download", base, duration, thread_count, False, progress, paths)
         print_speed_line("Download", download["speed"], download["bytes"])
         print_loaded_latency(download["latency"])
 
         if upload_enabled:
-            upload = run_transfer("Upload", base, duration, thread_count, True, progress)
+            upload = run_transfer("Upload", base, duration, thread_count, True, progress, paths)
             print_speed_line("Upload", upload["speed"], upload["bytes"])
             print_loaded_latency(upload["latency"])
         else:
@@ -642,7 +727,7 @@ def main(argv):
     loss = (failures / probes * 100.0) if probes else 0.0
     print("%12s: %7.1f%%" % ("Packet Loss", loss))
 
-    if os.environ.get("SPEEDTEST_SAVE"):
+    if os.environ.get("SPEEDTEST_SAVE") and args.librespeed is None:
         payload = {
             "isp": isp,
             "server": {

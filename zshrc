@@ -149,12 +149,10 @@ alias sudo-default-path='\sudo'
 alias awk-map-count="awk '{a[\$1]++} END {for (i in a) print i,a[i]}'"
 
 alias speedtest-jp='speedtest -s 60324'
-alias speedtest-sg='speedtest -s 367'
-alias speedtest-sh='speedtest -s 24447'
 alias speedtest-hk='speedtest -s 1536'
-alias speedtest-js='speedtest -s 5396'
 alias speedtest-los='speedtest -s 5905'
 alias speedtest-de='speedtest -s 44081'
+alias speedtest-lan='speedtest --librespeed'
 
 # git aliases (from OMZ git plugin, only the ones actually used)
 alias ga='git add'
