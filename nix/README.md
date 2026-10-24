@@ -13,6 +13,35 @@ Linux 的主机入口名称不变，例如在仓库根目录运行：
 sudo nixos-rebuild switch --flake .#huskar
 ```
 
+## 桌面应用图标
+
+桌面 profile 引入 `nixos/modules/desktop-icons.nix`，在
+`nixos/profiles/desktop.nix` 配置启动项 ID 与图标文件即可，支持 SVG、PNG 等桌面图标格式：
+
+```nix
+programs.desktopIconOverrides = {
+  "io.github.yucling.open-orpheus" = ./icons/netease-cloud-music.svg;
+  "org.gnome.Nautilus" = ./icons/files.png;
+};
+```
+
+ID 是 `.desktop` 文件名，可省略后缀，不是窗口标题或可执行文件名。图片路径相对于
+配置所在的 Nix 文件；新增本地图片要先加入 Git，flake 才能读取。
+
+模块在图形会话启动时按 `XDG_DATA_DIRS` 的优先级查找原启动项，在用户的
+`XDG_DATA_HOME/applications`（默认 `~/.local/share/applications`）生成同名覆盖，
+只修改主图标，保留启动命令、文件关联和右键动作，适用于 Flatpak 和普通桌面应用。
+移除配置后会清理模块生成的覆盖；尚未安装的应用会跳过。已有手工创建的同名用户启动项
+不会被覆盖，冲突详情见 `journalctl --user -u desktop-icon-overrides`。
+
+rebuild 后可手动刷新当前会话；应用升级或安装后也可运行：
+
+```sh
+systemctl --user restart desktop-icon-overrides.service
+```
+
+完全退出应用后重新打开；Dock 仍显示缓存图标时注销再登录。
+
 ## Mac
 
 先安装 Nix，然后在 `python3 ~/.dotfiles/setup.py` 中选择 `nix-darwin`。

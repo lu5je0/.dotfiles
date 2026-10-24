@@ -3,11 +3,16 @@
 {
   imports = [
     ../modules/arcglyph.nix
+    ../modules/desktop-icons.nix
     ../modules/fcitx5-rime.nix
     ../modules/gnome.nix
     ../modules/keyd.nix
     ../modules/mission-center.nix
   ];
+
+  programs.desktopIconOverrides = {
+    "io.github.yucling.open-orpheus" = ../icons/netease-cloud-music.svg;
+  };
 
   environment.systemPackages = with pkgs; [
     (pkgs.callPackage ../pkgs/kitty { })
