@@ -168,6 +168,8 @@
   FileNotFoundError；现在用 socket.gethostname()。
 - **`restic snapshots --json` 的 `summary` 里没有 `total_size`**，那个名字只存在于 `restic stats` 的输出。
   版本数据量取 `summary.total_bytes_processed`，该版本实际写入量取 `summary.data_added_packed`。
+  缺失统计返回 None，不能冒充 0；旧快照数据量通过 `stats --mode restore-size <ID>` 补齐，
+  TUI 仅在版本页逐个后台查询并缓存，失败可重试，失效请求不得回写。旧快照新增量保持未知。
 - **restic 时间戳是纳秒精度**，Python 3.9 的 `datetime.fromisoformat` 不接受，排序用 `snap_time_key()` 截到秒。
 - **`--one-file-system` 不能用**：`/home` 下没有嵌套挂载点，加了只会平白跳过东西。
 - NAS 仓库走 SFTP 而不是 CIFS 挂载点，本地 ext4 仓库可直接写：restic 依赖 fsync + rename 原子性，而 fstab 里的 CIFS 用了

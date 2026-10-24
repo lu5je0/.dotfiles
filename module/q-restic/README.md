@@ -79,6 +79,11 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 多个 profile 共用仓库时，写锁仍按仓库区分，`check` 和 `unlock` 是仓库级操作。
 不同 profile 的快照筛选标签不能互相匹配。
 
+版本数据量优先读取快照的 `summary`。旧版 restic 创建的快照没有此字段时，TUI 在进入版本列表后
+逐个后台调用 `stats --mode restore-size <快照 ID>` 补齐数据量，并在会话内缓存；查询前显示「统计中」，
+失败显示「不可用」。CLI `status` 也会查询缺失的数据量，失败返回非零。
+快照没有记录的新增量显示「未知」，不从仓库总占用推算，也不把缺失统计当成 0 B。
+
 `mount_dir` 默认 `/tmp/restic-mnt/<profile>`，`restore_dir` 默认 `~/restic-restore/<profile>`。
 多目录快照恢复后，各源目录的绝对路径树都位于恢复目标下。
 

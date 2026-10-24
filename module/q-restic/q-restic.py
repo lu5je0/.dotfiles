@@ -784,8 +784,17 @@ def snapshots(restic, cfg):
     return sorted(data, key=snap_time_key)
 
 
-def snapshot_stats(restic, cfg):
-    return run_json(restic, cfg, ["stats", "--json", "latest"] + snapshot_args(cfg))
+def snapshot_stats(restic, cfg, snapshot="latest", *, strict=False):
+    return run_json(restic, cfg, ["stats", "--json", "--mode", "restore-size", snapshot]
+                    + snapshot_args(cfg), strict=strict)
+
+
+def snapshot_total_size(restic, cfg, snapshot):
+    result = snapshot_stats(restic, cfg, snapshot, strict=True)
+    size = result.get("total_size") if isinstance(result, dict) else None
+    if type(size) is not int or size < 0:
+        raise RuntimeError("restic 返回的版本数据量格式无效")
+    return size
 
 
 def repo_stats(restic, cfg, *, strict=False):
@@ -811,13 +820,21 @@ def do_status(cfg):
         return 0
     print(f"{'ID':<10} {'时间':<20} {'数据量':>10} {'新增':>10}  标签")
     print("-" * 68)
+    size_failed = False
     for snap in snaps:
+        size = snap_size(snap)
+        if size is None:
+            try:
+                size = snapshot_total_size(restic, cfg, snap["id"])
+            except (OSError, RuntimeError) as exc:
+                warn(f"版本 {snap['short_id']} 数据量读取失败: {exc}")
+                size_failed = True
         print(
             f"{snap['short_id']:<10} {snap['time'][:19].replace('T', ' '):<20} "
-            f"{human_size(snap_size(snap)):>10} {human_size(snap_added(snap)):>10}  "
+            f"{human_size(size):>10} {human_size(snap_added(snap)):>10}  "
             f"{','.join(snap.get('tags') or [])}"
         )
-    latest = run_json(restic, cfg, ["stats", "--json", "latest"] + snapshot_args(cfg))
+    latest = snapshot_stats(restic, cfg)
     repo = repo_stats(restic, cfg)
     print()
     if latest:
@@ -827,27 +844,35 @@ def do_status(cfg):
             f"（{latest.get('total_file_count', 0)} 个文件）"
         )
     if repo:
+        details = []
+        if repo.get("compression_ratio") is not None:
+            details.append(f"压缩比 {repo['compression_ratio']:.2f}x")
+        if repo.get("total_uncompressed_size") is not None:
+            details.append(f"未压缩 {human_size(repo['total_uncompressed_size'])}")
         print(
-            f"当前 profile 数据占用 {human_size(repo.get('total_size', 0))}"
-            f"（压缩比 {repo.get('compression_ratio', 0):.2f}x，"
-            f"未压缩 {human_size(repo.get('total_uncompressed_size', 0))}）"
+            f"当前 profile 数据占用 {human_size(repo.get('total_size'))}"
+            + (f"（{'，'.join(details)}）" if details else "")
         )
-    return 0
+    return 1 if size_failed else 0
 
 
 def snap_size(snap):
     """该版本源数据的总量。注意 restic 的 summary 里没有 total_size，
     那个名字只存在于 `restic stats` 的输出。"""
-    return (snap.get("summary") or {}).get("total_bytes_processed", 0)
+    value = (snap.get("summary") or {}).get("total_bytes_processed")
+    return value if type(value) is int and value >= 0 else None
 
 
 def snap_added(snap):
     """该版本实际写进仓库的字节数（已压缩）。"""
     summary = snap.get("summary") or {}
-    return summary.get("data_added_packed", summary.get("data_added", 0))
+    value = summary.get("data_added_packed", summary.get("data_added"))
+    return value if type(value) is int and value >= 0 else None
 
 
 def human_size(num):
+    if num is None:
+        return "未知"
     step = 1024.0
     for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
         if abs(num) < step or unit == "TiB":
@@ -1394,6 +1419,9 @@ class App:
         self.repo_size_loading = False
         self.repo_size_loaded = False
         self.repo_size_error = ""
+        self.snapshot_sizes = {}
+        self.snapshot_size_errors = {}
+        self.pending_snapshot_size = None
         self._requests = {}
         self._results = queue.Queue()
         self._repo_key = self.repo_key()
@@ -1411,6 +1439,10 @@ class App:
 
     def invalidate_stats(self):
         self._requests.pop("stats", None)
+        self._requests.pop("snapshot_size", None)
+        self.snapshot_sizes = {}
+        self.snapshot_size_errors = {}
+        self.pending_snapshot_size = None
         self.repo_size = None
         self.repo_size_loading = False
         self.repo_size_loaded = False
@@ -1455,11 +1487,29 @@ class App:
 
     def start_stats_load(self):
         """进入版本列表后按需统计，同一次会话内复用结果。"""
+        self.start_snapshot_size_load()
         if (self.screen != "snapshots" or self.loading or self.load_error or self.repo_uninitialized
                 or self.repo_size_loaded or self.repo_size_loading):
             return
         self.repo_size_loading = True
         self._start_request("stats", lambda r, c: repo_stats(r, c, strict=True))
+
+    def snapshot_size(self, snap):
+        size = snap_size(snap)
+        return self.snapshot_sizes.get(snap["id"]) if size is None else size
+
+    def start_snapshot_size_load(self):
+        # 旧快照没有 summary；逐个后台统计，避免阻塞首屏或同时扫描大量版本。
+        if (self.screen not in ("snapshots", "snap_actions") or self.loading
+                or self.load_error or self.repo_uninitialized or "snapshot_size" in self._requests):
+            return
+        for snap in reversed(self.snaps):
+            sid = snap["id"]
+            if (snap_size(snap) is None and sid not in self.snapshot_sizes
+                    and sid not in self.snapshot_size_errors):
+                self.pending_snapshot_size = sid
+                self._start_request("snapshot_size", lambda r, c, sid=sid: snapshot_total_size(r, c, sid))
+                return
 
     def poll_data(self):
         """只在主线程更新界面数据，忽略已过期的后台结果。"""
@@ -1497,6 +1547,13 @@ class App:
                         self.cursor = (new_ids.index(selected) if selected in new_ids
                                        else min(self.cursor, max(0, len(result) - 1)))
                 self.snaps = result
+            elif kind == "snapshot_size":
+                sid = self.pending_snapshot_size
+                self.pending_snapshot_size = None
+                if error:
+                    self.snapshot_size_errors[sid] = str(error)
+                else:
+                    self.snapshot_sizes[sid] = result
             else:
                 size = result.get("total_size") if isinstance(result, dict) else None
                 if not error and (not isinstance(size, int) or size < 0):
@@ -1577,7 +1634,8 @@ class App:
             return ""
         return (
             f"{snap['short_id']} · {snap['time'][:19].replace('T', ' ')} · "
-            f"{human_size(snap_size(snap))} · {snap_size(snap)} bytes"
+            + (f"{human_size(self.snapshot_size(snap))} · {self.snapshot_size(snap)} bytes"
+               if self.snapshot_size(snap) is not None else "版本数据量未知")
         )
 
     def footer(self, width):
@@ -1592,6 +1650,9 @@ class App:
         error = f"读取仓库失败: {self.load_error}" if self.load_error else ""
         if not error and self.screen == "snapshots" and self.repo_size_error:
             error = f"统计占用失败: {self.repo_size_error}"
+        if not error and self.screen in ("snapshots", "snap_actions") and self.snapshot_size_errors:
+            sid, detail = next(iter(self.snapshot_size_errors.items()))
+            error = f"版本 {sid[:8]} 数据量读取失败: {detail}"
         if error:
             for chunk in wrap_text(error + "；返回主菜单后重新进入版本列表重试", width - 2):
                 lines.append(f"  {YELLOW}{chunk}{RESET}")
@@ -1657,12 +1718,14 @@ class App:
         items = []
         for snap in self.snaps:
             added = snap_added(snap)
+            size = self.snapshot_size(snap)
             items.append(
                 {
                     "badge": snap["short_id"],
                     "label": snap["time"][:19].replace("T", " "),
-                    "size": human_size(snap_size(snap)),
-                    "added": f"+{human_size(added)}" if added else "",
+                    "size": (human_size(size) if size is not None else
+                             "不可用" if snap["id"] in self.snapshot_size_errors else "统计中…"),
+                    "added": "新增未知" if added is None else f"+{human_size(added)}" if added else "",
                     "desc": ",".join(snap.get("tags") or []),
                     "goto": "snap_actions",
                 }
@@ -1873,7 +1936,7 @@ class App:
         """恢复到用户指定的目录。不默认写 /tmp：home 可能有上百 G，
         而 /tmp 在根文件系统上，既可能撑爆根也没意义。"""
         default = expand(self.cfg["restore_dir"]) / snap["short_id"]
-        need = snap_size(snap)
+        need = self.snapshot_size(snap)
         self.term.suspend()
         code = 1
         target = default
@@ -2064,7 +2127,7 @@ class App:
             if self.screen == "snapshots":
                 if self.load_error:
                     self.refresh()
-                elif self.repo_size_error:
+                elif self.repo_size_error or self.snapshot_size_errors:
                     self.invalidate_stats()
             self.start_stats_load()
             return None

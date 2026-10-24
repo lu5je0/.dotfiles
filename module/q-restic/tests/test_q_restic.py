@@ -559,7 +559,7 @@ if (root / 'offline').exists():
     raise SystemExit(1)
 if sys.argv[1] == 'snapshots':
     time.sleep(.3)
-    print(json.dumps([{'id': str(i)*64, 'short_id': str(i)*8, 'time': f'2026-10-0{i}T12:00:00Z'} for i in (1, 2)]))
+    print(json.dumps([{'id': str(i)*64, 'short_id': str(i)*8, 'time': f'2026-10-0{i}T12:00:00Z', 'summary': {'total_bytes_processed': 1024}} for i in (1, 2)]))
 elif sys.argv[1] == 'stats':
     assert sys.argv[2:5] == ['--json', '--mode', 'raw-data']
     time.sleep(.5)
