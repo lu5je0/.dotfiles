@@ -1,4 +1,4 @@
-"""Exercise the profile picker and hidden password prompt in a real pseudo-terminal."""
+"""Exercise the profile picker without password setup in a real pseudo-terminal."""
 import contextlib
 import fcntl
 import json
@@ -101,27 +101,17 @@ else:
 
 
 class ProfileTuiTests(unittest.TestCase):
-    def test_picker_does_not_connect_and_menu_can_set_missing_password_without_echo(self):
+    def test_picker_does_not_connect_and_profile_needs_no_password_file(self):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
             root = Path(tmp)
             session = Session(self, root, missing_password=True)
             session.read_until('2 个 profile')
             self.assertFalse((root / 'calls').exists())
             session.write('j\r')
-            session.read_until('密码文件未配置')
-            self.assertFalse((root / 'calls').exists())
-            session.write('G\r')
-            session.read_until('仓库密码（不回显）:')
-            secret = 'pty-only-test-password'
-            session.write(secret + '\n')
-            session.read_until('再次输入密码:')
-            session.write(secret + '\n')
-            session.read_until('密码文件已保存')
-            self.assertEqual((root / 'immich.password').read_text(), secret + '\n')
-            self.assertEqual((root / 'immich.password').stat().st_mode & 0o777, 0o600)
             session.read_until('2026-10-02')
             session.exit('qq')
-            self.assertNotIn(secret.encode(), session.output)
+            self.assertFalse((root / 'immich.password').exists())
+            self.assertNotIn('设置密码'.encode(), session.output)
             self.assertNotIn('snapshots home', (root / 'calls').read_text())
 
     def test_switching_profile_discards_old_async_results(self):

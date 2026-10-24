@@ -9,9 +9,7 @@ let
   enableTimer = true;
 
   # 备份逻辑在 module/q-restic/，入口符号链接是 bin/common/q-restic。
-  # 这里直接调 python3 而不走那个入口：入口经 runner.sh 用 uv 起 venv，
-  # 对常驻定时任务来说是多余的一层（要 uv、要 .venv 可用、要能求值 flake），
-  # 而 q-restic 只用标准库，python3 直接跑就够了。
+  # 定时任务直接调用 python3；q-restic 只使用标准库。
   #
   # 用户入口默认合并本模块部署的配置，手动执行与定时任务读取同一份 profile。
   # CLI 仓库操作必须显式指定配置文件和 profile。
@@ -22,7 +20,7 @@ in
     profiles.home = {
       sources = [ home ];
       repository = "sftp:${user}@192.168.1.10:/mnt/mg08/backups/restic/huskar";
-      password_file = "${home}/.config/restic/password";
+      run_as = user;
       excludes = "/etc/q-restic/huskar-excludes.txt";
       host = "huskar";
       tag = "home";

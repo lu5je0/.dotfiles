@@ -22,7 +22,6 @@ class BackupHookTests(unittest.TestCase):
         self.enterContext(contextlib.redirect_stdout(io.StringIO()))
         self.enterContext(contextlib.redirect_stderr(io.StringIO()))
         self.enterContext(patch.object(q, 'restic_bin', return_value='restic'))
-        self.enterContext(patch.object(q, 'require_password'))
         self.enterContext(patch.object(q, 'writer_lock', side_effect=lambda cfg: contextlib.nullcontext()))
         for name in ('preflight_sftp', 'ensure_repo'):
             self.enterContext(patch.object(q, name, side_effect=lambda *args, n=name: self.events.append(n)))
@@ -96,7 +95,6 @@ s=importlib.util.spec_from_file_location('q',sys.argv[1]); q=importlib.util.modu
 from pathlib import Path
 q.CONFIG_FILE=Path(sys.argv[2])/'config.json'
 q.restic_bin=lambda:'restic'
-q.require_password=lambda cfg:None
 q.preflight_sftp=lambda cfg:None
 q.ensure_repo=lambda *args:None
 def backup(*args):

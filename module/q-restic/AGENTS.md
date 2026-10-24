@@ -25,7 +25,7 @@
 ## 配置与 profile
 
 - 根配置格式是 `{"profiles": {...}}`，详见同目录 `README.md`。
-  新 profile 必须显式配置 `sources` 列表、`repository`、`password_file`；不能隐式备份 home。
+  新 profile 必须显式配置 `sources` 列表、`repository`；不能隐式备份 home。
   `-c/--config`、`-p/--profile` 可置于子命令前后，CLI 仓库操作必须指定 profile。
 - `load_config()` 返回整个文档，`profile_config()` 返回解析路径及私有上下文的有效配置。
   `imports` 递归合并 profiles，缺失文件、循环与重名均报错，不允许覆盖。
@@ -39,14 +39,19 @@
 - 所有支持快照筛选的命令都通过 `snapshot_args()` 传主机和 profile 标签。
   restore 对显式 ID 也先检查是否属于当前 profile，因为 restic 原生筛选只约束 latest。
   同仓库同主机的 profile 标签不能互相匹配；写锁仍按仓库区分，check/unlock 操作整个仓库。
-- TUI 默认从 profile 列表开始，首屏不访问仓库、不要求 restic 或密码已经可用。
+- TUI 默认从 profile 列表开始，首屏不访问仓库、不要求 restic 已经可用。
   切换 profile 时废弃所有旧异步请求，不能把上一 profile 的版本、统计或错误带过来。
 - 仓库未初始化是独立状态：TUI/CLI status 只提示，不初始化；首次 backup 才创建。
   错误凭证、权限和连接失败不得当成空仓库，也不得触发初始化；已有列表遇到仓库消失仍保留列表并报错。
   未初始化时不读取占用；异步结果切换 profile 后不能带入此状态。
-- 「设置密码文件」在普通屏用 getpass 两次确认，不回显、不把密码写入配置或日志。
-  通过 600 临时文件和不覆盖目标的 link 创建；现有文件/符号链接、空密码、取消均不得覆盖或落盘。
-  失败提示和按键等待必须在恢复备用屏之前完成。
+- 仓库密码统一为内置 `lu5je0`，不读取 password_file 或继承外部密码设置；没有设置密码菜单/命令。
+  错误密码仍是认证失败，不自动改密钥或初始化仓库。
+- `run_as` 指定 restic 和运行文件的用户；`hooks_run_as` 显式覆盖 hooks 身份，默认继承 run_as。
+  未配置时保留启动身份。root 通过 Popen 的 user/group/extra_groups 切换子进程身份，不能在
+  多线程 TUI 父进程里 setuid 或使用 preexec_fn。普通用户不自动提权。
+  显式用户的 HOME/XDG 路径固定于账号 home，锁和挂载日志必须由目标用户打开；通过 Unix socket
+  传回描述符让父进程持锁，不能让 root 直接打开用户可写路径。已有文件权限不自动迁移。
+  hooks 获得 Q_RESTIC_RUN_AS/Q_RESTIC_UID/Q_RESTIC_GID；root hook 负责让导出文件可被备份用户读取。
 
 - `hooks` 可配置 preflight/before_backup/after_backup 的 argv 列表，不经过 shell，cwd 是配置目录。
   写锁覆盖准备、备份、恢复和清理；after_backup 在准备失败或异常时也执行，且早于清理。
@@ -86,7 +91,7 @@
 - **版本 diff 交给 Neovim 展示**：restic stdout 直接写临时 `.diff` 文件，以只读、不可修改的
   diff buffer 打开 `nvim`，不在 TUI 中自行渲染。退出编辑器后清理临时文件并恢复 TUI；
   restic 或编辑器失败时在普通屏等待按键，错误不能被备用屏盖掉。
-- **kitty IME 闸门必须成对，离开时必须开闸**。q-restic 备用屏内只做导航，密码在普通屏输入，所以进 TUI 就发
+- **kitty IME 闸门必须成对，离开时必须开闸**。q-restic 备用屏内只做导航，进入 TUI 就发
   `OSC 1337;SetUserVar=tui-bridge=<base64>`（`method=normal`）关掉 kitty 的 IME。
   kitty 是**旁路** IME 而不是切输入源，**留着关闸状态出去，用户手动切输入源也救不回来**
   （逃生阀是 kitty.conf 的 `ctrl+b>i enable_ime`）。所以 `KittyIMEGate` 把这些路径全挂上了：
@@ -110,7 +115,7 @@
   加载完成后靠 `select` 超时自动重绘。不要同步调用 `restic stats` 阻塞首屏：冷缓存下它要 4 秒以上
   （要遍历 44 万个文件）。版本数据量取 `snapshots --json` 的 summary；版本列表底部的
   总占用在进入版本列表后由 `start_stats_load()` 后台读取 `stats --mode raw-data`
-  （与 CLI 一样按 host 和 profile 标签过滤），会话内缓存；备份、删除、仓库/host/密码文件变更，
+  （与 CLI 一样按 host 和 profile 标签过滤），会话内缓存；备份、删除、仓库/host/执行用户变更，
   或新版本列表与缓存不同时失效。只读操作不触发重新统计。
   `refresh()` 也必须后台执行、保留已有列表，失败不能清空列表或冒充空仓库；
   `snapshots()` 遇到命令失败/无效 JSON 必须抛错，CLI status 返回非零。
