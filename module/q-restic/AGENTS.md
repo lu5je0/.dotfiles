@@ -52,6 +52,9 @@
   显式用户的 HOME/XDG 路径固定于账号 home，锁和挂载日志必须由目标用户打开；通过 Unix socket
   传回描述符让父进程持锁，不能让 root 直接打开用户可写路径。已有文件权限不自动迁移。
   hooks 获得 Q_RESTIC_RUN_AS/Q_RESTIC_UID/Q_RESTIC_GID；root hook 负责让导出文件可被备份用户读取。
+  huskar 的 systemd 服务以 lu5je0 运行并授予 CAP_DAC_READ_SEARCH，读取 root 私有源文件；
+  同 UID 子进程必须保留 ambient capability，不能无条件 setuid/drop capabilities。
+  日常 CLI/TUI 不带此权限；完整手动备份走 restic-home.service，排除清单照常生效。
 
 - `hooks` 可配置 preflight/before_backup/after_backup 的 argv 列表，不经过 shell，cwd 是配置目录。
   写锁覆盖准备、备份、恢复和清理；after_backup 在准备失败或异常时也执行，且早于清理。
@@ -161,9 +164,8 @@
   `systemd.services.<name>.path` 才是 unit 的 PATH 来源（求值时按 `enableDefaultPath`
   生成 coreutils/findutils/gnugrep/gnused/systemd）。只写 systemPackages 的话手动跑没事、
   定时任务天天失败在“PATH 里找不到 restic”，**rebuild 多少次也不会好**。同一坑的第二口是 `ssh`：
-  unit 里还得有 `pkgs.openssh`，因为 `preflight_sftp()` 自己调 ssh；restic 的 sftp 后端是
-  Go 原生实现、不需要 ssh（实测 PATH 清空也能列快照），所以 ssh 缺了只影响预检，
-  现在会 warn 跳过而不是抛堆栈。反过来，别把 `detect_host()` 改回 `hostname -s`：
+  unit 里还得有 `pkgs.openssh`，因为 `preflight_sftp()` 与 restic 默认的 SFTP 传输都调用 ssh；
+  预检缺少 ssh 时 warn 跳过，实际连接失败由 restic 报告。反过来，别把 `detect_host()` 改回 `hostname -s`：
   那个二进制来自 net-tools、不在 unit 的 PATH 里，新机器（还没有 config.json）会直接
   FileNotFoundError；现在用 socket.gethostname()。
 - **`restic snapshots --json` 的 `summary` 里没有 `total_size`**，那个名字只存在于 `restic stats` 的输出。
@@ -188,6 +190,9 @@ restic 原生还有「桶装不满时额外保留最老的那个」的兜底；q
 
 - 改完至少跑 `python3 -m py_compile q-restic.py`。
 - 数据加载/刷新逻辑的回归测试：`python3 -m unittest discover -s module/q-restic/tests -p 'test_*.py'`。
+- huskar 跨属主读取验证：`unshare --map-auto --map-root-user python3 -m unittest discover -s module/q-restic/tests -p test_backup_capability.py -v`。
+  需要 Linux 用户命名空间及 subordinate UID/GID 映射；验证私有源文件不可读、带 capability 备份、
+  撤掉 capability 后读取仓库、保留源权限和普通用户的仓库/缓存属主，不接触真实备份仓库。
 - **`config` 子命令的 stdout 必须保持纯 JSON**（提示信息一律走 stderr），
   否则 `q-restic config | jq` 会解析失败。验证：`q-restic config 2>/dev/null | python3 -m json.tool`。
 - 改 CLI / 保留策略：先用 `q-restic -p <profile> dry-run` 空跑，或在临时仓库上验

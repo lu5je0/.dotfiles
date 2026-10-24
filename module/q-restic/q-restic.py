@@ -517,9 +517,8 @@ def repo_ready(restic, cfg):
 def preflight_sftp(cfg, quiet=False):
     """SFTP 目标预检：路径存在且可写，避免跑一半才发现写不进去。
 
-    要自己调 PATH 里的 ssh。找不到就只 warn 跳过，不要 die：预检只是提前发现，
-    restic 的 sftp 后端是 Go 原生实现、根本不用 ssh（实测 PATH 清空照样能列快照），
-    所以少了它备份也能跑完。
+    调用 PATH 里的 ssh；找不到时跳过预检，实际连接错误由 restic 报告。
+    restic 默认也通过 ssh 启动远端 SFTP，但可单独配置传输命令。
     """
     repo = cfg["repository"]
     if not repo.startswith("sftp:"):
@@ -530,7 +529,7 @@ def preflight_sftp(cfg, quiet=False):
         return
     ssh = shutil.which("ssh")
     if not ssh:
-        warn("PATH 里没有 ssh，跳过 NAS 目标预检（不影响备份，只是少了提前发现）")
+        warn("PATH 里没有 ssh，跳过 NAS 目标预检；restic 默认的 SFTP 传输也需要 ssh")
         return
     if not quiet:
         info(f"预检 NAS 目标 {userhost}:{path}")

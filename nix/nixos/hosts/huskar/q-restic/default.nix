@@ -51,8 +51,7 @@ in
   systemd.services.restic-home = {
     description = "restic 增量备份 home 到 NAS";
 
-    # openssh 只给 q-restic 的 NAS 预检（它自己调 ssh 试写）用，不是 restic 的依赖：
-    # restic 的 sftp 后端是 Go 原生实现，PATH 清空也能列快照（实测）。
+    # q-restic 的 NAS 预检和 restic 默认的 SFTP 传输都需要 ssh。
     # hostname 不需要——detect_host() 用的是 socket.gethostname()，跟 PATH 无关。
     path = [ pkgs.restic pkgs.openssh ];
 
@@ -67,9 +66,13 @@ in
 
     serviceConfig = {
       Type = "oneshot";
-      # 以用户身份跑，不用 root：home 里的文件本来就都属于这个用户。
+      # 保持用户的 SSH 身份、HOME、缓存和写锁；只为本服务授予跨属主读取权限。
       User = user;
       Group = config.users.users.${user}.group;
+      # 包括 root 的 0600 文件和 0700 目录；不授予绕过写权限或修改属主的能力。
+      # Ambient 集让权限经过 Python/子进程 exec 传给 restic，普通 q-restic 不带此权限。
+      AmbientCapabilities = [ "CAP_DAC_READ_SEARCH" ];
+      CapabilityBoundingSet = [ "CAP_DAC_READ_SEARCH" ];
       ExecStart = "${pkgs.python3}/bin/python3 ${script} -c ${configFile} -p home backup";
       Nice = 10;
       IOSchedulingClass = "idle";

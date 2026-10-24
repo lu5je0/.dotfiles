@@ -133,6 +133,18 @@ q-restic 不会递归修改现有仓库或备份源的属主。切换用户前�
 并确认该用户能读取所有备份源。root hook 产生的 SQL 等文件须由 hook 显式交给备份用户；
 新恢复文件由目标用户创建，无法恢复其无权设置的其他账号属主。SFTP 远端属主仍由连接账号决定。
 
+huskar 的 home 定时备份由 `restic-home.service` 以 `lu5je0` 运行，并通过 systemd 的
+`AmbientCapabilities` / `CapabilityBoundingSet` 授予 `CAP_DAC_READ_SEARCH`。
+因此服务能读取 home 内 root 的 0600 文件、遍历 0700 目录，备份会保留源文件的 UID/GID 和权限；
+SSH、仓库、缓存和锁仍属于 `lu5je0`。权限仅作用于该服务及其子进程，没有给 restic 二进制设置全局 capability。
+原有 excludes 和 `--exclude-caches` 仍生效；“完整”指未被排除的普通文件和目录，socket 等特殊文件不保存内容。
+
+需要包含受限文件的手动备份也用 `sudo systemctl start restic-home.service`；
+直接在普通终端运行 `q-restic -p home backup` 不具有这项读取权限。
+日常用 `q-restic -p home` 查看、挂载即可，默认只读 FUSE 挂载允许挂载用户读取已备份内容，
+不需要源文件属主是自己。把文件恢复到磁盘并精确保留 root 属主则需要另外以 root 执行恢复。
+修改 huskar 的 Nix 服务配置后需要 rebuild 才生效。
+
 ## 备份前后命令
 
 profile 可选 `hooks` 对象，`preflight`、`before_backup` 和 `after_backup` 的值都是非空命令参数列表，
