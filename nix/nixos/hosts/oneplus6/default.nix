@@ -3,8 +3,8 @@
   imports = [
     ./hardware-configuration.nix
     ./audio.nix
-    ./battery-monitor.nix
-    ./bluetooth.nix
+    ./pkgs/battery-monitor/module.nix
+    ./pkgs/bluetooth-address/module.nix
     ./camera.nix
     ./charging.nix
     ./power.nix

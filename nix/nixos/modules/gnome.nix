@@ -23,7 +23,10 @@ let
   ];
 in
 {
-  imports = [ ../pkgs/window-decorations/module.nix ];
+  imports = [
+    ../pkgs/gtk-frdp/module.nix
+    ../pkgs/window-decorations/module.nix
+  ];
 
   environment.systemPackages = shellExtensions ++ [
     pkgs.gjs
@@ -37,23 +40,6 @@ in
   # qt.enable 把 QT_PLUGIN_PATH 指到各 profile 的 lib/qt-6/plugins，Qt 插件装进 profile 才被找到
   qt.enable = true;
   environment.sessionVariables.QT_WAYLAND_DECORATION = "qadwaitadecorations";
-
-  # gtk-frdp 2026-04-24 快照的 frdp_register_pointer 用未初始化的 rdpPointer 注册指针类，
-  # 收到服务端指针更新时会 free 野指针崩溃（上游 040b75d5 已修），覆盖为修复版
-  nixpkgs.overlays = [
-    (final: prev: {
-      gtk-frdp = prev.gtk-frdp.overrideAttrs {
-        version = "0-unstable-2026-07-24";
-        src = prev.fetchFromGitLab {
-          domain = "gitlab.gnome.org";
-          owner = "GNOME";
-          repo = "gtk-frdp";
-          rev = "83854a24e31d1c07519f6e4393fe280d3b59e080";
-          hash = "sha256-6f0irRBkpmOYrhXkeSR6ni55SJiltOfYRiwZy5V/VrE=";
-        };
-      };
-    })
-  ];
 
   services.displayManager.gdm = {
     enable = true;

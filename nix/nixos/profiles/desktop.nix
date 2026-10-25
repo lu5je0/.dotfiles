@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ../modules/arcglyph.nix
+    ../pkgs/arcglyph/module.nix
     ../modules/desktop-icons.nix
     ../modules/fcitx5-rime.nix
     ../modules/gnome.nix
