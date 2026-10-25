@@ -23,10 +23,7 @@ let
   ];
 in
 {
-  imports = [
-    ../pkgs/gtk-frdp/module.nix
-    ../pkgs/window-decorations/module.nix
-  ];
+  imports = [ ../pkgs/window-decorations/module.nix ];
 
   environment.systemPackages = shellExtensions ++ [
     pkgs.gjs
