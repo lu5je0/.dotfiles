@@ -16,4 +16,5 @@
   qoder = pkgs.callPackage ./qoder { };
   terminal-browser = pkgs.callPackage ./terminal-browser { };
   tilewindow = pkgs.callPackage ./tilewindow { };
+  wechat = pkgs.callPackage ./wechat { };
 }
