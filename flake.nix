@@ -46,7 +46,7 @@
         config.allowUnfree = true;
       };
       localPackages = import ./nix/nixos/pkgs {
-        inherit pkgs inputs;
+        inherit pkgs pkgsUnstable inputs;
       };
       mkSystem =
         modules:

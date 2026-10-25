@@ -14,6 +14,6 @@
 
   environment.systemPackages = [
     pkgs.lm_sensors
-    pkgsUnstable.mission-center
+    (pkgsUnstable.callPackage ./. { })
   ];
 }

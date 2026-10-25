@@ -7,7 +7,7 @@
     ../modules/fcitx5-rime.nix
     ../modules/gnome.nix
     ../modules/keyd.nix
-    ../modules/mission-center.nix
+    ../pkgs/mission-center/module.nix
   ];
 
   programs.desktopIconOverrides = {

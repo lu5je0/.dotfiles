@@ -1,0 +1,2778 @@
+From 253d2a59016c0a9b8b3114022bef95fbf7343eed Mon Sep 17 00:00:00 2001
+From: jojo2357 <11406210-jojo2357@users.noreply.gitlab.com>
+Date: Tue, 8 Sep 2026 03:12:29 +0000
+Subject: [PATCH] performance_page: Fix sidebar ordering and visibility
+
+Make position and visibility functions of GSettings that GTK evaluates
+through a sort function and a filter function, so rows can come and go
+freely.
+
+This means that the names of devices that are not present are kept,
+which in turn lets an unplugged device, or one that is known but not
+yet enumerated, reclaim its position.
+
+A device seen for the first time is merged in after the last device
+that sorts before it by default, and the merged order is stored.
+
+Closes #256, #461, #539, and #540
+
+See merge request mission-center-devs/mission-center!538
+---
+ src/performance_page/mod.rs           | 1905 +++++++++++--------------
+ src/performance_page/summary_graph.rs |  183 ++-
+ src/window.rs                         |    5 +-
+ 3 files changed, 1003 insertions(+), 1090 deletions(-)
+
+diff --git a/src/performance_page/mod.rs b/src/performance_page/mod.rs
+index 6ca93ce4..fb1170e0 100644
+--- a/src/performance_page/mod.rs
++++ b/src/performance_page/mod.rs
+@@ -22,7 +22,7 @@ use std::fmt::Write;
+ use std::marker::PhantomData;
+ use std::{
+     cell::{Cell, RefCell},
+-    collections::HashMap,
++    collections::{HashMap, HashSet},
+ };
+ 
+ use adw::{prelude::*, subclass::prelude::*};
+@@ -48,8 +48,8 @@ use crate::widgets::Placeholder;
+ use crate::{settings, DataType};
+ 
+ use summary_graph::{
+-    parse_device_overrides, resolve_device_visibility, serialize_device_overrides, DeviceOverride,
+-    DeviceType, NetworkGroup,
++    decode_device_name, encode_device_name, parse_device_overrides, resolve_device_visibility,
++    serialize_device_overrides, DeviceOverride, DeviceType, NetworkGroup,
+ };
+ 
+ mod battery;
+@@ -81,6 +81,22 @@ trait PageExt {
+ 
+ const MK_TO_0_C: i32 = -273150;
+ 
++const MAX_REMEMBERED_DEVICES: usize = 256;
++
++fn prune_sidebar_order(order: &mut Vec<String>, present: &HashSet<String>, max: usize) {
++    let mut excess = order.len().saturating_sub(max);
++    let mut index = order.len();
++
++    while excess > 0 && index > 0 {
++        index -= 1;
++
++        if !present.contains(&order[index]) {
++            order.remove(index);
++            excess -= 1;
++        }
++    }
++}
++
+ mod imp {
+     use super::*;
+ 
+@@ -143,6 +159,9 @@ mod imp {
+         pages: Cell<Vec<Pages>>,
+         pub summary_graphs: Cell<HashMap<SummaryGraph, gtk::DragSource>>,
+ 
++        sidebar_rank: RefCell<HashMap<String, usize>>,
++        rebuilding: Cell<bool>,
++
+         context_menu_view_actions: Cell<HashMap<String, gio::SimpleAction>>,
+         current_view_action: Cell<gio::SimpleAction>,
+     }
+@@ -168,6 +187,9 @@ mod imp {
+                 pages: Cell::new(Vec::new()),
+                 summary_graphs: Cell::new(HashMap::new()),
+ 
++                sidebar_rank: RefCell::new(HashMap::new()),
++                rebuilding: Cell::new(false),
++
+                 context_menu_view_actions: Cell::new(HashMap::new()),
+                 current_view_action: Cell::new(gio::SimpleAction::new("", None)),
+             }
+@@ -179,6 +201,187 @@ mod imp {
+             self.sidebar.borrow().clone()
+         }
+ 
++        fn canonical_key(name: &str) -> (u8, &str) {
++            const CATEGORIES: [&str; 7] = ["cpu", "memory", "disk", "net", "gpu", "fan", "battery"];
++
++            let category = CATEGORIES
++                .iter()
++                .position(|prefix| name.starts_with(prefix))
++                .unwrap_or(CATEGORIES.len()) as u8;
++
++            (category, name)
++        }
++
++        fn view_action_name(page_name: &str) -> Option<&'static str> {
++            Some(match page_name.split('-').next().unwrap_or_default() {
++                "cpu" => "cpu",
++                "memory" => "memory",
++                "disk" => "disk",
++                "net" => "network",
++                "gpu" => "gpu",
++                "fan" => "fan",
++                "battery" => "battery",
++                _ => return None,
++            })
++        }
++
++        fn device_visible(&self, graph: &SummaryGraph) -> bool {
++            let settings = settings!();
++
++            let category_visible = match graph.device_type() {
++                DeviceType::Disk => settings.boolean("performance-show-disks"),
++                DeviceType::Network(group) => {
++                    settings.boolean("performance-show-network")
++                        && settings.boolean(group.settings_key())
++                }
++                DeviceType::Gpu => settings.boolean("performance-show-gpus"),
++                DeviceType::Fan => settings.boolean("performance-show-fans"),
++                DeviceType::Battery => settings.boolean("performance-show-batteries"),
++                DeviceType::Cpu | DeviceType::Memory | DeviceType::Unspecified => true,
++            };
++
++            let overrides =
++                parse_device_overrides(&settings.string("performance-sidebar-device-overrides"));
++
++            resolve_device_visibility(graph.widget_name().as_str(), &overrides, category_visible)
++        }
++
++        fn graph_shown(&self, graph: &SummaryGraph) -> bool {
++            self.sidebar_edit_mode.get() || self.device_visible(graph)
++        }
++
++        pub(super) fn row_shown(&self, row: &gtk::ListBoxRow) -> bool {
++            match row
++                .child()
++                .and_then(|child| child.downcast::<SummaryGraph>().ok())
++            {
++                Some(graph) => self.graph_shown(&graph),
++                None => true,
++            }
++        }
++
++        fn load_sidebar_order(settings: &gio::Settings) -> Vec<String> {
++            settings
++                .string("performance-sidebar-order")
++                .split(';')
++                .filter(|entry| !entry.is_empty())
++                .map(decode_device_name)
++                .collect()
++        }
++
++        fn store_sidebar_order(settings: &gio::Settings, order: &[String]) {
++            let encoded = order
++                .iter()
++                .map(|name| encode_device_name(name))
++                .collect::<Vec<_>>()
++                .join(";");
++
++            if encoded.as_str() == settings.string("performance-sidebar-order").as_str() {
++                return;
++            }
++
++            settings
++                .set_string("performance-sidebar-order", &encoded)
++                .unwrap_or_else(|_| {
++                    g_warning!(
++                        "MissionCenter::PerformancePage",
++                        "Failed to set performance-sidebar-order setting"
++                    );
++                });
++        }
++
++        fn merge_new_devices(order: &mut Vec<String>, mut present: Vec<String>) {
++            present.sort_unstable_by(|a, b| Self::canonical_key(a).cmp(&Self::canonical_key(b)));
++
++            for name in present {
++                if order.iter().any(|known| known == &name) {
++                    continue;
++                }
++
++                let key = Self::canonical_key(&name);
++                let at = order
++                    .iter()
++                    .rposition(|known| {
++                        let known_key = Self::canonical_key(known);
++                        known_key.0 == key.0 && known_key.1 < key.1
++                    })
++                    .or_else(|| {
++                        order
++                            .iter()
++                            .rposition(|known| Self::canonical_key(known).0 == key.0)
++                    })
++                    .or_else(|| {
++                        order
++                            .iter()
++                            .rposition(|known| Self::canonical_key(known) < key)
++                    })
++                    .map_or(0, |index| index + 1);
++
++                order.insert(at, name);
++            }
++        }
++
++        fn rebuild_sidebar_rank(&self) {
++            if self.rebuilding.replace(true) {
++                return;
++            }
++
++            let settings = settings!();
++            let mut order = Self::load_sidebar_order(&settings);
++
++            let summary_graphs = self.summary_graphs.take();
++            let present = summary_graphs
++                .keys()
++                .map(|graph| graph.widget_name().to_string())
++                .collect::<Vec<_>>();
++            self.summary_graphs.set(summary_graphs);
++
++            let present_set = present.iter().cloned().collect::<HashSet<_>>();
++
++            Self::merge_new_devices(&mut order, present);
++            prune_sidebar_order(&mut order, &present_set, MAX_REMEMBERED_DEVICES);
++            Self::store_sidebar_order(&settings, &order);
++
++            self.sidebar_rank.replace(
++                order
++                    .into_iter()
++                    .enumerate()
++                    .map(|(rank, name)| (name, rank))
++                    .collect(),
++            );
++
++            self.sidebar().invalidate_sort();
++            self.rebuilding.set(false);
++        }
++
++        fn move_in_saved_order(&self, dragged: &str, target: &str, after_target: bool) {
++            if dragged == target {
++                return;
++            }
++
++            let settings = settings!();
++
++            let mut order = Self::load_sidebar_order(&settings);
++            order.retain(|name| name != dragged);
++
++            let at = match order.iter().position(|name| name == target) {
++                Some(index) if after_target => index + 1,
++                Some(index) => index,
++                None => {
++                    g_warning!(
++                        "MissionCenter::PerformancePage",
++                        "Drop target {} is not in the saved sidebar order",
++                        target
++                    );
++
++                    return;
++                }
++            };
++            order.insert(at, dragged.to_owned());
++
++            Self::store_sidebar_order(&settings, &order);
++        }
++
+         fn set_sidebar(&self, lb: &gtk::ListBox) {
+             let this = self.obj().as_ref().clone();
+ 
+@@ -202,7 +405,9 @@ mod imp {
+                     let imp = this.imp();
+ 
+                     let actions = imp.context_menu_view_actions.take();
+-                    if let Some(new_action) = actions.get(page_name) {
++                    if let Some(new_action) =
++                        Self::view_action_name(page_name).and_then(|name| actions.get(name))
++                    {
+                         let prev_action = imp.current_view_action.replace(new_action.clone());
+                         prev_action.set_state(&glib::Variant::from(false));
+                         new_action.set_state(&glib::Variant::from(true));
+@@ -222,9 +427,46 @@ mod imp {
+                 }
+             });
+ 
++            lb.set_sort_func({
++                let this = self.obj().downgrade();
++                move |row_a, row_b| {
++                    let this = match this.upgrade() {
++                        Some(this) => this,
++                        None => return gtk::Ordering::Equal,
++                    };
++
++                    let rank = this.imp().sidebar_rank.borrow();
++
++                    let key = |row: &gtk::ListBoxRow| -> (u8, usize, u8, String) {
++                        let name = row
++                            .child()
++                            .map(|child| child.widget_name().to_string())
++                            .unwrap_or_default();
++
++                        match rank.get(&name) {
++                            Some(&index) => (0, index, 0, String::new()),
++                            None => {
++                                let category = Self::canonical_key(&name).0;
++                                (1, 0, category, name)
++                            }
++                        }
++                    };
++
++                    key(row_a).cmp(&key(row_b)).into()
++                }
++            });
++
++            lb.set_filter_func({
++                let this = self.obj().downgrade();
++                move |row| match this.upgrade() {
++                    Some(this) => this.imp().row_shown(row),
++                    None => true,
++                }
++            });
++
+             let drop_target = gtk::DropTarget::new(glib::Type::INVALID, gdk::DragAction::all());
+             drop_target.set_preload(true);
+-            drop_target.set_types(&[glib::Type::I32]);
++            drop_target.set_types(&[glib::Type::STRING]);
+             drop_target.connect_motion({
+                 let this = self.obj().downgrade();
+                 move |_, _, y| {
+@@ -265,7 +507,7 @@ mod imp {
+                                     None => continue,
+                                 };
+ 
+-                                if !row.is_visible() {
++                                if !row.is_visible() || !this.imp().row_shown(&row) {
+                                     continue;
+                                 }
+ 
+@@ -328,68 +570,28 @@ mod imp {
+                         None => return false,
+                     };
+ 
+-                    let row_index: i32 = match value.get() {
++                    let dragged_name: String = match value.get() {
+                         Ok(value) => value,
+                         Err(_) => return false,
+                     };
+ 
+-                    let sidebar = this.sidebar();
+-
+-                    let dragged_row = match sidebar.row_at_index(row_index) {
+-                        Some(row) => row,
+-                        None => return false,
+-                    };
+-
+-                    let dragged_graph = match dragged_row
+-                        .child()
+-                        .and_then(|child| child.downcast_ref::<SummaryGraph>().cloned())
+-                    {
+-                        Some(graph) => graph,
+-                        None => return false,
+-                    };
+-
+                     let summary_graphs = this.imp().summary_graphs.take();
+ 
+-                    for graph in summary_graphs.keys() {
+-                        if graph.is_drop_hint_visible() {
+-                            if let Some(target_row) = graph
+-                                .parent()
+-                                .and_then(|p| p.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                            {
+-                                dragged_graph.set_visible(true);
+-                                let drag_controller = match summary_graphs.get(&dragged_graph) {
+-                                    Some(drag_controller) => drag_controller.clone(),
+-                                    None => {
+-                                        this.imp().summary_graphs.set(summary_graphs);
+-                                        g_critical!(
+-                                            "MissionCenter::PerformancePage",
+-                                            "Drag controller is missing from summary graphs"
+-                                        );
+-                                        return false;
+-                                    }
+-                                };
+-
+-                                sidebar.remove(&dragged_row);
+-                                drop(dragged_row);
+-
+-                                let new_index = if graph.is_drop_hint_bottom() {
+-                                    target_row.index() + 1
+-                                } else {
+-                                    target_row.index()
+-                                };
++                    let target = summary_graphs
++                        .keys()
++                        .find(|graph| graph.is_drop_hint_visible())
++                        .map(|graph| (graph.widget_name(), graph.is_drop_hint_bottom()));
+ 
+-                                sidebar.insert(&dragged_graph, new_index);
+-                                sidebar
+-                                    .row_at_index(new_index)
+-                                    .and_then(|row| Some(row.add_controller(drag_controller)));
+-                            }
++                    this.imp().summary_graphs.set(summary_graphs);
+ 
+-                            break;
+-                        }
++                    if let Some((target_name, after_target)) = target {
++                        this.imp().move_in_saved_order(
++                            dragged_name.as_str(),
++                            target_name.as_str(),
++                            after_target,
++                        );
+                     }
+ 
+-                    this.imp().summary_graphs.set(summary_graphs);
+-
+                     true
+                 }
+             });
+@@ -398,127 +600,108 @@ mod imp {
+             self.sidebar.replace(lb.clone());
+         }
+ 
+-        fn set_sidebar_edit_mode(&self, edit_mode: bool) {
+-            let active_page_name = self.page_stack.visible_child_name().unwrap_or_default();
++        /// Select the closest shown row to `index`, searching forward then backward.
++        fn select_nearest_shown_row(&self, index: i32) {
++            let sidebar = self.sidebar();
+ 
+-            let settings = settings!();
+-            let show_disks = settings.boolean("performance-show-disks");
+-            let show_network = settings.boolean("performance-show-network");
+-            let show_gpus = settings.boolean("performance-show-gpus");
+-            let show_fans = settings.boolean("performance-show-fans");
+-            let show_batteries = settings.boolean("performance-show-batteries");
++            let mut forward = index;
++            let mut backward = index - 1;
+ 
+-            let raw_overrides = settings.string("performance-sidebar-device-overrides");
+-            let overrides = parse_device_overrides(&raw_overrides);
++            loop {
++                let forward_row = sidebar.row_at_index(forward);
++                let backward_row = if backward >= 0 {
++                    sidebar.row_at_index(backward)
++                } else {
++                    None
++                };
+ 
+-            let summary_graphs = self.summary_graphs.take();
+-            let graph_count = summary_graphs.len() as i32;
+-            for (graph, drag_source) in &summary_graphs {
+-                let category_visible = match graph.device_type() {
+-                    DeviceType::Disk => show_disks,
+-                    DeviceType::Network(group) => {
+-                        show_network && settings.boolean(group.settings_key())
++                if forward_row.is_none() && backward_row.is_none() {
++                    return;
++                }
++
++                if let Some(row) = forward_row {
++                    if self.row_shown(&row) {
++                        sidebar.select_row(Some(&row));
++                        return;
+                     }
+-                    DeviceType::Gpu => show_gpus,
+-                    DeviceType::Fan => show_fans,
+-                    DeviceType::Battery => show_batteries,
+-                    DeviceType::Cpu | DeviceType::Memory | DeviceType::Unspecified => true,
+-                };
+-                let resolved = resolve_device_visibility(
+-                    graph.widget_name().as_str(),
+-                    &overrides,
+-                    category_visible,
+-                );
+-                graph.set_edit_mode(edit_mode, resolved);
++                    forward += 1;
++                }
+ 
+-                if edit_mode {
+-                    drag_source.set_actions(gdk::DragAction::MOVE);
+-                } else {
+-                    drag_source.set_actions(gdk::DragAction::empty());
++                if let Some(row) = backward_row {
++                    if self.row_shown(&row) {
++                        sidebar.select_row(Some(&row));
++                        return;
++                    }
++                    backward -= 1;
+                 }
++            }
++        }
+ 
+-                if !graph.is_visible() && active_page_name == graph.widget_name() {
+-                    if let Some(index) = graph
+-                        .parent()
+-                        .and_then(|parent| parent.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                        .and_then(|row| Some(row.index()))
+-                    {
+-                        let mut forward_index = index + 1;
+-                        let mut backward_index = index - 1;
+-                        let mut new_row = None;
+-
+-                        fn visible_row(
+-                            sidebar: &gtk::ListBox,
+-                            index: i32,
+-                        ) -> Option<gtk::ListBoxRow> {
+-                            sidebar.row_at_index(index).and_then(|row| {
+-                                if !row.is_visible() {
+-                                    None
+-                                } else {
+-                                    Some(row)
+-                                }
+-                            })
+-                        }
++        /// Select the row for `page_name`, or the closest shown row if it is gone or hidden.
++        fn select_page(&self, page_name: &str) {
++            let sidebar = self.sidebar();
+ 
+-                        // Try to find the nearest visible entry
+-                        let sidebar = self.sidebar();
+-                        loop {
+-                            if forward_index >= graph_count && backward_index < 0 {
+-                                break;
+-                            }
++            let mut index = 0;
++            while let Some(row) = sidebar.row_at_index(index) {
++                let name = row.child().map(|child| child.widget_name());
++                if name.as_deref() == Some(page_name) {
++                    if self.row_shown(&row) {
++                        sidebar.select_row(Some(&row));
++                    } else {
++                        self.select_nearest_shown_row(index);
++                    }
++                    return;
++                }
+ 
+-                            // Go to the next visible entry
+-                            loop {
+-                                if forward_index >= graph_count {
+-                                    break;
+-                                }
++                index += 1;
++            }
+ 
+-                                match visible_row(&sidebar, forward_index) {
+-                                    Some(row) => {
+-                                        new_row = Some(row);
+-                                        break;
+-                                    }
+-                                    None => {
+-                                        forward_index += 1;
+-                                        continue;
+-                                    }
+-                                }
+-                            }
++            self.select_nearest_shown_row(0);
++        }
+ 
+-                            if let Some(row) = new_row {
+-                                self.sidebar().select_row(Some(&row));
+-                                break;
+-                            }
++        /// Select the first shown row belonging to `action_name`, in sidebar order.
++        fn select_first_shown_in_category(&self, action_name: &str) -> bool {
++            let sidebar = self.sidebar();
+ 
+-                            // Go to the previous visible entry
+-                            loop {
+-                                if backward_index < 0 {
+-                                    break;
+-                                }
++            let mut index = 0;
++            while let Some(row) = sidebar.row_at_index(index) {
++                let name = row
++                    .child()
++                    .map(|child| child.widget_name())
++                    .unwrap_or_default();
+ 
+-                                match visible_row(&sidebar, backward_index) {
+-                                    Some(row) => {
+-                                        new_row = Some(row);
+-                                        break;
+-                                    }
+-                                    None => {
+-                                        backward_index -= 1;
+-                                        continue;
+-                                    }
+-                                }
+-                            }
++                if Self::view_action_name(name.as_str()) == Some(action_name)
++                    && self.row_shown(&row)
++                {
++                    sidebar.select_row(Some(&row));
++                    return true;
++                }
+ 
+-                            if let Some(row) = new_row {
+-                                self.sidebar().select_row(Some(&row));
+-                                break;
+-                            }
+-                        }
+-                    }
++                index += 1;
++            }
++
++            false
++        }
++
++        fn set_sidebar_edit_mode(&self, edit_mode: bool) {
++            self.sidebar_edit_mode.set(edit_mode);
++
++            let summary_graphs = self.summary_graphs.take();
++            for (graph, drag_source) in &summary_graphs {
++                graph.set_edit_mode(edit_mode, self.device_visible(graph));
++
++                if edit_mode {
++                    drag_source.set_actions(gdk::DragAction::MOVE);
++                } else {
++                    drag_source.set_actions(gdk::DragAction::empty());
+                 }
+             }
+             self.summary_graphs.set(summary_graphs);
+ 
+-            self.sidebar_edit_mode.set(edit_mode);
++            self.sidebar().invalidate_filter();
++
++            let active_page_name = self.page_stack.visible_child_name().unwrap_or_default();
++            self.select_page(active_page_name.as_str());
+         }
+ 
+         fn infobar_visible(&self) -> bool {
+@@ -575,32 +758,11 @@ mod imp {
+                     };
+                     let this = this.imp();
+ 
+-                    let pages = this.pages.take();
+-                    for page in &pages {
+-                        let (graph, _) = match page {
+-                            Pages::Cpu(cpu_page) => cpu_page,
+-                            _ => continue,
+-                        };
+-
+-                        let row = match graph.parent() {
+-                            Some(row) => row,
+-                            None => break,
+-                        };
+-
+-                        if !row.is_visible() {
+-                            break;
+-                        }
+-
+-                        this.sidebar()
+-                            .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
++                    if this.select_first_shown_in_category("cpu") {
+                         let prev_action = this.current_view_action.replace(action.clone());
+                         prev_action.set_state(&glib::Variant::from(false));
+                         action.set_state(&glib::Variant::from(true));
+-
+-                        break;
+                     }
+-                    this.pages.set(pages);
+                 }
+             });
+             actions.add_action(&action);
+@@ -618,32 +780,11 @@ mod imp {
+                     };
+                     let this = this.imp();
+ 
+-                    let pages = this.pages.take();
+-                    for page in &pages {
+-                        let (graph, _) = match page {
+-                            Pages::Memory(memory_page) => memory_page,
+-                            _ => continue,
+-                        };
+-
+-                        let row = match graph.parent() {
+-                            Some(row) => row,
+-                            None => break,
+-                        };
+-
+-                        if !row.is_visible() {
+-                            break;
+-                        }
+-
+-                        this.sidebar()
+-                            .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
++                    if this.select_first_shown_in_category("memory") {
+                         let prev_action = this.current_view_action.replace(action.clone());
+                         prev_action.set_state(&glib::Variant::from(false));
+                         action.set_state(&glib::Variant::from(true));
+-
+-                        break;
+                     }
+-                    this.pages.set(pages);
+                 }
+             });
+             actions.add_action(&action);
+@@ -659,36 +800,11 @@ mod imp {
+                     };
+                     let this = this.imp();
+ 
+-                    let pages = this.pages.take();
+-                    'page_loop: for page in &pages {
+-                        let disk_pages = match page {
+-                            Pages::Disk(disk_pages) => disk_pages,
+-                            _ => continue,
+-                        };
+-
+-                        for (graph, _) in disk_pages.values() {
+-                            let row = match graph.parent() {
+-                                Some(row) => row,
+-                                None => continue,
+-                            };
+-
+-                            if !row.is_visible() {
+-                                continue;
+-                            }
+-
+-                            this.sidebar()
+-                                .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
+-                            let prev_action = this.current_view_action.replace(action.clone());
+-                            prev_action.set_state(&glib::Variant::from(false));
+-                            action.set_state(&glib::Variant::from(true));
+-
+-                            break 'page_loop;
+-                        }
+-
+-                        break;
++                    if this.select_first_shown_in_category("disk") {
++                        let prev_action = this.current_view_action.replace(action.clone());
++                        prev_action.set_state(&glib::Variant::from(false));
++                        action.set_state(&glib::Variant::from(true));
+                     }
+-                    this.pages.set(pages);
+                 }
+             });
+             actions.add_action(&action);
+@@ -705,36 +821,11 @@ mod imp {
+                     };
+                     let this = this.imp();
+ 
+-                    let pages = this.pages.take();
+-                    'page_loop: for page in &pages {
+-                        let net_pages = match page {
+-                            Pages::Network(net_pages) => net_pages,
+-                            _ => continue,
+-                        };
+-
+-                        for (graph, _) in net_pages.values() {
+-                            let row = match graph.parent() {
+-                                Some(row) => row,
+-                                None => continue,
+-                            };
+-
+-                            if !row.is_visible() {
+-                                continue;
+-                            }
+-
+-                            this.sidebar()
+-                                .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
+-                            let prev_action = this.current_view_action.replace(action.clone());
+-                            prev_action.set_state(&glib::Variant::from(false));
+-                            action.set_state(&glib::Variant::from(true));
+-
+-                            break 'page_loop;
+-                        }
+-
+-                        break;
++                    if this.select_first_shown_in_category("network") {
++                        let prev_action = this.current_view_action.replace(action.clone());
++                        prev_action.set_state(&glib::Variant::from(false));
++                        action.set_state(&glib::Variant::from(true));
+                     }
+-                    this.pages.set(pages);
+                 }
+             });
+             actions.add_action(&action);
+@@ -750,84 +841,15 @@ mod imp {
+                     };
+                     let this = this.imp();
+ 
+-                    let pages = this.pages.take();
+-                    'page_loop: for page in &pages {
+-                        let gpu_pages = match page {
+-                            Pages::Gpu(gpu_pages) => gpu_pages,
+-                            _ => continue,
+-                        };
+-
+-                        for (graph, _) in gpu_pages.values() {
+-                            let row = match graph.parent() {
+-                                Some(row) => row,
+-                                None => continue,
+-                            };
+-
+-                            if !row.is_visible() {
+-                                continue;
+-                            }
+-
+-                            this.sidebar()
+-                                .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
+-                            let prev_action = this.current_view_action.replace(action.clone());
+-                            prev_action.set_state(&glib::Variant::from(false));
+-                            action.set_state(&glib::Variant::from(true));
+-
+-                            break 'page_loop;
+-                        }
+-
+-                        break;
+-                    }
+-                    this.pages.set(pages);
+-                }
+-            });
+-            actions.add_action(&action);
+-            view_actions.insert("gpu".to_string(), action);
+-            let action =
+-                gio::SimpleAction::new_stateful("battery", None, &glib::Variant::from(false));
+-            action.connect_activate({
+-                let this = this.downgrade();
+-                move |action, _| {
+-                    let this = match this.upgrade() {
+-                        Some(this) => this,
+-                        None => return,
+-                    };
+-                    let this = this.imp();
+-
+-                    let pages = this.pages.take();
+-                    for page in &pages {
+-                        let battery_pages = match page {
+-                            Pages::Battery(battery_pages) => battery_pages,
+-                            _ => continue,
+-                        };
+-
+-                        let battery_page = battery_pages.values().next();
+-                        if battery_page.is_none() {
+-                            continue;
+-                        }
+-                        let battery_page = battery_page.unwrap();
+-
+-                        let row = battery_page.0.parent();
+-                        if row.is_none() {
+-                            continue;
+-                        }
+-                        let row = row.unwrap();
+-
+-                        this.sidebar()
+-                            .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
++                    if this.select_first_shown_in_category("gpu") {
+                         let prev_action = this.current_view_action.replace(action.clone());
+                         prev_action.set_state(&glib::Variant::from(false));
+                         action.set_state(&glib::Variant::from(true));
+-
+-                        break;
+                     }
+-                    this.pages.set(pages);
+                 }
+             });
+             actions.add_action(&action);
+-            view_actions.insert("fan".to_string(), action);
++            view_actions.insert("gpu".to_string(), action);
+             let action = gio::SimpleAction::new_stateful("fan", None, &glib::Variant::from(false));
+             action.connect_activate({
+                 let this = this.downgrade();
+@@ -838,35 +860,11 @@ mod imp {
+                     };
+                     let this = this.imp();
+ 
+-                    let pages = this.pages.take();
+-                    for page in &pages {
+-                        let fan_pages = match page {
+-                            Pages::Fan(fan_pages) => fan_pages,
+-                            _ => continue,
+-                        };
+-
+-                        let fan_page = fan_pages.values().next();
+-                        if fan_page.is_none() {
+-                            continue;
+-                        }
+-                        let fan_page = fan_page.unwrap();
+-
+-                        let row = fan_page.0.parent();
+-                        if row.is_none() {
+-                            continue;
+-                        }
+-                        let row = row.unwrap();
+-
+-                        this.sidebar()
+-                            .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
++                    if this.select_first_shown_in_category("fan") {
+                         let prev_action = this.current_view_action.replace(action.clone());
+                         prev_action.set_state(&glib::Variant::from(false));
+                         action.set_state(&glib::Variant::from(true));
+-
+-                        break;
+                     }
+-                    this.pages.set(pages);
+                 }
+             });
+             actions.add_action(&action);
+@@ -882,35 +880,11 @@ mod imp {
+                     };
+                     let this = this.imp();
+ 
+-                    let pages = this.pages.take();
+-                    for page in &pages {
+-                        let battery_pages = match page {
+-                            Pages::Battery(battery_pages) => battery_pages,
+-                            _ => continue,
+-                        };
+-
+-                        let battery_page = battery_pages.values().next();
+-                        if battery_page.is_none() {
+-                            continue;
+-                        }
+-                        let battery_page = battery_page.unwrap();
+-
+-                        let row = battery_page.0.parent();
+-                        if row.is_none() {
+-                            continue;
+-                        }
+-                        let row = row.unwrap();
+-
+-                        this.sidebar()
+-                            .select_row(row.downcast_ref::<gtk::ListBoxRow>());
+-
++                    if this.select_first_shown_in_category("battery") {
+                         let prev_action = this.current_view_action.replace(action.clone());
+                         prev_action.set_state(&glib::Variant::from(false));
+                         action.set_state(&glib::Variant::from(true));
+-
+-                        break;
+                     }
+-                    this.pages.set(pages);
+                 }
+             });
+             actions.add_action(&action);
+@@ -942,174 +916,129 @@ mod imp {
+                 .build();
+         }
+ 
+-        fn add_to_sidebar(&self, graph: &SummaryGraph, hint: Option<i32>) {
++        fn add_to_sidebar(&self, graph: &SummaryGraph) {
+             let sidebar = self.sidebar();
+ 
+             let drag_source = gtk::DragSource::builder()
+                 .actions(gdk::DragAction::empty())
+                 .build();
+ 
+-            if self.sidebar_edit_mode.get() {
+-                let settings = settings!();
+-                let category_visible = match graph.device_type() {
+-                    DeviceType::Disk => settings.boolean("performance-show-disks"),
+-                    DeviceType::Network(group) => {
+-                        settings.boolean("performance-show-network")
+-                            && settings.boolean(group.settings_key())
+-                    }
+-                    DeviceType::Gpu => settings.boolean("performance-show-gpus"),
+-                    DeviceType::Fan => settings.boolean("performance-show-fans"),
+-                    DeviceType::Battery => settings.boolean("performance-show-batteries"),
+-                    DeviceType::Cpu | DeviceType::Memory | DeviceType::Unspecified => true,
+-                };
+-                let raw_overrides = settings.string("performance-sidebar-device-overrides");
+-                let overrides = parse_device_overrides(&raw_overrides);
+-                let resolved = resolve_device_visibility(
+-                    graph.widget_name().as_str(),
+-                    &overrides,
+-                    category_visible,
+-                );
+-                graph.set_edit_mode(true, resolved);
++            let edit_mode = self.sidebar_edit_mode.get();
++            graph.set_edit_mode(edit_mode, self.device_visible(graph));
++            if edit_mode {
+                 drag_source.set_actions(gdk::DragAction::MOVE);
+             }
+ 
+             let mut summary_graphs = self.summary_graphs.take();
+-            let index = hint
+-                .unwrap_or_else(|| summary_graphs.len().saturating_sub(1) as i32)
+-                .max(0);
+             summary_graphs.insert(graph.clone(), drag_source.clone());
+             self.summary_graphs.set(summary_graphs);
+ 
+-            sidebar.insert(graph, index);
+-            if let Some(row) = sidebar.row_at_index(index) {
+-                drag_source.connect_prepare({
+-                    let this = self.obj().downgrade();
+-                    let graph = graph.downgrade();
+-                    move |src, x, y| {
+-                        if !src.actions().contains(gdk::DragAction::MOVE) {
+-                            return None;
+-                        }
+-
+-                        let this = match this.upgrade() {
+-                            Some(this) => this,
+-                            None => return None,
+-                        };
++            sidebar.append(graph);
+ 
+-                        let graph = match graph.upgrade() {
+-                            Some(graph) => graph,
+-                            None => return None,
+-                        };
+-
+-                        let row = match graph
+-                            .parent()
+-                            .and_then(|row| row.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                        {
+-                            Some(row) => row,
+-                            None => return None,
+-                        };
++            let row = match graph
++                .parent()
++                .and_then(|parent| parent.downcast::<gtk::ListBoxRow>().ok())
++            {
++                Some(row) => row,
++                None => {
++                    g_critical!(
++                        "MissionCenter::PerformancePage",
++                        "Sidebar row is missing for {}, it cannot be dragged",
++                        graph.widget_name()
++                    );
+ 
+-                        this.sidebar().unselect_all();
++                    return;
++                }
++            };
+ 
+-                        let summary_graphs = this.imp().summary_graphs.take();
++            drag_source.connect_prepare({
++                let graph = graph.downgrade();
++                move |src, x, y| {
++                    if !src.actions().contains(gdk::DragAction::MOVE) {
++                        return None;
++                    }
+ 
+-                        let drag_source = match summary_graphs.get(&graph) {
+-                            Some(drag_source) => drag_source,
+-                            None => {
+-                                this.imp().summary_graphs.set(summary_graphs);
+-                                g_critical!(
+-                                    "MissionCenter::PerformancePage",
+-                                    "Drag source is missing from summary graphs"
+-                                );
+-                                return None;
+-                            }
+-                        };
++                    let graph = match graph.upgrade() {
++                        Some(graph) => graph,
++                        None => return None,
++                    };
+ 
+-                        drag_source.set_icon(
+-                            Some(&gtk::WidgetPaintable::new(Some(&row)).current_image()),
+-                            x.round() as i32,
+-                            y.round() as i32,
+-                        );
++                    let row = match graph
++                        .parent()
++                        .and_then(|row| row.downcast_ref::<gtk::ListBoxRow>().cloned())
++                    {
++                        Some(row) => row,
++                        None => return None,
++                    };
+ 
+-                        let content_provider =
+-                            gdk::ContentProvider::for_value(&Value::from(row.index()));
++                    src.set_icon(
++                        Some(&gtk::WidgetPaintable::new(Some(&row)).current_image()),
++                        x.round() as i32,
++                        y.round() as i32,
++                    );
+ 
+-                        row.set_visible(false);
+-                        for sg in summary_graphs.keys() {
+-                            if sg.as_ptr() != graph.as_ptr() {
+-                                sg.parent().and_then(|p| Some(p.set_sensitive(false)));
+-                            }
+-                        }
++                    Some(gdk::ContentProvider::for_value(&Value::from(
++                        graph.widget_name().as_str(),
++                    )))
++                }
++            });
+ 
+-                        this.imp().summary_graphs.set(summary_graphs);
++            drag_source.connect_drag_begin({
++                let this = self.obj().downgrade();
++                let graph = graph.downgrade();
++                move |_, _| {
++                    let this = match this.upgrade() {
++                        Some(this) => this,
++                        None => return,
++                    };
+ 
+-                        Some(content_provider)
+-                    }
+-                });
++                    let graph = match graph.upgrade() {
++                        Some(graph) => graph,
++                        None => return,
++                    };
+ 
+-                drag_source.connect_drag_end({
+-                    let this = self.obj().downgrade();
+-                    move |src, _, _| {
+-                        let this = match this.upgrade() {
+-                            Some(this) => this,
+-                            None => return,
+-                        };
++                    this.sidebar().unselect_all();
+ 
+-                        let summary_graphs = this.imp().summary_graphs.take();
+-                        for graph in summary_graphs.keys() {
+-                            graph.parent().and_then(|p| Some(p.set_sensitive(true)));
+-                            graph.parent().and_then(|p| Some(p.set_visible(true)));
+-                            graph.hide_drop_hint();
++                    let summary_graphs = this.imp().summary_graphs.take();
++                    for sg in summary_graphs.keys() {
++                        if sg.as_ptr() != graph.as_ptr() {
++                            if let Some(row) = sg.parent() {
++                                row.set_sensitive(false);
++                            }
+                         }
+-                        this.imp().summary_graphs.set(summary_graphs);
+-
+-                        src.set_icon(None::<&gtk::WidgetPaintable>, 0, 0);
+-                        src.set_content(None::<&gdk::ContentProvider>);
+-
+-                        let this = this.imp();
+-
+-                        let settings = settings!();
++                    }
++                    this.imp().summary_graphs.set(summary_graphs);
+ 
+-                        let sidebar = this.sidebar();
+-                        let mut row_index = -1;
+-                        let mut sidebar_order = String::new();
+-                        loop {
+-                            row_index += 1;
+-                            let row = match sidebar.row_at_index(row_index) {
+-                                Some(row) => row,
+-                                None => break,
+-                            };
++                    if let Some(row) = graph.parent() {
++                        row.set_visible(false);
++                    }
++                }
++            });
+ 
+-                            let graph = match row
+-                                .child()
+-                                .and_then(|child| child.downcast_ref::<SummaryGraph>().cloned())
+-                            {
+-                                Some(graph) => graph,
+-                                None => continue,
+-                            };
++            drag_source.connect_drag_end({
++                let this = self.obj().downgrade();
++                move |src, _, _| {
++                    let this = match this.upgrade() {
++                        Some(this) => this,
++                        None => return,
++                    };
+ 
+-                            sidebar_order.push_str(graph.widget_name().as_str());
+-                            sidebar_order.push(';');
++                    let summary_graphs = this.imp().summary_graphs.take();
++                    for graph in summary_graphs.keys() {
++                        if let Some(row) = graph.parent() {
++                            row.set_sensitive(true);
++                            row.set_visible(true);
+                         }
+-
+-                        let sidebar_order = if !sidebar_order.is_empty() {
+-                            &sidebar_order[..sidebar_order.len() - 1]
+-                        } else {
+-                            ""
+-                        };
+-
+-                        settings
+-                            .set_string("performance-sidebar-order", sidebar_order)
+-                            .unwrap_or_else(|_| {
+-                                g_warning!(
+-                                    "MissionCenter::PerformancePage",
+-                                    "Failed to set performance-sidebar-order setting"
+-                                );
+-                            });
++                        graph.hide_drop_hint();
+                     }
+-                });
++                    this.imp().summary_graphs.set(summary_graphs);
+ 
+-                row.add_controller(drag_source);
+-            }
++                    src.set_icon(None::<&gtk::WidgetPaintable>, 0, 0);
++                    src.set_content(None::<&gdk::ContentProvider>);
++                }
++            });
++
++            row.add_controller(drag_source);
+         }
+ 
+         fn set_up_cpu_page(
+@@ -1153,7 +1082,7 @@ mod imp {
+             self.configure_page(&page);
+ 
+             self.page_stack.add_named(&page, Some("cpu"));
+-            self.add_to_sidebar(&summary, None);
++            self.add_to_sidebar(&summary);
+ 
+             pages.push(Pages::Cpu((summary, page)));
+         }
+@@ -1219,7 +1148,7 @@ mod imp {
+             self.configure_page(&page);
+ 
+             self.page_stack.add_named(&page, Some("memory"));
+-            self.add_to_sidebar(&summary, None);
++            self.add_to_sidebar(&summary);
+ 
+             pages.push(Pages::Memory((summary, page)));
+         }
+@@ -1233,11 +1162,8 @@ mod imp {
+             let len = readings.disks_info.len();
+             let hide_index = len == 1;
+             for i in 0..len {
+-                let mut ret = self.create_disk_page(
+-                    readings,
+-                    if hide_index { None } else { Some(i as i32) },
+-                    None,
+-                );
++                let mut ret =
++                    self.create_disk_page(readings, if hide_index { None } else { Some(i as i32) });
+                 disks.insert(std::mem::take(&mut ret.0), ret.1);
+             }
+ 
+@@ -1286,7 +1212,6 @@ mod imp {
+             &self,
+             readings: &crate::magpie_client::Readings,
+             disk_id: Option<i32>,
+-            pos_hint: Option<i32>,
+         ) -> (String, (SummaryGraph, DiskPage)) {
+             let disk = &readings.disks_info[disk_id.unwrap_or(0) as usize];
+ 
+@@ -1340,22 +1265,7 @@ mod imp {
+             self.configure_page(&page);
+ 
+             self.page_stack.add_named(&page, Some(&page_name));
+-            self.add_to_sidebar(&summary, pos_hint);
+-
+-            let mut actions = self.context_menu_view_actions.take();
+-            match actions.get("disk") {
+-                None => {
+-                    g_critical!(
+-                        "MissionCenter::PerformancePage",
+-                        "Failed to wire up disk action for {}, logic bug?",
+-                        &disk.id
+-                    );
+-                }
+-                Some(action) => {
+-                    actions.insert(page_name.clone(), action.clone());
+-                }
+-            }
+-            self.context_menu_view_actions.set(actions);
++            self.add_to_sidebar(&summary);
+ 
+             (page_name, (summary, page))
+         }
+@@ -1367,7 +1277,7 @@ mod imp {
+         ) {
+             let mut networks = HashMap::new();
+             for (_, connection) in &readings.network_connections {
+-                let mut ret = self.create_network_page(connection, None);
++                let mut ret = self.create_network_page(connection);
+                 networks.insert(std::mem::take(&mut ret.0), ret.1);
+             }
+ 
+@@ -1381,7 +1291,6 @@ mod imp {
+         fn create_network_page(
+             &self,
+             connection: &Connection,
+-            pos_hint: Option<i32>,
+         ) -> (String, (SummaryGraph, NetworkPage)) {
+             let if_name = connection.id.as_str();
+             let page_name = Self::network_page_name(if_name);
+@@ -1466,23 +1375,7 @@ mod imp {
+             self.configure_page(&page);
+ 
+             self.page_stack.add_named(&page, Some(&page_name));
+-            self.add_to_sidebar(&summary, pos_hint);
+-
+-            let mut actions = self.context_menu_view_actions.take();
+-            match actions.get("network") {
+-                None => {
+-                    g_critical!(
+-                        "MissionCenter::PerformancePage",
+-                        "Failed to wire up network action for {}, logic bug?",
+-                        if_name
+-                    );
+-                }
+-
+-                Some(action) => {
+-                    actions.insert(page_name.clone(), action.clone());
+-                }
+-            }
+-            self.context_menu_view_actions.set(actions);
++            self.add_to_sidebar(&summary);
+ 
+             (page_name, (summary, page))
+         }
+@@ -1495,7 +1388,6 @@ mod imp {
+             &self,
+             gpu: &Gpu,
+             index: Option<usize>,
+-            pos_hint: Option<i32>,
+         ) -> (String, (SummaryGraph, GpuPage)) {
+             let page_name = Self::gpu_page_name(&gpu.id);
+ 
+@@ -1546,27 +1438,12 @@ mod imp {
+                 GPU_BASE_COLOR[2] as f32 / 255.,
+                 1.,
+             ));
+-            page.set_static_information(index, gpu);
+-
+-            self.configure_page(&page);
+-
+-            self.page_stack.add_named(&page, Some(&page_name));
+-            self.add_to_sidebar(&summary, pos_hint);
+-
+-            let mut actions = self.context_menu_view_actions.take();
+-            match actions.get("gpu") {
+-                None => {
+-                    g_critical!(
+-                        "MissionCenter::PerformancePage",
+-                        "Failed to wire up GPU action for {:?}, logic bug?",
+-                        &gpu.device_name
+-                    );
+-                }
+-                Some(action) => {
+-                    actions.insert(page_name.clone(), action.clone());
+-                }
+-            }
+-            self.context_menu_view_actions.set(actions);
++            page.set_static_information(index, gpu);
++
++            self.configure_page(&page);
++
++            self.page_stack.add_named(&page, Some(&page_name));
++            self.add_to_sidebar(&summary);
+ 
+             (page_name, (summary, page))
+         }
+@@ -1581,7 +1458,7 @@ mod imp {
+             let hide_index = readings.gpus.len() == 1;
+             for (index, gpu) in readings.gpus.values().enumerate() {
+                 let (page_name, (summary, page)) =
+-                    self.create_gpu_page(gpu, if hide_index { None } else { Some(index) }, None);
++                    self.create_gpu_page(gpu, if hide_index { None } else { Some(index) });
+                 gpus.insert(page_name, (summary, page));
+             }
+ 
+@@ -1598,7 +1475,7 @@ mod imp {
+             let hide_index = len == 1;
+             for i in 0..len {
+                 let mut ret =
+-                    self.create_fan_page(readings, if hide_index { None } else { Some(i) }, None);
++                    self.create_fan_page(readings, if hide_index { None } else { Some(i) });
+                 fans.insert(std::mem::take(&mut ret.0), ret.1);
+             }
+ 
+@@ -1613,7 +1490,6 @@ mod imp {
+             &self,
+             readings: &crate::magpie_client::Readings,
+             index: Option<usize>,
+-            pos_hint: Option<i32>,
+         ) -> (String, (SummaryGraph, FanPage)) {
+             let fan_static_info = &readings.fans[index.unwrap_or(0)];
+ 
+@@ -1655,26 +1531,7 @@ mod imp {
+             self.configure_page(&page);
+ 
+             self.page_stack.add_named(&page, Some(&page_name));
+-            self.add_to_sidebar(&summary, pos_hint);
+-
+-            let mut actions = self.context_menu_view_actions.take();
+-            match actions.get("fan") {
+-                None => {
+-                    g_critical!(
+-                        "MissionCenter::PerformancePage",
+-                        "Failed to wire up fan action for {}, logic bug?",
+-                        fan_static_info
+-                            .fan_label
+-                            .as_ref()
+-                            .map(|s| s.as_str())
+-                            .unwrap_or("Unknown")
+-                    );
+-                }
+-                Some(action) => {
+-                    actions.insert(page_name.clone(), action.clone());
+-                }
+-            }
+-            self.context_menu_view_actions.set(actions);
++            self.add_to_sidebar(&summary);
+ 
+             (page_name, (summary, page))
+         }
+@@ -1688,11 +1545,8 @@ mod imp {
+             let len = readings.batteries.len();
+             let hide_index = len == 1;
+             for i in 0..len {
+-                let mut ret = self.create_battery_page(
+-                    readings,
+-                    if hide_index { None } else { Some(i) },
+-                    None,
+-                );
++                let mut ret =
++                    self.create_battery_page(readings, if hide_index { None } else { Some(i) });
+                 batteries.insert(std::mem::take(&mut ret.0), ret.1);
+             }
+ 
+@@ -1711,7 +1565,6 @@ mod imp {
+             &self,
+             readings: &crate::magpie_client::Readings,
+             index: Option<usize>,
+-            pos_hint: Option<i32>,
+         ) -> (String, (SummaryGraph, BatteryPage)) {
+             let battery_static_info = &readings.batteries[index.unwrap_or(0)];
+ 
+@@ -1751,147 +1604,21 @@ mod imp {
+             self.configure_page(&page);
+ 
+             self.page_stack.add_named(&page, Some(&page_name));
+-            self.add_to_sidebar(&summary, pos_hint);
+-
+-            let mut actions = self.context_menu_view_actions.take();
+-            match actions.get("battery") {
+-                None => {
+-                    g_critical!(
+-                        "MissionCenter::PerformancePage",
+-                        "Failed to wire up battery action for {}, logic bug?",
+-                        battery_static_info.name.as_str()
+-                    );
+-                }
+-                Some(action) => {
+-                    actions.insert(page_name.clone(), action.clone());
+-                }
+-            }
+-            self.context_menu_view_actions.set(actions);
++            self.add_to_sidebar(&summary);
+ 
+             (page_name, (summary, page))
+         }
+-
+-        pub fn default_sort_sidebar_entries(&self) {
+-            fn add_graph_to_sidebar(
+-                graph: Option<(SummaryGraph, gtk::DragSource)>,
+-                sidebar: &gtk::ListBox,
+-                index: &mut i32,
+-            ) {
+-                if let Some((graph, drag_controller)) = graph {
+-                    sidebar.insert(&graph, *index);
+-                    sidebar
+-                        .row_at_index(*index)
+-                        .and_then(|row| Some(row.add_controller(drag_controller)));
+-                    *index += 1;
+-                }
+-            }
+-
+-            fn add_graphs_to_sidebar(
+-                mut graphs: Vec<(SummaryGraph, gtk::DragSource)>,
+-                sidebar: &gtk::ListBox,
+-                index: &mut i32,
+-            ) {
+-                for (graph, drag_controller) in graphs.drain(..) {
+-                    sidebar.insert(&graph, *index);
+-                    sidebar
+-                        .row_at_index(*index)
+-                        .and_then(|row| Some(row.add_controller(drag_controller)));
+-                    *index += 1;
+-                }
+-            }
+-
+-            let summary_graphs = self.summary_graphs.take();
+-
+-            let mut cpu_graph = None;
+-            let mut memory_graph = None;
+-            let mut disk_graphs = Vec::with_capacity(summary_graphs.len());
+-            let mut net_graphs = Vec::with_capacity(summary_graphs.len());
+-            let mut gpu_graphs = Vec::with_capacity(summary_graphs.len());
+-            let mut fan_graphs = Vec::with_capacity(summary_graphs.len());
+-            let mut battery_graphs = Vec::with_capacity(summary_graphs.len());
+-
+-            for (graph, drag_source) in &summary_graphs {
+-                graph.set_switch_active(true);
+-
+-                if graph.widget_name().starts_with("cpu") {
+-                    cpu_graph = Some((graph.clone(), drag_source.clone()));
+-                } else if graph.widget_name().starts_with("memory") {
+-                    memory_graph = Some((graph.clone(), drag_source.clone()));
+-                } else if graph.widget_name().starts_with("disk") {
+-                    disk_graphs.push((graph.clone(), drag_source.clone()));
+-                } else if graph.widget_name().starts_with("net") {
+-                    net_graphs.push((graph.clone(), drag_source.clone()));
+-                } else if graph.widget_name().starts_with("gpu") {
+-                    gpu_graphs.push((graph.clone(), drag_source.clone()));
+-                } else if graph.widget_name().starts_with("fan") {
+-                    fan_graphs.push((graph.clone(), drag_source.clone()));
+-                } else if graph.widget_name().starts_with("battery") {
+-                    battery_graphs.push((graph.clone(), drag_source.clone()));
+-                }
+-            }
+-
+-            self.summary_graphs.set(summary_graphs);
+-
+-            disk_graphs
+-                .sort_unstable_by(|(g1, _), (g2, _)| g1.widget_name().cmp(&g2.widget_name()));
+-            net_graphs.sort_unstable_by(|(g1, _), (g2, _)| g1.widget_name().cmp(&g2.widget_name()));
+-            gpu_graphs.sort_unstable_by(|(g1, _), (g2, _)| g1.widget_name().cmp(&g2.widget_name()));
+-            fan_graphs.sort_unstable_by(|(g1, _), (g2, _)| g1.widget_name().cmp(&g2.widget_name()));
+-            battery_graphs
+-                .sort_unstable_by(|(g1, _), (g2, _)| g1.widget_name().cmp(&g2.widget_name()));
+-
+-            let sidebar = self.sidebar();
+-            sidebar.remove_all();
+-
+-            let mut index = 0;
+-            add_graph_to_sidebar(cpu_graph, &sidebar, &mut index);
+-            add_graph_to_sidebar(memory_graph, &sidebar, &mut index);
+-            add_graphs_to_sidebar(disk_graphs, &sidebar, &mut index);
+-            add_graphs_to_sidebar(net_graphs, &sidebar, &mut index);
+-            add_graphs_to_sidebar(gpu_graphs, &sidebar, &mut index);
+-            add_graphs_to_sidebar(fan_graphs, &sidebar, &mut index);
+-            add_graphs_to_sidebar(battery_graphs, &sidebar, &mut index);
+-        }
+     }
+ 
+     impl PerformancePage {
+-        fn update_device_visibility(
+-            &self,
+-            settings: &gio::Settings,
+-            summary_graphs: &HashMap<SummaryGraph, gtk::DragSource>,
+-        ) {
+-            let show_disks = settings.boolean("performance-show-disks");
+-            let show_network = settings.boolean("performance-show-network");
+-            let show_gpus = settings.boolean("performance-show-gpus");
+-            let show_fans = settings.boolean("performance-show-fans");
+-            let show_batteries = settings.boolean("performance-show-batteries");
+-
+-            let raw_overrides = settings.string("performance-sidebar-device-overrides");
+-            let overrides = parse_device_overrides(&raw_overrides);
+-
++        fn refresh_device_visibility(&self) {
++            let summary_graphs = self.summary_graphs.take();
+             for graph in summary_graphs.keys() {
+-                let category_visible = match graph.device_type() {
+-                    DeviceType::Disk => show_disks,
+-                    DeviceType::Network(group) => {
+-                        show_network && settings.boolean(group.settings_key())
+-                    }
+-                    DeviceType::Gpu => show_gpus,
+-                    DeviceType::Fan => show_fans,
+-                    DeviceType::Battery => show_batteries,
+-                    DeviceType::Cpu | DeviceType::Memory | DeviceType::Unspecified => continue,
+-                };
+-
+-                let visible = resolve_device_visibility(
+-                    graph.widget_name().as_str(),
+-                    &overrides,
+-                    category_visible,
+-                );
+-
+-                graph.set_switch_active(visible);
+-                if !self.sidebar_edit_mode.get() {
+-                    graph.parent().map(|parent| parent.set_visible(visible));
+-                }
++                graph.set_switch_active(self.device_visible(graph));
+             }
++            self.summary_graphs.set(summary_graphs);
++
++            self.sidebar().invalidate_filter();
+         }
+ 
+         pub fn set_up_pages(
+@@ -1910,35 +1637,20 @@ mod imp {
+             this.set_up_battery_pages(&mut pages, &readings);
+             this.pages.set(pages);
+ 
+-            this.default_sort_sidebar_entries();
+-
+             let settings = settings!();
+ 
+-            let view_actions = this.context_menu_view_actions.take();
+-            let action = if let Some(action) =
+-                view_actions.get(settings.string("performance-selected-page").as_str())
+-            {
+-                action
+-            } else {
+-                view_actions.get("cpu").expect("All computers have a CPU")
+-            };
+-            action.activate(None);
+-
+-            this.context_menu_view_actions.set(view_actions);
+-
+-            let sidebar = this.sidebar();
+-
+-            let raw_overrides = settings.string("performance-sidebar-device-overrides");
+-            let mut overrides = parse_device_overrides(&raw_overrides);
+-
+             // Migrate from the deprecated performance-sidebar-hidden-graphs key
+             let old_hidden = settings.string("performance-sidebar-hidden-graphs");
+             if !old_hidden.is_empty() {
++                let raw_overrides = settings.string("performance-sidebar-device-overrides");
++                let mut overrides = parse_device_overrides(&raw_overrides);
++
+                 for name in old_hidden.split(';').filter(|s| !s.is_empty()) {
+                     overrides
+                         .entry(name.to_string())
+                         .or_insert(DeviceOverride::Hide);
+                 }
++
+                 let _ = settings.set_string(
+                     "performance-sidebar-device-overrides",
+                     &serialize_device_overrides(&overrides),
+@@ -1946,97 +1658,29 @@ mod imp {
+                 let _ = settings.set_string("performance-sidebar-hidden-graphs", "");
+             }
+ 
+-            let show_disks = settings.boolean("performance-show-disks");
+-            let show_network = settings.boolean("performance-show-network");
+-            let show_gpus = settings.boolean("performance-show-gpus");
+-            let show_fans = settings.boolean("performance-show-fans");
+-            let show_batteries = settings.boolean("performance-show-batteries");
+-
+-            let sidebar_order = settings.string("performance-sidebar-order");
+-
+-            let mut row_map = HashMap::new();
+-            let mut row_index = -1;
+-            loop {
+-                row_index += 1;
+-                let row = match sidebar.row_at_index(row_index) {
+-                    Some(row) => row,
+-                    None => break,
+-                };
+-
+-                let graph = match row
+-                    .child()
+-                    .and_then(|child| child.downcast_ref::<SummaryGraph>().cloned())
+-                {
+-                    Some(graph) => graph,
+-                    None => continue,
+-                };
+-
+-                let name = graph.widget_name();
+-                let category_visible = match graph.device_type() {
+-                    DeviceType::Disk => show_disks,
+-                    DeviceType::Network(group) => {
+-                        show_network && settings.boolean(group.settings_key())
+-                    }
+-                    DeviceType::Gpu => show_gpus,
+-                    DeviceType::Fan => show_fans,
+-                    DeviceType::Battery => show_batteries,
+-                    DeviceType::Cpu | DeviceType::Memory | DeviceType::Unspecified => true,
+-                };
+-                let visible =
+-                    resolve_device_visibility(name.as_str(), &overrides, category_visible);
+-                graph.set_switch_active(visible);
+-                if let Some(parent) = graph.parent() {
+-                    parent.set_visible(visible);
+-                }
+-
+-                row_map.insert(graph.widget_name(), (row, graph));
+-            }
+-
+-            let summary_graphs = this.summary_graphs.take();
+-
+-            for (i, row_name) in sidebar_order
+-                .split(';')
+-                .filter(|g| !g.is_empty())
+-                .enumerate()
+-                .map(|(i, r)| (i as i32, r))
+-            {
+-                if let Some((row, graph)) = row_map.remove(row_name) {
+-                    let drag_controller = match summary_graphs.get(&graph) {
+-                        Some(drag_controller) => drag_controller.clone(),
+-                        None => {
+-                            g_critical!(
+-                                "MissionCenter::PerformancePage",
+-                                "Drag controller is missing from summary graphs for {}",
+-                                row_name
+-                            );
+-                            continue;
+-                        }
+-                    };
+-
+-                    sidebar.remove(&row);
+-                    drop(row);
++            this.rebuild_sidebar_rank();
++            this.refresh_device_visibility();
++            this.select_page(settings.string("performance-selected-page").as_str());
+ 
+-                    sidebar.insert(&graph, i);
+-                    sidebar
+-                        .row_at_index(i)
+-                        .and_then(|row| Some(row.add_controller(drag_controller)));
++            let perf_page = this.obj().downgrade();
++            let on_order_changed = move |_: &gio::Settings, _: &str| {
++                if let Some(perf_page) = perf_page.upgrade() {
++                    perf_page.imp().rebuild_sidebar_rank();
+                 }
+-            }
+-
+-            this.summary_graphs.set(summary_graphs);
++            };
++            settings.connect_changed(Some("performance-sidebar-order"), on_order_changed);
+ 
+             let perf_page = this.obj().downgrade();
+-            let on_category_changed = move |settings: &gio::Settings, _: &str| {
+-                let perf_page = match perf_page.upgrade() {
+-                    Some(p) => p,
+-                    None => return,
+-                };
+-                let imp = perf_page.imp();
+-                let summary_graphs = imp.summary_graphs.take();
+-                imp.update_device_visibility(settings, &summary_graphs);
+-                imp.summary_graphs.set(summary_graphs);
++            let on_category_changed = move |_: &gio::Settings, _: &str| {
++                if let Some(perf_page) = perf_page.upgrade() {
++                    perf_page.imp().refresh_device_visibility();
++                }
+             };
+ 
++            settings.connect_changed(
++                Some("performance-sidebar-device-overrides"),
++                on_category_changed.clone(),
++            );
+             settings.connect_changed(Some("performance-show-disks"), on_category_changed.clone());
+             settings.connect_changed(
+                 Some("performance-show-network"),
+@@ -2081,19 +1725,22 @@ mod imp {
+                 pages_to_destroy: &Vec<String>,
+                 pages: &mut HashMap<String, (SummaryGraph, P)>,
+                 summary_graphs: &mut HashMap<SummaryGraph, gtk::DragSource>,
+-                sidebar: &gtk::ListBox,
+-                page_stack: &gtk::Stack,
++                this: &PerformancePage,
+             ) {
+-                for disk_page_name in pages_to_destroy {
+-                    if let Some((graph, page)) =
+-                        pages.get(disk_page_name).and_then(|v| Some(v.clone()))
++                let sidebar = this.sidebar();
++
++                for page_name in pages_to_destroy {
++                    if let Some((graph, page)) = pages.get(page_name).and_then(|v| Some(v.clone()))
+                     {
+                         summary_graphs.remove(&graph);
+-                        page_stack.remove(&page);
+-                        pages.remove(disk_page_name);
++                        this.page_stack.remove(&page);
++                        pages.remove(page_name);
+ 
+-                        let parent = match graph.parent() {
+-                            Some(parent) => parent,
++                        let row = match graph
++                            .parent()
++                            .and_then(|parent| parent.downcast::<gtk::ListBoxRow>().ok())
++                        {
++                            Some(row) => row,
+                             None => {
+                                 g_warning!(
+                                     "MissionCenter::PerformancePage",
+@@ -2103,18 +1750,16 @@ mod imp {
+                             }
+                         };
+ 
+-                        if let Some(selection) = sidebar.selected_row() {
+-                            if selection.eq(&parent) {
+-                                let row = pages
+-                                    .values()
+-                                    .next()
+-                                    .and_then(|(graph, _)| graph.parent())
+-                                    .and_then(|row| row.downcast::<gtk::ListBoxRow>().ok());
+-                                sidebar.select_row(row.as_ref());
+-                            }
+-                        }
++                        let was_selected = sidebar
++                            .selected_row()
++                            .map_or(false, |selected| selected.eq(&row));
++                        let index = row.index();
++
++                        sidebar.remove(&row);
+ 
+-                        sidebar.remove(&parent);
++                        if was_selected {
++                            this.select_nearest_shown_row(index);
++                        }
+                     }
+                 }
+             }
+@@ -2139,8 +1784,7 @@ mod imp {
+                             &pages_to_destroy,
+                             disks_pages,
+                             &mut summary_graphs,
+-                            &this.sidebar(),
+-                            &this.imp().page_stack,
++                            this.imp(),
+                         );
+                         pages_to_destroy.clear();
+                     }
+@@ -2157,8 +1801,7 @@ mod imp {
+                             &pages_to_destroy,
+                             net_pages,
+                             &mut summary_graphs,
+-                            &this.sidebar(),
+-                            &this.imp().page_stack,
++                            this.imp(),
+                         );
+                         pages_to_destroy.clear();
+                     }
+@@ -2173,8 +1816,7 @@ mod imp {
+                             &pages_to_destroy,
+                             gpu_pages,
+                             &mut summary_graphs,
+-                            &this.sidebar(),
+-                            &this.imp().page_stack,
++                            this.imp(),
+                         );
+                         pages_to_destroy.clear();
+                     }
+@@ -2193,8 +1835,7 @@ mod imp {
+                             &pages_to_destroy,
+                             fan_pages,
+                             &mut summary_graphs,
+-                            &this.sidebar(),
+-                            &this.imp().page_stack,
++                            this.imp(),
+                         );
+                         pages_to_destroy.clear();
+                     }
+@@ -2211,8 +1852,7 @@ mod imp {
+                             &pages_to_destroy,
+                             battery_pages,
+                             &mut summary_graphs,
+-                            &this.sidebar(),
+-                            &this.imp().page_stack,
++                            this.imp(),
+                         );
+                         pages_to_destroy.clear();
+                     }
+@@ -2275,9 +1915,6 @@ mod imp {
+                         result &= page.update_readings(readings);
+                     }
+                     Pages::Disk(pages) => {
+-                        let mut last_sidebar_pos = -1;
+-                        let mut consecutive_dev_count = 0;
+-
+                         let mut new_devices = Vec::new();
+                         let hide_index = readings.disks_info.len() == 1;
+                         for (index, disk) in readings.disks_info.iter().enumerate() {
+@@ -2291,22 +1928,6 @@ mod imp {
+                                     if hide_index { None } else { Some(index as i32) },
+                                 );
+ 
+-                                // Search for a group of existing disks and try to add new entries at that position
+-                                summary
+-                                    .parent()
+-                                    .and_then(|p| p.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                                    .and_then(|row| {
+-                                        let sidebar_pos = row.index();
+-                                        if sidebar_pos == last_sidebar_pos + 1 {
+-                                            consecutive_dev_count += 1;
+-                                        } else {
+-                                            consecutive_dev_count = 1;
+-                                        };
+-                                        last_sidebar_pos = sidebar_pos;
+-
+-                                        Some(())
+-                                    });
+-
+                                 let graph_widget = summary.graph_widget();
+                                 graph_widget.add_data_point(vec![vec![disk.busy_percent]]);
+                                 if let Some(temp_mk) = disk.temperature_milli_k {
+@@ -2339,42 +1960,17 @@ mod imp {
+                                 } else {
+                                     Some(new_device_index as i32)
+                                 },
+-                                if last_sidebar_pos > -1 && consecutive_dev_count > 1 {
+-                                    last_sidebar_pos += 1;
+-                                    Some(last_sidebar_pos)
+-                                } else {
+-                                    None
+-                                },
+                             );
+ 
+                             pages.insert(disk_id, page);
+                         }
+                     }
+                     Pages::Network(pages) => {
+-                        let mut last_sidebar_pos = -1;
+-                        let mut consecutive_dev_count = 0;
+-
+                         let mut new_devices = Vec::new();
+                         for (index, network_connection) in readings.network_connections.iter() {
+                             if let Some((summary, page)) =
+                                 pages.get(&Self::network_page_name(&network_connection.id))
+                             {
+-                                // Search for a group of existing network devices and try to add new entries at that position
+-                                summary
+-                                    .parent()
+-                                    .and_then(|p| p.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                                    .and_then(|row| {
+-                                        let sidebar_pos = row.index();
+-                                        if sidebar_pos == last_sidebar_pos + 1 {
+-                                            consecutive_dev_count += 1;
+-                                        } else {
+-                                            consecutive_dev_count = 1;
+-                                        };
+-                                        last_sidebar_pos = sidebar_pos;
+-
+-                                        Some(())
+-                                    });
+-
+                                 let graph_widget = summary.graph_widget();
+ 
+                                 graph_widget.add_data_point(vec![
+@@ -2418,20 +2014,11 @@ mod imp {
+                         for new_device_index in new_devices {
+                             let (net_if_id, page) = this.imp().create_network_page(
+                                 &readings.network_connections[new_device_index],
+-                                if last_sidebar_pos > -1 && consecutive_dev_count > 1 {
+-                                    last_sidebar_pos += 1;
+-                                    Some(last_sidebar_pos)
+-                                } else {
+-                                    None
+-                                },
+                             );
+                             pages.insert(net_if_id, page);
+                         }
+                     }
+                     Pages::Gpu(pages) => {
+-                        let mut last_sidebar_pos = -1;
+-                        let mut consecutive_dev_count = 0;
+-
+                         let mut gpus = readings.gpus.iter().collect::<Vec<_>>();
+                         gpus.sort_by(|(lhs, _), (rhs, _)| lhs.cmp(&rhs));
+ 
+@@ -2443,22 +2030,6 @@ mod imp {
+ 
+                             if let Some((summary, page)) = pages.get(&Self::gpu_page_name(&gpu.id))
+                             {
+-                                // Search for a group of existing GPUs and try to add new entries at that position
+-                                summary
+-                                    .parent()
+-                                    .and_then(|p| p.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                                    .and_then(|row| {
+-                                        let sidebar_pos = row.index();
+-                                        if sidebar_pos == last_sidebar_pos + 1 {
+-                                            consecutive_dev_count += 1;
+-                                        } else {
+-                                            consecutive_dev_count = 1;
+-                                        };
+-                                        last_sidebar_pos = sidebar_pos;
+-
+-                                        Some(())
+-                                    });
+-
+                                 let graph_widget = summary.graph_widget();
+ 
+                                 if let Some(index) = index {
+@@ -2488,23 +2059,11 @@ mod imp {
+                                 continue;
+                             };
+ 
+-                            let (page_name, page) = this.imp().create_gpu_page(
+-                                gpu,
+-                                index,
+-                                if last_sidebar_pos > -1 && consecutive_dev_count > 1 {
+-                                    last_sidebar_pos += 1;
+-                                    Some(last_sidebar_pos)
+-                                } else {
+-                                    None
+-                                },
+-                            );
++                            let (page_name, page) = this.imp().create_gpu_page(gpu, index);
+                             pages.insert(page_name, page);
+                         }
+                     }
+                     Pages::Fan(pages) => {
+-                        let mut last_sidebar_pos = -1;
+-                        let mut consecutive_dev_count = 0;
+-
+                         let hide_index = readings.fans.len() == 1;
+ 
+                         let mut new_devices = Vec::new();
+@@ -2512,22 +2071,6 @@ mod imp {
+                             let index = if hide_index { None } else { Some(index) };
+ 
+                             if let Some((summary, page)) = pages.get(&Self::fan_page_name(&fan)) {
+-                                // Search for a group of existing fans and try to add new entries at that position
+-                                summary
+-                                    .parent()
+-                                    .and_then(|p| p.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                                    .and_then(|row| {
+-                                        let sidebar_pos = row.index();
+-                                        if sidebar_pos == last_sidebar_pos + 1 {
+-                                            consecutive_dev_count += 1;
+-                                        } else {
+-                                            consecutive_dev_count = 1;
+-                                        };
+-                                        last_sidebar_pos = sidebar_pos;
+-
+-                                        Some(())
+-                                    });
+-
+                                 let graph_widget = summary.graph_widget();
+                                 graph_widget.add_data_point(vec![vec![fan.rpm as f32]]);
+                                 if let Some(fan_name) = &fan.fan_label {
+@@ -2563,23 +2106,11 @@ mod imp {
+                         }
+ 
+                         for index in new_devices {
+-                            let (page_name, page) = this.imp().create_fan_page(
+-                                readings,
+-                                index,
+-                                if last_sidebar_pos > -1 && consecutive_dev_count > 1 {
+-                                    last_sidebar_pos += 1;
+-                                    Some(last_sidebar_pos)
+-                                } else {
+-                                    None
+-                                },
+-                            );
++                            let (page_name, page) = this.imp().create_fan_page(readings, index);
+                             pages.insert(page_name, page);
+                         }
+                     }
+                     Pages::Battery(pages) => {
+-                        let mut last_sidebar_pos = -1;
+-                        let mut consecutive_dev_count = 0;
+-
+                         let num_bat = readings.batteries.len();
+                         let hide_index = num_bat == 1;
+ 
+@@ -2590,22 +2121,6 @@ mod imp {
+                             if let Some((summary, page)) =
+                                 pages.get(&Self::battery_page_name(&battery))
+                             {
+-                                // Search for a group of existing batteries and try to add new entries at that position
+-                                summary
+-                                    .parent()
+-                                    .and_then(|p| p.downcast_ref::<gtk::ListBoxRow>().cloned())
+-                                    .and_then(|row| {
+-                                        let sidebar_pos = row.index();
+-                                        if sidebar_pos == last_sidebar_pos + 1 {
+-                                            consecutive_dev_count += 1;
+-                                        } else {
+-                                            consecutive_dev_count = 1;
+-                                        };
+-                                        last_sidebar_pos = sidebar_pos;
+-
+-                                        Some(())
+-                                    });
+-
+                                 let graph_widget = summary.graph_widget();
+                                 graph_widget.add_data_point(vec![vec![battery.percentage * 100.]]);
+                                 summary.set_info1(
+@@ -2635,16 +2150,7 @@ mod imp {
+                         }
+ 
+                         for index in new_devices {
+-                            let (page_name, page) = this.imp().create_battery_page(
+-                                readings,
+-                                index,
+-                                if last_sidebar_pos > -1 && consecutive_dev_count > 1 {
+-                                    last_sidebar_pos += 1;
+-                                    Some(last_sidebar_pos)
+-                                } else {
+-                                    None
+-                                },
+-                            );
++                            let (page_name, page) = this.imp().create_battery_page(readings, index);
+                             pages.insert(page_name, page);
+                         }
+                     }
+@@ -2653,6 +2159,19 @@ mod imp {
+ 
+             this.imp().pages.set(pages);
+ 
++            let summary_graphs = this.imp().summary_graphs.take();
++            let unranked = {
++                let rank = this.imp().sidebar_rank.borrow();
++                summary_graphs
++                    .keys()
++                    .any(|graph| !rank.contains_key(graph.widget_name().as_str()))
++            };
++            this.imp().summary_graphs.set(summary_graphs);
++
++            if unranked {
++                this.imp().rebuild_sidebar_rank();
++            }
++
+             result
+         }
+ 
+@@ -2866,6 +2385,247 @@ mod imp {
+     impl WidgetImpl for PerformancePage {}
+ 
+     impl BreakpointBinImpl for PerformancePage {}
++
++    #[cfg(test)]
++    mod tests {
++        use super::*;
++
++        fn names(list: &[&str]) -> Vec<String> {
++            list.iter().map(|name| name.to_string()).collect()
++        }
++
++        fn present(list: &[&str]) -> HashSet<String> {
++            list.iter().map(|name| name.to_string()).collect()
++        }
++
++        #[test]
++        fn prune_leaves_a_short_order_alone() {
++            let mut order = names(&["cpu", "memory", "disk-sda"]);
++            prune_sidebar_order(&mut order, &present(&["cpu"]), 256);
++            assert_eq!(order, names(&["cpu", "memory", "disk-sda"]));
++        }
++
++        #[test]
++        fn prune_drops_absent_devices_from_the_end() {
++            let mut order = names(&["a", "b", "c", "d", "e"]);
++            prune_sidebar_order(&mut order, &HashSet::new(), 3);
++            assert_eq!(order, names(&["a", "b", "c"]));
++        }
++
++        #[test]
++        fn prune_never_drops_a_present_device() {
++            let mut order = names(&["a", "b", "c", "d", "e"]);
++            prune_sidebar_order(&mut order, &present(&["d", "e"]), 3);
++            assert_eq!(order, names(&["a", "d", "e"]));
++        }
++
++        #[test]
++        fn prune_keeps_every_present_device_even_above_the_cap() {
++            let mut order = names(&["a", "b", "c", "d", "e"]);
++            prune_sidebar_order(&mut order, &present(&["a", "b", "c", "d", "e"]), 2);
++            assert_eq!(order, names(&["a", "b", "c", "d", "e"]));
++        }
++
++        #[test]
++        fn prune_keeps_the_cap_when_there_are_repeated_changes() {
++            let mut order = names(&["cpu", "memory"]);
++
++            for index in 0..1000 {
++                let arriving = format!("net-veth{}", index);
++                order.push(arriving.clone());
++                prune_sidebar_order(
++                    &mut order,
++                    &present(&["cpu", "memory", arriving.as_str()]),
++                    MAX_REMEMBERED_DEVICES,
++                );
++            }
++
++            assert_eq!(order.len(), MAX_REMEMBERED_DEVICES);
++            assert!(order.contains(&"cpu".to_string()));
++            assert!(order.contains(&"memory".to_string()));
++            assert!(order.contains(&"net-veth999".to_string()));
++        }
++
++        fn merged(stored: &[&str], present: &[&str]) -> Vec<String> {
++            let mut order = names(stored);
++            PerformancePage::merge_new_devices(&mut order, names(present));
++            order
++        }
++
++        #[test]
++        fn merge_into_an_empty_order_gives_default_order() {
++            assert_eq!(
++                merged(
++                    &[],
++                    &["net-eth1", "cpu", "disk-sdb", "net-eth0", "disk-sda", "memory"]
++                ),
++                names(&["cpu", "memory", "disk-sda", "disk-sdb", "net-eth0", "net-eth1"])
++            );
++        }
++
++        #[test]
++        fn merge_joins_a_sibling_the_user_dragged_to_the_top() {
++            assert_eq!(
++                merged(
++                    &["net-eth0", "cpu", "memory", "disk-sda"],
++                    &["cpu", "memory", "disk-sda", "net-eth0", "net-eth1"]
++                ),
++                names(&["net-eth0", "net-eth1", "cpu", "memory", "disk-sda"])
++            );
++        }
++
++        #[test]
++        fn merge_leaves_the_top_row_alone() {
++            assert_eq!(
++                merged(
++                    &["net-eth1", "cpu", "memory"],
++                    &["cpu", "memory", "net-eth0", "net-eth1"]
++                ),
++                names(&["net-eth1", "net-eth0", "cpu", "memory"])
++            );
++        }
++
++        #[test]
++        fn merge_rejoins_a_group_a_drag_split_in_two() {
++            assert_eq!(
++                merged(
++                    &["net-eth0", "cpu", "net-eth2", "memory"],
++                    &["cpu", "memory", "net-eth0", "net-eth1", "net-eth2"]
++                ),
++                names(&["net-eth0", "net-eth1", "cpu", "net-eth2", "memory"])
++            );
++        }
++
++        #[test]
++        fn merge_uses_the_default_position_for_a_new_category() {
++            assert_eq!(
++                merged(&["net-eth0", "disk-sda"], &["cpu", "disk-sda", "net-eth0"]),
++                names(&["cpu", "net-eth0", "disk-sda"])
++            );
++        }
++
++        #[test]
++        fn merge_keeps_siblings_arriving_together_contiguous() {
++            assert_eq!(
++                merged(
++                    &["cpu", "net-eth5"],
++                    &["cpu", "net-eth1", "net-eth2", "net-eth5"]
++                ),
++                names(&["cpu", "net-eth5", "net-eth1", "net-eth2"])
++            );
++        }
++
++        #[test]
++        fn merge_puts_a_newcomer_next_to_the_sibling_it_sorts_after() {
++            assert_eq!(
++                merged(
++                    &["net-eth0", "cpu", "memory", "disk-sda", "net-wlan0"],
++                    &[
++                        "cpu",
++                        "memory",
++                        "disk-sda",
++                        "net-eth0",
++                        "net-wlan0",
++                        "net-veth1a2b3c"
++                    ]
++                ),
++                names(&[
++                    "net-eth0",
++                    "net-veth1a2b3c",
++                    "cpu",
++                    "memory",
++                    "disk-sda",
++                    "net-wlan0"
++                ])
++            );
++        }
++
++        #[test]
++        fn merge_does_not_change_order_once_every_device_is_known() {
++            let stored = ["net-eth0", "cpu", "memory", "disk-sda"];
++            let present = ["cpu", "memory", "disk-sda", "net-eth0"];
++
++            let once = merged(&stored, &present);
++            let mut twice = once.clone();
++            PerformancePage::merge_new_devices(&mut twice, names(&present));
++
++            assert_eq!(once, names(&stored));
++            assert_eq!(twice, once);
++        }
++
++        #[test]
++        fn canonical_key_orders_categories() {
++            let ordered = [
++                "cpu",
++                "memory",
++                "disk-sda",
++                "net-eth0",
++                "gpu-0",
++                "fan-0-0",
++                "battery-BAT0",
++            ];
++
++            for pair in ordered.windows(2) {
++                assert!(
++                    PerformancePage::canonical_key(pair[0])
++                        < PerformancePage::canonical_key(pair[1]),
++                    "{} should sort before {}",
++                    pair[0],
++                    pair[1]
++                );
++            }
++        }
++
++        #[test]
++        fn canonical_key_puts_unknown_names_last() {
++            let unknown = PerformancePage::canonical_key("something-else");
++            assert_eq!(unknown.0, 7);
++            assert!(PerformancePage::canonical_key("battery-BAT0") < unknown);
++        }
++
++        #[test]
++        fn canonical_key_groups_a_category_together() {
++            let mut sorted = names(&["net-eth1", "cpu", "disk-sdb", "net-eth0", "disk-sda"]);
++            sorted.sort_by(|a, b| {
++                PerformancePage::canonical_key(a).cmp(&PerformancePage::canonical_key(b))
++            });
++
++            assert_eq!(
++                sorted,
++                names(&["cpu", "disk-sda", "disk-sdb", "net-eth0", "net-eth1"])
++            );
++        }
++
++        #[test]
++        fn view_action_name_maps_every_category() {
++            let expected = [
++                ("cpu", "cpu"),
++                ("memory", "memory"),
++                ("disk-sda", "disk"),
++                ("net-eth0", "network"),
++                ("gpu-0000:01:00.0", "gpu"),
++                ("fan-0-1", "fan"),
++                ("battery-0-BAT0", "battery"),
++            ];
++
++            for (page_name, action) in expected {
++                assert_eq!(
++                    PerformancePage::view_action_name(page_name),
++                    Some(action),
++                    "{} should use the {} action",
++                    page_name,
++                    action
++                );
++            }
++        }
++
++        #[test]
++        fn view_action_name_rejects_names_outside_the_categories() {
++            for page_name in ["", "cpufreq", "netlink-0", "something-else"] {
++                assert_eq!(PerformancePage::view_action_name(page_name), None);
++            }
++        }
++    }
+ }
+ 
+ glib::wrapper! {
+@@ -2904,32 +2664,73 @@ impl PerformancePage {
+         imp::PerformancePage::update_animations(self, ticks)
+     }
+ 
+-    pub fn sidebar_enable_all(&self) {
++    pub fn select_nth_shown_device(&self, nth: i32) {
+         let this = self.imp();
++        let sidebar = this.sidebar();
++
++        let mut shown = 0;
++        let mut index = 0;
++        while let Some(row) = sidebar.row_at_index(index) {
++            if this.row_shown(&row) {
++                if shown == nth {
++                    sidebar.select_row(Some(&row));
++                    return;
++                }
++                shown += 1;
++            }
+ 
+-        if !this.sidebar_edit_mode.get() {
+-            return;
+-        }
+-
+-        let summary_graphs = this.summary_graphs.take();
+-        for (graph, _) in &summary_graphs {
+-            graph.set_is_enabled(true);
++            index += 1;
+         }
+-        this.summary_graphs.set(summary_graphs);
+     }
+ 
+-    pub fn sidebar_disable_all(&self) {
++    fn set_all_enabled(&self, enabled: bool) {
+         let this = self.imp();
+ 
+         if !this.sidebar_edit_mode.get() {
+             return;
+         }
+ 
++        let settings = settings!();
++        let current =
++            parse_device_overrides(&settings.string("performance-sidebar-device-overrides"));
++        let mut overrides = current.clone();
++
++        let state = if enabled {
++            DeviceOverride::Show
++        } else {
++            DeviceOverride::Hide
++        };
++
+         let summary_graphs = this.summary_graphs.take();
+-        for (graph, _) in &summary_graphs {
+-            graph.set_is_enabled(false);
++        for graph in summary_graphs.keys() {
++            overrides.insert(graph.widget_name().to_string(), state);
++            graph.set_switch_active(enabled);
+         }
+         this.summary_graphs.set(summary_graphs);
++
++        if overrides == current {
++            return;
++        }
++
++        settings
++            .set_string(
++                "performance-sidebar-device-overrides",
++                &serialize_device_overrides(&overrides),
++            )
++            .unwrap_or_else(|_| {
++                g_warning!(
++                    "MissionCenter::PerformancePage",
++                    "Failed to set performance-sidebar-device-overrides setting"
++                );
++            });
++    }
++
++    pub fn sidebar_enable_all(&self) {
++        self.set_all_enabled(true);
++    }
++
++    pub fn sidebar_disable_all(&self) {
++        self.set_all_enabled(false);
+     }
+ 
+     pub fn sidebar_reset_to_default(&self) {
+@@ -2946,7 +2747,7 @@ impl PerformancePage {
+             .unwrap_or_else(|_| {
+                 g_warning!(
+                     "MissionCenter::PerformancePage",
+-                    "Failed to set performance-selected-page setting"
++                    "Failed to set performance-sidebar-order setting"
+                 );
+             });
+         settings
+@@ -2958,33 +2759,19 @@ impl PerformancePage {
+                 );
+             });
+ 
+-        this.default_sort_sidebar_entries();
+-
+-        let show_disks = settings.boolean("performance-show-disks");
+-        let show_network = settings.boolean("performance-show-network");
+-        let show_gpus = settings.boolean("performance-show-gpus");
+-        let show_fans = settings.boolean("performance-show-fans");
+-        let show_batteries = settings.boolean("performance-show-batteries");
+-
+-        let summary_graphs = this.summary_graphs.take();
+-        for (graph, _) in &summary_graphs {
+-            let category_visible = match graph.device_type() {
+-                DeviceType::Disk => show_disks,
+-                DeviceType::Network(group) => {
+-                    show_network && settings.boolean(group.settings_key())
+-                }
+-                DeviceType::Gpu => show_gpus,
+-                DeviceType::Fan => show_fans,
+-                DeviceType::Battery => show_batteries,
+-                DeviceType::Cpu | DeviceType::Memory | DeviceType::Unspecified => true,
+-            };
+-            graph.set_switch_active(category_visible);
+-            if !this.sidebar_edit_mode.get() {
+-                graph.parent().map(|parent| {
+-                    parent.set_visible(category_visible);
+-                });
+-            }
++        for key in [
++            "performance-show-disks",
++            "performance-show-network",
++            "performance-show-network-wired",
++            "performance-show-network-wireless",
++            "performance-show-network-vpn",
++            "performance-show-network-virtual",
++            "performance-show-network-other",
++            "performance-show-gpus",
++            "performance-show-fans",
++            "performance-show-batteries",
++        ] {
++            settings.reset(key);
+         }
+-        this.summary_graphs.set(summary_graphs);
+     }
+ }
+diff --git a/src/performance_page/summary_graph.rs b/src/performance_page/summary_graph.rs
+index 929ee013..10a463f2 100644
+--- a/src/performance_page/summary_graph.rs
++++ b/src/performance_page/summary_graph.rs
+@@ -84,6 +84,43 @@ pub enum DeviceOverride {
+     Hide,
+ }
+ 
++pub fn encode_device_name(name: &str) -> String {
++    let mut encoded = String::with_capacity(name.len());
++
++    for ch in name.chars() {
++        match ch {
++            '%' => encoded.push_str("%25"),
++            ';' => encoded.push_str("%3B"),
++            ':' => encoded.push_str("%3A"),
++            _ => encoded.push(ch),
++        }
++    }
++
++    encoded
++}
++
++pub fn decode_device_name(encoded: &str) -> String {
++    let mut name = String::with_capacity(encoded.len());
++    let mut rest = encoded;
++
++    while let Some(at) = rest.find('%') {
++        name.push_str(&rest[..at]);
++
++        let (decoded, consumed) = match rest.as_bytes().get(at + 1..at + 3) {
++            Some(b"25") => ('%', 3),
++            Some(b"3B") => (';', 3),
++            Some(b"3A") => (':', 3),
++            _ => ('%', 1),
++        };
++
++        name.push(decoded);
++        rest = &rest[at + consumed..];
++    }
++
++    name.push_str(rest);
++    name
++}
++
+ pub fn parse_device_overrides(raw: &str) -> HashMap<String, DeviceOverride> {
+     raw.split(';')
+         .filter(|s| !s.is_empty())
+@@ -94,23 +131,25 @@ pub fn parse_device_overrides(raw: &str) -> HashMap<String, DeviceOverride> {
+                 "hide" => DeviceOverride::Hide,
+                 _ => return None,
+             };
+-            Some((name.to_string(), ovr))
++            Some((decode_device_name(name), ovr))
+         })
+         .collect()
+ }
+ 
+ pub fn serialize_device_overrides(overrides: &HashMap<String, DeviceOverride>) -> String {
+-    overrides
++    let mut entries = overrides
+         .iter()
+         .map(|(name, ovr)| {
+             let action = match ovr {
+                 DeviceOverride::Show => "show",
+                 DeviceOverride::Hide => "hide",
+             };
+-            format!("{}:{}", name, action)
++            format!("{}:{}", encode_device_name(name), action)
+         })
+-        .collect::<Vec<_>>()
+-        .join(";")
++        .collect::<Vec<_>>();
++
++    entries.sort_unstable();
++    entries.join(";")
+ }
+ 
+ pub fn resolve_device_visibility(
+@@ -151,9 +190,6 @@ mod imp {
+         #[template_child]
+         pub enabled_switch: TemplateChild<gtk::Switch>,
+ 
+-        #[property(get = Self::is_enabled, set = Self::set_enabled)]
+-        is_enabled: PhantomData<bool>,
+-
+         #[property(get = Self::base_color, set = Self::set_base_color)]
+         base_color: PhantomData<gdk::RGBA>,
+         #[property(get = Self::heading, set = Self::set_heading)]
+@@ -179,8 +215,6 @@ mod imp {
+                 label_info2: Default::default(),
+                 enabled_switch: Default::default(),
+ 
+-                is_enabled: PhantomData,
+-
+                 base_color: PhantomData,
+                 heading: PhantomData,
+                 info1: PhantomData,
+@@ -194,14 +228,6 @@ mod imp {
+     }
+ 
+     impl SummaryGraph {
+-        fn is_enabled(&self) -> bool {
+-            self.enabled_switch.is_active()
+-        }
+-
+-        fn set_enabled(&self, enabled: bool) {
+-            self.enabled_switch.set_active(enabled);
+-        }
+-
+         fn base_color(&self) -> gdk::RGBA {
+             self.graph_widget.base_color()
+         }
+@@ -310,8 +336,6 @@ mod imp {
+                                 "Failed to set performance-sidebar-device-overrides setting"
+                             );
+                         });
+-
+-                    this.notify_is_enabled();
+                 }
+             });
+         }
+@@ -340,13 +364,7 @@ impl SummaryGraph {
+         imp.drag_handle_icon.set_visible(edit_mode);
+         imp.enabled_switch.set_visible(edit_mode);
+ 
+-        if edit_mode {
+-            self.set_switch_active(switch_enabled);
+-        }
+-
+-        if let Some(parent) = self.parent() {
+-            parent.set_visible(edit_mode || switch_enabled);
+-        }
++        self.set_switch_active(switch_enabled);
+     }
+ 
+     pub fn set_switch_active(&self, active: bool) {
+@@ -411,3 +429,114 @@ impl SummaryGraph {
+         self.imp().device_type.get()
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn encode_decode_roundtrip() {
++        for name in [
++            "net-eth0",
++            "net-a;b",
++            "50%",
++            "odd:name",
++            "%3B",
++            "",
++            "net-a;b:hide",
++            "%%%",
++            "üñî;çø∂é",
++        ] {
++            assert_eq!(decode_device_name(&encode_device_name(name)), name);
++        }
++    }
++
++    #[test]
++    fn encoded_names_are_free_of_separators() {
++        let encoded = encode_device_name("net-a;b:c");
++        assert!(!encoded.contains(';'));
++        assert!(!encoded.contains(':'));
++        assert_eq!(encoded, "net-a%3Bb%3Ac");
++    }
++
++    #[test]
++    fn ordinary_names_are_untouched() {
++        for name in [
++            "cpu",
++            "memory",
++            "disk-sda",
++            "net-eth0",
++            "gpu-0",
++            "battery-BAT0",
++        ] {
++            assert_eq!(encode_device_name(name), name);
++            assert_eq!(decode_device_name(name), name);
++        }
++    }
++
++    #[test]
++    fn decode_leaves_legacy_values_unchanged() {
++        for legacy in ["50%", "%", "%zz", "%3", "100%done", "a%b%c"] {
++            assert_eq!(decode_device_name(legacy), legacy);
++        }
++    }
++
++    #[test]
++    fn overrides_roundtrip_through_settings_string() {
++        let mut overrides = HashMap::new();
++        overrides.insert("net-a;b".to_string(), DeviceOverride::Hide);
++        overrides.insert("cpu".to_string(), DeviceOverride::Show);
++        overrides.insert("weird:show".to_string(), DeviceOverride::Show);
++        overrides.insert("50%".to_string(), DeviceOverride::Hide);
++
++        let serialized = serialize_device_overrides(&overrides);
++        assert_eq!(serialized.matches(';').count(), overrides.len() - 1);
++        assert_eq!(parse_device_overrides(&serialized), overrides);
++    }
++
++    #[test]
++    fn overrides_resolve_for_names_holding_separators() {
++        let mut overrides = HashMap::new();
++        overrides.insert("net-a;b".to_string(), DeviceOverride::Hide);
++
++        let parsed = parse_device_overrides(&serialize_device_overrides(&overrides));
++        assert!(!resolve_device_visibility("net-a;b", &parsed, true));
++        assert!(resolve_device_visibility("net-a", &parsed, true));
++        assert!(resolve_device_visibility("b", &parsed, true));
++    }
++
++    #[test]
++    fn legacy_unencoded_overrides_still_parse() {
++        let parsed = parse_device_overrides("cpu:show;disk-sda:hide");
++        assert_eq!(parsed.get("cpu"), Some(&DeviceOverride::Show));
++        assert_eq!(parsed.get("disk-sda"), Some(&DeviceOverride::Hide));
++    }
++
++    #[test]
++    fn serialized_overrides_do_not_depend_on_insertion_order() {
++        let entries = [
++            ("cpu", DeviceOverride::Show),
++            ("disk-sda", DeviceOverride::Hide),
++            ("net-eth0", DeviceOverride::Hide),
++            ("gpu-0", DeviceOverride::Show),
++        ];
++
++        let mut forward = HashMap::new();
++        for (name, ovr) in entries {
++            forward.insert(name.to_string(), ovr);
++        }
++
++        let mut backward = HashMap::new();
++        for (name, ovr) in entries.iter().rev() {
++            backward.insert(name.to_string(), *ovr);
++        }
++
++        let serialized = serialize_device_overrides(&forward);
++        assert_eq!(serialized, serialize_device_overrides(&backward));
++        assert_eq!(
++            serialized,
++            "cpu:show;disk-sda:hide;gpu-0:show;net-eth0:hide"
++        );
++        assert_eq!(parse_device_overrides(&serialized), forward);
++    }
++}
+diff --git a/src/window.rs b/src/window.rs
+index 1e68a8a6..aecae16b 100644
+--- a/src/window.rs
++++ b/src/window.rs
+@@ -44,10 +44,7 @@ fn special_shortcuts(
+ 
+         let result = window.performance_page_active();
+         if result {
+-            let row = imp.sidebar.row_at_index(index);
+-            if row.is_some() {
+-                imp.sidebar.select_row(row.as_ref());
+-            }
++            imp.performance_page.select_nth_shown_device(index);
+         }
+         result
+     }
+-- 
+GitLab
+
