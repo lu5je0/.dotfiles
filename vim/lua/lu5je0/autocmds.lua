@@ -35,6 +35,7 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   end
 })
 
+-- workaround: neovim-yank-highlight-compat
 -- 0.13 起 vim.hl.on_yank 已废弃（0.14 移除），改用 vim.hl.hl_op。
 local highlight_yank = vim.fn.has('nvim-0.13') == 1 and vim.hl.hl_op or vim.hl.on_yank
 

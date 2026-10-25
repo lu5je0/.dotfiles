@@ -32,6 +32,7 @@ in
     pkgs.qadwaitadecorations-qt6
   ];
 
+  # workaround: qt-wayland-decoration-shadow
   # 修复qt应用窗口阴影
   # https://github.com/FedoraQt/QAdwaitaDecorations/pull/89
   # qt.enable 把 QT_PLUGIN_PATH 指到各 profile 的 lib/qt-6/plugins，Qt 插件装进 profile 才被找到
@@ -49,9 +50,11 @@ in
     enable = true;
     wantedBy = [ "gnome-session.target" ];
   };
+  # workaround: gnome-remote-desktop-settings-entry
   # GNOME 50 的设置仅在 system unit 状态为 enabled/disabled 时显示「远程桌面」入口，
   # NixOS 默认给的是 linked，补 wantedBy 让它变成 enabled
   systemd.services.gnome-remote-desktop.wantedBy = [ "graphical.target" ];
+  # workaround: gnome-remote-login-pkexec-path
   # 「远程登录」开关由 configuration daemon 提权配置，而它的 PATH 里没有
   # /run/wrappers/bin（pkexec 所在），会报 Failed to execute child process "pkexec"
   systemd.services.gnome-remote-desktop-configuration.environment = {

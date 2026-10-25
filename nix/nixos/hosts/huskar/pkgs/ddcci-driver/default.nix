@@ -4,6 +4,7 @@
 }:
 
 ddcci-driver.overrideAttrs (oldAttrs: {
+  # workaround: huskar-ddcci-brightness-write-confirmation
   patches = (oldAttrs.patches or [ ]) ++ [
     ./brightness-write-retry.patch
   ];

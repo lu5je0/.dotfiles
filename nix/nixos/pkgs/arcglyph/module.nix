@@ -14,6 +14,7 @@ in
     packages = [ arcglyph ];
   };
 
+  # workaround: arcglyph-autostart-wrapper
   # arcglyph 写自启条目时优先用 /usr/bin/arcglyph，不存在才回退 current_exe()，
   # 而在 nix wrapper 下那是裸的 .arcglyph-wrapped（缺 LD_LIBRARY_PATH，登录即崩）。
   # 该软链经用户 profile 始终指向当前 generation 的 wrapper，跨 rebuild/GC 有效。

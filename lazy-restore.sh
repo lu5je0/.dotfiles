@@ -21,6 +21,7 @@ for PLUGIN in "${PLUGIN_LIST[@]}"; do
     fi
 done
 
+# workaround: lazy-legacy-inplace-patches
 # 临时兼容旧版 lazy patch：先撤销插件目录里的原地补丁，避免 Lazy restore 被本地 diff 阻塞。
 # TODO: 所有环境都已切换到缓存副本补丁后，移除此兼容段。
 PATCH_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/vim/patches"

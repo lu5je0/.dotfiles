@@ -8,6 +8,7 @@ let
   upstream = flake.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt;
   patched = upstream.override {
     chatgpt-unwrapped = upstream.unwrapped.overrideAttrs (old: {
+      # workaround: codex-preedit-first-key-caret
       # 2026-10-17：修复 preedit 首字母光标在末尾、第二字母才回到开头的问题。
       # Codex 26.1007.71326 + GNOME Wayland + WeTypeX 已实测修复；原因与升级检查见脚本。
       postInstall = (old.postInstall or "") + ''
