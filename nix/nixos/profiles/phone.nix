@@ -31,8 +31,6 @@
   };
   security.rtkit.enable = true;
   services.flatpak.enable = true;
-  # Keep Docker available on demand without delaying the phone's login screen.
-  virtualisation.docker.enableOnBoot = false;
   # GDM and GNOME Shell use their native on-screen keyboard with IBus.
   i18n.inputMethod.ibus.engines = [ pkgs.ibus-engines.libpinyin ];
 
