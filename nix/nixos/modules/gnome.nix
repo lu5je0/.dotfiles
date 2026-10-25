@@ -7,6 +7,7 @@
 
 let
   tilewindow = pkgs.callPackage ../pkgs/tilewindow { };
+  showDesktopCorner = pkgs.callPackage ../pkgs/show-desktop-corner { };
   windowDecorations = pkgs.callPackage ../pkgs/window-decorations { };
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
@@ -15,7 +16,7 @@ let
     pkgs.gnomeExtensions.dash-to-dock
     pkgs.gnomeExtensions.gtk4-desktop-icons-ng-ding
     pkgs.gnomeExtensions.kimpanel
-    pkgs.gnomeExtensions.show-desktop-button
+    showDesktopCorner
     pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
     tilewindow

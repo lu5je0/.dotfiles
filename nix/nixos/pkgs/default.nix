@@ -14,6 +14,7 @@
   mark-shot = pkgs.callPackage ./mark-shot { flake = inputs.mark-shot; };
   mission-center = pkgsUnstable.callPackage ./mission-center { };
   qoder = pkgs.callPackage ./qoder { };
+  show-desktop-corner = pkgs.callPackage ./show-desktop-corner { };
   terminal-browser = pkgs.callPackage ./terminal-browser { };
   tilewindow = pkgs.callPackage ./tilewindow { };
   wechat = pkgs.callPackage ./wechat { };
