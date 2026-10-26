@@ -85,7 +85,7 @@ local function primary_paste()
   return { vim.split(text, '\n', { plain = true }), 'v' }
 end
 
-function M.setup()
+local function setup_provider()
   -- unnamedplus：无名寄存器走 `+`（CLIPBOARD），把 `*` 留给 primary selection。
   vim.o.clipboard = 'unnamedplus'
 
@@ -109,6 +109,10 @@ function M.setup()
     },
   }
 
+  -- The default provider may already be cached while installation is in progress.
+  vim.fn['provider#clipboard#Executable']()
+  vim.g.loaded_clipboard_provider = 2
+
   vim.api.nvim_create_autocmd({ 'FocusGained' }, {
     group = augroup,
     callback = sync_from,
@@ -124,6 +128,10 @@ function M.setup()
     sync_from(true)
     require('lu5je0.core.keys').feedkey('<c-r>+')
   end)
+end
+
+function M.setup()
+  require('lu5je0.misc.tui-bridge.tui-bridge').on_ready(setup_provider)
 end
 
 return M

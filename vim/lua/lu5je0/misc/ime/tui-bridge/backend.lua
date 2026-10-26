@@ -24,6 +24,9 @@ end
 
 function M.setup()
   state.ime = require('lu5je0.misc.tui-bridge.ext.im').setup()
+  require('lu5je0.misc.tui-bridge.tui-bridge').on_ready(function()
+    require('lu5je0.misc.ime').resync()
+  end)
   return M
 end
 

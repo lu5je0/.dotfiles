@@ -1,4 +1,2 @@
-tui-bridge
-tui-bridge_win
-tui-bridge_mac
+build/
 linux/gen/

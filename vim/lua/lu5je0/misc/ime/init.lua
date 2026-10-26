@@ -94,6 +94,11 @@ function M.normal()
   apply('normal')
 end
 
+function M.resync()
+  state.applied = nil
+  sync()
+end
+
 function M.set_typing_context(name, active)
   state.typing_contexts[name] = active and true or nil
   sync()

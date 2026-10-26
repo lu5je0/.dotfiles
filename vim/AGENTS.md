@@ -203,8 +203,11 @@ ext/tabline/
   - Linux 的 native 实现在 `module/tui-bridge/linux/clipboard-bridge.c`：libwayland-client + data-control 协议（优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`），由常驻 `-i` 进程持有 selection；`clipboard.input` / `clipboard.output` 都带 `selection` 参数（`regular`/`primary`），一次只动一个 selection。
   - `clipboard/tui-bridge.lua` 里 `+` 与 `*` 语义分离，不要再把两者指向同一个函数：`vim.o.clipboard = 'unnamedplus'`，`+` 走 CLIPBOARD 且复用 `active_entry` 缓存（缓存只在 FocusGained/启动时同步）；`*` 是 primary selection，每次实时读写、不进缓存——鼠标在别的应用里划选不产生任何能让 Neovim 同步的事件，走缓存必然粘出旧内容。同理 `core/clipboard.lua` 的 `M.set` 只写 `+`，写 `*` 会覆盖用户刚划选的内容。
   - 旧的纯 Lua 实现 `wayland.lua`（LuaJIT FFI 手写 Wayland wire 协议）保留在仓库但已不接入，不作为 fallback。注意纯 X11/XWayland 桥接方案在 KWin 上无法粘贴 Wayland 内容(KWin 仅在 X11 窗口获焦时才同步)，故未采用。
-- `bin/macos-arm64/tui-bridge`、`bin/windows-x86_64/tui-bridge` 与 `bin/linux-x86_64/tui-bridge`（仓库顶层 `bin/`，非 `vim/lib`）来自 `module/tui-bridge` 构建产物；平台由目录区分，文件名统一为连字符 `tui-bridge`。`lua/lu5je0/misc/tui-bridge/tui-bridge.lua` 直接解析 `~/.dotfiles/bin/<平台-架构>/tui-bridge`，不再走 `core.native`。不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
-- `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下剩余的 native 资源（如 `liblibclipboard.dylib`）；新增落在 `vim/lib/` 的动态库时优先复用这个入口，不要硬编码 `stdpath('config') .. '/lib/...'`。注意 `tui-bridge` 已迁出 `vim/lib`，不再经此解析。
+- `misc/tui-bridge/installer.lua` 读取 `module/tui-bridge/VERSION`，按固定 GitHub Release tag 获取对应平台的二进制；WSL 使用 Windows 产物，Neovim 仅支持 macOS、Linux 与 WSL，均安装为 `~/.local/bin/tui-bridge`，不通过 `core.native` 解析。
+- 仅启用 tui-bridge 后端、实际调用或显式执行 `:TuiBridgeInstall` 时安装；加载模块和退出不下载。版本检查、下载和校验均为异步子进程，校验 SHA256 与候选文件 `--version` 后原子替换；安装锁协调多个 Neovim，退出时清理进行中的安装。失败只提示一次，使用安装命令重试。
+- `misc/tui-bridge/tui-bridge.lua` 的 `singleton()` 只返回桥接对象，`on_ready()` 在安装与进程启动成功后执行回调；就绪前不接管剪贴板、不重放请求。IME 后端就绪时通过 `misc/ime/init.lua` 的 `resync()` 按当前上下文重新同步。
+- `:TuiBridgeInstall` 在 `commands.lua` 注册，首次执行时加载 installer。WezTerm 共用安装路径与版本声明；Windows 端通过 `wslpath -w` 定位默认 WSL 发行版中的安装，首次使用时检查版本，不负责下载。
+- `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下的 native 资源（如 `liblibclipboard.dylib`）；新增落在 `vim/lib/` 的动态库时优先复用这个入口，不要硬编码 `stdpath('config') .. '/lib/...'`。
 - 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `module/tui-bridge/AGENTS.md`。
 - IME 后端由 `misc/ime/init.lua` 的 `select_backend_module` 选择：macOS 走 `lua/lu5je0/misc/ime/mac/backend.lua`（XkbSwitchLib FFI）；WSL 与非 SSH 的 Linux 桌面走 `lua/lu5je0/misc/ime/tui-bridge/backend.lua`，平台切换逻辑下沉到 native `tui-bridge`。旧 `lua/lu5je0/misc/ime/linux/backend.lua`（busctl 调 fcitx5 rime）保留但未接入。
 - IME 不提供 keeper，不监听输入法手动切换；通过模式变化、输入上下文及焦点/窗口事件同步状态。Neovim 的 tui-bridge 适配层只调用 IME 的 `normal` / `insert`，不提供 `watch` 或事件订阅接口。

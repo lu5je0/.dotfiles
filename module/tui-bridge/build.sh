@@ -4,11 +4,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
+if [[ "${1:-}" == -h || "${1:-}" == --help ]]; then
+  echo "Usage: ./build.sh [output]"
+  echo "Build for the current platform (WSL builds Windows); default: build/tui-bridge[.exe]"
+  exit 0
+fi
+if [[ $# -gt 1 || "${1:-}" == -* ]]; then
+  echo "Usage: ./build.sh [output]" >&2
+  exit 1
+fi
 OUT_ARG="${1:-}"
-
-BIN_DIR="${SCRIPT_DIR}/../../bin"
-WIN_CC="${WIN_CC:-/mnt/c/Users/lu5je0/scoop/apps/gcc/13.2.0/bin/gcc.exe}"
-WIN_TEMP_ROOT="${WIN_TEMP_ROOT:-C:\\Users\\lu5je0\\AppData\\Local\\Temp}"
+VERSION="$(cat VERSION)"
+if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "Invalid VERSION: ${VERSION}" >&2
+  exit 1
+fi
+VERSION_FLAG="-DTUI_BRIDGE_VERSION=\"${VERSION}\""
 
 detect_target() {
   case "$(uname -s)" in
@@ -31,17 +42,6 @@ detect_target() {
   esac
 }
 
-sync_to_bin() {
-  local built_out="$1"
-  local bin_out="$2"
-
-  if [[ -d "${BIN_DIR}" ]]; then
-    mkdir -p "$(dirname "${bin_out}")"
-    cp "${built_out}" "${bin_out}.new"
-    mv -f "${bin_out}.new" "${bin_out}"
-  fi
-}
-
 build_linux() {
   local out="${1:-tui-bridge}"
   local gen_dir="${SCRIPT_DIR}/linux/gen"
@@ -59,7 +59,6 @@ build_linux() {
     "linux/gen/ext-data-control-v1-protocol.c"
   )
   local cflags=("-O3" "-flto" "-DNDEBUG" "-s" "-Wl,--gc-sections" "-I${gen_dir}")
-  local bin_out="${BIN_DIR}/linux-x86_64/tui-bridge"
 
   mkdir -p "${gen_dir}"
   wayland-scanner client-header "${wlr_xml}" \
@@ -71,9 +70,8 @@ build_linux() {
   wayland-scanner private-code "${ext_xml}" \
     "${gen_dir}/ext-data-control-v1-protocol.c"
 
-  gcc "${sources[@]}" -o "${out}" "${cflags[@]}" \
+  gcc "${sources[@]}" -o "${out}" "${VERSION_FLAG}" "${cflags[@]}" \
     $(pkg-config --cflags --libs dbus-1 wayland-client x11) -lpthread
-  sync_to_bin "${out}" "${bin_out}"
 }
 
 build_mac() {
@@ -88,17 +86,13 @@ build_mac() {
   )
   local cflags=("-O3" "-flto" "-DNDEBUG" "-fobjc-arc" "-Wl,-dead_strip")
   local ldflags=("-framework" "Carbon" "-framework" "AppKit")
-  local bin_out="${BIN_DIR}/macos-arm64/tui-bridge"
-
-  clang "${sources[@]}" -o "${out}" "${cflags[@]}" "${ldflags[@]}"
-  sync_to_bin "${out}" "${bin_out}"
+  clang "${sources[@]}" -o "${out}" "${VERSION_FLAG}" "${cflags[@]}" "${ldflags[@]}"
 }
 
 build_win() {
   local out="${1:-tui-bridge}"
   local out_basename
   local out_dir
-  local bin_out="${BIN_DIR}/windows-x86_64/tui-bridge"
   local sources=(
     "third_party/cjson/cJSON.c"
     "request-dispatch.c"
@@ -107,7 +101,7 @@ build_win() {
     "win/clipboard-bridge.c"
     "win/platform.c"
   )
-  local cflags=("-O3" "-flto" "-DNDEBUG" "-s" "-Wl,--gc-sections")
+  local cflags=("-O3" "-flto" "-DNDEBUG" "-s" "-static" "-Wl,--gc-sections")
   local ldflags=("-luser32" "-limm32" "-lole32" "-luuid" "-lmsctfmonitor")
 
   out_basename="$(basename "${out}")"
@@ -116,13 +110,12 @@ build_win() {
 
   local built
   if command -v wslpath >/dev/null 2>&1; then
-    local win_build_dir="${WIN_TEMP_ROOT}\\tui-bridge-build"
     local win_build_dir_wsl
+    local win_temp_root="${WIN_TEMP_ROOT:-$(cmd.exe /c echo %TEMP% | tr -d '\r')}"
     local src_args=()
     local src
 
-    win_build_dir_wsl="$(wslpath -u "${win_build_dir}")"
-    mkdir -p "${win_build_dir_wsl}"
+    win_build_dir_wsl="$(mktemp -d "$(wslpath -u "${win_temp_root}")/tui-bridge.XXXXXX")"
 
     for src in "${sources[@]}"; do
       src_args+=("$(wslpath -w "${SCRIPT_DIR}/${src}")")
@@ -130,7 +123,7 @@ build_win() {
 
     (
       cd "${win_build_dir_wsl}"
-      "${WIN_CC}" "${src_args[@]}" -o "${out_basename}" "${cflags[@]}" "${ldflags[@]}"
+      "${WIN_CC:-gcc.exe}" "${src_args[@]}" -o "${out_basename}" "${VERSION_FLAG}" "${cflags[@]}" "${ldflags[@]}"
     )
 
     if [[ -f "${win_build_dir_wsl}/${out_basename}" ]]; then
@@ -139,30 +132,36 @@ build_win() {
       cp "${win_build_dir_wsl}/${out_basename}.exe" "${out}"
     fi
     built="${out}"
+    rm -rf "${win_build_dir_wsl}"
   else
-    "${WIN_CC}" "${sources[@]}" -o "${out}.exe" "${cflags[@]}" "${ldflags[@]}"
-    built="${out}.exe"
+    "${WIN_CC:-gcc}" "${sources[@]}" -o "${out}" "${VERSION_FLAG}" "${cflags[@]}" "${ldflags[@]}"
+    built="${out}"
   fi
 
   if [[ ! -f "${built}" ]]; then
     echo "build_win: expected output '${built}' not found after build" >&2
     exit 1
   fi
-
-  sync_to_bin "${built}" "${bin_out}"
 }
 
 TARGET="$(detect_target)"
+if [[ -z "${OUT_ARG}" ]]; then
+  OUT_ARG="build/tui-bridge"
+  if [[ "${TARGET}" == win ]]; then
+    OUT_ARG+=".exe"
+  fi
+fi
+mkdir -p "$(dirname "${OUT_ARG}")"
 
 case "${TARGET}" in
   mac)
-    build_mac "${OUT_ARG:-tui-bridge}"
+    build_mac "${OUT_ARG}"
     ;;
   win)
-    build_win "${OUT_ARG:-tui-bridge}"
+    build_win "${OUT_ARG}"
     ;;
   linux)
-    build_linux "${OUT_ARG:-tui-bridge}"
+    build_linux "${OUT_ARG}"
     ;;
   *)
     echo "Unsupported platform for auto build: ${TARGET}" >&2

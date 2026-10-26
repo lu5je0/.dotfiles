@@ -1,5 +1,9 @@
 local encode_command_creater = require('lu5je0.misc.encode-command-creater')
 
+vim.api.nvim_create_user_command('TuiBridgeInstall', function()
+  require('lu5je0.misc.tui-bridge.installer').install()
+end, {})
+
 local starts_with_complete = function(words)
   return function(input)
     local completes = {}

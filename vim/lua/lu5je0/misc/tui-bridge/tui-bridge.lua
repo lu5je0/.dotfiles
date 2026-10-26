@@ -1,19 +1,13 @@
 local M = {}
 
-local exe_path
-if vim.fn.has("mac") == 1 then
-  exe_path = vim.fn.expand('~/.dotfiles/bin/macos-arm64/tui-bridge')
-elseif vim.fn.has('wsl') == 1 then
-  exe_path = vim.fn.expand('~/.dotfiles/bin/windows-x86_64/tui-bridge')
-elseif vim.fn.has('linux') == 1 then
-  exe_path = vim.fn.expand('~/.dotfiles/bin/linux-x86_64/tui-bridge')
-end
+local installer = require('lu5je0.misc.tui-bridge.installer').default()
+local awaiting_install = false
 
 local state = {
   process_handle = nil,
   stdin_pipe = nil,
   stdout_pipe = nil,
-  exe_path = exe_path,
+  exe_path = nil,
   is_running = false,
   next_id = 1,
   pending = {},
@@ -79,9 +73,6 @@ local function start_process()
   end
 
   if not state.exe_path or vim.fn.executable(state.exe_path) == 0 then
-    vim.notify(('找不到 TUI Bridge 可执行文件: %s'):format(state.exe_path or 'nil'), vim.log.levels.ERROR, {
-      title = 'TUI Bridge',
-    })
     return false
   end
 
@@ -141,8 +132,14 @@ local function start_process()
   return true
 end
 
+function M.on_ready(callback)
+  installer.on_ready(function(path)
+    state.exe_path = path
+    if start_process() then callback() end
+  end)
+end
+
 function M.singleton()
-  start_process()
   return M
 end
 
@@ -152,6 +149,13 @@ function M.call(module, method, params, opts)
   local timeout = opts.timeout or 1500
 
   if not start_process() then
+    if not awaiting_install then
+      awaiting_install = true
+      M.on_ready(function() awaiting_install = false end)
+    end
+    if opts.callback then
+      vim.schedule(function() opts.callback(nil, 'process_not_running') end)
+    end
     return nil, 'process_not_running'
   end
 
@@ -219,7 +223,8 @@ end
 --- it would be cold-spawned only to die immediately. A detached one-shot lives
 --- on past us.
 function M.call_detached(module, method, params)
-  if not state.exe_path or vim.fn.executable(state.exe_path) == 0 then
+  local path = installer.installed_path()
+  if not path then
     return false
   end
   local payload = vim.json.encode({
@@ -228,7 +233,7 @@ function M.call_detached(module, method, params)
     method = method,
     params = params or vim.empty_dict(),
   })
-  vim.fn.jobstart({ state.exe_path, '-j', payload }, { detach = true })
+  vim.fn.jobstart({ path, '-j', payload }, { detach = true })
   return true
 end
 

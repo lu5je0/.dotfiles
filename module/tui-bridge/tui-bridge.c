@@ -15,6 +15,10 @@
 #include "request-dispatch.h"
 #include "third_party/cjson/cJSON.h"
 
+#ifndef TUI_BRIDGE_VERSION
+#error "Build with build.sh to set TUI_BRIDGE_VERSION"
+#endif
+
 #ifdef _WIN32
 static double get_time_ms(void) {
   static LARGE_INTEGER freq = {0};
@@ -248,7 +252,7 @@ static void process_json_line(const char *line) {
 
 static void print_usage(const char *prog_name) {
   fprintf(stderr,
-          "Usage: %s [-i|--interactive] [-j|--json <request>] [-h|--help]\n",
+          "Usage: %s [-i|--interactive] [-j|--json <request>] [-h|--help] [--version]\n",
           prog_name);
 }
 
@@ -306,10 +310,10 @@ static int run_interactive_mode(void) {
 }
 
 int main(int argc, char *argv[]) {
-  bridge_platform_init();
-#ifndef __APPLE__
-  atexit(bridge_ime_shutdown);
-#endif
+  if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+    puts(TUI_BRIDGE_VERSION);
+    return 0;
+  }
 
   bool interactive_mode = false;
   bool show_help = false;
@@ -330,12 +334,20 @@ int main(int argc, char *argv[]) {
       i++;
       continue;
     }
+    fprintf(stderr, "Unknown or incomplete argument: %s\n", argv[i]);
+    print_usage(argv[0]);
+    return 1;
   }
 
   if (show_help) {
     print_usage(argv[0]);
     return 0;
   }
+
+  bridge_platform_init();
+#ifndef __APPLE__
+  atexit(bridge_ime_shutdown);
+#endif
 
   if (json_request) {
     process_json_line(json_request);

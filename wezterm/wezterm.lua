@@ -519,20 +519,51 @@ end)
 
 local tui_bridge_path = (function()
   local home = os.getenv("USERPROFILE") or os.getenv("HOME")
-  local tui_bridge_root = home and (home .. "/.dotfiles/bin")
-  if not tui_bridge_root then
+  if not home then
     return nil
   end
 
-  if is_mac then
-    return tui_bridge_root .. "/macos-arm64/tui-bridge"
-  elseif is_win then
-    return tui_bridge_root .. "/windows-x86_64/tui-bridge"
+  if is_mac or is_win then
+    return home .. "/.local/bin/tui-bridge"
   end
 end)()
 
 local tui_bridge_pipe = nil
 local tui_bridge_ime_saved = {}
+local tui_bridge_verified = false
+local tui_bridge_warned = false
+local tui_bridge_wsl_resolved = false
+
+local function tui_bridge_ready()
+  if tui_bridge_verified then return true end
+  if is_win and not tui_bridge_wsl_resolved then
+    -- Neovim runs inside WSL; use that installation through its Windows path.
+    local distro = config.default_domain:match('^WSL:(.+)$')
+    local ok, stdout = wezterm.run_child_process {
+      'wsl.exe', '--distribution', distro, '--exec', 'sh', '-c',
+      'wslpath -w "$HOME/.local/bin/tui-bridge"',
+    }
+    if ok then
+      tui_bridge_path = stdout:match('^%s*(.-)%s*$')
+      tui_bridge_wsl_resolved = true
+    end
+  end
+  local home = os.getenv('USERPROFILE') or os.getenv('HOME')
+  local version_file = home and io.open(home .. '/.dotfiles/module/tui-bridge/VERSION', 'r')
+  local version = version_file and version_file:read('*l')
+  if version_file then version_file:close() end
+  local binary = tui_bridge_path and io.open(tui_bridge_path, 'rb')
+  if binary then
+    binary:close()
+    local ok, stdout = wezterm.run_child_process { tui_bridge_path, '--version' }
+    tui_bridge_verified = ok and version and stdout:match('^%s*(.-)%s*$') == version
+  end
+  if not tui_bridge_verified and not tui_bridge_warned then
+    tui_bridge_warned = true
+    wezterm.log_warn('tui-bridge 未安装或版本不匹配，请在 Neovim 中使用 tui-bridge 后端自动安装，或执行 :TuiBridgeInstall 重试')
+  end
+  return tui_bridge_verified
+end
 
 wezterm.on('user-var-changed', function(window, pane, name, value)
   if name == 'tabpick_close' then
@@ -559,10 +590,10 @@ wezterm.on('user-var-changed', function(window, pane, name, value)
     return
   end
   if name == 'tui-bridge' then
+    if not tui_bridge_ready() then return end
     if is_mac then
       if tui_bridge_pipe == nil then
-        print('popen tui_bridge_path')
-        tui_bridge_pipe = io.popen(tui_bridge_path .. " -i", "w") or nil
+        tui_bridge_pipe = io.popen("'" .. tui_bridge_path:gsub("'", "'\\''") .. "' -i", "w") or nil
       end
       if tui_bridge_pipe then
         tui_bridge_pipe:write(value .. '\n')
