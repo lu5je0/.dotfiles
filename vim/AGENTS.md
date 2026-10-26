@@ -204,6 +204,7 @@ ext/tabline/
   - `clipboard/tui-bridge.lua` 里 `+` 与 `*` 语义分离，不要再把两者指向同一个函数：`vim.o.clipboard = 'unnamedplus'`，`+` 走 CLIPBOARD 且复用 `active_entry` 缓存（缓存只在 FocusGained/启动时同步）；`*` 是 primary selection，每次实时读写、不进缓存——鼠标在别的应用里划选不产生任何能让 Neovim 同步的事件，走缓存必然粘出旧内容。同理 `core/clipboard.lua` 的 `M.set` 只写 `+`，写 `*` 会覆盖用户刚划选的内容。
   - 旧的纯 Lua 实现 `wayland.lua`（LuaJIT FFI 手写 Wayland wire 协议）保留在仓库但已不接入，不作为 fallback。注意纯 X11/XWayland 桥接方案在 KWin 上无法粘贴 Wayland 内容(KWin 仅在 X11 窗口获焦时才同步)，故未采用。
 - `misc/tui-bridge/installer.lua` 读取 `module/tui-bridge/VERSION`，按固定 GitHub Release tag 获取对应平台的二进制；WSL 使用 Windows 产物，Neovim 仅支持 macOS、Linux 与 WSL，均安装为 `~/.local/bin/tui-bridge`，不通过 `core.native` 解析。
+- 原生 Linux 支持 x86_64 与 aarch64/arm64，后两种架构名统一下载 `tui-bridge-linux-aarch64`；WSL 仅支持 x86_64。
 - 仅启用 tui-bridge 后端、实际调用或显式执行 `:TuiBridgeInstall` 时安装；加载模块和退出不下载。版本检查、下载和校验均为异步子进程，校验 SHA256 与候选文件 `--version` 后原子替换；安装锁协调多个 Neovim，退出时清理进行中的安装。失败只提示一次，使用安装命令重试。
 - `misc/tui-bridge/tui-bridge.lua` 的 `singleton()` 只返回桥接对象，`on_ready()` 在安装与进程启动成功后执行回调；就绪前不接管剪贴板、不重放请求。IME 后端就绪时通过 `misc/ime/init.lua` 的 `resync()` 按当前上下文重新同步。
 - `:TuiBridgeInstall` 在 `commands.lua` 注册，首次执行时加载 installer。WezTerm 共用安装路径与版本声明；Windows 端通过 `wslpath -w` 定位默认 WSL 发行版中的安装，首次使用时检查版本，不负责下载。

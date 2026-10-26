@@ -7,6 +7,9 @@ function M.detect_platform(sysname, machine, wsl)
   if sysname == 'Darwin' and (machine == 'arm64' or machine == 'aarch64') then
     return 'macos-arm64'
   end
+  if sysname == 'Linux' and not wsl and (machine == 'aarch64' or machine == 'arm64') then
+    return 'linux-aarch64'
+  end
   if machine == 'x86_64' or machine == 'AMD64' then
     if sysname == 'Linux' and wsl then
       return 'windows-x86_64'

@@ -36,10 +36,11 @@
 - WSL 使用 Windows 的临时目录构建再复制输出；编译器通过 `WIN_CC` 覆盖，默认 `gcc.exe`（MSYS2 默认 `gcc`）。Windows 构建静态链接编译器运行库，系统 DLL 仍由 Windows 提供。
 
 ### Release 与安装
-- `.github/workflows/build-tui-bridge.yml` 在推送 `tui-bridge-v<VERSION>` tag 时构建三平台二进制，全部通过版本检查后发布 GitHub Release；tag 必须与 `VERSION` 一致。手动运行分支 workflow 只构建，运行 tag 才发布。
-- Release 资产：`tui-bridge-macos-arm64`、`tui-bridge-linux-x86_64`、`tui-bridge-windows-x86_64.exe`、`SHA256SUMS`。
-- Linux 在 Ubuntu 22.04 构建；其他 glibc Linux 需提供上述动态库，NixOS 通过仓库已有的 `programs.nix-ld` 提供加载器与库。
+- `.github/workflows/build-tui-bridge.yml` 在推送 `tui-bridge-v<VERSION>` tag 时构建 macOS arm64、Windows x86_64、Linux x86_64/aarch64 二进制，全部通过版本检查后发布 GitHub Release；tag 必须与 `VERSION` 一致。手动运行分支 workflow 只构建，运行 tag 才发布。
+- Release 资产：`tui-bridge-macos-arm64`、`tui-bridge-linux-x86_64`、`tui-bridge-linux-aarch64`、`tui-bridge-windows-x86_64.exe`、`SHA256SUMS`。
+- Linux 在对应架构的 Ubuntu 22.04 runner 上原生构建；其他 glibc Linux 需提供上述动态库，NixOS 通过仓库已有的 `programs.nix-ld` 提供加载器与库。
 - Neovim 的 `misc/tui-bridge/installer.lua` 按 `VERSION` 下载固定 tag；WSL 选择 Windows 产物，Neovim 仅支持 macOS、Linux 与 WSL，均安装为 `~/.local/bin/tui-bridge`，不使用 `.exe` 安装后缀。
+- Linux 的 `aarch64` / `arm64` 架构均选择 `linux-aarch64` 资产；WSL 仅支持 x86_64，不将 WSL ARM 误识别为原生 Linux ARM。
 - 仅启用 tui-bridge 后端、实际调用 bridge 或执行 `:TuiBridgeInstall` 时检查版本和安装；模块加载与退出均不触发下载。版本检查、下载、SHA256 校验与候选文件版本检查使用异步子进程。
 - 安装在目标目录下使用临时目录与安装锁；校验成功后原子替换。失败保留已有文件，只提示一次，通过 `:TuiBridgeInstall` 重试。五分钟前遗留的安装锁可自动清理，正常退出会终止安装并清理临时文件与锁。
 - bridge 就绪后才接管 Neovim 剪贴板，并按当前输入上下文同步 IME，不重放安装期间的操作。
