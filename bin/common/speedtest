@@ -35,6 +35,11 @@
     SPEEDTEST_NO_CACHE=1  不读写 ~/.cache/speedtest 下的配置缓存
     SPEEDTEST_NO_PROGRESS=1   即使终端支持也不显示进度条
     SPEEDTEST_SAVE=1     尝试把结果保存到 speedtest.net（默认关闭，因为该接口未公开）
+    http_proxy / https_proxy  按目标协议选择代理，未设置时回退到 all_proxy
+    no_proxy            逗号分隔的直连主机、域名后缀或 host:port，* 表示全部直连
+    代理变量兼容大写，小写优先；代理 URL 支持 http://、socks5://、socks5h://，
+    可带用户名密码。socks5 在本地解析目标域名，socks5h 交给代理解析。
+    配置、选服、延迟、下载、上传与结果保存均使用同一套代理规则。
 
 已知差异：
     - 仍使用单服务器 HTTP legacy 接口，未实现网页引擎的动态连接扩容、
@@ -46,7 +51,9 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import http.client
+import ipaddress
 import json
 import os
 import random
@@ -147,7 +154,7 @@ def _fetch_config_remote(server_id=None):
     if server_id is not None:
         url += "?serverid=" + urllib.parse.quote(str(server_id))
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=20) as resp:
+    with _urlopen(req, timeout=20) as resp:
         return json.loads(resp.read().decode("utf-8", "replace"))
 
 
@@ -186,12 +193,152 @@ def fetch_config(server_id=None):
     return data
 
 
-def make_conn(base):
+def _proxy_for(parts):
+    proxies = urllib.request.getproxies_environment()
+    if urllib.request.proxy_bypass_environment(parts.netloc, proxies):
+        return None
+    value = proxies.get(parts.scheme) or proxies.get("all")
+    if not value:
+        return None
+    proxy = urllib.parse.urlsplit(value if "://" in value else "http://" + value)
+    if (proxy.scheme not in ("http", "socks5", "socks5h") or not proxy.hostname
+            or proxy.path not in ("", "/") or proxy.query or proxy.fragment):
+        raise ValueError("代理 URL 需要使用 http://、socks5:// 或 socks5h://")
+    proxy.port  # 校验端口；错误信息不包含代理认证信息。
+    return proxy
+
+
+def _recv_exact(sock, size):
+    data = bytearray()
+    while len(data) < size:
+        block = sock.recv(size - len(data))
+        if not block:
+            raise OSError("SOCKS5 代理提前关闭连接")
+        data.extend(block)
+    return bytes(data)
+
+
+def _socks_connect(sock, proxy, host, port):
+    """SOCKS5 CONNECT（RFC 1928），可选用户名密码认证（RFC 1929）。"""
+    methods = b"\x00\x02" if proxy.username is not None else b"\x00"
+    sock.sendall(b"\x05" + bytes([len(methods)]) + methods)
+    version, method = _recv_exact(sock, 2)
+    if version != 5 or method not in methods:
+        raise RuntimeError("SOCKS5 代理不接受客户端认证方式")
+    if method == 2:
+        user = urllib.parse.unquote(proxy.username).encode("utf-8")
+        password = urllib.parse.unquote(proxy.password or "").encode("utf-8")
+        if not (1 <= len(user) <= 255 and 1 <= len(password) <= 255):
+            raise ValueError("SOCKS5 用户名和密码需为 1–255 字节")
+        sock.sendall(b"\x01" + bytes([len(user)]) + user + bytes([len(password)]) + password)
+        if _recv_exact(sock, 2) != b"\x01\x00":
+            raise RuntimeError("SOCKS5 代理认证失败")
+
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        address = None
+    if address is None and proxy.scheme == "socks5":
+        resolved = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)[0][4][0]
+        address = ipaddress.ip_address(resolved)
+    if address is not None:
+        target = (b"\x01" if address.version == 4 else b"\x04") + address.packed
+    else:
+        domain = host.encode("idna")
+        if not 1 <= len(domain) <= 255:
+            raise ValueError("SOCKS5 目标域名长度无效")
+        target = b"\x03" + bytes([len(domain)]) + domain
+    sock.sendall(b"\x05\x01\x00" + target + port.to_bytes(2, "big"))
+    version, status, reserved, address_type = _recv_exact(sock, 4)
+    if version != 5 or reserved != 0 or status != 0:
+        raise RuntimeError("SOCKS5 连接失败（状态 %d）" % status)
+    if address_type == 1:
+        size = 4
+    elif address_type == 4:
+        size = 16
+    elif address_type == 3:
+        size = _recv_exact(sock, 1)[0]
+    else:
+        raise RuntimeError("SOCKS5 代理返回无效地址类型")
+    _recv_exact(sock, size + 2)
+
+
+class _ProxyConnection:
+    def __init__(self, *args, proxy, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._proxy = proxy
+        self._create_connection = self._connect_proxy
+        self._forward_proxy = proxy.scheme == "http" and not isinstance(self, http.client.HTTPSConnection)
+        self._proxy_auth = None
+        if proxy.username is not None:
+            credentials = "%s:%s" % (urllib.parse.unquote(proxy.username),
+                                      urllib.parse.unquote(proxy.password or ""))
+            self._proxy_auth = "Basic " + base64.b64encode(credentials.encode("utf-8")).decode("ascii")
+        if proxy.scheme == "http" and not self._forward_proxy:
+            headers = {"Proxy-Authorization": self._proxy_auth} if self._proxy_auth else {}
+            # HTTPS 的认证只放在 CONNECT 中，不发送到测速服务器。
+            self.set_tunnel(self.host, self.port, headers=headers)
+
+    def _connect_proxy(self, address, timeout, source_address):
+        proxy = self._proxy
+        sock = socket.create_connection(
+            (proxy.hostname, proxy.port or (80 if proxy.scheme == "http" else 1080)),
+            timeout, source_address,
+        )
+        try:
+            if proxy.scheme != "http":
+                _socks_connect(sock, proxy, address[0], address[1])
+            return sock
+        except Exception:
+            sock.close()
+            raise
+
+    def request(self, method, url, body=None, headers=None, *, encode_chunked=False):
+        headers = dict(headers or {})
+        if self._forward_proxy:
+            host = "[%s]" % self.host if ":" in self.host else self.host
+            url = "http://%s:%d%s" % (host, self.port, url)
+            if self._proxy_auth:
+                headers["Proxy-Authorization"] = self._proxy_auth
+        return super().request(method, url, body, headers, encode_chunked=encode_chunked)
+
+
+class _ProxyHTTPConnection(_ProxyConnection, http.client.HTTPConnection):
+    pass
+
+
+class _ProxyHTTPSConnection(_ProxyConnection, http.client.HTTPSConnection):
+    pass
+
+
+def make_conn(base, timeout=20):
     parts = urllib.parse.urlsplit(base)
     port = parts.port or (443 if parts.scheme == "https" else 80)
+    proxy = _proxy_for(parts)
+    options = {"timeout": timeout}
+    if proxy:
+        options["proxy"] = proxy
     if parts.scheme == "https":
-        return http.client.HTTPSConnection(parts.hostname, port, timeout=20, context=SSL_CTX)
-    return http.client.HTTPConnection(parts.hostname, port, timeout=20)
+        cls = _ProxyHTTPSConnection if proxy else http.client.HTTPSConnection
+        return cls(parts.hostname, port, context=SSL_CTX, **options)
+    cls = _ProxyHTTPConnection if proxy else http.client.HTTPConnection
+    return cls(parts.hostname, port, **options)
+
+
+class _HTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(lambda host, **kwargs: make_conn("http://" + host, **kwargs), req)
+
+
+class _HTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(lambda host, **kwargs: make_conn("https://" + host, **kwargs), req)
+
+
+def _urlopen(req, timeout):
+    # 禁用 urllib 自带的代理处理，避免与 make_conn 重复代理；保留标准重定向处理。
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _HTTPHandler(), _HTTPSHandler())
+    return opener.open(req, timeout=timeout)
 
 
 def librespeed_target(url):
@@ -230,7 +377,7 @@ def _base_from_final(url):
 
 def _fetch_final(url, timeout):
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout, context=SSL_CTX) as resp:
+    with _urlopen(req, timeout=timeout) as resp:
         resp.read()
         return resp.url
 
@@ -649,7 +796,7 @@ def try_save_result(cfg, payload):
                 "X-License-Key": key or "",
             },
         )
-        with urllib.request.urlopen(req, timeout=8) as resp:
+        with _urlopen(req, timeout=8) as resp:
             data = json.loads(resp.read().decode("utf-8", "replace"))
     except Exception:
         return None
