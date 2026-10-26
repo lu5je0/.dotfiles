@@ -1,6 +1,5 @@
--- Floating popup that shows the full sidebar line when it overflows the
--- sidebar window width. Lifted out of window.lua so the window-management
--- module can stay focused on the actual sidebar window.
+-- Floating popup that extends an overflowing sidebar line while preserving
+-- the sidebar's text origin and horizontal viewport.
 local state = require('lu5je0.ext.sidebar.state')
 
 local M = {}
@@ -39,22 +38,24 @@ function M.setup()
       return
     end
 
-    local line_nr = vim.api.nvim_win_get_cursor(win)[1]
+    local cursor = vim.api.nvim_win_get_cursor(win)
+    local line_nr = cursor[1]
     local line = vim.fn.getline(line_nr)
     local text_width = vim.fn.strdisplaywidth(line)
     local win_info = vim.fn.getwininfo(win)
     local textoff = (win_info[1] and win_info[1].textoff) or 0
+    local leftcol = (win_info[1] and win_info[1].leftcol) or 0
     local win_width = vim.api.nvim_win_get_width(win) - textoff
+    local visible_width = text_width - leftcol
 
-    if text_width <= win_width then
+    if visible_width <= win_width then
       hide_popup()
       return
     end
 
     local buf = get_or_create_buf()
-    local padded_line = ' ' .. line
     vim.bo[buf].modifiable = true
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { padded_line })
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { line })
     vim.bo[buf].modifiable = false
 
     vim.api.nvim_buf_clear_namespace(buf, popup_ns, 0, -1)
@@ -68,9 +69,9 @@ function M.setup()
         if not details.end_col or (details.end_row and details.end_row ~= row) then
           end_col = -1
         else
-          end_col = details.end_col + 1
+          end_col = details.end_col
         end
-        vim.api.nvim_buf_add_highlight(buf, popup_ns, details.hl_group, 0, col + 1, end_col)
+        vim.api.nvim_buf_add_highlight(buf, popup_ns, details.hl_group, 0, col, end_col)
       end
     end
 
@@ -79,8 +80,8 @@ function M.setup()
       relative = 'win',
       win = win,
       row = line_nr - topline,
-      col = 0,
-      width = math.min(text_width + 1, vim.o.columns - 2),
+      col = textoff,
+      width = math.min(visible_width, vim.o.columns - win_info[1].wincol + 1 - textoff),
       height = 1,
       noautocmd = true,
       style = 'minimal',
@@ -95,7 +96,15 @@ function M.setup()
       popup_win = vim.api.nvim_open_win(buf, false, win_config)
       vim.wo[popup_win].cursorline = true
       vim.wo[popup_win].cursorlineopt = 'line'
+      vim.wo[popup_win].wrap = false
+      vim.wo[popup_win].sidescrolloff = 0
     end
+
+    -- Search and horizontal movement can scroll the sidebar. Keep the same
+    -- viewport so the popup's name, icon and highlights stay on the same cells.
+    vim.api.nvim_win_call(popup_win, function()
+      vim.fn.winrestview({ lnum = 1, col = cursor[2], leftcol = leftcol, topline = 1 })
+    end)
   end
 
   local group = vim.api.nvim_create_augroup('sidebar-fullname', { clear = true })
