@@ -1,13 +1,10 @@
--- macOS backend: switches keyboard layout via the XkbSwitchLib native
--- helper, and subscribes to IME change events through tui-bridge.
+-- macOS backend: switches keyboard layout via the XkbSwitchLib native helper.
 local M = {}
 
 local ABC_IM_SOURCE_CODE = 'com.apple.keylayout.ABC'
 local native = require('lu5je0.core.native')
 
 local state = {
-  ime = nil,
-  subscribed = false,
   last_ime = ABC_IM_SOURCE_CODE,
 }
 
@@ -72,20 +69,7 @@ end
 --- call is synchronous, so it always lands before we go away.
 M.on_exit = M.ascii_mode
 
-function M.keeper(enable)
-  state.ime.watch(enable == true)
-end
-
-function M.on_change(handler)
-  state.ime.on_change(function(args)
-    if args.source_id ~= ABC_IM_SOURCE_CODE then
-      handler()
-    end
-  end)
-end
-
 M.setup = function()
-  state.ime = require('lu5je0.misc.tui-bridge.ext.im').setup()
   return M
 end
 

@@ -199,16 +199,17 @@ ext/tabline/
 
 ## TUI Bridge 与平台联动
 - `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/ime/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
-- `lua/lu5je0/misc/clipboard/init.lua` 按平台选择后端：SSH 走 OSC52；macOS / WSL / Linux 桌面均走 `clipboard/tui-bridge.lua`（native `tui-bridge` 进程桥接）。
+- `lua/lu5je0/misc/clipboard/init.lua` 按平台选择后端：SSH 走 OSC52；macOS 走 `clipboard/mac.lua`（`liblibclipboard.dylib` FFI）；WSL / Linux 桌面走 `clipboard/tui-bridge.lua`（native `tui-bridge` 进程桥接）。
   - Linux 的 native 实现在 `module/tui-bridge/linux/clipboard-bridge.c`：libwayland-client + data-control 协议（优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`），由常驻 `-i` 进程持有 selection；`clipboard.input` / `clipboard.output` 都带 `selection` 参数（`regular`/`primary`），一次只动一个 selection。
   - `clipboard/tui-bridge.lua` 里 `+` 与 `*` 语义分离，不要再把两者指向同一个函数：`vim.o.clipboard = 'unnamedplus'`，`+` 走 CLIPBOARD 且复用 `active_entry` 缓存（缓存只在 FocusGained/启动时同步）；`*` 是 primary selection，每次实时读写、不进缓存——鼠标在别的应用里划选不产生任何能让 Neovim 同步的事件，走缓存必然粘出旧内容。同理 `core/clipboard.lua` 的 `M.set` 只写 `+`，写 `*` 会覆盖用户刚划选的内容。
   - 旧的纯 Lua 实现 `wayland.lua`（LuaJIT FFI 手写 Wayland wire 协议）保留在仓库但已不接入，不作为 fallback。注意纯 X11/XWayland 桥接方案在 KWin 上无法粘贴 Wayland 内容(KWin 仅在 X11 窗口获焦时才同步)，故未采用。
 - `bin/macos-arm64/tui-bridge`、`bin/windows-x86_64/tui-bridge` 与 `bin/linux-x86_64/tui-bridge`（仓库顶层 `bin/`，非 `vim/lib`）来自 `module/tui-bridge` 构建产物；平台由目录区分，文件名统一为连字符 `tui-bridge`。`lua/lu5je0/misc/tui-bridge/tui-bridge.lua` 直接解析 `~/.dotfiles/bin/<平台-架构>/tui-bridge`，不再走 `core.native`。不要在 Neovim 侧文档中把它们描述成普通 Lua 模块。
 - `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下剩余的 native 资源（如 `liblibclipboard.dylib`）；新增落在 `vim/lib/` 的动态库时优先复用这个入口，不要硬编码 `stdpath('config') .. '/lib/...'`。注意 `tui-bridge` 已迁出 `vim/lib`，不再经此解析。
 - 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `module/tui-bridge/AGENTS.md`。
-- macOS、Windows/WSL 与 Linux 桌面共用同一个 IME 后端 `lua/lu5je0/misc/ime/tui-bridge/backend.lua`（由 `misc/ime/init.lua` 的 `select_backend_module` 选中）；平台差异下沉到 native `tui-bridge`，Lua 侧只按归一化的 `ime_changed.state`（`ascii`/`ime`）判断，keeper 不再按平台分叉。旧后端 `lua/lu5je0/misc/ime/mac/backend.lua`(XkbSwitchLib FFI) 与 `lua/lu5je0/misc/ime/linux/backend.lua`(busctl 轮询 fcitx5 rime) 保留但已不接入。
+- IME 后端由 `misc/ime/init.lua` 的 `select_backend_module` 选择：macOS 走 `lua/lu5je0/misc/ime/mac/backend.lua`（XkbSwitchLib FFI）；WSL 与非 SSH 的 Linux 桌面走 `lua/lu5je0/misc/ime/tui-bridge/backend.lua`，平台切换逻辑下沉到 native `tui-bridge`。旧 `lua/lu5je0/misc/ime/linux/backend.lua`（busctl 调 fcitx5 rime）保留但未接入。
+- IME 不提供 keeper，不监听输入法手动切换；通过模式变化、输入上下文及焦点/窗口事件同步状态。Neovim 的 tui-bridge 适配层只调用 IME 的 `normal` / `insert`，不提供 `watch` 或事件订阅接口。
 - 会临时切换内部窗口的输入 UI 通过 `require('lu5je0.misc.ime').set_typing_context(name, active)` 声明输入上下文；例如 Telescope 在 prompt 生命周期内保持该上下文，避免 preview 刷新产生的短暂 Normal 模式关闭 IME。
-- kitty 下优先走 OSC 后端 `lua/lu5je0/misc/ime/osc/backend.lua`（kitty 原生处理 `SetUserVar=tui-bridge`，按窗口屏蔽自身 IME）。识别由 `select_backend_module` 前的 `is_kitty()` 负责：tmux 内 `TERM` 是 tmux 自己的 terminfo，改问 `tmux display-message -p '#{client_termname}'`（带 `-t $TMUX_PANE`），只在 tmux 里 fork 一次。
+- `TERM == 'xterm-kitty'` 时优先走 OSC 后端 `lua/lu5je0/misc/ime/osc/backend.lua`（kitty 原生处理 `SetUserVar=tui-bridge`，按窗口屏蔽自身 IME）；其余环境按平台选择，未匹配的平台与 Linux SSH 会话回退到 OSC。当前不额外识别 tmux 客户端的终端类型。
 - OSC 后端在 tmux 内会把转义序列包进 `\ePtmux;…\e\\`（内层 ESC 加倍），否则 tmux 直接吞掉 OSC 1337；依赖 `tmux/tmux.conf` 的 `allow-passthrough on`。`zsh/vi-im-switch.zsh` 用同一套包装。
 
 ## 测试与验证

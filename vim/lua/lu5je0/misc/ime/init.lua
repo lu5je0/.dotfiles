@@ -3,7 +3,6 @@ local M = {}
 local env_keeper = require('lu5je0.misc.env-keeper')
 
 local state = {
-  keeper_enabled = false,
   backend = nil,
   applied = nil,
   typing_contexts = {},
@@ -13,12 +12,6 @@ local rate_limiter
 local profile_timer = nil
 
 -- ── config helpers ────────────────────────────────────────────
-
---- Master switch for the IME keeper. When on, a change of input source while
---- Neovim is focused in a non-typing mode is snapped straight back to ASCII.
---- Off for now: mode transitions still drive the IME as usual, backends just
---- stop watching for manual toggles. Set to true to re-enable.
-local ENABLE_KEEPER = false
 
 local function save_last_ime_enabled()
   return env_keeper.get('save_last_ime', true)
@@ -30,16 +23,6 @@ local function toggle_save_last_ime()
   print(next_v and 'keep last ime enabled' or 'keep last ime disabled')
 end
 
---- keeper is meaningless in these hosts because they intercept IME
---- state changes themselves (Apple Terminal, JetBrains embedded term)
---- or run inside another nvim (:!nvim spawns).
-local function keeper_disabled_here()
-  if vim.env.TERM_PROGRAM == 'Apple_Terminal' then return true end
-  if vim.env.TERMINAL_EMULATOR == 'JetBrains-JediTerm' then return true end
-  if vim.env.NVIM ~= nil and vim.env.NVIM ~= '' then return true end
-  return false
-end
-
 local function select_backend_module()
   if vim.env.TERM == 'xterm-kitty' then
     return 'lu5je0.misc.ime.osc.backend'
@@ -48,7 +31,6 @@ local function select_backend_module()
     return 'lu5je0.misc.ime.tui-bridge.backend'
   end
   if vim.fn.has('mac') == 1 then
-    -- return 'lu5je0.misc.ime.tui-bridge.backend'
     return 'lu5je0.misc.ime.mac.backend'
   end
   if vim.fn.has('linux') == 1 and not vim.env.SSH_TTY then
@@ -112,18 +94,9 @@ function M.normal()
   apply('normal')
 end
 
-local function set_keeper(enable)
-  state.keeper_enabled = enable
-end
-
-local function sync_keeper()
-  set_keeper(wanted_for_context() == 'normal')
-end
-
 function M.set_typing_context(name, active)
   state.typing_contexts[name] = active and true or nil
   sync()
-  sync_keeper()
 end
 
 -- ── autocmds ──────────────────────────────────────────────────
@@ -160,60 +133,6 @@ local function wire_status_autocmds()
   })
 end
 
-local function wire_keeper_signal(backend)
-  backend.on_change(function()
-    -- Watch runs while Neovim is focused; keeper_enabled gates whether a change
-    -- snaps back to ASCII (true in normal mode, false in insert/cmdline).
-    if state.keeper_enabled then
-      backend.ascii_mode()
-    end
-  end)
-end
-
-local function wire_keeper_autocmds(backend)
-  local group = vim.api.nvim_create_augroup('ime-keeper-common', { clear = true })
-
-  vim.api.nvim_create_autocmd('ModeChanged', {
-    group = group,
-    pattern = '*:*',
-    callback = function() sync_keeper() end,
-  })
-
-  -- Native watch follows focus: only subscribe while Neovim is focused so the
-  -- keeper never fights the IME of another app.
-  vim.api.nvim_create_autocmd('FocusLost', {
-    group = group,
-    callback = function() backend.keeper(false) end,
-  })
-
-  vim.api.nvim_create_autocmd('FocusGained', {
-    group = group,
-    callback = function()
-      backend.keeper(true)
-      sync_keeper()
-    end,
-  })
-end
-
---- Push the current mode down to the backend. Must run for every backend, so it
---- deliberately lives outside config_keeper, which bails out early for backends
---- that do not implement the keeper.
-local function sync_initial_state()
-  sync()
-  sync_keeper()
-end
-
-local function config_keeper(backend)
-  if not ENABLE_KEEPER then return end
-  if keeper_disabled_here() then return end
-  if not backend.on_change or not backend.keeper then return end
-  wire_keeper_signal(backend)
-  wire_keeper_autocmds(backend)
-
-  -- Assume focused at startup; watch is toggled by FocusLost/FocusGained.
-  backend.keeper(true)
-end
-
 -- ── entry ─────────────────────────────────────────────────────
 
 function M.setup()
@@ -238,9 +157,8 @@ function M.setup()
   end, { nargs = '?', complete = function() return { 'on', 'off' } end })
 
   wire_status_autocmds()
-  config_keeper(state.backend)
   -- deferred so a backend that writes escapes does not race the TUI startup
-  vim.schedule(sync_initial_state)
+  vim.schedule(sync)
 end
 
 return M

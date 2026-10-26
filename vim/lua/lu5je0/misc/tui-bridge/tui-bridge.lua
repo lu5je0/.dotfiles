@@ -19,7 +19,6 @@ local state = {
   pending = {},
   callbacks = {},
   stdout_buffer = '',
-  event_handlers = {},
 }
 
 local function reset_state()
@@ -30,7 +29,6 @@ local function reset_state()
   state.pending = {}
   state.callbacks = {}
   state.stdout_buffer = ''
-  state.event_handlers = {}
 end
 
 local function process_stdout_line(line)
@@ -59,17 +57,6 @@ local function process_stdout_line(line)
       state.pending[resp.id] = resp
     end
     return
-  end
-
-  if type(resp.event) == 'string' then
-    local handlers = state.event_handlers[resp.event]
-    if handlers then
-      vim.schedule(function()
-        for _, handler in ipairs(handlers) do
-          handler(resp)
-        end
-      end)
-    end
   end
 end
 
@@ -243,24 +230,6 @@ function M.call_detached(module, method, params)
   })
   vim.fn.jobstart({ state.exe_path, '-j', payload }, { detach = true })
   return true
-end
-
-function M.subscribe(event, handler)
-  if not state.event_handlers[event] then
-    state.event_handlers[event] = {}
-  end
-  table.insert(state.event_handlers[event], handler)
-end
-
-function M.unsubscribe(event, handler)
-  local handlers = state.event_handlers[event]
-  if not handlers then return end
-  for i, h in ipairs(handlers) do
-    if h == handler then
-      table.remove(handlers, i)
-      return
-    end
-  end
 end
 
 return M

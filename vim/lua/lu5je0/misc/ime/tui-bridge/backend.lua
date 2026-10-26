@@ -22,18 +22,6 @@ M.on_exit = function()
   require('lu5je0.misc.tui-bridge.ext.im').ascii_now()
 end
 
-function M.keeper(enable)
-  state.ime.watch(enable == true)
-end
-
-function M.on_change(handler)
-  state.ime.on_change(function(args)
-    if args.state == 'ime' then
-      handler()
-    end
-  end)
-end
-
 function M.setup()
   state.ime = require('lu5je0.misc.tui-bridge.ext.im').setup()
   return M

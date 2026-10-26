@@ -103,6 +103,8 @@
   - Windows: 监听前台窗口中文输入法内部中/英文状态变化，并主动推送状态变更事件。当前实现基于轮询前台窗口 IME 状态，而不是系统级输入源通知。
   - Linux: 监听 rime ascii_mode 变化并推送事件。rime 的 Shift 切换不发 DBus 信号，因此实现为独立线程每 200ms 轮询 `IsAsciiMode`。
 
+Neovim 的 IME 适配层只调用 `normal` / `insert`，不提供 keeper、`watch` 或事件订阅接口；上述原生监听 API 仍保留。
+
 ### IME 事件
 当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）。事件契约在各平台统一：始终带 `source_id` 与归一化的 `state`（`ascii`/`ime`）：
 
@@ -114,7 +116,7 @@
 ```
 
 说明：
-- `state` 是跨平台归一化信号，调用方（如 keeper）统一按 `state` 判断，不要按平台分叉。
+- `state` 是跨平台归一化信号，调用方统一按 `state` 判断，不要按平台分叉。
 - macOS: `source_id` 是系统输入源 ID；`state` 由「当前源是否等于 ASCII 源」推导——ASCII 源为 `ascii`，任意非 ASCII 源（中文/日文等 IME）为 `ime`。
 - Windows: `state` 表示中文输入法内部的中/英文状态；`source_id` 为兼容旧调用方保留，值与 `state` 相同，不要当作真正的输入法 ID。
 - Linux: 同 Windows，`state` 表示 rime ascii_mode 状态，`source_id` 值与 `state` 相同。
