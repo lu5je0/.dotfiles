@@ -7,6 +7,7 @@
 
 let
   tilewindow = pkgs.callPackage ../pkgs/tilewindow { };
+  showDesktopCorner = pkgs.callPackage ../pkgs/show-desktop-corner { };
   windowDecorations = pkgs.callPackage ../pkgs/window-decorations { };
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
@@ -15,7 +16,7 @@ let
     pkgs.gnomeExtensions.dash-to-dock
     pkgs.gnomeExtensions.gtk4-desktop-icons-ng-ding
     pkgs.gnomeExtensions.kimpanel
-    pkgs.gnomeExtensions.show-desktop-button
+    showDesktopCorner
     pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
     tilewindow
@@ -32,28 +33,12 @@ in
     pkgs.qadwaitadecorations-qt6
   ];
 
+  # workaround: qt-wayland-decoration-shadow
   # 修复qt应用窗口阴影
   # https://github.com/FedoraQt/QAdwaitaDecorations/pull/89
   # qt.enable 把 QT_PLUGIN_PATH 指到各 profile 的 lib/qt-6/plugins，Qt 插件装进 profile 才被找到
   qt.enable = true;
   environment.sessionVariables.QT_WAYLAND_DECORATION = "qadwaitadecorations";
-
-  # gtk-frdp 2026-04-24 快照的 frdp_register_pointer 用未初始化的 rdpPointer 注册指针类，
-  # 收到服务端指针更新时会 free 野指针崩溃（上游 040b75d5 已修），覆盖为修复版
-  nixpkgs.overlays = [
-    (final: prev: {
-      gtk-frdp = prev.gtk-frdp.overrideAttrs {
-        version = "0-unstable-2026-07-24";
-        src = prev.fetchFromGitLab {
-          domain = "gitlab.gnome.org";
-          owner = "GNOME";
-          repo = "gtk-frdp";
-          rev = "83854a24e31d1c07519f6e4393fe280d3b59e080";
-          hash = "sha256-6f0irRBkpmOYrhXkeSR6ni55SJiltOfYRiwZy5V/VrE=";
-        };
-      };
-    })
-  ];
 
   services.displayManager.gdm = {
     enable = true;
@@ -66,9 +51,11 @@ in
     enable = true;
     wantedBy = [ "gnome-session.target" ];
   };
+  # workaround: gnome-remote-desktop-settings-entry
   # GNOME 50 的设置仅在 system unit 状态为 enabled/disabled 时显示「远程桌面」入口，
   # NixOS 默认给的是 linked，补 wantedBy 让它变成 enabled
   systemd.services.gnome-remote-desktop.wantedBy = [ "graphical.target" ];
+  # workaround: gnome-remote-login-pkexec-path
   # 「远程登录」开关由 configuration daemon 提权配置，而它的 PATH 里没有
   # /run/wrappers/bin（pkexec 所在），会报 Failed to execute child process "pkexec"
   systemd.services.gnome-remote-desktop-configuration.environment = {

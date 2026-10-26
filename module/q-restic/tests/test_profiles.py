@@ -1,4 +1,4 @@
-"""Profiles, local password setup, and isolation against temporary repositories."""
+"""Profiles and isolation against temporary repositories."""
 import contextlib
 import io
 import json
@@ -52,7 +52,7 @@ class ConfigTests(unittest.TestCase):
         cfg = q.profile_config(doc, 'immich')
         self.assertEqual(cfg['sources'][0], str(self.root / 'media'))
         self.assertEqual(cfg['sources'][1], str(Path.home() / 'Documents'))
-        for key, suffix in [('repository', 'repo'), ('password_file', 'password'),
+        for key, suffix in [('repository', 'repo'),
                             ('excludes', 'exclude'), ('mount_dir', 'mount'), ('restore_dir', 'restore')]:
             self.assertEqual(cfg[key], str(self.root / suffix))
         self.assertEqual(cfg['_profile_tag'], 'q-restic:profile:immich')
@@ -95,44 +95,6 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(q.restore_root(cfg, {'paths': ['/one']}), 'one')
 
 
-class PasswordTests(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(dir='/tmp')
-        self.addCleanup(self.tmp.cleanup)
-        self.path = Path(self.tmp.name) / 'private' / 'password'
-        self.cfg = {'password_file': str(self.path)}
-        self.out, self.err = io.StringIO(), io.StringIO()
-        self.enterContext(contextlib.redirect_stdout(self.out))
-        self.enterContext(contextlib.redirect_stderr(self.err))
-
-    def test_password_is_saved_privately_and_never_echoed(self):
-        secret = 'only-a-test-password'
-        with patch.object(q.getpass, 'getpass', side_effect=[secret, secret]):
-            self.assertEqual(q.set_password_file(self.cfg), 0)
-        self.assertEqual(self.path.read_text(), secret + '\n')
-        self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
-        self.assertNotIn(secret, self.out.getvalue() + self.err.getvalue())
-        with patch.object(q.getpass, 'getpass') as prompt:
-            self.assertEqual(q.set_password_file(self.cfg), 1)
-        prompt.assert_not_called()
-        self.assertEqual(self.path.read_text(), secret + '\n')
-
-    def test_mismatch_empty_cancel_and_echo_fallback_never_create_file(self):
-        for effect in (['', ''], ['one', 'two'], KeyboardInterrupt(), EOFError(), q.getpass.GetPassWarning('echo')):
-            with self.subTest(effect=repr(effect)), patch.object(q.getpass, 'getpass', side_effect=effect):
-                self.assertNotEqual(q.set_password_file(self.cfg), 0)
-            self.assertFalse(self.path.exists())
-
-    def test_dangling_symlink_is_not_followed(self):
-        self.path.parent.mkdir()
-        target = self.path.parent / 'not-created'
-        self.path.symlink_to(target)
-        with patch.object(q.getpass, 'getpass') as prompt:
-            self.assertEqual(q.set_password_file(self.cfg), 1)
-        prompt.assert_not_called()
-        self.assertFalse(target.exists())
-
-
 class WriterLockTests(unittest.TestCase):
     def test_lock_is_released_when_a_tui_write_finishes_or_raises(self):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp, patch.dict(os.environ, {'XDG_CACHE_HOME': tmp}):
@@ -156,7 +118,7 @@ class RepositoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
             root = Path(tmp)
             password = root / 'password'
-            password.write_text('test-only\n')
+            password.write_text('lu5je0\n')
             password.chmod(0o600)
             doc = {'profiles': {name: profile(root, name) for name in ('home', 'immich')}}
             (root / 'extra').mkdir()

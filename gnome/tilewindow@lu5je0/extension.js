@@ -415,6 +415,7 @@ function snapWithSwap(side) {
     resizeWindow(side);
 }
 
+// workaround: mutter-shortcut-modifier-release
 // 缓解 mutter 上游 bug：抓取带修饰键的全局快捷键后，客户端可能收不到修饰键的
 // release，其修饰键状态就此卡住——表现为悬停高亮正常、但点击被当成 Ctrl+点击而失效
 // （mutter#3636、mutter#3672，截至 50.4 仍未修）。补发一次 RELEASED 让客户端重新同步，

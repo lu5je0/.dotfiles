@@ -1,4 +1,27 @@
-# GNOME TileWindow Extension
+# GNOME 配置
+
+## Show Desktop Corner
+
+`show-desktop-corner@lu5je0/` 是 GNOME 50 的右下角显示桌面扩展，由
+`nix/nixos/pkgs/show-desktop-corner/` 打包，`nix/nixos/modules/gnome.nix` 安装并默认启用。
+
+- 主屏右下角 `8×8` 逻辑像素区域仅响应左键点击，始终完全透明，悬停、按下和隐藏窗口后均不显示高亮；
+  不设置鼠标屏障，不轮询鼠标。
+- 每次点击检查当前工作区所有显示器上的普通窗口：有可见窗口时隐藏，桌面没有可见窗口时才还原。
+  按工作区累积扩展最小化的窗口及其层叠顺序，焦点使用最近一次隐藏前的窗口。
+  例如隐藏 A 后新开 B，下一次点击隐藏 B，再点击还原 A 和 B；原本已最小化的窗口不参与还原。
+- 手动还原的窗口立即移出记录；关闭、移往其他工作区的窗口不再还原。
+- 任意显示器有可见全屏窗口时，入口同时设为不可见和不接收输入，点击时再次检查。
+  未声明 fullscreen、没有装饰且覆盖整块显示器的非最大化窗口也按全屏保护；
+  普通最大化窗口不触发该兜底规则。Overview、锁屏和 Shell 模态操作期间禁止切换。
+- 不改变全屏合成策略，不修改窗口几何或最大化状态。停用扩展时仅取消本次最小化，不抬高窗口或抢焦点。
+- 测试：`node --experimental-vm-modules gnome/tests/show-desktop-corner.test.mjs`；
+  Nix 构建也执行这些测试（仓库根目录运行）：`nix build path:.#show-desktop-corner --no-link`。
+- 修改后需要重新构建系统并注销重登；Wayland 不支持热重载 Shell。
+  用户自定义过 enabled-extensions 时，重登后需执行 `gnome-extensions enable show-desktop-corner@lu5je0`。
+  停用：`gnome-extensions disable show-desktop-corner@lu5je0`。
+
+## TileWindow
 
 GNOME Shell 下的窗口管理扩展，是 `kwin/tilewindow` 的移植，逻辑保持一致。
 窗口尺寸统一放在仓库根的 `wm/layout.jsonc`（hammerspoon/kwin/gnome 共用），每次按键实时读取。

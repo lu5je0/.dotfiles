@@ -1,3 +1,4 @@
+-- workaround: neovim-modified-events
 -- Registers an autocmd that fires whenever a buffer's 'modified' flag changes.
 --
 -- The event differs by version, and neither alone covers both paths:

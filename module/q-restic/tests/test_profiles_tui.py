@@ -1,4 +1,4 @@
-"""Exercise the profile picker and hidden password prompt in a real pseudo-terminal."""
+"""Exercise the profile picker without password setup in a real pseudo-terminal."""
 import contextlib
 import fcntl
 import json
@@ -19,7 +19,7 @@ from test_q_restic import SOURCE
 
 
 class Session:
-    def __init__(self, case, root, missing_password=False):
+    def __init__(self, case, root, missing_password=False, legacy_snapshots=False):
         self.case, self.root = case, root
         self.output = bytearray()
         profiles = {}
@@ -43,17 +43,23 @@ with (Path(os.environ['TEST_ROOT']) / 'calls').open('a') as output:
 if args[0] == 'snapshots':
     time.sleep(.4 if name == 'home' else .05)
     number, letter = ('1', 'a') if name == 'home' else ('2', 'b')
-    print(json.dumps([dict(id=letter*64, short_id=letter*8, tags=[tag],
-                          time=f'2026-10-0{number}T12:00:00Z')]))
+    snap = dict(id=letter*64, short_id=letter*8, tags=[tag], time=f'2026-10-0{number}T12:00:00Z')
+    if os.environ['TEST_LEGACY'] != '1':
+        snap['summary'] = {'total_bytes_processed': 1024}
+    print(json.dumps([snap]))
 elif args[0] == 'stats':
-    print(json.dumps(dict(total_size=111 if name == 'home' else 222)))
+    if 'restore-size' in args:
+        time.sleep(.3)
+        print(json.dumps(dict(total_size=4096)))
+    else:
+        print(json.dumps(dict(total_size=111 if name == 'home' else 222)))
 else:
     raise SystemExit(1)
 ''')
         fake.chmod(0o755)
         self.pid, self.fd = pty.fork()
         if self.pid == 0:
-            os.environ.update(TERM='xterm-256color', TEST_ROOT=str(root),
+            os.environ.update(TERM='xterm-256color', TEST_ROOT=str(root), TEST_LEGACY='1' if legacy_snapshots else '0',
                               PATH=str(root) + ':' + os.environ['PATH'])
             os.execv(sys.executable, [sys.executable, str(SOURCE), '-c', str(self.config)])
         fcntl.ioctl(self.fd, termios.TIOCSWINSZ, struct.pack('HHHH', 28, 120, 0, 0))
@@ -101,28 +107,35 @@ else:
 
 
 class ProfileTuiTests(unittest.TestCase):
-    def test_picker_does_not_connect_and_menu_can_set_missing_password_without_echo(self):
+    def test_picker_does_not_connect_and_profile_needs_no_password_file(self):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
             root = Path(tmp)
             session = Session(self, root, missing_password=True)
             session.read_until('2 个 profile')
             self.assertFalse((root / 'calls').exists())
             session.write('j\r')
-            session.read_until('密码文件未配置')
-            self.assertFalse((root / 'calls').exists())
-            session.write('G\r')
-            session.read_until('仓库密码（不回显）:')
-            secret = 'pty-only-test-password'
-            session.write(secret + '\n')
-            session.read_until('再次输入密码:')
-            session.write(secret + '\n')
-            session.read_until('密码文件已保存')
-            self.assertEqual((root / 'immich.password').read_text(), secret + '\n')
-            self.assertEqual((root / 'immich.password').stat().st_mode & 0o777, 0o600)
             session.read_until('2026-10-02')
             session.exit('qq')
-            self.assertNotIn(secret.encode(), session.output)
+            self.assertFalse((root / 'immich.password').exists())
+            self.assertNotIn('设置密码'.encode(), session.output)
             self.assertNotIn('snapshots home', (root / 'calls').read_text())
+
+    def test_legacy_snapshot_sizes_load_without_blocking_navigation(self):
+        with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
+            root = Path(tmp)
+            session = Session(self, root, legacy_snapshots=True)
+            session.read_until('2 个 profile')
+            session.write('j\r')
+            session.read_until('2026-10-02')
+            session.write('jj\r')
+            session.read_until('统计中')
+            session.read_until('4.0 KiB')
+            session.write('g')
+            output = session.read_until('新增未知')
+            self.assertIn('4.0 KiB', output)
+            self.assertNotIn('0 B', output)
+            session.exit('hqq')
+            self.assertEqual((root / 'calls').read_text().splitlines().count('stats immich'), 2)
 
     def test_switching_profile_discards_old_async_results(self):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp:

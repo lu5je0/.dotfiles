@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  address = pkgs.callPackage ./pkgs/bluetooth-address { };
+  address = pkgs.callPackage ./. { };
 in
 {
   # The WCN3990 NVM has a placeholder address. Configure it before BlueZ

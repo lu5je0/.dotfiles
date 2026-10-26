@@ -1,0 +1,6 @@
+{
+    "uuid": "show-desktop-corner@lu5je0",
+    "name": "Show Desktop Corner",
+    "description": "Click the primary monitor's transparent bottom-right corner to hide and restore windows. Disabled during fullscreen.",
+    "shell-version": ["50"]
+}

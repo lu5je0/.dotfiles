@@ -43,7 +43,6 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
     "home": {
       "sources": ["$HOME"],
       "repository": "sftp:user@nas:/backups/restic/home",
-      "password_file": "$HOME/.config/restic/password",
       "snapshot_tag": "home",
       "excludes": "./excludes.txt",
       "keep": {"daily": 7, "weekly": 4, "monthly": 1}
@@ -52,7 +51,7 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 }
 ```
 
-每个 profile 必须提供 `sources`（非空列表）、`repository`、`password_file`，不隐式备份 home。
+每个 profile 必须提供 `sources`（非空列表）、`repository`，不隐式备份 home。
 路径支持 `~` 和环境变量，相对路径以配置文件所在目录为基准；SFTP 等仓库地址保持后端语法。
 `excludes` 是可选的排除文件路径。排除文件内部的变量由 restic 展开，推荐使用 `$HOME`。
 
@@ -80,6 +79,11 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 多个 profile 共用仓库时，写锁仍按仓库区分，`check` 和 `unlock` 是仓库级操作。
 不同 profile 的快照筛选标签不能互相匹配。
 
+版本数据量优先读取快照的 `summary`。旧版 restic 创建的快照没有此字段时，TUI 在进入版本列表后
+逐个后台调用 `stats --mode restore-size <快照 ID>` 补齐数据量，并在会话内缓存；查询前显示「统计中」，
+失败显示「不可用」。CLI `status` 也会查询缺失的数据量，失败返回非零。
+快照没有记录的新增量显示「未知」，不从仓库总占用推算，也不把缺失统计当成 0 B。
+
 `mount_dir` 默认 `/tmp/restic-mnt/<profile>`，`restore_dir` 默认 `~/restic-restore/<profile>`。
 多目录快照恢复后，各源目录的绝对路径树都位于恢复目标下。
 
@@ -90,31 +94,68 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 `q-restic config` 输出合并后的 JSON，`q-restic -p home config` 输出该 profile 解析后的配置；
 提示信息不混入 stdout。
 
-## 密码文件
+## 仓库密码
 
-文件缺失时，在当前 profile 菜单选择「设置密码文件」，隐藏输入两次确认，写入权限为 600。
-也可以运行 `q-restic -p home set-password`。不接受空密码，不覆盖已有文件或符号链接。
-无法关闭终端回显时拒绝输入；取消、两次不一致时不创建文件。
+所有仓库统一使用内置密码 `lu5je0`，不读取密码文件，不提供密码设置菜单或 `set-password` 命令。
+遗留配置中的 `password_file` 不再生效；环境中的 `RESTIC_PASSWORD_FILE`、`RESTIC_PASSWORD_COMMAND`
+与 `RESTIC_PASSWORD` 不会覆盖内置密码。已有仓库必须已使用该密码；认证失败会直接报错，不自动改密钥或初始化。
 
-已有仓库需要输入原密码；此操作只设置本机密码文件，不修改仓库密钥。
-CLI 备份缺少密码时直接报错，不进入交互输入。密码不会写入配置、命令参数或日志。
+## 执行用户
 
-NixOS 的 home 定时服务由 `nix/nixos/hosts/huskar/q-restic/default.nix` 显式传入配置和 profile，
-修改后需重新部署系统配置。
+profile 可配置 `"run_as": "lu5je0"`。root cron 仍启动 q-restic，所有 restic 子进程
+（包括查看、备份、清理、恢复、挂载）使用指定用户的 UID、主组和附加组。
+未配置时沿用启动身份；普通用户不能切换成其他账号，需要通过 sudo 启动。
+TUI 显示配置的执行用户；父进程保持启动身份，切换仅发生在子进程中。
+
+显式指定用户后，`HOME`、`USER`、`LOGNAME` 与 XDG 配置、缓存、状态和数据目录统一按其账号设置；
+`~` / `$HOME` 等 profile 路径按目标用户展开，相对配置路径仍基于来源配置目录。
+配置入口和 imports 仍由启动用户解析，root cron 应显式传入 `-c`。
+锁、缓存、挂载目录和挂载日志由目标用户创建；root cron 与该用户的手动操作共用
+`<用户 home>/.cache/q-restic.<仓库 hash>.lock`。配置同一仓库的写入入口应使用相同 `run_as`。
+
+hooks 默认也使用 `run_as`；需要 Docker 等 root 权限时，显式增加 `"hooks_run_as": "root"`：
+
+```json
+{
+  "run_as": "lu5je0",
+  "hooks_run_as": "root",
+  "hooks": {
+    "before_backup": ["/usr/bin/python3", "./hooks.py", "prepare"]
+  }
+}
+```
+
+上述片段放入现有 profile。此配置下 root cron 或 `sudo q-restic ... backup` 可以执行 root hook；
+lu5je0 可直接查看和恢复，但执行备份会提示需要 sudo。不会自动提权或修改 sudoers。
+`hooks_run_as` 可独立配置，未指定时继承 `run_as`，两项都未配置时沿用启动身份。
+
+q-restic 不会递归修改现有仓库或备份源的属主。切换用户前应在没有备份任务运行时迁移本地仓库权限，
+并确认该用户能读取所有备份源。root hook 产生的 SQL 等文件须由 hook 显式交给备份用户；
+新恢复文件由目标用户创建，无法恢复其无权设置的其他账号属主。SFTP 远端属主仍由连接账号决定。
+
+huskar 的 home 定时备份由 `restic-home.service` 以 `lu5je0` 运行，并通过 systemd 的
+`AmbientCapabilities` / `CapabilityBoundingSet` 授予 `CAP_DAC_READ_SEARCH`。
+因此服务能读取 home 内 root 的 0600 文件、遍历 0700 目录，备份会保留源文件的 UID/GID 和权限；
+SSH、仓库、缓存和锁仍属于 `lu5je0`。权限仅作用于该服务及其子进程，没有给 restic 二进制设置全局 capability。
+原有 excludes 和 `--exclude-caches` 仍生效；“完整”指未被排除的普通文件和目录，socket 等特殊文件不保存内容。
+
+需要包含受限文件的手动备份也用 `sudo systemctl start restic-home.service`；
+直接在普通终端运行 `q-restic -p home backup` 不具有这项读取权限。
+日常用 `q-restic -p home` 查看、挂载即可，默认只读 FUSE 挂载允许挂载用户读取已备份内容，
+不需要源文件属主是自己。把文件恢复到磁盘并精确保留 root 属主则需要另外以 root 执行恢复。
+修改 huskar 的 Nix 服务配置后需要 rebuild 才生效。
 
 ## 备份前后命令
 
 profile 可选 `hooks` 对象，`preflight`、`before_backup` 和 `after_backup` 的值都是非空命令参数列表，
 例如 `"before_backup": ["/usr/bin/python3", "./prepare.py"]`。命令直接执行，不经过 shell；
 工作目录为定义该 profile 的文件所在目录，提供入口路径 `Q_RESTIC_CONFIG` 和 `Q_RESTIC_PROFILE` 环境变量。
+配置 `run_as` 时还提供 `Q_RESTIC_RUN_AS`、`Q_RESTIC_UID`、`Q_RESTIC_GID`，供 root hook 设置导出文件属主。
 
-`preflight` 只在显式执行 `q-restic -p home preflight` 时运行，不获取备份锁、不要求已设置仓库密码；
+`preflight` 只在显式执行 `q-restic -p home preflight` 时运行，不获取备份锁、不访问仓库；
 未配置对应命令时返回错误。
 
 取得仓库写锁后先执行 `before_backup`，成功才初始化仓库并备份。`after_backup` 在准备、
 初始化或备份失败时也会执行，因此应能安全处理未完成的准备工作；它在旧版本清理之前执行。
 恢复步骤失败会返回非零并跳过清理。`dry-run` 不执行这些命令，也不初始化仓库。
 Ctrl-C、SIGTERM、SIGHUP 会经过恢复步骤；强制杀进程或断电需要准备脚本自行保留恢复状态。
-
-q-restic 和 hooks 都使用启动进程的用户身份，不自动切换用户、附加系统组或修改已有文件属主。
-使用 sudo/root 时，本地仓库、缓存、锁和数据库导出由 root 创建；SFTP 远端属主由连接账号决定。

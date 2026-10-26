@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  monitor = pkgs.callPackage ./pkgs/battery-monitor { };
+  monitor = pkgs.callPackage ./. { };
 in
 {
   system.build.oneplus6-battery-monitor = monitor;

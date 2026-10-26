@@ -6,13 +6,14 @@
 """
 
 import argparse
+import array
 import atexit
 import base64
 import fcntl
-import getpass
 import hashlib
 import json
 import os
+import pwd
 import queue
 import re
 import select
@@ -28,7 +29,6 @@ import threading
 import time
 import tty
 import unicodedata
-import warnings
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -38,6 +38,7 @@ CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config") / "q-re
 DEFAULT_CONFIG_FILE = CONFIG_DIR / "config.json"
 SYSTEM_CONFIG_FILE = Path("/etc/q-restic/config.json")
 CONFIG_FILE = DEFAULT_CONFIG_FILE
+REPOSITORY_PASSWORD = "lu5je0"
 
 def die(msg, code=1):
     print(f"错误: {msg}", file=sys.stderr)
@@ -65,12 +66,65 @@ def detect_host():
     return socket.gethostname().split(".")[0] or "localhost"
 
 
-def expand(path):
-    return Path(os.path.expandvars(str(path))).expanduser()
+def execution_user(cfg, *, hook=False):
+    name = cfg.get("hooks_run_as", cfg.get("run_as")) if hook else cfg.get("run_as")
+    if name is None:
+        return None
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("run_as / hooks_run_as 必须是非空用户名")
+    try:
+        return pwd.getpwnam(name)
+    except KeyError:
+        raise ValueError(f"执行用户不存在: {name}") from None
 
 
-def config_path(path, source=None):
-    path = expand(path)
+def execution_env(cfg, *, hook=False):
+    env = dict(os.environ)
+    user = execution_user(cfg, hook=hook)
+    if user is not None:
+        # 显式用户使用固定目录，使 root cron 与交互会话共用缓存和锁。
+        env.update(HOME=user.pw_dir, USER=user.pw_name, LOGNAME=user.pw_name,
+                   XDG_CONFIG_HOME=user.pw_dir + "/.config",
+                   XDG_CACHE_HOME=user.pw_dir + "/.cache",
+                   XDG_STATE_HOME=user.pw_dir + "/.local/state",
+                   XDG_DATA_HOME=user.pw_dir + "/.local/share")
+        if user.pw_uid != os.geteuid():
+            for key in ("XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS", "SSH_AUTH_SOCK"):
+                env.pop(key, None)
+    return env
+
+
+def execution_options(cfg, *, hook=False):
+    user = execution_user(cfg, hook=hook)
+    if user is None:
+        return {}
+    options = {} if hook else {"cwd": user.pw_dir}
+    if os.geteuid() == 0:
+        # Popen 的身份参数在线程环境中安全；不能使用 preexec_fn 或修改父进程 UID。
+        return dict(options, user=user.pw_uid, group=user.pw_gid,
+                    extra_groups=os.getgrouplist(user.pw_name, user.pw_gid))
+    if user.pw_uid != os.geteuid():
+        raise PermissionError(f"需要以 {user.pw_name} 执行{' hook' if hook else ''}；请使用 sudo 启动 q-restic")
+    return options
+
+
+def expand_text(path, cfg=None):
+    if cfg and cfg.get("run_as"):
+        env = execution_env(cfg)
+        value = re.sub(r"\$(\w+)|\$\{([^}]+)\}",
+                       lambda m: env.get(m[1] or m[2], m[0]), str(path))
+        if value == "~" or value.startswith("~/"):
+            value = env["HOME"] + value[1:]
+        return os.path.expanduser(value)
+    return os.path.expanduser(os.path.expandvars(str(path)))
+
+
+def expand(path, cfg=None):
+    return Path(expand_text(path, cfg))
+
+
+def config_path(path, source=None, cfg=None):
+    path = expand(path, cfg)
     return path if path.is_absolute() else (source or CONFIG_FILE).parent / path
 
 
@@ -145,15 +199,20 @@ def profile_config(document, name):
     if name not in profiles:
         die(f"profile 不存在: {name}；可选: {', '.join(profiles) or '无'}")
     cfg = dict(profiles[name])
+    cfg.pop("password_file", None)
+    try:
+        execution_user(cfg)
+        execution_user(cfg, hook=True)
+    except ValueError as exc:
+        die(f"profile {name}: {exc}")
     origins = getattr(document, "origins", {})
     source = origins.get(name, CONFIG_FILE)
     sources = cfg.get("sources")
     if (not isinstance(sources, list) or not sources
             or not all(isinstance(path, str) and path.strip() for path in sources)):
         die(f"profile {name} 需要非空 sources 路径列表")
-    for key in ("repository", "password_file"):
-        if not isinstance(cfg.get(key), str) or not cfg[key].strip():
-            die(f"profile {name} 缺少 {key}")
+    if not isinstance(cfg.get("repository"), str) or not cfg["repository"].strip():
+        die(f"profile {name} 缺少 repository")
     for key in ("excludes", "mount_dir", "restore_dir"):
         if key in cfg and (not isinstance(cfg[key], str) or not cfg[key]):
             die(f"profile {name} 的 {key} 必须是非空路径")
@@ -164,16 +223,16 @@ def profile_config(document, name):
                    for argv in hooks.values())):
         die(f"profile {name} 的 hooks 必须是 preflight/before_backup/after_backup 命令参数列表")
     cfg["hooks"] = {name: list(argv) for name, argv in hooks.items()}
-    cfg["sources"] = [os.path.abspath(config_path(path, source)) for path in sources]
-    for key in ("password_file", "excludes", "mount_dir", "restore_dir"):
+    cfg["sources"] = [os.path.abspath(config_path(path, source, cfg)) for path in sources]
+    for key in ("excludes", "mount_dir", "restore_dir"):
         if key in cfg:
-            cfg[key] = str(config_path(cfg[key], source))
-    repository = os.path.expandvars(cfg["repository"])
-    cfg["repository"] = str(config_path(repository, source).resolve()) if ":" not in repository else repository
+            cfg[key] = str(config_path(cfg[key], source, cfg))
+    repository = expand_text(cfg["repository"], cfg)
+    cfg["repository"] = str(config_path(repository, source, cfg).resolve()) if ":" not in repository else repository
     cfg["host"] = cfg.get("host") or detect_host()
     cfg.setdefault("tag", "")
     cfg.setdefault("mount_dir", f"/tmp/restic-mnt/{name}")
-    cfg.setdefault("restore_dir", str(HOME / "restic-restore" / name))
+    cfg.setdefault("restore_dir", str(Path(execution_env(cfg).get("HOME") or HOME) / "restic-restore" / name))
     keep = cfg.get("keep", {})
     if (not isinstance(keep, dict) or set(keep) - {"hourly", "daily", "weekly", "monthly", "yearly"}
             or any(type(value) is not int or value < 0 for value in keep.values())):
@@ -189,9 +248,12 @@ def profile_config(document, name):
             continue
         if not isinstance(profile.get("repository"), str):
             continue
-        other_repo = os.path.expandvars(profile["repository"])
+        try:
+            other_repo = expand_text(profile["repository"], profile)
+        except ValueError as exc:
+            die(f"profile {other}: {exc}")
         if other_repo and ":" not in other_repo:
-            other_repo = str(config_path(other_repo, origins.get(other, CONFIG_FILE)).resolve())
+            other_repo = str(config_path(other_repo, origins.get(other, CONFIG_FILE), profile).resolve())
         other_tag = profile.get("snapshot_tag", f"q-restic:profile:{other}")
         extra_tags = str(profile.get("tag") or "").split(",")
         own_tags = cfg["tag"].split(",")
@@ -246,9 +308,11 @@ def restic_bin():
 
 
 def restic_env(cfg):
-    env = dict(os.environ)
+    env = execution_env(cfg)
     env["RESTIC_REPOSITORY"] = cfg["repository"]
-    env["RESTIC_PASSWORD_FILE"] = str(expand(cfg["password_file"]))
+    env.pop("RESTIC_PASSWORD_FILE", None)
+    env.pop("RESTIC_PASSWORD_COMMAND", None)
+    env["RESTIC_PASSWORD"] = REPOSITORY_PASSWORD
     env["RESTIC_CACHE_DIR"] = str(Path(env.get("XDG_CACHE_HOME") or HOME / ".cache") / "restic")
     env.setdefault("HOME", str(HOME))   # excludes.txt 的 $HOME 靠它，缺了会展开成 /.cache
     env.setdefault("RESTIC_PROGRESS_FPS", "1")
@@ -273,6 +337,7 @@ def run(restic, cfg, args, capture=True, check=False):
         capture_output=capture,
         text=True,
         check=check,
+        **execution_options(cfg),
     )
 
 
@@ -318,7 +383,7 @@ def run_json(restic, cfg, args, *, strict=False):
 
 def run_stream(restic, cfg, args):
     """直接继承终端，让 restic 自己的进度条可见。"""
-    return subprocess.call([restic] + args, env=restic_env(cfg))
+    return subprocess.call([restic] + args, env=restic_env(cfg), **execution_options(cfg))
 
 
 def run_visible(restic, cfg, args):
@@ -334,6 +399,7 @@ def run_visible(restic, cfg, args):
         text=True,
         bufsize=1,
         env=restic_env(cfg),
+        **execution_options(cfg),
     )
     lines = []
     for line in proc.stdout:
@@ -342,60 +408,61 @@ def run_visible(restic, cfg, args):
     return proc.wait(), "\n".join(lines)
 
 
-def require_password(cfg):
-    path = expand(cfg["password_file"])
-    if not password_ready(cfg):
-        die(f"密码文件不存在或为空: {path}；请在 TUI 中选择「设置密码文件」")
-    mode = path.stat().st_mode & 0o777
-    if mode & 0o077:
-        warn(f"密码文件权限是 {mode:o}，建议 chmod 600 {path}")
+# 在目标用户的子进程中创建运行文件；父进程不能先以 root 打开用户可写路径。
+# open 返回文件描述符，父进程负责持有 flock，不需要常驻的锁进程。
+_FILE_WORKER = r'''
+import array, os, socket, sys
+from pathlib import Path
+action, raw = sys.argv[1:3]
+path = Path(raw)
+if action == "mkdir":
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+else:
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if action == "open":
+        fd = os.open(path, int(sys.argv[3]), 0o600)
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=int(sys.argv[4])) as channel:
+            channel.sendmsg([b"f"], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", [fd]))])
+        os.close(fd)
+'''
 
 
-def password_ready(cfg):
-    try:
-        path = expand(cfg["password_file"])
-        return path.is_file() and path.stat().st_size > 0
-    except OSError:
-        return False
+def user_file_action(cfg, action, path, *args, **kwargs):
+    result = subprocess.run(
+        [sys.executable, "-I", "-c", _FILE_WORKER, action, str(path), *map(str, args)],
+        env=execution_env(cfg), capture_output=True, text=True,
+        **execution_options(cfg), **kwargs,
+    )
+    if result.returncode:
+        raise OSError(result.stderr.strip() or f"无法以目标用户创建文件: {path}")
 
 
-def set_password_file(cfg):
-    path = expand(cfg["password_file"])
-    if path.exists() or path.is_symlink():
-        warn(f"密码文件已存在，未修改: {path}")
-        return 1
-    print("设置本机密码文件；已有仓库请填写原密码，此操作不修改仓库密钥。")
-    try:
-        with warnings.catch_warnings():
-            # getpass 无法关闭回显时禁止退回普通输入。
-            warnings.simplefilter("error", getpass.GetPassWarning)
-            password = getpass.getpass("仓库密码（不回显）: ")
-            confirm = getpass.getpass("再次输入密码: ")
-        if not password or "\n" in password or "\r" in password:
-            warn("密码不能为空或包含换行")
-            return 1
-        if password != confirm:
-            warn("两次密码不一致，未保存")
-            return 1
-        path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(prefix=".q-restic-password-", dir=path.parent)
-        try:
-            with os.fdopen(fd, "w") as output:
-                output.write(password + "\n")
-                output.flush()
-                os.fsync(output.fileno())
-            # link 的目标若已存在会失败，避免并发或符号链接造成覆盖。
-            os.link(tmp, path)
-        finally:
-            os.unlink(tmp)
-        info(f"密码文件已保存: {path}（权限 600）")
-        return 0
-    except (KeyboardInterrupt, EOFError):
-        print("\n已取消")
-        return 130
-    except (OSError, getpass.GetPassWarning) as exc:
-        warn(f"密码文件未保存: {exc}")
-        return 1
+def user_mkdir(cfg, path):
+    if cfg.get("run_as"):
+        user_file_action(cfg, "mkdir", path)
+    else:
+        path.mkdir(parents=True, exist_ok=True)
+
+
+def user_open(cfg, path, *, truncate=False):
+    flags = os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW
+    if truncate:
+        flags |= os.O_TRUNC
+    if not cfg.get("run_as"):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return os.fdopen(os.open(path, flags, 0o600), "r+")
+    receiver, sender = socket.socketpair()
+    with receiver, sender:
+        user_file_action(cfg, "open", path, flags, sender.fileno(), pass_fds=(sender.fileno(),))
+        _, ancillary, _, _ = receiver.recvmsg(1, socket.CMSG_SPACE(array.array("i").itemsize))
+        for level, kind, data in ancillary:
+            if level == socket.SOL_SOCKET and kind == socket.SCM_RIGHTS:
+                fds = array.array("i")
+                fds.frombytes(data)
+                fd = fds[0]
+                os.set_inheritable(fd, False)
+                return os.fdopen(fd, "r+")
+    raise OSError(f"无法接收目标用户的文件描述符: {path}")
 
 
 # ── 防并发（只保护会写仓库的流程）──────────────────────────────────────
@@ -411,13 +478,15 @@ def acquire_lock(cfg):
     """
     global _LOCK_FD
     digest = hashlib.sha256(cfg["repository"].encode()).hexdigest()[:12]
-    lock_path = Path(os.environ.get("XDG_CACHE_HOME") or HOME / ".cache") / f"q-restic.{digest}.lock"
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    _LOCK_FD = open(lock_path, "w")
+    env = execution_env(cfg)
+    lock_path = Path(env.get("XDG_CACHE_HOME") or HOME / ".cache") / f"q-restic.{digest}.lock"
+    handle = user_open(cfg, lock_path)
     try:
-        fcntl.flock(_LOCK_FD, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
+        handle.close()
         die(f"另一次备份正在运行（{lock_path}），本次退出")
+    _LOCK_FD = handle
 
 
 @contextmanager
@@ -448,9 +517,8 @@ def repo_ready(restic, cfg):
 def preflight_sftp(cfg, quiet=False):
     """SFTP 目标预检：路径存在且可写，避免跑一半才发现写不进去。
 
-    要自己调 PATH 里的 ssh。找不到就只 warn 跳过，不要 die：预检只是提前发现，
-    restic 的 sftp 后端是 Go 原生实现、根本不用 ssh（实测 PATH 清空照样能列快照），
-    所以少了它备份也能跑完。
+    调用 PATH 里的 ssh；找不到时跳过预检，实际连接错误由 restic 报告。
+    restic 默认也通过 ssh 启动远端 SFTP，但可单独配置传输命令。
     """
     repo = cfg["repository"]
     if not repo.startswith("sftp:"):
@@ -461,7 +529,7 @@ def preflight_sftp(cfg, quiet=False):
         return
     ssh = shutil.which("ssh")
     if not ssh:
-        warn("PATH 里没有 ssh，跳过 NAS 目标预检（不影响备份，只是少了提前发现）")
+        warn("PATH 里没有 ssh，跳过 NAS 目标预检；restic 默认的 SFTP 传输也需要 ssh")
         return
     if not quiet:
         info(f"预检 NAS 目标 {userhost}:{path}")
@@ -476,6 +544,8 @@ def preflight_sftp(cfg, quiet=False):
         ],
         capture_output=True,
         text=True,
+        env=execution_env(cfg),
+        **execution_options(cfg),
     )
     if res.returncode != 0:
         die(f"NAS 目标不可写或不可达: {userhost}:{path}\n  排查: ssh {userhost}")
@@ -496,11 +566,18 @@ def run_backup_hook(cfg, name):
     argv = cfg.get("hooks", {}).get(name)
     if not argv:
         return 0
-    env = dict(os.environ, Q_RESTIC_CONFIG=str(CONFIG_FILE), Q_RESTIC_PROFILE=cfg.get("_profile", ""))
+    env = execution_env(cfg, hook=True)
+    env.update(Q_RESTIC_CONFIG=str(CONFIG_FILE), Q_RESTIC_PROFILE=cfg.get("_profile", ""))
+    for key in ("Q_RESTIC_RUN_AS", "Q_RESTIC_UID", "Q_RESTIC_GID"):
+        env.pop(key, None)
+    user = execution_user(cfg)
+    if user is not None:
+        env.update(Q_RESTIC_RUN_AS=user.pw_name, Q_RESTIC_UID=str(user.pw_uid),
+                   Q_RESTIC_GID=str(user.pw_gid))
     info(f"执行 {name}")
     try:
         with subprocess.Popen(argv, cwd=Path(cfg.get("_config_file", CONFIG_FILE)).parent,
-                              env=env, start_new_session=True) as proc:
+                              env=env, start_new_session=True, **execution_options(cfg, hook=True)) as proc:
             try:
                 code = proc.wait()
             except BaseException:
@@ -542,7 +619,6 @@ def backup_signals(cfg):
 
 def do_backup(cfg, dry_run=False):
     restic = restic_bin()
-    require_password(cfg)
 
     args = ["backup"] + cfg["sources"] + ["--exclude-caches"]
     if cfg.get("excludes"):
@@ -687,11 +763,10 @@ def do_forget(restic, cfg, stream=True, dry_run=False):
 
 def do_check(cfg):
     restic = restic_bin()
-    require_password(cfg)
     info("整个仓库完整性校验（读 5% 数据，包含其它 profile）")
     # check 不支持 --host，不要加主机过滤
     return subprocess.call(
-        [restic, "check", "--read-data-subset=5%"], env=restic_env(cfg)
+        [restic, "check", "--read-data-subset=5%"], env=restic_env(cfg), **execution_options(cfg)
     )
 
 
@@ -708,8 +783,17 @@ def snapshots(restic, cfg):
     return sorted(data, key=snap_time_key)
 
 
-def snapshot_stats(restic, cfg):
-    return run_json(restic, cfg, ["stats", "--json", "latest"] + snapshot_args(cfg))
+def snapshot_stats(restic, cfg, snapshot="latest", *, strict=False):
+    return run_json(restic, cfg, ["stats", "--json", "--mode", "restore-size", snapshot]
+                    + snapshot_args(cfg), strict=strict)
+
+
+def snapshot_total_size(restic, cfg, snapshot):
+    result = snapshot_stats(restic, cfg, snapshot, strict=True)
+    size = result.get("total_size") if isinstance(result, dict) else None
+    if type(size) is not int or size < 0:
+        raise RuntimeError("restic 返回的版本数据量格式无效")
+    return size
 
 
 def repo_stats(restic, cfg, *, strict=False):
@@ -720,7 +804,6 @@ def repo_stats(restic, cfg, *, strict=False):
 
 def do_status(cfg):
     restic = restic_bin()
-    require_password(cfg)
     try:
         snaps = snapshots(restic, cfg)
     except RepositoryNotInitialized as exc:
@@ -736,13 +819,21 @@ def do_status(cfg):
         return 0
     print(f"{'ID':<10} {'时间':<20} {'数据量':>10} {'新增':>10}  标签")
     print("-" * 68)
+    size_failed = False
     for snap in snaps:
+        size = snap_size(snap)
+        if size is None:
+            try:
+                size = snapshot_total_size(restic, cfg, snap["id"])
+            except (OSError, RuntimeError) as exc:
+                warn(f"版本 {snap['short_id']} 数据量读取失败: {exc}")
+                size_failed = True
         print(
             f"{snap['short_id']:<10} {snap['time'][:19].replace('T', ' '):<20} "
-            f"{human_size(snap_size(snap)):>10} {human_size(snap_added(snap)):>10}  "
+            f"{human_size(size):>10} {human_size(snap_added(snap)):>10}  "
             f"{','.join(snap.get('tags') or [])}"
         )
-    latest = run_json(restic, cfg, ["stats", "--json", "latest"] + snapshot_args(cfg))
+    latest = snapshot_stats(restic, cfg)
     repo = repo_stats(restic, cfg)
     print()
     if latest:
@@ -752,27 +843,35 @@ def do_status(cfg):
             f"（{latest.get('total_file_count', 0)} 个文件）"
         )
     if repo:
+        details = []
+        if repo.get("compression_ratio") is not None:
+            details.append(f"压缩比 {repo['compression_ratio']:.2f}x")
+        if repo.get("total_uncompressed_size") is not None:
+            details.append(f"未压缩 {human_size(repo['total_uncompressed_size'])}")
         print(
-            f"当前 profile 数据占用 {human_size(repo.get('total_size', 0))}"
-            f"（压缩比 {repo.get('compression_ratio', 0):.2f}x，"
-            f"未压缩 {human_size(repo.get('total_uncompressed_size', 0))}）"
+            f"当前 profile 数据占用 {human_size(repo.get('total_size'))}"
+            + (f"（{'，'.join(details)}）" if details else "")
         )
-    return 0
+    return 1 if size_failed else 0
 
 
 def snap_size(snap):
     """该版本源数据的总量。注意 restic 的 summary 里没有 total_size，
     那个名字只存在于 `restic stats` 的输出。"""
-    return (snap.get("summary") or {}).get("total_bytes_processed", 0)
+    value = (snap.get("summary") or {}).get("total_bytes_processed")
+    return value if type(value) is int and value >= 0 else None
 
 
 def snap_added(snap):
     """该版本实际写进仓库的字节数（已压缩）。"""
     summary = snap.get("summary") or {}
-    return summary.get("data_added_packed", summary.get("data_added", 0))
+    value = summary.get("data_added_packed", summary.get("data_added"))
+    return value if type(value) is int and value >= 0 else None
 
 
 def human_size(num):
+    if num is None:
+        return "未知"
     step = 1024.0
     for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
         if abs(num) < step or unit == "TiB":
@@ -784,7 +883,7 @@ def human_size(num):
 
 
 def mount_point(cfg, override=None):
-    return expand(override or cfg["mount_dir"])
+    return Path(os.path.abspath(expand(override or cfg["mount_dir"], cfg)))
 
 
 def require_fuse():
@@ -805,34 +904,33 @@ def is_mounted(path):
 
 def do_mount(cfg, override=None):
     restic = restic_bin()
-    require_password(cfg)
     require_fuse()
     target = mount_point(cfg, override)
-    target.mkdir(parents=True, exist_ok=True)
+    user_mkdir(cfg, target)
     if is_mounted(target):
         die(f"{target} 已经是挂载点，先跑 q-restic unmount")
     info(f"只读挂载到 {target}（前台，Ctrl-C 结束）")
     info(f"版本目录: {target}/snapshots/   卸载: q-restic unmount")
     return subprocess.call(
-        [restic, "mount", str(target)] + snapshot_args(cfg), env=restic_env(cfg)
+        [restic, "mount", str(target)] + snapshot_args(cfg), env=restic_env(cfg), **execution_options(cfg)
     )
 
 
 def do_browse(cfg, override=None):
     restic = restic_bin()
-    require_password(cfg)
     require_fuse()
     target = mount_point(cfg, override)
-    target.mkdir(parents=True, exist_ok=True)
+    user_mkdir(cfg, target)
     if not is_mounted(target):
-        state = Path(os.environ.get("XDG_STATE_HOME") or HOME / ".local/state") / "q-restic"
-        state.mkdir(parents=True, exist_ok=True)
+        env = execution_env(cfg)
+        state = Path(env.get("XDG_STATE_HOME") or HOME / ".local/state") / "q-restic"
         logf = state / "mount.log"
         info(f"后台挂载到 {target}（日志: {logf}）")
-        with open(logf, "w") as handle:
+        with user_open(cfg, logf, truncate=True) as handle:
             subprocess.Popen(
                 [restic, "mount", str(target)] + snapshot_args(cfg),
                 env=restic_env(cfg),
+                **execution_options(cfg),
                 stdout=handle,
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
@@ -848,6 +946,7 @@ def do_browse(cfg, override=None):
     if shutil.which("xdg-open"):
         subprocess.Popen(
             ["xdg-open", str(snapdir)],
+            env=execution_env(cfg), **execution_options(cfg),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -873,7 +972,6 @@ def do_restore(cfg, snapshot, target=None):
     既可能撑爆根分区，恢复出来的东西也不在合理的位置。
     """
     restic = restic_bin()
-    require_password(cfg)
     if cfg.get("_profile_tag"):
         available = snapshots(restic, cfg)
         matches = available[-1:] if snapshot == "latest" else [
@@ -882,7 +980,7 @@ def do_restore(cfg, snapshot, target=None):
         if len(matches) != 1:
             die(f"当前 profile 中未找到唯一的版本: {snapshot}")
         snapshot = matches[0]["id"]
-    dest = expand(target) if target else expand(cfg["restore_dir"]) / snapshot
+    dest = Path(os.path.abspath(expand(target, cfg))) if target else expand(cfg["restore_dir"]) / snapshot
     info(f"恢复 {snapshot} 到 {dest}")
     root = restore_root(cfg)
     info(f"恢复完成后文件在以 {dest}/{root}/ 为根的目录树里" if root
@@ -890,6 +988,7 @@ def do_restore(cfg, snapshot, target=None):
     return subprocess.call(
         [restic, "restore", snapshot, "--target", str(dest)] + snapshot_args(cfg),
         env=restic_env(cfg),
+        **execution_options(cfg),
     )
 
 
@@ -901,7 +1000,6 @@ def do_unlock(cfg):
     仓库走的是 restic 自己的锁机制，和 q-restic 那层 flock 无关。
     """
     restic = restic_bin()
-    require_password(cfg)
     with writer_lock(cfg):
         result = run(restic, cfg, ["list", "locks"])
         if result.returncode != 0:
@@ -928,7 +1026,7 @@ def do_unmount(cfg, override=None):
     errors = []
     busy = False
     # 固定诊断语言，只对 EBUSY 做延迟卸载；权限等错误仍直接报告失败。
-    env = dict(os.environ, LC_ALL="C")
+    env = dict(execution_env(cfg), LC_ALL="C")
     for lazy in (False, True):
         if lazy and not busy:
             break
@@ -938,7 +1036,7 @@ def do_unmount(cfg, override=None):
                 continue
             result = subprocess.run(
                 [helper] + (lazy_args if lazy else normal_args) + [str(target)],
-                capture_output=True, text=True, env=env,
+                capture_output=True, text=True, env=env, **execution_options(cfg),
             )
             if result.returncode == 0:
                 info(f"已延迟卸载 {target}（现有访问结束后释放资源）" if lazy
@@ -1320,6 +1418,9 @@ class App:
         self.repo_size_loading = False
         self.repo_size_loaded = False
         self.repo_size_error = ""
+        self.snapshot_sizes = {}
+        self.snapshot_size_errors = {}
+        self.pending_snapshot_size = None
         self._requests = {}
         self._results = queue.Queue()
         self._repo_key = self.repo_key()
@@ -1333,10 +1434,14 @@ class App:
 
     # -- 数据 --
     def repo_key(self):
-        return tuple(self.cfg.get(key) for key in ("repository", "host", "password_file", "_profile_tag"))
+        return tuple(self.cfg.get(key) for key in ("repository", "host", "run_as", "_profile_tag"))
 
     def invalidate_stats(self):
         self._requests.pop("stats", None)
+        self._requests.pop("snapshot_size", None)
+        self.snapshot_sizes = {}
+        self.snapshot_size_errors = {}
+        self.pending_snapshot_size = None
         self.repo_size = None
         self.repo_size_loading = False
         self.repo_size_loaded = False
@@ -1356,9 +1461,6 @@ class App:
         self.load_error = ""
         self.repo_uninitialized = False
         if not self.cfg:
-            return
-        if not password_ready(self.cfg):
-            self.load_error = "密码文件未配置，请在菜单中选择「设置密码文件」"
             return
         self.restic = shutil.which("restic")
         if not self.restic:
@@ -1384,11 +1486,29 @@ class App:
 
     def start_stats_load(self):
         """进入版本列表后按需统计，同一次会话内复用结果。"""
+        self.start_snapshot_size_load()
         if (self.screen != "snapshots" or self.loading or self.load_error or self.repo_uninitialized
                 or self.repo_size_loaded or self.repo_size_loading):
             return
         self.repo_size_loading = True
         self._start_request("stats", lambda r, c: repo_stats(r, c, strict=True))
+
+    def snapshot_size(self, snap):
+        size = snap_size(snap)
+        return self.snapshot_sizes.get(snap["id"]) if size is None else size
+
+    def start_snapshot_size_load(self):
+        # 旧快照没有 summary；逐个后台统计，避免阻塞首屏或同时扫描大量版本。
+        if (self.screen not in ("snapshots", "snap_actions") or self.loading
+                or self.load_error or self.repo_uninitialized or "snapshot_size" in self._requests):
+            return
+        for snap in reversed(self.snaps):
+            sid = snap["id"]
+            if (snap_size(snap) is None and sid not in self.snapshot_sizes
+                    and sid not in self.snapshot_size_errors):
+                self.pending_snapshot_size = sid
+                self._start_request("snapshot_size", lambda r, c, sid=sid: snapshot_total_size(r, c, sid))
+                return
 
     def poll_data(self):
         """只在主线程更新界面数据，忽略已过期的后台结果。"""
@@ -1426,6 +1546,13 @@ class App:
                         self.cursor = (new_ids.index(selected) if selected in new_ids
                                        else min(self.cursor, max(0, len(result) - 1)))
                 self.snaps = result
+            elif kind == "snapshot_size":
+                sid = self.pending_snapshot_size
+                self.pending_snapshot_size = None
+                if error:
+                    self.snapshot_size_errors[sid] = str(error)
+                else:
+                    self.snapshot_sizes[sid] = result
             else:
                 size = result.get("total_size") if isinstance(result, dict) else None
                 if not error and (not isinstance(size, int) or size < 0):
@@ -1493,7 +1620,8 @@ class App:
         if self.screen == "profiles":
             return f"配置文件: {CONFIG_FILE}"
         if self.screen == "menu":
-            return self.cfg["repository"]
+            user = self.cfg.get("run_as")
+            return (f"执行用户: {user} · " if user else "") + self.cfg["repository"]
         if self.screen == "snapshots":
             if self.repo_uninitialized:
                 return "首次备份将自动初始化仓库"
@@ -1505,7 +1633,8 @@ class App:
             return ""
         return (
             f"{snap['short_id']} · {snap['time'][:19].replace('T', ' ')} · "
-            f"{human_size(snap_size(snap))} · {snap_size(snap)} bytes"
+            + (f"{human_size(self.snapshot_size(snap))} · {self.snapshot_size(snap)} bytes"
+               if self.snapshot_size(snap) is not None else "版本数据量未知")
         )
 
     def footer(self, width):
@@ -1520,6 +1649,9 @@ class App:
         error = f"读取仓库失败: {self.load_error}" if self.load_error else ""
         if not error and self.screen == "snapshots" and self.repo_size_error:
             error = f"统计占用失败: {self.repo_size_error}"
+        if not error and self.screen in ("snapshots", "snap_actions") and self.snapshot_size_errors:
+            sid, detail = next(iter(self.snapshot_size_errors.items()))
+            error = f"版本 {sid[:8]} 数据量读取失败: {detail}"
         if error:
             for chunk in wrap_text(error + "；返回主菜单后重新进入版本列表重试", width - 2):
                 lines.append(f"  {YELLOW}{chunk}{RESET}")
@@ -1579,21 +1711,20 @@ class App:
              "run": self.act_edit_policy},
             {"label": "编辑排除清单", "desc": self.cfg.get("excludes") or "未配置 excludes",
              "run": self.act_edit_excludes},
-            {"label": "设置密码文件",
-             "desc": ("已设置 · " if password_ready(self.cfg) else "未设置 · ") + self.cfg["password_file"],
-             "run": self.act_set_password},
         ]
 
     def snapshot_items(self):
         items = []
         for snap in self.snaps:
             added = snap_added(snap)
+            size = self.snapshot_size(snap)
             items.append(
                 {
                     "badge": snap["short_id"],
                     "label": snap["time"][:19].replace("T", " "),
-                    "size": human_size(snap_size(snap)),
-                    "added": f"+{human_size(added)}" if added else "",
+                    "size": (human_size(size) if size is not None else
+                             "不可用" if snap["id"] in self.snapshot_size_errors else "统计中…"),
+                    "added": "新增未知" if added is None else f"+{human_size(added)}" if added else "",
                     "desc": ",".join(snap.get("tags") or []),
                     "goto": "snap_actions",
                 }
@@ -1752,10 +1883,6 @@ class App:
             if refresh_repo:
                 self.refresh()
 
-    def act_set_password(self):
-        code = self.run_suspended(set_password_file, self.cfg, refresh_repo=True)
-        self.set_message("密码文件已保存" if code == 0 else "密码文件未修改")
-
     def act_backup(self):
         # 退出码 3 也是“不完整”，不能说成“执行失败”，提示就用中性的
         code = self.run_suspended(do_backup, self.cfg, refresh_repo=True,
@@ -1808,14 +1935,14 @@ class App:
         """恢复到用户指定的目录。不默认写 /tmp：home 可能有上百 G，
         而 /tmp 在根文件系统上，既可能撑爆根也没意义。"""
         default = expand(self.cfg["restore_dir"]) / snap["short_id"]
-        need = snap_size(snap)
+        need = self.snapshot_size(snap)
         self.term.suspend()
         code = 1
         target = default
         try:
             info(f"恢复版本 {snap['short_id']}（{human_size(need)}）")
             entered = input(f"恢复到哪个目录？[默认 {default}] ").strip()
-            target = expand(entered) if entered else default
+            target = Path(os.path.abspath(expand(entered, self.cfg))) if entered else default
 
             free = self.free_space(target)
             if free is not None and need and free < need:
@@ -1830,7 +1957,7 @@ class App:
             code = subprocess.call(
                 [self.restic, "restore", snap["short_id"], "--target", str(target)]
                 + snapshot_args(self.cfg),
-                env=restic_env(self.cfg),
+                env=restic_env(self.cfg), **execution_options(self.cfg),
             )
             if code == 0:
                 root = restore_root(self.cfg, snap)
@@ -1860,7 +1987,7 @@ class App:
                     code = subprocess.call(
                         [self.restic, "diff", prev["short_id"], snap["short_id"]],
                         stdout=output,
-                        env=restic_env(self.cfg),
+                        env=restic_env(self.cfg), **execution_options(self.cfg),
                     )
                 if code == 0:
                     code = subprocess.call([
@@ -1999,7 +2126,7 @@ class App:
             if self.screen == "snapshots":
                 if self.load_error:
                     self.refresh()
-                elif self.repo_size_error:
+                elif self.repo_size_error or self.snapshot_size_errors:
                     self.invalidate_stats()
             self.start_stats_load()
             return None
@@ -2104,7 +2231,6 @@ def build_parser():
     command("config", help="打印配置 JSON；指定 -p 时打印该 profile 的有效配置")
     command("edit-config", help="编辑配置文件")
     command("edit-excludes", help="编辑当前 profile 的排除清单")
-    command("set-password", help="交互设置当前 profile 的密码文件，不覆盖已有文件")
     for name in ("mount", "browse", "unmount"):
         cmd = command(name, help="挂载浏览或卸载当前 profile")
         cmd.add_argument("dir", nargs="?", help="挂载目录")
@@ -2145,8 +2271,6 @@ def main():
         if message := editable_config(cfg["excludes"]):
             die(message)
         return subprocess.call([os.environ.get("EDITOR") or "vi", cfg["excludes"]])
-    if args.command == "set-password":
-        return set_password_file(cfg)
     if args.command == "preflight":
         if not cfg.get("hooks", {}).get("preflight"):
             die("当前 profile 未配置 hooks.preflight")
@@ -2160,7 +2284,6 @@ def main():
     if args.command == "check":
         return do_check(cfg)
     if args.command == "forget":
-        require_password(cfg)
         if args.dry_run:
             return do_forget(restic_bin(), cfg, dry_run=True)
         with writer_lock(cfg):
@@ -2188,4 +2311,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except OSError as exc:
+        die(str(exc))

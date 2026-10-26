@@ -60,7 +60,7 @@ Docker 按需启动。实测普通重启到图形目标约 16 秒。
 蓝牙需要本机的 `qca/crbtfw21.tlv`，不能使用通用 linux-firmware 中的同名文件。
 `pkgs/firmware/` 的优先级设为 5（数字越小优先级越高），覆盖优先级为 6 的
 linux-firmware；反过来会在固件下载后报 `Opcode 0x0c03 failed: -110`。
-设备 NVM 还包含占位地址，`bluetooth.nix` 在 BlueZ 启动前运行
+设备 NVM 还包含占位地址，`pkgs/bluetooth-address/module.nix` 在 BlueZ 启动前运行
 `pkgs/bluetooth-address/`：仅对缺少 public-address 的 WCN3990 控制器，
 根据本机 `/etc/machine-id` 派生固定的本地单播地址，并通过 BlueZ 管理接口配置。
 已有有效地址时保持原样；不需要重编内核或写入厂商分区。
@@ -160,7 +160,7 @@ cat /sys/class/power_supply/pmi8998-charger/charge_behaviour
 换用识别为 DCP 的充电器后，输入限流为 1.5 A，正常充电时电池电流约 1.04 A，
 空闲暂停充电的 25 秒测试中电池电流持续读到 0 mA。短测不代表长期或高负载下始终零放电。
 
-`battery-monitor.nix` 将 `oneplus6-battery-monitor.service` 配置为开机常驻服务，
+`pkgs/battery-monitor/module.nix` 将 `oneplus6-battery-monitor.service` 配置为开机常驻服务，
 异常退出自动重启，无截止时间。程序和测试位于 `pkgs/battery-monitor/`，
 每 60 秒只读记录一次电量、电流、电压、温度、充电状态及系统负载，不改变充电策略。
 电流单位为 µA（正为充电、负为放电），电压为 µV，温度为 0.1°C；

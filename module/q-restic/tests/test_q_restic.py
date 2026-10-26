@@ -188,7 +188,7 @@ class RetentionTests(unittest.TestCase):
         self.enterContext(contextlib.redirect_stdout(self.out))
         self.enterContext(contextlib.redirect_stderr(self.err))
         self.enterContext(patch.object(q, "restic_bin", return_value="restic"))
-        for name in ("require_password", "acquire_lock", "preflight_sftp", "ensure_repo"):
+        for name in ("acquire_lock", "preflight_sftp", "ensure_repo"):
             self.enterContext(patch.object(q, name))
 
     def test_cleanup_failure_reaches_caller_without_claiming_success(self):
@@ -358,7 +358,6 @@ class RetentionTests(unittest.TestCase):
 class LoadingTests(unittest.TestCase):
     def setUp(self):
         self.enterContext(patch.object(q, "acquire_lock"))
-        self.enterContext(patch.object(q, "password_ready", return_value=True))
         self.enterContext(patch.object(q.shutil, "which", return_value="restic"))
         self.app = test_app()
         self.app.restic = "restic"
@@ -387,7 +386,7 @@ class LoadingTests(unittest.TestCase):
                     self.assertEqual(q.snapshots("restic", self.app.cfg), [])
 
     def test_cli_status_reports_failure(self):
-        with patch.object(q, "restic_bin"), patch.object(q, "require_password"), patch.object(
+        with patch.object(q, "restic_bin"), patch.object(
             q, "snapshots", side_effect=RuntimeError("offline")
         ), contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
             self.assertEqual(q.do_status(self.app.cfg), 1)
@@ -546,7 +545,7 @@ class PtyTests(unittest.TestCase):
             (root / "q-restic").mkdir()
             cfg = raw_profile(repository=str(root / "repo"), host="test", password_file=str(root / "password"))
             (root / "password").write_text("test-password\n")
-            (root / "q-restic/config.json").write_text(json.dumps({"profiles": {"home": cfg}}))
+            (root / "test-config.json").write_text(json.dumps({"profiles": {"home": cfg}}))
             (root / "offline").touch()
             fake = root / "restic"
             fake.write_text("#!" + sys.executable + "\n" + '''import json, os, sys, time
@@ -560,7 +559,7 @@ if (root / 'offline').exists():
     raise SystemExit(1)
 if sys.argv[1] == 'snapshots':
     time.sleep(.3)
-    print(json.dumps([{'id': str(i)*64, 'short_id': str(i)*8, 'time': f'2026-10-0{i}T12:00:00Z'} for i in (1, 2)]))
+    print(json.dumps([{'id': str(i)*64, 'short_id': str(i)*8, 'time': f'2026-10-0{i}T12:00:00Z', 'summary': {'total_bytes_processed': 1024}} for i in (1, 2)]))
 elif sys.argv[1] == 'stats':
     assert sys.argv[2:5] == ['--json', '--mode', 'raw-data']
     time.sleep(.5)
@@ -573,7 +572,7 @@ else:
             if pid == 0:
                 os.environ.update(HOME=tmp, XDG_CONFIG_HOME=tmp, TERM="xterm-256color",
                                   EDITOR="/bin/true", PATH=tmp + ":" + os.environ["PATH"])
-                os.execv(sys.executable, [sys.executable, str(SOURCE), "-c", str(root / "q-restic/config.json"), "-p", "home"])
+                os.execv(sys.executable, [sys.executable, str(SOURCE), "-c", str(root / "test-config.json"), "-p", "home"])
             fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 90, 0, 0))
             def read_until(text):
                 output = bytearray()

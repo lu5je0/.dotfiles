@@ -31,7 +31,6 @@ class RepositoryStateTests(unittest.TestCase):
         self.document = {'profiles': {'home': self.raw}}
         self.cfg = q.profile_config(self.document, 'home')
         self.app = q.App(self.document, profile='home')
-        self.enterContext(patch.object(q, 'password_ready', return_value=True))
         self.enterContext(patch.object(q.shutil, 'which', return_value='restic'))
 
     def until_loaded(self):
@@ -75,7 +74,7 @@ class RepositoryStateTests(unittest.TestCase):
         self.assertFalse(q.repository_missing(result, dict(self.cfg, repository='sftp:user@host:/repo')))
 
     def test_cli_status_explains_first_backup_without_creating_repository(self):
-        with patch.object(q, 'restic_bin'), patch.object(q, 'require_password'), patch.object(q, 'snapshots', side_effect=q.RepositoryNotInitialized('仓库未初始化')), contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
+        with patch.object(q, 'restic_bin'), patch.object(q, 'snapshots', side_effect=q.RepositoryNotInitialized('仓库未初始化')), contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
             self.assertEqual(q.do_status(self.cfg), 0)
         self.assertIn('仓库未初始化', out.getvalue())
         self.assertIn('backup', out.getvalue())
@@ -139,7 +138,7 @@ class NativeRepositoryTests(unittest.TestCase):
             (root/'source').mkdir()
             (root/'source/file').write_text('test data')
             password = root/'password'
-            password.write_text('test-only\n')
+            password.write_text('lu5je0\n')
             password.chmod(0o600)
             cfg = root/'config.json'
             cfg.write_text(json.dumps({'profiles': {'home': dict(sources=[str(root/'source')],

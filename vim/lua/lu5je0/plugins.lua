@@ -258,6 +258,7 @@ local plugins = {
   },
   {
     'mg979/vim-visual-multi',
+    -- workaround: neovim-multicursor-compat
     -- Neovim 0.13+ 用原生 multicursor（见 ext/multicursor.lua），插件的键位与语义都会打架。
     enabled = function()
       return not require('lu5je0.ext.multicursor').supported
@@ -596,6 +597,7 @@ local plugins = {
     },
     {
       "dnlhc/glance.nvim",
+      -- workaround: glance-nixd-definition
       -- nixd 在字符串、注释等不支持跳转的节点上会报错，Glance 随后还会提示 No definitions found。
       -- 此补丁仅静默该已知错误及其重复提示；上游修复后可移除：https://github.com/nix-community/nixd/issues/823
       patches = { 'glance-nixd-definition.diff' },

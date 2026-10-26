@@ -38,7 +38,7 @@ class ImportTests(unittest.TestCase):
         for name, base in [('home', self.source.parent), ('other', self.root)]:
             cfg = q.profile_config(document, name)
             self.assertEqual(cfg['sources'], [str(base / 'data')])
-            for key, suffix in [('repository', 'repo'), ('password_file', 'password'),
+            for key, suffix in [('repository', 'repo'),
                                 ('excludes', 'excludes'), ('mount_dir', 'mount'), ('restore_dir', 'restore')]:
                 self.assertEqual(cfg[key], str(base / suffix))
 

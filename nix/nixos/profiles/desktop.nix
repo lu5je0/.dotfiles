@@ -2,12 +2,17 @@
 
 {
   imports = [
-    ../modules/arcglyph.nix
+    ../pkgs/arcglyph/module.nix
+    ../modules/desktop-icons.nix
     ../modules/fcitx5-rime.nix
     ../modules/gnome.nix
     ../modules/keyd.nix
-    ../modules/mission-center.nix
+    ../pkgs/mission-center/module.nix
   ];
+
+  programs.desktopIconOverrides = {
+    "io.github.yucling.open-orpheus" = ../icons/netease-cloud-music.svg;
+  };
 
   environment.systemPackages = with pkgs; [
     (pkgs.callPackage ../pkgs/kitty { })
@@ -19,7 +24,7 @@
   users.users.lu5je0.packages = with pkgs; [
     google-chrome
     telegram-desktop
-    wechat
+    (pkgs.callPackage ../pkgs/wechat { })
     mpv
     wineWow64Packages.stable
     wpsoffice-cn
