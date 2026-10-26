@@ -24,8 +24,10 @@
       支持子路径部署，不请求 Ookla 配置，也不保存测速结果。
       上传使用 16 MiB 二进制请求，避免 PHP 表单解析与频繁请求的开销。
     - 输出格式对齐官方 CLI 的 human-readable 结果。
-    - 进度条显示最近 2 秒的速度；最终速度取各采样点完整 2 秒窗口平均速度的最大值，
-      不含线程退出等待。阶段不足 2 秒时使用全程平均速度。
+    - 速率参考网页引擎的 mst_66_30：按 500 ms 分桶，去掉最快两桶，
+      再去掉剩余桶中最慢的约 1/3，以保留桶的总字节 / 总时长计算速度。
+      结果不低于全程均速；进度中按阶段完成比例从均速过渡到筛样速度。
+    - 延迟显示中间 50% 样本的均值（IQM），排除两端异常值。
 
 环境变量：
     SPEEDTEST_DURATION   覆盖每个阶段时长（秒，默认 10）
@@ -35,6 +37,8 @@
     SPEEDTEST_SAVE=1     尝试把结果保存到 speedtest.net（默认关闭，因为该接口未公开）
 
 已知差异：
+    - 仍使用单服务器 HTTP legacy 接口，未实现网页引擎的动态连接扩容、
+      WebSocket 延迟与服务端上传接收统计；结果不能视为官方引擎的完全复现。
     - 默认不生成 Result URL（官方通过未公开的 results.speedtest.net 接口保存）。
       设置 SPEEDTEST_SAVE=1 时会尽力尝试，失败则静默跳过。
 """
@@ -46,6 +50,7 @@ import http.client
 import json
 import os
 import random
+import socket
 import ssl
 import sys
 import threading
@@ -70,7 +75,7 @@ DOWNLOAD_SIZE = 4000
 UPLOAD_CHUNK = 1024 * 1024
 LIBRESPEED_UPLOAD_CHUNK = 16 * 1024 * 1024
 IO_CHUNK = 256 * 1024
-RATE_WINDOW = 2.0
+RATE_BUCKET = 0.5
 SPINNER = "-\\|/"
 OOKLA_PATHS = {
     "latency": PROBE_PATH,
@@ -95,15 +100,21 @@ def human_bytes(n):
 
 
 def latency_stats(samples):
-    """返回 (low, high, mean, jitter)。jitter 取相邻样本差的平均绝对值。"""
+    """返回 (low, high, IQM, jitter)。jitter 取相邻样本差的平均绝对值。"""
     low = min(samples)
     high = max(samples)
-    mean = sum(samples) / len(samples)
+    ordered = sorted(samples)
+    if len(ordered) <= 2:
+        iqm = sum(ordered) / len(ordered)
+    else:
+        lower, upper = len(ordered) / 4, len(ordered) * 3 / 4
+        iqm = sum(value * max(0.0, min(index + 1, upper) - max(index, lower))
+                  for index, value in enumerate(ordered)) / (upper - lower)
     if len(samples) > 1:
         jitter = sum(abs(samples[i] - samples[i - 1]) for i in range(1, len(samples))) / (len(samples) - 1)
     else:
         jitter = 0.0
-    return low, high, mean, jitter
+    return low, high, iqm, jitter
 
 
 def _config_cache_path(server_id):
@@ -382,35 +393,47 @@ def _clear_progress():
     sys.stdout.flush()
 
 
-def sample_rate(samples, since):
-    """计算 since 至最后一次采样的字节速率，边界在相邻采样之间线性插值。"""
-    if len(samples) < 2:
-        return 0.0
-    begin, first_bytes = samples[0]
-    for stamp, count in samples[1:]:
-        if stamp <= since:
-            begin, first_bytes = stamp, count
-        else:
-            if since > begin:
-                first_bytes += (count - first_bytes) * (since - begin) / (stamp - begin)
-                begin = since
-            break
-    end, last_bytes = samples[-1]
-    if end <= begin:
-        return 0.0
-    return max(last_bytes - first_bytes, 0) / (end - begin)
+class ThroughputStats:
+    """按实际 I/O 到达时间分桶；调用方用锁保护写入和读取。
 
+    参考 speedtest.net 网页引擎的 mst_66_30（500 ms、保留约 2/3）。
+    源码：https://r.cdnst.net/assets/index-DcaxsiQx.js（模块 650、892、894）。
+    按字节速率排序，保留桶按时长加权；短阶段回退到均速。
+    本地统计使用完整阶段时长，避免最后一次 I/O 后的停顿被漏算。
+    """
 
-def peak_window_rate(samples, window):
-    """取完整滑动窗口的最高平均速度；不足一个窗口时使用全程平均。"""
-    if len(samples) < 2:
-        return 0.0
-    start = samples[0][0]
-    if samples[-1][0] - start < window:
-        return sample_rate(samples, start)
-    return max(sample_rate(samples[:index + 1], stamp - window)
-               for index, (stamp, _) in enumerate(samples)
-               if stamp - start >= window)
+    def __init__(self):
+        self.bytes = 0
+        self.buckets = []
+
+    def add(self, size, elapsed):
+        index = int(elapsed / RATE_BUCKET)
+        while len(self.buckets) <= index:
+            self.buckets.append(0)
+        self.buckets[index] += size
+        self.bytes += size
+
+    def speed(self, elapsed, duration, finished=False):
+        if elapsed <= 0:
+            return 0.0
+        average = self.bytes / elapsed
+        # 进度中只使用已完成的桶；结束时纳入最后一个不足 500 ms 的桶。
+        count = int(elapsed / RATE_BUCKET)
+        buckets = [(self.buckets[index] if index < len(self.buckets) else 0, RATE_BUCKET)
+                   for index in range(count)]
+        tail = elapsed - count * RATE_BUCKET
+        if finished and tail > 1e-6:
+            buckets.append((self.buckets[count] if count < len(self.buckets) else 0, tail))
+        if len(buckets) < 4:
+            return average
+        buckets.sort(key=lambda item: item[0] / item[1], reverse=True)
+        buckets = buckets[2:]  # 丢弃最快两桶，避免瞬间突发抬高结果。
+        discard = int(len(buckets) * (1 - 2 / 3))
+        if discard:
+            buckets = buckets[:-discard]
+        filtered = sum(size for size, _ in buckets) / sum(span for _, span in buckets)
+        ratio = 1.0 if finished else min(elapsed / duration, 1.0)
+        return average + ratio * max(filtered - average, 0.0)
 
 
 def run_transfer(label, base, duration, thread_count, upload, progress, paths=None,
@@ -418,33 +441,53 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
     """并发跑一个阶段的下载或上传，返回统计结果。"""
     paths = OOKLA_PATHS if paths is None else paths
     lock = threading.Lock()
-    counter = {"bytes": 0}
+    stats = ThroughputStats()
     latencies = []
     errors = []
+    connections = {}
     stop = threading.Event()
     buf = os.urandom(upload_size) if upload else None
     start = time.monotonic()
-    samples = [(start, 0)]
 
     def add(n):
         with lock:
-            counter["bytes"] += n
+            elapsed = time.monotonic() - start
+            if not stop.is_set() and elapsed < duration:
+                stats.add(n, elapsed)
 
-    def total():
+    def snapshot(finished=False):
         with lock:
-            return counter["bytes"]
+            now = min(time.monotonic(), start + duration)
+            return now, stats.bytes, stats.speed(now - start, duration, finished)
 
-    def snapshot():
-        with lock:
-            return time.monotonic(), counter["bytes"]
+    def open_conn():
+        conn = make_conn(base)
+        conn.timeout = min(3.0, duration)
+        try:
+            conn.connect()
+            with lock:
+                if not stop.is_set():
+                    connections[conn] = conn.sock
+                    return conn
+            raise OSError("测速阶段已结束")
+        except Exception:
+            conn.close()
+            raise
+
+    def close_conn(conn):
+        if conn is not None:
+            with lock:
+                connections.pop(conn, None)
+            conn.close()
 
     def worker():
         conn = None
         download_buf = bytearray(IO_CHUNK) if not upload else None
         while not stop.is_set():
             try:
-                if conn is None:
-                    conn = make_conn(base)
+                if conn is None or conn.sock is None:
+                    close_conn(conn)
+                    conn = open_conn()
                 if upload:
                     conn.request(
                         "POST",
@@ -459,7 +502,7 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
                     if stop.is_set():
                         # body 被截断，请求不完整，直接关连接
                         try:
-                            conn.close()
+                            close_conn(conn)
                         except Exception:
                             pass
                         conn = None
@@ -488,26 +531,23 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
                     stop.set()
                 try:
                     if conn is not None:
-                        conn.close()
+                        close_conn(conn)
                 except Exception:
                     pass
                 conn = None
                 if stop.is_set():
                     break
-                time.sleep(0.2)
+                stop.wait(0.2)
         try:
-            if conn is not None:
-                conn.close()
+            close_conn(conn)
         except Exception:
             pass
 
     def sampler():
         spin = 0
         while not stop.wait(0.1):
-            now, current = snapshot()
-            samples.append((now, current))
+            now, current, rate = snapshot()
             if progress:
-                rate = sample_rate(samples, now - RATE_WINDOW)
                 if current > 0:
                     percent = min(99, int((now - start) / duration * 100)) if duration else 0
                 else:
@@ -521,20 +561,22 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
         conn = None
         while not stop.is_set():
             try:
-                if conn is None:
-                    conn = make_conn(base)
-                latencies.append(conn_latency(conn, paths["latency"]))
+                if conn is None or conn.sock is None:
+                    close_conn(conn)
+                    conn = open_conn()
+                ms = conn_latency(conn, paths["latency"])
+                if not stop.is_set():
+                    latencies.append(ms)
             except Exception:
                 try:
                     if conn is not None:
-                        conn.close()
+                        close_conn(conn)
                 except Exception:
                     pass
                 conn = None
             stop.wait(0.75)
         try:
-            if conn is not None:
-                conn.close()
+            close_conn(conn)
         except Exception:
             pass
 
@@ -552,19 +594,23 @@ def run_transfer(label, base, duration, thread_count, upload, progress, paths=No
         if remaining <= 0:
             break
         stop.wait(min(remaining, 0.1))
-    stop.set()
-    end_sample = snapshot()
+    with lock:
+        stop.set()
+        active_sockets = list(connections.values())
+    end_time, total_bytes, speed = snapshot(finished=True)
+    # shutdown 同时打断响应体读取和上传，避免残留流量进入下一个阶段。
+    for sock in active_sockets:
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
     mon.join(timeout=3)
     probe_thread.join(timeout=3)
     join_deadline = time.monotonic() + 3
     for thread in workers:
         thread.join(timeout=max(0.0, join_deadline - time.monotonic()))
 
-    elapsed = end_sample[0] - start
-    total_bytes = total()
-    # 冻结停止传输时的快照，排除收尾等待与在途块稍后完成带来的计数。
-    final_samples = [sample for sample in samples if sample[0] < end_sample[0]] + [end_sample]
-    speed = peak_window_rate(final_samples, RATE_WINDOW)
+    elapsed = end_time - start
 
     if progress:
         _clear_progress()
@@ -582,9 +628,9 @@ def print_speed_line(label, speed_bps, data_bytes):
 def print_loaded_latency(samples):
     if not samples:
         return
-    low, high, mean, jitter = latency_stats(samples)
+    low, high, iqm, jitter = latency_stats(samples)
     print("%12s  %8.2f ms   (jitter: %.2fms, low: %.2fms, high: %.2fms)"
-          % ("", mean, jitter, low, high))
+          % ("", iqm, jitter, low, high))
 
 
 def try_save_result(cfg, payload):
@@ -714,9 +760,9 @@ def main(argv):
         # 和官方一致：连延迟测试都做不了就直接失败退出
         print("Error: Latency test failed", file=sys.stderr)
         return 2
-    low, high, mean, jitter = latency_stats(idle)
+    low, high, iqm, jitter = latency_stats(idle)
     print("%12s: %8.2f ms   (jitter: %.2fms, low: %.2fms, high: %.2fms)"
-          % ("Idle Latency", mean, jitter, low, high))
+          % ("Idle Latency", iqm, jitter, low, high))
 
     upload_enabled = stage.get("upload", {}).get("isServerUploadEnabled", True)
 
@@ -753,7 +799,7 @@ def main(argv):
                 "name": server.get("name"),
                 "country": server.get("country"),
             },
-            "ping": ({"latency": idle[0]} if idle else {}),
+            "ping": ({"latency": iqm} if idle else {}),
             "download": {"bandwidth": int(download["speed"]), "bytes": download["bytes"]},
             "upload": ({"bandwidth": int(upload["speed"]), "bytes": upload["bytes"]}
                        if upload_enabled else {}),
