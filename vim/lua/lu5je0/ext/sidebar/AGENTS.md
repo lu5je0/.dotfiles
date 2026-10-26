@@ -95,6 +95,7 @@ sidebar/
 - Files 的 Git 状态键相对仓库根目录，不是 cwd；折叠目录再次展开时需重扫，不能依赖折叠期间已停止的监听。
 - 查询使用 `--ignored=matching`，避免递归输出被忽略目录中的每个文件；Files 的忽略标记需继承最近的 ignored 祖先，不能仅查当前路径。
 - devicons 已缓存、fullname popup 复用 buffer/window、suffix 用 `right_align` virt_text — 不要退化。
+- fullname popup 按 sidebar 的实际 `textoff` 对齐，沿用 `leftcol` 横向视口；不要用固定空格模拟边距，也不要在搜索触发横向滚动后从行首重画选中行。
 
 ## 集成点
 
@@ -108,6 +109,7 @@ sidebar/
   - `state_spec.lua` — per-tab schema / 隔离 / cleanup
   - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
+  - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
   - `diff_preview_spec.lua` — `resolve_diff_targets` 映射
   - `parser_spec.lua` — `files_to_tree_nodes`、`git_root` 缓存自失效
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为
