@@ -5,6 +5,7 @@ let
   userPackages =
     common.userPackages
     ++ (with pkgs; [
+      google-chrome
       # 在这里添加 Mac 专属的个人软件。
     ]);
 in
