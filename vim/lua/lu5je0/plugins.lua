@@ -349,7 +349,7 @@ local plugins = {
     config = function()
       require('lu5je0.ext.scrollview').setup()
     end,
-    event = { 'VeryLazy' }
+    keys = { { '<leader><tab>', mode = 'n', nowait = true, desc = 'Toggle scrollview' } }
   },
 
   -- {
@@ -534,7 +534,6 @@ local plugins = {
     },
     {
       "folke/lazydev.nvim",
-      ft = "lua", -- only load on lua files
       config = function()
         require('lazydev').setup {
           library = {
@@ -553,11 +552,12 @@ local plugins = {
         }
         
         vim.api.nvim_create_autocmd('LspAttach', {
+          group = vim.api.nvim_create_augroup('lu5je0_navic', { clear = true }),
           callback = function(ctx)
             local client = vim.lsp.get_client_by_id(ctx.data.client_id)
             if client and client.server_capabilities.documentSymbolProvider then
               local navic = require("nvim-navic")
-              navic.attach(client, vim.api.nvim_get_current_buf())
+              navic.attach(client, ctx.buf)
             end
           end
         })
@@ -675,7 +675,9 @@ local plugins = {
         }
       }
     end,
-    ft = nvim_colorizer_ft,
+    ft = vim.tbl_filter(function(ft)
+      return ft ~= 'lua'
+    end, nvim_colorizer_ft),
   },
   {
     'lambdalisue/suda.vim',
@@ -917,7 +919,7 @@ local plugins = {
         }
       }
     end,
-    ft = 'markdown'
+    lazy = true,
   },
   
   -- {
@@ -956,7 +958,6 @@ local plugins = {
     config = function()
       require('lu5je0.ext.snacks').setup()
     end,
-    ft = { 'markdown' },
     event = 'VeryLazy',
   },
   

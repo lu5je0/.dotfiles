@@ -21,8 +21,8 @@ function M.is_available(buf_id)
   if filetype == 'json' then
     return true
   else
-    local ok, navic = pcall(require, 'nvim-navic')
-    if not ok then
+    local navic = package.loaded['nvim-navic']
+    if not navic then
       return false
     end
     return navic.is_available()

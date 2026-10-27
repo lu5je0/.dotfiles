@@ -74,7 +74,7 @@ local components = {
       if args.filename ~= '' then
         filename = args.filename
       else
-        local buffer_number = require('lu5je0.ext.bufferline').buffer_name_map[args.buf_id]
+        local buffer_number = require('lu5je0.ext.winbar.state').buffer_name_map[args.buf_id]
         if buffer_number then
           filename = '[Untitled-' .. buffer_number .. ']'
         else
@@ -214,8 +214,8 @@ local components = {
         hunks = gitsigns.get_hunks(args.buf_id)
       end
       if not hunks then
-        local db_ok, core = pcall(require, 'lu5je0.ext.diff-base.core')
-        if db_ok and core.state[args.buf_id] then
+        local core = package.loaded['lu5je0.ext.diff-base.core']
+        if core and core.state[args.buf_id] then
           hunks = core.state[args.buf_id].hunks
         end
       end

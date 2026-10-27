@@ -1,317 +1,83 @@
 # Neovim 配置工作指引
 
-## 适用范围
-- 本文件适用于 `vim/` 目录下的 Neovim 配置、测试、补丁与本地依赖约定。
-- 如果任务同时涉及仓库根目录其他组件，遵循就近原则：`vim/` 内改动优先参考本文件，跨目录联动再补充阅读对应目录文档。
-- 如果任务同时涉及 `module/tui-bridge` 和 `vim/`，还需阅读 `module/tui-bridge/AGENTS.md`。
+## 范围与维护
 
-## 维护约定
-- 修改配置装配方式、核心目录职责、测试入口、补丁流程、`tui-bridge` 接入方式时，必须同步更新本文件。
-- 只要 AI 改动了本文件已声明的事实、规则、目录职责、验证方式或联动关系，必须同时更新本文件，不能只改代码不改文档。
-- 不要把这里写成通用 Neovim 教程；只记录当前仓库里真实存在的结构、约束和工作流。
-- 优先做最小改动，保持现有模块边界与懒加载方式，不要无故把独立模块内联回 `init.lua`。
+- 适用于 `vim/`；修改子目录前阅读其中的 `AGENTS.md`，跨目录联动时同时阅读对应说明。
+- 修改本文声明的结构、约束、加载方式或验证入口时同步更新本文，只记录当前行为和必要的设计原因。
+- 保持模块边界与懒加载方式，优先做最小改动；Lua 格式遵循 `stylua.toml`。
+- 涉及桥接协议、IME、剪贴板或二进制同步时，同时检查仓库根目录的 `module/tui-bridge/AGENTS.md`。
 
-## 入口与加载顺序
-- 主入口是 `vim/init.lua`。
-- 启动时先启用 `vim.loader`，再确保 `lazy.nvim` 位于运行时路径中。
-- 核心模块按顺序加载：
-  - `lu5je0.options`
-  - `lu5je0.mappings`
-  - `lu5je0.plugins`
-  - `lu5je0.ext-loader`
-  - `lu5je0.commands`
-  - `lu5je0.autocmds`
-  - `lu5je0.filetype`
-- 每个核心模块都通过 `pcall(require, ...)` 加载；如果某模块报错，Neovim 会继续启动并通过 `vim.notify` 报错。
-- `plugin/matchparen.vim` 会在延迟回调中手动加载，因为内建 `matchparen` 已从默认运行时插件列表里禁用。
+## 结构与装配
 
-## 目录职责
-- `lua/lu5je0/options.lua`: 基础选项。
-- `lua/lu5je0/mappings.lua`: 全局按键。
-- `lua/lu5je0/plugins.lua`: `lazy.nvim` 插件声明、补丁声明、插件级装配入口。
-- `lua/lu5je0/ext-loader.lua`: 仓库自定义懒加载器，负责按 `keys`、`cmd`、`event` 延迟加载本地扩展。
-- `lua/lu5je0/ext/`: 第三方插件配置适配层。通常一个插件一个文件。
-- `lua/lu5je0/core/`: 可复用核心能力，供多个扩展或功能模块共享。
-  - `core/filetree.lua`: 使用 Sidebar Files 页打开目录；注册 `Plugins`、`SwapFiles`、`TimeMachine`，由 `ext-config.lua` 的 sidebar 条目懒加载，插件和 swap 目录分别从 `stdpath('data')` / `stdpath('state')` 获取。
-  - `core/buffer-modified.lua`: 'modified' 变化的兼容注册层，见下方「临时兼容」一节。
-  - `core/multicursor-guard.lua`: 原生多光标能力探测与批量编辑保护，由 gitsigns / DiffBase 共用；不加载按键适配层。
-- `lua/lu5je0/misc/`: 独立功能模块与自定义工具，例如 IME、clipboard、timestamp、translator、json-helper。
-  - `misc/lsp-info.lua`: `:LspInfo` 的只读浮窗，沿用 `ExtLoader` 的圆角边框、状态图标、分组高亮与紧凑列表；尺寸采用 Lazy 默认的 80% 编辑器宽高，居中并随 `VimResized` 调整，长行自动换行。展示当前 buffer / 其他 buffer 的客户端与当前文件类型已启用但未连接的配置；`q` / `<Esc>` 关闭。命令由 `nvim-lspconfig` spec 的 `cmd` 首次加载，配置回调在上游插件加载后注册，报告模块只在执行命令时加载。
-- `lua/lu5je0/lang/`: 轻量通用工具函数。
-- `ftplugin/`, `syntax/`, `indent/`: 文件类型定制。
-- `lsp/`: 独立语言服务器配置文件。
-- `patches/`: 对上游插件 Lua 模块的补丁文件，和 `plugins.lua` 中的 `patches = { ... }` 声明联动；应用到缓存副本，不修改插件安装目录。
-- `tests/`: 当前仓库内的自动化测试。现有入口覆盖 `cron-parser`、`line-log`、`lazy-patch`、`glance`、`project-log`、`git-selection`、`sidebar`、`multicursor` 与 `whichkey`，并按功能子目录组织。
-- `lib/` 下的 native 依赖优先按平台子目录组织；如果调整其落点，需要同时检查 Neovim 配置、外部消费脚本和构建同步逻辑。
+- `init.lua` 先启用 `vim.loader`、加入 lazy.nvim 运行时路径，再依次加载 `lu5je0.options`、`keymaps`、`plugins`、`ext-config`、`commands`、`autocmds`、`filetype`。各模块通过 `pcall(require, ...)` 加载，失败时通知但继续启动。
+- `lua/lu5je0/plugins.lua` 集中声明第三方插件、依赖、补丁与插件级配置；适配代码放在 `ext/`。
+- `ext-config.lua` 声明本地扩展，由 `ext/loader.lua` 按 `keys`、`cmd`、`event` 代理首次加载并回放操作。
+- `core/` 放共享能力，`misc/` 放独立工具，`lang/` 放轻量函数；新功能通过明确的装配入口接入。
+- 文件类型定制放在 `ftplugin/`、`after/` 等运行时目录；LSP 修改同时检查 `lsp/` 和 `core/lsp.lua`。
+- `core/filetree.lua` 通过 Sidebar Files 页打开目录，注册 `Plugins`、`SwapFiles`、`TimeMachine`，由 sidebar 条目懒加载；插件和 swap 路径分别取自 `stdpath('data')`、`stdpath('state')`。
+- `misc/lsp-info.lua` 只在执行 `:LspInfo` 时加载；命令由 nvim-lspconfig 的 `cmd` 懒加载入口注册。
+- `lib/` 的 native 资源按平台组织，通过 `core/native.lua` 解析；调整位置时检查外部消费脚本和构建同步逻辑。
 
-## Multicursor (`ext/multicursor.lua`)
+## 插件加载与补丁
 
-Neovim 0.13 起 multicursor 是内建能力（`:help multicursor`），不再需要 `mg979/vim-visual-multi`。
-`lua/lu5je0/ext/multicursor.lua` 保留 Ctrl-N 风格的加匹配入口，但 cursor 使用原生 normal-mode 语义。
+- 基础编辑行为放在 `options.lua`、`keymaps.lua`、`autocmds.lua`、`commands.lua`；第三方插件行为优先放在对应 spec 或适配文件中。
+- Markdown 依赖由 `ftplugin/markdown.lua` 直接调用 `lazy.load`，避免 lazy 的 `FileType` 重放重复初始化语法。render-markdown 保持 `lazy = true`，Snacks 保留供其他功能使用的 `VeryLazy`。
+- Lua 依赖由 `ftplugin/lua.lua` 直接加载 lazydev 和 colorizer，并显式挂载 colorizer 到当前 buffer，避免错过正在派发的 `FileType`。lazydev 保持 `lazy = true`；colorizer 的配置仍包含 Lua，但 spec 的 `ft` 排除 Lua，其他文件类型保持按需加载。
+- Scrollview 由 normal 模式 `<leader><Tab>` 首次加载，默认关闭，按键启用五秒、再按可提前关闭。setup 必须先完成上游延迟的命令初始化，才能回放首按。
+- 插件 spec 的 `keys` 不得使用裸 `<leader>`：lazy 代理会占用该键，阻止 which-key 安装触发器；使用实际功能键，如 `<leader>ff`。
+- 改插件版本、来源或锁定策略时检查 `lazy-lock.json`；仅在必要时调整 `disabled_plugins`，它直接改变运行时插件集合。
+- `nixd` 由 Nix 的 `nix/common/packages.nix` 安装，不经 Mason；`core/lsp.lua` 检查 PATH 后启用，配置在 `lsp/nixd.lua`。
+- 补丁文件放在 `patches/`，与 spec 的 `patches` 声明同步维护；只支持修改现有 `lua/**/*.lua` 模块，不支持增删、重命名模块或修改其他运行时文件。
+- `ext/lazy_patch.lua` 在 `lazy.setup()` 前注册，通过 `LazyPlugins` 读取解析后的 spec 和插件目录，再用 `package.preload` 覆盖模块，保留首次加载与配置语义。
+- 首次 require 时复制受影响源码，在 `stdpath('cache')/lazy-patches/<内容哈希>/` 应用补丁；哈希包含源码、插件目录和补丁内容，暖缓存不调用 Git。生成使用临时目录并原子发布，应用或语法检查失败直接报错，不回退原模块、不修改插件工作树。
+- `:LazyApplyPatch` 主动准备缓存但不热重载；修改补丁后重启 Neovim。恢复版本用 `Lazy restore`；根目录 `lazy-restore.sh` 使用阻塞的 `Lazy! restore` 后更新 parser。
+- `lazy-restore.sh` 的原地补丁兼容段只撤销可完整反向应用的已知补丁，保留其他本地修改；所有环境改用缓存补丁后删除该兼容段。
+- Glance 补丁仅静默 nixd 的 `unknown node type for definition`；只有全部客户端响应均为该错误时才跳过 `No definitions found`，其他错误、空结果和正常结果保留原行为。
 
-- 能力探测统一读取 `require('lu5je0.ext.multicursor').supported`（转发共享保护模块的结果）：检查原生
-  `vim._core.mcursor` 模块与 `follow` 选项，**不要**只判断 `nvim_mcursor` 或版本号。
-  新版 0.13 nightly 已移除 `nvim_mcursor`；添加 cursor 改用 `nvim.multicursor` namespace
-  中的 extmark，仍提供旧 API 的早期 nightly 则继续走旧接口。
-- 0.12 上模块整体 no-op（但仍导出空的 `setup()`，因为 `ext-config.lua` 会无条件调用）。
-  同一套 `<C-n>`/`<M-n>` 由 `vim-visual-multi` 提供，见下。
-- `<C-n>`：在当前词和下一个整词匹配处放 cursor，连按逐个追加，并保持首次 pattern；
-  cursor 留在 normal mode，替换单词使用 `ciw`，不再模拟 vim-visual-multi 的 Visual 选区。
-- `<M-n>`：在下方同列加 cursor；它和 `<C-n>` 都开启 follow-mode（`q=`）。
-- `\A`：一次在当前词/visual 选区的所有匹配处放置 normal-mode cursor，primary 取离原光标
-  最近的匹配；不会为 primary 自己再加 anchor，连按幂等。
-- 原生 `Q`/`[count]Q`/`gQ`/`]C`/`g<C-A>` 保留默认，`Q` 自己会关 follow。
-- 退出用 `<C-l>`：只在当前 buffer 有 cursor 时挂 buffer-local 映射；会话结束后删除并还原
-  原 buffer-local `<C-l>`。无 cursor 时仍是全局 `<C-w>l` 或 diff_preview 自己的映射。
-- `<C-p>` 删除当前 region，primary 换成另一个 cursor；`<C-x>` 保留 anchors 并把 primary
-  前进到下一个匹配。两者只在会话中挂载，退出时还原原映射。
-- 系统剪切板粘贴用**全局** `<leader>p`/`<leader>P`（`"*p`/`"*P`，字符串映射，见 `keymaps.lua`）。
-  不要在 multicursor 里依赖隐式 `clipboard=unnamed/unnamedplus`，也不要把 `p`/`P` 包成
-  Lua 函数映射（例如 lazy proxy）：实测两者都只有 primary 生效，其余 cursor 会插入错位内容。
-  显式 `"*`/`"+` 是全局寄存器，字符串映射会被原样重放，每个 cursor 都粘同一份内容。
-- `<C-n>`/`\A` 必须把 pattern 写入 `@/`，供 `<C-x>` 和原生搜索命令使用；同时把首次 pattern
-  保存在 `session_patterns`，否则 visual 文本 pattern 或后续光标下单词可能改变匹配语义。
-- Git reset 的调用与异步回调留在 `ext/gitsigns.lua`；DiffBase 的同步编辑留在各自 actions 中。
-  两者直接调用 `core/multicursor-guard.lua` 的 `preserve(action)`，不依赖多光标按键模块。
-  reset 仍只执行一次，`gu` 仍只恢复 primary 所在的改动块，不变成逐个 cursor 的批量 reset。
-- 共享保护模块在 typed CmdAtom 外执行 `action(done)`；同步或异步编辑结束时必须调用
-  `done(err)`。它用 `on_lines` 修正行数变化，完成后还原 cursor 和 follow 状态；实际被删除的
-  位置会夹到有效行列并去重。
-- `ext/multicursor.lua` 通过 `set_session_hooks(capture, restore)` 提供私有首次 pattern 的保存与恢复，
-  通过 `cancel(buf)` 通知主动退出。共享模块不读取该模块内部状态；手动 `<C-l>` 后不得重新创建光标。
+## Multicursor
 
-### `<C-l>` 是 buffer-local 且懒挂载的
+- 能力探测统一使用 `require('lu5je0.ext.multicursor').supported`，由 `core/multicursor-guard.lua` 先检查 `follow` 选项，再加载 `vim._core.mcursor` 并检查 `active`；不能只检查版本号或 `nvim_mcursor`。
+- 0.12 使用 vim-visual-multi，原生适配层保持 no-op 的 `setup()`；0.13+ 使用原生能力。仓库不再支持 0.12 时可移除兼容插件及其 spec、配置和按键。
+- 原生 cursor 使用 normal-mode 语义；`<C-n>`、`<M-n>`、`\A` 完成后开启 follow。添加或移动 cursor 的主体必须 `vim.schedule` 出 typed CmdAtom，避免 LHS replay 级联；移动 primary 前用 `2q=` 关闭 follow，完成后用 `1q=` 恢复。
+- `<C-n>` 连按复用首次 pattern，`<C-n>` / `\A` 同时写入 `@/` 和 `session_patterns`；保留整词边界，不能随光标变化重新取词。
+- x-mode 回调通过 `vim.fn.mode()` 判断选区类型，不能依赖此时为空的 `visualmode()`；退出选区后显式使用左上角位置。
+- `<C-l>`、`<C-p>`、`<C-x>` 仅在会话中挂 buffer-local 映射，结束时恢复原映射。比较 `nvim_buf_get_keymap()` 的 lhs 时处理大小写和 `<leader>` 展开。
+- 不在正在执行的映射回调里卸载自身；先保存待恢复状态，由 scheduled `sync_cl_map` 重判 `mc.active()` 后处理。清 namespace 后等待一拍再开始下一次测试。
+- 系统剪贴板粘贴保持全局 `<leader>p` / `<leader>P` 的 `"*p` / `"*P` 字符串映射；隐式 clipboard 或 Lua 函数代理会导致只有 primary 生效。
+- gitsigns / DiffBase 直接调用共享保护模块的 `preserve(action)`，不依赖按键适配层；reset 只执行一次，保留当前 hunk 的操作范围。
+- 受保护的同步或异步编辑必须调用 `done(err)`；保护层修正 cursor 位置并恢复 follow，通过 session hooks 保存/恢复 pattern，且不得在用户取消会话后重新创建光标。
+- 不在 `ModeChanged` 中切换 `showcmd`，避免暴露原生 cursor 的重画中间态。
 
-- 挂钩点是上游 `vim._core.mcursor.enable()`；回调中 schedule `sync_cl_map`，再用 `mc.active()`
-  重判。`BufEnter`/`BufDelete`/`BufWipeout` 兜底。
-- `nvim_buf_get_keymap()` 返回规范化的 `<C-L>`，比较前必须 `:lower()`；它同时会展开
-  `<leader>`，capture/restore 前必须用 `expand_leader()` 规范化。
-- 不要在 mapping 回调里删除正在执行的映射。`cl_action` 将待还原状态存进 `pending_unmount`，
-  由 `enable(false)` 后 scheduled 的 `sync_cl_map` 完成删除和还原。
-- 清 namespace 是异步触发卸载的；测试 `reset()` 必须等一拍，避免映射污染下一用例。
+## Winbar 与共享状态
 
-### 实现约束
+- 状态栏仅查询已加载的 navic / DiffBase，未命名 buffer 从 `winbar.state` 读取名称，避免重复 setup；navic 的 `LspAttach` 监听需使用独立 augroup，确保首次懒加载时事件能回放。
+- 自定义窗口 buffer 标签位于 `ext/winbar/`，通过 `vim.wo.winbar` 渲染；`ext/winbar.lua` 和 `ext/bufferline.lua` 都是调用其 setup 的入口。
+- 修改窗口标签时先读 `lua/lu5je0/ext/winbar/agents.md`；高亮、拖动、截断和关闭 buffer 的约束集中在该文件。
+- 调整 buffer 名称映射或 `core/buffers.lua` 时检查 sidebar、winbar、time-machine 的消费方；修改 offset 时考虑窗口 separator、foldcolumn 和 signcolumn 宽度。
 
-1. `<C-n>`/`<M-n>`/`\A` 最终停在 normal mode 并开启 follow；添加和移动 cursor 的主体必须
-   `vim.schedule` 出当前 typed CmdAtom，否则 `follow && map_moved && !Visual.active` 会触发
-   LHS replay，导致 cursor 数量级联。
-2. 移动 primary 前必须用 `2q=` 关 follow，移动完成后再用 `1q=` 开启。
-3. 连按 `<C-n>` 必须复用首次 pattern；不能从后续位置重新取 `<cword>`，也不能把首次整词
-   pattern 退化为 visual 字面 pattern，否则 `vim` 会错误命中 `nvim`。
-4. x-mode mapping 中 `vim.fn.visualmode()` 返回空串，必须从 `vim.fn.mode()` 推导选区类型；退出
-   visual 后要显式使用选区左上角作为留下的 cursor。
-5. 不要在 `ModeChanged` 中动态切换 `showcmd`；修改 option 会暴露原生 cursor 的重画中间态。
-   `showcmd` 保持 `options.lua` 中的全局关闭状态。
+## 平台与 TUI Bridge
 
-### 与 vim-visual-multi 的切换
-
-`plugins.lua` 里给 `mg979/vim-visual-multi` 加了 `enabled = function() return not require('lu5je0.ext.multicursor').supported end`，
-即 0.12 用插件、0.13 用原生，避免两套键位/语义打架。
-**删除条件**：仓库不再支持 0.12（或 `nvim-cmp` 等旧插件一并移除）时，可删掉 vim-visual-multi、
-`ext/vim-visual-multi.lua` 及其 `keys` 声明；`ext/multicursor.lua` 的能力探测也可简化掉。
-
-## Tabline (自定义实现)
-
-`lua/lu5je0/ext/tabline/` 是替代 `akinsho/bufferline.nvim` 的纯 Lua tabline 实现，通过 `vim.o.tabline` 渲染。
-
-### 目录结构
-
-```
-ext/tabline/
-├── init.lua        -- 入口：setup()，导出 buffer_name_map
-├── config.lua      -- 选项、offsets、keymap 注册（setup_keymaps）
-├── highlights.lua  -- 动态高亮（从 colorscheme 推导颜色）
-├── state.lua       -- 模块级缓存：buffer_name_map、ordinal_to_buf、pick 状态
-├── naming.lua      -- Untitled-N gap-fill 命名分配
-├── render.lua      -- 纯 tabline 字符串构建 + truncation + 鼠标点击 + tab 页指示器
-├── offsets.lua     -- 检测左侧 sidebar 窗口生成 offset 填充块
-├── actions.lua     -- cycle / go_to_ordinal / close_left / close_right / close_others
-├── pick.lua        -- 字母分配 + getcharstr 选择
-├── commands.lua    -- 用户命令注册
-└── autocmds.lua    -- 单 augroup 'tabline'，事件触发 refresh
-```
-
-`ext/bufferline.lua` 是兼容 shim，返回 `require('lu5je0.ext.tabline.init')` 并调用 `setup()`。
-
-### 架构设计
-
-- **颜色动态推导**：`highlights.apply()` 从 `Normal`、`Comment`、`String`、`TabLineSel`、`DiagnosticError`、`WinSeparator` 等 hl group 读取颜色，经 shade/tint 计算后设置所有 `BufferLine*` 高亮组。`ColorScheme` 事件时自动重新应用。
-- **Devicon 组合高亮**：`render.lua` 为每个 file icon 创建 `BufferLineIcon_<iconHl>_<tabHl>` 组合组（icon fg + tab bg），`ColorScheme` 时清除缓存。
-- **Truncation**：buffer tab 放不下时，从两侧平衡裁剪，当前 buffer 始终保留。显示 ` N  ` / ` N  ` 标记。
-- **Tab 页指示器**：多 tabpage 时右对齐显示 tab 编号 + 关闭按钮。
-- **Offset**：扫描当前 tabpage 左侧窗口，按 filetype 匹配 `config.offsets` 表，手动空格填充实现居中/左/右对齐，末尾追加 `█` separator。宽度包含 window separator 的 1 列。
-- **懒加载**：通过 `ext-config.lua` 的 `lazy_load` 注册，`UIEnter` 事件触发。setup 中 `commands` 和 `config.setup_keymaps` 延迟到 `vim.schedule`。
-
-### 兼容接口
-
-- `require('lu5je0.ext.tabline').buffer_name_map`：被 `sidebar/sources/buffers.lua` 读取以显示 Untitled-N 名称。
-- `require('lu5je0.core.buffers').valid_buffers()`：共享 buffer 列表函数（`buflisted` + `is_valid`），被 bufferline、sidebar、time-machine 共用。
-
-### 按键映射
-
-| 按键 | 功能 |
-|------|------|
-| `<leader>0` | Pick 模式（字母跳转） |
-| `<leader>1..9` | 跳转到第 N 个 buffer |
-| `<leader>to` | 关闭其他所有 buffer |
-| `<leader>th` | 关闭左侧 buffer |
-| `<leader>tl` | 关闭右侧 buffer |
-| `<left>` | 切换到上一个 buffer |
-| `<right>` | 切换到下一个 buffer |
-
-### Nerd Font 图标
-
-- `render.lua` 包含 Nerd Font 图标字符（truncation arrows U+F0A8/U+F0A9）。
-- **不要用 Edit 工具直接编辑这些图标行**，多字节 UTF-8 匹配容易失败；需要时用 python/sed 写入。
-
-### 维护注意
-
-- 新增/修改高亮组时，在 `highlights.apply()` 的 `groups` 表内操作，不要散落到其他文件。
-- 改动 buffer 列表逻辑时，确认 `core/buffers.lua` 的消费方（sidebar、time-machine）不受影响。
-- 改动 offset 逻辑时，确认 sidebar 的 foldcolumn/signcolumn 宽度是否影响对齐。
-
-## 改动落点规则
-- 改基础编辑行为、选项默认值，优先改 `options.lua`、`mappings.lua`、`autocmds.lua`、`commands.lua`。
-- 改第三方插件行为，优先改 `plugins.lua` 中对应 spec，或 `ext/` 下对应适配文件；不要把插件细节散落到多个无关模块。
-- 新增仓库自定义功能，优先放到 `misc/` 或 `core/`，再在 `ext-loader.lua` 或其他明确入口里接入。
-- 新增按键或命令时，先判断是否应该懒加载；已有模式是由 `ext-loader.lua` 代理首次触发并回放按键/命令。
-- 修改 LSP 行为时，同时检查 `lsp/` 与 `core/lsp.lua` 是否都有联动。
-- `nixd` 由 Nix 安装（`nix/common/packages.nix`），不经 Mason；`core/lsp.lua` 在 PATH 中找到它时启用，`lsp/nixd.lua` 配置 Nixpkgs 补全来源与 `nixfmt` 格式化。
-- 修改文件树、补全、输入法、剪贴板等平台相关功能时，确认 macOS / WSL / Windows 路径或二进制名是否受影响。
-
-## 插件与补丁约定
-- 插件列表集中在 `lua/lu5je0/plugins.lua`。
-- 当前配置依赖 `lazy.nvim`，并使用：
-  - `event`
-  - `keys`
-  - `cmd`
-  - `dependencies`
-  - `patches`
-- 如果插件行为依赖仓库内补丁，必须同时维护 `patches/*.diff` 与 `plugins.lua` 中对应的 `patches` 声明。
-- `ext/lazy_patch.lua` 在 `lazy.setup()` 前注册，监听 `LazyPlugins`，从 lazy 已解析的插件表读取 `patches` 与 `plugin.dir`，通过 `package.preload` 覆盖对应模块；保留 lazy 的首次加载和配置调用语义，支持嵌套声明、依赖与自定义插件目录。
-- 补丁仅支持修改现有 `lua/**/*.lua` 模块；不支持新增、删除、重命名模块或修改其他运行时文件。首次 require 涉及的模块时，把受影响源码复制到 `stdpath('cache')/lazy-patches/<内容哈希>/` 并依次应用补丁；哈希包含源码、插件目录及补丁内容，缓存命中不调用 Git。生成过程使用临时目录并原子发布，应用或语法检查失败直接报错，不回退到原模块。
-- `LazyApplyPatch` 主动准备所有已安装插件的缓存，不修改原目录，也不热重载已加载模块；修改补丁或更新插件后，重启 Neovim 使用新的模块。恢复版本直接使用 lazy 原生命令 `Lazy restore`。补丁模块不再注册 Check / Update / Install / Sync 或退出时的 reset/apply 钩子，不执行 `git reset --hard`。
-- 仓库根目录 `lazy-restore.sh` 使用 `Lazy! restore` 阻塞等待插件恢复完成，再加载 nvim-treesitter 更新 parser；不依赖自定义恢复命令。
-- `lazy-restore.sh` 启动 Neovim 前会对 Glance、Snacks、indent-blankline 和 nvim-tree 的旧版原地补丁执行 `git apply --reverse --check`，通过后才反向应用；未应用的补丁不操作，其他本地修改保留，不强制 reset。此临时兼容段在所有环境切换到缓存副本补丁后移除。
-- Glance 的 `glance-nixd-definition.diff` 仅忽略 nixd 的 definition 请求返回的 `unknown node type for definition`（上游 nixd#823）；只有全部响应都是该错误时，同时跳过 `No definitions found`，其他错误、正常空结果和其他客户端的结果保持原行为。
-- 改插件版本、插件源、锁定策略时，检查是否需要同步更新 `lazy-lock.json`。
-- 仅在确有必要时调整 `disabled_plugins` 列表；这会直接影响启动时的运行时插件集合。
-
-## TUI Bridge 与平台联动
-- `lua/lu5je0/misc/tui-bridge/`、`lua/lu5je0/misc/ime/`、`lua/lu5je0/misc/clipboard/` 含平台相关逻辑。
-- `lua/lu5je0/misc/clipboard/init.lua` 按平台选择后端：SSH 走 OSC52；macOS 走 `clipboard/mac.lua`（`liblibclipboard.dylib` FFI）；WSL / Linux 桌面走 `clipboard/tui-bridge.lua`（native `tui-bridge` 进程桥接）。
-  - Linux 的 native 实现在 `module/tui-bridge/linux/clipboard-bridge.c`：libwayland-client + data-control 协议（优先 `ext_data_control_v1`，回退 `zwlr_data_control_unstable_v1`），由常驻 `-i` 进程持有 selection；`clipboard.input` / `clipboard.output` 都带 `selection` 参数（`regular`/`primary`），一次只动一个 selection。
-  - `clipboard/tui-bridge.lua` 里 `+` 与 `*` 语义分离，不要再把两者指向同一个函数：`vim.o.clipboard = 'unnamedplus'`，`+` 走 CLIPBOARD 且复用 `active_entry` 缓存（缓存只在 FocusGained/启动时同步）；`*` 是 primary selection，每次实时读写、不进缓存——鼠标在别的应用里划选不产生任何能让 Neovim 同步的事件，走缓存必然粘出旧内容。同理 `core/clipboard.lua` 的 `M.set` 只写 `+`，写 `*` 会覆盖用户刚划选的内容。
-  - 旧的纯 Lua 实现 `wayland.lua`（LuaJIT FFI 手写 Wayland wire 协议）保留在仓库但已不接入，不作为 fallback。注意纯 X11/XWayland 桥接方案在 KWin 上无法粘贴 Wayland 内容(KWin 仅在 X11 窗口获焦时才同步)，故未采用。
-- `misc/tui-bridge/installer.lua` 读取 `module/tui-bridge/VERSION`，按固定 GitHub Release tag 获取对应平台的二进制；WSL 使用 Windows 产物，Neovim 仅支持 macOS、Linux 与 WSL，均安装为 `~/.local/bin/tui-bridge`，不通过 `core.native` 解析。
-- 原生 Linux 支持 x86_64 与 aarch64/arm64，后两种架构名统一下载 `tui-bridge-linux-aarch64`；WSL 仅支持 x86_64。
-- 仅启用 tui-bridge 后端、实际调用或显式执行 `:TuiBridgeInstall` 时安装；加载模块和退出不下载。版本检查、下载和校验均为异步子进程，校验 SHA256 与候选文件 `--version` 后原子替换；安装锁协调多个 Neovim，退出时清理进行中的安装。失败只提示一次，使用安装命令重试。
-- `misc/tui-bridge/tui-bridge.lua` 的 `singleton()` 只返回桥接对象，`on_ready()` 在安装与进程启动成功后执行回调；就绪前不接管剪贴板、不重放请求。IME 后端就绪时通过 `misc/ime/init.lua` 的 `resync()` 按当前上下文重新同步。
-- `:TuiBridgeInstall` 在 `commands.lua` 注册，首次执行时加载 installer。WezTerm 共用安装路径与版本声明；Windows 端通过 `wslpath -w` 定位默认 WSL 发行版中的安装，首次使用时检查版本，不负责下载。
-- `lua/lu5je0/core/native.lua` 负责解析 `vim/lib/` 下的 native 资源（如 `liblibclipboard.dylib`）；新增落在 `vim/lib/` 的动态库时优先复用这个入口，不要硬编码 `stdpath('config') .. '/lib/...'`。
-- 如果任务改动了桥接协议、IME 行为、剪贴板桥接或二进制同步流程，必须同步检查 `module/tui-bridge/AGENTS.md`。
-- IME 后端由 `misc/ime/init.lua` 的 `select_backend_module` 选择：macOS 走 `lua/lu5je0/misc/ime/mac/backend.lua`（XkbSwitchLib FFI）；WSL 与非 SSH 的 Linux 桌面走 `lua/lu5je0/misc/ime/tui-bridge/backend.lua`，平台切换逻辑下沉到 native `tui-bridge`。旧 `lua/lu5je0/misc/ime/linux/backend.lua`（busctl 调 fcitx5 rime）保留但未接入。
-- IME 不提供 keeper，不监听输入法手动切换；通过模式变化、输入上下文及焦点/窗口事件同步状态。Neovim 的 tui-bridge 适配层只调用 IME 的 `normal` / `insert`，不提供 `watch` 或事件订阅接口。
-- 会临时切换内部窗口的输入 UI 通过 `require('lu5je0.misc.ime').set_typing_context(name, active)` 声明输入上下文；例如 Telescope 在 prompt 生命周期内保持该上下文，避免 preview 刷新产生的短暂 Normal 模式关闭 IME。
-- `TERM == 'xterm-kitty'` 时优先走 OSC 后端 `lua/lu5je0/misc/ime/osc/backend.lua`（kitty 原生处理 `SetUserVar=tui-bridge`，按窗口屏蔽自身 IME）；其余环境按平台选择，未匹配的平台与 Linux SSH 会话回退到 OSC。当前不额外识别 tmux 客户端的终端类型。
-- OSC 后端在 tmux 内会把转义序列包进 `\ePtmux;…\e\\`（内层 ESC 加倍），否则 tmux 直接吞掉 OSC 1337；依赖 `tmux/tmux.conf` 的 `allow-passthrough on`。`zsh/vi-im-switch.zsh` 用同一套包装。
+- 剪贴板入口为 `misc/clipboard/init.lua`：SSH 使用 OSC52，macOS 使用 FFI，WSL / Linux 桌面使用 native tui-bridge。
+- tui-bridge 的 `+` 是 CLIPBOARD，仅在启动 / FocusGained 同步缓存；`*` 是 primary selection，每次实时读写、不得复用缓存。`core/clipboard.lua` 的 `M.set` 只写 `+`，避免覆盖外部鼠标选区。
+- IME 入口为 `misc/ime/init.lua`：macOS 使用 XkbSwitchLib，WSL / 非 SSH 的 Linux 桌面使用 tui-bridge；`TERM=xterm-kitty` 优先使用 OSC，未匹配环境和 Linux SSH 也回退 OSC。
+- IME 按模式、输入上下文和焦点/窗口事件同步，不监听手动切换；临时输入 UI 使用 `set_typing_context(name, active)`，避免 preview 切窗时误关 IME。
+- OSC 在 tmux 中需包装为 passthrough 序列并加倍内层 ESC，依赖 `tmux/tmux.conf` 的 `allow-passthrough on`；`zsh/vi-im-switch.zsh` 使用相同包装。
+- installer 读取 `module/tui-bridge/VERSION`，安装到 `~/.local/bin/tui-bridge`；支持 macOS、Linux x86_64/aarch64 和 WSL x86_64。WSL 下载 Windows 产物，Linux arm64 映射为 aarch64。
+- 仅启用后端、实际调用或执行 `:TuiBridgeInstall` 时安装，加载模块与退出不下载；版本检查、下载和校验均异步，校验 SHA256 与 `--version` 后原子替换，安装锁协调多进程。
+- `singleton()` 只返回对象，`on_ready()` 后才接管剪贴板与 IME，未就绪时不重放请求；IME 就绪后调用 `resync()`。
+- WezTerm 共用安装路径和版本声明；Windows 端通过 `wslpath -w` 定位默认 WSL 发行版中的安装，仅检查版本、不负责下载。
 
 ## 测试与验证
-- 最小启动验证：
-  - `cd vim && nvim --headless '+qa'`
-- `tests/lazy-patch/spec.lua` 用临时 Git 仓库和真实 lazy.nvim，在独立 Neovim 进程中验证嵌套声明、自定义目录、require / 命令首次加载、冷暖缓存、源码及补丁变化、恢复旧版本与冲突报错；检查插件工作区始终干净，暖缓存不调用 Git。子进程隔离 XDG 目录且禁用安装与更新检查，由 `tests/run-tests.sh` 调用。
-- `tests/glance/definition_spec.lua` 在临时目录向已安装 Glance 的 HEAD 应用补丁，验证 nixd 已知错误静默、其他错误与正常空结果保留、多客户端响应仍能返回定义；不改动插件安装目录，由 `tests/run-tests.sh` 调用。
-- `tests/lsp-info/spec.lua` 复用真实插件 spec 与已安装 lazy.nvim，验证 `:LspInfo` 首次懒加载、只读浮窗、重复打开与关闭，以及当前 / 其他 buffer 客户端、未连接配置和缺失可执行文件；由 `tests/run-tests.sh` 调用。
-- `tests/sidebar/full_name_spec.lua` 在附加 UI 的独立 Neovim 中比较选中行与相邻行的实际屏幕内容，验证长名称浮窗在不同边距、搜索横向滚动、宽字符与复用时保持对齐；由 `tests/run-tests.sh` 调用。
-- 当前自动化测试入口：
-  - `cd vim && ./tests/run-tests.sh`
-- `tests/run-tests.sh` 通过 `luajit` 运行 `tests/cron/spec.lua`（要求设置 `DOTFILES_ROOT`），并通过 `nvim --headless -u NONE -l` 运行 `tests/line-log/spec.lua`、`tests/project-log/spec.lua`、`tests/git-selection/spec.lua`、`tests/sidebar/state_spec.lua`、`tests/sidebar/spec.lua`、`tests/sidebar/interactive_spec.lua`、`tests/sidebar/diff_preview_spec.lua`、`tests/sidebar/parser_spec.lua`、`tests/sidebar/git_changes_spec.lua`、`tests/sidebar/git_ops_spec.lua`、`tests/winbar/drag_spec.lua`、`tests/multicursor/spec.lua`、`tests/whichkey/spec.lua`。
-- `tests/git-selection/spec.lua` 用临时 Git 仓库和 `--embed` 子 Neovim 的真实 `nvim_input()` 按键验证两个 Git 日志入口的懒加载、Space 勾选、Visual Enter、连续/离散提交的净变化文件树、合并冲突与 single / dual 文件 diff，包含一加 6 四提交抵消 `gnome.nix` 变化的真实回归；合并使用临时 bare repo/index，子进程禁用用户配置与 swap/shada，避免污染用户状态。
-- `tests/multicursor/spec.lua` 通过适配层的 `supported` 探测原生能力，支持移除旧 API 的新版 nightly；
-  老版本输出 `SKIP` 并退出 0。若有 `follow` 选项却被误判为不支持，必须报错，不能静默跳过。
-  它起一个 `--embed -u NONE -i NONE -n` 子 Neovim，隔离用户配置与状态，用 `nvim_input()` 发真实按键：multicursor 的 CmdAtom / follow-mode
-  只在 typed 路径上被捕获，`vim.api.nvim_feedkeys(..., 'x')` 在脚本里行为不可靠。
-  要在 0.12 下验证这部分，得用 0.13+ 的 nvim 跑整套测试；`NVIM_TEST_BIN` 只用于在外层已是 0.13 时指定另一个 0.13 二进制
-  （0.12 的 `rpcrequest` 对着 0.13 子进程会挂死，不能用来“升级”外层）。
-- `tests/multicursor/git_reset_spec.lua` 用临时 Git 仓库、已安装的真实 gitsigns 和独立 DiffBase buffer，
-  验证真实按键修改后 `gu` / `gC` 保留光标、只恢复当前 hunk、后续编辑与 undo/redo。
-  子进程禁用用户配置与 swap/shada；缺少 gitsigns 时仅跳过对应后端，DiffBase 仍执行。
-  异步退出用例先等待操作开始信号，再发送 `<C-l>`，避免把“开始前取消”混入“操作中退出”。
-  `tests/run-tests.sh` 在基础 multicursor 用例之后运行该入口。
-- `tests/winbar/drag_spec.lua` 会 attach UI 发真实鼠标事件（winbar tab 拖动），坑点见 `lua/lu5je0/ext/winbar/agents.md` 的「测试」一节。
-- `tests/whichkey/spec.lua` 校验 which-key 的 `<leader>` 触发器：**child 跑在 pty 里（非 headless）**，
-  用 `--listen <sock>` 起真实 TUI（UIEnter 正常触发）、RPC 走 socket、用 `nvim_input()` 发真实按键。
-  **不要**用 `--embed` + `nvim_ui_attach`：RPC 客户端不处理 redraw，UI attach 后 child 会立刻退出。
-  which-key 的触发器本质是把 `<leader>` 本身映射成函数（`triggers.lua`），并用 `is_mapped()` 跳过已被
-  占用的 lhs。所以 **lazy.nvim 插件 spec 的 `keys` 不能写裸 `<leader>`**（例如 `keys = { ',' }`，
-  telescope 曾这么写）：那会在全局建 `<leader>` proxy，which-key 会拒绝安装自己的触发器，
-  表现为「第一次按 `<leader>` 不弹、第二次才弹」。懒加载要用真实键位（如 telescope 的 `<leader>f*`）。
-- 如果你新增了独立 Lua 功能且具备稳定输入输出，优先补到 `tests/`，不要只依赖手动打开 Neovim 验证。
-- 如果改动只覆盖某个懒加载模块，至少补一次对应命令、按键或事件的首次加载路径验证。
 
-## 提交流程建议
-- 改完入口或模块后，先跑 `nvim --headless '+qa'`，尽可能不在沙箱内运行，确认没有直接语法错误或 require 失败。
-- 改插件补丁时，确认补丁文件、插件声明、运行时行为三者一致。
-- 改平台相关能力时，在提交说明里明确受影响平台与未验证平台。
+- 最小启动检查：`cd vim && nvim --headless '+qa'`。
+- 自动化入口：`cd vim && ./tests/run-tests.sh`；具体用例及参数以脚本和测试文件头部为准，cron 用例通过脚本设置 `DOTFILES_ROOT`。
+- 新增具备稳定输入输出的独立 Lua 功能时补测试；修改懒加载模块至少验证一次对应命令、按键或事件的首次加载路径。
+- 子进程测试隔离配置、状态、swap 和 shada；使用真实插件时禁用自动安装/更新，不修改插件工作树。
+- 原生 multicursor 测试需用 0.13+ 运行外层和子进程，0.12 按能力探测 SKIP；`NVIM_TEST_BIN` 不能把 0.12 外层升级为 0.13。使用 `nvim_input()` 发真实按键，脚本中的 `feedkeys(..., 'x')` 不覆盖 typed CmdAtom 行为。
+- which-key 的首次触发测试使用 pty TUI + `--listen` / RPC，确保 `UIEnter` 和 `VeryLazy` 执行；鼠标与 winbar UI 测试的要求见局部说明。
+- 补丁验证同时检查声明、缓存生成和实际加载行为；平台改动需注明已验证和未验证的平台。
 
 ## 临时兼容
 
-### BufModifiedSet / OptionSet modified（`core/buffer-modified.lua`）
-
-背景：0.12 与 0.13 的 'modified' 事件模型不同，单用任何一个都会漏。
-
-| 路径 | 0.12 触发 | 0.13 触发 |
-|------|-----------|-----------|
-| 自然编辑 / undo / `dd` / `x` | `BufModifiedSet` | `OptionSet modified` |
-| `:set [no]modified` | `OptionSet modified` | `OptionSet modified` |
-
-- 0.12（`release-0.12`）：自然编辑只置 `b_changed_invalid = true`，由主循环（`normal.c` / `edit.c`）派发 `BufModifiedSet`；`OptionSet modified` 只在显式 `set` 时经 `apply_optionset_autocmd()` 触发。
-- 0.13：`BufModifiedSet` 已移除（`news.txt` / `deprecated.txt`，PR #35610）。`changed_internal()` / `unchanged()` 直接调 `aucmd_defer_modified()`，`OptionSet modified` 覆盖自然编辑。
-
-因此 `core/buffer-modified.lua` 用 `vim.fn.exists('##BufModifiedSet')` 探测能力，两个都注册。0.12 上两条路径互斥（各触发一次），不会重复触发。
-
-**删除条件：当运行版本已经是 0.13 正式版（`vim.fn.has('nvim-0.13') == 1`，即 `BufModifiedSet` 已不存在）时，删除该文件**，并把 `winbar/autocmds.lua` 与 `sidebar/sources/buffers.lua` 的 `require('lu5je0.core.buffer-modified').register(group, cb)` 直接换成：
-
-```lua
-vim.api.nvim_create_autocmd('OptionSet', {
-  group = group,
-  pattern = 'modified',
-  callback = cb,
-})
-```
-
-注意：`OptionSet` 必须单独注册（需要 `pattern`，无法并入 `BufAdd/BufEnter/...` 那组事件表），且 `'modified'` 触发时是 deferred 派发。
-
-消费方（两处）：
-- `lua/lu5je0/ext/winbar/autocmds.lua`：刷新 winbar 的 modified 标记（●）。
-- `lua/lu5je0/ext/sidebar/sources/buffers.lua`：刷新 Buffers source 的 `●`。
-
-两处都**不能删掉这个事件**：`:set modified` 不走 Neovim 的 winbar 重画路径，且 winbar/sidebar 渲染的是所有 listed buffer，而内置重画只覆盖显示该 buffer 的窗口。
-
-### multicursor：0.13 原生 vs 0.12 vim-visual-multi
-
-0.13 起 `Q` 变成「加 multicursor」，而仓库里 `keymaps.lua` 原本把 `Q` 映射成回放录制寄存器。
-该行现已注释掉（注释后在两个版本上都是对的：0.12 的 `Q` 默认本来就回放寄存器）。
-
-切换条件统一使用适配层的 `supported`（原生模块与 `follow` 选项），不依赖已移除的 `nvim_mcursor`：
-
-| 位置 | 0.12 | 0.13+ |
-|------|------|-------|
-| `ext-config.lua` 的 `multicursor` 条目 | `ext/multicursor.lua` 内部 no-op | 注册 `<C-n>`/`<M-n>`/`\A`，会话中挂载 `<C-l>` |
-| `plugins.lua` 的 `mg979/vim-visual-multi` | `enabled` → 加载插件 | `enabled` → 禁用 |
-
-细节见本文件「Multicursor (`ext/multicursor.lua`)」一节。测试：`tests/multicursor/spec.lua`（老版本自动 SKIP）。
-
-### TextYankPost 高亮：vim.hl.hl_op vs vim.hl.on_yank
-
-0.13 起 `vim.hl.on_yank()` 已废弃（0.14 移除），替代品是 0.13 新增的 `vim.hl.hl_op()`（同时覆盖 `TextYankPost`/`TextPutPost`）。
-0.12 只有 `vim.hl.on_yank()`，没有 `vim.hl.hl_op()`。
-
-`autocmds.lua` 在模块加载时用 `vim.fn.has('nvim-0.13') == 1` 选定一次：0.13+ 走 `vim.hl.hl_op`，0.12 走 `vim.hl.on_yank`，存进 `highlight_yank` 供回调 `pcall`。
-
-**删除条件**：仓库不再支持 0.12 时，直接调用 `vim.hl.hl_op`，删掉 `highlight_yank` 与版本判断。
-
-## 已知事实
-- 仓库根 README 将该目录视为 `neovim` 配置的一部分。
-- 当前仓库在 `vim/` 目录下使用 `stylua.toml`，说明 Lua 格式化约定已本地化到该目录。
-- 当前没有覆盖整个配置的完整端到端测试；很多能力仍依赖启动验证和定向手工验证。
+- `core/buffer-modified.lua` 在 0.12 同时注册 `BufModifiedSet`（自然编辑）和 `OptionSet modified`（显式设置），0.13 仅保留后者。winbar 和 sidebar 都必须通过它订阅，不能省略 modified 通知。运行环境切换到 0.13 正式版、`BufModifiedSet` 不再存在时，删除兼容层并将两处调用替换为独立的 `OptionSet` + `pattern = 'modified'` autocmd；该事件延迟派发，不能混入无需 pattern 的事件列表。
+- `autocmds.lua` 在 0.12 使用 `vim.hl.on_yank`，0.13+ 使用 `vim.hl.hl_op`。不再支持 0.12 时删除分支，直接调用 `hl_op`。

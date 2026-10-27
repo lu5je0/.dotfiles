@@ -1,8 +1,11 @@
 -- 原生多光标的批量编辑保护，供 gitsigns / DiffBase 共用。
 -- 不加载按键适配层，也不负责 Git 操作或匹配规则。
 local M = {}
-local ok, mc = pcall(require, 'vim._core.mcursor')
-M.supported = ok and type(mc.active) == 'function' and vim.fn.exists('+follow') == 1
+local ok, mc = false, nil
+if vim.fn.exists('+follow') == 1 then
+  ok, mc = pcall(require, 'vim._core.mcursor')
+end
+M.supported = ok and type(mc.active) == 'function'
 
 local function report_error(err)
   if err then

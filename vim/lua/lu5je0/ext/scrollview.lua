@@ -181,6 +181,9 @@ function M.setup()
     delete_symbol = '╶',
   }
   -- gitsigns()
+
+  -- 上游通过定时器注册命令；按键首次加载时需在 lazy 回放按键前完成初始化。
+  vim.fn['scrollview#Initialize']()
   
   vim.keymap.set('n', '<leader><tab>', function()
     if vim.g.scrollview_enabled then
