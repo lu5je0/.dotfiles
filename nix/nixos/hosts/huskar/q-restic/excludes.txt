@@ -31,12 +31,8 @@
 /home/lu5je0/.cargo/registry
 /home/lu5je0/.cargo/git
 
-# ── Steam：只排游戏本体和缓存，保留 compatdata(存档) ──
-# compatdata 是 Proton 容器的游戏存档，userdata/ 不存在，这里可能是唯一副本
-/home/lu5je0/.local/share/Steam/steamapps/common
-/home/lu5je0/.local/share/Steam/steamapps/shadercache
-/home/lu5je0/.local/share/Steam/steamapps/downloading
-/home/lu5je0/.local/share/Steam/steamapps/temp
+# ── Steam：排除 steamapps 及缓存 / 日志 ──
+/home/lu5je0/.local/share/Steam/steamapps
 /home/lu5je0/.local/share/Steam/appcache
 /home/lu5je0/.local/share/Steam/logs
 
@@ -55,4 +51,3 @@ __pycache__
 # /home/lu5je0/Models                        # 108G GGUF 权重
 # /home/lu5je0/.wine                         # 4G Wine prefix
 # /home/lu5je0/.local/share/lutris           # 1.4G 运行器数据
-# /home/lu5je0/.local/share/Steam/steamapps/compatdata
