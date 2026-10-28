@@ -25,6 +25,8 @@ class BackupHookTests(unittest.TestCase):
         self.enterContext(patch.object(q, 'writer_lock', side_effect=lambda cfg: contextlib.nullcontext()))
         for name in ('preflight_sftp', 'ensure_repo'):
             self.enterContext(patch.object(q, name, side_effect=lambda *args, n=name: self.events.append(n)))
+        self.unlock = self.enterContext(patch.object(q, 'unlock_stale_locks',
+            side_effect=lambda *args: self.events.append('unlock') or 0))
 
     def hook(self, cfg, name):
         self.events.append(name)
@@ -42,7 +44,19 @@ class BackupHookTests(unittest.TestCase):
         with patch.object(q, 'run_backup_hook', side_effect=self.hook), patch.object(
                 q, 'run_stream', side_effect=self.backup), patch.object(q, 'do_forget', side_effect=self.forget):
             self.assertEqual(q.do_backup(self.cfg), 3)
-        self.assertEqual(self.events, ['before_backup', 'preflight_sftp', 'ensure_repo', 'backup', 'after_backup', 'forget'])
+        self.assertEqual(self.events, ['before_backup', 'preflight_sftp', 'ensure_repo', 'unlock', 'backup', 'after_backup', 'forget'])
+
+    def test_failed_unlock_recovers_without_backing_up_or_pruning(self):
+        self.unlock.side_effect = None
+        for code in (1, 3, 12):
+            self.unlock.return_value = code
+            with self.subTest(code=code), patch.object(q, 'run_backup_hook', side_effect=self.hook), patch.object(
+                q, 'run_stream'
+            ) as backup, patch.object(q, 'do_forget') as forget:
+                self.assertEqual(q.do_backup(self.cfg), code)
+            backup.assert_not_called()
+            forget.assert_not_called()
+            self.assertEqual(self.events[-1], 'after_backup')
 
     def test_failed_preparation_or_backup_still_recovers_without_pruning(self):
         for failure in ('before_backup', 'backup', 'ensure_repo'):
@@ -69,6 +83,7 @@ class BackupHookTests(unittest.TestCase):
             self.assertEqual(q.do_backup(self.cfg, dry_run=True), 0)
             hook.assert_not_called()
         self.assertEqual(self.events, [])
+        self.unlock.assert_not_called()
 
     def test_hook_cwd_argv_and_profile_context_without_shell(self):
         with tempfile.TemporaryDirectory(dir='/tmp') as tmp:
@@ -97,6 +112,7 @@ q.CONFIG_FILE=Path(sys.argv[2])/'config.json'
 q.restic_bin=lambda:'restic'
 q.preflight_sftp=lambda cfg:None
 q.ensure_repo=lambda *args:None
+q.unlock_stale_locks=lambda *args:0
 def backup(*args):
  from pathlib import Path
  Path(sys.argv[2]+'/ready').touch()

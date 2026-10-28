@@ -87,6 +87,8 @@
   因为拿不到排他锁而失败——表现就是“删除失败”，而且每晚定时任务会在 forget 这步挂掉。
   清理用 `q-restic -p <profile> unlock`。`act_forget_snap` 会识别输出里的 `already locked` 并直接把这条命令提示给用户。
   `unlock` 也要拿 q-restic 的写锁，只用 restic 默认的残留锁清理，别加 `--remove-all`；读取锁失败不能说成“没有锁”。
+  正式备份在本机写锁内、仓库确认或初始化后自动执行默认 `unlock`；活动锁判断交给 restic，
+  不用进程列表替代 flock 或仓库锁。自动清理失败时仍跑 after_backup，但不启动备份或清理旧快照；dry-run 不解锁。
 - **`selected_snap()` 不能用 `self.cursor` 索引**。在 `snap_actions` 屏里 `cursor` 指的是操作项
   （进屏时被重置为 0），拿它去索引 `self.snaps` 会**永远指向第一个版本**，
   于是“恢复/对比/删除这个版本”全作用在错误的版本上。离开版本列表时把选中项记进
@@ -147,6 +149,10 @@
   不要像早期版本那样无差别给所有命令加。
 - **只读操作不占备份锁**。`status` / `mount` / `browse` / `unmount` 必须在 `acquire_lock()` 之前
   返回，否则备份跑着时连状态都查不了（restic 自己的锁本来就允许并发读）。
+- **挂载入口消失不代表挂载进程已退出**。Linux 卸载和重新挂载前通过 `/proc` 核对用户、仓库、
+  挂载路径、host/tag 参数并回收残留 `restic mount`，不能按进程名批量结束 restic。
+  发信号前复核启动时间，支持时使用 pidfd 防止 PID 复用；SIGTERM 后超时必须报错。
+  `browse` 启动失败、超时或等待被中断时也要 terminate/wait，不能丢下后台子进程。
 - **锁文件路径必须与执行环境无关**：交互 shell 里 `XDG_RUNTIME_DIR` 有值，systemd 服务里是空的，
   用它做前缀会得到两个不同的锁，手动跑和定时跑撞在一起时保护失效。现在用 `$HOME/.cache/q-restic.<仓库hash>.lock`，
   按仓库区分，同一仓库串行、不同目标可并行。

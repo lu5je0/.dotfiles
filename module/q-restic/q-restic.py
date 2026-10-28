@@ -9,6 +9,7 @@ import argparse
 import array
 import atexit
 import base64
+import errno
 import fcntl
 import hashlib
 import json
@@ -562,6 +563,17 @@ def ensure_repo(restic, cfg):
             die("仓库初始化失败")
 
 
+def unlock_stale_locks(restic, cfg):
+    # restic 默认按锁的主机/PID 及刷新时间判断残留锁，不能使用 --remove-all。
+    result = run(restic, cfg, ["unlock"])
+    if result.returncode:
+        warn("自动清理残留锁失败: " + (result.stderr.strip() or result.stdout.strip()
+             or f"restic 退出码 {result.returncode}"))
+    elif result.stdout.strip():
+        info(result.stdout.strip())
+    return result.returncode
+
+
 def run_backup_hook(cfg, name):
     argv = cfg.get("hooks", {}).get(name)
     if not argv:
@@ -633,19 +645,23 @@ def do_backup(cfg, dry_run=False):
         info("dry-run 结束，仓库未改动")
         return code
     with writer_lock(cfg), backup_signals(cfg):
+        backup_started = False
         try:
             code = run_backup_hook(cfg, "before_backup")
             if code == 0:
                 preflight_sftp(cfg)
                 ensure_repo(restic, cfg)
-                info(f"备份 {', '.join(cfg['sources'])} → {cfg['repository']}")
-                code = run_stream(restic, cfg, args)
+                code = unlock_stale_locks(restic, cfg)
+                if code == 0:
+                    info(f"备份 {', '.join(cfg['sources'])} → {cfg['repository']}")
+                    backup_started = True
+                    code = run_stream(restic, cfg, args)
         finally:
             after_code = run_backup_hook(cfg, "after_backup")
         if after_code:
             warn("备份恢复步骤失败，跳过旧版本清理；请检查 after_backup 输出")
             return code or after_code
-        if code not in (0, 3):
+        if not backup_started or code not in (0, 3):
             # 没建快照（含仓库不存在/被锁/密码错），别动旧版本。
             return code
         if code == 3:
@@ -902,6 +918,78 @@ def is_mounted(path):
         return False
 
 
+def mount_process_identity(proc, uid, args, repository):
+    """Linux /proc 身份校验；启动时间用于防止 PID 复用后误发信号。"""
+    try:
+        if proc.stat().st_uid != uid:
+            return None
+        argv = (proc / "cmdline").read_bytes().rstrip(b"\0").split(b"\0")
+    except (FileNotFoundError, ProcessLookupError, PermissionError):
+        return None
+    try:
+        if not argv or Path(os.fsdecode(argv[0])).name != "restic":
+            return None
+        if argv[1:] != [os.fsencode(arg) for arg in args]:
+            return None
+        env = (proc / "environ").read_bytes().split(b"\0")
+        if os.fsencode("RESTIC_REPOSITORY=" + repository) not in env:
+            return None
+        fields = (proc / "stat").read_text().rsplit(")", 1)[1].split()
+        return fields[19] if fields[0] != "Z" else None
+    except (FileNotFoundError, ProcessLookupError):
+        return None
+
+
+def stop_mount_processes(cfg, target):
+    """挂载入口可能已消失，仍须回收当前用户、仓库及筛选条件的挂载进程。"""
+    if not sys.platform.startswith("linux"):
+        return 0
+    user = execution_user(cfg)
+    uid = user.pw_uid if user else os.geteuid()
+    args = ["mount", str(target)] + snapshot_args(cfg)
+    stopped = 0
+    for proc in Path("/proc").iterdir():
+        if not proc.name.isdigit():
+            continue
+        fd = None
+        try:
+            identity = mount_process_identity(proc, uid, args, cfg["repository"])
+            if identity is None:
+                continue
+            pid = int(proc.name)
+            # pidfd 将信号及等待绑定到进程本身；旧内核退回启动时间复核。
+            if hasattr(os, "pidfd_open") and hasattr(signal, "pidfd_send_signal"):
+                try:
+                    fd = os.pidfd_open(pid)
+                except OSError as exc:
+                    if exc.errno != errno.ENOSYS:
+                        raise
+            if mount_process_identity(proc, uid, args, cfg["repository"]) != identity:
+                continue
+            if fd is not None:
+                signal.pidfd_send_signal(fd, signal.SIGTERM)
+                finished = bool(select.select([fd], [], [], 5)[0])
+            else:
+                os.kill(pid, signal.SIGTERM)
+                deadline = time.monotonic() + 5
+                while mount_process_identity(proc, uid, args, cfg["repository"]) == identity:
+                    if time.monotonic() >= deadline:
+                        break
+                    time.sleep(0.05)
+                finished = mount_process_identity(proc, uid, args, cfg["repository"]) != identity
+            if not finished:
+                die(f"挂载进程 {pid} 收到 SIGTERM 后仍未退出，请检查")
+            stopped += 1
+        except ProcessLookupError:
+            continue
+        except OSError as exc:
+            die(f"清理挂载进程失败（{proc.name}）: {exc}")
+        finally:
+            if fd is not None:
+                os.close(fd)
+    return stopped
+
+
 def do_mount(cfg, override=None):
     restic = restic_bin()
     require_fuse()
@@ -909,6 +997,7 @@ def do_mount(cfg, override=None):
     user_mkdir(cfg, target)
     if is_mounted(target):
         die(f"{target} 已经是挂载点，先跑 q-restic unmount")
+    stop_mount_processes(cfg, target)
     info(f"只读挂载到 {target}（前台，Ctrl-C 结束）")
     info(f"版本目录: {target}/snapshots/   卸载: q-restic unmount")
     return subprocess.call(
@@ -922,12 +1011,13 @@ def do_browse(cfg, override=None):
     target = mount_point(cfg, override)
     user_mkdir(cfg, target)
     if not is_mounted(target):
+        stop_mount_processes(cfg, target)
         env = execution_env(cfg)
         state = Path(env.get("XDG_STATE_HOME") or HOME / ".local/state") / "q-restic"
         logf = state / "mount.log"
         info(f"后台挂载到 {target}（日志: {logf}）")
         with user_open(cfg, logf, truncate=True) as handle:
-            subprocess.Popen(
+            process = subprocess.Popen(
                 [restic, "mount", str(target)] + snapshot_args(cfg),
                 env=restic_env(cfg),
                 **execution_options(cfg),
@@ -935,11 +1025,25 @@ def do_browse(cfg, override=None):
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
             )
-        for _ in range(60):
-            if is_mounted(target):
-                break
-            time.sleep(0.25)
-        if not is_mounted(target):
+        ready = False
+        try:
+            for _ in range(60):
+                if process.poll() is not None:
+                    break
+                if is_mounted(target):
+                    ready = True
+                    break
+                time.sleep(0.25)
+        finally:
+            # 超时、异常和 Ctrl-C 都必须回收本次启动的后台进程。
+            if not ready:
+                if process.poll() is None:
+                    process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    die(f"挂载失败，进程 {process.pid} 收到 SIGTERM 后仍未退出；日志: {logf}")
+        if not ready:
             die(f"挂载失败，看日志: {logf}")
     snapdir = target / "snapshots"
     info(f"用文件管理器打开 {snapdir}/")
@@ -996,7 +1100,7 @@ def do_unlock(cfg):
     """清掉残留锁。
 
     restic 在进程被强杀（SIGKILL，或 prune 跑到一半被 Ctrl-C）时会留下锁，
-    之后 backup 和 forget --prune 都会因为拿不到排他锁而失败。
+    之后的仓库操作可能因锁冲突失败；正式备份会先自动清理残留锁。
     仓库走的是 restic 自己的锁机制，和 q-restic 那层 flock 无关。
     """
     restic = restic_bin()
@@ -1018,7 +1122,9 @@ def do_unlock(cfg):
 def do_unmount(cfg, override=None):
     target = mount_point(cfg, override)
     if not is_mounted(target):
-        info(f"{target} 未挂载，无需卸载")
+        stopped = stop_mount_processes(cfg, target)
+        info(f"{target} 未挂载，已清理 {stopped} 个残留挂载进程" if stopped
+             else f"{target} 未挂载，也没有残留挂载进程")
         return 0
     commands = (("fusermount3", ["-u"], ["-u", "-z"]),
                 ("fusermount", ["-u"], ["-u", "-z"]),
@@ -1039,7 +1145,8 @@ def do_unmount(cfg, override=None):
                 capture_output=True, text=True, env=env, **execution_options(cfg),
             )
             if result.returncode == 0:
-                info(f"已延迟卸载 {target}（现有访问结束后释放资源）" if lazy
+                stop_mount_processes(cfg, target)
+                info(f"已延迟卸载 {target} 并清理挂载进程" if lazy
                      else f"已卸载 {target}")
                 return 0
             detail = result.stderr.strip() or result.stdout.strip()

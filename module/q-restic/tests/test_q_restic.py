@@ -105,6 +105,7 @@ class UnmountTests(unittest.TestCase):
         self.enterContext(contextlib.redirect_stdout(self.out))
         self.enterContext(contextlib.redirect_stderr(self.err))
         self.mounted = self.enterContext(patch.object(q, "is_mounted", return_value=True))
+        self.stop = self.enterContext(patch.object(q, "stop_mount_processes", return_value=0))
         self.enterContext(patch.object(q.subprocess, "call", side_effect=AssertionError(
             "卸载测试不能调用真实子进程")))
 
@@ -113,6 +114,21 @@ class UnmountTests(unittest.TestCase):
         with patch.object(q.subprocess, "run") as run:
             self.assertEqual(q.do_unmount(self.cfg), 0)
         run.assert_not_called()
+        self.stop.assert_called_once_with(self.cfg, Path(self.cfg["mount_dir"]))
+
+    def test_unmounted_directory_cleans_orphan_process(self):
+        self.mounted.return_value = False
+        self.stop.return_value = 1
+        self.assertEqual(q.do_unmount(self.cfg), 0)
+        self.assertIn("已清理 1 个残留挂载进程", self.out.getvalue())
+
+    def test_process_cleanup_failure_is_not_reported_as_success(self):
+        self.stop.side_effect = SystemExit(1)
+        with patch.object(q.shutil, "which", side_effect=lambda name: name), patch.object(
+            q.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)
+        ), self.assertRaises(SystemExit):
+            q.do_unmount(self.cfg)
+        self.assertNotIn("已卸载", self.out.getvalue())
 
     def test_normal_unmount_stops_at_first_success(self):
         with patch.object(q.shutil, "which", side_effect=lambda name: name), patch.object(
@@ -122,6 +138,7 @@ class UnmountTests(unittest.TestCase):
         self.assertEqual(run.call_args_list[0].args[0],
                          ["fusermount3", "-u", self.cfg["mount_dir"]])
         self.assertEqual(run.call_count, 1)
+        self.stop.assert_called_once()
         self.assertNotIn("延迟", self.out.getvalue() + self.err.getvalue())
 
     def test_busy_mount_uses_available_lazy_helper(self):
@@ -190,6 +207,7 @@ class RetentionTests(unittest.TestCase):
         self.enterContext(patch.object(q, "restic_bin", return_value="restic"))
         for name in ("acquire_lock", "preflight_sftp", "ensure_repo"):
             self.enterContext(patch.object(q, name))
+        self.enterContext(patch.object(q, "unlock_stale_locks", return_value=0))
 
     def test_cleanup_failure_reaches_caller_without_claiming_success(self):
         for backup_code, forget_code, expected in ((0, 1, 1), (0, 11, 11), (0, 12, 12),

@@ -20,6 +20,10 @@ q-restic -p home check            # 整个仓库的校验，不限于该 profile
 q-restic -p home unlock           # 整个仓库的残留锁清理
 ```
 
+正式备份会先在本机写锁保护下调用 restic 默认的 `unlock`，自动清理异常退出留下的残留仓库锁。
+锁是否失效由 restic 根据主机、PID 和刷新时间判断，活动锁仍然保留；不使用 `--remove-all`。
+解锁失败会中止备份并执行 `after_backup` 恢复步骤；`dry-run` 不解锁。
+
 `-c/--config`、`-p/--profile` 可放在子命令前或后。默认配置是
 `~/.config/q-restic/config.json`，会自动合并 `/etc/q-restic/config.json` 中的 profiles，
 两份文件均可缺省，profile 重名时报错；`-c` 指向其它文件时只读取该入口及其 imports。
@@ -88,8 +92,10 @@ TUI 首屏不访问仓库，进入 profile 后异步加载；`Esc/q` 返回 prof
 多目录快照恢复后，各源目录的绝对路径树都位于恢复目标下。
 
 `q-restic -p home browse` 只读挂载并用文件管理器打开，`q-restic -p home unmount` 卸载。
-普通卸载因目录被占用而失败时，自动改用延迟卸载：立即移除挂载入口，现有访问结束后释放资源。
-权限等其它错误仍会报错；不会终止占用目录的程序。
+普通卸载因目录被占用而失败时，自动改用延迟卸载，立即移除挂载入口。
+Linux 下，卸载也会检查并正常终止同一用户、仓库、挂载路径及快照筛选条件的残留 `restic mount`
+进程，即使挂载入口已经消失；不会终止其它备份任务或占用目录的程序。延迟卸载后的现有读取可能中断。
+权限或进程退出超时仍会报错。后台挂载超时、提前退出或等待期间被中断时，会回收本次启动的进程。
 
 `q-restic config` 输出合并后的 JSON，`q-restic -p home config` 输出该 profile 解析后的配置；
 提示信息不混入 stdout。
