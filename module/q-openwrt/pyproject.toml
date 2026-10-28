@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "q-openwrt"
+version = "0.1.0"
+description = "A dependency-free terminal bandwidth monitor for OpenWrt over SSH"
+requires-python = ">=3.10"
+
+[project.scripts]
+q-openwrt = "q_openwrt.app:main"
+
+[tool.setuptools.packages.find]
+include = ["q_openwrt*"]

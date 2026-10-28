@@ -1,0 +1,19 @@
+#compdef q-openwrt
+
+_q_openwrt() {
+  _arguments -s \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '(-i --interface)'{-i,--interface}'[network interface]:interface:(pppoe-wan wan wan6 eth0 eth1 br-lan)' \
+    '(-n --interval)'{-n,--interval}'[sampling interval in seconds, 0.2–60]:seconds: ' \
+    '(-p --port)'{-p,--port}'[SSH port]:port: ' \
+    '--identity[SSH private key]:private key:_files' \
+    '--ssh-config[SSH config file]:config file:_files' \
+    '--batch[disable interactive SSH authentication]' \
+    '(--demo --local)--demo[preview simulated traffic]' \
+    '(--demo --local)--local[read local Linux network counters]' \
+    '--once[print one rate sample as JSON and exit]' \
+    '--bits[display rates in bit/s]' \
+    '1:SSH host:_ssh_hosts'
+}
+
+_q_openwrt "$@"
