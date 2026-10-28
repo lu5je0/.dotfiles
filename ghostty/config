@@ -1,3 +1,4 @@
+# vim: set ft=config:
 # Copy Ghostty's terminfo to a remote machine
 # infocmp -x | ssh YOUR-SERVER -- tic -x -
 

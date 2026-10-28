@@ -25,10 +25,7 @@ vim.filetype.add {
   pattern = {
     ['.*.tmux.conf'] = 'tmux',
     ['.*.zsh'] = 'bash',
-    ['.*/ssh/config'] = 'sshconfig',
-    ['.*/.ssh/config.d/.*'] = 'sshconfig',
     ['.*/git/config'] = 'gitconfig',
     ['.*/.dotfiles/services/.*'] = 'systemd',
-    ['.*/.dotfiles/ghostty/config'] = 'config',
   },
 }
