@@ -1,3 +1,4 @@
+# vim: set ft=bash:
 # huskar 的 restic 排除清单，由 Nix 部署；修改后需 rebuild。
 #
 # 匹配规则（已实测）:
@@ -39,11 +40,8 @@ $HOME/.local/share/Steam/steamapps/temp
 $HOME/.local/share/Steam/appcache
 $HOME/.local/share/Steam/logs
 
-# ── 浏览器：只排缓存，保留书签 / 密码 / profile ──
-$HOME/.config/google-chrome/*/Cache
-$HOME/.config/google-chrome/*/Code Cache
-$HOME/.config/google-chrome/*/GPUCache
-$HOME/.config/google-chrome/*/Service Worker/CacheStorage
+# ── 浏览器
+$HOME/.config/google-chrome
 
 # ── 依赖 / 中间产物，任意层级 ──
 node_modules
