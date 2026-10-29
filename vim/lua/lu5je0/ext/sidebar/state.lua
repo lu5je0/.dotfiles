@@ -49,6 +49,8 @@ local function new_tab_state()
     -- winbar tabs
     active_tab_idx = 1,
     tab_cursors = {},
+    visible_tabs = {},
+    tab_widths = {},
     _visible_start = 1,
 
     git_status = {
@@ -103,6 +105,28 @@ local function new_tab_state()
       _first_located = false,   -- first <leader>gs entry on this tabpage parks on the first changed file
     },
 
+    history = {
+      repo_root = nil,
+      graph_enabled = false,
+      graph_rows = nil,
+      commits = {},
+      display_items = {},
+      selected_commits = {},
+      log_buf = nil,
+      log_win = nil,
+      refresh_selection = nil,
+      is_visible = nil,
+      loaded = false,
+      loading = false,
+      error = nil,
+      limited = false,
+      generation = 0,
+      job = nil,
+      count_job = nil,
+      pending_jump_sha = nil,
+      pending_jump_file = nil,
+    },
+
     -- Watcher resources belong to the tabpage, not the selected source.
     _index_watcher = nil,
     _index_path = nil,
@@ -120,6 +144,10 @@ local function new_tab_state()
 
     preview = {
       active = false,
+      enter_pending = false,
+      text_win = nil,
+      text_buf = nil,
+      text_autocmd = nil,
       autocmd = nil,
       bufleave_autocmd = nil,
       type = nil,
@@ -127,6 +155,8 @@ local function new_tab_state()
 
     -- diff_preview floating windows (dual mode uses left/right, single mode uses win_single)
     diff_preview = {
+      generation = 0,
+      timer = nil,
       win_left = nil,
       win_right = nil,
       buf_left = nil,
@@ -143,6 +173,8 @@ end
 -- watchers, timers, or orphan windows.
 local function release_tab_resources(ts)
   if not ts then return end
+  require('lu5je0.ext.sidebar.actions.text_preview').close(ts)
+  require('lu5je0.ext.git.project-log.model').cancel(ts.history)
   require('lu5je0.ext.sidebar.watcher').release(ts)
   require('lu5je0.ext.sidebar.git_status').release(ts)
   if ts.files then
@@ -159,6 +191,8 @@ local function release_tab_resources(ts)
   end
   if ts.diff_preview then
     local dp = ts.diff_preview
+    dp.generation = dp.generation + 1
+    if dp.timer then dp.timer:stop(); dp.timer:close(); dp.timer = nil end
     dp.refresh = nil
     if dp.win_left and vim.api.nvim_win_is_valid(dp.win_left) then
       pcall(vim.api.nvim_win_close, dp.win_left, true)

@@ -36,9 +36,9 @@ local function read_worktree(abs_path, max_bytes)
   return { lines = vim.fn.readfile(abs_path), kind = 'text' }
 end
 
-local function git_show_to_lines(spec, max_bytes, cb)
+local function git_show_to_lines(spec, max_bytes, cb, cwd)
   -- spec is a `git show` argument like 'HEAD:path' or ':path'
-  vim.system({ 'git', 'show', spec }, { text = true }, function(result)
+  vim.system({ 'git', 'show', spec }, { text = true, cwd = cwd }, function(result)
     vim.schedule(function()
       if result.code ~= 0 or not result.stdout then
         cb({ lines = {}, kind = 'missing' })
@@ -69,7 +69,7 @@ local function get_short_head(cwd, cb)
     cb(_short_head_cache[cwd])
     return
   end
-  vim.system({ 'git', 'rev-parse', '--short', 'HEAD' }, { text = true }, function(result)
+  vim.system({ 'git', 'rev-parse', '--short', 'HEAD' }, { text = true, cwd = cwd }, function(result)
     vim.schedule(function()
       local hash = ''
       if result.code == 0 and result.stdout then
@@ -138,13 +138,13 @@ function M.resolve_diff_targets(item)
   }
 end
 
-local function fetch_source(source, max_bytes, cb)
+local function fetch_source(source, max_bytes, cb, cwd)
   if source.kind == 'empty' then
     cb({ lines = {}, kind = 'text' })
   elseif source.kind == 'worktree' then
     cb(read_worktree(source.path, max_bytes))
   elseif source.kind == 'git_show' then
-    git_show_to_lines(source.spec, max_bytes, cb)
+    git_show_to_lines(source.spec, max_bytes, cb, cwd)
   end
 end
 
@@ -172,8 +172,16 @@ local function close_for(ts)
   end
 end
 
-function M.close()
-  close_for(state.tab())
+local function cancel_fetch(ts)
+  local d = dp(ts)
+  d.generation = d.generation + 1
+  if d.timer then d.timer:stop(); d.timer:close(); d.timer = nil end
+end
+
+function M.close(ts)
+  ts = ts or state.tab()
+  cancel_fetch(ts)
+  close_for(ts)
 end
 
 function M.refresh()
@@ -215,14 +223,18 @@ end
 
 function M.show(item, on_state_change)
   local node = item.node
-  local targets = M.resolve_diff_targets(item)
+  local targets = item.diff_targets or M.resolve_diff_targets(item)
   local max_bytes = config.diff_max_bytes
-  local cwd = vim.fn.getcwd()
+  local cwd = item.repo_root or vim.fn.getcwd()
   -- Capture this tab's state so the async callbacks always write back
   -- into the originating tab even if the user switches tabs mid-fetch.
   local ts = state.tab()
+  local tabpage = vim.api.nvim_get_current_tabpage()
+  local source_idx = ts.active_tab_idx
+  cancel_fetch(ts)
+  local generation = dp(ts).generation
 
-  local pending = 2
+  local pending = targets.left_title:find('HEAD') and 3 or 2
   local left_data, right_data, head_short
   local rendered = false
   local timeout_timer
@@ -447,6 +459,7 @@ function M.show(item, on_state_change)
   end
 
   local function render_preview()
+    if generation ~= dp(ts).generation or vim.api.nvim_get_current_tabpage() ~= tabpage or ts.active_tab_idx ~= source_idx then return end
     local d = dp(ts)
     local current_win = vim.api.nvim_get_current_win()
     local restore_focus = current_win == d.win_single or current_win == d.win_left or current_win == d.win_right
@@ -479,7 +492,7 @@ function M.show(item, on_state_change)
   end
 
   local function maybe_render()
-    if pending > 0 or rendered then
+    if generation ~= dp(ts).generation or pending > 0 or rendered then
       return
     end
     if timeout_timer then
@@ -490,6 +503,7 @@ function M.show(item, on_state_change)
         timeout_timer:close()
       end)
       timeout_timer = nil
+      dp(ts).timer = nil
     end
     rendered = true
     render_preview()
@@ -514,10 +528,13 @@ function M.show(item, on_state_change)
   -- Fallback: if any vim.system callback is lost, render after 5s with
   -- the data we have so the diff floats never hang.
   timeout_timer = vim.uv.new_timer()
+  dp(ts).timer = timeout_timer
   if timeout_timer then
     timeout_timer:start(5000, 0, vim.schedule_wrap(function()
+      if generation ~= dp(ts).generation then return end
       pcall(function() timeout_timer:close() end)
       timeout_timer = nil
+      dp(ts).timer = nil
       if rendered then return end
       pending = 0
       maybe_render()
@@ -528,15 +545,14 @@ function M.show(item, on_state_change)
     left_data = data
     pending = pending - 1
     maybe_render()
-  end)
+  end, cwd)
   fetch_source(targets.right, max_bytes, function(data)
     right_data = data
     pending = pending - 1
     maybe_render()
-  end)
+  end, cwd)
 
   if targets.left_title:find('HEAD') then
-    pending = pending + 1
     get_short_head(cwd, function(hash)
       head_short = hash
       pending = pending - 1

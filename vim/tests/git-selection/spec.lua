@@ -38,7 +38,10 @@ git { 'rm', 'extra.txt' }
 local deleted = commit('picked-delete')
 
 local function child(kind, mode)
-  local chan = vim.fn.jobstart({ vim.v.progpath, '--headless', '--embed', '-n', '-i', 'NONE', '-u', 'NONE', '--cmd', 'set rtp+=' .. root .. '/vim' }, { rpc = true })
+  local chan = vim.fn.jobstart({ vim.v.progpath, '--headless', '--embed', '-n', '-i', 'NONE', '-u', 'NONE', '--cmd', 'set rtp+=' .. root .. '/vim' }, {
+    rpc = true,
+    env = { NVIM_LOG_FILE = vim.fn.tempname() },
+  })
   assert(chan > 0)
   children[#children + 1] = chan
   local c = {}
@@ -46,6 +49,7 @@ local function child(kind, mode)
     return vim.rpcrequest(chan, 'nvim_exec_lua', code, args or {})
   end
   function c.feed(keys)
+    keys = keys:gsub('<Mark>', kind == 'project' and 'm' or '<Space>')
     vim.rpcrequest(chan, 'nvim_input', keys)
     vim.wait(70, function()
       return false
@@ -63,7 +67,8 @@ local function child(kind, mode)
     [[
     local repo, mode = ...
     vim.g.mapleader = ','
-    _G.saved_diff_prefs = { line_log_diff_mode = mode, line_log_diff_changes_only = false }
+    vim.o.columns, vim.o.lines = 140, 36
+    _G.saved_diff_prefs = { line_log_diff_mode = mode, line_log_diff_changes_only = false, sidebar_diff_mode = mode, sidebar_diff_changes_only = false }
     package.loaded['lu5je0.misc.env-keeper'] = {
       get = function(key, default)
         if saved_diff_prefs[key] ~= nil then return saved_diff_prefs[key] end
@@ -120,6 +125,10 @@ local function child(kind, mode)
     c.feed(c.row(text) .. 'G')
   end
   function c.selected(count)
+    if kind == 'project' then
+      c.wait(('return vim.tbl_count(require("lu5je0.ext.sidebar.state").history.selected_commits)==%d'):format(count))
+      return
+    end
     c.wait(([[return vim.wo[log_win].statusline:find(%q,1,true) ~= nil]]):format(count .. ' selected'))
   end
   function c.preview()
@@ -160,6 +169,9 @@ local function excludes(text, part)
   assert(not text:find(part, 1, true), 'unexpected: ' .. part .. '\n' .. text)
 end
 local function run(name, fn)
+  if vim.env.NVIM_TEST_FILTER and not name:find(vim.env.NVIM_TEST_FILTER, 1, true) then
+    return
+  end
   local ok, err = pcall(fn)
   if ok then
     passed = passed + 1
@@ -177,7 +189,7 @@ end
 local function pick_commits(c, names)
   for _, name in ipairs(names) do
     c.go(name)
-    c.feed('<Space>')
+    c.feed('<Mark>')
   end
   c.selected(#names)
   c.feed('<CR>')
@@ -196,7 +208,7 @@ for _, kind in ipairs { 'project', 'line' } do
     if kind == 'project' then
       c.feed('l')
       c.go('demo.txt')
-      c.feed('<CR>')
+      c.feed('<Space>')
     end
     c.q([[
       for _, map in ipairs(vim.api.nvim_buf_get_keymap(log_buf, 'n')) do
@@ -214,7 +226,7 @@ for _, kind in ipairs { 'project', 'line' } do
       { 'c', 'single', false },
     } do
       c.feed(expected[1])
-      c.wait(([[
+      local check = ([[
         if saved_diff_prefs.line_log_diff_mode ~= %q or saved_diff_prefs.line_log_diff_changes_only ~= %s then return false end
         local count = 0
         for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -225,7 +237,14 @@ for _, kind in ipairs { 'project', 'line' } do
           end
         end
         return count == %d
-      ]]):format(expected[2], tostring(expected[3]), tostring(expected[2] == 'dual'), tostring(expected[3]), expected[2] == 'dual' and 2 or 1))
+      ]]):format(expected[2], tostring(expected[3]), tostring(expected[2] == 'dual'), tostring(expected[3]), expected[2] == 'dual' and 2 or 1)
+      if kind == 'project' then
+        check = check:gsub('line_log_diff_', 'sidebar_diff_'):gsub(
+          'if vim.w%[win%].git_line_log_diff or vim.w%[win%].git_project_log_diff then',
+          'local d=require("lu5je0.ext.sidebar.state").diff_preview; if win==d.win_single or win==d.win_left or win==d.win_right then'
+        )
+      end
+      c.wait(check)
     end
     c.stop()
   end)
@@ -236,16 +255,16 @@ run('continuous selection: one net patch per path, original marks survive tree e
   local c = child('project')
   for _, name in ipairs { 'picked-root', 'skipped-middle', 'picked-change' } do
     c.go(name)
-    c.feed('<Space>')
+    c.feed('<Mark>')
   end
   c.selected(3)
   c.feed('l')
   c.q([[
     assert(#vim.api.nvim_buf_get_extmarks(log_buf,vim.api.nvim_create_namespace('git_commit_selection'),0,-1,{})==3)
   ]])
-  c.feed('<Space>')
+  c.feed('<Mark>')
   c.selected(2)
-  c.feed('<Space>')
+  c.feed('<Mark>')
   c.selected(3)
   c.feed('<CR>')
   local tree_text = c.tree_text()
@@ -335,9 +354,9 @@ run('Visual Enter computes net changes for line, character and block selections'
     c.feed('q')
     c.wait([[return #vim.api.nvim_list_tabpages()==1]])
   end
-  c.feed(top .. 'GV' .. bottom .. 'G<Space>')
+  c.feed(top .. 'GV' .. bottom .. 'G<Mark>')
   c.selected(3)
-  c.feed('<Space>')
+  c.feed('<Mark>')
   c.q([[assert(not vim.wo[log_win].statusline:find('selected',1,true))]])
   c.stop()
 end)
@@ -454,7 +473,7 @@ run('all-cancelled selections show no net changes and no partial preview', funct
   c.stop()
 end)
 
-run('root, rename, deletion and untracked changes retain their net semantics', function()
+run('History excludes local changes while Changes previews untracked files', function()
   write('untracked.txt', { 'local new file' })
   local c = child('project')
   -- Each file changes once across these selections, so all patches apply cleanly.
@@ -467,10 +486,22 @@ run('root, rename, deletion and untracked changes retain their net semantics', f
   contains(c.preview(), '-extra')
   c.feed('q')
   c.wait([[return #vim.api.nvim_list_tabpages()==1]])
-  c.feed('U')
-  pick_commits(c, { 'local change' })
-  contains(c.tree_text(), 'untracked.txt')
-  contains(c.preview(), '+local new file')
+  c.q([[
+    for _,entry in ipairs(require('lu5je0.ext.sidebar.state').history.commits) do
+      assert(not entry.local_change and entry.hash~='local-change')
+    end
+    assert(not table.concat(vim.api.nvim_buf_get_lines(log_buf,0,-1,false),'\n'):find('Local changes',1,true))
+  ]])
+  c.q([[vim.cmd.cd(...)]], { repo })
+  c.feed(',gs')
+  c.wait([[return table.concat(vim.api.nvim_buf_get_lines(log_buf,0,-1,false),'\n'):find('untracked.txt',1,true)~=nil]])
+  c.go('untracked.txt')
+  c.feed('<Space>')
+  c.wait([[local d=require('lu5je0.ext.sidebar.state').diff_preview; return d.win_single~=nil]])
+  c.q([[
+    local d=require('lu5je0.ext.sidebar.state').diff_preview
+    assert(table.concat(vim.api.nvim_buf_get_lines(d.buf_single,0,-1,false),'\n'):find('+local new file',1,true))
+  ]])
   c.stop()
   vim.fn.delete(repo .. '/untracked.txt')
 end)
@@ -559,6 +590,360 @@ run('the four OnePlus 6 commits have no net gnome.nix changes', function()
   c.stop()
 end)
 
+run('History hosts the project tree, isolates page mappings and restores selection', function()
+  local c = child('project')
+  c.q([[
+    local s = require('lu5je0.ext.sidebar.state')
+    assert(s.win == log_win and s.buf == log_buf)
+    assert(s.active_tab_idx == require('lu5je0.ext.sidebar.config').tab_idx('history'))
+    assert(vim.bo[log_buf].filetype == 'Sidebar')
+    assert(vim.api.nvim_win_get_height(log_win) == vim.api.nvim_win_get_height(1000))
+    assert(vim.api.nvim_win_get_width(log_win) == 50)
+    assert(vim.fn.maparg('dd', 'n') == '')
+  ]])
+  c.go('picked-rename')
+  c.feed('<Mark>l')
+  c.feed('<Space>')
+  c.wait([[local d=require('lu5je0.ext.sidebar.state').diff_preview; return d.win_single ~= nil and vim.api.nvim_win_is_valid(d.win_single)]])
+  c.q([[
+    local s = require('lu5je0.ext.sidebar.state')
+    local h = s.history
+    assert(vim.api.nvim_win_get_width(s.win) == 50)
+    assert(vim.wo[s.win].winfixbuf)
+    assert(vim.api.nvim_win_get_config(s.diff_preview.win_single).relative == 'editor')
+    assert(vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(1000)):find('renamed.txt',1,true))
+    require('lu5je0.ext.sidebar.actions.diff_preview').toggle_mode()
+    require('lu5je0.ext.sidebar.actions.preview').refresh()
+    require('lu5je0.ext.sidebar.tabs').switch_to(require('lu5je0.ext.sidebar.config').tab_idx('buffers'))
+    assert(s.diff_preview.win_single == nil and s.diff_preview.win_left == nil)
+    assert(vim.fn.maparg('d','n') == '')
+    _G.buffers_text = vim.api.nvim_buf_get_lines(s.buf,0,-1,false)
+  ]])
+  vim.wait(200, function()
+    return false
+  end)
+  c.q([[
+    local s = require('lu5je0.ext.sidebar.state')
+    assert(vim.deep_equal(buffers_text,vim.api.nvim_buf_get_lines(s.buf,0,-1,false)))
+    assert(#vim.api.nvim_buf_get_extmarks(s.buf,vim.api.nvim_create_namespace('git_commit_selection'),0,-1,{})==0)
+    require('lu5je0.ext.sidebar.tabs').switch_to(require('lu5je0.ext.sidebar.config').tab_idx('history'))
+    assert(vim.tbl_count(s.history.selected_commits)==1)
+    assert(#vim.api.nvim_buf_get_extmarks(s.buf,vim.api.nvim_create_namespace('git_commit_selection'),0,-1,{})==1)
+  ]])
+  c.feed('q')
+  c.q([[assert(not require('lu5je0.ext.sidebar.state'):is_open())]])
+  c.feed(',gl')
+  c.wait([[return require('lu5je0.ext.sidebar.state'):is_open()]])
+  c.q([[assert(vim.tbl_count(require('lu5je0.ext.sidebar.state').history.selected_commits)==1)]])
+  c.stop()
+end)
+
+run('History graph toggle preserves cursor selection and uses disjoint highlight spans', function()
+  local c = child('project')
+  c.go('picked-change')
+  c.feed('m')
+  c.q([[
+    local state=require('lu5je0.ext.sidebar.state')
+    _G.graph_cursor=vim.api.nvim_win_get_cursor(state.win)
+    _G.initial_lines=vim.api.nvim_buf_get_lines(state.buf,0,-1,false)
+    function check_history_highlights()
+      local source=require('lu5je0.ext.sidebar.sources.history')
+      local spec=source._spec
+      local lines,items,hls,vt=require('lu5je0.ext.sidebar.render').render_tree(spec.build(state.history),spec.render_opts())
+      spec.decorate(state.history,lines,items,hls,vt)
+      local groups={}
+      for _,hl in ipairs(hls) do
+        if hl.col_start<hl.col_end then
+          local ranges=groups[hl.line] or {}; groups[hl.line]=ranges
+          for _,previous in ipairs(ranges) do
+            assert(hl.col_end<=previous.col_start or hl.col_start>=previous.col_end, 'overlapping colors: '..hl.hl..' / '..previous.hl)
+          end
+          ranges[#ranges+1]=hl
+        end
+      end
+    end
+    check_history_highlights()
+  ]])
+  c.feed('gG')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    assert(s.history.graph_enabled and #s.history.graph_rows==#s.history.commits)
+    assert(vim.deep_equal(graph_cursor,vim.api.nvim_win_get_cursor(s.win)))
+    assert(vim.tbl_count(s.history.selected_commits)==1)
+    _G.cached_graph=s.history.graph_rows
+    check_history_highlights()
+  ]])
+  c.feed('gG')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    assert(not s.history.graph_enabled)
+    assert(vim.deep_equal(initial_lines,vim.api.nvim_buf_get_lines(s.buf,0,-1,false)))
+    check_history_highlights()
+  ]])
+  c.feed('gG')
+  c.q([[assert(require('lu5je0.ext.sidebar.state').history.graph_rows==cached_graph)]])
+  c.feed('U')
+  c.feed('l')
+  c.go('demo.txt')
+  c.feed('<Space>')
+  c.wait([[return require('lu5je0.ext.sidebar.state').diff_preview.win_single~=nil]])
+  c.feed('<Esc>q,gl')
+  c.q([[assert(require('lu5je0.ext.sidebar.state').history.graph_enabled)]])
+  c.stop()
+end)
+
+run('History navigation respects typed key order and closes the actual parent', function()
+  local c = child('project')
+  c.feed('ggjl')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    assert(not h.commits[1].expanded, 'j/l must not expand the previous commit')
+    assert(h.commits[2].expanded, 'j/l must expand the second commit')
+  ]])
+  c.go('picked-change')
+  c.feed('l')
+  c.go('demo.txt')
+  c.feed('h')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    local line=vim.api.nvim_win_get_cursor(s.win)[1]
+    local item=s.history.display_items[line]
+    assert(item.type=='commit' and item.node.commit.message=='picked-change')
+    assert(not item.node.commit.expanded, 'h must close the owning commit, not an unrelated directory')
+  ]])
+  c.feed('h')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    assert(h.commits[2].expanded, 'h on a folded commit must not close a preceding commit')
+  ]])
+  c.stop()
+end)
+
+run('History preserves child folds when reopening parents and reveals jump targets', function()
+  write('fold-parent/child/one.txt', { 'one' })
+  write('fold-parent/sibling.txt', { 'sibling' })
+  local fold_commit = commit('fold-state')
+  local c = child('project')
+  c.go('fold-state')
+  c.feed('l')
+  c.go('one.txt')
+  -- Fold the leaf directory and then its parent, retaining both fold flags.
+  c.feed('hh')
+  c.feed('l')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    assert(item.node.name=='child' and not item.node.expanded, 'reopening a parent must preserve its folded child')
+    for _,child in ipairs(s.history.display_items) do
+      assert(child.node.name~='one.txt', 'files under the folded child must remain hidden')
+    end
+  ]=])
+  c.feed('hh')
+  c.feed('<CR>')
+  c.go('fold-parent')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    assert(not item.node.expanded, 'reopening a commit must preserve its folded directories')
+  ]=])
+  c.feed('l')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    assert(item.node.name=='child' and not item.node.expanded, 'nested fold state must survive closing the commit')
+  ]=])
+  c.feed('l')
+  c.go('one.txt')
+  c.q([=[require('lu5je0.ext.git.project-log').show({jump_to_sha=...,jump_to_file='fold-parent/child/one.txt'})]=], { fold_commit })
+  c.wait([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    return item and item.node.rel_path=='fold-parent/child/one.txt'
+  ]=])
+  c.stop()
+end)
+
+run('History opens and closes a whole single-directory chain and stops at branches', function()
+  write('chain/a/b/leaf/one.txt', { 'one' })
+  write('chain/a/b/peer.txt', { 'peer' })
+  commit('single-directory-chain')
+  local c = child('project')
+  c.go('single-directory-chain')
+  c.feed('l')
+  c.go('one.txt')
+  c.feed('hh')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    assert(item.node.name=='chain' and not item.node.expanded, 'h must collapse the whole displayed parent chain')
+  ]=])
+  c.feed('l')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    assert(item.node.name=='leaf' and not item.node.expanded, 'auto expansion must stop at b with two children')
+    local text=table.concat(vim.api.nvim_buf_get_lines(s.buf,0,-1,false),'\n')
+    assert(text:find('chain/a/b',1,true), 'the directory chain must be expanded and compressed in one action')
+    assert(not text:find('one.txt',1,true), 'folded descendants beyond the branch must stay folded')
+  ]=])
+  c.go('peer.txt')
+  c.feed('h')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    assert(item.node.name=='chain' and not item.node.expanded, 'h from a direct file must collapse the whole chain')
+  ]=])
+  c.feed('l')
+  c.go('chain/a/b')
+  c.feed('zc')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
+    assert(item.node.name=='chain' and not item.node.expanded, 'zc on the compressed row must collapse the whole chain')
+  ]=])
+  c.stop()
+end)
+
+run('History commit Space previews details and follows Sidebar lifecycle', function()
+  local c = child('project')
+  c.go('picked-rename')
+  c.feed('<Space>')
+  c.q([=[
+    local s=require('lu5je0.ext.sidebar.state')
+    local p=s.preview
+    assert(p.type=='text' and p.active and vim.api.nvim_win_is_valid(p.text_win))
+    assert(vim.api.nvim_get_current_win()==s.win, 'first Space must keep focus in Sidebar')
+    local text=table.concat(vim.api.nvim_buf_get_lines(p.text_buf,0,-1,false),'\n')
+    for _,expected in ipairs {'commit ', 'Author: Test', 'Date:', 'picked-rename', 'demo.txt → renamed.txt'} do
+      assert(text:find(expected,1,true), 'missing commit detail: '..expected)
+    end
+    assert(vim.tbl_count(s.history.selected_commits)==0)
+    assert(not s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]].node.commit.expanded)
+  ]=])
+  c.feed('<Space>')
+  c.q([[local s=require('lu5je0.ext.sidebar.state'); assert(vim.api.nvim_get_current_win()==s.preview.text_win)]])
+  c.feed('q')
+  c.q([[local s=require('lu5je0.ext.sidebar.state'); assert(s.preview.text_win==nil and s.preview.text_buf==nil); assert(vim.api.nvim_get_current_win()==s.win)]])
+  c.feed('<Space>j')
+  c.q([[assert(require('lu5je0.ext.sidebar.state').preview.text_win==nil, 'moving off commit must close details')]])
+  c.feed('<Space><Space>')
+  c.q([[local s=require('lu5je0.ext.sidebar.state'); assert(vim.api.nvim_get_current_win()==s.preview.text_win)]])
+  c.feed('<Esc>')
+  c.feed('<Space>')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    _G.details_buf=s.preview.text_buf
+    require('lu5je0.ext.sidebar.tabs').switch_to(require('lu5je0.ext.sidebar.config').tab_idx('files'))
+    assert(s.preview.text_win==nil and not vim.api.nvim_buf_is_valid(details_buf), 'switching page must release details')
+  ]])
+  c.feed(',gl<Space>q')
+  c.q([[local s=require('lu5je0.ext.sidebar.state'); assert(not s:is_open() and s.preview.text_win==nil)]])
+  c.stop()
+end)
+
+run('History Space preview uses Changes controls and m marks commits', function()
+  local c = child('project')
+  c.q([[vim.keymap.set('n', '<Space><Space>', function() error('global double-Space mapping must not run in History') end)]])
+  c.go('picked-change')
+  c.feed('l')
+  c.go('demo.txt')
+  c.feed('<Space>')
+  c.wait([[local d=require('lu5je0.ext.sidebar.state').diff_preview; return d.win_single~=nil]])
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    assert(vim.tbl_count(s.history.selected_commits)==0)
+    assert(vim.api.nvim_get_current_win()==s.win)
+    assert(table.concat(vim.api.nvim_buf_get_lines(s.diff_preview.buf_single,0,-1,false),'\n'):find('+gamma',1,true))
+  ]])
+  c.feed('<Space>d')
+  c.wait([[local d=require('lu5je0.ext.sidebar.state').diff_preview; return d.win_left~=nil and vim.api.nvim_get_current_win()==d.win_left]])
+  c.feed('cq')
+  c.wait([[local s=require('lu5je0.ext.sidebar.state'); return s.diff_preview.win_left==nil and vim.api.nvim_get_current_win()==s.win]])
+  c.feed('<Space><Space>')
+  c.wait([[local s=require('lu5je0.ext.sidebar.state'); local d=s.diff_preview; return d.win_left~=nil and vim.api.nvim_get_current_win()==d.win_left]])
+  c.feed('q')
+  c.wait([[return vim.api.nvim_get_current_win()==log_win]])
+  c.feed('m')
+  c.selected(1)
+  c.feed('U')
+  c.selected(0)
+  c.go('picked-rename')
+  c.feed('l<CR>')
+  c.q([[assert(vim.api.nvim_get_current_win()~=log_win); assert(vim.api.nvim_buf_get_name(0):find('renamed.txt',1,true))]])
+  c.stop()
+end)
+
+run('Files Symbols Changes are default tabs while History and Buffers are transient', function()
+  local c = child('project')
+  c.q([[
+    local cfg=require('lu5je0.ext.sidebar.config')
+    local tabs=require('lu5je0.ext.sidebar.tabs')
+    assert(vim.deep_equal(vim.list_slice(tabs.visible_indices(),1,3),{cfg.tab_idx('files'),cfg.tab_idx('symbols'),cfg.tab_idx('git_changes')}))
+    assert(not vim.tbl_contains(tabs.visible_indices(),cfg.tab_idx('buffers')))
+    tabs.next_tab()
+    assert(require('lu5je0.ext.sidebar.state').active_tab_idx==cfg.tab_idx('files'))
+    tabs.prev_tab()
+    assert(require('lu5je0.ext.sidebar.state').active_tab_idx==cfg.tab_idx('history'))
+  ]])
+  c.feed(',gs')
+  c.q([[
+    local cfg=require('lu5je0.ext.sidebar.config')
+    assert(require('lu5je0.ext.sidebar.state').active_tab_idx==cfg.tab_idx('git_changes'))
+    assert(vim.tbl_contains(require('lu5je0.ext.sidebar.tabs').visible_indices(),cfg.tab_idx('git_changes')))
+  ]])
+  c.feed('q,fb')
+  c.q([[
+    local cfg=require('lu5je0.ext.sidebar.config')
+    local tabs=require('lu5je0.ext.sidebar.tabs')
+    assert(require('lu5je0.ext.sidebar.state').active_tab_idx==cfg.tab_idx('buffers'))
+    assert(vim.tbl_contains(tabs.visible_indices(),cfg.tab_idx('buffers')))
+    assert(vim.deep_equal(vim.list_slice(tabs.visible_indices(),1,3),{cfg.tab_idx('files'),cfg.tab_idx('symbols'),cfg.tab_idx('git_changes')}))
+  ]])
+  c.feed('q')
+  c.q([[
+    local cfg=require('lu5je0.ext.sidebar.config')
+    assert(vim.deep_equal(require('lu5je0.ext.sidebar.tabs').visible_indices(),{cfg.tab_idx('files'),cfg.tab_idx('symbols'),cfg.tab_idx('git_changes')}))
+  ]])
+  c.feed(',gl')
+  c.q([[
+    local cfg=require('lu5je0.ext.sidebar.config')
+    local indices=require('lu5je0.ext.sidebar.tabs').visible_indices()
+    assert(not vim.tbl_contains(indices,cfg.tab_idx('buffers')))
+    assert(vim.tbl_contains(indices,cfg.tab_idx('git_changes')))
+  ]])
+  c.stop()
+end)
+
+run('History sessions belong to their tabpage and release resources on close', function()
+  local c = child('project')
+  c.go('picked-rename')
+  c.feed('<Mark>')
+  c.q(
+    [[
+    _G.first_history = require('lu5je0.ext.sidebar.state').history
+    _G.first_tab = vim.api.nvim_get_current_tabpage()
+    vim.cmd.tabnew()
+    vim.cmd.edit(...)
+    require('lu5je0.ext.git.project-log').show()
+    _G.second_history = require('lu5je0.ext.sidebar.state').history
+    assert(second_history ~= first_history)
+  ]],
+    { repo .. '/renamed.txt' }
+  )
+  c.wait([[return #second_history.commits > 0 and not second_history.loading]])
+  c.q([[
+    assert(vim.tbl_count(second_history.selected_commits)==0)
+    vim.cmd.tabclose()
+  ]])
+  c.wait([[return second_history.job == nil and not second_history.loading]])
+  c.q([[
+    assert(vim.api.nvim_get_current_tabpage()==first_tab)
+    assert(require('lu5je0.ext.sidebar.state').history == first_history)
+    assert(vim.tbl_count(first_history.selected_commits)==1)
+  ]])
+  c.stop()
+end)
+
 run('closing a pending merge invokes cleanup and suppresses late callbacks', function()
   local c = child('project')
   c.q([[
@@ -578,8 +963,8 @@ run('closing a pending merge invokes cleanup and suppresses late callbacks', fun
   c.q([[
     assert(_G.cleaned)
     assert(#vim.api.nvim_list_tabpages()==1)
-    assert(vim.api.nvim_get_current_win()==log_win)
-    assert(vim.api.nvim_exec2('messages',{output=true}).output=='')
+    assert(vim.api.nvim_get_current_win()==log_win, vim.inspect({current=vim.api.nvim_get_current_win(), expected=log_win, messages=vim.api.nvim_exec2('messages',{output=true}).output}))
+    assert(vim.api.nvim_exec2('messages',{output=true}).output=='', vim.api.nvim_exec2('messages',{output=true}).output)
   ]])
   c.stop()
 end)

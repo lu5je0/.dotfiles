@@ -104,14 +104,8 @@ function M.apply_shared()
     end)
   end
 
-  buf_set('n', 'j', function()
-    local keys = require('lu5je0.core.keys')
-    keys.feedkey('j', 'n')
-  end)
-  buf_set('n', 'k', function()
-    local keys = require('lu5je0.core.keys')
-    keys.feedkey('k', 'n')
-  end)
+  buf_set('n', 'j', 'j')
+  buf_set('n', 'k', 'k')
 end
 
 local function build_dispatch()
@@ -140,7 +134,13 @@ function M.apply_for_tab(idx)
 
   build_dispatch()
 
-  for _, entry in pairs(_dispatch) do
+  local entries = vim.tbl_values(_dispatch)
+  -- Neovim checks newer mappings first. Install short <nowait> mappings
+  -- last so a longer mapping cannot make their shared prefix wait.
+  table.sort(entries, function(a, b)
+    return #vim.api.nvim_replace_termcodes(a.lhs, true, false, true) > #vim.api.nvim_replace_termcodes(b.lhs, true, false, true)
+  end)
+  for _, entry in ipairs(entries) do
     local handler = entry.handlers[idx]
     if handler then
       buf_set(entry.mode, entry.lhs, handler)

@@ -111,7 +111,25 @@ run_case('merge collapses through middle lane', '65a66c78~1..5a0206da')
 run_case('wide merge with spaced continuation', '62b07ca6~1..HEAD')
 run_case('multi-lane close after inner join', 'bf903126~1..5fe3a5a0')
 
-io.write(string.format('\nproject-log kitty graph: %d passed, %d failed\n', passed, failed))
+-- Golden cells captured from unmodified Tig 2.6.0 graph-v2.c, including
+-- its color IDs. No Tig binary or network access is required by the tests.
+local fixtures_path = repo_root .. '/vim/tests/project-log/tig-fixtures.json'
+local fixtures = vim.json.decode(table.concat(vim.fn.readfile(fixtures_path), '\n'))
+local tig = require('lu5je0.ext.git.project-log.tig')
+for _, fixture in ipairs(fixtures) do
+  local rows = tig.build(fixture.commits)
+  local cells = {}
+  for _, row in ipairs(rows) do cells[#cells + 1] = row.cells end
+  if vim.deep_equal(cells, fixture.expected) then
+    passed = passed + 1
+    io.write('  Tig v2 ' .. fixture.name .. ' ... PASS\n')
+  else
+    failed = failed + 1
+    io.write('  Tig v2 ' .. fixture.name .. ' ... FAIL\n')
+  end
+end
+
+io.write(string.format('\nproject-log graphs: %d passed, %d failed\n', passed, failed))
 if failed > 0 then
   os.exit(1)
 end

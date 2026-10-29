@@ -30,11 +30,16 @@ function M.visual_range(state)
   return math.min(first, last), math.max(first, last)
 end
 
-function M.setup(state, key_for_item, update_status)
+function M.setup(state, key_for_item, update_status, settings)
+  settings = settings or {}
+  local map = settings.map or vim.keymap.set
   local buf = state.log_buf
-  state.selected_commits = {}
+  state.selected_commits = settings.manual_refresh and state.selected_commits or {}
 
   local function refresh()
+    if state.is_visible and not state.is_visible() then
+      return
+    end
     if state.log_buf ~= buf or not vim.api.nvim_buf_is_valid(buf) then
       return
     end
@@ -53,24 +58,27 @@ function M.setup(state, key_for_item, update_status)
   end
 
   -- Tree expansion and streamed history change row numbers, but not commit keys.
-  local pending = false
-  vim.api.nvim_buf_attach(buf, false, {
-    on_lines = function()
-      if state.log_buf ~= buf then
-        return true
-      end
-      if not pending then
-        pending = true
-        vim.schedule(function()
-          pending = false
-          refresh()
-        end)
-      end
-    end,
-  })
+  state.refresh_selection = refresh
+  if not settings.manual_refresh then
+    local pending = false
+    vim.api.nvim_buf_attach(buf, false, {
+      on_lines = function()
+        if state.log_buf ~= buf then
+          return true
+        end
+        if not pending then
+          pending = true
+          vim.schedule(function()
+            pending = false
+            refresh()
+          end)
+        end
+      end,
+    })
+  end
 
   local opts = { buffer = buf, nowait = true }
-  vim.keymap.set('n', '<Space>', function()
+  map('n', '<Space>', function()
     local item = state.display_items[vim.api.nvim_win_get_cursor(state.log_win)[1]]
     local key = key_for_item(item)
     if key then
@@ -78,7 +86,7 @@ function M.setup(state, key_for_item, update_status)
       refresh()
     end
   end, opts)
-  vim.keymap.set('x', '<Space>', function()
+  map('x', '<Space>', function()
     local first, last = M.visual_range(state)
     local keys = M.keys(state, key_for_item, first, last)
     local select = false
@@ -90,7 +98,7 @@ function M.setup(state, key_for_item, update_status)
     end
     refresh()
   end, opts)
-  vim.keymap.set({ 'n', 'x' }, 'U', function()
+  map({ 'n', 'x' }, 'U', function()
     state.selected_commits = {}
     refresh()
   end, opts)

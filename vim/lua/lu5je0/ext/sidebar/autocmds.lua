@@ -45,6 +45,10 @@ function M.setup(group)
       require('lu5je0.ext.sidebar')._on_dir_changed({ match = 'tabpage' })
       watcher.start()
       watcher.refresh(nil, true)
+      if state:is_open() then
+        local source = require('lu5je0.ext.sidebar.tabs').get_active_source()
+        if source and source.on_enter then source.on_enter() end
+      end
     end,
   })
 
@@ -57,9 +61,19 @@ function M.setup(group)
         if ts.win == win then
           watcher.stop(tabpage)
           ts.win = nil
+          vim.schedule(function()
+            if ts.win then return end
+            require('lu5je0.ext.sidebar.source_base').deactivate(ts)
+            require('lu5je0.ext.sidebar.tabs').reset_transient(ts)
+          end)
         end
       end
     end,
+  })
+
+  vim.api.nvim_create_autocmd('TabLeave', {
+    group = group,
+    callback = function() require('lu5je0.ext.sidebar.source_base').deactivate(state.tab()) end,
   })
 
   -- Symbols auto-follow state.

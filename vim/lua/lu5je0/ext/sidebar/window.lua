@@ -53,6 +53,8 @@ do
 
   statusline.register_component('sidebar_label', {
     function()
+      local source = require('lu5je0.ext.sidebar.tabs').get_active_source()
+      if source and source.status then return '%#StatusLineGrey#' .. source.status() end
       return '%#StatusLineGrey#' .. config.filetype:upper()
     end,
   })
@@ -128,9 +130,11 @@ function M.close()
   if not state:is_open() then
     return
   end
-  state.width = vim.api.nvim_win_get_width(state.win)
+  require('lu5je0.ext.sidebar.tabs').save_width()
+  require('lu5je0.ext.sidebar.source_base').deactivate(state.tab())
   vim.api.nvim_win_close(state.win, true)
   state.win = nil
+  require('lu5je0.ext.sidebar.tabs').reset_transient(state.tab())
 end
 
 local PICK_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -256,21 +260,10 @@ function M.toggle_width()
   else
     vim.api.nvim_win_set_width(state.win, state.last_width)
   end
-  state.width = vim.api.nvim_win_get_width(state.win)
+  require('lu5je0.ext.sidebar.tabs').save_width()
 end
 
 function M.setup_remember_width()
-  vim.api.nvim_create_autocmd('WinClosed', {
-    callback = function(args)
-      if vim.bo[args.buf].filetype ~= config.filetype then
-        return
-      end
-      if state:is_open() then
-        state.width = vim.api.nvim_win_get_width(state.win)
-      end
-    end,
-  })
-
   local last_known_width = nil
   vim.api.nvim_create_autocmd('WinResized', {
     callback = function()
@@ -281,7 +274,10 @@ function M.setup_remember_width()
       if cur ~= last_known_width then
         last_known_width = cur
         local tabs = require('lu5je0.ext.sidebar.tabs')
+        tabs.save_width()
         tabs.render_winbar()
+        local source = tabs.get_active_source()
+        if source and source.on_resize then source.on_resize() end
       end
     end,
   })

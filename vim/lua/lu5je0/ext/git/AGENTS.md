@@ -26,11 +26,12 @@
   - `block.lua`: Block 类与 diff 生成（纯算法，不依赖 state）
   - `ui.lua`: 窗口、buffer、statusline、高亮、keymaps；直接消费 `state.tracker`
 - `project-log/`: 项目级 commit log 子模块
-  - `init.lua`: Neovim 入口，负责 session、git 命令、文件 diff 窗口与 keymaps
+  - `init.lua`: `show()` 进入 Sidebar History
+  - `model.lua`: 项目历史的异步数据加载与取消，状态由 Sidebar per-tab schema 持有；不创建窗口、不安装按键、不渲染
   - `core.lua`: 解析项目级 `git log --name-status` 输出
-  - `graph.lua`: 维护 compact git graph 状态，解析 `git log --graph` 的 prefix 与 graph-only continuation 行并折叠成单行 graph
+  - `tig.lua`: Tig 2.6.0 graph-v2 的纯 Lua 实现，布局、UTF-8 符号和颜色编号与上游一致；GPL-2.0-or-later，许可文本内嵌在 `tig.lua` 注释中
+  - `kitty.lua`: 独立的 gitgraph 风格图形算法，现有回归用例保留
   - `ui.lua`: 渲染 commit 列表、文件树、图标、高亮与 statusline
-  - `scheduler.lua`: CursorMoved 后的 diff preview 调度
 
 ## 功能说明
 
@@ -44,26 +45,24 @@
 
 ### Project Log (`<leader>gl` normal 模式)
 
-1. Normal 模式按 `<leader>gl`
-2. 底部 split 窗口显示当前 git 仓库的 commit 列表，窗口高度约为当前窗口的 80%
-3. 如果存在未提交改动，列表顶部显示 `local change` 伪 commit 节点
-4. commit 行在最前方渲染 git graph 语义列：普通提交为 `o`，merge 提交为 `M─┐`，活动分支列为 `│`；graph 后保留当前 commit 文本格式
-5. commit 节点默认折叠；打开 commit 时，内部目录树默认全部展开，只有单个子目录的连续目录链压缩成 `parent/child` 显示
-6. 在 commit 行按 `l` / `<CR>` 展开节点，并把光标放到第一个可见子节点；在目录行按 `l` / `<CR>` 展开节点，并把光标放到第一个子节点
-7. 在 commit 行按 `h` 折叠 commit；在展开目录行按 `h` 先折叠当前目录，在折叠目录或文件行按 `h` 折叠父节点
-8. 光标移动到文件行时，右侧 vsplit 自动显示该 commit 对该文件的 diff；文件行 `<CR>` 可手动刷新
-9. `c` 切换 changes-only，`d` 切换 single / dual，两个设置互相独立，复用 line-log 的 diff 偏好
-10. Visual 选中多行后按 `<CR>`，在新 tab 打开选区内 commit 的文件树；文件/目录行按所属 commit 去重，graph connector 行跳过
+1. 普通模式 `<leader>gl` 打开 Sidebar History，提交树使用与 Changes 相同的渲染、缩进、展开箭头、文件图标和状态颜色。提交行显示短 hash 与标题，`K` 查看 hash、作者、时间与完整标题。
+2. commit 默认折叠，目录默认展开，连续目录链合并显示；打开目录时沿唯一子目录自动展开到分支、文件或空目录；收起时整条合并显示的目录链一起关闭，分支以下子节点及 commit 重开时保留折叠状态；`h/l`、`zo/zc` 折叠/展开，文件行 Enter 打开工作区文件。
+3. 提交行 Space 预览 hash、作者、时间、标题和变更文件列表（含 rename 路径）；再按进入浮窗，`q` / Esc 关闭。文件行 Space 使用共享浮窗预览该提交相对 first parent 的变化，再按进入预览；移动光标关闭预览。root commit 与空树比较，rename 使用旧路径。
+4. `d` / `c` 与 Changes 共用布局、changes-only 偏好，预览内切换复用加载结果。预览关闭、切页和切 Neovim tab 后，过期回调不得重开窗口。
+5. `m` 勾选提交（支持 Visual 批量），`U` 清空；有勾选时 Enter 或 Visual Enter 在新 tab 查看净变化。
+6. `r` 刷新，`ga` 加载全部，`Z` 切换 Sidebar 宽度；Visual `<leader>gl` 与 `<leader>gL` 保留独立的行/文件历史窗口。
+7. `gG` 在普通列表与 Tig 提交关系图之间切换；每个提交一行，保留文件树、光标和勾选。图形按已加载提交生成并缓存，刷新历史后失效，不在 render / CursorMoved 中计算。
+8. History 状态按 Neovim tabpage 隔离，切页/关闭取消加载并保留已完成的历史、展开和勾选；`model.lua` 只产出数据，Sidebar source 管理树、按键和预览目标。
 
 ### 离散 commit 勾选（两个日志窗口共用）
 
-- Normal 模式 `<Space>` 勾选/取消光标所在 commit；项目日志的子节点按所属 commit 处理
-- Visual 模式 `<Space>` 批量勾选范围内的 commit；范围已全部勾选时批量取消，保留 Visual 选区
+- History 用 `m`、行历史用 `<Space>` 勾选/取消光标所在 commit；History 子节点按所属 commit 处理
+- Visual 模式沿用各入口的勾选键批量处理范围内 commit；范围已全部勾选时批量取消，保留 Visual 选区
 - 勾选行首显示 `✓`，日志 statusline 显示已选数量；`U` 清空勾选
 - Normal 模式 `<CR>` 在新 tab 打开所有已勾选 commit 的文件树；Visual Enter 在两个日志窗口均打开当前选区内 commit 的文件树
 - 按日志中的历史顺序（从旧到新）尝试合并改动；连续提交比较最早提交的父树与最终结果树，先改后还原、新增后删除的文件从树中消失；root commit 基于空树，merge 取 first parent
 - 离散选择仅应用所选提交的改动，在临时 index 中做三方合并，不混入跳过的提交；缺少依赖或冲突时只提示错误，不展示不完整结果，也不悄悄退回逐条 diff
-- 项目日志覆盖提交的所有变更文件，也支持 local change；行历史只展示原追踪代码块
+- 项目日志只展示已提交历史及其变更文件，未提交改动由 Sidebar Changes 展示；行历史只展示原追踪代码块
 - 新 tab 中 `c` 切换 changes-only，`d` 切换 single / dual，切换布局保留上下文偏好；`]f` / `[f` 切换净变化文件；`q` 关闭并返回原日志，保留勾选。dual 的 `]c` / `[c` 保留 Neovim 原生 diff hunk 跳转
 - 左侧将所选 commit 的变更文件按完整路径合并为一棵树，同一路径只显示一次，不同目录下的同名文件各自保留；树根显示所选提交总数。目录默认展开，复用项目日志的图标、高亮、连续目录链压缩和 `l` / `<CR>` / `h` / `H` 展开折叠操作；文件行移动光标即可更新右侧预览，`<CR>` 强制刷新
 - 右侧 single 显示当前文件的一份净变化 unified patch，dual 并排显示合并前/后的内容；两种模式均保留左侧文件树。合并后完全无变化时显示 `No net changes`，不创建 diff 窗口；关闭、失败时清理临时数据，切换文件时取消过期读取
@@ -122,7 +121,7 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
   - `algorithm = 'histogram'`：IDEA 的 ByLine diff 最接近 histogram/patience 算法；默认 myers 会产生过大的 hunk 导致 block 过早变空
   - `ignore_whitespace = true`：对齐 IDEA 的 `ComparisonPolicy.IGNORE_WHITESPACES`
 - `vim.system()` 异步执行，避免阻塞
-- 窗口关闭时 `BufWipeout` autocmd 触发 `job:kill()` 停止进程
+- 行历史在 `BufWipeout` 停止进程；项目历史由 Sidebar 生命周期取消任务，共享 diff_preview 用 generation 防止过期结果重开窗口
 - commit 列表格式：`%h %ad %s`，日期精确到秒
 - 高亮：commit hash 用 `Number`，日期用 `Comment`
 
@@ -131,8 +130,8 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 - `vim/tests/line-log/spec.lua` 负责 line-log 算法测试，当前同时覆盖：
   - 现有 dotfiles 仓库里的固定 commit/文件/行段 case
   - 运行时动态创建的临时 git 仓库 fixture
-- `vim/tests/project-log/spec.lua` 负责 project-log graph 渲染回归测试，固定复杂 merge / crossover 历史段的 compact graph 输出
-- `vim/tests/git-selection/spec.lua` 通过真实按键覆盖两个日志入口的 `c` / `d` 独立切换、dual 的 changes-only 折叠与 `D` 映射移除、Space 勾选、Visual Enter、文件树折叠/展开/自动预览、single / dual 净 diff、离散提交合并成功/冲突、先改后还原与新增后删除、rename/delete/local change、真实 index/工作区不变、临时资源清理，以及一加 6 的四提交 `gnome.nix` 净变化为空的真实 case
+- `vim/tests/project-log/spec.lua` 负责 project-log graph 渲染回归测试，覆盖复杂 merge / crossover 历史段，并使用 `tig-fixtures.json` 中由 Tig 2.6.0 官方 graph-v2.c 生成的 golden cells 校验 UTF-8 图形与颜色编号
+- `vim/tests/git-selection/spec.lua` 通过真实按键覆盖 History 的 Sidebar 布局、切页/关闭恢复、per-tab 隔离及两个日志入口的 `c` / `d` 独立切换、dual 的 changes-only 折叠与 `D` 映射移除、Space / m 勾选、Visual Enter、文件树折叠/展开/自动预览、single / dual 净 diff、离散提交合并成功/冲突、先改后还原与新增后删除、rename/delete、未提交改动与 History 隔离、真实 index/工作区不变、临时资源清理，以及一加 6 的四提交 `gnome.nix` 净变化为空的真实 case
 - 临时 fixture 定义位于 `vim/tests/line-log/fixtures.lua`，仓库本体在测试运行时创建到系统临时目录，不把 `.git` fixture 提交进仓库
 - 如果修改 revision/path 链、rename 处理、tracker 推进或 `Block` 交互，必须至少跑：
   - `cd vim && ./tests/run-tests.sh`
@@ -157,17 +156,18 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 | any (statuscolumn) | 右键 on blame 区域 | 弹出 blame 操作菜单，被点行高亮 `GitBlameSelected` |
 | n (log buf) | `j` / `k` 等移动 | 自动预览当前 commit 的 diff |
 | x (line log buf) | Visual 选择 | 自动预览选中 commit 范围的聚合 diff |
-| n / x (log buf) | `<Space>` | 切换当前 commit / 批量勾选选区内 commit |
+| n / x (line log) / (History) | `<Space>` / `m` | 切换当前 commit / 批量勾选选区内 commit |
 | n / x (log buf) | `U` | 清空所有 commit 勾选 |
 | n (log buf, 有勾选) | `<CR>` | 新 tab 打开已勾选提交的文件树 |
 | x (log buf) | `<CR>` | 新 tab 打开当前选区内提交的文件树 |
-| n (project log buf) | `l` / `<CR>` on commit | 展开 commit 文件树并默认展开全部目录，跳到第一个文件 |
-| n (project log buf) | `l` / `<CR>` on dir | 展开目录并跳到第一个子节点 |
+| n (project log buf) | `l` / `<CR>` on commit | 展开 commit 文件树，保留子目录折叠状态 |
+| n (project log buf) | `l` / `<CR>` on dir | 展开目录并跳到第一个可见子节点，保留后代折叠状态 |
 | n (project log buf) | `h` on commit | 折叠 commit |
 | n (project log buf) | `h` on child node | 折叠父节点 |
-| n (project log buf) | `H` | 折叠当前 commit 并跳回 commit 行 |
-| n (project log buf) | cursor on file | 自动显示该 commit 下该文件的 diff |
-| n (project log buf) | `<CR>` on file | 手动刷新该文件 diff |
+| n (History) | `<Space>` | 打开历史 diff 预览，再按进入浮窗 |
+| n (History) | `K` | 查看完整提交信息 |
+| n (History) | `gG` | 切换 Tig 提交关系图 |
+| n (History) | `<CR>` on file | 打开工作区文件；有勾选时查看所选净变化 |
 | n (log buf) | `c` | 切换 changes-only；single 压缩上下文，dual 折叠未变化区域 |
 | n (log buf) | `d` | 切换 single / dual，保留 changes-only 状态 |
 | n (log buf) | `?` | 打开帮助浮窗并进入 help 窗口 |

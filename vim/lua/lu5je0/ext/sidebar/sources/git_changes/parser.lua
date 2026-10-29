@@ -69,9 +69,9 @@ end
 
 --- Build a hierarchical tree of nodes (directories + files) for the
 --- given list of file entries within a section.
-function M.files_to_tree_nodes(files, expanded_dirs, section_key)
+function M.files_to_tree_nodes(files, expanded_dirs, section_key, root)
   expanded_dirs = expanded_dirs or {}
-  local cwd = M.git_root()
+  local cwd = root or M.git_root()
   local root_dirs, root_files = {}, {}
 
   local function get_or_create_dir(dirs_table, name, abs_prefix)

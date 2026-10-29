@@ -10,9 +10,10 @@ M.diff_max_bytes = 1024 * 1024
 
 M.tabs = {
   { id = 'files', label = '󰙅 Files' },
-  { id = 'git_changes', label = '󰊢 Changes' },
   { id = 'symbols', label = '󰊕 Symbols' },
-  { id = 'buffers', label = '󰈙 Buffers' },
+  { id = 'git_changes', label = '󰊢 Changes' },
+  { id = 'buffers', transient = true, label = '󰈙 Buffers' },
+  { id = 'history', transient = true, label = '󰊢 History', width = 50 },
 }
 
 M.passthrough_mappings = {
@@ -24,6 +25,10 @@ M.passthrough_mappings = {
 }
 
 M.highlights = {
+  { 'SidebarHistoryCommit', { link = 'Normal', default = true } },
+  { 'SidebarHistoryHash', { fg = '#5dbbc1', default = true } },
+  { 'SidebarHistoryDate', { fg = '#d8b26e', default = true } },
+  { 'SidebarHistoryArrow', { fg = '#82aaff', default = true } },
   { 'SidebarFolderName', { fg = '#e5c07b', default = true } },
   { 'SidebarFolderIcon', { link = 'Directory', default = true } },
   { 'SidebarRootFolder', { fg = '#e06c75', default = true } },
@@ -153,6 +158,20 @@ function M.apply_highlights()
   for _, hl in ipairs(M.highlights) do
     vim.api.nvim_set_hl(0, hl[1], hl[2])
   end
+  -- Tig's palette-0..13: seven ANSI colors, followed by their bold forms.
+  local palette = { 5, 3, 6, 2, -1, 7, 1 }
+  local fallback = { [1] = '#cd0000', [2] = '#00cd00', [3] = '#cdcd00', [4] = '#0000ee', [5] = '#cd00cd', [6] = '#00cdcd', [7] = '#e5e5e5' }
+  local normal = vim.api.nvim_get_hl(0, { name = 'Normal', link = false }).fg
+  for i = 0, 13 do
+    local color = palette[i % 7 + 1]
+    vim.api.nvim_set_hl(0, 'SidebarHistoryGraph' .. i, {
+      fg = color == -1 and normal or (vim.g['terminal_color_' .. color] or fallback[color]),
+      ctermfg = color ~= -1 and color or nil, bold = i >= 7, default = true,
+    })
+  end
+  vim.api.nvim_set_hl(0, 'SidebarHistoryGraphCommit', {
+    fg = vim.g.terminal_color_4 or fallback[4], ctermfg = 4, default = true,
+  })
 end
 
 return M

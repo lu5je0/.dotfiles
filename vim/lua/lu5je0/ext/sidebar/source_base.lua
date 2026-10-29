@@ -117,4 +117,12 @@ function M.close_node(spec, render_fn)
   })
 end
 
+-- Release the active source's transient UI before switching or closing.
+function M.deactivate(ts)
+  require('lu5je0.ext.sidebar.actions.preview').stop_for(ts)
+  local tab = require('lu5je0.ext.sidebar.config').tabs[ts.active_tab_idx]
+  local source = tab and package.loaded['lu5je0.ext.sidebar.sources.' .. tab.id]
+  if source and source.on_leave then source.on_leave(ts) end
+end
+
 return M

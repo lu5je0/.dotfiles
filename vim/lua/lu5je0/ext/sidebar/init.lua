@@ -11,6 +11,8 @@ local autocmds = require('lu5je0.ext.sidebar.autocmds')
 local watcher = require('lu5je0.ext.sidebar.watcher')
 
 local function init_sidebar(do_render)
+  M.setup()
+  tabs.apply_width()
   tabs.render_winbar()
   keymaps.apply_shared()
   keymaps.apply_for_tab(state.active_tab_idx)
@@ -40,6 +42,7 @@ end
 function M.open_tab(idx, opts)
   opts = opts or {}
   local prev_win = vim.api.nvim_get_current_win()
+  state.visible_tabs[idx] = true
   if state:is_open() and state.active_tab_idx == idx and not opts.no_toggle then
     window.close()
     watcher.stop()
@@ -150,6 +153,10 @@ function M._on_dir_changed(args)
   parser.invalidate_root_cache()
   local new_git_root = parser.git_root()
   state.git_changes._last_git_root = new_git_root
+  for _, tab in ipairs(config.tabs) do
+    local source = package.loaded['lu5je0.ext.sidebar.sources.' .. tab.id]
+    if source and source.on_directory_changed then source.on_directory_changed(state.tab(), new_cwd) end
+  end
 
   if old_git_root ~= new_git_root then
     state.git_changes.sections = {}
@@ -191,7 +198,10 @@ local function register_keymaps()
   end, opts)
 end
 
+local initialized = false
 function M.setup()
+  if initialized then return end
+  initialized = true
   config.apply_highlights()
   state.init_pwd_stack()
   window.setup_remember_width()

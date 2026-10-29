@@ -5,6 +5,36 @@ local M = {}
 
 M.max_visible = 3
 
+function M.visible_indices(ts)
+  ts = ts or state.tab()
+  local indices = {}
+  for i, tab in ipairs(config.tabs) do
+    if not tab.transient or ts.visible_tabs[i] then indices[#indices + 1] = i end
+  end
+  return indices
+end
+
+function M.save_width()
+  if not state:is_open() then return end
+  local idx = state.active_tab_idx
+  local width = vim.api.nvim_win_get_width(state.win)
+  state.tab_widths[idx] = width
+  if not config.tabs[idx].width then state.width = width end
+end
+
+function M.apply_width()
+  if not state:is_open() then return end
+  local idx = state.active_tab_idx
+  local width = state.tab_widths[idx] or config.tabs[idx].width or state.width
+  vim.api.nvim_win_set_width(state.win, math.min(width, math.floor(vim.o.columns * 0.6)))
+end
+
+function M.reset_transient(ts)
+  ts.visible_tabs = {}
+  if config.tabs[ts.active_tab_idx].transient then ts.active_tab_idx = 1 end
+  ts._visible_start = 1
+end
+
 local function ensure_visible(idx)
   local start = state._visible_start or 1
   if idx < start then
@@ -19,9 +49,12 @@ function M.render_winbar()
     return
   end
 
-  ensure_visible(state.active_tab_idx)
+  local indices = M.visible_indices()
+  local position = 1
+  for i, idx in ipairs(indices) do if idx == state.active_tab_idx then position = i end end
+  ensure_visible(position)
 
-  local tab_count = #config.tabs
+  local tab_count = #indices
   local visible_count = math.min(M.max_visible, tab_count)
   local visible_start = state._visible_start or 1
   local visible_end = math.min(visible_start + visible_count - 1, tab_count)
@@ -34,8 +67,9 @@ function M.render_winbar()
   local vi = 0
   for i = visible_start, visible_end do
     vi = vi + 1
-    local tab = config.tabs[i]
-    local hl = (i == state.active_tab_idx) and '%#SidebarTabActive#' or '%#SidebarTabInactive#'
+    local idx = indices[i]
+    local tab = config.tabs[idx]
+    local hl = (idx == state.active_tab_idx) and '%#SidebarTabActive#' or '%#SidebarTabInactive#'
     local cell_width = base_width + (vi <= remainder and 1 or 0)
     local content_width = cell_width - 1
     local label = tab.label
@@ -60,7 +94,7 @@ function M.render_winbar()
     end
 
     local right_pad = content_width - label_width
-    local click = string.format('%%@v:lua.require\'lu5je0.ext.sidebar.tabs\'._click_%d@', i)
+    local click = string.format('%%@v:lua.require\'lu5je0.ext.sidebar.tabs\'._click_%d@', idx)
     parts[#parts + 1] = click .. hl .. ' ' .. label .. string.rep(' ', right_pad) .. '%X'
   end
   vim.wo[state.win].winbar = table.concat(parts)
@@ -89,11 +123,15 @@ function M.restore_view(idx)
 end
 
 function M.set_active_tab(idx)
+  state.visible_tabs[idx] = true
   if idx == state.active_tab_idx then
     return false
   end
   M.save_view()
+  M.save_width()
+  require('lu5je0.ext.sidebar.source_base').deactivate(state.tab())
   state.active_tab_idx = idx
+  M.apply_width()
   M.render_winbar()
   return true
 end
@@ -118,15 +156,14 @@ function M.switch_to(idx)
   require('lu5je0.ext.sidebar.watcher').refresh()
 end
 
-function M.next_tab()
-  local next_idx = state.active_tab_idx % #config.tabs + 1
-  M.switch_to(next_idx)
+local function cycle(direction)
+  local indices = M.visible_indices()
+  for position, idx in ipairs(indices) do
+    if idx == state.active_tab_idx then M.switch_to(indices[(position - 1 + direction) % #indices + 1]); return end
+  end
 end
-
-function M.prev_tab()
-  local prev_idx = (state.active_tab_idx - 2) % #config.tabs + 1
-  M.switch_to(prev_idx)
-end
+function M.next_tab() cycle(1) end
+function M.prev_tab() cycle(-1) end
 
 function M.get_active_source()
   local tab = config.tabs[state.active_tab_idx]

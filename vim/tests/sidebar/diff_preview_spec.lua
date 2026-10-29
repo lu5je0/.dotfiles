@@ -274,7 +274,7 @@ r.run('c and d preserve all four combinations in the Changes list and diff panes
 end)
 
 local child
-r.run('real d and c input does not wait for Files mappings or timeoutlen', function()
+r.run('real d, c and Space input does not wait for longer mappings or timeoutlen', function()
   child = vim.fn.jobstart({ vim.v.progpath, '--embed', '--headless', '-u', 'NONE', '-i', 'NONE', '-n' }, { rpc = true })
   assert(child > 0, 'failed to start isolated Neovim')
   vim.rpcrequest(child, 'nvim_exec_lua', [[
@@ -284,6 +284,10 @@ r.run('real d and c input does not wait for Files mappings or timeoutlen', funct
     local state = require('lu5je0.ext.sidebar.state')
     local config = require('lu5je0.ext.sidebar.config')
     local keymaps = require('lu5je0.ext.sidebar.keymaps')
+    local preview = require('lu5je0.ext.sidebar.actions.preview')
+    preview.toggle = function() vim.g.last_toggle = 'preview' end
+    preview.enter = function() vim.g.last_toggle = 'enter_preview' end
+    vim.keymap.set('n', '<Space><Space>', function() error('global double Space must not run') end)
     local keeper = require('lu5je0.misc.env-keeper')
     keeper.get = function(_, default) return default end
     keeper.set = function(key) vim.g.last_toggle = key end
@@ -293,7 +297,7 @@ r.run('real d and c input does not wait for Files mappings or timeoutlen', funct
     state.active_tab_idx = config.tab_idx('git_changes')
     keymaps.apply_for_tab(state.active_tab_idx)
   ]], { repo_root .. '/vim' })
-  for _, input in ipairs { { 'd', 'sidebar_diff_mode' }, { 'c', 'sidebar_diff_changes_only' } } do
+  for _, input in ipairs { { 'd', 'sidebar_diff_mode' }, { 'c', 'sidebar_diff_changes_only' }, { ' ', 'preview' } } do
     vim.rpcrequest(child, 'nvim_input', input[1])
     r.assert_truthy(vim.wait(500, function()
       return vim.rpcrequest(child, 'nvim_eval', 'get(g:, "last_toggle", "")') == input[2]

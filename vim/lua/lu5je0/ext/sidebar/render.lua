@@ -58,6 +58,7 @@ end
 --   item_data(node)     -> table (merged into the produced item entry)
 --   compress_dirs       -> bool
 --   flat_depth          -> int, depth at which children skip the branch prefix
+--   name_width          -> optional viewport columns; truncate names while reserving suffix space
 --
 -- Returns: lines, items, highlights, virt_texts
 --
@@ -158,6 +159,19 @@ function M.render_tree(root_children, opts)
     return display_name, display_node
   end
 
+  local function fit_name(name, prefix, icon, suffix)
+    if not opts.name_width then return name end
+    local available = math.max(1, opts.name_width - vim.fn.strdisplaywidth(prefix .. icon .. ' ') - (suffix and (vim.fn.strdisplaywidth(suffix) + 1) or 0))
+    if vim.fn.strdisplaywidth(name) <= available then return name end
+    local out, width = {}, 0
+    for _, char in ipairs(vim.fn.split(name, '\\zs')) do
+      local size = vim.fn.strdisplaywidth(char)
+      if width + size > available - 1 then break end
+      out[#out + 1], width = char, width + size
+    end
+    return table.concat(out) .. '…'
+  end
+
   local function walk(children, prefix, depth, in_context)
     local visible = {}
     for _, child in ipairs(children) do
@@ -187,6 +201,7 @@ function M.render_tree(root_children, opts)
       if child.type == 'directory' then
         local display_name, display_node = compress_chain(child)
         local icon = get_dir_icon and get_dir_icon(child) or default_dir_icon(display_node)
+        display_name = fit_name(display_name, line_prefix, icon, dir_suffix and dir_suffix(child))
         local line = line_prefix .. icon .. ' ' .. display_name
 
         lines[#lines + 1] = line
@@ -229,7 +244,8 @@ function M.render_tree(root_children, opts)
         else
           icon, icon_hl = M.get_file_icon(child.name)
         end
-        local line = line_prefix .. icon .. ' ' .. child.name
+        local display_name = fit_name(child.name, line_prefix, icon, file_suffix and file_suffix(child))
+        local line = line_prefix .. icon .. ' ' .. display_name
 
         lines[#lines + 1] = line
         local line_idx = #lines - 1
@@ -242,7 +258,7 @@ function M.render_tree(root_children, opts)
         add_indent_hls(line_idx, indent_end, branch_end)
         local self_hl = node_hl and node_hl(child) or nil
         local final_icon_hl = self_hl or icon_hl
-        local name_end = branch_end + #icon + 1 + #child.name
+        local name_end = branch_end + #icon + 1 + #display_name
         highlights[#highlights + 1] = { line = line_idx, hl = final_icon_hl, col_start = branch_end, col_end = branch_end + #icon }
         if self_hl then
           highlights[#highlights + 1] = { line = line_idx, hl = self_hl, col_start = branch_end + #icon + 1, col_end = name_end }

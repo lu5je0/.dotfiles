@@ -1,0 +1,1880 @@
+[
+  {
+    "name": "linear",
+    "commits": [
+      {
+        "hash": "aaa",
+        "parents": "bbb"
+      },
+      {
+        "hash": "bbb",
+        "parents": "ccc"
+      },
+      {
+        "hash": "ccc",
+        "parents": ""
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ◎"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "merge",
+    "commits": [
+      {
+        "hash": "aaa",
+        "parents": "bbb ccc"
+      },
+      {
+        "hash": "bbb",
+        "parents": "ddd"
+      },
+      {
+        "hash": "ccc",
+        "parents": "ddd"
+      },
+      {
+        "hash": "ddd",
+        "parents": ""
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ◎"
+        },
+        {
+          "color": 0,
+          "text": "─╯"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "octopus",
+    "commits": [
+      {
+        "hash": "aaa",
+        "parents": "bbb ccc ddd"
+      },
+      {
+        "hash": "bbb",
+        "parents": "eee"
+      },
+      {
+        "hash": "ccc",
+        "parents": "eee"
+      },
+      {
+        "hash": "ddd",
+        "parents": "eee"
+      },
+      {
+        "hash": "eee",
+        "parents": ""
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─┬"
+        },
+        {
+          "color": 2,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ◎"
+        },
+        {
+          "color": 0,
+          "text": "─┴"
+        },
+        {
+          "color": 0,
+          "text": "─╯"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "crossed",
+    "commits": [
+      {
+        "hash": "9be08dfc17e967aef413d22958a7eb1ca70f27b4",
+        "parents": "82c2ba70850f207699e856cfc11630140780373d"
+      },
+      {
+        "hash": "82c2ba70850f207699e856cfc11630140780373d",
+        "parents": "e3f7dedfd325d4be85242598846a7943b0a7368f"
+      },
+      {
+        "hash": "e3f7dedfd325d4be85242598846a7943b0a7368f",
+        "parents": "7b414ced674e9759a65557ba7a12eb53ff7d6050"
+      },
+      {
+        "hash": "7b414ced674e9759a65557ba7a12eb53ff7d6050",
+        "parents": "b093cd687351ec96e3fc72d2c0d5cc08067643c8"
+      },
+      {
+        "hash": "b093cd687351ec96e3fc72d2c0d5cc08067643c8",
+        "parents": "3579ccdfe42ed823192d968129eda23314cb390e"
+      },
+      {
+        "hash": "3579ccdfe42ed823192d968129eda23314cb390e",
+        "parents": "bf1051a257078924111f14b6329628fd3ab6e104"
+      },
+      {
+        "hash": "bf1051a257078924111f14b6329628fd3ab6e104",
+        "parents": "c5a6839c452933092640b2c37891166dbeb9c836"
+      },
+      {
+        "hash": "c5a6839c452933092640b2c37891166dbeb9c836",
+        "parents": "193f0ccbf783cc25c9abb4fa0b313732afe05078 e65b16f9850e66c25c5a813330dbeccd90c3c688"
+      },
+      {
+        "hash": "e65b16f9850e66c25c5a813330dbeccd90c3c688",
+        "parents": "0cd955aefacc6bb159e487c26f14ee6d9fa20862"
+      },
+      {
+        "hash": "193f0ccbf783cc25c9abb4fa0b313732afe05078",
+        "parents": "0cd955aefacc6bb159e487c26f14ee6d9fa20862"
+      },
+      {
+        "hash": "0cd955aefacc6bb159e487c26f14ee6d9fa20862",
+        "parents": "7097da93ebcd0317ecab7319e107ad26feba7f0d"
+      },
+      {
+        "hash": "7097da93ebcd0317ecab7319e107ad26feba7f0d",
+        "parents": "ea332f0578f815212b0320dcb7a6ed730abe55d8"
+      },
+      {
+        "hash": "ea332f0578f815212b0320dcb7a6ed730abe55d8",
+        "parents": "a1b88671f6994ca65eb9714b79ee460f72240b1b"
+      },
+      {
+        "hash": "a1b88671f6994ca65eb9714b79ee460f72240b1b",
+        "parents": "a080ac8dc176071fd3f979b85ed9c839d180f629 bd9d3d4004c4b8b97486efa179893cfc725a6f32"
+      },
+      {
+        "hash": "bd9d3d4004c4b8b97486efa179893cfc725a6f32",
+        "parents": "d5b26acf5c238e4592e8317a5ff4cacef9d078f1"
+      },
+      {
+        "hash": "d5b26acf5c238e4592e8317a5ff4cacef9d078f1",
+        "parents": "b14473484c746401ba4b02e94dfc608c2c99ed03"
+      },
+      {
+        "hash": "a080ac8dc176071fd3f979b85ed9c839d180f629",
+        "parents": "b14473484c746401ba4b02e94dfc608c2c99ed03"
+      },
+      {
+        "hash": "b14473484c746401ba4b02e94dfc608c2c99ed03",
+        "parents": "168aa28e959425ae56846888f3430363eee8adab c20145bede196a9d081785b6c8a4a90841b418cd"
+      },
+      {
+        "hash": "c20145bede196a9d081785b6c8a4a90841b418cd",
+        "parents": "7b18c6572325dc114a3ba9d5da7ebe14c971ea95"
+      },
+      {
+        "hash": "7b18c6572325dc114a3ba9d5da7ebe14c971ea95",
+        "parents": "0e8e9008bdec5cdc283e074b7d82d66b52d96fa4 04fe7b9225b0fcd40ffe0136ff97563159142c51"
+      },
+      {
+        "hash": "0e8e9008bdec5cdc283e074b7d82d66b52d96fa4",
+        "parents": "8fc95dbde7a6e519c75346e82f9a1d6ac499b286"
+      },
+      {
+        "hash": "168aa28e959425ae56846888f3430363eee8adab",
+        "parents": "04fe7b9225b0fcd40ffe0136ff97563159142c51"
+      },
+      {
+        "hash": "04fe7b9225b0fcd40ffe0136ff97563159142c51",
+        "parents": "3ae0b376b26c1421dd4f403887514847040fb936"
+      },
+      {
+        "hash": "3ae0b376b26c1421dd4f403887514847040fb936",
+        "parents": "4185f28688c382743109e7970069b1c673ae9098"
+      },
+      {
+        "hash": "4185f28688c382743109e7970069b1c673ae9098",
+        "parents": "53e1196cdd0bc1d8c86b4d47ad876c379b4f2da4"
+      },
+      {
+        "hash": "53e1196cdd0bc1d8c86b4d47ad876c379b4f2da4",
+        "parents": "fc4d9544d4f98257d18b3f8c7ebfc00744376cf0"
+      },
+      {
+        "hash": "fc4d9544d4f98257d18b3f8c7ebfc00744376cf0",
+        "parents": "2c62efb8bb7d33019cf07aafe6a01b21027957ec"
+      },
+      {
+        "hash": "2c62efb8bb7d33019cf07aafe6a01b21027957ec",
+        "parents": "e842bbd817cc39a2b408da6457f0bfa07bb94397"
+      },
+      {
+        "hash": "e842bbd817cc39a2b408da6457f0bfa07bb94397",
+        "parents": "98a789a72b281dd7b8ac2d613465f83130a8c46a"
+      },
+      {
+        "hash": "98a789a72b281dd7b8ac2d613465f83130a8c46a",
+        "parents": "ef0d1430255ef65992904e48eb5ffb8a8320216b"
+      },
+      {
+        "hash": "ef0d1430255ef65992904e48eb5ffb8a8320216b",
+        "parents": "90dece7f6fcb74fbed2a99bb2e34e246d25cabe0"
+      },
+      {
+        "hash": "90dece7f6fcb74fbed2a99bb2e34e246d25cabe0",
+        "parents": "3c5ed9f260db15e8daa015638eb3894edddcb119"
+      },
+      {
+        "hash": "3c5ed9f260db15e8daa015638eb3894edddcb119",
+        "parents": "21168e805599a3884c606d57ceed0fd50a45afa2"
+      },
+      {
+        "hash": "21168e805599a3884c606d57ceed0fd50a45afa2",
+        "parents": "d2622dd73c35aeb59973e7a9e0f55919a079e725"
+      },
+      {
+        "hash": "d2622dd73c35aeb59973e7a9e0f55919a079e725",
+        "parents": "8fc95dbde7a6e519c75346e82f9a1d6ac499b286"
+      },
+      {
+        "hash": "8fc95dbde7a6e519c75346e82f9a1d6ac499b286",
+        "parents": "268882dfb384dd5e29c6ce78e38f959f117d7ea0"
+      },
+      {
+        "hash": "268882dfb384dd5e29c6ce78e38f959f117d7ea0",
+        "parents": "c00bc08f545cf9a114c1e54618c3943baa7d87d1"
+      },
+      {
+        "hash": "c00bc08f545cf9a114c1e54618c3943baa7d87d1",
+        "parents": "6209489aca93b9ac249e2e40ce94020061fedc0f"
+      },
+      {
+        "hash": "6209489aca93b9ac249e2e40ce94020061fedc0f",
+        "parents": "5bcbace1aed7b7db5a4cccd27f87bbcf73bc4e95"
+      },
+      {
+        "hash": "5bcbace1aed7b7db5a4cccd27f87bbcf73bc4e95",
+        "parents": "c67ca63d90cb760773886fdde5728faeeda1eca3"
+      },
+      {
+        "hash": "c67ca63d90cb760773886fdde5728faeeda1eca3",
+        "parents": "da69a886f64799776d18ee3de514fcd33e6095b1"
+      },
+      {
+        "hash": "da69a886f64799776d18ee3de514fcd33e6095b1",
+        "parents": "8ae103cb825b18f2742d3d6f6ae56934ff53b8bf"
+      },
+      {
+        "hash": "8ae103cb825b18f2742d3d6f6ae56934ff53b8bf",
+        "parents": "1b55fb01d81590034faedbd6ed3f9330435ffae9"
+      },
+      {
+        "hash": "1b55fb01d81590034faedbd6ed3f9330435ffae9",
+        "parents": "421e40fcf1063fcb2c25efabb7be8fa4d0e0a845"
+      },
+      {
+        "hash": "421e40fcf1063fcb2c25efabb7be8fa4d0e0a845",
+        "parents": "7d2170dad5d837b834b2294997a3a666134f4385"
+      },
+      {
+        "hash": "7d2170dad5d837b834b2294997a3a666134f4385",
+        "parents": "cf7d69c64b316065fd056ac197262a2ef87f79ac"
+      },
+      {
+        "hash": "cf7d69c64b316065fd056ac197262a2ef87f79ac",
+        "parents": "41fa3954a56f9278fb820bfbf13182372202fd0b"
+      },
+      {
+        "hash": "41fa3954a56f9278fb820bfbf13182372202fd0b",
+        "parents": "c1f35d4b6fd20aa4c85fa11ee651ef9c1bdfbbe1"
+      },
+      {
+        "hash": "c1f35d4b6fd20aa4c85fa11ee651ef9c1bdfbbe1",
+        "parents": "d2f1294d8185ef46119506e4dc172fc019933f57"
+      },
+      {
+        "hash": "d2f1294d8185ef46119506e4dc172fc019933f57",
+        "parents": "5c30cbea601f292acbdedaec272076826b3726c0"
+      },
+      {
+        "hash": "5c30cbea601f292acbdedaec272076826b3726c0",
+        "parents": "fb7e47255a2d6aef374851208e0cd9c6112900e9"
+      },
+      {
+        "hash": "fb7e47255a2d6aef374851208e0cd9c6112900e9",
+        "parents": "666c2d67683bb8f83a112291ffe725c6910f4c04"
+      },
+      {
+        "hash": "666c2d67683bb8f83a112291ffe725c6910f4c04",
+        "parents": "e75000eaa3f5a8d392bf9fd06b8650b0df166726"
+      },
+      {
+        "hash": "e75000eaa3f5a8d392bf9fd06b8650b0df166726",
+        "parents": "b9a353f637aff221941d661f0ddb6bfaa984ac33"
+      },
+      {
+        "hash": "b9a353f637aff221941d661f0ddb6bfaa984ac33",
+        "parents": "a5c579317eb509a3a4e1683c30591cecc9eabeca"
+      },
+      {
+        "hash": "a5c579317eb509a3a4e1683c30591cecc9eabeca",
+        "parents": "5ab75a46cb9161b0a94e9b3f75eb09e3bfb0a180"
+      },
+      {
+        "hash": "5ab75a46cb9161b0a94e9b3f75eb09e3bfb0a180",
+        "parents": "dbecca0e47a0352c00a49a3f9d60b36a966af0d0"
+      },
+      {
+        "hash": "dbecca0e47a0352c00a49a3f9d60b36a966af0d0",
+        "parents": "d61fd3e07a7c291cb561669635b7fd7ae88e0bd9 cb0fef44503c97b1fd389ca59dc4871b2a824cbb"
+      },
+      {
+        "hash": "cb0fef44503c97b1fd389ca59dc4871b2a824cbb",
+        "parents": "672571cb7abddef1c3e965df6d5f3de59db983e2"
+      },
+      {
+        "hash": "d61fd3e07a7c291cb561669635b7fd7ae88e0bd9",
+        "parents": "672571cb7abddef1c3e965df6d5f3de59db983e2"
+      },
+      {
+        "hash": "672571cb7abddef1c3e965df6d5f3de59db983e2",
+        "parents": "62dfa49158b1ce1f5bdbc6bec5b998d7b789ef20"
+      },
+      {
+        "hash": "62dfa49158b1ce1f5bdbc6bec5b998d7b789ef20",
+        "parents": "e022af47c05cbbf01c3950adf56a06128c13ebf2"
+      },
+      {
+        "hash": "e022af47c05cbbf01c3950adf56a06128c13ebf2",
+        "parents": "fbd00bf2a6d03b3c2277b785c06b9e913e1d9671"
+      },
+      {
+        "hash": "fbd00bf2a6d03b3c2277b785c06b9e913e1d9671",
+        "parents": "ab3bd2b081520a0ecb67e342109196686aecd0c0"
+      },
+      {
+        "hash": "ab3bd2b081520a0ecb67e342109196686aecd0c0",
+        "parents": "1baf726279a349b1954801940ecf79ae25aecb66"
+      },
+      {
+        "hash": "1baf726279a349b1954801940ecf79ae25aecb66",
+        "parents": "cd9776f2dc67b79cf96b56da92dd5937a555dd76"
+      },
+      {
+        "hash": "cd9776f2dc67b79cf96b56da92dd5937a555dd76",
+        "parents": "2c8de97bc04f63e7bb499a5605497eb372a1d0da"
+      },
+      {
+        "hash": "2c8de97bc04f63e7bb499a5605497eb372a1d0da",
+        "parents": "ebcfdb8ee958a3091f9614647f7659384b07bdef"
+      },
+      {
+        "hash": "ebcfdb8ee958a3091f9614647f7659384b07bdef",
+        "parents": "22386b95855fc5abe76f2ce5f209ca5d5d9a2dd1"
+      },
+      {
+        "hash": "22386b95855fc5abe76f2ce5f209ca5d5d9a2dd1",
+        "parents": "0dbe7496b7bfa094fcdc3f4226d148b67e39fa59"
+      },
+      {
+        "hash": "0dbe7496b7bfa094fcdc3f4226d148b67e39fa59",
+        "parents": "7c2870a72a32bb61f23223c5ac9c8b333bd28079"
+      },
+      {
+        "hash": "7c2870a72a32bb61f23223c5ac9c8b333bd28079",
+        "parents": "71fce0938abfcda0abf908aec3736feb73b7c058"
+      },
+      {
+        "hash": "71fce0938abfcda0abf908aec3736feb73b7c058",
+        "parents": "1c4da2e20d616365f05a75b644074d8fc276e8cb"
+      },
+      {
+        "hash": "1c4da2e20d616365f05a75b644074d8fc276e8cb",
+        "parents": "c4f22d8b45cb08e57ba14b5f5219e2fa2b1d71f5"
+      },
+      {
+        "hash": "c4f22d8b45cb08e57ba14b5f5219e2fa2b1d71f5",
+        "parents": "3c3b598bd83a21cba13c6bf2066287276df0bf68"
+      },
+      {
+        "hash": "3c3b598bd83a21cba13c6bf2066287276df0bf68",
+        "parents": "f8fc39b3bece1b54d8d8d66a684be71fa80eea4d"
+      },
+      {
+        "hash": "f8fc39b3bece1b54d8d8d66a684be71fa80eea4d",
+        "parents": "4432877ee478cf2f311769f059d4c0724f0be62d"
+      },
+      {
+        "hash": "4432877ee478cf2f311769f059d4c0724f0be62d",
+        "parents": "4ce785891fe2acba7bdbf8271f3f05e2cd7f9cd6"
+      },
+      {
+        "hash": "4ce785891fe2acba7bdbf8271f3f05e2cd7f9cd6",
+        "parents": "4f19deb06ca268f5bd49ebf20f01c846ac7fc785"
+      },
+      {
+        "hash": "4f19deb06ca268f5bd49ebf20f01c846ac7fc785",
+        "parents": "258bae50aab1cf873b815e61bea0324fca889638"
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─┤"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 2,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": "─│"
+        },
+        {
+          "color": 2,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "nested",
+    "commits": [
+      {
+        "hash": "419a960cdd0fd7cadb0a1fad548123a283a49186",
+        "parents": "42aba8997ea0b4f98e2e50dab36ca95c312dc4de"
+      },
+      {
+        "hash": "42aba8997ea0b4f98e2e50dab36ca95c312dc4de",
+        "parents": "64e6205683cc7769a27304e0e933056bc1e1da94"
+      },
+      {
+        "hash": "64e6205683cc7769a27304e0e933056bc1e1da94",
+        "parents": "503ae902a3c668c91cedca358a92afc74e0cbf73 b2a6eca94bac4ab176f75920c945bad24667a62b"
+      },
+      {
+        "hash": "b2a6eca94bac4ab176f75920c945bad24667a62b",
+        "parents": "3798c973578cc594db74ebd061c4846453962b79 25ba2b284f7d7a59a50036e54132abf2b4786c6f"
+      },
+      {
+        "hash": "3798c973578cc594db74ebd061c4846453962b79",
+        "parents": "639f89b8abf3adeaac4783ed9b301c60ded7c80a"
+      },
+      {
+        "hash": "503ae902a3c668c91cedca358a92afc74e0cbf73",
+        "parents": "25ba2b284f7d7a59a50036e54132abf2b4786c6f"
+      },
+      {
+        "hash": "25ba2b284f7d7a59a50036e54132abf2b4786c6f",
+        "parents": "fa36495d02d8af539af23c8046bc8c876917fab6 639f89b8abf3adeaac4783ed9b301c60ded7c80a"
+      },
+      {
+        "hash": "639f89b8abf3adeaac4783ed9b301c60ded7c80a",
+        "parents": "936b05e637bd19956ef0e4d279055b98e4ca572e"
+      },
+      {
+        "hash": "fa36495d02d8af539af23c8046bc8c876917fab6",
+        "parents": "936b05e637bd19956ef0e4d279055b98e4ca572e"
+      },
+      {
+        "hash": "936b05e637bd19956ef0e4d279055b98e4ca572e",
+        "parents": "0ae3adc835e49f652aafca3935fe8f61bf5a2199"
+      },
+      {
+        "hash": "0ae3adc835e49f652aafca3935fe8f61bf5a2199",
+        "parents": "2eb170500ae23d68241855f67f4296dfe1363e6d"
+      },
+      {
+        "hash": "2eb170500ae23d68241855f67f4296dfe1363e6d",
+        "parents": "07f6575c8632b9047d0e893c5a2ee47ef362dd5d"
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 2,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─│"
+        },
+        {
+          "color": 2,
+          "text": "─┤"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "crossover",
+    "commits": [
+      {
+        "hash": "2eb170500ae23d68241855f67f4296dfe1363e6d",
+        "parents": "07f6575c8632b9047d0e893c5a2ee47ef362dd5d"
+      },
+      {
+        "hash": "07f6575c8632b9047d0e893c5a2ee47ef362dd5d",
+        "parents": "c62e131babee4f0a37d71dfef890399e2b0384a8"
+      },
+      {
+        "hash": "c62e131babee4f0a37d71dfef890399e2b0384a8",
+        "parents": "69187d33b769d4c554247f5fb4f13de76b56bf74 611ee13d8e21c4c3d51ee8e47db5bd55486d5dd2"
+      },
+      {
+        "hash": "611ee13d8e21c4c3d51ee8e47db5bd55486d5dd2",
+        "parents": "97c7c2d914ae9e27ec67dcc790fceed5ae6dd575"
+      },
+      {
+        "hash": "97c7c2d914ae9e27ec67dcc790fceed5ae6dd575",
+        "parents": "b4b3977fb86840010bd5c3ee427c8127146e27a0"
+      },
+      {
+        "hash": "b4b3977fb86840010bd5c3ee427c8127146e27a0",
+        "parents": "9de3ebd04c216f4931a39782344ced4789e789e6"
+      },
+      {
+        "hash": "69187d33b769d4c554247f5fb4f13de76b56bf74",
+        "parents": "d45647535f54fc1b8d07c6a0796c6f802bdab419 9de3ebd04c216f4931a39782344ced4789e789e6"
+      },
+      {
+        "hash": "9de3ebd04c216f4931a39782344ced4789e789e6",
+        "parents": "29823fe9ca3d65f7d29a4da4bdc0af4081f714ee 182b697ab0c7e0fefc027eb4b3fee16b767b87d6"
+      },
+      {
+        "hash": "182b697ab0c7e0fefc027eb4b3fee16b767b87d6",
+        "parents": "2acf11f0288deda2b15f7e4d15947b40534690ff"
+      },
+      {
+        "hash": "29823fe9ca3d65f7d29a4da4bdc0af4081f714ee",
+        "parents": "2acf11f0288deda2b15f7e4d15947b40534690ff"
+      },
+      {
+        "hash": "d45647535f54fc1b8d07c6a0796c6f802bdab419",
+        "parents": "2acf11f0288deda2b15f7e4d15947b40534690ff"
+      },
+      {
+        "hash": "2acf11f0288deda2b15f7e4d15947b40534690ff",
+        "parents": "2c19eda26fd22ceda1b6d8cbab95e7943760d598 736007d60cb9db76597427ea15a7c6f9ed64dae0"
+      },
+      {
+        "hash": "736007d60cb9db76597427ea15a7c6f9ed64dae0",
+        "parents": "ac30cc991725c788492d2481de3bbcb4d4871318"
+      },
+      {
+        "hash": "2c19eda26fd22ceda1b6d8cbab95e7943760d598",
+        "parents": "ac30cc991725c788492d2481de3bbcb4d4871318"
+      },
+      {
+        "hash": "ac30cc991725c788492d2481de3bbcb4d4871318",
+        "parents": "5b7e28464d1bfcc54a4eb68a33266e55456a6403"
+      },
+      {
+        "hash": "5b7e28464d1bfcc54a4eb68a33266e55456a6403",
+        "parents": "7c6450ea74bc62fae67dc120879fe89fffa231b7"
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─│"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─┤"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 2,
+          "text": "─┼"
+        },
+        {
+          "color": 2,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": "─╯"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "middle",
+    "commits": [
+      {
+        "hash": "5a0206da8f9cf3dca985dfeeb0abb9105a28f590",
+        "parents": "b41008cd3d144c068ad54cc240e4d255bf6e12ce"
+      },
+      {
+        "hash": "b41008cd3d144c068ad54cc240e4d255bf6e12ce",
+        "parents": "dc16fff9a8fc14756f7adbe301e2db1224e39425 a50cf71e0bd3e6ad267ed76a1e15886af52d1786"
+      },
+      {
+        "hash": "a50cf71e0bd3e6ad267ed76a1e15886af52d1786",
+        "parents": "b70958985e8e8e5152afa0657956e524385bf42a"
+      },
+      {
+        "hash": "dc16fff9a8fc14756f7adbe301e2db1224e39425",
+        "parents": "b70958985e8e8e5152afa0657956e524385bf42a"
+      },
+      {
+        "hash": "b70958985e8e8e5152afa0657956e524385bf42a",
+        "parents": "e0c1385bc046962d245e1322fdd7636a389a5fb4 7e5dc8d8a43a4556e16b94f549f57d75d66b7b54"
+      },
+      {
+        "hash": "7e5dc8d8a43a4556e16b94f549f57d75d66b7b54",
+        "parents": "55d0789fcdef29c52c73812f14860ddb085a6e2d"
+      },
+      {
+        "hash": "55d0789fcdef29c52c73812f14860ddb085a6e2d",
+        "parents": "b84ddbecbe937e6ce3f1739a74d426901a7f5861"
+      },
+      {
+        "hash": "b84ddbecbe937e6ce3f1739a74d426901a7f5861",
+        "parents": "147271085e29d8ad1eb288e495c0d24da5242fee 0d041528c8f2551192046990051a217a1275b4bd"
+      },
+      {
+        "hash": "0d041528c8f2551192046990051a217a1275b4bd",
+        "parents": "65a66c785fd6f71f796d60876e8d912aa1cd1235"
+      },
+      {
+        "hash": "147271085e29d8ad1eb288e495c0d24da5242fee",
+        "parents": "65a66c785fd6f71f796d60876e8d912aa1cd1235"
+      },
+      {
+        "hash": "e0c1385bc046962d245e1322fdd7636a389a5fb4",
+        "parents": "65a66c785fd6f71f796d60876e8d912aa1cd1235"
+      },
+      {
+        "hash": "65a66c785fd6f71f796d60876e8d912aa1cd1235",
+        "parents": "eeb51a02198e2597f9fe11ce90b45a958bef81a0"
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─┤"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 2,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": "─┴"
+        },
+        {
+          "color": 2,
+          "text": "─╯"
+        }
+      ]
+    ]
+  },
+  {
+    "name": "close",
+    "commits": [
+      {
+        "hash": "5fe3a5a03852c8399ef7b3dc4852c10deb8558d5",
+        "parents": "eca80b0a31fb4415f577adcdfaea17a815f4b3ff"
+      },
+      {
+        "hash": "eca80b0a31fb4415f577adcdfaea17a815f4b3ff",
+        "parents": "f047ba6b6bb95ad1d690dee27b62429953cf8258 fde860460294096a443404bb21c9910c983c3b93"
+      },
+      {
+        "hash": "fde860460294096a443404bb21c9910c983c3b93",
+        "parents": "d3f939229481381dd301d5fcff6188c37fe21c89 85cb5c578e8fd8e771fe5353ea6c7eaa5af55a20"
+      },
+      {
+        "hash": "85cb5c578e8fd8e771fe5353ea6c7eaa5af55a20",
+        "parents": "bf903126de4848d483097a94141b58c07429d973"
+      },
+      {
+        "hash": "d3f939229481381dd301d5fcff6188c37fe21c89",
+        "parents": "bf903126de4848d483097a94141b58c07429d973"
+      },
+      {
+        "hash": "f047ba6b6bb95ad1d690dee27b62429953cf8258",
+        "parents": "bf903126de4848d483097a94141b58c07429d973"
+      },
+      {
+        "hash": "bf903126de4848d483097a94141b58c07429d973",
+        "parents": "3fbc40322d37d26b20e8ed39522de91a2a00b753"
+      }
+    ],
+    "expected": [
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 1,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ●"
+        },
+        {
+          "color": 2,
+          "text": "─╮"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": 1,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        }
+      ],
+      [
+        {
+          "color": 0,
+          "text": " │"
+        },
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        },
+        {
+          "color": 2,
+          "text": " │"
+        }
+      ],
+      [
+        {
+          "color": -1,
+          "text": " ∙"
+        },
+        {
+          "color": 2,
+          "text": "─┴"
+        },
+        {
+          "color": 2,
+          "text": "─╯"
+        }
+      ]
+    ]
+  }
+]

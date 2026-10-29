@@ -450,6 +450,21 @@ r.run('anchor_dir on a file target anchors on its parent', function()
   vim.fn.delete(dir, 'rf')
 end)
 
+r.run('tree name truncation reserves suffix space and keeps full node names', function()
+  local render = require('lu5je0.ext.sidebar.render')
+  local name = '很长的提交标题以及后续内容'
+  local node = { name = name, type = 'directory', children = {}, expanded = false }
+  local lines, items, _, suffix = render.render_tree({ node }, {
+    name_width = 24, flat_depth = 1,
+    get_dir_icon = function() return '>' end,
+    dir_suffix = function() return '10-29', 'Comment' end,
+  })
+  r.assert_truthy(lines[1]:find('…',1,true))
+  r.assert_truthy(vim.fn.strdisplaywidth(lines[1]) + 6 <= 24)
+  r.assert_eq(items[1].node.name, name)
+  r.assert_eq(suffix[1].virt_text[1][1], '10-29')
+end)
+
 -- ============================================================================
 -- summary
 -- ============================================================================
