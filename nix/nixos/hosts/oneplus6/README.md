@@ -69,6 +69,7 @@ linux-firmware；反过来会在固件下载后报 `Opcode 0x0c03 failed: -110`�
 `audio.nix` 为 PipeWire 和 WirePlumber 指定本机的 ALSA UCM 路由，包位于
 `pkgs/alsa-ucm/`，固定到 sdm845-mainline 提交 `628b9900cdd2b9b8356201293f1da5396cf0ca27`。
 本机用户加入 audio 组，后台 PipeWire 不依赖 GNOME 活动会话的临时声卡 ACL；停在 GDM 登录界面时也可按需采音。组成员变更后需重新登录或重启用户服务，使其获得新的补充组。
+启用该用户的 linger，让用户音频服务在无人登录和退出登录后仍保持可用，避免 Docker 挂载的 PipeWire socket 失效；这不启动录音。
 该配置提供扬声器、3.5 mm 耳机及麦克风；去掉标准内核没有的 Q6Voice 通话控制项，
 避免只有虚拟输出或启用 HiFi 失败。通话音频未适配。
 WirePlumber 固定本机音频为 48 kHz/S16LE：同为 80% 音量时，S24_LE 无声，

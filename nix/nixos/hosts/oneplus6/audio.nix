@@ -6,6 +6,8 @@ in
 {
   # Background PipeWire must access ALSA while GDM owns the active seat.
   users.users.lu5je0.extraGroups = [ "audio" ];
+  # Keep the PipeWire socket available to Docker without an interactive login.
+  users.users.lu5je0.linger = true;
 
   environment.systemPackages = [ pkgs.alsa-utils ];
   environment.variables.ALSA_CONFIG_UCM2 = ucmPath;
