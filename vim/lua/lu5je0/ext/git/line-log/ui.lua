@@ -21,8 +21,8 @@ local function show_help()
     '  Space   Mark/unmark commit (Visual: mark range)',
     '  <CR>    View marked commits in a file tree (Normal)',
     '  U       Clear marked commits',
-    '  d       Toggle changes-only (single mode)',
-    '  D       Toggle diff mode: single / dual',
+    '  c       Toggle changes-only',
+    '  d       Toggle diff mode: single / dual',
     '  Z       Toggle window height',
     '  ?       Show this help',
     '  q/<Esc> Close this help',
@@ -30,6 +30,7 @@ local function show_help()
     'Diff modes:',
     '  single: Unified diff format',
     '  dual:   Side-by-side vimdiff style',
+    '  changes-only: Compact context (single) / fold unchanged (dual)',
   })
 end
 
@@ -561,12 +562,12 @@ function M.setup_log_buffer_keymaps(state, toggle_diff_mode, toggle_diff_changes
   })
 
   vim.keymap.set('n', 'd', function()
-    toggle_diff_changes_only()
+    toggle_diff_mode()
     M.show_commit_diff(state, nil, nil, true)
   end, opts)
 
-  vim.keymap.set('n', 'D', function()
-    toggle_diff_mode()
+  vim.keymap.set('n', 'c', function()
+    toggle_diff_changes_only()
     M.show_commit_diff(state, nil, nil, true)
   end, opts)
 

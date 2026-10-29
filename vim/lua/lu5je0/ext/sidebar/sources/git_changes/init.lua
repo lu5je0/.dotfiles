@@ -580,12 +580,18 @@ function M.keymaps()
     end, desc = 'Locate in files' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
     { '<space>', preview.toggle, desc = 'Preview' },
-    { 'gd', function()
+    { 'd', function()
       local diff_preview = require('lu5je0.ext.sidebar.actions.diff_preview')
       local next_mode = diff_preview.toggle_mode()
       vim.notify('Diff mode: ' .. next_mode, vim.log.levels.INFO)
       preview.refresh()
     end, desc = 'Toggle diff mode (single/dual)' },
+    { 'c', function()
+      local diff_preview = require('lu5je0.ext.sidebar.actions.diff_preview')
+      local changes_only = diff_preview.toggle_changes_only()
+      vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
+      preview.refresh()
+    end, desc = 'Toggle changes-only' },
     { 'yn', function()
       local line = vim.api.nvim_win_get_cursor(state.win)[1]
       local item = state.git_changes.display_items[line]

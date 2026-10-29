@@ -133,18 +133,20 @@ local function build_dispatch()
   end
 end
 
-function M.apply_for_tab(_idx)
+function M.apply_for_tab(idx)
   if not state:is_buf_valid() then return end
-  if vim.b[state.buf]._sidebar_keymaps_bound then return end
-  vim.b[state.buf]._sidebar_keymaps_bound = true
+  if vim.b[state.buf]._sidebar_keymaps_bound == idx then return end
+  vim.b[state.buf]._sidebar_keymaps_bound = idx
 
   build_dispatch()
 
   for _, entry in pairs(_dispatch) do
-    buf_set(entry.mode, entry.lhs, function()
-      local h = entry.handlers[state.active_tab_idx]
-      if h then h() end
-    end)
+    local handler = entry.handlers[idx]
+    if handler then
+      buf_set(entry.mode, entry.lhs, handler)
+    else
+      pcall(vim.keymap.del, entry.mode, entry.lhs, { buffer = state.buf })
+    end
   end
 end
 

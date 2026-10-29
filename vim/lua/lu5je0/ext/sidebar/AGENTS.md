@@ -44,7 +44,7 @@ sidebar/
     ├── git_ops.lua           -- Git 操作（调用 git/common/git-ops.lua）
     ├── navigation.lua        -- cwd 历史 back/forward
     ├── preview.lua           -- 预览控制器
-    └── diff_preview.lua      -- diff 预览（per-tab 浮窗，5s pending 超时兜底；`sidebar_diff_mode` 控制 dual / single 布局，`gd` 在 git_changes tab 切换）
+    └── diff_preview.lua      -- diff 预览（per-tab 浮窗，5s pending 超时兜底；`sidebar_diff_mode` 控制 dual / single 布局，`d` 切换布局、`c` 切换 changes-only，Git Changes 列表与预览窗口按键一致）
 ```
 
 外部共享：`ext/git/common/git-ops.lua`（sidebar 和 git-status 共用的日志/undo/git 工具）
@@ -61,6 +61,7 @@ sidebar/
 - 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，不再各自手写 render/open_node/close_node 骨架。
 - 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册即可。
 - 快捷键区分共享（`keymaps.apply_shared`）和 per-tab（source `keymaps()`）。
+- source 快捷键只绑定当前页，切页时移除其他页的映射；不能把非当前页按键保留成空操作，避免 Files 的 `dd` / `cd` 使 Git Changes 的 `d` / `c` 等待后续输入。
 - git 工具统一用 `actions/git_ops.lua` → `ext/git/common/git-ops.lua`。
 - 异步回调里先捕获 `local ts = state.tab()` 或 `state.tab_for(tabpage)`，不要直接读写 `state.xxx`。render 还要捕获 tabpage，schedule 里 `nvim_get_current_tabpage() ~= captured` 就跳过。
 - 跨 tab 的资源（fs_event、timer、preview 等）放进 per-tab state，不要写成模块级 singleton；持 libuv handle 的字段在 `state.cleanup_closed_tabs` 里释放。
@@ -73,6 +74,8 @@ sidebar/
 
 - `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）；`<leader>fg` 已移除。
 - 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
+
+- Git diff 的布局与 changes-only 独立保存：`d` 保留上下文偏好；`c` 在 single 模式切换完整上下文 / 改动附近 3 行，在 dual 模式展开 / 折叠未变化区域。Space 预览期间，在列表或预览窗口按 `d` / `c` 均立即使用已加载内容刷新，不重读文件；切换布局保留当前焦点所在区域。
 
 ## 高亮约定
 
@@ -110,7 +113,7 @@ sidebar/
   - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
-  - `diff_preview_spec.lua` — `resolve_diff_targets` 映射
+  - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入不等待其他页的映射前缀
   - `parser_spec.lua` — `files_to_tree_nodes`、`git_root` 缓存自失效
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为
   - `git_ops_spec.lua` — 真实 git 仓库下的 stage/discard/undo

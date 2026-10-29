@@ -156,25 +156,34 @@ end
 
 local function close_for(ts)
   local d = dp(ts)
-  if d.win_left and vim.api.nvim_win_is_valid(d.win_left) then
-    vim.api.nvim_win_close(d.win_left, true)
-  end
-  if d.win_right and vim.api.nvim_win_is_valid(d.win_right) then
-    vim.api.nvim_win_close(d.win_right, true)
-  end
-  if d.win_single and vim.api.nvim_win_is_valid(d.win_single) then
-    vim.api.nvim_win_close(d.win_single, true)
-  end
+  local windows = { d.win_left, d.win_right, d.win_single }
+  -- Detach first so WinClosed does not treat a preview rebuild as a user close.
   d.win_left = nil
   d.win_right = nil
   d.buf_left = nil
   d.buf_right = nil
   d.win_single = nil
   d.buf_single = nil
+  d.refresh = nil
+  for _, win in pairs(windows) do
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_close(win, true)
+    end
+  end
 end
 
 function M.close()
   close_for(state.tab())
+end
+
+function M.refresh()
+  local d = dp()
+  local win = d.win_single or d.win_left or d.win_right
+  if not d.refresh or not win or not vim.api.nvim_win_is_valid(win) then
+    return false
+  end
+  d.refresh()
+  return true
 end
 
 -- ── mode (single | dual) ───────────────────────────────────────────────
@@ -198,6 +207,12 @@ function M.toggle_mode()
   return next_mode
 end
 
+function M.toggle_changes_only()
+  local changes_only = not env_keeper.get('sidebar_diff_changes_only', false)
+  env_keeper.set('sidebar_diff_changes_only', changes_only)
+  return changes_only
+end
+
 function M.show(item, on_state_change)
   local node = item.node
   local targets = M.resolve_diff_targets(item)
@@ -211,6 +226,16 @@ function M.show(item, on_state_change)
   local left_data, right_data, head_short
   local rendered = false
   local timeout_timer
+
+  local function toggle_mode_here()
+    local next_mode = M.toggle_mode()
+    vim.notify('Diff mode: ' .. next_mode, vim.log.levels.INFO)
+    vim.schedule(function()
+      if state.tab() == ts then
+        M.refresh()
+      end
+    end)
+  end
 
   local function render_dual(d, changes_only, left_title)
     local gap = 2
@@ -279,8 +304,7 @@ function M.show(item, on_state_change)
     end
 
     local function toggle_changes_only()
-      changes_only = not changes_only
-      env_keeper.set('sidebar_diff_changes_only', changes_only)
+      changes_only = M.toggle_changes_only()
       for _, w in ipairs({ d.win_left, d.win_right }) do
         if w and vim.api.nvim_win_is_valid(w) then
           vim.wo[w].foldenable = changes_only
@@ -290,17 +314,11 @@ function M.show(item, on_state_change)
       vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
     end
 
-    local function toggle_mode_here()
-      M.set_mode('single')
-      vim.notify('Diff mode: single', vim.log.levels.INFO)
-      vim.schedule(function() M.show(item, on_state_change) end)
-    end
-
     for _, buf in ipairs({ d.buf_left, d.buf_right }) do
       local bopts = { buffer = buf, nowait = true, silent = true }
       vim.keymap.set('n', 'q', close_and_return, bopts)
-      vim.keymap.set('n', 'd', toggle_changes_only, bopts)
-      vim.keymap.set('n', 'gd', toggle_mode_here, bopts)
+      vim.keymap.set('n', 'c', toggle_changes_only, bopts)
+      vim.keymap.set('n', 'd', toggle_mode_here, bopts)
     end
 
     vim.keymap.set('n', '<c-l>', function()
@@ -320,6 +338,8 @@ function M.show(item, on_state_change)
         pattern = tostring(win_id),
         once = true,
         callback = function()
+          local current = dp(ts)
+          if current.win_left ~= cur_left or current.win_right ~= cur_right then return end
           if on_state_change then on_state_change(nil) end
           vim.schedule(function()
             local cur = dp(ts)
@@ -336,12 +356,12 @@ function M.show(item, on_state_change)
     end
   end
 
-  local function build_unified_diff_lines(left_lines, right_lines, left_title, right_title)
+  local function build_unified_diff_lines(left_lines, right_lines, left_title, right_title, changes_only)
     local left_text = #left_lines > 0 and (table.concat(left_lines, '\n') .. '\n') or ''
     local right_text = #right_lines > 0 and (table.concat(right_lines, '\n') .. '\n') or ''
     local ok, diff_str = pcall(vim.text.diff, left_text, right_text, {
       algorithm = 'histogram',
-      ctxlen = 3,
+      ctxlen = changes_only and 3 or math.max(#left_lines, #right_lines),
     })
     if not ok or not diff_str or diff_str == '' then
       return { '--- a' .. left_title, '+++ b' .. right_title, '', '-- No changes --' }
@@ -353,13 +373,13 @@ function M.show(item, on_state_change)
     return lines
   end
 
-  local function render_single(d, left_title)
+  local function render_single(d, changes_only, left_title)
     local width = math.floor(vim.o.columns * 0.85)
     local height = math.floor(vim.o.lines * 0.8)
     local row = math.floor((vim.o.lines - height) / 2)
     local col = math.floor((vim.o.columns - width) / 2)
 
-    local lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title)
+    local lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title, changes_only)
 
     local buf = vim.api.nvim_create_buf(false, true)
     vim.bo[buf].buftype = 'nofile'
@@ -395,21 +415,24 @@ function M.show(item, on_state_change)
       end)
     end
 
-    local function toggle_mode_here()
-      M.set_mode('dual')
-      vim.notify('Diff mode: dual', vim.log.levels.INFO)
-      vim.schedule(function() M.show(item, on_state_change) end)
-    end
-
     local bopts = { buffer = buf, nowait = true, silent = true }
     vim.keymap.set('n', 'q', close_and_return, bopts)
-    vim.keymap.set('n', 'gd', toggle_mode_here, bopts)
+    vim.keymap.set('n', 'd', toggle_mode_here, bopts)
+    vim.keymap.set('n', 'c', function()
+      changes_only = M.toggle_changes_only()
+      local updated_lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title, changes_only)
+      vim.bo[buf].modifiable = true
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, updated_lines)
+      vim.bo[buf].modifiable = false
+      vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
+    end, bopts)
 
     local cur_win = d.win_single
     vim.api.nvim_create_autocmd('WinClosed', {
       pattern = tostring(cur_win),
       once = true,
       callback = function()
+        if dp(ts).win_single ~= cur_win then return end
         if on_state_change then on_state_change(nil) end
         vim.schedule(function()
           local cur = dp(ts)
@@ -423,15 +446,10 @@ function M.show(item, on_state_change)
     })
   end
 
-  local function maybe_render()
-    if pending > 0 or rendered then return end
-    if timeout_timer then
-      pcall(function() timeout_timer:stop() end)
-      pcall(function() timeout_timer:close() end)
-      timeout_timer = nil
-    end
-    rendered = true
+  local function render_preview()
     local d = dp(ts)
+    local current_win = vim.api.nvim_get_current_win()
+    local restore_focus = current_win == d.win_single or current_win == d.win_left or current_win == d.win_right
     close_for(ts)
     ui.close_current_popup()
     if on_state_change then on_state_change('diff') end
@@ -450,10 +468,31 @@ function M.show(item, on_state_change)
     end
 
     if M.get_mode() == 'single' then
-      render_single(d, left_title)
+      render_single(d, changes_only, left_title)
     else
       render_dual(d, changes_only, left_title)
     end
+    d.refresh = render_preview
+    if restore_focus then
+      vim.api.nvim_set_current_win(d.win_single or d.win_left)
+    end
+  end
+
+  local function maybe_render()
+    if pending > 0 or rendered then
+      return
+    end
+    if timeout_timer then
+      pcall(function()
+        timeout_timer:stop()
+      end)
+      pcall(function()
+        timeout_timer:close()
+      end)
+      timeout_timer = nil
+    end
+    rendered = true
+    render_preview()
   end
 
   -- Worktree-binary fast path: if both sides would resolve to a binary file,

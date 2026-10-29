@@ -155,6 +155,9 @@ function M.stop()
 end
 
 function M.refresh()
+  if diff_preview.refresh() then
+    return
+  end
   if pv().active then
     update_preview()
   end

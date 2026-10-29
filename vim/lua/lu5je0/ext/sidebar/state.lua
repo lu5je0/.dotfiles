@@ -133,6 +133,7 @@ local function new_tab_state()
       buf_right = nil,
       win_single = nil,
       buf_single = nil,
+      refresh = nil,
     },
   }
 end
@@ -158,6 +159,7 @@ local function release_tab_resources(ts)
   end
   if ts.diff_preview then
     local dp = ts.diff_preview
+    dp.refresh = nil
     if dp.win_left and vim.api.nvim_win_is_valid(dp.win_left) then
       pcall(vim.api.nvim_win_close, dp.win_left, true)
     end

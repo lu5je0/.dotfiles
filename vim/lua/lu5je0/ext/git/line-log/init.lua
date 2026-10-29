@@ -34,9 +34,7 @@ local state = {
   prefetch_specs = {},
   next_prefetch_idx = 1,
   waiting_for_prefetch = false,
-  -- diff mode: 'single' or 'dual' (vimdiff style)
   diff_mode = env_keeper.get('line_log_diff_mode', 'single'),
-  -- changes-only diff (single mode only)
   diff_changes_only = env_keeper.get('line_log_diff_changes_only', false),
   blob_store = nil,
 }

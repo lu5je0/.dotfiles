@@ -23,7 +23,7 @@ function M.open(opts)
     log_win = vim.api.nvim_get_current_win(),
     log_buf = vim.api.nvim_get_current_buf(),
     mode = opts.mode or 'single',
-    changes_only = opts.changes_only,
+    changes_only = opts.changes_only == true,
     index = 1,
     entries = {},
     file_groups = {},
@@ -99,11 +99,11 @@ function M.open(opts)
     vim.bo[buf].filetype = ft
     local map = { buffer = buf, nowait = true }
     vim.keymap.set('n', 'q', close, map)
-    vim.keymap.set('n', 'D', function()
+    vim.keymap.set('n', 'd', function()
       state.mode = state.mode == 'single' and 'dual' or 'single'
       render()
     end, map)
-    vim.keymap.set('n', 'd', function()
+    vim.keymap.set('n', 'c', function()
       state.changes_only = not state.changes_only
       render()
     end, map)

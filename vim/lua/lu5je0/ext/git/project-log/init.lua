@@ -311,18 +311,18 @@ local function setup_keymaps()
     show_selected(true)
   end, opts)
   vim.keymap.set('n', 'd', function()
-    state.diff_changes_only = not state.diff_changes_only
-    env_keeper.set('line_log_diff_changes_only', state.diff_changes_only)
-    ui.update_statusline(state, false)
-    vim.notify('Changes only: ' .. (state.diff_changes_only and 'on' or 'off'), vim.log.levels.INFO)
-    state.preview_key = nil
-    show_file_diff(true)
-  end, opts)
-  vim.keymap.set('n', 'D', function()
     state.diff_mode = state.diff_mode == 'single' and 'dual' or 'single'
     env_keeper.set('line_log_diff_mode', state.diff_mode)
     ui.update_statusline(state, false)
     vim.notify('Diff mode: ' .. state.diff_mode, vim.log.levels.INFO)
+    state.preview_key = nil
+    show_file_diff(true)
+  end, opts)
+  vim.keymap.set('n', 'c', function()
+    state.diff_changes_only = not state.diff_changes_only
+    env_keeper.set('line_log_diff_changes_only', state.diff_changes_only)
+    ui.update_statusline(state, false)
+    vim.notify('Changes only: ' .. (state.diff_changes_only and 'on' or 'off'), vim.log.levels.INFO)
     state.preview_key = nil
     show_file_diff(true)
   end, opts)
@@ -386,8 +386,8 @@ local function setup_keymaps()
       '  U       Clear marked commits',
       '  h       Fold parent node',
       '  H       Fold commit',
-      '  d       Toggle changes-only',
-      '  D       Toggle diff mode: single / dual',
+      '  c       Toggle changes-only',
+      '  d       Toggle diff mode: single / dual',
       '  a       Load all commits (when limited)',
       '  gf      Open file',
       '  Z       Toggle window height',

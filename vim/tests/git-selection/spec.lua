@@ -63,9 +63,13 @@ local function child(kind, mode)
     [[
     local repo, mode = ...
     vim.g.mapleader = ','
+    _G.saved_diff_prefs = { line_log_diff_mode = mode, line_log_diff_changes_only = false }
     package.loaded['lu5je0.misc.env-keeper'] = {
-      get = function(key, default) if key == 'line_log_diff_mode' then return mode end return default end,
-      set = function() end,
+      get = function(key, default)
+        if saved_diff_prefs[key] ~= nil then return saved_diff_prefs[key] end
+        return default
+      end,
+      set = function(key, value) saved_diff_prefs[key] = value end,
     }
     vim.cmd.edit(repo .. '/renamed.txt')
     require('lu5je0.ext.loader').ext_load({
@@ -185,6 +189,48 @@ local function merge_error(c)
   return c.tree_text()
 end
 
+for _, kind in ipairs { 'project', 'line' } do
+  run(kind .. ' log: c and d independently toggle context and layout after lazy entry', function()
+    local c = child(kind)
+    c.go('picked-change')
+    if kind == 'project' then
+      c.feed('l')
+      c.go('demo.txt')
+      c.feed('<CR>')
+    end
+    c.q([[
+      for _, map in ipairs(vim.api.nvim_buf_get_keymap(log_buf, 'n')) do
+        assert(map.lhs ~= 'D', 'D must not have a buffer mapping')
+      end
+    ]])
+    for _, expected in ipairs {
+      { 'c', 'single', true },
+      { 'd', 'dual', true },
+      { 'c', 'dual', false },
+      { 'd', 'single', false },
+      { 'd', 'dual', false },
+      { 'c', 'dual', true },
+      { 'd', 'single', true },
+      { 'c', 'single', false },
+    } do
+      c.feed(expected[1])
+      c.wait(([[
+        if saved_diff_prefs.line_log_diff_mode ~= %q or saved_diff_prefs.line_log_diff_changes_only ~= %s then return false end
+        local count = 0
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if vim.w[win].git_line_log_diff or vim.w[win].git_project_log_diff then
+            count = count + 1
+            if vim.wo[win].diff ~= %s then return false end
+            if vim.wo[win].diff and vim.wo[win].foldenable ~= %s then return false end
+          end
+        end
+        return count == %d
+      ]]):format(expected[2], tostring(expected[3]), tostring(expected[2] == 'dual'), tostring(expected[3]), expected[2] == 'dual' and 2 or 1))
+    end
+    c.stop()
+  end)
+end
+
 run('continuous selection: one net patch per path, original marks survive tree expansion', function()
   local index_before = git { 'hash-object', '.git/index' }
   local c = child('project')
@@ -212,7 +258,7 @@ run('continuous selection: one net patch per path, original marks survive tree e
   excludes(text, '+beta')
   local _, patches = text:gsub('\n@@ ', '')
   assert(patches == 1, 'selected commits should produce one net patch')
-  c.feed('D')
+  c.feed('d')
   c.dual_ready()
   c.q([[
     local texts={}
@@ -222,7 +268,7 @@ run('continuous selection: one net patch per path, original marks survive tree e
   ]])
   c.feed(']f')
   c.wait([[return preview_status():find('extra.txt',1,true)~=nil]])
-  c.feed('[fD')
+  c.feed('[fd')
   c.preview()
   c.pick('中文 name.txt')
   contains(c.preview(), '+unicode filename')
@@ -267,10 +313,10 @@ run('nested merged tree folds, expands and automatically previews files', functi
   contains(c.tree_text(), 'demo.txt')
   c.pick('extra.txt', false)
   contains(c.preview(), '+extra')
-  c.feed('D')
+  c.feed('d')
   c.dual_ready()
   c.q([[vim.api.nvim_set_current_win(preview_wins()[2])]])
-  c.feed('D')
+  c.feed('d')
   c.preview()
   contains(c.tree_text(), 'nested/dir')
   c.stop()
@@ -341,11 +387,33 @@ run('independent nonadjacent patches merge without including skipped edits', fun
   contains(text, '+selected-middle')
   excludes(text, 'skipped-last')
   contains(text, 'base-16')
-  c.feed('D')
+  c.feed('d')
   c.dual_ready()
   c.q([[
     for _,w in ipairs(preview_wins()) do
       assert(not table.concat(vim.api.nvim_buf_get_lines(vim.api.nvim_win_get_buf(w),0,-1,false),'\n'):find('skipped-last',1,true))
+    end
+  ]])
+  c.feed('c')
+  c.dual_ready()
+  c.q([[
+    for _, win in ipairs(preview_wins()) do assert(vim.wo[win].foldenable) end
+  ]])
+  c.feed('d')
+  local compact = c.preview()
+  contains(compact, '+selected-first')
+  contains(compact, '+selected-middle')
+  excludes(compact, 'base-16')
+  c.feed('c')
+  contains(c.preview(), 'base-16')
+  c.feed('d')
+  c.dual_ready()
+  c.q([[
+    for _, win in ipairs(preview_wins()) do assert(not vim.wo[win].foldenable) end
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      for _, map in ipairs(vim.api.nvim_buf_get_keymap(vim.api.nvim_win_get_buf(win), 'n')) do
+        assert(map.lhs ~= 'D', 'D must not have a buffer mapping')
+      end
     end
   ]])
   assert(index_before == git { 'hash-object', '.git/index' }, 'real index changed after clean merge')
@@ -414,7 +482,7 @@ run('line history merges selected blocks, filters cancellation and reports skipp
   contains(text, '+gamma')
   excludes(text, '+beta')
   excludes(text, 'unselected source line')
-  c.feed('D')
+  c.feed('d')
   c.dual_ready()
   c.q([[
     local texts={}
