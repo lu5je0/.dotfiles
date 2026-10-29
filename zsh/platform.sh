@@ -1,13 +1,8 @@
 if [[ $OSTYPE == darwin* ]]; then
   export HOMEBREW_PATH="/opt/homebrew"
   
-  export PATH="$HOMEBREW_PATH/bin:$PATH"
-  export PATH="$HOMEBREW_PATH/opt/coreutils/libexec/gnubin:$PATH"
-  export PATH="$HOMEBREW_PATH/opt/grep/libexec/gnubin:$PATH"
-  
-  # eval $(gdircolors -b $HOME/.dir_colors)
-  alias sed='gsed'
-  alias q-battery='ioreg -rn AppleSmartBattery | awk "/AppleRawMaxCapacity/{raw=\$NF} /DesignCapacity/{design=\$NF} /CycleCount/{cycle=\$NF} END{printf \"当前最大容量: %d mAh | 设计容量: %d mAh | 循环次数 %d 次 | 健康度: %.1f%%\n\", raw, design, cycle, (raw/design)*100}"'
+  # GNU 工具由 nix-darwin 提供，Brew 作为其余工具的补充。
+  export PATH="$PATH:$HOMEBREW_PATH/bin"
   
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
 

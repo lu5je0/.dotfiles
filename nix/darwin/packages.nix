@@ -15,5 +15,8 @@ in
     ++ userPackages
     ++ [
       pkgs.clang
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.gnused
     ];
 }
