@@ -119,7 +119,19 @@ local tig = require('lu5je0.ext.git.project-log.tig')
 for _, fixture in ipairs(fixtures) do
   local rows = tig.build(fixture.commits)
   local cells = {}
-  for _, row in ipairs(rows) do cells[#cells + 1] = row.cells end
+  for _, row in ipairs(rows) do
+    cells[#cells + 1] = row.cells
+    local raw = {}
+    for _, cell in ipairs(row.cells) do raw[#raw + 1] = cell.text end
+    assert(row.text == table.concat(raw):sub(2), 'display must omit the first padding byte like Tig draw_graph_utf8')
+    assert(row.width == vim.fn.strdisplaywidth(row.text))
+    local offset = 0
+    for _, span in ipairs(row.spans) do
+      assert(span.first == offset and span.last > span.first, 'display highlights must remain aligned')
+      offset = span.last
+    end
+    assert(offset == #row.text)
+  end
   if vim.deep_equal(cells, fixture.expected) then
     passed = passed + 1
     io.write('  Tig v2 ' .. fixture.name .. ' ... PASS\n')

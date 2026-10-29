@@ -604,14 +604,15 @@ local function symbols(g)
     local color = s.commit and -1 or s.color
     out[#out + 1] = { text = glyph, color = color }
     text[#text + 1] = glyph
-    spans[#spans + 1] = { first = bytes, last = bytes + #glyph, color = color }
+    -- Tig's draw_graph_utf8 skips the first cell's leading padding byte.
+    spans[#spans + 1] = { first = math.max(0, bytes - 1), last = bytes + #glyph - 1, color = color }
     bytes = bytes + #glyph
   end
   local color = g.colors[g.id]
   if color ~= nil then
     g.counts[color], g.colors[g.id] = g.counts[color] - 1, nil
   end
-  return { text = table.concat(text), spans = spans, cells = out, width = #row * 2 }
+  return { text = table.concat(text):sub(2), spans = spans, cells = out, width = #row * 2 - 1 }
 end
 
 -- Commits must be in topological order; each output row belongs to one commit.

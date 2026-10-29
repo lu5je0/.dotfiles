@@ -671,6 +671,15 @@ run('History graph toggle preserves cursor selection and uses disjoint highlight
     assert(s.history.graph_enabled and #s.history.graph_rows==#s.history.commits)
     assert(vim.deep_equal(graph_cursor,vim.api.nvim_win_get_cursor(s.win)))
     assert(vim.tbl_count(s.history.selected_commits)==1)
+    local lines=vim.api.nvim_buf_get_lines(s.buf,0,-1,false)
+    for i,row in ipairs(s.history.graph_rows) do
+      if row.width==1 then
+        local hash=s.history.commits[i].short_hash
+        local before=initial_lines[i]:find(hash,1,true)
+        local after=lines[i]:find(hash,1,true)
+        assert(vim.fn.strdisplaywidth(initial_lines[i]:sub(1,before-1))==vim.fn.strdisplaywidth(lines[i]:sub(1,after-1)), 'gG must not shift the single-lane hash column')
+      end
+    end
     _G.cached_graph=s.history.graph_rows
     check_history_highlights()
   ]])
