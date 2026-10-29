@@ -187,6 +187,9 @@ function M.open(opts)
       vim.api.nvim_win_set_buf(state.win, state.buf)
       setup_buffer(state.buf, 'git')
       vim.w[state.win].git_selected_diff = true
+      vim.wo[state.win].number = true
+      vim.wo[state.win].relativenumber = false
+      vim.wo[state.win].statuscolumn = ''
       vim.api.nvim_win_set_width(state.log_win, math.min(math.max(config.log_width, 25), math.floor(vim.o.columns / 3)))
     end)
   end
@@ -302,6 +305,9 @@ function M.open(opts)
         vim.api.nvim_win_set_buf(state.win2, state.buf2)
         setup_buffer(state.buf2, 'git')
         vim.w[state.win2].git_selected_diff = true
+        vim.wo[state.win2].number = true
+        vim.wo[state.win2].relativenumber = false
+        vim.wo[state.win2].statuscolumn = ''
       end)
     end
     local old = entry.old_block and entry.old_block:get_content() or {}
