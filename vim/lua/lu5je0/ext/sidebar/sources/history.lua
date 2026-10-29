@@ -65,7 +65,6 @@ function spec.render_opts()
     end
     return get_dir_icon(node)
   end
-  opts.simple_indent = true
   local info = vim.fn.getwininfo(state.win)[1]
   opts.name_width = info and (info.width - info.textoff) or 48
   opts.dir_suffix = function(node)
@@ -289,6 +288,9 @@ local function open_file(item)
   end
 end
 spec.open = {
+  keep_cursor = function(item)
+    return item.type == 'commit'
+  end,
   is_expandable = function(item)
     return item.node.type == 'directory'
   end,

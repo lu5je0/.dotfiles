@@ -160,7 +160,7 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 | n / x (log buf) | `U` | 清空所有 commit 勾选 |
 | n (log buf, 有勾选) | `<CR>` | 新 tab 打开已勾选提交的文件树 |
 | x (log buf) | `<CR>` | 新 tab 打开当前选区内提交的文件树 |
-| n (project log buf) | `l` / `<CR>` on commit | 展开 commit 文件树，保留子目录折叠状态 |
+| n (project log buf) | `l` / `<CR>` on commit | 展开 commit 文件树，光标停留当前提交，保留子目录折叠状态 |
 | n (project log buf) | `l` / `<CR>` on dir | 展开目录并跳到第一个可见子节点，保留后代折叠状态 |
 | n (project log buf) | `h` on commit | 折叠 commit |
 | n (project log buf) | `h` on child node | 折叠父节点 |

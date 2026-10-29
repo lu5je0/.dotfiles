@@ -59,11 +59,12 @@ function M.open_node(opts)
   if not item then return end
 
   if opts.is_expandable(item) then
+    local keep_cursor = opts.keep_cursor and opts.keep_cursor(item)
     if not opts.is_expanded(item) then
       opts.expand(item, line)
       opts.render_fn()
-      set_cursor(line + 1)
-    elseif opts.on_already_expanded then
+      set_cursor(keep_cursor and line or line + 1)
+    elseif not keep_cursor and opts.on_already_expanded then
       opts.on_already_expanded(item, line)
     end
     return

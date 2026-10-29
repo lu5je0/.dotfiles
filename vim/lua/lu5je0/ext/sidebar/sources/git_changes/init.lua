@@ -263,6 +263,7 @@ local function load_stash_files(stash_entry, callback)
 end
 
 spec.open = {
+  keep_cursor = function(item) return item._is_section or item.node._is_stash end,
   is_expandable = function(item)
     return item._is_section or item.node._is_stash or (item.type == 'dir' and item.node ~= nil)
   end,

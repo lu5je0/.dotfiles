@@ -15,7 +15,7 @@
 --   post_flush  (state_tab, ctx)                  optional, runs AFTER display_items
 --                                                 and buffer have been flushed
 --   open        { is_expandable, is_expanded,
---                 expand, on_already_expanded,
+--                 expand, keep_cursor, on_already_expanded,
 --                 on_file }                       used by open_node()
 --   close       { is_closeable, close,
 --                 is_boundary }                   used by close_node()
@@ -99,6 +99,7 @@ function M.open_node(spec, render_fn)
     is_expandable = glue.is_expandable,
     is_expanded = glue.is_expanded,
     expand = glue.expand,
+    keep_cursor = glue.keep_cursor,
     on_already_expanded = glue.on_already_expanded,
     on_file = glue.on_file,
   })
