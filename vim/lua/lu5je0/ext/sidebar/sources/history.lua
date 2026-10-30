@@ -22,6 +22,10 @@ local function item_key(item)
   return item and item.node and item.node.commit.hash
 end
 
+local function is_merge(commit)
+  return (commit.parents or ''):find('%S+%s+%S+') ~= nil
+end
+
 function spec.build(h)
   local roots = {}
   for index, commit in ipairs(h.commits) do
@@ -99,7 +103,7 @@ function spec.render_opts()
   opts.name_width = info and (info.width - info.textoff) or 48
   opts.dir_suffix = function(node)
     if node._is_section and not node._is_parent and not node.expanded then
-      return node.commit.date:sub(6, 10), 'SidebarHistoryDate'
+      return node.commit.date:sub(6, 10), is_merge(node.commit) and 'SidebarHistoryMerge' or 'SidebarHistoryDate'
     end
   end
   opts.item_data = function(node)
@@ -153,7 +157,11 @@ function spec.decorate(h, lines, items, highlights)
           end
         else
           local last = math.min(hl.col_end, hl.col_start + #item.node.commit.short_hash)
-          extra[#extra + 1] = { line = hl.line, hl = 'SidebarHistoryHash', col_start = hl.col_start, col_end = last }
+          local merge = is_merge(item.node.commit)
+          extra[#extra + 1] = { line = hl.line, hl = merge and 'SidebarHistoryMerge' or 'SidebarHistoryHash', col_start = hl.col_start, col_end = last }
+          if merge then
+            hl.hl = 'SidebarHistoryMerge'
+          end
           hl.col_start = last
         end
       end
