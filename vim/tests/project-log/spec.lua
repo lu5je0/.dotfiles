@@ -1,11 +1,11 @@
--- Project-log kitty graph tests
+-- History Tig graph tests
 -- Usage: cd vim && nvim --headless -u NONE -l tests/project-log/spec.lua
 
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
 vim.opt.runtimepath:prepend(repo_root .. '/vim')
 
-local core = require('lu5je0.ext.git.project-log.core')
-local kitty = require('lu5je0.ext.git.project-log.kitty')
+local core = require('lu5je0.ext.sidebar.sources.history.core')
+local tig = require('lu5je0.ext.sidebar.sources.history.tig')
 
 local passed = 0
 local failed = 0
@@ -35,73 +35,35 @@ local function load_commits(range)
   return core.parse_log(result.stdout or '')
 end
 
-local VALID_COLORS = {
-  Red = true, Yellow = true, Blue = true, Purple = true, Cyan = true,
-  BoldRed = true, BoldYellow = true, BoldBlue = true, BoldPurple = true, BoldCyan = true,
-}
-
-local VALID_CHARS = {}
-for _, ch in ipairs({ '●', '│', '─', '╮', '╭', '╯', '╰', '┴', '┬', '┤', '├', '┼', ' ', '?' }) do
-  VALID_CHARS[ch] = true
+local function verify_rows(rows, commits)
+  assert(#rows == #commits, 'each commit must have one graph row')
+  for _, row in ipairs(rows) do
+    local raw = {}
+    for _, cell in ipairs(row.cells) do raw[#raw + 1] = cell.text end
+    assert(row.text == table.concat(raw):sub(2), 'display must omit the first padding byte like Tig draw_graph_utf8')
+    assert(row.width == vim.fn.strdisplaywidth(row.text))
+    local offset = 0
+    for _, span in ipairs(row.spans) do
+      assert(span.first == offset and span.last > span.first, 'display highlights must remain aligned')
+      offset = span.last
+    end
+    assert(offset == #row.text)
+  end
 end
 
 local function run_case(name, range)
   io.write(string.format('  %s ... ', name))
-  local commits = load_commits(range)
-  local errors = {}
-
-  local ok, graph = pcall(kitty.build, commits, true)
-  if not ok then
-    io.write(string.format('%sFAIL%s\n', color.red, color.reset))
-    io.write('    kitty.build error: ' .. tostring(graph) .. '\n')
-    failed = failed + 1
-    return
-  end
-
-  if #graph == 0 and #commits > 0 then
-    errors[#errors + 1] = 'graph is empty but commits exist'
-  end
-
-  local seen_hashes = {}
-  for _, row in ipairs(graph) do
-    local oid = row[1] and row[1].oid
-    if oid then
-      if seen_hashes[oid] then
-        errors[#errors + 1] = 'duplicate oid: ' .. oid:sub(1, 8)
-      end
-      seen_hashes[oid] = true
-    end
-
-    for _, cell in ipairs(row) do
-      if cell.color and not VALID_COLORS[cell.color] then
-        errors[#errors + 1] = 'invalid color: ' .. tostring(cell.color)
-      end
-      if cell.text and not VALID_CHARS[cell.text] then
-        errors[#errors + 1] = 'invalid char: ' .. cell.text .. ' (bytes: ' .. #cell.text .. ')'
-      end
-    end
-  end
-
-  for _, commit in ipairs(commits) do
-    if not seen_hashes[commit.hash] then
-      errors[#errors + 1] = 'missing commit: ' .. commit.short_hash
-    end
-  end
-
-  if #errors == 0 then
-    io.write(string.format('%sPASS%s\n', color.green, color.reset))
+  local ok, err = pcall(function()
+    local commits = load_commits(range)
+    verify_rows(tig.build(commits), commits)
+  end)
+  if ok then
     passed = passed + 1
-    return
+    io.write(string.format('%sPASS%s\n', color.green, color.reset))
+  else
+    failed = failed + 1
+    io.write(string.format('%sFAIL%s\n    %s\n', color.red, color.reset, tostring(err)))
   end
-
-  io.write(string.format('%sFAIL%s\n', color.red, color.reset))
-  for i = 1, math.min(#errors, 5) do
-    io.write('    ' .. errors[i] .. '\n')
-  end
-  if #errors > 5 then
-    io.write('    ... and ' .. (#errors - 5) .. ' more\n')
-  end
-  failed = failed + 1
 end
 
 run_case('crossed branch joins', '0357ae54~1..HEAD')
@@ -115,23 +77,11 @@ run_case('multi-lane close after inner join', 'bf903126~1..5fe3a5a0')
 -- its color IDs. No Tig binary or network access is required by the tests.
 local fixtures_path = repo_root .. '/vim/tests/project-log/tig-fixtures.json'
 local fixtures = vim.json.decode(table.concat(vim.fn.readfile(fixtures_path), '\n'))
-local tig = require('lu5je0.ext.git.project-log.tig')
 for _, fixture in ipairs(fixtures) do
   local rows = tig.build(fixture.commits)
   local cells = {}
-  for _, row in ipairs(rows) do
-    cells[#cells + 1] = row.cells
-    local raw = {}
-    for _, cell in ipairs(row.cells) do raw[#raw + 1] = cell.text end
-    assert(row.text == table.concat(raw):sub(2), 'display must omit the first padding byte like Tig draw_graph_utf8')
-    assert(row.width == vim.fn.strdisplaywidth(row.text))
-    local offset = 0
-    for _, span in ipairs(row.spans) do
-      assert(span.first == offset and span.last > span.first, 'display highlights must remain aligned')
-      offset = span.last
-    end
-    assert(offset == #row.text)
-  end
+  for _, row in ipairs(rows) do cells[#cells + 1] = row.cells end
+  verify_rows(rows, fixture.commits)
   if vim.deep_equal(cells, fixture.expected) then
     passed = passed + 1
     io.write('  Tig v2 ' .. fixture.name .. ' ... PASS\n')

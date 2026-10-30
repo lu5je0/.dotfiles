@@ -208,6 +208,9 @@ local function mark_diff_window(win)
   if win and vim.api.nvim_win_is_valid(win) then
     vim.w[win].git_line_log_diff = true
     vim.wo[win].cursorline = false
+    vim.wo[win].number = true
+    vim.wo[win].relativenumber = false
+    vim.wo[win].statuscolumn = ''
   end
 end
 

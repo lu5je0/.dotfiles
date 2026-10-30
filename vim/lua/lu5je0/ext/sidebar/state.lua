@@ -123,6 +123,7 @@ local function new_tab_state()
       generation = 0,
       job = nil,
       count_job = nil,
+      merge_jobs = {},
       pending_jump_sha = nil,
       pending_jump_file = nil,
     },
@@ -174,7 +175,7 @@ end
 local function release_tab_resources(ts)
   if not ts then return end
   require('lu5je0.ext.sidebar.actions.text_preview').close(ts)
-  require('lu5je0.ext.git.project-log.model').cancel(ts.history)
+  require('lu5je0.ext.sidebar.sources.history.model').cancel(ts.history)
   require('lu5je0.ext.sidebar.watcher').release(ts)
   require('lu5je0.ext.sidebar.git_status').release(ts)
   if ts.files then

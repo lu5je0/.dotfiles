@@ -211,6 +211,25 @@ function M.parse_status_grouped(stdout)
   return { staged = staged, unstaged = unstaged, untracked = untracked, changes = changes }
 end
 
+-- NUL-separated diff output preserves quoted, Unicode and tab-containing paths.
+function M.parse_name_status_z(stdout)
+  local fields = vim.split(stdout or '', '\0', { plain = true })
+  local files, i = {}, 1
+  while i < #fields do
+    local status, path = fields[i], fields[i + 1]
+    i = i + 2
+    local old_path
+    if status:match('^[RC]') then
+      old_path, path = path, fields[i]
+      i = i + 1
+    end
+    if path then
+      files[#files + 1] = { status = status, path = path, old_path = old_path }
+    end
+  end
+  return files
+end
+
 function M.parse_name_status(stdout)
   local files = {}
   for line in (stdout or ''):gmatch('[^\n]+') do

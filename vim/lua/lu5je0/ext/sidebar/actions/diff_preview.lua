@@ -305,6 +305,12 @@ function M.show(item, on_state_change)
     vim.wo[d.win_right].foldenable = changes_only
     vim.wo[d.win_right].cursorline = false
 
+    for _, win in ipairs({ d.win_left, d.win_right }) do
+      vim.wo[win].number = true
+      vim.wo[win].relativenumber = false
+      vim.wo[win].statuscolumn = ''
+    end
+
     local function close_and_return()
       vim.schedule(function()
         close_for(ts)
@@ -411,8 +417,9 @@ function M.show(item, on_state_change)
     })
     vim.wo[d.win_single].wrap = false
     vim.wo[d.win_single].cursorline = false
-    vim.wo[d.win_single].number = false
+    vim.wo[d.win_single].number = true
     vim.wo[d.win_single].relativenumber = false
+    vim.wo[d.win_single].statuscolumn = ''
     vim.wo[d.win_single].signcolumn = 'no'
     vim.wo[d.win_single].foldcolumn = '0'
     vim.wo[d.win_single].winhighlight = 'Normal:Normal,FloatBorder:Fg'

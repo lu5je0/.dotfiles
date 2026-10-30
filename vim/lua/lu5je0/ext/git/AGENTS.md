@@ -17,7 +17,7 @@
   - `colors.lua`: 定义 `GitBlame1`–`GitBlame5` 与 `GitBlameSelected`，并响应 `ColorScheme` 重新挂载
 - `blame-menu.lua`: blame 区域右键菜单；提供 copy hash / show commit / show in project log 动作，被点中的源 buffer 行 blame 高亮为 `GitBlameSelected`，菜单关闭后清除
 - `common/commit-selection.lua`: 项目日志与行历史共用的 commit 勾选、标记与计数；以稳定 commit key 保存选择，buffer 内容变化后重新挂载行首 `✓` inline extmark
-- `common/selected-diff.lua`: 新 tab 中查看所选提交的净变化；左侧复用项目日志 UI 和 common tree，右侧 single / dual 显示当前文件的合并结果，统一管理异步读取、临时资源清理、取消和切换
+- `common/selected-diff.lua`: 新 tab 中查看所选提交的净变化；左侧使用 `common/selected-diff-ui.lua` 和 common tree，右侧 single / dual 显示当前文件的合并结果，统一管理异步读取、临时资源清理、取消和切换
 - `common/net-diff.lua`: 合并所选改动；项目日志使用临时 bare repo 和独立 index，以源仓库对象库为 alternate，连续提交直接读取结果树，离散提交按 first-parent patch 做三方应用；行历史对追踪块做三方合并。真实工作区、暂存区、refs 与对象库均不写入，冲突时明确报错
 - `line-log/`: 行级 git log 子模块
   - `init.lua`: Neovim 入口，负责 session、窗口、buffer、prefetch 调度与 UI 驱动
@@ -25,13 +25,8 @@
   - `blob-store.lua`: 批量加载并缓存 `rev:file` 内容，供测试与运行时共用
   - `block.lua`: Block 类与 diff 生成（纯算法，不依赖 state）
   - `ui.lua`: 窗口、buffer、statusline、高亮、keymaps；直接消费 `state.tracker`
-- `project-log/`: 项目级 commit log 子模块
-  - `init.lua`: `show()` 进入 Sidebar History
-  - `model.lua`: 项目历史的异步数据加载与取消，状态由 Sidebar per-tab schema 持有；不创建窗口、不安装按键、不渲染
-  - `core.lua`: 解析项目级 `git log --name-status` 输出
-  - `tig.lua`: Tig 2.6.0 graph-v2 的纯 Lua 实现，布局、UTF-8 符号和颜色编号与上游一致；GPL-2.0-or-later，许可文本内嵌在 `tig.lua` 注释中
-  - `kitty.lua`: 独立的 gitgraph 风格图形算法，现有回归用例保留
-  - `ui.lua`: 渲染 commit 列表、文件树、图标、高亮与 statusline
+- `common/selected-diff-ui.lua`: 行历史与 History 的净变化视图共用的提交 / 文件树渲染，由 `common/selected-diff.lua` 使用
+- 项目历史由 `../sidebar/sources/history/` 提供：`init.lua` 为 source / open 入口，`model.lua` 管理异步任务，`core.lua` 解析 Git 输出，`tig.lua` 提供提交图算法；本模块只注册快捷键与 blame 跳转。
 
 ## 功能说明
 
@@ -47,12 +42,13 @@
 
 1. 普通模式 `<leader>gl` 打开 Sidebar History，提交树使用与 Changes 相同的渲染、缩进、展开箭头、文件图标和状态颜色。提交行显示短 hash 与标题，`K` 查看 hash、作者、时间与完整标题。
 2. commit 默认折叠，目录默认展开，连续目录链合并显示；打开目录时沿唯一子目录自动展开到分支、文件或空目录；收起时整条合并显示的目录链一起关闭，分支以下子节点及 commit 重开时保留折叠状态；`h/l`、`zo/zc` 折叠/展开，文件行 Enter 打开工作区文件。
-3. 提交行 Space 预览 hash、作者、时间、标题和变更文件列表（含 rename 路径）；再按进入浮窗，`q` / Esc 关闭。文件行 Space 使用共享浮窗预览该提交相对 first parent 的变化，再按进入预览；移动光标关闭预览。root commit 与空树比较，rename 使用旧路径。
-4. `d` / `c` 与 Changes 共用布局、changes-only 偏好，预览内切换复用加载结果。预览关闭、切页和切 Neovim tab 后，过期回调不得重开窗口。
-5. `m` 勾选提交（支持 Visual 批量），`U` 清空；有勾选时 Enter 或 Visual Enter 在新 tab 查看净变化。
-6. `r` 刷新，`ga` 加载全部，`Z` 切换 Sidebar 宽度；Visual `<leader>gl` 与 `<leader>gL` 保留独立的行/文件历史窗口。
-7. `gG` 在普通列表与 Tig 提交关系图之间切换；每个提交一行，保留文件树、光标和勾选。图形按已加载提交生成并缓存，刷新历史后失效，不在 render / CursorMoved 中计算。
-8. History 状态按 Neovim tabpage 隔离，切页/关闭取消加载并保留已完成的历史、展开和勾选；`model.lua` 只产出数据，Sidebar source 管理树、按键和预览目标。
+3. Merge 提交展开后按所有 parent 分组（暖黄色标题），每组比较该 parent 与 merge 最终快照；合并时的手动改动按实际差异出现在一组或多组，不单独推断冲突解决。文件列表首次展开时异步加载并缓存，无变化显示 `No changes`；切页/关闭取消任务，返回后恢复未完成查询。各组目录折叠状态独立，jump-to-file 等待分组加载后定位。
+4. 提交行 Space 预览 hash、作者、时间、标题和变更文件列表（含 rename 路径）；再按进入浮窗，`q` / Esc 关闭。文件行 Space 使用共享浮窗预览该提交相对 parent 的变化（普通提交取 first parent，merge 取所属分组），再按进入预览；移动光标关闭预览。root commit 与空树比较，rename 使用旧路径。
+5. `d` / `c` 与 Changes 共用布局、changes-only 偏好，预览内切换复用加载结果。预览关闭、切页和切 Neovim tab 后，过期回调不得重开窗口。
+6. `m` 勾选提交（支持 Visual 批量），`U` 清空；有勾选时 Enter 或 Visual Enter 在新 tab 查看净变化。
+7. `r` 刷新，`ga` 加载全部，`Z` 切换 Sidebar 宽度；Visual `<leader>gl` 与 `<leader>gL` 保留独立的行/文件历史窗口。
+8. `gG` 在普通列表与 Tig 提交关系图之间切换；每个提交一行，保留文件树、光标和勾选。图形按已加载提交生成并缓存，刷新历史后失效，不在 render / CursorMoved 中计算。
+9. History 状态按 Neovim tabpage 隔离，切页/关闭取消加载并保留已完成的历史、展开和勾选；`model.lua` 只产出数据，Sidebar source 管理树、按键和预览目标。
 
 ### 离散 commit 勾选（两个日志窗口共用）
 
@@ -86,14 +82,14 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 2. 菜单项：
    - Copy commit hash（完整 SHA → `+` / `"` 寄存器）
    - Show commit（`git show --stat --patch <sha>` 渲染到新 tab）
-   - Show in project log（调用 `project_log.show({ jump_to_sha = sha, jump_to_file = abs_path })`，自动滚动到对应 commit 并定位文件行）
+   - Show in project log（调用 `require('lu5je0.ext.sidebar.sources.history').open({ jump_to_sha = sha, jump_to_file = abs_path })`，自动滚动到对应 commit 并定位文件行）
 3. 菜单期间隐藏光标，避免出现下划线/闪烁；关闭后恢复
 4. 被点中的源 buffer 行 blame 高亮为 `GitBlameSelected`，菜单关闭后清除
 5. blame 还未加载会先提示 `Loading blame...`，未提交行（`00000000`）提示 `Line is uncommitted`
 
 ### Project Log 跳转入口
 
-`project_log.show(opts)` 支持以下可选参数：
+`require('lu5je0.ext.sidebar.sources.history').open(opts)` 支持以下可选参数：
 
 - `jump_to_sha`：commit 列表渲染完成后把光标定位到匹配 hash（精确或前缀匹配）的 commit 行
 - `jump_to_file`：可与 `jump_to_sha` 组合；定位到 commit 后自动展开其文件树，并把光标停在匹配路径的文件行上。匹配同时考虑 `file.path` 和 `file.old_path`，rename commit 也能命中
@@ -184,7 +180,7 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 - 无外部插件依赖
 - 需要 git 命令行工具
 - `lua/lu5je0/ext/statuscol.lua` 在自定义 segment 中渲染 blame 并把右键事件路由到 blame 模块；本模块不反向依赖 statuscol
-- `project-log` / `git-status` / `line-log` 的窗口均使用全行 cursorline，与 NvimTree 一致
+- History、Changes 和 line-log 的窗口均使用全行 cursorline，与 NvimTree 一致
 
 ## 懒加载
 

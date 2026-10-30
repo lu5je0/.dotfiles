@@ -145,8 +145,9 @@ function M.switch_to(idx)
   end
 
   local source = M.get_active_source()
-  if source and source.render then
-    source.render()
+  if source then
+    local enter = source.on_enter or source.render
+    if enter then enter() end
   end
 
   M.restore_view(idx)

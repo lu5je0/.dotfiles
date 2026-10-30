@@ -361,6 +361,167 @@ run('Visual Enter computes net changes for line, character and block selections'
   c.stop()
 end)
 
+run('History merge groups preview each parent and include manual merge edits', function()
+  write('merge-shared.txt', { 'base' })
+  write('merge-old.txt', { 'unique rename contents' })
+  write('merge-deleted.txt', { 'delete me' })
+  commit('merge-fixture-base')
+  local main = git { 'branch', '--show-current' }
+  git { 'checkout', '-qb', 'history-side' }
+  write('merge-shared.txt', { 'side' })
+  write('merge-side.txt', { 'side addition' })
+  git { 'mv', 'merge-old.txt', '合并 renamed.txt' }
+  git { 'rm', 'merge-deleted.txt' }
+  local side = commit('history-side-change')
+  git { 'checkout', '-q', main }
+  write('merge-shared.txt', { 'main' })
+  write('merge-main.txt', { 'main addition' })
+  local first_parent = commit('history-main-change')
+  local merged = vim.system({ 'git', '-C', repo, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'merge', '--no-commit', '--no-ff', 'history-side' }, { text = true }):wait()
+  assert(merged.code == 1, merged.stderr)
+  write('merge-shared.txt', { 'manual merge result' })
+  local sha = commit('history-merge-result')
+  local c = child('project')
+  c.go('history-merge-result')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    for _,commit in ipairs(s.history.commits) do
+      assert(not commit.parent_diffs or #commit.parent_diffs==0, 'merge must load only on expansion')
+    end
+  ]])
+  c.feed('l')
+  c.wait([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    return h.commits[1].parent_diffs and #h.commits[1].parent_diffs==2
+      and h.commits[1].parent_diffs[2].loaded
+  ]])
+  c.q([[
+    local first,second=...
+    local s=require('lu5je0.ext.sidebar.state')
+    local groups=s.history.commits[1].parent_diffs
+    assert(groups[1].hash:find(first,1,true)==1, vim.inspect({groups,first,second}))
+    assert(groups[2].hash:find(second,1,true)==1)
+    function merge_file_row(index,path)
+      for row,item in ipairs(s.history.display_items) do
+        if item.type=='file' and item.node.parent_group==groups[index] and item.node.rel_path==path then return row end
+      end
+      error('missing merge file '..index..' '..path)
+    end
+    function check_merge_target(index,path,old_path,kind)
+      local row=merge_file_row(index,path)
+      vim.api.nvim_win_set_cursor(s.win,{row,0})
+      local targets=require('lu5je0.ext.sidebar.sources.history').preview_item().diff_targets
+      assert(targets.left.kind==(kind=='A' and 'empty' or 'git_show'))
+      assert(targets.right.kind==(kind=='D' and 'empty' or 'git_show'))
+      if kind~='A' then assert(targets.left.spec==groups[index].hash..':'..(old_path or path)) end
+      if kind~='D' then assert(targets.right.spec==s.history.commits[1].hash..':'..path) end
+      return row
+    end
+    check_merge_target(1,'合并 renamed.txt','merge-old.txt','R')
+    check_merge_target(1,'merge-deleted.txt',nil,'D')
+    check_merge_target(1,'merge-side.txt',nil,'A')
+    check_merge_target(2,'merge-main.txt',nil,'A')
+    check_merge_target(1,'merge-shared.txt')
+    check_merge_target(2,'merge-shared.txt')
+  ]], { first_parent, side })
+  c.feed('<Space>')
+  c.wait([[
+    local s=require('lu5je0.ext.sidebar.state'); local dp=s.diff_preview
+    if not dp.win_single or not vim.api.nvim_win_is_valid(dp.win_single) then return false end
+    local text=table.concat(vim.api.nvim_buf_get_lines(dp.buf_single,0,-1,false),'\n')
+    return text:find('-side',1,true) and text:find('+manual merge result',1,true)
+  ]])
+  c.q([[require('lu5je0.ext.sidebar.actions.preview').stop()]])
+  c.feed('h')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    local line=vim.api.nvim_win_get_cursor(s.win)[1]
+    local item=s.history.display_items[line]
+    assert(item.type=='parent' and item.node.parent_group.index==2, vim.inspect(item))
+    assert(not item.node.parent_group.expanded, 'parent must close')
+    assert(s.history.commits[1].parent_diffs[1].expanded)
+  ]])
+  c.feed('l')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    assert(s.history.commits[1].parent_diffs[2].expanded)
+  ]])
+  c.q([[
+    local sha,repo=...
+    for _,win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if win~=require('lu5je0.ext.sidebar.state').win and vim.api.nvim_win_get_config(win).relative=='' then
+        vim.api.nvim_set_current_win(win)
+        break
+      end
+    end
+    vim.cmd.edit(repo..'/renamed.txt')
+    require('lu5je0.ext.sidebar.sources.history').open({jump_to_sha=sha,jump_to_file='合并 renamed.txt'})
+  ]], { sha, repo })
+  c.wait([[
+    local s=require('lu5je0.ext.sidebar.state')
+    local line=vim.api.nvim_win_get_cursor(s.win)[1]
+    local item=s.history.display_items[line]
+    return not s.history.pending_jump_sha and item and item.node.rel_path=='合并 renamed.txt'
+  ]])
+  c.stop()
+end)
+
+run('History merge loading cancels on page leave and resumes all parents with empty groups', function()
+  local parents = git { 'rev-parse', 'HEAD', 'HEAD^', 'HEAD^^' }
+  local hashes = vim.split(parents, '\n', { trimempty = true })
+  local sha = git { '-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit-tree', 'HEAD^{tree}', '-p', hashes[1], '-p', hashes[2], '-p', hashes[3], '-m', 'three-parent-fixture' }
+  local c = child('project')
+  c.q([[
+    local sha,parents=...
+    local s=require('lu5je0.ext.sidebar.state')
+    _G.merge_fixture={hash=sha,short_hash=sha:sub(1,7),parents=parents,message='three-parent-fixture',author='Test',date='2026-01-01',files={},expanded_dirs={}}
+    table.insert(s.history.commits,1,merge_fixture)
+    require('lu5je0.ext.sidebar.sources.history').render()
+    _G.original_system=vim.system
+    _G.merge_killed=false
+    vim.system=function(args,opts,callback)
+      assert(args[3]=='diff',vim.inspect(args))
+      _G.late_merge_callback=callback
+      return {kill=function() merge_killed=true end}
+    end
+  ]], { sha, table.concat(hashes, ' ') })
+  c.go('three-parent-fixture')
+  c.feed('l')
+  c.q([[
+    local tabs=require('lu5je0.ext.sidebar.tabs')
+    tabs.switch_to(require('lu5je0.ext.sidebar.config').tab_idx('files'))
+    assert(merge_killed)
+    vim.system=original_system
+    late_merge_callback({code=0,stdout='M\0stale.txt\0'})
+  ]])
+  c.q([[
+    assert(not merge_fixture.parent_diffs[1].loaded, 'canceled callback must not publish changes')
+    assert(#merge_fixture.parent_diffs[1].files==0)
+    require('lu5je0.ext.sidebar.tabs').switch_to(require('lu5je0.ext.sidebar.config').tab_idx('history'))
+  ]])
+  c.wait([[return merge_fixture.parent_diffs[3].loaded]])
+  c.q([[
+    local source=require('lu5je0.ext.sidebar.sources.history')
+    local s=require('lu5je0.ext.sidebar.state')
+    assert(#merge_fixture.parent_diffs==3)
+    assert(#merge_fixture.parent_diffs[1].files==0)
+    local roots=source._spec.build(s.history)
+    assert(roots[1].children[1].children[1].name=='No changes')
+    assert(not next(s.history.merge_jobs))
+    local parent_hl=false
+    for _,node in ipairs(roots[1].children) do
+      assert(source._spec.render_opts().node_hl(node)=='SidebarHistoryParent')
+      parent_hl=true
+    end
+    assert(parent_hl)
+    vim.system=function() error('cached merge must not query Git again') end
+  ]])
+  c.go('three-parent-fixture')
+  c.feed('hl')
+  c.q([[vim.system=original_system]])
+  c.stop()
+end)
+
 run('merge selection compares its first parent', function()
   local main = git { 'branch', '--show-current' }
   git { 'checkout', '-qb', 'selection-side' }
@@ -571,7 +732,7 @@ run('the four OnePlus 6 commits have no net gnome.nix changes', function()
   c.q(
     [[
     local root,stdout=...
-    local commits=require('lu5je0.ext.git.project-log.core').parse_log(stdout)
+    local commits=require('lu5je0.ext.sidebar.sources.history.core').parse_log(stdout)
     assert(#commits==4)
     local opts=require('lu5je0.ext.git.common.net-diff').project(commits,root)
     opts.mode='dual'
@@ -800,7 +961,7 @@ run('History preserves child folds when reopening parents and reveals jump targe
   ]=])
   c.feed('l')
   c.go('one.txt')
-  c.q([=[require('lu5je0.ext.git.project-log').show({jump_to_sha=...,jump_to_file='fold-parent/child/one.txt'})]=], { fold_commit })
+  c.q([=[require('lu5je0.ext.sidebar.sources.history').open({jump_to_sha=...,jump_to_file='fold-parent/child/one.txt'})]=], { fold_commit })
   c.wait([=[
     local s=require('lu5je0.ext.sidebar.state')
     local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
@@ -970,7 +1131,7 @@ run('History sessions belong to their tabpage and release resources on close', f
     _G.first_tab = vim.api.nvim_get_current_tabpage()
     vim.cmd.tabnew()
     vim.cmd.edit(...)
-    require('lu5je0.ext.git.project-log').show()
+    require('lu5je0.ext.sidebar.sources.history').open()
     _G.second_history = require('lu5je0.ext.sidebar.state').history
     assert(second_history ~= first_history)
   ]],

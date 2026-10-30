@@ -26,6 +26,8 @@ M.passthrough_mappings = {
 
 M.highlights = {
   { 'SidebarHistoryCommit', { link = 'Normal', default = true } },
+  { 'SidebarHistoryMerge', { fg = '#7f848e', default = true } },
+  { 'SidebarHistoryParent', { fg = '#d7aa62', default = true } },
   { 'SidebarHistoryHash', { fg = '#5dbbc1', default = true } },
   { 'SidebarHistoryDate', { fg = '#d8b26e', default = true } },
   { 'SidebarHistoryArrow', { fg = '#82aaff', default = true } },

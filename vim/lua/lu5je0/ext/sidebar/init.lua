@@ -18,7 +18,10 @@ local function init_sidebar(do_render)
   keymaps.apply_for_tab(state.active_tab_idx)
   if do_render then
     local source = tabs.get_active_source()
-    if source and source.render then source.render() end
+    if source then
+      local enter = source.on_enter or source.render
+      if enter then enter() end
+    end
   end
   watcher.start()
   watcher.refresh()

@@ -1,7 +1,7 @@
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
 local source_base = require('lu5je0.ext.sidebar.source_base')
-local model = require('lu5je0.ext.git.project-log.model')
+local model = require('lu5je0.ext.sidebar.sources.history.model')
 local selection = require('lu5je0.ext.git.common.commit-selection')
 local git_style = require('lu5je0.ext.sidebar.git_style')
 local parser = require('lu5je0.ext.sidebar.sources.git_changes.parser')
@@ -22,26 +22,60 @@ local function item_key(item)
   return item and item.node and item.node.commit.hash
 end
 
+local function is_merge(commit)
+  return (commit.parents or ''):find('%S+%s+%S+') ~= nil
+end
+
 function spec.build(h)
   local roots = {}
   for index, commit in ipairs(h.commits) do
-    local files, by_path = {}, {}
-    for file_index, file in ipairs(commit.files) do
-      local xy = file.status == '??' and '??' or (file.status:sub(1, 1) .. ' ')
-      files[#files + 1] = { path = file.path, old_path = file.old_path, xy = xy, x = xy:sub(1, 1), y = xy:sub(2, 2) }
-      by_path[file.path] = file_index
+    local function file_tree(owner, group)
+      local files, by_path = {}, {}
+      for file_index, file in ipairs(owner.files) do
+        local xy = file.status == '??' and '??' or (file.status:sub(1, 1) .. ' ')
+        files[#files + 1] = { path = file.path, old_path = file.old_path, xy = xy, x = xy:sub(1, 1), y = xy:sub(2, 2) }
+        by_path[file.path] = file_index
+      end
+      local nodes = parser.files_to_tree_nodes(files, owner.expanded_dirs, 'history', h.repo_root)
+      local function annotate(children)
+        for _, node in ipairs(children) do
+          node.commit, node.commit_idx = commit, index
+          node.parent_group = group
+          node.file_idx = by_path[node.rel_path]
+          if node.children then
+            annotate(node.children)
+          end
+        end
+      end
+      annotate(nodes)
+      return nodes
     end
-    local children = commit.expanded and parser.files_to_tree_nodes(files, commit.expanded_dirs, 'history', h.repo_root) or {}
-    local function annotate(nodes)
-      for _, node in ipairs(nodes) do
-        node.commit, node.commit_idx = commit, index
-        node.file_idx = by_path[node.rel_path]
-        if node.children then
-          annotate(node.children)
+    local children = {}
+    if commit.expanded then
+      local groups = model.parent_diffs(commit)
+      if #groups == 0 then
+        children = file_tree(commit)
+      else
+        for _, group in ipairs(groups) do
+          local nodes = group.expanded and file_tree(group, group) or {}
+          if group.expanded and #nodes == 0 then
+            local message = group.error or (group.loaded and 'No changes' or 'Loading changes…')
+            nodes = { { name = message:gsub('[\r\n]+', ' '), type = 'message', commit = commit, commit_idx = index, parent_group = group } }
+          end
+          children[#children + 1] = {
+            name = string.format('Parent %d · %s', group.index, group.hash:sub(1, 7)),
+            type = 'directory',
+            _is_section = true,
+            _is_parent = true,
+            expanded = group.expanded,
+            children = nodes,
+            commit = commit,
+            commit_idx = index,
+            parent_group = group,
+          }
         end
       end
     end
-    annotate(children)
     roots[#roots + 1] = {
       name = commit.short_hash .. ' ' .. commit.message,
       type = 'directory',
@@ -68,14 +102,20 @@ function spec.render_opts()
   local info = vim.fn.getwininfo(state.win)[1]
   opts.name_width = info and (info.width - info.textoff) or 48
   opts.dir_suffix = function(node)
-    if node._is_section and not node.expanded then
-      return node.commit.date:sub(6, 10), 'SidebarHistoryDate'
+    if node._is_section and not node._is_parent and not node.expanded then
+      return node.commit.date:sub(6, 10), is_merge(node.commit) and 'SidebarHistoryMerge' or 'SidebarHistoryDate'
     end
   end
   opts.item_data = function(node)
-    return { type = node._is_section and 'commit' or (node.type == 'directory' and 'dir' or 'file'), commit_idx = node.commit_idx, file_idx = node.file_idx }
+    return { type = node._is_parent and 'parent' or (node._is_section and 'commit' or (node.type == 'directory' and 'dir' or node.type)), commit_idx = node.commit_idx, file_idx = node.file_idx }
   end
   opts.node_hl = function(node)
+    if node._is_parent then
+      return 'SidebarHistoryParent'
+    end
+    if node.type == 'message' then
+      return 'Comment'
+    end
     if node._is_section then
       return 'SidebarHistoryCommit'
     end
@@ -117,7 +157,11 @@ function spec.decorate(h, lines, items, highlights)
           end
         else
           local last = math.min(hl.col_end, hl.col_start + #item.node.commit.short_hash)
-          extra[#extra + 1] = { line = hl.line, hl = 'SidebarHistoryHash', col_start = hl.col_start, col_end = last }
+          local merge = is_merge(item.node.commit)
+          extra[#extra + 1] = { line = hl.line, hl = merge and 'SidebarHistoryMerge' or 'SidebarHistoryHash', col_start = hl.col_start, col_end = last }
+          if merge then
+            hl.hl = 'SidebarHistoryMerge'
+          end
           hl.col_start = last
         end
       end
@@ -152,11 +196,33 @@ local function redraw(ts, tabpage)
         end
       end
     end
-    if h.pending_jump_sha and not h.loading then
+    if h.pending_jump_sha and not h.loading and not next(h.merge_jobs) then
       vim.notify('Commit or file not found in loaded history', vim.log.levels.WARN)
       h.pending_jump_sha, h.pending_jump_file = nil, nil
     end
   end
+end
+
+local function load_merge(ts, tabpage, commit)
+  model.load_merge(ts.history, commit, function()
+    if not visible(ts, tabpage) then
+      return
+    end
+    local h = ts.history
+    local old = h.display_items[vim.api.nvim_win_get_cursor(ts.win)[1]]
+    local jumping = h.pending_jump_sha
+    redraw(ts, tabpage)
+    if old and not jumping then
+      local node = old.node
+      for line, item in ipairs(h.display_items) do
+        local candidate = item.node
+        if item.type == old.type and candidate.commit == node.commit and candidate.parent_group == node.parent_group and candidate.abs_path == node.abs_path then
+          vim.api.nvim_win_set_cursor(ts.win, { line, 0 })
+          break
+        end
+      end
+    end
+  end)
 end
 
 local function load(opts)
@@ -171,6 +237,7 @@ local function load(opts)
       for _, commit in ipairs(h.commits) do
         if commit.hash:sub(1, #h.pending_jump_sha) == h.pending_jump_sha then
           commit.expanded = true
+          load_merge(ts, tabpage, commit)
         end
       end
     end
@@ -201,7 +268,15 @@ function M.render()
   end
 end
 
-M.on_enter = M.render
+function M.on_enter()
+  M.render()
+  local ts, tabpage = state.tab(), vim.api.nvim_get_current_tabpage()
+  for _, commit in ipairs(ts.history.commits) do
+    if commit.expanded then
+      load_merge(ts, tabpage, commit)
+    end
+  end
+end
 M.on_resize = M.render
 
 function M.status()
@@ -234,7 +309,7 @@ function M.open(opts)
     h.pending_jump_file = opts.jump_to_file and opts.jump_to_file:gsub('^' .. vim.pesc(root .. '/'), '')
     load(opts)
   else
-    M.render()
+    M.on_enter()
   end
 end
 
@@ -262,21 +337,24 @@ end
 
 local function set_expanded(item, expanded)
   local node = expanded and (item.display_node or item.node) or item.node
-  if node._is_section then
+  if node._is_parent then
+    node.parent_group.expanded = expanded
+  elseif node._is_section then
     node.commit.expanded = expanded
   else
-    node.commit.expanded_dirs = node.commit.expanded_dirs or {}
-    node.commit.expanded_dirs[node.abs_path] = expanded
+    local owner = node.parent_group or node.commit
+    owner.expanded_dirs = owner.expanded_dirs or {}
+    owner.expanded_dirs[node.abs_path] = expanded
     if expanded then
       while node.children and #node.children == 1 and node.children[1].type == 'directory' do
         node = node.children[1]
-        node.commit.expanded_dirs[node.abs_path] = true
+        owner.expanded_dirs[node.abs_path] = true
       end
     else
       local tail = item.display_node or node
       while node ~= tail do
         node = node.children[1]
-        node.commit.expanded_dirs[node.abs_path] = false
+        owner.expanded_dirs[node.abs_path] = false
       end
     end
   end
@@ -289,7 +367,7 @@ local function open_file(item)
 end
 spec.open = {
   keep_cursor = function(item)
-    return item.type == 'commit'
+    return item.type == 'commit' or item.type == 'parent'
   end,
   is_expandable = function(item)
     return item.node.type == 'directory'
@@ -299,6 +377,7 @@ spec.open = {
   end,
   expand = function(item)
     set_expanded(item, true)
+    load_merge(state.tab(), vim.api.nvim_get_current_tabpage(), item.node.commit)
   end,
   on_already_expanded = function(_, line)
     vim.api.nvim_win_set_cursor(state.win, { math.min(line + 1, #state.history.display_items), 0 })
@@ -313,7 +392,13 @@ spec.close = {
     if not current or node.type ~= 'directory' or not node.expanded or node.commit ~= current.commit then
       return false
     end
-    return node == current or node._is_section or (current.abs_path and vim.startswith(current.abs_path, node.abs_path .. '/'))
+    if node._is_section and not node._is_parent then
+      return true
+    end
+    if node.parent_group ~= current.parent_group then
+      return false
+    end
+    return node == current or node._is_parent or (current.abs_path and node.abs_path and vim.startswith(current.abs_path, node.abs_path .. '/'))
   end,
   is_boundary = function(item)
     local current = current_item()
@@ -350,10 +435,18 @@ function M.preview_item()
     lines[#lines + 1] = ''
     lines[#lines + 1] = commit.message
     lines[#lines + 1] = ''
-    lines[#lines + 1] = string.format('Files changed (%d)', #commit.files)
-    for _, file in ipairs(commit.files) do
-      local path = file.old_path and (file.old_path .. ' → ' .. file.path) or file.path
-      lines[#lines + 1] = '  ' .. file.status .. '  ' .. path
+    local groups = model.parent_diffs(commit)
+    local owners = #groups > 0 and groups or { commit }
+    for _, owner in ipairs(owners) do
+      if owner.hash ~= commit.hash then
+        lines[#lines + 1] = string.format('Parent %d · %s', owner.index, owner.hash:sub(1, 7))
+      end
+      lines[#lines + 1] = #groups > 0 and (owner.error or (owner.loaded and string.format('Files changed (%d)', #owner.files) or 'Expand merge to load changes'))
+        or string.format('Files changed (%d)', #owner.files)
+      for _, file in ipairs(owner.files) do
+        local path = file.old_path and (file.old_path .. ' → ' .. file.path) or file.path
+        lines[#lines + 1] = '  ' .. file.status .. '  ' .. path
+      end
     end
     return { preview_kind = 'text', title = 'Commit ' .. commit.short_hash, lines = lines }
   end
@@ -361,11 +454,12 @@ function M.preview_item()
     return
   end
   local node, commit = item.node, item.node.commit
-  local file = commit.files[item.file_idx]
-  local parent = commit.parents and commit.parents:match('%x+')
+  local file = (node.parent_group or commit).files[item.file_idx]
+  local parent = node.parent_group and node.parent_group.hash or (commit.parents and commit.parents:match('%x+'))
+  local status = file.status:sub(1, 1)
   local targets = {
-    left = parent and { kind = 'git_show', spec = parent .. ':' .. (file.old_path or file.path) } or { kind = 'empty' },
-    right = { kind = 'git_show', spec = commit.hash .. ':' .. file.path },
+    left = parent and status ~= 'A' and { kind = 'git_show', spec = parent .. ':' .. (file.old_path or file.path) } or { kind = 'empty' },
+    right = status ~= 'D' and { kind = 'git_show', spec = commit.hash .. ':' .. file.path } or { kind = 'empty' },
     left_title = parent and (' ' .. parent:sub(1, 7) .. ' ') or ' (none) ',
     right_title = ' ' .. commit.short_hash .. ' ',
   }

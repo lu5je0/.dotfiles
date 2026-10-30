@@ -32,6 +32,32 @@ if [[ ${words[2]} == profile && ${words[3]} == (add|upgrade|remove) && CURRENT -
         if [[ $PREFIX$SUFFIX != *\#* && $PREFIX != [./~]* ]]; then
           compadd -Q -S '' -- 'nixpkgs#' 'nixpkgs-unstable#' && return
         fi
+        if [[ $PREFIX$SUFFIX == *\#* ]]; then
+          local -a input reply suggestions quoted
+          local suggestion
+          input=("${(Q)words[@]}")
+          reply=("${(@f)$(NIX_GET_COMPLETIONS=$((CURRENT - 1)) "${input[@]}" 2>/dev/null)}")
+          if [[ ${reply[1]} == attrs ]]; then
+            for suggestion in "${reply[@]:1}"; do
+              suggestions+=("${suggestion%%$'\t'*}")
+            done
+            if [[ -n $compstate[quote] ]]; then
+              compadd -J nix -S '' -d suggestions -a suggestions
+              return
+            fi
+            for suggestion in "${suggestions[@]}"; do
+              suggestion=${(q)suggestion}
+              # Completion enables extendedglob locally; inspect the caller's options.
+              if [[ $_comp_caller_options[extendedglob] == off &&
+                    $_comp_caller_options[interactivecomments] == off ]]; then
+                suggestion=${suggestion//\\\#/#}
+              fi
+              quoted+=("$suggestion")
+            done
+            compadd -Q -J nix -S '' -d suggestions -a quoted
+            return
+          fi
+        fi
         ;;
     esac
   fi
