@@ -1,7 +1,7 @@
 local Block = require('lu5je0.ext.git.line-log.block')
 local ui = require('lu5je0.ext.git.common.ui')
 local tree = require('lu5je0.ext.git.common.tree')
-local project_ui = require('lu5je0.ext.git.project-log.ui')
+local selected_ui = require('lu5je0.ext.git.common.selected-diff-ui')
 local config = require('lu5je0.ext.git.config')
 
 local M = {}
@@ -29,7 +29,7 @@ function M.open(opts)
     file_groups = {},
     commits = {},
     display_items = {},
-    render = project_ui.render_log,
+    render = selected_ui.render_log,
     tree_opts = {
       status_hl_fn = function()
         return 'Type'
@@ -383,7 +383,7 @@ function M.open(opts)
     if not line then
       commit.expanded = true
       tree.expand_all_dirs(commit)
-      project_ui.render_log(state)
+      selected_ui.render_log(state)
       line = find_row()
     end
     if line then
@@ -466,7 +466,7 @@ function M.open(opts)
     for _, commit in ipairs(state.commits) do
       tree.expand_all_dirs(commit)
     end
-    project_ui.render_log(state)
+    selected_ui.render_log(state)
     state.ready = true
     vim.wo[state.log_win].statusline = string.format(' Selected Diff %d commits / %d files | l open h fold q back', commit_count, #files)
     focus_entry()

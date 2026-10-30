@@ -4,8 +4,8 @@
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
 vim.opt.runtimepath:prepend(repo_root .. '/vim')
 
-local core = require('lu5je0.ext.git.project-log.core')
-local kitty = require('lu5je0.ext.git.project-log.kitty')
+local core = require('lu5je0.ext.sidebar.sources.history.core')
+local kitty = require('lu5je0.ext.sidebar.sources.history.kitty')
 
 local passed = 0
 local failed = 0
@@ -115,7 +115,7 @@ run_case('multi-lane close after inner join', 'bf903126~1..5fe3a5a0')
 -- its color IDs. No Tig binary or network access is required by the tests.
 local fixtures_path = repo_root .. '/vim/tests/project-log/tig-fixtures.json'
 local fixtures = vim.json.decode(table.concat(vim.fn.readfile(fixtures_path), '\n'))
-local tig = require('lu5je0.ext.git.project-log.tig')
+local tig = require('lu5je0.ext.sidebar.sources.history.tig')
 for _, fixture in ipairs(fixtures) do
   local rows = tig.build(fixture.commits)
   local cells = {}

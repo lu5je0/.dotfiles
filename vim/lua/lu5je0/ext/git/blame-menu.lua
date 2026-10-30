@@ -49,13 +49,13 @@ local function action_show_commit(commit, bufnr)
 end
 
 local function action_show_in_project_log(commit, bufnr)
-  local ok, project_log = pcall(require, 'lu5je0.ext.git.project-log')
+  local ok, history = pcall(require, 'lu5je0.ext.sidebar.sources.history')
   if not ok then
-    vim.notify('project-log not available', vim.log.levels.WARN)
+    vim.notify('History not available', vim.log.levels.WARN)
     return
   end
   local file = bufnr and api.nvim_buf_get_name(bufnr) or ''
-  project_log.show({
+  history.open({
     jump_to_sha = commit.sha,
     jump_to_file = file ~= '' and file or nil,
   })

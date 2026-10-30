@@ -455,7 +455,7 @@ run('History merge groups preview each parent and include manual merge edits', f
       end
     end
     vim.cmd.edit(repo..'/renamed.txt')
-    require('lu5je0.ext.git.project-log').show({jump_to_sha=sha,jump_to_file='合并 renamed.txt'})
+    require('lu5je0.ext.sidebar.sources.history').open({jump_to_sha=sha,jump_to_file='合并 renamed.txt'})
   ]], { sha, repo })
   c.wait([[
     local s=require('lu5je0.ext.sidebar.state')
@@ -732,7 +732,7 @@ run('the four OnePlus 6 commits have no net gnome.nix changes', function()
   c.q(
     [[
     local root,stdout=...
-    local commits=require('lu5je0.ext.git.project-log.core').parse_log(stdout)
+    local commits=require('lu5je0.ext.sidebar.sources.history.core').parse_log(stdout)
     assert(#commits==4)
     local opts=require('lu5je0.ext.git.common.net-diff').project(commits,root)
     opts.mode='dual'
@@ -961,7 +961,7 @@ run('History preserves child folds when reopening parents and reveals jump targe
   ]=])
   c.feed('l')
   c.go('one.txt')
-  c.q([=[require('lu5je0.ext.git.project-log').show({jump_to_sha=...,jump_to_file='fold-parent/child/one.txt'})]=], { fold_commit })
+  c.q([=[require('lu5je0.ext.sidebar.sources.history').open({jump_to_sha=...,jump_to_file='fold-parent/child/one.txt'})]=], { fold_commit })
   c.wait([=[
     local s=require('lu5je0.ext.sidebar.state')
     local item=s.history.display_items[vim.api.nvim_win_get_cursor(s.win)[1]]
@@ -1131,7 +1131,7 @@ run('History sessions belong to their tabpage and release resources on close', f
     _G.first_tab = vim.api.nvim_get_current_tabpage()
     vim.cmd.tabnew()
     vim.cmd.edit(...)
-    require('lu5je0.ext.git.project-log').show()
+    require('lu5je0.ext.sidebar.sources.history').open()
     _G.second_history = require('lu5je0.ext.sidebar.state').history
     assert(second_history ~= first_history)
   ]],

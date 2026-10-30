@@ -1,5 +1,4 @@
 local line_log = require('lu5je0.ext.git.line-log')
-local project_log = require('lu5je0.ext.git.project-log')
 local blame = require('lu5je0.ext.git.blame')
 local config = require('lu5je0.ext.git.config')
 
@@ -23,7 +22,9 @@ function M.setup(opts)
   blame.setup()
 
   vim.keymap.set('x', '<leader>gl', line_log.show, { desc = 'Git line log' })
-  vim.keymap.set('n', '<leader>gl', project_log.show, { desc = 'Git project log' })
+  vim.keymap.set('n', '<leader>gl', function()
+    require('lu5je0.ext.sidebar.sources.history').open()
+  end, { desc = 'Git project log' })
   vim.keymap.set('n', '<leader>gL', function()
     line_log.show({ start_line = 1, end_line = vim.api.nvim_buf_line_count(0) })
   end, { desc = 'Git file log' })

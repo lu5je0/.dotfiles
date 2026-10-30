@@ -37,7 +37,12 @@ sidebar/
 │   │   ├── init.lua          -- git_changes source 门面
 │   │   ├── parser.lua        -- parse_git_status / files_to_tree_nodes / git_root 缓存（自失效）
 │   │   └── locate.lua        -- do_locate / do_locate_first 实现
-│   ├── history.lua           -- 项目历史 source：提交树、勾选、历史 diff 目标
+│   ├── history/
+│   │   ├── init.lua          -- History source：提交树、勾选、历史 diff 目标与 open 入口
+│   │   ├── model.lua         -- 项目历史 / merge parent 文件列表的异步加载、缓存与取消
+│   │   ├── core.lua          -- Git 日志与文件状态输出解析
+│   │   ├── tig.lua           -- Tig v2 提交图布局与颜色编号
+│   │   └── kitty.lua         -- gitgraph 风格提交图算法（保留回归用例）
 │   ├── buffers.lua           -- Buffers source（含 setup_auto_refresh）
 │   └── symbols.lua           -- LSP Symbols source
 └── actions/
@@ -61,7 +66,7 @@ sidebar/
 - buffer/窗口写入只走 `view.lua`（`flush` / `open_node` / `close_node` / `restore_cursor`）；`render.lua` 仍 re-export 兼容旧调用。
 - 展开接口的 `open.keep_cursor(item)` 控制是否保留光标；History commit、Changes 分组与 stash 节点展开后留在当前行，已展开时再次按 `l` 也保持不动；普通目录沿用进入子节点的行为。
 - 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，不再各自手写 render/open_node/close_node 骨架。
-- History 只展示已提交历史，未提交改动由 Changes 展示。History 与其他 source 一样走 `source_base` → `render_tree` → `view.flush`；`git/project-log/model.lua` 只负责异步加载和取消，Git 算法保持独立。`git_style.lua` 共用 Changes/History 的树样式；预览 source 可声明 `preview_kind` 与 `preview_item()`，由共享 preview / diff_preview 管理浮窗；条目可通过 `preview_kind = "text"`、`lines`、`title` 提供文本预览，`text_preview` 管理 per-tab 浮窗及资源释放。
+- History 只展示已提交历史，未提交改动由 Changes 展示。History 与其他 source 一样走 `source_base` → `render_tree` → `view.flush`；`sources/history/model.lua` 只负责异步加载和取消，History 专属解析和提交图算法集中在 `sources/history/`，与 source 的窗口操作分离。`git_style.lua` 共用 Changes/History 的树样式；预览 source 可声明 `preview_kind` 与 `preview_item()`，由共享 preview / diff_preview 管理浮窗；条目可通过 `preview_kind = "text"`、`lines`、`title` 提供文本预览，`text_preview` 管理 per-tab 浮窗及资源释放。
 - 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册即可。
 - 快捷键区分共享（`keymaps.apply_shared`）和 per-tab（source `keymaps()`）。
 - source 快捷键只绑定当前页，切页时移除其他页的映射；不能把非当前页按键保留成空操作，避免 Files 的 `dd` / `cd` 使 Git Changes 的 `d` / `c` 等待后续输入。 同页存在短键和长键前缀时，先注册长键、后注册短键，使短键的 `nowait` 优先匹配；单空格预览不能等待双空格超时。

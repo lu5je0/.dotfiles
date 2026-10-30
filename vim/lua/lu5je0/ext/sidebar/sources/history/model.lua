@@ -1,10 +1,10 @@
-local core = require('lu5je0.ext.git.project-log.core')
+local core = require('lu5je0.ext.sidebar.sources.history.core')
 local config = require('lu5je0.ext.git.config')
 local M = {}
 
 function M.prepare_graph(state)
   if not state.graph_rows then
-    state.graph_rows = require('lu5je0.ext.git.project-log.tig').build(state.commits)
+    state.graph_rows = require('lu5je0.ext.sidebar.sources.history.tig').build(state.commits)
   end
 end
 
