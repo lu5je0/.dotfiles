@@ -14,6 +14,5 @@ in
   users.users.lu5je0.packages =
     common.userPackages
     ++ (with pkgs; [
-      gcc
     ]);
 }

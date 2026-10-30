@@ -14,7 +14,6 @@ in
     common.systemPackages
     ++ userPackages
     ++ [
-      pkgs.clang
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.gnused
