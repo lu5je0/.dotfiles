@@ -73,7 +73,7 @@ sidebar/
 - 所有 sidebar autocmd 都进 `sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
 - Buffers source 的 `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`，**不要直接写事件名**：0.12 的自然编辑走 `BufModifiedSet`（0.13 已移除，见 `news.txt` / `deprecated.txt`，PR #35610），`:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`；单用任一个都会漏。兼容层与删除条件见根 `AGENTS.md` 的「临时兼容」一节。
 
-- source 可提供 `on_enter` / `on_leave` 生命周期；切页、切 Neovim tab 和关闭窗口由共享入口释放瞬时 UI，任务资源也须在 `state` 的 tab 清理中释放。`config.tabs[].transient` 定义临时页，显示状态保存在 per-tab `visible_tabs`，不改动稳定的 source 索引。`config.tabs[].width` 可指定默认宽度，各页宽度在 `tab_widths` 中记忆；History 默认 50 列，窗口过小时限制为屏幕的 60%。
+- source 可提供 `on_enter` / `on_leave` 生命周期；切页、切 Neovim tab 和关闭窗口由共享入口释放瞬时 UI；Sidebar 打开、切 source 和切回 Neovim tab 时调用 `on_enter`（未声明时用 `render`），任务资源也须在 `state` 的 tab 清理中释放。`config.tabs[].transient` 定义临时页，显示状态保存在 per-tab `visible_tabs`，不改动稳定的 source 索引。`config.tabs[].width` 可指定默认宽度，各页宽度在 `tab_widths` 中记忆；History 默认 50 列，窗口过小时限制为屏幕的 60%。
 
 ## 快捷键
 
@@ -82,7 +82,7 @@ sidebar/
 
 - Git diff 的布局与 changes-only 独立保存：`d` 保留上下文偏好；`c` 在 single 模式切换完整上下文 / 改动附近 3 行，在 dual 模式展开 / 折叠未变化区域。Space 预览期间，在列表或预览窗口按 `d` / `c` 均立即使用已加载内容刷新，不重读文件；切换布局保留当前焦点所在区域。
 
-- 普通模式 `<leader>gl` 打开 History；`h/l`、`zo/zc` 折叠/展开，目录默认展开，连续目录链合并显示，打开目录时自动展开仅有一个子目录的连续链，在出现分支、文件或空目录时停止；收起时整条合并显示的目录链一起关闭，分支以下手动折叠的子节点保持折叠；文件行 Enter 打开工作区文件；Space 在提交行预览元数据及变更文件列表，在文件行预览历史 diff，再按进入浮窗，`d` / `c` 与 Changes 共用偏好及已加载内容，光标移走关闭预览。`m` 勾选 commit（支持 Visual），`U` 清空、Enter 查看勾选的净变化；`K` 查看提交详情，`gG` 切换 Tig v2 提交关系图（按 tabpage 保存开关，复用已加载提交的图形缓存），`r` 刷新，`ga` 加载全部，`Z` 调整宽度；标题使用正常文字对比度，短 hash 为青色、展开箭头为蓝色、日期为暖色并靠右，名称按可用宽度用省略号截断并为状态保留空间，完整信息通过 `K` 查看。
+- 普通模式 `<leader>gl` 打开 History；merge 展开后按全部 parent 分组，Parent 标题使用独立暖黄色 `SidebarHistoryParent`，文件 diff 比较所属 parent 与 merge 结果，组内目录折叠状态独立；首次展开异步加载并缓存，切页/关闭取消，返回恢复未完成任务，无变化显示 `No changes`；`h/l`、`zo/zc` 折叠/展开，目录默认展开，连续目录链合并显示，打开目录时自动展开仅有一个子目录的连续链，在出现分支、文件或空目录时停止；收起时整条合并显示的目录链一起关闭，分支以下手动折叠的子节点保持折叠；文件行 Enter 打开工作区文件；Space 在提交行预览元数据及变更文件列表，在文件行预览历史 diff，再按进入浮窗，`d` / `c` 与 Changes 共用偏好及已加载内容，光标移走关闭预览。`m` 勾选 commit（支持 Visual），`U` 清空、Enter 查看勾选的净变化；`K` 查看提交详情，`gG` 切换 Tig v2 提交关系图（按 tabpage 保存开关，复用已加载提交的图形缓存），`r` 刷新，`ga` 加载全部，`Z` 调整宽度；标题使用正常文字对比度，短 hash 为青色、展开箭头为蓝色、日期为暖色并靠右，名称按可用宽度用省略号截断并为状态保留空间，完整信息通过 `K` 查看。
 
 ## 高亮约定
 

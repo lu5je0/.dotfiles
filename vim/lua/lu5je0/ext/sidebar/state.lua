@@ -123,6 +123,7 @@ local function new_tab_state()
       generation = 0,
       job = nil,
       count_job = nil,
+      merge_jobs = {},
       pending_jump_sha = nil,
       pending_jump_file = nil,
     },

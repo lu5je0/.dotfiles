@@ -27,7 +27,7 @@
   - `ui.lua`: 窗口、buffer、statusline、高亮、keymaps；直接消费 `state.tracker`
 - `project-log/`: 项目级 commit log 子模块
   - `init.lua`: `show()` 进入 Sidebar History
-  - `model.lua`: 项目历史的异步数据加载与取消，状态由 Sidebar per-tab schema 持有；不创建窗口、不安装按键、不渲染
+  - `model.lua`: 项目历史及 merge 各 parent 文件列表的异步加载、缓存与取消，状态由 Sidebar per-tab schema 持有；不创建窗口、不安装按键、不渲染
   - `core.lua`: 解析项目级 `git log --name-status` 输出
   - `tig.lua`: Tig 2.6.0 graph-v2 的纯 Lua 实现，布局、UTF-8 符号和颜色编号与上游一致；GPL-2.0-or-later，许可文本内嵌在 `tig.lua` 注释中
   - `kitty.lua`: 独立的 gitgraph 风格图形算法，现有回归用例保留
@@ -47,12 +47,13 @@
 
 1. 普通模式 `<leader>gl` 打开 Sidebar History，提交树使用与 Changes 相同的渲染、缩进、展开箭头、文件图标和状态颜色。提交行显示短 hash 与标题，`K` 查看 hash、作者、时间与完整标题。
 2. commit 默认折叠，目录默认展开，连续目录链合并显示；打开目录时沿唯一子目录自动展开到分支、文件或空目录；收起时整条合并显示的目录链一起关闭，分支以下子节点及 commit 重开时保留折叠状态；`h/l`、`zo/zc` 折叠/展开，文件行 Enter 打开工作区文件。
-3. 提交行 Space 预览 hash、作者、时间、标题和变更文件列表（含 rename 路径）；再按进入浮窗，`q` / Esc 关闭。文件行 Space 使用共享浮窗预览该提交相对 first parent 的变化，再按进入预览；移动光标关闭预览。root commit 与空树比较，rename 使用旧路径。
-4. `d` / `c` 与 Changes 共用布局、changes-only 偏好，预览内切换复用加载结果。预览关闭、切页和切 Neovim tab 后，过期回调不得重开窗口。
-5. `m` 勾选提交（支持 Visual 批量），`U` 清空；有勾选时 Enter 或 Visual Enter 在新 tab 查看净变化。
-6. `r` 刷新，`ga` 加载全部，`Z` 切换 Sidebar 宽度；Visual `<leader>gl` 与 `<leader>gL` 保留独立的行/文件历史窗口。
-7. `gG` 在普通列表与 Tig 提交关系图之间切换；每个提交一行，保留文件树、光标和勾选。图形按已加载提交生成并缓存，刷新历史后失效，不在 render / CursorMoved 中计算。
-8. History 状态按 Neovim tabpage 隔离，切页/关闭取消加载并保留已完成的历史、展开和勾选；`model.lua` 只产出数据，Sidebar source 管理树、按键和预览目标。
+3. Merge 提交展开后按所有 parent 分组（暖黄色标题），每组比较该 parent 与 merge 最终快照；合并时的手动改动按实际差异出现在一组或多组，不单独推断冲突解决。文件列表首次展开时异步加载并缓存，无变化显示 `No changes`；切页/关闭取消任务，返回后恢复未完成查询。各组目录折叠状态独立，jump-to-file 等待分组加载后定位。
+4. 提交行 Space 预览 hash、作者、时间、标题和变更文件列表（含 rename 路径）；再按进入浮窗，`q` / Esc 关闭。文件行 Space 使用共享浮窗预览该提交相对 parent 的变化（普通提交取 first parent，merge 取所属分组），再按进入预览；移动光标关闭预览。root commit 与空树比较，rename 使用旧路径。
+5. `d` / `c` 与 Changes 共用布局、changes-only 偏好，预览内切换复用加载结果。预览关闭、切页和切 Neovim tab 后，过期回调不得重开窗口。
+6. `m` 勾选提交（支持 Visual 批量），`U` 清空；有勾选时 Enter 或 Visual Enter 在新 tab 查看净变化。
+7. `r` 刷新，`ga` 加载全部，`Z` 切换 Sidebar 宽度；Visual `<leader>gl` 与 `<leader>gL` 保留独立的行/文件历史窗口。
+8. `gG` 在普通列表与 Tig 提交关系图之间切换；每个提交一行，保留文件树、光标和勾选。图形按已加载提交生成并缓存，刷新历史后失效，不在 render / CursorMoved 中计算。
+9. History 状态按 Neovim tabpage 隔离，切页/关闭取消加载并保留已完成的历史、展开和勾选；`model.lua` 只产出数据，Sidebar source 管理树、按键和预览目标。
 
 ### 离散 commit 勾选（两个日志窗口共用）
 
