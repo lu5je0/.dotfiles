@@ -26,7 +26,7 @@
   - `block.lua`: Block 类与 diff 生成（纯算法，不依赖 state）
   - `ui.lua`: 窗口、buffer、statusline、高亮、keymaps；直接消费 `state.tracker`
 - `common/selected-diff-ui.lua`: 行历史与 History 的净变化视图共用的提交 / 文件树渲染，由 `common/selected-diff.lua` 使用
-- 项目历史由 `../sidebar/sources/history/` 提供：`init.lua` 为 source / open 入口，`model.lua` 管理异步任务，`core.lua` 解析 Git 输出，`tig.lua` / `kitty.lua` 提供提交图算法；本模块只注册快捷键与 blame 跳转。
+- 项目历史由 `../sidebar/sources/history/` 提供：`init.lua` 为 source / open 入口，`model.lua` 管理异步任务，`core.lua` 解析 Git 输出，`tig.lua` 提供提交图算法；本模块只注册快捷键与 blame 跳转。
 
 ## 功能说明
 

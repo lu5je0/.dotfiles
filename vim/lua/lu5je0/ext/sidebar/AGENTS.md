@@ -41,8 +41,7 @@ sidebar/
 │   │   ├── init.lua          -- History source：提交树、勾选、历史 diff 目标与 open 入口
 │   │   ├── model.lua         -- 项目历史 / merge parent 文件列表的异步加载、缓存与取消
 │   │   ├── core.lua          -- Git 日志与文件状态输出解析
-│   │   ├── tig.lua           -- Tig v2 提交图布局与颜色编号
-│   │   └── kitty.lua         -- gitgraph 风格提交图算法（保留回归用例）
+│   │   └── tig.lua           -- Tig v2 提交图布局与颜色编号
 │   ├── buffers.lua           -- Buffers source（含 setup_auto_refresh）
 │   └── symbols.lua           -- LSP Symbols source
 └── actions/
