@@ -41,11 +41,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792225279,
-        "narHash": "sha256-sbzau3ZMe0XnOh8kdXLYZYa9t8zrlHxPMtvvWWUg9mg=",
+        "lastModified": 1793422405,
+        "narHash": "sha256-FECij/rbeV5RD9VdtV7bO/QCBOHaObixxloZFMNQxP8=",
         "owner": "lu5je0",
         "repo": "fcitx5-wetypex",
-        "rev": "11276c7c0606c22ceec0535b89e6b09332dd4e23",
+        "rev": "ad3820294e8dd9bc48e7497d2e9a914eb1752633",
         "type": "github"
       },
       "original": {
