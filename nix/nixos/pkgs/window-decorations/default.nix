@@ -20,10 +20,7 @@ buildNpmPackage {
   npmFlags = [ "--ignore-scripts" ];
   dontNpmInstall = true;
   nativeBuildInputs = [ glib ];
-  patches = [
-    ./per-app-rules.patch
-    ./corner-antialiasing.patch
-  ];
+  patches = [ ./per-app-rules.patch ];
   postPatch = ''
     cp ${./app-rules.ts} src/settings/app-rules.ts
     cp ${./rule-config.ts} src/settings/rule-config.ts
