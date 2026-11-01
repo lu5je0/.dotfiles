@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   pkgsUnstable,
@@ -87,7 +88,10 @@ in
         "org/gnome/desktop/wm/preferences".button-layout = "appmenu:minimize,maximize,close";
         "org/gnome/shell" = {
           always-show-log-out = true;
-          enabled-extensions = map (extension: extension.extensionUuid) shellExtensions;
+          # 主机额外安装的扩展也加入默认启用列表。
+          enabled-extensions = map (extension: extension.extensionUuid) (
+            builtins.filter (package: package ? extensionUuid) config.environment.systemPackages
+          );
         };
       };
     }
