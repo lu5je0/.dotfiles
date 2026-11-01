@@ -21,7 +21,7 @@
 
   programs.dconf.profiles.user.databases = [
     {
-      # 仅在 logical 布局、单个逻辑显示器、自动 XWayland 缩放时生效。
+      # logical 布局、自动 XWayland 缩放时，共用显示器中的最大实际比例。
       # gsettings 设为 false 可临时关闭；卸载补丁需移除 import 并重建、重新登录。
       settings."org/gnome/mutter/wayland".xwayland-native-resolution = true;
     }

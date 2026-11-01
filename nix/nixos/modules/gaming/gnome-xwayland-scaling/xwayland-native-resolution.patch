@@ -1,24 +1,25 @@
-Subject: [PATCH] xwayland: opt in to fractional coordinates on a single monitor
+Subject: [PATCH] xwayland: opt in to the highest fractional monitor scale
 
 Keep native Wayland buffer scales and XSettings UI scales integral. Use the
-monitor scale for X11 geometry, rendering, damage and input coordinates only
-when xwayland-native-resolution is enabled with one logical monitor.
+highest monitor scale for the shared X11 geometry, rendering, damage and input
+coordinates when xwayland-native-resolution is enabled with automatic scaling.
 
 diff --git a/data/org.gnome.mutter.wayland.gschema.xml.in b/data/org.gnome.mutter.wayland.gschema.xml.in
 --- a/data/org.gnome.mutter.wayland.gschema.xml.in
 +++ b/data/org.gnome.mutter.wayland.gschema.xml.in
-@@ -149,6 +149,16 @@
+@@ -149,6 +149,17 @@
        </description>
      </key>
  
 +    <key name="xwayland-native-resolution" type="b">
 +      <default>false</default>
-+      <summary>Use native Xwayland resolution on a single monitor</summary>
++      <summary>Use the highest monitor scale for Xwayland without rounding up</summary>
 +      <description>
-+        Experimental local option: use the monitor's fractional scale for the
-+        Xwayland coordinate space instead of rounding it up. Only applies to a
-+        single logical monitor in logical layout mode, with automatic Xwayland
-+        scaling. This affects all X11 windows. Log out after changing this option.
++        Experimental local option: use the highest monitor's fractional scale
++        for the shared Xwayland coordinate space instead of rounding it up.
++        Applies in logical layout mode with automatic Xwayland scaling. Outputs
++        at lower scales are resampled. This affects all X11 windows. Log out
++        after changing this option.
 +      </description>
 +    </key>
      <key name="xwayland-scaling-factor" type="d">
@@ -428,28 +429,24 @@ diff --git a/src/wayland/meta-xwayland.c b/src/wayland/meta-xwayland.c
  meta_xwayland_get_effective_scale (MetaXWaylandManager *manager)
  {
    MetaWaylandCompositor *compositor = manager->compositor;
-@@ -1370,7 +1370,19 @@
+@@ -1370,7 +1370,15 @@
                                                         &scaling_factor))
            return (int) roundf (scaling_factor);
          else
 -          return (int) ceil (manager->highest_monitor_scale);
 +          {
-+            GList *monitors =
-+              meta_monitor_manager_get_logical_monitors (monitor_manager);
-+
-+            /* One shared X11 coordinate space cannot match multiple monitor
-+             * scales. Keep the upstream policy when another monitor is active.
++            /* Share the highest monitor scale across X11, as KWin does.
++             * Lower-scale outputs are resampled by the compositor.
 +             */
-+            if (meta_settings_get_xwayland_native_resolution (settings) &&
-+                monitors && !monitors->next)
-+              return meta_logical_monitor_get_scale (monitors->data);
++            if (meta_settings_get_xwayland_native_resolution (settings))
++              return manager->highest_monitor_scale;
 +
 +            return ceilf (manager->highest_monitor_scale);
 +          }
        }
      }
  
-@@ -1392,7 +1404,7 @@
+@@ -1392,7 +1400,7 @@
      case META_LOGICAL_MONITOR_LAYOUT_MODE_PHYSICAL:
        return meta_settings_get_ui_scaling_factor (settings);
      case META_LOGICAL_MONITOR_LAYOUT_MODE_LOGICAL:

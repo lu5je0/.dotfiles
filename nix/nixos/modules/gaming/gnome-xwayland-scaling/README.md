@@ -14,13 +14,20 @@ imports = [ ./gaming/gnome-xwayland-scaling ];
 
 `xwayland-native-resolution.patch` 添加
 `org.gnome.mutter.wayland xwayland-native-resolution` 布尔设置，上游默认行为为 `false`，
-游戏模块的 dconf 默认值为 `true`。仅在 logical 布局、单个 logical monitor、
-`xwayland-scaling-factor=0`（自动）时使用显示器实际缩放比例。
-多屏及手动缩放因子保留上游规则。此设置影响整个 XWayland 实例中的 X11 应用。
+游戏模块的 dconf 默认值为 `true`。在 logical 布局、`xwayland-scaling-factor=0`
+（自动）时，使用所有 logical monitor 中最大的实际缩放比例，不向上取整，采用
+[KWin 的全局比例策略](https://github.com/KDE/kwin/blob/master/src/workspace.cpp#L631)。
+physical 布局及手动缩放因子保留上游规则。此设置影响整个 XWayland 实例中的 X11 应用。
 
 补丁让 X11 坐标、窗口尺寸、纹理、damage 和输入区域使用同一个小数缩放因子。
 XSettings 的 UI 缩放和原生 Wayland 客户端的 buffer scale 仍为整数。
 例如单屏 3840×2160、166.7% 缩放时，XWayland 的当前尺寸为 3840×2160。
+
+多屏共用一个比例和一套 DPI。缩放比例最大的屏幕匹配原生分辨率，低缩放屏幕上的
+X11 窗口会经过缩小显示，可能变糊；游戏跟随该屏的 X11 桌面尺寸渲染时会增加像素量。
+例如两块物理 4K 屏分别设置为 166.7% 与 100%，共用比例为 1.6667，X11 看到的
+屏幕尺寸分别为 3840×2160 与约 6400×3600。两块屏都设置为 166.7% 时均匹配 4K。
+显示器增减或缩放变化时，比例随当前最大值更新，不提供每屏独立的 X11 DPI。
 
 `xwayland-content-scale.patch` 通过 `org.gnome.Mutter.X11.ContentScalingFactor`
 发布实际内容比例。配套的设置守护进程补丁使用它同时计算 XResources 和 XSettings，
@@ -69,7 +76,10 @@ python nix/nixos/modules/gaming/gnome-xwayland-scaling/smoke-test.py /nix/store/
 
 脚本在独立 D-Bus、运行时目录和 GSettings 配置中启动 headless Mutter，需要可用的
 EGL render node，不替换当前桌面。它检查开关前后的 XWayland 尺寸、100% 至 250%
-缩放下的实际 GLX 全屏窗口、手动缩放覆盖、混合缩放双屏和单屏恢复。
+缩放下的实际 GLX 全屏窗口，以及同缩放/混合缩放双 4K 屏、左右/上下布局、
+副屏比例高于主屏、两屏分别全屏、双屏手动覆盖/开关和单屏恢复。
+两屏分别全屏的检查需要提供 `--x11-library`：测试先创建普通 GLX 窗口，移动到目标屏，
+再发送标准 X11 全屏请求，避免测试程序自行选择其他屏幕。
 加入 `--settings-daemon`、`--x11-library`、`--sdl-library` 并在 PATH 中提供 `xrdb`，
 可同时检查实际 DPI、文字缩放、SDL 的内容比例，以及 GTK XSettings 和光标大小。
 三个参数依次接受对应包目录、libX11.so.6 和 libSDL3.so.0 路径，动态库需为宿主架构：
@@ -85,8 +95,8 @@ python nix/nixos/modules/gaming/gnome-xwayland-scaling/smoke-test.py /nix/store/
 X11 后端，读取监视器整数比例与字体 DPI，检查 Chromium GTK3 路径所需的组合比例。
 该检查不运行 Steam 或 Chromium 本身。
 
-验证无 `ContentScalingFactor` 属性的旧 Mutter 时，添加 `--legacy-content-scale`，
-检查设置守护进程是否回退到整数 DPI。
+验证包含本目录坐标补丁、但无 `ContentScalingFactor` 属性的 Mutter 时，添加
+`--legacy-content-scale`，检查设置守护进程是否回退到整数 DPI。
 
 脚本不检查实际游戏的图像清晰度、鼠标锁定、拖放或热插拔时已有窗口的连续性；
 这些需要在重新登录后的桌面中验证。
