@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./touchpad.nix
     ./fn-ctrl.nix
   ];
 

@@ -26,6 +26,11 @@
       url = "github:jswysnemc/mark-shot";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    wayland-scroll-factor = {
+      url = "github:daniel-g-carrasco/wayland-scroll-factor";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -99,6 +104,7 @@
           ./nix/nixos/modules/nas-mount.nix
         ];
         jerry = mkSystem [
+          inputs.wayland-scroll-factor.nixosModules.default
           ./nix/nixos/profiles/base.nix
           ./nix/nixos/hosts/jerry
           ./nix/nixos/modules/gaming.nix
