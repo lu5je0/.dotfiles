@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./fn-ctrl.nix
   ];
 
   # ESP 挂在 /boot（hardware-configuration.nix 里生成），GRUB 装进 ESP，device = "nodev"
@@ -18,6 +19,7 @@
     efiSysMountPoint = "/boot";
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  services.fn-ctrl.enable = true;
 
   fileSystems = {
     "/".options = [
