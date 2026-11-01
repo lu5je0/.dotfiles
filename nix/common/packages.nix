@@ -14,6 +14,7 @@
     unzip
     nmap
     vim
+    killall
     fd
     tmux
     file
