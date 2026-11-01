@@ -19,4 +19,5 @@
   terminal-browser = pkgs.callPackage ./terminal-browser { };
   tilewindow = pkgs.callPackage ./tilewindow { };
   wechat = pkgs.callPackage ./wechat { };
+  wps = pkgs.wpsoffice-cn;
 }

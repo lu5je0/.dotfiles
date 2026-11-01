@@ -27,7 +27,6 @@
     (pkgs.callPackage ../pkgs/wechat { })
     mpv
     wineWow64Packages.stable
-    wpsoffice-cn
     peazip
   ];
 
