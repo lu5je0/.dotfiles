@@ -41,19 +41,11 @@ python3 ~/.dotfiles/setup.py
 
 ```json
 {
-  "name": "rime-ime",
-  "action": "install",
-  "desc": "fcitx5/Squirrel + Rime, shallow-clone rime-ice (ime/install.sh)",
-  "script": "unix/rime-ime.sh",
-  "vars": {
-    "RIME_DIR": { "mac": "~/Library/Rime", "linux": "~/.local/share/fcitx5/rime" }
-  },
-  "checks": [
-    { "link": "$RIME_DIR/rime_ice.custom.yaml" },
-    { "exists": "$RIME_DIR/rime-ice/default.yaml" },
-    { "link": "~/.config/fcitx5", "os": ["linux"] }
-  ],
-  "os": ["mac", "linux"]
+  "name": "q-trash",
+  "action": "link",
+  "desc": "q-trash → ~/.local/bin",
+  "script": "unix/q-trash.sh",
+  "checks": [{ "link": "~/.local/bin/q-trash" }]
 }
 ```
 
@@ -66,7 +58,7 @@ python3 ~/.dotfiles/setup.py
 
 - `link` — 路径必须是 symlink 且解析到 dotfiles 内部（存在但不满足 → conflict，即位置被别的东西占了）
 - `exists` — 路径存在即可（用于 cp / 下载 / 浅克隆等运行时产物）
-- 每项可加 `os` 过滤（如 `{ "link": "~/.config/fcitx5", "os": ["linux"] }`），不匹配当前平台则跳过
+- 每项可加 `os` 过滤（如 `{ "link": "~/.config/kitty", "os": ["linux"] }`），不匹配当前平台则跳过
 
 聚合规则：任一 link 项冲突 → `▲ conflict`；全部通过 → `● installed`；有缺失但无冲突 → 无状态（未装/装了一半）。
 不写 `checks` 则无状态显示。

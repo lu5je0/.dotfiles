@@ -2,69 +2,29 @@
 
 fcitx5 / Squirrel + Rime（雾凇拼音）的全部配置集中在本目录。
 
-## 目录职责
+## 目录职责与 Nix 包
 
-| 路径 | 目标 | link 方式 |
-|---|---|---|
-| `fcitx5/` | `~/.config/fcitx5` | 整目录 |
-| `rime/` | `~/.local/share/fcitx5/rime`（mac 为 `~/Library/Rime`） | 逐文件 |
-| `environment.d/*.conf` | `~/.config/environment.d/` | 单文件 |
-| `autostart/*.desktop` | `~/.config/autostart/` | 单文件 |
-| `themes/<name>/` | `~/.local/share/fcitx5/themes/<name>` | 整目录 |
-| `fontconfig/*.conf` | `~/.config/fontconfig/conf.d/` | 单文件 |
-| `install.sh` | Linux / macOS 安装入口 | — |
+- `rime/`：个人 Rime 配置、Lua 与短语；`squirrel.custom.yaml` 仅供 macOS。
+- `fcitx5/`：可写的 Fcitx5 用户配置，由 setup.py 的 `fcitx5` 模块整目录链接到 `~/.config/fcitx5`，
+  避免 Fcitx5 保存设置时的 temp+rename 冲掉文件级链接。
+- `themes/<name>/`：候选框主题，由 Nix 包安装到 `share/fcitx5/themes`。
+- `environment.d/`、`autostart/`、`fontconfig/`：非 NixOS 环境可参考的桌面配置；
+  使用时逐文件接入对应 XDG 目录。
 
-`install.sh` 另外还写 `kwinrc` 的 `[Wayland] InputMethod`（见下）。
+Linux 独立包定义在 `nix/nixos/pkgs/fcitx5-rime/default.nix`，
+通过 `.#fcitx5-rime` 导出，使用方法见同目录 `README.md`。
+Nixpkgs 的 `rime-ice` 提供雾凇拼音、词库、Lua 和 OpenCC 数据，版本与哈希由根 flake 的
+Nixpkgs 输入固定。包恢复上游 `default.yaml`，再叠加 `rime/` 下的 Linux 个人配置。
+不在用户目录下载依赖，也不提供输入法安装脚本；setup.py 的 `fcitx5` 模块只链接 Fcitx5 用户配置。
 
-## 上游 rime-ice 在哪里
+包内 `share/rime-data` 只读，Rime 在用户目录 `~/.local/share/fcitx5/rime` 写入
+`build/`、用户词库与学习数据。用户目录同名文件优先于共享数据；旧配置或上游链接
+会遮蔽包内更新，切换到 Nix 管理时先备份并移走对应文件，保留学习数据，再重新部署。
+不要将整个 Rime 用户目录链接到仓库或 Nix store。
 
-**不是 submodule。** 安装时由 `install.sh` 浅克隆到 **Rime 用户目录**：
-
-```
-~/.local/share/fcitx5/rime/          ← RIME_DIR（mac: ~/Library/Rime）
-├── rime-ice/                        ← git clone --depth 1，上游雾凇拼音
-├── default.yaml -> rime-ice/default.yaml        上游：**相对**链接
-├── cn_dicts     -> rime-ice/cn_dicts
-├── rime.lua     -> ~/.dotfiles/ime/rime/rime.lua  个人：**绝对**链接
-└── build/ installation.yaml user.yaml            Rime 运行时数据
-```
-
-为什么不用 submodule：
-
-- rime-ice 词库改动频繁，完整历史的 `.git` 有 **232M**（工作树才 50M），全压在 dotfiles 里不值。
-  浅克隆后 `.git` 只 **17M**。
-- 它是上游运行时数据，不是你的配置；你的配置只有 `rime/` 下那几个 `*.custom.yaml` / `*.lua` / `custom_phrase.txt`。
-- 放在 RIME_DIR 而不是仓库里，仓库目录就不会嵌一个外来 git 仓，`git clean -xdf` 也不会误删它。
-
-上游文件用**相对**链接（`rime-ice/xxx`），因为 rime-ice 就在同一目录里，整个 RIME_DIR 搬走也不会断；
-个人定制用**绝对**链接，因为要指回仓库。
-
-更新上游（浅克隆不能直接 `git pull`）：
-
-```sh
-cd ~/.local/share/fcitx5/rime/rime-ice
-git fetch --depth 1 origin && git reset --hard origin/HEAD
-```
-
-重跑 `install.sh` 不会拉更新 —— 只有 `rime-ice/default.yaml` 不存在时才 clone。
-目录存在但缺 `default.yaml` 时脚本会报错退出而不自动删，避免误删你放在里面的东西。
-
-**它不碰 `~/.local/share/applications/` 下的 desktop 文件**。早期版本会从系统 desktop
-生成一份覆盖并追加 flag，但那意味着每次重跑都 `rm -f` 后重写，会吞掉手改内容；
-现在这些文件完全由你手动维护，dotfiles 不接管。
-
-安装由 `scripts/setup.d/modules/modules.json` 的 `rime-ime` 模块触发，
-调用 `ime/install.sh`。脚本幂等，可重复执行。
-
-## 为什么 link 方式不统一
-
-- **`fcitx5/` 整目录**：这个目录只有 fcitx5 在用。fcitx5 保存设置时用 temp+rename，
-  会把文件级软链接冲成实体文件；整目录 link 才能让设置界面里的改动落回仓库。
-- **`rime/` 逐文件**：Rime 会在用户目录里写 `build/`、`installation.yaml`、`user.yaml`
-  等运行时数据，整目录 link 会把这些垃圾灌进仓库。
-- **其余两个共享 XDG 目录单文件**：`environment.d` / `autostart`
-  是多个程序共用的，整目录 link 会挡住别的程序往里写。
-  `~/.local/share/applications` 同理，而且里面的 desktop 覆盖干脆不由本仓库管。
+`rime.lua` 与 `rime_ice.custom.yaml` 必须一起打包：后者引用
+`lua_processor@ctrl_b_passthrough`，缺少 Lua 会导致方案加载失败。
+macOS 配置源仍保留在 `rime/`，Squirrel 的部署与用户目录配置由用户管理。
 
 ## 几个必须知道的坑
 
@@ -97,7 +57,7 @@ git fetch --depth 1 origin && git reset --hard origin/HEAD
   fontconfig 取「sans-serif 回退链里第一个覆盖该码点的字体」，Symbols 2(#28)远早于
   Color Emoji(#185)，重叠的 267 个码点全被抢走。`fontconfig/75-noto-emoji-over-symbols2.conf`
   在 scan 阶段把这 267 个从 Symbols 2 charset 减掉，逼回退落到 Color Emoji；改完必须
-  `fc-cache -f`（install.sh 已代跑）。完整推导见该 conf 顶部注释。换字体版本要重算码点集。
+  `fc-cache -f`（手动接入此规则后需自行执行）。完整推导见该 conf 顶部注释。换字体版本要重算码点集。
 
 ## 排查手法
 
@@ -189,7 +149,7 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
 
 ## 本目录之外的相关配置
 
-- `nix/nixos/modules/fcitx5.nix` 为所有 NixOS desktop 主机安装 Fcitx5、WeTypeX 和 GTK 输入模块，默认输入法为 WeTypeX，不默认安装 Rime；本目录继续管理用户词库、主题与运行时配置。
+- `nix/nixos/modules/fcitx5.nix` 为所有 NixOS desktop 主机安装 Fcitx5、WeTypeX 和 GTK 输入模块，默认输入法为 WeTypeX，不默认安装 Rime；独立 Rime 包提供雾凇与个人配置，本目录保留用户配置源和主题。
 - `wm/niri/config.kdl` 里有 `spawn-at-startup "fcitx5" "-d" "--replace"`（niri 的自启，不走 XDG autostart）。
 - `module/tui-bridge/linux/im.c` 通过 DBus 调 `org.fcitx.Fcitx.Rime1` 切 rime 的 ascii_mode，
   供 Neovim 用；改 rime 方案时注意别动 `ascii_mode` 开关的语义。

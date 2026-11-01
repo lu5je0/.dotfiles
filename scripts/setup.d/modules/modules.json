@@ -11,6 +11,12 @@
   { "name": "yazi", "source": "yazi", "target": "~/.config/yazi" },
   { "name": "kitty", "source": "kitty", "target": "~/.config/kitty" },
   {
+    "name": "fcitx5",
+    "source": "ime/fcitx5",
+    "target": "~/.config/fcitx5",
+    "os": ["linux"]
+  },
+  {
     "name": "mpv",
     "action": "clone",
     "desc": "mpv config (lu5je0/mpv-lazy, portable_config → ~/.config/mpv)",
@@ -44,25 +50,6 @@
     "desc": "q-trash → ~/.local/bin",
     "script": "unix/q-trash.sh",
     "checks": [{ "link": "~/.local/bin/q-trash" }]
-  },
-  {
-    "name": "rime-ime",
-    "action": "install",
-    "desc": "fcitx5/Squirrel + Rime, shallow-clone rime-ice (ime/install.sh)",
-    "script": "unix/rime-ime.sh",
-    "vars": {
-      "RIME_DIR": { "mac": "~/Library/Rime", "linux": "~/.local/share/fcitx5/rime" }
-    },
-    "checks": [
-      { "link": "$RIME_DIR/rime_ice.custom.yaml" },
-      { "link": "$RIME_DIR/rime.lua" },
-      { "link": "$RIME_DIR/custom_phrase.txt" },
-      { "exists": "$RIME_DIR/rime-ice/default.yaml" },
-      { "exists": "$RIME_DIR/cn_dicts" },
-      { "link": "~/.config/fcitx5", "os": ["linux"] },
-      { "link": "~/.config/fontconfig/conf.d/75-noto-emoji-over-symbols2.conf", "os": ["linux"] }
-    ],
-    "os": ["mac", "linux"]
   },
   {
     "name": "fontconfig",
