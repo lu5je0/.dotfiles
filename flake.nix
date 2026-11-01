@@ -58,7 +58,7 @@
         nixpkgs.lib.nixosSystem {
           inherit system modules;
           specialArgs = {
-            inherit pkgsUnstable;
+            inherit inputs pkgsUnstable;
           };
         };
     in

@@ -4,7 +4,7 @@
   imports = [
     ../pkgs/arcglyph/module.nix
     ../modules/desktop-icons.nix
-    ../modules/fcitx5-rime.nix
+    ../modules/fcitx5.nix
     ../modules/gnome.nix
     ../modules/keyd.nix
     ../pkgs/mission-center/module.nix
