@@ -72,6 +72,38 @@ int main(void)
     for (unsigned int i = 0; i < KEY_CNT; i++)
         assert(!state.down[i] && !state.mapped[i]);
     assert(forward_key(&state, KEY_CNT, 1, capture, NULL) < 0);
-    puts("Fn/Ctrl event ordering, overlapping modifiers, Insert pairing and cleanup passed");
+    /* Fn+B 的 Pause 脉冲还原为 Ctrl+B，之后输入 % 时 Ctrl 已释放。 */
+    count = 0;
+    set_modifiers(&state, 0x40, capture, NULL);
+    forward_key(&state, KEY_PAUSE, 1, capture, NULL);
+    forward_key(&state, KEY_PAUSE, 0, capture, NULL);
+    set_modifiers(&state, 0x00, capture, NULL);
+    forward_key(&state, KEY_LEFTSHIFT, 1, capture, NULL);
+    forward_key(&state, KEY_5, 1, capture, NULL);
+    forward_key(&state, KEY_5, 0, capture, NULL);
+    forward_key(&state, KEY_LEFTSHIFT, 0, capture, NULL);
+    expect(0, KEY_LEFTCTRL, 1);
+    expect(1, KEY_B, 1);
+    expect(2, KEY_B, 0);
+    expect(3, KEY_LEFTCTRL, 0);
+    expect(4, KEY_LEFTSHIFT, 1);
+    expect(5, KEY_5, 1);
+    expect(6, KEY_5, 0);
+    expect(7, KEY_LEFTSHIFT, 0);
+
+    /* Fn 先松开仍释放 B；普通 Pause 及先按 Pause 后按 Fn 不改写。 */
+    count = 0;
+    set_modifiers(&state, 0x40, capture, NULL);
+    forward_key(&state, KEY_PAUSE, 1, capture, NULL);
+    set_modifiers(&state, 0x00, capture, NULL);
+    forward_key(&state, KEY_PAUSE, 0, capture, NULL);
+    expect(3, KEY_B, 0);
+    forward_key(&state, KEY_PAUSE, 1, capture, NULL);
+    set_modifiers(&state, 0x40, capture, NULL);
+    forward_key(&state, KEY_PAUSE, 0, capture, NULL);
+    expect(4, KEY_PAUSE, 1);
+    expect(6, KEY_PAUSE, 0);
+    release_keys(&state, capture, NULL);
+    puts("Fn/Ctrl ordering, modifier overlap, Insert/Pause pairing, prefix and cleanup passed");
     return 0;
 }

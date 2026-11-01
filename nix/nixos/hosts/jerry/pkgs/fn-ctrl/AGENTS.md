@@ -17,6 +17,8 @@
   EC 读取失败、设备丢失或 SYN_DROPPED 时退出，由 systemd 重建。启动失败不会阻止物理键盘基本输入。
 - Fn+C/V 等固件合成的左 Ctrl 事件不直接转发，与 EC 中的 Fn/左 Ctrl 状态合并；右 Ctrl、Shift、Win 原样转发。
   Fn+I 实测产生 Insert，按下时还原为 I，并保存配对直到松开，避免先松 Fn 后卡键。
+  Fn+B 实测产生 Pause 按下/松开脉冲，Fn 状态下还原为 B；无法从该脉冲恢复真实 B 的按住时长。
+  Fn 状态下其他来源的 Pause 也会映射为 B，仅凭键码无法区分。
   Fn+PrtSc 若也产生 Insert，将无法与 Fn+I 区分；Fn+方向键、F 区、Fn+Q、背光等固件行为尚未取消，不能宣称所有键完整等价于 Ctrl。
 - 构建与测试：`nix build path:.#nixosConfigurations.jerry.config.services.fn-ctrl.package --no-link`；
   内核模块：同一路径追加 `.kernelModule`。事件状态测试覆盖顺序、修饰键重叠、Insert 配对和清理；硬件行为仍需本机试用。

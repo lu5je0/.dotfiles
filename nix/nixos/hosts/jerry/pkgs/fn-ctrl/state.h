@@ -33,8 +33,14 @@ static int forward_key(struct bridge_state *s, unsigned int code, int value,
     /* 固件的 Fool Proof Ctrl 点击由 EC 状态合并，不能独立转发松开事件。 */
     if (code == KEY_LEFTCTRL)
         return 0;
-    if (value == 1 && !s->mapped[code])
-        s->mapped[code] = s->fn && code == KEY_INSERT ? KEY_I : code;
+    if (value == 1 && !s->mapped[code]) {
+        unsigned int target = code;
+        if (s->fn && code == KEY_INSERT)
+            target = KEY_I;
+        if (s->fn && code == KEY_PAUSE)
+            target = KEY_B;
+        s->mapped[code] = target;
+    }
     unsigned int target = s->mapped[code] ? s->mapped[code] : code;
     if (emit(ctx, EV_KEY, target, value) < 0)
         return -1;
