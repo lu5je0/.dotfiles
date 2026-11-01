@@ -1,0 +1,87 @@
+Subject: [PATCH] xsettings: publish consistent fractional content DPI for X11
+
+diff --git a/plugins/xsettings/gsd-xsettings-manager.c b/plugins/xsettings/gsd-xsettings-manager.c
+--- a/plugins/xsettings/gsd-xsettings-manager.c
++++ b/plugins/xsettings/gsd-xsettings-manager.c
+@@ -23,6 +23,7 @@
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <stdlib.h>
++#include <math.h>
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <string.h>
+@@ -629,6 +630,41 @@
+         return ui_scaling_factor;
+ }
+ 
++static double
++get_content_scale (GsdXSettingsManager *manager,
++                   int                  window_scale)
++{
++        GDBusConnection *connection = g_application_get_dbus_connection (G_APPLICATION (manager));
++        g_autoptr(GVariant) res = NULL;
++        g_autoptr(GVariant) value = NULL;
++        double scale;
++
++        /* Older Mutter versions only publish the integer UI scale. */
++        res = g_dbus_connection_call_sync (connection,
++                                          "org.gnome.Mutter.X11",
++                                          "/org/gnome/Mutter/X11",
++                                          "org.freedesktop.DBus.Properties",
++                                          "Get",
++                                          g_variant_new ("(ss)",
++                                                         "org.gnome.Mutter.X11",
++                                                         "ContentScalingFactor"),
++                                          G_VARIANT_TYPE ("(v)"),
++                                          G_DBUS_CALL_FLAGS_NO_AUTO_START,
++                                          -1, NULL, NULL);
++        if (!res)
++                return window_scale;
++
++        g_variant_get (res, "(v)", &value);
++        if (!g_variant_is_of_type (value, G_VARIANT_TYPE_DOUBLE))
++                return window_scale;
++
++        scale = g_variant_get_double (value);
++        if (!isfinite (scale) || scale <= 0 || scale > 10)
++                return window_scale;
++
++        return scale;
++}
++
+ typedef struct {
+         gboolean    antialias;
+         gboolean    hinting;
+@@ -652,6 +688,7 @@
+         GDesktopFontRgbaOrder order;
+         gboolean use_rgba = FALSE;
+         double dpi;
++        double content_scale;
+         int cursor_size;
+ 
+ 	interface_settings = g_hash_table_lookup (manager->settings, INTERFACE_SETTINGS_SCHEMA);
+@@ -663,11 +700,20 @@
+         settings->antialias = (antialiasing != G_DESKTOP_FONT_ANTIALIASING_MODE_NONE);
+         settings->hinting = (hinting != G_DESKTOP_FONT_HINTING_NONE);
+         settings->window_scale = get_window_scale (manager);
++        content_scale = get_content_scale (manager, settings->window_scale);
++        /* Avoid flooring a scale just below an integer due to float rounding. */
++        if (fabs (content_scale - (int) (content_scale + 0.5)) < 0.000001)
++                content_scale = (int) (content_scale + 0.5);
++        settings->window_scale = MAX (1, (int) content_scale);
+         dpi = get_dpi_from_gsettings (manager);
+-        settings->dpi = dpi * 1024; /* Xft wants 1/1024ths of an inch */
+-        settings->scaled_dpi = dpi * settings->window_scale * 1024;
++        /* Keep GDK's window scale integral and express the remaining fraction
++         * through font DPI, as Plasma does. GTK multiplies UnscaledDPI by the
++         * window scale; GTK2 and other Xft consumers use the absolute DPI.
++         */
++        settings->scaled_dpi = (int) (dpi * content_scale * 1024 + 0.5);
++        settings->dpi = settings->scaled_dpi / settings->window_scale;
+         cursor_size = g_settings_get_int (interface_settings, CURSOR_SIZE_KEY);
+-        settings->cursor_size = cursor_size * settings->window_scale;
++        settings->cursor_size = (int) (cursor_size * content_scale + 0.5);
+         settings->cursor_theme = g_settings_get_string (interface_settings, CURSOR_THEME_KEY);
+         settings->rgba = "rgb";
+         settings->hintstyle = "hintfull";
