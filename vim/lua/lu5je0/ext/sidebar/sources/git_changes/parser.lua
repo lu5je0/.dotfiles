@@ -6,8 +6,18 @@ local _git_root_cache = {}
 function M.git_root()
   local cwd = vim.fn.getcwd()
   local cached = _git_root_cache[cwd]
-  if cached and vim.uv.fs_stat(cached .. '/.git') then
-    return cached
+  if cached then
+    -- A nearer repository can appear while cwd stays unchanged. Validate
+    -- the path up to the cached root, including .git files in worktrees.
+    local dir = cwd
+    while dir do
+      if vim.uv.fs_stat(dir .. '/.git') then
+        _git_root_cache[cwd] = dir
+        return dir
+      end
+      if dir == cached then break end
+      dir = vim.fs.dirname(dir)
+    end
   end
   local root = vim.fs.root(cwd, '.git') or cwd
   _git_root_cache[cwd] = root

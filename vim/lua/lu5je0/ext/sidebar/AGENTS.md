@@ -131,7 +131,7 @@ sidebar/
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
   - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入不等待其他页的映射前缀
-  - `parser_spec.lua` — `files_to_tree_nodes`、`git_root` 缓存自失效
+  - `parser_spec.lua` — 独立 Git fixture 下的 `files_to_tree_nodes`、`git_root` 缓存自失效（同 cwd 出现嵌套仓库 / worktree、根标记删除后回退父仓库）
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为
   - `git_ops_spec.lua` — 真实 git 仓库下的 stage/discard/undo
 - 新增 spec 时把测试基础设施统一从 `tests/sidebar/helpers.lua` 拿（`make_runner` / `eq` / `dump` / `color`），不要再各自重复定义。

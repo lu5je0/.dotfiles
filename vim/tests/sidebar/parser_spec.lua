@@ -18,6 +18,7 @@ local function with_cwd(target, fn)
     vim.fn.mkdir(target, 'p')
   end
   vim.cmd('lcd ' .. vim.fn.fnameescape(target))
+  parser.invalidate_root_cache()
   local ok, err = pcall(fn)
   vim.cmd('lcd ' .. vim.fn.fnameescape(prev))
   parser.invalidate_root_cache()
@@ -32,6 +33,17 @@ local function git(args, cwd)
   return (result.stdout or ''):gsub('%s+$', '')
 end
 
+-- Give each tree case its own repository so ancestor repos and directories
+-- on the host cannot change path resolution or all_deleted results.
+local function with_repo(fn)
+  local target = vim.fn.tempname() .. '-parser'
+  vim.fn.mkdir(target, 'p')
+  git({ 'init', '-q' }, target)
+  local ok, err = pcall(with_cwd, target, fn)
+  vim.fn.delete(target, 'rf')
+  if not ok then error(err, 0) end
+end
+
 -- ============================================================================
 -- group: files_to_tree_nodes
 -- ============================================================================
@@ -39,9 +51,8 @@ end
 r.group('files_to_tree_nodes')
 
 r.run('flat files become root-level file nodes', function()
-  with_cwd(vim.fn.tempname(), function()
-    -- abs_path values are computed via git_root() which falls back to
-    -- cwd when there's no repo.
+  with_repo(function()
+    -- Paths must be relative to this fixture repository.
     local files = {
       { path = 'a.txt', xy = 'M ', x = 'M', y = ' ' },
       { path = 'b.txt', xy = ' M', x = ' ', y = 'M' },
@@ -56,7 +67,7 @@ r.run('flat files become root-level file nodes', function()
 end)
 
 r.run('nested paths build a directory tree', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local files = {
       { path = 'src/a.lua', xy = 'M ', x = 'M', y = ' ' },
       { path = 'src/sub/b.lua', xy = 'M ', x = 'M', y = ' ' },
@@ -83,7 +94,7 @@ r.run('nested paths build a directory tree', function()
 end)
 
 r.run('expanded_dirs overrides default directory expansion', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local cwd = parser.git_root()
     local files = { { path = 'src/a.lua', xy = 'M ', x = 'M', y = ' ' } }
     local nodes = parser.files_to_tree_nodes(files, { [cwd .. '/src'] = false }, 'staged')
@@ -93,7 +104,7 @@ r.run('expanded_dirs overrides default directory expansion', function()
 end)
 
 r.run('directory with all deleted files is all_deleted', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local files = {
       { path = 'src/a.lua', xy = 'D ', x = 'D', y = ' ' },
       { path = 'src/sub/b.lua', xy = 'D ', x = 'D', y = ' ' },
@@ -109,7 +120,7 @@ r.run('directory with all deleted files is all_deleted', function()
 end)
 
 r.run('directory still on disk is not all_deleted even if its only change is a deletion', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local cwd = parser.git_root()
     vim.fn.mkdir(cwd .. '/src', 'p')
     vim.fn.writefile({}, cwd .. '/src/kept.lua')
@@ -124,7 +135,7 @@ r.run('directory still on disk is not all_deleted even if its only change is a d
 end)
 
 r.run('directory with any non-deleted file is not all_deleted', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local files = {
       { path = 'src/a.lua', xy = 'D ', x = 'D', y = ' ' },
       { path = 'src/b.lua', xy = 'M ', x = 'M', y = ' ' },
@@ -139,7 +150,7 @@ r.run('directory with any non-deleted file is not all_deleted', function()
 end)
 
 r.run('all_deleted respects unstaged delete column', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local files = {
       { path = 'src/a.lua', xy = ' D', x = ' ', y = 'D' },
       { path = 'src/b.lua', xy = ' D', x = ' ', y = 'D' },
@@ -151,7 +162,7 @@ r.run('all_deleted respects unstaged delete column', function()
 end)
 
 r.run('all_deleted in changes section counts either delete column', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local files = {
       { path = 'src/a.lua', xy = 'D ', x = 'D', y = ' ' },
       { path = 'src/b.lua', xy = ' D', x = ' ', y = 'D' },
@@ -163,7 +174,7 @@ r.run('all_deleted in changes section counts either delete column', function()
 end)
 
 r.run('untracked files never make a directory all_deleted', function()
-  with_cwd(vim.fn.tempname(), function()
+  with_repo(function()
     local files = {
       { path = 'src/a.lua', xy = '??', x = '?', y = '?' },
       { path = 'src/b.lua', xy = '??', x = '?', y = '?' },
@@ -181,60 +192,56 @@ end)
 r.group('git_root cache')
 
 r.run('cache hit when cached root remains valid', function()
-  local tmp = vim.fn.resolve(vim.fn.tempname() .. '-grootcache')
-  vim.fn.mkdir(tmp, 'p')
-  git({ 'init' }, tmp)
-  with_cwd(tmp, function()
+  with_repo(function()
     local first = parser.git_root()
-    r.assert_eq(first, vim.fn.resolve(tmp))
-    -- Second call should still produce the same root (cached or re-resolved).
-    local second = parser.git_root()
-    r.assert_eq(second, first)
+    r.assert_eq(first, vim.fn.getcwd())
+    r.assert_eq(parser.git_root(), first)
   end)
-  vim.fn.delete(tmp, 'rf')
 end)
 
-r.run('cache invalidates when .git disappears under cached root', function()
-  local outer = vim.fn.resolve(vim.fn.tempname() .. '-grootouter')
-  vim.fn.mkdir(outer, 'p')
-  git({ 'init' }, outer)
-  with_cwd(outer, function()
-    local first = parser.git_root()
-    r.assert_eq(first, vim.fn.resolve(outer))
-
-    -- Now nuke the .git directory; cache must not return the stale root.
-    vim.fn.delete(outer .. '/.git', 'rf')
-    local second = parser.git_root()
-    -- After invalidation, git_root() falls back to getcwd() (no .git anywhere),
-    -- which equals `outer` itself. The key assertion is that a re-resolution
-    -- happened (no surprise cached value pointing to a non-existent .git).
-    r.assert_eq(second, vim.fn.resolve(outer))
+r.run('cache invalidates when .git disappears and resolves the enclosing repository', function()
+  with_repo(function()
+    local outer = vim.fn.getcwd()
+    local inner = outer .. '/inner'
+    vim.fn.mkdir(inner, 'p')
+    git({ 'init', '-q' }, inner)
+    with_cwd(inner, function()
+      r.assert_eq(parser.git_root(), inner)
+      vim.fn.delete(inner .. '/.git', 'rf')
+      r.assert_eq(parser.git_root(), outer)
+    end)
   end)
-  vim.fn.delete(outer, 'rf')
 end)
 
-r.run('cache invalidates when nested .git appears in subdir (cwd no longer under cached root)', function()
-  local outer = vim.fn.resolve(vim.fn.tempname() .. '-grootnest')
-  vim.fn.mkdir(outer, 'p')
-  git({ 'init' }, outer)
-  local inner = outer .. '/sub'
-  vim.fn.mkdir(inner, 'p')
-
-  -- Prime the cache with the outer root
-  with_cwd(outer, function()
-    local outer_root = parser.git_root()
-    r.assert_eq(outer_root, vim.fn.resolve(outer))
+r.run('cache detects a nested repository appearing above the same cwd', function()
+  with_repo(function()
+    local outer = vim.fn.getcwd()
+    local inner = outer .. '/nested'
+    local cwd = inner .. '/deeper'
+    vim.fn.mkdir(cwd, 'p')
+    with_cwd(cwd, function()
+      r.assert_eq(parser.git_root(), outer)
+      git({ 'init', '-q' }, inner)
+      r.assert_eq(parser.git_root(), inner)
+      vim.fn.delete(inner .. '/.git', 'rf')
+      r.assert_eq(parser.git_root(), outer)
+    end)
   end)
+end)
 
-  -- Now create a nested repo and resolve from it
-  git({ 'init' }, inner)
-  with_cwd(inner, function()
-    local inner_root = parser.git_root()
-    -- inner_root must point to the nested .git, not the cached outer one
-    r.assert_eq(inner_root, vim.fn.resolve(inner))
+r.run('cache detects a worktree .git file appearing at the same cwd', function()
+  with_repo(function()
+    local outer = vim.fn.getcwd()
+    git({ '-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '--allow-empty', '-qm', 'fixture' }, outer)
+    local worktree = outer .. '/worktree'
+    vim.fn.mkdir(worktree, 'p')
+    with_cwd(worktree, function()
+      r.assert_eq(parser.git_root(), outer)
+      git({ 'worktree', 'add', '--detach', worktree }, outer)
+      r.assert_eq(vim.uv.fs_stat(worktree .. '/.git').type, 'file')
+      r.assert_eq(parser.git_root(), worktree)
+    end)
   end)
-
-  vim.fn.delete(outer, 'rf')
 end)
 
 r.finish()
