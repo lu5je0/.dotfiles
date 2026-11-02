@@ -268,8 +268,17 @@ function M.render()
   end
 end
 
-function M.on_enter()
-  M.render()
+function M.enter(_ctx, opts)
+  local jump = opts and opts.history
+  if jump and jump.jump_to_sha then
+    local h = state.history
+    h.pending_jump_sha = jump.jump_to_sha
+    h.pending_jump_file = jump.jump_to_file and jump.jump_to_file:gsub('^' .. vim.pesc(h.repo_root .. '/'), '')
+    setup_selection()
+    load(jump)
+  else
+    M.render()
+  end
   local ts, tabpage = state.tab(), vim.api.nvim_get_current_tabpage()
   for _, commit in ipairs(ts.history.commits) do
     if commit.expanded then
@@ -302,22 +311,19 @@ function M.open(opts)
     h.loaded = false
   end
   h.repo_root = root
-  require('lu5je0.ext.sidebar').open_tab(config.tab_idx('history'), { no_toggle = true })
-  setup_selection()
-  if opts.jump_to_sha then
-    h.pending_jump_sha = opts.jump_to_sha
-    h.pending_jump_file = opts.jump_to_file and opts.jump_to_file:gsub('^' .. vim.pesc(root .. '/'), '')
-    load(opts)
-  else
-    M.on_enter()
-  end
+  require('lu5je0.ext.sidebar').open_tab(config.tab_idx('history'), { no_toggle = true, history = opts })
 end
 
-function M.on_leave(ts)
+function M.leave(ctx)
+  local ts = ctx.state
   model.cancel(ts.history)
   if ts.buf and vim.api.nvim_buf_is_valid(ts.buf) then
     vim.api.nvim_buf_clear_namespace(ts.buf, vim.api.nvim_create_namespace('git_commit_selection'), 0, -1)
   end
+end
+
+function M.dispose(ctx)
+  model.cancel(ctx.state.history)
 end
 
 function M.on_directory_changed(ts, cwd)
@@ -330,9 +336,6 @@ function M.on_directory_changed(ts, cwd)
   h.repo_root, h.loaded, h.error = root, false, nil
   h.commits, h.selected_commits = {}, {}
   h.graph_rows = nil
-  if ts.active_tab_idx == config.tab_idx('history') and ts.win then
-    M.render()
-  end
 end
 
 local function set_expanded(item, expanded)

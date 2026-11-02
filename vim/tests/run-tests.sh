@@ -39,6 +39,10 @@ printf '%s[sidebar:state]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_D
 nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/state_spec.lua"
 
 printf '\n'
+printf '%s[sidebar:lifecycle]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/lifecycle_spec.lua" "${RESET}"
+nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/sidebar/lifecycle_spec.lua"
+
+printf '\n'
 printf '%s[sidebar]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/spec.lua"
 

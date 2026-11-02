@@ -1,5 +1,6 @@
 -- Git Changes source (Changes / Staged / Unstaged / Untracked).
 local state = require('lu5je0.ext.sidebar.state')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local config = require('lu5je0.ext.sidebar.config')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local render = require('lu5je0.ext.sidebar.render')
@@ -212,24 +213,56 @@ end
 
 -- ── open / close glue ───────────────────────────────────
 
-local function load_stash_list(callback)
-  vim.system({ 'git', 'stash', 'list', '--format=%gd%x00%gs' }, { text = true }, function(result)
+local function run_stash(ctx, args, callback, on_cancel)
+  local jobs = ctx.state.git_changes.stash_jobs
+  local request = { on_cancel = on_cancel }
+  jobs[request] = true
+  request.job = vim.system(args, { text = true, cwd = vim.fn.getcwd() }, function(result)
     vim.schedule(function()
-      local ts = state.git_changes
-      local stashes = parser.parse_stash_list(result.code == 0 and result.stdout or '')
-      local old = {}
-      for _, s in ipairs(ts._stash_entries or {}) do old[s.ref] = s end
-      for _, s in ipairs(stashes) do
-        local prev = old[s.ref]
-        if prev then
-          s.expanded = prev.expanded
-          s.children = prev.children
-          s._files_loaded = prev._files_loaded
-        end
+      jobs[request] = nil
+      if lifecycle.is_current(ctx) then
+        callback(result)
       end
-      ts._stash_entries = stashes
-      if callback then callback() end
     end)
+  end)
+end
+
+function M.leave(ctx)
+  local ts = ctx.state.git_changes
+  for request in pairs(ts.stash_jobs) do
+    if request.job then
+      pcall(request.job.kill, request.job)
+    end
+    if request.on_cancel then request.on_cancel() end
+  end
+  ts.stash_jobs = {}
+end
+M.dispose = M.leave
+
+local function load_stash_list(callback)
+  local ctx = lifecycle.capture()
+  run_stash(ctx, { 'git', 'stash', 'list', '--format=%gd%x00%gs' }, function(result)
+    local ts = ctx.state.git_changes
+    local stashes = parser.parse_stash_list(result.code == 0 and result.stdout or '')
+    local old = {}
+    for _, s in ipairs(ts._stash_entries or {}) do
+      old[s.ref] = s
+    end
+    for _, s in ipairs(stashes) do
+      local prev = old[s.ref]
+      if prev then
+        s.expanded = prev.expanded
+        s.children = prev.children
+        s._files_loaded = prev._files_loaded
+      end
+    end
+    ts._stash_entries = stashes
+    if callback then
+      callback()
+    end
+  end, function()
+    local ts = ctx.state.git_changes
+    if #(ts._stash_entries or {}) == 0 and ts._expanded then ts._expanded.stashes = false end
   end)
 end
 
@@ -237,29 +270,30 @@ function M.reload_stash_list(after)
   if state:is_open() and state.active_tab_idx == config.tab_idx('git_changes') then
     load_stash_list(function()
       M.render()
-      if after then after() end
+      if after then
+        after()
+      end
     end)
   end
 end
 
 local function load_stash_files(stash_entry, callback)
-  vim.system(
-    { 'git', 'stash', 'show', '--name-status', '--find-renames', stash_entry.ref },
-    { text = true },
-    function(result)
-      vim.schedule(function()
-        local raw = parser.parse_stash_files(result.code == 0 and result.stdout or '')
-        local files = {}
-        for _, f in ipairs(raw) do
-          local s = f.status:sub(1, 1)
-          files[#files + 1] = { path = f.path, xy = s .. ' ', x = s, y = ' ', stash_ref = stash_entry.ref }
-        end
-        stash_entry.children = parser.files_to_tree_nodes(files, {}, 'stash')
-        stash_entry._files_loaded = true
-        if callback then callback() end
-      end)
+  local ctx = lifecycle.capture()
+  run_stash(ctx, { 'git', 'stash', 'show', '--name-status', '--find-renames', stash_entry.ref }, function(result)
+    local raw = parser.parse_stash_files(result.code == 0 and result.stdout or '')
+    local files = {}
+    for _, f in ipairs(raw) do
+      local s = f.status:sub(1, 1)
+      files[#files + 1] = { path = f.path, xy = s .. ' ', x = s, y = ' ', stash_ref = stash_entry.ref }
     end
-  )
+    stash_entry.children = parser.files_to_tree_nodes(files, {}, 'stash')
+    stash_entry._files_loaded = true
+    if callback then
+      callback()
+    end
+  end, function()
+    stash_entry.expanded = false
+  end)
 end
 
 spec.open = {
@@ -406,6 +440,18 @@ function M.expand_all()
 end
 
 -- ── locate ──────────────────────────────────────────────
+
+function M.locate(ctx, target)
+  local ts = ctx.state.git_changes
+  if not ts._first_located then
+    ts._first_located = true
+    M.locate_first_file()
+  elseif vim.fn.filereadable(target.path) == 1 then
+    M.locate_file(target.path)
+  else
+    M.render()
+  end
+end
 
 function M.locate_file(filepath)
   locate_mod.locate_file(filepath, M.render, M.refresh, M.find_section_for_line)

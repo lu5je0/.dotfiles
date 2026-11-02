@@ -1,45 +1,32 @@
 local state = require('lu5je0.ext.sidebar.state')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 
 local M = {}
 
 local PREFIX = '[FILTER]: '
 
-local function lf()
-  return state.files._live_filter
+local function render_files(ctx)
+  if lifecycle.is_current(ctx) then require('lu5je0.ext.sidebar.sources.files').render() end
 end
 
-local function render_files()
-  local files = require('lu5je0.ext.sidebar.sources.files')
-  files.render()
-end
-
-local function remove_overlay()
-  local s = lf()
+function M.dispose(ctx)
+  local files = ctx.state.files
+  local s = files._live_filter
   if s.closing then return end
   s.closing = true
-
-  local ok, err = pcall(function()
-    if s.win and vim.api.nvim_win_is_valid(s.win) then
-      vim.api.nvim_win_close(s.win, true)
-    end
-    if s.buf and vim.api.nvim_buf_is_valid(s.buf) then
-      vim.api.nvim_buf_delete(s.buf, { force = true })
-    end
-    s.win = nil
-    s.buf = nil
-
-    if not state.files.live_filter or state.files.live_filter == '' then
-      state.files.live_filter = nil
-      render_files()
-    end
-
-    if state:is_open() then
-      vim.api.nvim_set_current_win(state.win)
-    end
-  end)
-
+  local win, buf = s.win, s.buf
+  s.win, s.buf = nil, nil
+  if win and vim.api.nvim_win_is_valid(win) then pcall(vim.api.nvim_win_close, win, true) end
+  if buf and vim.api.nvim_buf_is_valid(buf) then pcall(vim.api.nvim_buf_delete, buf, { force = true }) end
+  if files.live_filter == '' then files.live_filter = nil end
   s.closing = false
-  if not ok then error(err) end
+end
+
+local function remove_overlay(ctx)
+  M.dispose(ctx)
+  if not lifecycle.is_current(ctx) then return end
+  render_files(ctx)
+  vim.api.nvim_set_current_win(ctx.state.win)
 end
 
 local function get_filter_line_nr()
@@ -55,12 +42,14 @@ end
 function M.start()
   if not state:is_open() then return end
 
-  remove_overlay()
+  local ctx = lifecycle.capture()
+  local ts = ctx.state
+  remove_overlay(ctx)
 
   -- ensure filter state exists so header line renders
   if not state.files.live_filter then
     state.files.live_filter = ''
-    render_files()
+    render_files(ctx)
   end
 
   vim.api.nvim_set_current_win(state.win)
@@ -71,7 +60,7 @@ function M.start()
   end
   vim.api.nvim_win_set_cursor(state.win, { filter_line, #PREFIX - 1 })
 
-  local s = lf()
+  local s = ts.files._live_filter
   s.buf = vim.api.nvim_create_buf(false, true)
   vim.bo[s.buf].buftype = 'nofile'
   vim.bo[s.buf].bufhidden = 'hide'
@@ -81,11 +70,11 @@ function M.start()
     on_lines = function()
       vim.schedule(function()
         if not attached_buf or not vim.api.nvim_buf_is_valid(attached_buf) then return end
-        if lf().buf ~= attached_buf then return end
+        if not lifecycle.is_current(ctx) or s.buf ~= attached_buf then return end
         local lines = vim.api.nvim_buf_get_lines(attached_buf, 0, 1, false)
         local text = lines[1] or ''
-        state.files.live_filter = text
-        render_files()
+        ts.files.live_filter = text
+        render_files(ctx)
       end)
     end,
   })
@@ -96,7 +85,7 @@ function M.start()
     buffer = s.buf,
     once = true,
     callback = function()
-      remove_overlay()
+      remove_overlay(ctx)
     end,
   })
 
@@ -104,8 +93,8 @@ function M.start()
   local win_width = win_info and (win_info.width - win_info.textoff - #PREFIX) or 20
 
   vim.schedule(function()
-    if not state:is_open() then return end
-    local cs = lf()
+    if not lifecycle.is_current(ctx) then return end
+    local cs = s
     if not cs.buf or not vim.api.nvim_buf_is_valid(cs.buf) then return end
 
     cs.win = vim.api.nvim_open_win(cs.buf, true, {
@@ -119,7 +108,7 @@ function M.start()
       zindex = 50,
     })
 
-    local prev = state.files.live_filter or ''
+    local prev = ts.files.live_filter or ''
     vim.api.nvim_buf_set_lines(cs.buf, 0, -1, false, { prev })
     vim.cmd('startinsert')
     vim.api.nvim_win_set_cursor(cs.win, { 1, #prev + 1 })
@@ -127,9 +116,10 @@ function M.start()
 end
 
 function M.clear()
-  remove_overlay()
-  state.files.live_filter = nil
-  render_files()
+  local ctx = lifecycle.capture()
+  remove_overlay(ctx)
+  ctx.state.files.live_filter = nil
+  render_files(ctx)
 end
 
 return M

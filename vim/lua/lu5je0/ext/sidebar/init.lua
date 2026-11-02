@@ -9,19 +9,16 @@ local tabs = require('lu5je0.ext.sidebar.tabs')
 local keymaps = require('lu5je0.ext.sidebar.keymaps')
 local autocmds = require('lu5je0.ext.sidebar.autocmds')
 local watcher = require('lu5je0.ext.sidebar.watcher')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 
-local function init_sidebar(do_render)
+local function init_sidebar(do_render, opts)
   M.setup()
   tabs.apply_width()
   tabs.render_winbar()
   keymaps.apply_shared()
   keymaps.apply_for_tab(state.active_tab_idx)
   if do_render then
-    local source = tabs.get_active_source()
-    if source then
-      local enter = source.on_enter or source.render
-      if enter then enter() end
-    end
+    lifecycle.enter(state.tab(), opts)
   end
   watcher.start()
   watcher.refresh()
@@ -32,8 +29,6 @@ function M.toggle(opts)
   window.toggle(opts)
   if state:is_open() then
     init_sidebar(true)
-  else
-    watcher.stop()
   end
 end
 
@@ -48,15 +43,16 @@ function M.open_tab(idx, opts)
   state.visible_tabs[idx] = true
   if state:is_open() and state.active_tab_idx == idx and not opts.no_toggle then
     window.close()
-    watcher.stop()
     return
   end
   if not state:is_open() then
     window.open()
     state.active_tab_idx = idx
-    init_sidebar(true)
+    init_sidebar(true, opts)
+  elseif state.active_tab_idx == idx then
+    lifecycle.enter(state.tab(), opts)
   else
-    tabs.switch_to(idx)
+    tabs.switch_to(idx, opts)
   end
   if opts.focus == false then
     vim.api.nvim_set_current_win(prev_win)
@@ -65,65 +61,20 @@ function M.open_tab(idx, opts)
   end
 end
 
--- A Tree edit buffer projects a directory instead of owning a file of its own.
-local function fs_edit_root_dir(buf)
-  local ok, fs_edit = pcall(require, 'lu5je0.ext.sidebar.sources.files.fs-edit')
-  if not ok then return nil end
-  local session = fs_edit._sessions and fs_edit._sessions[buf]
-  return session and session.root_dir or nil
-end
-
 function M.locate_in_tab(idx)
-  local filepath = vim.fn.expand('%:p')
-  local cur_buf = vim.api.nvim_get_current_buf()
-  local source_win = vim.api.nvim_get_current_win()
-
-  local file_readable = vim.fn.filereadable(filepath) == 1
-  -- Fall back to the Tree edit root so `<leader>fe` still has a target there.
-  local files_target = file_readable and filepath or fs_edit_root_dir(cur_buf)
-
-  if idx == config.tab_idx('files') and files_target then
-    local cwd = vim.fn.getcwd()
-    local dir = require('lu5je0.ext.sidebar.sources.files').anchor_dir(files_target)
-    if not vim.startswith(dir, cwd) then
-      local choice = vim.fn.confirm(
-        'Target is outside cwd. Change directory to ' .. dir .. '?',
-        '&Yes\n&No', 2)
-      if choice ~= 1 then return end
-    end
-  end
-
+  local target = {
+    path = vim.fn.expand('%:p'),
+    buf = vim.api.nvim_get_current_buf(),
+    source_win = vim.api.nvim_get_current_win(),
+  }
+  local source = lifecycle.source(idx)
+  if source.prepare_locate and source.prepare_locate(target) == false then return end
   if not state:is_open() then window.open() end
   tabs.set_active_tab(idx)
   init_sidebar(false)
   vim.api.nvim_set_current_win(state.win)
-
-  if idx == config.tab_idx('buffers') then
-    local buffers = require('lu5je0.ext.sidebar.sources.buffers')
-    buffers.render()
-    buffers.locate_buffer(cur_buf)
-  elseif idx == config.tab_idx('files') then
-    if not files_target then return end
-    local files = require('lu5je0.ext.sidebar.sources.files')
-    files.find_file(files_target)
-    vim.cmd('normal! zz')
-  elseif idx == config.tab_idx('git_changes') then
-    local git_changes = require('lu5je0.ext.sidebar.sources.git_changes')
-    if state.git_changes._first_located then
-      if file_readable then
-        git_changes.locate_file(filepath)
-      else
-        git_changes.render()
-      end
-    else
-      -- First entry on this tabpage: ignore the current file and park on the
-      -- first changed file instead.
-      state.git_changes._first_located = true
-      git_changes.locate_first_file()
-    end
-  elseif idx == config.tab_idx('symbols') then
-    require('lu5je0.ext.sidebar.sources.symbols').request_symbols({ locate = true, source_win = source_win })
-  end
+  lifecycle.enter(state.tab(), { locate = true, source_win = target.source_win })
+  lifecycle.locate(state.tab(), target)
 end
 
 function M._on_dir_changed(args)
@@ -135,6 +86,7 @@ function M._on_dir_changed(args)
   if old_cwd == new_cwd then return end
 
   local tabpage = vim.api.nvim_get_current_tabpage()
+  lifecycle.leave(state.tab())
   watcher.stop(tabpage)
 
   state.files._root_cache = state.files._root_cache or {}
@@ -173,9 +125,7 @@ function M._on_dir_changed(args)
   end
 
   if state:is_open() then
-    if state.active_tab_idx == config.tab_idx('files') then
-      require('lu5je0.ext.sidebar.sources.files').render()
-    end
+    lifecycle.enter(state.tab())
     watcher.start(tabpage)
     watcher.refresh(tabpage)
   end
@@ -189,15 +139,10 @@ local function register_keymaps()
   vim.keymap.set('n', '<leader>fe', function() M.locate_in_tab(config.tab_idx('files')) end, opts)
   vim.keymap.set('n', '<leader>gs', function() M.locate_in_tab(config.tab_idx('git_changes')) end, opts)
   vim.keymap.set('n', '<leader>fb', function() M.locate_in_tab(config.tab_idx('buffers')) end, opts)
-  vim.keymap.set('n', '<leader>fs', function()
-    local source_win = vim.api.nvim_get_current_win()
-    M.open_tab(config.tab_idx('symbols'), { no_toggle = true })
-    require('lu5je0.ext.sidebar.sources.symbols').request_symbols({ locate = true, source_win = source_win })
-  end, opts)
+  vim.keymap.set('n', '<leader>fs', function() M.locate_in_tab(config.tab_idx('symbols')) end, opts)
   vim.keymap.set('n', '<leader>s', function()
     local source_win = vim.api.nvim_get_current_win()
-    M.open_tab(config.tab_idx('symbols'), { focus = false })
-    require('lu5je0.ext.sidebar.sources.symbols').request_symbols({ source_win = source_win })
+    M.open_tab(config.tab_idx('symbols'), { focus = false, source_win = source_win })
   end, opts)
 end
 

@@ -92,6 +92,30 @@ function M.render(opts)
   source_base.render(spec, opts or {})
 end
 
+function M.prepare_locate(target)
+  if vim.fn.filereadable(target.path) ~= 1 then
+    local fs_edit = require('lu5je0.ext.sidebar.sources.files.fs-edit')
+    local session = fs_edit._sessions and fs_edit._sessions[target.buf]
+    target.path = session and session.root_dir or nil
+  end
+  if not target.path then return true end
+  local dir = M.anchor_dir(target.path)
+  if not vim.startswith(dir, vim.fn.getcwd()) then
+    return vim.fn.confirm('Target is outside cwd. Change directory to ' .. dir .. '?', '&Yes\n&No', 2) == 1
+  end
+end
+
+function M.locate(_ctx, target)
+  if not target.path then return end
+  M.find_file(target.path)
+  vim.cmd('normal! zz')
+end
+
+function M.leave(ctx)
+  require('lu5je0.ext.sidebar.sources.files.live_filter').dispose(ctx)
+end
+M.dispose = M.leave
+
 -- Walk a reveal_path up to its nearest still-existing ancestor. Returns nil
 -- only when no ancestor (including '/') exists. Lets reveal-anchored renders
 -- survive when the originally revealed file gets deleted underfoot.

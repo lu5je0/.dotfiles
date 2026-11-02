@@ -1,6 +1,7 @@
 -- Buffers source: list of valid loaded buffers.
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 
 local M = {}
@@ -117,6 +118,10 @@ function M.locate_buffer(bufnr)
   end
 end
 
+function M.locate(_ctx, target)
+  M.locate_buffer(target.buf)
+end
+
 function M.keymaps()
   local preview = require('lu5je0.ext.sidebar.actions.preview')
   return {
@@ -131,7 +136,10 @@ end
 function M.setup_auto_refresh(group)
   local function refresh()
     if state:is_open() and state.active_tab_idx == config.tab_idx('buffers') then
-      vim.schedule(M.render)
+      local ctx = lifecycle.capture()
+      vim.schedule(function()
+        if lifecycle.is_current(ctx) then M.render() end
+      end)
     end
   end
 

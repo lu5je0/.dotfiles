@@ -129,14 +129,14 @@ function M.set_active_tab(idx)
   end
   M.save_view()
   M.save_width()
-  require('lu5je0.ext.sidebar.source_base').deactivate(state.tab())
+  require('lu5je0.ext.sidebar.lifecycle').leave(state.tab())
   state.active_tab_idx = idx
   M.apply_width()
   M.render_winbar()
   return true
 end
 
-function M.switch_to(idx)
+function M.switch_to(idx, opts)
   if idx < 1 or idx > #config.tabs then
     return
   end
@@ -144,11 +144,7 @@ function M.switch_to(idx)
     return
   end
 
-  local source = M.get_active_source()
-  if source then
-    local enter = source.on_enter or source.render
-    if enter then enter() end
-  end
+  require('lu5je0.ext.sidebar.lifecycle').enter(state.tab(), opts)
 
   M.restore_view(idx)
 

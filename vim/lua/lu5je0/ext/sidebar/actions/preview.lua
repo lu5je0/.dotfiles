@@ -1,4 +1,5 @@
 local state = require('lu5je0.ext.sidebar.state')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local config = require('lu5je0.ext.sidebar.config')
 local ui = require('lu5je0.core.ui')
 local diff_preview = require('lu5je0.ext.sidebar.actions.diff_preview')
@@ -45,6 +46,7 @@ end
 local function stop_preview(ts)
   ts = ts or state.tab()
   local p = ts.preview
+  p.generation = p.generation + 1
   p.active = false
   p.enter_pending = false
   clear_autocmds(p)
@@ -54,16 +56,18 @@ local function stop_preview(ts)
   p.type = nil
 end
 
-local function show_text(item, p)
+local function show_text(item, ctx)
+  local p = ctx.state.preview
   p.type = 'text'
   text_preview.show(item, function()
     p.active, p.type = false, nil
     clear_autocmds(p)
-  end)
+  end, ctx.state)
 end
 
 local function update_preview()
-  local p = pv()
+  local ctx = lifecycle.capture()
+  local p = ctx.state.preview
   if not p.active then
     return
   end
@@ -72,18 +76,18 @@ local function update_preview()
     return
   end
   if item.preview_kind == 'text' then
-    show_text(item, p)
+    show_text(item, ctx)
   elseif require('lu5je0.ext.sidebar.tabs').get_active_source().preview_kind == 'diff' then
     diff_preview.show(item, function(new_type)
       p.type = new_type
       if new_type == 'diff' and p.enter_pending then
         vim.schedule(function()
-          if p == pv() and p.active and p.enter_pending then enter_preview_window() end
+          if lifecycle.is_current(ctx) and p.active and p.enter_pending then enter_preview_window(ctx.state) end
         end)
       end
       if new_type == nil then
         p.active = false
-        clear_autocmds()
+        clear_autocmds(p)
       end
     end)
   else
@@ -92,7 +96,10 @@ local function update_preview()
 end
 
 local function setup_autocmds()
-  local p = pv()
+  local ctx = lifecycle.capture()
+  local ts = ctx.state
+  local p = ts.preview
+  local generation = p.generation
   p.autocmd = vim.api.nvim_create_autocmd('CursorMoved', {
     buffer = state.buf,
     callback = function()
@@ -109,9 +116,10 @@ local function setup_autocmds()
     once = true,
     callback = function()
       vim.schedule(function()
+        if not lifecycle.is_current(ctx) or p.generation ~= generation then return end
         local cur_win = vim.api.nvim_get_current_win()
         if cur_win == p.text_win then return end
-        local dp_state = state.diff_preview
+        local dp_state = ts.diff_preview
         if cur_win == dp_state.win_left or cur_win == dp_state.win_right or cur_win == dp_state.win_single then
           return
         end
@@ -119,34 +127,36 @@ local function setup_autocmds()
         if popup and popup.winid and cur_win == popup.winid then
           return
         end
-        stop_preview()
+        stop_preview(ts)
       end)
     end,
   })
 end
 
 local function start_preview()
+  local ctx = lifecycle.capture()
   local item = get_current_item()
   if not item then
     return
   end
-  local p = pv()
+  local p = ctx.state.preview
+  p.generation = p.generation + 1
   p.active = true
 
   if item.preview_kind == 'text' then
-    show_text(item, p)
+    show_text(item, ctx)
   elseif require('lu5je0.ext.sidebar.tabs').get_active_source().preview_kind == 'diff' then
     p.type = 'diff'
     diff_preview.show(item, function(new_type)
       p.type = new_type
       if new_type == 'diff' and p.enter_pending then
         vim.schedule(function()
-          if p == pv() and p.active and p.enter_pending then enter_preview_window() end
+          if lifecycle.is_current(ctx) and p.active and p.enter_pending then enter_preview_window(ctx.state) end
         end)
       end
       if new_type == nil then
         p.active = false
-        clear_autocmds()
+        clear_autocmds(p)
       end
     end)
   else
@@ -157,16 +167,18 @@ local function start_preview()
   setup_autocmds()
 end
 
-enter_preview_window = function()
-  local d = state.diff_preview
-  local win = pv().type == 'text' and pv().text_win or (d.win_single or d.win_left or d.win_right)
+enter_preview_window = function(ts)
+  ts = ts or state.tab()
+  local p = ts.preview
+  local d = ts.diff_preview
+  local win = p.type == 'text' and p.text_win or (d.win_single or d.win_left or d.win_right)
   if not win or not vim.api.nvim_win_is_valid(win) then
-    pv().enter_pending = true
+    p.enter_pending = true
     return
   end
-  pv().enter_pending = false
-  pv().active = false
-  clear_autocmds()
+  p.enter_pending = false
+  p.active = false
+  clear_autocmds(p)
   vim.api.nvim_set_current_win(win)
 end
 

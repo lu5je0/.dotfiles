@@ -1,6 +1,7 @@
 -- All sidebar autocmds, registered into a single `sidebar` augroup.
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 
 local M = {}
 
@@ -46,8 +47,7 @@ function M.setup(group)
       watcher.start()
       watcher.refresh(nil, true)
       if state:is_open() then
-        local source = require('lu5je0.ext.sidebar.tabs').get_active_source()
-        if source and source.on_enter then source.on_enter() end
+        lifecycle.enter(state.tab())
       end
     end,
   })
@@ -59,13 +59,7 @@ function M.setup(group)
       for _, tabpage in ipairs(vim.api.nvim_list_tabpages()) do
         local ts = state.tab_for(tabpage)
         if ts.win == win then
-          watcher.stop(tabpage)
-          ts.win = nil
-          vim.schedule(function()
-            if ts.win then return end
-            require('lu5je0.ext.sidebar.source_base').deactivate(ts)
-            require('lu5je0.ext.sidebar.tabs').reset_transient(ts)
-          end)
+          lifecycle.close(ts)
         end
       end
     end,
@@ -73,12 +67,8 @@ function M.setup(group)
 
   vim.api.nvim_create_autocmd('TabLeave', {
     group = group,
-    callback = function() require('lu5je0.ext.sidebar.source_base').deactivate(state.tab()) end,
+    callback = function() lifecycle.leave(state.tab()) end,
   })
-
-  -- Symbols auto-follow state.
-  local follow_timer = nil
-  local last_follow_line = nil
 
   -- Re-query LSP symbols when the foreground buffer changes.
   vim.api.nvim_create_autocmd({ 'BufEnter', 'LspAttach' }, {
@@ -89,9 +79,12 @@ function M.setup(group)
       if args.buf == state.buf then return end
       local cur_buf = vim.api.nvim_get_current_buf()
       if cur_buf == state.symbols.target_buf then return end
-      last_follow_line = nil
+      local ctx = lifecycle.capture()
+      local source_win = vim.api.nvim_get_current_win()
       vim.schedule(function()
-        require('lu5je0.ext.sidebar.sources.symbols').request_symbols()
+        if lifecycle.is_current(ctx) then
+          require('lu5je0.ext.sidebar.sources.symbols').request_symbols({ source_win = source_win }, ctx)
+        end
       end)
     end,
   })
@@ -107,20 +100,7 @@ function M.setup(group)
       local symbols_mod = require('lu5je0.ext.sidebar.sources.symbols')
       if not symbols_mod.is_auto_follow() then return end
       local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
-      if cursor_line == last_follow_line then return end
-      if follow_timer then
-        follow_timer:stop()
-        follow_timer:close()
-      end
-      follow_timer = vim.uv.new_timer()
-      follow_timer:start(30, 0, vim.schedule_wrap(function()
-        follow_timer:close()
-        follow_timer = nil
-        if not state:is_open() then return end
-        if state.active_tab_idx ~= config.tab_idx('symbols') then return end
-        last_follow_line = cursor_line
-        symbols_mod.locate_by_line(cursor_line, { no_center = true })
-      end))
+      symbols_mod.follow(lifecycle.capture(), cursor_line)
     end,
   })
 

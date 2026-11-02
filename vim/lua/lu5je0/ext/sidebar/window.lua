@@ -131,10 +131,11 @@ function M.close()
     return
   end
   require('lu5je0.ext.sidebar.tabs').save_width()
-  require('lu5je0.ext.sidebar.source_base').deactivate(state.tab())
-  vim.api.nvim_win_close(state.win, true)
-  state.win = nil
-  require('lu5je0.ext.sidebar.tabs').reset_transient(state.tab())
+  local ts, win = state.tab(), state.win
+  vim.api.nvim_win_close(win, true)
+  -- WinClosed normally commits cleanup. Preserve ownership if closing
+  -- fails (e.g. E444), and support callers without sidebar autocmds.
+  if ts.win == win then require('lu5je0.ext.sidebar.lifecycle').close(ts) end
 end
 
 local PICK_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

@@ -11,6 +11,7 @@ sidebar/
 ├── init.lua           -- 入口：setup / toggle / focus / open_tab / locate_in_tab / _on_dir_changed
 ├── config.lua         -- 配置：图标、highlight、tabs、宽度；M.apply_highlights() 集中应用
 ├── state.lua          -- per-tab 状态（metatable 按 tabpage 隔离），new_tab_state() 是 schema 单一来源
+├── lifecycle.lua      -- source enter / leave / locate / dispose，异步归属与统一关闭清理
 ├── git_status.lua     -- 单次异步 git status，按 tab 更新 Files/Git Changes 缓存并合并刷新请求
 ├── watcher.lua        -- 展开目录/Git 元数据 fs_event 与资源释放（无定时轮询）
 ├── window.lua         -- 窗口生命周期、guicursor
@@ -66,23 +67,26 @@ sidebar/
 - 展开接口的 `open.keep_cursor(item)` 控制是否保留光标；History commit、Changes 分组与 stash 节点展开后留在当前行，已展开时再次按 `l` 也保持不动；普通目录沿用进入子节点的行为。
 - 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，不再各自手写 render/open_node/close_node 骨架。
 - History 只展示已提交历史，未提交改动由 Changes 展示。History 与其他 source 一样走 `source_base` → `render_tree` → `view.flush`；`sources/history/model.lua` 只负责异步加载和取消，History 专属解析和提交图算法集中在 `sources/history/`，与 source 的窗口操作分离。`git_style.lua` 共用 Changes/History 的树样式；预览 source 可声明 `preview_kind` 与 `preview_item()`，由共享 preview / diff_preview 管理浮窗；条目可通过 `preview_kind = "text"`、`lines`、`title` 提供文本预览，`text_preview` 管理 per-tab 浮窗及资源释放。
-- 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册即可。
+- 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册。可选接口为 `enter(ctx, opts)`、`leave(ctx)`、`locate(ctx, target)`、`dispose(ctx)`；未声明 `enter` 时回退到 `render()`。定位前需要校验或转换目标时提供 `prepare_locate(target)`，返回 false 中止；`init.locate_in_tab` 只分派接口，不包含具体 source 分支。
+- `enter(ctx, opts)` 负责让当前页就绪，同页 `focus()` 与 `open_tab(..., { no_toggle = true })` 也会调用；同一次访问复用 ctx，直到 `leave` 才失效。hook 必须支持重复调用，可刷新数据，但应取消或复用已有任务，避免重复持有资源；`enter` 与 `leave` 的调用次数不必一一对应。
 - 快捷键区分共享（`keymaps.apply_shared`）和 per-tab（source `keymaps()`）。
 - source 快捷键只绑定当前页，切页时先移除全部 source 映射，再绑定当前页；不能把非当前页按键保留成空操作，避免 Files 的 `dd` / `cd` 使 Git Changes 的 `d` / `c` 等待后续输入。同页存在短键和长键前缀时，先注册长键、后注册短键，使短键的 `nowait` 优先匹配；覆盖已有映射不会改变查找顺序，必须先移除再注册，单空格预览不能等待双空格超时。
 - git 工具统一用 `actions/git_ops.lua` → `ext/git/common/git-ops.lua`。
-- 异步回调里先捕获 `local ts = state.tab()` 或 `state.tab_for(tabpage)`，不要直接读写 `state.xxx`。render 还要捕获 tabpage，schedule 里 `nvim_get_current_tabpage() ~= captured` 就跳过。
-- 跨 tab 的资源（fs_event、timer、preview 等）放进 per-tab state，不要写成模块级 singleton；持 libuv handle 的字段在 `state.cleanup_closed_tabs` 里释放。
-- per-tab schema 单一来源：所有 per-tab 字段必须在 `state.lua` 的 `new_tab_state()` 中显式声明，便于一处看清完整 shape；持 libuv handle 或浮窗的字段同时在 `release_tab_resources` 中释放。
+- 页面异步入口通过 `lifecycle.capture()` 或 hook 参数取得 `ctx`（state、tabpage、idx、generation）；回调读写 `ctx.state`，更新页面前检查 `lifecycle.is_current(ctx)`。离开页面、切 Neovim tab、关闭与切目录会使旧 context 失效，离开后再回到同页也不能接收旧结果。后台 Git 状态刷新保留独立的 tabpage 和 generation 检查，不依赖当前页面。
+- 跨 tab 的资源（fs_event、timer、preview 等）放进 per-tab state，不要写成模块级 singleton；页面持有的资源由自己的 `leave` / `dispose` 释放。Symbols 请求取消函数、请求 generation 与光标跟随 timer 均属于 `state.symbols`，保持 30ms 防抖。
+- per-tab schema 单一来源：所有 per-tab 字段必须在 `state.lua` 的 `new_tab_state()` 中显式声明，便于一处看清完整 shape；页面私有资源在 source 的 `dispose(ctx)` 中释放；`state.cleanup_closed_tabs` 只调用 `lifecycle.dispose`，不依赖具体 source 的实现。
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
 - 所有 sidebar autocmd 都进 `sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
 - Buffers source 的 `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`，**不要直接写事件名**：0.12 的自然编辑走 `BufModifiedSet`（0.13 已移除，见 `news.txt` / `deprecated.txt`，PR #35610），`:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`；单用任一个都会漏。兼容层与删除条件见根 `AGENTS.md` 的「临时兼容」一节。
 
-- source 可提供 `on_enter` / `on_leave` 生命周期；切页、切 Neovim tab 和关闭窗口由共享入口释放瞬时 UI；Sidebar 打开、切 source 和切回 Neovim tab 时调用 `on_enter`（未声明时用 `render`），任务资源也须在 `state` 的 tab 清理中释放。`config.tabs[].transient` 定义临时页，显示状态保存在 per-tab `visible_tabs`，不改动稳定的 source 索引。`config.tabs[].width` 可指定默认宽度，各页宽度在 `tab_widths` 中记忆；History 默认 50 列，窗口过小时限制为屏幕的 60%。
+- 生命周期只经 `lifecycle` 分派：Sidebar 打开、切 source 和切回 Neovim tab 时 enter；离开时先使 context 失效，再关闭预览并调用 source.leave。实际窗口关闭成功后，显式关闭与外部 WinClosed 共用 close（再释放 watcher / Git 状态查询并重置临时页签）；E444 等关闭失败必须保留窗口归属、context 和资源；Neovim tab 销毁经 dispose 清理全部已加载 source，清理 hook 必须可重复调用。`config.tabs[].transient` 定义临时页，显示状态保存在 per-tab `visible_tabs`，不改动稳定的 source 索引。`config.tabs[].width` 可指定默认宽度，各页宽度在 `tab_widths` 中记忆；History 默认 50 列，窗口过小时限制为屏幕的 60%。
 
 ## 快捷键
 
 - `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）；`<leader>fg` 已移除。
 - 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
+
+- Changes 离开时取消 stash 加载；没有缓存条目的列表与未加载完的 stash 文件节点恢复折叠，返回后可按 `l` 重试，已加载内容与展开状态保留。Symbols 进入时先同步渲染缓存或空状态，再发起请求，等待 LSP 时不能保留上一页内容。
 
 - Git diff 的布局与 changes-only 独立保存：`d` 保留上下文偏好；`c` 在 single 模式切换完整上下文 / 改动附近 3 行，在 dual 模式展开 / 折叠未变化区域。Space 预览期间，在列表或预览窗口按 `d` / `c` 均立即使用已加载内容刷新，不重读文件；切换布局保留当前焦点所在区域。
 
@@ -122,6 +126,7 @@ sidebar/
 
 - `cd vim && ./tests/run-tests.sh` 跑全部 sidebar 测试：
   - `state_spec.lua` — per-tab schema / 隔离 / cleanup
+  - `lifecycle_spec.lua` — 统一定位、请求乱序、切页后旧回调、跨 tab 隔离、显式/外部关闭及 E444 失败状态保留、stash 取消后重试、Symbols 等待响应时的内容、任务和 timer 清理
   - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用

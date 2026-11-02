@@ -1,5 +1,6 @@
 -- Symbols source: LSP documentSymbol tree with treesitter fallback.
 local state = require('lu5je0.ext.sidebar.state')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local config = require('lu5je0.ext.sidebar.config')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local view = require('lu5je0.ext.sidebar.view')
@@ -268,10 +269,31 @@ end
 
 -- ── symbol query ───────────────────────────────────────
 
-function M.request_symbols(opts)
+local function cancel_pending(symbols)
+  symbols.generation = symbols.generation + 1
+  if symbols.cancel_request then
+    local cancel = symbols.cancel_request
+    symbols.cancel_request = nil
+    pcall(cancel)
+  end
+  if symbols.follow_timer then
+    symbols.follow_timer:stop()
+    symbols.follow_timer:close()
+    symbols.follow_timer = nil
+  end
+  symbols.last_follow_line = nil
+end
+
+function M.request_symbols(opts, ctx)
   opts = opts or {}
-  local tabpage = vim.api.nvim_get_current_tabpage()
-  local ts = state.tab_for(tabpage)
+  ctx = ctx or lifecycle.capture()
+  local tabpage, ts = ctx.tabpage, ctx.state
+  local symbols = ts.symbols
+  cancel_pending(symbols)
+  local generation = symbols.generation
+  local function current()
+    return symbols.generation == generation and lifecycle.is_current(ctx)
+  end
 
   local target_buf, target_win = nil, nil
 
@@ -317,18 +339,19 @@ function M.request_symbols(opts)
   if has_provider then
     ts.symbols.target_buf = target_buf
     local params = { textDocument = vim.lsp.util.make_text_document_params(target_buf) }
-    vim.lsp.buf_request(target_buf, 'textDocument/documentSymbol', params, function(err, result)
+    local _, cancel = vim.lsp.buf_request(target_buf, 'textDocument/documentSymbol', params, function(err, result)
+      if not current() then return end
       if err or not result then
         ts.symbols.nodes = {}
         vim.schedule(function()
-          if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
+          if not current() then return end
           if ts.active_tab_idx == config.tab_idx('symbols') then M.render() end
         end)
         return
       end
       ts.symbols.nodes = lsp_symbols_to_tree(result, ts.symbols.nodes)
       vim.schedule(function()
-        if vim.api.nvim_get_current_tabpage() ~= tabpage then return end
+        if not current() then return end
         if ts.active_tab_idx ~= config.tab_idx('symbols') then return end
         M.render()
         if cursor_line and state:is_open() then
@@ -336,6 +359,7 @@ function M.request_symbols(opts)
         end
       end)
     end)
+    symbols.cancel_request = cancel
     return
   end
 
@@ -359,6 +383,40 @@ function M.request_symbols(opts)
   ts.symbols.nodes = {}
   ts.symbols.target_buf = nil
   if vim.api.nvim_get_current_tabpage() == tabpage then M.render() end
+end
+
+function M.enter(ctx, opts)
+  M.render()
+  if not opts.locate then M.request_symbols(opts, ctx) end
+end
+
+function M.locate(ctx, target)
+  M.request_symbols({ locate = true, source_win = target.source_win }, ctx)
+end
+
+function M.leave(ctx)
+  cancel_pending(ctx.state.symbols)
+end
+M.dispose = M.leave
+
+function M.follow(ctx, cursor_line)
+  local symbols = ctx.state.symbols
+  if cursor_line == symbols.last_follow_line then return end
+  if symbols.follow_timer then
+    symbols.follow_timer:stop()
+    symbols.follow_timer:close()
+  end
+  local timer = vim.uv.new_timer()
+  symbols.follow_timer = timer
+  timer:start(30, 0, vim.schedule_wrap(function()
+    if symbols.follow_timer ~= timer then return end
+    timer:stop()
+    timer:close()
+    symbols.follow_timer = nil
+    if not lifecycle.is_current(ctx) then return end
+    symbols.last_follow_line = cursor_line
+    M.locate_by_line(cursor_line, { no_center = true })
+  end))
 end
 
 local function expand_to_line(nodes, cursor_line, target_node)

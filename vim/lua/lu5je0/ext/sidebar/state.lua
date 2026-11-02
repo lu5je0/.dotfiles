@@ -7,7 +7,7 @@
 --
 -- The full per-tab schema lives in `new_tab_state()` below. New per-tab
 -- fields MUST be declared there so the shape is discoverable in one
--- place and `release_tab_resources` can free any libuv handles they own.
+-- place and the source dispose hook can free any resources it owns.
 local Stack = require('lu5je0.lang.stack')
 
 local M = {}
@@ -38,8 +38,13 @@ end
 
 local _tabs = {}
 
-local function new_tab_state()
+local function new_tab_state(tabpage)
   return {
+    tabpage = tabpage,
+    source_generation = 0,
+    source_context = nil,
+    disposed = false,
+
     -- window / buffer
     win = nil,
     buf = nil,
@@ -101,6 +106,7 @@ local function new_tab_state()
       _undo_stack = nil,      -- list of undo entries pushed by git_ops
       _redo_stack = nil,      -- list of redo entries for redo support
       _last_git_root = nil,
+      stash_jobs = {},
       _is_loading = false,
       _first_located = false,   -- first <leader>gs entry on this tabpage parks on the first changed file
     },
@@ -141,9 +147,16 @@ local function new_tab_state()
       display_items = {},
       target_buf = nil,
       last_located_node = nil,
+      generation = 0,
+      cancel_request = nil,
+      follow_timer = nil,
+      last_follow_line = nil,
+      auto_follow = nil,
+      _is_empty = false,
     },
 
     preview = {
+      generation = 0,
       active = false,
       enter_pending = false,
       text_win = nil,
@@ -169,50 +182,10 @@ local function new_tab_state()
   }
 end
 
--- Close libuv handles and floating windows owned by a per-tab state
--- before the tab is dropped, so closing a tabpage doesn't leak fs_event
--- watchers, timers, or orphan windows.
-local function release_tab_resources(ts)
-  if not ts then return end
-  require('lu5je0.ext.sidebar.actions.text_preview').close(ts)
-  require('lu5je0.ext.sidebar.sources.history.model').cancel(ts.history)
-  require('lu5je0.ext.sidebar.watcher').release(ts)
-  require('lu5je0.ext.sidebar.git_status').release(ts)
-  if ts.files then
-    local lf = ts.files._live_filter
-    if lf then
-      if lf.win and vim.api.nvim_win_is_valid(lf.win) then
-        pcall(vim.api.nvim_win_close, lf.win, true)
-      end
-      if lf.buf and vim.api.nvim_buf_is_valid(lf.buf) then
-        pcall(vim.api.nvim_buf_delete, lf.buf, { force = true })
-      end
-      lf.win, lf.buf, lf.closing = nil, nil, false
-    end
-  end
-  if ts.diff_preview then
-    local dp = ts.diff_preview
-    dp.generation = dp.generation + 1
-    if dp.timer then dp.timer:stop(); dp.timer:close(); dp.timer = nil end
-    dp.refresh = nil
-    if dp.win_left and vim.api.nvim_win_is_valid(dp.win_left) then
-      pcall(vim.api.nvim_win_close, dp.win_left, true)
-    end
-    if dp.win_right and vim.api.nvim_win_is_valid(dp.win_right) then
-      pcall(vim.api.nvim_win_close, dp.win_right, true)
-    end
-    if dp.win_single and vim.api.nvim_win_is_valid(dp.win_single) then
-      pcall(vim.api.nvim_win_close, dp.win_single, true)
-    end
-    dp.win_left, dp.win_right, dp.buf_left, dp.buf_right = nil, nil, nil, nil
-    dp.win_single, dp.buf_single = nil, nil
-  end
-end
-
 local function get_tab_state()
   local tab = vim.api.nvim_get_current_tabpage()
   if not _tabs[tab] then
-    _tabs[tab] = new_tab_state()
+    _tabs[tab] = new_tab_state(tab)
   end
   return _tabs[tab]
 end
@@ -230,7 +203,7 @@ function M.cleanup_closed_tabs()
   end
   for tp, ts in pairs(_tabs) do
     if not valid[tp] then
-      release_tab_resources(ts)
+      require('lu5je0.ext.sidebar.lifecycle').dispose(ts)
       _tabs[tp] = nil
     end
   end
@@ -241,7 +214,7 @@ end
 --- need to write into that specific tab without going through the proxy.
 function M.tab_for(tabpage)
   if not _tabs[tabpage] then
-    _tabs[tabpage] = new_tab_state()
+    _tabs[tabpage] = new_tab_state(tabpage)
   end
   return _tabs[tabpage]
 end

@@ -17,8 +17,8 @@ function M.close(ts)
   end
 end
 
-function M.show(item, on_close)
-  local ts = state.tab()
+function M.show(item, on_close, ts)
+  ts = ts or state.tab()
   M.close(ts)
   local p = ts.preview
   local buf = vim.api.nvim_create_buf(false, true)
