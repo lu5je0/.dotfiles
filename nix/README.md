@@ -20,11 +20,12 @@ sudo nixos-rebuild switch --flake .#huskar
 
 ```nix
 programs.desktopIconOverrides = {
-  "io.github.yucling.open-orpheus" = ./icons/netease-cloud-music.svg;
+  "io.github.yucling.open-orpheus" = ../modules/desktop-icons/icons/netease-cloud-music.svg;
   "org.gnome.Nautilus" = ./icons/files.png;
 };
 ```
 
+内置图标放在 `nixos/modules/desktop-icons/icons/`。
 ID 是 `.desktop` 文件名，可省略后缀，不是窗口标题或可执行文件名。图片路径相对于
 配置所在的 Nix 文件；新增本地图片要先加入 Git，flake 才能读取。
 

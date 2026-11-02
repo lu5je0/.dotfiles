@@ -11,7 +11,7 @@
   ];
 
   programs.desktopIconOverrides = {
-    "io.github.yucling.open-orpheus" = ../icons/netease-cloud-music.svg;
+    "io.github.yucling.open-orpheus" = ../modules/desktop-icons/icons/netease-cloud-music.svg;
   };
 
   environment.systemPackages = with pkgs; [
