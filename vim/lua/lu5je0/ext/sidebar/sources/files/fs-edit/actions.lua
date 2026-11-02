@@ -75,7 +75,9 @@ local function do_rename(src, dst)
     if vim.v.shell_error ~= 0 then
       return false, res
     end
-    vim.fn.delete(src, 'rf')
+    if vim.fn.delete(src, 'rf') ~= 0 then
+      return false, 'could not remove source after copying: ' .. src
+    end
     return true
   end
   return false, err
@@ -244,6 +246,7 @@ function M.execute_actions(actions)
       if vim.endswith(action.dst, '/') then
         if vim.fn.mkdir(action.dst:sub(1, -2), 'p') == 0 then
           vim.notify('fs-edit: mkdir failed: ' .. action.dst, vim.log.levels.ERROR)
+          return false
         end
       else
         local parent = vim.fs.dirname(action.dst)
@@ -253,6 +256,7 @@ function M.execute_actions(actions)
           vim.uv.fs_close(fd)
         else
           vim.notify('fs-edit: create failed: ' .. action.dst, vim.log.levels.ERROR)
+          return false
         end
       end
       i = i + 1
@@ -268,11 +272,13 @@ function M.execute_actions(actions)
       if has_trash() then
         if not trash(batch) then
           vim.notify('fs-edit: trash failed: ' .. table.concat(batch, ', '), vim.log.levels.ERROR)
+          return false
         end
       else
         for _, src in ipairs(batch) do
           if vim.fn.delete(src, 'rf') ~= 0 then
             vim.notify('fs-edit: delete failed: ' .. src, vim.log.levels.ERROR)
+            return false
           end
         end
       end
@@ -291,6 +297,7 @@ function M.execute_actions(actions)
         rename_bufs(src, dst)
       else
         vim.notify('fs-edit: move failed: ' .. tostring(err), vim.log.levels.ERROR)
+        return false
       end
       i = i + 1
     elseif action.name == 'copy' then
@@ -303,6 +310,7 @@ function M.execute_actions(actions)
       local res = vim.fn.system({ 'cp', '-a', src, dst })
       if vim.v.shell_error ~= 0 then
         vim.notify('fs-edit: copy failed: ' .. tostring(res), vim.log.levels.ERROR)
+        return false
       end
       i = i + 1
     else

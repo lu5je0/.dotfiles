@@ -77,6 +77,21 @@ function M.scan_children(model, node)
   return node.children
 end
 
+-- Reset every previously loaded level. Replacing only direct children would
+-- orphan tracked grandchildren and turn a reset into delete actions.
+function M.reset_children(model, node)
+  local loaded = {}
+  for id, n in pairs(model.nodes) do
+    if n.kind == 'entity' and n.loaded then loaded[id] = true end
+  end
+  local function reset(parent)
+    for _, child in ipairs(M.scan_children(model, parent)) do
+      if loaded[child.id] then reset(child) end
+    end
+  end
+  reset(node)
+end
+
 -- Deep-copy `src` (an entity or copy node) into a fresh persistent copy node.
 -- Materialized subtrees are copied structurally (preserving pending edits);
 -- self-references (a copy of X pasted inside X) are skipped like before.
@@ -148,7 +163,7 @@ local function parse_items(model, lines)
   local occurrences = {}
   for lnum, line in ipairs(lines) do
     if line ~= '' and line:match('%S') then
-      local id, name, depth, is_dir = parse_line(line)
+      local id, name, depth, is_dir, expanded = parse_line(line)
       if id or name ~= '' then
         while #stack > 1 and stack[#stack].depth >= depth do
           table.remove(stack)
@@ -157,6 +172,7 @@ local function parse_items(model, lines)
         if id then
           local item = {
             line_nr = lnum, id = id, depth = depth, is_dir = is_dir,
+            expanded = expanded,
             name = is_dir and name:sub(1, -2) or name,
             parent = parent, children = {},
           }
@@ -301,6 +317,7 @@ function M.reconcile(model, lines)
         local node = it.claims
         node.name = it.name
         if node.type == 'directory' then
+          if it.expanded ~= nil then node.expanded = it.expanded end
           if #it.children > 0 then
             node.expanded = true
             node.loaded = true
@@ -536,7 +553,9 @@ local function element_line(elem, depth)
   local indent = string.rep('  ', depth)
   local name = elem.name .. (elem.type == 'directory' and '/' or '')
   if elem.id then
-    return format_line(indent, elem.id, name)
+    local expanded
+    if elem.type == 'directory' then expanded = elem.expanded == true end
+    return format_line(indent, elem.id, name, expanded)
   end
   return indent .. name
 end

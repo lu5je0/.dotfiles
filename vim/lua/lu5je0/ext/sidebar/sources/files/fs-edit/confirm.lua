@@ -22,7 +22,7 @@ end
 -- exists on disk and is NOT freed by another action in the same batch, plus a
 -- second set of actions whose src no longer exists on disk (stale snapshot)
 -- and is not produced by another action's dst in the same batch. Pure
--- function over `sorted` + `vim.uv.fs_stat`; safe to unit-test.
+-- function over `sorted` + filesystem metadata; safe to unit-test.
 function M.detect_conflicts(sorted)
   local will_be_deleted = {}
   for _, a in ipairs(sorted) do
@@ -42,11 +42,18 @@ function M.detect_conflicts(sorted)
     if action.dst then
       local check_path = strip_slash(action.dst)
       if action.name ~= 'create' or not vim.endswith(action.dst, '/') then
-        if vim.uv.fs_stat(check_path)
+        local dst_stat = vim.uv.fs_lstat(check_path)
+        if dst_stat
           and not will_be_deleted[check_path]
           and not will_be_moved_away[check_path] then
-          local is_self = action.src and (action.src == check_path or action.src:sub(1, -2) == check_path)
-          local is_case_rename = action.src and check_path:lower() == action.src:lower()
+          local src = strip_slash(action.src)
+          local is_self = src == check_path
+          -- Case-only renames are safe only when both spellings resolve to
+          -- the same filesystem object, not merely the same lowercase text.
+          local src_stat = src and vim.uv.fs_lstat(src)
+          local is_case_rename = action.name == 'move' and src
+            and check_path:lower() == src:lower() and src_stat
+            and src_stat.dev == dst_stat.dev and src_stat.ino == dst_stat.ino
           if not is_self and not is_case_rename then
             conflicts[action] = true
           end
@@ -70,7 +77,7 @@ function M.detect_conflicts(sorted)
   for _, action in ipairs(sorted) do
     if action.src and (action.name == 'move' or action.name == 'copy' or action.name == 'delete') then
       local sp = strip_slash(action.src)
-      if not vim.uv.fs_stat(sp) and not produced_in_batch(sp) then
+      if not vim.uv.fs_lstat(sp) and not produced_in_batch(sp) then
         conflicts[action] = true
         missing[action] = true
       end

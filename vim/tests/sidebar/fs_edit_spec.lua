@@ -84,6 +84,16 @@ r.run('directory with id', function()
   r.assert_eq(is_dir, true)
 end)
 
+r.run('directory state markers keep the fixed-width name column', function()
+  local fmt = require('lu5je0.ext.sidebar.sources.files.fs-edit.format')
+  for _, expanded in ipairs({ false, true }) do
+    local line = fmt.format_line('  ', 2, 'src/', expanded)
+    local id, name, depth, is_dir, state = parse_line(line)
+    r.assert_eq({ id, name, depth, is_dir, state }, { 2, 'src/', 1, true, expanded })
+    r.assert_eq(line:find('src/', 1, true), 11, 'state marker must not shift the filename')
+  end
+end)
+
 r.run('nested depth', function()
   local _, _, depth = parse_line('      /10 deep.txt')
   r.assert_eq(depth, 3)

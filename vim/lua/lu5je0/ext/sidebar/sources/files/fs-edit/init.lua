@@ -45,7 +45,7 @@ local function reconcile_now(session)
 end
 
 local function refresh(session)
-  te_render.refresh(session, session.buf)
+  return te_render.refresh(session, session.buf)
 end
 
 -- Anchoring info for deleted entries; shared with render's diff signs.
@@ -65,7 +65,7 @@ local function id_order_insert_after(session, after_id, ids)
   end
 end
 
-local function remove_children_lines(session, buf, line_nr, depth)
+local function remove_children_lines(session, buf, line_nr, depth, header)
   local rest = vim.api.nvim_buf_get_lines(buf, line_nr, -1, false)
   local removed = 0
   local removed_ids = {}
@@ -77,7 +77,9 @@ local function remove_children_lines(session, buf, line_nr, depth)
     end
     removed = removed + 1
   end
-  if removed > 0 then
+  if header then
+    vim.api.nvim_buf_set_lines(buf, line_nr - 1, line_nr + removed, false, { header })
+  elseif removed > 0 then
     vim.api.nvim_buf_set_lines(buf, line_nr, line_nr + removed, false, {})
   end
   return removed_ids
@@ -116,7 +118,7 @@ local function on_enter(session)
     local node = model_mod.mint_copy(session, src, elem.name)
     local indent = line:match('^(%s*)') or ''
     vim.api.nvim_buf_set_lines(session.buf, line_nr - 1, line_nr, false,
-      { format_line(indent, node.id, node.name .. '/') })
+      { format_line(indent, node.id, node.name .. '/', false) })
     id_order_insert_after(session, elem.src_id, { node.id })
     rec = reconcile_now(session)
     elem = rec.by_line[line_nr]
@@ -124,18 +126,19 @@ local function on_enter(session)
   end
 
   if elem.type == 'directory' and elem.id and (elem.kind == 'entity' or elem.kind == 'copy') then
+    local indent = line:match('^(%s*)') or ''
     if elem.expanded then
       elem.expanded = false
-      local removed_ids = remove_children_lines(session, session.buf, line_nr, depth)
+      local header = format_line(indent, elem.id, elem.name .. '/', false)
+      local removed_ids = remove_children_lines(session, session.buf, line_nr, depth, header)
       prune_id_order(session, removed_ids)
     else
       elem.expanded = true
       model_mod.ensure_loaded(session, elem)
       local child_lines, new_ids = model_mod.render_children_lines(session, elem, depth + 1)
-      if #child_lines > 0 then
-        vim.api.nvim_buf_set_lines(session.buf, line_nr, line_nr, false, child_lines)
-        id_order_insert_after(session, elem.id, new_ids)
-      end
+      table.insert(child_lines, 1, format_line(indent, elem.id, elem.name .. '/', true))
+      vim.api.nvim_buf_set_lines(session.buf, line_nr - 1, line_nr, false, child_lines)
+      id_order_insert_after(session, elem.id, new_ids)
     end
     local pending = refresh(session)
     vim.bo[session.buf].modified = was_modified or pending
@@ -147,6 +150,15 @@ local function on_enter(session)
       if dk then win_mod.open_file(dk.path) end
     end
   end
+end
+
+-- A rebuilt disk snapshot assigns new identities. Old buffer undo records
+-- must never be interpreted against those identities.
+local function replace_snapshot_lines(session, lines)
+  local undo_levels = vim.bo[session.buf].undolevels
+  vim.bo[session.buf].undolevels = -1
+  vim.api.nvim_buf_set_lines(session.buf, 0, -1, false, lines)
+  vim.bo[session.buf].undolevels = undo_levels
 end
 
 local function post_save_reset(session, acts)
@@ -172,7 +184,7 @@ local function post_save_reset(session, acts)
   end
   model_mod.rebuild(session, expanded)
   local lines = model_mod.render_all(session)
-  vim.api.nvim_buf_set_lines(session.buf, 0, -1, false, lines)
+  replace_snapshot_lines(session, lines)
   refresh(session)
   vim.bo[session.buf].modified = false
 end
@@ -193,7 +205,7 @@ local function mutate(session)
 
   confirm.show(acts, dupes, session.root_dir, function(confirmed)
     if not confirmed then return end
-    actions_mod.execute_actions(acts)
+    if not actions_mod.execute_actions(acts) then return end
     post_save_reset(session, acts)
 
     local sidebar_state = require('lu5je0.ext.sidebar.state')
@@ -205,7 +217,7 @@ local function mutate(session)
 end
 
 local function name_start_col(line)
-  local after_id = line:match('^%s*/%d+ ()')
+  local after_id = line:match('^%s*[/+%-]%d+ ()')
   if after_id then return after_id - 1 end
   local indent = line:match('^(%s*)')
   return #indent
@@ -236,7 +248,7 @@ function M.open(node, opts)
       vim.wo[win].number = true
       vim.wo[win].signcolumn = 'yes:1'
       s.win = win
-      vim.cmd([[syn match FsEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
+      vim.cmd([[syn match FsEditStoreID /^\s*\zs[\/+-]\d\+\s/ conceal]])
       refresh(s)
       return
     end
@@ -301,7 +313,7 @@ function M.open(node, opts)
   vim.wo[session.win].number = true
   vim.wo[session.win].signcolumn = 'yes:1'
 
-  vim.cmd([[syn match FsEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
+  vim.cmd([[syn match FsEditStoreID /^\s*\zs[\/+-]\d\+\s/ conceal]])
 
   sessions[buf] = session
 
@@ -516,7 +528,7 @@ function M.open(node, opts)
     -- (rescan re-claims tracked ids; clearing would read as deletions)
     if cursor_elem and cursor_elem.kind == 'entity' and cursor_elem.type == 'directory'
       and not cursor_elem.expanded and cursor_elem.loaded then
-      model_mod.scan_children(session, cursor_elem)
+      model_mod.reset_children(session, cursor_elem)
       refresh(session)
       return
     end
@@ -551,7 +563,9 @@ function M.open(node, opts)
         cnode.expanded = false
         cnode.loaded = false
         cnode.children = {}
-        local removed_ids = remove_children_lines(session, buf, target_row, pd)
+        local indent = all_lines[target_row]:match('^(%s*)') or ''
+        local header = format_line(indent, cnode.id, cnode.name .. '/', false)
+        local removed_ids = remove_children_lines(session, buf, target_row, pd, header)
         prune_id_order(session, removed_ids)
         refresh(session)
         return
@@ -610,7 +624,9 @@ function M.open(node, opts)
       for _ in rel:gmatch('/') do orig_depth = orig_depth + 1 end
       local indent = string.rep('  ', orig_depth)
       local restored = dk.type == 'directory' and (dk.name .. '/') or dk.name
-      return format_line(indent, id, restored)
+      local expanded
+      if dk.type == 'directory' then expanded = session.nodes[id].expanded == true end
+      return format_line(indent, id, restored, expanded)
     end
 
     if changed_set[cursor_row] then
@@ -717,9 +733,9 @@ function M.open(node, opts)
       end
       model_mod.rebuild(session, expanded)
       local lines = model_mod.render_all(session)
-      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+      replace_snapshot_lines(session, lines)
       refresh(session)
-      vim.cmd([[syn match FsEditStoreID /^\s*\zs\/\d\+\s/ conceal]])
+      vim.cmd([[syn match FsEditStoreID /^\s*\zs[\/+-]\d\+\s/ conceal]])
       vim.bo[buf].modified = false
     end,
   })

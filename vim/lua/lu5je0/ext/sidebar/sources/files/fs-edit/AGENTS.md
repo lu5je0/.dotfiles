@@ -27,22 +27,22 @@
 
 ## 模块职责
 
-- `format.lua`：行格式唯一来源。`ID_WIDTH = 6`、`LINE_FMT`、`format_line` / `parse_line`（depth 对奇数缩进向下取整）、`PLACEHOLDER`（o/O 插入的 NBSP）。
-- `model.lua`：核心。`new` / `rebuild`（重扫磁盘并按路径集合恢复展开）/ `mint_disk` / `scan_children` / `ensure_loaded` / `mint_copy`；`reconcile`（解析 buffer 行、认领节点、瞬态元素重建）；`diff`（position 驱动：实体节点收集全部出现位置，磁盘路径命中则 keep-original，否则最后一个位置为 move、其余为 copy；祖先 move 抑制/重写子路径）；`check_dupes` / `has_pending` / `has_hidden_pending` / `deleted_entries` / `render_all` / `render_children_lines` / `expanded_paths`。
-- `actions.lua`：纯执行层，不认识 buffer 和树。`plan_actions` 拓扑排序（move 环过 `.fs-edit-swap-N` 中转；consumer-before-writer 边对"writer 的 src 在被消费子树内"不成立；**无法排序的环返回 nil，保存中止**）；`execute_actions`（`q-trash`、`EXDEV` 回退、`cp -a` 保留元数据；plan 失败返回 false 不执行任何操作）；`add_implicit_creates` / `format_action`。
+- `format.lua`：行格式唯一来源。`ID_WIDTH = 6`、`LINE_FMT`、`format_line` / `parse_line`（depth 对奇数缩进向下取整）、`PLACEHOLDER`（o/O 插入的 NBSP）。目录隐藏前缀用 `-` / `+` 表示折叠 / 展开，文件用 `/`；三者等宽。`parse_line` 第五个返回值为展开状态，`/` 行返回 nil，兼容未显式记录状态的行。
+- `model.lua`：核心。`new` / `rebuild`（重扫磁盘并按路径集合恢复展开）/ `mint_disk` / `scan_children` / `reset_children`（递归恢复此前加载过的层级）/ `ensure_loaded` / `mint_copy`；`reconcile`（解析 buffer 行、认领节点、瞬态元素重建）；`diff`（position 驱动：实体节点收集全部出现位置，磁盘路径命中则 keep-original，否则最后一个位置为 move、其余为 copy；祖先 move 抑制/重写子路径）；`check_dupes` / `has_pending` / `has_hidden_pending` / `deleted_entries` / `render_all` / `render_children_lines` / `expanded_paths`。
+- `actions.lua`：纯执行层，不认识 buffer 和树。`plan_actions` 拓扑排序（move 环过 `.fs-edit-swap-N` 中转；consumer-before-writer 边对"writer 的 src 在被消费子树内"不成立；**无法排序的环返回 nil，保存中止**）；`execute_actions`（`q-trash`、`EXDEV` 回退、`cp -a` 保留元数据；plan 失败不执行任何操作，执行失败立即返回 false，停止后续操作）；`add_implicit_creates` / `format_action`。
 - `render.lua`：装饰层，单入口 `M.refresh(session, buf)`（内部 reconcile + diff 一次，再画 guides/icons/diff signs/[+] 标记）。纯读，不改 buffer 内容，不跑同步外部命令。
-- `confirm.lua`：保存前预览。`M.show` **同步阻塞**（浮窗 + `getcharstr`，j/k 可滚动），保证 BufWriteCmd 返回时保存已完成（`:wq` / `:x` 语义正确）。`detect_conflicts` 返回 `(conflicts, missing)`：目标已存在且未被同批腾空 → `[CONFLICT]`；src 磁盘缺失且非同批产物 → `[MISSING]`；任一存在时只能取消。
+- `confirm.lua`：保存前预览。`M.show` **同步阻塞**（浮窗 + `getcharstr`，j/k 可滚动），保证 BufWriteCmd 返回时保存已完成（`:wq` / `:x` 语义正确）。`detect_conflicts` 返回 `(conflicts, missing)`：目标已存在且未被同批腾空 → `[CONFLICT]`；src 磁盘缺失且非同批产物 → `[MISSING]`；任一存在时只能取消。存在性用 `lstat` 检查链接本身；大小写重命名豁免必须确认两种拼写的 device/inode 相同。
 - `path_util.lua`：纯字符串路径工具（`strip_slash` / `rel` / `inside` / `iter_ancestors`）。
 - `init.lua`：buffer 生命周期 + 交互。session 就是 model 表（附加 `buf`/`win`），存在 `sessions[buf]`（`M._sessions` 供测试用）。`on_enter` 是薄调度：瞬态 copy 目录先 `mint_copy` 重写行 id，目录节点翻转 `expanded`（展开走 `ensure_loaded` + `render_children_lines`）。`mutate` 保存流程；`reset_hunk` / `preview_hunk` / `smart_paste` / `o` / `O` / `K`。`q` 有未保存修改时确认，`<leader>q` 强制关闭。
 
 ## 核心不变式（大多已结构化，不再靠纪律）
 
 - **折叠不等于删除**：折叠只是 `expanded = false`，子节点仍在 `node.children`（stash）里；reconcile 对折叠节点**不触碰** children，diff 自然把 stash 计入。旧架构的 `saved_children` / `effective_buf_lines` 拼接已不存在。
-- **undo 自愈**：`nodes[]` 保留 detach 的节点；undo 恢复行后 reconcile 按 id 重新认领节点（连同子树状态）。不存在"行恢复了但旁挂表没恢复"的中间态。
+- **undo 边界**：同一磁盘快照内，`nodes[]` 保留 detach 节点供 undo 认领；展开状态与子行在同一次 buffer 编辑中更新，undo / redo 同时恢复。成功保存或显式刷新重建快照时清空 buffer undo 历史，旧 ID 不得用于新快照。
 - **删除只针对 tracked**：`disk[id].tracked` 仅在实体节点进过 working 树时为 true；copy 的 origin 引用的 disk id 不 tracked，永不产生 delete。
 - **stash 规则**：折叠目录中隐藏的节点被 buffer 其它位置引用时，那些行是 copy，不会把节点从 stash 里撕走（除非折叠被 undo，行回到容器项之内）。
 - **copy 的 bulk/展开二态**：copy 目录 `loaded = false` → 单条 `cp -a` bulk copy；`loaded = true`（展开过或深拷贝过）→ `create dir/` + 子节点各自产出 action。
-- **reconcile 的展开推断**：折叠节点若在 buffer 里出现子行（undo 场景）→ 视为展开并按行重建 children；`expanded = true` 但无子行 → children 全删。
+- **reconcile 的展开推断**：先读取目录前缀中的展开状态；出现子行时视为展开并按行重建 children。显式展开但无子行表示删除全部 children；显式折叠时保留 stash，避免把撤销展开误认为删除。
 - **id_order**：仅用于删除 sign/恢复的邻居锚定；`render_all` 重建、展开/铸造插入、折叠修剪。不参与 diff 决策。
 - **fixed-width id 前缀**：`format.ID_WIDTH = 6`，保证 `<C-v>` 视觉块列对齐；改动前确认所有解析点容忍。
 
@@ -53,7 +53,7 @@
 3. `diff`：working 树 vs disk 快照 → create/delete/move/copy。
 4. `add_implicit_creates`：为 move/copy 目标补齐缺失父目录。
 5. `confirm.show` 同步阻塞预览（`plan_actions` 检出环则直接中止）。
-6. 确认后 `execute_actions` 落盘 → `rebuild`（按展开路径 + action 目标祖先恢复展开）→ `render_all` 重渲染。整个流程在 BufWriteCmd 内同步完成。
+6. 确认后 `execute_actions` 落盘；失败则保留 buffer 与 modified，不重建快照，已完成的操作不自动回滚。全部成功后 `rebuild`（按展开路径 + action 目标祖先恢复展开）→ `render_all` 重渲染并清空旧 undo 历史。整个流程在 BufWriteCmd 内同步完成。
 
 ## 修改约定
 

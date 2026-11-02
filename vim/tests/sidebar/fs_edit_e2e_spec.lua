@@ -2020,5 +2020,298 @@ r.run('save after mv re-associates the open buffer (no E13)', function()
   vim.fn.delete(tmp, 'rf')
 end)
 
+-- Real :write fixtures keep confirmation, execution and post-save rebuilding
+-- in the path under test. PATH excludes q-trash so deletes stay inside tmp.
+local function with_write_fixture(fn)
+  local tmp = vim.fn.tempname()
+  local ctx = { dir = tmp .. '/root', notifications = {} }
+  local old_path, old_notify = vim.env.PATH, vim.notify
+  local ok, err = xpcall(function()
+    mkdir(ctx.dir)
+    mkdir(tmp .. '/bin')
+    local cp = vim.fn.exepath('cp')
+    r.assert_truthy(cp ~= '', 'cp is required for filesystem tests')
+    assert(vim.uv.fs_symlink(cp, tmp .. '/bin/cp'))
+    vim.env.PATH = tmp .. '/bin'
+    vim.notify = function(msg) ctx.notifications[#ctx.notifications + 1] = msg end
+
+    function ctx.open()
+      local buf, session, _, do_enter = open_and_helpers(ctx.dir)
+      ctx.buf, ctx.session, ctx.do_enter = buf, session, do_enter
+      return buf
+    end
+
+    function ctx.do_save()
+      vim.api.nvim_input('y')
+      local saved, save_err = pcall(vim.cmd.write)
+      -- A no-op save has no prompt; do not leave its reply for the next input.
+      while vim.fn.getchar(0) ~= 0 do end
+      return saved, save_err
+    end
+
+    fn(ctx)
+  end, debug.traceback)
+
+  vim.env.PATH, vim.notify = old_path, old_notify
+  if ctx.buf and vim.api.nvim_buf_is_valid(ctx.buf) then
+    vim.api.nvim_buf_delete(ctx.buf, { force = true })
+  end
+  vim.uv.fs_chmod(ctx.dir, tonumber('755', 8))
+  vim.fn.delete(tmp, 'rf')
+  if not ok then error(err, 0) end
+end
+
+-- Separate Lua API edits into undo blocks, as distinct user inputs would be.
+local function break_undo_block()
+  local keys = vim.api.nvim_replace_termcodes('i<C-G>u<Esc>', true, false, true)
+  vim.api.nvim_feedkeys(keys, 'nx', false)
+end
+
+-- ============================================================================
+r.group('e2e: failed writes preserve sources and pending edits')
+-- ============================================================================
+
+r.run('failed copy does not delete its source directory', function()
+  with_write_fixture(function(t)
+    mkdir(t.dir .. '/src')
+    local source = t.dir .. '/src/file.txt'
+    writefile(source, { 'irreplaceable content' })
+    local buf = t.open()
+
+    -- Materialize a copy, then remove the original directory from the tree.
+    local src_row = find_line(buf, 'src/')
+    local src_text = buf_lines(buf)[src_row]
+    vim.api.nvim_buf_set_lines(buf, src_row, src_row, false,
+      { gsub(src_text, 'src/', 'dst/') })
+    t.do_enter(src_row + 1)
+    vim.api.nvim_buf_set_lines(buf, src_row - 1, src_row, false, {})
+
+    assert(vim.uv.fs_chmod(source, 0))
+    t.do_save()
+
+    r.assert_truthy(table.concat(t.notifications, '\n'):find('copy failed', 1, true),
+      'the fixture must reach a real copy failure')
+    r.assert_truthy(not exists(t.dir .. '/dst/file.txt'), 'failed copy has no destination')
+    r.assert_truthy(isfile(source), 'failed copy must preserve src/file.txt instead of deleting src/')
+    assert(vim.uv.fs_chmod(source, tonumber('644', 8)))
+    r.assert_eq(readfile(source), 'irreplaceable content')
+    r.assert_eq(vim.bo[buf].modified, true, 'failed save must remain pending')
+  end)
+end)
+
+r.run('failed create keeps its buffer line and modified state for retry', function()
+  with_write_fixture(function(t)
+    writefile(t.dir .. '/keep.txt', { 'keep' })
+    local buf = t.open()
+    vim.api.nvim_buf_set_lines(buf, -1, -1, false, { 'new.txt' })
+    assert(vim.uv.fs_chmod(t.dir, tonumber('555', 8)))
+
+    t.do_save()
+    assert(vim.uv.fs_chmod(t.dir, tonumber('755', 8)))
+
+    r.assert_truthy(table.concat(t.notifications, '\n'):find('create failed', 1, true),
+      'the fixture must reach a real create failure')
+    r.assert_truthy(not exists(t.dir .. '/new.txt'), 'failed create has no destination')
+    r.assert_eq(vim.bo[buf].modified, true, 'failed create must not clear modified')
+    r.assert_truthy(find_line(buf, 'new.txt'), 'failed create must keep the pending line')
+
+    local saved, err = t.do_save()
+    r.assert_truthy(saved, tostring(err))
+    r.assert_truthy(isfile(t.dir .. '/new.txt'), 'retry succeeds after permissions are restored')
+  end)
+end)
+
+-- ============================================================================
+r.group('e2e: rename conflicts preserve externally created targets')
+-- ============================================================================
+
+for _, names in ipairs({ { 'foo', 'fo' }, { 'a', 'A' } }) do
+  local src, dst = names[1], names[2]
+  r.run(src .. ' -> ' .. dst .. ' does not overwrite a different existing file', function()
+    with_write_fixture(function(t)
+      writefile(t.dir .. '/' .. src, { 'source content' })
+      local buf = t.open()
+      r.assert_truthy(not exists(t.dir .. '/' .. dst),
+        'fixture requires distinct source and destination paths')
+      -- The target appears after the snapshot, so it is not a requested deletion.
+      writefile(t.dir .. '/' .. dst, { 'external target content' })
+      vim.api.nvim_buf_set_lines(buf, 0, 1, false,
+        { gsub(buf_lines(buf)[1], src .. '$', dst) })
+
+      t.do_save()
+
+      r.assert_eq(readfile(t.dir .. '/' .. dst), 'external target content',
+        'rename conflict must preserve the external target')
+      r.assert_truthy(isfile(t.dir .. '/' .. src), 'blocked rename keeps its source')
+      r.assert_eq(readfile(t.dir .. '/' .. src), 'source content')
+      r.assert_eq(vim.bo[buf].modified, true, 'blocked rename remains pending')
+    end)
+  end)
+end
+
+-- ============================================================================
+r.group('e2e: reset and undo preserve file identity and hidden descendants')
+-- ============================================================================
+
+r.run('resetting a collapsed ancestor restores its loaded grandchild', function()
+  with_write_fixture(function(t)
+    mkdir(t.dir .. '/dir/sub')
+    writefile(t.dir .. '/dir/sub/file.txt', { 'grandchild content' })
+    local buf = t.open()
+    t.do_enter(find_line(buf, 'dir/'))
+    t.do_enter(find_line(buf, 'sub/'))
+    local row = find_line(buf, 'file.txt')
+    vim.api.nvim_buf_set_lines(buf, row - 1, row, false,
+      { gsub(buf_lines(buf)[row], 'file%.txt', 'renamed.txt') })
+    local dir_row = find_line(buf, 'dir/')
+    t.do_enter(dir_row)
+
+    vim.api.nvim_win_set_cursor(0, { dir_row, 0 })
+    local reset
+    for _, m in ipairs(vim.api.nvim_buf_get_keymap(buf, 'n')) do
+      if m.lhs == '\\gu' then reset = m.callback; break end
+    end
+    r.assert_truthy(reset, '<leader>gu keymap not found')
+    reset()
+    local saved, err = t.do_save()
+    r.assert_truthy(saved, tostring(err))
+
+    r.assert_truthy(isfile(t.dir .. '/dir/sub/file.txt'),
+      'reset must restore the grandchild instead of scheduling its deletion')
+    r.assert_eq(readfile(t.dir .. '/dir/sub/file.txt'), 'grandchild content')
+    r.assert_truthy(not exists(t.dir .. '/dir/sub/renamed.txt'), 'rename was reset')
+  end)
+end)
+
+r.run('undo after save never exchanges an unrelated file with the renamed file', function()
+  with_write_fixture(function(t)
+    writefile(t.dir .. '/a', { 'AAA' })
+    writefile(t.dir .. '/b', { 'BBB' })
+    local buf = t.open()
+    break_undo_block()
+    local row = find_line(buf, ' a')
+    vim.api.nvim_buf_set_lines(buf, row - 1, row, false,
+      { gsub(buf_lines(buf)[row], 'a$', 'z') })
+    break_undo_block()
+    local saved, err = t.do_save()
+    r.assert_truthy(saved, tostring(err))
+    r.assert_eq(readfile(t.dir .. '/z'), 'AAA', 'initial rename succeeds')
+    r.assert_eq(readfile(t.dir .. '/b'), 'BBB')
+
+    break_undo_block()
+    vim.cmd('undo')
+    saved, err = t.do_save()
+    r.assert_truthy(saved, tostring(err))
+
+    r.assert_eq(readfile(t.dir .. '/b'), 'BBB', 'undo must not rebind old IDs to unrelated files')
+    -- Either undo the rename or stop undo at the save boundary; never swap content.
+    local renamed_path = exists(t.dir .. '/a') and (t.dir .. '/a') or (t.dir .. '/z')
+    r.assert_eq(readfile(renamed_path), 'AAA', 'the renamed file retains its content')
+  end)
+end)
+
+r.run('undoing expansion then saving another edit preserves the hidden child', function()
+  with_write_fixture(function(t)
+    mkdir(t.dir .. '/dir')
+    writefile(t.dir .. '/dir/file.txt', { 'hidden content' })
+    local buf = t.open()
+    break_undo_block()
+    t.do_enter(find_line(buf, 'dir/'))
+    r.assert_truthy(find_line(buf, 'file.txt'), 'expansion shows the child')
+    break_undo_block()
+    vim.cmd('undo')
+    r.assert_truthy(not find_line(buf, 'file.txt'), 'undo removes the expansion lines')
+
+    vim.api.nvim_buf_set_lines(buf, -1, -1, false, { 'unrelated.txt' })
+    local saved, err = t.do_save()
+    r.assert_truthy(saved, tostring(err))
+
+    r.assert_truthy(isfile(t.dir .. '/unrelated.txt'), 'the unrelated edit was saved')
+    r.assert_truthy(isfile(t.dir .. '/dir/file.txt'),
+      'undoing expansion must not become a deletion on the next save')
+    r.assert_eq(readfile(t.dir .. '/dir/file.txt'), 'hidden content')
+  end)
+end)
+
+-- ============================================================================
+r.group('e2e: dangling symlinks can be edited')
+-- ============================================================================
+
+for _, operation in ipairs({ 'delete', 'rename' }) do
+  r.run(operation .. ' operates on a dangling symlink itself', function()
+    with_write_fixture(function(t)
+      local target = t.dir .. '/missing-target'
+      local link = t.dir .. '/link'
+      assert(vim.uv.fs_symlink(target, link))
+      local buf = t.open()
+      r.assert_truthy(vim.uv.fs_lstat(link), 'the symlink itself exists')
+      r.assert_truthy(not exists(link), 'the symlink target is missing')
+      if operation == 'delete' then
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+      else
+        vim.api.nvim_buf_set_lines(buf, 0, 1, false,
+          { gsub(buf_lines(buf)[1], 'link$', 'renamed-link') })
+      end
+
+      local saved, err = t.do_save()
+      r.assert_truthy(saved, tostring(err))
+
+      r.assert_truthy(not vim.uv.fs_lstat(link),
+        operation .. ' must not be blocked by the symlink target being missing')
+      if operation == 'rename' then
+        r.assert_eq(vim.uv.fs_readlink(t.dir .. '/renamed-link'), target,
+          'rename preserves the symlink target')
+      end
+      r.assert_truthy(not exists(target), 'the missing target stays untouched')
+      r.assert_eq(vim.bo[buf].modified, false, 'the operation completed')
+    end)
+  end)
+end
+
+r.group('e2e: directory view edits remain undoable without blocking real deletes')
+
+r.run('redo expansion then delete all children still deletes the files', function()
+  with_write_fixture(function(t)
+    mkdir(t.dir .. '/dir')
+    writefile(t.dir .. '/dir/file.txt', { 'delete me' })
+    local buf = t.open()
+    break_undo_block()
+    t.do_enter(find_line(buf, 'dir/'))
+    break_undo_block()
+    vim.cmd('undo')
+    vim.cmd('redo')
+    local row = find_line(buf, 'file.txt')
+    r.assert_truthy(row, 'redo restores the expansion')
+    vim.api.nvim_buf_set_lines(buf, row - 1, row, false, {})
+
+    local saved, err = t.do_save()
+    r.assert_truthy(saved, tostring(err))
+    r.assert_truthy(isdir(t.dir .. '/dir'), 'directory remains')
+    r.assert_truthy(not exists(t.dir .. '/dir/file.txt'), 'explicit child deletion is applied')
+  end)
+end)
+
+r.run('undo collapse preserves an edited child through save', function()
+  with_write_fixture(function(t)
+    mkdir(t.dir .. '/dir')
+    writefile(t.dir .. '/dir/file.txt', { 'keep me' })
+    local buf = t.open()
+    t.do_enter(find_line(buf, 'dir/'))
+    local row = find_line(buf, 'file.txt')
+    vim.api.nvim_buf_set_lines(buf, row - 1, row, false,
+      { gsub(buf_lines(buf)[row], 'file%.txt', 'renamed.txt') })
+    break_undo_block()
+    t.do_enter(find_line(buf, 'dir/'))
+    break_undo_block()
+    vim.cmd('undo')
+    r.assert_truthy(find_line(buf, 'renamed.txt'), 'undo restores the edited child line')
+
+    local saved, err = t.do_save()
+    r.assert_truthy(saved, tostring(err))
+    r.assert_eq(readfile(t.dir .. '/dir/renamed.txt'), 'keep me')
+    r.assert_truthy(not exists(t.dir .. '/dir/file.txt'), 'rename is applied once')
+  end)
+end)
+
 r.finish()
 
