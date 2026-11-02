@@ -68,7 +68,7 @@ sidebar/
 - History 只展示已提交历史，未提交改动由 Changes 展示。History 与其他 source 一样走 `source_base` → `render_tree` → `view.flush`；`sources/history/model.lua` 只负责异步加载和取消，History 专属解析和提交图算法集中在 `sources/history/`，与 source 的窗口操作分离。`git_style.lua` 共用 Changes/History 的树样式；预览 source 可声明 `preview_kind` 与 `preview_item()`，由共享 preview / diff_preview 管理浮窗；条目可通过 `preview_kind = "text"`、`lines`、`title` 提供文本预览，`text_preview` 管理 per-tab 浮窗及资源释放。
 - 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册即可。
 - 快捷键区分共享（`keymaps.apply_shared`）和 per-tab（source `keymaps()`）。
-- source 快捷键只绑定当前页，切页时移除其他页的映射；不能把非当前页按键保留成空操作，避免 Files 的 `dd` / `cd` 使 Git Changes 的 `d` / `c` 等待后续输入。 同页存在短键和长键前缀时，先注册长键、后注册短键，使短键的 `nowait` 优先匹配；单空格预览不能等待双空格超时。
+- source 快捷键只绑定当前页，切页时先移除全部 source 映射，再绑定当前页；不能把非当前页按键保留成空操作，避免 Files 的 `dd` / `cd` 使 Git Changes 的 `d` / `c` 等待后续输入。同页存在短键和长键前缀时，先注册长键、后注册短键，使短键的 `nowait` 优先匹配；覆盖已有映射不会改变查找顺序，必须先移除再注册，单空格预览不能等待双空格超时。
 - git 工具统一用 `actions/git_ops.lua` → `ext/git/common/git-ops.lua`。
 - 异步回调里先捕获 `local ts = state.tab()` 或 `state.tab_for(tabpage)`，不要直接读写 `state.xxx`。render 还要捕获 tabpage，schedule 里 `nvim_get_current_tabpage() ~= captured` 就跳过。
 - 跨 tab 的资源（fs_event、timer、preview 等）放进 per-tab state，不要写成模块级 singleton；持 libuv handle 的字段在 `state.cleanup_closed_tabs` 里释放。

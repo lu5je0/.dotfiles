@@ -37,7 +37,7 @@ local renamed = commit('picked-rename')
 git { 'rm', 'extra.txt' }
 local deleted = commit('picked-delete')
 
-local function child(kind, mode)
+local function child(kind, mode, via_files)
   local chan = vim.fn.jobstart({ vim.v.progpath, '--headless', '--embed', '-n', '-i', 'NONE', '-u', 'NONE', '--cmd', 'set rtp+=' .. root .. '/vim' }, {
     rpc = true,
     env = { NVIM_LOG_FILE = vim.fn.tempname() },
@@ -84,6 +84,19 @@ local function child(kind, mode)
   ]],
     { repo, mode or 'single' }
   )
+  if via_files then
+    c.q([[
+      vim.cmd.cd(...)
+      vim.o.timeoutlen = 2000
+      vim.keymap.set('n', '<Space><Space>', function() error('global double-Space mapping must not run in History') end)
+      require('lu5je0.ext.loader').ext_load({
+        name = 'sidebar', config = function() require('lu5je0.ext.sidebar').setup() end,
+        keys = { { '<leader>e', mode = { 'n' } } },
+      })
+    ]], { repo })
+    c.feed(',e')
+    c.q([[vim.api.nvim_set_current_win(require('lu5je0.ext.sidebar.state').win)]])
+  end
   c.feed(kind == 'line' and 'ggV,gl' or ',gl')
   c.wait(
     kind == 'line' and [[return vim.api.nvim_buf_line_count(0) == 3 and vim.wo.statusline:find('L%%#Number#1%%') ~= nil]]
@@ -1045,6 +1058,20 @@ run('History commit Space previews details and follows Sidebar lifecycle', funct
   ]])
   c.feed(',gl<Space>q')
   c.q([[local s=require('lu5je0.ext.sidebar.state'); assert(not s:is_open() and s.preview.text_win==nil)]])
+  c.stop()
+end)
+
+run('History file Space after opening Files does not wait for timeoutlen', function()
+  local c = child('project', 'single', true)
+  c.go('picked-change')
+  c.feed('l')
+  c.go('demo.txt')
+  c.feed('<Space>')
+  assert(vim.wait(500, function()
+    return c.q([[local s=require('lu5je0.ext.sidebar.state'); return s.preview.active and s.diff_preview.win_single~=nil]])
+  end, 10), 'file preview must open before the 2000ms mapping timeout')
+  c.feed('<Space>')
+  c.q([[local s=require('lu5je0.ext.sidebar.state'); assert(vim.api.nvim_get_current_win()==s.diff_preview.win_single)]])
   c.stop()
 end)
 

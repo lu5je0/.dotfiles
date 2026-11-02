@@ -135,6 +135,11 @@ function M.apply_for_tab(idx)
   build_dispatch()
 
   local entries = vim.tbl_values(_dispatch)
+  -- Replacing a mapping keeps its old position in Neovim's lookup list.
+  -- Remove previous source mappings before restoring prefix priority.
+  for _, entry in ipairs(entries) do
+    pcall(vim.keymap.del, entry.mode, entry.lhs, { buffer = state.buf })
+  end
   -- Neovim checks newer mappings first. Install short <nowait> mappings
   -- last so a longer mapping cannot make their shared prefix wait.
   table.sort(entries, function(a, b)
@@ -144,8 +149,6 @@ function M.apply_for_tab(idx)
     local handler = entry.handlers[idx]
     if handler then
       buf_set(entry.mode, entry.lhs, handler)
-    else
-      pcall(vim.keymap.del, entry.mode, entry.lhs, { buffer = state.buf })
     end
   end
 end
