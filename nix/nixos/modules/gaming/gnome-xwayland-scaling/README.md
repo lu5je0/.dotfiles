@@ -1,9 +1,9 @@
 # GNOME 游戏缩放
 
-`nixos/modules/gaming.nix` 通过导入本目录的 NixOS 模块启用：
+`nixos/modules/gaming/default.nix` 通过导入本目录的 NixOS 模块启用：
 
 ```nix
-imports = [ ./gaming/gnome-xwayland-scaling ];
+imports = [ ./gnome-xwayland-scaling ];
 ```
 
 `default.nix` 统一定义 Mutter 与 `gnome-settings-daemon` 的覆盖以及 dconf 默认值。
@@ -56,7 +56,7 @@ gsettings set org.gnome.mutter.wayland xwayland-native-resolution false
 gsettings reset org.gnome.mutter.wayland xwayland-native-resolution
 ```
 
-桌面内关闭开关不能卸载补丁。完全回退时，移除 `gaming.nix` 中本模块的 import，
+桌面内关闭开关不能卸载补丁。完全回退时，移除 `gaming/default.nix` 中本模块的 import，
 再重建系统并重新登录。
 
 ## 验证

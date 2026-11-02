@@ -3,7 +3,7 @@
 {
   imports = [
     ../pkgs/arcglyph/module.nix
-    ../modules/desktop-icons.nix
+    ../modules/desktop-icons
     ../modules/fcitx5.nix
     ../modules/gnome.nix
     ../modules/keyd.nix

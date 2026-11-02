@@ -99,7 +99,7 @@
         huskar = mkSystem [
           ./nix/nixos/profiles/base.nix
           ./nix/nixos/hosts/huskar
-          ./nix/nixos/modules/gaming.nix
+          ./nix/nixos/modules/gaming
           ./nix/nixos/profiles/desktop.nix
           ./nix/nixos/modules/nas-mount.nix
         ];
@@ -107,7 +107,7 @@
           inputs.wayland-scroll-factor.nixosModules.default
           ./nix/nixos/profiles/base.nix
           ./nix/nixos/hosts/jerry
-          ./nix/nixos/modules/gaming.nix
+          ./nix/nixos/modules/gaming
           ./nix/nixos/profiles/desktop.nix
           ./nix/nixos/modules/nas-mount.nix
         ];

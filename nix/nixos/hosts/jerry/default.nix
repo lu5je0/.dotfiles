@@ -3,8 +3,8 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./touchpad.nix
-    ./fn-ctrl.nix
+    ./pkgs/touchpad-speed-control/module.nix
+    ./pkgs/fn-ctrl/module.nix
   ];
 
   # ESP 挂在 /boot（hardware-configuration.nix 里生成），GRUB 装进 ESP，device = "nodev"

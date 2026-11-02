@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  imports = [ ./gaming/gnome-xwayland-scaling ];
+  imports = [ ./gnome-xwayland-scaling ];
 
   # Xbox 蓝牙手柄使用带震动指令节流的 xpadneo，保留默认震动强度。
   hardware.xpadneo.enable = true;

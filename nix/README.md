@@ -15,7 +15,7 @@ sudo nixos-rebuild switch --flake .#huskar
 
 ## 桌面应用图标
 
-桌面 profile 引入 `nixos/modules/desktop-icons.nix`，在
+桌面 profile 引入 `nixos/modules/desktop-icons`，在
 `nixos/profiles/desktop.nix` 配置启动项 ID 与图标文件即可，支持 SVG、PNG 等桌面图标格式：
 
 ```nix

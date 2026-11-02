@@ -4,7 +4,7 @@
   programs.wsf.enable = true;
 
   # 公共 GNOME 模块会把包的 extensionUuid 加入默认启用列表。
-  environment.systemPackages = [ (pkgs.callPackage ./pkgs/touchpad-speed-control { }) ];
+  environment.systemPackages = [ (pkgs.callPackage ./. { }) ];
 
   programs.dconf.profiles.user.databases = [
     {

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "nixos/modules/desktop-icons.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "nixos/modules/desktop-icons/desktop-icons.py"
 APP = "io.github.example.Player.desktop"
 LAUNCHER = """[Desktop Entry]
 Name=播放器
