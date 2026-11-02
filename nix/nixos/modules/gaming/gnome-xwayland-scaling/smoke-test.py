@@ -86,7 +86,7 @@ def main():
         def setting(key, value):
             run("gsettings", "set", "org.gnome.mutter.wayland", key, value)
 
-        def configure(scale, second_scale=None, placement="--right-of"):
+        def configure(scale, second_scale=None, placement="--right-of", third_scale=None):
             args = [
                 str(package / "bin/gdctl"), "set", "--layout-mode", "logical",
                 "--logical-monitor", "--primary", "--scale", str(scale),
@@ -96,6 +96,11 @@ def main():
                 args += [
                     "--logical-monitor", "--scale", str(second_scale), placement, "Meta-0",
                     "--monitor", "Meta-1", "--mode", "3840x2160@60.000",
+                ]
+            if third_scale is not None:
+                args += [
+                    "--logical-monitor", "--scale", str(third_scale), placement, "Meta-1",
+                    "--monitor", "Meta-2", "--mode", "3840x2160@60.000",
                 ]
             run(*args)
 
@@ -171,7 +176,12 @@ def main():
             try:
                 if args.x11_library:
                     def mapped():
-                        return re.search(r'(0x[0-9a-f]+) "glxgears"', run("xwininfo", "-root", "-tree"))
+                        # 装饰窗口也沿用应用标题；EWMH 请求必须发给应用窗口。
+                        for line in run("xwininfo", "-root", "-tree").splitlines():
+                            if '"mutter-x11-frames"' not in line:
+                                match = re.search(r'(0x[0-9a-f]+) "glxgears"', line)
+                                if match:
+                                    return match
 
                     window = wait_for(mapped, "GLX window initialization").group(1)
                     run(sys.executable, str(Path(__file__).with_name("dpi-probe.py")),
@@ -203,6 +213,7 @@ def main():
                 [
                     str(package / "bin/mutter"), "--headless", "--wayland",
                     "--wayland-display=native-resolution-test",
+                    "--virtual-monitor=3840x2160@60",
                     "--virtual-monitor=3840x2160@60",
                     "--virtual-monitor=3840x2160@60",
                 ],
@@ -286,6 +297,20 @@ def main():
                 setting("xwayland-native-resolution", "true")
                 expect_resolution((10240, 3600), "dual 4K, enabled again")
                 expect_dpi(5 / 3, 2)
+
+                configure(1.5, second_scale=1.5, third_scale=5 / 3)
+                expect_resolution((12373, 2400), "triple 4K, shared fractional edges")
+                expect_outputs([
+                    (0, 0, 4267, 2400), (4267, 0, 4266, 2400), (8533, 0, 3840, 2160),
+                ])
+                expect_dpi(5 / 3, 2)
+
+                # 第二屏的 logical 宽度不变，只移动位置也会改变取整后的 X11 宽度。
+                configure(1.25, second_scale=1.5, third_scale=5 / 3)
+                expect_resolution((13227, 2880), "triple 4K, moved output updates size")
+                expect_outputs([
+                    (0, 0, 5120, 2880), (5120, 0, 4267, 2400), (9387, 0, 3840, 2160),
+                ])
 
                 configure(5 / 3)
                 expect_resolution((3840, 2160), "single monitor restored")

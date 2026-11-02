@@ -14,17 +14,12 @@ diff --git a/data/dbus-interfaces/org.gnome.Mutter.X11.xml b/data/dbus-interface
 diff --git a/src/x11/meta-x11-display.c b/src/x11/meta-x11-display.c
 --- a/src/x11/meta-x11-display.c
 +++ b/src/x11/meta-x11-display.c
-@@ -208,7 +208,17 @@
+@@ -208,7 +208,12 @@
    int ui_scaling_factor =
      meta_xwayland_get_x11_ui_scaling_factor (xwayland_manager);
  
-+  MetaMonitorManager *monitor_manager =
-+    meta_backend_get_monitor_manager (backend);
-+  double content_scaling_factor = ui_scaling_factor;
-+
-+  if (meta_monitor_manager_get_layout_mode (monitor_manager) ==
-+      META_LOGICAL_MONITOR_LAYOUT_MODE_LOGICAL)
-+    content_scaling_factor = meta_xwayland_get_effective_scale (xwayland_manager);
++  double content_scaling_factor =
++    meta_xwayland_get_x11_content_scaling_factor (xwayland_manager);
 +
    meta_dbus_x11_set_ui_scaling_factor (priv->dbus_api, ui_scaling_factor);
 +  meta_dbus_x11_set_content_scaling_factor (priv->dbus_api,
