@@ -69,7 +69,11 @@
   '';
 
   # GNOME 50 的电源菜单休眠入口。
-  environment.systemPackages = [ pkgsUnstable.gnomeExtensions.hibernate-power-menu ];
+  environment.systemPackages = [
+    (pkgs.callPackage ./pkgs/hibernate-power-menu {
+      hibernate-power-menu = pkgsUnstable.gnomeExtensions.hibernate-power-menu;
+    })
+  ];
 
   networking.hostName = "jerry";
   networking.networkmanager.enable = true;
