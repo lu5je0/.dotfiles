@@ -76,6 +76,7 @@ sidebar/
 - 跨 tab 的资源（fs_event、timer、preview 等）放进 per-tab state，不要写成模块级 singleton；页面持有的资源由自己的 `leave` / `dispose` 释放。Symbols 请求取消函数、请求 generation 与光标跟随 timer 均属于 `state.symbols`，保持 30ms 防抖。
 - per-tab schema 单一来源：所有 per-tab 字段必须在 `state.lua` 的 `new_tab_state()` 中显式声明，便于一处看清完整 shape；页面私有资源在 source 的 `dispose(ctx)` 中释放；`state.cleanup_closed_tabs` 只调用 `lifecycle.dispose`，不依赖具体 source 的实现。
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
+- 关闭 Sidebar 前按 source 保存完整窗口视图（含鼠标滚动后的 `topline`），重新打开时在 source 渲染后恢复；对已打开窗口执行 focus 不回放旧视图，定位入口仍以定位目标为准。
 - 所有 sidebar autocmd 都进 `sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
 - Buffers source 的 `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`，**不要直接写事件名**：0.12 的自然编辑走 `BufModifiedSet`（0.13 已移除，见 `news.txt` / `deprecated.txt`，PR #35610），`:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`；单用任一个都会漏。兼容层与删除条件见根 `AGENTS.md` 的「临时兼容」一节。
 
@@ -105,6 +106,7 @@ sidebar/
 ## 性能规则
 
 - **render 路径禁止同步外部命令**。git 数据通过异步预加载，render 只读缓存。
+- render 路径不调用 `redraw` / `redrawstatus` 强制刷新屏幕，确保视图恢复前的中间画面不会显示；剪贴板状态栏刷新只在复制/剪切操作中执行，`apply_clipboard_mark` 仅更新高亮。
 - **改动涉及 render、CursorMoved、高频 autocmd 时，必须提前告知用户性能影响。**
 - 所有 Git 状态触发统一调用 `git_status.lua`，由它执行一次 `git status` 并分发给 Files 与 Git Changes；不要在 source 或 autocmd 中另起查询。
 - Git 查询使用 `--no-optional-locks` 避免自身写 index 触发监听回路；每个 tabpage 最多一个在途查询，查询期间的刷新请求合并为后续补查，不按时间窗口丢弃事件。
@@ -130,6 +132,7 @@ sidebar/
   - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
+  - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，覆盖非当前窗口、外部关闭及不同打开入口
   - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入不等待其他页的映射前缀
   - `parser_spec.lua` — 独立 Git fixture 下的 `files_to_tree_nodes`、`git_root` 缓存自失效（同 cwd 出现嵌套仓库 / worktree、根标记删除后回退父仓库）
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为

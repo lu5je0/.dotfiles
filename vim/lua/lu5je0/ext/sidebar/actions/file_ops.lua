@@ -14,10 +14,8 @@ function M.apply_clipboard_mark()
   vim.api.nvim_buf_clear_namespace(state.buf, _mark_ns, 0, -1)
   local cb = state.files._clipboard
   if not cb then
-    vim.cmd('redrawstatus')
     return
   end
-  vim.cmd('redrawstatus')
   local paths = {}
   for _, p in ipairs(cb.paths or {}) do
     paths[p] = true
@@ -251,13 +249,19 @@ function M.delete()
   end
 end
 
+local function refresh_clipboard()
+  M.apply_clipboard_mark()
+  -- Keep statusline redraws out of the file-tree render path.
+  vim.cmd('redrawstatus')
+end
+
 function M.cut()
   local node = get_current_node()
   if not node then
     return
   end
   state.files._clipboard = { action = 'move', paths = { node.abs_path } }
-  M.apply_clipboard_mark()
+  refresh_clipboard()
   print('Cut: ' .. node.name)
 end
 
@@ -267,7 +271,7 @@ function M.copy()
     return
   end
   state.files._clipboard = { action = 'copy', paths = { node.abs_path } }
-  M.apply_clipboard_mark()
+  refresh_clipboard()
   print('Copy: ' .. node.name)
 end
 
@@ -277,7 +281,7 @@ function M.cut_visual()
   local paths = {}
   for _, n in ipairs(nodes) do paths[#paths + 1] = n.abs_path end
   state.files._clipboard = { action = 'move', paths = paths }
-  M.apply_clipboard_mark()
+  refresh_clipboard()
   print(string.format('Cut: %d item%s', #paths, #paths == 1 and '' or 's'))
 end
 
@@ -287,7 +291,7 @@ function M.copy_visual()
   local paths = {}
   for _, n in ipairs(nodes) do paths[#paths + 1] = n.abs_path end
   state.files._clipboard = { action = 'copy', paths = paths }
-  M.apply_clipboard_mark()
+  refresh_clipboard()
   print(string.format('Copy: %d item%s', #paths, #paths == 1 and '' or 's'))
 end
 

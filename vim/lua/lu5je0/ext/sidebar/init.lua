@@ -11,7 +11,7 @@ local autocmds = require('lu5je0.ext.sidebar.autocmds')
 local watcher = require('lu5je0.ext.sidebar.watcher')
 local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 
-local function init_sidebar(do_render, opts)
+local function init_sidebar(do_render, opts, restore_view)
   M.setup()
   tabs.apply_width()
   tabs.render_winbar()
@@ -20,6 +20,7 @@ local function init_sidebar(do_render, opts)
   if do_render then
     lifecycle.enter(state.tab(), opts)
   end
+  if restore_view then tabs.restore_view(state.active_tab_idx) end
   watcher.start()
   watcher.refresh()
 end
@@ -28,13 +29,14 @@ function M.toggle(opts)
   opts = opts or {}
   window.toggle(opts)
   if state:is_open() then
-    init_sidebar(true)
+    init_sidebar(true, nil, true)
   end
 end
 
 function M.focus()
+  local was_open = state:is_open()
   window.focus()
-  init_sidebar(true)
+  init_sidebar(true, nil, not was_open)
 end
 
 function M.open_tab(idx, opts)
@@ -48,7 +50,7 @@ function M.open_tab(idx, opts)
   if not state:is_open() then
     window.open()
     state.active_tab_idx = idx
-    init_sidebar(true, opts)
+    init_sidebar(true, opts, true)
   elseif state.active_tab_idx == idx then
     lifecycle.enter(state.tab(), opts)
   else

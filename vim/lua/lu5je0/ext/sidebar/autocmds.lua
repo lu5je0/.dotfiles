@@ -59,6 +59,7 @@ function M.setup(group)
       for _, tabpage in ipairs(vim.api.nvim_list_tabpages()) do
         local ts = state.tab_for(tabpage)
         if ts.win == win then
+          require('lu5je0.ext.sidebar.tabs').save_view(ts)
           lifecycle.close(ts)
         end
       end

@@ -130,7 +130,9 @@ function M.close()
   if not state:is_open() then
     return
   end
-  require('lu5je0.ext.sidebar.tabs').save_width()
+  local tabs = require('lu5je0.ext.sidebar.tabs')
+  tabs.save_view()
+  tabs.save_width()
   local ts, win = state.tab(), state.win
   vim.api.nvim_win_close(win, true)
   -- WinClosed normally commits cleanup. Preserve ownership if closing

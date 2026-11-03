@@ -55,6 +55,10 @@ printf '%s[sidebar:full-name]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRI
 nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/sidebar/full_name_spec.lua"
 
 printf '\n'
+printf '%s[sidebar:scroll]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/scroll_spec.lua" "${RESET}"
+nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/sidebar/scroll_spec.lua"
+
+printf '\n'
 printf '%s[sidebar:diff-preview]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/sidebar/diff_preview_spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/sidebar/diff_preview_spec.lua"
 

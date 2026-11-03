@@ -100,10 +100,11 @@ function M.render_winbar()
   vim.wo[state.win].winbar = table.concat(parts)
 end
 
-function M.save_view()
-  if state:is_open() then
-    vim.api.nvim_win_call(state.win, function()
-      state.tab_cursors[state.active_tab_idx] = vim.fn.winsaveview()
+function M.save_view(ts)
+  ts = ts or state.tab()
+  if ts.win and vim.api.nvim_win_is_valid(ts.win) then
+    vim.api.nvim_win_call(ts.win, function()
+      ts.tab_cursors[ts.active_tab_idx] = vim.fn.winsaveview()
     end)
   end
 end
