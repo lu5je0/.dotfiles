@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgsUnstable, ... }:
 
 {
   imports = [ ./gnome-xwayland-scaling ];
@@ -8,6 +8,7 @@
 
   programs.steam = {
     enable = true;
+    extraCompatPackages = [ pkgsUnstable.proton-ge-bin ];
     # workaround: steam-fhs-cursor-theme
     # Steam FHS needs the cursor theme to avoid a tiny fallback cursor: https://github.com/ValveSoftware/steam-for-linux/issues/12092
     extraPackages = [ pkgs.adwaita-icon-theme ];
