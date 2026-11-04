@@ -23,6 +23,10 @@ printf '%s[lsp-info]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/l
 nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/lsp-info/spec.lua"
 
 printf '\n'
+printf '%s[ime]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/ime/spec.lua" "${RESET}"
+nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/ime/spec.lua"
+
+printf '\n'
 printf '%s[glance:definitions]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/glance/definition_spec.lua" "${RESET}"
 nvim --headless -u NONE -i NONE -l "${SCRIPT_DIR}/glance/definition_spec.lua"
 

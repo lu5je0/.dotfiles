@@ -57,7 +57,7 @@
         "app": "kitty",
         "screen": "external",
         "size": {
-          "center_i": { "w": 1497, "h": 991 },
+          "center_i": { "w": 1497, "h": 993 },
           "center_j": { "w": 1023, "h": 863 }
         }
       },

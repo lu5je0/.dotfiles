@@ -54,24 +54,28 @@ M.ascii_mode = function()
   M.normal()
 end
 
---- On exit two different things have to happen, and only one of them can go
---- through the terminal:
----   1. un-bypass the IME. Mandatory -- kitty disables it outright, so leaving it
----      disabled makes the window unable to type and no input-source switch can
----      rescue it.
----   2. put the input source itself into ASCII, which kitty cannot do. Ask the
----      tui-bridge helper directly; kitty swallows the ime OSC, so that message
----      would never reach the daemon.
+-- Most hosts switch the input source through OSC. Kitty instead uses OSC to
+-- bypass IME, so it needs insert to undo that bypass, followed by a detached
+-- local backend request to switch the actual input source to English.
 M.on_exit = function()
+  if vim.env.TERM ~= 'xterm-kitty' then
+    -- The host executes the request, including over SSH. Restoring insert here
+    -- would bring back the saved Chinese input source in WezTerm.
+    M.normal()
+    return
+  end
   M.insert()
   -- over ssh the helper binary lives on the other machine
   if vim.env.SSH_TTY then
     return
   end
-  pcall(require('lu5je0.misc.tui-bridge.ext.im').ascii_now)
+  require('lu5je0.misc.tui-bridge.ext.im').ascii_now()
 end
 
 M.setup = function()
+  if vim.env.TERM == 'xterm-kitty' and not vim.env.SSH_TTY then
+    require('lu5je0.misc.tui-bridge.installer').default().ensure()
+  end
   return M
 end
 

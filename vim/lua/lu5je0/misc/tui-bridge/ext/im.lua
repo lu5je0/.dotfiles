@@ -24,7 +24,7 @@ end
 --- helper (kitty, where the terminal handles the IME itself) it would be
 --- cold-spawned only to die immediately.
 function M.ascii_now()
-  require('lu5je0.misc.tui-bridge.tui-bridge').call_detached('ime', 'normal')
+  return require('lu5je0.misc.tui-bridge.tui-bridge').call_detached('ime', 'normal')
 end
 
 return M

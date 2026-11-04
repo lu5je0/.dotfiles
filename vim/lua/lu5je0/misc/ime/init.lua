@@ -6,6 +6,7 @@ local state = {
   backend = nil,
   applied = nil,
   typing_contexts = {},
+  exiting = false,
 }
 
 local rate_limiter
@@ -55,7 +56,7 @@ end
 --- the terminal IME disabled. Same-mode triggers only re-assert external state;
 --- normal re-assertions must not overwrite the input source saved on transition.
 local function apply(want)
-  if not state.backend then return end
+  if not state.backend or state.exiting then return end
   if want == 'insert' and not save_last_ime_enabled() then return end
 
   local changed = state.applied ~= want
@@ -80,14 +81,16 @@ local function sync()
   apply(wanted_for_context())
 end
 
---- Leaving is backend specific: one that switches the input source wants ASCII,
---- while one that bypasses the IME outright has to restore it first. Every
---- backend declares its own on_exit.
---- Deliberately skips apply(): if a throttled exit update were dropped there is
---- no later event to recover from and the terminal would stay stranded.
-local function exit_now()
+-- Exit bypasses throttling, then prevents late mode/focus/ready callbacks from
+-- restoring a non-ASCII source while the detached switch is running.
+local function exit_now(suspend)
   if not state.backend then return end
-  state.backend.on_exit()
+  if suspend then
+    (state.backend.on_suspend or state.backend.on_exit)()
+  else
+    state.exiting = true
+    state.backend.on_exit()
+  end
 end
 
 function M.normal()
@@ -127,9 +130,14 @@ local function wire_status_autocmds()
 
   -- Quitting or suspending hands the terminal back to the shell, so never leave
   -- it in a state the user cannot type in.
-  vim.api.nvim_create_autocmd({ 'VimLeavePre', 'VimSuspend' }, {
+  vim.api.nvim_create_autocmd('VimLeavePre', {
     group = group,
     callback = function() exit_now() end,
+  })
+
+  vim.api.nvim_create_autocmd('VimSuspend', {
+    group = group,
+    callback = function() exit_now(true) end,
   })
 
   vim.api.nvim_create_autocmd('VimResume', {
