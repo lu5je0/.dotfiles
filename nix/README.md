@@ -64,6 +64,35 @@ sudo -H nix --extra-experimental-features 'nix-command flakes' \
 
 Linux 与 Mac 的 nixpkgs 输入分别跟随各自渠道，共用一份锁文件；添加 Mac 支持不会更新现有 Linux 输入。
 
+## 局域网构建缓存
+
+huskar 在 `192.168.1.100:5000` 运行 `nix-serve`，提供本机仍保留在 Nix store 中的构建结果。
+该地址需要在路由器上保留，服务仅监听此 IPv4 地址。其他 NixOS 主机通过 base profile
+信任缓存地址及签名公钥，但不将其加入默认下载源；huskar 自身不使用该缓存，macOS 不添加此 Linux 缓存。
+缓存不会代替客户端构建缺失的包，GC 清理的 store 路径也不再可用。
+
+客户端照常执行 `nh os switch` 或 `nh os build`。nh 包装脚本先用最多 1 秒访问缓存接口，
+成功才通过本次进程的 `NIX_CONFIG` 追加缓存；不可用时继续使用原有缓存。
+其他 nh 子命令和直接执行的 Nix 命令不启用该缓存。此探测只判断启动时的可用性，
+不保证下载过程中断网时立即回退。
+
+签名私钥位于 huskar 的 `/var/lib/nix-cache/cache-private-key.pem`，不进入 Git 或 Nix store。
+首次部署时，将本机生成的私钥安装到服务读取的位置，再应用配置：
+
+```sh
+sudo install -d -m 700 /var/lib/nix-cache
+sudo install -o root -g root -m 600 \
+  ~/.local/state/nix-cache/cache-private-key.pem \
+  /var/lib/nix-cache/cache-private-key.pem
+sudo nixos-rebuild switch --flake ~/.dotfiles#huskar
+curl --fail http://192.168.1.100:5000/nix-cache-info
+```
+
+保管好与 base profile 中公钥对应的私钥；重装时恢复同一密钥。
+更换密钥时需要同步更新客户端的 `trusted-public-keys`。
+其他 NixOS 主机应用各自配置后生效；复用二进制要求对应的 store 路径完全一致，
+通常需要相同平台、锁定输入和包构建参数。
+
 ## 全局切源
 
 国内二进制缓存镜像默认关闭。首次应用本仓库的 NixOS / nix-darwin 配置后，可单独启动切源 TUI：

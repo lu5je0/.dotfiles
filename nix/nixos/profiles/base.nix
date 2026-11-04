@@ -1,7 +1,8 @@
-{ config, ... }:
+{ config, lib, ... }:
 
 let
   home = config.users.users.lu5je0.home;
+  useHuskarCache = config.networking.hostName != "huskar";
 in
 {
   imports = [
@@ -26,9 +27,12 @@ in
     substituters = [
       "https://nix-community.cachix.org"
     ];
+    # 允许 nh 在探测成功后按次启用，默认不访问可能离线的局域网缓存。
+    trusted-substituters = lib.optionals useHuskarCache [ "http://192.168.1.100:5000?priority=30" ];
     trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-    ];
+    ]
+    ++ lib.optionals useHuskarCache [ "huskar-1:/hAtuYEwzeOuSwvlOQGbWT4omIu18D1u64jg33LdXyg=" ];
   };
 
   nix.gc = {

@@ -1,14 +1,36 @@
-{ config, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   home = config.users.users.lu5je0.home;
+  nhWithCache = pkgs.symlinkJoin {
+    name = "nh-with-lan-cache-${pkgs.nh.version}";
+    paths = [ pkgs.nh ];
+    postBuild = ''
+      rm "$out/bin/nh"
+      cp ${
+        pkgs.replaceVars ./nh-cache.sh {
+          bash = "${pkgs.bash}/bin/bash";
+          curl = "${pkgs.curl}/bin/curl";
+          nh = "${pkgs.nh}/bin/nh";
+        }
+      } "$out/bin/nh"
+      chmod +x "$out/bin/nh"
+    '';
+    meta = pkgs.nh.meta;
+  };
 in
 {
   # nh (nix-community/nh) 官方 NixOS 模块。
-  # enable 自带 systemPackages = [ pkgs.nh ]，并把 NH_FLAKE 写进 /etc/set-environment，
+  # enable 安装配置的 nh package，并把 NH_FLAKE 写进 /etc/set-environment，
   # 于是 `nh os switch` 无需再指定 flake 路径。
   programs.nh = {
     enable = true;
+    package = lib.mkIf (config.networking.hostName != "huskar") nhWithCache;
     # 必须是展开好的字面路径：nh 不展开 $HOME（实测 `NH_FLAKE='$HOME/.dotfiles'` 会去找
     # "/tmp/$HOME/.dotfiles"）。$HOME 的展开依赖 login shell，systemd/脚本拿不到。
     flake = "${home}/.dotfiles";
