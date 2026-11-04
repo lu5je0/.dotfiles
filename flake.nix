@@ -87,13 +87,13 @@
           };
           modules = [
             ./nix/nixos/profiles/base.nix
-            ./nix/nixos/profiles/phone.nix
             ./nix/nixos/hosts/oneplus6
+            ./nix/nixos/profiles/phone.nix
           ];
         };
-        nixpve = mkSystem [
+        raider = mkSystem [
           ./nix/nixos/profiles/base.nix
-          ./nix/nixos/hosts/nixpve
+          ./nix/nixos/hosts/raider
           ./nix/nixos/modules/nas-mount.nix
         ];
         huskar = mkSystem [
@@ -104,9 +104,9 @@
           ./nix/nixos/modules/nas-mount.nix
         ];
         jerry = mkSystem [
-          inputs.wayland-scroll-factor.nixosModules.default
           ./nix/nixos/profiles/base.nix
           ./nix/nixos/hosts/jerry
+          inputs.wayland-scroll-factor.nixosModules.default
           ./nix/nixos/modules/gaming
           ./nix/nixos/profiles/desktop.nix
           ./nix/nixos/modules/nas-mount.nix

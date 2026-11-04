@@ -7,11 +7,20 @@
 - `nixos/`：Linux 主机、模块、profiles 和 Linux 专用包。
 - `darwin/default.nix`：Mac 入口；`darwin/packages.nix` 引入共用清单并追加 Mac 专属软件。
 
-Linux 的主机入口名称不变，例如在仓库根目录运行：
+Linux 在仓库根目录选择对应主机入口，例如：
 
 ```sh
 sudo nixos-rebuild switch --flake .#huskar
 ```
+
+raider 使用 NixOS 静态网络管理 `ens18`，地址为 `192.168.1.3/24`，网关和 DNS 均为
+`192.168.1.1`，不启用 NetworkManager。实际主机名尚未与配置一致时，显式指定入口：
+
+```sh
+nh os switch --hostname raider
+```
+
+应用网络配置可能中断 SSH；需要时通过虚拟机控制台操作，随后连接 `192.168.1.3`。
 
 ## 桌面应用图标
 
@@ -104,7 +113,7 @@ sudo nixos-rebuild switch --flake ".#$(hostname)" \
   'huskar-1:/hAtuYEwzeOuSwvlOQGbWT4omIu18D1u64jg33LdXyg='
 ```
 
-主机名须与 flake 中的配置名称一致，例如 `jerry`、`nixpve` 或 `oneplus6`。
+主机名须与 flake 中的配置名称一致，例如 `jerry`、`raider` 或 `oneplus6`。
 此命令优先尝试 huskar，未命中的包仍使用原有缓存；切换后继续使用
 `nh os switch` / `nh os build`，由包装脚本自动探测缓存。
 

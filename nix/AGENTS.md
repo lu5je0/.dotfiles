@@ -11,6 +11,7 @@
 
 ## 配置归属
 
+- 根 flake 的 NixOS 模块列表统一先放 `profiles/base.nix`，紧接 `hosts/<主机名>`，再放其他 profile 和模块。
 - 跨平台软件清单放 `common/packages.nix`，由 `nixos/modules/packages.nix` 和 `darwin/packages.nix` 引入，
   平台专属软件在各自清单中追加。共用 Nix 设置放 `common/nix.nix`。
 - Linux 额外缓存优先配置在 `nixos/profiles/base.nix`。
