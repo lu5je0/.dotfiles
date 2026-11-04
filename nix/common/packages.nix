@@ -19,7 +19,6 @@
     tmux
     file
     cmake
-    clang
     gcc
     ncdu
     eza

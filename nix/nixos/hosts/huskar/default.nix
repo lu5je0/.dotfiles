@@ -8,13 +8,6 @@
     ./q-restic
   ];
 
-  # huskar 的 AMD 显卡会运行时休眠，使用带 GPU 空采样保护的 btop。
-  nixpkgs.overlays = [
-    (_final: prev: {
-      btop = prev.callPackage ./pkgs/btop { inherit (prev) btop; };
-    })
-  ];
-
   boot.loader.systemd-boot.enable = false;
   boot.loader.grub = {
     enable = true;

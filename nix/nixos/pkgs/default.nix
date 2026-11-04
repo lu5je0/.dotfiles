@@ -6,6 +6,7 @@
 
 {
   arcglyph = pkgs.callPackage ./arcglyph { };
+  btop = pkgs.callPackage ./btop { };
   codex-desktop = pkgs.callPackage ./codex-desktop { flake = inputs.llm-agents; };
   window-decorations = pkgs.callPackage ./window-decorations { };
   emby-ext-player = pkgs.callPackage ./emby-ext-player { };
