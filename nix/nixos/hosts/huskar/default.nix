@@ -145,7 +145,7 @@
   services.nix-serve = {
     enable = true;
     bindAddress = "192.168.1.100";
-    port = 5000;
+    port = 17500;
     secretKeyFile = "/var/lib/nix-cache/cache-private-key.pem";
   };
 
