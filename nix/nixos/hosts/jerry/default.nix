@@ -48,6 +48,17 @@
   # 笔记本保留 power-profiles-daemon（GNOME 电源模式），不套用 huskar 的 performance 固定调优
   services.power-profiles-daemon.enable = true;
 
+  # 合盖先挂起，15 分钟后休眠；提前开盖唤醒会结束本次计时。
+  # 扩展坞/外接屏幕场景保留 logind 默认的 ignore 行为。
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+  };
+  systemd.sleep.settings.Sleep = {
+    HibernateDelaySec = "15min";
+    HibernateOnACPower = false;
+  };
+
   # systemd 在 EFI HibernateLocation 中记录 swap 文件的设备和偏移，initrd 据此恢复。
   boot.initrd.systemd.enable = true;
 
