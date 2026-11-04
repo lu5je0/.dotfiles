@@ -65,11 +65,15 @@ M.ascii_mode = function()
   M.get_im_switcher().switch_to_ime(ABC_IM_SOURCE_CODE)
 end
 
---- Quitting hands the terminal back to the shell, so leave it on ABC. The FFI
---- call is synchronous, so it always lands before we go away.
-M.on_exit = M.ascii_mode
+-- Exit uses the same detached helper as Linux / WSL, without waiting for it.
+M.on_exit = function()
+  return require('lu5je0.misc.tui-bridge.ext.im').ascii_now()
+end
+
+M.on_suspend = M.ascii_mode
 
 M.setup = function()
+  require('lu5je0.misc.tui-bridge.installer').default().ensure()
   return M
 end
 

@@ -61,9 +61,10 @@
 - tui-bridge 的 `+` 是 CLIPBOARD，仅在启动 / FocusGained 同步缓存；`*` 是 primary selection，每次实时读写、不得复用缓存。`core/clipboard.lua` 的 `M.set` 只写 `+`，避免覆盖外部鼠标选区。
 - IME 入口为 `misc/ime/init.lua`：macOS 使用 XkbSwitchLib，WSL / 非 SSH 的 Linux 桌面使用 tui-bridge；`TERM=xterm-kitty` 优先使用 OSC，未匹配环境和 Linux SSH 也回退 OSC。
 - IME 按模式、输入上下文和焦点/窗口事件同步，不监听手动切换；临时输入 UI 使用 `set_typing_context(name, active)`，避免 preview 切窗时误关 IME。
+- IME 在 `VimLeavePre` 无条件请求英文并停止后续状态同步：macOS / Linux / WSL 统一用 detached tui-bridge 单次请求；macOS 日常模式切换仍用 XkbSwitchLib。退出不等待切换结果、不安装依赖；macOS 与本地 kitty 在 IME setup 时异步准备 helper。OSC 向宿主发送 `normal`；kitty 必须先发送 `insert` 解除 IME bypass，再由本地异步后端切英文，SSH 下 kitty 只能解除 bypass，无法切换远端不可访问的宿主输入源。
 - OSC 在 tmux 中需包装为 passthrough 序列并加倍内层 ESC，依赖 `tmux/tmux.conf` 的 `allow-passthrough on`；`zsh/vi-im-switch.zsh` 使用相同包装。
 - installer 读取 `module/tui-bridge/VERSION`，安装到 `~/.local/bin/tui-bridge`；支持 macOS、Linux x86_64/aarch64 和 WSL x86_64。WSL 下载 Windows 产物，Linux arm64 映射为 aarch64。
-- 仅启用后端、实际调用或执行 `:TuiBridgeInstall` 时安装，加载模块与退出不下载；版本检查、下载和校验均异步，校验 SHA256 与 `--version` 后原子替换，安装锁协调多进程。
+- 仅启用需要 helper 的后端（含 macOS / 本地 kitty 的退出切换）、实际调用或执行 `:TuiBridgeInstall` 时安装，加载模块与退出不下载；版本检查、下载和校验均异步，校验 SHA256 与 `--version` 后原子替换，安装锁协调多进程。
 - `singleton()` 只返回对象，`on_ready()` 后才接管剪贴板与 IME，未就绪时不重放请求；IME 就绪后调用 `resync()`。
 - WezTerm 共用安装路径和版本声明；Windows 端通过 `wslpath -w` 定位默认 WSL 发行版中的安装，仅检查版本、不负责下载。
 

@@ -41,7 +41,7 @@
 - Linux 在对应架构的 Ubuntu 22.04 runner 上原生构建；其他 glibc Linux 需提供上述动态库，NixOS 通过仓库已有的 `programs.nix-ld` 提供加载器与库。
 - Neovim 的 `misc/tui-bridge/installer.lua` 按 `VERSION` 下载固定 tag；WSL 选择 Windows 产物，Neovim 仅支持 macOS、Linux 与 WSL，均安装为 `~/.local/bin/tui-bridge`，不使用 `.exe` 安装后缀。
 - Linux 的 `aarch64` / `arm64` 架构均选择 `linux-aarch64` 资产；WSL 仅支持 x86_64，不将 WSL ARM 误识别为原生 Linux ARM。
-- 仅启用 tui-bridge 后端、实际调用 bridge 或执行 `:TuiBridgeInstall` 时检查版本和安装；模块加载与退出均不触发下载。版本检查、下载、SHA256 校验与候选文件版本检查使用异步子进程。
+- 仅启用需要 helper 的后端（含 macOS / 本地 kitty 的退出切换）、实际调用 bridge 或执行 `:TuiBridgeInstall` 时检查版本和安装；模块加载与退出均不触发下载。版本检查、下载、SHA256 校验与候选文件版本检查使用异步子进程。
 - 安装在目标目录下使用临时目录与安装锁；校验成功后原子替换。失败保留已有文件，只提示一次，通过 `:TuiBridgeInstall` 重试。五分钟前遗留的安装锁可自动清理，正常退出会终止安装并清理临时文件与锁。
 - bridge 就绪后才接管 Neovim 剪贴板，并按当前输入上下文同步 IME，不重放安装期间的操作。
 - WezTerm 使用同一个安装路径和 `VERSION`，Windows 端通过 `wslpath -w` 解析默认 WSL 发行版中 `~/.local/bin/tui-bridge` 的路径，macOS 直接使用本机路径；首次使用时校验版本，不负责下载。
@@ -112,6 +112,8 @@
   - Linux: 监听 rime ascii_mode 变化并推送事件。rime 的 Shift 切换不发 DBus 信号，因此实现为独立线程每 200ms 轮询 `IsAsciiMode`。
 
 Neovim 的 IME 适配层只调用 `normal` / `insert`，不提供 keeper、`watch` 或事件订阅接口；上述原生监听 API 仍保留。
+
+Neovim 退出时，macOS / Linux / WSL 统一使用已安装 helper 的 detached `-j` 单次 `ime.normal`，stdio 关闭且不等待响应；macOS 日常模式切换仍用 XkbSwitchLib。macOS / 本地 kitty 在 IME setup 时异步准备 helper，退出时缺失则跳过，不临时安装。OSC 宿主通过 `normal` 切英文；kitty 先解除 IME bypass 再调用本地异步后端，SSH kitty 仅能解除 bypass。
 
 ### IME 事件
 当 `ime.watch` 启用后，输入法变化时会主动推送事件（无 `id` 字段）。事件契约在各平台统一：始终带 `source_id` 与归一化的 `state`（`ascii`/`ime`）：

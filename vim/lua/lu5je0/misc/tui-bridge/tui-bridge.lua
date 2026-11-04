@@ -233,8 +233,9 @@ function M.call_detached(module, method, params)
     method = method,
     params = params or vim.empty_dict(),
   })
-  vim.fn.jobstart({ path, '-j', payload }, { detach = true })
-  return true
+  return vim.fn.jobstart({ path, '-j', payload }, {
+    detach = true, stdin = 'null', stdout = 'null', stderr = 'null',
+  }) > 0
 end
 
 return M
