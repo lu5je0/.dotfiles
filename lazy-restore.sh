@@ -29,7 +29,6 @@ LEGACY_PATCHES=(
     "glance.nvim:glance-nixd-definition.diff"
     "snacks.nvim:snacks-wezterm-placeholders.diff"
     "indent-blankline.nvim:indent-blankline.diff"
-    "nvim-tree.lua:nvim-tree.diff"
 )
 
 for ENTRY in "${LEGACY_PATCHES[@]}"; do

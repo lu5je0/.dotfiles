@@ -14,6 +14,7 @@ WeTypeX 开启默认的 preedit_cursor_at_beginning（候选框固定在拼音�
 
 实现：仅等长修改两个运算符（实际改变 3 个字节），保持 ASAR 文件大小与偏移不变，
 并更新该 JS 资源的 SHA256 整体和分块校验。正则捕获压缩变量名，不写死资源哈希。
+递归扫描 webview/assets 下的 JS，兼容顶层资源与 async 子目录中的分块。
 升级时若不能唯一匹配旧逻辑，直接让构建失败；应重新检查上游代码，不要放宽匹配。
 移除补丁前，用未打补丁的新版本复测首键、追加、退格和选词，确认已无需本补丁。
 """
@@ -36,6 +37,15 @@ CHROME_SELECTION = re.compile(
 )
 
 
+def iter_js_assets(files: dict, prefix: str = ""):
+    for name, entry in files.items():
+        path = prefix + name
+        if "files" in entry:
+            yield from iter_js_assets(entry["files"], path + "/")
+        elif name.endswith(".js"):
+            yield path, entry
+
+
 def patch(archive: Path) -> None:
     with archive.open("r+b") as file, mmap.mmap(file.fileno(), 0) as data:
         _, header_size, _, json_size = struct.unpack_from("<4I", data)
@@ -43,13 +53,14 @@ def patch(archive: Path) -> None:
         payload = 8 + header_size
         assets = header["files"]["webview"]["files"]["assets"]["files"]
         matches = []
-        for name, entry in assets.items():
-            if not (name.startswith("app-shared-") and name.endswith(".js")):
-                continue
+        for name, entry in iter_js_assets(assets):
             if entry.get("unpacked"):
                 raise ValueError(f"unexpected unpacked asset: {name}")
             offset = payload + int(entry["offset"])
             content = data[offset : offset + entry["size"]]
+            # 完整正则必含此属性，先跳过无关分块以避免逐个执行正则。
+            if b"lastChromeDelete" not in content:
+                continue
             for match in CHROME_SELECTION.finditer(content):
                 matches.append((name, entry, offset, content, match))
         if len(matches) != 1:
