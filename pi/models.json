@@ -1,5 +1,63 @@
 {
   "providers": {
+    "strata": {
+      "baseUrl": "http://127.0.0.1:18781/v1",
+      "api": "openai-completions",
+      "apiKey": "strata-local",
+      "compat": {
+        "thinkingFormat": "qwen-chat-template",
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "qwen3.8-flash-next-iq2_xs",
+          "name": "Qwen3.8-Flash-Next IQ2_XS (Strata)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 262144,
+          "maxTokens": 16384,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "qwen3.8-flash-next-iq3_s",
+          "name": "Qwen3.8-Flash-Next IQ3_S (Strata)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 262144,
+          "maxTokens": 16384,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        }
+      ]
+    },
     "llama.cpp": {
       "modelOverrides": {
         "Qwen3.8-27B-Uncensored-Q4_K_M": {
