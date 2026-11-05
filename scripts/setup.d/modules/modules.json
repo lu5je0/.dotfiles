@@ -52,13 +52,6 @@
     "checks": [{ "link": "~/.local/bin/q-trash" }]
   },
   {
-    "name": "fontconfig",
-    "desc": "font rendering: subpixel rgba + hintfull (fontconfig/fonts.conf)",
-    "source": "fontconfig/fonts.conf",
-    "target": "~/.config/fontconfig/fonts.conf",
-    "os": ["linux"]
-  },
-  {
     "name": "proton",
     "desc": "PROTON_ENABLE_WAYLAND session env (environment.d, needs re-login)",
     "source": "proton/environment.d/20-proton.conf",
