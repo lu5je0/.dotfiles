@@ -23,8 +23,8 @@
  * 「去掉围栏标记行」之后的行数算。原因与回归检查见同级 `AGENTS.md` 的 thinking 段。
  */
 
-import { getMarkdownTheme, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { Markdown, type MarkdownTheme, stripTerminalSequences, truncateToWidth } from "@earendil-works/pi-tui";
+import { AssistantMessageComponent, getMarkdownTheme, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { type Container, Markdown, type MarkdownTheme, MouseRegion, stripTerminalSequences, truncateToWidth } from "@earendil-works/pi-tui";
 
 const TOGGLE_KEY = "ctrl+t";
 const HEADER = "**Thinking**";
@@ -105,16 +105,62 @@ function refreshThinking(ctx: ExtensionContext): void {
 	ctx.ui.setHiddenThinkingLabel();
 }
 
+// SDK 没有 thinking 点击钩子。只接管 assistant 内的 MouseRegion；Symbol 保存原方法，
+// /reload 时替换补丁而不叠加。依赖 pi 1.4 的 contentContainer / MouseRegion.child 结构。
+const ORIGINAL_UPDATE = Symbol.for("dotfiles.thinking-fold.updateContent");
+function installMouseFolding(getFolded: () => boolean, renderWithFolded: (folded: boolean, render: () => string[]) => string[]) {
+	const prototype = AssistantMessageComponent.prototype as AssistantMessageComponent & {
+		[ORIGINAL_UPDATE]?: AssistantMessageComponent["updateContent"];
+	};
+	const original = prototype[ORIGINAL_UPDATE] ??= prototype.updateContent;
+	let overrides = new WeakMap<AssistantMessageComponent, Map<number, boolean>>();
+	prototype.updateContent = function (...args) {
+		original.apply(this, args);
+		const container = (this as unknown as { contentContainer: Container }).contentContainer;
+		const runs = overrides.get(this) ?? new Map<number, boolean>();
+		overrides.set(this, runs);
+		let runIndex = 0;
+		for (const region of container.children) {
+			if (!(region instanceof MouseRegion)) continue;
+			const index = runIndex++;
+			const child = (region as unknown as { child: unknown }).child;
+			const render = region.render.bind(region);
+			const handleMouse = region.handleMouse.bind(region);
+			region.render = (width) => renderWithFolded(runs.get(index) ?? getFolded(), () => render(width));
+			region.handleMouse = (event) => {
+				if (event.type !== "click" || event.button !== "left") return handleMouse(event);
+				// 内置隐藏标签仍需原处理器恢复 Markdown；可见预览则只切折叠，不触发内置隐藏。
+				runs.set(index, child instanceof Markdown ? !(runs.get(index) ?? getFolded()) : false);
+				if (!(child instanceof Markdown)) return handleMouse(event);
+				region.invalidate();
+				return { handled: true };
+			};
+		}
+	};
+	return () => { overrides = new WeakMap(); };
+}
+
 export default function (pi: ExtensionAPI) {
 	let folded = true;
+	let renderingFolded: boolean | undefined;
+	const clearMouseOverrides = installMouseFolding(() => folded, (localFolded, render) => {
+		const previous = renderingFolded;
+		renderingFolded = localFolded;
+		try {
+			return render();
+		} finally {
+			renderingFolded = previous;
+		}
+	});
 
 	pi.registerMarkdownTransformer((markdown, { messageType, availableWidth }) => {
 		if (messageType !== "assistant-thinking") return markdown;
-		return renderThinking(markdown, availableWidth, folded);
+		return renderThinking(markdown, availableWidth, renderingFolded ?? folded);
 	});
 
 	const toggle = (ctx: ExtensionContext) => {
 		folded = !folded;
+		clearMouseOverrides();
 		refreshThinking(ctx);
 		ctx.ui.notify(`Thinking: ${folded ? "folded" : "expanded"} (${TOGGLE_KEY})`);
 	};

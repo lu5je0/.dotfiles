@@ -284,6 +284,79 @@ function runTests({ Markdown, visibleWidth, stripTerminalSequences, truncateToWi
 	}
 }
 
+function runMouseTests(agent, tui, install) {
+	agent.initTheme("dark");
+	let transformers;
+	let toggle;
+	const setup = () => install({
+		registerMarkdownTransformer: (transformer) => { transformers = [transformer]; },
+		registerShortcut: (_key, options) => { toggle = options.handler; },
+		registerCommand: () => {},
+	});
+	setup();
+	const message = { content: [
+		{ type: "thinking", thinking: LONG(8) },
+		{ type: "text", text: "正文" },
+		{ type: "thinking", thinking: LONG(7) },
+	] };
+	const component = new agent.AssistantMessageComponent(message, false, undefined, undefined, 1, transformers);
+	const regions = () => component.contentContainer.children.filter((child) => child instanceof tui.MouseRegion);
+	const plain = (region) => region.render(80).map(tui.stripTerminalSequences).join("\n");
+	const click = (index, type = "click", button = "left") => {
+		component.render(80);
+		const children = component.contentContainer.children;
+		const region = regions()[index];
+		const y = children.slice(0, children.indexOf(region)).reduce((sum, child) => sum + child.render(80).length, 0);
+		return component.handleMouse({ type, button, x: 4, y, width: 80, height: component.render(80).length,
+			shift: false, alt: false, ctrl: false });
+	};
+	const folded = (index) => assert.match(plain(regions()[index]), /… \+\d+ rows/);
+	const expanded = (index) => {
+		assert.doesNotMatch(plain(regions()[index]), /… \+\d+ rows|Thinking\.\.\./);
+		assert.match(plain(regions()[index]), /第 4 句推理/);
+	};
+	folded(0);
+	folded(1);
+	assert.equal(click(0)?.handled, true);
+	expanded(0);
+	folded(1); // 点击只影响当前 thinking run
+	click(0);
+	folded(0);
+	click(0, "click", "right");
+	click(0, "move");
+	folded(0);
+	click(1);
+	expanded(1);
+	component.updateContent(message, true);
+	expanded(1); // 流式重建保留局部状态
+	component.invalidate();
+	expanded(1);
+	const ctx = { ui: {
+		setHiddenThinkingLabel: (label = "Thinking...") => component.setHiddenThinkingLabel(label),
+		notify: () => {},
+	} };
+	toggle(ctx);
+	expanded(0);
+	expanded(1);
+	toggle(ctx);
+	folded(0);
+	folded(1);
+	component.setHideThinkingBlock(true);
+	assert.match(plain(regions()[0]), /Thinking\.\.\./);
+	click(0);
+	expanded(0); // 内置隐藏标签点击也应打开全文
+	assert.match(plain(regions()[1]), /Thinking\.\.\./);
+	setup(); // /reload 不可叠加点击处理器
+	component.markdownTransformers = transformers;
+	component.setHideThinkingBlock(false);
+	folded(0);
+	click(0);
+	expanded(0);
+	click(0);
+	folded(0);
+	console.log("thinking-fold-mouse: 真实 AssistantMessageComponent 点击、独立块、流式、全局切换、隐藏标签和 reload 全部通过");
+}
+
 const agentEntry = findPiPackage("pi-coding-agent", process.env.PI_AGENT_PKG);
 const tuiEntry = findPiPackage("pi-tui", process.env.PI_TUI_PATH);
 if (!agentEntry || !tuiEntry) {
@@ -299,8 +372,9 @@ if (!agentEntry || !tuiEntry) {
 		const copy = path.join(sandbox, "thinking-fold.ts");
 		copyFileSync(extension, copy);
 		const tui = await import(pathToFileURL(tuiEntry).href);
-		const { renderThinking, renderPreviewRows, FENCE_BORDER } = await import(pathToFileURL(copy).href);
+		const { default: install, renderThinking, renderPreviewRows, FENCE_BORDER } = await import(pathToFileURL(copy).href);
 		runTests(tui, renderThinking, renderPreviewRows, FENCE_BORDER);
+		runMouseTests(await import(pathToFileURL(agentEntry).href), tui, install);
 	} finally {
 		rmSync(sandbox, { recursive: true, force: true });
 	}

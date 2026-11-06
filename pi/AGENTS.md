@@ -149,6 +149,12 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
 - **硬换行用行尾两个空格，不用 `\`**：反斜杠会被 autolink 吃进 URL 文本（裸 URL 结尾接 `\`
   会让 pi 把链接拆成两行、多出一行）；两个空格正常终结 URL 与行内代码。
 - 展开态直接返回 `**Thinking**` + 原 markdown：不套引用所以没有竖线，也不做任何折行。
+- 左键点击当前 thinking 块在头尾预览与全文之间切换，不进入内置的 `Thinking...` 隐藏态；
+  点击内置隐藏标签会直接展开全文。每段 thinking 的点击状态独立，流式更新保留；`ctrl+t` / `/fold`
+  清掉局部状态并统一切换。SDK 没有点击钩子，扩展包装 `AssistantMessageComponent.updateContent`，
+  只接管其中的 `MouseRegion`，渲染时把局部状态传给 transformer；依赖 pi 1.4 的
+  `contentContainer` / `MouseRegion.child` 结构，升级时跑鼠标回归检查。原方法用 `Symbol.for` 保存，
+  `/reload` 替换包装而不叠加。
 - 已知限制：折叠态代码行是行内代码配色（`codeBlock` 被顶替），与展开态代码块颜色不同；正文自带的
   标题/表格等块级结构会各自多占行，所以折叠高度不总是 6 行；`… +N rows` 按「去掉围栏标记行」
   之后的行数算；样式只能借 pi 的 markdown 主题（竖线走 `quoteBorder`，正文走 thinkingText），
@@ -169,7 +175,8 @@ pi 的"插件"是 npm/git 包，通过 `packages` 数组声明，包体装在 `~
   续行（有序/无序）、列表空行后另起段、列表里的 fence、行内标记撑宽、嵌套/跨行行内标记、链接
   （text ≠ href）、转义字符、半截 fence/math/链接、长 autolink、表格、checkbox 嵌套列表、
   entities、CJK/emoji——都是折叠高度漂移的历史来源。包位置由脚本顺着 `command -v pi` 往上找
-  （深 6），可用 `PI_AGENT_PKG` / `PI_TUI_PATH` 覆盖
+  （深 6），可用 `PI_AGENT_PKG` / `PI_TUI_PATH` 覆盖。另用真实 `AssistantMessageComponent`
+  验证鼠标点击、各块独立、流式重建、全局切换、隐藏标签和 `/reload`
 
 ## footer（常见坑：只有一个槽位）
 
