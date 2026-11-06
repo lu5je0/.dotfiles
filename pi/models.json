@@ -34,11 +34,11 @@
           }
         },
         {
-          "id": "qwen3.8-flash-next-iq3_s",
-          "name": "Qwen3.8-Flash-Next IQ3_S (Strata)",
+          "id": "qwen3.8-flash-next-iq3_xxs",
+          "name": "Qwen3.8-Flash-Next IQ3_XXS (Strata, 200K)",
           "reasoning": true,
           "input": ["text"],
-          "contextWindow": 262144,
+          "contextWindow": 204800,
           "maxTokens": 16384,
           "thinkingLevelMap": {
             "off": null,
