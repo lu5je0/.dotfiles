@@ -47,6 +47,16 @@ in
     autoSuspend = false;
   };
   services.desktopManager.gnome.enable = true;
+  # 按 comm 匹配（最多 15 字节），包含 Nix 包装后的进程名；avoid 仅降低优先级。
+  services.earlyoom.extraArgs = [
+    "--avoid"
+    "^(gnome-shell|[.]gnome-shell-wr|gnome-session.*|[.]gnome-session-|Xorg|Xwayland|gdm.*|systemd|systemd-logind|dbus-daemon|dbus-broker)$"
+  ];
+  # 普通应用可能仍在 Shell 的 cgroup 中；应用被 OOM 杀掉时不由 systemd 连带停止 Shell。
+  systemd.user.services."org.gnome.Shell@" = {
+    overrideStrategy = "asDropin";
+    serviceConfig.OOMPolicy = "continue";
+  };
   services.gnome.gnome-remote-desktop.enable = true;
   systemd.user.services.gnome-remote-desktop = {
     enable = true;

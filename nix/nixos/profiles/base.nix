@@ -7,6 +7,7 @@ in
 {
   imports = [
     ../../common/nix.nix
+    ../modules/earlyoom.nix
     ../modules/nh.nix
     ../modules/nix-ld.nix
     ../modules/packages.nix
