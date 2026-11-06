@@ -99,10 +99,11 @@
       ALLOW_USERS = [ "lu5je0" ];
       TIMELINE_CREATE = true;
       TIMELINE_CLEANUP = true;
+      # 按有快照的小时/日期计数，保留最近 10 个小时和 7 个日期的快照。
       TIMELINE_LIMIT_HOURLY = 10;
       TIMELINE_LIMIT_DAILY = 7;
-      TIMELINE_LIMIT_WEEKLY = 4;
-      TIMELINE_LIMIT_MONTHLY = 2;
+      TIMELINE_LIMIT_WEEKLY = 0;
+      TIMELINE_LIMIT_MONTHLY = 0;
       TIMELINE_LIMIT_YEARLY = 0;
     };
   };
