@@ -4,7 +4,7 @@
   # inputs 只能是字面量 attrset（import / let / // 都会被判为 thunk 而报错）
   inputs = {
     nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
-    nixpkgs-unstable.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
+    nixpkgs-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
 
     nixpkgs-darwin.url = "https://channels.nixos.org/nixpkgs-26.05-darwin/nixexprs.tar.zst";
     nixpkgs-darwin-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
