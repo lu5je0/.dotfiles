@@ -50,6 +50,8 @@ in
   # 服务中的其他进程被 OOM 终止时，不由 systemd 连带停止 Shell。
   systemd.user.services."org.gnome.Shell@" = {
     overrideStrategy = "asDropin";
+    # 继承桌面会话的 PATH，避免默认服务 PATH 遮蔽系统与用户 profile 中的程序。
+    enableDefaultPath = false;
     serviceConfig = {
       OOMPolicy = "continue";
       # 保护 Shell 免受内核 OOM 终止；不影响 systemd-oomd 的 cgroup 选择。
