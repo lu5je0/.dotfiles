@@ -1,0 +1,29 @@
+# arcglyph gesture bindings
+#
+# enabled: global switch. false disables all gestures.
+# hide_tray: true hides the tray icon.
+# lang: GUI language. "en" (default) or "zh".
+# groups: each group associates a set of apps with a list of gestures.
+#   name: display name for the group
+#   apps: list of app_id substrings (case-insensitive). empty = every window.
+#   gestures[*].pattern: sequence of numpad-style direction digits
+#     7 8 9      up-left  up   up-right
+#     4 . 6      left     .    right
+#     1 2 3      down-left down down-right
+#   gestures[*].keys: evdev key names pressed together as a chord.
+#   gestures[*].label: free-form description shown in the GUI.
+#
+enabled: true
+lang: zh
+groups:
+  - name: Browser
+    apps: [google-chrome, chromium, microsoft-edge, nautilus]
+    gestures:
+      - { label: Back, pattern: "4", keys: [LEFTALT, LEFT] }
+      - { label: Forward, pattern: "6", keys: [LEFTALT, RIGHT] }
+      - { label: "Scroll to top", pattern: "8", keys: [HOME] }
+      - { label: "Scroll to bottom", pattern: "2", keys: [END] }
+      - { label: "Close tab", pattern: "26", keys: [LEFTCTRL, W] }
+      - { label: "Reopen closed tab", pattern: "24", keys: [LEFTCTRL, LEFTSHIFT, T] }
+      - { label: Reload, pattern: "46", keys: [F5] }
+      - { label: 新手势, pattern: "93", keys: [LEFTCTRL, T] }

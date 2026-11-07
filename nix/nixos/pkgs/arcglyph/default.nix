@@ -12,18 +12,18 @@
   noto-fonts-cjk-sans-static,
 }:
 
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage  {
   pname = "arcglyph";
-  version = "0.7.0";
+  version = "0.7.4";
 
   src = fetchFromGitHub {
     owner = "lu5je0";
     repo = "arcglyph";
-    rev = "91128be01aab6b084e4d134b05c7f16f2727d927";
-    hash = "sha256-unVYFie20Qyya43JRGFwQWQ+czi1BeCe9iemDPt+Ci8=";
+    rev = "d9d98af427d5dd4679cc7cda3bfb60d9fd09ceef";
+    hash = "sha256-h8najBLg5zN8UjlAGFpSH8XBy9O25RucSB6tsjtpYjE=";
   };
 
-  cargoHash = "sha256-E3mH1qd5onvskZBK0eIKfngx6sNM8D3tHGppIWunNU0=";
+  cargoHash = "sha256-IQhRf5SuGwjgMQgBZEkQFVqwY2NQHmxqBGGL4P+bsaw=";
 
   nativeBuildInputs = [
     makeWrapper
