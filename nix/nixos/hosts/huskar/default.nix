@@ -102,8 +102,8 @@
       # 按有快照的小时/日期计数，保留最近 10 个小时和 7 个日期的快照。
       TIMELINE_LIMIT_HOURLY = 10;
       TIMELINE_LIMIT_DAILY = 7;
-      TIMELINE_LIMIT_WEEKLY = 0;
-      TIMELINE_LIMIT_MONTHLY = 0;
+      TIMELINE_LIMIT_WEEKLY = 2;
+      TIMELINE_LIMIT_MONTHLY = 1;
       TIMELINE_LIMIT_YEARLY = 0;
     };
   };
@@ -112,6 +112,13 @@
   # 必须进 systemPackages：polkit 只扫描 /run/current-system/sw/share/polkit-1，
   # 放进用户 profile 会让 pkexec 找不到 action 而无法提权。
   environment.systemPackages = [ pkgs.btrfs-assistant ];
+  # /home/.snapshots 单独挂载，Browse/Restore 需要显式关联快照子卷和恢复目标。
+  environment.etc."btrfs-assistant.conf".text = ''
+    snapper = ${pkgs.snapper}/bin/snapper
+
+    [Subvol-Mapping]
+    home = "@home-snapshots,@home,f4037ed9-577a-4e48-a838-1a0ed6fd2eda"
+  '';
 
   # ── 内核卡死自动重启 ──
   # 参考：系统卡死时不需要强制关机，配置好后 30s 自动复位。
