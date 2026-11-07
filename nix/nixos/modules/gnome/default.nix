@@ -7,9 +7,9 @@
 }:
 
 let
-  tilewindow = pkgs.callPackage ../pkgs/tilewindow { };
-  showDesktopCorner = pkgs.callPackage ../pkgs/show-desktop-corner { };
-  windowDecorations = pkgs.callPackage ../pkgs/window-decorations { };
+  tilewindow = pkgs.callPackage ../../pkgs/tilewindow { };
+  showDesktopCorner = pkgs.callPackage ../../pkgs/show-desktop-corner { };
+  windowDecorations = pkgs.callPackage ../../pkgs/window-decorations { };
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
     pkgs.gnomeExtensions.astra-monitor
@@ -25,7 +25,10 @@ let
   ];
 in
 {
-  imports = [ ../pkgs/window-decorations/module.nix ];
+  imports = [
+    ./nautilus.nix
+    ../../pkgs/window-decorations/module.nix
+  ];
 
   environment.systemPackages = shellExtensions ++ [
     pkgs.gjs
@@ -47,6 +50,7 @@ in
     autoSuspend = false;
   };
   services.desktopManager.gnome.enable = true;
+
   # 服务中的其他进程被 OOM 终止时，不由 systemd 连带停止 Shell。
   systemd.user.services."org.gnome.Shell@" = {
     overrideStrategy = "asDropin";
@@ -60,30 +64,24 @@ in
       ManagedOOMPreference = "omit";
     };
   };
+
   services.gnome.gnome-remote-desktop.enable = true;
   systemd.user.services.gnome-remote-desktop = {
     enable = true;
     wantedBy = [ "gnome-session.target" ];
   };
+
   # workaround: gnome-remote-desktop-settings-entry
   # GNOME 50 的设置仅在 system unit 状态为 enabled/disabled 时显示「远程桌面」入口，
   # NixOS 默认给的是 linked，补 wantedBy 让它变成 enabled
   systemd.services.gnome-remote-desktop.wantedBy = [ "graphical.target" ];
+
   # workaround: gnome-remote-login-pkexec-path
   # 「远程登录」开关由 configuration daemon 提权配置，而它的 PATH 里没有
   # /run/wrappers/bin（pkexec 所在），会报 Failed to execute child process "pkexec"
   systemd.services.gnome-remote-desktop-configuration.environment = {
     PATH = lib.mkForce "/run/wrappers/bin";
     SHELL = "/run/current-system/sw/bin/bash";
-  };
-
-  # networking.firewall.allowedTCPPorts = [ 3389 ];
-
-  # Nautilus 右键「在终端中打开」，终端用系统安装的定制 kitty
-  # （等价于 gsettings set com.github.stunkymonkey.nautilus-open-any-terminal terminal kitty）
-  programs.nautilus-open-any-terminal = {
-    enable = true;
-    terminal = "kitty";
   };
 
   programs.dconf.profiles.user.databases = [

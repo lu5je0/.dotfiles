@@ -5,7 +5,7 @@
     ../pkgs/arcglyph/module.nix
     ../modules/desktop-icons
     ../modules/fcitx5.nix
-    ../modules/gnome.nix
+    ../modules/gnome
     ../modules/keyd.nix
     ../pkgs/mission-center/module.nix
   ];

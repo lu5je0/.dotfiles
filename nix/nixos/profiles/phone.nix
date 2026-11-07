@@ -1,7 +1,7 @@
 { lib, pkgs, ... }:
 {
   imports = [
-    ../modules/gnome.nix
+    ../modules/gnome
     ../modules/keyd.nix
   ];
 
