@@ -16,6 +16,11 @@
     # 保留上游 nixpkgs，复用其桌面包依赖与缓存；用 flake.lock 固定版本。
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    arcglyph = {
+      url = "github:lu5je0/arcglyph";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     fcitx5-wetypex = {
       url = "github:lu5je0/fcitx5-wetypex";
       inputs.nixpkgs.follows = "nixpkgs";

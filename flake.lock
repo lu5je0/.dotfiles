@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "arcglyph": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794109303,
+        "narHash": "sha256-hJmnsq6WKyP5pUppaZJGIBNh/M6crkOzVOotgGck6Yo=",
+        "owner": "lu5je0",
+        "repo": "arcglyph",
+        "rev": "b8b8ba082c54eceedcb86b593886b8d0553d9ecf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lu5je0",
+        "repo": "arcglyph",
+        "type": "github"
+      }
+    },
     "bun2nix": {
       "inputs": {
         "flake-parts": [
@@ -245,6 +265,7 @@
     },
     "root": {
       "inputs": {
+        "arcglyph": "arcglyph",
         "fcitx5-wetypex": "fcitx5-wetypex",
         "llm-agents": "llm-agents",
         "mark-shot": "mark-shot",

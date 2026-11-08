@@ -1,14 +1,24 @@
-{ pkgs, pkgsUnstable, ... }:
+{
+  inputs,
+  pkgs,
+  pkgsUnstable,
+  ...
+}:
 
 {
   imports = [
-    ../pkgs/arcglyph/module.nix
+    inputs.arcglyph.nixosModules.default
     ../modules/desktop-icons
     ../modules/fcitx5.nix
     ../modules/gnome
     ../modules/keyd.nix
     ../pkgs/mission-center/module.nix
   ];
+
+  programs.arcglyph = {
+    enable = true;
+    users = [ "lu5je0" ];
+  };
 
   programs.desktopIconOverrides = {
     "io.github.yucling.open-orpheus" = ../modules/desktop-icons/icons/netease-cloud-music.svg;
