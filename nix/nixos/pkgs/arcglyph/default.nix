@@ -14,16 +14,16 @@
 
 rustPlatform.buildRustPackage  {
   pname = "arcglyph";
-  version = "0.7.4";
+  version = "0.7.6";
 
   src = fetchFromGitHub {
     owner = "lu5je0";
     repo = "arcglyph";
-    rev = "d9d98af427d5dd4679cc7cda3bfb60d9fd09ceef";
-    hash = "sha256-h8najBLg5zN8UjlAGFpSH8XBy9O25RucSB6tsjtpYjE=";
+    rev = "85816dba3c2b1e21990fbcdbbeb24854785be6a5";
+    hash = "sha256-6FbW0ZRGd3Skjms25bZfM2WDdXOLT27QVPMUD6e1r9I=";
   };
 
-  cargoHash = "sha256-IQhRf5SuGwjgMQgBZEkQFVqwY2NQHmxqBGGL4P+bsaw=";
+  cargoHash = "sha256-J4XQqCqcavKGs1OfXh17YeU+xBsBNtCwxjIhwkUGcfk=";
 
   nativeBuildInputs = [
     makeWrapper
