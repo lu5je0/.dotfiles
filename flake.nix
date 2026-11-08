@@ -13,8 +13,8 @@
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
-    # 保留上游 nixpkgs，复用其桌面包依赖与缓存；用 flake.lock 固定版本。
-    llm-agents.url = "github:numtide/llm-agents.nix";
+    # 固定 Codex 26.1023.51421 对应版本，保留上游 nixpkgs 以复用桌面包依赖与缓存。
+    llm-agents.url = "github:numtide/llm-agents.nix/724537386a90f2cf3033fa3f13b5df087aae34fa";
 
     arcglyph = {
       url = "github:lu5je0/arcglyph";
