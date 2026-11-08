@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794109303,
-        "narHash": "sha256-hJmnsq6WKyP5pUppaZJGIBNh/M6crkOzVOotgGck6Yo=",
+        "lastModified": 1794118761,
+        "narHash": "sha256-ehlGukVY23DLKx0lZam2qlXK2fsZEW+zNBdgSBDf3yA=",
         "owner": "lu5je0",
         "repo": "arcglyph",
-        "rev": "b8b8ba082c54eceedcb86b593886b8d0553d9ecf",
+        "rev": "fedc5bcde4400b07887b694f531fa0a622c804fa",
         "type": "github"
       },
       "original": {

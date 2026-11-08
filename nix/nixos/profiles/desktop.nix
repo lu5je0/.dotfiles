@@ -17,6 +17,7 @@
 
   programs.arcglyph = {
     enable = true;
+    autostart = true;
     users = [ "lu5je0" ];
   };
 
