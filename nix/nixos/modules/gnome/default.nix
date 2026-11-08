@@ -27,6 +27,7 @@ in
 {
   imports = [
     ./nautilus.nix
+    ./profile-applications
     ../../pkgs/window-decorations/module.nix
   ];
 

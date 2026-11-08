@@ -52,6 +52,45 @@ systemctl --user restart desktop-icon-overrides.service
 
 完全退出应用后重新打开；Dock 仍显示缓存图标时注销再登录。
 
+## GNOME 的 Nix 应用自动刷新
+
+GNOME 模块安装 `nix-profile-applications.path` 和同名用户服务。通过 inotify 监视用户
+profile 的父目录、系统 profile 和 `/run/current-system` 切换；登录时也同步一次，不使用轮询或定时器。
+支持 `nix profile add/upgrade/remove`、`nh os switch` 和系统中的用户包，用户 profile 优先。
+
+服务在 `~/.local/share/applications`（或 `$XDG_DATA_HOME/applications`）生成启动项，
+把 profile 提供的图标名改为实际图标文件的绝对路径，绕开 GNOME 的图标主题缓存。
+保留启动命令、动作及文件关联；profile 没提供的图标继续按主题名查找。此服务不处理托盘图标。
+绝对路径固定图标选择，不随图标主题切换。
+同步及图标覆盖服务都会刷新用户目录的 `mimeinfo.cache`，使用户启动项覆盖系统入口后仍能参与
+文件类型关联；不修改用户的默认应用偏好。
+
+状态记录在 `$XDG_STATE_HOME/nix-profile-applications`（默认 `~/.local/state/` 下）。
+升级时刷新、卸载时清理，只修改本服务生成且未被用户编辑的文件；已有手工启动项及其他来源的链接
+不会被覆盖。直接指向 profile 启动项的链接会被接管。`programs.desktopIconOverrides` 中配置的
+启动项交给图标覆盖服务处理，profile 切换后也会触发该服务刷新。
+
+查看监视状态和同步日志：
+
+```sh
+systemctl --user status nix-profile-applications.path
+journalctl --user -u nix-profile-applications.service -n 30
+```
+
+手动触发一次检查：
+
+```sh
+systemctl --user restart nix-profile-applications.service
+```
+
+世代未变时服务直接退出。需要强制重建时，在 `systemctl --user cat nix-profile-applications.service`
+显示的 `ExecStart` 命令后加 `--force`，保留其中的 `--exclude` 参数。
+不要删除状态清单：它用于区分自动生成的启动项和用户文件。
+
+测试：`PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s nix/tests -p 'test*desktop*.py'`
+以及 `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s nix/tests -p 'test_profile_applications.py'`。
+MIME 集成测试需要 `gio` 和 `update-desktop-database`；后者也可用 `UPDATE_DESKTOP_DATABASE` 指定绝对路径。
+
 ## Mac
 
 先安装 Nix，然后在 `python3 ~/.dotfiles/setup.py` 中选择 `nix-darwin`。

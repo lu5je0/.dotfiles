@@ -56,7 +56,7 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.python3}/bin/python3 ${./desktop-icons.py} ${overrides}";
+        ExecStart = "${pkgs.python3}/bin/python3 ${./desktop-icons.py} ${overrides} ${pkgs.desktop-file-utils}/bin/update-desktop-database";
       };
     };
   };

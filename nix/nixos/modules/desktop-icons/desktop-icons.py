@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 
 
@@ -95,7 +96,10 @@ def main():
     state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
     data_dirs = [Path(p) for p in os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":") if p]
     overrides = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-    return apply(overrides, data_home, state_home, data_dirs)
+    result = apply(overrides, data_home, state_home, data_dirs)
+    if len(sys.argv) > 2:
+        subprocess.run([sys.argv[2], str(data_home / "applications")], check=True)
+    return result
 
 
 if __name__ == "__main__":
