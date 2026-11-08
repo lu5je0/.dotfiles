@@ -1,0 +1,148 @@
+diff --git a/metadata/meta-daemon.c b/metadata/meta-daemon.c
+index 15782d2..3a91ad5 100644
+--- a/metadata/meta-daemon.c
++++ b/metadata/meta-daemon.c
+@@ -48,14 +48,16 @@
+ typedef struct {
+   char *filename;
+   MetaTree *tree;
++  GHashTable *pending_notifications;
+   guint writeout_timeout;
+ } TreeInfo;
+ 
+ typedef struct {
+-  gchar *treefile;
++  TreeInfo *tree_info;
+   gchar *path;
+   GVfsMetadata *object;
+   guint timeout_id;
++  GList queue_link;
+ } BusNotificationInfo;
+ 
+ static GHashTable *tree_infos = NULL;
+@@ -63,13 +65,15 @@ static GVfsMetadata *skeleton = NULL;
+ #ifdef HAVE_GUDEV
+ static GUdevClient *gudev_client = NULL;
+ #endif
+-static GList *dbus_notification_list = NULL;
++/* Keep the newest-first flush order across metadata trees. */
++static GQueue dbus_notification_queue = G_QUEUE_INIT;
+ 
+ static void
+ tree_info_free (TreeInfo *info)
+ {
+   g_free (info->filename);
+   meta_tree_unref (info->tree);
++  g_hash_table_unref (info->pending_notifications);
+   if (info->writeout_timeout)
+     g_source_remove (info->writeout_timeout);
+ 
+@@ -116,12 +120,11 @@ flush_single (const gchar *filename,
+ static void
+ free_bus_notification_info (BusNotificationInfo *info)
+ {
+-  dbus_notification_list = g_list_remove (dbus_notification_list,
+-                                          info);
++  g_hash_table_remove (info->tree_info->pending_notifications, info->path);
++  g_queue_unlink (&dbus_notification_queue, &info->queue_link);
+   g_object_unref (info->object);
+   g_source_remove (info->timeout_id);
+   g_free (info->path);
+-  g_free (info->treefile);
+   g_free (info);
+ }
+ 
+@@ -132,7 +135,7 @@ notify_attribute_change (gpointer data)
+ 
+   info = (BusNotificationInfo *) data;
+   gvfs_metadata_emit_attribute_changed (info->object,
+-                                        info->treefile,
++                                        info->tree_info->filename,
+                                         info->path);
+   free_bus_notification_info (info);
+   return G_SOURCE_REMOVE;
+@@ -140,29 +143,21 @@ notify_attribute_change (gpointer data)
+ 
+ static void
+ emit_attribute_change (GVfsMetadata *object,
+-                       const gchar  *treefile,
++                       TreeInfo     *tree_info,
+                        const gchar  *path)
+ {
+-  GList *iter;
+   BusNotificationInfo *info;
+ 
+-  for (iter = dbus_notification_list; iter != NULL; iter = iter->next)
+-    {
+-      info = iter->data;
+-      if (g_str_equal (info->treefile, treefile) &&
+-          g_str_equal (info->path, path))
+-        {
+-          break;
+-        }
+-    }
+-  if (iter == NULL)
++  info = g_hash_table_lookup (tree_info->pending_notifications, path);
++  if (info == NULL)
+     {
+       info = g_new0 (BusNotificationInfo, 1);
+-      info->treefile = g_strdup (treefile);
++      info->tree_info = tree_info;
+       info->path = g_strdup (path);
+       info->object = g_object_ref (object);
+-      dbus_notification_list = g_list_prepend (dbus_notification_list,
+-                                               info);
++      info->queue_link.data = info;
++      g_hash_table_insert (tree_info->pending_notifications, info->path, info);
++      g_queue_push_head_link (&dbus_notification_queue, &info->queue_link);
+     }
+   else
+     {
+@@ -178,9 +173,8 @@ flush_all (gboolean send_pending_notifications)
+ {
+   BusNotificationInfo *info;
+ 
+-  while (dbus_notification_list != NULL)
++  while ((info = g_queue_peek_head (&dbus_notification_queue)) != NULL)
+     {
+-      info = (BusNotificationInfo *) dbus_notification_list->data;
+       if (send_pending_notifications)
+         notify_attribute_change (info);
+       else
+@@ -202,6 +196,7 @@ tree_info_new (const char *filename)
+   info = g_new0 (TreeInfo, 1);
+   info->filename = g_strdup (filename);
+   info->tree = tree;
++  info->pending_notifications = g_hash_table_new (g_str_hash, g_str_equal);
+   info->writeout_timeout = 0;
+ 
+   return info;
+@@ -301,7 +296,7 @@ handle_set (GVfsMetadata *object,
+     }
+   else
+     {
+-      emit_attribute_change (object, arg_treefile, arg_path);
++      emit_attribute_change (object, info, arg_path);
+       gvfs_metadata_complete_set (object, invocation);
+     }
+   
+@@ -337,7 +332,7 @@ handle_remove (GVfsMetadata *object,
+       return TRUE;
+     }
+ 
+-  emit_attribute_change (object, arg_treefile, arg_path);
++  emit_attribute_change (object, info, arg_path);
+   tree_info_schedule_writeout (info);
+   gvfs_metadata_complete_remove (object, invocation);
+   
+@@ -378,8 +373,8 @@ handle_move (GVfsMetadata *object,
+   /* Remove source if copy succeeded (ignoring errors) */
+   meta_tree_remove (info->tree, arg_path);
+ 
+-  emit_attribute_change (object, arg_treefile, arg_path);
+-  emit_attribute_change (object, arg_treefile, arg_dest_path);
++  emit_attribute_change (object, info, arg_path);
++  emit_attribute_change (object, info, arg_dest_path);
+   tree_info_schedule_writeout (info);
+   gvfs_metadata_complete_move (object, invocation);
+   

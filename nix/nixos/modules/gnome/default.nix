@@ -26,6 +26,7 @@ let
 in
 {
   imports = [
+    ./gvfs
     ./nautilus.nix
     ./profile-applications
     ../../pkgs/window-decorations/module.nix
