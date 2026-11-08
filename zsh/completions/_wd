@@ -18,6 +18,7 @@ _wd() {
     '--delete-stat[delete stats for a single word]:word: ' \
     '--clear-stats[clear all query history stats]' \
     '--no-say[disable text-to-speech]' \
+    '--say-only[speak the text without looking it up]' \
     '--json[print result as JSON]' \
     '1:word: '
 }

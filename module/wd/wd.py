@@ -6,12 +6,15 @@ import json
 import os
 import platform
 import re
+import shutil
+import subprocess
 import sys
 from datetime import datetime
 
 import color_pattern
 from init_dependencies import init_dependencies
 from paths import history_dir, history_file
+from pronunciation import play_pronunciation
 
 
 ENGINE_MODULES = [
@@ -38,12 +41,36 @@ def style(text, *codes):
 
 
 def get_say_cmd():
-    s = platform.system()
-    if s == 'Windows':
-        return 'wsay'
-    if s == 'Linux':
-        return 'wsay -v 2'
-    return 'say -v Alex'
+    system = platform.system()
+    if system == 'Windows':
+        return ['wsay']
+    if system == 'Linux':
+        if shutil.which('wsay'):
+            return ['wsay', '-v', '2']
+        return ['spd-say', '-w', '--']
+    return ['say', '-v', 'Alex', '--']
+
+
+def say_word(word, *, wait=False):
+    if wait:
+        status = play_pronunciation(word)
+        if status is not None:
+            return status
+        cmd = [*get_say_cmd(), word]
+    else:
+        cmd = [sys.executable, '-B', __file__, '--say-only', '--', word]
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=None if wait else subprocess.DEVNULL,
+        )
+    except OSError as exc:
+        if wait:
+            print(f'wd: could not start {cmd[0]}: {exc.strerror}', file=sys.stderr)
+        return 1
+    return process.wait() if wait else 0
 
 
 def load_module(module_name, module_file):
@@ -97,12 +124,9 @@ def query_with_engines(word, engines):
     return None
 
 
-def print_result(result, say_word=True):
+def print_result(result):
     def has_text(value):
         return isinstance(value, str) and value.strip() != ''
-
-    if say_word:
-        os.popen(get_say_cmd() + ' {} 2>/dev/null'.format(result.get('word', '')))
 
     engine = result.get('engine', '')
     if engine:
@@ -280,7 +304,9 @@ def parse_args(argv=None):
     )
     parser.add_argument('--list-engines', action='store_true', help='list available engines')
     parser.add_argument('--init', action='store_true', help='download local dictionary dependencies')
-    parser.add_argument('--no-say', action='store_true', help='disable text-to-speech')
+    speech = parser.add_mutually_exclusive_group()
+    speech.add_argument('--no-say', action='store_true', help='disable text-to-speech')
+    speech.add_argument('--say-only', action='store_true', help='speak the text without looking it up')
     parser.add_argument('--stats', action='store_true', help='show query history stats')
     parser.add_argument('--delete-stat', metavar='WORD', help='delete stats for a single word')
     parser.add_argument('--clear-stats', action='store_true', help='clear all query history stats')
@@ -290,10 +316,6 @@ def parse_args(argv=None):
 
 def print_json(payload):
     print(json.dumps(payload, ensure_ascii=False))
-
-
-def say_result(result):
-    os.popen(get_say_cmd() + ' {} 2>/dev/null'.format(result.get('word', '')))
 
 
 def main():
@@ -357,6 +379,9 @@ def main():
         print('Please input a word!')
         return 1
 
+    if args.say_only:
+        return say_word(word, wait=True)
+
     allowed_engines = args.engine if args.engine else get_supported_engines()
     engines = build_engines(allowed_engines)
     if not engines:
@@ -382,13 +407,13 @@ def main():
             pass
 
     if not args.no_say:
-        say_result(result)
+        say_word(result.get('word') or word)
 
     if args.json:
         print_json({'ok': True, 'result': result})
         return 0
 
-    print_result(result, say_word=False)
+    print_result(result)
     return 0
 
 

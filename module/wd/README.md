@@ -11,6 +11,7 @@ Default behavior:
 
 ```bash
 wd hello
+wd --say-only hello
 wd --no-say hello
 wd --json --no-say hello
 wd -e stardict -e google hello
@@ -32,10 +33,20 @@ echo "good for you" | wd
 - `--list-engines`: print available engines
 - `--init`: download local dictionary dependencies for `hanzi` and `stardict`
 - `--no-say`: disable text-to-speech
+- `--say-only`: speak the text without looking it up
 - `--stats`: show query history stats
 - `--delete-stat WORD`: delete stats for a single word
 - `--clear-stats`: clear all query history stats
 - `--json`: print machine-readable JSON
+
+Successful lookups are spoken by default. With `mpv` installed, `wd` requests
+recordings for individual English words through the
+[Wiktionary REST API](https://en.wiktionary.org/wiki/Special:RestSandbox).
+It downloads one recording per lookup, preferring American English. Playback
+starts with 500 ms of silence to give idle audio devices time to wake. Phrases
+and words without downloadable recordings use local speech. On Linux, `wd` uses
+`wsay` if available and otherwise uses `spd-say`. Windows uses `wsay`, and macOS
+uses `say -v Alex`. Use `--no-say` to skip pronunciation requests and playback.
 
 `--json` success example:
 
