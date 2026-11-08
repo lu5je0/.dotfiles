@@ -9,9 +9,10 @@ let
   patched = upstream.override {
     chatgpt-unwrapped = upstream.unwrapped.overrideAttrs (old: {
       # workaround: codex-ime-first-key
-      # 修复 preedit 首键光标与自动聚焦重复插入首字母；原因与升级检查见脚本。
+      # 修复 preedit 首键光标、预测打断组字与发送后聚焦失败；约束见补丁脚本。
       postInstall = (old.postInstall or "") + ''
         ${pkgs.python3}/bin/python3 ${./patch-preedit-caret.py} \
+          --helpers ${./ime-workarounds.js} \
           "$out/lib/chatgpt/resources/app.asar"
       '';
     });
