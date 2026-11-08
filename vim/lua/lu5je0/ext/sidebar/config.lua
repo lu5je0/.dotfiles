@@ -10,8 +10,8 @@ M.diff_max_bytes = 1024 * 1024
 
 M.tabs = {
   { id = 'files', label = '󰙅 Files' },
-  { id = 'symbols', label = '󰊕 Symbols' },
   { id = 'git_changes', label = '󰊢 Changes' },
+  { id = 'symbols', label = '󰊕 Symbols' },
   { id = 'buffers', transient = true, label = '󰈙 Buffers' },
   { id = 'history', transient = true, label = '󰊢 History', width = 50 },
 }
