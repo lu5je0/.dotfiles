@@ -58,19 +58,21 @@ for name in "${MANAGED_FILES[@]}"; do
 	link_file "$SRC/$name" "$AGENT_DIR/$name"
 done
 
-# settings.json is shared with pi itself: pi writes runtime keys such as
+# settings.jsonc is parsed with comments/trailing commas removed before merging.
+# The live settings.json is shared with pi itself: pi writes runtime keys such as
 # lastChangelogVersion, defaultProvider/defaultModel, packages, theme. Merging
 # (instead of symlinking) keeps the dotfiles-managed subset in git while leaving
 # pi-owned keys untouched. For each managed key, dotfiles wins: `packages` is
 # replaced wholesale, so the list here is the authoritative plugin set. Keys not
 # present here (defaultModel, theme, ...) are left as pi wrote them.
-python3 - "$SRC/settings.json" "$AGENT_DIR/settings.json" <<'EOF'
+PYTHONPATH="$SRC${PYTHONPATH:+:$PYTHONPATH}" python3 -B - "$SRC/settings.jsonc" "$AGENT_DIR/settings.json" <<'EOF'
 import json, os, sys
+import jsonc
 
 src, dst = sys.argv[1], sys.argv[2]
 if not os.path.exists(src):
     sys.exit(0)
-managed = json.load(open(src))
+managed = jsonc.load(open(src))
 current = json.load(open(dst)) if os.path.exists(dst) else {}
 changed = [k for k, v in managed.items() if current.get(k) != v]
 if changed:
@@ -83,34 +85,57 @@ else:
     print("skip: settings already managed")
 EOF
 
-# Reconcile the declared packages into pi's own npm root. `pi install` is a
-# no-op when the version already satisfies the declared range, and pi also
-# auto-installs any missing global package on startup, so this simply makes a
-# fresh machine converge without first opening pi. Packages dropped from the
-# list are not uninstalled here; pi stops loading them once settings no longer
-# reference them.
-if command -v pi >/dev/null 2>&1 && [ -f "$SRC/settings.json" ]; then
-	# Emit `npm:<spec>` for every declared package whose package name is not yet
-	# present in pi's user npm root. Handles scoped names (@scope/pkg) correctly.
-	missing=()
-	while IFS= read -r spec; do
-		[ -n "$spec" ] || continue
-		missing+=("$spec")
-	done < <(python3 - "$SRC/settings.json" "$AGENT_DIR/npm/node_modules" <<'PY'
+# Reconcile npm packages against the authoritative list. Only direct dependencies
+# in pi's npm/package.json are removal candidates; never scan node_modules, which
+# also contains dependencies needed by retained plugins. Use npm for removal:
+# pi remove also edits settings and fails if the merged list no longer has it.
+if command -v pi >/dev/null 2>&1 && [ -f "$SRC/settings.jsonc" ]; then
+	# Command substitution propagates parser failures under set -e, unlike process
+	# substitution. Finish the plan before executing any package operation.
+	package_plan="$(PYTHONPATH="$SRC${PYTHONPATH:+:$PYTHONPATH}" python3 -B - "$SRC/settings.jsonc" "$AGENT_DIR/npm" <<'PYTHON'
 import json, os, re, sys
+import jsonc
 
-settings, modules_dir = sys.argv[1], sys.argv[2]
-for pkg in json.load(open(settings)).get("packages", []):
-    source = pkg if isinstance(pkg, str) else pkg.get("source", "")
+settings, npm_root = sys.argv[1], sys.argv[2]
+managed = jsonc.load(open(settings))
+if "packages" not in managed:
+    sys.exit(0)
+packages = managed["packages"]
+if not isinstance(packages, list):
+    raise ValueError("packages must be an array")
+declared = {}
+for pkg in packages:
+    source = pkg if isinstance(pkg, str) else pkg["source"]
     if not source.startswith("npm:"):
         continue
     spec = source[len("npm:"):]
     # Strip the version/range suffix without eating a leading scope '@'.
     name = re.sub(r"@[^@/]*$", "", spec) or spec
-    if not os.path.isdir(os.path.join(modules_dir, name)):
-        print(spec)
-PY
-	)
+    declared[name] = spec
+manifest = os.path.join(npm_root, "package.json")
+installed = json.load(open(manifest)).get("dependencies", {}) if os.path.exists(manifest) else {}
+for name in sorted(installed.keys() - declared.keys()):
+    print("remove\t" + name)
+for name, spec in declared.items():
+    if not os.path.isdir(os.path.join(npm_root, "node_modules", name)):
+        print("install\t" + spec)
+PYTHON
+	)"
+	obsolete=()
+	missing=()
+	while IFS=$'\t' read -r action spec; do
+		[ -n "$spec" ] || continue
+		case "$action" in
+			remove) obsolete+=("$spec") ;;
+			install) missing+=("$spec") ;;
+		esac
+	done <<< "$package_plan"
+	if [ ${#obsolete[@]} -gt 0 ]; then
+		echo "uninstalling pi packages: ${obsolete[*]}"
+		npm uninstall --prefix "$AGENT_DIR/npm" --legacy-peer-deps --no-audit --no-fund -- "${obsolete[@]}"
+	else
+		echo "skip: no undeclared pi packages"
+	fi
 	if [ ${#missing[@]} -gt 0 ]; then
 		echo "installing pi packages: ${missing[*]}"
 		for spec in "${missing[@]}"; do
