@@ -14,7 +14,9 @@
           "id": "qwen3.8-flash-next-iq2_xs",
           "name": "Qwen3.8-Flash-Next IQ2_XS (Strata)",
           "reasoning": true,
-          "input": ["text"],
+          "input": [
+            "text"
+          ],
           "contextWindow": 262144,
           "maxTokens": 16384,
           "thinkingLevelMap": {
@@ -37,7 +39,9 @@
           "id": "qwen3.8-flash-next-iq3_xxs",
           "name": "Qwen3.8-Flash-Next IQ3_XXS (Strata, 200K)",
           "reasoning": true,
-          "input": ["text"],
+          "input": [
+            "text"
+          ],
           "contextWindow": 204800,
           "maxTokens": 16384,
           "thinkingLevelMap": {
@@ -58,64 +62,6 @@
         }
       ]
     },
-    "llama.cpp": {
-      "modelOverrides": {
-        "Qwen3.8-27B-Uncensored-Q4_K_M": {
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": "enable",
-            "low": "enable",
-            "medium": "enable",
-            "high": "enable",
-            "xhigh": "enable",
-            "max": "enable"
-          },
-          "compat": {
-            "thinkingFormat": "qwen-chat-template",
-            "supportsDeveloperRole": false,
-            "supportsReasoningEffort": false
-          }
-        },
-        "Qwen3.8-27B-Q4_K_M": {
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": "enable",
-            "low": "enable",
-            "medium": "enable",
-            "high": "enable",
-            "xhigh": "enable",
-            "max": "enable"
-          },
-          "compat": {
-            "thinkingFormat": "qwen-chat-template",
-            "supportsDeveloperRole": false,
-            "supportsReasoningEffort": false
-          }
-        },
-        "Qwen3.8-27B-heretic-ara.ROCmFP4-STRIX": {
-          "reasoning": true,
-          "contextWindow": 229376,
-          "maxTokens": 65536,
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": "enable",
-            "low": "enable",
-            "medium": "enable",
-            "high": "enable",
-            "xhigh": "enable",
-            "max": "enable"
-          },
-          "compat": {
-            "thinkingFormat": "qwen-chat-template",
-            "supportsDeveloperRole": false,
-            "supportsReasoningEffort": false
-          }
-        }
-      },
-      "api": "openai-completions"
-    },
     "commandcode": {
       "modelOverrides": {
         "deepseek/deepseek-v4.1-flash": {
@@ -133,6 +79,147 @@
           }
         }
       }
+    },
+    "llama-local": {
+      "baseUrl": "http://127.0.0.1:8080/v1",
+      "api": "openai-completions",
+      "apiKey": "lu5je0",
+      "compat": {
+        "thinkingFormat": "qwen-chat-template",
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "supportsStore": false,
+        "supportsStrictMode": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "Qwen3.6-35B-A3B-UD-Q4_K_M",
+          "name": "Qwen3.6-35B-A3B-UD-Q4_K_M (Vulkan, 256K)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Qwen3.8-27B-heretic-ara.ROCmFP4-STRIX",
+          "name": "Qwen3.8-27B-heretic-ara.ROCmFP4-STRIX (HIP + DFlash2, 224K)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 229376,
+          "maxTokens": 65536,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Qwen3.8-27B-Q4_K_M",
+          "name": "Qwen3.8-27B-Q4_K_M (Vulkan, 256K)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Qwen3.8-27B-Uncensored-Q4_K_M",
+          "name": "Qwen3.8-27B-Uncensored-Q4_K_M (Vulkan, 256K)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Qwen3.8-27B-Uncensored-Q5_K_M",
+          "name": "Qwen3.8-27B-Uncensored-Q5_K_M (Vulkan, 256K)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": "enable",
+            "low": "enable",
+            "medium": "enable",
+            "high": "enable",
+            "xhigh": "enable",
+            "max": "enable"
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        }
+      ],
+      "name": "Local llama.cpp (TUI)"
     }
   }
 }
