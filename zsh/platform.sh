@@ -1,7 +1,9 @@
 if [[ $OSTYPE == darwin* ]]; then
   export HOMEBREW_PATH="/opt/homebrew"
   
-  # GNU 工具由 nix-darwin 提供，Brew 作为其余工具的补充。
+  # path_helper 会把系统目录提前；恢复 Nix 优先级，使用 nix-darwin 的 GNU 工具。
+  export PATH="$HOME/.nix-profile/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:$PATH"
+  # Brew 作为其余工具的补充。
   export PATH="$PATH:$HOMEBREW_PATH/bin"
   
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555"
