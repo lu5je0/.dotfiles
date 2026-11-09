@@ -60,7 +60,9 @@ profile 的父目录、系统 profile 和 `/run/current-system` 切换；登录�
 
 服务在 `~/.local/share/applications`（或 `$XDG_DATA_HOME/applications`）生成启动项，
 把 profile 提供的图标名改为实际图标文件的绝对路径，绕开 GNOME 的图标主题缓存。
-保留启动命令、动作及文件关联；profile 没提供的图标继续按主题名查找。此服务不处理托盘图标。
+启动入口调用固定位置的 `launch.js`，由 GIO 读取当前的原启动项，避免 GNOME 缓存旧的 store 启动命令。
+原启动项保存在状态目录的 `launchers/`，保留参数、工作目录、终端和 D-Bus 激活设置；右键动作也从当前原启动项读取。
+文件关联不变；profile 没提供的图标继续按主题名查找。此服务不处理托盘图标。
 绝对路径固定图标选择，不随图标主题切换。
 同步及图标覆盖服务都会刷新用户目录的 `mimeinfo.cache`，使用户启动项覆盖系统入口后仍能参与
 文件类型关联；不修改用户的默认应用偏好。
@@ -83,13 +85,18 @@ journalctl --user -u nix-profile-applications.service -n 30
 systemctl --user restart nix-profile-applications.service
 ```
 
-世代未变时服务直接退出。需要强制重建时，在 `systemctl --user cat nix-profile-applications.service`
+世代未变、托管启动项齐全且 MIME 缓存就绪时，服务直接退出；托管启动项缺失时会重新生成。
+需要强制重建时，在 `systemctl --user cat nix-profile-applications.service`
 显示的 `ExecStart` 命令后加 `--force`，保留其中的 `--exclude` 参数。
 不要删除状态清单：它用于区分自动生成的启动项和用户文件。
 
+首次启用固定入口后需注销重登一次，让现有图标读到新入口；后续升级会通过该入口读取最新命令。
+GNOME 已缓存的名称、图标和右键动作列表仍可能需要重新登录刷新。
+
 测试：`PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s nix/tests -p 'test*desktop*.py'`
 以及 `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s nix/tests -p 'test_profile_applications.py'`。
-MIME 集成测试需要 `gio` 和 `update-desktop-database`；后者也可用 `UPDATE_DESKTOP_DATABASE` 指定绝对路径。
+启动集成测试需要 `gjs` 和 `gio`；MIME 集成测试还需要 `update-desktop-database`，
+也可用 `UPDATE_DESKTOP_DATABASE` 指定其绝对路径。
 
 ## Mac
 

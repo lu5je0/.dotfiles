@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 
@@ -14,6 +15,7 @@ spec = importlib.util.spec_from_file_location("profile_applications", SCRIPT)
 sync = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sync)
 DESKTOP_DATABASE = os.environ.get("UPDATE_DESKTOP_DATABASE") or shutil.which("update-desktop-database")
+GJS = shutil.which("gjs")
 
 LAUNCHER = """[Desktop Entry]
 Type=Application
@@ -98,18 +100,82 @@ class ProfileApplicationsTest(unittest.TestCase):
         self.switch(first)
         self.assertTrue(self.run_sync())
         destination = self.applications / "player.desktop"
+        source = self.state / "nix-profile-applications/launchers/player.desktop"
         icon = first / "share/icons/hicolor/scalable/apps/player.svg"
-        self.assertEqual(destination.read_text(), LAUNCHER.replace("Icon=player", f"Icon={icon}"))
+        self.assertEqual(source.read_text(), LAUNCHER.replace("Icon=player", f"Icon={icon}"))
+        self.assertIn("MimeType=audio/flac;", destination.read_text())
+        self.assertIn("Actions=New;", destination.read_text())
+        command = next(line for line in destination.read_text().splitlines() if line.startswith("Exec="))
         self.assertFalse(destination.is_symlink())
         second = self.generation("second", LAUNCHER.replace("Exec=player", "Exec=player-v2"))
         self.switch(second)
         self.run_sync()
-        self.assertIn("Exec=player-v2 %U", destination.read_text())
+        self.assertIn("Exec=player-v2 %U", source.read_text())
+        self.assertIn(command, destination.read_text())
         self.assertIn(str(second), destination.read_text())
         self.assertNotIn(str(first), destination.read_text())
         self.switch(self.generation("empty", None))
         self.run_sync()
         self.assertFalse(destination.exists())
+        self.assertFalse(source.exists())
+
+    @unittest.skipUnless(GJS and shutil.which("gio"), "requires GJS and GIO")
+    def test_cached_launcher_uses_latest_command_arguments_cwd_and_actions(self):
+        # Keep an old desktop entry, as Shell does, while upgrading its source.
+        self.state = self.root / 'state % "$`\\'
+        recorder = self.root / "record.py"
+        result = self.root / "result.json"
+        recorder.write_text("import json,os,sys\nfrom pathlib import Path\n"
+                            "Path(sys.argv[1]).write_text(json.dumps([os.getcwd(), sys.argv[2:]]))\n")
+        cwd = self.root / "working directory"
+        cwd.mkdir()
+        source = LAUNCHER.replace("Exec=player", f'Exec={sys.executable} "{recorder}" "{result}" old')
+        source = source.replace("Icon=player", "Icon=player\nPath=" + str(cwd))
+        self.switch(self.generation("first", source))
+        self.run_sync()
+        cached = self.root / "cached.desktop"
+        cached.write_bytes((self.applications / "player.desktop").read_bytes())
+        source = source.replace(" old", " new").replace("--new", "--updated-action")
+        self.switch(self.generation("second", source))
+        self.run_sync()
+        uri = "file:///tmp/example%20file.txt"
+        remote_uri = "https://example.invalid/example%20file.txt"
+        subprocess.run(["gio", "launch", str(cached), uri, remote_uri], check=True, capture_output=True)
+
+        def recorded():
+            deadline = time.monotonic() + 5
+            while not result.exists() and time.monotonic() < deadline:
+                time.sleep(0.02)
+            self.assertTrue(result.exists(), "application did not launch")
+            return json.loads(result.read_text())
+
+        self.assertEqual(recorded(), [str(cwd), ["new", "/tmp/example file.txt", remote_uri]])
+        result.unlink()
+        script = self.root / "action.js"
+        script.write_text("import GioUnix from 'gi://GioUnix';\n"
+                          "GioUnix.DesktopAppInfo.new_from_filename(ARGV[0]).launch_action('New', null);\n")
+        subprocess.run([GJS, "-m", str(script), str(cached)], check=True, capture_output=True)
+        self.assertEqual(recorded(), [str(cwd), ["new", "--updated-action"]])
+
+    def test_proxy_leaves_terminal_and_dbus_activation_to_latest_source(self):
+        source = LAUNCHER.replace("Type=Application", "Type=Application\nTerminal=true\nDBusActivatable=true\nPath=/old/path\nTryExec=/old/binary")
+        self.switch(self.generation("first", source))
+        self.run_sync()
+        text = (self.applications / "player.desktop").read_text()
+        self.assertIn("Terminal=false\nDBusActivatable=false\n", text)
+        self.assertNotIn("Path=/old/path", text)
+        self.assertNotIn("TryExec=/old/binary", text)
+        self.assertIn("Terminal=true\nDBusActivatable=true", (self.state / "nix-profile-applications/launchers/player.desktop").read_text())
+
+    def test_restores_missing_dispatcher_and_source_without_generation_change(self):
+        self.switch(self.generation("first"))
+        self.run_sync()
+        for name in ["launch.js", "launchers/player.desktop"]:
+            target = self.state / "nix-profile-applications" / name
+            original = target.read_bytes()
+            target.unlink()
+            self.assertTrue(self.run_sync())
+            self.assertEqual(target.read_bytes(), original)
 
     def test_system_switch_and_user_priority(self):
         self.switch(self.generation("system-v1", LAUNCHER.replace("Name=示例", "Name=System")), self.system)
@@ -132,6 +198,16 @@ class ProfileApplicationsTest(unittest.TestCase):
         self.assertFalse(self.run_sync())
         self.assertEqual(destination.stat().st_mtime_ns, before.st_mtime_ns)
         self.assertEqual(destination.stat().st_ino, before.st_ino)
+
+    def test_restores_missing_managed_launcher_without_generation_change(self):
+        self.switch(self.generation("first"))
+        self.run_sync()
+        destination = self.applications / "player.desktop"
+        original = destination.read_bytes()
+        destination.unlink()
+        self.assertTrue(self.run_sync())
+        self.assertEqual(destination.read_bytes(), original)
+        self.assertFalse(self.run_sync())
 
     def test_preserves_manual_files_and_links(self):
         self.switch(self.generation("first"))

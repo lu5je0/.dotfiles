@@ -83,11 +83,49 @@ def owned(path, expected):
             and digest(path.read_bytes()) == expected)
 
 
-def sync(profiles, data_home, state_home, excluded=(), force=False, desktop_database=None):
+def exec_argument(value):
+    # Exec quoting is parsed after desktop-entry string escapes and field codes.
+    value = str(value).replace("%", "%%")
+    for char in ("\\", '"', "`", "$"):
+        value = value.replace(char, "\\" + char)
+    return ('"' + value + '"').replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+
+
+def proxy_launcher(content, dispatcher, source):
+    output = []
+    operation = None
+    for line in content.decode("utf-8").splitlines(keepends=True):
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            operation = None
+            if stripped == "[Desktop Entry]":
+                operation = "launch"
+            elif stripped.startswith("[Desktop Action "):
+                operation = "action:" + stripped[len("[Desktop Action "):-1]
+            output.append(line if line.endswith("\n") else line + "\n")
+            if operation:
+                output.append(f"Exec=gjs -m {exec_argument(dispatcher)} {exec_argument(source)} {exec_argument(operation)} %U\n")
+            if operation == "launch":
+                # The latest source entry owns terminal, cwd and D-Bus activation.
+                output.append("Terminal=false\nDBusActivatable=false\nStartupNotify=false\n")
+        elif operation and line.partition("=")[0].strip() == "Exec":
+            continue
+        elif operation != "launch" or line.partition("=")[0].strip() not in {
+            "Terminal", "DBusActivatable", "StartupNotify", "Path", "TryExec",
+        }:
+            output.append(line)
+    return "".join(output).encode("utf-8")
+
+
+def sync(profiles, data_home, state_home, excluded=(), force=False, desktop_database=None, dispatcher_source=None):
     applications = data_home / "applications"
     state = state_home / "nix-profile-applications"
+    sources = state / "launchers"
+    dispatcher = state / "launch.js"
+    dispatcher_content = (dispatcher_source or Path(__file__).with_name("launch.js")).read_bytes()
     applications.mkdir(parents=True, exist_ok=True)
     state.mkdir(parents=True, exist_ok=True)
+    sources.mkdir(parents=True, exist_ok=True)
     if applications.is_symlink():
         raise ValueError(f"{applications}: must be a real directory")
 
@@ -97,9 +135,13 @@ def sync(profiles, data_home, state_home, excluded=(), force=False, desktop_data
         previous = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
         while True:
             generations = [profile.resolve() for profile in profiles]
-            identity = {"version": 2, "generations": list(map(str, generations)), "excluded": sorted(excluded)}
+            identity = {"version": 3, "generations": list(map(str, generations)), "excluded": sorted(excluded),
+                        "dispatcher": digest(dispatcher_content)}
             if (not force and previous.get("identity") == identity
                     and previous.get("mime_cache_ready")
+                    and all(os.path.lexists(applications / name) for name in previous.get("entries", {}))
+                    and all((sources / name).is_file() for name in previous.get("entries", {}))
+                    and owned(dispatcher, identity["dispatcher"])
                     and (desktop_database is None or (applications / "mimeinfo.cache").is_file())):
                 return False
             entries = {}
@@ -116,6 +158,14 @@ def sync(profiles, data_home, state_home, excluded=(), force=False, desktop_data
                         continue
                     entries[desktop_id] = rewrite_icons(source.read_text(encoding="utf-8"), icons)
 
+            if not owned(dispatcher, identity["dispatcher"]):
+                atomic_write(dispatcher, dispatcher_content)
+            # Publish current launch data before making its stable entry visible.
+            for desktop_id, content in entries.items():
+                target = sources / desktop_id
+                if not owned(target, digest(content)):
+                    atomic_write(target, content)
+
             managed = previous.get("entries", {})
             updated = {}
             for destination in applications.glob("*.desktop"):
@@ -125,6 +175,7 @@ def sync(profiles, data_home, state_home, excluded=(), force=False, desktop_data
                                                         for profile in profiles]):
                     destination.unlink()
             for desktop_id, content in entries.items():
+                content = proxy_launcher(content, dispatcher, sources / desktop_id)
                 destination = applications / desktop_id
                 # Adopt direct profile links, preserving links to any other source.
                 legacy = (destination.is_symlink() and os.readlink(destination)
@@ -141,6 +192,10 @@ def sync(profiles, data_home, state_home, excluded=(), force=False, desktop_data
                 destination = applications / desktop_id
                 if desktop_id not in updated and owned(destination, expected):
                     destination.unlink()
+
+            for target in sources.glob("*.desktop"):
+                if target.name not in entries:
+                    target.unlink()
 
             previous = {"identity": identity, "entries": updated, "mime_cache_ready": desktop_database is None}
             atomic_write(manifest_path, (json.dumps(previous, indent=2) + "\n").encode())
@@ -159,6 +214,7 @@ def main():
     parser.add_argument("--exclude", type=Path)
     parser.add_argument("--desktop-database", type=Path, required=True)
     parser.add_argument("--systemctl", type=Path, help="refresh configured icon overrides after a switch")
+    parser.add_argument("--dispatcher", type=Path, required=True)
     parser.add_argument("--force", action="store_true", help="resync even if the generation is unchanged")
     args = parser.parse_args()
     excluded = json.loads(args.exclude.read_text()) if args.exclude else []
@@ -166,7 +222,7 @@ def main():
           Path("/run/current-system/sw")],
          Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")),
          Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")),
-         excluded, args.force, args.desktop_database)
+         excluded, args.force, args.desktop_database, args.dispatcher)
     if changed and args.systemctl:
         subprocess.run([str(args.systemctl), "--user", "--no-block", "try-restart",
                         "desktop-icon-overrides.service"], check=True)

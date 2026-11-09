@@ -1,5 +1,15 @@
 # GNOME 配置
 
+## 应用启动项同步
+
+- `nix-profile-applications.service` 在登录和 Nix profile 切换时，将各 profile 的启动项同步到
+  `~/.local/share/applications`，并将可解析的图标名改为绝对路径；保留用户自行修改的启动项。
+- `nix/nixos/modules/gnome/profile-applications/` 管理同步；同一 generation 再次执行时也会恢复缺失的托管启动项。
+- 生成的入口通过状态目录中的固定 `launch.js` 调用 GIO，启动命令及右键动作读取 `launchers/` 中的当前原启动项。
+  首次启用后需注销重登以刷新已缓存的旧入口；后续升级无需因启动命令变化而重登。
+- 同步测试：`python3 -m unittest discover -s nix/tests -p test_profile_applications.py`；MIME 集成测试需要
+  `update-desktop-database` 和 `gio` 在 PATH 中，或用 `UPDATE_DESKTOP_DATABASE` 指定前者路径；启动集成测试还需要 `gjs`。
+
 ## Show Desktop Corner
 
 `show-desktop-corner@lu5je0/` 是 GNOME 50 的右下角显示桌面扩展，由

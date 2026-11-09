@@ -46,6 +46,7 @@ in
       Type = "oneshot";
       ExecStart =
         "${pkgs.python3}/bin/python3 ${./sync.py} --exclude ${excluded}"
+        + " --dispatcher ${./launch.js}"
         + " --desktop-database ${pkgs.desktop-file-utils}/bin/update-desktop-database"
         + lib.optionalString (
           config.programs ? desktopIconOverrides
