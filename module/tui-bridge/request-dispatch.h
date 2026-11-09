@@ -8,6 +8,7 @@ typedef enum {
   BRIDGE_DISPATCH_STATE = 1,
   BRIDGE_DISPATCH_TEXT = 2,
   BRIDGE_DISPATCH_ERROR = 3,
+  BRIDGE_DISPATCH_IMAGE = 4,
 } bridge_dispatch_kind_t;
 
 typedef struct {

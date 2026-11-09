@@ -13,7 +13,9 @@ def is_wezterm():
             shutil.which('wezterm') is not None)
 
 def is_kitty():
-    return os.environ.get('TERM') == 'xterm-kitty'
+    # 没有 kitty CLI 时，使用下面内置的 graphics protocol 输出。
+    return (os.environ.get('TERM') == 'xterm-kitty' and
+            shutil.which('kitty') is not None)
 
 def is_tmux():
     return bool(os.environ.get('TMUX')) or \

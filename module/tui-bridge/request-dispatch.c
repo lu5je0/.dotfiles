@@ -129,6 +129,20 @@ static bool parse_selection(cJSON *params, bridge_selection_t *out) {
 
 static void dispatch_clipboard(const char *method, cJSON *params,
                                bridge_dispatch_result_t *result) {
+#ifdef __APPLE__
+  if (strcmp(method, "image") == 0) {
+    char *data = NULL;
+    if (bridge_clipboard_image(&data) != BRIDGE_STATUS_OK || !data) {
+      free(data);
+      set_error(result, "CLIPBOARD_FAILED", "clipboard image output failed");
+      return;
+    }
+    result->kind = BRIDGE_DISPATCH_IMAGE;
+    result->text = data;
+    return;
+  }
+#endif
+
   if (strcmp(method, "output") == 0) {
     const char *eol_ptr = NULL;
     cJSON *eol = params ? cJSON_GetObjectItemCaseSensitive(params, "eol") : NULL;

@@ -80,3 +80,39 @@ int bridge_clipboard_input(const char *text, bridge_selection_t selection) {
         return ok ? BRIDGE_STATUS_OK : BRIDGE_STATUS_FAILED;
     }
 }
+
+int bridge_clipboard_image(char **data_out) {
+    if (!data_out) {
+        return BRIDGE_STATUS_INVALID_PARAMS;
+    }
+    *data_out = NULL;
+
+    @autoreleasepool {
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        if (!pb.types) {
+            return BRIDGE_STATUS_FAILED;
+        }
+        NSData *png = [pb dataForType:NSPasteboardTypePNG];
+        if (!png) {
+            // macOS screenshots and copied images commonly expose only TIFF.
+            NSData *tiff = [pb dataForType:NSPasteboardTypeTIFF];
+            if (tiff) {
+                NSBitmapImageRep *image = [NSBitmapImageRep imageRepWithData:tiff];
+                png = [image representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+                if (!png) {
+                    return BRIDGE_STATUS_FAILED;
+                }
+            }
+        }
+        if (png.length > 64 * 1024 * 1024) {
+            return BRIDGE_STATUS_FAILED;
+        }
+        NSString *encoded = png ? [png base64EncodedStringWithOptions:0] : @"";
+        const char *utf8 = [encoded UTF8String];
+        if (!utf8) {
+            return BRIDGE_STATUS_FAILED;
+        }
+        *data_out = strdup(utf8);
+        return *data_out ? BRIDGE_STATUS_OK : BRIDGE_STATUS_FAILED;
+    }
+}

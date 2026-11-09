@@ -13,4 +13,9 @@ int bridge_clipboard_output(const char *eol, bridge_selection_t selection,
                            char **text_out);
 int bridge_clipboard_input(const char *text, bridge_selection_t selection);
 
+#ifdef __APPLE__
+// PNG bytes encoded as base64; an empty string means no image is available.
+int bridge_clipboard_image(char **data_out);
+#endif
+
 #endif

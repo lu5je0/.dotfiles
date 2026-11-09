@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import base64
+import binascii
+import json
 import os
 import shutil
 import subprocess
@@ -41,6 +44,51 @@ def is_wsl():
         return False
 
 
+def bridge_request(bridge, method):
+    request = {'id': 1, 'module': 'clipboard', 'method': method, 'params': {}}
+    try:
+        process = subprocess.run(
+            [bridge, '-j', json.dumps(request)], stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+        )
+        if process.returncode:
+            die('tui-bridge failed: %s' % process.stderr.decode('utf-8', 'replace').strip())
+        response = json.loads(process.stdout)
+        if not isinstance(response, dict) or response.get('id') != 1:
+            raise ValueError('invalid response')
+        if response.get('ok') is not True:
+            error = response.get('error', {})
+            if isinstance(error, dict) and error.get('code') == 'INVALID_METHOD':
+                die('tui-bridge lacks image support; rebuild module/tui-bridge and install it in ~/.local/bin')
+            die('tui-bridge: %s' % error)
+        result = response.get('result')
+        if not isinstance(result, dict):
+            raise ValueError('invalid result')
+        return result
+    except (OSError, subprocess.TimeoutExpired, ValueError) as error:
+        die('tui-bridge: %s' % error)
+
+
+def paste_bridge(bridge, raw):
+    result = bridge_request(bridge, 'image')
+    image = result.get('data')
+    if result.get('mime') != 'image/png' or not isinstance(image, str):
+        die('invalid image response from tui-bridge')
+    if image:
+        if not raw:
+            die('clipboard contains image data, use -f to force output or redirect to a file')
+        try:
+            sys.stdout.buffer.write(base64.b64decode(image, validate=True))
+        except (ValueError, binascii.Error):
+            die('invalid image data from tui-bridge')
+    else:
+        text = bridge_request(bridge, 'output').get('text')
+        if not isinstance(text, str):
+            die('invalid text response from tui-bridge')
+        sys.stdout.buffer.write(text.encode('utf-8'))
+    sys.exit(0)
+
+
 force = False
 for arg in sys.argv[1:]:
     for flag in arg[1:] if arg.startswith('-') else '?':
@@ -54,6 +102,15 @@ raw = force or not sys.stdout.isatty()
 
 if (os.environ.get('SSH_CLIENT') or os.environ.get('SSH_TTY')) and shutil.which('clipboard-osc52'):
     os.execvp('clipboard-osc52', ['clipboard-osc52', 'paste'])
+
+if sys.platform == 'darwin':
+    bridge = shutil.which('tui-bridge')
+    if not bridge:
+        installed = os.path.expanduser('~/.local/bin/tui-bridge')
+        if os.access(installed, os.X_OK):
+            bridge = installed
+    if bridge:
+        paste_bridge(bridge, raw)
 
 if sys.platform == 'darwin' and shutil.which('mac_clipboard_cli'):
     os.execvp('mac_clipboard_cli', ['mac_clipboard_cli', '-p'])

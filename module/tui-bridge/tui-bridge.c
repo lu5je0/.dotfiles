@@ -157,6 +157,24 @@ static void respond_empty(int id, double rt_ms) {
   cJSON_Delete(json);
 }
 
+static void respond_image(int id, const char *data, double rt_ms) {
+  cJSON *json = cJSON_CreateObject();
+  cJSON *result = cJSON_CreateObject();
+  if (!json || !result) {
+    cJSON_Delete(json);
+    cJSON_Delete(result);
+    return;
+  }
+  cJSON_AddNumberToObject(json, "id", id);
+  cJSON_AddBoolToObject(json, "ok", 1);
+  cJSON_AddStringToObject(result, "mime", "image/png");
+  cJSON_AddStringToObject(result, "data", data ? data : "");
+  cJSON_AddItemToObject(json, "result", result);
+  add_rt_field(json, rt_ms);
+  print_json_message(json);
+  cJSON_Delete(json);
+}
+
 typedef struct {
   int id;
   int has_id;
@@ -240,6 +258,8 @@ static void process_json_line(const char *line) {
     respond_state(req.id, result.state, get_time_ms() - start_time);
   } else if (result.kind == BRIDGE_DISPATCH_TEXT) {
     respond_text(req.id, result.text, get_time_ms() - start_time);
+  } else if (result.kind == BRIDGE_DISPATCH_IMAGE) {
+    respond_image(req.id, result.text, get_time_ms() - start_time);
   } else if (result.kind == BRIDGE_DISPATCH_EMPTY) {
     respond_empty(req.id, get_time_ms() - start_time);
   } else {

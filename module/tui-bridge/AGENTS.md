@@ -137,13 +137,25 @@ Neovim 退出时，macOS / Linux / WSL 统一使用已安装 helper 的 detached
 1. `clipboard.output`
 - 请求：`{"id":3,"module":"clipboard","method":"output","params":{"eol":"lf"}}`
 - 可选参数：`{"selection":"primary"}`
-- 结果：`{"text":"..."}`
+- 结果：`{"text":"..."}`；始终只读文本，图片不会改变此响应格式，供 Neovim 的同步 / 异步文本剪贴板继续使用。
 - 说明：当前仅支持 `eol=lf`。
 
 2. `clipboard.input`
 - 请求：`{"id":4,"module":"clipboard","method":"input","params":{"text":"hello"}}`
 - 可选参数：`{"selection":"primary"}`
 - 结果：空对象 `{}`。
+
+3. `clipboard.image`（仅 macOS）
+- 请求：`{"id":5,"module":"clipboard","method":"image","params":{}}`
+- 结果：`{"mime":"image/png","data":"<base64>"}`；无图片时 `data` 为空字符串。
+- 优先读取 PNG，否则将 TIFF（包括系统截图）转换为 PNG；PNG 超过 64 MiB 或转换失败返回 `CLIPBOARD_FAILED`。
+- 读取系统剪贴板，忽略 selection 参数；其他平台返回 `INVALID_METHOD`。
+- `bin/common/p` 在 macOS 优先使用已安装的 tui-bridge，先读图片、无图片再读文本；图片仅在重定向、管道或 `-f` 时输出原始 PNG。Linux / WSL 保留原有图片后端，SSH 使用 OSC52 文本通道。
+
+### 剪贴板验证
+- `python3 -m unittest discover -s module/tui-bridge/tests` 验证 `p` 的文本 / PNG 输出、终端保护、旧 helper 与异常 MIME / base64 响应。
+- macOS 构建后，在模块目录执行 `clang -fobjc-arc -framework AppKit tests/clipboard-mac.m -o build/test-clipboard`，再运行 `build/test-clipboard /绝对路径/.dotfiles`。
+- 原生测试需能访问系统剪贴板，临时写入文本、PNG、TIFF 与混合类型，验证 `p` 导出及原有 `clipboard.output` 的文本响应，结束时恢复原剪贴板各 item 的全部类型。
 
 ### selection 参数
 - 取值 `regular`（默认，缺省等价）或 `primary`；其他值返回 `INVALID_PARAMS`。
