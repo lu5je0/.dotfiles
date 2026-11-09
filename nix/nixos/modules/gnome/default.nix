@@ -91,6 +91,8 @@ in
       # 统一标题栏按钮，避免旧用户设置覆盖布局后隐藏按钮。
       locks = [ "/org/gnome/desktop/wm/preferences/button-layout" ];
       settings = {
+        # 桌面共享默认创建虚拟屏幕，实体显示器关闭或断开时仍可连接。
+        "org/gnome/desktop/remote-desktop/rdp".screen-share-mode = "extend";
         "org/gnome/desktop/interface" = {
           font-name = "Noto Sans CJK SC 11";
           document-font-name = "Noto Sans CJK SC 12";

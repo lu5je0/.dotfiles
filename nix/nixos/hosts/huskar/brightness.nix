@@ -13,6 +13,7 @@
   # ddcci-driver 通过 DDC/CI 将显示器暴露为标准背光设备，供 GNOME 原生亮度控制使用；
   # 驱动随当前内核编译，并在启动时加载 ddcci-backlight。
   # Linux 6.8+ 不支持自动探测，下面的服务在 GDM 启动前绑定 DP-1 的 AUX 总线；
+  # 显示器断开时跳过绑定，避免无屏幕使用时导致系统激活失败。
   # GNOME 不会立即识别会话启动后新增的背光设备，所以绑定必须早于登录界面。
   # 重建并重启后，检查 /sys/class/backlight/ 是否出现 ddcci*，以及 GNOME 的原生亮度滑块。
   boot.extraModulePackages = [
@@ -41,6 +42,12 @@
         for adapter in /sys/bus/i2c/devices/i2c-*; do
           [ -r "$adapter/name" ] || continue
           [ "$(cat "$adapter/name")" = "AMDGPU DM aux hw bus 0" ] || continue
+          # 从匹配的 AUX 总线定位 DRM 接口，避免误用其他显卡上同名的 DP-1。
+          connector="$(dirname "$(readlink -f "$adapter")")"
+          if [ -r "$connector/status" ] && [ "$(cat "$connector/status")" = disconnected ]; then
+            echo "DP-1 is disconnected; skipping DDC/CI backlight attachment"
+            exit 0
+          fi
           bus="''${adapter##*/i2c-}"
           if [ -d "/sys/class/backlight/ddcci$bus" ]; then
             echo "DDC/CI backlight ddcci$bus ready (attempt $attempt)"
