@@ -5,3 +5,4 @@
 - 修改电量记录逻辑时运行 `pkgs/battery-monitor/` 内的测试，覆盖跨日、重启追加、30 天边界和安全清理；
   清理只针对日志目录内有效日期命名的普通 CSV，不跟随符号链接。
 - 设备适配和电量记录的运行细节见本目录 `README.md`。
+- U-Boot 专用于本机，定义只在 `pkgs/uboot/default.nix` 维护，不向根 flake 导出快捷入口，也不得登记到通用 `nixos/pkgs/default.nix`。该包在 x86_64 Linux 宿主交叉编译生成手机 boot 镜像。

@@ -1,0 +1,140 @@
+name: Build and release q-trash
+
+on:
+  push:
+    tags: ['q-trash-v*']
+    paths:
+      - 'module/q-trash/**'
+      - '.github/workflows/build-q-trash.yml'
+      - 'scripts/setup.d/modules/unix/q-trash.sh'
+  pull_request:
+    paths:
+      - 'module/q-trash/**'
+      - '.github/workflows/build-q-trash.yml'
+      - 'scripts/setup.d/modules/unix/q-trash.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: q-trash-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - asset: linux-x86_64
+            target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - asset: linux-aarch64
+            target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+          - asset: macos-aarch64
+            target: aarch64-apple-darwin
+            runner: macos-15
+          - asset: macos-x86_64
+            target: x86_64-apple-darwin
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: module/q-trash
+    env:
+      CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add "$TARGET"
+      - name: Install Linux test/build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools trash-cli python3-pytest
+      - name: Install GNU rm for comparison tests
+        if: runner.os == 'macOS'
+        run: |
+          brew list coreutils >/dev/null 2>&1 || brew install coreutils
+          echo "QTRASH_SYSTEM_RM=$(brew --prefix coreutils)/bin/grm" >> "$GITHUB_ENV"
+      - name: Check version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          if [[ "$REF_TYPE" == tag ]]; then
+            test "$REF_NAME" = "q-trash-v$version"
+          fi
+      - name: Build and test
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          cargo build --release --locked --target "$TARGET"
+          cargo test --locked --target "$TARGET"
+          export QTRASH_BIN="$PWD/target/$TARGET/release/q-trash"
+          python3 tests/run_compare.py
+          python3 tests/run_qtrash.py
+          python3 tests/run_safety.py
+          python3 tests/run_installer.py
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            python3 -m pytest tests/test_qrm.py -q
+          fi
+      - name: Prepare release asset
+        env:
+          TARGET: ${{ matrix.target }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          mkdir -p dist
+          cp "target/$TARGET/release/q-trash" "dist/q-trash-$ASSET"
+          version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
+          test "$("dist/q-trash-$ASSET" --version)" = "q-trash $version"
+          file "dist/q-trash-$ASSET"
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            if readelf -l "dist/q-trash-$ASSET" | grep -q INTERP; then
+              echo 'Linux release must not require a dynamic loader' >&2
+              exit 1
+            fi
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: q-trash-${{ matrix.asset }}
+          path: module/q-trash/dist/q-trash-${{ matrix.asset }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/q-trash-v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: q-trash-*
+          merge-multiple: true
+          path: release
+      - name: Check assets and checksums
+        working-directory: release
+        run: |
+          test -f q-trash-linux-x86_64
+          test -f q-trash-linux-aarch64
+          test -f q-trash-macos-x86_64
+          test -f q-trash-macos-aarch64
+          sha256sum q-trash-* > SHA256SUMS
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" release/* --verify-tag --title "$RELEASE_TAG" --generate-notes

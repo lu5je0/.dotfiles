@@ -13,7 +13,6 @@
 手机桌面设置集中在 `profiles/phone.nix`，硬件设置集中在本目录。
 
 ```sh
-nix build .#oneplus6-uboot
 sudo nixos-rebuild build --flake .#oneplus6
 ```
 

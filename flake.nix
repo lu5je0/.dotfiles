@@ -55,9 +55,6 @@
         inherit system;
         config.allowUnfree = true;
       };
-      localPackages = import ./nix/nixos/pkgs {
-        inherit pkgs pkgsUnstable inputs;
-      };
       mkSystem =
         modules:
         nixpkgs.lib.nixosSystem {
@@ -68,10 +65,7 @@
         };
     in
     {
-      packages.${system} = localPackages // {
-        oneplus6-uboot = pkgs.callPackage ./nix/nixos/hosts/oneplus6/pkgs/uboot { };
-      };
-
+      packages.${system} = import ./nix/nixos/pkgs { inherit pkgs pkgsUnstable inputs; };
       packages.aarch64-darwin.darwin-rebuild = nix-darwin.packages.aarch64-darwin.darwin-rebuild;
 
       darwinConfigurations.mac = nix-darwin.lib.darwinSystem {

@@ -1,0 +1,13 @@
+[package]
+name = "q-trash"
+version = "0.2.0"
+edition = "2024"
+build = "build.rs"
+
+[dependencies]
+libc = "=0.2.190"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

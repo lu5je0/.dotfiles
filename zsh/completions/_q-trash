@@ -8,7 +8,7 @@ _q_trash_commands() {
     'restore:interactively restore trashed files'
     'empty:permanently delete trashed files'
     'size:show trash disk usage'
-    'rm:move files to trash (same as q-rm)'
+    'rm:move files to trash'
   )
   _describe -t commands 'q-trash command' cmds
 }

@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-QTRASH = HERE.parent / "q-trash.py"
+QTRASH = Path(os.environ.get("QTRASH_BIN", HERE.parent / "target" / "debug" / "q-trash")).resolve()
 
 FAIL: list[str] = []
 PASS = 0
@@ -30,15 +30,6 @@ SKIP = 0
 # trash (scoped by a unique sandbox path, then cleaned up), and whole-trash
 # operations (empty / size / global list) are skipped.
 IS_MAC = sys.platform == "darwin"
-
-
-def _load_trash_backend():
-    import importlib.util
-    path = HERE.parent / "trash_backend.py"
-    spec = importlib.util.spec_from_file_location("trash_backend", str(path))
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
 
 
 def skip(name: str, reason: str) -> None:
@@ -77,7 +68,7 @@ def run_qtrash(*args, home: Path, env_extra=None, cwd=None, stdin=None):
             i += 1
         arg_list = cleaned
     return subprocess.run(
-        [sys.executable, str(QTRASH), *arg_list],
+        [str(QTRASH), *arg_list],
         capture_output=True, text=True,
         env=_build_env(home, env_extra), cwd=cwd, input=stdin,
     )
@@ -85,7 +76,7 @@ def run_qtrash(*args, home: Path, env_extra=None, cwd=None, stdin=None):
 
 def run_qrm(*args, home: Path, env_extra=None, cwd=None):
     return subprocess.run(
-        [sys.executable, str(QTRASH), "rm", *args],
+        [str(QTRASH), "rm", *args],
         capture_output=True, text=True,
         env=_build_env(home, env_extra), cwd=cwd,
     )
@@ -102,37 +93,17 @@ def check(name: str, cond: bool, detail: str = "") -> None:
 
 
 def _purge_real_trash(sandbox: Path) -> None:
-    """Remove real-trash entries whose original path is under `sandbox`.
+    """Restore every entry scoped to the sandbox, then cleanup removes it.
 
-    Scoped strictly by the unique sandbox prefix so a user's other trashed
-    files are never touched. macOS records put-back paths in .DS_Store
-    asynchronously, so a bounded retry catches late-flushed records. macOS only.
+    Finder flushes put-back metadata asynchronously, so retry briefly.
     """
     import time
-
-    prefix = str(sandbox)
-    for attempt in range(5):
-        try:
-            tb = _load_trash_backend()
-            matched = False
-            for t in tb.scan_trash(None):
-                op = t.original_path
-                if op == prefix or op.startswith(prefix.rstrip("/") + "/"):
-                    matched = True
-                    p = t.files_path
-                    try:
-                        if os.path.isdir(p) and not os.path.islink(p):
-                            shutil.rmtree(p, ignore_errors=True)
-                        else:
-                            os.remove(p)
-                    except OSError:
-                        pass
-        except Exception:
-            return
-        if not matched and attempt > 0:
-            return
+    for _ in range(5):
+        subprocess.run(
+            [str(QTRASH), "restore", "--overwrite", str(sandbox.resolve())],
+            input="all\n", capture_output=True, text=True,
+        )
         time.sleep(0.1)
-
 
 def cleanup(*dirs: Path) -> None:
     for d in dirs:

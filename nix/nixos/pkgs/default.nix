@@ -5,6 +5,7 @@
 }:
 
 {
+  q-trash = pkgs.callPackage ./q-trash { };
   arcglyph = inputs.arcglyph.packages.${pkgs.stdenv.hostPlatform.system}.default;
   btop = pkgs.callPackage ./btop { };
   codex-desktop = pkgs.callPackage ./codex-desktop { flake = inputs.llm-agents; };

@@ -8,7 +8,7 @@ from urllib.parse import unquote
 import pytest
 
 HERE = Path(__file__).resolve().parent
-QTRASH = HERE.parent / "q-trash.py"
+QTRASH = Path(os.environ.get("QTRASH_BIN", HERE.parent / "target" / "debug" / "q-trash")).resolve()
 
 
 def run_qrm(*args, env=None, cwd=None, input_text=None):
@@ -16,7 +16,7 @@ def run_qrm(*args, env=None, cwd=None, input_text=None):
     if env:
         e.update(env)
     return subprocess.run(
-        [sys.executable, str(QTRASH), "rm", *args],
+        [str(QTRASH), "rm", *args],
         capture_output=True, text=True, env=e, cwd=cwd, input=input_text,
     )
 

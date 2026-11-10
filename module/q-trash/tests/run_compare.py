@@ -17,8 +17,8 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-QTRASH = HERE.parent / "q-trash.py"
-RM = shutil.which("rm") or "/usr/bin/rm"
+QTRASH = Path(os.environ.get("QTRASH_BIN", HERE.parent / "target" / "debug" / "q-trash")).resolve()
+RM = os.environ.get("QTRASH_SYSTEM_RM", shutil.which("rm") or "/usr/bin/rm")
 
 FAIL: list[str] = []
 PASS = 0
@@ -26,10 +26,11 @@ PASS = 0
 
 def run_qrm(args, cwd, env_extra=None, stdin=None):
     e = os.environ.copy()
+    e.pop("XDG_DATA_HOME", None)
     if env_extra:
         e.update(env_extra)
     return subprocess.run(
-        [sys.executable, str(QTRASH), "rm", *args],
+        [str(QTRASH), "rm", *args],
         capture_output=True, text=True, cwd=cwd, env=e, input=stdin,
     )
 

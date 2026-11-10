@@ -28,6 +28,7 @@
   ];
 
   userPackages = with pkgs; [
+    (pkgs.callPackage ../nixos/pkgs/q-trash { })
     bun
     nodejs
     openssl

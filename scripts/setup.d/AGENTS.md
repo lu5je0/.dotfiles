@@ -42,10 +42,10 @@ python3 ~/.dotfiles/setup.py
 ```json
 {
   "name": "q-trash",
-  "action": "link",
+  "action": "install",
   "desc": "q-trash → ~/.local/bin",
   "script": "unix/q-trash.sh",
-  "checks": [{ "link": "~/.local/bin/q-trash" }]
+  "checks": [{ "exists": "~/.local/bin/q-trash" }]
 }
 ```
 
