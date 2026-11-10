@@ -51,7 +51,32 @@ local function file_name_hl(xy)
   return 'GitFileStatusModified'
 end
 
-function M.tree_options()
+local function status_suffix(xy, section, summary)
+  local label
+  if section == 'staged' or section == 'stash' then
+    label = xy:sub(1, 1)
+  elseif section == 'unstaged' then
+    label = xy:sub(2, 2)
+  elseif section == 'untracked' then
+    label = '?'
+  else
+    label = xy
+  end
+  local text = '[' .. label .. ']'
+  local vt = {}
+  for ci = 1, #text do
+    local ch = text:sub(ci, ci)
+    local hl = status_hl_per_char(xy, ch)
+    if summary and ch == '*' then
+      hl = summary.conflict and 'GitChangesUnmerged' or 'GitChangesEmpty'
+    end
+    vt[#vt + 1] = { ch, hl }
+  end
+  return text, vt
+end
+
+function M.tree_options(options)
+  options = options or {}
   return {
     compress_dirs = true,
     flat_depth = 1,
@@ -69,23 +94,16 @@ function M.tree_options()
       if not node.xy then
         return
       end
-      local label
-      if node.section == 'staged' or node.section == 'stash' then
-        label = node.xy:sub(1, 1)
-      elseif node.section == 'unstaged' then
-        label = node.xy:sub(2, 2)
-      elseif node.section == 'untracked' then
-        label = '?'
-      else
-        label = node.xy
+      return status_suffix(node.xy, node.section)
+    end,
+    dir_suffix = function(node)
+      if not options.directory_summary or node.expanded or node._is_section or node._is_stash then
+        return
       end
-      local text = '[' .. label .. ']'
-      local vt = {}
-      for ci = 1, #text do
-        local ch = text:sub(ci, ci)
-        vt[#vt + 1] = { ch, status_hl_per_char(node.xy, ch) }
+      local summary = node.git_summary
+      if summary then
+        return status_suffix(summary.xy, summary.section, summary)
       end
-      return text, vt
     end,
     item_data = function(node)
       if node._is_section then

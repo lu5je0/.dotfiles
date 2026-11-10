@@ -112,7 +112,9 @@ function spec.build(ts, _ctx)
   return roots, { lines = {}, items = {}, highlights = {} }
 end
 
-spec.render_opts = git_style.tree_options
+function spec.render_opts()
+  return git_style.tree_options({ directory_summary = true })
+end
 
 function spec.decorate(ts, lines, items, highlights, virt_texts, _ctx)
   if ts._is_loading then

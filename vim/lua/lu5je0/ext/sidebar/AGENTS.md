@@ -98,6 +98,7 @@ sidebar/
 - 全部 highlight 集中在 `config.highlights` 表（包括 `Sidebar*`、`GitChanges*`、`GitFileStatus*`），由 `init.setup` → `config.apply_highlights()` 应用。
 - History 的箭头、hash 与标题使用互不重叠的高亮区间，禁止同优先级叠色；Tig 图形使用上游 14 色 ANSI palette 顺序和蓝色提交节点，RGB 取当前 terminal_color 或标准 ANSI 回退，由 config.apply_highlights 集中注册。
 - ColorScheme 切换时 `autocmds.lua` 会重新 apply。
+- Changes 的折叠目录在右侧显示方括号状态汇总：Changes 按 XY 两列分别汇总，相同字符（含空格）保留，混合为 `*`；Staged / Unstaged 只显示对应列，Untracked 显示 `[?]`。汇总在建树时自底向上计算，使用独立 `git_summary` 字段，不给目录设置文件 `xy`；展开后隐藏，章节和 stash 标题不显示，History 不启用。具体字母和 `?` 沿用文件状态颜色，`*` 与括号同为灰色，后代含冲突时 `*` 为红色；目录名称保留现有样式和整目录删除高亮。
 - Files 的折叠目录将 Git 状态汇总为单个 `●`，优先级为冲突 > 未暂存 > 未跟踪 > 已暂存；
   冲突用红色 `!`，未暂存用琥珀色、未跟踪用紫色、已暂存用蓝色。已展开目录不显示汇总，
   文件保留具体状态图标，被忽略的目录保留灰色 `◌`；目录汇总单独判断工作区状态，
