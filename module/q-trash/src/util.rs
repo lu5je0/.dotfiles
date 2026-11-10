@@ -182,9 +182,11 @@ pub fn append(value: &OsStr, suffix: &str) -> OsString {
 pub fn rename_exclusive(from: &Path, to: &Path) -> io::Result<()> {
     let from = CString::new(from.as_os_str().as_bytes())?;
     let to = CString::new(to.as_os_str().as_bytes())?;
+    // musl static builds may lack the renameat2 libc symbol; call the kernel directly.
     #[cfg(target_os = "linux")]
     let result = unsafe {
-        libc::renameat2(
+        libc::syscall(
+            libc::SYS_renameat2,
             libc::AT_FDCWD,
             from.as_ptr(),
             libc::AT_FDCWD,

@@ -26,6 +26,10 @@ case "$(uname -m)" in
   aarch64|arm64) arch=aarch64 ;;
   *) echo "unsupported q-trash architecture: $(uname -m)" >&2; exit 1 ;;
 esac
+case "$platform-$arch" in
+  linux-x86_64|linux-aarch64|macos-aarch64) ;;
+  *) echo "no q-trash release for $platform-$arch" >&2; exit 1 ;;
+esac
 if [[ -d "$TARGET" ]]; then
   echo "cannot replace directory: $TARGET" >&2
   exit 1

@@ -34,7 +34,7 @@ ARM Linux / macOS 通过各自的系统配置安装，不依赖 Linux 个人包�
 bash scripts/setup.d/modules/unix/q-trash.sh
 ```
 
-安装器根据系统与架构下载 GitHub Release，校验 SHA256 和版本后原子替换 `~/.local/bin/q-trash`。WSL 使用 Linux 产物；Android/Termux 和原生 Windows 暂不支持。
+安装器根据系统与架构下载 GitHub Release，校验 SHA256 和版本后原子替换 `~/.local/bin/q-trash`。WSL 使用 Linux 产物；预编译版本仅覆盖 Linux x86_64 / aarch64 和 macOS aarch64，Android/Termux 和原生 Windows 暂不支持。
 
 源码构建：
 
@@ -56,10 +56,10 @@ macOS 构建需 Xcode Command Line Tools；其他平台仅使用 Rust 和系统 
 
 ## 发布与验证
 
-版本唯一来源为 `Cargo.toml`。推送 `q-trash-v<VERSION>` tag 后，GitHub Actions 原生构建并验证四个产物，再发布 Release：
+版本唯一来源为 `Cargo.toml`。推送 `q-trash-v<VERSION>` tag 后，GitHub Actions 原生构建并验证三个产物，再发布 Release：
 
 - `q-trash-linux-x86_64`、`q-trash-linux-aarch64`：musl 静态链接。
-- `q-trash-macos-x86_64`、`q-trash-macos-aarch64`：使用系统 Foundation。
+- `q-trash-macos-aarch64`：使用系统 Foundation。
 - `SHA256SUMS`。
 
 分支推送、PR 和手动运行只构建测试，不发布。

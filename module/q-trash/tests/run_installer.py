@@ -103,6 +103,13 @@ shutil.copyfile(source,args[args.index("-o")+1])
         self.fixture(name="q-trash-macos-aarch64")
         self.assertEqual(self.install().returncode, 0)
 
+    def test_unsupported_macos_arch(self):
+        self.env.update(MOCK_OS="Darwin", MOCK_ARCH="x86_64")
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("no q-trash release", result.stderr)
+        self.assertFalse(self.target.exists())
+
     def test_shell_respects_path_for_both_commands(self):
         zsh = shutil.which("zsh")
         if not zsh:

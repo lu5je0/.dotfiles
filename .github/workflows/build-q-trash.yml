@@ -36,9 +36,6 @@ jobs:
           - asset: macos-aarch64
             target: aarch64-apple-darwin
             runner: macos-15
-          - asset: macos-x86_64
-            target: x86_64-apple-darwin
-            runner: macos-15-intel
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
@@ -130,7 +127,6 @@ jobs:
         run: |
           test -f q-trash-linux-x86_64
           test -f q-trash-linux-aarch64
-          test -f q-trash-macos-x86_64
           test -f q-trash-macos-aarch64
           sha256sum q-trash-* > SHA256SUMS
       - name: Publish release
