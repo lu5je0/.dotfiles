@@ -15,7 +15,7 @@
   hardware.oneplus6-charging = {
     bypassOnBoot = true;
     lowerThreshold = 40;
-    upperThreshold = 60;
+    upperThreshold = 50;
   };
 
   networking = {

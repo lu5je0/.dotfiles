@@ -138,8 +138,8 @@ GDM 登录界面仅切换面板电源，不调用屏保激活或退出接口，�
 7.2.9 的 s2idle 休眠在此设备上无法恢复，因此禁用整机休眠和自动休眠；
 屏幕熄灭时系统仍运行，耗电会高于正常休眠。
 
-`charging.nix` 默认开机启动 `oneplus6-bypass.service`，每 15 秒检查一次电量：
-低于 40% 恢复充电，高于 60% 暂停充电，40%～60%（含端点）保持当前模式，避免反复切换。
+本机默认开机启动 `oneplus6-bypass.service`，每 15 秒检查一次电量：
+低于 40% 恢复充电，高于 50% 暂停充电，40%～50%（含端点）保持当前模式，避免反复切换。
 启动时处于区间内也保留当前硬件模式；驱动初始化默认正常充电。USB 输入始终保留。
 `pkgs/charge-control/` 提供控制程序；电量读取失败、停止服务或退出时恢复正常充电。
 `pkgs/pmi8998-charger/` 只重建 `qcom_smbx` 模块，增加标准
@@ -149,7 +149,7 @@ GDM 登录界面仅切换面板电源，不调用屏保激活或退出接口，�
 
 ```sh
 sudo systemctl stop oneplus6-bypass   # 恢复正常充电
-sudo systemctl start oneplus6-bypass  # 启动 40%～60% 自动控制
+sudo systemctl start oneplus6-bypass  # 启动 40%～50% 自动控制
 cat /sys/class/power_supply/pmi8998-charger/charge_behaviour
 ```
 
