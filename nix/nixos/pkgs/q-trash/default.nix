@@ -6,22 +6,24 @@
   trash-cli,
 }:
 
+let
+  sourceRoot = ../../../../module/q-trash;
+in
 rustPlatform.buildRustPackage {
   pname = "q-trash";
-  version =
-    (builtins.fromTOML (builtins.readFile ../../../../module/q-trash/Cargo.toml)).package.version;
+  version = (builtins.fromTOML (builtins.readFile (sourceRoot + "/Cargo.toml"))).package.version;
 
   src = lib.fileset.toSource {
-    root = ../../../../module/q-trash;
+    root = sourceRoot;
     fileset = lib.fileset.unions [
-      ../../../../module/q-trash/Cargo.toml
-      ../../../../module/q-trash/Cargo.lock
-      ../../../../module/q-trash/build.rs
-      ../../../../module/q-trash/src
-      ../../../../module/q-trash/tests
+      (sourceRoot + "/Cargo.toml")
+      (sourceRoot + "/Cargo.lock")
+      (sourceRoot + "/build.rs")
+      (sourceRoot + "/src")
+      (sourceRoot + "/tests")
     ];
   };
-  cargoLock.lockFile = ../../../../module/q-trash/Cargo.lock;
+  cargoLock.lockFile = sourceRoot + "/Cargo.lock";
 
   nativeCheckInputs = lib.optionals stdenv.hostPlatform.isLinux [
     (python3.withPackages (ps: [ ps.pytest ]))

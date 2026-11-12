@@ -8,27 +8,30 @@
   libx11,
 }:
 
+let
+  sourceRoot = ../../../../module/tui-bridge;
+in
 stdenv.mkDerivation {
   pname = "tui-bridge";
-  version = lib.trim (builtins.readFile ../../../../module/tui-bridge/VERSION);
+  version = lib.trim (builtins.readFile (sourceRoot + "/VERSION"));
 
   src = lib.fileset.toSource {
-    root = ../../../../module/tui-bridge;
+    root = sourceRoot;
     fileset =
       lib.fileset.difference
         (lib.fileset.unions [
-          ../../../../module/tui-bridge/build.sh
-          ../../../../module/tui-bridge/VERSION
+          (sourceRoot + "/build.sh")
+          (sourceRoot + "/VERSION")
           (lib.fileset.fileFilter (
             file: file.hasExt "c" || file.hasExt "h" || file.hasExt "m" || file.hasExt "xml"
-          ) ../../../../module/tui-bridge)
+          ) sourceRoot)
         ])
         (
           lib.fileset.unions [
-            (lib.fileset.maybeMissing ../../../../module/tui-bridge/build)
-            (lib.fileset.maybeMissing ../../../../module/tui-bridge/linux/gen)
-            ../../../../module/tui-bridge/tests
-            ../../../../module/tui-bridge/win
+            (lib.fileset.maybeMissing (sourceRoot + "/build"))
+            (lib.fileset.maybeMissing (sourceRoot + "/linux/gen"))
+            (sourceRoot + "/tests")
+            (sourceRoot + "/win")
           ]
         );
   };
