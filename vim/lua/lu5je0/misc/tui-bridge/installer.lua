@@ -43,6 +43,7 @@ end
 function M.new(opts)
   opts = opts or {}
   local root = opts.root or default_root
+  local nix = vim.fn.isdirectory('/nix/store') == 1
   local uname = uv.os_uname()
   local platform, platform_error = M.detect_platform(uname.sysname, uname.machine, vim.env.WSL_DISTRO_NAME ~= nil or vim.fn.has('wsl') == 1)
   platform = opts.platform or platform
@@ -53,6 +54,13 @@ function M.new(opts)
   local asset = 'tui-bridge-' .. (platform or 'unsupported') .. (platform == 'windows-x86_64' and '.exe' or '')
   local directory = opts.install_dir or (vim.fn.expand('~') .. '/.local/bin')
   local path = directory .. '/' .. filename
+  -- WSL needs the Windows helper; a Linux binary from PATH cannot control its host.
+  if not opts.install_dir and platform ~= 'windows-x86_64' then
+    local executable = vim.fn.exepath(filename)
+    if executable ~= '' then
+      path = executable
+    end
+  end
   local lock = directory .. '/.' .. filename .. '.install.lock'
   local base_url = opts.base_url or 'https://github.com/lu5je0/.dotfiles/releases/download'
   local url = base_url .. '/tui-bridge-v' .. version .. '/'
@@ -101,7 +109,8 @@ function M.new(opts)
         end)
       end
     elseif not opts.quiet then
-      vim.notify('安装 tui-bridge 失败: ' .. err .. '\n使用 :TuiBridgeInstall 重试', vim.log.levels.ERROR, { title = 'TUI Bridge' })
+      local hint = nix and '\n请通过 Nix 安装或更新 tui-bridge，应用配置后重启 Neovim。' or '\n使用 :TuiBridgeInstall 重试'
+      vim.notify('tui-bridge 不可用: ' .. err .. hint, vim.log.levels.ERROR, { title = 'TUI Bridge' })
     end
     for _, callback in ipairs(waiting) do
       vim.schedule(function()
@@ -275,11 +284,17 @@ function M.new(opts)
       return
     end
     state.status, state.error = 'checking', nil
-    check_version(path, function(valid)
+    check_version(path, function(valid, version_err)
       if valid then
         finish()
         return
       end
+      if nix then
+        finish(version_err)
+        return
+      end
+      -- Download only into our own directory, never into a package-managed path.
+      path = directory .. '/' .. filename
       local ok, err = pcall(vim.fn.mkdir, directory, 'p')
       if not ok then
         finish(tostring(err))
@@ -308,6 +323,9 @@ function M.new(opts)
 
   -- Exit-time callers may inspect the file, but must never initiate installation.
   function instance.installed_path()
+    if state.status == 'error' then
+      return nil
+    end
     return vim.fn.executable(path) == 1 and path or nil
   end
 

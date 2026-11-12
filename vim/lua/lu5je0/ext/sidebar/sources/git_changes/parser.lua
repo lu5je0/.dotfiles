@@ -164,6 +164,23 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key, root)
       dir.children = finalize(dir._subdirs, dir._files)
       dir._subdirs, dir._files = nil, nil
       dir.all_deleted = dir_all_deleted(dir)
+      -- Merge each column independently, including spaces. Keep the summary
+      -- separate from xy: a directory is not a porcelain file entry.
+      local x, y, conflict
+      for _, child in ipairs(dir.children) do
+        local summary = child.git_summary
+        local xy = summary and summary.xy or child.xy
+        if xy then
+          local cx, cy = xy:sub(1, 1), xy:sub(2, 2)
+          x = x == nil and cx or (x == cx and x or '*')
+          y = y == nil and cy or (y == cy and y or '*')
+          conflict = conflict or (summary and summary.conflict)
+            or cx == 'U' or cy == 'U' or (cx == cy and (cx == 'A' or cx == 'D'))
+        end
+      end
+      if x then
+        dir.git_summary = { xy = x .. y, conflict = not not conflict, section = section_key }
+      end
       if expanded_dirs[dir.abs_path] ~= nil then
         dir.expanded = expanded_dirs[dir.abs_path]
       end

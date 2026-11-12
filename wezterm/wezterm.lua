@@ -518,6 +518,16 @@ wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_wid
 end)
 
 local tui_bridge_path = (function()
+  if is_mac then
+    for directory in (os.getenv('PATH') or ''):gmatch('[^:]+') do
+      local candidate = directory .. '/tui-bridge'
+      local binary = io.open(candidate, 'rb')
+      if binary then
+        binary:close()
+        return candidate
+      end
+    end
+  end
   local home = os.getenv("USERPROFILE") or os.getenv("HOME")
   if not home then
     return nil

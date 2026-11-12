@@ -27,6 +27,10 @@ printf '%s[ime]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/ime/sp
 nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/ime/spec.lua"
 
 printf '\n'
+printf '%s[tui-bridge:installer]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/tui-bridge/installer_spec.lua" "${RESET}"
+nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/tui-bridge/installer_spec.lua"
+
+printf '\n'
 printf '%s[glance:definitions]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/glance/definition_spec.lua" "${RESET}"
 nvim --headless -u NONE -i NONE -l "${SCRIPT_DIR}/glance/definition_spec.lua"
 

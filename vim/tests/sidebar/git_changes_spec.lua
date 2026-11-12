@@ -80,6 +80,128 @@ r.run('empty stdout returns empty sections', function()
 end)
 
 -- ============================================================================
+-- group: collapsed directory status
+-- ============================================================================
+
+r.group('collapsed directory status')
+
+local parser = require('lu5je0.ext.sidebar.sources.git_changes.parser')
+local render = require('lu5je0.ext.sidebar.render')
+local git_style = require('lu5je0.ext.sidebar.git_style')
+
+local function summary_tree(statuses, section)
+  local files = {}
+  for i, xy in ipairs(statuses) do
+    files[#files + 1] = { path = 'src/nested/' .. i .. '.lua', xy = xy, x = xy:sub(1, 1), y = xy:sub(2, 2) }
+  end
+  local root = vim.fn.tempname()
+  return parser.files_to_tree_nodes(files, { [root .. '/src'] = false }, section or 'changes', root)
+end
+
+local function suffix_text(vt)
+  local parts = {}
+  for _, chunk in ipairs(vt.virt_text) do parts[#parts + 1] = chunk[1] end
+  return table.concat(parts)
+end
+
+for _, case in ipairs({
+  { { 'M ', 'M ' }, 'changes', '[M ]' },
+  { { ' M', ' M' }, 'changes', '[ M]' },
+  { { 'MM', 'MM' }, 'changes', '[MM]' },
+  { { 'A ', 'M ' }, 'changes', '[* ]' },
+  { { 'M ', ' M' }, 'changes', '[**]' },
+  { { '??', '??' }, 'changes', '[??]' },
+  { { '??', 'M ' }, 'changes', '[**]' },
+  { { 'MM', 'M ' }, 'staged', '[M]' },
+  { { 'A ', 'MM' }, 'staged', '[*]' },
+  { { 'MM', ' M' }, 'unstaged', '[M]' },
+  { { ' M', ' D' }, 'unstaged', '[*]' },
+  { { '??', '??' }, 'untracked', '[?]' },
+  { { 'A ', 'M ' }, 'stash', '[*]' },
+}) do
+  r.run(case[2] .. ': ' .. table.concat(case[1], ',') .. ' -> ' .. case[3], function()
+    local nodes = summary_tree(case[1], case[2])
+    local _, items, _, vt = render.render_tree(nodes, git_changes._spec.render_opts())
+    r.assert_eq(#items, 1)
+    r.assert_eq(#vt, 1)
+    r.assert_eq(suffix_text(vt[1]), case[3])
+    r.assert_eq(nodes[1].xy, nil)
+    r.assert_eq(nodes[1].git_summary.xy, nodes[1].children[1].git_summary.xy)
+  end)
+end
+
+r.run('mixed columns use the same neutral color as brackets', function()
+  local _, _, _, vt = render.render_tree(summary_tree({ 'M ', ' M' }), git_changes._spec.render_opts())
+  r.assert_eq(vt[1].virt_text[2], { '*', 'GitChangesEmpty' })
+  r.assert_eq(vt[1].virt_text[3], { '*', 'GitChangesEmpty' })
+end)
+
+r.run('summaries combine sibling directories and direct files regardless of expansion', function()
+  local root = vim.fn.tempname()
+  local files = {
+    { path = 'src/a/one.lua', xy = 'M ', x = 'M', y = ' ' },
+    { path = 'src/b/two.lua', xy = ' M', x = ' ', y = 'M' },
+    { path = 'src/three.lua', xy = '??', x = '?', y = '?' },
+  }
+  local nodes = parser.files_to_tree_nodes(files, { [root .. '/src'] = false, [root .. '/src/a'] = false }, 'changes', root)
+  local _, _, _, vt = render.render_tree(nodes, git_changes._spec.render_opts())
+  r.assert_eq(suffix_text(vt[1]), '[**]')
+  r.assert_eq(nodes[1].children[1].git_summary.xy, 'M ')
+  r.assert_eq(nodes[1].children[2].git_summary.xy, ' M')
+end)
+
+for _, xy in ipairs({ 'UU', 'AA', 'DD', 'AU', 'UD', 'UA', 'DU' }) do
+  r.run('mixed conflict ' .. xy .. ' stays red through ancestors', function()
+    local nodes = summary_tree({ xy, ' M' })
+    local _, _, _, vt = render.render_tree(nodes, git_changes._spec.render_opts())
+    r.assert_eq(nodes[1].git_summary.conflict, true)
+    r.assert_eq(vt[1].virt_text[2], { '*', 'GitChangesUnmerged' })
+    r.assert_eq(vt[1].virt_text[3], { '*', 'GitChangesUnmerged' })
+  end)
+end
+
+r.run('untracked summary uses the same status color as files', function()
+  local _, _, _, vt = render.render_tree(summary_tree({ '??' }), git_changes._spec.render_opts())
+  r.assert_eq(vt[1].virt_text[2], { '?', 'GitChangesUntracked' })
+  r.assert_eq(vt[1].virt_text[3], { '?', 'GitChangesUntracked' })
+end)
+
+r.run('expanding a compressed chain shows file suffixes and folding restores summary', function()
+  local nodes = summary_tree({ 'M ', ' M' })
+  local opts = git_changes._spec.render_opts()
+  nodes[1].expanded = true
+  local _, items, _, vt = render.render_tree(nodes, opts)
+  r.assert_eq(#items, 3)
+  r.assert_eq(items[1].display_node, nodes[1].children[1])
+  r.assert_eq(#vt, 2)
+  r.assert_eq(vt[1].line, 1)
+  r.assert_eq(suffix_text(vt[1]), '[M ]')
+  r.assert_eq(suffix_text(vt[2]), '[ M]')
+  nodes[1].expanded = false
+  _, items, _, vt = render.render_tree(nodes, opts)
+  r.assert_eq(#items, 1)
+  r.assert_eq(suffix_text(vt[1]), '[**]')
+end)
+
+r.run('section and stash headings never receive summaries', function()
+  local opts = git_changes._spec.render_opts()
+  local node = summary_tree({ 'M ' })[1]
+  node._is_section = true
+  r.assert_eq(opts.dir_suffix(node), nil)
+  node._is_section, node._is_stash = nil, true
+  r.assert_eq(opts.dir_suffix(node), nil)
+end)
+
+r.run('shared History style keeps directory suffixes hidden and deletion highlight intact', function()
+  local nodes = summary_tree({ 'D ' }, 'history')
+  local opts = git_style.tree_options()
+  local _, _, _, vt = render.render_tree(nodes, opts)
+  r.assert_eq(#vt, 0)
+  nodes[1].all_deleted = true
+  r.assert_eq(opts.node_hl(nodes[1]), 'GitFileStatusDeleted')
+end)
+
+-- ============================================================================
 -- group: restore_cursor
 -- ============================================================================
 

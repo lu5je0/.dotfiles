@@ -33,6 +33,7 @@
 - Linux 构建依赖：`gcc`、`pkg-config`、`wayland-scanner`、`libwayland-dev`、`libdbus-1-dev`、`libx11-dev`；运行时动态链接 `libwayland-client`、`libdbus-1` 与 `libX11`。
 - `VERSION` 是版本号的唯一来源；`build.sh` 将它注入 `TUI_BRIDGE_VERSION` 编译宏。
 - 默认输出 `build/tui-bridge`（Windows 为 `build/tui-bridge.exe`），构建产物不写入 Git，也不自动安装；传入输出路径时相对当前模块目录解析。
+- Nix 包定义位于 `nix/nixos/pkgs/tui-bridge/default.nix`，复用 `build.sh` 与 `VERSION`，通过共用软件清单在 NixOS / nix-darwin 原生构建安装；Linux 依赖由 Nix 链接，无需 nix-ld。`nix/nixos/pkgs/default.nix` 提供 x86_64-linux 独立构建入口。
 - WSL 使用 Windows 的临时目录构建再复制输出；编译器通过 `WIN_CC` 覆盖，默认 `gcc.exe`（MSYS2 默认 `gcc`）。Windows 构建静态链接编译器运行库，系统 DLL 仍由 Windows 提供。
 
 ### Release 与安装
@@ -40,11 +41,12 @@
 - Release 资产：`tui-bridge-macos-arm64`、`tui-bridge-linux-x86_64`、`tui-bridge-linux-aarch64`、`tui-bridge-windows-x86_64.exe`、`SHA256SUMS`。
 - Linux 在对应架构的 Ubuntu 22.04 runner 上原生构建；其他 glibc Linux 需提供上述动态库，NixOS 通过仓库已有的 `programs.nix-ld` 提供加载器与库。
 - Neovim 的 `misc/tui-bridge/installer.lua` 按 `VERSION` 下载固定 tag；WSL 选择 Windows 产物，Neovim 仅支持 macOS、Linux 与 WSL，均安装为 `~/.local/bin/tui-bridge`，不使用 `.exe` 安装后缀。
+- 原生 Linux / macOS 的 Neovim 优先校验并使用 PATH 中的 helper（包括 Nix 安装）。存在 `/nix/store` 目录时禁止下载：缺失或版本不符仅提示通过 Nix 安装或更新，`:TuiBridgeInstall` 同样只检查；其他环境保留下载到 `~/.local/bin`，不修改包管理器目录。WSL 始终使用 Windows 产物；显式 `install_dir` 保持隔离，但不绕过 Nix 的下载限制。
 - Linux 的 `aarch64` / `arm64` 架构均选择 `linux-aarch64` 资产；WSL 仅支持 x86_64，不将 WSL ARM 误识别为原生 Linux ARM。
 - 仅启用需要 helper 的后端（含 macOS / 本地 kitty 的退出切换）、实际调用 bridge 或执行 `:TuiBridgeInstall` 时检查版本和安装；模块加载与退出均不触发下载。版本检查、下载、SHA256 校验与候选文件版本检查使用异步子进程。
 - 安装在目标目录下使用临时目录与安装锁；校验成功后原子替换。失败保留已有文件，只提示一次，通过 `:TuiBridgeInstall` 重试。五分钟前遗留的安装锁可自动清理，正常退出会终止安装并清理临时文件与锁。
 - bridge 就绪后才接管 Neovim 剪贴板，并按当前输入上下文同步 IME，不重放安装期间的操作。
-- WezTerm 使用同一个安装路径和 `VERSION`，Windows 端通过 `wslpath -w` 解析默认 WSL 发行版中 `~/.local/bin/tui-bridge` 的路径，macOS 直接使用本机路径；首次使用时校验版本，不负责下载。
+- WezTerm 使用同一个 `VERSION`，Windows 端通过 `wslpath -w` 解析默认 WSL 发行版中 `~/.local/bin/tui-bridge` 的路径，macOS 优先查找 PATH，再使用本机 `~/.local/bin/tui-bridge`；首次使用时校验版本，不负责下载。
 
 ## 协议
 
