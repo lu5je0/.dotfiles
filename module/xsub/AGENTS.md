@@ -24,12 +24,7 @@
 
 ## Editing Notes
 
-- Keep templates repo-local under `template/`; do not reintroduce dependency on `~/.dotfiles/module/pyass/template`.
+- Built-in templates are loaded from the repo-local `template/` directory.
 - Prefer minimal CLI surface changes and keep help text aligned with actual behavior.
-- When changing subtitle selection rules, validate against the sample file:
-  - `/mnt/mg08/videos/tv/黑袍纠察队 (2019)/S05/01.mkv`
-
-## Sandbox Notes
-
-- Real subtitle extraction may write `.ass` output next to MKV files outside the repo. That requires escalated execution in this environment.
-- `uv run xsub ...` may fail unless the entrypoint is installed; `uv run python xsub.py ...` is the reliable repo-local invocation.
+- Validate subtitle selection changes with reproducible track metadata or temporary media fixtures. Local videos can supplement these checks.
+- Extraction writes `.ass` files next to the input by default; use temporary inputs for tests.

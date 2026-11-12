@@ -18,15 +18,15 @@ Nixpkgs 输入固定。包恢复上游 `default.yaml`，再叠加 `rime/` 下的
 不在用户目录下载依赖，也不提供输入法安装脚本；setup.py 的 `fcitx5` 模块只链接 Fcitx5 用户配置。
 
 包内 `share/rime-data` 只读，Rime 在用户目录 `~/.local/share/fcitx5/rime` 写入
-`build/`、用户词库与学习数据。用户目录同名文件优先于共享数据；旧配置或上游链接
-会遮蔽包内更新，切换到 Nix 管理时先备份并移走对应文件，保留学习数据，再重新部署。
+`build/`、用户词库与学习数据。用户目录同名文件优先于共享数据，会遮蔽包内更新；
+排查更新未生效时检查这些覆盖文件，处理时保留用户词库与学习数据。
 不要将整个 Rime 用户目录链接到仓库或 Nix store。
 
 `rime.lua` 与 `rime_ice.custom.yaml` 必须一起打包：后者引用
 `lua_processor@ctrl_b_passthrough`，缺少 Lua 会导致方案加载失败。
-macOS 配置源仍保留在 `rime/`，Squirrel 的部署与用户目录配置由用户管理。
+macOS 配置源在 `rime/`，Squirrel 的部署与用户目录配置由用户管理。
 
-## 几个必须知道的坑
+## 部署注意
 
 - **`rime/*.lua` 必须和 `*.custom.yaml` 一起 link**。`rime_ice.custom.yaml` 里 patch 了
   `lua_processor@ctrl_b_passthrough`，缺 lua 文件时 Rime 加载方案直接失败，表现为输入法完全不可用。
@@ -39,13 +39,9 @@ macOS 配置源仍保留在 `rime/`，Squirrel 的部署与用户目录配置由
   「fcitx5 里完全没有这个应用的 input context」：
   1. 应用侧：Wayland 原生模式下不读 `GTK_IM_MODULE`/`XMODIFIERS`，必须命令行加
      `--enable-wayland-ime`；KWin 只实现 text_input v2/v3 而 Chromium 默认 v1，
-     所以还要 `--wayland-text-input-version=3`。这些开关只能落在 desktop 的 Exec 上
-     （VS Code 系的 `argv.json` 白名单不含它们，环境变量也传不进去）。
-     **这一步需要手工做**：把 `/usr/share/applications/<app>.desktop` 拷到
-     `~/.local/share/applications/`（同名即覆盖），给每一条 `Exec=` 加上开关。
-     拷整份而不是写个精简版：`Exec` 不只一条（Chrome 有普通/新窗口/隐私三条），
-     而且 `MimeType`（默认浏览器关联）、`Actions`、`StartupWMClass`、上百行本地化
-     `Name[..]` 都不能丢。应用升级后如果上游 desktop 变了，要自己重新拷一份。
+     所以还要 `--wayland-text-input-version=3`。开关可通过应用 wrapper 或 desktop 的 `Exec` 传入；
+     使用 desktop 覆盖时，在 `~/.local/share/applications/` 保留同名完整入口并调整相关 `Exec=`，
+     保留 `MimeType`、`Actions`、`StartupWMClass` 与本地化名称，应用升级后核对上游入口变化。
   2. 合成器侧：`kwinrc` 的 `[Wayland] InputMethod` 必须指向
      `fcitx5-wayland-launcher.desktop`。没配时 `org.kde.kwin.VirtualKeyboard` 的
      `available` 为 `false`，KWin 不中转 text-input，加了 flag 也没用。
@@ -54,10 +50,8 @@ macOS 配置源仍保留在 `rime/`，Squirrel 的部署与用户目录配置由
      交给现有实例。**KWin 只在启动时读这个键，改完必须重新登录。**
 - **某些 emoji 撑大候选框是字体回退问题，不是输入法**。打出 🛏(U+1F6CF) 等 emoji 时被黑白的
   `Noto Sans Symbols 2` 截胡、渲成宽扁字形；而 🛌 之类只有 `Noto Color Emoji` 有的正常。
-  fontconfig 取「sans-serif 回退链里第一个覆盖该码点的字体」，Symbols 2(#28)远早于
-  Color Emoji(#185)，重叠的 267 个码点全被抢走。`fontconfig/75-noto-emoji-over-symbols2.conf`
-  在 scan 阶段把这 267 个从 Symbols 2 charset 减掉，逼回退落到 Color Emoji；改完必须
-  `fc-cache -f`（手动接入此规则后需自行执行）。完整推导见该 conf 顶部注释。换字体版本要重算码点集。
+  `fontconfig/75-noto-emoji-over-symbols2.conf` 在 scan 阶段从 Symbols 2 的 charset 中排除重叠 emoji，
+  使其回退到 Color Emoji。接入或修改规则后执行 `fc-cache -f`；字体版本变化时重新核对码点集。
 
 ## 排查手法
 
@@ -88,58 +82,29 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
   它的 `stylesheet.css`（`~/.local/share/gnome-shell/extensions/kimpanel@kde.org/`）
   自己不设背景/文字色，用的是 Shell 标准类 `.popup-menu-boxpointer` / `.popup-menu-content`，
   所以**黑/白 = GNOME Shell 弹出菜单皮肤**。GNOME 47+ 起 Shell UI 跟随系统「浅色/深色」外观：
-  `gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'` → 白，`'prefer-dark'` → 黑
-  （`'default'` 在本机实测偏黑）。要脱离系统固定颜色，只能改那份 `stylesheet.css`，
-  但它不在本仓库、扩展升级会被覆盖。
+  `gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'` → 白，`'prefer-dark'` → 黑。
+  固定候选框颜色可调整扩展的 `stylesheet.css`，但该文件不在本仓库，扩展升级会覆盖修改。
 
-坑：
+主题注意：
 
-- **主题缺失是静默失败**。`classicui.conf` 里的 `Theme=` 指向一个本机没装的主题时，
-  fcitx5 直接退回内置样式，**日志里一个字都不会报** —— 表现就是「皮肤看起来很奇怪」。
-  所以主题必须放 `themes/` 由仓库自带，不要引用外部下载安装的主题名。
+- **主题缺失会回退到内置样式**。`classicui.conf` 引用的主题需要随部署安装；仓库主题位于 `themes/`，
+  使用外部主题时同时声明安装依赖。
 - **主题读的是 data 目录**（`~/.local/share/fcitx5/themes/`），不是 `~/.config/fcitx5/`。
-- **Rime 颜色是 `0xAABBGGRR`（BGR 序），fcitx5 是 `#RRGGBB`**，直接照搬数字会得到错色。
-  例：squirrel 的 `0x75B100` → `#00B175`。验证方法：rime-ice 的 `squirrel.yaml` 里
-  solarized 配色 `back_color: 0xF0E5F6FB` 按 BGR 解出 `#FBF6E5`，与 Solarized base3 `#FDF6E3` 吻合。
-- **fcitx5 主题没有 `BorderRadius`**（至少 5.1.12 没有，已在所有 `libFcitx5*` 里搜过）。
-  圆角只能靠 9-patch 背景图，配 `Background/Margin=10` 保住四角、中间拉伸。
+- **Rime 颜色是 `0xAABBGGRR`（BGR 序），fcitx5 是 `#RRGGBB`**，转换时交换红蓝通道。
+  例如 squirrel 的 `0x75B100` 对应 `#00B175`。
+- 当前主题通过 9-patch 背景图提供圆角，`Background/Margin` 保留四角，中间区域拉伸。
 - **配了 `Image=` 之后 `BorderWidth`/`BorderColor` 完全不生效**。fcitx5 的
   `ThemeImage` 构造函数里画边框的代码包在 `if (!image_) { ... }` 里（`src/ui/classic/theme.cpp`），
-  背景图加载成功就永远进不了那个分支。所以**边框也必须烘进 PNG**，
-  而且就算能生效也不能用 —— fcitx5 画的是直角边框，和 9-patch 的圆角对不上。
-- **背景图现在是手写 SVG**（`themes/*/panel.svg`、`highlight.svg`），改 `rx` / `fill` 即可，不需要生成脚本。
-  `gen-panel.sh` 和两张 PNG 是旧的位图方案，配置已不引用它们（SVG 在没链 rsvg 的 fcitx5 上
-  也能通过 gdk-pixbuf 显示，见下条），留着只是备查、可删，
-  里面那两个位图坑仍然成立：不能用 `-stroke` 画 1px 边框（抗锯齿把不透明度摊到 67%，发虚），
-  降采样必须 `-filter Box`（Lanczos 会振铃、颜色偏）。
+  背景图加载成功后跳过该分支，因此圆角边框由背景图自身绘制。
+- **背景图使用 SVG**（`themes/*/panel.svg`、`highlight.svg`），修改 `rx` / `fill` 即可。
   `Background/Margin` 无论 PNG 还是 SVG 都必须 >= 圆角半径，否则拉伸区切进圆角。
-- **微信面板的边界感主要靠投影，不是边框**。拿微信输入法截图逐像素量过：
-  白底 `#ffffff` 上只有 1px `#dadada` 描边，外侧另有一层约 15px 的投影
-  （`#fbfbfb` → `#efefef`，越近面板越深）。只抄那条 `#dadada` 会觉得“几乎看不到边框”，
-  要得到同样的轮廓感得把阴影也烘进 PNG（靠四周透明边 + 同比例抬高 `Background/Margin`）。
-- **描边发虚的主因是小数缩放，不是 PNG**。本机 4K + `scale: 1.7`（`~/.config/kwinoutputconfig.json`），
-  1 个逻辑像素的描边 = 1.7 个物理像素，矢量画法一样要抗锯齿 —— 所以从 PNG 换 SVG 时边框看着毫无变化，
-  换掉的只是「圆角弧线被上采样」那部分。实测剖面（暗底→白面板）：`37 → 218(#dadada) → 229 → 255`，
-  里面那行 229 就是 0.7 的覆盖率。
-  要实心整数个物理像素，**SVG 里别用 `stroke`**，改成「外层圆角矩形填边框色 + 内层内缩 `想要的物理像素数 / 缩放`
-  填背景色」：外沿正好压在 9-patch 角块的对齐边界上（`theme.cpp` 把 `gridX/gridY` floor/ceil 到设备像素），
-  剖面就变成 `218 218 218 → 255`。代价是内缩值写死了本机的 1.7，换机器要按 `1/缩放` 重算内层 `rx`。
-  位图路线下换更大的图没用：9-patch 角块永远是「源 = 图里 margin 个像素 → 目标 = 同样数量的逻辑像素」。
-- **SVG 皮肤在哪个 fcitx5 上都能显示，但只有新版才是矢量重绘**。5.1.21 的 `libclassicui.so` 没链 librsvg，
-  可 `Image=*.svg` 依然能用 —— Arch 的 `gdk-pixbuf2` 依赖 **glycin**，SVG 是它支持的格式，
-  所以走的是 `loadImage` 位图路径：**按 SVG 的标称尺寸（32x32）栅格化后再当位图上采样**，
-  边框于是退回发虚。实测面板上边框逐行剖面：
-  位图路径 `218 → 222 → 228 → 244 → 255`，矢量路径 `218 → 218 → 218 → 255`（3 行实心）。
-  要矢量就得 **fcitx5 > 5.1.21**（native SVG 是 2026-07-27 才进 master 的 commit `1f752ec7`，构建时链 librsvg），
-  本机用 AUR `fcitx5-git`。它的两个坑：PKGBUILD 还停在 5.1.19，`depends` 缺 master 新增的 `nlohmann-json`，
-  也缺默认开启的 `USE_SYSTEM_PLASMA_WAYLAND_PROTOCOLS` 所需的 `plasma-wayland-protocols`，
-  这两个不先装就编不过；ABI 没变（Core 7 / Config 6 / Utils 2），所以 `fcitx5-rime` 不用重编。
-  回滚到官方包用缓存里的 `fcitx5-5.1.21` + `xcb-imdkit-1.0.9` 即可，皮肤不用动。
+- 小数缩放可能使描边落在非整数物理像素上，产生抗锯齿。需要控制物理宽度时，可用外层边框色矩形与
+  内层背景色矩形绘制，内缩量按目标物理像素数除以缩放计算，并在目标显示环境验证。
+- SVG 是否按矢量重绘取决于 Fcitx5 构建；原生 SVG 路径使用 librsvg，图像加载后端也可能先栅格化再缩放。
+  排查清晰度时检查实际加载路径。
 - **`Highlight/Margin` 是一个键干两件事**：它既是 9-patch 的拉伸边界（所以高亮图的圆角必须 <= 它，
   否则圆弧被拉伸区切开），也是绿块相对候选文字向外扩张的量（`inputwindow.cpp` 里
-  高亮矩形 = 候选文字盒 ± 该 margin）。**结论：绿块想更圆就必然更胖，反之亦然。**
-  绿块的竖直内边距还额外含一份字体 ascent+descent 与字形墨迹的差（实测约 6 物理像素），
-  这部分调不掉 —— 和 macOS 微信输入法「绿块高度≈行高」比总会略胖一点。
+  高亮矩形 = 候选文字盒 ± 该 margin）。圆角与高亮外扩需要一起调整；竖直内边距还受字体度量影响。
 - **面板留白和候选之间的间距共用 `TextMargin`**：
   面板边→绿块 = `ContentMargin + TextMargin − Highlight/Margin`，
   候选间距 = `TextMargin.Left + TextMargin.Right − Highlight/Margin`。

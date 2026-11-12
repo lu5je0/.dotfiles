@@ -13,7 +13,7 @@
 ## Show Desktop Corner
 
 `show-desktop-corner@lu5je0/` 是 GNOME 50 的右下角显示桌面扩展，由
-`nix/nixos/pkgs/show-desktop-corner/` 打包，`nix/nixos/modules/gnome.nix` 安装并默认启用。
+`nix/nixos/pkgs/show-desktop-corner/` 打包，`nix/nixos/modules/gnome/default.nix` 安装并默认启用。
 
 - 主屏右下角 `8×8` 逻辑像素区域仅响应左键点击，始终完全透明，悬停、按下和隐藏窗口后均不显示高亮；
   不设置鼠标屏障，不轮询鼠标。
@@ -109,9 +109,8 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
 - mutter-18 的 `maximize()/unmaximize()` 无参数（旧版 MaximizeFlags 已移除）
 - Ctrl+Super+W 会把当前窗口几何、workArea 与检测到的 dock 矩形打到 journal，用于排查
 - `bind()` 在每个快捷键处理函数跑完后调 `scheduleModifierResync()`，绕过 mutter 上游 bug
-  （mutter#3636、#3672，50.4 仍未修）：mutter 抓走带修饰键的快捷键后，客户端可能收不到
-  修饰键的 release，其修饰键状态卡住，表现为**悬停高亮正常但点击失效**（点击被当成
-  Ctrl+点击），极易误判成「应用卡死」。用虚拟键盘补发一次 RELEASED 即可解除。
+  （mutter#3636、#3672）：mutter 处理带修饰键的快捷键后，客户端可能收不到 release，
+  导致点击被当作 Ctrl+点击。通过虚拟键盘补发 RELEASED 恢复状态。
   必须轮询等到修饰键真正松开才补发，否则会打断按住 Ctrl+Super 连按 N/P 的连续切换；
   长按超过 3s 就放弃本次重同步。刻意不含 Super——卡住的 Super 在 GTK 侧无默认点击行为，
   而合成它的 release 会让 `overlay-key` 误弹 Overview
@@ -120,18 +119,17 @@ hammerspoon/kwin/gnome 共用的统一配置（JSONC，支持 `//` 与 `/* */` �
 
 GNOME 顶栏只对**按图标名拿到且以 `-symbolic` 结尾**的图标按前景色染色。mark-shot 上游的托盘逻辑是：主题名对宿主可见才发图标名，
 否则退彩色位图；而它的可见性判断只认 `/usr/share` 等标准根目录，NixOS 的 profile 路径不算，所以上游默认走位图。
-本仓库直接改默认行为（不再用 AppIndicator 扩展的 custom-icons 覆盖）。mark-shot 不装进系统配置，
-作为根 flake 的 `packages.<system>.mark-shot` 装进用户 profile：`nix profile add path:~/.dotfiles#mark-shot`。
+本仓库通过补丁调整默认托盘行为。mark-shot 通过根 flake 的 `packages.<system>.mark-shot`
+安装到用户 profile：`nix profile add path:~/.dotfiles#mark-shot`。
 
 - `nix/nixos/pkgs/mark-shot/default.nix`：
   - `mark-shot-tray-symbolic.patch`：托盘优先发 `mark-shot-symbolic` 且宿主可见性判断扩展到会话的 `XDG_DATA_DIRS`；
     自启动 desktop 写成 `Exec=mark-shot --tray`（上游写 `applicationFilePath()`，Nix 下是 store 路径且绕过 wrapper，升级后会拉起旧版本）
   - SVG 装进包内 `share/icons/hicolor/symbolic/apps/`，应用启动（初始化托盘）时把它链到
-    `~/.local/share/icons/hicolor/symbolic/apps/`——gnome-shell 解析图标名时看不清 nix profile（实测退占位符「…」），
-    放用户目录则应用与宿主都能按名解析；该位置已有普通文件时不覆盖（可手动放文件迭代图标）
+    `~/.local/share/icons/hicolor/symbolic/apps/`，使应用与宿主都能按名解析；该位置已有普通文件时不覆盖，支持手动迭代图标
   - wrapper 补 gtk3 的 gsettings schema 目录（内有组件要读 `org.gtk.Settings.FileChooser`，缺失时进程启动即 abort）
 - 上游包定义由根 flake 的 `mark-shot` input 提供（`github:jswysnemc/mark-shot`，nixpkgs follows 根），
-  `nix/nixos/pkgs/mark-shot/` 目录不再自带 flake，只放补丁、SVG 与 `default.nix`
+  `nix/nixos/pkgs/mark-shot/` 存放补丁、SVG 与 `default.nix`
 
 升级：仓库根 `nix flake update mark-shot` 后 `nix profile upgrade mark-shot`（profile 元素记录的是 `path:` URL，会取当前工作树）；
 补丁可能要随上游 rebase（上游改了 `application_icon.{h,cpp}` / `windows_tray_controller.cpp` / `autostart_linux.cpp` 会打不上）。

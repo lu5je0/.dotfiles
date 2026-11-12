@@ -65,7 +65,7 @@
 
 ### Changes (`<leader>gs`)
 
-Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 git-status 窗口）。`<leader>gs` 打开/定位 sidebar 的 Git Changes tab，顶部 `Changes` 章节列出当前仓库所有受影响的文件（合并 staged / unstaged / untracked，每个路径只出现一次）。
+Git Changes tab 由 `lua/lu5je0/ext/sidebar/` 提供。`<leader>gs` 打开/定位 sidebar 的 Git Changes tab，顶部 `Changes` 章节列出当前仓库所有受影响的文件（合并 staged / unstaged / untracked，每个路径只出现一次）。
 
 1. 每个 tabpage 首次进入 Git Changes 时光标定位到第一个变更文件；之后同 tabpage 再按仍定位当前文件。
 2. 每个文件名末尾显示 git porcelain 的 2 字符状态：
@@ -93,7 +93,7 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 
 - `jump_to_sha`：commit 列表渲染完成后把光标定位到匹配 hash（精确或前缀匹配）的 commit 行
 - `jump_to_file`：可与 `jump_to_sha` 组合；定位到 commit 后自动展开其文件树，并把光标停在匹配路径的文件行上。匹配同时考虑 `file.path` 和 `file.old_path`，rename commit 也能命中
-- 传 `jump_to_sha` 时不再无脑全量加载，会按目标距 HEAD 的距离动态选择 `commit_limit`
+- 传 `jump_to_sha` 时按目标距 HEAD 的距离动态选择 `commit_limit`
 - 加载完仍未命中目标 sha 时会 notify 警告
 - 不传任何 opts 时与 `<leader>gl` 原行为一致
 
@@ -127,7 +127,7 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
   - 现有 dotfiles 仓库里的固定 commit/文件/行段 case
   - 运行时动态创建的临时 git 仓库 fixture
 - `vim/tests/project-log/spec.lua` 负责 project-log graph 渲染回归测试，覆盖复杂 merge / crossover 历史段，并使用 `tig-fixtures.json` 中由 Tig 2.6.0 官方 graph-v2.c 生成的 golden cells 校验 UTF-8 图形与颜色编号
-- `vim/tests/git-selection/spec.lua` 通过真实按键覆盖 History 的 Sidebar 布局、切页/关闭恢复、per-tab 隔离及两个日志入口的 `c` / `d` 独立切换、dual 的 changes-only 折叠与 `D` 映射移除、Space / m 勾选、Visual Enter、文件树折叠/展开/自动预览、single / dual 净 diff、离散提交合并成功/冲突、先改后还原与新增后删除、rename/delete、未提交改动与 History 隔离、真实 index/工作区不变、临时资源清理，以及一加 6 的四提交 `gnome.nix` 净变化为空的真实 case
+- `vim/tests/git-selection/spec.lua` 通过真实按键覆盖 History 布局、生命周期、per-tab 隔离、diff 布局切换、提交勾选、文件树操作、净变化合并与冲突、rename/delete、未提交改动隔离、index/工作区保护及临时资源清理
 - 临时 fixture 定义位于 `vim/tests/line-log/fixtures.lua`，仓库本体在测试运行时创建到系统临时目录，不把 `.git` fixture 提交进仓库
 - 如果修改 revision/path 链、rename 处理、tracker 推进或 `Block` 交互，必须至少跑：
   - `cd vim && ./tests/run-tests.sh`
@@ -184,4 +184,4 @@ Git Changes tab 现由 `lua/lu5je0/ext/sidebar/` 提供（本模块不再包含 
 
 ## 懒加载
 
-通过 `ext-loader.lua` 注册，首次按 `<leader>gl` / `<leader>gL` / `<leader>gb`，或执行 `:GitStatusLog` 时加载。
+通过 `ext-config.lua` 注册触发键与命令，由 `ext/loader.lua` 代理首次加载；具体入口以 spec 为准。

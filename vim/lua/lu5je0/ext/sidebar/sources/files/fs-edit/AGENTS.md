@@ -35,9 +35,9 @@
 - `path_util.lua`：纯字符串路径工具（`strip_slash` / `rel` / `inside` / `iter_ancestors`）。
 - `init.lua`：buffer 生命周期 + 交互。session 就是 model 表（附加 `buf`/`win`），存在 `sessions[buf]`（`M._sessions` 供测试用）。`on_enter` 是薄调度：瞬态 copy 目录先 `mint_copy` 重写行 id，目录节点翻转 `expanded`（展开走 `ensure_loaded` + `render_children_lines`）。`mutate` 保存流程；`reset_hunk` / `preview_hunk` / `smart_paste` / `o` / `O` / `K`。`q` 有未保存修改时确认，`<leader>q` 强制关闭。
 
-## 核心不变式（大多已结构化，不再靠纪律）
+## 核心不变式
 
-- **折叠不等于删除**：折叠只是 `expanded = false`，子节点仍在 `node.children`（stash）里；reconcile 对折叠节点**不触碰** children，diff 自然把 stash 计入。旧架构的 `saved_children` / `effective_buf_lines` 拼接已不存在。
+- **折叠不等于删除**：折叠只是 `expanded = false`，子节点仍在 `node.children`（stash）里；reconcile 对折叠节点不触碰 children，diff 将 stash 计入。
 - **undo 边界**：同一磁盘快照内，`nodes[]` 保留 detach 节点供 undo 认领；展开状态与子行在同一次 buffer 编辑中更新，undo / redo 同时恢复。成功保存或显式刷新重建快照时清空 buffer undo 历史，旧 ID 不得用于新快照。
 - **删除只针对 tracked**：`disk[id].tracked` 仅在实体节点进过 working 树时为 true；copy 的 origin 引用的 disk id 不 tracked，永不产生 delete。
 - **stash 规则**：折叠目录中隐藏的节点被 buffer 其它位置引用时，那些行是 copy，不会把节点从 stash 里撕走（除非折叠被 undo，行回到容器项之内）。
@@ -57,24 +57,16 @@
 
 ## 修改约定
 
-- **改 `reconcile` / `diff` / `resolve_occurrences`**：必须同步跑 `fs_edit_spec.lua` 和 `fs_edit_e2e_spec.lua`，它们是唯一行为契约。移动/复制判定的语义（keep-original、last-wins、stash 规则）都在 `diff` 的 position 决策和 `resolve_occurrences` 里，两处必须一致。
+- **改 `reconcile` / `diff` / `resolve_occurrences`**：运行 `fs_edit_spec.lua` 和 `fs_edit_e2e_spec.lua`。移动/复制判定的语义（keep-original、last-wins、stash 规则）在 `diff` 的 position 决策和 `resolve_occurrences` 中保持一致。
 - **render 里禁止同步外部命令**：`render.refresh` 在 `on_lines` 回调里高频触发。
 - **新增 keymap**：加在 `M.open` 里，`{ buffer = buf, nowait = true }`。别用全局映射。
-- **多字节字符**：`config.files.folder_icons`、devicon 等 Nerd Font 字符**不要用 Edit 工具直接改**（多字节匹配易失败），必要时用 python/sed。
+- **多字节字符**：修改 `config.files.folder_icons`、devicon 等 Nerd Font 字符后检查 diff，确认字符完整。
 - 测试可依赖的稳定入口：`fs_edit._sessions[buf]`（session 即 model）、`model.reconcile/diff/check_dupes/has_pending/has_hidden_pending/rebuild`、`actions.plan_actions/execute_actions/add_implicit_creates`、`confirm.detect_conflicts`。
 
-## Bug 修复 → 端到端测试流程（强制）
+## 回归测试
 
-当在 fs-edit 中修复了任何 bug，必须走这套流程：
-
-1. **询问用户**：先用一句话描述 bug 的触发路径，然后询问是否需要补一条 e2e 测试。**不要默认加，也不要默认不加，必须问。**
-2. **用户同意后写 e2e**：在 `vim/tests/sidebar/fs_edit_e2e_spec.lua` 末尾（`r.finish()` 之前）新增 `r.group` + `r.run`。测试要走真实的 `fs_edit.open_dir` → 编辑 buffer → `do_enter` / `do_save` → 断言磁盘状态，不要绕过公开 API。
-3. **强制回归验证**：写完测试后必须做两次运行：
-   - `git stash push -- <被修复的文件>` 撤掉修复
-   - 跑 `cd vim && nvim --headless -u NONE -l tests/sidebar/fs_edit_e2e_spec.lua`，**新测试必须 FAIL**
-   - `git stash pop` 恢复修复
-   - 再跑一次，新测试必须 PASS，且原有 e2e 全部 PASS
-4. **报告结果**：在最终回复里明确写"回滚修复后新测试 FAIL，恢复修复后全部 PASS"。如果新测试在没修复时就 PASS，说明测试没覆盖到 bug，必须重写测试。
+- 修复文件操作或 undo 行为时，按影响范围补充能复现问题的回归用例。
+- e2e 测试通过 `fs_edit.open_dir` → 编辑 buffer → `do_enter` / `do_save` 验证磁盘状态；纯算法用例放在 model 测试中。
 
 ## 测试入口
 

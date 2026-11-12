@@ -58,14 +58,14 @@ sidebar/
 ## Nerd Font 图标
 
 - `config.lua` 中包含 Nerd Font 图标字符（tab label、folder icon、git glyph、section arrow、symbol kind icon）。
-- **不要用 Edit 工具直接编辑这些图标行**，多字节 UTF-8 匹配容易失败，请用合适的命令修改；普通字段（如 `M.highlights`）可用 Edit。
+- 修改图标后检查 diff，确认 UTF-8 字符完整。
 
 ## 架构约定
 
 - 树渲染统一走 `render.render_tree(root_children, opts)`，不在各 source 重复实现。
 - buffer/窗口写入只走 `view.lua`（`flush` / `open_node` / `close_node` / `restore_cursor`）；`render.lua` 仍 re-export 兼容旧调用。
 - 展开接口的 `open.keep_cursor(item)` 控制是否保留光标；History commit、Changes 分组与 stash 节点展开后留在当前行，已展开时再次按 `l` 也保持不动；普通目录沿用进入子节点的行为。
-- 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，不再各自手写 render/open_node/close_node 骨架。
+- 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，共用渲染与展开骨架。
 - History 只展示已提交历史，未提交改动由 Changes 展示。History 与其他 source 一样走 `source_base` → `render_tree` → `view.flush`；`sources/history/model.lua` 只负责异步加载和取消，History 专属解析和提交图算法集中在 `sources/history/`，与 source 的窗口操作分离。`git_style.lua` 共用 Changes/History 的树样式；预览 source 可声明 `preview_kind` 与 `preview_item()`，由共享 preview / diff_preview 管理浮窗；条目可通过 `preview_kind = "text"`、`lines`、`title` 提供文本预览，`text_preview` 管理 per-tab 浮窗及资源释放。
 - 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册。可选接口为 `enter(ctx, opts)`、`leave(ctx)`、`locate(ctx, target)`、`dispose(ctx)`；未声明 `enter` 时回退到 `render()`。定位前需要校验或转换目标时提供 `prepare_locate(target)`，返回 false 中止；`init.locate_in_tab` 只分派接口，不包含具体 source 分支。
 - `enter(ctx, opts)` 负责让当前页就绪，同页 `focus()` 与 `open_tab(..., { no_toggle = true })` 也会调用；同一次访问复用 ctx，直到 `leave` 才失效。hook 必须支持重复调用，可刷新数据，但应取消或复用已有任务，避免重复持有资源；`enter` 与 `leave` 的调用次数不必一一对应。
@@ -78,13 +78,13 @@ sidebar/
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
 - 关闭 Sidebar 前按 source 保存完整窗口视图（含鼠标滚动后的 `topline`），重新打开时在 source 渲染后恢复；对已打开窗口执行 focus 不回放旧视图，定位入口仍以定位目标为准。
 - 所有 sidebar autocmd 都进 `sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
-- Buffers source 的 `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`，**不要直接写事件名**：0.12 的自然编辑走 `BufModifiedSet`（0.13 已移除，见 `news.txt` / `deprecated.txt`，PR #35610），`:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`；单用任一个都会漏。兼容层与删除条件见根 `AGENTS.md` 的「临时兼容」一节。
+- Buffers source 的 `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`：0.12 的自然编辑走 `BufModifiedSet`，0.13 移除此事件；显式 `:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`。兼容层与删除条件见 `vim/AGENTS.md` 的「临时兼容」一节。
 
 - 生命周期只经 `lifecycle` 分派：Sidebar 打开、切 source 和切回 Neovim tab 时 enter；离开时先使 context 失效，再关闭预览并调用 source.leave。实际窗口关闭成功后，显式关闭与外部 WinClosed 共用 close（再释放 watcher / Git 状态查询并重置临时页签）；E444 等关闭失败必须保留窗口归属、context 和资源；Neovim tab 销毁经 dispose 清理全部已加载 source，清理 hook 必须可重复调用。`config.tabs[].transient` 定义临时页，显示状态保存在 per-tab `visible_tabs`，不改动稳定的 source 索引。`config.tabs[].width` 可指定默认宽度，各页宽度在 `tab_widths` 中记忆；History 默认 50 列，窗口过小时限制为屏幕的 60%。
 
 ## 快捷键
 
-- `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）；`<leader>fg` 已移除。
+- `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）。
 - 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
 
 - Changes 离开时取消 stash 加载；没有缓存条目的列表与未加载完的 stash 文件节点恢复折叠，返回后可按 `l` 重试，已加载内容与展开状态保留。Symbols 进入时先同步渲染缓存或空状态，再发起请求，等待 LSP 时不能保留上一页内容。
@@ -108,7 +108,7 @@ sidebar/
 
 - **render 路径禁止同步外部命令**。git 数据通过异步预加载，render 只读缓存。
 - render 路径不调用 `redraw` / `redrawstatus` 强制刷新屏幕，确保视图恢复前的中间画面不会显示；剪贴板状态栏刷新只在复制/剪切操作中执行，`apply_clipboard_mark` 仅更新高亮。
-- **改动涉及 render、CursorMoved、高频 autocmd 时，必须提前告知用户性能影响。**
+- 修改 render、CursorMoved 或高频 autocmd 时检查热路径开销；有明显性能影响时说明验证结果。
 - 所有 Git 状态触发统一调用 `git_status.lua`，由它执行一次 `git status` 并分发给 Files 与 Git Changes；不要在 source 或 autocmd 中另起查询。
 - Git 查询使用 `--no-optional-locks` 避免自身写 index 触发监听回路；每个 tabpage 最多一个在途查询，查询期间的刷新请求合并为后续补查，不按时间窗口丢弃事件。
 - `watcher.lua` 监听已展开目录与实际 gitdir（支持 worktree、无 index 的新仓库），只做事件防抖，不做定时轮询。刷新只扫描缓存树的展开目录，目录结构和 Git 输出均未变化时不重画。
@@ -116,13 +116,13 @@ sidebar/
 - 未展开目录的外部修改可能没有 fs_event，需等 FocusGained、切页、保存或手动 `r` 才更新，没有周期刷新时限；关闭 sidebar 不查询，其他 tabpage/source 保留的文件/index 监听仍可能触发查询。
 - Files 的 Git 状态键相对仓库根目录，不是 cwd；折叠目录再次展开时需重扫，不能依赖折叠期间已停止的监听。
 - 查询使用 `--ignored=matching`，避免递归输出被忽略目录中的每个文件；Files 的忽略标记需继承最近的 ignored 祖先，不能仅查当前路径。
-- devicons 已缓存、fullname popup 复用 buffer/window、suffix 用 `right_align` virt_text — 不要退化。
+- devicons 使用缓存，fullname popup 复用 buffer/window，suffix 使用 `right_align` virt_text。
 - fullname popup 按 sidebar 的实际 `textoff` 对齐，沿用 `leftcol` 横向视口；不要用固定空格模拟边距，也不要在搜索触发横向滚动后从行首重画选中行。
 
 ## 集成点
 
 - `core/filetree.lua` 的 `Plugins` / `SwapFiles` / `TimeMachine` 命令经 `ext-config.lua` 的 sidebar 条目首次加载，在 `setup()` 后注册；通过 `open_tab(files, { no_toggle = true, focus = false })` 展示目标目录并保留调用窗口焦点。
-- `ext-loader.lua`：懒加载触发键。**新增或修改全局快捷键时，必须同步更新 `ext-loader.lua` 的 `keys` 列表，否则按键不会触发模块加载，快捷键不生效。**
+- `ext-config.lua` 的 sidebar 条目声明懒加载触发键；新增或修改全局快捷键时同步维护其 `keys` 列表。
 - `ext/bufferline.lua`、`core/statusline.lua`、`ext/statuscol.lua`：Sidebar filetype 注册
 
 ## 测试

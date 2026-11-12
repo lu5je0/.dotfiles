@@ -9,7 +9,7 @@
 - 飞书只支持纯文本且不支持附件；Telegram 支持 `MarkdownV2`、`parse_mode=HTML`、`sendPhoto` / `sendDocument`。渠道能力校验在 `push_feishu` / `push_telegram` 内部完成，失败统一抛 `PushError`，由 `main` 转成退出码 1。
 
 ## 目录协作规则
-- 如果调整 `q-push.py` 的 CLI 参数、渠道类型或环境变量约定，需要同步检查根目录 `bin/q-push` 包装脚本是否仍然适配。
+- 如果调整 `q-push.py` 的 CLI 参数、渠道类型或环境变量约定，需要同步检查 `bin/common/q-push` 包装脚本是否仍然适配。
 - 如果调整 `q-push.py` 的 CLI 参数或参数取值，需要同步更新根目录 `zsh/completions/_q-push`。
 - 不要在本目录重复记录根仓库的通用约定；这里只记录 `q-push` 自身的职责和联动关系。
 
