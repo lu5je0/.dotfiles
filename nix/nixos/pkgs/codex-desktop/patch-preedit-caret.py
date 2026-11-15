@@ -43,14 +43,16 @@ AUTO_FOCUS = re.compile(
     rb"(?P<controller>[\w$]+)\.insertTextAtSelection\((?P=event)\.key\)"
 )
 PREDICTION_PLUGIN = re.compile(
-    rb"(?P<plugin>new [\w$]+\(\{key:[\w$]+,state:\{init:\(\)=>null,"
+    rb"(?P<plugin>new (?:[\w$]+\.)?[\w$]+\(\{key:[\w$]+,state:\{init:\(\)=>null,"
     rb"apply\([\w$]+,[\w$]+\)\{[^\n]*?hiddenForComposition:[^\n]*?\}\}\}\))"
-    rb"(?=\}function )"
+    # 插件可由独立函数返回，也可由模块导出对象中的工厂方法返回。
+    rb"(?=\}function |\},[\w$]+:[\w$]+,)"
 )
 COMPOSER_FOCUS = re.compile(
-    rb"focus\((?P<position>[\w$]+)\)\{if\((?P=position)===`end`\)\{"
+    rb"focus\((?P<position>[\w$]+)\)\{if\("
+    rb"(?:(?P=position)===`end`|\"end\"===(?P=position))\)\{"
     rb"let\{state:(?P<state>[\w$]+)\}=this\.view;this\.view\.dispatch\("
-    rb"(?P=state)\.tr\.setSelection\([\w$]+\.atEnd\((?P=state)\.doc\)\)\)\}"
+    rb"(?P=state)\.tr\.setSelection\((?:[\w$]+\.)?[\w$]+\.atEnd\((?P=state)\.doc\)\)\)\}"
     rb"this\.view\.editable\|\|this\.view\.dom\.focus\(\{preventScroll:!0\}\),"
     rb"(?P<call>this\.view\.focus\(\))\}"
 )

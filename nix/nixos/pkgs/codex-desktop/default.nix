@@ -2,7 +2,7 @@
 
 # 官方 Linux 桌面包由上游适配 NixOS，启动命令为 chatgpt。
 # 安装：nix profile add path:~/.dotfiles#codex-desktop
-# 更新：先修改根 flake.nix 中 llm-agents 的提交，再 nix flake update llm-agents，最后 nix profile upgrade codex-desktop
+# 更新：在仓库根目录执行 nix flake update llm-agents，再 nix profile upgrade codex-desktop
 # Git flake 只包含已跟踪的文件；新增补丁脚本须先 git add，否则 profile 升级读不到。
 let
   upstream = flake.packages.${pkgs.stdenv.hostPlatform.system}.chatgpt;
