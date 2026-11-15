@@ -140,6 +140,15 @@ if [[ -o interactive ]]; then
   alias rm=safe_rm
 fi
 
+nix() {
+  # 补全通过参数位置定位光标，必须保留原始参数。
+  if [[ ${1-} == profile && ${2-} == (add|install|upgrade) && -z ${NIX_GET_COMPLETIONS-} ]]; then
+    NIXPKGS_ALLOW_UNFREE=1 command nix profile "$2" --impure "${@:3}"
+  else
+    command nix "$@"
+  fi
+}
+
 alias sudo='sudo env PATH=/sbin:$PATH'
 alias sudo-default-path='\sudo'
 
