@@ -40,13 +40,16 @@ echo "good for you" | wd
 - `--json`: print machine-readable JSON
 
 Successful lookups are spoken by default. With `mpv` installed, `wd` requests
-recordings for individual English words through the
-[Wiktionary REST API](https://en.wiktionary.org/wiki/Special:RestSandbox).
-It downloads one recording per lookup, preferring American English. Playback
-starts with 500 ms of silence to give idle audio devices time to wake. Phrases
-and words without downloadable recordings use local speech. On Linux, `wd` uses
-`wsay` if available and otherwise uses `spd-say`. Windows uses `wsay`, and macOS
-uses `say -v Alex`. Use `--no-say` to skip pronunciation requests and playback.
+American English pronunciations for individual words from
+[Youdao Dictionary](https://dict.youdao.com/). It reuses successfully played recordings from
+`$XDG_CACHE_HOME/wd/pronunciation.sqlite3` (default
+`~/.cache/wd/pronunciation.sqlite3`) even when offline. The cache holds up to
+256 recordings and 16 MiB of audio, evicting the least recently used recordings
+when either limit is exceeded. Playback starts with 500 ms of silence to give
+idle audio devices time to wake. Phrases and words without an available
+recording use local speech. On Linux, `wd` uses `wsay` if available and otherwise
+uses `spd-say`. Windows uses `wsay`, and macOS uses `say -v Alex`. Use
+`--no-say` to skip pronunciation requests and playback.
 
 `--json` success example:
 
