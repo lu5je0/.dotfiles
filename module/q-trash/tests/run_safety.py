@@ -71,6 +71,43 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(source.read_text(), "keep")
         self.assertEqual(list(outside.iterdir()), [])
 
+    def test_readable_trash_directories_allow_round_trip(self):
+        dirs = [self.trash, self.trash / "files", self.trash / "info"]
+        for directory in dirs:
+            directory.mkdir(parents=True, mode=0o700)
+        for mode in (0o700, 0o750, 0o755):
+            with self.subTest(mode=oct(mode)):
+                for directory in dirs:
+                    directory.chmod(mode)
+                original = self.put()
+                self.assertFalse(original.exists())
+                self.assertEqual((self.trash / "files/item").read_text(), "backup")
+                result = self.run_cli("restore", str(original))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(original.read_text(), "backup")
+                for directory in dirs:
+                    self.assertEqual(directory.stat().st_mode & 0o777, mode)
+
+    def test_group_or_other_writable_trash_directories_refused(self):
+        dirs = [self.trash, self.trash / "files", self.trash / "info"]
+        for directory in dirs:
+            directory.mkdir(parents=True, mode=0o700)
+        source = self.work / "keep"
+        source.write_text("keep")
+        for directory in dirs:
+            for mode in (0o775, 0o777, 0o702):
+                with self.subTest(directory=directory.name, mode=oct(mode)):
+                    directory.chmod(mode)
+                    try:
+                        result = self.run_cli("rm", str(source))
+                        self.assertEqual(result.returncode, 1)
+                        self.assertIn(b"not writable by group or others", result.stderr)
+                        self.assertEqual(source.read_text(), "keep")
+                        self.assertEqual(list((self.trash / "files").iterdir()), [])
+                        self.assertEqual(list((self.trash / "info").iterdir()), [])
+                    finally:
+                        directory.chmod(0o700)
+
     def test_non_utf8_round_trip_and_equals_destination(self):
         original = os.fsencode(self.work) + b"/raw-\xff"
         with open(original, "wb") as f:

@@ -48,7 +48,7 @@ macOS 构建需 Xcode Command Line Tools；其他平台仅使用 Rust 和系统 
 
 ## 平台行为
 
-- **Linux**：freedesktop Trash Spec 1.0；同卷优先 `$XDG_DATA_HOME/Trash`，其他卷优先 sticky 且非符号链接的 `$top/.Trash/$UID`，否则 `$top/.Trash-$UID`。不跨卷拷贝，无法回收时报错。`files` 与 `info` 目录要求当前用户所有、无组/其他用户权限且非符号链接。支持非 UTF-8 文件名，与 `trash-list` / `trash-restore` 互通。
+- **Linux**：freedesktop Trash Spec 1.0；同卷优先 `$XDG_DATA_HOME/Trash`，其他卷优先 sticky 且非符号链接的 `$top/.Trash/$UID`，否则 `$top/.Trash-$UID`。不跨卷拷贝，无法回收时报错。回收站及其 `files`、`info` 目录要求当前用户所有、无组/其他用户写权限且非符号链接；新建时请求 `0700`，接受共享盘映射的 `0755` 等权限。允许其他用户读取和进入目录可能暴露回收站文件名，内容访问仍取决于文件权限及服务端访问控制。支持非 UTF-8 文件名，与 `trash-list` / `trash-restore` 互通。
 - **WSL**：`drvfs` / `9p` / `virtiofs` 上的 Windows 路径调用 PowerShell 的 Windows 回收站 API，Windows 资源管理器可还原；Linux 路径仍使用 freedesktop。管理命令扫描各盘 `$Recycle.Bin`。
 - **macOS**：调用 Foundation `NSFileManager trashItemAtURL:`，保留系统 put-back 元数据；扫描 `~/.Trash` 和 `.DS_Store`。Finder put-back 记录可能延迟写入，未知原路径的项目需指定 `restore --dest`。终端读取回收站可能需要 Full Disk Access。
 

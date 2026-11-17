@@ -110,9 +110,9 @@ fn ensure_dirs(path: &Path) -> Result<()> {
             .create(&dir)
             .map_err(|e| format!("cannot create '{}': {e}", dir.display()))?;
         let meta = fs::symlink_metadata(&dir).map_err(|e| e.to_string())?;
-        if !meta.is_dir() || meta.uid() != unsafe { libc::getuid() } || meta.mode() & 0o077 != 0 {
+        if !meta.is_dir() || meta.uid() != unsafe { libc::getuid() } || meta.mode() & 0o022 != 0 {
             return Err(format!(
-                "unsafe trash directory '{}' (must be owned by current user, mode 0700, and not a symlink)",
+                "unsafe trash directory '{}' (must be owned by current user, not writable by group or others, and not a symlink)",
                 dir.display()
             ));
         }
