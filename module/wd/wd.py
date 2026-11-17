@@ -311,6 +311,8 @@ def parse_args(argv=None):
     parser.add_argument('--delete-stat', metavar='WORD', help='delete stats for a single word')
     parser.add_argument('--clear-stats', action='store_true', help='clear all query history stats')
     parser.add_argument('--json', action='store_true', help='print result as JSON')
+    parser.add_argument('--target', choices=['en', 'zh-CN'], help='translation target language')
+    parser.add_argument('--no-history', action='store_true', help='do not update query history')
     return parser.parse_args(argv)
 
 
@@ -382,7 +384,7 @@ def main():
     if args.say_only:
         return say_word(word, wait=True)
 
-    allowed_engines = args.engine if args.engine else get_supported_engines()
+    allowed_engines = args.engine if args.engine else (['google'] if args.target == 'en' else get_supported_engines())
     engines = build_engines(allowed_engines)
     if not engines:
         if args.json:
@@ -391,6 +393,9 @@ def main():
         print('无可用引擎')
         return 3
 
+    for engine in engines:
+        if getattr(engine, 'name', '') == 'google' and args.target:
+            engine.target = args.target
     result = query_with_engines(word, engines)
 
     if result is None:
@@ -400,7 +405,7 @@ def main():
         print('未找到该单词')
         return 2
 
-    if is_single_word(word) and result.get('engine') == 'stardict':
+    if not args.no_history and is_single_word(word) and result.get('engine') == 'stardict':
         try:
             update_history(word)
         except Exception:
