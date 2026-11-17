@@ -14,6 +14,7 @@ wd hello
 wd --say-only hello
 wd --no-say hello
 wd --json --no-say hello
+wd --json --no-say --no-history --target en "你好世界"
 wd -e stardict -e google hello
 wd --list-engines
 wd --init
@@ -38,6 +39,8 @@ echo "good for you" | wd
 - `--delete-stat WORD`: delete stats for a single word
 - `--clear-stats`: clear all query history stats
 - `--json`: print machine-readable JSON
+- `--target en|zh-CN`: choose the output language; English uses Google directly, Chinese keeps the dictionary-first fallback
+- `--no-history`: skip history writes (for server integrations)
 
 Successful lookups are spoken by default. With `mpv` installed, `wd` requests
 American English pronunciations for individual words from

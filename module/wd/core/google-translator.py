@@ -11,6 +11,7 @@ class GoogleTranslatorEngine(object):
     def __init__(self, timeout: int = 5):
         self.timeout = timeout
         self.name = 'google'
+        self.target = 'zh-CN'
 
     def query(self, text: str):
         if not text:
@@ -18,13 +19,14 @@ class GoogleTranslatorEngine(object):
 
         params = {
             'client': 'gtx',
-            'sl': 'en',
-            'tl': 'zh-CN',
+            'sl': 'auto',
+            'tl': self.target,
             'dt': 't',
             'q': text,
         }
-        url = 'https://translate.googleapis.com/translate_a/single?' + urllib.parse.urlencode(params)
-        req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
+        url = 'https://translate.googleapis.com/translate_a/single'
+        req = urllib.request.Request(url, data=urllib.parse.urlencode(params).encode(),
+                                     headers={'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded'})
 
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
