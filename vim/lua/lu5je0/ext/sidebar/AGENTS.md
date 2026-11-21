@@ -87,7 +87,7 @@ sidebar/
 - `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）。
 - 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
 
-- Changes 普通模式下，`zC` 沿光标所在目录链收起到分组，保留旁支状态；`zO` 递归展开光标处的闭合折叠，`zR` 展开所有分组和目录（包括按需加载的 stash）。在原处重新展开会恢复被折叠的光标条目。
+- Changes 普通模式下，`zC` 沿光标所在目录链收起到分组，保留旁支状态；`zO` 递归展开光标处的闭合折叠，`zR` 展开光标所在分组的全部折叠。在 Stashes 分组内操作时按需加载 stash。在原处重新展开会恢复被折叠的光标条目。
 - Changes 离开时取消 stash 加载；没有缓存条目的列表与未加载完的 stash 文件节点恢复折叠，返回后可按 `l` 重试，已加载内容与展开状态保留。Symbols 进入时先同步渲染缓存或空状态，再发起请求，等待 LSP 时不能保留上一页内容。
 
 - Git diff 的布局与 changes-only 独立保存：`d` 保留上下文偏好；`c` 在 single 模式切换完整上下文 / 改动附近 3 行，在 dual 模式展开 / 折叠未变化区域。Space 预览期间，在列表或预览窗口按 `d` / `c` 均立即使用已加载内容刷新，不重读文件；切换布局保留当前焦点所在区域。

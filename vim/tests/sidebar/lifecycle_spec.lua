@@ -228,12 +228,12 @@ run('zC closes enclosing folds and zO opens only a closed fold', function()
   vim.cmd('normal zO')
   r.assert_eq(ts.display_items[2].node.expanded, false)
   vim.cmd('normal zR')
-  r.assert_eq(ts._expanded.unstaged, true)
+  r.assert_eq(ts._expanded.unstaged, false)
   r.assert_eq(ts.display_items[2].node.children[1].expanded, true)
   r.assert_eq(current().section, 'changes')
 end)
 
-run('zR expands all sections and stashes from an unrelated file row', function()
+run('fold keys stay within Changes, Staged and Stashes including lazy loads', function()
   open('git_changes')
   drain()
   local changes = require('lu5je0.ext.sidebar.sources.git_changes')
@@ -248,9 +248,35 @@ run('zR expands all sections and stashes from an unrelated file row', function()
   local path = current_path()
   r.assert_truthy(path)
   vim.cmd('normal zR')
-  for _, section in ipairs({ 'changes', 'staged', 'unstaged', 'untracked', 'stashes' }) do
-    r.assert_eq(ts._expanded[section], true)
+  r.assert_eq(current_path(), path)
+  local function goto_section(name)
+    for i, item in ipairs(ts.display_items) do
+      if item._is_section and item.section == name then
+        vim.api.nvim_win_set_cursor(state.win, { i, 0 })
+        return
+      end
+    end
+    error('missing section ' .. name)
   end
+  local function check_sections(staged, stashes)
+    r.assert_eq(ts._expanded, {
+      changes = true, staged = staged, unstaged = false, untracked = false, stashes = stashes,
+    })
+  end
+  check_sections(false, false)
+  goto_section('staged')
+  vim.cmd('normal zR')
+  check_sections(true, false)
+  vim.cmd('normal 2jzC')
+  check_sections(false, false)
+  vim.cmd('normal zO')
+  check_sections(true, false)
+  r.assert_eq(current_path(), 'staged/f')
+  r.assert_eq(#pending, 0)
+
+  goto_section('stashes')
+  vim.cmd('normal zR')
+  check_sections(true, true)
   pending[1].callback { code = 0, stdout = 'stash@{0}\0one\nstash@{1}\0two\n' }
   drain()
   r.assert_eq(#pending, 3)
@@ -260,7 +286,11 @@ run('zR expands all sections and stashes from an unrelated file row', function()
     r.assert_eq(entry.expanded, true)
     r.assert_eq(entry.children[1].expanded, true)
   end
-  r.assert_eq(current_path(), path)
+  vim.cmd('normal 2jzC')
+  check_sections(true, false)
+  vim.cmd('normal zO')
+  check_sections(true, true)
+  r.assert_eq(current_path(), 'dir/file')
 end)
 
 for _, kind in ipairs { 'list', 'empty cached list', 'files' } do

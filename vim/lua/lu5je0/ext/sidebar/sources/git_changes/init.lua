@@ -453,7 +453,7 @@ local function cursor_target(items, line)
     local ancestor = items[i]
     if ancestor._is_section then
       target.section = ancestor.section
-      return target
+      return target, ancestor
     end
     if ancestor.node._is_stash and not target.ref then target.ref = ancestor.node.stash_ref end
   end
@@ -525,26 +525,20 @@ local function expand_item(ts, item, section)
   end
 end
 
-local function open_folds(all)
+local function open_folds(whole_section)
   if not state:is_open() then return end
   local ts = state.git_changes
   local line = vim.api.nvim_win_get_cursor(state.win)[1]
   local item = ts.display_items[line]
   if not item then return end
-  if not all and (item.type ~= 'dir' or item.node.expanded) then return end
-  local target = cursor_target(ts.display_items, line)
+  if not whole_section and (item.type ~= 'dir' or item.node.expanded) then return end
+  local target, section_root = cursor_target(ts.display_items, line)
   if item._is_section and not item.node.expanded and ts._fold_cursor
       and ts._fold_cursor.section == item.section then
     target = ts._fold_cursor
   end
   ts._fold_cursor = nil
-  if all then
-    for _, root in ipairs(ts.display_items) do
-      if root._is_section then expand_item(ts, root, root.section) end
-    end
-  else
-    expand_item(ts, item, target.section)
-  end
+  expand_item(ts, whole_section and section_root or item, target.section)
   M.render()
   restore_target(target)
 end
