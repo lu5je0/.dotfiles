@@ -23,7 +23,7 @@ export default class ShowDesktopCorner extends Extension {
             can_focus: false,
             reactive: true,
             opacity: 0,
-            button_mask: St.ButtonMask.ONE,
+            button_mask: St.ButtonMask.PRIMARY,
             width: CORNER_SIZE,
             height: CORNER_SIZE,
             style: 'padding: 0; margin: 0; border: 0; border-radius: 0; background-color: transparent; box-shadow: none;',

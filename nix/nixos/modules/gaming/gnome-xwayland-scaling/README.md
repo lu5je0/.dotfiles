@@ -76,7 +76,7 @@ nix build --no-link --print-out-paths path:.#nixosConfigurations.huskar.pkgs.mut
 `gsettings`、`xrandr`、`glxgears`（mesa-demos）和 `xwininfo`：
 
 ```sh
-python nix/nixos/modules/gaming/gnome-xwayland-scaling/smoke-test.py /nix/store/…-mutter-50.5
+python nix/nixos/modules/gaming/gnome-xwayland-scaling/smoke-test.py /nix/store/…-mutter-51.1
 ```
 
 脚本在独立 D-Bus、运行时目录和 GSettings 配置中启动 headless Mutter，需要可用的
@@ -92,8 +92,8 @@ EGL render node，不替换当前桌面。它检查开关前后的 XWayland 尺�
 三个参数依次接受对应包目录、libX11.so.6 和 libSDL3.so.0 路径，动态库需为宿主架构：
 
 ```sh
-python nix/nixos/modules/gaming/gnome-xwayland-scaling/smoke-test.py /nix/store/…-mutter-50.5 \
-  --settings-daemon /nix/store/…-gnome-settings-daemon-50.1 \
+python nix/nixos/modules/gaming/gnome-xwayland-scaling/smoke-test.py /nix/store/…-mutter-51.1 \
+  --settings-daemon /nix/store/…-gnome-settings-daemon-51.1 \
   --x11-library /nix/store/…-libx11-…/lib/libX11.so.6 \
   --sdl-library /nix/store/…-sdl3-…-lib/lib/libSDL3.so.0
 ```

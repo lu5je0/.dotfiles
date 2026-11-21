@@ -1,10 +1,12 @@
 {
   description = "lu5je0's NixOS and macOS configuration";
 
-  # inputs 只能是字面量 attrset（import / let / // 都会被判为 thunk 而报错）
   inputs = {
-    nixpkgs.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
+    nixpkgs.url = "https://releases.nixos.org/nixos/unstable/nixos-26.11pre1124497.0bb8272318b4/nixexprs.tar.zst";
     nixpkgs-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
+
+    # 一加 6 的硬件配置需要 7.2 内核。
+    nixpkgs-oneplus6.url = "https://channels.nixos.org/nixos-26.05/nixexprs.tar.zst";
 
     nixpkgs-darwin.url = "https://channels.nixos.org/nixpkgs-26.05-darwin/nixexprs.tar.zst";
     nixpkgs-darwin-unstable.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
@@ -26,12 +28,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # 上游只有 flake 打包；补丁后不装进系统配置，`nix profile add path:~/.dotfiles#mark-shot`
-    mark-shot = {
-      url = "github:jswysnemc/mark-shot";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     wayland-scroll-factor = {
       url = "github:daniel-g-carrasco/wayland-scroll-factor";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -42,6 +38,7 @@
     {
       nixpkgs,
       nixpkgs-unstable,
+      nixpkgs-oneplus6,
       nix-darwin,
       ...
     }@inputs:
@@ -77,9 +74,8 @@
       };
 
       nixosConfigurations = {
-        oneplus6 = nixpkgs.lib.nixosSystem {
+        oneplus6 = nixpkgs-oneplus6.lib.nixosSystem {
           system = "aarch64-linux";
-          # Keep the system on stable; shared modules can select ARM unstable packages.
           specialArgs.pkgsUnstable = import nixpkgs-unstable {
             system = "aarch64-linux";
             config.allowUnfree = true;

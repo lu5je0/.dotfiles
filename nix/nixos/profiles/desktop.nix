@@ -35,7 +35,6 @@
   users.users.lu5je0.packages = with pkgs; [
     google-chrome
     telegram-desktop
-    (pkgs.callPackage ../pkgs/wechat { })
     mpv
     wineWow64Packages.stable
     peazip

@@ -15,7 +15,7 @@
   fcitx5-rime = pkgs.callPackage ./fcitx5-rime { };
   fcitx5-wetypex = pkgs.callPackage ./fcitx5-wetypex { flake = inputs.fcitx5-wetypex; };
   kitty = pkgs.callPackage ./kitty { };
-  mark-shot = pkgs.callPackage ./mark-shot { flake = inputs.mark-shot; };
+  mark-shot = pkgs.callPackage ./mark-shot { };
   mission-center = pkgsUnstable.callPackage ./mission-center { };
   qoder = pkgs.callPackage ./qoder { };
   show-desktop-corner = pkgs.callPackage ./show-desktop-corner { };

@@ -113,7 +113,7 @@ async function setup() {
         }, {context});
     const modules = {
         'gi://Shell': {default: {ActionMode: {NORMAL: 1}}},
-        'gi://St': {default: {Button, ButtonMask: {ONE: 1}}},
+        'gi://St': {default: {Button, ButtonMask: {PRIMARY: 1}}},
         'gi://Meta': {default: {WindowType: {NORMAL: 0, DIALOG: 1, MODAL_DIALOG: 2}}},
         'resource:///org/gnome/shell/extensions/extension.js': {Extension: class {}},
     };
