@@ -1,0 +1,22 @@
+{
+   "$schema": "https://vicinae.com/schemas/config.json",
+   "escape_key_behavior": "",
+   "tray": {
+      "enabled": false
+   },
+   "font": {
+      "rendering": "qt",
+      "normal": {}
+   },
+   "theme": {
+      "light": {
+         "name": "libadwaita-light"
+      }
+   },
+   "launcher_window": {
+      "client_side_decorations": {
+         "enabled": true
+      },
+      "floating_status_bar": true
+   }
+}

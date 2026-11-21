@@ -27,10 +27,21 @@
 
   environment.systemPackages = with pkgs; [
     (pkgs.callPackage ../pkgs/kitty { })
+    gnomeExtensions.vicinae
     steam-run
+    vicinae
     wl-clipboard
     xclip
   ];
+
+  systemd.packages = [ pkgs.vicinae ];
+  programs.dconf.profiles.user.databases = [
+    { settings."org/gnome/shell/extensions/vicinae".show-status-indicator = false; }
+  ];
+  systemd.user.services.vicinae = {
+    wantedBy = [ "graphical-session.target" ];
+    enableDefaultPath = false;
+  };
 
   users.users.lu5je0.packages = with pkgs; [
     google-chrome
