@@ -190,6 +190,79 @@ local function stash_row()
   error('missing Stashes section')
 end
 
+run('zC closes enclosing folds and zO opens only a closed fold', function()
+  open('git_changes')
+  drain()
+  local changes = require('lu5je0.ext.sidebar.sources.git_changes')
+  local ts = state.git_changes
+  changes.update_sections_from_stdout(ts, ' M a/nested/f\0 M a/g\0 M b/f\0 M root\0')
+  changes.render()
+  vim.api.nvim_set_current_win(state.win)
+  local function goto_path(path)
+    for i, item in ipairs(ts.display_items) do
+      if item.node.rel_path == path then
+        vim.api.nvim_win_set_cursor(state.win, { i, 0 })
+        return
+      end
+    end
+    error('missing ' .. path)
+  end
+  local function current()
+    return ts.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
+  end
+
+  goto_path('a/nested/f')
+  vim.cmd('normal zO')
+  r.assert_eq(vim.api.nvim_get_current_win(), state.win)
+  r.assert_eq(current().node.rel_path, 'a/nested/f')
+  vim.cmd('normal zC')
+  r.assert_eq(current().section, 'changes')
+  r.assert_eq(current().node.expanded, false)
+  local dirs = current().node.children
+  r.assert_eq(dirs[1].expanded, false)
+  r.assert_eq(dirs[1].children[1].expanded, false)
+  r.assert_eq(dirs[2].expanded, true)
+  vim.cmd('normal zO')
+  r.assert_eq(current().node.rel_path, 'a/nested/f')
+  vim.cmd('normal zCzo')
+  vim.cmd('normal zO')
+  r.assert_eq(ts.display_items[2].node.expanded, false)
+  vim.cmd('normal zR')
+  r.assert_eq(ts._expanded.unstaged, true)
+  r.assert_eq(ts.display_items[2].node.children[1].expanded, true)
+  r.assert_eq(current().section, 'changes')
+end)
+
+run('zR expands all sections and stashes from an unrelated file row', function()
+  open('git_changes')
+  drain()
+  local changes = require('lu5je0.ext.sidebar.sources.git_changes')
+  local ts = state.git_changes
+  changes.update_sections_from_stdout(ts, 'M  staged/f\0 M unstaged/f\0?? untracked/f\0')
+  stash_row()
+  vim.api.nvim_set_current_win(state.win)
+  vim.cmd('normal 3G')
+  local function current_path()
+    return ts.display_items[vim.api.nvim_win_get_cursor(state.win)[1]].node.rel_path
+  end
+  local path = current_path()
+  r.assert_truthy(path)
+  vim.cmd('normal zR')
+  for _, section in ipairs({ 'changes', 'staged', 'unstaged', 'untracked', 'stashes' }) do
+    r.assert_eq(ts._expanded[section], true)
+  end
+  pending[1].callback { code = 0, stdout = 'stash@{0}\0one\nstash@{1}\0two\n' }
+  drain()
+  r.assert_eq(#pending, 3)
+  for i = 2, 3 do pending[i].callback { code = 0, stdout = 'M\tdir/file\n' } end
+  drain()
+  for _, entry in ipairs(ts._stash_entries) do
+    r.assert_eq(entry.expanded, true)
+    r.assert_eq(entry.children[1].expanded, true)
+  end
+  r.assert_eq(current_path(), path)
+end)
+
 for _, kind in ipairs { 'list', 'empty cached list', 'files' } do
   local files = kind == 'files'
   run(('cancelled stash %s can be expanded and loaded after returning'):format(kind), function()

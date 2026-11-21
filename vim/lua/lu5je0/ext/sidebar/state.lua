@@ -102,6 +102,7 @@ local function new_tab_state(tabpage)
       display_items = {},
       _expanded = nil,        -- { changes, staged, unstaged, untracked, stashes } — lazily populated
       _dir_states = nil,      -- per-section { [abs_path] = bool }
+      _fold_cursor = nil,     -- logical cursor hidden by zC
       _stash_entries = nil,   -- { { ref, message, expanded, children, _files_loaded } }
       _undo_stack = nil,      -- list of undo entries pushed by git_ops
       _redo_stack = nil,      -- list of redo entries for redo support
