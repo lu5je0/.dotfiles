@@ -14,6 +14,7 @@
     "fuzzy_z_zh": true,
     "input_mode": "pinyin",
     "keyboard": 0,
+    "preedit_cursor_at_beginning": false,
     "smart_input": true,
     "symbol_auto_change": false,
     "symbol_auto_pair": false,

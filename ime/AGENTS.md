@@ -69,6 +69,11 @@ gdbus call --session --dest org.fcitx.Fcitx5 --object-path /controller \
 
 ## 候选框皮肤
 
+NixOS desktop 上，WeTypeX 的 `preedit_cursor_at_beginning=false` 让行内光标跟随实际编辑位置。
+系统 Fcitx5 给 Kimpanel 和 X11 Classic UI 使用本轮首次发送行内 preedit 前的光标矩形定位。
+应用须及时上报坐标；组字期间文本滚动或重排后，起笔坐标可能偏离首字。客户端自绘候选框和
+Wayland 合成器定位的弹窗使用各自的坐标。
+
 三套完全独立的配置，改一处不影响另一处；**关键是先分清当前候选框由谁绘制**：
 
 | 场景 | 前端 | 皮肤配置 |
