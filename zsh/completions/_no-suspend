@@ -1,0 +1,15 @@
+#compdef no-suspend
+
+if (( CURRENT > 2 )) && [[ $words[2] == -- ]]; then
+  shift 2 words
+  (( CURRENT -= 2 ))
+  _normal -p no-suspend
+  return
+fi
+
+_arguments -s \
+  '(- *)'{-t,--time=}'[Prevent idle suspend for a duration]:duration:(30s 15m 30m 1h 1h30m 2h)' \
+  '(- *)--status[Show the current timer]' \
+  '(- *)--cancel[Cancel the current timer]' \
+  '(- *)'{-h,--help}'[Show help]' \
+  '(- *)--[Run a command with idle suspend inhibited]'
