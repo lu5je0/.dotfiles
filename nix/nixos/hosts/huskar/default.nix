@@ -156,11 +156,13 @@
     "wifi.wake-on-wlan" = 8; # 仅由魔术包唤醒
   };
 
-  services.nix-serve = {
+  services.harmonia.cache = {
     enable = true;
-    bindAddress = "192.168.1.100";
-    port = 17500;
-    secretKeyFile = "/var/lib/nix-cache/cache-private-key.pem";
+    signKeyPaths = [ "/var/lib/nix-cache/cache-private-key.pem" ];
+    settings = {
+      bind = "192.168.1.100:17500";
+      priority = 30;
+    };
   };
 
   # 关闭 WiFi 省电。NM 侧默认是 "ignore"（不管 mac80211 PS），显式关掉；

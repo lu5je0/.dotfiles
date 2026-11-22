@@ -121,8 +121,9 @@ Linux 与 Mac 的 nixpkgs 输入分别跟随各自渠道，共用一份锁文件
 
 ## 局域网构建缓存
 
-huskar 在 `192.168.1.100:17500` 运行 `nix-serve`，提供本机仍保留在 Nix store 中的构建结果。
-该地址需要在路由器上保留，服务仅监听此 IPv4 地址。其他 NixOS 主机通过 base profile
+huskar 在 `192.168.1.100:17500` 运行 Harmonia，提供本机仍保留在 Nix store 中的构建结果。
+该地址需要在路由器上保留，`harmonia.socket` 仅监听此 IPv4 地址，按需启动 `harmonia.service`。
+其他 NixOS 主机通过 base profile
 信任缓存地址及签名公钥，但不将其加入默认下载源；huskar 自身不使用该缓存，macOS 不添加此 Linux 缓存。
 缓存不会代替客户端构建缺失的包，GC 清理的 store 路径也不再可用。
 
@@ -132,6 +133,7 @@ huskar 在 `192.168.1.100:17500` 运行 `nix-serve`，提供本机仍保留在 N
 不保证下载过程中断网时立即回退。
 
 签名私钥位于 huskar 的 `/var/lib/nix-cache/cache-private-key.pem`，不进入 Git 或 Nix store。
+Harmonia 通过 systemd credentials 读取该密钥，客户端继续使用 base profile 中的 `huskar-1` 公钥。
 首次部署时，将本机生成的私钥安装到服务读取的位置，再应用配置：
 
 ```sh
