@@ -1,0 +1,179 @@
+--- a/src/lib/fcitx/inputcontext.cpp
++++ b/src/lib/fcitx/inputcontext.cpp
+@@ -137,6 +137,12 @@
+     return d->cursorRect_;
+ }
+ 
++const Rect &InputContext::inputPanelRect() const {
++    FCITX_D();
++    return d->inClientPreedit_ && d->preeditAnchor_ ? *d->preeditAnchor_
++                                                    : d->cursorRect_;
++}
++
+ double InputContext::scaleFactor() const {
+     FCITX_D();
+     return d->scale_;
+@@ -229,6 +235,14 @@
+     if (oldFlags != newFlags) {
+         d->emplaceEvent<CapabilityAboutToChangeEvent>(this, oldFlags, flags);
+     }
++    if (oldFlags.test(CapabilityFlag::RelativeRect) !=
++        newFlags.test(CapabilityFlag::RelativeRect)) {
++        d->hasCursorRect_ = false;
++        d->preeditAnchor_.reset();
++    }
++    if (!newFlags.test(CapabilityFlag::Preedit)) {
++        d->inClientPreedit_ = false;
++    }
+     d->capabilityFlags_ = flags;
+     if (oldFlags != newFlags) {
+         d->emplaceEvent<CapabilityChangedEvent>(this, oldFlags, flags);
+@@ -250,6 +264,9 @@
+     if (oldFlags != newFlags) {
+         d->emplaceEvent<CapabilityAboutToChangeEvent>(this, oldFlags, newFlags);
+     }
++    if (!enable) {
++        d->inClientPreedit_ = false;
++    }
+     d->isPreeditEnabled_ = enable;
+     if (oldFlags != newFlags) {
+         d->emplaceEvent<CapabilityChangedEvent>(this, oldFlags, newFlags);
+@@ -265,6 +282,10 @@
+ 
+ void InputContext::setCursorRect(Rect rect, double scale) {
+     FCITX_D();
++    d->hasCursorRect_ = true;
++    if (d->scale_ != scale) {
++        d->preeditAnchor_.reset();
++    }
+     if (d->cursorRect_ == rect && d->scale_ == scale) {
+         return;
+     }
+@@ -319,6 +340,10 @@
+     FCITX_D();
+     if (hasFocus == d->hasFocus_) {
+         return;
++    }
++    if (!hasFocus) {
++        d->hasCursorRect_ = false;
++        d->inClientPreedit_ = false;
+     }
+     d->hasFocus_ = hasFocus;
+     d->manager_.notifyFocus(*this, d->hasFocus_);
+@@ -375,6 +400,7 @@
+ void InputContext::reset() {
+     FCITX_D();
+     RETURN_IF_HAS_NO_FOCUS();
++    d->inClientPreedit_ = false;
+     d->emplaceEvent<ResetEvent>(this);
+ }
+ 
+@@ -432,6 +458,7 @@
+ 
+ void InputContext::commitString(const std::string &text) {
+     FCITX_D();
++    d->inClientPreedit_ = false;
+     auto sanitizedText = utf8::replaceInvalid(text, '?');
+     if (auto *instance = d->manager_.instance()) {
+         auto newString = instance->commitFilter(this, sanitizedText);
+@@ -449,6 +476,7 @@
+     if (cursor > utf8::length(sanitizedText)) {
+         throw std::invalid_argument(sanitizedText);
+     }
++    d->inClientPreedit_ = false;
+ 
+     if (auto *instance = d->manager_.instance()) {
+         auto newString = instance->commitFilter(this, sanitizedText);
+@@ -480,6 +508,13 @@
+     if (!forceUpdate && preeditIsEmpty && d->lastPreeditUpdateIsEmpty_) {
+         return;
+     }
++    if (!preeditIsEmpty && !d->inClientPreedit_) {
++        // Capture before the frontend receives the first inline preedit.
++        d->preeditAnchor_ = d->hasFocus_ && d->hasCursorRect_
++                                ? std::optional(d->cursorRect_)
++                                : std::nullopt;
++    }
++    d->inClientPreedit_ = !preeditIsEmpty;
+     d->lastPreeditUpdateIsEmpty_ = preeditIsEmpty;
+     d->pushEvent<UpdatePreeditEvent>(this);
+ }
+--- a/src/lib/fcitx/inputcontext.h
++++ b/src/lib/fcitx/inputcontext.h
+@@ -85,6 +85,9 @@
+     /// Returns the cursor position of the client.
+     const Rect &cursorRect() const;
+ 
++    /// Position for a server-side input panel during inline composition.
++    const Rect &inputPanelRect() const;
++
+     /// Return the client scale factor.
+     double scaleFactor() const;
+ 
+--- a/src/lib/fcitx/inputcontext_p.h
++++ b/src/lib/fcitx/inputcontext_p.h
+@@ -10,6 +10,7 @@
+ #include <cstddef>
+ #include <list>
+ #include <memory>
++#include <optional>
+ #include <string>
+ #include <utility>
+ #include <vector>
+@@ -165,6 +166,9 @@
+     bool isPreeditEnabled_ = true;
+     SurroundingText surroundingText_;
+     Rect cursorRect_;
++    bool hasCursorRect_ = false;
++    bool inClientPreedit_ = false;
++    std::optional<Rect> preeditAnchor_;
+     double scale_ = 1.0;
+ 
+     IntrusiveListNode listNode_;
+--- a/src/ui/classic/xcbinputwindow.cpp
++++ b/src/ui/classic/xcbinputwindow.cpp
+@@ -155,7 +155,7 @@
+         return;
+     }
+ 
+-    const Rect &cursorRect = inputContext->cursorRect();
++    const Rect &cursorRect = inputContext->inputPanelRect();
+     const Rect *closestScreen = getClosestScreen(cursorRect);
+     xcb_params_configure_window_t wc;
+     wc.x = calculatePositionX(cursorRect, closestScreen);
+@@ -168,8 +168,8 @@
+ }
+ 
+ void XCBInputWindow::updateDPI(InputContext *inputContext) {
+-    auto dpi = ui_->dpiByPosition(inputContext->cursorRect().left(),
+-                                  inputContext->cursorRect().top());
++    const auto &rect = inputContext->inputPanelRect();
++    auto dpi = ui_->dpiByPosition(rect.left(), rect.top());
+     setScale(scaleForDPI(dpi));
+ }
+ 
+--- a/src/ui/kimpanel/kimpanel.cpp
++++ b/src/ui/kimpanel/kimpanel.cpp
+@@ -93,10 +93,9 @@
+         auto msg = bus_->createMethodCall("org.kde.impanel", "/org/kde/impanel",
+                                           "org.kde.impanel2", name);
+ 
+-        int32_t x = inputContext->cursorRect().left(),
+-                y = inputContext->cursorRect().top(),
+-                w = inputContext->cursorRect().width(),
+-                h = inputContext->cursorRect().height();
++        const auto &rect = inputContext->inputPanelRect();
++        int32_t x = rect.left(), y = rect.top(), w = rect.width(),
++                h = rect.height();
+ 
+         msg << x << y << w << h;
+         if (method == CursorRectMethod::SetRelativeSpotRectV2) {
+@@ -249,6 +248,8 @@
+                               EventWatcherPhase::Default, check));
+     eventHandlers_.emplace_back(instance_->watchEvent(
+         EventType::InputContextFocusIn, EventWatcherPhase::Default, check));
++    eventHandlers_.emplace_back(instance_->watchEvent(
++        EventType::InputContextUpdatePreedit, EventWatcherPhase::Default, check));
+     eventHandlers_.emplace_back(instance_->watchEvent(
+         EventType::InputContextSwitchInputMethod, EventWatcherPhase::Default,
+         [this](Event &event) {

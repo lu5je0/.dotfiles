@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """修复 Codex 在 GNOME Wayland + Fcitx5 / WeTypeX 下的组合输入。
 
-适用配置：WeTypeX 开启 preedit_cursor_at_beginning，候选框固定在拼音起点。
-ProseMirror 的 Chromium selection 过滤会丢弃位于文本变更起点的光标，
-因此保留起点 selection，仅保留其他 Chromium 过滤条件与 IE 分支。
-
 失焦时的自动补字与输入法的组字首键可能重叠；自动聚焦只负责获取焦点，
 字符交给浏览器和输入法。发送后的过渡层可能仍带 inert，聚焦失败时限时重试，
 但用户主动聚焦其他控件后必须放弃，不能抢回焦点。
 
 输入预测插件只在 keyCode=229 时提前隐藏提示，无法覆盖直接到达的 compositionstart。
-在组字开始时隐藏预测，并按上述光标策略校正隐藏预测后的第一段 preedit。
+在组字开始时隐藏预测，由输入法和编辑器维护组字光标。
 运行时处理与监听的生命周期见 ime-workarounds.js，不依赖调试端口。
 
-递归匹配 JS 资源中的四处逻辑，捕获压缩变量名，不写死资源哈希。
+递归匹配 JS 资源中的三处逻辑，捕获压缩变量名，不写死资源哈希。
 升级时若不能唯一匹配，构建直接失败，应检查上游代码而非放宽匹配。
 资源增长时重算 ASAR 偏移、大小与 SHA256 整体及分块校验，保留其他资源内容，
 通过临时文件原子替换归档，避免失败时留下不完整文件。
@@ -31,13 +27,6 @@ import tempfile
 from pathlib import Path
 
 
-CHROME_SELECTION = re.compile(
-    rb"[\w$]+&&(?P<view>[\w$]+)\.composing&&(?P<sel>[\w$]+)\.empty&&"
-    rb"\((?P<diff>[\w$]+)\.start!=(?P=diff)\.endB\|\|"
-    rb"(?P=view)\.input\.lastChromeDelete<Date\.now\(\)-100\)&&"
-    rb"(?P<clause>\((?P=sel)\.head==(?P<start>[\w$]+)\|\|"
-    rb"(?P=sel)\.head==[\w$]+\.mapping\.map\([\w$]+\)-1\))"
-)
 AUTO_FOCUS = re.compile(
     rb"(?P<event>[\w$]+)\.preventDefault\(\),"
     rb"(?P<controller>[\w$]+)\.insertTextAtSelection\((?P=event)\.key\)"
@@ -102,7 +91,7 @@ def patch(archive: Path, helpers: Path) -> None:
             ranges[offset, size] = [name]
             previous_end = offset + size
 
-        matches = {key: [] for key in ("caret", "auto-focus", "prediction", "focus-retry")}
+        matches = {key: [] for key in ("auto-focus", "prediction", "focus-retry")}
         for name, entry in resources:
             if not name.startswith("webview/assets/") or not name.endswith(".js") or "link" in entry:
                 continue
@@ -112,8 +101,6 @@ def patch(archive: Path, helpers: Path) -> None:
             content = data[offset : offset + entry["size"]]
             if b"codexImePredictionPlugin" in content or b"codexImeFocus" in content:
                 raise ValueError(f"asset already contains IME helpers: {name}")
-            if b"lastChromeDelete" in content:
-                matches["caret"].extend((name, entry, content, m) for m in CHROME_SELECTION.finditer(content))
             # 限定扫描窗口，避免在无关长字符串上回溯压缩变量名。
             for call in re.finditer(rb"\.insertTextAtSelection\(", content):
                 for match in AUTO_FOCUS.finditer(content, max(0, call.start() - 100), call.start() + 100):
@@ -139,9 +126,6 @@ def patch(archive: Path, helpers: Path) -> None:
             if needs_helpers:
                 helper_assets.add(name)
 
-        caret = matches["caret"][0][3]["clause"]
-        # 起点同时可能等于映射后的末尾减一，不能只删除左侧条件。
-        edit(matches["caret"][0], caret.replace(b"==", b"!=", 1).replace(b"||", b"&&", 1), "clause")
         edit(matches["auto-focus"][0], matches["auto-focus"][0][3]["controller"] + b".focus()")
         plugin = matches["prediction"][0][3]["plugin"]
         edit(matches["prediction"][0], b"codexImePredictionPlugin(" + plugin + b")", "plugin", True)
@@ -200,7 +184,7 @@ def patch(archive: Path, helpers: Path) -> None:
                 os.replace(temporary, archive)
             finally:
                 temporary.unlink(missing_ok=True)
-        print("Patched IME caret, auto-focus, prediction and focus retry in " + ", ".join(replacements))
+        print("Patched IME auto-focus, prediction and focus retry in " + ", ".join(replacements))
 
 
 if __name__ == "__main__":
