@@ -150,6 +150,12 @@
   networking.hostName = "huskar";
   networking.networkmanager.enable = true;
 
+  # wake on wlan
+  networking.networkmanager.settings."connection-wowlan" = {
+    match-device = "mac:08:9d:f4:38:5b:b2";
+    "wifi.wake-on-wlan" = 8; # 仅由魔术包唤醒
+  };
+
   services.nix-serve = {
     enable = true;
     bindAddress = "192.168.1.100";

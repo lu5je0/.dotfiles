@@ -15,6 +15,7 @@ in
     ++ (with pkgs; [
       bubblewrap
       clang
+      iw
       net-tools
     ]);
 

@@ -47,7 +47,6 @@
 
   environment.systemPackages = [
     pkgs.gnome-console
-    pkgs.iw
   ];
   system.stateVersion = "26.05";
 }
