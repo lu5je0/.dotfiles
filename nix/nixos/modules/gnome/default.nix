@@ -26,8 +26,10 @@ in
 {
   imports = [
     ./gvfs
+    ./keybindings.nix
     ./nautilus.nix
     ./profile-applications
+    ./vicinae.nix
     ../../pkgs/window-decorations/module.nix
   ];
 
