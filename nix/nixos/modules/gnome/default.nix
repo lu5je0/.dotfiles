@@ -33,6 +33,14 @@ in
     ../../pkgs/window-decorations/module.nix
   ];
 
+  nixpkgs.overlays = [
+    (_final: prev: {
+      gnome-shell = prev.gnome-shell.override {
+        ibus = prev.callPackage ../../pkgs/ibus { };
+      };
+    })
+  ];
+
   environment.systemPackages = shellExtensions ++ [
     pkgs.gjs
     pkgs.gnome-tweaks
