@@ -79,16 +79,12 @@ Wayland 合成器定位的弹窗使用各自的坐标。
 | 场景 | 前端 | 皮肤配置 |
 |---|---|---|
 | Linux 非 GNOME（KWin 等）| fcitx5 classicui | `fcitx5/conf/classicui.conf` + `themes/` |
-| **Linux GNOME** | **`kimpanel@kde.org` GNOME Shell 扩展** | GNOME Shell 弹出菜单主题（见下） |
+| NixOS GNOME | `kimpanel@kde.org` GNOME Shell 扩展 | `kimpanel/wechat.css` |
 | macOS | Squirrel | `rime/squirrel.custom.yaml` |
 
-- **GNOME 下候选框不是 fcitx5 画的，classicui.conf 的 wechat 主题完全不生效**。
-  fcitx5 只通过 kimpanel 的 DBus 把候选词喂给 `kimpanel@kde.org` 扩展，外观由该扩展绘制。
-  它的 `stylesheet.css`（`~/.local/share/gnome-shell/extensions/kimpanel@kde.org/`）
-  自己不设背景/文字色，用的是 Shell 标准类 `.popup-menu-boxpointer` / `.popup-menu-content`，
-  所以**黑/白 = GNOME Shell 弹出菜单皮肤**。GNOME 47+ 起 Shell UI 跟随系统「浅色/深色」外观：
-  `gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'` → 白，`'prefer-dark'` → 黑。
-  固定候选框颜色可调整扩展的 `stylesheet.css`，但该文件不在本仓库，扩展升级会覆盖修改。
+- GNOME 下 Fcitx5 通过 D-Bus 将候选词交给 Kimpanel 绘制。`nix/nixos/pkgs/kimpanel/`
+  把微信键盘浅色样式追加到扩展，并按较小字号显示候选序号。字体与列表方向可在扩展首选项中调整。
+  用户目录安装的同 UUID 扩展会优先于系统包。
 
 主题注意：
 

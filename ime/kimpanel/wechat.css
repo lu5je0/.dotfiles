@@ -1,0 +1,42 @@
+.popup-menu-boxpointer.kimpanel-popup-boxpointer {
+  -arrow-rise: 0;
+  -boxpointer-gap: 0;
+  min-width: 0;
+}
+
+.popup-menu-content.kimpanel-popup-content {
+  background-color: #ffffff;
+  color: #444444;
+  border: none;
+  border-radius: 9px;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.18);
+  padding: 3px;
+  spacing: 0;
+}
+
+.kimpanel-candidates {
+  spacing: 6px;
+}
+
+.kimpanel-popup-content .kimpanel-label {
+  color: #444444;
+  padding: 1px 6px;
+}
+
+.kimpanel-popup-content .kimpanel-candidate-item {
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  margin: 0;
+  box-shadow: none;
+}
+
+.kimpanel-popup-content .kimpanel-candidate-item:hover {
+  background-color: #f2f2f2;
+}
+
+.kimpanel-popup-content .kimpanel-candidate-item:active,
+.kimpanel-popup-content .kimpanel-candidate-item:active:hover {
+  background-color: #02b176;
+  color: #ffffff;
+}

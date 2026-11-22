@@ -1,0 +1,31 @@
+--- a/panel.js
++++ b/panel.js
+@@ -1,5 +1,6 @@
+ import Clutter from 'gi://Clutter';
+ import St from 'gi://St';
++import GLib from 'gi://GLib';
+ import GObject from 'gi://GObject';
+ import Mtk from 'gi://Mtk';
+ import Pango from 'gi://Pango';
+@@ -43,5 +44,6 @@
+         this.upperLayout = new St.BoxLayout();
+         this.lookupTableLayout = new St.BoxLayout({
++            style_class : 'kimpanel-candidates',
+             orientation : this.kimpanel.isLookupTableVertical() ?
+                 Clutter.Orientation.VERTICAL : Clutter.Orientation.HORIZONTAL,
+         });
+@@ -157,7 +159,13 @@
+             else
+                 lookupTable[i].ignore_focus = false;
+             lookupTable[i].candidate_index = i;
+-            lookupTable[i].text = label[i] + table[i];
++            const number = label[i].match(/^(\d+)[.]?\s*$/u);
++            const prefix = number ? number[1] + '\u2005' : label[i];
++            const escapedLabel = GLib.markup_escape_text(prefix, -1);
++            const escapedText = GLib.markup_escape_text(table[i], -1);
++            const alpha = i === this.kimpanel.cursor ? '100%' : '64%';
++            lookupTable[i].clutter_text.set_markup(
++                `<span size="81.25%" alpha="${alpha}">${escapedLabel}</span>${escapedText}`);
+         }
+     }
+     setLookupTableCursor(cursor) {

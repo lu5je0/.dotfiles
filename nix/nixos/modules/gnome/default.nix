@@ -15,7 +15,7 @@ let
     pkgs.gnomeExtensions.astra-monitor
     pkgs.gnomeExtensions.dash-to-dock
     pkgs.gnomeExtensions.gtk4-desktop-icons-ng-ding
-    pkgs.gnomeExtensions.kimpanel
+    (pkgs.callPackage ../../pkgs/kimpanel { })
     showDesktopCorner
     pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
