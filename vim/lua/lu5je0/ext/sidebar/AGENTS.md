@@ -2,7 +2,7 @@
 
 ## 适用范围
 - `vim/lua/lu5je0/ext/sidebar/` 下的自定义树形侧边栏插件，替代 nvim-tree。
-- 顶部 winbar 默认依次显示 Files、Symbols、Changes；History / Buffers 是临时页签，快捷键打开后显示，关闭 Sidebar 后移除。左右键仅遍历可见页签，每次最多显示三个。
+- 顶部 winbar 默认依次显示 Files、Changes、Symbols；History / Buffers 是临时页签，快捷键打开后显示，关闭 Sidebar 后移除。左右键仅遍历可见页签，每次最多显示三个。
 
 ## 目录结构
 
@@ -63,6 +63,7 @@ sidebar/
 ## 架构约定
 
 - 树渲染统一走 `render.render_tree(root_children, opts)`，不在各 source 重复实现。
+- 合并目录行的 `item.node` 指向显示路径的末级目录，路径和文件操作都以它为准。`item.dir_chain` 仅在多级合并时存在，按从外到内的顺序记录整条链，供折叠和定位使用。分组与 stash 标题单独占行。
 - buffer/窗口写入只走 `view.lua`（`flush` / `open_node` / `close_node` / `restore_cursor`）；`render.lua` 仍 re-export 兼容旧调用。
 - 展开接口的 `open.keep_cursor(item)` 控制是否保留光标；History commit、Changes 分组与 stash 节点展开后留在当前行，已展开时再次按 `l` 也保持不动；普通目录沿用进入子节点的行为。
 - 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，共用渲染与展开骨架。

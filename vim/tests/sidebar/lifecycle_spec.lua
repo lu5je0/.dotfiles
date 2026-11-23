@@ -12,6 +12,8 @@ package.loaded['lu5je0.misc.env-keeper'] = {
 }
 
 local pending, requests = {}, {}
+local copied_text
+package.loaded['lu5je0.core.clipboard'] = { set = function(value) copied_text = value end }
 local original_system = vim.system
 vim.system = function(args, opts, callback)
   local task = { args = args, opts = opts, callback = callback, killed = false }
@@ -190,6 +192,45 @@ local function stash_row()
   error('missing Stashes section')
 end
 
+run('Changes and Files act on the last directory in a compressed path', function()
+  local rel = 'nix/nixos/pkgs/kimpanel'
+  local dir = fixture .. '/' .. rel
+  vim.fn.mkdir(dir, 'p')
+  vim.fn.writefile({}, dir .. '/default.nix')
+  open('git_changes')
+  drain()
+  local changes = require('lu5je0.ext.sidebar.sources.git_changes')
+  changes.update_sections_from_stdout(state.git_changes, ' M ' .. rel .. '/default.nix\0')
+  changes.render()
+  vim.api.nvim_set_current_win(state.win)
+  vim.api.nvim_win_set_cursor(state.win, { 2, 0 })
+
+  local function check_yanks()
+    r.assert_truthy(vim.api.nvim_get_current_line():find(rel, 1, true))
+    for _, case in ipairs({ { 'yp', dir }, { 'yP', rel }, { 'yn', 'kimpanel' } }) do
+      copied_text = nil
+      vim.cmd.normal(case[1])
+      r.assert_eq(copied_text, case[2])
+    end
+  end
+
+  check_yanks()
+  vim.cmd('normal zCzO')
+  check_yanks()
+  state.files.compress_dirs = true
+  vim.cmd.normal(vim.api.nvim_replace_termcodes('<leader>fe', true, false, true))
+  r.assert_eq(state.active_tab_idx, config.tab_idx('files'))
+  check_yanks()
+  local files = require('lu5je0.ext.sidebar.sources.files')
+  vim.api.nvim_win_set_cursor(state.win, { 1, 0 })
+  files.find_file(fixture .. '/nix/nixos')
+  check_yanks()
+  vim.cmd('normal yy')
+  r.assert_eq(state.files._clipboard.paths, { dir })
+  vim.cmd('normal cd')
+  r.assert_eq(vim.fn.getcwd(), dir)
+end)
+
 run('zC closes enclosing folds and zO opens only a closed fold', function()
   open('git_changes')
   drain()
@@ -286,7 +327,9 @@ run('fold keys stay within Changes, Staged and Stashes including lazy loads', fu
     r.assert_eq(entry.expanded, true)
     r.assert_eq(entry.children[1].expanded, true)
   end
-  vim.cmd('normal 2jzC')
+  vim.cmd('normal 3j')
+  r.assert_eq(current_path(), 'dir/file')
+  vim.cmd('normal zC')
   check_sections(true, false)
   vim.cmd('normal zO')
   check_sections(true, true)

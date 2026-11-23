@@ -1107,12 +1107,12 @@ run('History Space preview uses Changes controls and m marks commits', function(
   c.stop()
 end)
 
-run('Files Symbols Changes are default tabs while History and Buffers are transient', function()
+run('Files Changes Symbols are default tabs while History and Buffers are transient', function()
   local c = child('project')
   c.q([[
     local cfg=require('lu5je0.ext.sidebar.config')
     local tabs=require('lu5je0.ext.sidebar.tabs')
-    assert(vim.deep_equal(vim.list_slice(tabs.visible_indices(),1,3),{cfg.tab_idx('files'),cfg.tab_idx('symbols'),cfg.tab_idx('git_changes')}))
+    assert(vim.deep_equal(vim.list_slice(tabs.visible_indices(),1,3),{cfg.tab_idx('files'),cfg.tab_idx('git_changes'),cfg.tab_idx('symbols')}))
     assert(not vim.tbl_contains(tabs.visible_indices(),cfg.tab_idx('buffers')))
     tabs.next_tab()
     assert(require('lu5je0.ext.sidebar.state').active_tab_idx==cfg.tab_idx('files'))
@@ -1131,12 +1131,12 @@ run('Files Symbols Changes are default tabs while History and Buffers are transi
     local tabs=require('lu5je0.ext.sidebar.tabs')
     assert(require('lu5je0.ext.sidebar.state').active_tab_idx==cfg.tab_idx('buffers'))
     assert(vim.tbl_contains(tabs.visible_indices(),cfg.tab_idx('buffers')))
-    assert(vim.deep_equal(vim.list_slice(tabs.visible_indices(),1,3),{cfg.tab_idx('files'),cfg.tab_idx('symbols'),cfg.tab_idx('git_changes')}))
+    assert(vim.deep_equal(vim.list_slice(tabs.visible_indices(),1,3),{cfg.tab_idx('files'),cfg.tab_idx('git_changes'),cfg.tab_idx('symbols')}))
   ]])
   c.feed('q')
   c.q([[
     local cfg=require('lu5je0.ext.sidebar.config')
-    assert(vim.deep_equal(require('lu5je0.ext.sidebar.tabs').visible_indices(),{cfg.tab_idx('files'),cfg.tab_idx('symbols'),cfg.tab_idx('git_changes')}))
+    assert(vim.deep_equal(require('lu5je0.ext.sidebar.tabs').visible_indices(),{cfg.tab_idx('files'),cfg.tab_idx('git_changes'),cfg.tab_idx('symbols')}))
   ]])
   c.feed(',gl')
   c.q([[

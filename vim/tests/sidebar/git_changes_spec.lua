@@ -172,7 +172,7 @@ r.run('expanding a compressed chain shows file suffixes and folding restores sum
   nodes[1].expanded = true
   local _, items, _, vt = render.render_tree(nodes, opts)
   r.assert_eq(#items, 3)
-  r.assert_eq(items[1].display_node, nodes[1].children[1])
+  r.assert_eq(items[1].node, nodes[1].children[1])
   r.assert_eq(#vt, 2)
   r.assert_eq(vt[1].line, 1)
   r.assert_eq(suffix_text(vt[1]), '[M ]')

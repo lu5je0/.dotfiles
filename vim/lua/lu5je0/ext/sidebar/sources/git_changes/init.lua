@@ -4,6 +4,7 @@ local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local config = require('lu5je0.ext.sidebar.config')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local render = require('lu5je0.ext.sidebar.render')
+local view = require('lu5je0.ext.sidebar.view')
 
 local parser = require('lu5je0.ext.sidebar.sources.git_changes.parser')
 local locate_mod = require('lu5je0.ext.sidebar.sources.git_changes.locate')
@@ -354,8 +355,9 @@ spec.close = {
         if s.ref == ref then s.expanded = false; break end
       end
     else
-      item.node.expanded = false
-      save_dir_state(line, item.node.abs_path, false)
+      local first = item.dir_chain and item.dir_chain[1] or item.node
+      first.expanded = false
+      save_dir_state(line, first.abs_path, false)
     end
   end,
 }
@@ -447,7 +449,7 @@ end
 -- Rendered rows disappear when a tree fold closes. Remember the logical
 -- cursor so reopening the fold can return to the same file or directory.
 local function cursor_target(items, line)
-  local node = items[line].display_node or items[line].node
+  local node = items[line].node
   local target = { path = node.abs_path }
   for i = line, 1, -1 do
     local ancestor = items[i]
@@ -464,16 +466,9 @@ local function restore_target(target)
   for i, item in ipairs(state.git_changes.display_items) do
     if item._is_section then section, ref = item.section, nil end
     if item.node._is_stash then ref = item.node.stash_ref end
-    if section == target.section and ref == target.ref then
-      local node = item.node
-      while node do
-        if node.abs_path == target.path then
-          vim.api.nvim_win_set_cursor(state.win, { i, 0 })
-          return
-        end
-        if not item.display_node or node == item.display_node then break end
-        node = node.children[1]
-      end
+    if section == target.section and ref == target.ref and view.item_has_path(item, target.path) then
+      vim.api.nvim_win_set_cursor(state.win, { i, 0 })
+      return
     end
   end
 end
@@ -562,18 +557,15 @@ function M.close_node_recursive()
   local child = item.node
   for i = line, 1, -1 do
     local parent = ts.display_items[i]
-    local leaf = parent.display_node or parent.node
+    local leaf = parent.node
     if parent.type == 'dir' and (i == line or vim.list_contains(leaf.children or {}, child)) then
       -- A compressed directory row represents several enclosing folds.
-      local node = parent.node
-      while true do
+      for _, node in ipairs(parent.dir_chain or { leaf }) do
         if node.abs_path then
           node.expanded = false
           local dirs = ts._dir_states[target.section]
           if dirs then dirs[node.abs_path] = false end
         end
-        if node == leaf then break end
-        node = node.children[1]
       end
       if parent.node._is_stash then
         spec.close.close(parent, i)
@@ -583,7 +575,7 @@ function M.close_node_recursive()
         vim.api.nvim_win_set_cursor(state.win, { i, 0 })
         return
       end
-      child = parent.node
+      child = parent.dir_chain and parent.dir_chain[1] or leaf
     end
   end
 end
@@ -618,16 +610,16 @@ function M.keymaps()
     { '<leader>fe', function()
       local line = vim.api.nvim_win_get_cursor(state.win)[1]
       local item = state.git_changes.display_items[line]
-      if not item or not item.node or item._is_section then return end
-      local target = item.display_node or item.node
-      if not vim.uv.fs_stat(target.abs_path) then
+      local path = item and item.node and item.node.abs_path
+      if not path then return end
+      if not vim.uv.fs_stat(path) then
         vim.notify('File deleted', vim.log.levels.WARN)
         return
       end
       local tabs = require('lu5je0.ext.sidebar.tabs')
       tabs.switch_to(config.tab_idx('files'))
       local files = require('lu5je0.ext.sidebar.sources.files')
-      files.find_file(target.abs_path)
+      files.find_file(path)
       vim.cmd('normal! zz')
     end, desc = 'Locate in files' },
     { 'r', function() M.refresh() end, desc = 'Refresh' },
