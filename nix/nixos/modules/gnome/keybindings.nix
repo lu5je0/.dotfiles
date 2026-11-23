@@ -5,8 +5,8 @@ let
   customKeybindings = {
     mark-shot-capture = {
       name = "Mark Shot: 截图";
-      # Mark Shot 由用户 profile 安装，命令通过 PATH 跟随 profile 升级。
-      command = "mark-shot --capture";
+      # 桌面门户通过 scope 识别 Mark Shot，才能复用记住的屏幕共享选择。
+      command = "${pkgs.runtimeShell} -c 'exec ${pkgs.systemd}/bin/systemd-run --user --scope --collect --quiet --slice=app.slice --unit=app-gnome-io.github.jswysnemc.MarkShot-$$.scope mark-shot'";
       binding = "<Shift><Super>a";
     };
     vicinae = {
