@@ -46,7 +46,7 @@ ModifierOnlyKeyTimeout=250
 
 [Behavior]
 # 默认状态为激活
-ActiveByDefault=False
+ActiveByDefault=True
 # 重新聚焦时重置状态
 resetStateWhenFocusIn=No
 # 共享输入状态
