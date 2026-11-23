@@ -7,10 +7,10 @@
 .popup-menu-content.kimpanel-popup-content {
   background-color: #ffffff;
   color: #444444;
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: 9px;
   box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.18);
-  padding: 3px;
+  padding: 2px;
   spacing: 0;
 }
 
