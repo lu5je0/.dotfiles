@@ -16,7 +16,9 @@
    },
    "font": {
       "rendering": "qt",
-      "normal": {}
+      "normal": {
+         "family": "JetBrainsMono Nerd Font Mono"
+      }
    },
    "theme": {
       "light": {
@@ -31,7 +33,7 @@
    },
    "providers": {
       "@gebeto/store.raycast.translate": {
-         "enabled": false
+         "enabled": true
       },
       "@knoopx/store.vicinae.nix": {
          "preferences": {

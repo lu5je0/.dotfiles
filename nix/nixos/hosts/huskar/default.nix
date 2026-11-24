@@ -147,6 +147,11 @@
   # 代价：GNOME 设置里的「电源模式」开关消失
   services.power-profiles-daemon.enable = false;
 
+  # 在 166.7% 缩放下，25 像素的 Adwaita 箭头边缘更清晰。
+  programs.dconf.profiles.user.databases = [
+    { settings."org/gnome/desktop/interface".cursor-size = 25; }
+  ];
+
   networking.hostName = "huskar";
   networking.networkmanager.enable = true;
 
