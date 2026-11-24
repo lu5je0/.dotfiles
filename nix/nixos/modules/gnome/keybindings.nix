@@ -22,7 +22,27 @@ in
       # 快捷键由 Nix 统一管理，防止用户 dconf 中的旧值覆盖声明。
       lockAll = true;
       settings = {
-        "org/gnome/desktop/wm/keybindings".activate-window-menu = lib.gvariant.mkEmptyArray "s";
+        "org/gnome/desktop/wm/keybindings" = {
+          activate-window-menu = lib.gvariant.mkEmptyArray "s";
+          switch-to-workspace-left = [
+            "<Super>Left"
+            "<Super>Page_Up"
+            "<Super>KP_Prior"
+            "<Super><Alt>Left"
+            "<Control><Alt>Left"
+          ];
+          switch-to-workspace-right = [
+            "<Super>Right"
+            "<Super>Page_Down"
+            "<Super>KP_Next"
+            "<Super><Alt>Right"
+            "<Control><Alt>Right"
+          ];
+        };
+        "org/gnome/mutter/keybindings" = {
+          toggle-tiled-left = lib.gvariant.mkEmptyArray "s";
+          toggle-tiled-right = lib.gvariant.mkEmptyArray "s";
+        };
         "org/gnome/settings-daemon/plugins/media-keys".custom-keybindings = map (
           name: "/${customKeybindingsPath}/${name}/"
         ) (builtins.attrNames customKeybindings);

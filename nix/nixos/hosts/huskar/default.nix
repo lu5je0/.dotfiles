@@ -149,7 +149,7 @@
 
   # 在 166.7% 缩放下，25 像素的 Adwaita 箭头边缘更清晰。
   programs.dconf.profiles.user.databases = [
-    { settings."org/gnome/desktop/interface".cursor-size = 25; }
+    { settings."org/gnome/desktop/interface".cursor-size = lib.gvariant.mkInt32 25; }
   ];
 
   networking.hostName = "huskar";
