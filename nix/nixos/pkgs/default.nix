@@ -17,6 +17,7 @@
   kitty = pkgs.callPackage ./kitty { };
   mark-shot = pkgs.callPackage ./mark-shot { };
   mission-center = pkgsUnstable.callPackage ./mission-center { };
+  pingfang = pkgs.callPackage ./pingfang { };
   qoder = pkgs.callPackage ./qoder { };
   show-desktop-corner = pkgs.callPackage ./show-desktop-corner { };
   terminal-browser = pkgs.callPackage ./terminal-browser { };

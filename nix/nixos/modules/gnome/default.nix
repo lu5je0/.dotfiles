@@ -61,6 +61,7 @@ in
     autoSuspend = false;
   };
   services.desktopManager.gnome.enable = true;
+  fonts.packages = [ (pkgs.callPackage ../../pkgs/pingfang { }) ];
 
   # 服务中的其他进程被 OOM 终止时，不由 systemd 连带停止 Shell。
   systemd.user.services."org.gnome.Shell@" = {
@@ -103,8 +104,8 @@ in
         # 桌面共享默认创建虚拟屏幕，实体显示器关闭或断开时仍可连接。
         "org/gnome/desktop/remote-desktop/rdp".screen-share-mode = "extend";
         "org/gnome/desktop/interface" = {
-          font-name = "Noto Sans CJK SC 11";
-          document-font-name = "Noto Sans CJK SC 12";
+          font-name = "PingFang SC 11";
+          document-font-name = "PingFang SC 12";
           monospace-font-name = "JetBrainsMonoNL Nerd Font Mono 11";
           # GNOME 50 起默认关闭中键粘贴（primary selection），这里显式恢复
           gtk-enable-primary-paste = true;
