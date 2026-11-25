@@ -88,6 +88,7 @@
             ./nix/nixos/profiles/base.nix
             ./nix/nixos/hosts/oneplus6
             ./nix/nixos/profiles/phone.nix
+            ./nix/nixos/modules/nas-mount.nix
           ];
         };
         raider = mkSystem [
