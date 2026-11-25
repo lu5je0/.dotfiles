@@ -188,7 +188,7 @@ def main(args):
         allow_abbrev=False,
     )
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("-t", "--time", type=parse_duration, metavar="DURATION", help="set a timer, e.g. 2h or 1h30m")
+    mode.add_argument("duration", nargs="?", type=parse_duration, metavar="DURATION", help="set a timer, e.g. 2h or 1h30m")
     mode.add_argument("--status", action="store_true", help="show the timer (default)")
     mode.add_argument("--cancel", action="store_true", help="cancel the timer")
 
@@ -210,8 +210,8 @@ def main(args):
                 except FileNotFoundError:
                     pass
         previous = [path for _, path in sorted(paths, reverse=True)]
-        if options.time is not None:
-            start_timer(directory, previous, options.time)
+        if options.duration is not None:
+            start_timer(directory, previous, options.duration)
         elif options.cancel:
             for path in previous:
                 request(path, b"c")
