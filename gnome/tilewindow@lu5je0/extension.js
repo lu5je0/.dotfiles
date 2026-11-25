@@ -440,7 +440,7 @@ function anyModifierHeld() {
 
 function sendModifierReleases() {
     if (!virtualKeyboard) {
-        const seat = Clutter.get_default_backend().get_default_seat();
+        const seat = global.stage.get_context().get_backend().get_default_seat();
         virtualKeyboard = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
     }
     const time = global.get_current_time() * 1000;

@@ -1,0 +1,17 @@
+diff --git a/resources/metadata.json b/resources/metadata.json
+--- a/resources/metadata.json
++++ b/resources/metadata.json
+@@ -3,11 +3,4 @@
+     "name": "Smooth Shell Corners",
+-    "description": "Consistent rounded and squircle window corners, crisp text at fractional scaling, and optional shadows. Preview tested on GNOME 50.4; GNOME 45\u201349 unverified. Native GTK4 corner replacement is enabled by default and requires restarting apps.",
+-    "shell-version": [
+-        "45",
+-        "46",
+-        "47",
+-        "48",
+-        "49",
+-        "50"
+-    ],
++    "description": "Consistent rounded and squircle window corners, crisp text at fractional scaling, and optional shadows. Native GTK4 corner replacement is enabled by default and requires restarting apps.",
++    "shell-version": ["51"],
+     "version-name": "0.1.3",

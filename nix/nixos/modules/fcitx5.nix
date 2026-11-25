@@ -1,6 +1,18 @@
 { pkgs, inputs, ... }:
 
 {
+  nixpkgs.overlays = [
+    (_final: prev: {
+      qt6Packages = prev.qt6Packages.overrideScope (_qtFinal: qtPrev: {
+        fcitx5-with-addons = qtPrev.fcitx5-with-addons.override {
+          fcitx5 = prev.fcitx5.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [ ../pkgs/fcitx5/preedit-anchor.patch ];
+          });
+        };
+      });
+    })
+  ];
+
   i18n.inputMethod = {
     enable = true;
     type = "fcitx5";

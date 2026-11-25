@@ -13,10 +13,9 @@ let
   shellExtensions = [
     pkgs.gnomeExtensions.appindicator
     pkgs.gnomeExtensions.astra-monitor
-    pkgs.gnomeExtensions.clipboard-indicator
     pkgs.gnomeExtensions.dash-to-dock
     pkgs.gnomeExtensions.gtk4-desktop-icons-ng-ding
-    pkgs.gnomeExtensions.kimpanel
+    (pkgs.callPackage ../../pkgs/kimpanel { })
     showDesktopCorner
     pkgs.gnomeExtensions.transparent-top-bar-adjustable-transparency
     pkgsUnstable.gnomeExtensions.chinese-calendar
@@ -27,9 +26,19 @@ in
 {
   imports = [
     ./gvfs
+    ./keybindings.nix
     ./nautilus.nix
     ./profile-applications
+    ./vicinae.nix
     ../../pkgs/window-decorations/module.nix
+  ];
+
+  nixpkgs.overlays = [
+    (_final: prev: {
+      gnome-shell = prev.gnome-shell.override {
+        ibus = prev.callPackage ../../pkgs/ibus { };
+      };
+    })
   ];
 
   environment.systemPackages = shellExtensions ++ [

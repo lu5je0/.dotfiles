@@ -201,7 +201,10 @@ spec.open = {
 
 spec.close = {
   is_closeable = function(it) return it.type == 'dir' and it.node.expanded end,
-  close = function(it) it.node.expanded = false end,
+  close = function(it)
+    local first = it.dir_chain and it.dir_chain[1] or it.node
+    first.expanded = false
+  end,
   is_boundary = function(it) return it.type == 'root' end,
 }
 
@@ -307,7 +310,7 @@ function M.refresh_after_delete(deleted_path, fallback_paths)
     if anchor then candidates[#candidates + 1] = anchor end
     for _, target in ipairs(candidates) do
       for line, item in ipairs(state.files.display_items) do
-        if item.node and item.node.abs_path == target then
+        if view.item_has_path(item, target) then
           pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
           return
         end
@@ -344,7 +347,7 @@ function M.toggle_dotfiles()
 
   if old_path then
     for line, item in ipairs(state.files.display_items) do
-      if item.node and item.node.abs_path == old_path then
+      if view.item_has_path(item, old_path) then
         pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
         return
       end
@@ -489,7 +492,7 @@ function M.find_file(filepath)
   M.render({ reveal_path = filepath })
 
   for line, item in ipairs(state.files.display_items) do
-    if item.node and item.node.abs_path == filepath then
+    if view.item_has_path(item, filepath) then
       pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
       return
     end

@@ -1,0 +1,45 @@
+// This configuration is merged with the default vicinae configuration file, which you can obtain by running the `vicinae config default` command.
+// Every item defined in this file takes precedence over the values defined in the default config or any other imported file.
+//
+// You can make manual edits to this file, however you should keep in mind that this file may be written to by vicinae when a configuration change is made through the GUI.
+// When that happens, any custom comments or formatting will be lost.
+//
+// If you want to maintain a configuration file with your own comments and formatting, you should create a separate file and add it to the 'imports' array.
+//
+// Learn more about configuration at https://docs.vicinae.com/config
+
+{
+   "$schema": "https://vicinae.com/schemas/config.json",
+   "escape_key_behavior": "",
+   "tray": {
+      "enabled": false
+   },
+   "font": {
+      "rendering": "qt",
+      "normal": {
+         "family": "JetBrainsMono Nerd Font Mono"
+      }
+   },
+   "theme": {
+      "light": {
+         "name": "libadwaita-light"
+      }
+   },
+   "launcher_window": {
+      "client_side_decorations": {
+         "enabled": true
+      },
+      "floating_status_bar": true
+   },
+   "providers": {
+      "@gebeto/store.raycast.translate": {
+         "enabled": true
+      },
+      "@knoopx/store.vicinae.nix": {
+         "preferences": {
+            "searchUrl": "https://search.nixos.org/backend/latest-48-nixos-unstable/_search",
+            "homeManagerOptionsUrl": "https://home-manager-options.extranix.com/data/options-master.json"
+         }
+      }
+   }
+}

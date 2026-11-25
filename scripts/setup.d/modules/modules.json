@@ -10,6 +10,7 @@
   { "name": "wezterm", "source": "wezterm", "target": "~/.config/wezterm" },
   { "name": "yazi", "source": "yazi", "target": "~/.config/yazi" },
   { "name": "kitty", "source": "kitty", "target": "~/.config/kitty" },
+  { "name": "vicinae", "source": "vicinae", "target": "~/.config/vicinae", "os": ["linux"] },
   {
     "name": "fcitx5",
     "source": "ime/fcitx5",

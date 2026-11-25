@@ -5,6 +5,7 @@
   libevdev,
   systemd,
   kernel,
+  kernelModuleMakeFlags,
 }:
 let
   kernelModule = stdenv.mkDerivation {
@@ -20,18 +21,19 @@ let
     nativeBuildInputs = kernel.moduleBuildDependencies;
     hardeningDisable = [ "pic" ];
     dontPatchELF = true;
-    buildPhase = ''
-      runHook preBuild
-      make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
-        M="$PWD" -j$NIX_BUILD_CORES modules
-      runHook postBuild
-    '';
-    installPhase = ''
-      runHook preInstall
-      install -Dm644 fn_ctrl_ec.ko \
-        $out/lib/modules/${kernel.modDirVersion}/extra/fn_ctrl_ec.ko
-      runHook postInstall
-    '';
+    dontStrip = true;
+    enableParallelBuilding = true;
+    makeFlags = kernelModuleMakeFlags ++ [
+      "-C"
+      "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+      "M=$(PWD)"
+      "INSTALL_MOD_PATH=$(out)"
+      "INSTALL_MOD_DIR=extra"
+      "CONFIG_MODULE_COMPRESS_ALL="
+    ];
+    buildFlags = [ "modules" ];
+    # modules_install 通过内核签名规则生成模块及汇总所需的 .ko.cer。
+    installTargets = [ "modules_install" ];
     meta = {
       description = "Read-only Fn state for Lenovo 82DM F0CN35WW";
       license = lib.licenses.gpl2Only;

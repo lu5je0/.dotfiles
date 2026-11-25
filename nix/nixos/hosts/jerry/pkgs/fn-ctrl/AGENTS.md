@@ -6,6 +6,7 @@
 - 内核只导出 root 可读的 `/sys/kernel/fn_ctrl_ec/modifiers`，调用内核 `ec_transaction` 获取 EC 锁，拒绝休眠准备期间的读取。
   不暴露任意地址访问、写入命令、直接端口或 `/dev/mem` 访问。不能把此协议用于未经验证的固件。
 - `fn-ctrl-module.service` 从 Nix 构建产物直接加载模块，避免 test/switch 时旧 modprobe 搜索树找不到新模块。
+  内核模块使用 `kernelModuleMakeFlags` 和 `modules_install` 安装，保留 `.ko.cer` 供模块树汇总；禁用压缩以匹配直接加载的 `.ko` 路径。
   未加载模块且运行内核与配置的内核构建不同时拒绝加载，需要重启；已存在 EC 接口时复用。
   只有一次性加载单元持有 CAP_SYS_MODULE，常驻桥接没有该权限。
 - C 服务独占原始 i8042 键盘，将替代设备 `1209:f1c0` 交给 keyd；jerry 模块在 keyd 通配配置中排除原始 `0001:0001`。

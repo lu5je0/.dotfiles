@@ -22,7 +22,7 @@ usage:
   nsdk [--profile <path>]
 
 options:
-  --profile <path>   profile to manage (default: ~/.nix-profile)
+  --profile <path>   profile to manage (default: the current Nix profile)
 
 Slots (java, mvn, …) are horizontal tabs; versions of the selected slot
 are listed below. All versions stay installed; switching reorders element
@@ -221,12 +221,32 @@ class Slot:
 
 class Profile:
     def __init__(self, path):
-        self.path = os.path.abspath(os.path.expanduser(path))
+        self.path = Path(os.path.abspath(os.path.expanduser(path))) if path is not None else None
+        self.explicit = self.path is not None
+        home_link = HOME / ".nix-profile"
+        state_home = Path(os.environ.get("XDG_STATE_HOME") or HOME / ".local/state")
+        xdg_link = state_home / "nix/profile"
+        if self.path in (None, home_link, xdg_link):
+            setting = subprocess.run(
+                ["nix", "config", "show", "use-xdg-base-directories"], capture_output=True, text=True,
+            )
+            if setting.returncode:
+                die(f"nsdk: cannot determine the current Nix profile:\n{setting.stderr.strip()}")
+            link = xdg_link if setting.stdout.strip() == "true" else home_link
+            if self.path is None or self.path == link:
+                # Nix follows the user link when selecting its default profile.
+                # Passing that link as --profile would overwrite it on the next switch.
+                self.explicit = False
+                self.path = link
         self.elements = []
+
+    def command(self, operation, *args):
+        selection = ["--profile", str(self.path)] if self.explicit else []
+        return ["nix", "profile", operation, *selection, *args]
 
     def load(self):
         proc = subprocess.run(
-            ["nix", "profile", "list", "--profile", self.path, "--json"],
+            self.command("list", "--json"),
             capture_output=True, text=True,
         )
         if proc.returncode != 0:
@@ -239,6 +259,11 @@ class Profile:
 
     def generation(self):
         cur = self.path
+        if not self.explicit:
+            try:
+                cur = cur.parent / cur.readlink()
+            except OSError:
+                return None
         for _ in range(2):
             try:
                 target = os.readlink(cur)
@@ -431,7 +456,7 @@ def short_ref(ref):
     return ref
 
 
-def plan_switch(profile_path, slot, target):
+def plan_switch(profile, slot, target):
     """Ops to make `target` (Element or candidate attr str) win the slot's bins.
 
     Priorities only need to differ among providers of the same bins. If a free
@@ -439,7 +464,7 @@ def plan_switch(profile_path, slot, target):
     target takes priority 1 and the winner is demoted (3 ops, batched remove).
     """
     installed = isinstance(target, Element)
-    winner = slot.active(profile_path)
+    winner = slot.active(profile.path)
     if installed and winner and target.name == winner.name:
         return []
     providers = slot.elements
@@ -451,7 +476,7 @@ def plan_switch(profile_path, slot, target):
     target_ref = target.ref if installed else f"nixpkgs#{target}"
 
     def op_add(ref, prio):
-        argv = ["nix", "profile", "add", "--profile", profile_path, ref]
+        argv = profile.command("add", ref)
         disp = f"nix profile add {short_ref(ref)}"
         if prio is not None:
             argv += ["--priority", str(prio)]
@@ -460,7 +485,7 @@ def plan_switch(profile_path, slot, target):
 
     def op_remove(names):
         return (
-            ["nix", "profile", "remove", "--profile", profile_path] + names,
+            profile.command("remove", *names),
             "nix profile remove " + " ".join(names),
         )
 
@@ -1049,7 +1074,7 @@ class App:
         kind = action[0]
         if kind == "switch":
             _, slot, target = action
-            ops = plan_switch(self.profile.path, slot, target)
+            ops = plan_switch(self.profile, slot, target)
             if not ops:
                 self.msg = f"{YELLOW}already active{RESET}"
                 return
@@ -1072,7 +1097,7 @@ class App:
         elif kind == "remove":
             el = action[1]
             ok = confirm_run(f"remove {el.name} ({el.pkg(self.tab)})", [
-                (["nix", "profile", "remove", "--profile", self.profile.path, el.name],
+                (self.profile.command("remove", el.name),
                  f"nix profile remove {el.name}"),
             ], self.profile.path)
             self.reload()
@@ -1080,14 +1105,14 @@ class App:
         elif kind == "upgrade":
             el = action[1]
             ok = confirm_run(f"upgrade {el.name} (re-resolves its flake)", [
-                (["nix", "profile", "upgrade", "--profile", self.profile.path, el.name],
+                (self.profile.command("upgrade", el.name),
                  f"nix profile upgrade {el.name}"),
             ], self.profile.path)
             self.reload()
             self.msg = f"{GREEN}✓ upgraded {el.name}{RESET}" if ok else f"{RED}✗ upgrade failed{RESET}"
         elif kind == "rollback":
             ok = confirm_run("rollback profile (one generation back)", [
-                (["nix", "profile", "rollback", "--profile", self.profile.path],
+                (self.profile.command("rollback"),
                  "nix profile rollback"),
             ], self.profile.path)
             self.reload()
@@ -1102,7 +1127,7 @@ class App:
                 self.msg = f"{YELLOW}cancelled{RESET}"
                 return
             ok = confirm_run(f"add {ref}", [
-                (["nix", "profile", "add", "--profile", self.profile.path, ref],
+                (self.profile.command("add", ref),
                  f"nix profile add {ref}"),
             ], self.profile.path)
             self.reload()
@@ -1123,7 +1148,7 @@ def main():
     if "-h" in args or "--help" in args:
         print(USAGE)
         return
-    profile_path = "~/.nix-profile"
+    profile_path = None
     rest = []
     i = 0
     while i < len(args):

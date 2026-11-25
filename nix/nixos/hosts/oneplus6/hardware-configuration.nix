@@ -2,7 +2,7 @@
 {
   nixpkgs.hostPlatform = "aarch64-linux";
   # Keep the tested 7.2 series: camera, WLAN and charger modules need validation
-  # before moving to another series. Patch releases still follow flake.lock.
+  # before moving to another series. The nixpkgs-oneplus6 input supplies this kernel.
   boot.kernelPackages = pkgs.linuxPackages_7_2;
   # Keep the cached stock kernel; rebuild only the two affected WLAN modules.
   boot.extraModulePackages = [

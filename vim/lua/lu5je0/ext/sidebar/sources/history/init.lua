@@ -339,7 +339,7 @@ function M.on_directory_changed(ts, cwd)
 end
 
 local function set_expanded(item, expanded)
-  local node = expanded and (item.display_node or item.node) or item.node
+  local node = item.node
   if node._is_parent then
     node.parent_group.expanded = expanded
   elseif node._is_section then
@@ -353,11 +353,9 @@ local function set_expanded(item, expanded)
         node = node.children[1]
         owner.expanded_dirs[node.abs_path] = true
       end
-    else
-      local tail = item.display_node or node
-      while node ~= tail do
-        node = node.children[1]
-        owner.expanded_dirs[node.abs_path] = false
+    elseif item.dir_chain then
+      for _, dir in ipairs(item.dir_chain) do
+        owner.expanded_dirs[dir.abs_path] = false
       end
     end
   end
@@ -376,7 +374,7 @@ spec.open = {
     return item.node.type == 'directory'
   end,
   is_expanded = function(item)
-    return (item.display_node or item.node).expanded
+    return item.node.expanded
   end,
   expand = function(item)
     set_expanded(item, true)
@@ -389,9 +387,9 @@ spec.open = {
 }
 spec.close = {
   is_closeable = function(item)
-    local node = item.display_node or item.node
+    local node = item.node
     local current = current_item()
-    current = current and (current.display_node or current.node)
+    current = current and current.node
     if not current or node.type ~= 'directory' or not node.expanded or node.commit ~= current.commit then
       return false
     end

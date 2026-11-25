@@ -12,6 +12,8 @@ package.loaded['lu5je0.misc.env-keeper'] = {
 }
 
 local pending, requests = {}, {}
+local copied_text
+package.loaded['lu5je0.core.clipboard'] = { set = function(value) copied_text = value end }
 local original_system = vim.system
 vim.system = function(args, opts, callback)
   local task = { args = args, opts = opts, callback = callback, killed = false }
@@ -189,6 +191,150 @@ local function stash_row()
   end
   error('missing Stashes section')
 end
+
+run('Changes and Files act on the last directory in a compressed path', function()
+  local rel = 'nix/nixos/pkgs/kimpanel'
+  local dir = fixture .. '/' .. rel
+  vim.fn.mkdir(dir, 'p')
+  vim.fn.writefile({}, dir .. '/default.nix')
+  open('git_changes')
+  drain()
+  local changes = require('lu5je0.ext.sidebar.sources.git_changes')
+  changes.update_sections_from_stdout(state.git_changes, ' M ' .. rel .. '/default.nix\0')
+  changes.render()
+  vim.api.nvim_set_current_win(state.win)
+  vim.api.nvim_win_set_cursor(state.win, { 2, 0 })
+
+  local function check_yanks()
+    r.assert_truthy(vim.api.nvim_get_current_line():find(rel, 1, true))
+    for _, case in ipairs({ { 'yp', dir }, { 'yP', rel }, { 'yn', 'kimpanel' } }) do
+      copied_text = nil
+      vim.cmd.normal(case[1])
+      r.assert_eq(copied_text, case[2])
+    end
+  end
+
+  check_yanks()
+  vim.cmd('normal zCzO')
+  check_yanks()
+  state.files.compress_dirs = true
+  vim.cmd.normal(vim.api.nvim_replace_termcodes('<leader>fe', true, false, true))
+  r.assert_eq(state.active_tab_idx, config.tab_idx('files'))
+  check_yanks()
+  local files = require('lu5je0.ext.sidebar.sources.files')
+  vim.api.nvim_win_set_cursor(state.win, { 1, 0 })
+  files.find_file(fixture .. '/nix/nixos')
+  check_yanks()
+  vim.cmd('normal yy')
+  r.assert_eq(state.files._clipboard.paths, { dir })
+  vim.cmd('normal cd')
+  r.assert_eq(vim.fn.getcwd(), dir)
+end)
+
+run('zC closes enclosing folds and zO opens only a closed fold', function()
+  open('git_changes')
+  drain()
+  local changes = require('lu5je0.ext.sidebar.sources.git_changes')
+  local ts = state.git_changes
+  changes.update_sections_from_stdout(ts, ' M a/nested/f\0 M a/g\0 M b/f\0 M root\0')
+  changes.render()
+  vim.api.nvim_set_current_win(state.win)
+  local function goto_path(path)
+    for i, item in ipairs(ts.display_items) do
+      if item.node.rel_path == path then
+        vim.api.nvim_win_set_cursor(state.win, { i, 0 })
+        return
+      end
+    end
+    error('missing ' .. path)
+  end
+  local function current()
+    return ts.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
+  end
+
+  goto_path('a/nested/f')
+  vim.cmd('normal zO')
+  r.assert_eq(vim.api.nvim_get_current_win(), state.win)
+  r.assert_eq(current().node.rel_path, 'a/nested/f')
+  vim.cmd('normal zC')
+  r.assert_eq(current().section, 'changes')
+  r.assert_eq(current().node.expanded, false)
+  local dirs = current().node.children
+  r.assert_eq(dirs[1].expanded, false)
+  r.assert_eq(dirs[1].children[1].expanded, false)
+  r.assert_eq(dirs[2].expanded, true)
+  vim.cmd('normal zO')
+  r.assert_eq(current().node.rel_path, 'a/nested/f')
+  vim.cmd('normal zCzo')
+  vim.cmd('normal zO')
+  r.assert_eq(ts.display_items[2].node.expanded, false)
+  vim.cmd('normal zR')
+  r.assert_eq(ts._expanded.unstaged, false)
+  r.assert_eq(ts.display_items[2].node.children[1].expanded, true)
+  r.assert_eq(current().section, 'changes')
+end)
+
+run('fold keys stay within Changes, Staged and Stashes including lazy loads', function()
+  open('git_changes')
+  drain()
+  local changes = require('lu5je0.ext.sidebar.sources.git_changes')
+  local ts = state.git_changes
+  changes.update_sections_from_stdout(ts, 'M  staged/f\0 M unstaged/f\0?? untracked/f\0')
+  stash_row()
+  vim.api.nvim_set_current_win(state.win)
+  vim.cmd('normal 3G')
+  local function current_path()
+    return ts.display_items[vim.api.nvim_win_get_cursor(state.win)[1]].node.rel_path
+  end
+  local path = current_path()
+  r.assert_truthy(path)
+  vim.cmd('normal zR')
+  r.assert_eq(current_path(), path)
+  local function goto_section(name)
+    for i, item in ipairs(ts.display_items) do
+      if item._is_section and item.section == name then
+        vim.api.nvim_win_set_cursor(state.win, { i, 0 })
+        return
+      end
+    end
+    error('missing section ' .. name)
+  end
+  local function check_sections(staged, stashes)
+    r.assert_eq(ts._expanded, {
+      changes = true, staged = staged, unstaged = false, untracked = false, stashes = stashes,
+    })
+  end
+  check_sections(false, false)
+  goto_section('staged')
+  vim.cmd('normal zR')
+  check_sections(true, false)
+  vim.cmd('normal 2jzC')
+  check_sections(false, false)
+  vim.cmd('normal zO')
+  check_sections(true, false)
+  r.assert_eq(current_path(), 'staged/f')
+  r.assert_eq(#pending, 0)
+
+  goto_section('stashes')
+  vim.cmd('normal zR')
+  check_sections(true, true)
+  pending[1].callback { code = 0, stdout = 'stash@{0}\0one\nstash@{1}\0two\n' }
+  drain()
+  r.assert_eq(#pending, 3)
+  for i = 2, 3 do pending[i].callback { code = 0, stdout = 'M\tdir/file\n' } end
+  drain()
+  for _, entry in ipairs(ts._stash_entries) do
+    r.assert_eq(entry.expanded, true)
+    r.assert_eq(entry.children[1].expanded, true)
+  end
+  vim.cmd('normal 3j')
+  r.assert_eq(current_path(), 'dir/file')
+  vim.cmd('normal zC')
+  check_sections(true, false)
+  vim.cmd('normal zO')
+  check_sections(true, true)
+  r.assert_eq(current_path(), 'dir/file')
+end)
 
 for _, kind in ipairs { 'list', 'empty cached list', 'files' } do
   local files = kind == 'files'

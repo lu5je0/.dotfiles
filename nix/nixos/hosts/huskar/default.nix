@@ -147,14 +147,27 @@
   # 代价：GNOME 设置里的「电源模式」开关消失
   services.power-profiles-daemon.enable = false;
 
+  # 在 166.7% 缩放下，25 像素的 Adwaita 箭头边缘更清晰。
+  programs.dconf.profiles.user.databases = [
+    { settings."org/gnome/desktop/interface".cursor-size = lib.gvariant.mkInt32 25; }
+  ];
+
   networking.hostName = "huskar";
   networking.networkmanager.enable = true;
 
-  services.nix-serve = {
+  # wake on wlan
+  networking.networkmanager.settings."connection-wowlan" = {
+    match-device = "mac:08:9d:f4:38:5b:b2";
+    "wifi.wake-on-wlan" = 8; # 仅由魔术包唤醒
+  };
+
+  services.harmonia.cache = {
     enable = true;
-    bindAddress = "192.168.1.100";
-    port = 17500;
-    secretKeyFile = "/var/lib/nix-cache/cache-private-key.pem";
+    signKeyPaths = [ "/var/lib/nix-cache/cache-private-key.pem" ];
+    settings = {
+      bind = "192.168.1.100:17500";
+      priority = 30;
+    };
   };
 
   # 关闭 WiFi 省电。NM 侧默认是 "ignore"（不管 mac80211 PS），显式关掉；

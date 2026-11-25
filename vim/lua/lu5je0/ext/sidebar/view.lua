@@ -106,6 +106,16 @@ function M.close_node(opts)
   end
 end
 
+function M.item_has_path(item, path)
+  if item.node and item.node.abs_path == path then return true end
+  if item.dir_chain then
+    for _, dir in ipairs(item.dir_chain) do
+      if dir.abs_path == path then return true end
+    end
+  end
+  return false
+end
+
 function M.restore_cursor(old_items, new_items)
   local line = cursor_line()
   local old_node = old_items[line] and old_items[line].node
@@ -133,7 +143,8 @@ function M.restore_cursor(old_items, new_items)
 
   local best_line = 1
   for i, item in ipairs(new_items) do
-    if item.node and contains(item.node, old_node) then
+    local root = item.dir_chain and item.dir_chain[1] or item.node
+    if root and contains(root, old_node) then
       best_line = i
     end
   end

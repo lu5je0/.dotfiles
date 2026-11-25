@@ -12,7 +12,7 @@ in
     enable = lib.mkEnableOption "jerry 的 EC Fn/Ctrl 输入桥接";
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ./. { inherit (config.boot.kernelPackages) kernel; };
+      default = config.boot.kernelPackages.callPackage ./. { };
       description = "包含 C 输入桥接及匹配当前内核的只读 EC 模块。";
     };
     idleIntervalMs = lib.mkOption {

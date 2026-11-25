@@ -31,7 +31,6 @@
 - `ext/lazy_patch.lua` 在 `lazy.setup()` 前注册，通过 `LazyPlugins` 读取解析后的 spec 和插件目录，再用 `package.preload` 覆盖模块，保留首次加载与配置语义。
 - 首次 require 时复制受影响源码，在 `stdpath('cache')/lazy-patches/<内容哈希>/` 应用补丁；哈希包含源码、插件目录和补丁内容，暖缓存不调用 Git。生成使用临时目录并原子发布，应用或语法检查失败直接报错，不回退原模块、不修改插件工作树。
 - `:LazyApplyPatch` 主动准备缓存但不热重载；修改补丁后重启 Neovim。恢复版本用 `Lazy restore`；根目录 `lazy-restore.sh` 使用阻塞的 `Lazy! restore` 后更新 parser。
-- `lazy-restore.sh` 的原地补丁兼容段只撤销可完整反向应用的已知补丁，保留其他本地修改；所有环境改用缓存补丁后删除该兼容段。
 - Glance 补丁仅静默 nixd 的 `unknown node type for definition`；只有全部客户端响应均为该错误时才跳过 `No definitions found`，其他错误、空结果和正常结果保留原行为。
 
 ## Multicursor

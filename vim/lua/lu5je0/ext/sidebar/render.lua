@@ -132,11 +132,11 @@ function M.render_tree(root_children, opts)
   end
 
   local function compress_chain(child)
-    -- Returns final display_node and joined display_name.
     local display_name, display_node = child.name, child
-    if not (compress_dirs and child.expanded and child.children and not child._is_section) then
+    if not (compress_dirs and child.expanded and child.children) or child._is_section or child._is_stash then
       return display_name, display_node
     end
+    local chain
     while true do
       local visible_dir = nil
       local found_one = false
@@ -153,10 +153,12 @@ function M.render_tree(root_children, opts)
         end
       end
       if multiple or not visible_dir then break end
+      chain = chain or { child }
+      chain[#chain + 1] = visible_dir
       display_node = visible_dir
       display_name = display_name .. '/' .. visible_dir.name
     end
-    return display_name, display_node
+    return display_name, display_node, chain
   end
 
   local function fit_name(name, prefix, icon, suffix)
@@ -199,17 +201,17 @@ function M.render_tree(root_children, opts)
       local branch_end = indent_end + #branch
 
       if child.type == 'directory' then
-        local display_name, display_node = compress_chain(child)
+        local display_name, display_node, chain = compress_chain(child)
         local icon = get_dir_icon and get_dir_icon(child) or default_dir_icon(display_node)
         display_name = fit_name(display_name, line_prefix, icon, dir_suffix and dir_suffix(child))
         local line = line_prefix .. icon .. ' ' .. display_name
 
         lines[#lines + 1] = line
         local line_idx = #lines - 1
-        add_item(child, line_idx, 'dir')
-        -- The row visually represents the compressed chain leaf; expose it so
-        -- consumers (e.g. locate) can target the directory the user sees.
-        items[#items].display_node = display_node
+        -- Actions target the last directory in the label. Folding and cursor
+        -- restoration also need the directories represented by the same row.
+        add_item(display_node, line_idx, 'dir')
+        items[#items].dir_chain = chain
 
         if dir_suffix then
           add_suffix(line_idx, dir_suffix(child))

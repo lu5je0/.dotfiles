@@ -59,10 +59,8 @@
     HibernateOnACPower = false;
   };
 
-  # systemd 在 EFI HibernateLocation 中记录 swap 文件的设备和偏移，initrd 据此恢复。
-  boot.initrd.systemd.enable = true;
-
   # 磁盘 swap 保存休眠镜像；日常换页仍优先使用公共配置中 priority = 5 的 zram。
+  # systemd 在 EFI HibernateLocation 中记录 swap 文件的设备和偏移，initrd 据此恢复。
   swapDevices = [
     {
       device = "/swap/swapfile";
@@ -79,7 +77,7 @@
     chmod 0700 /swap
   '';
 
-  # GNOME 50 的电源菜单休眠入口。
+  # GNOME 的电源菜单休眠入口。
   environment.systemPackages = [
     (pkgs.callPackage ./pkgs/hibernate-power-menu {
       hibernate-power-menu = pkgsUnstable.gnomeExtensions.hibernate-power-menu;

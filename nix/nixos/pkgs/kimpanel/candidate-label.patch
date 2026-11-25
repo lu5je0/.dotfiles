@@ -1,0 +1,54 @@
+--- a/panel.js
++++ b/panel.js
+@@ -1,4 +1,5 @@
+ import Clutter from 'gi://Clutter';
+ import St from 'gi://St';
++import GLib from 'gi://GLib';
+ import GObject from 'gi://GObject';
+ import Mtk from 'gi://Mtk';
+@@ -6,3 +7,5 @@
+ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+ import * as Params from 'resource:///org/gnome/shell/misc/params.js';
++import {adaptPanelText} from './candidateText.js';
++import {PanelFrame} from './panelFrame.js';
+ import * as BoxPointer from 'resource:///org/gnome/shell/ui/boxpointer.js';
+@@ -12,4 +15,5 @@
+     label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
+     label.clutter_text.line_wrap = false;
++    adaptPanelText(label);
+     return label;
+ }
+@@ -27,3 +31,4 @@
+         this.panel = new BoxPointer.BoxPointer(this._arrowSide,
+                                                {x_align : Clutter.ActorAlign.START});
++        this.panel.set_offscreen_redirect(Clutter.OffscreenRedirect.AUTOMATIC_FOR_OPACITY);
+         this.panel.style_class = 'popup-menu-boxpointer';
+@@ -36,5 +41,6 @@
+-            style_class : 'popup-menu-content',
+             orientation : Clutter.Orientation.VERTICAL,
+         });
+-        this.layout.add_style_class_name('kimpanel-popup-content');
+-        this.panel.bin.set_child(this.layout);
++        this.panel.bin.set_child(new PanelFrame({
++            style_class: 'popup-menu-content kimpanel-popup-content',
++            child: this.layout,
++        }));
+@@ -43,4 +49,5 @@
+         this.upperLayout = new St.BoxLayout();
+         this.lookupTableLayout = new St.BoxLayout({
++            style_class : 'kimpanel-candidates',
+             orientation : this.kimpanel.isLookupTableVertical() ?
+                 Clutter.Orientation.VERTICAL : Clutter.Orientation.HORIZONTAL,
+@@ -158,5 +165,11 @@
+                 lookupTable[i].ignore_focus = false;
+             lookupTable[i].candidate_index = i;
+-            lookupTable[i].text = label[i] + table[i];
++            const number = label[i].match(/^(\d+)[.]?\s*$/u);
++            const prefix = number ? number[1] + '\u2005' : label[i];
++            const escapedLabel = GLib.markup_escape_text(prefix, -1);
++            const escapedText = GLib.markup_escape_text(table[i], -1);
++            const alpha = i === this.kimpanel.cursor ? '100%' : '64%';
++            lookupTable[i].clutter_text.set_markup(
++                `<span size="81.25%" alpha="${alpha}">${escapedLabel}</span>${escapedText}`);
+         }
+     }

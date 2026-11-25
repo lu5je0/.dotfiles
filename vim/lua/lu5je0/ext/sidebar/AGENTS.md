@@ -2,7 +2,7 @@
 
 ## 适用范围
 - `vim/lua/lu5je0/ext/sidebar/` 下的自定义树形侧边栏插件，替代 nvim-tree。
-- 顶部 winbar 默认依次显示 Files、Symbols、Changes；History / Buffers 是临时页签，快捷键打开后显示，关闭 Sidebar 后移除。左右键仅遍历可见页签，每次最多显示三个。
+- 顶部 winbar 默认依次显示 Files、Changes、Symbols；History / Buffers 是临时页签，快捷键打开后显示，关闭 Sidebar 后移除。左右键仅遍历可见页签，每次最多显示三个。
 
 ## 目录结构
 
@@ -63,6 +63,7 @@ sidebar/
 ## 架构约定
 
 - 树渲染统一走 `render.render_tree(root_children, opts)`，不在各 source 重复实现。
+- 合并目录行的 `item.node` 指向显示路径的末级目录，路径和文件操作都以它为准。`item.dir_chain` 仅在多级合并时存在，按从外到内的顺序记录整条链，供折叠和定位使用。分组与 stash 标题单独占行。
 - buffer/窗口写入只走 `view.lua`（`flush` / `open_node` / `close_node` / `restore_cursor`）；`render.lua` 仍 re-export 兼容旧调用。
 - 展开接口的 `open.keep_cursor(item)` 控制是否保留光标；History commit、Changes 分组与 stash 节点展开后留在当前行，已展开时再次按 `l` 也保持不动；普通目录沿用进入子节点的行为。
 - 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，共用渲染与展开骨架。
@@ -87,6 +88,7 @@ sidebar/
 - `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）。
 - 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
 
+- Changes 普通模式下，`zC` 沿光标所在目录链收起到分组，保留旁支状态；`zO` 递归展开光标处的闭合折叠，`zR` 展开光标所在分组的全部折叠。在 Stashes 分组内操作时按需加载 stash。在原处重新展开会恢复被折叠的光标条目。
 - Changes 离开时取消 stash 加载；没有缓存条目的列表与未加载完的 stash 文件节点恢复折叠，返回后可按 `l` 重试，已加载内容与展开状态保留。Symbols 进入时先同步渲染缓存或空状态，再发起请求，等待 LSP 时不能保留上一页内容。
 
 - Git diff 的布局与 changes-only 独立保存：`d` 保留上下文偏好；`c` 在 single 模式切换完整上下文 / 改动附近 3 行，在 dual 模式展开 / 折叠未变化区域。Space 预览期间，在列表或预览窗口按 `d` / `c` 均立即使用已加载内容刷新，不重读文件；切换布局保留当前焦点所在区域。
