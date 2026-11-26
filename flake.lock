@@ -204,22 +204,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-oneplus6": {
-      "locked": {
-        "lastModified": 1793410479,
-        "narHash": "sha256-HzgjxrLY4AEc0044ZuM5CHbLSWLZgDlay1idmzvvpJs=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "fa1373130d5a21c040a47c5dbe1913d59ed91808",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-26.05",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1793826729,
@@ -261,7 +245,6 @@
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-darwin-unstable": "nixpkgs-darwin-unstable",
-        "nixpkgs-oneplus6": "nixpkgs-oneplus6",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "wayland-scroll-factor": "wayland-scroll-factor"
       }

@@ -2,12 +2,11 @@
   description = "lu5je0's NixOS and macOS configuration";
 
   inputs = {
+    # nixos
     nixpkgs.url = "github:NixOS/nixpkgs/release-26.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # 一加 6 的硬件配置需要 7.2 内核。
-    nixpkgs-oneplus6.url = "github:NixOS/nixpkgs/nixos-26.05";
-
+    # darwin
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
     nixpkgs-darwin-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nix-darwin = {
@@ -16,7 +15,9 @@
     };
 
     # 跟随上游更新，保留上游 nixpkgs 以复用桌面包依赖与缓存。
-    llm-agents.url = "github:numtide/llm-agents.nix";
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+    };
 
     arcglyph = {
       url = "github:lu5je0/arcglyph";
@@ -38,7 +39,6 @@
     {
       nixpkgs,
       nixpkgs-unstable,
-      nixpkgs-oneplus6,
       nix-darwin,
       ...
     }@inputs:
@@ -48,16 +48,20 @@
         inherit system;
         config.allowUnfree = true;
       };
-      pkgsUnstable = import nixpkgs-unstable {
-        inherit system;
-        config.allowUnfree = true;
-      };
+      pkgsUnstableFor =
+        system:
+        import nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+        };
+      pkgsUnstable = pkgsUnstableFor system;
       mkSystem =
-        modules:
+        system: modules:
         nixpkgs.lib.nixosSystem {
           inherit system modules;
           specialArgs = {
-            inherit inputs pkgsUnstable;
+            inherit inputs;
+            pkgsUnstable = pkgsUnstableFor system;
           };
         };
     in
@@ -74,32 +78,25 @@
       };
 
       nixosConfigurations = {
-        oneplus6 = nixpkgs-oneplus6.lib.nixosSystem {
-          system = "aarch64-linux";
-          specialArgs.pkgsUnstable = import nixpkgs-unstable {
-            system = "aarch64-linux";
-            config.allowUnfree = true;
-          };
-          modules = [
-            ./nix/nixos/profiles/base.nix
-            ./nix/nixos/hosts/oneplus6
-            ./nix/nixos/profiles/phone.nix
-            ./nix/nixos/modules/nas-mount.nix
-          ];
-        };
-        raider = mkSystem [
+        oneplus6 = mkSystem "aarch64-linux" [
+          ./nix/nixos/profiles/base.nix
+          ./nix/nixos/hosts/oneplus6
+          ./nix/nixos/profiles/phone.nix
+          ./nix/nixos/modules/nas-mount.nix
+        ];
+        raider = mkSystem system [
           ./nix/nixos/profiles/base.nix
           ./nix/nixos/hosts/raider
           ./nix/nixos/modules/nas-mount.nix
         ];
-        huskar = mkSystem [
+        huskar = mkSystem system [
           ./nix/nixos/profiles/base.nix
           ./nix/nixos/hosts/huskar
           ./nix/nixos/modules/gaming
           ./nix/nixos/profiles/desktop.nix
           ./nix/nixos/modules/nas-mount.nix
         ];
-        jerry = mkSystem [
+        jerry = mkSystem system [
           ./nix/nixos/profiles/base.nix
           ./nix/nixos/hosts/jerry
           inputs.wayland-scroll-factor.nixosModules.default

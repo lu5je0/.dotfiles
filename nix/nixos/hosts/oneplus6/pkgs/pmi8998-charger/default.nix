@@ -2,6 +2,7 @@
   lib,
   stdenv,
   kernel,
+  kernelModuleMakeFlags,
 }:
 stdenv.mkDerivation {
   pname = "oneplus6-pmi8998-charger";
@@ -11,6 +12,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = kernel.moduleBuildDependencies;
   hardeningDisable = [ "pic" ];
   dontPatchELF = true;
+  dontStrip = true;
   unpackPhase = ''
     runHook preUnpack
     tar xf "$src" --wildcards 'linux-*/drivers/power/supply/qcom_smbx.c' --strip-components=4
@@ -20,13 +22,14 @@ stdenv.mkDerivation {
     runHook preBuild
     echo 'obj-m += qcom_smbx.o' > Makefile
     make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
-      M="$PWD" -j$NIX_BUILD_CORES modules
+      ${lib.escapeShellArgs kernelModuleMakeFlags} M="$PWD" -j$NIX_BUILD_CORES modules
     runHook postBuild
   '';
   installPhase = ''
     runHook preInstall
-    install -Dm644 qcom_smbx.ko \
-      $out/lib/modules/${kernel.modDirVersion}/updates/qcom_smbx.ko
+    make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
+      ${lib.escapeShellArgs kernelModuleMakeFlags} M="$PWD" \
+      INSTALL_MOD_PATH="$out" INSTALL_MOD_STRIP=1 DEPMOD=true modules_install
     runHook postInstall
   '';
   meta = {

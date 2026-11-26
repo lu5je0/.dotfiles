@@ -1,14 +1,12 @@
 { config, pkgs, ... }:
 {
   nixpkgs.hostPlatform = "aarch64-linux";
-  # Keep the tested 7.2 series: camera, WLAN and charger modules need validation
-  # before moving to another series. The nixpkgs-oneplus6 input supplies this kernel.
-  boot.kernelPackages = pkgs.linuxPackages_7_2;
+  # Keep the 7.3 series: camera, WLAN and charger modules need validation
+  # before moving to another series.
+  boot.kernelPackages = pkgs.linuxPackages_7_3;
   # Keep the cached stock kernel; rebuild only the two affected WLAN modules.
   boot.extraModulePackages = [
-    (pkgs.callPackage ./pkgs/ath10k-wcn3990 {
-      kernel = config.boot.kernelPackages.kernel;
-    })
+    (config.boot.kernelPackages.callPackage ./pkgs/ath10k-wcn3990 { })
   ];
   boot.loader = {
     grub.enable = false;
@@ -35,7 +33,6 @@
     "ipa"
   ];
   boot.initrd = {
-    systemd.enable = true;
     systemd.tpm2.enable = false;
     includeDefaultModules = false;
     availableKernelModules = [

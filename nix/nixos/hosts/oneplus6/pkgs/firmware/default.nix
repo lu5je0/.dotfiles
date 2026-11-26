@@ -10,6 +10,7 @@ stdenvNoCC.mkDerivation {
   version = "0-unstable-2026-04-28";
 
   src = fetchFromGitLab {
+    name = "oneplus-sdm845-firmware-source";
     owner = "sdm845-mainline";
     repo = "firmware-oneplus-sdm845";
     rev = "3e31a0c3e5a061645c09f805387b49fa9d35acbf";
@@ -43,6 +44,19 @@ stdenvNoCC.mkDerivation {
     ln -s oneplus6 $out/share/qcom/sdm845/OnePlus/fajita
 
     runHook postInstall
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+
+    firmwareDir="$out/lib/firmware/qcom/sdm845/OnePlus/enchilada"
+    printf '%s\n' \
+      "d7387fe1d377e7fe98a77fc8dd83690bfaaa3abe79623360285ddd8ee4184b5c  $firmwareDir/modem.mbn" \
+      "d7be2977263061155b2694a140548783f7cd40108cc72b7816a3ef41b95dc923  $firmwareDir/adsp.mbn" |
+      sha256sum --strict --check
+
+    runHook postInstallCheck
   '';
 
   dontFixup = true;

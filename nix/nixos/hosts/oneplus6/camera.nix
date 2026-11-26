@@ -1,9 +1,9 @@
 { config, pkgs, ... }:
 let
-  kernel = config.boot.kernelPackages.kernel;
+  kernelPackages = config.boot.kernelPackages;
+  inherit (kernelPackages) kernel;
   tree = pkgs.callPackage ./pkgs/device-tree { inherit kernel; };
-  drivers = pkgs.callPackage ./pkgs/camera {
-    inherit kernel;
+  drivers = kernelPackages.callPackage ./pkgs/camera {
     cameraOverlay = "${tree}/overlays/oneplus6-camera.dtbo";
   };
   cameraLib = pkgs.callPackage ./pkgs/libcamera { };

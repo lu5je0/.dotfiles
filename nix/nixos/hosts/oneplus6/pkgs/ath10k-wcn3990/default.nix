@@ -2,6 +2,7 @@
   lib,
   stdenv,
   kernel,
+  kernelModuleMakeFlags,
   enableDebug ? false,
 }:
 stdenv.mkDerivation {
@@ -15,6 +16,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = kernel.moduleBuildDependencies;
   hardeningDisable = [ "pic" ];
   dontPatchELF = true;
+  dontStrip = true;
   enableParallelBuilding = true;
   unpackPhase = ''
     runHook preUnpack
@@ -24,6 +26,7 @@ stdenv.mkDerivation {
   buildPhase = ''
     runHook preBuild
     make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
+      ${lib.escapeShellArgs kernelModuleMakeFlags} \
       M="$PWD/ath10k" -j$NIX_BUILD_CORES \
       CONFIG_ATH10K=m CONFIG_ATH10K_SNOC=m CONFIG_ATH10K_PCI=n \
       CONFIG_ATH10K_AHB=n CONFIG_ATH10K_USB=n CONFIG_ATH10K_SDIO=n \
@@ -34,8 +37,9 @@ stdenv.mkDerivation {
   '';
   installPhase = ''
     runHook preInstall
-    install -Dm644 ath10k/ath10k_core.ko ath10k/ath10k_snoc.ko \
-      -t $out/lib/modules/${kernel.modDirVersion}/updates
+    make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
+      ${lib.escapeShellArgs kernelModuleMakeFlags} M="$PWD/ath10k" \
+      INSTALL_MOD_PATH="$out" INSTALL_MOD_STRIP=1 DEPMOD=true modules_install
     runHook postInstall
   '';
   meta = {

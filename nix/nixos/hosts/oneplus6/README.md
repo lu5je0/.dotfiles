@@ -1,14 +1,13 @@
 # OnePlus 6 / enchilada
 
-标准 NixOS 26.05 stable + GNOME，使用仓库根的 `nixpkgs-oneplus6` 输入和
-`linuxPackages_7_2`（7.2.9）。不导入 Mobile NixOS。
-跨内核系列升级需更新该输入和 `hardware-configuration.nix`，并验证启动、相机、Wi-Fi 与充电模块。
+标准 NixOS 26.11 预览版 + GNOME 51，与 huskar 共用仓库根的 `nixpkgs` 输入。
+内核固定为 `linuxPackages_7_3`。跨系列升级时需修改 `hardware-configuration.nix`，
+并验证启动、相机、Wi-Fi 与充电模块。
 
 配置入口：`nixosConfigurations.oneplus6`。复用 `profiles/base.nix` 和 GNOME 模块；
 手机的共享模块参数 `pkgsUnstable` 指向 `aarch64-linux` 的 unstable 包集，
-用于 Neovim、Python、pi-coding-agent 和农历扩展；系统、GNOME 和内核仍来自 stable。
+用于 Neovim、Python、pi-coding-agent 和农历扩展。
 手机桌面设置集中在 `profiles/phone.nix`，硬件设置集中在本目录。
-共享模块会安装 GNOME 51 专用的本地扩展，手机的 GNOME 50 会将其标记为版本不兼容。
 
 ```sh
 sudo nixos-rebuild build --flake .#oneplus6
@@ -46,7 +45,7 @@ Docker 按需启动。实测普通重启到图形目标约 16 秒。
 `qualcomm.nix` 提供标准 nixpkgs 的 rmtfs、tqftpserv；调制解调器 NV 分区只读访问。
 `pkgs/ath10k-wcn3990/` 将此设备的 VHT 信道宽度限制为 80 MHz：7.2.9 原驱动连接
 160 MHz AP 时认证帧收不到 ACK，限制后 5 GHz 能正常认证和联网。
-只重建 ath10k_core、ath10k_snoc 两个模块，完整内核继续使用 stable 的二进制缓存。
+只重建 ath10k_core、ath10k_snoc 两个模块，完整内核使用 Nixpkgs 的二进制缓存。
 同包回移了 [WCN3990 PMF peer flag 修复](https://lkml.iu.edu/2610.1/19751.html)：
 固件支持 PMF，却未在 firmware-5.bin 声明对应 feature，原驱动因此漏发 peer PMF 标志。
 本机保留 PMF 时，修复前到路由器平均延迟约 28 ms、周期性跳到 100 ms 以上；
@@ -75,7 +74,7 @@ S16_LE 能正常播放。内置声卡默认输出音量为 80%，已有的用户
 `camera.nix` 提供本机的摄像头栈：`pkgs/camera/` 从 SDM845 维护者提交
 `85f1df2a4ec71d7a91dd95a7a49f889d1595ffa8` 构建 IMX519 主摄、IMX376K 后置副摄、
 IMX371 前摄和 LC898217XC 对焦模块，并为 stock CAMSS 模块回移 C-PHY 补丁。
-完整 7.2.9 内核保持不变；`pkgs/device-tree/camera.dts` 补上供电、复位、时钟和 CSI 连接，
+保留 Nixpkgs 的完整内核；`pkgs/device-tree/camera.dts` 补上供电、复位、时钟和 CSI 连接，
 与原有 Wi-Fi 引脚修复一起合入启动 DTB。
 
 `pkgs/libcamera/` 使用官方 0.7.2、postmarketOS 的 IMX371 Quad Bayer 补丁及传感器调参，

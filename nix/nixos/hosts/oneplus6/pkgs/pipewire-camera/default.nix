@@ -1,4 +1,5 @@
 {
+  lib,
   pipewire,
   libcamera,
   symlinkJoin,
@@ -6,6 +7,12 @@
 let
   plugin = (pipewire.override { inherit libcamera; }).overrideAttrs (old: {
     pname = "oneplus6-pipewire-camera-plugin";
+    # The stock PipeWire patch expects the libcamera 0.8 location enum names.
+    patches =
+      if lib.versionOlder libcamera.version "0.8" then
+        builtins.filter (patch: baseNameOf (toString patch) != "libcamera-0.8-compat.patch") old.patches
+      else
+        old.patches;
     outputs = [ "out" ];
     buildPhase = ''
       runHook preBuild

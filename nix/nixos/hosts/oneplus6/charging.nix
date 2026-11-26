@@ -32,9 +32,7 @@ in
       }
     ];
     boot.extraModulePackages = [
-      (pkgs.callPackage ./pkgs/pmi8998-charger {
-        kernel = config.boot.kernelPackages.kernel;
-      })
+      (config.boot.kernelPackages.callPackage ./pkgs/pmi8998-charger { })
     ];
 
     systemd.services.oneplus6-bypass = {

@@ -3,9 +3,11 @@
   stdenv,
   fetchurl,
   kernel,
+  kernelModuleMakeFlags,
   cameraOverlay,
 }:
 let
+  makeKernel = "make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build ${lib.escapeShellArgs kernelModuleMakeFlags}";
   revision = "85f1df2a4ec71d7a91dd95a7a49f889d1595ffa8";
   sensor =
     name: hash:
@@ -34,6 +36,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = kernel.moduleBuildDependencies;
   hardeningDisable = [ "pic" ];
   dontPatchELF = true;
+  dontStrip = true;
   enableParallelBuilding = true;
   unpackPhase = ''
     runHook preUnpack
@@ -60,18 +63,17 @@ stdenv.mkDerivation {
   '';
   buildPhase = ''
     runHook preBuild
-    make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
-      M="$PWD" -j$NIX_BUILD_CORES modules
-    make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
-      M="$PWD/drivers/media/platform/qcom/camss" \
+    ${makeKernel} M="$PWD" -j$NIX_BUILD_CORES modules
+    ${makeKernel} M="$PWD/drivers/media/platform/qcom/camss" \
       -j$NIX_BUILD_CORES CONFIG_VIDEO_QCOM_CAMSS=m modules
     runHook postBuild
   '';
   installPhase = ''
     runHook preInstall
-    install -Dm644 imx371.ko imx376.ko imx519.ko lc898217xc.ko \
-      oneplus6-camera-overlay.ko drivers/media/platform/qcom/camss/qcom-camss.ko \
-      -t $out/lib/modules/${kernel.modDirVersion}/updates
+    ${makeKernel} M="$PWD" \
+      INSTALL_MOD_PATH="$out" INSTALL_MOD_STRIP=1 DEPMOD=true modules_install
+    ${makeKernel} M="$PWD/drivers/media/platform/qcom/camss" \
+      INSTALL_MOD_PATH="$out" INSTALL_MOD_STRIP=1 DEPMOD=true modules_install
     runHook postInstall
   '';
   meta = {
