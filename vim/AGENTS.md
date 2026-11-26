@@ -9,13 +9,10 @@
 
 ## 结构与装配
 
-- `init.lua` 先启用 `vim.loader`、加入 lazy.nvim 运行时路径，再依次加载 `lu5je0.options`、`keymaps`、`plugins`、`ext-config`、`commands`、`autocmds`、`filetype`。各模块通过 `pcall(require, ...)` 加载，失败时通知但继续启动。
 - `lua/lu5je0/plugins.lua` 集中声明第三方插件、依赖、补丁与插件级配置；适配代码放在 `ext/`。
 - `ext-config.lua` 声明本地扩展，由 `ext/loader.lua` 按 `keys`、`cmd`、`event` 代理首次加载并回放操作。
 - `core/` 放共享能力，`misc/` 放独立工具，`lang/` 放轻量函数；新功能通过明确的装配入口接入。
 - 文件类型定制放在 `ftplugin/`、`after/` 等运行时目录；LSP 修改同时检查 `lsp/` 和 `core/lsp.lua`。
-- `core/filetree.lua` 通过 Sidebar Files 页打开目录，注册 `Plugins`、`SwapFiles`、`TimeMachine`，由 sidebar 条目懒加载；插件和 swap 路径分别取自 `stdpath('data')`、`stdpath('state')`。
-- `misc/lsp-info.lua` 只在执行 `:LspInfo` 时加载；命令由 nvim-lspconfig 的 `cmd` 懒加载入口注册。
 - `lib/` 的 native 资源按平台组织，通过 `core/native.lua` 解析；调整位置时检查外部消费脚本和构建同步逻辑。
 
 ## 插件加载与补丁
@@ -23,7 +20,7 @@
 - 基础编辑行为放在 `options.lua`、`keymaps.lua`、`autocmds.lua`、`commands.lua`；第三方插件行为优先放在对应 spec 或适配文件中。
 - Markdown 依赖由 `ftplugin/markdown.lua` 直接调用 `lazy.load`，避免 lazy 的 `FileType` 重放重复初始化语法。render-markdown 保持 `lazy = true`，Snacks 保留供其他功能使用的 `VeryLazy`。
 - Lua 依赖由 `ftplugin/lua.lua` 直接加载 lazydev 和 colorizer，并显式挂载 colorizer 到当前 buffer，避免错过正在派发的 `FileType`。lazydev 保持 `lazy = true`；colorizer 的配置仍包含 Lua，但 spec 的 `ft` 排除 Lua，其他文件类型保持按需加载。
-- Scrollview 由 normal 模式 `<leader><Tab>` 首次加载，默认关闭，按键启用五秒、再按可提前关闭。setup 必须先完成上游延迟的命令初始化，才能回放首按。
+- Scrollview 首次加载时，setup 必须先完成上游延迟的命令初始化，才能回放按键。
 - 插件 spec 的 `keys` 不得使用裸 `<leader>`：lazy 代理会占用该键，阻止 which-key 安装触发器；使用实际功能键，如 `<leader>ff`。
 - 改插件版本、来源或锁定策略时检查 `lazy-lock.json`；仅在必要时调整 `disabled_plugins`，它直接改变运行时插件集合。
 - `nixd` 由 Nix 的 `nix/common/packages.nix` 安装，不经 Mason；`core/lsp.lua` 检查 PATH 后启用，配置在 `lsp/nixd.lua`。
@@ -35,8 +32,7 @@
 
 ## Multicursor
 
-- 能力探测统一使用 `require('lu5je0.ext.multicursor').supported`，由 `core/multicursor-guard.lua` 先检查 `follow` 选项，再加载 `vim._core.mcursor` 并检查 `active`；不能只检查版本号或 `nvim_mcursor`。
-- 仅使用原生 multicursor；能力探测未通过时，适配层的 `setup()` 不注册按键。
+- 能力探测统一使用 `require('lu5je0.ext.multicursor').supported`，以兼容原生 API 不同的 0.13 nightly。
 - 原生 cursor 使用 normal-mode 语义；`<C-n>`、`<M-n>`、`\A` 完成后开启 follow。添加或移动 cursor 的主体必须 `vim.schedule` 出 typed CmdAtom，避免 LHS replay 级联；移动 primary 前用 `2q=` 关闭 follow，完成后用 `1q=` 恢复。
 - `<C-n>` 连按复用首次 pattern，`<C-n>` / `\A` 同时写入 `@/` 和 `session_patterns`；保留整词边界，不能随光标变化重新取词。
 - x-mode 回调通过 `vim.fn.mode()` 判断选区类型，不能依赖此时为空的 `visualmode()`；退出选区后显式使用左上角位置。
@@ -50,7 +46,6 @@
 ## Winbar 与共享状态
 
 - 状态栏仅查询已加载的 navic / DiffBase，未命名 buffer 从 `winbar.state` 读取名称，避免重复 setup；navic 的 `LspAttach` 监听需使用独立 augroup，确保首次懒加载时事件能回放。
-- 自定义窗口 buffer 标签位于 `ext/winbar/`，通过 `vim.wo.winbar` 渲染；`ext/winbar.lua` 和 `ext/bufferline.lua` 都是调用其 setup 的入口。
 - 修改窗口标签时先读 `lua/lu5je0/ext/winbar/agents.md`；高亮、拖动、截断和关闭 buffer 的约束集中在该文件。
 - 调整 buffer 名称映射或 `core/buffers.lua` 时检查 sidebar、winbar、time-machine 的消费方；修改 offset 时考虑窗口 separator、foldcolumn 和 signcolumn 宽度。
 
@@ -70,14 +65,13 @@
 ## 测试与验证
 
 - 最小启动检查：`cd vim && nvim --headless '+qa'`。
-- 自动化入口：`cd vim && ./tests/run-tests.sh`；具体用例及参数以脚本和测试文件头部为准，cron 用例通过脚本设置 `DOTFILES_ROOT`。
+- 自动化入口为 `cd vim && ./tests/run-tests.sh`。
 - 新增具备稳定输入输出的独立 Lua 功能时补测试；修改懒加载模块至少验证一次对应命令、按键或事件的首次加载路径。
 - 子进程测试隔离配置、状态、swap 和 shada；使用真实插件时禁用自动安装/更新，不修改插件工作树。
-- 原生 multicursor 测试需用 0.13+ 运行外层和子进程，0.12 按能力探测 SKIP；`NVIM_TEST_BIN` 不能把 0.12 外层升级为 0.13。使用 `nvim_input()` 发真实按键，脚本中的 `feedkeys(..., 'x')` 不覆盖 typed CmdAtom 行为。
+- 原生 multicursor 测试的外层和子进程都需要支持原生 multicursor。使用 `nvim_input()` 发送真实按键以覆盖 typed CmdAtom 行为。
 - which-key 的首次触发测试使用 pty TUI + `--listen` / RPC，确保 `UIEnter` 和 `VeryLazy` 执行；鼠标与 winbar UI 测试的要求见局部说明。
 - 补丁验证同时检查声明、缓存生成和实际加载行为；平台改动需注明已验证和未验证的平台。
 
 ## 临时兼容
 
 - `core/buffer-modified.lua` 在 0.12 同时注册 `BufModifiedSet`（自然编辑）和 `OptionSet modified`（显式设置），0.13 仅保留后者。winbar 和 sidebar 都必须通过它订阅，不能省略 modified 通知。运行环境切换到 0.13 正式版、`BufModifiedSet` 不再存在时，删除兼容层并将两处调用替换为独立的 `OptionSet` + `pattern = 'modified'` autocmd；该事件延迟派发，不能混入无需 pattern 的事件列表。
-- `autocmds.lua` 在 0.12 使用 `vim.hl.on_yank`，0.13+ 使用 `vim.hl.hl_op`。不再支持 0.12 时删除分支，直接调用 `hl_op`。

@@ -77,7 +77,7 @@ ext/winbar/
   `displayed_elsewhere` 检查所有 tabpage 的实际窗口，不以 `state.win_bufs` 的记录判断可见性。
   删除当前窗口的 buffer 前先切换到相邻 buffer；跳过时通过 `vim.notify` 说明原因。
 - 拖动/跨窗口移动后必须用 `redrawstatus!`（带 `!`）：不带 `!` 只重画当前窗口的 winbar，源窗口会残留旧 tab，直到切回该窗口才更新。
-- `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`：0.12 的自然编辑走 `BufModifiedSet`，0.13 移除此事件；显式 `:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`。兼容层与删除条件见 `vim/AGENTS.md` 的「临时兼容」一节。
+- `modified` 标记刷新通过 `core/buffer-modified.lua` 订阅，兼容约定见 `vim/AGENTS.md` 的「临时兼容」。
 - 显式 `:set modified` 需要主动刷新标签；内置重画只覆盖显示该 buffer 的窗口。
 
 ## 测试

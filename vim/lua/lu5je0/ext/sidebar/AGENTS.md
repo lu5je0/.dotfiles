@@ -79,7 +79,7 @@ sidebar/
 - 初始化路径统一走 `init.init_sidebar`，不在各入口函数重复。
 - 关闭 Sidebar 前按 source 保存完整窗口视图（含鼠标滚动后的 `topline`），重新打开时在 source 渲染后恢复；对已打开窗口执行 focus 不回放旧视图，定位入口仍以定位目标为准。
 - 所有 sidebar autocmd 都进 `sidebar` augroup（`autocmds.lua` 集中注册），在 `setup` 时 `clear = true` 以防重复。
-- Buffers source 的 `modified` 标记刷新用 `require('lu5je0.core.buffer-modified').register(group, cb)`：0.12 的自然编辑走 `BufModifiedSet`，0.13 移除此事件；显式 `:set modified` 两版本都走 `OptionSet` + `pattern = 'modified'`。兼容层与删除条件见 `vim/AGENTS.md` 的「临时兼容」一节。
+- Buffers source 通过 `core/buffer-modified.lua` 订阅 `modified` 变化，兼容约定见 `vim/AGENTS.md` 的「临时兼容」。
 
 - 生命周期只经 `lifecycle` 分派：Sidebar 打开、切 source 和切回 Neovim tab 时 enter；离开时先使 context 失效，再关闭预览并调用 source.leave。实际窗口关闭成功后，显式关闭与外部 WinClosed 共用 close（再释放 watcher / Git 状态查询并重置临时页签）；E444 等关闭失败必须保留窗口归属、context 和资源；Neovim tab 销毁经 dispose 清理全部已加载 source，清理 hook 必须可重复调用。`config.tabs[].transient` 定义临时页，显示状态保存在 per-tab `visible_tabs`，不改动稳定的 source 索引。`config.tabs[].width` 可指定默认宽度，各页宽度在 `tab_widths` 中记忆；History 默认 50 列，窗口过小时限制为屏幕的 60%。
 
