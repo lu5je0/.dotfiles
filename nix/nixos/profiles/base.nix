@@ -15,8 +15,10 @@ in
   ];
 
   nix.registry.nixpkgs-unstable.to = {
-    type = "tarball";
-    url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
+    type = "github";
+    owner = "NixOS";
+    repo = "nixpkgs";
+    ref = "nixpkgs-unstable";
   };
 
   nix.settings = {
