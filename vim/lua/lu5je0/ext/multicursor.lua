@@ -1,7 +1,6 @@
 -- 原生 multicursor（Neovim 0.13+，:help multicursor）的按键适配。
 --
--- 0.13 起 multicursor 是内建能力，不再是 vim-visual-multi 那种插件。这里保留 Ctrl-N
--- 逐个加匹配的入口，但使用更稳定的原生 normal-mode cursor 语义：
+-- 按键使用原生 normal-mode cursor 语义：
 --
 --   <C-n>  在光标下的词（或 visual 选中的文本）及下一个匹配处放 cursor；连按逐个加，
 --          并开启 follow-mode（q=），所以 w/b/j/k 这类纯 motion 会在所有 cursor 重放。
@@ -18,8 +17,6 @@
 --   g CTRL-A 每个 cursor 插入递增数字
 --
 -- 通过原生模块和 follow 选项探测支持；新版 nightly 已移除 nvim_mcursor API。
--- 0.12 上彻底 no-op，
--- 由 vim-visual-multi 负责同样的键位（见 plugins.lua 的 enabled 门控）。
 
 local M = {}
 local cursor_guard = require('lu5je0.core.multicursor-guard')
@@ -206,7 +203,7 @@ local function ctrl_n()
     elseif not orig then
       -- 非 visual 时留下的是「光标下的词」：用 pattern 自身反向搜索取词首。
       -- 光标停在词中间（如 `f|oo`）时直接取 `nvim_win_get_cursor()` 会得到词中间的列，
-      -- 而 visual-multi / 原生 `matches()` 的语义是 cursor 一律落在整词第一个字符。
+      -- 原生 `matches()` 将 cursor 放在整词第一个字符。
       local start = find_next(pat, 'bcnW')
       if start then
         orig = { start[1], start[2] - 1 }
@@ -322,7 +319,7 @@ local function remove_current()
   return true
 end
 
---- <C-p>：删除当前 region（visual-multi 的 Remove Region）。
+--- <C-p>：移除当前光标。
 local function remove_region()
   if busy then
     return
@@ -336,7 +333,7 @@ end
 
 --- <C-x>：跳过当前 region（primary 所在处）并选下一个匹配。
 ---
---- 语义（visual-multi 的 Skip Region）：primary 当前位置被丢弃，primary 前进到下一个匹配；
+--- 丢弃 primary 的当前位置，并将其移动到下一个匹配。
 --- 已有 anchor 不变。所以总 region 数不变。
 ---   例：anchors=[foo1], primary=foo2  →  skip  →  anchors=[foo1], primary=foo3
 --- 找不到下一个时保持现状并提示（不环绕）。

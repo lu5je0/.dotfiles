@@ -12,7 +12,6 @@ M.statusline_config = {
       { name = 'mode', padding = { left = 1 } },
       { name = 'filename' },
       { name = 'modified' },
-      { name = 'visual_multi' },
       { name = 'gps_path' },
     },
     right = {

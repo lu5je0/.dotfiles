@@ -257,27 +257,6 @@ local plugins = {
     keys = { { mode = { 'i', 'n' }, '<m-i>' }, { mode = { 'i', 'n' }, '<d-i>' }, { mode = { 'n' }, '<leader>go' } }
   },
   {
-    'mg979/vim-visual-multi',
-    -- workaround: neovim-multicursor-compat
-    -- Neovim 0.13+ 用原生 multicursor（见 ext/multicursor.lua），插件的键位与语义都会打架。
-    enabled = function()
-      return not require('lu5je0.ext.multicursor').supported
-    end,
-    init = function()
-      vim.g.VM_maps = {
-        ['Select Cursor Down'] = '<m-n>',
-        ['Remove Region'] = '<c-p>',
-        ['Skip Region'] = '<c-x>',
-        ['VM-Switch-Mode'] = 'v',
-      }
-    end,
-    config = function()
-      require('lu5je0.ext.vim-visual-multi').setup()
-    end,
-    keys = { { mode = { 'n', 'x' }, '<c-n>' }, { mode = { 'n', 'x' }, '<m-n>' } },
-  },
-
-  {
     'dstein64/vim-startuptime',
     init = function()
       vim.g.startuptime_tries = 20

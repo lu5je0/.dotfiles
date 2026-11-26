@@ -51,13 +51,8 @@ local mode_hl = setmetatable({}, {
 
 local components = {
   mode = {
-    function(args)
-      local mode
-      if vim.b.in_visual_multi then
-        mode = require('lu5je0.ext.vim-visual-multi').mode()
-      else
-        mode = vim.api.nvim_get_mode().mode
-      end
+    function()
+      local mode = vim.api.nvim_get_mode().mode
       local mapping = mode_mappings[mode] or mode_mappings.fallback
       return mode_hl[mapping.color or colors.yellow] .. mapping.text
     end,
@@ -107,18 +102,6 @@ local components = {
     end,
     color = 'Green',
     padding = { left = 0, right = 0 },
-  },
-
-  visual_multi = {
-    function()
-      local vm_infos = vim.fn.VMInfos()
-      return ('[%s/%s]'):format(vm_infos['current'], vm_infos['total'])
-    end,
-    cond = function()
-      local selection = vim.b.VM_Selection
-      return selection ~= nil and not vim.tbl_isempty(selection)
-    end,
-    color = { fg = colors.white },
   },
 
   gps_path = {

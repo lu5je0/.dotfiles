@@ -36,7 +36,7 @@
 ## Multicursor
 
 - 能力探测统一使用 `require('lu5je0.ext.multicursor').supported`，由 `core/multicursor-guard.lua` 先检查 `follow` 选项，再加载 `vim._core.mcursor` 并检查 `active`；不能只检查版本号或 `nvim_mcursor`。
-- 0.12 使用 vim-visual-multi，原生适配层保持 no-op 的 `setup()`；0.13+ 使用原生能力。仓库不再支持 0.12 时可移除兼容插件及其 spec、配置和按键。
+- 仅使用原生 multicursor；能力探测未通过时，适配层的 `setup()` 不注册按键。
 - 原生 cursor 使用 normal-mode 语义；`<C-n>`、`<M-n>`、`\A` 完成后开启 follow。添加或移动 cursor 的主体必须 `vim.schedule` 出 typed CmdAtom，避免 LHS replay 级联；移动 primary 前用 `2q=` 关闭 follow，完成后用 `1q=` 恢复。
 - `<C-n>` 连按复用首次 pattern，`<C-n>` / `\A` 同时写入 `@/` 和 `session_patterns`；保留整词边界，不能随光标变化重新取词。
 - x-mode 回调通过 `vim.fn.mode()` 判断选区类型，不能依赖此时为空的 `visualmode()`；退出选区后显式使用左上角位置。

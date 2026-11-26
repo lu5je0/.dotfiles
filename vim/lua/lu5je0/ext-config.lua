@@ -2,7 +2,6 @@ local loader = require('lu5je0.ext.loader')
 local ext_load = loader.ext_load
 
 -- multicursor: Neovim 0.13+ 原生能力（:help multicursor）的按键适配。
--- 0.12 上该模块整体 no-op，由 vim-visual-multi 提供同样的 <C-n>/<M-n>。
 -- 立即加载：<C-l> 是高频键，不走 keys 懒加载代理，避免多一层转发。
 ext_load({
   name = 'multicursor',

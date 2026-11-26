@@ -140,7 +140,7 @@ end)
 
 run('<C-n> 光标停在词中间/词尾时 cursor 仍落在词首', function()
   -- 回归：之前直接用 nvim_win_get_cursor() 留 cursor，`f|oo` 会留下 1:1。
-  -- visual-multi / 原生 matches() 的语义是一律落在整词第一个字符。
+  -- cursor 应落在整词第一个字符。
   reset([[{'foo bar','foo baz'}]], '{1, 1}')
   feed('<C-n>')
   assert_eq(marks(), '1:0', 'mid-word cursor must snap to the word start')
@@ -432,7 +432,7 @@ run('末行 <M-n> 无 cursor 时不挂载', function()
 end)
 
 -- ============================================================================
-group('<C-p> / <C-x>：Remove Region / Skip Region（visual-multi 语义）')
+group('<C-p> / <C-x>：移除当前光标 / 跳过当前匹配')
 -- ============================================================================
 
 --- 查询会话键是否挂载（buffer-local）。
