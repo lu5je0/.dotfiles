@@ -5,7 +5,7 @@ local tmp = vim.fn.tempname()
 vim.fn.mkdir(tmp, 'p')
 vim.env.XDG_CACHE_HOME = tmp .. '/cache'
 vim.env.XDG_STATE_HOME = tmp .. '/state'
-vim.lsp.log._set_filename(tmp .. '/lsp.log')
+assert(vim.fs.relpath(vim.env.XDG_STATE_HOME, vim.lsp.log.get_filename()), 'LSP log must stay in the test state directory')
 
 -- Reuse the real plugin spec to exercise the first :LspInfo invocation through lazy.
 local spec
