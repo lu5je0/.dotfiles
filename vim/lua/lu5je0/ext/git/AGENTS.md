@@ -25,6 +25,7 @@
   - `core.lua`: 纯算法与 git 历史收集核心，负责 revision/path 链、tracker 初始化与 block 推进；测试与运行时共用
   - `blob-store.lua`: 批量加载并缓存 `rev:file` 内容，供测试与运行时共用
   - `block.lua`: Block 类与 diff 生成（纯算法，不依赖 state）
+  - `idea-diff.lua` 按 IDEA 的 Myers 匹配顺序找未变化行，超出差异阈值时用 Patience 锚点继续匹配。
   - `ui.lua`: 窗口、buffer、statusline、高亮、keymaps；直接消费 `state.tracker`
 - `common/selected-diff-ui.lua`: 行历史与 History 的净变化视图共用的提交 / 文件树渲染，由 `common/selected-diff.lua` 使用
 - 项目历史由 `../sidebar/sources/history/` 提供：`init.lua` 为 source / open 入口，`model.lua` 管理异步任务，`core.lua` 解析 Git 输出，`tig.lua` 提供提交图算法；本模块只注册快捷键与 blame 跳转。
@@ -115,9 +116,8 @@ Git Changes tab 由 `lua/lu5je0/ext/sidebar/` 提供。`<leader>gs` 打开/定�
   - 内部使用 0-based exclusive range `[start, end)` 对齐 IDEA 的 `Block.java`
   - vim.diff 返回的 1-based 索引需特殊转换：当 count=0（纯插入/纯删除）时，start 直接使用（不减 1）
   - `content_equals()` 使用严格逐行比较，对齐 IDEA 的 `getLines().equals()`
-- `vim.diff()` 配置：
-  - `algorithm = 'histogram'`：IDEA 的 ByLine diff 最接近 histogram/patience 算法；默认 myers 会产生过大的 hunk 导致 block 过早变空
-  - `ignore_whitespace = true`：对齐 IDEA 的 `ComparisonPolicy.IGNORE_WHITESPACES`
+- 追踪选区使用 IDEA 的 ByLine 两阶段比较。匹配时忽略空格、Tab 和换行字符，短行阈值按 UTF-16 单元计算。Git blob 的行分隔符统一识别为 LF、CRLF 或 CR。
+- 单栏预览生成 unified diff 时使用 `vim.text.diff` 的 histogram 算法。
 - `vim.system()` 异步执行，避免阻塞
 - 行历史在 `BufWipeout` 停止进程；项目历史由 Sidebar 生命周期取消任务，共享 diff_preview 用 generation 防止过期结果重开窗口
 - commit 列表格式：`%h %ad %s`，日期精确到秒

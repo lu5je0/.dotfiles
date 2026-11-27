@@ -5,6 +5,7 @@
 -- Temporary git fixtures exercise the same algorithm against stable synthetic history.
 
 local blob_store = require('lu5je0.ext.git.line-log.blob-store')
+local Block = require('lu5je0.ext.git.line-log.block')
 local core = require('lu5je0.ext.git.line-log.core')
 
 local repo_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h:h')
@@ -195,6 +196,19 @@ local function run_test(tc)
   end
 end
 
+local function run_block_case(name, previous, current, first, last, expected)
+  local block = Block.new(current, first, last):create_previous_block(previous)
+  local actual = { block.start_line, block.end_line }
+  if vim.deep_equal(actual, expected) then
+    print('  ' .. name .. ' ... ' .. color.green .. 'PASS' .. color.reset)
+    passed = passed + 1
+  else
+    print('  ' .. name .. ' ... ' .. color.red .. 'FAIL' .. color.reset)
+    print('    expected ' .. vim.inspect(expected) .. ', got ' .. vim.inspect(actual))
+    failed = failed + 1
+  end
+end
+
 -- ============================================================================
 -- Test cases
 --
@@ -349,6 +363,16 @@ local test_cases = {
 print('line-log algorithm tests')
 print(string.rep('-', 60))
 print()
+
+run_block_case('IDEA matches the trailing blank line', { 'bravo', ' ', '' }, { '' }, 1, 1, { 3, 3 })
+run_block_case(
+  'IDEA aligns repeated lines around a short Unicode line',
+  { '}', '}', '中文', 'y' },
+  { '}', ' ', 'bravo', 'charlie', 'charlie', '}', '}', '}', 'y', '中文', ' ', 'alpha' },
+  1,
+  7,
+  { 1, 3 }
+)
 
 for _, tc in ipairs(test_cases) do
   run_test(tc)

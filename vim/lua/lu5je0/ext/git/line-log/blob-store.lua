@@ -9,7 +9,10 @@ local function make_key(rev, file)
 end
 
 local function split_lines(content)
-  return vim.split(content or '', '\n', { plain = true })
+  if content == '' then
+    return {}
+  end
+  return vim.split(content:gsub('\r\n', '\n'):gsub('\r', '\n'), '\n', { plain = true })
 end
 
 local function normalize_specs(specs)

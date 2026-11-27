@@ -240,12 +240,10 @@ function M.build_prefetch_specs(revisions)
 end
 
 function M.initialize_tracker(current_lines, start_line, end_line, revisions)
-  local lines = vim.deepcopy(current_lines or {})
-  lines[#lines + 1] = ''
   return {
     revisions = revisions or {},
     blocks = {
-      [0] = Block.new(lines, start_line, end_line),
+      [0] = Block.new(current_lines or {}, start_line, end_line),
     },
     current_idx = 0,
     local_change_block = nil,

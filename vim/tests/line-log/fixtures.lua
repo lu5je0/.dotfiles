@@ -75,4 +75,21 @@ return {
     },
     expected_commits = { 'edit_tail', 'add_tail' },
   },
+  {
+    name = 'line_endings_do_not_change_selection',
+    file = 'notes.txt',
+    start_line = 2,
+    end_line = 2,
+    commits = {
+      { id = 'initial', message = 'initial CRLF', writes = { ['notes.txt'] = 'alpha\r\nbeta\r\n' } },
+      { id = 'normalize', message = 'normalize line endings', writes = { ['notes.txt'] = 'alpha\nbeta\n' } },
+      { id = 'edit', message = 'edit selected line', writes = { ['notes.txt'] = 'alpha\nBETA\n' } },
+    },
+    expected_revisions = {
+      { id = 'edit', file = 'notes.txt' },
+      { id = 'normalize', file = 'notes.txt' },
+      { id = 'initial', file = 'notes.txt' },
+    },
+    expected_commits = { 'edit', 'initial' },
+  },
 }

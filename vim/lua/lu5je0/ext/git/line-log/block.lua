@@ -1,239 +1,66 @@
 -- Block: tracks content and range using IntelliJ IDEA's content tracking algorithm
+local idea_diff = require('lu5je0.ext.git.line-log.idea-diff')
 local Block = {}
 Block.__index = Block
 
 local UNIMPORTANT_LINE_CHAR_COUNT = 3
 
 local function normalize_line(line)
-  return (line or ''):gsub('%s+', '')
+  return (line:gsub('[ \t\n]', ''))
 end
 
-local function non_space_chars(line)
-  return #normalize_line(line)
+local function line_length(line)
+  if line:find('[\128-\255]') then
+    return vim.str_utfindex(line, 'utf-16')
+  end
+  return #line
 end
 
-local function lcs_pairs(seq1, seq2, map1, map2)
-  local n, m = #seq1, #seq2
-  if n == 0 or m == 0 then
-    return {}
-  end
-
-  local dp = {}
-  for i = 0, n do
-    dp[i] = {}
-  end
-
-  for i = n - 1, 0, -1 do
-    local row, next_row = dp[i], dp[i + 1]
-    for j = m - 1, 0, -1 do
-      if seq1[i + 1] == seq2[j + 1] then
-        row[j] = (next_row[j + 1] or 0) + 1
-      else
-        local down = next_row[j] or 0
-        local right = row[j + 1] or 0
-        row[j] = down >= right and down or right
-      end
+local function important_lines(lines)
+  local important, indexes = {}, {}
+  for i, line in ipairs(lines) do
+    if line_length(line) > UNIMPORTANT_LINE_CHAR_COUNT then
+      important[#important + 1] = line
+      indexes[#indexes + 1] = i - 1
     end
   end
-
-  local pairs = {}
-  local i, j = 0, 0
-  while i < n and j < m do
-    if seq1[i + 1] == seq2[j + 1] then
-      pairs[#pairs + 1] = { map1[i + 1], map2[j + 1] }
-      i = i + 1
-      j = j + 1
-    elseif (dp[i + 1][j] or 0) > (dp[i][j + 1] or 0) then
-      i = i + 1
-    else
-      j = j + 1
-    end
-  end
-
-  return pairs
+  return important, indexes
 end
 
-local function diff_hunks_to_changes(hunks)
-  local changes = {}
-  for _, hunk in ipairs(hunks or {}) do
-    local prev_start, prev_count, curr_start, curr_count = hunk[1], hunk[2], hunk[3], hunk[4]
-    local start1 = prev_count > 0 and (prev_start - 1) or prev_start
-    local end1 = prev_count > 0 and (prev_start - 1 + prev_count) or prev_start
-    local start2 = curr_count > 0 and (curr_start - 1) or curr_start
-    local end2 = curr_count > 0 and (curr_start - 1 + curr_count) or curr_start
-    changes[#changes + 1] = { start1 = start1, end1 = end1, start2 = start2, end2 = end2 }
-  end
-  return changes
-end
-
-local function diff_changes(seq1, seq2, opts)
-  local text1 = #seq1 > 0 and (table.concat(seq1, '\n') .. '\n') or ''
-  local text2 = #seq2 > 0 and (table.concat(seq2, '\n') .. '\n') or ''
-  local ok, hunks = pcall(vim.text.diff, text1, text2, vim.tbl_extend('force', {
-    result_type = 'indices',
-    algorithm = 'myers',
-    indent_heuristic = false,
-  }, opts or {}))
-  if not ok then
-    return {}
-  end
-  return diff_hunks_to_changes(hunks)
-end
-
-local function unchanged_ranges_from_changes(changes, length1, length2)
-  local unchanged = {}
-  local last1, last2 = 0, 0
-  for _, change in ipairs(changes) do
-    if last1 ~= change.start1 or last2 ~= change.start2 then
-      unchanged[#unchanged + 1] = {
-        start1 = last1,
-        end1 = change.start1,
-        start2 = last2,
-        end2 = change.start2,
-      }
-    end
-    last1 = change.end1
-    last2 = change.end2
-  end
-  if last1 ~= length1 or last2 ~= length2 then
-    unchanged[#unchanged + 1] = { start1 = last1, end1 = length1, start2 = last2, end2 = length2 }
-  end
-  return unchanged
-end
-
-local function expand_ignored_whitespace(lines1, lines2, start1, start2, end1, end2)
-  while start1 < end1 and start2 < end2 and normalize_line(lines1[start1 + 1]) == normalize_line(lines2[start2 + 1]) do
-    start1 = start1 + 1
-    start2 = start2 + 1
-  end
-  while start1 < end1 and start2 < end2 and normalize_line(lines1[end1]) == normalize_line(lines2[end2]) do
-    end1 = end1 - 1
-    end2 = end2 - 1
-  end
-  return start1, start2, end1, end2
-end
-
-local function build_pairs(lines1, lines2)
-  local big1, big2, map1, map2 = {}, {}, {}, {}
-  for i, line in ipairs(lines1) do
-    if non_space_chars(line) > UNIMPORTANT_LINE_CHAR_COUNT then
-      big1[#big1 + 1] = normalize_line(line)
-      map1[#map1 + 1] = i - 1
-    end
-  end
-  for i, line in ipairs(lines2) do
-    if non_space_chars(line) > UNIMPORTANT_LINE_CHAR_COUNT then
-      big2[#big2 + 1] = normalize_line(line)
-      map2[#map2 + 1] = i - 1
-    end
-  end
-
-  local pairs = {}
-  local last1, last2 = 0, 0
-
-  local function mark_equal_range(start1, end1, start2, end2)
-    for i = 0, math.min(end1 - start1, end2 - start2) - 1 do
-      pairs[#pairs + 1] = { start1 + i, start2 + i }
-    end
-  end
-
-  local function expand_equal_range(start1, start2, end1, end2, limit1, limit2)
-    while start1 > last1 and start2 > last2 and normalize_line(lines1[start1]) == normalize_line(lines2[start2]) do
-      start1 = start1 - 1
-      start2 = start2 - 1
-    end
-    while end1 < limit1 and end2 < limit2 and normalize_line(lines1[end1 + 1]) == normalize_line(lines2[end2 + 1]) do
-      end1 = end1 + 1
-      end2 = end2 + 1
-    end
-    return start1, start2, end1, end2
-  end
-
-  local function refine(next1, next2)
-    local expanded_start1, expanded_start2 = last1, last2
-    local expanded_end1, expanded_end2 = next1, next2
-
-    if next1 > last1 and next2 > last2 then
-      expanded_start1, expanded_start2, expanded_end1, expanded_end2 =
-        expand_equal_range(last1, last2, next1, next2, next1, next2)
-    end
-
-    mark_equal_range(last1, expanded_start1, last2, expanded_start2)
-
-    if expanded_start1 < expanded_end1 and expanded_start2 < expanded_end2 then
-      local sub1, sub2 = {}, {}
-      local sub_map1, sub_map2 = {}, {}
-      for i = expanded_start1, expanded_end1 - 1 do
-        sub1[#sub1 + 1] = normalize_line(lines1[i + 1])
-        sub_map1[#sub_map1 + 1] = i
-      end
-      for i = expanded_start2, expanded_end2 - 1 do
-        sub2[#sub2 + 1] = normalize_line(lines2[i + 1])
-        sub_map2[#sub_map2 + 1] = i
-      end
-
-      for _, pair in ipairs(lcs_pairs(sub1, sub2, sub_map1, sub_map2)) do
-        pairs[#pairs + 1] = pair
-      end
-    end
-
-    mark_equal_range(expanded_end1, next1, expanded_end2, next2)
-  end
-
-  -- Use Myers diff (like IDEA's DiffIterableUtil.diff) for big-line matching
-  local big_changes = diff_changes(big1, big2)
-  local big_unchanged = unchanged_ranges_from_changes(big_changes, #big1, #big2)
-  for _, u in ipairs(big_unchanged) do
-    for i = 0, (u.end1 - u.start1) - 1 do
-      local anchor1, anchor2 = map1[u.start1 + i + 1], map2[u.start2 + i + 1]
-      refine(anchor1, anchor2)
-      pairs[#pairs + 1] = { anchor1, anchor2 }
-      last1 = anchor1 + 1
-      last2 = anchor2 + 1
-    end
-  end
-  refine(#lines1, #lines2)
-
-  return pairs
-end
-
-local function ranges_from_pairs(pairs)
-  table.sort(pairs, function(a, b)
-    return a[1] == b[1] and a[2] < b[2] or a[1] < b[1]
-  end)
-
+local function match_ranges(lines1, lines2)
+  local important1, indexes1 = important_lines(lines1)
+  local important2, indexes2 = important_lines(lines2)
   local ranges = {}
-  local start1, start2, end1, end2
-  local last_key
-  for _, pair in ipairs(pairs) do
-    local key = pair[1] .. ':' .. pair[2]
-    if key ~= last_key then
-      local a, b = pair[1], pair[2]
-      if not start1 then
-        start1, start2, end1, end2 = a, b, a + 1, b + 1
-      elseif a == end1 and b == end2 then
-        end1 = end1 + 1
-        end2 = end2 + 1
-      else
-        ranges[#ranges + 1] = { start1 = start1, end1 = end1, start2 = start2, end2 = end2 }
-        start1, start2, end1, end2 = a, b, a + 1, b + 1
-      end
-      last_key = key
+  local function mark(i, j)
+    local last = ranges[#ranges]
+    if last and last.end1 == i and last.end2 == j then
+      last.end1, last.end2 = i + 1, j + 1
+    else
+      ranges[#ranges + 1] = { start1 = i, end1 = i + 1, start2 = j, end2 = j + 1 }
     end
   end
 
-  if start1 then
-    ranges[#ranges + 1] = { start1 = start1, end1 = end1, start2 = start2, end2 = end2 }
+  local last1, last2 = 0, 0
+  local within_limit = true
+  local matched = idea_diff.matches(important1, important2, 0, #important1, 0, #important2, function(a, b)
+    if not within_limit then
+      return
+    end
+    local i, j = indexes1[a + 1], indexes2[b + 1]
+    within_limit = idea_diff.matches(lines1, lines2, last1, i, last2, j, mark)
+    mark(i, j)
+    last1, last2 = i + 1, j + 1
+  end)
+  if matched and within_limit and idea_diff.matches(lines1, lines2, last1, #lines1, last2, #lines2, mark) then
+    return ranges
   end
-
-  return ranges
 end
 
 local function expand_forward(lines1, lines2, start1, start2, end1, end2)
   local count = 0
   while start1 + count < end1
     and start2 + count < end2
-    and normalize_line(lines1[start1 + count + 1]) == normalize_line(lines2[start2 + count + 1]) do
+    and lines1[start1 + count + 1] == lines2[start2 + count + 1] do
     count = count + 1
   end
   return count
@@ -243,7 +70,7 @@ local function expand_backward(lines1, lines2, start1, start2, end1, end2)
   local count = 0
   while start1 < end1 - count
     and start2 < end2 - count
-    and normalize_line(lines1[end1 - count]) == normalize_line(lines2[end2 - count]) do
+    and lines1[end1 - count] == lines2[end2 - count] do
     count = count + 1
   end
   return count
@@ -251,7 +78,7 @@ end
 
 local function find_next_unimportant_line(lines, offset, count, threshold)
   for i = 0, count - 1 do
-    if non_space_chars(lines[offset + i + 1]) <= threshold then
+    if line_length(lines[offset + i + 1]) <= threshold then
       return i
     end
   end
@@ -260,7 +87,7 @@ end
 
 local function find_prev_unimportant_line(lines, offset, count, threshold)
   for i = 0, count - 1 do
-    if non_space_chars(lines[offset - i + 1]) <= threshold then
+    if line_length(lines[offset - i + 1]) <= threshold then
       return i
     end
   end
@@ -390,126 +217,30 @@ local function optimize_ranges(lines1, lines2, ranges)
 end
 
 local function create_changes(lines1, lines2)
-  local equal_ranges = optimize_ranges(lines1, lines2, ranges_from_pairs(build_pairs(lines1, lines2)))
+  lines1 = vim.tbl_map(normalize_line, lines1)
+  lines2 = vim.tbl_map(normalize_line, lines2)
+  local ranges = match_ranges(lines1, lines2)
+  if not ranges then
+    return
+  end
   local changes = {}
   local last1, last2 = 0, 0
-
-  for _, range in ipairs(equal_ranges) do
-    if last1 ~= range.start1 or last2 ~= range.start2 then
-      local start1, start2, end1, end2 = expand_ignored_whitespace(lines1, lines2, last1, last2, range.start1, range.start2)
-      if start1 ~= end1 or start2 ~= end2 then
-        changes[#changes + 1] = { start1 = start1, end1 = end1, start2 = start2, end2 = end2 }
-      end
-    end
-    last1 = range.end1
-    last2 = range.end2
-  end
-
-  if last1 ~= #lines1 or last2 ~= #lines2 then
-    local start1, start2, end1, end2 = expand_ignored_whitespace(lines1, lines2, last1, last2, #lines1, #lines2)
+  local function add_change(end1, end2)
+    local forward = expand_forward(lines1, lines2, last1, last2, end1, end2)
+    local start1, start2 = last1 + forward, last2 + forward
+    local backward = expand_backward(lines1, lines2, start1, start2, end1, end2)
+    end1, end2 = end1 - backward, end2 - backward
     if start1 ~= end1 or start2 ~= end2 then
       changes[#changes + 1] = { start1 = start1, end1 = end1, start2 = start2, end2 = end2 }
     end
   end
 
-  -- Merge adjacent changes separated by a single empty line when one change
-  -- is a pure insert or delete. This matches IDEA's ByLineRt which doesn't
-  -- produce isolated empty-line matches that split such changes.
-  local merged = {}
-  local i = 1
-  while i <= #changes do
-    local c = changes[i]
-    if i < #changes then
-      local nc = changes[i + 1]
-      local gap1 = nc.start1 - c.end1
-      local gap2 = nc.start2 - c.end2
-      if gap1 >= 0 and gap1 <= 1 and gap2 >= 0 and gap2 <= 1
-        and (gap1 == 0 or non_space_chars(lines1[c.end1 + 1]) == 0)
-        and (gap2 == 0 or non_space_chars(lines2[c.end2 + 1]) == 0)
-        and (c.start1 == c.end1 or nc.start1 == nc.end1
-          or c.start2 == c.end2 or nc.start2 == nc.end2) then
-        merged[#merged + 1] = { start1 = c.start1, end1 = nc.end1, start2 = c.start2, end2 = nc.end2 }
-        i = i + 2
-      else
-        merged[#merged + 1] = c
-        i = i + 1
-      end
-    else
-      merged[#merged + 1] = c
-      i = i + 1
-    end
+  for _, range in ipairs(optimize_ranges(lines1, lines2, ranges)) do
+    add_change(range.start1, range.start2)
+    last1, last2 = range.end1, range.end2
   end
-
-  return merged
-end
-
-local function shrink_to_best_match(prev_lines, current_content, start_line, end_line)
-  if #current_content == 0 or start_line > end_line then
-    return start_line, end_line
-  end
-
-  local candidate = {}
-  for i = start_line, end_line do
-    candidate[#candidate + 1] = prev_lines[i] or ''
-  end
-
-  local map_current, map_candidate = {}, {}
-  local seq_current, seq_candidate = {}, {}
-  for i, line in ipairs(current_content) do
-    local normalized = normalize_line(line)
-    if normalized ~= '' then
-      seq_current[#seq_current + 1] = normalized
-      map_current[#map_current + 1] = i
-    end
-  end
-  for i, line in ipairs(candidate) do
-    local normalized = normalize_line(line)
-    if normalized ~= '' then
-      seq_candidate[#seq_candidate + 1] = normalized
-      map_candidate[#map_candidate + 1] = i
-    end
-  end
-
-  local pairs = lcs_pairs(seq_current, seq_candidate, map_current, map_candidate)
-  if #pairs == 0 then
-    return start_line, end_line
-  end
-
-  local first = pairs[1][2]
-  local last = pairs[#pairs][2]
-
-  local new_start = math.max(start_line, start_line + first - 1)
-  local new_end = math.min(end_line, start_line + last - 1)
-  if new_start <= new_end then
-    return new_start, new_end
-  end
-  return start_line, end_line
-end
-
-local function maybe_shrink_prefix(prev_lines, current_content, start_line, end_line)
-  local new_start, new_end = shrink_to_best_match(prev_lines, current_content, start_line, end_line)
-  local advanced = new_start - start_line
-  local kept = new_end - new_start + 1
-  local original = end_line - start_line + 1
-  if advanced >= 2 and kept >= math.max(3, math.floor(original / 2)) then
-    return new_start, new_end
-  end
-  return start_line, end_line
-end
-
-local function trim_to_require_anchor(prev_lines, start_line, end_line)
-  local found = nil
-  for i = start_line, end_line do
-    local line = prev_lines[i] or ''
-    if line:match("^%s*local%s+[%w_]+%s*=%s*require%(") or line:match("^%s*require%(") then
-      found = i
-      break
-    end
-  end
-  if found and found - start_line >= 2 and end_line - found + 1 >= 3 then
-    return found, end_line
-  end
-  return start_line, end_line
+  add_change(#lines1, #lines2)
+  return changes
 end
 
 function Block.new(lines, start_line, end_line)
@@ -552,12 +283,10 @@ end
 -- This implements the same algorithm as IntelliJ IDEA's Block.createPreviousBlock
 -- IDEA uses 0-based exclusive ranges [start, end), we convert at boundaries
 function Block:create_previous_block(prev_lines, debug)
-  if self:is_empty() then
+  local changes = create_changes(prev_lines, self.lines)
+  if not changes then
     return Block.new(prev_lines, 1, 0)
   end
-
-  local changes = create_changes(prev_lines, self.lines)
-  local original_length = self.end_line - self.start_line + 1
 
   -- Convert from 1-based inclusive to 0-based exclusive (IDEA's format)
   -- 1-based inclusive [a, b] -> 0-based exclusive [a-1, b)
@@ -569,7 +298,6 @@ function Block:create_previous_block(prev_lines, debug)
   local greedy = start ~= end_
 
   local shift = 0
-  local top_damaged = false
 
   -- Process hunks in forward order (matching IntelliJ's approach)
   for _, range in ipairs(changes) do
@@ -632,7 +360,6 @@ function Block:create_previous_block(prev_lines, debug)
         end
       else
         -- top boundary damaged
-        top_damaged = true
         if greedy then
           start = changeStart
           end_ = end_ + changeShift
@@ -657,35 +384,6 @@ function Block:create_previous_block(prev_lines, debug)
   -- 0-based exclusive [a, b) -> 1-based inclusive [a+1, b]
   local result_start = start + 1
   local result_end = end_
-  local current_content = self:get_content()
-
-  if top_damaged and greedy then
-    local result_length = result_end - result_start + 1
-    local expanded_a_lot = result_length > math.max(original_length * 3, 20)
-    local moved_far_up = result_start < self.start_line - 5
-    if expanded_a_lot and moved_far_up then
-      for i = result_start, result_end - 1 do
-        if non_space_chars(prev_lines[i] or '') == 0 and non_space_chars(prev_lines[i + 1] or '') > 0 then
-          local trimmed_start = i + 1
-          local trimmed_length = result_end - trimmed_start + 1
-          if trimmed_length >= original_length then
-            result_start = trimmed_start
-            break
-          end
-        end
-      end
-    end
-  end
-
-  if top_damaged then
-    result_start, result_end = maybe_shrink_prefix(prev_lines, current_content, result_start, result_end)
-    result_start, result_end = trim_to_require_anchor(prev_lines, result_start, result_end)
-  end
-
-  -- Clamp to valid range
-  result_start = math.max(1, result_start)
-  result_end = math.max(result_start - 1, math.min(#prev_lines, result_end))
-
   return Block.new(prev_lines, result_start, result_end)
 end
 

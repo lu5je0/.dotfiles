@@ -317,7 +317,16 @@ local function load_revisions()
         return
       end
 
-      local current_lines = vim.api.nvim_buf_get_lines(vim.fn.bufnr(state.file), 0, -1, false)
+      local buf = vim.fn.bufnr(state.file)
+      local current_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+      local empty = #current_lines == 1 and current_lines[1] == '' and vim.api.nvim_buf_call(buf, function()
+        return vim.fn.line2byte(2) == -1
+      end)
+      if empty then
+        current_lines = {}
+      elseif vim.bo[buf].endofline then
+        current_lines[#current_lines + 1] = ''
+      end
       state.tracker = core.initialize_tracker(current_lines, state.start_line, state.end_line, revisions)
       state.prefetch_specs = core.build_prefetch_specs(revisions)
       state.next_prefetch_idx = 1
