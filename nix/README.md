@@ -104,6 +104,10 @@ GNOME 已缓存的名称、图标和右键动作列表仍可能需要重新登�
 该模块通过根 flake 锁定的 `darwin-rebuild` 应用 `.#mac`，并在成功后清理旧的
 `~/.config/nix/nix.conf -> ~/.dotfiles/nix-mac/nix.conf` 链接。
 
+`nix-darwin` 安装定制 Kitty、`kitten` 和 Kitty 使用的 `JetBrainsMonoNL Nerd Font Mono` 字体。
+应用位于 `/Applications/Nix Apps/kitty.app`，字体安装到 `/Library/Fonts/Nix Fonts`。
+`setup.py` 的 `kitty` 模块将 `~/.config/kitty` 链接到仓库中的配置目录，方便直接修改并在 Kitty 中重载。
+
 本地 flake 使用普通目录路径，让 Nix 按 Git 已跟踪文件取源，避免 `path:` 连同 `.git`
 内的 socket 等运行时文件一起复制。已跟踪文件的未提交修改会生效；新增配置文件需先 `git add`。
 

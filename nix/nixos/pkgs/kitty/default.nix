@@ -6,6 +6,7 @@
   libxkbcommon,
   python3Packages,
   shader-slang,
+  stdenv,
 }:
 
 let
@@ -28,20 +29,24 @@ kitty.overrideAttrs (old: {
       vendorHash = "sha256-Oo5ehjdq4HcTxZcKi/rwz8dDZYGxdSS8cqIkbdLBrb8=";
     }).goModules;
 
-  nativeBuildInputs = old.nativeBuildInputs ++ [
-    python3Packages.sphinx-design
-    shader-slang
-  ];
+  nativeBuildInputs =
+    old.nativeBuildInputs
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
+      python3Packages.sphinx-design
+      shader-slang
+    ];
 
   patches = builtins.filter (
     patch: !(lib.hasSuffix "libxkbcommon-runtime-path.patch" (toString patch))
   ) old.patches;
 
-  postPatch = (old.postPatch or "") + ''
-    substituteInPlace kitty/key_names.py \
-      --replace-fail "lib = ctypes.CDLL(f'libxkbcommon.so{suffix}')" \
-        "lib = ctypes.CDLL('${lib.getLib libxkbcommon}/lib/libxkbcommon.so.0')"
-  '';
+  postPatch =
+    (old.postPatch or "")
+    + lib.optionalString stdenv.hostPlatform.isLinux ''
+      substituteInPlace kitty/key_names.py \
+        --replace-fail "lib = ctypes.CDLL(f'libxkbcommon.so{suffix}')" \
+          "lib = ctypes.CDLL('${lib.getLib libxkbcommon}/lib/libxkbcommon.so.0')"
+    '';
 
   meta = old.meta // {
     description = "Kitty terminal with lu5je0's custom features";

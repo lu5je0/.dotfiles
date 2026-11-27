@@ -1,9 +1,13 @@
-{ pkgs, pkgsUnstable }:
+{
+  pkgs,
+  pkgsUnstable,
+  kittyTerminfo ? pkgs.kitty.terminfo,
+}:
 
 {
   # 保留 NixOS 原有的系统包 / 用户包归属；Darwin 将两组安装到系统环境。
   systemPackages = with pkgs; [
-    kitty.terminfo
+    kittyTerminfo
     htop
     (pkgsUnstable.python3.withPackages (pythonPackages: [ pythonPackages.requests ]))
     git
