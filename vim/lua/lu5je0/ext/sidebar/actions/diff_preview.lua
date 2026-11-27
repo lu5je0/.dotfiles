@@ -4,6 +4,7 @@ local ui = require('lu5je0.core.ui')
 local env_keeper = require('lu5je0.misc.env-keeper')
 
 local M = {}
+local preview_winhighlight = 'Normal:Normal,NormalFloat:Normal,FloatBorder:Fg'
 
 -- Diff windows/buffers live in per-tab state.diff_preview so two tabs
 -- can each have their own diff visible without one overwriting the
@@ -148,6 +149,23 @@ local function fetch_source(source, max_bytes, cb, cwd)
   end
 end
 
+local function set_buffer_content(buf, lines, ft)
+  vim.bo[buf].modifiable = true
+  if ft and ft ~= '' and vim.bo[buf].filetype ~= ft then
+    vim.bo[buf].filetype = ft
+  end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+end
+
+local function loading_buffer(lines)
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].buftype = 'nofile'
+  vim.bo[buf].bufhidden = 'wipe'
+  set_buffer_content(buf, lines or { ' Loading diff…' })
+  return buf
+end
+
 -- ── window management ──────────────────────────────────────────────────
 
 local function dp(ts)
@@ -237,7 +255,44 @@ function M.show(item, on_state_change)
   local pending = targets.left_title:find('HEAD') and 3 or 2
   local left_data, right_data, head_short
   local rendered = false
+  local content_shown = false
   local timeout_timer
+
+  local function owns_window(win)
+    local d = dp(ts)
+    return win == d.win_single or win == d.win_left or win == d.win_right
+  end
+
+  local function close_and_return()
+    vim.schedule(function()
+      if generation ~= dp(ts).generation then return end
+      M.close(ts)
+      if on_state_change then on_state_change(nil) end
+      if ts.win and vim.api.nvim_win_is_valid(ts.win) then
+        vim.api.nvim_set_current_win(ts.win)
+      end
+    end)
+  end
+
+  local function watch_close(win)
+    vim.api.nvim_create_autocmd('WinClosed', {
+      pattern = tostring(win),
+      once = true,
+      callback = function()
+        if not owns_window(win) then return end
+        -- Invalidate the fetch before its queued callback can recreate a closed preview.
+        cancel_fetch(ts)
+        if on_state_change then on_state_change(nil) end
+        vim.schedule(function()
+          if not owns_window(win) then return end
+          close_for(ts)
+          if ts.win and vim.api.nvim_win_is_valid(ts.win) then
+            vim.api.nvim_set_current_win(ts.win)
+          end
+        end)
+      end,
+    })
+  end
 
   local function toggle_mode_here()
     local next_mode = M.toggle_mode()
@@ -249,7 +304,13 @@ function M.show(item, on_state_change)
     end)
   end
 
-  local function render_dual(d, changes_only, left_title)
+  local function toggle_changes_only_here()
+    local changes_only = M.toggle_changes_only()
+    M.refresh()
+    vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
+  end
+
+  local function open_dual(d, left_title)
     local gap = 2
     local total_width = math.floor(vim.o.columns * 0.85)
     local half_width = math.floor((total_width - gap) / 2)
@@ -258,84 +319,37 @@ function M.show(item, on_state_change)
     local col_left = math.floor((vim.o.columns - total_width) / 2)
     local col_right = col_left + half_width + gap
 
-    local ft = vim.filetype.match({ filename = node.abs_path }) or ''
-
-    local function make_buf(data)
-      local buf = vim.api.nvim_create_buf(false, true)
-      vim.bo[buf].buftype = 'nofile'
-      vim.bo[buf].bufhidden = 'wipe'
-      if ft ~= '' and data.kind == 'text' then
-        vim.bo[buf].filetype = ft
-      end
-      vim.api.nvim_buf_set_lines(buf, 0, -1, false, data.lines)
-      vim.bo[buf].modifiable = false
-      return buf
-    end
-
-    d.buf_left = make_buf(left_data)
-    d.buf_right = make_buf(right_data)
+    d.buf_left = loading_buffer()
+    d.buf_right = loading_buffer({})
 
     d.win_left = vim.api.nvim_open_win(d.buf_left, false, {
       relative = 'editor',
       row = row, col = col_left,
       width = half_width, height = height,
-      style = 'minimal', border = 'rounded',
+      style = 'minimal', border = 'single',
       title = left_title, title_pos = 'center',
     })
-    vim.wo[d.win_left].diff = true
-    vim.wo[d.win_left].scrollbind = true
-    vim.wo[d.win_left].wrap = false
-    vim.wo[d.win_left].foldmethod = 'diff'
-    vim.wo[d.win_left].foldlevel = changes_only and 0 or 99
-    vim.wo[d.win_left].foldenable = changes_only
-    vim.wo[d.win_left].cursorline = false
-
     d.win_right = vim.api.nvim_open_win(d.buf_right, false, {
       relative = 'editor',
       row = row, col = col_right,
       width = half_width, height = height,
-      style = 'minimal', border = 'rounded',
+      style = 'minimal', border = 'single',
       title = targets.right_title, title_pos = 'center',
     })
-    vim.wo[d.win_right].diff = true
-    vim.wo[d.win_right].scrollbind = true
-    vim.wo[d.win_right].wrap = false
-    vim.wo[d.win_right].foldmethod = 'diff'
-    vim.wo[d.win_right].foldlevel = changes_only and 0 or 99
-    vim.wo[d.win_right].foldenable = changes_only
-    vim.wo[d.win_right].cursorline = false
-
     for _, win in ipairs({ d.win_left, d.win_right }) do
+      vim.wo[win].winhighlight = preview_winhighlight
+      vim.wo[win].wrap = false
+      vim.wo[win].cursorline = false
       vim.wo[win].number = true
       vim.wo[win].relativenumber = false
       vim.wo[win].statuscolumn = ''
-    end
-
-    local function close_and_return()
-      vim.schedule(function()
-        close_for(ts)
-        if on_state_change then on_state_change(nil) end
-        if ts.win and vim.api.nvim_win_is_valid(ts.win) then
-          vim.api.nvim_set_current_win(ts.win)
-        end
-      end)
-    end
-
-    local function toggle_changes_only()
-      changes_only = M.toggle_changes_only()
-      for _, w in ipairs({ d.win_left, d.win_right }) do
-        if w and vim.api.nvim_win_is_valid(w) then
-          vim.wo[w].foldenable = changes_only
-          vim.wo[w].foldlevel = changes_only and 0 or 99
-        end
-      end
-      vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
+      watch_close(win)
     end
 
     for _, buf in ipairs({ d.buf_left, d.buf_right }) do
       local bopts = { buffer = buf, nowait = true, silent = true }
       vim.keymap.set('n', 'q', close_and_return, bopts)
-      vim.keymap.set('n', 'c', toggle_changes_only, bopts)
+      vim.keymap.set('n', 'c', toggle_changes_only_here, bopts)
       vim.keymap.set('n', 'd', toggle_mode_here, bopts)
     end
 
@@ -349,28 +363,25 @@ function M.show(item, on_state_change)
         vim.api.nvim_set_current_win(d.win_left)
       end
     end, { buffer = d.buf_right, nowait = true, silent = true })
+  end
 
-    local cur_left, cur_right = d.win_left, d.win_right
-    for _, win_id in ipairs({ cur_left, cur_right }) do
-      vim.api.nvim_create_autocmd('WinClosed', {
-        pattern = tostring(win_id),
-        once = true,
-        callback = function()
-          local current = dp(ts)
-          if current.win_left ~= cur_left or current.win_right ~= cur_right then return end
-          if on_state_change then on_state_change(nil) end
-          vim.schedule(function()
-            local cur = dp(ts)
-            if cur.win_left ~= cur_left or cur.win_right ~= cur_right then
-              return
-            end
-            close_for(ts)
-            if ts.win and vim.api.nvim_win_is_valid(ts.win) then
-              vim.api.nvim_set_current_win(ts.win)
-            end
-          end)
-        end,
-      })
+  local function update_dual(d, changes_only, left_title)
+    if not content_shown then
+      local ft = vim.filetype.match({ filename = node.abs_path })
+      set_buffer_content(d.buf_left, left_data.lines, left_data.kind == 'text' and ft or nil)
+      set_buffer_content(d.buf_right, right_data.lines, right_data.kind == 'text' and ft or nil)
+      if left_title ~= targets.left_title then
+        vim.api.nvim_win_set_config(d.win_left, { title = left_title, title_pos = 'center' })
+      end
+      for _, win in ipairs({ d.win_left, d.win_right }) do
+        vim.wo[win].diff = true
+        vim.wo[win].scrollbind = true
+        vim.wo[win].foldmethod = 'diff'
+      end
+    end
+    for _, win in ipairs({ d.win_left, d.win_right }) do
+      vim.wo[win].foldlevel = changes_only and 0 or 99
+      vim.wo[win].foldenable = changes_only
     end
   end
 
@@ -391,28 +402,24 @@ function M.show(item, on_state_change)
     return lines
   end
 
-  local function render_single(d, changes_only, left_title)
+  local function single_title(left_title)
+    return left_title .. '  →' .. targets.right_title
+  end
+
+  local function open_single(d, left_title)
     local width = math.floor(vim.o.columns * 0.85)
     local height = math.floor(vim.o.lines * 0.8)
     local row = math.floor((vim.o.lines - height) / 2)
     local col = math.floor((vim.o.columns - width) / 2)
 
-    local lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title, changes_only)
-
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.bo[buf].buftype = 'nofile'
-    vim.bo[buf].bufhidden = 'wipe'
-    vim.bo[buf].filetype = 'diff'
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-    vim.bo[buf].modifiable = false
-
+    local buf = loading_buffer()
     d.buf_single = buf
     d.win_single = vim.api.nvim_open_win(buf, false, {
       relative = 'editor',
       row = row, col = col,
       width = width, height = height,
       style = 'minimal', border = 'single',
-      title = left_title .. '  →' .. targets.right_title,
+      title = single_title(left_title),
       title_pos = 'center',
     })
     vim.wo[d.win_single].wrap = false
@@ -422,63 +429,28 @@ function M.show(item, on_state_change)
     vim.wo[d.win_single].statuscolumn = ''
     vim.wo[d.win_single].signcolumn = 'no'
     vim.wo[d.win_single].foldcolumn = '0'
-    vim.wo[d.win_single].winhighlight = 'Normal:Normal,FloatBorder:Fg'
-
-    local function close_and_return()
-      vim.schedule(function()
-        close_for(ts)
-        if on_state_change then on_state_change(nil) end
-        if ts.win and vim.api.nvim_win_is_valid(ts.win) then
-          vim.api.nvim_set_current_win(ts.win)
-        end
-      end)
-    end
+    vim.wo[d.win_single].winhighlight = preview_winhighlight
 
     local bopts = { buffer = buf, nowait = true, silent = true }
     vim.keymap.set('n', 'q', close_and_return, bopts)
     vim.keymap.set('n', 'd', toggle_mode_here, bopts)
-    vim.keymap.set('n', 'c', function()
-      changes_only = M.toggle_changes_only()
-      local updated_lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title, changes_only)
-      vim.bo[buf].modifiable = true
-      vim.api.nvim_buf_set_lines(buf, 0, -1, false, updated_lines)
-      vim.bo[buf].modifiable = false
-      vim.notify('Changes only: ' .. (changes_only and 'on' or 'off'), vim.log.levels.INFO)
-    end, bopts)
+    vim.keymap.set('n', 'c', toggle_changes_only_here, bopts)
+    watch_close(d.win_single)
+  end
 
-    local cur_win = d.win_single
-    vim.api.nvim_create_autocmd('WinClosed', {
-      pattern = tostring(cur_win),
-      once = true,
-      callback = function()
-        if dp(ts).win_single ~= cur_win then return end
-        if on_state_change then on_state_change(nil) end
-        vim.schedule(function()
-          local cur = dp(ts)
-          if cur.win_single ~= cur_win then return end
-          close_for(ts)
-          if ts.win and vim.api.nvim_win_is_valid(ts.win) then
-            vim.api.nvim_set_current_win(ts.win)
-          end
-        end)
-      end,
-    })
+  local function update_single(d, changes_only, left_title)
+    local lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title, changes_only)
+    set_buffer_content(d.buf_single, lines, 'diff')
+    if not content_shown and left_title ~= targets.left_title then
+      vim.api.nvim_win_set_config(d.win_single, { title = single_title(left_title), title_pos = 'center' })
+    end
   end
 
   local function render_preview()
     if generation ~= dp(ts).generation or vim.api.nvim_get_current_tabpage() ~= tabpage or ts.active_tab_idx ~= source_idx then return end
     local d = dp(ts)
-    local current_win = vim.api.nvim_get_current_win()
-    local restore_focus = current_win == d.win_single or current_win == d.win_left or current_win == d.win_right
-    close_for(ts)
-    ui.close_current_popup()
-    if on_state_change then on_state_change('diff') end
-
-    -- If a fetch never delivered (e.g. timeout fired), substitute a
-    -- placeholder so the diff still opens instead of hanging.
-    left_data = left_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
-    right_data = right_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
-
+    local single = M.get_mode() == 'single'
+    local existing = single and d.win_single or (not single and d.win_left)
     local changes_only = env_keeper.get('sidebar_diff_changes_only', false)
 
     -- Augment HEAD title with short hash when appropriate.
@@ -487,12 +459,28 @@ function M.show(item, on_state_change)
       left_title = left_title:gsub('HEAD', 'HEAD (' .. head_short .. ')')
     end
 
-    if M.get_mode() == 'single' then
-      render_single(d, changes_only, left_title)
-    else
-      render_dual(d, changes_only, left_title)
+    local restore_focus = false
+    if not existing or not vim.api.nvim_win_is_valid(existing) then
+      restore_focus = owns_window(vim.api.nvim_get_current_win())
+      close_for(ts)
+      ui.close_current_popup()
+      content_shown = false
+      if single then
+        open_single(d, left_title)
+      else
+        open_dual(d, left_title)
+      end
+    end
+    if rendered then
+      if single then
+        update_single(d, changes_only, left_title)
+      else
+        update_dual(d, changes_only, left_title)
+      end
+      content_shown = true
     end
     d.refresh = render_preview
+    if on_state_change then on_state_change('diff') end
     if restore_focus then
       vim.api.nvim_set_current_win(d.win_single or d.win_left)
     end
@@ -513,6 +501,8 @@ function M.show(item, on_state_change)
       dp(ts).timer = nil
     end
     rendered = true
+    left_data = left_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
+    right_data = right_data or { lines = { '[fetch timed out]' }, kind = 'missing' }
     render_preview()
   end
 
@@ -531,6 +521,11 @@ function M.show(item, on_state_change)
       end
     end
   end
+
+  -- Keep the same windows while the contents load.
+  close_for(ts)
+  render_preview()
+  if generation ~= dp(ts).generation then return end
 
   -- Fallback: if any vim.system callback is lost, render after 5s with
   -- the data we have so the diff floats never hang.

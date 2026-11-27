@@ -1205,6 +1205,76 @@ run('History Space preview uses Changes controls and m marks commits', function(
   c.stop()
 end)
 
+run('History diff shows loading and fills the same windows', function()
+  local c = child('project', 'dual')
+  c.go('picked-change')
+  c.feed('l')
+  c.go('demo.txt')
+  c.q([[
+    local system=vim.system
+    _G.pending_git={}
+    vim.system=function(args,opts,done)
+      if args[1]=='git' and args[2]=='show' then
+        pending_git[#pending_git+1]=function() system(args,opts,done) end
+        return {}
+      end
+      return system(args,opts,done)
+    end
+    function finish_git()
+      local jobs=pending_git
+      pending_git={}
+      for _,run in ipairs(jobs) do run() end
+    end
+  ]])
+  for _, mode in ipairs { 'dual', 'single' } do
+    c.q([[saved_diff_prefs.sidebar_diff_mode=...]], { mode })
+    c.feed('<Space>')
+    c.q([[
+      local d=require('lu5je0.ext.sidebar.state').diff_preview
+      _G.loading_win=d.win_single or d.win_left
+      _G.loading_right=d.win_right
+      _G.loading_style=vim.wo[loading_win].winhighlight
+      for _, win in ipairs({loading_win,loading_right}) do
+        local border=vim.api.nvim_win_get_config(win).border
+        assert(border[1]=='┌' and border[3]=='┐' and border[5]=='┘' and border[7]=='└')
+        assert(vim.wo[win].winhighlight:find('NormalFloat:Normal',1,true))
+      end
+      assert(#pending_git==2 and d.timer)
+      assert(vim.api.nvim_buf_get_lines(vim.api.nvim_win_get_buf(loading_win),0,1,false)[1]:find('Loading diff',1,true))
+    ]])
+    c.feed('<Space>')
+    c.q([[
+      assert(vim.api.nvim_get_current_win()==loading_win)
+      finish_git()
+    ]])
+    c.wait([[
+      local d=require('lu5je0.ext.sidebar.state').diff_preview
+      local buf=d.buf_single or d.buf_right
+      return buf and table.concat(vim.api.nvim_buf_get_lines(buf,0,-1,false),'\n'):find('gamma',1,true)~=nil
+    ]])
+    c.q([[
+      local d=require('lu5je0.ext.sidebar.state').diff_preview
+      assert((d.win_single or d.win_left)==loading_win and d.win_right==loading_right)
+      assert(vim.wo[loading_win].winhighlight==loading_style)
+      assert(vim.api.nvim_get_current_win()==loading_win)
+      assert(d.timer==nil)
+    ]])
+    c.feed('q')
+    c.wait([[return vim.api.nvim_get_current_win()==log_win]])
+  end
+  c.feed('<Space>')
+  c.q([[
+    local d=require('lu5je0.ext.sidebar.state').diff_preview
+    vim.api.nvim_win_close(d.win_single,true)
+    finish_git()
+  ]])
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    assert(s.diff_preview.win_single==nil and s.diff_preview.timer==nil and not s.preview.active)
+  ]])
+  c.stop()
+end)
+
 run('Files Changes Symbols are default tabs while History and Buffers are transient', function()
   local c = child('project')
   c.q([[

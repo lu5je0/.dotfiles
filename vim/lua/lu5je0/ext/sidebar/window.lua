@@ -40,6 +40,9 @@ function M.open()
   vim.wo[win].cursorline = true
   vim.wo[win].cursorlineopt = 'line'
   vim.wo[win].wrap = false
+  -- Sidebar tree folds are rendered by Lua. Preview floats inherit window options.
+  vim.wo[win].foldmethod = 'manual'
+  vim.wo[win].foldexpr = '0'
   vim.wo[win].list = false
   vim.wo[win].winfixwidth = true
   vim.wo[win].winfixbuf = true

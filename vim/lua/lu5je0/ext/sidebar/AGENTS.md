@@ -93,12 +93,14 @@ sidebar/
 - Changes 离开时取消 stash 加载；没有缓存条目的列表与未加载完的 stash 文件节点恢复折叠，返回后可按 `l` 重试，已加载内容与展开状态保留。Symbols 进入时先同步渲染缓存或空状态，再发起请求，等待 LSP 时不能保留上一页内容。
 
 - Git diff 的布局与 changes-only 独立保存：`d` 保留上下文偏好；`c` 在 single 模式切换完整上下文 / 改动附近 3 行，在 dual 模式展开 / 折叠未变化区域。Space 预览期间，在列表或预览窗口按 `d` / `c` 均立即使用已加载内容刷新，不重读文件；切换布局保留当前焦点所在区域。
+- Diff 浮窗先显示加载状态，读取完成后在原窗口填入内容。加载过程中可关闭、进入浮窗或切换布局；关闭后旧回调不得重开窗口。Sidebar 使用普通窗口折叠设置，避免预览创建时继承编辑器的 Tree-sitter 折叠，双栏加载完成后启用原生 diff 折叠。
 
 - 普通模式 `<leader>gl` 打开 History；merge 展开后按全部 parent 分组，Parent 标题使用独立暖黄色 `SidebarHistoryParent`，文件 diff 比较所属 parent 与 merge 结果，组内目录折叠状态独立；首次展开异步加载并缓存，切页/关闭取消，返回恢复未完成任务，无变化显示 `No changes`；`h/l`、`zo/zc` 折叠/展开，目录默认展开，连续目录链合并显示，打开目录时自动展开仅有一个子目录的连续链，在出现分支、文件或空目录时停止；收起时整条合并显示的目录链一起关闭，分支以下手动折叠的子节点保持折叠；文件行 Enter 打开工作区文件；Space 在提交行预览元数据及变更文件列表，在文件行预览历史 diff，再按进入浮窗，`d` / `c` 与 Changes 共用偏好及已加载内容，光标移走关闭预览。`m` 勾选 commit（支持 Visual），`U` 清空、Enter 查看勾选的净变化；`K` 查看提交详情，`gG` 切换 Tig v2 提交关系图（按 tabpage 保存开关，复用已加载提交的图形缓存），`r` 刷新，`ga` 加载全部，`Z` 调整宽度；普通提交标题使用正常文字对比度，短 hash 为青色、日期为暖色；merge 提交的标题、hash 和日期统一使用灰色 `SidebarHistoryMerge` 弱化，展开箭头保持蓝色，日期靠右，名称按可用宽度用省略号截断并为状态保留空间，完整信息通过 `K` 查看。
 
 ## 高亮约定
 
 - 全部 highlight 集中在 `config.highlights` 表（包括 `Sidebar*`、`GitChanges*`、`GitFileStatus*`），由 `init.setup` → `config.apply_highlights()` 应用。
+- Diff 浮窗的单栏和双栏均使用直角边框，窗口底色跟随编辑区的 `Normal`。
 - History 的箭头、hash 与标题使用互不重叠的高亮区间，禁止同优先级叠色；Tig 图形使用上游 14 色 ANSI palette 顺序和蓝色提交节点，RGB 取当前 terminal_color 或标准 ANSI 回退，由 config.apply_highlights 集中注册。
 - ColorScheme 切换时 `autocmds.lua` 会重新 apply。
 - Changes 的折叠目录在右侧显示方括号状态汇总：Changes 按 XY 两列分别汇总，相同字符（含空格）保留，混合为 `*`；Staged / Unstaged 只显示对应列，Untracked 显示 `[?]`。汇总在建树时自底向上计算，使用独立 `git_summary` 字段，不给目录设置文件 `xy`；展开后隐藏，章节和 stash 标题不显示，History 不启用。具体字母和 `?` 沿用文件状态颜色，`*` 与括号同为灰色，后代含冲突时 `*` 为红色；目录名称保留现有样式和整目录删除高亮。
