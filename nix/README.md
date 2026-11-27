@@ -54,23 +54,23 @@ systemctl --user restart desktop-icon-overrides.service
 
 ## GNOME 的 Nix 应用自动刷新
 
-GNOME 模块安装 `nix-profile-applications.path` 和同名用户服务。通过 inotify 监视用户
-profile 的父目录、系统 profile 和 `/run/current-system` 切换；登录时也同步一次，不使用轮询或定时器。
-支持 `nix profile add/upgrade/remove`、`nh os switch` 和系统中的用户包，用户 profile 优先。
+GNOME 模块安装 `nix-profile-applications.path` 和同名用户服务。服务在登录和
+`nix profile add/upgrade/remove` 后同步 `~/.nix-profile` 或 `$XDG_STATE_HOME/nix/profile` 的启动项。
+GNOME 通过 `XDG_DATA_DIRS` 直接读取系统包和 NixOS 声明式用户包的启动项。
 
 服务在 `~/.local/share/applications`（或 `$XDG_DATA_HOME/applications`）生成启动项，
 把 profile 提供的图标名改为实际图标文件的绝对路径，绕开 GNOME 的图标主题缓存。
 启动入口调用固定位置的 `launch.js`，由 GIO 读取当前的原启动项，避免 GNOME 缓存旧的 store 启动命令。
 原启动项保存在状态目录的 `launchers/`，保留参数、工作目录、终端和 D-Bus 激活设置；右键动作也从当前原启动项读取。
 文件关联不变；profile 没提供的图标继续按主题名查找。此服务不处理托盘图标。
-绝对路径固定图标选择，不随图标主题切换。
+绝对路径固定图标选择，不随图标主题切换。GNOME 设置侧栏只读取主题图标名，因此设置面板保留原图标名。
 同步及图标覆盖服务都会刷新用户目录的 `mimeinfo.cache`，使用户启动项覆盖系统入口后仍能参与
 文件类型关联；不修改用户的默认应用偏好。
 
 状态记录在 `$XDG_STATE_HOME/nix-profile-applications`（默认 `~/.local/state/` 下）。
 升级时刷新、卸载时清理，只修改本服务生成且未被用户编辑的文件；已有手工启动项及其他来源的链接
-不会被覆盖。直接指向 profile 启动项的链接会被接管。`programs.desktopIconOverrides` 中配置的
-启动项交给图标覆盖服务处理，profile 切换后也会触发该服务刷新。
+不会被覆盖。直接指向个人 profile 启动项的链接会被接管。`programs.desktopIconOverrides` 中配置的
+启动项交给图标覆盖服务处理，个人 profile 切换后也会触发该服务刷新。
 
 查看监视状态和同步日志：
 

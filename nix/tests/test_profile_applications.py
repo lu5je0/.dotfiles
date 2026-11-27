@@ -38,8 +38,8 @@ class ProfileApplicationsTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.data = self.root / "data"
         self.state = self.root / "state"
-        self.profile = self.root / "profile"
-        self.system = self.root / "system"
+        self.profile = self.root / ".nix-profile"
+        self.xdg_profile = self.state / "nix/profile"
         self.applications = self.data / "applications"
 
     def generation(self, name, launcher=LAUNCHER, desktop_id="player.desktop"):
@@ -57,12 +57,13 @@ class ProfileApplicationsTest(unittest.TestCase):
 
     def switch(self, generation, profile=None):
         profile = profile or self.profile
+        profile.parent.mkdir(parents=True, exist_ok=True)
         temporary = profile.with_suffix(".tmp")
         temporary.symlink_to(generation)
         temporary.replace(profile)
 
     def run_sync(self, excluded=(), force=False, desktop_database=None):
-        return sync.sync([self.profile, self.system], self.data, self.state, excluded, force, desktop_database)
+        return sync.sync([self.profile, self.xdg_profile], self.data, self.state, excluded, force, desktop_database)
 
     @unittest.skipUnless(DESKTOP_DATABASE and shutil.which("gio"), "requires desktop-file-utils and gio")
     def test_gio_registers_and_unregisters_mime_handlers(self):
@@ -118,6 +119,19 @@ class ProfileApplicationsTest(unittest.TestCase):
         self.run_sync()
         self.assertFalse(destination.exists())
         self.assertFalse(source.exists())
+
+    def test_gnome_settings_panel_keeps_themed_icon(self):
+        desktop_id = "gnome-sound-panel.desktop"
+        launcher = LAUNCHER.replace("Exec=player %U", "Exec=gnome-control-center sound\n"
+                                    "Categories=GNOME;Settings;X-GNOME-Settings-Panel;\nNoDisplay=true")
+        self.switch(self.generation("user-generation", launcher, desktop_id))
+        self.run_sync()
+
+        destination = self.applications / desktop_id
+        self.assertIn("\nIcon=player\n", destination.read_text())
+        self.assertIn("\nNoDisplay=true\n", destination.read_text())
+        source = self.state / "nix-profile-applications/launchers" / desktop_id
+        self.assertEqual(source.read_text(), launcher)
 
     @unittest.skipUnless(GJS and shutil.which("gio"), "requires GJS and GIO")
     def test_cached_launcher_uses_latest_command_arguments_cwd_and_actions(self):
@@ -177,18 +191,39 @@ class ProfileApplicationsTest(unittest.TestCase):
             self.assertTrue(self.run_sync())
             self.assertEqual(target.read_bytes(), original)
 
-    def test_system_switch_and_user_priority(self):
-        self.switch(self.generation("system-v1", LAUNCHER.replace("Name=示例", "Name=System")), self.system)
+    def test_both_personal_profile_locations_and_priority(self):
+        self.switch(self.generation("xdg", LAUNCHER.replace("Name=示例", "Name=XDG")), self.xdg_profile)
         self.run_sync()
         destination = self.applications / "player.desktop"
-        self.assertIn("Name=System", destination.read_text())
+        self.assertIn("Name=XDG", destination.read_text())
         self.switch(self.generation("user"))
         self.run_sync()
         self.assertIn("Name=示例", destination.read_text())
         self.profile.unlink()
-        self.switch(self.generation("system-v2", LAUNCHER.replace("Name=示例", "Name=System v2")), self.system)
         self.run_sync()
-        self.assertIn("Name=System v2", destination.read_text())
+        self.assertIn("Name=XDG", destination.read_text())
+
+    def test_migration_clears_managed_system_launchers_and_preserves_user_edits(self):
+        self.switch(self.generation("user"))
+        system = self.generation("system", desktop_id="gnome-sound-panel.desktop")
+        declarative_user = self.generation("declarative-user", desktop_id="declarative.desktop")
+        (system / "share/applications/edited.desktop").write_text(LAUNCHER)
+        sync.sync([self.profile, declarative_user, system], self.data, self.state)
+        state = self.state / "nix-profile-applications"
+        manifest_path = state / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["identity"]["version"] = 4
+        manifest_path.write_text(json.dumps(manifest))
+        edited = self.applications / "edited.desktop"
+        edited.write_text(LAUNCHER.replace("Name=示例", "Name=User edit"))
+
+        self.assertTrue(self.run_sync())
+        for desktop_id in ["gnome-sound-panel.desktop", "declarative.desktop"]:
+            self.assertFalse((self.applications / desktop_id).exists())
+            self.assertFalse((state / "launchers" / desktop_id).exists())
+        self.assertIn("Name=User edit", edited.read_text())
+        self.assertEqual(set(json.loads(manifest_path.read_text())["entries"]), {"player.desktop"})
+        self.assertFalse(self.run_sync())
 
     def test_unchanged_generation_does_not_rewrite_files(self):
         self.switch(self.generation("first"))

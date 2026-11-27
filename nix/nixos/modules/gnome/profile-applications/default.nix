@@ -22,20 +22,17 @@ in
     pathConfig = {
       # Watch the real parent directories, not an immutable generation's share directory.
       PathChanged = [
+        "%S/nix"
         "%S/nix/profiles"
         "/nix/var/nix/profiles/per-user/%u"
         "%h"
-        "/nix/var/nix/profiles"
-        "/run"
-        "/etc/profiles"
-        "/etc/profiles/per-user"
       ];
       Unit = "nix-profile-applications.service";
     };
   };
 
   systemd.user.services.nix-profile-applications = {
-    description = "Synchronize Nix profile application launchers and icons";
+    description = "Synchronize Nix user profile application launchers and icons";
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
     after = [ "graphical-session-pre.target" ];

@@ -2,7 +2,6 @@
 
 import argparse
 import fcntl
-import getpass
 import hashlib
 import json
 import os
@@ -62,8 +61,16 @@ def files_under(root):
 
 
 def rewrite_icons(text, icons):
+    # GNOME Settings only reads themed icons when building its panel list.
+    lines = text.splitlines(keepends=True)
+    if any(
+        "X-GNOME-Settings-Panel" in line.strip().removeprefix("Categories=").split(";")
+        for line in lines if line.startswith("Categories=")
+    ):
+        return text.encode("utf-8")
+
     output = []
-    for line in text.splitlines(keepends=True):
+    for line in lines:
         key, separator, value = line.partition("=")
         if separator and key.strip() == "Icon":
             name = value.strip()
@@ -135,7 +142,7 @@ def sync(profiles, data_home, state_home, excluded=(), force=False, desktop_data
         previous = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
         while True:
             generations = [profile.resolve() for profile in profiles]
-            identity = {"version": 3, "generations": list(map(str, generations)), "excluded": sorted(excluded),
+            identity = {"version": 5, "generations": list(map(str, generations)), "excluded": sorted(excluded),
                         "dispatcher": digest(dispatcher_content)}
             if (not force and previous.get("identity") == identity
                     and previous.get("mime_cache_ready")
@@ -218,11 +225,11 @@ def main():
     parser.add_argument("--force", action="store_true", help="resync even if the generation is unchanged")
     args = parser.parse_args()
     excluded = json.loads(args.exclude.read_text()) if args.exclude else []
-    changed = sync([Path.home() / ".nix-profile", Path("/etc/profiles/per-user") / getpass.getuser(),
-          Path("/run/current-system/sw")],
-         Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")),
-         Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")),
-         excluded, args.force, args.desktop_database, args.dispatcher)
+    home = Path.home()
+    state_home = Path(os.environ.get("XDG_STATE_HOME", home / ".local/state"))
+    data_home = Path(os.environ.get("XDG_DATA_HOME", home / ".local/share"))
+    profiles = [home / ".nix-profile", state_home / "nix/profile"]
+    changed = sync(profiles, data_home, state_home, excluded, args.force, args.desktop_database, args.dispatcher)
     if changed and args.systemctl:
         subprocess.run([str(args.systemctl), "--user", "--no-block", "try-restart",
                         "desktop-icon-overrides.service"], check=True)

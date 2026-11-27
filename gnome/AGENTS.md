@@ -2,8 +2,10 @@
 
 ## 应用启动项同步
 
-- `nix-profile-applications.service` 在登录和 Nix profile 切换时，将各 profile 的启动项同步到
+- `nix-profile-applications.service` 在登录和个人 Nix profile 切换时，将个人 profile 的启动项同步到
   `~/.local/share/applications`，并将可解析的图标名改为绝对路径；保留用户自行修改的启动项。
+  系统及 NixOS 声明式用户包的启动项由 GNOME 直接读取。
+- GNOME 设置侧栏只读取主题图标名，带 `X-GNOME-Settings-Panel` 分类的启动项保留原图标名。
 - `nix/nixos/modules/gnome/profile-applications/` 管理同步；同一 generation 再次执行时也会恢复缺失的托管启动项。
 - 生成的入口通过状态目录中的固定 `launch.js` 调用 GIO，启动命令及右键动作读取 `launchers/` 中的当前原启动项。
   首次启用后需注销重登以刷新已缓存的旧入口；后续升级无需因启动命令变化而重登。
