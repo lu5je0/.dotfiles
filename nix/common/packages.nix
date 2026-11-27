@@ -32,8 +32,8 @@
   ];
 
   userPackages = with pkgs; [
-    (pkgs.callPackage ../nixos/pkgs/q-trash { })
-    (pkgs.callPackage ../nixos/pkgs/tui-bridge { })
+    (pkgs.callPackage ./pkgs/q-trash { })
+    (pkgs.callPackage ./pkgs/tui-bridge { })
     bun
     nodejs
     openssl

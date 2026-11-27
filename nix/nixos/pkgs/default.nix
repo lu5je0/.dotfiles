@@ -8,8 +8,8 @@ let
   commonPkgs = ../../common/pkgs;
 in
 {
-  q-trash = pkgs.callPackage ./q-trash { };
-  tui-bridge = pkgs.callPackage ./tui-bridge { };
+  q-trash = pkgs.callPackage (commonPkgs + "/q-trash") { };
+  tui-bridge = pkgs.callPackage (commonPkgs + "/tui-bridge") { };
   arcglyph = inputs.arcglyph.packages.${pkgs.stdenv.hostPlatform.system}.default;
   btop = pkgs.callPackage ./btop { };
   codex-desktop = pkgs.callPackage ./codex-desktop { flake = inputs.llm-agents; };

@@ -10,7 +10,7 @@ in
     ../modules/oomd.nix
     ../modules/nh.nix
     ../modules/nix-ld.nix
-    ../modules/packages.nix
+    ../packages.nix
     ../modules/zsh.nix
   ];
 

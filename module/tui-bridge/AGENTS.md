@@ -33,7 +33,7 @@
 - Linux 构建依赖：`gcc`、`pkg-config`、`wayland-scanner`、`libwayland-dev`、`libdbus-1-dev`、`libx11-dev`；运行时动态链接 `libwayland-client`、`libdbus-1` 与 `libX11`。
 - `VERSION` 是版本号的唯一来源；`build.sh` 将它注入 `TUI_BRIDGE_VERSION` 编译宏。
 - 默认输出 `build/tui-bridge`（Windows 为 `build/tui-bridge.exe`），构建产物不写入 Git，也不自动安装；传入输出路径时相对当前模块目录解析。
-- Nix 包定义位于 `nix/nixos/pkgs/tui-bridge/default.nix`，复用 `build.sh` 与 `VERSION`，通过共用软件清单在 NixOS / nix-darwin 原生构建安装；Linux 依赖由 Nix 链接，无需 nix-ld。`nix/nixos/pkgs/default.nix` 提供 x86_64-linux 独立构建入口。
+- Nix 包定义位于 `nix/common/pkgs/tui-bridge/default.nix`，复用 `build.sh` 与 `VERSION`，通过共用软件清单在 NixOS / nix-darwin 原生构建安装；Linux 依赖由 Nix 链接，无需 nix-ld。`nix/nixos/pkgs/default.nix` 提供 x86_64-linux 独立构建入口。
 - WSL 使用 Windows 的临时目录构建再复制输出；编译器通过 `WIN_CC` 覆盖，默认 `gcc.exe`（MSYS2 默认 `gcc`）。Windows 构建静态链接编译器运行库，系统 DLL 仍由 Windows 提供。
 
 ### Release 与安装

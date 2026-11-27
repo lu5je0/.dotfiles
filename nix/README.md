@@ -6,6 +6,7 @@
 - `common/nix.nix`：共用的 Nix 设置。
 - `common/pkgs/`：Linux 和 macOS 包清单共用的本地包定义。
 - `nixos/`：Linux 主机、模块、profiles 和 Linux 专用包。
+- `nixos/packages.nix`：NixOS 基础软件清单，由 `nixos/profiles/base.nix` 引入，追加 Linux 软件并区分系统与用户安装。
 - `darwin/default.nix`：Mac 入口；`darwin/packages.nix` 引入共用清单并追加 Mac 专属软件。
 - `darwin/pkgs/default.nix`：Mac 可单独构建或通过用户 profile 安装的软件。
 

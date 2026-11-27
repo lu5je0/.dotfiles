@@ -4,7 +4,7 @@
 
 - 主机专用包放在 `nixos/hosts/<主机名>/pkgs/<包名>/`，供 NixOS 主机共用的包可放在 `nixos/pkgs/`。
 - 需要独立构建入口时，可由根 flake 引用主机包目录，包定义仍留在所属主机下。
-- Linux / Darwin 两份包导出清单共用的本地包定义放在 `common/pkgs/<包名>/`。
+- NixOS 和 Darwin 共用的本地包定义放在 `common/pkgs/<包名>/`。
 - `nixos/pkgs/default.nix` 登记 Linux 共用包的独立构建 / profile 安装入口，接收 `{ pkgs, pkgsUnstable, inputs }` 并返回单平台包集合。
 - `darwin/pkgs/default.nix` 登记 Darwin 的独立构建 / profile 安装入口。
 - 包表达式用 `default.nix`；补丁、图标、升级脚本放同目录。
@@ -15,7 +15,7 @@
 
 - NixOS 与 Darwin 各自维护安装和导出入口，根 flake 提供独立构建入口；按实际复用需求组织共用定义。
 - Darwin 通过 `common/packages.nix` 及自身清单安装软件，可用自己的 `pkgs.callPackage` 直接引用共用包定义，不导入 Linux 个人包导出清单。
-- 跨平台软件清单放 `common/packages.nix`，由 `nixos/modules/packages.nix` 和 `darwin/packages.nix` 引入，
+- 跨平台软件清单放 `common/packages.nix`，由 `nixos/packages.nix` 和 `darwin/packages.nix` 引入，
   平台专属软件在各自清单中追加。共用 Nix 设置放 `common/nix.nix`。
 - Linux 额外缓存优先配置在 `nixos/profiles/base.nix`。
 - 不进系统配置的包安装到用户 profile。

@@ -12,7 +12,7 @@
 
 ## 构建与安装
 - `Cargo.toml` 是版本号唯一来源；提交 `Cargo.lock`。`cargo build --release` 构建，无 Python 运行时依赖。
-- Nix 包定义保留一份，位于 `nix/nixos/pkgs/q-trash/default.nix`；NixOS / nix-darwin 通过共用软件清单，用各自平台的 `pkgs.callPackage` 构建安装。`nix/nixos/pkgs/default.nix` 只登记 x86_64-linux 的独立构建入口，ARM Linux / Darwin 的系统安装不依赖此导出。
+- Nix 包定义保留一份，位于 `nix/common/pkgs/q-trash/default.nix`；NixOS / nix-darwin 通过共用软件清单，用各自平台的 `pkgs.callPackage` 构建安装。`nix/nixos/pkgs/default.nix` 只登记 x86_64-linux 的独立构建入口，ARM Linux / Darwin 的系统安装不依赖此导出。
 - Nix 与 setup 均提供 `q-trash`，zsh 按现有 PATH 顺序查找；`~/.local/bin` 优先，`safe_rm` 继续调用 `q-trash rm`。
 - setup.py 的 q-trash 模块通过 `scripts/setup.d/modules/unix/q-trash.sh` 安装固定版本的 GitHub Release 到 `~/.local/bin/q-trash`；SHA256 和候选文件版本均验证成功后原子替换，失败保留旧版本。
 - `.github/workflows/build-q-trash.yml` 构建 Linux x86_64 / aarch64 的 musl 静态产物和 macOS aarch64 原生产物。`q-trash-v<VERSION>` tag 与 Cargo 版本一致时发布；普通分支和手动运行只构建验证。
