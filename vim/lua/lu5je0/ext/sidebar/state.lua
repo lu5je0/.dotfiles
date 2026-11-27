@@ -77,6 +77,7 @@ local function new_tab_state(tabpage)
       git_root = nil,
       reveal_path = nil,
       live_filter = nil,
+      filter_prompt = nil,
       expand_job = nil,
 
       -- caches
@@ -86,13 +87,6 @@ local function new_tab_state(tabpage)
       -- libuv handles owned by this tab
       fs_watchers = {},
       fs_refresh_timer = nil,
-
-      -- live_filter overlay
-      _live_filter = {
-        buf = nil,
-        win = nil,
-        closing = false,
-      },
 
       -- clipboard mark for cut/copy/paste in files source
       _clipboard = nil,
@@ -116,7 +110,7 @@ local function new_tab_state(tabpage)
     history = {
       repo_root = nil,
       author_filter = nil,
-      author_prompt = nil,
+      filter_prompt = nil,
       graph_enabled = false,
       graph_rows = nil,
       commits = {},

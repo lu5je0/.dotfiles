@@ -1,6 +1,7 @@
 -- All sidebar autocmds, registered into a single `sidebar` augroup.
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local filter_prompt = require('lu5je0.ext.sidebar.filter_prompt')
 local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 
 local M = {}
@@ -61,8 +62,8 @@ function M.setup(group)
         if ts.win == win then
           require('lu5je0.ext.sidebar.tabs').save_view(ts)
           lifecycle.close(ts)
-        elseif ts.history.author_prompt and ts.history.author_prompt.win == win then
-          require('lu5je0.ext.sidebar.sources.history.author_filter').close(ts.history, true)
+        else
+          filter_prompt.on_window_closed(ts, win)
         end
       end
     end,

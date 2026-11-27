@@ -18,6 +18,7 @@ sidebar/
 ├── full_name.lua      -- 长文件名浮窗（CursorMoved/WinScrolled 触发）
 ├── tabs.lua           -- winbar 渲染、tab 切换
 ├── keymaps.lua        -- 共享 + per-tab 快捷键管理
+├── filter_prompt.lua  -- Files / History 共用的首行筛选、输入浮窗与确认/取消
 ├── folds.lua          -- 折叠键定义、已加载子树的批量折叠与展开
 ├── autocmds.lua       -- 集中注册到 `sidebar` augroup（DirChanged / TabEnter+TabClosed / WinClosed /
 │                          ColorScheme / BufWritePost+FileChangedShellPost+FocusGained / BufEnter+LspAttach /
@@ -33,7 +34,6 @@ sidebar/
 │   │   ├── tree.lua          -- 节点 / scan_dir / ensure_children / rescan / rel_to_cwd / make_filter
 │   │   ├── expand.lua        -- 分批递归展开与取消（per-tab expand_job）
 │   │   ├── git.lua           -- build_status_map / status_to_glyph / is_git_item
-│   │   ├── live_filter.lua   -- 过滤 overlay（per-tab buf/win/closing 在 state.files._live_filter）
 │   │   └── info.lua          -- show_file_info 浮窗
 │   ├── git_changes.lua       -- 兼容 shim → sources.git_changes.init
 │   ├── git_changes/
@@ -42,7 +42,7 @@ sidebar/
 │   │   └── locate.lua        -- do_locate / do_locate_first 实现
 │   ├── history/
 │   │   ├── init.lua          -- History source：提交树、勾选、历史 diff 目标与 open 入口
-│   │   ├── author_filter.lua -- 第一行作者筛选与补全
+│   │   ├── author_filter.lua -- 作者姓名和邮箱补全
 │   │   ├── model.lua         -- 项目历史 / merge parent 文件列表的异步加载、缓存与取消
 │   │   ├── core.lua          -- Git 日志与文件状态输出解析
 │   │   └── tig.lua           -- Tig v2 提交图布局与颜色编号
@@ -90,6 +90,7 @@ sidebar/
 
 - `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）。
 - 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
+- Files 和 History 的 `f` 在首行打开筛选浮窗。打开和取消时只更新筛选行，回车应用或清除空查询，`Esc` 保留之前的筛选。Files 按文件名匹配正则，也可用 `F` 清除筛选。
 
 - Files、Changes、Symbols、History 支持 `zo` 展开一层、`zc` 折叠最近一层、`zO` 递归展开、`zC` 递归折叠当前节点及其子折叠，以及 `zR` / `zM`。叶子行上的 `zC` 使用最近的可折叠父节点，保留其外层和旁支的开合状态。在 Files 根标题上按 `zC` 收起标题下所有目录。文件树和符号树的 `zR` 展开整棵树。Files 递归展开分批扫描和渲染，遵循隐藏目录设置并跳过符号链接。`Esc` 保留已显示的内容并停止后续批次，切页、换目录或关闭 Sidebar 也会取消任务。
 - Changes 的 `zR` 展开当前分组。Stashes 按需加载，异步结果按当前子折叠设置显示。History 的 `zO` 展开当前提交、parent 或目录，`zR` 展开光标所在提交的全部折叠，`zM` 收起全部提交。对单个提交操作时，只重绘该提交的行。
@@ -103,6 +104,7 @@ sidebar/
 ## 高亮约定
 
 - 全部 highlight 集中在 `config.highlights` 表（包括 `Sidebar*`、`GitChanges*`、`GitFileStatus*`），由 `init.setup` → `config.apply_highlights()` 应用。
+- Files 和 History 的筛选行与输入浮窗使用 `NormalFloat` 底色，整行高亮与光标位置无关。
 - Diff 浮窗的单栏和双栏均使用直角边框，窗口底色跟随编辑区的 `Normal`。
 - 单栏 diff 复用 `git/common/unified-diff-highlight.lua` 的行背景和源码语法高亮。
 - History 的箭头、hash 与标题使用互不重叠的高亮区间，禁止同优先级叠色；Tig 图形使用上游 14 色 ANSI palette 顺序和蓝色提交节点，RGB 取当前 terminal_color 或标准 ANSI 回退，由 config.apply_highlights 集中注册。
@@ -118,7 +120,7 @@ sidebar/
 - **render 路径禁止同步外部命令**。git 数据通过异步预加载，render 只读缓存。
 - History 展开、折叠及 merge parent 加载完成时只重绘所属提交的行；重新加载、切换提交图和窗口宽度变化时重绘全页。
 - History 的 `ga` 加载全部提交时保留当前列表；完成后按提交和树节点恢复光标与视口，并保留仍在历史中的提交展开状态和勾选。
-- History 的 `f` 在第一行按作者姓名或邮箱筛选，复用 Files 的筛选行样式。按 `Tab` 补全、回车应用（空输入清除）、`Esc` 取消。补全异步读取 HEAD 可达的作者，筛选在 Git 限制提交数量前执行，`ga` 加载所有匹配提交。筛选按 tabpage 和仓库保留，显式跳转到提交时清除。筛选后的关系图只连显示的直接 parent，历史 diff 仍使用实际 parent。
+- History 按作者姓名或邮箱筛选。`Tab` 补全异步读取 HEAD 可达的作者，筛选在 Git 限制提交数量前执行，`ga` 加载所有匹配提交。筛选按 tabpage 和仓库保留，显式跳转到提交时清除。筛选后的关系图只连显示的直接 parent，历史 diff 仍使用实际 parent。
 - render 路径不调用 `redraw` / `redrawstatus` 强制刷新屏幕，确保视图恢复前的中间画面不会显示；剪贴板状态栏刷新只在复制/剪切操作中执行，`apply_clipboard_mark` 仅更新高亮。
 - 修改 render、CursorMoved 或高频 autocmd 时检查热路径开销；有明显性能影响时说明验证结果。
 - 所有 Git 状态触发统一调用 `git_status.lua`，由它执行一次 `git status` 并分发给 Files 与 Git Changes；不要在 source 或 autocmd 中另起查询。
@@ -145,7 +147,7 @@ sidebar/
   - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
-  - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，并用真实按键验证 Files 筛选状态栏、递归展开和取消
+  - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，并用真实按键验证 Files 首行筛选、状态栏、递归展开和取消
   - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入、单栏跨 hunk 的语法高亮和行背景
   - `parser_spec.lua` — 独立 Git fixture 下的 `files_to_tree_nodes`、`git_root` 缓存自失效（同 cwd 出现嵌套仓库 / worktree、根标记删除后回退父仓库）
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为

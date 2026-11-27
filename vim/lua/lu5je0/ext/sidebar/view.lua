@@ -34,7 +34,11 @@ function M.flush(lines, highlights, virt_texts, first, last)
   M.clear_highlights(first, last)
   M.set_lines(lines, first, last)
   for _, h in ipairs(highlights) do
-    M.add_highlight(first + h.line, h.hl, h.col_start, h.col_end)
+    if h.line_hl_group then
+      vim.api.nvim_buf_set_extmark(state.buf, ns_id, first + h.line, 0, { line_hl_group = h.line_hl_group })
+    else
+      M.add_highlight(first + h.line, h.hl, h.col_start, h.col_end)
+    end
   end
   for _, vt in ipairs(virt_texts or {}) do
     vim.api.nvim_buf_set_extmark(state.buf, ns_id, first + vt.line, 0, {

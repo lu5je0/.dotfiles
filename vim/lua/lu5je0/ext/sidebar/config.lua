@@ -49,6 +49,7 @@ M.highlights = {
   { 'SidebarSectionName', { fg = '#5c6370', bold = true, default = true } },
   { 'SidebarCut', { underline = true, sp = '#e06c75', default = true } },
   { 'SidebarCopy', { underline = true, sp = '#61afef', default = true } },
+  { 'SidebarLiveFilterBackground', { link = 'NormalFloat', default = true } },
   { 'SidebarLiveFilterPrefix', { fg = '#61afef', bold = true, default = true } },
   { 'SidebarLiveFilterValue', { fg = '#e5c07b', default = true } },
   { 'SidebarTabActive', { fg = '#abb2bf', bg = '#3e4452', bold = true, default = true } },

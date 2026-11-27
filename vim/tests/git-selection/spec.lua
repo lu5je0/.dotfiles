@@ -1495,11 +1495,11 @@ run('History author filter completes names and emails beyond the initial log', f
     c.feed('f')
     c.wait([[
       local h=require('lu5je0.ext.sidebar.state').history
-      return h.author_prompt and not h.author_prompt.job and vim.api.nvim_get_current_win()==h.author_prompt.win
+      return h.filter_prompt and not h.filter_prompt.job and vim.api.nvim_get_current_win()==h.filter_prompt.win
     ]])
     c.q([[
       local s=require('lu5je0.ext.sidebar.state')
-      local popup=vim.api.nvim_win_get_config(s.history.author_prompt.win)
+      local popup=vim.api.nvim_win_get_config(s.history.filter_prompt.win)
       assert(popup.relative=='win' and popup.win==s.win and popup.bufpos[1]==0 and popup.height==1)
       assert(s.history.display_items[1].type=='filter')
     ]])
@@ -1550,7 +1550,7 @@ run('History author filter completes names and emails beyond the initial log', f
   c.feed('<C-u>unused<Esc>')
   c.q([[
     local h=require('lu5je0.ext.sidebar.state').history
-    assert(not h.author_prompt and h.author_filter=='ada+review@example.test')
+    assert(not h.filter_prompt and h.author_filter=='ada+review@example.test')
   ]])
   open_prompt()
   c.feed('<C-u>ADA+REVIEW<CR>')
@@ -1582,12 +1582,12 @@ run('History author filter cancels completion when the Sidebar closes', function
   c.feed('f')
   c.q([[
     local s=require('lu5je0.ext.sidebar.state')
-    local prompt=s.history.author_prompt.win
+    local prompt=s.history.filter_prompt.win
     vim.api.nvim_win_close(s.win,true)
     assert(author_lookup_killed)
-    assert(not s.history.author_prompt and not vim.api.nvim_win_is_valid(prompt))
+    assert(not s.history.filter_prompt and not vim.api.nvim_win_is_valid(prompt))
     finish_author_lookup({{word='Late completion'}})
-    assert(not s.history.author_prompt)
+    assert(not s.history.filter_prompt)
   ]])
   c.stop()
 end)

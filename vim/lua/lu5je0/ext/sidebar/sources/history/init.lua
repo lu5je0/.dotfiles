@@ -1,5 +1,7 @@
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local filter_prompt = require('lu5je0.ext.sidebar.filter_prompt')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local folds = require('lu5je0.ext.sidebar.folds')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local view = require('lu5je0.ext.sidebar.view')
@@ -28,9 +30,7 @@ local function is_merge(commit)
 end
 
 local function filter_header(h)
-  if h.author_filter or h.author_prompt then
-    return author_filter.header(h.author_filter or '')
-  end
+  return filter_prompt.header(h, h.author_filter)
 end
 
 function spec.build(h, ctx)
@@ -233,14 +233,6 @@ local function redraw(ts, tabpage, commit)
   end
 end
 
-local function redraw_filter_header(ts, tabpage)
-  if visible(ts, tabpage) then
-    local first = ts.history.display_items[1]
-    local last = first and first.type == 'filter' and 1 or 0
-    source_base.render(spec, { header_only = true }, 0, last)
-  end
-end
-
 local function find_row(items, old)
   if not old or not old.node then
     return
@@ -358,7 +350,7 @@ function M.enter(_ctx, opts)
   local jump = opts and opts.history
   if jump and jump.jump_to_sha then
     local h = state.history
-    author_filter.close(h)
+    filter_prompt.close(h)
     h.author_filter = nil
     h.pending_jump_sha = jump.jump_to_sha
     h.pending_jump_file = jump.jump_to_file and jump.jump_to_file:gsub('^' .. vim.pesc(h.repo_root .. '/'), '')
@@ -391,7 +383,7 @@ function M.open(opts)
   end
   local h = state.history
   if root ~= h.repo_root then
-    author_filter.close(h)
+    filter_prompt.close(h)
     model.cancel(h)
     h.loaded, h.author_filter = false, nil
   end
@@ -401,7 +393,7 @@ end
 
 function M.leave(ctx)
   local ts = ctx.state
-  author_filter.close(ts.history)
+  filter_prompt.close(ts.history)
   model.cancel(ts.history)
   if ts.buf and vim.api.nvim_buf_is_valid(ts.buf) then
     vim.api.nvim_buf_clear_namespace(ts.buf, vim.api.nvim_create_namespace('git_commit_selection'), 0, -1)
@@ -409,7 +401,7 @@ function M.leave(ctx)
 end
 
 function M.dispose(ctx)
-  author_filter.close(ctx.state.history)
+  filter_prompt.close(ctx.state.history)
   model.cancel(ctx.state.history)
 end
 
@@ -419,7 +411,7 @@ function M.on_directory_changed(ts, cwd)
   if h.repo_root == root then
     return
   end
-  author_filter.close(h)
+  filter_prompt.close(h)
   model.cancel(h)
   h.repo_root, h.loaded, h.error = root, false, nil
   h.author_filter = nil
@@ -668,11 +660,11 @@ function M.keymaps()
       'f',
       function()
         preview.stop()
-        local ts, tabpage = state.tab(), vim.api.nvim_get_current_tabpage()
-        author_filter.open(function()
-          redraw_filter_header(ts, tabpage)
-        end, function(query)
-          local h = ts.history
+        local ctx = lifecycle.capture()
+        local h = ctx.state.history
+        if not h.repo_root then return end
+        filter_prompt.open(ctx, spec, h.author_filter, function(query)
+          query = vim.trim(query:gsub('[%z\r\n]', ' '))
           local filter = query ~= '' and query or nil
           if filter ~= h.author_filter then
             h.author_filter = filter
@@ -680,7 +672,7 @@ function M.keymaps()
             load()
             return true
           end
-        end)
+        end, author_filter.setup_completion)
       end,
       desc = 'Filter by author name or email',
     },

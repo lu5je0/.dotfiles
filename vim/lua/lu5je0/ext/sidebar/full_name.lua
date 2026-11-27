@@ -64,7 +64,9 @@ function M.setup()
       local row = extmark[2]
       local col = extmark[3]
       local details = extmark[4]
-      if type(details) == 'table' and details.hl_group then
+      if details.line_hl_group then
+        vim.api.nvim_buf_set_extmark(buf, popup_ns, 0, 0, { line_hl_group = details.line_hl_group })
+      elseif details.hl_group then
         local end_col
         if not details.end_col or (details.end_row and details.end_row ~= row) then
           end_col = -1

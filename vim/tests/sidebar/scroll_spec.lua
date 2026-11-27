@@ -182,42 +182,7 @@ for _, action in ipairs { 'copy', 'cut' } do
   end)
 end
 
-h.group('Sidebar filter statusline')
-h.run('Files filter keeps the global Sidebar statusline while typing', function()
-  eval([[
-    vim.api.nvim_set_current_win(state.win)
-    state.files._clipboard = nil
-    vim.o.laststatus = 3
-    require('lu5je0.ext.statusline').setup()
-    function statusline_text()
-      vim.cmd.redrawstatus()
-      local cells = {}
-      for col = 1, vim.o.columns do
-        cells[col] = vim.fn.screenstring(vim.o.lines - vim.o.cmdheight, col)
-      end
-      return table.concat(cells)
-    end
-  ]])
-  local before = eval('return statusline_text()')
-  h.assert_truthy(before:find('SIDEBAR', 1, true))
-  vim.rpcrequest(child, 'nvim_input', 'f')
-  h.assert_truthy(vim.wait(2000, function()
-    return eval("return vim.fn.mode() == 'i' and vim.api.nvim_get_current_win() == state.files._live_filter.win")
-  end, 10))
-  h.assert_eq(eval('return statusline_text()'), before)
-  vim.rpcrequest(child, 'nvim_input', 'file-001')
-  h.assert_truthy(vim.wait(2000, function()
-    return eval("return state.files.live_filter == 'file-001'")
-  end, 10))
-  h.assert_eq(eval('return statusline_text()'), before)
-  vim.rpcrequest(child, 'nvim_input', '<CR>')
-  h.assert_truthy(vim.wait(2000, function()
-    return eval("return state.files.live_filter == 'file-001' and vim.api.nvim_get_current_win() == state.win")
-  end, 10))
-  h.assert_eq(eval('return statusline_text()'), before)
-end)
-
-h.group('Sidebar Files folds')
+h.group('Sidebar Files filter')
 local function input(keys)
   vim.rpcrequest(child, 'nvim_input', keys)
 end
@@ -226,9 +191,119 @@ local function wait_for(code)
   h.assert_truthy(vim.wait(4000, function() return eval(code) end, 5), code)
 end
 
-h.run('zo and zc fold one level, and zO expands just the current subtree', function()
+h.run('Files filter edits the top row and applies only on Enter', function()
+  eval([[
+    vim.api.nvim_set_current_win(state.win)
+    state.files._clipboard = nil
+    vim.o.laststatus = 3
+    require('lu5je0.ext.statusline').setup()
+    vim.api.nvim_set_hl(0, 'NormalFloat', { bg = 0x314159 })
+    vim.api.nvim_set_hl(0, 'CursorLine', { bg = 0x493011 })
+    filter_frames = {}
+    unfiltered_items = state.files.display_items
+    unfiltered_count = #unfiltered_items
+    root_item = unfiltered_items[1]
+    vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace('sidebar_filter_test'), {
+      on_win = function(_, _, buf)
+        if buf == state.buf then
+          local line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1]
+          if line and vim.startswith(line, '[FILTER]: ') then
+            filter_frames[#filter_frames + 1] = line
+          end
+        end
+      end,
+    })
+    function statusline_text()
+      vim.cmd.redrawstatus()
+      local cells = {}
+      for col = 1, vim.o.columns do
+        cells[col] = vim.fn.screenstring(vim.o.lines - vim.o.cmdheight, col)
+      end
+      return table.concat(cells)
+    end
+    function filter_row_backgrounds(editing)
+      vim.cmd.redraw()
+      local pos = vim.fn.screenpos(state.win, 1, 1)
+      local right = vim.fn.win_screenpos(state.win)[2] + vim.api.nvim_win_get_width(state.win) - 1
+      local function background(col)
+        return vim.api.nvim__inspect_cell(1, pos.row - 1, col - 1)[2].background
+      end
+      -- While editing, the float covers the right side of the main grid.
+      if editing then return { background(pos.col) } end
+      return { background(pos.col), background(right) }
+    end
+  ]])
+  local before = eval('return statusline_text()')
+  h.assert_truthy(before:find('SIDEBAR', 1, true))
+  local function open_filter()
+    input('f')
+    wait_for("return vim.fn.mode() == 'i' and state.files.filter_prompt and vim.api.nvim_get_current_win() == state.files.filter_prompt.win")
+  end
+  open_filter()
+  eval([[
+    local popup = vim.api.nvim_win_get_config(state.files.filter_prompt.win)
+    assert(popup.relative == 'win' and popup.win == state.win and popup.bufpos[1] == 0)
+    assert(state.files.display_items == unfiltered_items and state.files.display_items[2] == root_item)
+    assert(root_item.line_idx == 1 and #unfiltered_items == unfiltered_count + 1)
+  ]])
+  h.assert_eq(eval('return statusline_text()'), before)
+  local frames = eval('return filter_frames')
+  h.assert_truthy(#frames > 0, 'must observe actual Sidebar redraws')
+  for _, line in ipairs(frames) do
+    h.assert_eq(line, '[FILTER]: ')
+  end
+  local tick = eval('return vim.api.nvim_buf_get_changedtick(state.buf)')
+  input('file-001')
+  wait_for("return vim.api.nvim_get_current_line() == 'file-001'")
+  h.assert_eq(eval('return vim.api.nvim_buf_get_changedtick(state.buf)'), tick)
+  h.assert_eq(eval('return state.files.live_filter'), vim.NIL)
+  local prompt_text = eval([[
+    vim.cmd.redraw()
+    local pos = vim.fn.screenpos(state.win, 1, 1)
+    local cells = {}
+    for col = pos.col, pos.col + #'[FILTER]: file-001' - 1 do
+      cells[#cells + 1] = vim.fn.screenstring(pos.row, col)
+    end
+    return table.concat(cells)
+  ]])
+  h.assert_eq(prompt_text, '[FILTER]: file-001')
+  h.assert_eq(eval('return filter_row_backgrounds(true)'), { 0x314159 })
+  h.assert_eq(eval('return statusline_text()'), before)
+  input('<CR>')
+  wait_for("return state.files.live_filter == 'file-001' and vim.api.nvim_get_current_win() == state.win")
+  h.assert_eq(eval('return statusline_text()'), before)
+  local function header()
+    return eval('return vim.api.nvim_buf_get_lines(state.buf, 0, 1, false)[1]')
+  end
+  h.assert_eq(header(), '[FILTER]: /file-001/')
+  h.assert_eq(eval('return #state.files.display_items'), 3)
+  h.assert_eq(eval('return filter_row_backgrounds()'), { 0x314159, 0x314159 })
+  input('j')
+  wait_for('return vim.api.nvim_win_get_cursor(state.win)[1] == 2')
+  h.assert_eq(eval('return filter_row_backgrounds()'), { 0x314159, 0x314159 })
+
+  open_filter()
+  h.assert_eq(eval('return vim.api.nvim_get_current_line()'), 'file-001')
+  input('<C-u>file-002<Esc>')
+  wait_for('return not state.files.filter_prompt and vim.api.nvim_get_current_win() == state.win')
+  h.assert_eq(header(), '[FILTER]: /file-001/')
+  h.assert_eq(eval('return state.files.live_filter'), 'file-001')
+
+  open_filter()
+  input('<C-u><CR>')
+  wait_for('return not state.files.filter_prompt and not state.files.live_filter and vim.api.nvim_get_current_win() == state.win')
+  h.assert_eq(eval('return #state.files.display_items'), eval('return unfiltered_count'))
+
+  open_filter()
+  input('file-001<CR>')
+  wait_for("return state.files.live_filter == 'file-001' and not state.files.filter_prompt")
   input('F')
-  wait_for('return state.files.live_filter == nil')
+  wait_for("return not state.files.live_filter and state.files.display_items[1].type == 'root'")
+end)
+
+h.group('Sidebar Files folds')
+
+h.run('zo and zc fold one level, and zO expands just the current subtree', function()
   eval([[
     local fixture = ... .. '/.folds'
     for _, path in ipairs({ 'branch/nested/deep', 'other/side', '.hidden/nested' }) do

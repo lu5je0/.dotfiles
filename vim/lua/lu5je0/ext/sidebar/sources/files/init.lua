@@ -1,6 +1,8 @@
 -- Files source: workspace file tree.
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local filter_prompt = require('lu5je0.ext.sidebar.filter_prompt')
+local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local folds = require('lu5je0.ext.sidebar.folds')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local view = require('lu5je0.ext.sidebar.view')
@@ -44,34 +46,23 @@ local function dotfile_hl(node)
   end
 end
 
-function spec.build(ts, _ctx)
+function spec.build(ts, ctx)
+  local header = filter_prompt.header(ts, ts.live_filter)
+  if ctx.header_only then return {}, header end
   ensure_root()
   tree.prepare_tree(ts.root)
 
+  header = header or { lines = {}, items = {}, highlights = {} }
   local cwd = vim.fn.getcwd()
-  local header = { lines = {}, items = {}, highlights = {} }
-  if cwd ~= '/' then
-    header.lines[1] = vim.fn.fnamemodify(cwd, ':~') .. '/..'
-    header.highlights[1] = { line = 0, hl = 'SidebarRootFolder', col_start = 0, col_end = -1 }
-  else
-    header.lines[1] = '/..'
-    header.highlights[1] = { line = 0, hl = 'SidebarRootFolder', col_start = 0, col_end = -1 }
-  end
-  header.items[1] = { type = 'root', node = ts.root, line_idx = 0 }
-  if ts.live_filter then
-    local prefix = '[FILTER]: '
-    local filter_line = prefix .. '/' .. ts.live_filter .. '/'
-    local idx = #header.lines + 1
-    local line_idx = idx - 1
-    header.lines[idx] = filter_line
-    header.items[idx] = { type = 'filter', line_idx = line_idx }
-    header.highlights[#header.highlights + 1] = { line = line_idx, hl = 'SidebarLiveFilterPrefix', col_start = 0, col_end = #prefix }
-    header.highlights[#header.highlights + 1] = { line = line_idx, hl = 'SidebarLiveFilterValue', col_start = #prefix, col_end = #filter_line }
-  end
+  local row = #header.lines
+  header.lines[row + 1] = cwd == '/' and '/..' or vim.fn.fnamemodify(cwd, ':~') .. '/..'
+  header.items[row + 1] = { type = 'root', node = ts.root, line_idx = row }
+  header.highlights[#header.highlights + 1] = { line = row, hl = 'SidebarRootFolder', col_start = 0, col_end = -1 }
   return ts.root.children or {}, header
 end
 
 function spec.render_opts(ts, ctx)
+  if ctx.header_only then return end
   local reveal = ctx.reveal_path or ts.reveal_path
   return {
     filter = tree.make_filter(reveal),
@@ -83,7 +74,8 @@ function spec.render_opts(ts, ctx)
   }
 end
 
-function spec.post_flush(_ts, _ctx)
+function spec.post_flush(_ts, ctx)
+  if ctx.header_only then return end
   watcher.sync_files(vim.api.nvim_get_current_tabpage())
   require('lu5je0.ext.sidebar.actions.file_ops').apply_clipboard_mark()
 end
@@ -92,6 +84,22 @@ end
 
 function M.render(opts)
   source_base.render(spec, opts or {})
+end
+
+local function apply_filter(files, query)
+  local pattern = query ~= '' and query or nil
+  if pattern == files.live_filter then return false end
+  files.live_filter = pattern
+  M.render()
+  return true
+end
+
+local function open_filter()
+  local ctx = lifecycle.capture()
+  local files = ctx.state.files
+  filter_prompt.open(ctx, spec, files.live_filter, function(query)
+    return apply_filter(files, query)
+  end)
 end
 
 local function render_keep_cursor()
@@ -124,7 +132,7 @@ end
 
 function M.leave(ctx)
   expand.cancel(ctx.state.files)
-  require('lu5je0.ext.sidebar.sources.files.live_filter').dispose(ctx)
+  filter_prompt.close(ctx.state.files)
 end
 M.dispose = M.leave
 
@@ -260,6 +268,12 @@ end
 
 -- ── cwd / cursor management ─────────────────────────────
 
+local function focus_root()
+  local first = state.files.display_items[1]
+  local row = first and first.type == 'filter' and 2 or 1
+  pcall(vim.api.nvim_win_set_cursor, state.win, { row, 0 })
+end
+
 function M.save_cursor_for_cwd()
   if not state:is_open() then return end
   state.files._cursor_cache = state.files._cursor_cache or {}
@@ -271,7 +285,7 @@ function M.restore_cursor_for_cwd()
   if cache and cache[vim.fn.getcwd()] then
     pcall(vim.api.nvim_win_set_cursor, state.win, cache[vim.fn.getcwd()])
   else
-    pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+    focus_root()
   end
 end
 
@@ -279,7 +293,7 @@ local function cd_to(path)
   M.save_cursor_for_cwd()
   state.files.reveal_path = nil
   vim.cmd('cd ' .. vim.fn.fnameescape(path))
-  pcall(vim.api.nvim_win_set_cursor, state.win, { 1, 0 })
+  focus_root()
 end
 
 function M.cd_to_node()
@@ -551,7 +565,6 @@ function M.keymaps()
   local nav = require('lu5je0.ext.sidebar.actions.navigation')
   local file_ops = require('lu5je0.ext.sidebar.actions.file_ops')
   local preview = require('lu5je0.ext.sidebar.actions.preview')
-  local live_filter = require('lu5je0.ext.sidebar.sources.files.live_filter')
 
   return {
     { 'l', M.open_node, desc = 'Open node' },
@@ -583,8 +596,8 @@ function M.keymaps()
     { 'gx', file_ops.system_open, desc = 'System open' },
     { ']g', M.next_git_file, desc = 'Next git change' },
     { '[g', M.prev_git_file, desc = 'Prev git change' },
-    { 'f', live_filter.start, desc = 'Filter' },
-    { 'F', live_filter.clear, desc = 'Clear filter' },
+    { 'f', open_filter, desc = 'Filter' },
+    { 'F', function() apply_filter(state.files, '') end, desc = 'Clear filter' },
     { 'o', function()
       local item = state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
       if not item or not item.node then return end

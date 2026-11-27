@@ -431,13 +431,25 @@ for _, kind in ipairs { 'list', 'empty cached list', 'files' } do
   end)
 end
 
-run('leaving Files disposes a pending filter overlay without reopening it', function()
+run('closing the Files filter prompt or leaving Files cleans up its resources', function()
   open('files')
-  require('lu5je0.ext.sidebar.sources.files.live_filter').start()
-  local buf = state.files._live_filter.buf
+  local function open_prompt()
+    vim.fn.maparg('f', 'n', false, true).callback()
+    local win = state.files.filter_prompt.win
+    return win, vim.api.nvim_win_get_buf(win)
+  end
+  local win, buf = open_prompt()
+  vim.api.nvim_win_close(win, true)
+  drain()
+  r.assert_eq(state.files.filter_prompt, nil)
+  r.assert_eq(state.files.display_items[1].type, 'root')
+  r.assert_truthy(not vim.api.nvim_buf_is_valid(buf))
+
+  win, buf = open_prompt()
   open('buffers')
   drain()
-  r.assert_eq(state.files._live_filter.buf, nil)
+  r.assert_eq(state.files.filter_prompt, nil)
+  r.assert_truthy(not vim.api.nvim_win_is_valid(win))
   r.assert_truthy(not vim.api.nvim_buf_is_valid(buf))
 end)
 
