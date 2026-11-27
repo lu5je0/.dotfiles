@@ -394,7 +394,27 @@ local plugins = {
 
     -- v2 is not tagged yet, switch back to `version = '*'` once v2.0.0 is released
     branch = 'main',
-    build = function() require('blink.cmp').build():pwait() end,
+    build = function()
+      local cmp = require('blink.cmp')
+      if vim.fn.has('mac') == 0 or vim.fn.executable('/usr/bin/clang') == 0 then
+        assert(cmp.build():pwait())
+        return
+      end
+
+      local arch = vim.uv.os_uname().machine == 'arm64' and 'AARCH64' or 'X86_64'
+      local linker = 'CARGO_TARGET_' .. arch .. '_APPLE_DARWIN_LINKER'
+      if vim.env[linker] then
+        assert(cmp.build():pwait())
+        return
+      end
+
+      -- Nix 的 GCC wrapper 找不到 macOS SDK 中的 libiconv，改用 Apple Clang。
+      vim.env[linker] = '/usr/bin/clang'
+      local ok, task = pcall(cmp.build)
+      vim.env[linker] = nil
+      assert(ok, task)
+      assert(task:pwait())
+    end,
 
     config = function()
       require('lu5je0.ext.blink').setup()
