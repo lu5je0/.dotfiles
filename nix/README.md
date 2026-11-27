@@ -4,8 +4,10 @@
 
 - `common/packages.nix`：跨平台 CLI 清单。保留 Linux 的系统包、用户包分组；Mac 将两组一起安装。
 - `common/nix.nix`：共用的 Nix 设置。
+- `common/pkgs/`：Linux 和 macOS 包清单共用的本地包定义。
 - `nixos/`：Linux 主机、模块、profiles 和 Linux 专用包。
 - `darwin/default.nix`：Mac 入口；`darwin/packages.nix` 引入共用清单并追加 Mac 专属软件。
+- `darwin/pkgs/default.nix`：Mac 可单独构建或通过用户 profile 安装的软件。
 
 Linux 在仓库根目录选择对应主机入口，例如：
 
@@ -120,6 +122,21 @@ sudo -H nix --extra-experimental-features 'nix-command flakes' \
 
 配置使用上游 Nix，由 nix-darwin 管理 Nix daemon 和 `/etc/nix/nix.conf`。
 使用 Determinate Nix 的机器需要先处理其 Nix 管理方式，不能直接沿用这里的 `nix.settings`。
+
+Emby 外置播放器可按需安装到用户 profile，Darwin 包使用项目自带的 `EmbyExtPlayer.app`。
+取源码需要能通过 GitHub SSH 访问私有仓库。安装后可从启动台打开，也可运行 `emby-ext-player`。
+服务器地址可在 `~/Library/Application Support/EmbyExtPlayerData/config.json` 中设置。
+
+```sh
+nix profile add ~/.dotfiles#emby-ext-player
+```
+
+### 用户 profile 应用同步
+
+`nix-darwin` 在图形会话启动时运行 `org.nixos.nix-profile-applications`，通过 macOS 文件事件监听
+默认用户 profile 的世代切换。profile 的 `Applications` 中的 `.app` 会复制到 `~/Applications/Nix Profile Apps`，供
+启动台和 Spotlight 索引。应用升级、回滚和卸载会同步到该目录；同名的手工应用保留。
+该服务也支持 `$XDG_STATE_HOME/nix/profile`。
 
 Linux 与 Mac 的 nixpkgs 输入分别跟随各自渠道，共用一份锁文件；添加 Mac 支持不会更新现有 Linux 输入。
 

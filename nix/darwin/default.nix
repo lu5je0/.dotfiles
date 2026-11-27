@@ -5,6 +5,7 @@
     ../common/nix.nix
     ./packages.nix
     ./modules/nh.nix
+    ./modules/profile-applications
   ];
 
   nixpkgs.hostPlatform = "aarch64-darwin";
