@@ -95,6 +95,7 @@
           ./nix/nixos/modules/gaming
           ./nix/nixos/profiles/desktop.nix
           ./nix/nixos/modules/nas-mount.nix
+          ./nix/nixos/modules/glances
         ];
         jerry = mkSystem system [
           ./nix/nixos/profiles/base.nix
