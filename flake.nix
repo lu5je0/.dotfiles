@@ -48,6 +48,10 @@
         inherit system;
         config.allowUnfree = true;
       };
+      pkgsDarwin = import inputs.nixpkgs-darwin {
+        system = "aarch64-darwin";
+        config.allowUnfree = true;
+      };
       pkgsUnstableFor =
         system:
         import nixpkgs-unstable {
@@ -67,13 +71,19 @@
     in
     {
       packages.${system} = import ./nix/nixos/pkgs { inherit pkgs pkgsUnstable inputs; };
-      packages.aarch64-darwin.darwin-rebuild = nix-darwin.packages.aarch64-darwin.darwin-rebuild;
+      packages.aarch64-darwin = import ./nix/darwin/pkgs {
+        pkgs = pkgsDarwin;
+        inherit inputs;
+      };
 
       darwinConfigurations.mac = nix-darwin.lib.darwinSystem {
         modules = [ ./nix/darwin ];
-        specialArgs.pkgsUnstable = import inputs.nixpkgs-darwin-unstable {
-          system = "aarch64-darwin";
-          config.allowUnfree = true;
+        specialArgs = {
+          inherit inputs;
+          pkgsUnstable = import inputs.nixpkgs-darwin-unstable {
+            system = "aarch64-darwin";
+            config.allowUnfree = true;
+          };
         };
       };
 

@@ -26,7 +26,7 @@
   };
 
   environment.systemPackages = with pkgs; [
-    (pkgs.callPackage ../pkgs/kitty { })
+    (pkgs.callPackage ../../common/pkgs/kitty { })
     steam-run
     wl-clipboard
     xclip

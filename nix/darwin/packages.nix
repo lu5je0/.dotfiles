@@ -1,7 +1,12 @@
-{ pkgs, pkgsUnstable, ... }:
+{
+  inputs,
+  pkgs,
+  pkgsUnstable,
+  ...
+}:
 
 let
-  kitty = pkgs.callPackage ../nixos/pkgs/kitty { };
+  inherit (import ./pkgs { inherit pkgs inputs; }) kitty;
   common = import ../common/packages.nix {
     inherit pkgs pkgsUnstable;
     kittyTerminfo = kitty.terminfo;

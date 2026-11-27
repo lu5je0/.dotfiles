@@ -2,10 +2,11 @@
 
 ## 包组织
 
-- 主机专用包放在 `nixos/hosts/<主机名>/pkgs/<包名>/`，共用包放在 `nixos/pkgs/`。
+- 主机专用包放在 `nixos/hosts/<主机名>/pkgs/<包名>/`，供 NixOS 主机共用的包可放在 `nixos/pkgs/`。
 - 需要独立构建入口时，可由根 flake 引用主机包目录，包定义仍留在所属主机下。
-- Linux / Darwin 共用的本地包也统一放 `nixos/pkgs/<包名>/`，跨平台软件清单 `common/packages.nix` 可直接引用；目录位置不限制构建平台。
+- Linux / Darwin 两份包导出清单共用的本地包定义放在 `common/pkgs/<包名>/`。
 - `nixos/pkgs/default.nix` 登记 Linux 共用包的独立构建 / profile 安装入口，接收 `{ pkgs, pkgsUnstable, inputs }` 并返回单平台包集合。
+- `darwin/pkgs/default.nix` 登记 Darwin 的独立构建 / profile 安装入口。
 - 包表达式用 `default.nix`；补丁、图标、升级脚本放同目录。
 - 单包能通过 wrapper、补丁等解决的问题留在包内，系统级配置才放进对应平台目录。
 - 包需要外部 flake 时，在根 `flake.nix` 登记 input，通过 `callPackage` 参数传入，包目录不自带 flake。
