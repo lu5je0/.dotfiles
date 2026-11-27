@@ -174,9 +174,13 @@ M.setup = function()
 
   M.statusline = function()
     local win_id = vim.g.statusline_winid
-    local buf_id = vim.api.nvim_win_get_buf(win_id)
     local focus_win_id = vim.api.nvim_get_current_win()
     local focus_win_is_floating = vim.api.nvim_win_get_config(focus_win_id).relative ~= ''
+    if focus_win_is_floating and win_id == focus_win_id then
+      local parent = vim.w[win_id].statusline_parent
+      if parent and vim.api.nvim_win_is_valid(parent) then win_id = parent end
+    end
+    local buf_id = vim.api.nvim_win_get_buf(win_id)
     local filename = vim.fs.basename(vim.api.nvim_buf_get_name(buf_id))
     local filetype = vim.bo[buf_id].filetype
     local buftype = vim.bo[buf_id].buftype

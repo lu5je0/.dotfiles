@@ -107,6 +107,7 @@ function M.start()
       border = 'none',
       zindex = 50,
     })
+    vim.w[cs.win].statusline_parent = ts.win
 
     local prev = ts.files.live_filter or ''
     vim.api.nvim_buf_set_lines(cs.buf, 0, -1, false, { prev })

@@ -182,6 +182,41 @@ for _, action in ipairs { 'copy', 'cut' } do
   end)
 end
 
+h.group('Sidebar filter statusline')
+h.run('Files filter keeps the global Sidebar statusline while typing', function()
+  eval([[
+    vim.api.nvim_set_current_win(state.win)
+    state.files._clipboard = nil
+    vim.o.laststatus = 3
+    require('lu5je0.ext.statusline').setup()
+    function statusline_text()
+      vim.cmd.redrawstatus()
+      local cells = {}
+      for col = 1, vim.o.columns do
+        cells[col] = vim.fn.screenstring(vim.o.lines - vim.o.cmdheight, col)
+      end
+      return table.concat(cells)
+    end
+  ]])
+  local before = eval('return statusline_text()')
+  h.assert_truthy(before:find('SIDEBAR', 1, true))
+  vim.rpcrequest(child, 'nvim_input', 'f')
+  h.assert_truthy(vim.wait(2000, function()
+    return eval("return vim.fn.mode() == 'i' and vim.api.nvim_get_current_win() == state.files._live_filter.win")
+  end, 10))
+  h.assert_eq(eval('return statusline_text()'), before)
+  vim.rpcrequest(child, 'nvim_input', 'file-001')
+  h.assert_truthy(vim.wait(2000, function()
+    return eval("return state.files.live_filter == 'file-001'")
+  end, 10))
+  h.assert_eq(eval('return statusline_text()'), before)
+  vim.rpcrequest(child, 'nvim_input', '<CR>')
+  h.assert_truthy(vim.wait(2000, function()
+    return eval("return state.files.live_filter == 'file-001' and vim.api.nvim_get_current_win() == state.win")
+  end, 10))
+  h.assert_eq(eval('return statusline_text()'), before)
+end)
+
 vim.fn.jobstop(child)
 vim.fn.delete(fixture, 'rf')
 h.finish()

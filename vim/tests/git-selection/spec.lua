@@ -1413,6 +1413,11 @@ run('History author filter completes names and emails beyond the initial log', f
   local c = child('project')
   c.q([[
     require('lu5je0.ext.git').setup({ project_log = { max_commits = 1 } })
+    vim.o.laststatus = 3
+    require('lu5je0.ext.statusline').setup()
+    function statusline_text()
+      return vim.api.nvim_eval_statusline(vim.o.statusline, { winid = vim.api.nvim_get_current_win() }).str
+    end
     function author_query()
       return vim.api.nvim_get_current_line():sub(#vim.fn.prompt_getprompt(vim.api.nvim_get_current_buf())+1)
     end
@@ -1424,6 +1429,8 @@ run('History author filter completes names and emails beyond the initial log', f
   ]])
 
   local function open_prompt()
+    local before = c.q('return statusline_text()')
+    contains(before, 'History · ')
     c.feed('f')
     c.wait([[
       local h=require('lu5je0.ext.sidebar.state').history
@@ -1435,6 +1442,8 @@ run('History author filter completes names and emails beyond the initial log', f
       assert(popup.relative=='win' and popup.win==s.win and popup.bufpos[1]==0 and popup.height==1)
       assert(s.history.display_items[1].type=='filter')
     ]])
+    local during = c.q('return statusline_text()')
+    assert(during == before, during)
   end
 
   open_prompt()

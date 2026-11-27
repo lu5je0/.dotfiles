@@ -132,7 +132,7 @@ sidebar/
 
 - `core/filetree.lua` 的 `Plugins` / `SwapFiles` / `TimeMachine` 命令经 `ext-config.lua` 的 sidebar 条目首次加载，在 `setup()` 后注册；通过 `open_tab(files, { no_toggle = true, focus = false })` 展示目标目录并保留调用窗口焦点。
 - `ext-config.lua` 的 sidebar 条目声明懒加载触发键；新增或修改全局快捷键时同步维护其 `keys` 列表。
-- `ext/bufferline.lua`、`core/statusline.lua`、`ext/statuscol.lua`：Sidebar filetype 注册
+- `ext/bufferline.lua`、`ext/statusline/`、`ext/statuscol.lua`：Sidebar filetype 注册。Files 和 History 的筛选浮窗通过窗口变量 `statusline_parent` 沿用 Sidebar 的全局状态栏。
 
 ## 测试
 
@@ -142,7 +142,7 @@ sidebar/
   - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
-  - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，覆盖非当前窗口、外部关闭及不同打开入口
+  - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，覆盖非当前窗口、外部关闭及不同打开入口，并验证 Files 筛选期间的全局状态栏
   - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入、单栏跨 hunk 的语法高亮和行背景
   - `parser_spec.lua` — 独立 Git fixture 下的 `files_to_tree_nodes`、`git_root` 缓存自失效（同 cwd 出现嵌套仓库 / worktree、根标记删除后回退父仓库）
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为

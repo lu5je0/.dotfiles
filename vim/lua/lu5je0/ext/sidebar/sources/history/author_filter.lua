@@ -74,6 +74,7 @@ function M.open(redraw, apply)
     style = 'minimal',
     border = 'none',
   })
+  vim.w[win].statusline_parent = ts.win
   vim.wo[win].winhighlight = 'NormalFloat:SidebarLiveFilterValue'
   prompt.win = win
   local candidates = {}
