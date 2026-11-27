@@ -106,12 +106,15 @@ end
 -- Load data only. The caller decides whether its view is still visible.
 function M.load(state, root, opts, changed)
   opts = opts or {}
+  local keep_existing = opts.all and state.loaded
   M.cancel(state)
   local generation = state.generation
-  state.repo_root, state.loading, state.loaded = root, true, false
-  state.error, state.limited = nil, false
-  state.commits, state.selected_commits = {}, {}
-  state.graph_rows = nil
+  state.repo_root, state.loading, state.error = root, true, nil
+  if not keep_existing then
+    state.loaded, state.limited = false, false
+    state.commits, state.selected_commits = {}, {}
+    state.graph_rows = nil
+  end
   local function valid()
     return state.generation == generation
   end
@@ -129,20 +132,36 @@ function M.load(state, root, opts, changed)
           return
         end
         state.job = nil
-        local commits = {}
         if result.code == 0 then
-          commits = core.parse_log(result.stdout or '')
-          if limit and #commits > limit then
-            state.limited = true
+          local commits = core.parse_log(result.stdout or '')
+          state.limited = limit ~= nil and #commits > limit
+          if state.limited then
             table.remove(commits)
+          end
+          if keep_existing then
+            local previous, selected = {}, {}
+            for _, commit in ipairs(state.commits) do
+              previous[commit.hash] = commit
+            end
+            for index, commit in ipairs(commits) do
+              local existing = previous[commit.hash]
+              if existing then
+                -- Keep open trees and running merge callbacks attached to the same commit.
+                existing.short_hash, existing.files = commit.short_hash, commit.files
+                commits[index] = existing
+                selected[commit.hash] = state.selected_commits[commit.hash]
+              end
+            end
+            state.selected_commits = selected
+          end
+          state.commits, state.graph_rows = commits, nil
+          if state.graph_enabled then
+            M.prepare_graph(state)
           end
         else
           state.error = (result.stderr or 'Failed to load history'):gsub('%s+$', '')
         end
-        state.commits, state.loading, state.loaded = commits, false, true
-        if state.graph_enabled then
-          M.prepare_graph(state)
-        end
+        state.loading, state.loaded = false, true
         changed()
       end)
     end)

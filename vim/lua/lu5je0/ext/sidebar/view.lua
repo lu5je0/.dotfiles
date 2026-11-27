@@ -12,16 +12,16 @@ function M.ns_id()
   return ns_id
 end
 
-function M.set_lines(lines)
+function M.set_lines(lines, first, last)
   if not state:is_buf_valid() then return end
   vim.bo[state.buf].modifiable = true
-  vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+  vim.api.nvim_buf_set_lines(state.buf, first or 0, last or -1, false, lines)
   vim.bo[state.buf].modifiable = false
 end
 
-function M.clear_highlights()
+function M.clear_highlights(first, last)
   if not state:is_buf_valid() then return end
-  vim.api.nvim_buf_clear_namespace(state.buf, ns_id, 0, -1)
+  vim.api.nvim_buf_clear_namespace(state.buf, ns_id, first or 0, last or -1)
 end
 
 function M.add_highlight(line, hl_group, col_start, col_end)
@@ -29,14 +29,15 @@ function M.add_highlight(line, hl_group, col_start, col_end)
   vim.api.nvim_buf_add_highlight(state.buf, ns_id, hl_group, line, col_start, col_end)
 end
 
-function M.flush(lines, highlights, virt_texts)
-  M.set_lines(lines)
-  M.clear_highlights()
+function M.flush(lines, highlights, virt_texts, first, last)
+  first = first or 0
+  M.clear_highlights(first, last)
+  M.set_lines(lines, first, last)
   for _, h in ipairs(highlights) do
-    M.add_highlight(h.line, h.hl, h.col_start, h.col_end)
+    M.add_highlight(first + h.line, h.hl, h.col_start, h.col_end)
   end
   for _, vt in ipairs(virt_texts or {}) do
-    vim.api.nvim_buf_set_extmark(state.buf, ns_id, vt.line, 0, {
+    vim.api.nvim_buf_set_extmark(state.buf, ns_id, first + vt.line, 0, {
       virt_text = vt.virt_text,
       virt_text_pos = vt.pos or 'right_align',
       hl_mode = 'combine',

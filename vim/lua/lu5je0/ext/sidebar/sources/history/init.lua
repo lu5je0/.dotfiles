@@ -26,9 +26,11 @@ local function is_merge(commit)
   return (commit.parents or ''):find('%S+%s+%S+') ~= nil
 end
 
-function spec.build(h)
+function spec.build(h, ctx)
   local roots = {}
-  for index, commit in ipairs(h.commits) do
+  local index_to_render = ctx and ctx.commit_idx
+  for index = index_to_render or 1, index_to_render or #h.commits do
+    local commit = h.commits[index]
     local function file_tree(owner, group)
       local files, by_path = {}, {}
       for file_index, file in ipairs(owner.files) do
@@ -179,12 +181,26 @@ function spec.post_flush(h)
   end
 end
 
-local function redraw(ts, tabpage)
+local function redraw(ts, tabpage, commit)
   if not visible(ts, tabpage) then
     return
   end
-  source_base.render(spec)
   local h = ts.history
+  if commit then
+    local items = h.display_items
+    for row, item in ipairs(items) do
+      if item.type == 'commit' and item.node.commit == commit then
+        local last = row
+        while items[last + 1] and items[last + 1].node.commit == commit do
+          last = last + 1
+        end
+        source_base.render(spec, { commit_idx = item.commit_idx }, row - 1, last)
+        break
+      end
+    end
+  else
+    source_base.render(spec)
+  end
   if h.pending_jump_sha then
     for line, item in ipairs(h.display_items) do
       local commit = item.node.commit
@@ -203,26 +219,57 @@ local function redraw(ts, tabpage)
   end
 end
 
-local function load_merge(ts, tabpage, commit)
-  model.load_merge(ts.history, commit, function()
-    if not visible(ts, tabpage) then
-      return
-    end
-    local h = ts.history
-    local old = h.display_items[vim.api.nvim_win_get_cursor(ts.win)[1]]
-    local jumping = h.pending_jump_sha
-    redraw(ts, tabpage)
-    if old and not jumping then
-      local node = old.node
-      for line, item in ipairs(h.display_items) do
-        local candidate = item.node
-        if item.type == old.type and candidate.commit == node.commit and candidate.parent_group == node.parent_group and candidate.abs_path == node.abs_path then
-          vim.api.nvim_win_set_cursor(ts.win, { line, 0 })
-          break
-        end
+local function find_row(items, old)
+  if not old then
+    return
+  end
+  local node = old.node
+  local commit_row
+  for row, item in ipairs(items) do
+    local candidate = item.node
+    if candidate.commit == node.commit then
+      if item.type == old.type and candidate.parent_group == node.parent_group and candidate.abs_path == node.abs_path then
+        return row
+      end
+      if item.type == 'commit' then
+        commit_row = row
       end
     end
+  end
+  return commit_row
+end
+
+local function redraw_preserving_view(ts, tabpage, commit)
+  if not visible(ts, tabpage) then
+    return
+  end
+  local h = ts.history
+  if h.pending_jump_sha then
+    redraw(ts, tabpage, commit)
+    return
+  end
+  vim.api.nvim_win_call(ts.win, function()
+    local view = vim.fn.winsaveview()
+    local cursor, top = h.display_items[view.lnum], h.display_items[view.topline]
+    redraw(ts, tabpage, commit)
+    view.lnum = find_row(h.display_items, cursor) or view.lnum
+    view.topline = find_row(h.display_items, top) or view.topline
+    vim.fn.winrestview(view)
   end)
+end
+
+local function load_merge(ts, tabpage, commit)
+  model.load_merge(ts.history, commit, function()
+    redraw_preserving_view(ts, tabpage, commit)
+  end)
+end
+
+local function resume_merges(ts, tabpage)
+  for _, commit in ipairs(ts.history.commits) do
+    if commit.expanded then
+      load_merge(ts, tabpage, commit)
+    end
+  end
 end
 
 local function load(opts)
@@ -232,7 +279,19 @@ local function load(opts)
     return
   end
   require('lu5je0.ext.sidebar.actions.preview').stop()
+  local keep_view = opts and opts.all and h.loaded
   model.load(h, h.repo_root, opts, function()
+    if not visible(ts, tabpage) then
+      return
+    end
+    if keep_view and not h.pending_jump_sha then
+      if h.error then
+        vim.notify(h.error, vim.log.levels.WARN)
+        return
+      end
+      redraw_preserving_view(ts, tabpage)
+      return
+    end
     if h.pending_jump_sha and h.pending_jump_file then
       for _, commit in ipairs(h.commits) do
         if commit.hash:sub(1, #h.pending_jump_sha) == h.pending_jump_sha then
@@ -243,7 +302,11 @@ local function load(opts)
     end
     redraw(ts, tabpage)
   end)
-  redraw(ts, tabpage)
+  if keep_view then
+    resume_merges(ts, tabpage)
+  else
+    redraw(ts, tabpage)
+  end
 end
 
 local function setup_selection()
@@ -279,12 +342,7 @@ function M.enter(_ctx, opts)
   else
     M.render()
   end
-  local ts, tabpage = state.tab(), vim.api.nvim_get_current_tabpage()
-  for _, commit in ipairs(ts.history.commits) do
-    if commit.expanded then
-      load_merge(ts, tabpage, commit)
-    end
-  end
+  resume_merges(state.tab(), vim.api.nvim_get_current_tabpage())
 end
 M.on_resize = M.render
 
@@ -409,11 +467,16 @@ spec.close = {
     set_expanded(item, false)
   end,
 }
+local function redraw_current_commit()
+  local item = current_item()
+  redraw(state.tab(), vim.api.nvim_get_current_tabpage(), item.node.commit)
+end
+
 function M.open_node()
-  source_base.open_node(spec, M.render)
+  source_base.open_node(spec, redraw_current_commit)
 end
 function M.close_node()
-  source_base.close_node(spec, M.render)
+  source_base.close_node(spec, redraw_current_commit)
 end
 
 function M.toggle_graph()

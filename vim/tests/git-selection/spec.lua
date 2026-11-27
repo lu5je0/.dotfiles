@@ -939,6 +939,104 @@ run('History navigation respects typed key order and closes the actual parent', 
   c.stop()
 end)
 
+run('History folds after ga rewrite only the affected commit rows', function()
+  local c = child('project')
+  c.q([[require('lu5je0.ext.git').setup({ project_log = { max_commits = 2 } })]])
+  c.feed('r')
+  c.wait([[local h=require('lu5je0.ext.sidebar.state').history; return h.limited and #h.commits==2]])
+  c.feed('ga')
+  c.wait([[local h=require('lu5je0.ext.sidebar.state').history; return h.loaded and #h.commits>2]])
+  c.go('skipped-middle')
+  c.feed('m')
+  c.go('picked-change')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    _G.fold_row=vim.api.nvim_win_get_cursor(s.win)[1]
+    _G.fold_updates={}
+    _G.sidebar_ns=require('lu5je0.ext.sidebar.view').ns_id()
+    for _,mark in ipairs(vim.api.nvim_buf_get_extmarks(s.buf,sidebar_ns,0,-1,{details=true})) do
+      if mark[2]==fold_row and mark[4].virt_text then
+        _G.next_date=mark[1]
+        break
+      end
+    end
+    assert(next_date, 'the next commit should have a date extmark')
+    vim.api.nvim_buf_attach(s.buf,false,{on_lines=function(_,_,_,first,last,new_last)
+      fold_updates[#fold_updates+1]={first,last,new_last}
+    end})
+  ]])
+  c.feed('l')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    local first,last,new_last=unpack(fold_updates[1])
+    assert(first==fold_row-1 and last==fold_row and new_last>last, vim.inspect(fold_updates))
+    assert(vim.api.nvim_buf_get_extmark_by_id(s.buf,sidebar_ns,next_date,{})[1]==new_last)
+  ]])
+  c.feed('h')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    assert(#fold_updates==2, vim.inspect(fold_updates))
+    assert(vim.deep_equal(fold_updates[2],{fold_row-1,fold_updates[1][3],fold_row}), vim.inspect(fold_updates))
+    assert(vim.api.nvim_buf_get_extmark_by_id(s.buf,sidebar_ns,next_date,{})[1]==fold_row)
+    for row,item in ipairs(s.history.display_items) do
+      assert(item.line_idx==row-1)
+    end
+    local ns=vim.api.nvim_create_namespace('git_commit_selection')
+    local marks=vim.api.nvim_buf_get_extmarks(s.buf,ns,0,-1,{})
+    assert(#marks==1 and s.history.display_items[marks[1][2]+1].node.commit.message=='skipped-middle')
+  ]])
+  c.stop()
+end)
+
+run('History ga preserves the cursor and viewport during and after loading', function()
+  write('ga-cursor/sub/first.txt', { 'first' })
+  write('ga-cursor/sub/second.txt', { 'second' })
+  commit('ga-cursor-files')
+  local c = child('project')
+  c.q([[require('lu5je0.ext.git').setup({ project_log = { max_commits = 2 } })]])
+  c.feed('r')
+  c.wait([[local h=require('lu5je0.ext.sidebar.state').history; return h.limited and #h.commits==2]])
+  c.go('ga-cursor-files')
+  c.feed('ml')
+  c.go('first.txt')
+  c.q([[
+    local system=vim.system
+    vim.system=function(args,opts,callback)
+      if args[1]=='git' and args[2]=='log' then
+        _G.finish_ga=function()
+          vim.system=system
+          system(args,opts,callback)
+        end
+        return {kill=function() end}
+      end
+      return system(args,opts,callback)
+    end
+    _G.before_ga=vim.fn.winsaveview()
+  ]])
+  c.feed('ga')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    assert(h.loading and #h.commits==2)
+    assert(vim.deep_equal(vim.fn.winsaveview(),before_ga))
+  ]])
+  c.go('second.txt')
+  c.q([[
+    vim.wo.scrolloff=0
+    vim.fn.winrestview({topline=2})
+    _G.during_ga=vim.fn.winsaveview()
+    assert(during_ga.topline==2)
+    finish_ga()
+  ]])
+  c.wait([[local h=require('lu5je0.ext.sidebar.state').history; return h.loaded and not h.loading and #h.commits>2]])
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    assert(vim.deep_equal(vim.fn.winsaveview(),during_ga))
+    assert(h.display_items[during_ga.lnum].node.rel_path=='ga-cursor/sub/second.txt')
+    assert(vim.tbl_count(h.selected_commits)==1)
+  ]])
+  c.stop()
+end)
+
 run('History preserves child folds when reopening parents and reveals jump targets', function()
   write('fold-parent/child/one.txt', { 'one' })
   write('fold-parent/sibling.txt', { 'sibling' })

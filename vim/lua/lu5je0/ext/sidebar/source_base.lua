@@ -36,10 +36,31 @@ local function merge_offset(offset, list, key)
   for _, v in ipairs(list) do v[key] = v[key] + offset end
 end
 
---- Run the full render pipeline for a source.
+-- Keep the display array aligned with the buffer after replacing a range.
+local function replace_items(display_items, items, first, last)
+  local count = #display_items
+  local delta = #items - (last - first)
+  if delta ~= 0 then
+    table.move(display_items, last + 1, count, last + 1 + delta)
+    for row = last + 1 + delta, count + delta do
+      display_items[row].line_idx = row - 1
+    end
+    for row = count + delta + 1, count do
+      display_items[row] = nil
+    end
+  end
+  for row, item in ipairs(items) do
+    item.line_idx = first + row - 1
+    display_items[first + row] = item
+  end
+end
+
+--- Render a source, optionally replacing only [first, last) with the rows built for ctx.
 --- @param spec table
 --- @param ctx  table|nil  — extra context forwarded to spec hooks (e.g. { reveal_path = X })
-function M.render(spec, ctx)
+--- @param first integer|nil  — zero-based start of the old range
+--- @param last integer|nil   — exclusive end of the old range
+function M.render(spec, ctx, first, last)
   ctx = ctx or {}
   local ts = tab_state(spec)
 
@@ -81,8 +102,12 @@ function M.render(spec, ctx)
     if nv then virt_texts = nv end
   end
 
-  ts.display_items = items
-  view.flush(lines, highlights, virt_texts)
+  if first then
+    replace_items(ts.display_items, items, first, last)
+  else
+    ts.display_items = items
+  end
+  view.flush(lines, highlights, virt_texts, first, last)
 
   if spec.post_flush then
     spec.post_flush(ts, ctx)

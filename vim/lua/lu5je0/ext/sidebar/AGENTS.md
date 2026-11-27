@@ -109,6 +109,8 @@ sidebar/
 ## 性能规则
 
 - **render 路径禁止同步外部命令**。git 数据通过异步预加载，render 只读缓存。
+- History 展开、折叠及 merge parent 加载完成时只重绘所属提交的行；重新加载、切换提交图和窗口宽度变化时重绘全页。
+- History 的 `ga` 加载全部提交时保留当前列表；完成后按提交和树节点恢复光标与视口，并保留仍在历史中的提交展开状态和勾选。
 - render 路径不调用 `redraw` / `redrawstatus` 强制刷新屏幕，确保视图恢复前的中间画面不会显示；剪贴板状态栏刷新只在复制/剪切操作中执行，`apply_clipboard_mark` 仅更新高亮。
 - 修改 render、CursorMoved 或高频 autocmd 时检查热路径开销；有明显性能影响时说明验证结果。
 - 所有 Git 状态触发统一调用 `git_status.lua`，由它执行一次 `git status` 并分发给 Files 与 Git Changes；不要在 source 或 autocmd 中另起查询。
