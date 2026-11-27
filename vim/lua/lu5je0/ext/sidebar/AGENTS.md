@@ -101,6 +101,7 @@ sidebar/
 
 - 全部 highlight 集中在 `config.highlights` 表（包括 `Sidebar*`、`GitChanges*`、`GitFileStatus*`），由 `init.setup` → `config.apply_highlights()` 应用。
 - Diff 浮窗的单栏和双栏均使用直角边框，窗口底色跟随编辑区的 `Normal`。
+- 单栏 diff 复用 `git/common/unified-diff-highlight.lua` 的行背景和源码语法高亮。
 - History 的箭头、hash 与标题使用互不重叠的高亮区间，禁止同优先级叠色；Tig 图形使用上游 14 色 ANSI palette 顺序和蓝色提交节点，RGB 取当前 terminal_color 或标准 ANSI 回退，由 config.apply_highlights 集中注册。
 - ColorScheme 切换时 `autocmds.lua` 会重新 apply。
 - Changes 的折叠目录在右侧显示方括号状态汇总：Changes 按 XY 两列分别汇总，相同字符（含空格）保留，混合为 `*`；Staged / Unstaged 只显示对应列，Untracked 显示 `[?]`。汇总在建树时自底向上计算，使用独立 `git_summary` 字段，不给目录设置文件 `xy`；展开后隐藏，章节和 stash 标题不显示，History 不启用。具体字母和 `?` 沿用文件状态颜色，`*` 与括号同为灰色，后代含冲突时 `*` 为红色；目录名称保留现有样式和整目录删除高亮。
@@ -142,7 +143,7 @@ sidebar/
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
   - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，覆盖非当前窗口、外部关闭及不同打开入口
-  - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入不等待其他页的映射前缀
+  - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入、单栏跨 hunk 的语法高亮和行背景
   - `parser_spec.lua` — 独立 Git fixture 下的 `files_to_tree_nodes`、`git_root` 缓存自失效（同 cwd 出现嵌套仓库 / worktree、根标记删除后回退父仓库）
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为
   - `git_ops_spec.lua` — 真实 git 仓库下的 stage/discard/undo

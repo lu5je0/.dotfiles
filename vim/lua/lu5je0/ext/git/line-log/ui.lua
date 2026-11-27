@@ -197,6 +197,13 @@ local function get_range_summary(state, newest_item, oldest_item)
   return newest.short, oldest.short
 end
 
+local empty_lines = {}
+
+local function highlight_source(block, filename)
+  local lines = block and block.lines or empty_lines
+  return { kind = 'text', lines = lines, filename = filename }
+end
+
 local function is_tracked_diff_window(win)
   if not win or not vim.api.nvim_win_is_valid(win) then
     return false
@@ -307,6 +314,11 @@ function M.show_single_diff(state, old_block, new_block, old_file, new_file, sel
     vim.api.nvim_set_current_win(state.log_win)
 
   end
+
+  require('lu5je0.ext.git.common.unified-diff-highlight').apply(state.diff_buf, lines, {
+    highlight_source(old_block, old_file or state.file),
+    highlight_source(new_block, new_file or state.file),
+  })
 
   -- Statusline: single commit or range
   if selection.from_display_idx == selection.to_display_idx then

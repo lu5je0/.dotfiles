@@ -19,6 +19,7 @@
 - `common/commit-selection.lua`: 项目日志与行历史共用的 commit 勾选、标记与计数；以稳定 commit key 保存选择，buffer 内容变化后重新挂载行首 `✓` inline extmark
 - `common/selected-diff.lua`: 新 tab 中查看所选提交的净变化；左侧使用 `common/selected-diff-ui.lua` 和 common tree，右侧 single / dual 显示当前文件的合并结果，统一管理异步读取、临时资源清理、取消和切换
 - `common/net-diff.lua`: 合并所选改动；项目日志使用临时 bare repo 和独立 index，以源仓库对象库为 alternate，连续提交直接读取结果树，离散提交按 first-parent patch 做三方应用；行历史对追踪块做三方合并。真实工作区、暂存区、refs 与对象库均不写入，冲突时明确报错
+- `common/unified-diff-highlight.lua` 为 line log 与 Sidebar 的单栏 diff 提供共用高亮。新增和删除行沿用 `DiffAdd` 和 `DiffDelete` 底色，按 hunk 行号将异步解析出的源码高亮映射到 diff。
 - `line-log/`: 行级 git log 子模块
   - `init.lua`: Neovim 入口，负责 session、窗口、buffer、prefetch 调度与 UI 驱动
   - `core.lua`: 纯算法与 git 历史收集核心，负责 revision/path 链、tracker 初始化与 block 推进；测试与运行时共用

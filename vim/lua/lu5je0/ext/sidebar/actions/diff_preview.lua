@@ -254,6 +254,7 @@ function M.show(item, on_state_change)
 
   local pending = targets.left_title:find('HEAD') and 3 or 2
   local left_data, right_data, head_short
+  local unified_sources
   local rendered = false
   local content_shown = false
   local timeout_timer
@@ -386,12 +387,19 @@ function M.show(item, on_state_change)
     end
   end
 
-  local function build_unified_diff_lines(left_lines, right_lines, left_title, right_title, changes_only)
-    local left_text = #left_lines > 0 and (table.concat(left_lines, '\n') .. '\n') or ''
-    local right_text = #right_lines > 0 and (table.concat(right_lines, '\n') .. '\n') or ''
-    local ok, diff_str = pcall(vim.text.diff, left_text, right_text, {
+  local function unified_source(data, filename)
+    return {
+      kind = data.kind,
+      lines = data.lines,
+      text = #data.lines > 0 and (table.concat(data.lines, '\n') .. '\n') or '',
+      filename = filename,
+    }
+  end
+
+  local function build_unified_diff_lines(left, right, left_title, right_title, changes_only)
+    local ok, diff_str = pcall(vim.text.diff, left.text, right.text, {
       algorithm = 'histogram',
-      ctxlen = changes_only and 3 or math.max(#left_lines, #right_lines),
+      ctxlen = changes_only and 3 or math.max(#left.lines, #right.lines),
     })
     if not ok or not diff_str or diff_str == '' then
       return { '--- a' .. left_title, '+++ b' .. right_title, '', '-- No changes --' }
@@ -440,8 +448,15 @@ function M.show(item, on_state_change)
   end
 
   local function update_single(d, changes_only, left_title)
-    local lines = build_unified_diff_lines(left_data.lines, right_data.lines, left_title, targets.right_title, changes_only)
+    unified_sources = unified_sources or {
+      unified_source(left_data, node.old_path or node.abs_path),
+      unified_source(right_data, node.abs_path),
+    }
+    local lines = build_unified_diff_lines(
+      unified_sources[1], unified_sources[2], left_title, targets.right_title, changes_only
+    )
     set_buffer_content(d.buf_single, lines, 'diff')
+    require('lu5je0.ext.git.common.unified-diff-highlight').apply(d.buf_single, lines, unified_sources)
     if not content_shown and left_title ~= targets.left_title then
       vim.api.nvim_win_set_config(d.win_single, { title = single_title(left_title), title_pos = 'center' })
     end

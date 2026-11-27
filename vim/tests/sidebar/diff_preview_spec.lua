@@ -316,6 +316,58 @@ if child and child > 0 then
   vim.fn.jobstop(child)
 end
 
+r.run('line log single diff uses full snapshots for syntax and marks changed rows', function()
+  local chan = vim.fn.jobstart({ vim.v.progpath, '--embed', '--headless', '-u', 'NONE', '-i', 'NONE', '-n' }, { rpc = true })
+  assert(chan > 0)
+  local function q(code, ...)
+    return vim.rpcrequest(chan, 'nvim_exec_lua', code, { ... })
+  end
+  local ok, err = pcall(function()
+    vim.rpcrequest(chan, 'nvim_ui_attach', 100, 24, {})
+    q([==[
+      vim.opt.runtimepath:prepend(...)
+      local block = require('lu5je0.ext.git.line-log.block')
+      local ui = require('lu5je0.ext.git.line-log.ui')
+      local log = { log_win = vim.api.nvim_get_current_win() }
+      local function snapshot(value)
+        local lines = { 'local banner = [[', '', '', '', 'local café = ' .. value, ']]' }
+        return block.new(lines, 5, 5)
+      end
+      local set_extmark = vim.api.nvim_buf_set_extmark
+      local ns = vim.api.nvim_create_namespace('git_unified_diff')
+      _G.marks = {}
+      vim.api.nvim_buf_set_extmark = function(buf, namespace, row, col, opts)
+        if buf == log.diff_buf and namespace == ns then
+          marks[row] = marks[row] or {}
+          marks[row][opts.hl_group] = { col, opts.end_col, opts.hl_eol }
+        end
+        return set_extmark(buf, namespace, row, col, opts)
+      end
+      ui.show_single_diff(log, snapshot('old'), snapshot('new'), 'demo.lua', 'demo.lua', {
+        from_display_idx = 1,
+        to_display_idx = 1,
+        newest_item = { type = 'local_change' },
+      })
+      assert(vim.api.nvim_buf_get_lines(log.diff_buf, 2, 3, false)[1] == '@@ -5 +5 @@')
+    ]==], repo_root .. '/vim')
+    assert(vim.wait(3000, function()
+      return q([[
+        return marks[3] and marks[3]['@string.lua'] ~= nil
+          and marks[4] and marks[4]['@string.lua'] ~= nil
+      ]])
+    end, 10), 'source syntax did not reach the visible diff')
+    local marks = q([[return { marks[1], marks[2], marks[3], marks[4] }]])
+    r.assert_eq(marks[1], vim.NIL, 'the patch header has no line highlight')
+    r.assert_eq(marks[2], vim.NIL, 'the hunk header has no line highlight')
+    r.assert_eq(marks[3].GitUnifiedDiffRemoved, { 0, 0, true })
+    r.assert_eq(marks[4].GitUnifiedDiffAdded, { 0, 0, true })
+    r.assert_eq(marks[3]['@string.lua'], { 1, #'local café = old' + 1 })
+    r.assert_eq(marks[4]['@string.lua'], { 1, #'local café = new' + 1 })
+  end)
+  vim.fn.jobstop(chan)
+  assert(ok, err)
+end)
+
 require('lu5je0.ext.sidebar.actions.preview').stop()
 env_keeper.get, env_keeper.set = original_get, original_set
 vim.system, vim.fn.readfile = original_system, original_readfile
