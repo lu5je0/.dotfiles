@@ -158,11 +158,11 @@ local function set_buffer_content(buf, lines, ft)
   vim.bo[buf].modifiable = false
 end
 
-local function loading_buffer(lines)
+local function create_preview_buffer()
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].buftype = 'nofile'
   vim.bo[buf].bufhidden = 'wipe'
-  set_buffer_content(buf, lines or { ' Loading diff…' })
+  vim.bo[buf].modifiable = false
   return buf
 end
 
@@ -319,8 +319,8 @@ function M.show(item, on_state_change)
     local col_left = math.floor((vim.o.columns - total_width) / 2)
     local col_right = col_left + half_width + gap
 
-    d.buf_left = loading_buffer()
-    d.buf_right = loading_buffer({})
+    d.buf_left = create_preview_buffer()
+    d.buf_right = create_preview_buffer()
 
     d.win_left = vim.api.nvim_open_win(d.buf_left, false, {
       relative = 'editor',
@@ -347,6 +347,7 @@ function M.show(item, on_state_change)
     end
 
     for _, buf in ipairs({ d.buf_left, d.buf_right }) do
+      vim.b[buf].lu5je0_foldtext_async = true
       local bopts = { buffer = buf, nowait = true, silent = true }
       vim.keymap.set('n', 'q', close_and_return, bopts)
       vim.keymap.set('n', 'c', toggle_changes_only_here, bopts)
@@ -412,7 +413,7 @@ function M.show(item, on_state_change)
     local row = math.floor((vim.o.lines - height) / 2)
     local col = math.floor((vim.o.columns - width) / 2)
 
-    local buf = loading_buffer()
+    local buf = create_preview_buffer()
     d.buf_single = buf
     d.win_single = vim.api.nvim_open_win(buf, false, {
       relative = 'editor',

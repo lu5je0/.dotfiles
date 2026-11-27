@@ -133,6 +133,28 @@ local function get_buffer_state(bufnr)
   return state
 end
 
+local function parse_foldtext_async(state, bufnr, parser)
+  local function is_current()
+    return buffer_cache[bufnr] == state
+      and api.nvim_buf_is_loaded(bufnr)
+      and api.nvim_buf_get_changedtick(bufnr) == state.tick
+  end
+
+  -- Draw the folded text with syntax highlights before starting the parse.
+  vim.schedule(function()
+    if not is_current() then
+      return
+    end
+    pcall(parser.parse, parser, nil, function(err)
+      if not err and is_current() then
+        state.parser = parser
+        state.lines = {}
+        api.nvim__redraw({ buf = bufnr, valid = false })
+      end
+    end)
+  end)
+end
+
 local function get_parser(state, bufnr)
   if state.parser_checked then
     return state.parser
@@ -140,9 +162,15 @@ local function get_parser(state, bufnr)
 
   state.parser_checked = true
   local lang = vim.treesitter.language.get_lang(vim.bo[bufnr].filetype)
-  state.parser = vim.treesitter.get_parser(bufnr, lang, { error = false })
-  if state.parser and not pcall(state.parser.parse, state.parser) then
-    state.parser = nil
+  local parser = vim.treesitter.get_parser(bufnr, lang, { error = false })
+  if parser == nil then
+    return
+  end
+
+  if vim.b[bufnr].lu5je0_foldtext_async and not parser:is_valid() then
+    parse_foldtext_async(state, bufnr, parser)
+  elseif pcall(parser.parse, parser) then
+    state.parser = parser
   end
   return state.parser
 end

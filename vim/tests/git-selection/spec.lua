@@ -1205,7 +1205,7 @@ run('History Space preview uses Changes controls and m marks commits', function(
   c.stop()
 end)
 
-run('History diff shows loading and fills the same windows', function()
+run('History diff opens empty and fills the same windows', function()
   local c = child('project', 'dual')
   c.go('picked-change')
   c.feed('l')
@@ -1238,9 +1238,10 @@ run('History diff shows loading and fills the same windows', function()
         local border=vim.api.nvim_win_get_config(win).border
         assert(border[1]=='┌' and border[3]=='┐' and border[5]=='┘' and border[7]=='└')
         assert(vim.wo[win].winhighlight:find('NormalFloat:Normal',1,true))
+        local lines=vim.api.nvim_buf_get_lines(vim.api.nvim_win_get_buf(win),0,-1,false)
+        assert(#lines==1 and lines[1]=='')
       end
       assert(#pending_git==2 and d.timer)
-      assert(vim.api.nvim_buf_get_lines(vim.api.nvim_win_get_buf(loading_win),0,1,false)[1]:find('Loading diff',1,true))
     ]])
     c.feed('<Space>')
     c.q([[
