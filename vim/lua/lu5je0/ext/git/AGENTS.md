@@ -38,6 +38,7 @@
 3. 异步逐版本加载，窗口名称显示加载进度
 4. 在 log 窗口移动光标会自动在右侧 vsplit 预览当前 commit 对选中行的 diff
 5. 在 log 窗口 Visual 选中多个 commit 会自动显示连续范围的聚合 diff；Visual 模式按 `<CR>` 在新 tab 合并选区内改动，按文件查看净变化，合并冲突时提示
+6. 关闭 log 窗口会同时关闭右侧 diff 窗口，并清除源文件中的选区高亮。
 
 ### Project Log (`<leader>gl` normal 模式)
 

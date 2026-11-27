@@ -263,6 +263,39 @@ for _, kind in ipairs { 'project', 'line' } do
   end)
 end
 
+run('closing the line log also closes its single and dual diff windows', function()
+  for _, mode in ipairs { 'single', 'dual' } do
+    local c = child('line', mode)
+    c.go('picked-change')
+    c.wait(([[
+      local count = 0
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if vim.w[win].git_line_log_diff then count = count + 1 end
+      end
+      return count == %d
+    ]]):format(mode == 'dual' and 2 or 1))
+    c.q([[
+      _G.line_diff_windows = {}
+      for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if vim.w[win].git_line_log_diff then
+          line_diff_windows[win] = vim.api.nvim_win_get_buf(win)
+        end
+      end
+    ]])
+    c.feed(':close<CR>')
+    c.q([[
+      assert(not vim.api.nvim_win_is_valid(log_win))
+      for win, buf in pairs(line_diff_windows) do
+        assert(not vim.api.nvim_win_is_valid(win), 'a diff window outlived the line log')
+        assert(not vim.api.nvim_buf_is_valid(buf), 'a diff buffer outlived the line log')
+      end
+      local ns = vim.api.nvim_create_namespace('git_line_log_selected')
+      assert(#vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}) == 0)
+    ]])
+    c.stop()
+  end
+end)
+
 run('continuous selection: one net patch per path, original marks survive tree expansion', function()
   local index_before = git { 'hash-object', '.git/index' }
   local c = child('project')

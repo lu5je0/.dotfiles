@@ -113,12 +113,15 @@ local function cleanup_state()
   state.preview_key = nil
 end
 
-local function close_windows()
-  for _, win in ipairs({ state.diff_win2, state.diff_win, state.log_win }) do
-    if win and vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_close(win, true)
-    end
+local function close_window(win)
+  if win and vim.api.nvim_win_is_valid(win) then
+    vim.api.nvim_win_close(win, true)
   end
+end
+
+local function close_diff_windows()
+  close_window(state.diff_win2)
+  close_window(state.diff_win)
 end
 
 local function reset_session(file, repo_root, start_line, end_line)
@@ -358,7 +361,8 @@ function M.show(opts)
   end
 
   kill_job()
-  close_windows()
+  close_diff_windows()
+  close_window(state.log_win)
   reset_session(file, repo_root, start_line, end_line)
 
   apply_source_highlight()
@@ -400,7 +404,7 @@ function M.show(opts)
     buffer = state.log_buf,
     once = true,
     callback = function()
-      close_windows()
+      close_diff_windows()
       cleanup_state()
     end,
   })
