@@ -2,6 +2,7 @@
 local state = require('lu5je0.ext.sidebar.state')
 local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local config = require('lu5je0.ext.sidebar.config')
+local folds = require('lu5je0.ext.sidebar.folds')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local render = require('lu5je0.ext.sidebar.render')
 local view = require('lu5je0.ext.sidebar.view')
@@ -198,15 +199,16 @@ end
 -- ── helpers ─────────────────────────────────────────────
 
 function M.find_section_for_line(line)
-  for i = line, 1, -1 do
-    local it = state.git_changes.display_items[i]
-    if it and it._is_section then return it.section end
+  local item = state.git_changes.display_items[line]
+  while item do
+    if item._is_section then return item.section end
+    item = item.parent
   end
 end
 
-local function save_dir_state(line, abs_path, value)
+local function save_dir_state(item, abs_path, value)
   if not abs_path then return end
-  local section_key = M.find_section_for_line(line)
+  local section_key = M.find_section_for_line(item.line_idx + 1)
   if not section_key then return end
   local ds = state.git_changes._dir_states or {}
   ds[section_key] = ds[section_key] or {}
@@ -232,7 +234,7 @@ end
 
 function M.leave(ctx)
   local ts = ctx.state.git_changes
-  ts._fold_cursor = nil
+  ts.stash_folds.pending = false
   for request in pairs(ts.stash_jobs) do
     if request.job then
       pcall(request.job.kill, request.job)
@@ -257,6 +259,8 @@ local function load_stash_list(callback)
       if prev then
         prev.message = s.message
         stashes[i] = prev
+      else
+        s.expand_dirs = ts.stash_folds.expand_dirs
       end
     end
     ts._stash_entries = stashes
@@ -291,7 +295,7 @@ local function load_stash_files(stash_entry, callback)
       local s = f.status:sub(1, 1)
       files[#files + 1] = { path = f.path, xy = s .. ' ', x = s, y = ' ', stash_ref = stash_entry.ref }
     end
-    stash_entry.children = parser.files_to_tree_nodes(files, {}, 'stash')
+    stash_entry.children = parser.files_to_tree_nodes(files, {}, 'stash', nil, stash_entry.expand_dirs)
     stash_entry._files_loading = false
     stash_entry._files_loaded = true
     if callback then
@@ -309,7 +313,7 @@ spec.open = {
     return item._is_section or item.node._is_stash or (item.type == 'dir' and item.node ~= nil)
   end,
   is_expanded = function(item) return item.node.expanded end,
-  expand = function(item, line)
+  expand = function(item)
     if item._is_section then
       state.git_changes._expanded[item.section] = true
     elseif item.node._is_stash then
@@ -320,7 +324,7 @@ spec.open = {
       end
     else
       item.node.expanded = true
-      save_dir_state(line, item.node.abs_path, true)
+      save_dir_state(item, item.node.abs_path, true)
     end
   end,
   on_file = function(item)
@@ -339,15 +343,30 @@ spec.open = {
   end,
 }
 
+local function set_directory_folds(item, roots, expanded)
+  local section = M.find_section_for_line(item.line_idx + 1)
+  local dirs = state.git_changes._dir_states[section]
+  folds.set_subtree(roots, expanded, function(node)
+    if dirs and node.abs_path then dirs[node.abs_path] = expanded end
+  end)
+end
+
+local function close_stash(entry)
+  entry.expanded = false
+  entry.expand_dirs = false
+  folds.set_subtree(entry.children, false)
+end
+
 spec.close = {
   is_closeable = function(item)
     if item._is_section then return true end
     if item.node and item.node._is_stash and item.node.expanded then return true end
     return item.type == 'dir' and item.node and item.node.expanded
   end,
-  close = function(item, line)
+  close = function(item)
     if item._is_section then
       state.git_changes._expanded[item.section] = false
+      if item.section == 'stashes' then state.git_changes.stash_folds.pending = false end
     elseif item.node and item.node._is_stash then
       item.node.expanded = false
       local ref = item.node.stash_ref
@@ -357,13 +376,31 @@ spec.close = {
     else
       local first = item.dir_chain and item.dir_chain[1] or item.node
       first.expanded = false
-      save_dir_state(line, first.abs_path, false)
+      save_dir_state(item, first.abs_path, false)
+    end
+  end,
+  subtree = function(item, root)
+    local ts = state.git_changes
+    if item._is_section then
+      ts._expanded[item.section] = false
+      if item.section == 'stashes' then
+        ts.stash_folds.pending = false
+        ts.stash_folds.expand_dirs = false
+        for _, entry in ipairs(ts._stash_entries or {}) do close_stash(entry) end
+      else
+        set_directory_folds(item, item.node.children, false)
+      end
+    elseif item.node._is_stash then
+      for _, entry in ipairs(ts._stash_entries or {}) do
+        if entry.ref == item.node.stash_ref then close_stash(entry); break end
+      end
+    else
+      set_directory_folds(item, { root }, false)
     end
   end,
 }
 
-function M.open_node()
-  state.git_changes._fold_cursor = nil
+function M.open_node(fold_only)
   if not state:is_open() then return end
   local line = vim.api.nvim_win_get_cursor(state.win)[1]
   local item = state.git_changes.display_items[line]
@@ -388,16 +425,15 @@ function M.open_node()
     end
   end
 
-  source_base.open_node(spec, M.render)
+  source_base.open_node(spec, M.render, fold_only)
 end
 
 function M.close_node()
-  state.git_changes._fold_cursor = nil
   source_base.close_node(spec, M.render)
 end
 
 function M.collapse_all()
-  state.git_changes._fold_cursor = nil
+  state.git_changes.stash_folds.pending = false
   local line = vim.api.nvim_win_get_cursor(state.win)[1]
   local old_section = M.find_section_for_line(line)
 
@@ -446,18 +482,16 @@ function M.locate_first_file()
   locate_mod.locate_first_file(M.render, M.refresh)
 end
 
--- Rendered rows disappear when a tree fold closes. Remember the logical
--- cursor so reopening the fold can return to the same file or directory.
-local function cursor_target(items, line)
-  local node = items[line].node
-  local target = { path = node.abs_path }
-  for i = line, 1, -1 do
-    local ancestor = items[i]
-    if ancestor._is_section then
-      target.section = ancestor.section
-      return target, ancestor
+-- Keep the logical cursor on the same item across redraws and compression.
+local function cursor_target(item)
+  local target = { path = item.node.abs_path }
+  while item do
+    if item._is_section then
+      target.section = item.section
+      return target, item
     end
-    if ancestor.node._is_stash and not target.ref then target.ref = ancestor.node.stash_ref end
+    if item.node._is_stash then target.ref = item.node.stash_ref end
+    item = item.parent
   end
 end
 
@@ -474,40 +508,38 @@ local function restore_target(target)
 end
 
 local function render_keep_cursor()
-  local items = state.git_changes.display_items
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local target = items[line] and cursor_target(items, line)
+  local item = view.current_item(state.git_changes.display_items)
+  local target = item and cursor_target(item)
   M.render()
   if target then restore_target(target) end
 end
 
-local function expand_tree(node, dir_states)
-  if node.type ~= 'directory' then return end
-  node.expanded = true
-  if dir_states and node.abs_path then dir_states[node.abs_path] = true end
-  for _, child in ipairs(node.children or {}) do expand_tree(child, dir_states) end
-end
-
 local function expand_stash(entry)
   entry.expanded = true
+  entry.expand_dirs = true
   if not entry._files_loaded then
     load_stash_files(entry, render_keep_cursor)
     return
   end
-  for _, node in ipairs(entry.children) do expand_tree(node) end
+  folds.set_subtree(entry.children, true)
 end
 
 local function expand_item(ts, item, section)
   if item._is_section then ts._expanded[section] = true end
   if item._is_section and section == 'stashes' then
+    ts.stash_folds.expand_dirs = true
     local function expand_entries()
       for _, entry in ipairs(ts._stash_entries or {}) do expand_stash(entry) end
     end
     if #(ts._stash_entries or {}) > 0 then
       expand_entries()
-    else
+    elseif not ts.stash_folds.pending then
+      ts.stash_folds.pending = true
       load_stash_list(function()
-        if ts._expanded.stashes then expand_entries() end
+        if ts.stash_folds.pending then
+          ts.stash_folds.pending = false
+          expand_entries()
+        end
         render_keep_cursor()
       end)
     end
@@ -516,23 +548,16 @@ local function expand_item(ts, item, section)
       if entry.ref == item.node.stash_ref then expand_stash(entry); break end
     end
   else
-    expand_tree(item.node, ts._dir_states[section])
+    set_directory_folds(item, { item.node }, true)
   end
 end
 
 local function open_folds(whole_section)
-  if not state:is_open() then return end
   local ts = state.git_changes
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = ts.display_items[line]
+  local item = view.current_item(ts.display_items)
   if not item then return end
-  if not whole_section and (item.type ~= 'dir' or item.node.expanded) then return end
-  local target, section_root = cursor_target(ts.display_items, line)
-  if item._is_section and not item.node.expanded and ts._fold_cursor
-      and ts._fold_cursor.section == item.section then
-    target = ts._fold_cursor
-  end
-  ts._fold_cursor = nil
+  if not whole_section and item.node.type ~= 'directory' then return end
+  local target, section_root = cursor_target(item)
   expand_item(ts, whole_section and section_root or item, target.section)
   M.render()
   restore_target(target)
@@ -546,39 +571,14 @@ function M.open_node_recursive()
   open_folds(false)
 end
 
-function M.close_node_recursive()
-  if not state:is_open() then return end
-  local ts = state.git_changes
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = ts.display_items[line]
-  if not item or (item._is_section and not item.node.expanded) then return end
-  local target = cursor_target(ts.display_items, line)
-  ts._fold_cursor = target
-  local child = item.node
-  for i = line, 1, -1 do
-    local parent = ts.display_items[i]
-    local leaf = parent.node
-    if parent.type == 'dir' and (i == line or vim.list_contains(leaf.children or {}, child)) then
-      -- A compressed directory row represents several enclosing folds.
-      for _, node in ipairs(parent.dir_chain or { leaf }) do
-        if node.abs_path then
-          node.expanded = false
-          local dirs = ts._dir_states[target.section]
-          if dirs then dirs[node.abs_path] = false end
-        end
-      end
-      if parent.node._is_stash then
-        spec.close.close(parent, i)
-      elseif parent._is_section then
-        ts._expanded[parent.section] = false
-        M.render()
-        vim.api.nvim_win_set_cursor(state.win, { i, 0 })
-        return
-      end
-      child = parent.dir_chain and parent.dir_chain[1] or leaf
-    end
-  end
-end
+M.folds = {
+  open = function() M.open_node(true) end,
+  close = M.close_node,
+  open_recursive = M.open_node_recursive,
+  close_subtree = function() source_base.close_subtree(spec, M.render) end,
+  expand_all = M.expand_all,
+  collapse_all = M.collapse_all,
+}
 
 -- ── keymaps ─────────────────────────────────────────────
 
@@ -588,11 +588,7 @@ function M.keymaps()
   return {
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
-    { 'zo', M.open_node, desc = 'Open node' },
-    { 'zO', M.open_node_recursive, desc = 'Open node recursively' },
     { 'h', M.close_node, desc = 'Close node' },
-    { 'zc', M.close_node, desc = 'Close node' },
-    { 'zC', M.close_node_recursive, desc = 'Close node recursively' },
     { 'a', git_ops.stage_file, desc = 'Stage file' },
     { 'A', git_ops.stage_section, desc = 'Stage section' },
     { 'u', git_ops.undo_last_action, desc = 'Undo' },

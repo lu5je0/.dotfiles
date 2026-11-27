@@ -92,18 +92,6 @@ function M.setup(group)
     end,
   })
 
-  vim.api.nvim_create_autocmd('CursorMoved', {
-    group = group,
-    callback = function(args)
-      local target = state.git_changes._fold_cursor
-      if not target or args.buf ~= state.buf then return end
-      local item = state.git_changes.display_items[vim.api.nvim_win_get_cursor(0)[1]]
-      if not item or not item._is_section or item.section ~= target.section or item.node.expanded then
-        state.git_changes._fold_cursor = nil
-      end
-    end,
-  })
-
   -- Auto-follow symbol under cursor (debounced).
   vim.api.nvim_create_autocmd('CursorMoved', {
     group = group,

@@ -435,7 +435,7 @@ run('History merge groups preview each parent and include manual merge edits', f
       assert(not commit.parent_diffs or #commit.parent_diffs==0, 'merge must load only on expansion')
     end
   ]])
-  c.feed('l')
+  c.feed('zO')
   c.wait([[
     local h=require('lu5je0.ext.sidebar.state').history
     return h.commits[1].parent_diffs and #h.commits[1].parent_diffs==2
@@ -492,6 +492,28 @@ run('History merge groups preview each parent and include manual merge edits', f
     local s=require('lu5je0.ext.sidebar.state')
     assert(s.history.commits[1].parent_diffs[2].expanded)
   ]])
+  c.feed('zC')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.fn.line('.')]
+    assert(item.type=='parent' and item.node.parent_group.index==2 and not item.node.parent_group.expanded)
+    assert(item.node.commit.expanded)
+    assert(item.node.parent_group.expand_dirs==false and item.node.commit.parent_diffs[1].expanded)
+  ]])
+  c.go('history-merge-result')
+  c.feed('zC')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    local item=s.history.display_items[vim.fn.line('.')]
+    assert(item.type=='commit' and not item.node.commit.expanded)
+    for _,group in ipairs(item.node.commit.parent_diffs) do assert(not group.expanded and group.expand_dirs==false) end
+  ]])
+  c.feed('zR')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    assert(h.commits[1].expanded and h.commits[1].parent_diffs[2].expanded)
+    assert(not h.commits[2].expanded)
+  ]])
   c.q([[
     local sha,repo=...
     for _,win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -508,6 +530,45 @@ run('History merge groups preview each parent and include manual merge edits', f
     local line=vim.api.nvim_win_get_cursor(s.win)[1]
     local item=s.history.display_items[line]
     return not s.history.pending_jump_sha and item and item.node.rel_path=='合并 renamed.txt'
+  ]])
+  c.stop()
+end)
+
+run('History zC closes the commit and its directories recursively', function()
+  local c = child('project')
+  c.go('picked-change')
+  c.feed('zo')
+  c.go('one.txt')
+  c.feed('zozO')
+  c.q([[assert(vim.api.nvim_get_current_line():find('one.txt',1,true))]])
+  c.feed('zC')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    local item=h.display_items[vim.fn.line('.')]
+    assert(item.node.name=='nested' and not item.node.expanded)
+    assert(item.parent.type=='commit' and item.parent.node.expanded)
+  ]])
+  c.go('picked-change')
+  c.feed('zC')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    local item=h.display_items[vim.fn.line('.')]
+    assert(item.type=='commit' and item.node.commit.message=='picked-change' and not item.node.commit.expanded)
+  ]])
+  c.feed('zo')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    assert(h.display_items[vim.fn.line('.')+1].node.name=='nested')
+    assert(not h.display_items[vim.fn.line('.')+1].node.expanded)
+  ]])
+  excludes(c.q("return table.concat(vim.api.nvim_buf_get_lines(0,0,-1,false),'\\n')"), 'one.txt')
+  c.feed('zO')
+  c.go('one.txt')
+  c.feed('zM')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    for _,commit in ipairs(h.commits) do assert(not commit.expanded) end
+    assert(h.display_items[vim.fn.line('.')].node.commit.message=='picked-change')
   ]])
   c.stop()
 end)

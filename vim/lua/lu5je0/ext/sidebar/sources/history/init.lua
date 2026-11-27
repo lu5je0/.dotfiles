@@ -1,6 +1,8 @@
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local folds = require('lu5je0.ext.sidebar.folds')
 local source_base = require('lu5je0.ext.sidebar.source_base')
+local view = require('lu5je0.ext.sidebar.view')
 local model = require('lu5je0.ext.sidebar.sources.history.model')
 local author_filter = require('lu5je0.ext.sidebar.sources.history.author_filter')
 local selection = require('lu5je0.ext.git.common.commit-selection')
@@ -14,10 +16,7 @@ local function visible(ts, tabpage)
   return vim.api.nvim_get_current_tabpage() == tabpage and ts.active_tab_idx == config.tab_idx('history') and ts.win and vim.api.nvim_win_is_valid(ts.win)
 end
 local function current_item()
-  if not state:is_open() then
-    return
-  end
-  local item = state.history.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
+  local item = view.current_item(state.history.display_items)
   return item and item.node and item
 end
 local function item_key(item)
@@ -49,7 +48,7 @@ function spec.build(h, ctx)
         files[#files + 1] = { path = file.path, old_path = file.old_path, xy = xy, x = xy:sub(1, 1), y = xy:sub(2, 2) }
         by_path[file.path] = file_index
       end
-      local nodes = parser.files_to_tree_nodes(files, owner.expanded_dirs, 'history', h.repo_root)
+      local nodes = parser.files_to_tree_nodes(files, owner.expanded_dirs, 'history', h.repo_root, owner.expand_dirs)
       local function annotate(children)
         for _, node in ipairs(children) do
           node.commit, node.commit_idx = commit, index
@@ -251,7 +250,8 @@ local function find_row(items, old)
   for row, item in ipairs(items) do
     local candidate = item.node
     if candidate and candidate.commit == node.commit then
-      if item.type == old.type and candidate.parent_group == node.parent_group and candidate.abs_path == node.abs_path then
+      local same_path = candidate.abs_path == node.abs_path or (node.abs_path and view.item_has_path(item, node.abs_path))
+      if item.type == old.type and candidate.parent_group == node.parent_group and same_path then
         return row
       end
       if item.type == 'commit' then
@@ -449,6 +449,26 @@ local function set_expanded(item, expanded)
     end
   end
 end
+
+local function set_owner_dirs(owner, expanded)
+  owner.expanded_dirs = {}
+  owner.expand_dirs = expanded
+end
+
+local function set_commit_children(commit, expanded)
+  set_owner_dirs(commit, expanded)
+  for _, group in ipairs(model.parent_diffs(commit)) do
+    group.expanded = expanded
+    set_owner_dirs(group, expanded)
+  end
+end
+
+local function set_directory_folds(node, roots, expanded)
+  local owner = node.parent_group or node.commit
+  owner.expanded_dirs = owner.expanded_dirs or {}
+  folds.set_subtree(roots, expanded, function(dir) owner.expanded_dirs[dir.abs_path] = expanded end)
+end
+
 local function open_file(item)
   local path = item and item.node.abs_path
   if path and vim.uv.fs_stat(path) then
@@ -477,25 +497,22 @@ spec.open = {
 spec.close = {
   is_closeable = function(item)
     local node = item.node
-    local current = current_item()
-    current = current and current.node
-    if not current or not node or node.type ~= 'directory' or not node.expanded or node.commit ~= current.commit then
-      return false
-    end
-    if node._is_section and not node._is_parent then
-      return true
-    end
-    if node.parent_group ~= current.parent_group then
-      return false
-    end
-    return node == current or node._is_parent or (current.abs_path and node.abs_path and vim.startswith(current.abs_path, node.abs_path .. '/'))
-  end,
-  is_boundary = function(item)
-    local current = current_item()
-    return current and item.node and item.node.commit ~= current.node.commit
+    return node and node.type == 'directory' and node.expanded
   end,
   close = function(item)
     set_expanded(item, false)
+  end,
+  subtree = function(item, root)
+    local node = item.node
+    if item.type == 'commit' then
+      node.commit.expanded = false
+      set_commit_children(node.commit, false)
+    elseif item.type == 'parent' then
+      node.parent_group.expanded = false
+      set_owner_dirs(node.parent_group, false)
+    else
+      set_directory_folds(node, { root }, false)
+    end
   end,
 }
 local function redraw_current_commit()
@@ -509,6 +526,42 @@ end
 function M.close_node()
   source_base.close_node(spec, redraw_current_commit)
 end
+
+local function open_folds(whole_commit)
+  local item = current_item()
+  if not item or (not whole_commit and item.node.type ~= 'directory') then return end
+  local node = item.node
+  local ts, tabpage = state.tab(), vim.api.nvim_get_current_tabpage()
+  local commit = node.commit
+  if whole_commit or item.type == 'commit' then
+    commit.expanded = true
+    set_commit_children(commit, true)
+    load_merge(ts, tabpage, commit)
+  elseif item.type == 'parent' then
+    local group = node.parent_group
+    group.expanded = true
+    set_owner_dirs(group, true)
+    load_merge(ts, tabpage, commit)
+  else
+    set_directory_folds(node, { node }, true)
+  end
+  redraw_preserving_view(ts, tabpage, commit)
+end
+
+local function collapse_all()
+  local ts = state.tab()
+  for _, commit in ipairs(ts.history.commits) do commit.expanded = false end
+  redraw_preserving_view(ts, vim.api.nvim_get_current_tabpage())
+end
+
+M.folds = {
+  open = function() source_base.open_node(spec, redraw_current_commit, true) end,
+  close = M.close_node,
+  open_recursive = function() open_folds(false) end,
+  close_subtree = function() source_base.close_subtree(spec, redraw_current_commit) end,
+  expand_all = function() open_folds(true) end,
+  collapse_all = collapse_all,
+}
 
 function M.toggle_graph()
   local h = state.history
@@ -632,7 +685,6 @@ function M.keymaps()
       desc = 'Filter by author name or email',
     },
     { 'l', M.open_node, desc = 'Open node' },
-    { 'zo', M.open_node, desc = 'Open node' },
     {
       '<cr>',
       function()
@@ -643,7 +695,6 @@ function M.keymaps()
       desc = 'Open / view selected commits',
     },
     { 'h', M.close_node, desc = 'Close node' },
-    { 'zc', M.close_node, desc = 'Close node' },
     { '<space>', preview.toggle, desc = 'Preview' },
     { '<space><space>', preview.enter, desc = 'Enter preview' },
     { 'gG', M.toggle_graph, desc = 'Toggle Tig commit graph' },

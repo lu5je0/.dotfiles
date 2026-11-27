@@ -2,6 +2,7 @@
 local state = require('lu5je0.ext.sidebar.state')
 local lifecycle = require('lu5je0.ext.sidebar.lifecycle')
 local config = require('lu5je0.ext.sidebar.config')
+local folds = require('lu5je0.ext.sidebar.folds')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local view = require('lu5je0.ext.sidebar.view')
 local env_keeper = require('lu5je0.misc.env-keeper')
@@ -436,14 +437,6 @@ local function expand_to_line(nodes, cursor_line, target_node)
   return false
 end
 
-local function collapse_all_nodes(nodes)
-  if not nodes then return end
-  for _, node in ipairs(nodes) do
-    node.expanded = false
-    if node.children then collapse_all_nodes(node.children) end
-  end
-end
-
 local function same_node(a, b)
   if a == b then return true end
   if not a or not b then return false end
@@ -475,7 +468,7 @@ function M.locate_by_line(cursor_line, opts)
   state.symbols.last_located_node = target
 
   if M.is_auto_follow() then
-    collapse_all_nodes(state.symbols.nodes)
+    folds.set_subtree(state.symbols.nodes, false)
   end
   expand_to_line(state.symbols.nodes, cursor_line, target)
   M.render()
@@ -541,6 +534,12 @@ function M.toggle_node()
   end
 end
 
+spec.open = {
+  is_expandable = function(item) return item.node.type == 'directory' end,
+  is_expanded = function(item) return item.node.expanded end,
+  expand = function(item) item.node.expanded = true end,
+}
+
 spec.close = {
   is_closeable = function(item)
     return item.node and item.node.type == 'directory' and item.node.expanded
@@ -552,34 +551,16 @@ function M.close_node()
   source_base.close_node(spec, M.render)
 end
 
-function M.collapse_all()
-  local old_items = state.symbols.display_items or {}
-  local function collapse(nodes)
-    if not nodes then return end
-    for _, node in ipairs(nodes) do
-      node.expanded = false
-      if node.children then collapse(node.children) end
-    end
-  end
-  collapse(state.symbols.nodes)
+local function render_keep_cursor()
+  local old_items = state.symbols.display_items
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
   M.render()
-  view.restore_cursor(old_items, state.symbols.display_items)
+  view.restore_cursor(old_items, state.symbols.display_items, cursor)
 end
 
-function M.expand_all()
-  local old_items = state.symbols.display_items or {}
-  local function expand(nodes)
-    if not nodes then return end
-    for _, node in ipairs(nodes) do
-      if node.children and #node.children > 0 then
-        node.expanded = true
-        expand(node.children)
-      end
-    end
-  end
-  expand(state.symbols.nodes)
-  M.render()
-  view.restore_cursor(old_items, state.symbols.display_items)
+local function set_all_folds(expanded)
+  folds.set_subtree(state.symbols.nodes, expanded)
+  render_keep_cursor()
 end
 
 function M.is_auto_follow()
@@ -595,38 +576,26 @@ function M.toggle_auto_follow()
   vim.notify('Symbols auto-follow: ' .. (state.symbols.auto_follow and 'on' or 'off'), vim.log.levels.INFO)
 end
 
-function M.open_node_recursive()
-  if not state:is_open() then return end
-  local line = vim.api.nvim_win_get_cursor(state.win)[1]
-  local item = state.symbols.display_items[line]
-  if not item or not item.node then return end
-
-  if item.node.type == 'directory' then
-    local function expand_recursive(node)
-      node.expanded = true
-      if node.children then
-        for _, child in ipairs(node.children) do
-          if child.type == 'directory' then
-            expand_recursive(child)
-          end
-        end
-      end
-    end
-    expand_recursive(item.node)
-    M.render()
-    pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
-  else
-    M.open_symbol()
-  end
+local function open_folds()
+  local item = view.current_item(state.symbols.display_items)
+  if not item or item.node.type ~= 'directory' then return end
+  folds.set_subtree({ item.node }, true)
+  render_keep_cursor()
 end
+
+M.folds = {
+  open = function() source_base.open_node(spec, render_keep_cursor, true) end,
+  close = M.close_node,
+  open_recursive = open_folds,
+  close_subtree = function() source_base.close_subtree(spec, M.render) end,
+  expand_all = function() set_all_folds(true) end,
+  collapse_all = function() set_all_folds(false) end,
+}
 
 function M.keymaps()
   return {
     { 'l', M.toggle_node, desc = 'Expand node' },
-    { 'zo', M.toggle_node, desc = 'Expand node' },
-    { 'zO', M.open_node_recursive, desc = 'Open node recursive' },
     { 'h', M.close_node, desc = 'Collapse node' },
-    { 'zc', M.close_node, desc = 'Collapse node' },
     { '<cr>', M.open_symbol, desc = 'Go to symbol' },
     { 'r', M.request_symbols, desc = 'Refresh' },
     { 'gf', M.toggle_auto_follow, desc = 'Toggle auto-follow' },

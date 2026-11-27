@@ -1,9 +1,11 @@
 -- Files source: workspace file tree.
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local folds = require('lu5je0.ext.sidebar.folds')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local view = require('lu5je0.ext.sidebar.view')
 
+local expand = require('lu5je0.ext.sidebar.sources.files.expand')
 local tree = require('lu5je0.ext.sidebar.sources.files.tree')
 local watcher = require('lu5je0.ext.sidebar.watcher')
 local git = require('lu5je0.ext.sidebar.sources.files.git')
@@ -92,6 +94,15 @@ function M.render(opts)
   source_base.render(spec, opts or {})
 end
 
+local function render_keep_cursor()
+  local items = state.files.display_items
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  M.render()
+  if items[cursor[1]] and items[cursor[1]].node then
+    view.restore_cursor(items, state.files.display_items, cursor)
+  end
+end
+
 function M.prepare_locate(target)
   if vim.fn.filereadable(target.path) ~= 1 then
     local fs_edit = require('lu5je0.ext.sidebar.sources.files.fs-edit')
@@ -112,6 +123,7 @@ function M.locate(_ctx, target)
 end
 
 function M.leave(ctx)
+  expand.cancel(ctx.state.files)
   require('lu5je0.ext.sidebar.sources.files.live_filter').dispose(ctx)
 end
 M.dispose = M.leave
@@ -205,7 +217,10 @@ spec.close = {
     local first = it.dir_chain and it.dir_chain[1] or it.node
     first.expanded = false
   end,
-  is_boundary = function(it) return it.type == 'root' end,
+  subtree = function(item, root)
+    M.cancel_expand()
+    folds.set_subtree(item.type == 'root' and (root.children or {}) or { root }, false)
+  end,
 }
 
 function M.open_node()
@@ -220,7 +235,27 @@ function M.open_node()
 end
 
 function M.close_node()
+  M.cancel_expand()
   source_base.close_node(spec, M.render)
+end
+
+function M.open_fold()
+  source_base.open_node(spec, render_keep_cursor, true)
+end
+
+function M.open_node_recursive()
+  local item = view.current_item(state.files.display_items)
+  if item and (item.type == 'dir' or item.type == 'root') then
+    expand.start(item.node, render_keep_cursor)
+  end
+end
+
+function M.expand_all()
+  if state:is_open() then expand.start(state.files.root, render_keep_cursor) end
+end
+
+function M.cancel_expand()
+  return expand.cancel(state.files)
 end
 
 -- ── cwd / cursor management ─────────────────────────────
@@ -274,6 +309,7 @@ end
 -- ── refresh ─────────────────────────────────────────────
 
 function M.refresh()
+  M.cancel_expand()
   local tabpage = vim.api.nvim_get_current_tabpage()
   state.files.reveal_path = nil
   if state.files.root then
@@ -291,6 +327,7 @@ end
 -- so dotfile ancestors stay expanded, then moves the cursor to the nearest
 -- surviving neighbour (next sibling -> prev sibling -> parent dir).
 function M.refresh_after_delete(deleted_path, fallback_paths)
+  M.cancel_expand()
   local tabpage = vim.api.nvim_get_current_tabpage()
   local anchor = downgrade_reveal_path(vim.fs.dirname(deleted_path))
   if state.files.root then
@@ -337,6 +374,7 @@ end
 -- ── toggles ─────────────────────────────────────────────
 
 function M.toggle_dotfiles()
+  M.cancel_expand()
   local old_line = vim.api.nvim_win_get_cursor(state.win)[1]
   local old_item = state.files.display_items[old_line]
   local old_path = old_item and old_item.node and old_item.node.abs_path
@@ -414,19 +452,22 @@ end
 -- ── collapse all ────────────────────────────────────────
 
 function M.collapse_all()
-  local old_items = state.files.display_items or {}
-  local function collapse(node)
-    if node.type == 'directory' and node.expanded then node.expanded = false end
-    if node.children then
-      for _, child in ipairs(node.children) do collapse(child) end
-    end
-  end
+  M.cancel_expand()
   if state.files.root then
-    for _, child in ipairs(state.files.root.children or {}) do collapse(child) end
+    folds.set_subtree(state.files.root.children, false)
   end
-  M.render()
-  view.restore_cursor(old_items, state.files.display_items)
+  render_keep_cursor()
 end
+
+M.folds = {
+  open = M.open_fold,
+  close = M.close_node,
+  open_recursive = M.open_node_recursive,
+  close_subtree = function() source_base.close_subtree(spec, M.render) end,
+  expand_all = M.expand_all,
+  collapse_all = M.collapse_all,
+  cancel = M.cancel_expand,
+}
 
 -- ── show file info ──────────────────────────────────────
 
@@ -464,6 +505,7 @@ end
 
 function M.find_file(filepath)
   if not filepath or filepath == '' then return end
+  M.cancel_expand()
 
   local cwd = vim.fn.getcwd()
   local dir = M.anchor_dir(filepath)
@@ -514,10 +556,8 @@ function M.keymaps()
   return {
     { 'l', M.open_node, desc = 'Open node' },
     { '<cr>', M.open_node, desc = 'Open node' },
-    { 'zo', M.open_node, desc = 'Open node' },
     { 'u', M.cd_parent, desc = 'Navigate up' },
     { 'h', M.close_node, desc = 'Close node' },
-    { 'zc', M.close_node, desc = 'Close node' },
     { '-', M.cd_parent, desc = 'Navigate up' },
     { '<bs>', M.cd_parent, desc = 'Navigate up' },
     { 'cd', M.cd_to_node, desc = 'CD to node' },

@@ -118,6 +118,7 @@ function M._on_dir_changed(args)
   if old_git_root ~= new_git_root then
     state.git_changes.sections = {}
     state.git_changes._stash_entries = nil
+    state.git_changes.stash_folds.expand_dirs = nil
     state.git_changes._expanded = nil
     state.git_changes._dir_states = nil
     if state:is_open() and state.active_tab_idx == config.tab_idx('git_changes') then

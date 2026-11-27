@@ -18,6 +18,7 @@ sidebar/
 ├── full_name.lua      -- 长文件名浮窗（CursorMoved/WinScrolled 触发）
 ├── tabs.lua           -- winbar 渲染、tab 切换
 ├── keymaps.lua        -- 共享 + per-tab 快捷键管理
+├── folds.lua          -- 折叠键定义、已加载子树的批量折叠与展开
 ├── autocmds.lua       -- 集中注册到 `sidebar` augroup（DirChanged / TabEnter+TabClosed / WinClosed /
 │                          ColorScheme / BufWritePost+FileChangedShellPost+FocusGained / BufEnter+LspAttach /
 │                          buffers source 自动刷新：BufAdd+BufDelete+BufWipeout /
@@ -30,6 +31,7 @@ sidebar/
 │   ├── files/
 │   │   ├── init.lua          -- files source 门面（render / open_node / find_file / cd_* / keymaps）
 │   │   ├── tree.lua          -- 节点 / scan_dir / ensure_children / rescan / rel_to_cwd / make_filter
+│   │   ├── expand.lua        -- 分批递归展开与取消（per-tab expand_job）
 │   │   ├── git.lua           -- build_status_map / status_to_glyph / is_git_item
 │   │   ├── live_filter.lua   -- 过滤 overlay（per-tab buf/win/closing 在 state.files._live_filter）
 │   │   └── info.lua          -- show_file_info 浮窗
@@ -63,15 +65,15 @@ sidebar/
 
 ## 架构约定
 
-- 树渲染统一走 `render.render_tree(root_children, opts)`，不在各 source 重复实现。
+- 树渲染统一走 `render.render_tree(root_children, opts)`。渲染条目的 `item.parent` 指向同棵树的可见父行，`view.close_node` 沿这条链查找 `zc` 或 `zC` 的目标，并把光标停在该行。
 - 合并目录行的 `item.node` 指向显示路径的末级目录，路径和文件操作都以它为准。`item.dir_chain` 仅在多级合并时存在，按从外到内的顺序记录整条链，供折叠和定位使用。分组与 stash 标题单独占行。
 - buffer/窗口写入只走 `view.lua`（`flush` / `open_node` / `close_node` / `restore_cursor`）；`render.lua` 仍 re-export 兼容旧调用。
 - 展开接口的 `open.keep_cursor(item)` 控制是否保留光标；History commit、Changes 分组与 stash 节点展开后留在当前行，已展开时再次按 `l` 也保持不动；普通目录沿用进入子节点的行为。
-- 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close / keymaps`，共用渲染与展开骨架。
+- 每个 source 通过 `source_base.lua` 的 spec 表声明 `build / render_opts / decorate / post_flush / open / close`，共用渲染和折叠骨架。`zC` 从当前行代表的目录链首节点开始递归收起，可通过 `close.subtree` 钩子处理异步任务和持久折叠状态。
 - History 只展示已提交历史，未提交改动由 Changes 展示。History 与其他 source 一样走 `source_base` → `render_tree` → `view.flush`；`sources/history/model.lua` 只负责异步加载和取消，History 专属解析和提交图算法集中在 `sources/history/`，与 source 的窗口操作分离。`git_style.lua` 共用 Changes/History 的树样式；预览 source 可声明 `preview_kind` 与 `preview_item()`，由共享 preview / diff_preview 管理浮窗；条目可通过 `preview_kind = "text"`、`lines`、`title` 提供文本预览，`text_preview` 管理 per-tab 浮窗及资源释放。
 - 新增 source：在 `sources/` 下新增模块，导出 `render()` 与 `keymaps()`，在 `config.tabs` 表注册。可选接口为 `enter(ctx, opts)`、`leave(ctx)`、`locate(ctx, target)`、`dispose(ctx)`；未声明 `enter` 时回退到 `render()`。定位前需要校验或转换目标时提供 `prepare_locate(target)`，返回 false 中止；`init.locate_in_tab` 只分派接口，不包含具体 source 分支。
 - `enter(ctx, opts)` 负责让当前页就绪，同页 `focus()` 与 `open_tab(..., { no_toggle = true })` 也会调用；同一次访问复用 ctx，直到 `leave` 才失效。hook 必须支持重复调用，可刷新数据，但应取消或复用已有任务，避免重复持有资源；`enter` 与 `leave` 的调用次数不必一一对应。
-- 快捷键区分共享（`keymaps.apply_shared`）和 per-tab（source `keymaps()`）。
+- 快捷键区分共享（`keymaps.apply_shared`）和 per-tab（source `keymaps()`）。树页签通过 `source.folds` 提供 `open` / `close` / `open_recursive` / `close_subtree` / `expand_all` / `collapse_all`，可选 `cancel` 供 `Esc` 调用。`folds.lua` 统一为这些操作生成按键和帮助，`source_base` 与 `view` 负责通用的折叠操作，来源负责加载、存储折叠状态及确定渲染范围。`zo` 只打开折叠，文件和符号跳转走 `l` 等导航键。
 - source 快捷键只绑定当前页，切页时先移除全部 source 映射，再绑定当前页；不能把非当前页按键保留成空操作，避免 Files 的 `dd` / `cd` 使 Git Changes 的 `d` / `c` 等待后续输入。同页存在短键和长键前缀时，先注册长键、后注册短键，使短键的 `nowait` 优先匹配；覆盖已有映射不会改变查找顺序，必须先移除再注册，单空格预览不能等待双空格超时。
 - git 工具统一用 `actions/git_ops.lua` → `ext/git/common/git-ops.lua`。
 - 页面异步入口通过 `lifecycle.capture()` 或 hook 参数取得 `ctx`（state、tabpage、idx、generation）；回调读写 `ctx.state`，更新页面前检查 `lifecycle.is_current(ctx)`。离开页面、切 Neovim tab、关闭与切目录会使旧 context 失效，离开后再回到同页也不能接收旧结果。后台 Git 状态刷新保留独立的 tabpage 和 generation 检查，不依赖当前页面。
@@ -89,7 +91,8 @@ sidebar/
 - `<leader>gs` 打开/定位 Git Changes tab（`locate_in_tab('git_changes')`）。
 - 每个 tabpage **首次**按 `<leader>gs` 进入 Git Changes 时，忽略当前 buffer，光标定位到第一个变更文件（`git_changes.locate_first_file`），由 per-tab `state.git_changes._first_located` 记录；之后同 tabpage 再按仍定位当前文件（`locate_file`）。
 
-- Changes 普通模式下，`zC` 沿光标所在目录链收起到分组，保留旁支状态；`zO` 递归展开光标处的闭合折叠，`zR` 展开光标所在分组的全部折叠。在 Stashes 分组内操作时按需加载 stash。在原处重新展开会恢复被折叠的光标条目。
+- Files、Changes、Symbols、History 支持 `zo` 展开一层、`zc` 折叠最近一层、`zO` 递归展开、`zC` 递归折叠当前节点及其子折叠，以及 `zR` / `zM`。叶子行上的 `zC` 使用最近的可折叠父节点，保留其外层和旁支的开合状态。在 Files 根标题上按 `zC` 收起标题下所有目录。文件树和符号树的 `zR` 展开整棵树。Files 递归展开分批扫描和渲染，遵循隐藏目录设置并跳过符号链接。`Esc` 保留已显示的内容并停止后续批次，切页、换目录或关闭 Sidebar 也会取消任务。
+- Changes 的 `zR` 展开当前分组。Stashes 按需加载，异步结果按当前子折叠设置显示。History 的 `zO` 展开当前提交、parent 或目录，`zR` 展开光标所在提交的全部折叠，`zM` 收起全部提交。对单个提交操作时，只重绘该提交的行。
 - Changes 离开时取消 stash 加载；没有缓存条目的列表与未加载完的 stash 文件节点恢复折叠，返回后可按 `l` 重试，已加载内容与展开状态保留。Symbols 进入时先同步渲染缓存或空状态，再发起请求，等待 LSP 时不能保留上一页内容。
 
 - Git diff 的布局与 changes-only 独立保存：`d` 保留上下文偏好；`c` 在 single 模式切换完整上下文 / 改动附近 3 行，在 dual 模式展开 / 折叠未变化区域。Space 预览期间，在列表或预览窗口按 `d` / `c` 均立即使用已加载内容刷新，不重读文件；切换布局保留当前焦点所在区域。
@@ -138,11 +141,11 @@ sidebar/
 
 - `cd vim && ./tests/run-tests.sh` 跑全部 sidebar 测试：
   - `state_spec.lua` — per-tab schema / 隔离 / cleanup
-  - `lifecycle_spec.lua` — 统一定位、请求乱序、切页后旧回调、跨 tab 隔离、显式/外部关闭及 E444 失败状态保留、stash 取消后重试、Symbols 等待响应时的内容、任务和 timer 清理
+  - `lifecycle_spec.lua` — 统一定位、请求乱序、跨 tab 隔离、关闭与 E444、stash 取消后重试、Changes / Symbols 的折叠范围和任务清理
   - `spec.lua` — git status 解析、render_tree、live_filter 纯逻辑
   - `interactive_spec.lua` — files source 的 cd/DirChanged/back/forward 状态机
   - `full_name_spec.lua` — 真实 UI 下长名称浮窗的边距、搜索横向滚动、宽字符、高亮与复用
-  - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，覆盖非当前窗口、外部关闭及不同打开入口，并验证 Files 筛选期间的全局状态栏
+  - `scroll_spec.lua` — 真实鼠标滚轮与键盘翻页后关闭/重开恢复视图，逐帧检查没有中间位置闪动，并用真实按键验证 Files 筛选状态栏、递归展开和取消
   - `diff_preview_spec.lua` — `resolve_diff_targets` 映射、Git Changes 列表与预览窗口的 `c` / `d` 四种组合、真实单键输入、单栏跨 hunk 的语法高亮和行背景
   - `parser_spec.lua` — 独立 Git fixture 下的 `files_to_tree_nodes`、`git_root` 缓存自失效（同 cwd 出现嵌套仓库 / worktree、根标记删除后回退父仓库）
   - `git_changes_spec.lua` — git_changes section 分类、restore_cursor 行为

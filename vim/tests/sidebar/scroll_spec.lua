@@ -217,6 +217,131 @@ h.run('Files filter keeps the global Sidebar statusline while typing', function(
   h.assert_eq(eval('return statusline_text()'), before)
 end)
 
+h.group('Sidebar Files folds')
+local function input(keys)
+  vim.rpcrequest(child, 'nvim_input', keys)
+end
+
+local function wait_for(code)
+  h.assert_truthy(vim.wait(4000, function() return eval(code) end, 5), code)
+end
+
+h.run('zo and zc fold one level, and zO expands just the current subtree', function()
+  input('F')
+  wait_for('return state.files.live_filter == nil')
+  eval([[
+    local fixture = ... .. '/.folds'
+    for _, path in ipairs({ 'branch/nested/deep', 'other/side', '.hidden/nested' }) do
+      vim.fn.mkdir(fixture .. '/' .. path, 'p')
+      vim.fn.writefile({}, fixture .. '/' .. path .. '/leaf.txt')
+    end
+    assert(vim.uv.fs_symlink(fixture, fixture .. '/loop', { dir = true }))
+    vim.cmd.cd(fixture)
+    function row_for(path)
+      for row, item in ipairs(state.files.display_items) do
+        if item.node and item.node.abs_path == fixture .. '/' .. path then return row end
+      end
+    end
+    function goto_path(path)
+      vim.api.nvim_win_set_cursor(state.win, { assert(row_for(path), path), 0 })
+    end
+    goto_path('branch')
+  ]], fixture)
+  input('zo')
+  wait_for("return row_for('branch/nested') ~= nil")
+  h.assert_eq(eval("return row_for('branch/nested/deep')"), vim.NIL)
+  input('zoj')
+  wait_for("return vim.api.nvim_get_current_win() == state.win and vim.fn.line('.') == row_for('branch/nested')")
+  input('zc')
+  wait_for("return row_for('branch/nested') == nil")
+  input('zozO')
+  wait_for("return row_for('branch/nested/deep/leaf.txt') ~= nil")
+  h.assert_eq(eval("return row_for('other/side')"), vim.NIL)
+  h.assert_eq(eval("return vim.fn.line('.') == row_for('branch')"), true)
+  eval("goto_path('branch/nested/deep/leaf.txt')")
+  input('zo')
+  drain()
+  h.assert_eq(eval("return vim.api.nvim_get_current_win() == state.win and vim.fn.line('.') == row_for('branch/nested/deep/leaf.txt')"), true)
+  eval("goto_path('other')")
+  input('zc')
+  drain()
+  h.assert_truthy(eval("return row_for('branch/nested/deep/leaf.txt') ~= nil"))
+end)
+
+h.run('zC closes the Files directory and its descendants and leaves siblings open', function()
+  eval("goto_path('other')")
+  input('zO')
+  wait_for("return row_for('other/side/leaf.txt') ~= nil")
+  eval("goto_path('branch/nested/deep/leaf.txt')")
+  input('zC')
+  wait_for("return vim.fn.line('.') == row_for('branch/nested/deep') and row_for('branch/nested/deep/leaf.txt') == nil")
+  h.assert_truthy(eval("return row_for('other/side/leaf.txt') ~= nil"))
+  eval("goto_path('branch')")
+  input('zC')
+  wait_for("return row_for('branch/nested') == nil and vim.fn.line('.') == row_for('branch')")
+  h.assert_truthy(eval("return row_for('other/side/leaf.txt') ~= nil"))
+  input('zo')
+  wait_for("return row_for('branch/nested') ~= nil")
+  h.assert_eq(eval("return row_for('branch/nested/deep')"), vim.NIL)
+  eval("goto_path('branch/nested')")
+  input('zo')
+  wait_for("return row_for('branch/nested/deep') ~= nil")
+  h.assert_eq(eval("return row_for('branch/nested/deep/leaf.txt')"), vim.NIL)
+end)
+
+h.run('zR renders partial results, Esc stops scanning, and zR finishes on retry', function()
+  eval([[
+    for i = 1, 512 do
+      local dir = ('many/dir-%03d/deep'):format(i)
+      vim.fn.mkdir(dir, 'p')
+      vim.fn.writefile({}, dir .. '/leaf.txt')
+    end
+    require('lu5je0.ext.sidebar.sources.files').refresh()
+    vim.api.nvim_win_set_cursor(state.win, { row_for('other'), 4 })
+    fold_frame_rows = 0
+    vim.api.nvim_set_decoration_provider(vim.api.nvim_create_namespace('sidebar_expand_test'), {
+      on_win = function(_, _, buf)
+        if buf == state.buf and state.files.expand_job then
+          fold_frame_rows = math.max(fold_frame_rows, #state.files.display_items)
+        end
+      end,
+    })
+  ]])
+  local before = eval('return #state.files.display_items')
+  input('zR')
+  wait_for(('return fold_frame_rows > %d and state.files.expand_job ~= nil'):format(before))
+  input('<Esc>')
+  wait_for('return state.files.expand_job == nil')
+  local stopped = eval('return #state.files.display_items')
+  h.assert_truthy(stopped > before)
+  h.assert_eq(eval("return row_for('many/dir-512/deep/leaf.txt')"), vim.NIL)
+  drain()
+  h.assert_eq(eval('return #state.files.display_items'), stopped)
+  input('zR')
+  wait_for("return row_for('many/dir-512/deep/leaf.txt') ~= nil and state.files.expand_job == nil")
+  h.assert_eq(eval("return vim.api.nvim_win_get_cursor(state.win)"), { eval("return row_for('other')"), 4 })
+  h.assert_eq(eval("return row_for('loop/branch') or row_for('.hidden')"), vim.NIL)
+end)
+
+h.run('closing a fold or leaving Files cancels pending expansion', function()
+  eval("goto_path('many')")
+  input('zc')
+  wait_for("return row_for('many/dir-001') == nil")
+  input('zO')
+  wait_for("return state.files.expand_job ~= nil and row_for('many/dir-001/deep') ~= nil")
+  h.assert_eq(eval("return row_for('many/dir-512/deep/leaf.txt')"), vim.NIL)
+  input('zC')
+  wait_for("return state.files.expand_job == nil and row_for('many/dir-001') == nil")
+  input('zO')
+  wait_for("return state.files.expand_job ~= nil and row_for('many/dir-001/deep') ~= nil")
+  h.assert_eq(eval("return row_for('many/dir-512/deep/leaf.txt')"), vim.NIL)
+  input('<Right>')
+  wait_for('return state.active_tab_idx == 2 and state.files.expand_job == nil')
+  input('<Left>')
+  wait_for('return state.active_tab_idx == 1')
+  h.assert_eq(eval("return row_for('many/dir-512/deep/leaf.txt')"), vim.NIL)
+end)
+
 vim.fn.jobstop(child)
 vim.fn.delete(fixture, 'rf')
 h.finish()

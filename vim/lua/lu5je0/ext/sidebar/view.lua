@@ -49,14 +49,18 @@ local function cursor_line()
   return vim.api.nvim_win_get_cursor(state.win)[1]
 end
 
-local function set_cursor(line)
-  pcall(vim.api.nvim_win_set_cursor, state.win, { line, 0 })
+function M.current_item(items)
+  if not state:is_open() then return end
+  local line = cursor_line()
+  return items[line], line
+end
+
+local function set_cursor(line, col)
+  pcall(vim.api.nvim_win_set_cursor, state.win, { line, col or 0 })
 end
 
 function M.open_node(opts)
-  if not state:is_open() then return end
-  local line = cursor_line()
-  local item = opts.get_items()[line]
+  local item, line = M.current_item(opts.get_items())
   if not item then return end
 
   if opts.is_expandable(item) then
@@ -64,47 +68,26 @@ function M.open_node(opts)
     if not opts.is_expanded(item) then
       opts.expand(item, line)
       opts.render_fn()
-      set_cursor(keep_cursor and line or line + 1)
-    elseif not keep_cursor and opts.on_already_expanded then
+      if not opts.fold_only then set_cursor(keep_cursor and line or line + 1) end
+    elseif not opts.fold_only and not keep_cursor and opts.on_already_expanded then
       opts.on_already_expanded(item, line)
     end
     return
   end
 
-  if item.type == 'file' and opts.on_file then
+  if not opts.fold_only and item.type == 'file' and opts.on_file then
     opts.on_file(item, line)
   end
 end
 
 function M.close_node(opts)
-  if not state:is_open() then return end
-  local line = cursor_line()
-  local items = opts.get_items()
-  local item = items[line]
+  local item = M.current_item(opts.get_items())
+  while item and not opts.is_closeable(item) do item = item.parent end
   if not item then return end
-
-  if opts.is_closeable(item) then
-    opts.close(item, line)
-    opts.render_fn()
-    set_cursor(line)
-    return
-  end
-
-  for i = line - 1, 1, -1 do
-    local parent = items[i]
-    if parent then
-      if opts.is_boundary and opts.is_boundary(parent) then
-        set_cursor(i)
-        return
-      end
-      if opts.is_closeable(parent) then
-        opts.close(parent, i)
-        opts.render_fn()
-        set_cursor(i)
-        return
-      end
-    end
-  end
+  local row = item.line_idx + 1
+  opts.close(item)
+  opts.render_fn()
+  set_cursor(row)
 end
 
 function M.item_has_path(item, path)
@@ -117,8 +100,8 @@ function M.item_has_path(item, path)
   return false
 end
 
-function M.restore_cursor(old_items, new_items)
-  local line = cursor_line()
+function M.restore_cursor(old_items, new_items, cursor)
+  local line = cursor and cursor[1] or cursor_line()
   local old_node = old_items[line] and old_items[line].node
   if not old_node then
     set_cursor(1)
@@ -136,8 +119,8 @@ function M.restore_cursor(old_items, new_items)
   end
 
   for i, item in ipairs(new_items) do
-    if item.node == old_node then
-      set_cursor(i)
+    if item.node == old_node or (item.dir_chain and vim.list_contains(item.dir_chain, old_node)) then
+      set_cursor(i, cursor and cursor[2])
       return
     end
   end
