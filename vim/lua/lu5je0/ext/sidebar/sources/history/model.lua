@@ -4,8 +4,25 @@ local M = {}
 
 function M.prepare_graph(state)
   if not state.graph_rows then
-    state.graph_rows = require('lu5je0.ext.sidebar.sources.history.tig').build(state.commits)
+    local visible
+    if state.author_filter then
+      visible = {}
+      for _, commit in ipairs(state.commits) do
+        visible[commit.hash] = true
+      end
+    end
+    state.graph_rows = require('lu5je0.ext.sidebar.sources.history.tig').build(state.commits, visible)
   end
+end
+
+function M.load_authors(root, loaded)
+  return vim.system(
+    { 'git', 'log', '--no-patch', '--no-show-signature', '--format=%an%x00%ae' },
+    { cwd = root, text = true },
+    vim.schedule_wrap(function(result)
+      loaded(result.code == 0 and core.parse_authors(result.stdout) or {})
+    end)
+  )
 end
 
 function M.parent_diffs(commit)
@@ -123,6 +140,9 @@ function M.load(state, root, opts, changed)
       return
     end
     local args = { 'git', 'log', '--topo-order', '--date=format:%Y-%m-%d %H:%M:%S', '--pretty=format:%x1e%H%x00%h%x00%ad%x00%an%x00%s%x00%P', '--name-status', '--find-renames', '--find-copies' }
+    if state.author_filter then
+      vim.list_extend(args, { '--no-use-mailmap', '--fixed-strings', '--regexp-ignore-case', '--author=' .. state.author_filter })
+    end
     if limit then
       args[#args + 1] = '--max-count=' .. (limit + 1)
     end

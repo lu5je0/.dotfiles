@@ -1,5 +1,23 @@
 local M = {}
 
+function M.parse_authors(stdout)
+  local entries, seen = {}, {}
+  local function add(word, icon)
+    if word ~= '' and not seen[word] then
+      seen[word] = true
+      entries[#entries + 1] = { word = word, menu = icon, icase = 1 }
+    end
+  end
+  for name, email in (stdout or ''):gmatch('([^%z\n]*)%z([^\n]*)') do
+    add(name, '')
+    add(email, '')
+  end
+  table.sort(entries, function(a, b)
+    return a.word < b.word
+  end)
+  return entries
+end
+
 local function status_from_xy(xy)
   local x = xy:sub(1, 1)
   local y = xy:sub(2, 2)

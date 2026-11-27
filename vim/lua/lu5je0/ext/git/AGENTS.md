@@ -162,6 +162,7 @@ Git Changes tab 由 `lua/lu5je0/ext/sidebar/` 提供。`<leader>gs` 打开/定�
 | n (project log buf) | `h` on child node | 折叠父节点 |
 | n (History) | `<Space>` | 打开历史 diff 预览，再按进入浮窗 |
 | n (History) | `K` | 查看完整提交信息 |
+| n (History) | `f` | 在第一行按作者姓名或邮箱筛选，`Tab` 补全 |
 | n (History) | `gG` | 切换 Tig 提交关系图 |
 | n (History) | `<CR>` on file | 打开工作区文件；有勾选时查看所选净变化 |
 | n (log buf) | `c` | 切换 changes-only；single 压缩上下文，dual 折叠未变化区域 |

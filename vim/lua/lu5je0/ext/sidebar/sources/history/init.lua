@@ -2,6 +2,7 @@ local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
 local source_base = require('lu5je0.ext.sidebar.source_base')
 local model = require('lu5je0.ext.sidebar.sources.history.model')
+local author_filter = require('lu5je0.ext.sidebar.sources.history.author_filter')
 local selection = require('lu5je0.ext.git.common.commit-selection')
 local git_style = require('lu5je0.ext.sidebar.git_style')
 local parser = require('lu5je0.ext.sidebar.sources.git_changes.parser')
@@ -16,7 +17,8 @@ local function current_item()
   if not state:is_open() then
     return
   end
-  return state.history.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
+  local item = state.history.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
+  return item and item.node and item
 end
 local function item_key(item)
   return item and item.node and item.node.commit.hash
@@ -26,7 +28,16 @@ local function is_merge(commit)
   return (commit.parents or ''):find('%S+%s+%S+') ~= nil
 end
 
+local function filter_header(h)
+  if h.author_filter or h.author_prompt then
+    return author_filter.header(h.author_filter or '')
+  end
+end
+
 function spec.build(h, ctx)
+  if ctx and ctx.header_only then
+    return {}, filter_header(h)
+  end
   local roots = {}
   local index_to_render = ctx and ctx.commit_idx
   for index = index_to_render or 1, index_to_render or #h.commits do
@@ -89,7 +100,7 @@ function spec.build(h, ctx)
       graph = h.graph_enabled and h.graph_rows and h.graph_rows[index] or nil,
     }
   end
-  return roots
+  return roots, not index_to_render and filter_header(h) or nil
 end
 
 function spec.render_opts()
@@ -128,8 +139,11 @@ function spec.render_opts()
   return opts
 end
 
-function spec.decorate(h, lines, items, highlights)
-  if #lines > 0 then
+function spec.decorate(h, lines, items, highlights, _virt_texts, ctx)
+  if ctx and ctx.header_only then
+    return
+  end
+  if #h.commits > 0 then
     local commits = {}
     for _, item in ipairs(items) do
       if item.type == 'commit' then
@@ -171,8 +185,9 @@ function spec.decorate(h, lines, items, highlights)
     vim.list_extend(highlights, extra)
     return
   end
-  local message = h.loading and 'Loading history…' or h.error or (h.repo_root and 'No commits' or 'Not in a Git repository')
-  return { '  ' .. message:gsub('[\r\n]+', ' ') }, {}, { { line = 0, hl = 'Comment', col_start = 0, col_end = -1 } }, {}
+  local message = h.loading and 'Loading history…' or h.error or (h.author_filter and 'No commits match the author filter') or (h.repo_root and 'No commits' or 'Not in a Git repository')
+  highlights[#highlights + 1] = { line = #lines, hl = 'Comment', col_start = 0, col_end = -1 }
+  lines[#lines + 1] = '  ' .. message:gsub('[\r\n]+', ' ')
 end
 
 function spec.post_flush(h)
@@ -203,8 +218,8 @@ local function redraw(ts, tabpage, commit)
   end
   if h.pending_jump_sha then
     for line, item in ipairs(h.display_items) do
-      local commit = item.node.commit
-      if commit.hash:sub(1, #h.pending_jump_sha) == h.pending_jump_sha then
+      local commit = item.node and item.node.commit
+      if commit and commit.hash:sub(1, #h.pending_jump_sha) == h.pending_jump_sha then
         if not h.pending_jump_file or (item.node.rel_path == h.pending_jump_file or item.node.old_path == h.pending_jump_file) then
           vim.api.nvim_win_set_cursor(ts.win, { line, 0 })
           h.pending_jump_sha, h.pending_jump_file = nil, nil
@@ -219,15 +234,23 @@ local function redraw(ts, tabpage, commit)
   end
 end
 
+local function redraw_filter_header(ts, tabpage)
+  if visible(ts, tabpage) then
+    local first = ts.history.display_items[1]
+    local last = first and first.type == 'filter' and 1 or 0
+    source_base.render(spec, { header_only = true }, 0, last)
+  end
+end
+
 local function find_row(items, old)
-  if not old then
+  if not old or not old.node then
     return
   end
   local node = old.node
   local commit_row
   for row, item in ipairs(items) do
     local candidate = item.node
-    if candidate.commit == node.commit then
+    if candidate and candidate.commit == node.commit then
       if item.type == old.type and candidate.parent_group == node.parent_group and candidate.abs_path == node.abs_path then
         return row
       end
@@ -335,6 +358,8 @@ function M.enter(_ctx, opts)
   local jump = opts and opts.history
   if jump and jump.jump_to_sha then
     local h = state.history
+    author_filter.close(h)
+    h.author_filter = nil
     h.pending_jump_sha = jump.jump_to_sha
     h.pending_jump_file = jump.jump_to_file and jump.jump_to_file:gsub('^' .. vim.pesc(h.repo_root .. '/'), '')
     setup_selection()
@@ -352,7 +377,8 @@ function M.status()
     return 'History · loading'
   end
   local count = selection.count(h)
-  return string.format('History · %d commits%s', #h.commits, count > 0 and (' · ' .. count .. ' selected') or '')
+  local filter_label = h.author_filter and (' · Author: ' .. h.author_filter:gsub('%%', '%%%%')) or ''
+  return string.format('History · %d commits%s%s', #h.commits, count > 0 and (' · ' .. count .. ' selected') or '', filter_label)
 end
 
 function M.open(opts)
@@ -365,8 +391,9 @@ function M.open(opts)
   end
   local h = state.history
   if root ~= h.repo_root then
+    author_filter.close(h)
     model.cancel(h)
-    h.loaded = false
+    h.loaded, h.author_filter = false, nil
   end
   h.repo_root = root
   require('lu5je0.ext.sidebar').open_tab(config.tab_idx('history'), { no_toggle = true, history = opts })
@@ -374,6 +401,7 @@ end
 
 function M.leave(ctx)
   local ts = ctx.state
+  author_filter.close(ts.history)
   model.cancel(ts.history)
   if ts.buf and vim.api.nvim_buf_is_valid(ts.buf) then
     vim.api.nvim_buf_clear_namespace(ts.buf, vim.api.nvim_create_namespace('git_commit_selection'), 0, -1)
@@ -381,6 +409,7 @@ function M.leave(ctx)
 end
 
 function M.dispose(ctx)
+  author_filter.close(ctx.state.history)
   model.cancel(ctx.state.history)
 end
 
@@ -390,8 +419,10 @@ function M.on_directory_changed(ts, cwd)
   if h.repo_root == root then
     return
   end
+  author_filter.close(h)
   model.cancel(h)
   h.repo_root, h.loaded, h.error = root, false, nil
+  h.author_filter = nil
   h.commits, h.selected_commits = {}, {}
   h.graph_rows = nil
 end
@@ -429,7 +460,7 @@ spec.open = {
     return item.type == 'commit' or item.type == 'parent'
   end,
   is_expandable = function(item)
-    return item.node.type == 'directory'
+    return item.node and item.node.type == 'directory'
   end,
   is_expanded = function(item)
     return item.node.expanded
@@ -448,7 +479,7 @@ spec.close = {
     local node = item.node
     local current = current_item()
     current = current and current.node
-    if not current or node.type ~= 'directory' or not node.expanded or node.commit ~= current.commit then
+    if not current or not node or node.type ~= 'directory' or not node.expanded or node.commit ~= current.commit then
       return false
     end
     if node._is_section and not node._is_parent then
@@ -461,7 +492,7 @@ spec.close = {
   end,
   is_boundary = function(item)
     local current = current_item()
-    return current and item.node.commit ~= current.node.commit
+    return current and item.node and item.node.commit ~= current.node.commit
   end,
   close = function(item)
     set_expanded(item, false)
@@ -580,6 +611,26 @@ function M.keymaps()
   local preview = require('lu5je0.ext.sidebar.actions.preview')
   local diff_preview = require('lu5je0.ext.sidebar.actions.diff_preview')
   return {
+    {
+      'f',
+      function()
+        preview.stop()
+        local ts, tabpage = state.tab(), vim.api.nvim_get_current_tabpage()
+        author_filter.open(function()
+          redraw_filter_header(ts, tabpage)
+        end, function(query)
+          local h = ts.history
+          local filter = query ~= '' and query or nil
+          if filter ~= h.author_filter then
+            h.author_filter = filter
+            h.pending_jump_sha, h.pending_jump_file = nil, nil
+            load()
+            return true
+          end
+        end)
+      end,
+      desc = 'Filter by author name or email',
+    },
     { 'l', M.open_node, desc = 'Open node' },
     { 'zo', M.open_node, desc = 'Open node' },
     {

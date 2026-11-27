@@ -114,6 +114,8 @@ local function new_tab_state(tabpage)
 
     history = {
       repo_root = nil,
+      author_filter = nil,
+      author_prompt = nil,
       graph_enabled = false,
       graph_rows = nil,
       commits = {},

@@ -40,6 +40,7 @@ sidebar/
 │   │   └── locate.lua        -- do_locate / do_locate_first 实现
 │   ├── history/
 │   │   ├── init.lua          -- History source：提交树、勾选、历史 diff 目标与 open 入口
+│   │   ├── author_filter.lua -- 第一行作者筛选与补全
 │   │   ├── model.lua         -- 项目历史 / merge parent 文件列表的异步加载、缓存与取消
 │   │   ├── core.lua          -- Git 日志与文件状态输出解析
 │   │   └── tig.lua           -- Tig v2 提交图布局与颜色编号
@@ -111,6 +112,7 @@ sidebar/
 - **render 路径禁止同步外部命令**。git 数据通过异步预加载，render 只读缓存。
 - History 展开、折叠及 merge parent 加载完成时只重绘所属提交的行；重新加载、切换提交图和窗口宽度变化时重绘全页。
 - History 的 `ga` 加载全部提交时保留当前列表；完成后按提交和树节点恢复光标与视口，并保留仍在历史中的提交展开状态和勾选。
+- History 的 `f` 在第一行按作者姓名或邮箱筛选，复用 Files 的筛选行样式。按 `Tab` 补全、回车应用（空输入清除）、`Esc` 取消。补全异步读取 HEAD 可达的作者，筛选在 Git 限制提交数量前执行，`ga` 加载所有匹配提交。筛选按 tabpage 和仓库保留，显式跳转到提交时清除。筛选后的关系图只连显示的直接 parent，历史 diff 仍使用实际 parent。
 - render 路径不调用 `redraw` / `redrawstatus` 强制刷新屏幕，确保视图恢复前的中间画面不会显示；剪贴板状态栏刷新只在复制/剪切操作中执行，`apply_clipboard_mark` 仅更新高亮。
 - 修改 render、CursorMoved 或高频 autocmd 时检查热路径开销；有明显性能影响时说明验证结果。
 - 所有 Git 状态触发统一调用 `git_status.lua`，由它执行一次 `git status` 并分发给 Files 与 Git Changes；不要在 source 或 autocmd 中另起查询。

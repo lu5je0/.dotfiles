@@ -61,6 +61,8 @@ function M.setup(group)
         if ts.win == win then
           require('lu5je0.ext.sidebar.tabs').save_view(ts)
           lifecycle.close(ts)
+        elseif ts.history.author_prompt and ts.history.author_prompt.win == win then
+          require('lu5je0.ext.sidebar.sources.history.author_filter').close(ts.history, true)
         end
       end
     end,

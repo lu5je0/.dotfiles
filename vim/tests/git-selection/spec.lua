@@ -1301,6 +1301,123 @@ run('closing a pending merge invokes cleanup and suppresses late callbacks', fun
   c.stop()
 end)
 
+run('History author filter completes names and emails beyond the initial log', function()
+  git { '-c', 'user.name=Ada Example', '-c', 'user.email=ada+review@example.test', 'commit', '--allow-empty', '-qm', 'author-filter-old' }
+  git { '-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '--allow-empty', '-qm', 'author-filter-between' }
+  git { '-c', 'user.name=Ada Example', '-c', 'user.email=ada+review@example.test', 'commit', '--allow-empty', '-qm', 'author-filter-new' }
+  git { '-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '--allow-empty', '-qm', 'author-filter-head' }
+  local c = child('project')
+  c.q([[
+    require('lu5je0.ext.git').setup({ project_log = { max_commits = 1 } })
+    function author_query()
+      return vim.api.nvim_get_current_line():sub(#vim.fn.prompt_getprompt(vim.api.nvim_get_current_buf())+1)
+    end
+  ]])
+  c.feed('r')
+  c.wait([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    return h.loaded and h.limited and #h.commits==1 and h.commits[1].message=='author-filter-head'
+  ]])
+
+  local function open_prompt()
+    c.feed('f')
+    c.wait([[
+      local h=require('lu5je0.ext.sidebar.state').history
+      return h.author_prompt and not h.author_prompt.job and vim.api.nvim_get_current_win()==h.author_prompt.win
+    ]])
+    c.q([[
+      local s=require('lu5je0.ext.sidebar.state')
+      local popup=vim.api.nvim_win_get_config(s.history.author_prompt.win)
+      assert(popup.relative=='win' and popup.win==s.win and popup.bufpos[1]==0 and popup.height==1)
+      assert(s.history.display_items[1].type=='filter')
+    ]])
+  end
+
+  open_prompt()
+  c.feed('<Esc>')
+  c.q([[assert(not vim.api.nvim_get_current_line():find('[FILTER]',1,true))]])
+  open_prompt()
+  c.feed('Ada E<Tab>')
+  c.q([[
+    assert(author_query()=='Ada Example', vim.inspect(author_query()))
+    assert(vim.fn.complete_info({'items'}).items[1].menu=='')
+  ]])
+  c.feed('<CR>')
+  c.wait([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    return h.loaded and h.limited and #h.commits==1 and h.commits[1].message=='author-filter-new'
+  ]])
+  c.feed('gglh')
+  c.go('author-filter-new')
+  c.feed('lh')
+  c.q([[assert(vim.api.nvim_buf_get_lines(log_buf,0,1,false)[1]=='[FILTER]: /Ada Example/')]])
+  c.feed('ga')
+  c.wait([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    return h.loaded and not h.loading and not h.limited and #h.commits==2 and h.commits[2].message=='author-filter-old'
+  ]])
+  c.feed('gG')
+  c.q([[local h=require('lu5je0.ext.sidebar.state').history; assert(#h.graph_rows==2)]])
+
+  open_prompt()
+  c.q([[assert(author_query()=='Ada Example')]])
+  c.feed('<C-u>ada+<Tab>')
+  c.q([[
+    assert(author_query()=='ada+review@example.test', vim.inspect(author_query()))
+    assert(vim.fn.complete_info({'items'}).items[1].menu=='')
+  ]])
+  c.feed('<CR>')
+  c.wait([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    return h.author_filter=='ada+review@example.test' and h.loaded and h.commits[1].message=='author-filter-new'
+  ]])
+
+  open_prompt()
+  c.feed('<C-u>unused<Esc>')
+  c.q([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    assert(not h.author_prompt and h.author_filter=='ada+review@example.test')
+  ]])
+  open_prompt()
+  c.feed('<C-u>ADA+REVIEW<CR>')
+  c.wait([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    return h.loaded and h.author_filter=='ADA+REVIEW' and h.commits[1].message=='author-filter-new'
+  ]])
+  open_prompt()
+  c.feed('<C-u>nobody@example.test<CR>')
+  c.wait([[return vim.api.nvim_buf_get_lines(log_buf,1,2,false)[1]:find('No commits match the author filter',1,true)~=nil]])
+  open_prompt()
+  c.feed('<C-u><CR>')
+  c.wait([[
+    local h=require('lu5je0.ext.sidebar.state').history
+    return h.loaded and not h.author_filter and h.commits[1].message=='author-filter-head'
+  ]])
+  c.stop()
+end)
+
+run('History author filter cancels completion when the Sidebar closes', function()
+  local c = child('project')
+  c.q([[
+    local model=require('lu5je0.ext.sidebar.sources.history.model')
+    model.load_authors=function(_,done)
+      _G.finish_author_lookup=done
+      return {kill=function() _G.author_lookup_killed=true end}
+    end
+  ]])
+  c.feed('f')
+  c.q([[
+    local s=require('lu5je0.ext.sidebar.state')
+    local prompt=s.history.author_prompt.win
+    vim.api.nvim_win_close(s.win,true)
+    assert(author_lookup_killed)
+    assert(not s.history.author_prompt and not vim.api.nvim_win_is_valid(prompt))
+    finish_author_lookup({{word='Late completion'}})
+    assert(not s.history.author_prompt)
+  ]])
+  c.stop()
+end)
+
 for _, chan in ipairs(children) do
   pcall(vim.fn.jobstop, chan)
 end

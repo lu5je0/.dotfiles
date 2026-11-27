@@ -617,7 +617,7 @@ end
 
 -- Commits must be in topological order; each output row belongs to one commit.
 -- Values are cached by the caller, so rendering/expansion never runs the layout.
-function M.build(commits)
+function M.build(commits, visible)
   local g = { row = {}, prev = {}, next = {}, colors = {}, counts = {}, prev_position = 1 }
   for i = 0, 13 do
     g.counts[i] = 0
@@ -626,9 +626,11 @@ function M.build(commits)
   for index, commit in ipairs(commits) do
     g.id, g.position, g.parents = commit.hash, find(g.row, commit.hash), {}
     for parent in (commit.parents or ''):gmatch('%S+') do
-      local c = column(parent)
-      c.symbol.boundary = commit.boundary or false
-      g.parents[#g.parents + 1] = c
+      if not visible or visible[parent] then
+        local c = column(parent)
+        c.symbol.boundary = commit.boundary or false
+        g.parents[#g.parents + 1] = c
+      end
     end
     if #g.parents == 0 then
       g.parents[1] = column()
