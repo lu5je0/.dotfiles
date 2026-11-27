@@ -88,6 +88,40 @@ end
 
 r.group('source lifecycle')
 
+run('Symbols uses the shared fold keys and keeps them scoped to tree tabs', function(source_win)
+  open('symbols', { source_win = source_win })
+  local function node(name, children)
+    local symbol = result(name)[1]
+    symbol.children = children
+    return symbol
+  end
+  requests[#requests].callback(nil, {
+    node('branch', { node('nested', { node('leaf') }) }),
+    node('other', { node('sibling') }),
+  })
+  drain()
+  local function names()
+    return vim.tbl_map(function(item) return item.node.name end, state.symbols.display_items)
+  end
+  vim.cmd('normal ggzRzC')
+  r.assert_eq(names(), { 'branch', 'other', 'sibling' })
+  r.assert_eq(vim.fn.line('.'), 1)
+  vim.cmd('normal zozo')
+  r.assert_eq(names(), { 'branch', 'nested', 'other', 'sibling' })
+  vim.cmd('normal zO2jzozO')
+  r.assert_eq(vim.api.nvim_get_current_win(), state.win)
+  r.assert_eq(names(), { 'branch', 'nested', 'leaf', 'other', 'sibling' })
+  vim.cmd('normal zC')
+  r.assert_eq(names(), { 'branch', 'nested', 'other', 'sibling' })
+  r.assert_eq(vim.fn.line('.'), 2)
+  vim.cmd('normal zM')
+  r.assert_eq(names(), { 'branch', 'other' })
+  open('buffers')
+  for _, key in ipairs { 'zo', 'zc', 'zO', 'zC', 'zR', 'zM' } do
+    r.assert_eq(vim.fn.maparg(key, 'n'), '')
+  end
+end)
+
 run('source locate dispatch preserves Files, Buffers and Symbols targets', function(source_win)
   sidebar.locate_in_tab(config.tab_idx('files'))
   r.assert_eq(state.files.display_items[vim.api.nvim_win_get_cursor(state.win)[1]].node.abs_path, fixture .. '/demo.txt')
@@ -231,17 +265,17 @@ run('Changes and Files act on the last directory in a compressed path', function
   r.assert_eq(vim.fn.getcwd(), dir)
 end)
 
-run('zC closes enclosing folds and zO opens only a closed fold', function()
+run('zC closes the Changes directory and descendants within its open section', function()
   open('git_changes')
   drain()
   local changes = require('lu5je0.ext.sidebar.sources.git_changes')
   local ts = state.git_changes
-  changes.update_sections_from_stdout(ts, ' M a/nested/f\0 M a/g\0 M b/f\0 M root\0')
+  changes.update_sections_from_stdout(ts, ' M a/nested/deep/f\0 M a/g\0 M b/f\0 M root\0')
   changes.render()
   vim.api.nvim_set_current_win(state.win)
   local function goto_path(path)
     for i, item in ipairs(ts.display_items) do
-      if item.node.rel_path == path then
+      if item.node.abs_path == fixture .. '/' .. path then
         vim.api.nvim_win_set_cursor(state.win, { i, 0 })
         return
       end
@@ -252,26 +286,31 @@ run('zC closes enclosing folds and zO opens only a closed fold', function()
     return ts.display_items[vim.api.nvim_win_get_cursor(state.win)[1]]
   end
 
-  goto_path('a/nested/f')
+  goto_path('a/nested/deep/f')
   vim.cmd('normal zO')
   r.assert_eq(vim.api.nvim_get_current_win(), state.win)
-  r.assert_eq(current().node.rel_path, 'a/nested/f')
+  r.assert_eq(current().node.rel_path, 'a/nested/deep/f')
   vim.cmd('normal zC')
-  r.assert_eq(current().section, 'changes')
+  r.assert_eq(current().node.name, 'nested')
   r.assert_eq(current().node.expanded, false)
-  local dirs = current().node.children
-  r.assert_eq(dirs[1].expanded, false)
-  r.assert_eq(dirs[1].children[1].expanded, false)
-  r.assert_eq(dirs[2].expanded, true)
+  r.assert_eq(current().node.children[1].expanded, false)
+  r.assert_eq(current().parent.node.name, 'a')
+  r.assert_eq(current().parent.node.expanded, true)
+  goto_path('a')
+  vim.cmd('normal zC')
+  r.assert_eq(current().node.name, 'a')
+  r.assert_eq(current().node.expanded, false)
+  r.assert_eq(ts._expanded.changes, true)
+  r.assert_eq(current().node.children[1].expanded, false)
+  r.assert_eq(current().node.children[1].children[1].expanded, false)
+  r.assert_eq(ts.display_items[1].node.children[2].expanded, true)
   vim.cmd('normal zO')
-  r.assert_eq(current().node.rel_path, 'a/nested/f')
-  vim.cmd('normal zCzo')
-  vim.cmd('normal zO')
-  r.assert_eq(ts.display_items[2].node.expanded, false)
+  r.assert_eq(current().node.children[1].expanded, true)
+  r.assert_eq(current().node.children[1].children[1].expanded, true)
+  goto_path('a/nested/deep/f')
   vim.cmd('normal zR')
   r.assert_eq(ts._expanded.unstaged, false)
-  r.assert_eq(ts.display_items[2].node.children[1].expanded, true)
-  r.assert_eq(current().section, 'changes')
+  r.assert_eq(current().node.rel_path, 'a/nested/deep/f')
 end)
 
 run('fold keys stay within Changes, Staged and Stashes including lazy loads', function()
@@ -308,32 +347,50 @@ run('fold keys stay within Changes, Staged and Stashes including lazy loads', fu
   goto_section('staged')
   vim.cmd('normal zR')
   check_sections(true, false)
-  vim.cmd('normal 2jzC')
+  vim.cmd('normal zC')
   check_sections(false, false)
+  r.assert_eq(ts.display_items[vim.fn.line('.')].node.children[1].expanded, false)
   vim.cmd('normal zO')
   check_sections(true, false)
+  vim.cmd('normal 2j')
   r.assert_eq(current_path(), 'staged/f')
   r.assert_eq(#pending, 0)
 
   goto_section('stashes')
   vim.cmd('normal zR')
   check_sections(true, true)
+  vim.cmd('normal zC')
+  check_sections(true, false)
   pending[1].callback { code = 0, stdout = 'stash@{0}\0one\nstash@{1}\0two\n' }
   drain()
+  r.assert_eq(#pending, 1)
+  for _, entry in ipairs(ts._stash_entries) do r.assert_truthy(not entry.expanded) end
+
+  vim.cmd('normal zo')
+  r.assert_eq(#pending, 2)
+  pending[2].callback { code = 0, stdout = 'stash@{0}\0one\nstash@{1}\0two\n' }
+  drain()
+  vim.cmd('normal jzo')
   r.assert_eq(#pending, 3)
-  for i = 2, 3 do pending[i].callback { code = 0, stdout = 'M\tdir/file\n' } end
+  pending[3].callback { code = 0, stdout = 'M\tdir/file\n' }
+  drain()
+  r.assert_eq(ts._stash_entries[1].expanded, true)
+  r.assert_eq(ts._stash_entries[1].children[1].expanded, false)
+
+  goto_section('stashes')
+  vim.cmd('normal zO')
+  r.assert_eq(#pending, 4)
+  pending[4].callback { code = 0, stdout = 'M\tdir/file\n' }
   drain()
   for _, entry in ipairs(ts._stash_entries) do
     r.assert_eq(entry.expanded, true)
     r.assert_eq(entry.children[1].expanded, true)
   end
-  vim.cmd('normal 3j')
-  r.assert_eq(current_path(), 'dir/file')
-  vim.cmd('normal zC')
-  check_sections(true, false)
-  vim.cmd('normal zO')
+  vim.cmd('normal jzC')
   check_sections(true, true)
-  r.assert_eq(current_path(), 'dir/file')
+  r.assert_eq(ts._stash_entries[1].expanded, false)
+  r.assert_eq(ts._stash_entries[1].children[1].expanded, false)
+  r.assert_eq(ts._stash_entries[2].children[1].expanded, true)
 end)
 
 for _, kind in ipairs { 'list', 'empty cached list', 'files' } do

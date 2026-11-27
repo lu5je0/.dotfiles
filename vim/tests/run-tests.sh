@@ -11,6 +11,10 @@ RESET=$'\033[0m'
 printf '%s[cron]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/cron/spec.lua" "${RESET}"
 DOTFILES_ROOT="${DOTFILES_ROOT}" TZ=UTC luajit "${SCRIPT_DIR}/cron/spec.lua"
 
+printf '\n'
+printf '%s[folds]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/folds/spec.lua" "${RESET}"
+nvim --headless -u NONE -i NONE -n -l "${SCRIPT_DIR}/folds/spec.lua"
+
 printf '%s[line-log]%s %s%s%s\n' "${BLUE}" "${RESET}" "${CYAN}" "${SCRIPT_DIR}/line-log/spec.lua" "${RESET}"
 nvim --headless -u NONE -l "${SCRIPT_DIR}/line-log/spec.lua"
 

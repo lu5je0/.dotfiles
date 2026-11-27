@@ -78,8 +78,9 @@ function M.parse(stdout)
 end
 
 --- Build a hierarchical tree of nodes (directories + files) for the
---- given list of file entries within a section.
-function M.files_to_tree_nodes(files, expanded_dirs, section_key, root)
+--- given list of file entries within a section. By default, directories
+--- without an explicit entry in expanded_dirs are open.
+function M.files_to_tree_nodes(files, expanded_dirs, section_key, root, expand_dirs)
   expanded_dirs = expanded_dirs or {}
   local cwd = root or M.git_root()
   local root_dirs, root_files = {}, {}
@@ -92,7 +93,7 @@ function M.files_to_tree_nodes(files, expanded_dirs, section_key, root)
       name = name,
       type = 'directory',
       abs_path = abs_prefix .. '/' .. name,
-      expanded = true,
+      expanded = expand_dirs ~= false,
       children = nil,
       _subdirs = {},
       _files = {},

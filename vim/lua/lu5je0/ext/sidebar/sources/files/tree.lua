@@ -80,7 +80,7 @@ function M.prepare_tree(node)
   end
 end
 
-function M.rescan_node(node)
+function M.rescan_node(node, opts)
   if node.type ~= 'directory' then return false end
   local previous = node.children or {}
   local by_name = {}
@@ -93,7 +93,7 @@ function M.rescan_node(node)
     local old = by_name[child.name]
     if old and old.type == child.type and old.is_symlink == child.is_symlink then
       children[i] = old
-      if old.type == 'directory' and old.expanded then
+      if old.type == 'directory' and old.expanded and not (opts and opts.shallow) then
         changed = M.rescan_node(old) or changed
       end
     else

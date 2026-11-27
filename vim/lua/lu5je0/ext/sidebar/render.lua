@@ -107,8 +107,8 @@ function M.render_tree(root_children, opts)
     end
   end
 
-  local function add_item(node, line_idx, kind)
-    local item = { type = kind, node = node, line_idx = line_idx }
+  local function add_item(node, line_idx, kind, parent)
+    local item = { type = kind, node = node, line_idx = line_idx, parent = parent }
     if item_data then
       local extra = item_data(node)
       if extra then
@@ -116,6 +116,7 @@ function M.render_tree(root_children, opts)
       end
     end
     items[#items + 1] = item
+    return item
   end
 
   local function add_indent_hls(line_idx, indent_end, branch_end)
@@ -174,7 +175,7 @@ function M.render_tree(root_children, opts)
     return table.concat(out) .. '…'
   end
 
-  local function walk(children, prefix, depth, in_context)
+  local function walk(children, prefix, depth, in_context, parent)
     local visible = {}
     for _, child in ipairs(children) do
       if filter(child) then visible[#visible + 1] = child end
@@ -210,8 +211,8 @@ function M.render_tree(root_children, opts)
         local line_idx = #lines - 1
         -- Actions target the last directory in the label. Folding and cursor
         -- restoration also need the directories represented by the same row.
-        add_item(display_node, line_idx, 'dir')
-        items[#items].dir_chain = chain
+        local item = add_item(display_node, line_idx, 'dir', parent)
+        item.dir_chain = chain
 
         if dir_suffix then
           add_suffix(line_idx, dir_suffix(child))
@@ -237,7 +238,7 @@ function M.render_tree(root_children, opts)
           else
             child_prefix = prefix .. (child_is_last and '  ' or '│ ')
           end
-          walk(display_node.children, child_prefix, depth + 1, in_context or self_hl ~= nil)
+          walk(display_node.children, child_prefix, depth + 1, in_context or self_hl ~= nil, item)
         end
       else
         local icon, icon_hl
@@ -251,7 +252,7 @@ function M.render_tree(root_children, opts)
 
         lines[#lines + 1] = line
         local line_idx = #lines - 1
-        add_item(child, line_idx, 'file')
+        add_item(child, line_idx, 'file', parent)
 
         if file_suffix then
           add_suffix(line_idx, file_suffix(child))

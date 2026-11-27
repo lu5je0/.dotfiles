@@ -18,9 +18,9 @@
 --                 expand, keep_cursor, on_already_expanded,
 --                 on_file }                       used by open_node()
 --   close       { is_closeable, close,
---                 is_boundary }                   used by close_node()
---   keymaps     () -> list                        per-tab keymaps
+--                 subtree }                       used by close_node() / close_subtree()
 --
+local folds = require('lu5je0.ext.sidebar.folds')
 local render = require('lu5je0.ext.sidebar.render')
 local view = require('lu5je0.ext.sidebar.view')
 local state = require('lu5je0.ext.sidebar.state')
@@ -115,7 +115,7 @@ function M.render(spec, ctx, first, last)
 end
 
 --- open_node glue using the source's `open` spec.
-function M.open_node(spec, render_fn)
+function M.open_node(spec, render_fn, fold_only)
   local ts = tab_state(spec)
   local glue = spec.open or {}
   view.open_node({
@@ -127,6 +127,7 @@ function M.open_node(spec, render_fn)
     keep_cursor = glue.keep_cursor,
     on_already_expanded = glue.on_already_expanded,
     on_file = glue.on_file,
+    fold_only = fold_only,
   })
 end
 
@@ -139,7 +140,23 @@ function M.close_node(spec, render_fn)
     render_fn = render_fn,
     is_closeable = glue.is_closeable,
     close = glue.close,
-    is_boundary = glue.is_boundary,
+  })
+end
+
+function M.close_subtree(spec, render_fn)
+  local ts = tab_state(spec)
+  view.close_node({
+    get_items = function() return ts.display_items end,
+    render_fn = render_fn,
+    is_closeable = function(item) return item.node and item.node.type == 'directory' end,
+    close = function(item)
+      local root = item.dir_chain and item.dir_chain[1] or item.node
+      if spec.close.subtree then
+        spec.close.subtree(item, root)
+      else
+        folds.set_subtree({ root }, false)
+      end
+    end,
   })
 end
 

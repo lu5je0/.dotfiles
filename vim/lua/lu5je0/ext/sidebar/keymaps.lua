@@ -1,5 +1,6 @@
 local state = require('lu5je0.ext.sidebar.state')
 local config = require('lu5je0.ext.sidebar.config')
+local folds = require('lu5je0.ext.sidebar.folds')
 
 local M = {}
 
@@ -13,6 +14,11 @@ local function buf_set(mode, lhs, rhs, opts)
   opts.silent = true
   opts.nowait = true
   vim.keymap.set(mode, lhs, rhs, opts)
+end
+
+local function source_keymaps(source)
+  local maps = folds.keymaps(source.folds)
+  return source.keymaps and vim.list_extend(maps, source.keymaps()) or maps
 end
 
 function M.apply_shared()
@@ -34,23 +40,12 @@ function M.apply_shared()
   buf_set('n', '<leader>tn', function() end)
   buf_set('n', '<leader>ws', function() end)
 
-  buf_set('n', 'zM', function()
-    local source = tabs.get_active_source()
-    if source and source.collapse_all then
-      source.collapse_all()
-    end
-  end)
-
-  buf_set('n', 'zR', function()
-    local source = tabs.get_active_source()
-    if source and source.expand_all then
-      source.expand_all()
-    end
-  end)
-
   local preview_mod = require('lu5je0.ext.sidebar.actions.preview')
   local file_ops = require('lu5je0.ext.sidebar.actions.file_ops')
   buf_set('n', '<esc>', function()
+    local source = tabs.get_active_source()
+    local cancel = source and source.folds and source.folds.cancel
+    if cancel and cancel() then return end
     if preview_mod.is_active() then
       preview_mod.stop()
     end
@@ -66,9 +61,7 @@ function M.apply_shared()
     { '<leader>1/2/3/4', 'Jump to tab' },
     { 'q', 'Close sidebar' },
     { 'Z', 'Toggle width' },
-    { 'zM', 'Collapse all' },
-    { 'zR', 'Expand all' },
-    { '<esc>', 'Close preview / Clear clipboard' },
+    { '<esc>', 'Stop expanding / Close preview / Clear clipboard' },
     { '?', 'Show help' },
   }
   buf_set('n', '?', function()
@@ -78,12 +71,12 @@ function M.apply_shared()
     for _, km in ipairs(shared_keymaps) do
       lines[#lines + 1] = string.format('  %-14s  %s', km[1], km[2])
     end
-    if ok and source.keymaps then
+    if ok then
       lines[#lines + 1] = ''
       lines[#lines + 1] = tab.label
       lines[#lines + 1] = ''
       local seen = {}
-      for _, km in ipairs(source.keymaps()) do
+      for _, km in ipairs(source_keymaps(source)) do
         local desc = km.desc or ''
         if not seen[desc] then
           seen[desc] = true
@@ -114,14 +107,14 @@ local function build_dispatch()
 
   for i, tab in ipairs(config.tabs) do
     local ok, source = pcall(require, 'lu5je0.ext.sidebar.sources.' .. tab.id)
-    if ok and source.keymaps then
-      for _, km in ipairs(source.keymaps()) do
+    if ok then
+      for _, km in ipairs(source_keymaps(source)) do
         local mode = km.mode or 'n'
         local key = mode .. ':' .. km[1]
         if not _dispatch[key] then
           _dispatch[key] = { mode = mode, lhs = km[1], handlers = {} }
         end
-        _dispatch[key].handlers[i] = km[2]
+        _dispatch[key].handlers[i] = km
       end
     end
   end
@@ -146,9 +139,9 @@ function M.apply_for_tab(idx)
     return #vim.api.nvim_replace_termcodes(a.lhs, true, false, true) > #vim.api.nvim_replace_termcodes(b.lhs, true, false, true)
   end)
   for _, entry in ipairs(entries) do
-    local handler = entry.handlers[idx]
-    if handler then
-      buf_set(entry.mode, entry.lhs, handler)
+    local km = entry.handlers[idx]
+    if km then
+      buf_set(entry.mode, entry.lhs, km[2], { desc = km.desc })
     end
   end
 end

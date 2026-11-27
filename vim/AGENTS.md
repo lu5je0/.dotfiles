@@ -18,6 +18,7 @@
 ## 插件加载与补丁
 
 - 基础编辑行为放在 `options.lua`、`keymaps.lua`、`autocmds.lua`、`commands.lua`；第三方插件行为优先放在对应 spec 或适配文件中。
+- 普通模式 `zC` 递归收起当前折叠及其子折叠，保留外层和旁支的开合状态，光标停在当前折叠的起始行。Sidebar 用 buffer-local 映射对树节点提供同样的操作。
 - Markdown 依赖由 `ftplugin/markdown.lua` 直接调用 `lazy.load`，避免 lazy 的 `FileType` 重放重复初始化语法。render-markdown 保持 `lazy = true`，Snacks 保留供其他功能使用的 `VeryLazy`。
 - Lua 依赖由 `ftplugin/lua.lua` 直接加载 lazydev 和 colorizer，并显式挂载 colorizer 到当前 buffer，避免错过正在派发的 `FileType`。lazydev 保持 `lazy = true`；colorizer 的配置仍包含 Lua，但 spec 的 `ft` 排除 Lua，其他文件类型保持按需加载。
 - Scrollview 首次加载时，setup 必须先完成上游延迟的命令初始化，才能回放按键。

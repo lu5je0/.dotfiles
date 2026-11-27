@@ -126,6 +126,34 @@ vim.schedule(function()
     end
   end)
 
+  set_n_map('zC', function()
+    local view = vim.fn.winsaveview()
+    local line = view.lnum
+    if not vim.wo.foldenable or vim.fn.foldlevel(line) < 1 then return end
+
+    local foldtext = vim.wo.foldtext
+    local ok, err = pcall(function()
+      if vim.fn.foldclosed(line) == -1 then vim.cmd.normal({ args = { 'zc' }, bang = true }) end
+      local first, last = vim.fn.foldclosed(line), vim.fn.foldclosedend(line)
+      if first < 0 then return end
+
+      -- Query the visible fold's depth even when deeper folds share its first line.
+      vim.wo.foldtext = 'v:foldlevel'
+      local level = tonumber(vim.fn.foldtextresult(first))
+      vim.wo.foldtext = foldtext
+      if not level then return end
+      vim.cmd.foldclose({ range = { first, last }, bang = true })
+      if level > 1 then
+        vim.api.nvim_win_set_cursor(0, { first, 0 })
+        vim.cmd.normal({ args = { (level - 1) .. 'zo' }, bang = true })
+      end
+      if view.lnum ~= first then view.lnum, view.col, view.coladd, view.curswant = first, 0, 0, 0 end
+    end)
+    if vim.wo.foldtext ~= foldtext then vim.wo.foldtext = foldtext end
+    vim.fn.winrestview(view)
+    if not ok then error(err, 0) end
+  end, desc_opts('Close fold recursively'))
+
   -- 折起与光标同层、且同属一个父节点的折叠（父节点之外的同层节点不动）
   set_map('n', 'zB', function()
     local win = vim.api.nvim_get_current_win()
